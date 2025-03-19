@@ -1,4 +1,4 @@
-using Content.Shared._RF.Control;
+using Content.Shared._RF.Movement;
 using Content.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
@@ -6,7 +6,7 @@ using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Player;
 
-namespace Content.Server._RF.Control;
+namespace Content.Server._RF.Movement;
 
 public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
 {

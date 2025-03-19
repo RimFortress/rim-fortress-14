@@ -1,4 +1,4 @@
-namespace Content.Shared._RF.Control;
+namespace Content.Shared._RF.Movement;
 
 /// <summary>
 /// Entity with this component can move with the mouse.

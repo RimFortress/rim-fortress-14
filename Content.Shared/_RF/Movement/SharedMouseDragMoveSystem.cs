@@ -1,7 +1,7 @@
 using System.Numerics;
 using Robust.Shared.Serialization;
 
-namespace Content.Shared._RF.Control;
+namespace Content.Shared._RF.Movement;
 
 /// <summary>
 /// This handles entities with <see cref="MouseDragMoveComponent"/>

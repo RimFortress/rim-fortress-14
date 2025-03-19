@@ -1,5 +1,5 @@
 using System.Numerics;
-using Content.Shared._RF.Control;
+using Content.Shared._RF.Movement;
 using Content.Shared.Input;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
@@ -7,7 +7,7 @@ using Robust.Client.Input;
 using Robust.Shared.Input;
 using Robust.Shared.Timing;
 
-namespace Content.Client._RF.Control;
+namespace Content.Client._RF.Movement;
 
 public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
 {
