@@ -1,0 +1,21 @@
+- type: entity
+  parent: MobObserverBase
+  id: RimFortressObserver
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    visible: false
+  - type: ContentEye
+    maxZoom: 8.916104, 8.916104
+  - type: Tag
+    tags:
+    - BypassInteractionRangeChecks
+  - type: Ghost
+    canInteract: true
+  - type: ComplexInteraction
+  - type: Physics
+    ignorePaused: true
+    bodyType: Kinematic
+  - type: Body
+    prototype: Aghost
+  - type: MouseDragMove
