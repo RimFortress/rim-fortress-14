@@ -123,6 +123,10 @@ namespace Content.Client.Input
             common.AddFunction(ContentKeyFunctions.OpenDecalSpawnWindow);
             common.AddFunction(ContentKeyFunctions.OpenAdminMenu);
             common.AddFunction(ContentKeyFunctions.OpenGuidebook);
+
+            // RimFortress Start
+            common.AddFunction(ContentKeyFunctions.DragMove);
+            // RimFortress End
         }
     }
 }
