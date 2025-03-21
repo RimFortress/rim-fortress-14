@@ -17,4 +17,7 @@ public sealed partial class RimFortressRuleComponent : Component
 
     [DataField]
     public float MaxPlanetLoadDistance = 100f;
+
+    [DataField]
+    public string PlanetBorderProtoId = "GhostImpassableWall";
 }
