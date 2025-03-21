@@ -1,0 +1,9 @@
+- type: gamePreset
+  id: RimFortress
+  alias:
+    - rimfortress
+    - rim
+  name: rim-fortress-title
+  description: rim-fortress-description
+  rules:
+    - RimFortress

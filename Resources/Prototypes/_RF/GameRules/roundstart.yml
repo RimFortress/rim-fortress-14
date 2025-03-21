@@ -1,0 +1,5 @@
+- type: entity
+  id: RimFortress
+  parent: BaseGameRule
+  components:
+  - type: RimFortressRule
