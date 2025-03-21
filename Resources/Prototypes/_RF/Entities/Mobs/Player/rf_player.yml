@@ -1,5 +1,5 @@
 - type: entity
-  parent: MobObserverBase
+  parent: [ Incorporeal, BaseMob ]
   id: RimFortressObserver
   categories: [ HideSpawnMenu ]
   components:
@@ -7,15 +7,27 @@
     visible: false
   - type: ContentEye
     maxZoom: 8.916104, 8.916104
-  - type: Tag
-    tags:
-    - BypassInteractionRangeChecks
-  - type: Ghost
-    canInteract: true
-  - type: ComplexInteraction
+  - type: Eye
+    drawFov: false
   - type: Physics
     ignorePaused: true
     bodyType: Kinematic
   - type: Body
     prototype: Aghost
+  - type: Input
+    context: "ghost"
+  - type: Examiner
+    skipChecks: true
+  - type: GhostHearing
+  - type: IntrinsicRadioReceiver
+  - type: ActiveRadio
+    receiveAllChannels: true
+    globalReceive: true
+  - type: PointLight
+    radius: 6
+    enabled: false
+  - type: Tag
+    tags:
+    - BypassInteractionRangeChecks
+  - type: ComplexInteraction
   - type: MouseDragMove
