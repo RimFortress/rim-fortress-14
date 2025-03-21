@@ -9,11 +9,6 @@
     maxZoom: 8.916104, 8.916104
   - type: Eye
     drawFov: false
-  - type: Physics
-    ignorePaused: true
-    bodyType: Kinematic
-  - type: Body
-    prototype: Aghost
   - type: Input
     context: "ghost"
   - type: Examiner
@@ -23,6 +18,9 @@
   - type: ActiveRadio
     receiveAllChannels: true
     globalReceive: true
+  - type: MovementSpeedModifier
+    baseWalkSpeed: 13
+    baseSprintSpeed: 20
   - type: PointLight
     radius: 6
     enabled: false
