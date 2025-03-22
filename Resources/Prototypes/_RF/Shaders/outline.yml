@@ -1,0 +1,9 @@
+- type: shader
+  id: SelectionOutlineWhite
+  kind: source
+  path: "/Textures/Shaders/outline.swsl"
+  params:
+    outline_color: "#FFFFFFAA"
+    light_boost: 1
+    light_gamma: 1
+    light_whitepoint: 3
