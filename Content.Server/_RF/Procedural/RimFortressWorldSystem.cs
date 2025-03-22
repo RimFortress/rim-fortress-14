@@ -32,6 +32,10 @@ public sealed class RimFortressWorldSystem : EntitySystem
 
     private const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
 
+    /// <summary>
+    /// Create a world with the size specified in <see cref="RimFortressRuleComponent"/>.WorldSize
+    /// </summary>
+    /// <param name="rule">game rule component</param>
     public void InitializeWorld(RimFortressRuleComponent rule)
     {
         var size = rule.WorldSize;
@@ -72,6 +76,20 @@ public sealed class RimFortressWorldSystem : EntitySystem
         return mapId;
     }
 
+    private MapId CreateOrGetMap(int x, int y)
+    {
+        if (_worlds[y, x] != MapId.Nullspace)
+            return _worlds[y, x];
+
+        return CreateMap(x, y);
+    }
+
+    /// <summary>
+    /// Creates a box of entities of a given prototype
+    /// </summary>
+    /// <param name="bordersProtoId">prototype from which the border will be constructed</param>
+    /// <param name="id">id of the map on which the border will be created</param>
+    /// <param name="box">border box</param>
     private void CreateMapBorders(string bordersProtoId, MapId id, Box2i box)
     {
         for (var x = box.Bottom; x < box.Top; x++)
@@ -87,16 +105,20 @@ public sealed class RimFortressWorldSystem : EntitySystem
         }
     }
 
+    /// <summary>
+    /// Creates or allocates a free map for the player
+    /// </summary>
+    /// <exception cref="InvalidOperationException">if there are no maps available</exception>
     public void CreateOwnerMap(ICommonSession player)
     {
         if (_rule is not { } rule)
             return;
 
         if (_freeWorlds.Count == 0)
-            throw new InvalidOperationException("No free worlds available");
+            throw new InvalidOperationException("No free maps available");
 
         var (x, y) = _freeWorlds[_random.Next(_freeWorlds.Count - 1)];
-        var mapId = CreateMap(x, y);
+        var mapId = CreateOrGetMap(x, y);
 
         // Spawn RF player entity
         var newMind = _mind.CreateMind(player.UserId, player.Name);
@@ -115,17 +137,23 @@ public sealed class RimFortressWorldSystem : EntitySystem
         CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
     }
 
+    /// <summary>
+    /// Checks if the given map is part of the RimFortress world
+    /// </summary>
     public bool IsWorldMap(MapId mapId)
     {
         return _worldsCoords.ContainsKey(mapId);
     }
 
-    public bool ChunkInMapLimits(Vector2i indicates)
+    /// <summary>
+    /// checks if the coordinates are within the map borders
+    /// </summary>
+    public bool InMapLimits(Vector2i coordinates)
     {
         if (_rule is not { } rule)
             return true;
 
-        return Math.Abs(indicates.X) <= rule.PlanetChunkLoadDistance * ChunkSize
-               && Math.Abs(indicates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
+        return Math.Abs(coordinates.X) <= rule.PlanetChunkLoadDistance * ChunkSize
+               && Math.Abs(coordinates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
     }
 }

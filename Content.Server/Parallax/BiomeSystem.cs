@@ -455,7 +455,7 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
             LoadChunkMarkers(component, gridUid, grid, chunk, seed);
 
             // RimFortress Start
-            if (isWorldMap && !_world.ChunkInMapLimits(chunk))
+            if (isWorldMap && !_world.InMapLimits(chunk))
                 continue;
             // RimFortress End
 
@@ -897,7 +897,7 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         foreach (var chunk in component.LoadedChunks)
         {
             // RimFortress Start
-            if (isWorldMap && _world.ChunkInMapLimits(chunk))
+            if (isWorldMap && _world.InMapLimits(chunk))
                 continue;
             // RimFortress End
 
