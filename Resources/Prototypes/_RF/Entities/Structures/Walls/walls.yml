@@ -6,7 +6,6 @@
     anchored: true
   - type: Sprite
     visible: false
-  - type: IsRoof
   - type: Physics
     bodyType: Static
   - type: Fixtures

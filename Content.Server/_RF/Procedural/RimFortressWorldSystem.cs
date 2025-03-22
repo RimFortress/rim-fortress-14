@@ -24,14 +24,19 @@ public sealed class RimFortressWorldSystem : EntitySystem
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
 
-    private MapId[,] _worlds = new MapId[0,0]; // [Y][X]
+    private MapId[,] _worlds = new MapId[0,0]; // [Y,X]
     private Dictionary<MapId, (int, int)> _worldsCoords = [];
     private List<(int, int)> _freeWorlds = [];
     private Dictionary<NetUserId, List<MapId>> _mapOwners = new();
+    private RimFortressRuleComponent? _rule;
 
-    public void InitializeWorld(Vector2i size)
+    private const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
+
+    public void InitializeWorld(RimFortressRuleComponent rule)
     {
+        var size = rule.WorldSize;
         _worlds = new MapId[size.Y, size.X];
+
         for (var y = 0; y < size.Y; y++)
         {
             for (var x = 0; x < size.X; x++)
@@ -40,9 +45,11 @@ public sealed class RimFortressWorldSystem : EntitySystem
                 _freeWorlds.Add((x, y));
             }
         }
+
+        _rule = rule;
     }
 
-    public void SetMapOwner(MapId map, NetUserId owner)
+    private void SetMapOwner(MapId map, NetUserId owner)
     {
         if (!_mapOwners.ContainsKey(owner))
             _mapOwners[owner] = [];
@@ -65,25 +72,26 @@ public sealed class RimFortressWorldSystem : EntitySystem
         return mapId;
     }
 
-    private void CreateMapBorders(string bordersProtoId, MapId id, int distance)
+    private void CreateMapBorders(string bordersProtoId, MapId id, Box2i box)
     {
-        var offset = new Vector2(-0.5f, -0.5f);
-
-        for (var x = -distance; x < distance; x++)
+        for (var x = box.Bottom; x < box.Top; x++)
         {
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, distance) + offset, id));
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, -distance) + offset, id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Left), id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Right), id));
         }
 
-        for (var y = -distance + 1; y < distance; y++)
+        for (var y = box.Left + 1; y < box.Right; y++)
         {
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(distance, y) + offset, id));
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(-distance, y) + offset, id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Top, y), id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Bottom, y), id));
         }
     }
 
-    public void CreateOwnerMap(ICommonSession player, RimFortressRuleComponent rule)
+    public void CreateOwnerMap(ICommonSession player)
     {
+        if (_rule is not { } rule)
+            return;
+
         if (_freeWorlds.Count == 0)
             throw new InvalidOperationException("No free worlds available");
 
@@ -93,10 +101,31 @@ public sealed class RimFortressWorldSystem : EntitySystem
         // Spawn RF player entity
         var newMind = _mind.CreateMind(player.UserId, player.Name);
         _mind.SetUserId(newMind, player.UserId);
-        var mob = Spawn(rule.PlayerProtoId, new MapCoordinates(Vector2.Zero, mapId));
+        var mob = Spawn(rule.PlayerProtoId, new MapCoordinates(new Vector2(ChunkSize / 2f), mapId));
         _mind.TransferTo(newMind, mob);
 
         SetMapOwner(mapId, player.UserId);
-        CreateMapBorders(rule.PlanetBorderProtoId, mapId, rule.MaxPlanetDistance);
+
+        // Build map borders around map center
+        var borderBox = new Box2i(
+            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
+            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
+            ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1,
+            ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1);
+        CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
+    }
+
+    public bool IsWorldMap(MapId mapId)
+    {
+        return _worldsCoords.ContainsKey(mapId);
+    }
+
+    public bool ChunkInMapLimits(Vector2i indicates)
+    {
+        if (_rule is not { } rule)
+            return true;
+
+        return Math.Abs(indicates.X) <= rule.PlanetChunkLoadDistance * ChunkSize
+               && Math.Abs(indicates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
     }
 }

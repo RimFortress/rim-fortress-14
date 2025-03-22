@@ -24,18 +24,18 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     {
         base.Added(uid, comp, gameRule, args);
 
-        _world.InitializeWorld(comp.WorldSize);
+        _world.InitializeWorld(comp);
     }
 
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)
     {
         var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
-        while (query.MoveNext(out var uid, out var rf, out var rule))
+        while (query.MoveNext(out var uid, out _, out var rule))
         {
             if (!GameTicker.IsGameRuleActive(uid, rule))
                 continue;
 
-            _world.CreateOwnerMap(ev.Player, rf);
+            _world.CreateOwnerMap(ev.Player);
 
             ev.Handled = true;
             return;

@@ -13,10 +13,14 @@ public sealed partial class RimFortressRuleComponent : Component
     public string PlayerProtoId = "RimFortressObserver";
 
     /// <summary>
-    /// Distance from the center of the map to the rim
+    /// Number of chunks from the center, on which the planet will be loaded.
+    /// Beyond this distance, a border will be created
     /// </summary>
+    /// <remarks>
+    /// The number of chunks equals: (MaxPlanetChunkDistance * 2 + 1) ^ 2
+    /// </remarks>
     [DataField]
-    public int MaxPlanetDistance = 25;
+    public int PlanetChunkLoadDistance = 4;
 
     /// <summary>
     /// The prototype that will be used to create the map border
