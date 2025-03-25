@@ -1,0 +1,94 @@
+- type: htnCompound
+  id: BeforeTaskCompound
+  branches:
+    - tasks:
+      # Unbuckle
+      - !type:HTNPrimitiveTask
+        preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+        operator: !type:UnbuckleOperator
+          shutdownState: TaskFinished
+      # Unpull
+      - !type:HTNPrimitiveTask
+        preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+        operator: !type:UnPullOperator
+          shutdownState: TaskFinished
+      # Leave the container
+      #- !type:HTNPrimitiveTask
+      #  preconditions:
+      #  - !type:InContainerPrecondition
+      #    isInContainer: true
+      #  operator: !type:HTNCompoundTask
+      #    task: EscapeCompound
+
+- type: htnCompound
+  id: MoveToCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: MoveToTargetCoordinates
+        - !type:KeyExistsPrecondition
+          key: MoveToCloseRange
+      tasks:
+      #- !type:HTNCompoundTask
+      #  task: BeforeTaskCompound
+      - !type:HTNPrimitiveTask
+        operator: !type:MoveToOperator
+          pathfindInPlanning: true
+          targetKey: MoveToTargetCoordinates
+          rangeKey: MoveToCloseRange
+          removeKeyOnFinish: false
+
+- type: htnCompound
+  id: AttackTargetCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+        - !type:KeyExistsPrecondition
+          key: AttackTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            shutdownState: PlanFinished
+            pathfindInPlanning: true
+            removeKeyOnFinish: false
+            stopOnLineOfSight: true
+            targetKey: AttackTargetCoordinates
+            rangeKey: MeleeRange
+        # Attack with a gun
+        - !type:HTNPrimitiveTask
+          operator: !type:GunOperator
+            targetKey: AttackTarget
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+          invert: true
+        - !type:KeyExistsPrecondition
+          key: AttackTarget
+        - !type:KeyExistsPrecondition
+          key: AttackTargetCoordinates
+      tasks:
+        # Else go to the target at melee distance
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            shutdownState: PlanFinished
+            pathfindInPlanning: true
+            removeKeyOnFinish: false
+            targetKey: AttackTargetCoordinates
+            rangeKey: MeleeRange
+        # Attack in close combat if no gun is available
+        - !type:HTNPrimitiveTask
+          preconditions:
+            - !type:KeyExistsPrecondition
+              key: AttackTarget
+            - !type:TargetInRangePrecondition
+              targetKey: AttackTarget
+              rangeKey: MeleeRange
+          operator: !type:MeleeOperator
+            targetKey: AttackTarget

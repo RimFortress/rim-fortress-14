@@ -1,25 +1,115 @@
+using System.Numerics;
+using Content.Shared._RF.NPC;
+using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Shared.Enums;
+using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.NPC;
 
-public sealed class NPCControlOverlay(NPCControlSystem npcControl) : Overlay
+public sealed class NPCControlOverlay : Overlay
 {
     public override OverlaySpace Space => OverlaySpace.WorldSpace;
 
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string SelectShader = "SelectionOutlineWhite";
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string AttackShader = "SelectionOutlineRed";
+
+    private readonly NPCControlSystem _npcControl;
+    private readonly SharedTransformSystem _transform;
+    private readonly IEntityManager _entityManager;
+
+    private readonly Color _selectColor = Color.LightGray.WithAlpha(0.80f);
+    private readonly Color _attackColor = Color.Red.WithAlpha(0.80f);
+    private readonly ShaderInstance _selectShader;
+    private readonly ShaderInstance _attackShader;
+
+    private readonly HashSet<SpriteComponent> _highlightedSprites = new();
+
+    public NPCControlOverlay(
+        NPCControlSystem npcControl,
+        SharedTransformSystem transform,
+        IPrototypeManager prototype,
+        IEntityManager entityManager)
+    {
+        _npcControl = npcControl;
+        _transform = transform;
+        _entityManager = entityManager;
+        _selectShader = prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
+        _attackShader = prototype.Index<ShaderPrototype>(AttackShader).InstanceUnique();
+    }
+
     protected override void Draw(in OverlayDrawArgs args)
     {
-        foreach (var entity in npcControl.Selected)
+        foreach (var sprite in _highlightedSprites)
         {
-            if (npcControl.Targets.TryGetValue(entity, out var target)
-                && target is { } coordinates)
+            sprite.PostShader = null;
+            sprite.RenderOrder = 0;
+        }
+
+        _highlightedSprites.Clear();
+
+        foreach (var entity in _npcControl.Selected)
+        {
+            if (!_entityManager.TryGetComponent(entity, out SpriteComponent? sprite) || !sprite.Visible)
+                continue;
+
+            _highlightedSprites.Add(sprite);
+            sprite.PostShader = _selectShader;
+            sprite.RenderOrder = _entityManager.CurrentTick.Value;
+
+            if (!_npcControl.Tasks.TryGetValue(entity, out var task))
+                continue;
+
+            switch (task.Type)
             {
-                args.WorldHandle.DrawCircle(coordinates.Position, 0.35f, Color.LightGray.WithAlpha(0.80f), false);
-                args.WorldHandle.DrawCircle(coordinates.Position, 0.34f, Color.LightGray.WithAlpha(0.80f), false);
+                case NPCTaskType.Move:
+                {
+                    if (task.MoveTo is not { } coordinates)
+                        break;
+
+                    var startPos = _transform.GetWorldPosition(entity);
+                    var direction = coordinates.Position - startPos;
+                    var endPos = coordinates.Position + Vector2.Normalize(direction) * -0.35f;
+
+                    if (direction.Length() > 0.5f)
+                    {
+                        args.WorldHandle.DrawCircle(coordinates.Position, 0.35f, _selectColor, false);
+                        args.WorldHandle.DrawCircle(coordinates.Position, 0.34f, _selectColor, false);
+                        args.WorldHandle.DrawLine(startPos, endPos, _selectColor);
+                    }
+
+                    break;
+                }
+                case NPCTaskType.Attack:
+                {
+                    if (_entityManager.TryGetComponent(task.Attack, out SpriteComponent? attackSprite)
+                        && !_highlightedSprites.Contains(attackSprite)
+                        && attackSprite.Visible)
+                    {
+                        _highlightedSprites.Add(attackSprite);
+                        attackSprite.PostShader = _attackShader;
+                        attackSprite.RenderOrder = _entityManager.CurrentTick.Value;
+                    }
+
+                    if (!_entityManager.TryGetComponent(task.Attack, out TransformComponent? xform))
+                        break;
+
+                    var startPos = _transform.GetWorldPosition(entity);
+                    var endPos = xform.Coordinates.Position;
+                    var direction = endPos - startPos;
+                    if (direction.Length() > 0.5f)
+                        args.WorldHandle.DrawLine(startPos, endPos, _attackColor);
+
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
-        if (npcControl is { StartPoint: { } start, EndPoint: { } end })
+        if (_npcControl is { StartPoint: { } start, EndPoint: { } end })
         {
             var area = new Box2(start.Position, end.Position);
             args.WorldHandle.DrawRect(area, Color.White, false);
