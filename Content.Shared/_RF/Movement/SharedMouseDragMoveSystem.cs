@@ -3,9 +3,6 @@ using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Movement;
 
-/// <summary>
-/// This handles entities with <see cref="MouseDragMoveComponent"/>
-/// </summary>
 public abstract class SharedMouseDragMoveSystem : EntitySystem
 {
 

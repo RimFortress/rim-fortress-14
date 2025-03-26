@@ -9,6 +9,9 @@ using Robust.Shared.Timing;
 
 namespace Content.Client._RF.Movement;
 
+/// <summary>
+/// This handles entities with <see cref="MouseDragMoveComponent"/>
+/// </summary>
 public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
 {
     [Dependency] private readonly IGameTiming _gameTiming = default!;
@@ -74,7 +77,9 @@ public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
         var mouseScreenPos = _inputManager.MouseScreenPosition;
         var mouseMapPos = _eyeManager.PixelToMap(mouseScreenPos);
 
-        if (!TryComp(entity, out TransformComponent? xform) || xform.MapID != mouseMapPos.MapId)
+        if (!TryComp(entity, out MouseDragMoveComponent? dragMove)
+            || !TryComp(entity, out TransformComponent? xform)
+            || xform.MapID != mouseMapPos.MapId)
         {
             StopDragging();
             return;
@@ -84,6 +89,9 @@ public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
         var tickTime = _gameTiming.TickPeriod;
         var distance = mouseMapPos.Position - _transformSystem.GetWorldPosition(xform);
         var velocity = distance.LengthSquared() > 0f ? (distance / (float)tickTime.TotalSeconds) * 0.25f : Vector2.Zero;
+
+        if (velocity.LengthSquared() > dragMove.MaxSpeed * dragMove.MaxSpeed)
+            velocity = Vector2.Normalize(velocity) * dragMove.MaxSpeed;
 
         RaiseNetworkEvent(new MouseDragVelocityRequest { LinearVelocity = velocity });
     }
