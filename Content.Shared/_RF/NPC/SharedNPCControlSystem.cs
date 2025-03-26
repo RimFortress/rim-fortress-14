@@ -1,4 +1,3 @@
-using System.Numerics;
 using Robust.Shared.Map;
 using Robust.Shared.Serialization;
 
@@ -39,12 +38,6 @@ public enum NPCTaskType : byte
 {
     Move,
     Attack,
-}
-
-[Serializable, NetSerializable]
-public sealed class NPCTaskInfoRequest : EntityEventArgs
-{
-    public NetEntity Entity { get; set; }
 }
 
 [Serializable, NetSerializable]

@@ -46,6 +46,13 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         SubscribeNetworkEvent<NPCTaskInfoMessage>(OnTaskInfo);
     }
 
+    public override void Shutdown()
+    {
+        base.Shutdown();
+
+        _overlay.RemoveOverlay<NPCControlOverlay>();
+    }
+
     private bool OnSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
         if (player?.AttachedEntity is not { Valid: true } entity
@@ -80,6 +87,7 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
             if (!TryComp(entity, out HTNComponent? _))
                 continue;
 
+            // Create a task to attack a creature if it is under the cursor
             SetAttack(entity);
             return true;
         }
@@ -90,7 +98,8 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
             || !_map.TryGetTileRef(gridUid, grid, coords, out var tileRef))
             return false;
 
-        SetTargets(tileRef);
+        // Else we create a task to move to the cursor coordinates
+        SetMove(tileRef);
         return true;
     }
 
@@ -119,6 +128,9 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         Selected = GetNPCsInSelect();
     }
 
+    /// <summary>
+    /// Gets the list of NPCs in the selection area
+    /// </summary>
     private HashSet<EntityUid> GetNPCsInSelect()
     {
         if (StartPoint is not { } start
@@ -138,6 +150,9 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         return entities;
     }
 
+    /// <summary>
+    /// Gives all selected entities the task of attacking a given entity
+    /// </summary>
     private void SetAttack(EntityUid uid)
     {
         foreach (var entity in Selected)
@@ -147,7 +162,10 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         }
     }
 
-    private void SetTargets(TileRef tileRef)
+    /// <summary>
+    /// Gives all selected entities a task to go to a given tile
+    /// </summary>
+    private void SetMove(TileRef tileRef)
     {
         var previousTargets = new List<EntityCoordinates>();
 
@@ -182,6 +200,9 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         }
     }
 
+    /// <summary>
+    /// Returns the first free neighboring tile for the coordinate list
+    /// </summary>
     private EntityCoordinates? GetNeighborTile(List<EntityCoordinates> tiles)
     {
         var directions = new[] {Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down};
@@ -203,6 +224,10 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         return null;
     }
 
+    /// <summary>
+    /// Checks the tile for solid entities
+    /// </summary>
+    /// <param name="coords">tile center coordinates</param>
     private bool IsTileFree(EntityCoordinates coords)
     {
         var box = Box2.FromDimensions(coords.Position, Vector2.One).Enlarged(-0.1f);
