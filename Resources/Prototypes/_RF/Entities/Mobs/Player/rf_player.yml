@@ -30,3 +30,4 @@
   - type: ComplexInteraction
   - type: MouseDragMove
   - type: NPCControl
+  - type: NpcFactionMember

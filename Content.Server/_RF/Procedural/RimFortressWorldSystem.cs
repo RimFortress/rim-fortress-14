@@ -3,6 +3,8 @@ using Content.Server._RF.GameTicking.Rules;
 using Content.Server.Mind;
 using Content.Server.Parallax;
 using Content.Shared.Light.Components;
+using Content.Shared.NPC.Components;
+using Content.Shared.NPC.Systems;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Random.Helpers;
 using Robust.Server.GameObjects;
@@ -24,6 +26,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
     [Dependency] private readonly MapSystem _map = default!;
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly NpcFactionSystem _faction = default!;
 
     private MapId[,] _worlds = new MapId[0,0]; // [Y,X]
     private RimFortressRuleComponent? _rule;
@@ -31,6 +34,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
     private readonly Dictionary<MapId, (int, int)> _worldsCoords = [];
     private readonly List<(int, int)> _freeWorlds = [];
     private readonly Dictionary<NetUserId, List<MapId>> _mapOwners = new();
+    private readonly Dictionary<NetUserId, string> _playerFactions = new();
 
     private const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
 
@@ -76,7 +80,19 @@ public sealed class RimFortressWorldSystem : EntitySystem
         _biome.EnsurePlanet(map, _protoManager.Index<BiomeTemplatePrototype>(templateId));
 
         if (TryComp(map, out LightCycleComponent? cycle))
+        {
+            cycle.Duration = rule.DayDuration;
+            cycle.Offset = rule.DayDuration / 3; // For roundstart day time
             cycle.InitialOffset = false;
+        }
+
+        // Build map borders around map center
+        var borderBox = new Box2i(
+            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
+            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
+            ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1,
+            ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1);
+        CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
 
         _worlds[y, x] = mapId;
         _worldsCoords[mapId] = (y, x);
@@ -114,6 +130,36 @@ public sealed class RimFortressWorldSystem : EntitySystem
     }
 
     /// <summary>
+    /// Creates a faction for a player, if none exists
+    /// </summary>
+    private void CreatePlayerFaction(ICommonSession player)
+    {
+        if (_playerFactions.ContainsKey(player.UserId)
+            || player.AttachedEntity is not { } entity
+            || _rule is not { } rule)
+            return;
+
+        var factionId = $"{rule.FactionProtoPrefix}{_playerFactions.Count + 1}";
+        _faction.AddFaction(new Entity<NpcFactionMemberComponent?>(entity, null), factionId);
+
+        // Add friends
+        foreach (var friend in rule.PlayerFactionFriends)
+        {
+            _faction.MakeFriendly(factionId, friend);
+            _faction.MakeFriendly(friend, factionId);
+        }
+
+        // Add hostiles
+        foreach (var hostile in rule.PlayerFactionHostiles)
+        {
+            _faction.MakeHostile(factionId, hostile);
+            _faction.MakeHostile(hostile, factionId);
+        }
+
+        _playerFactions.Add(player.UserId, factionId);
+    }
+
+    /// <summary>
     /// Creates or allocates a free map for the player
     /// </summary>
     /// <exception cref="InvalidOperationException">if there are no maps available</exception>
@@ -135,14 +181,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
         _mind.TransferTo(newMind, mob);
 
         SetMapOwner(mapId, player.UserId);
-
-        // Build map borders around map center
-        var borderBox = new Box2i(
-            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
-            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
-            ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1,
-            ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1);
-        CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
+        CreatePlayerFaction(player);
     }
 
     /// <summary>
@@ -154,7 +193,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
     }
 
     /// <summary>
-    /// checks if the coordinates are within the map borders
+    /// Checks if the coordinates are within the map borders
     /// </summary>
     public bool InMapLimits(Vector2i coordinates)
     {
