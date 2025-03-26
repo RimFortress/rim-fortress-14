@@ -10,5 +10,5 @@ public sealed partial class MouseDragMoveComponent : Component
     /// Max movement speed
     /// </summary>
     [DataField]
-    public float MaxSpeed = 20f;
+    public float MaxSpeed = 40f;
 }

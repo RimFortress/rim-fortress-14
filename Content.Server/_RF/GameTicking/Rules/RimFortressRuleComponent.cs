@@ -1,3 +1,7 @@
+using Content.Shared.Parallax.Biomes;
+using Content.Shared.Random;
+using Robust.Shared.Prototypes;
+
 namespace Content.Server._RF.GameTicking.Rules;
 
 /// <summary>
@@ -20,7 +24,7 @@ public sealed partial class RimFortressRuleComponent : Component
     /// The number of chunks equals: (MaxPlanetChunkDistance * 2 + 1) ^ 2
     /// </remarks>
     [DataField]
-    public int PlanetChunkLoadDistance = 4;
+    public int PlanetChunkLoadDistance = 6;
 
     /// <summary>
     /// The prototype that will be used to create the map border
@@ -33,4 +37,10 @@ public sealed partial class RimFortressRuleComponent : Component
     /// </summary>
     [DataField]
     public Vector2i WorldSize = new(10, 10);
+
+    /// <summary>
+    /// Biome templates that will be used in the creation of the world
+    /// </summary>
+    [DataField(required: true), ValidatePrototypeId<WeightedRandomPrototype>]
+    public ProtoId<WeightedRandomPrototype> BiomeSet;
 }

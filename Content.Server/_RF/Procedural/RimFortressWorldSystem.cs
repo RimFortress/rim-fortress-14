@@ -1,9 +1,10 @@
-using System.Linq;
 using System.Numerics;
 using Content.Server._RF.GameTicking.Rules;
 using Content.Server.Mind;
 using Content.Server.Parallax;
+using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
+using Content.Shared.Random.Helpers;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Network;
@@ -25,10 +26,11 @@ public sealed class RimFortressWorldSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
 
     private MapId[,] _worlds = new MapId[0,0]; // [Y,X]
-    private Dictionary<MapId, (int, int)> _worldsCoords = [];
-    private List<(int, int)> _freeWorlds = [];
-    private Dictionary<NetUserId, List<MapId>> _mapOwners = new();
     private RimFortressRuleComponent? _rule;
+
+    private readonly Dictionary<MapId, (int, int)> _worldsCoords = [];
+    private readonly List<(int, int)> _freeWorlds = [];
+    private readonly Dictionary<NetUserId, List<MapId>> _mapOwners = new();
 
     private const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
 
@@ -66,9 +68,15 @@ public sealed class RimFortressWorldSystem : EntitySystem
 
     private MapId CreateMap(int x, int y)
     {
+        if (_rule is not { } rule)
+            throw new InvalidOperationException("trying create world map before rule is set");
+
         var map = _map.CreateMap(out var mapId);
-        var biomes = _protoManager.EnumeratePrototypes<BiomeTemplatePrototype>().ToList();
-        _biome.EnsurePlanet(map, biomes[_random.Next(biomes.Count - 1)]);
+        var templateId = _protoManager.Index(rule.BiomeSet).Pick(_random);
+        _biome.EnsurePlanet(map, _protoManager.Index<BiomeTemplatePrototype>(templateId));
+
+        if (TryComp(map, out LightCycleComponent? cycle))
+            cycle.InitialOffset = false;
 
         _worlds[y, x] = mapId;
         _worldsCoords[mapId] = (y, x);
