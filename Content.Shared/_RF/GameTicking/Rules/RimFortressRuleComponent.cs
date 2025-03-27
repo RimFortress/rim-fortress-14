@@ -1,7 +1,7 @@
 using Content.Shared.Random;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.GameTicking.Rules;
+namespace Content.Shared._RF.GameTicking.Rules;
 
 /// <summary>
 /// Basic game rule of RimFortress
