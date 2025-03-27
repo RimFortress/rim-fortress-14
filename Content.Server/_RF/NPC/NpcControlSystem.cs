@@ -1,4 +1,4 @@
-using Content.Server._RF.Procedural;
+using Content.Server._RF.World;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;

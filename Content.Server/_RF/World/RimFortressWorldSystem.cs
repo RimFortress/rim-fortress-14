@@ -19,7 +19,7 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
 
-namespace Content.Server._RF.Procedural;
+namespace Content.Server._RF.World;
 
 /// <summary>
 /// Manages the RimFortress world and player maps
