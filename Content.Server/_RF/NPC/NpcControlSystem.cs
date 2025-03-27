@@ -84,7 +84,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         var entity = GetEntity(request.Entity);
         var attackTarget = GetEntity(request.Attack);
-        
+
         if (!_npc.TryGetNpc(entity, out var npc)
             || !_world.IsPlayerFactionMember(request.Requester, entity)
             || _world.IsPlayerFactionMember(request.Requester, attackTarget))
