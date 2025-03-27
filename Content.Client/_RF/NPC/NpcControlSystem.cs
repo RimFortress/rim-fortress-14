@@ -10,6 +10,7 @@ using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
@@ -76,7 +77,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (Selected.Count == 0)
+        if (player is not { UserId: var userId }
+            || Selected.Count == 0)
             return false;
 
         var box = Box2.CenteredAround(coords.Position, new Vector2(0.05f));
@@ -88,7 +90,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 continue;
 
             // Create a task to attack a creature if it is under the cursor
-            SetAttack(entity);
+            SetAttack(userId, entity);
             return true;
         }
 
@@ -99,7 +101,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             return false;
 
         // Else we create a task to move to the cursor coordinates
-        SetMove(tileRef);
+        SetMove(userId, tileRef);
         return true;
     }
 
@@ -153,11 +155,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <summary>
     /// Gives all selected entities the task of attacking a given entity
     /// </summary>
-    private void SetAttack(EntityUid uid)
+    private void SetAttack(NetUserId requester, EntityUid uid)
     {
         foreach (var entity in Selected)
         {
-            var msg = new NpcAttackRequest { Entity = GetNetEntity(entity), Attack = GetNetEntity(uid) };
+            var msg = new NpcAttackRequest
+                { Entity = GetNetEntity(entity), Attack = GetNetEntity(uid), Requester = requester, };
             RaiseNetworkEvent(msg);
         }
     }
@@ -165,7 +168,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <summary>
     /// Gives all selected entities a task to go to a given tile
     /// </summary>
-    private void SetMove(TileRef tileRef)
+    private void SetMove(NetUserId requester, TileRef tileRef)
     {
         var previousTargets = new List<TileRef>();
         var tileCenter = _turf.GetTileCenter(tileRef);
@@ -180,6 +183,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 previousTargets.Add(tileRef);
                 RaiseNetworkEvent(new NpcMoveToRequest
                 {
+                    Requester = requester,
                     Entity = GetNetEntity(entity),
                     Target = GetNetCoordinates(tileCenter),
                 });
@@ -193,6 +197,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             previousTargets.Add(tile);
             RaiseNetworkEvent(new NpcMoveToRequest
             {
+                Requester = requester,
                 Entity = GetNetEntity(entity),
                 Target = GetNetCoordinates(_turf.GetTileCenter(tile)),
             });

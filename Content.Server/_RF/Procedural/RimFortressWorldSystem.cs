@@ -9,6 +9,7 @@ using Content.Shared.NPC.Systems;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Physics;
 using Content.Shared.Random.Helpers;
+using Content.Shared.Tag;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -35,6 +36,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly TagSystem _tag = default!;
 
     private MapId[,] _worlds = new MapId[0, 0]; // [Y,X]
     private RimFortressRuleComponent? _rule;
@@ -47,6 +49,28 @@ public sealed class RimFortressWorldSystem : EntitySystem
     private readonly Dictionary<NetUserId, List<EntityUid>> _playerPops = new();
 
     private const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
+
+    [ValidatePrototypeId<TagPrototype>]
+    public readonly ProtoId<TagPrototype> FactionPopTag = "PlayerFactionPop";
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<TagComponent, MapInitEvent>(OnSpawn);
+    }
+
+    // We use RandomHumanoidSpawner to spawn pops,
+    // so we can't set the faction at once, so we resort to these crutches
+    private void OnSpawn(EntityUid uid, TagComponent component, MapInitEvent args)
+    {
+        if (_tag.HasTag(uid, FactionPopTag)
+            && GetPlayerByMap(Transform(uid).MapID) is { } player
+            && _playerFactions.TryGetValue(player, out var factionId))
+        {
+            _faction.AddFaction((uid, null), factionId);
+        }
+    }
 
     /// <summary>
     /// Create a world with the size specified in <see cref="RimFortressRuleComponent"/>.WorldSize
@@ -154,7 +178,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
             return;
 
         var factionId = $"{rule.FactionProtoPrefix}{_playerFactions.Count + 1}";
-        _faction.AddFaction(new Entity<NpcFactionMemberComponent?>(entity, null), factionId);
+        _faction.AddFaction((entity, null), factionId);
 
         // Add friends
         foreach (var friend in rule.PlayerFactionFriends)
@@ -181,8 +205,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
         int amount = 1,
         bool hardSpawn = false)
     {
-        var factionId = _playerFactions.TryGetValue(userId, out var faction) ? faction : null;
-        var pops = SpawnPop(mapId, area, popProto, factionId, amount, hardSpawn);
+        var pops = SpawnPop(mapId, area, popProto, amount, hardSpawn);
 
         if (!_playerPops.TryGetValue(userId, out _))
             _playerPops.Add(userId, pops);
@@ -190,7 +213,7 @@ public sealed class RimFortressWorldSystem : EntitySystem
             _playerPops[userId].AddRange(pops);
     }
 
-/// <summary>
+    /// <summary>
     /// Spawns entities in random free tiles of a given area
     /// </summary>
     /// <returns>List of spawned entities</returns>
@@ -198,7 +221,6 @@ public sealed class RimFortressWorldSystem : EntitySystem
         MapId mapId,
         Box2 area,
         EntProtoId popProto,
-        string? factionId = null,
         int amount = 1,
         bool hardSpawn = false)
     {
@@ -247,9 +269,6 @@ public sealed class RimFortressWorldSystem : EntitySystem
             var spawnCoords = _turf.GetTileCenter(_random.Pick(freeTiles));
             var spawnedUid = Spawn(popProto, spawnCoords);
             spawned.Add(spawnedUid);
-
-            if (factionId != null)
-                _faction.AddFaction(new Entity<NpcFactionMemberComponent?>(spawnedUid, null), factionId);
         }
 
         return spawned;
@@ -311,6 +330,30 @@ public sealed class RimFortressWorldSystem : EntitySystem
 
         return Math.Abs(coordinates.X) <= rule.PlanetChunkLoadDistance * ChunkSize
                && Math.Abs(coordinates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
+    }
+
+    /// <summary>
+    /// Checks if the entity is part of the player's faction
+    /// </summary>
+    public bool IsPlayerFactionMember(NetUserId userId, EntityUid uid)
+    {
+        if (!_playerFactions.TryGetValue(userId, out var faction)
+            || !TryComp(uid, out NpcFactionMemberComponent? comp)
+            || !_faction.IsMember(new Entity<NpcFactionMemberComponent?>(uid, comp), faction))
+            return false;
+
+        return true;
+    }
+
+    public NetUserId? GetPlayerByMap(MapId mapId)
+    {
+        foreach (var (userId, maps) in _mapOwners)
+        {
+            if (maps.Contains(mapId))
+                return userId;
+        }
+
+        return null;
     }
 
     public override void Update(float frameTime)

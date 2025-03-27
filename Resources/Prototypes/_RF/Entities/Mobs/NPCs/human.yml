@@ -21,7 +21,7 @@
     - type: Loadout
       prototypes:
         - RfSafariGear
-        - RfMercenatyGear
+        - RfMercenaryGear
         - RfCossacGear
         - RfRandomVisualGear
     - type: InputMover
@@ -29,3 +29,6 @@
     - type: HTN
       rootTask:
         task: IdleCompound
+    - type: Tag
+      tags:
+        - PlayerFactionPop
