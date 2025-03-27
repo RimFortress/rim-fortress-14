@@ -29,5 +29,5 @@
     - BypassInteractionRangeChecks
   - type: ComplexInteraction
   - type: MouseDragMove
-  - type: NPCControl
+  - type: NpcControl
   - type: NpcFactionMember

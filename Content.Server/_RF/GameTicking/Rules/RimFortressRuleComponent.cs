@@ -13,7 +13,7 @@ public sealed partial class RimFortressRuleComponent : Component
     /// Prototype of the entity the player will move into after entering a round
     /// </summary>
     [DataField]
-    public string PlayerProtoId = "RimFortressObserver";
+    public EntProtoId PlayerProtoId = "RimFortressObserver";
 
     /// <summary>
     /// Number of chunks from the center, on which the planet will be loaded.
@@ -29,7 +29,7 @@ public sealed partial class RimFortressRuleComponent : Component
     /// The prototype that will be used to create the map border
     /// </summary>
     [DataField]
-    public string PlanetBorderProtoId = "GhostImpassableWall";
+    public EntProtoId PlanetBorderProtoId = "GhostImpassableWall";
 
     /// <summary>
     /// The size of the RimFortress world, determines the number of possible player maps
@@ -69,4 +69,28 @@ public sealed partial class RimFortressRuleComponent : Component
     /// </summary>
     [DataField]
     public TimeSpan DayDuration = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Prototypes of entities that may join the settlement as refugees or appear at the roundstart
+    /// </summary>
+    [DataField]
+    public List<EntProtoId> PopsProtoIds = new();
+
+    /// <summary>
+    /// Number of settlers at the roundstart
+    /// </summary>
+    [DataField]
+    public int RoundstartPops = 5;
+
+    /// <summary>
+    /// The period through which refugees will join the settlement
+    /// </summary>
+    [DataField]
+    public TimeSpan SpawnPopDuration = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// The area around the center of the map where settlers can appear
+    /// </summary>
+    [DataField]
+    public float RoundStartSpawnRadius = 10f;
 }

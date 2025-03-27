@@ -1,0 +1,31 @@
+- type: entity
+  id: RandomHumanoidSpawnerRfPop
+  name: Habitant
+  suffix: RimFortress, RF
+  components:
+    - type: Sprite
+      sprite: Markers/cross.rsi
+      state: green
+    - type: RandomMetadata
+      nameSegments:
+      - NamesFirst
+      - NamesLast
+    - type: RandomHumanoidSpawner
+      settings: RimFortressPop
+
+
+- type: randomHumanoidSettings
+  id: RimFortressPop
+  components:
+    - type: NpcFactionMember
+    - type: Loadout
+      prototypes:
+        - RfSafariGear
+        - RfMercenatyGear
+        - RfCossacGear
+        - RfRandomVisualGear
+    - type: InputMover
+    - type: MobMover
+    - type: HTN
+      rootTask:
+        task: IdleCompound

@@ -3,30 +3,30 @@ using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.NPC;
 
-public abstract class SharedNPCControlSystem : EntitySystem
+public abstract class SharedNpcControlSystem : EntitySystem
 {
 
 }
 
-public sealed class NPCTask
+public sealed class NpcTask
 {
-    public NPCTaskType Type { get; }
+    public NpcTaskType Type { get; }
     public EntityCoordinates? MoveTo { get; }
     public EntityUid? Attack { get; }
 
-    public NPCTask(EntityCoordinates coordinates)
+    public NpcTask(EntityCoordinates coordinates)
     {
-        Type = NPCTaskType.Move;
+        Type = NpcTaskType.Move;
         MoveTo = coordinates;
     }
 
-    public NPCTask(EntityUid uid)
+    public NpcTask(EntityUid uid)
     {
-        Type = NPCTaskType.Attack;
+        Type = NpcTaskType.Attack;
         Attack = uid;
     }
 
-    public NPCTask(NPCTaskType type, EntityCoordinates? coordinates, EntityUid? attack)
+    public NpcTask(NpcTaskType type, EntityCoordinates? coordinates, EntityUid? attack)
     {
         Type = type;
         MoveTo = coordinates;
@@ -34,36 +34,36 @@ public sealed class NPCTask
     }
 }
 
-public enum NPCTaskType : byte
+public enum NpcTaskType : byte
 {
     Move,
     Attack,
 }
 
 [Serializable, NetSerializable]
-public sealed class NPCTaskInfoMessage : EntityEventArgs
+public sealed class NpcTaskInfoMessage : EntityEventArgs
 {
     public NetEntity Entity { get; set; }
-    public NPCTaskType TaskType { get; set; }
+    public NpcTaskType TaskType { get; set; }
     public NetCoordinates? MoveTo { get; set; }
     public NetEntity? Attack { get; set; }
 }
 
 [Serializable, NetSerializable]
-public sealed class NPCTaskResetRequest : EntityEventArgs
+public sealed class NpcTaskResetRequest : EntityEventArgs
 {
     public NetEntity Entity { get; set; }
 }
 
 [Serializable, NetSerializable]
-public sealed class NPCMoveToRequest : EntityEventArgs
+public sealed class NpcMoveToRequest : EntityEventArgs
 {
     public NetEntity Entity { get; set; }
     public NetCoordinates Target { get; set; }
 }
 
 [Serializable, NetSerializable]
-public sealed class NPCAttackRequest : EntityEventArgs
+public sealed class NpcAttackRequest : EntityEventArgs
 {
     public NetEntity Entity { get; set; }
     public NetEntity Attack { get; set; }

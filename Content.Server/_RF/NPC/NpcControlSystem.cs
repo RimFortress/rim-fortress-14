@@ -4,7 +4,7 @@ using Content.Shared._RF.NPC;
 
 namespace Content.Server._RF.NPC;
 
-public sealed class NPCControlSystem : SharedNPCControlSystem
+public sealed class NpcControlSystem : SharedNpcControlSystem
 {
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
@@ -22,22 +22,22 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
     private const float MoveToCloseRange = 0.20f;
 
     private readonly Dictionary<EntityUid, HTNCompoundTask> _originCompounds = new();
-    private readonly Dictionary<EntityUid, NPCTask> _tasks = new();
+    private readonly Dictionary<EntityUid, NpcTask> _tasks = new();
 
     /// <inheritdoc/>
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<NPCMoveToRequest>(OnMoveToRequest);
-        SubscribeNetworkEvent<NPCAttackRequest>(OnAttackRequest);
-        SubscribeNetworkEvent<NPCTaskResetRequest>(OnTaskResetRequest);
+        SubscribeNetworkEvent<NpcMoveToRequest>(OnMoveToRequest);
+        SubscribeNetworkEvent<NpcAttackRequest>(OnAttackRequest);
+        SubscribeNetworkEvent<NpcTaskResetRequest>(OnTaskResetRequest);
     }
 
     /// <summary>
     /// Creates a new task for the NPC and saves the old one
     /// </summary>
-    private void SetTask(EntityUid entity, NPCTask task, string compoundTask)
+    private void SetTask(EntityUid entity, NpcTask task, string compoundTask)
     {
         if (!_npc.TryGetNpc(entity, out var npc)
             || npc is not HTNComponent htn)
@@ -53,7 +53,7 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         htn.RootTask = new HTNCompoundTask { Task = compoundTask };
         _htn.Replan(htn);
 
-        var msg = new NPCTaskInfoMessage
+        var msg = new NpcTaskInfoMessage
         {
             Entity = GetNetEntity(entity),
             TaskType = task.Type,
@@ -64,7 +64,7 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         RaiseNetworkEvent(msg);
     }
 
-    private void OnMoveToRequest(NPCMoveToRequest request)
+    private void OnMoveToRequest(NpcMoveToRequest request)
     {
         var entity = GetEntity(request.Entity);
         if (!_npc.TryGetNpc(entity, out var npc))
@@ -74,10 +74,10 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         npc.Blackboard.SetValue(MoveToTargetKey, coordinates);
         npc.Blackboard.SetValue(MoveToRangeKey, MoveToCloseRange);
 
-        SetTask(entity, new NPCTask(coordinates), MoveToCompound);
+        SetTask(entity, new NpcTask(coordinates), MoveToCompound);
     }
 
-    private void OnAttackRequest(NPCAttackRequest request)
+    private void OnAttackRequest(NpcAttackRequest request)
     {
         var entity = GetEntity(request.Entity);
         var attackTarget = GetEntity(request.Attack);
@@ -88,10 +88,10 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         npc.Blackboard.SetValue(AttackTargetCoordinatesKey, coordinates);
         npc.Blackboard.SetValue(AttackTargetKey, attackTarget);
 
-        SetTask(entity, new NPCTask(attackTarget), AttackCompound);
+        SetTask(entity, new NpcTask(attackTarget), AttackCompound);
     }
 
-    private void OnTaskResetRequest(NPCTaskResetRequest request)
+    private void OnTaskResetRequest(NpcTaskResetRequest request)
     {
         var entity = GetEntity(request.Entity);
         if (!_tasks.ContainsKey(entity)

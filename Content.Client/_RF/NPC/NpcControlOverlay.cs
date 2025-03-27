@@ -7,7 +7,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.NPC;
 
-public sealed class NPCControlOverlay : Overlay
+public sealed class NpcControlOverlay : Overlay
 {
     public override OverlaySpace Space => OverlaySpace.WorldSpace;
 
@@ -16,7 +16,7 @@ public sealed class NPCControlOverlay : Overlay
     [ValidatePrototypeId<ShaderPrototype>]
     private const string AttackShader = "SelectionOutlineRed";
 
-    private readonly NPCControlSystem _npcControl;
+    private readonly NpcControlSystem _npcControl;
     private readonly SharedTransformSystem _transform;
     private readonly IEntityManager _entityManager;
 
@@ -27,8 +27,8 @@ public sealed class NPCControlOverlay : Overlay
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
-    public NPCControlOverlay(
-        NPCControlSystem npcControl,
+    public NpcControlOverlay(
+        NpcControlSystem npcControl,
         SharedTransformSystem transform,
         IPrototypeManager prototype,
         IEntityManager entityManager)
@@ -64,7 +64,7 @@ public sealed class NPCControlOverlay : Overlay
 
             switch (task.Type)
             {
-                case NPCTaskType.Move:
+                case NpcTaskType.Move:
                 {
                     if (task.MoveTo is not { } coordinates)
                         break;
@@ -82,7 +82,7 @@ public sealed class NPCControlOverlay : Overlay
 
                     break;
                 }
-                case NPCTaskType.Attack:
+                case NpcTaskType.Attack:
                 {
                     if (_entityManager.TryGetComponent(task.Attack, out SpriteComponent? attackSprite)
                         && !_highlightedSprites.Contains(attackSprite)

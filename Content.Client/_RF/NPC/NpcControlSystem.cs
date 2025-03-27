@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Client.NPC.HTN;
 using Content.Shared._RF.NPC;
@@ -9,13 +10,12 @@ using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Physics;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.NPC;
 
-public sealed class NPCControlSystem : SharedNPCControlSystem
+public sealed class NpcControlSystem : SharedNpcControlSystem
 {
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly IInputManager _input = default!;
@@ -29,34 +29,34 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
     public MapCoordinates? StartPoint { get; private set; }
     public MapCoordinates? EndPoint { get; private set; }
     public HashSet<EntityUid> Selected { get; private set; } = new();
-    public Dictionary<EntityUid, NPCTask> Tasks { get; } = new();
+    public Dictionary<EntityUid, NpcTask> Tasks { get; } = new();
 
     /// <inheritdoc/>
     public override void Initialize()
     {
         base.Initialize();
 
-        _overlay.AddOverlay(new NPCControlOverlay(this, _transform, _prototype, EntityManager));
+        _overlay.AddOverlay(new NpcControlOverlay(this, _transform, _prototype, EntityManager));
 
         CommandBinds.Builder
             .Bind(EngineKeyFunctions.Use, new PointerStateInputCmdHandler(OnSelectEnabled, OnSelectDisabled))
             .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
-            .Register<SharedNPCControlSystem>();
+            .Register<SharedNpcControlSystem>();
 
-        SubscribeNetworkEvent<NPCTaskInfoMessage>(OnTaskInfo);
+        SubscribeNetworkEvent<NpcTaskInfoMessage>(OnTaskInfo);
     }
 
     public override void Shutdown()
     {
         base.Shutdown();
 
-        _overlay.RemoveOverlay<NPCControlOverlay>();
+        _overlay.RemoveOverlay<NpcControlOverlay>();
     }
 
     private bool OnSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
         if (player?.AttachedEntity is not { Valid: true } entity
-            || !TryComp(entity, out NPCControlComponent? _))
+            || !TryComp(entity, out NpcControlComponent? _))
             return false;
 
         StartPoint = _transform.ToMapCoordinates(coords);
@@ -67,7 +67,7 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
     private bool OnSelectDisabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
         if (player?.AttachedEntity is not { Valid: true } entity
-            || !TryComp(entity, out NPCControlComponent? _))
+            || !TryComp(entity, out NpcControlComponent? _))
             return false;
 
         StartPoint = null;
@@ -103,9 +103,9 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         return true;
     }
 
-    private void OnTaskInfo(NPCTaskInfoMessage msg)
+    private void OnTaskInfo(NpcTaskInfoMessage msg)
     {
-        var task = new NPCTask(msg.TaskType, GetCoordinates(msg.MoveTo), GetEntity(msg.Attack));
+        var task = new NpcTask(msg.TaskType, GetCoordinates(msg.MoveTo), GetEntity(msg.Attack));
         Tasks[GetEntity(msg.Entity)] = task;
     }
 
@@ -125,13 +125,13 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
         if (_input.MouseScreenPosition is { IsValid: true } mousePos)
             EndPoint = _eye.PixelToMap(mousePos);
 
-        Selected = GetNPCsInSelect();
+        Selected = GetNpcInSelect();
     }
 
     /// <summary>
     /// Gets the list of NPCs in the selection area
     /// </summary>
-    private HashSet<EntityUid> GetNPCsInSelect()
+    private HashSet<EntityUid> GetNpcInSelect()
     {
         if (StartPoint is not { } start
             || EndPoint is not { } end
@@ -157,7 +157,7 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
     {
         foreach (var entity in Selected)
         {
-            var msg = new NPCAttackRequest { Entity = GetNetEntity(entity), Attack = GetNetEntity(uid) };
+            var msg = new NpcAttackRequest { Entity = GetNetEntity(entity), Attack = GetNetEntity(uid) };
             RaiseNetworkEvent(msg);
         }
     }
@@ -167,19 +167,18 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
     /// </summary>
     private void SetMove(TileRef tileRef)
     {
-        var previousTargets = new List<EntityCoordinates>();
+        var previousTargets = new List<TileRef>();
+        var tileCenter = _turf.GetTileCenter(tileRef);
 
         foreach (var entity in Selected)
         {
             if (previousTargets.Count == 0)
             {
-                var tileCenter = _turf.GetTileCenter(tileRef);
-
-                if (!IsTileFree(tileCenter))
+                if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
                     return;
 
-                previousTargets.Add(tileCenter);
-                RaiseNetworkEvent(new NPCMoveToRequest
+                previousTargets.Add(tileRef);
+                RaiseNetworkEvent(new NpcMoveToRequest
                 {
                     Entity = GetNetEntity(entity),
                     Target = GetNetCoordinates(tileCenter),
@@ -188,69 +187,43 @@ public sealed class NPCControlSystem : SharedNPCControlSystem
                 continue;
             }
 
-            if (GetNeighborTile(previousTargets) is not { } coords)
+            if (GetNeighborTile(previousTargets) is not { } tile)
                 continue;
 
-            previousTargets.Add(coords);
-            RaiseNetworkEvent(new NPCMoveToRequest
+            previousTargets.Add(tile);
+            RaiseNetworkEvent(new NpcMoveToRequest
             {
                 Entity = GetNetEntity(entity),
-                Target = GetNetCoordinates(coords),
+                Target = GetNetCoordinates(_turf.GetTileCenter(tile)),
             });
         }
     }
 
     /// <summary>
-    /// Returns the first free neighboring tile for the coordinate list
+    /// Returns the first free neighboring tile for the tile list
     /// </summary>
-    private EntityCoordinates? GetNeighborTile(List<EntityCoordinates> tiles)
+    private TileRef? GetNeighborTile(List<TileRef> tiles)
     {
         var directions = new[] {Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down};
+        var indicates = tiles.Select(tile => tile.GridIndices).ToList();
 
         foreach (var tile in tiles)
         {
             foreach (var direction in directions)
             {
-                var offsetCoords = new EntityCoordinates(tile.EntityId, tile.Position + direction);
+                var offsetCoords = tile.GridIndices + direction;
 
-                if (tiles.Contains(offsetCoords))
+                if (indicates.Contains(offsetCoords))
                     continue;
 
-                if (IsTileFree(offsetCoords))
-                    return offsetCoords;
+                if (TryComp(tile.GridUid, out MapGridComponent? grid)
+                    && _map.TryGetTileRef(tile.GridUid, grid, offsetCoords, out var tileRef)
+                    && !_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
+                    && !tileRef.IsSpace())
+                    return tileRef;
             }
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Checks the tile for solid entities
-    /// </summary>
-    /// <param name="coords">tile center coordinates</param>
-    private bool IsTileFree(EntityCoordinates coords)
-    {
-        var box = Box2.FromDimensions(coords.Position, Vector2.One).Enlarged(-0.1f);
-        var entities = _lookup.GetEntitiesIntersecting(coords.EntityId, box, LookupFlags.Static);
-
-        foreach (var entity in entities)
-        {
-            if (!TryComp(entity, out FixturesComponent? fixtures))
-                continue;
-
-            foreach (var (_, fixture) in fixtures.Fixtures)
-            {
-                var mask = (CollisionGroup)fixture.CollisionMask;
-                if (!mask.HasFlag(CollisionGroup.Impassable)
-                    || !mask.HasFlag(CollisionGroup.HighImpassable))
-                    continue;
-
-                return false;
-            }
-
-            return false;
-        }
-
-        return true;
     }
 }

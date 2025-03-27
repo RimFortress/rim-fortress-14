@@ -4,6 +4,10 @@
   components:
   - type: RimFortressRule
     biomeSet: RimFortressBiome
+    playerFactionHostiles:
+      - AllHostile
+    popsProtoIds:
+      - RandomHumanoidSpawnerRfPop
 
 - type: weightedRandom
   id: RimFortressBiome
