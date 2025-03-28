@@ -448,7 +448,7 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         BuildMarkerChunks(component, gridUid, grid, seed);
 
         var active = _activeChunks[component];
-        var isWorldMap = _world.IsWorldMap(Transform(gridUid).MapID); // RimFortress
+        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in active)
         {
@@ -892,7 +892,7 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     {
         var active = _activeChunks[component];
         List<(Vector2i, Tile)>? tiles = null;
-        var isWorldMap = _world.IsWorldMap(Transform(gridUid).MapID); // RimFortress
+        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in component.LoadedChunks)
         {

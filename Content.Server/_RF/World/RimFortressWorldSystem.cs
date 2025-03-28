@@ -24,9 +24,9 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly MapSystem _map = default!;
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly GameTiming _timing = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
-    private MapId CreateMap()
+    private EntityUid CreateMap()
     {
         if (Rule is not { } rule)
             throw new InvalidOperationException("trying create world map before rule is set");
@@ -50,20 +50,20 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1);
         CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
 
-        return mapId;
+        return map;
     }
 
-    private WorldMap CreateOrGetMap(int x, int y)
+    private Entity<WorldMapComponent> CreateOrGetMap(int x, int y)
     {
-        if (Worlds[y, x] != MapId.Nullspace
-            && Maps.TryGetValue(Worlds[y, x], out var map))
-            return map;
+        if (Worlds[y, x] is { } mapUid
+            && MapQuery.TryComp(Worlds[y, x], out var mapComp))
+            return (mapUid, mapComp);
 
-        var world = new WorldMap(CreateMap(), new Vector2(x, y));
-        world.LastEventTime = _timing.CurTime;
-        Worlds[y, x] = world.MapId;
-        Maps[world.MapId] = world;
-        return world;
+        var map = CreateMap();
+        var worldMap = EnsureComp<WorldMapComponent>(map);
+        worldMap.LastEventTime = _timing.CurTime;
+        Worlds[y, x] = map;
+        return (map, worldMap);
     }
 
     /// <summary>
@@ -80,25 +80,24 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         // Create or get map for player
         var worldMap = CreateOrGetMap(mapCoords.X, mapCoords.Y);
-        worldMap.Owner = session.UserId;
 
         // Spawn RF player entity
         var newMind = _mind.CreateMind(session.UserId, session.Name);
         _mind.SetUserId(newMind, session.UserId);
-        var center = new MapCoordinates(new Vector2(ChunkSize / 2f), worldMap.MapId);
+        var center = new EntityCoordinates(worldMap.Owner, new Vector2(ChunkSize / 2f));
         var mob = Spawn(rule.PlayerProtoId, center);
         _mind.TransferTo(newMind, mob);
 
-        if (GetPlayerFaction(session.UserId, mob) is not { } faction)
-            return;
+        var player = EnsureComp<RimFortressPlayerComponent>(mob);
+        player.OwnedMaps.Add(worldMap.Owner);
 
-        var player = new RfPlayer(session.UserId, faction);
-        player.OwnedMaps.Add(worldMap);
-        Players.Add(session.UserId, player);
+        if (GetPlayerFaction(mob) is { } faction)
+            player.Faction = faction;
 
         // Spawn roundstart settlements
         var area = Box2.CenteredAround(center.Position, new Vector2(rule.RoundStartSpawnRadius));
         var pop = _random.Pick(rule.PopsProtoIds);
-        player.SpawnPop(this, worldMap, area, pop, amount: rule.RoundstartPops, hardSpawn: true);
+        var pops = SpawnPop(worldMap.Owner, area, pop, amount: rule.RoundstartPops, hardSpawn: true);
+        player.Pops.AddRange(pops);
     }
 }

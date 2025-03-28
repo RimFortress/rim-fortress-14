@@ -1,5 +1,4 @@
 using Robust.Shared.Map;
-using Robust.Shared.Network;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.NPC;
@@ -53,14 +52,14 @@ public sealed class NpcTaskInfoMessage : EntityEventArgs
 [Serializable, NetSerializable]
 public sealed class NpcTaskResetRequest : EntityEventArgs
 {
-    public NetUserId Requester { get; set; }
+    public NetEntity Requester { get; set; }
     public NetEntity Entity { get; set; }
 }
 
 [Serializable, NetSerializable]
 public sealed class NpcMoveToRequest : EntityEventArgs
 {
-    public NetUserId Requester { get; set; }
+    public NetEntity Requester { get; set; }
     public NetEntity Entity { get; set; }
     public NetCoordinates Target { get; set; }
 }
@@ -68,7 +67,7 @@ public sealed class NpcMoveToRequest : EntityEventArgs
 [Serializable, NetSerializable]
 public sealed class NpcAttackRequest : EntityEventArgs
 {
-    public NetUserId Requester { get; set; }
+    public NetEntity Requester { get; set; }
     public NetEntity Entity { get; set; }
     public NetEntity Attack { get; set; }
 }

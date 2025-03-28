@@ -7,12 +7,9 @@ using Content.Shared.Physics;
 using Content.Shared.Tag;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Network;
-using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.World;
 
@@ -25,21 +22,26 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     [ValidatePrototypeId<TagPrototype>]
     private readonly ProtoId<TagPrototype> _factionPopTag = "PlayerFactionPop";
 
+    private int _lastFaction = 1;
+
     protected RimFortressRuleComponent? Rule;
-    protected MapId[,] Worlds = new MapId[0, 0]; // [Y,X]
-    protected readonly Dictionary<NetUserId, RfPlayer> Players = new();
-    protected readonly Dictionary<MapId, WorldMap> Maps = new();
+    protected EntityUid?[,] Worlds = new EntityUid?[0, 0]; // [Y,X]
 
     protected const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
+
+    protected EntityQuery<WorldMapComponent> MapQuery;
+    protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
 
     public override void Initialize()
     {
         base.Initialize();
+
+        MapQuery = GetEntityQuery<WorldMapComponent>();
+        PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
 
         SubscribeLocalEvent<TagComponent, MapInitEvent>(OnSpawn);
     }
@@ -49,7 +51,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     private void OnSpawn(EntityUid uid, TagComponent component, MapInitEvent args)
     {
         if (_tag.HasTag(uid, _factionPopTag)
-            && GetPlayerByMap(Transform(uid).MapID) is { } player)
+            && GetPlayerByMap(_map.GetMap(Transform(uid).MapID)) is { } player)
         {
             _faction.AddFaction((uid, null), player.Faction);
         }
@@ -62,14 +64,13 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     public void InitializeWorld(RimFortressRuleComponent rule)
     {
         var size = rule.WorldSize;
-        Worlds = new MapId[size.Y, size.X];
-        Players.Clear();
+        Worlds = new EntityUid?[size.Y, size.X];
 
         for (var y = 0; y < size.Y; y++)
         {
             for (var x = 0; x < size.X; x++)
             {
-                Worlds[y, x] = MapId.Nullspace;
+                Worlds[y, x] = null;
             }
         }
 
@@ -98,18 +99,18 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     }
 
     /// <summary>
-    /// Creates a faction for a player, if none exists
+    /// Creates a faction for a player
     /// </summary>
-    protected string? GetPlayerFaction(NetUserId userId, EntityUid uid)
+    protected string? GetPlayerFaction(EntityUid uid)
     {
-        if (Players.TryGetValue(userId, out var player))
-            return player.Faction;
-
         if (Rule is not { } rule)
             return null;
 
-        var factionId = $"{rule.FactionProtoPrefix}{Players.Count + 1}";
+        var factionId = $"{rule.FactionProtoPrefix}{_lastFaction + 1}";
         _faction.AddFaction((uid, null), factionId);
+        _lastFaction++;
+
+        EnsureComp<RimFortressPlayerComponent>(uid).Faction = factionId;
 
         // Add friends
         foreach (var friend in rule.PlayerFactionFriends)
@@ -133,13 +134,12 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     /// </summary>
     /// <returns>List of spawned entities</returns>
     public List<EntityUid> SpawnPop(
-        MapId mapId,
+        EntityUid gridUid,
         Box2 area,
         EntProtoId popProto,
         int amount = 1,
         bool hardSpawn = false)
     {
-        var gridUid = _transform.ToCoordinates(new MapCoordinates(Vector2.Zero, mapId)).EntityId;
         var spawned = new List<EntityUid>();
 
         if (!TryComp(gridUid, out MapGridComponent? grid))
@@ -163,9 +163,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             // we remove everything that's in our way.
             if (hardSpawn)
             {
-                var tileRef = _map.GetTileRef(gridUid, grid, new MapCoordinates(area.Center, mapId));
+                var tileRef = _map.GetTileRef(gridUid, grid, new EntityCoordinates(gridUid, area.Center));
                 var box = Box2.CenteredAround(_turf.GetTileCenter(tileRef).Position, new Vector2(5f));
-                var entities = _lookup.GetEntitiesIntersecting(mapId, box);
+                var entities = _lookup.GetEntitiesIntersecting(gridUid, box, LookupFlags.Static ^ LookupFlags.Approximate);
 
                 foreach (var entity in entities)
                 {
@@ -192,9 +192,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     /// <summary>
     /// Checks if the given map is part of the RimFortress world
     /// </summary>
-    public bool IsWorldMap(MapId mapId)
+    public bool IsWorldMap(EntityUid uid)
     {
-        return Maps.ContainsKey(mapId);
+        return MapQuery.HasComp(uid);
     }
 
     /// <summary>
@@ -212,9 +212,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     /// <summary>
     /// Checks if the entity is part of the player's faction
     /// </summary>
-    public bool IsPlayerFactionMember(NetUserId userId, EntityUid uid)
+    public bool IsPlayerFactionMember(EntityUid playerUid, EntityUid uid)
     {
-        if (!Players.TryGetValue(userId, out var player)
+        if (!PlayerQuery.TryComp(playerUid, out var player)
             || !TryComp(uid, out NpcFactionMemberComponent? comp)
             || !_faction.IsMember(new Entity<NpcFactionMemberComponent?>(uid, comp), player.Faction))
             return false;
@@ -222,12 +222,14 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         return true;
     }
 
-    public RfPlayer? GetPlayerByMap(MapId mapId)
+    public RimFortressPlayerComponent? GetPlayerByMap(EntityUid mapId)
     {
-        if (Maps.TryGetValue(mapId, out var map)
-            && map.Owner is { } userId
-            && Players.TryGetValue(userId, out var player))
-            return player;
+        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
+        while (query.MoveNext(out var player))
+        {
+            if (player.OwnedMaps.Contains(mapId))
+                return player;
+        }
 
         return null;
     }
@@ -244,9 +246,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         {
             for (var x = 0; x < size.X; x++)
             {
-                if (Worlds[y, x] == MapId.Nullspace
-                    || Maps.TryGetValue(Worlds[y, x], out var map)
-                    && map.Owner == null)
+                if (Worlds[y, x] is not { } worldMap
+                    || MapQuery.TryComp(worldMap, out var map)
+                    && map.OwnerPlayer == null)
                     freeWorlds.Add(new Vector2i(x, y));
             }
         }
@@ -265,89 +267,28 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         if (Rule is not { } rule)
             return;
 
-        foreach (var (_, map) in Maps)
+        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
+        while (query.MoveNext(out var player))
         {
-            if (map.LastEventTime + rule.SpawnPopDuration > _timing.CurTime
-                || map.Owner is not { } owner
-                || !Players.TryGetValue(owner, out var player))
-                continue;
-
-            var radius = 5f;
-            var loadDist = rule.PlanetChunkLoadDistance * ChunkSize;
-            var randomBox = _random.Pick(new List<Box2>
+            foreach (var map in player.OwnedMaps)
             {
-                new(new Vector2(-loadDist, loadDist - radius), new Vector2(loadDist, loadDist)), // Top
-                new(new Vector2(-loadDist, -loadDist), new Vector2(-loadDist + radius, loadDist)), // Left
-                new(new Vector2(-loadDist, -loadDist), new Vector2(loadDist, -loadDist + radius)), // Down
-                new(new Vector2(loadDist - radius, -loadDist), new Vector2(loadDist, loadDist)), // Right
-            });
+                if (!TryComp(map, out WorldMapComponent? comp))
+                    continue;
 
-            player.SpawnPop(this, map, randomBox, _random.Pick(rule.PopsProtoIds), amount: _random.Next(1, 3));
-            map.LastEventTime = _timing.CurTime;
+                var radius = 5f;
+                var loadDist = rule.PlanetChunkLoadDistance * ChunkSize;
+                var randomBox = _random.Pick(new List<Box2>
+                {
+                    new(new Vector2(-loadDist, loadDist - radius), new Vector2(loadDist, loadDist)), // Top
+                    new(new Vector2(-loadDist, -loadDist), new Vector2(-loadDist + radius, loadDist)), // Left
+                    new(new Vector2(-loadDist, -loadDist), new Vector2(loadDist, -loadDist + radius)), // Down
+                    new(new Vector2(loadDist - radius, -loadDist), new Vector2(loadDist, loadDist)), // Right
+                });
+
+                var pops = SpawnPop(map, randomBox, _random.Pick(rule.PopsProtoIds), amount: _random.Next(1, 3));
+                player.Pops.AddRange(pops);
+                comp.LastEventTime = _timing.CurTime;
+            }
         }
-    }
-}
-
-public sealed class WorldMap
-{
-    public NetUserId? Owner { get; set; }
-    public MapId MapId { get; set; }
-    public Vector2 WorldCoords { get; }
-    public TimeSpan LastEventTime { get; set; }
-
-    public WorldMap(NetUserId owner, MapId mapId, Vector2 coords, IGameTiming timing)
-    {
-        DebugTools.Assert(mapId != MapId.Nullspace);
-        Owner = owner;
-        MapId = mapId;
-        WorldCoords = coords;
-        LastEventTime = timing.CurTime;
-    }
-
-    public WorldMap(MapId mapId, Vector2 coords)
-    {
-        DebugTools.Assert(mapId != MapId.Nullspace);
-        MapId = mapId;
-        WorldCoords = coords;
-        LastEventTime = TimeSpan.Zero;
-    }
-}
-
-public sealed class RfPlayer
-{
-    public NetUserId UserId { get; }
-    public string Faction { get; }
-    public List<WorldMap> OwnedMaps { get; } = new();
-    public List<EntityUid> Pops { get; } = new();
-
-
-    public RfPlayer(NetUserId userId, string faction)
-    {
-        UserId = userId;
-        Faction = faction;
-    }
-
-    public EntityUid? GetEntity(ISharedPlayerManager manager)
-    {
-        if (manager.TryGetSessionById(UserId, out var session)
-            && session.AttachedEntity is { Valid: true } entity)
-            return entity;
-
-        return null;
-    }
-
-    public void SpawnPop(
-        SharedRimFortressWorldSystem system,
-        WorldMap map,
-        Box2 area,
-        EntProtoId popProto,
-        int amount = 1,
-        bool hardSpawn = false)
-    {
-        if (!OwnedMaps.Contains(map))
-            return;
-
-        var pops = system.SpawnPop(map.MapId, area, popProto, amount, hardSpawn);
-        Pops.AddRange(pops);
     }
 }

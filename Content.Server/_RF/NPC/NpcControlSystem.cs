@@ -69,8 +69,10 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private void OnMoveToRequest(NpcMoveToRequest request)
     {
         var entity = GetEntity(request.Entity);
+        var requester = GetEntity(request.Requester);
+
         if (!_npc.TryGetNpc(entity, out var npc)
-            || !_world.IsPlayerFactionMember(request.Requester, entity))
+            || !_world.IsPlayerFactionMember(requester, entity))
             return;
 
         var coordinates = GetCoordinates(request.Target);
@@ -83,11 +85,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private void OnAttackRequest(NpcAttackRequest request)
     {
         var entity = GetEntity(request.Entity);
+        var requester = GetEntity(request.Requester);
         var attackTarget = GetEntity(request.Attack);
 
         if (!_npc.TryGetNpc(entity, out var npc)
-            || !_world.IsPlayerFactionMember(request.Requester, entity)
-            || _world.IsPlayerFactionMember(request.Requester, attackTarget))
+            || !_world.IsPlayerFactionMember(requester, entity)
+            || _world.IsPlayerFactionMember(requester, attackTarget))
             return;
 
         var coordinates = Transform(attackTarget).Coordinates;
@@ -100,7 +103,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private void OnTaskResetRequest(NpcTaskResetRequest request)
     {
         var entity = GetEntity(request.Entity);
-        if (!_world.IsPlayerFactionMember(request.Requester, entity)
+        var requester = GetEntity(request.Requester);
+
+        if (!_world.IsPlayerFactionMember(requester, entity)
             || !_tasks.ContainsKey(entity)
             || !_npc.TryGetNpc(entity, out var npc)
             || npc is not HTNComponent htn)
