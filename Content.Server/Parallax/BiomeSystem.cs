@@ -32,7 +32,7 @@ using Robust.Shared.Random;
 using Robust.Shared.Threading;
 using Robust.Shared.Utility;
 using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumerator;
-using Content.Server._RF.Procedural; // RimFortress
+using Content.Server._RF.World; // RimFortress
 
 namespace Content.Server.Parallax;
 

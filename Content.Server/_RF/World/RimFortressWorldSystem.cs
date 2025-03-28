@@ -24,9 +24,9 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly MapSystem _map = default!;
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly GameTiming _timing = default!;
 
-    private MapId CreateMap(int x, int y)
+    private MapId CreateMap()
     {
         if (Rule is not { } rule)
             throw new InvalidOperationException("trying create world map before rule is set");
@@ -50,55 +50,55 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             ChunkSize * (rule.PlanetChunkLoadDistance + 1) + 1);
         CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
 
-        Worlds[y, x] = mapId;
-        WorldsCoords[mapId] = (y, x);
-
         return mapId;
     }
 
-    private MapId CreateOrGetMap(int x, int y)
+    private WorldMap CreateOrGetMap(int x, int y)
     {
-        if (Worlds[y, x] != MapId.Nullspace)
-            return Worlds[y, x];
+        if (Worlds[y, x] != MapId.Nullspace
+            && Maps.TryGetValue(Worlds[y, x], out var map))
+            return map;
 
-        return CreateMap(x, y);
+        var world = new WorldMap(CreateMap(), new Vector2(x, y));
+        world.LastEventTime = _timing.CurTime;
+        Worlds[y, x] = world.MapId;
+        Maps[world.MapId] = world;
+        return world;
     }
 
     /// <summary>
     /// Creates or allocates a free map for the player
     /// </summary>
     /// <exception cref="InvalidOperationException">if there are no maps available</exception>
-    public void CreateOwnerMap(ICommonSession player)
+    public void CreateOwnerMap(ICommonSession session)
     {
         if (Rule is not { } rule)
             return;
 
-        if (FreeWorlds.Count == 0)
+        if (GetRandomFreeMap() is not { } mapCoords)
             throw new InvalidOperationException("No free maps available");
 
         // Create or get map for player
-        var (x, y) = FreeWorlds[_random.Next(FreeWorlds.Count - 1)];
-        var mapId = CreateOrGetMap(x, y);
-        SetMapOwner(mapId, player.UserId);
+        var worldMap = CreateOrGetMap(mapCoords.X, mapCoords.Y);
+        worldMap.Owner = session.UserId;
 
         // Spawn RF player entity
-        var newMind = _mind.CreateMind(player.UserId, player.Name);
-        _mind.SetUserId(newMind, player.UserId);
-        var center = new MapCoordinates(new Vector2(ChunkSize / 2f), mapId);
+        var newMind = _mind.CreateMind(session.UserId, session.Name);
+        _mind.SetUserId(newMind, session.UserId);
+        var center = new MapCoordinates(new Vector2(ChunkSize / 2f), worldMap.MapId);
         var mob = Spawn(rule.PlayerProtoId, center);
         _mind.TransferTo(newMind, mob);
-        CreatePlayerFaction(player);
+
+        if (GetPlayerFaction(session.UserId, mob) is not { } faction)
+            return;
+
+        var player = new RfPlayer(session.UserId, faction);
+        player.OwnedMaps.Add(worldMap);
+        Players.Add(session.UserId, player);
 
         // Spawn roundstart settlements
         var area = Box2.CenteredAround(center.Position, new Vector2(rule.RoundStartSpawnRadius));
-        SpawnPlayerPop(
-            player.UserId,
-            mapId,
-            area,
-            _random.Pick(rule.PopsProtoIds),
-            amount: rule.RoundstartPops,
-            hardSpawn: true);
-
-        LastSpawnTime[player.UserId] = _timing.CurTime;
+        var pop = _random.Pick(rule.PopsProtoIds);
+        player.SpawnPop(this, worldMap, area, pop, amount: rule.RoundstartPops, hardSpawn: true);
     }
 }

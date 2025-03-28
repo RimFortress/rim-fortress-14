@@ -92,5 +92,5 @@ public sealed partial class RimFortressRuleComponent : Component
     /// The area around the center of the map where settlers can appear
     /// </summary>
     [DataField]
-    public float RoundStartSpawnRadius = 10f;
+    public float RoundStartSpawnRadius = 20f;
 }
