@@ -1,3 +1,5 @@
+using Content.Shared.Destructible.Thresholds;
+using Content.Shared.EntityTable.EntitySelectors;
 using Content.Shared.Random;
 using Robust.Shared.Prototypes;
 
@@ -73,7 +75,7 @@ public sealed partial class RimFortressRuleComponent : Component
     /// <summary>
     /// Prototypes of entities that may join the settlement as refugees or appear at the roundstart
     /// </summary>
-    [DataField]
+    [DataField(required: true)]
     public List<EntProtoId> PopsProtoIds = new();
 
     /// <summary>
@@ -83,14 +85,26 @@ public sealed partial class RimFortressRuleComponent : Component
     public int RoundstartPops = 5;
 
     /// <summary>
-    /// The period through which refugees will join the settlement
-    /// </summary>
-    [DataField]
-    public TimeSpan SpawnPopDuration = TimeSpan.FromMinutes(1);
-
-    /// <summary>
     /// The area around the center of the map where settlers can appear
     /// </summary>
     [DataField]
     public float RoundStartSpawnRadius = 20f;
+
+    /// <summary>
+    /// Time to the first event on the map, after the establishment of a settlement on the map, in minutes
+    /// </summary>
+    [DataField]
+    public int MinimumTimeUntilFirstEvent = 10;
+
+    /// <summary>
+    /// Table with random events that can happen on the world map
+    /// </summary>
+    [DataField(required: true)]
+    public EntityTableSelector WorldEvents = default!;
+
+    /// <summary>
+    /// The minimum and maximum time between rule starts in seconds.
+    /// </summary>
+    [DataField]
+    public MinMax MinMaxEventTiming = new(3 * 60, 10 * 60);
 }

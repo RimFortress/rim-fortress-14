@@ -1,8 +1,15 @@
+using System.Linq;
 using Content.Server._RF.World;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared._RF.World;
+using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
+using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Server._RF.GameTicking.Rules;
 
@@ -12,6 +19,12 @@ namespace Content.Server._RF.GameTicking.Rules;
 public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
 {
     [Dependency] private readonly RimFortressWorldSystem _world = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly EntityTableSystem _table = default!;
+
+    private readonly Dictionary<EntityUid, Dictionary<EntProtoId, TimeSpan>> _nextEventTime = new ();
+    private readonly List<Entity<WorldMapComponent>> _eventQueue = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -19,6 +32,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         base.Initialize();
 
         SubscribeLocalEvent<PlayerBeforeSpawnEvent>(OnBeforeSpawn);
+        SubscribeLocalEvent<WorldMapAvailableForEvent>(OnMapAvailable);
     }
 
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
@@ -41,5 +55,58 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             ev.Handled = true;
             return;
         }
+    }
+
+    private void OnMapAvailable(WorldMapAvailableForEvent ev)
+    {
+        var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
+        while (query.MoveNext(out var ruleUid, out var rf, out var rule))
+        {
+            if (!GameTicker.IsGameRuleActive(ruleUid, rule))
+                continue;
+
+            var addRule = _random.Pick(AvailableRules(ev.Map));
+            ResetTime(rf, ev.Map, addRule);
+            _eventQueue.Add(ev.Map);
+
+            GameTicker.AddGameRule(addRule);
+        }
+    }
+
+    private List<EntProtoId> AvailableRules(EntityUid uid)
+    {
+        var available = new List<EntProtoId>();
+
+        var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
+        while (query.MoveNext(out var ruleUid, out var rf, out var rule))
+        {
+            if (!GameTicker.IsGameRuleActive(ruleUid, rule))
+                continue;
+
+            if (!_nextEventTime.ContainsKey(uid))
+                return _table.GetSpawns(rf.WorldEvents).ToList();
+
+            foreach (var spawn in _table.GetSpawns(rf.WorldEvents))
+            {
+                if (!_nextEventTime[uid].ContainsKey(spawn)
+                    || _nextEventTime[uid][spawn] < _timing.CurTime)
+                    available.Add(spawn);
+            }
+        }
+
+        return available;
+    }
+
+    private void ResetTime(RimFortressRuleComponent component, EntityUid uid, EntProtoId eventId)
+    {
+        if (!_nextEventTime.ContainsKey(uid))
+            _nextEventTime[uid] = new();
+
+        _nextEventTime[uid][eventId] = _timing.CurTime + TimeSpan.FromSeconds(component.MinMaxEventTiming.Next(_random));
+    }
+
+    public Entity<WorldMapComponent>? GetWorldMap()
+    {
+        return _eventQueue.Pop();
     }
 }

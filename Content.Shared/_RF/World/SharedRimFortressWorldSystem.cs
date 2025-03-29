@@ -20,8 +20,8 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
     [ValidatePrototypeId<TagPrototype>]
     private readonly ProtoId<TagPrototype> _factionPopTag = "PlayerFactionPop";
@@ -129,6 +129,28 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         return factionId;
     }
 
+    public List<EntityUid> SpawnPopAlongWall(
+        EntityUid gridUid,
+        int indent,
+        EntProtoId? popProto = null,
+        int amount = 1,
+        bool hardSpawn = false)
+    {
+        if (Rule is not { } rule)
+            return new List<EntityUid>();
+
+        var loadDist = rule.PlanetChunkLoadDistance * ChunkSize;
+        var randomBox = _random.Pick(new List<Box2>
+        {
+            new(new Vector2(-loadDist, loadDist - indent), new Vector2(loadDist, loadDist)), // Top
+            new(new Vector2(-loadDist, -loadDist), new Vector2(-loadDist + indent, loadDist)), // Left
+            new(new Vector2(-loadDist, -loadDist), new Vector2(loadDist, -loadDist + indent)), // Down
+            new(new Vector2(loadDist - indent, -loadDist), new Vector2(loadDist, loadDist)), // Right
+        });
+
+        return SpawnPop(gridUid, randomBox, popProto, amount, hardSpawn);
+    }
+
     /// <summary>
     /// Spawns entities in random free tiles of a given area
     /// </summary>
@@ -136,7 +158,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     public List<EntityUid> SpawnPop(
         EntityUid gridUid,
         Box2 area,
-        EntProtoId popProto,
+        EntProtoId? popProto = null,
         int amount = 1,
         bool hardSpawn = false)
     {
@@ -155,6 +177,15 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
                 continue;
 
             freeTiles.Add(tileRef);
+        }
+
+        var protoId = popProto;
+        if (popProto == null)
+        {
+            if (Rule is not { } rule)
+                return spawned;
+
+            protoId = _random.Pick(rule.PopsProtoIds);
         }
 
         if (freeTiles.Count == 0)
@@ -182,7 +213,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         for (var i = 0; i < amount; i++)
         {
             var spawnCoords = _turf.GetTileCenter(_random.Pick(freeTiles));
-            var spawnedUid = Spawn(popProto, spawnCoords);
+            var spawnedUid = Spawn(protoId, spawnCoords);
             spawned.Add(spawnedUid);
         }
 
@@ -259,7 +290,26 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         return _random.Pick(freeWorlds);
     }
 
-    /// <inheritdoc/>
+    public Entity<WorldMapComponent>? GetRandomPlayerMap()
+    {
+        var freeWorlds = new List<EntityUid>();
+
+        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
+        while (query.MoveNext(out var player))
+        {
+            freeWorlds.AddRange(player.OwnedMaps);
+        }
+
+        if (freeWorlds.Count == 0)
+            return null;
+
+        var map = _random.Pick(freeWorlds);
+        if (!MapQuery.TryComp(map, out var mapComp))
+            return null;
+
+        return (map, mapComp);
+    }
+
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
@@ -267,28 +317,22 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         if (Rule is not { } rule)
             return;
 
-        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
-        while (query.MoveNext(out var player))
+        var query = EntityQueryEnumerator<WorldMapComponent>();
+        while (query.MoveNext(out var uid, out var mapComp))
         {
-            foreach (var map in player.OwnedMaps)
-            {
-                if (!TryComp(map, out WorldMapComponent? comp))
-                    continue;
+            var entity = new Entity<WorldMapComponent>(uid, mapComp);
 
-                var radius = 5f;
-                var loadDist = rule.PlanetChunkLoadDistance * ChunkSize;
-                var randomBox = _random.Pick(new List<Box2>
-                {
-                    new(new Vector2(-loadDist, loadDist - radius), new Vector2(loadDist, loadDist)), // Top
-                    new(new Vector2(-loadDist, -loadDist), new Vector2(-loadDist + radius, loadDist)), // Left
-                    new(new Vector2(-loadDist, -loadDist), new Vector2(loadDist, -loadDist + radius)), // Down
-                    new(new Vector2(loadDist - radius, -loadDist), new Vector2(loadDist, loadDist)), // Right
-                });
+            if (_timing.CurTime < mapComp.NextEventTime
+                || mapComp.OwnerPlayer == null)
+                continue;
 
-                var pops = SpawnPop(map, randomBox, _random.Pick(rule.PopsProtoIds), amount: _random.Next(1, 3));
-                player.Pops.AddRange(pops);
-                comp.LastEventTime = _timing.CurTime;
-            }
+            entity.Comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(rule.MinMaxEventTiming.Next(_random));
+            RaiseLocalEvent(new WorldMapAvailableForEvent { Map = entity });
         }
     }
+}
+
+public sealed class WorldMapAvailableForEvent : HandledEntityEventArgs
+{
+    public Entity<WorldMapComponent> Map { get; set; }
 }

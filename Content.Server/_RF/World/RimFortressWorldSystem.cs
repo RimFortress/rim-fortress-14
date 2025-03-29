@@ -53,15 +53,16 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         return map;
     }
 
-    private Entity<WorldMapComponent> CreateOrGetMap(int x, int y)
+    private Entity<WorldMapComponent> CreateOrGetMap(Vector2i coords)
     {
+        var (x, y) = coords;
+
         if (Worlds[y, x] is { } mapUid
             && MapQuery.TryComp(Worlds[y, x], out var mapComp))
             return (mapUid, mapComp);
 
         var map = CreateMap();
         var worldMap = EnsureComp<WorldMapComponent>(map);
-        worldMap.LastEventTime = _timing.CurTime;
         Worlds[y, x] = map;
         return (map, worldMap);
     }
@@ -79,7 +80,9 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             throw new InvalidOperationException("No free maps available");
 
         // Create or get map for player
-        var worldMap = CreateOrGetMap(mapCoords.X, mapCoords.Y);
+        var worldMap = CreateOrGetMap(mapCoords);
+        worldMap.Comp.NextEventTime = _timing.CurTime + TimeSpan.FromMinutes(rule.MinimumTimeUntilFirstEvent)
+            + TimeSpan.FromSeconds(_random.NextFloat(120)); // Offset, so that events on the maps do not start at the same time
 
         // Spawn RF player entity
         var newMind = _mind.CreateMind(session.UserId, session.Name);
@@ -91,13 +94,14 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         var player = EnsureComp<RimFortressPlayerComponent>(mob);
         player.OwnedMaps.Add(worldMap.Owner);
 
+        worldMap.Comp.OwnerPlayer = mob;
+
         if (GetPlayerFaction(mob) is { } faction)
             player.Faction = faction;
 
         // Spawn roundstart settlements
         var area = Box2.CenteredAround(center.Position, new Vector2(rule.RoundStartSpawnRadius));
-        var pop = _random.Pick(rule.PopsProtoIds);
-        var pops = SpawnPop(worldMap.Owner, area, pop, amount: rule.RoundstartPops, hardSpawn: true);
+        var pops = SpawnPop(worldMap.Owner, area, amount: rule.RoundstartPops, hardSpawn: true);
         player.Pops.AddRange(pops);
     }
 }

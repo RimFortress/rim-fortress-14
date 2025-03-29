@@ -2,12 +2,18 @@
   id: RimFortress
   parent: BaseGameRule
   components:
-  - type: RimFortressRule
-    biomeSet: RimFortressBiome
-    playerFactionHostiles:
-      - AllHostile
-    popsProtoIds:
-      - RandomHumanoidSpawnerRfPop
+    - type: RimFortressRule
+      biomeSet: RimFortressBiome
+      playerFactionHostiles:
+        - AllHostile
+      popsProtoIds:
+        - RandomHumanoidSpawnerRfPop
+      worldEvents: !type:NestedSelector
+        tableId: BasicWorldRulesTable
+      minimumTimeUntilFirstEvent: 20
+      minMaxEventTiming:
+        min: 600 #10 min
+        max: 1800 #20 min
 
 - type: weightedRandom
   id: RimFortressBiome
@@ -19,3 +25,18 @@
     Snow: 0.20
     Shadow: 0.10
     Caves: 0.15
+
+# event schedulers
+- type: entityTable
+  id: BasicWorldRulesTable
+  table: !type:AllSelector
+    children:
+    - id: PopMigration
+
+- type: entity
+  id: PopMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ RandomHumanoidSpawnerRfPop ]
+      addToPlayerFaction: true

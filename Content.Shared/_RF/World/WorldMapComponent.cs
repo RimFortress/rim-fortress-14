@@ -21,5 +21,5 @@ public sealed partial class WorldMapComponent : Component
     public Vector2 WorldCoords { get; set; }
 
     [ViewVariables]
-    public TimeSpan LastEventTime { get; set; }
+    public TimeSpan NextEventTime { get; set; }
 }
