@@ -4,6 +4,7 @@ using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared.GameTicking.Components;
 using Content.Shared.NPC.Systems;
+using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Random;
 
 namespace Content.Server._RF.GameTicking.Rules;
@@ -25,8 +26,19 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
         if (_rimRule.GetWorldMap() is not { } map)
             return;
 
+        if (component.RequiredBiomes.Count != 0
+            && TryComp(map, out BiomeComponent? biome)
+            && biome.Template is { } template
+            && !component.RequiredBiomes.Contains(template))
+        {
+            // If the map does not match the requirement, call the event again.
+            // This event will not be called again, because the timer has been updated
+            RaiseLocalEvent(new WorldMapAvailableForEvent { Map = map });
+            return;
+        }
+
         var spawn = _random.Pick(component.Spawn);
-        var pops = _world.SpawnPopAlongWall(map, 5, spawn, amount: _random.Next(component.Min, component.Max));
+        var pops = _world.SpawnPopAlongWall(map, 5, spawn, amount: component.Amount.Next(_random));
 
         if (map.Comp.OwnerPlayer is not { } playerUid
             || !TryComp(playerUid, out RimFortressPlayerComponent? playerComp))

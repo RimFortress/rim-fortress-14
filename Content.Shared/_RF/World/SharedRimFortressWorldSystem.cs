@@ -336,3 +336,9 @@ public sealed class WorldMapAvailableForEvent : HandledEntityEventArgs
 {
     public Entity<WorldMapComponent> Map { get; set; }
 }
+
+public enum EventType : byte
+{
+    Request,
+    Invalid,
+}

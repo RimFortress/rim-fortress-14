@@ -1,3 +1,5 @@
+using Content.Shared.Destructible.Thresholds;
+using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.GameTicking.Rules;
@@ -9,16 +11,10 @@ namespace Content.Shared._RF.GameTicking.Rules;
 public sealed partial class MigrationRuleComponent : Component
 {
     /// <summary>
-    /// Minimum number of settlers to be added
+    /// Minimum and maximum number of mobs to be added
     /// </summary>
     [DataField]
-    public int Min { get; set; } = 1;
-
-    /// <summary>
-    /// Maximum number of settlers to be added
-    /// </summary>
-    [DataField]
-    public int Max { get; set; } = 3;
+    public MinMax Amount { get; set; } = new(1, 3);
 
     /// <summary>
     /// Entities to be spawned, the entity is randomly selected from the list
@@ -31,4 +27,11 @@ public sealed partial class MigrationRuleComponent : Component
     /// </summary>
     [DataField]
     public bool AddToPlayerFaction { get; set; }
+
+    /// <summary>
+    /// On maps with only these templates, this event can happen.
+    /// If not set, no check is performed
+    /// </summary>
+    [DataField]
+    public List<ProtoId<BiomeTemplatePrototype>> RequiredBiomes { get; set; } = new();
 }

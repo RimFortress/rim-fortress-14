@@ -73,7 +73,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         }
     }
 
-    private List<EntProtoId> AvailableRules(EntityUid uid)
+    private List<EntProtoId> AvailableRules(Entity<WorldMapComponent> uid)
     {
         var available = new List<EntProtoId>();
 
@@ -83,14 +83,16 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             if (!GameTicker.IsGameRuleActive(ruleUid, rule))
                 continue;
 
-            if (!_nextEventTime.ContainsKey(uid))
+            if (!_nextEventTime.TryGetValue(uid, out var times))
                 return _table.GetSpawns(rf.WorldEvents).ToList();
 
             foreach (var spawn in _table.GetSpawns(rf.WorldEvents))
             {
-                if (!_nextEventTime[uid].ContainsKey(spawn)
-                    || _nextEventTime[uid][spawn] < _timing.CurTime)
-                    available.Add(spawn);
+                if (times.TryGetValue(spawn, out var time)
+                    && time > _timing.CurTime)
+                    continue;
+
+                available.Add(spawn);
             }
         }
 

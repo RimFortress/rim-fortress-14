@@ -1,0 +1,289 @@
+- type: entityTable
+  id: BasicWorldRulesTable
+  table: !type:AllSelector
+    children:
+    - id: PopMigration
+
+    # Animal migration
+    # Neutral
+    - !type:GroupSelector
+      children:
+      - id: CatMigration
+      - id: PossumMigration
+      - id: PenguinMigration
+      - id: FoxMigration
+      - id: CrabMigration
+      - id: GoatMigration
+      - id: CowMigration
+      - id: FerretMigration
+      - id: FrogMigration
+      - id: FrogMigration
+      - id: GooseMigration
+      - id: HamsterMigration
+      - id: KangarooMigration
+      - id: MonkeyMigration
+      - id: MothroachMigration
+      - id: ParrotMigration
+      - id: RaccoonMigration
+      - id: SnakeMigration
+    # Hostile
+    - !type:GroupSelector
+      children:
+      - id: SlimeMigration
+      - id: SpiderMigration
+      - id: OreCrabMigration
+
+- type: entity
+  id: PopMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ RandomHumanoidSpawnerRfPop ]
+      addToPlayerFaction: true
+
+# Animals migration
+# Neutral
+
+- type: entity
+  id: CatMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn:
+      - MobCatRuntime
+      - MobCatException
+      - MobCatFloppa
+      - MobBingus
+      amount:
+        min: 4
+        max: 6
+
+- type: entity
+  id: PossumMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobPossumMorty ]
+      amount:
+        min: 3
+        max: 5
+
+- type: entity
+  id: PenguinMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobPenguin ]
+      requiredBiomes: [ Snow ]
+      amount:
+        min: 4
+        max: 8
+
+- type: entity
+  id: FoxMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobFoxRenault ]
+      requiredBiomes:
+        - Continental
+        - Grasslands
+        - Snow
+      amount:
+        min: 2
+        max: 4
+
+- type: entity
+  id: CrabMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobCrabAtmos ]
+      requiredBiomes:
+        - LowDesert
+      amount:
+        min: 3
+        max: 4
+
+- type: entity
+  id: GoatMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobGoat ]
+      requiredBiomes:
+        - Continental
+        - Caves
+      amount:
+        min: 2
+        max: 4
+
+- type: entity
+  id: CowMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobCow ]
+      requiredBiomes:
+        - Continental
+        - Grasslands
+      amount:
+        min: 1
+        max: 3
+
+- type: entity
+  id: FerretMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobFerret ]
+      amount:
+        min: 2
+        max: 4
+
+- type: entity
+  id: FrogMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobFrog ]
+      requiredBiomes:
+        - Continental
+        - Grasslands
+      amount:
+        min: 6
+        max: 10
+
+- type: entity
+  id: GooseMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobGoose ]
+      amount:
+        min: 2
+        max: 4
+
+- type: entity
+  id: HamsterMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobHamster ]
+      amount:
+        min: 5
+        max: 10
+
+- type: entity
+  id: KangarooMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobKangaroo ]
+      requiredBiomes:
+        - LowDesert
+      amount:
+        min: 2
+        max: 3
+
+- type: entity
+  id: MonkeyMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobMonkey ]
+      requiredBiomes:
+        - Continental
+        - Grasslands
+      amount:
+        min: 4
+        max: 7
+
+- type: entity
+  id: MothroachMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobMothroach ]
+      amount:
+        min: 4
+        max: 8
+
+- type: entity
+  id: ParrotMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobParrot ]
+      requiredBiomes:
+        - Continental
+      amount:
+        min: 2
+        max: 5
+
+- type: entity
+  id: RaccoonMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobRaccoon ]
+      amount:
+        min: 2
+        max: 4
+
+- type: entity
+  id: SnakeMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobSnake ]
+      requiredBiomes:
+        - Grasslands
+      amount:
+        min: 3
+        max: 5
+
+# Hostile
+
+- type: entity
+  id: SlimeMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn:
+      - MobSlimesPet
+      - MobAdultSlimesBlue
+      - MobAdultSlimesBlueAngry
+      - MobAdultSlimesGreen
+      - MobAdultSlimesGreenAngry
+      - MobAdultSlimesYellow
+      - MobAdultSlimesYellowAngry
+      amount:
+        min: 3
+        max: 6
+
+- type: entity
+  id: SpiderMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn: [ MobGiantSpiderAngry ]
+      amount:
+        min: 1
+        max: 3
+
+- type: entity
+  id: OreCrabMigration
+  parent: BaseGameRule
+  components:
+    - type: MigrationRule
+      spawn:
+        - MobIronCrab
+        - MobQuartzCrab
+        - MobSilverCrab
+        - MobUraniumCrab
+        - MobCoalCrab
+        - MobGoldCrab
+      amount:
+        min: 3
+        max: 6

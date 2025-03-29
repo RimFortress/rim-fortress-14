@@ -25,18 +25,3 @@
     Snow: 0.20
     Shadow: 0.10
     Caves: 0.15
-
-# event schedulers
-- type: entityTable
-  id: BasicWorldRulesTable
-  table: !type:AllSelector
-    children:
-    - id: PopMigration
-
-- type: entity
-  id: PopMigration
-  parent: BaseGameRule
-  components:
-    - type: MigrationRule
-      spawn: [ RandomHumanoidSpawnerRfPop ]
-      addToPlayerFaction: true
