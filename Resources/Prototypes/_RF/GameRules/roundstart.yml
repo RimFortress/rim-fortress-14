@@ -9,14 +9,13 @@
       popsProtoIds:
         - RandomHumanoidSpawnerRfPop
       worldEvents: !type:NestedSelector
-        tableId: BasicWorldRulesTable
-      minimumTimeUntilFirstEvent: 20
+        tableId: RandomBiome
       minMaxEventTiming:
         min: 600 #10 min
         max: 1800 #20 min
 
 - type: weightedRandom
-  id: RimFortressBiome
+  id: RandomBiome
   weights:
     Continental: 1.0
     LowDesert: 0.35

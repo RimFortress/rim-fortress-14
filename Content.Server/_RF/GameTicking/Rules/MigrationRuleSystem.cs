@@ -38,7 +38,11 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
         }
 
         var spawn = _random.Pick(component.Spawn);
-        var pops = _world.SpawnPopAlongWall(map, 5, spawn, amount: component.Amount.Next(_random));
+        var pops = _world.SpawnPopAlongBounds(
+            map,
+            component.ChunkSize,
+            spawn,
+            amount: component.Amount.Next(_random));
 
         if (map.Comp.OwnerPlayer is not { } playerUid
             || !TryComp(playerUid, out RimFortressPlayerComponent? playerComp))

@@ -129,9 +129,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         return factionId;
     }
 
-    public List<EntityUid> SpawnPopAlongWall(
+    public List<EntityUid> SpawnPopAlongBounds(
         EntityUid gridUid,
-        int indent,
+        int spawnChunks,
         EntProtoId? popProto = null,
         int amount = 1,
         bool hardSpawn = false)
@@ -139,16 +139,23 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         if (Rule is not { } rule)
             return new List<EntityUid>();
 
-        var loadDist = rule.PlanetChunkLoadDistance * ChunkSize;
-        var randomBox = _random.Pick(new List<Box2>
-        {
-            new(new Vector2(-loadDist, loadDist - indent), new Vector2(loadDist, loadDist)), // Top
-            new(new Vector2(-loadDist, -loadDist), new Vector2(-loadDist + indent, loadDist)), // Left
-            new(new Vector2(-loadDist, -loadDist), new Vector2(loadDist, -loadDist + indent)), // Down
-            new(new Vector2(loadDist - indent, -loadDist), new Vector2(loadDist, loadDist)), // Right
-        });
+        var chunkSize = spawnChunks * ChunkSize;
+        var ind = rule.PlanetChunkLoadDistance / spawnChunks;
+        var chunks = new List<Box2>();
 
-        return SpawnPop(gridUid, randomBox, popProto, amount, hardSpawn);
+        for (var x = -ind; x < ind; x++)
+        {
+            chunks.Add(Box2.CenteredAround(new Vector2(x * chunkSize, ind * chunkSize), new Vector2(chunkSize)));
+            chunks.Add(Box2.CenteredAround(new Vector2(x * chunkSize, -ind * chunkSize), new Vector2(chunkSize)));
+        }
+
+        for (var y = -ind + 1; y < ind - 1; y++)
+        {
+            chunks.Add(Box2.CenteredAround(new Vector2(ind * chunkSize, y * chunkSize), new Vector2(chunkSize)));
+            chunks.Add(Box2.CenteredAround(new Vector2(-ind * chunkSize, y * chunkSize), new Vector2(chunkSize)));
+        }
+
+        return SpawnPop(gridUid, _random.Pick(chunks), popProto, amount, hardSpawn);
     }
 
     /// <summary>

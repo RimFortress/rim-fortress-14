@@ -34,4 +34,12 @@ public sealed partial class MigrationRuleComponent : Component
     /// </summary>
     [DataField]
     public List<ProtoId<BiomeTemplatePrototype>> RequiredBiomes { get; set; } = new();
+
+    /// <summary>
+    /// Size of the chunk in which entities will spawn.
+    /// Larger the chunk the greater the chance that entities will be far away from each other,
+    /// but smaller chance that the spawn point will be blocked
+    /// </summary>
+    [DataField]
+    public int ChunkSize { get; set; } = 3;
 }
