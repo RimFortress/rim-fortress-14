@@ -66,6 +66,40 @@
         - !type:HTNCompoundTask
           task: EscapeCompound
 
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Wieldable
+            - type: GunRequiresWield
+        - !type:WieldedPrecondition
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:WieldOperator
+
+    # Insert the cartridge into the chamber, if necessary
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: ChamberMagazineAmmoProvider
+        - !type:BoltClosedPrecondition
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SwitchBoltClosedOperator
+
+    # Drop the gun NOW!!!
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+        - !type:ActiveHandEntityPrecondition
+        - !type:GunAmmoPrecondition
+          maxPercent: 0.001
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
     # Gun
     - preconditions:
         - !type:ActiveHandComponentPrecondition
@@ -75,7 +109,10 @@
           minPercent: 0.001
         - !type:KeyExistsPrecondition
           key: AttackTarget
+        - !type:KeyExistsPrecondition
+          key: AttackTargetCoordinates
       tasks:
+        # Move to the target
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
@@ -90,12 +127,8 @@
         - !type:HTNPrimitiveTask
           operator: !type:GunOperator
             targetKey: AttackTarget
-        - !type:HTNPrimitiveTask
-          preconditions:
-            - !type:ActiveHandEntityPrecondition
-            - !type:GunAmmoPrecondition
-              maxPercent: 0.001
-          operator: !type:DropOperator
+            opaqueKey: true
+
     # Melee
     - preconditions:
         - !type:ActiveHandComponentPrecondition

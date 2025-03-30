@@ -3,13 +3,13 @@
   parent: BaseGameRule
   components:
     - type: RimFortressRule
-      biomeSet: RimFortressBiome
+      biomeSet: RandomBiome
       playerFactionHostiles:
         - AllHostile
       popsProtoIds:
         - RandomHumanoidSpawnerRfPop
       worldEvents: !type:NestedSelector
-        tableId: RandomBiome
+        tableId: BasicWorldRulesTable
       minMaxEventTiming:
         min: 600 #10 min
         max: 1800 #20 min
