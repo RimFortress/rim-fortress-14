@@ -16,6 +16,9 @@
 
 - type: randomHumanoidSettings
   id: RimFortressPop
+  speciesBlacklist:
+    - Diona
+    - Vox
   components:
     - type: NpcFactionMember
     - type: Loadout
