@@ -14,14 +14,16 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [ValidatePrototypeId<HTNCompoundPrototype>]
     private const string MoveToCompound = "MoveToCompound";
     private const string MoveToTargetKey = "MoveToTargetCoordinates";
-    private const string MoveToRangeKey = "MoveToCloseRange";
 
     [ValidatePrototypeId<HTNCompoundPrototype>]
     private const string AttackCompound = "AttackTargetCompound";
     private const string AttackTargetKey = "AttackTarget";
     private const string AttackTargetCoordinatesKey = "AttackTargetCoordinates";
 
-    private const float MoveToCloseRange = 0.20f;
+    [ValidatePrototypeId<HTNCompoundPrototype>]
+    private const string PickUpCompound = "PickUpCompound";
+    private const string PickUpTargetKey = "PickUpTarget";
+    private const string PickUpTargetCoordinatesKey = "PickUpTargetCoordinates";
 
     private readonly Dictionary<EntityUid, HTNCompoundTask> _originCompounds = new();
     private readonly Dictionary<EntityUid, NpcTask> _tasks = new();
@@ -31,8 +33,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<NpcMoveToRequest>(OnMoveToRequest);
-        SubscribeNetworkEvent<NpcAttackRequest>(OnAttackRequest);
+        SubscribeNetworkEvent<NpcTaskRequest>(OnTaskRequest);
         SubscribeNetworkEvent<NpcTaskResetRequest>(OnTaskResetRequest);
     }
 
@@ -59,45 +60,50 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         {
             Entity = GetNetEntity(entity),
             TaskType = task.Type,
-            MoveTo = GetNetCoordinates(task.MoveTo),
-            Attack = GetNetEntity(task.Attack),
+            Target = GetNetEntity(task.Target),
+            TargetCoordinates = GetNetCoordinates(task.Coordinates),
         };
 
         RaiseNetworkEvent(msg);
     }
 
-    private void OnMoveToRequest(NpcMoveToRequest request)
+    private void OnTaskRequest(NpcTaskRequest request)
     {
         var entity = GetEntity(request.Entity);
         var requester = GetEntity(request.Requester);
+        var target = GetEntity(request.Target);
+        var targetCoords = GetCoordinates(request.TargetCoordinates);
+        var task = new NpcTask(request.TaskType, target, targetCoords);
 
         if (!_npc.TryGetNpc(entity, out var npc)
             || !_world.IsPlayerFactionMember(requester, entity))
             return;
 
-        var coordinates = GetCoordinates(request.Target);
-        npc.Blackboard.SetValue(MoveToTargetKey, coordinates);
-        npc.Blackboard.SetValue(MoveToRangeKey, MoveToCloseRange);
+        switch (request.TaskType)
+        {
+            case NpcTaskType.Move:
+                npc.Blackboard.SetValue(MoveToTargetKey, targetCoords);
 
-        SetTask(entity, new NpcTask(coordinates), MoveToCompound);
-    }
+                SetTask(entity, task, MoveToCompound);
+                break;
+            case NpcTaskType.Attack:
+                if (_world.IsPlayerFactionMember(requester, target))
+                    break;
 
-    private void OnAttackRequest(NpcAttackRequest request)
-    {
-        var entity = GetEntity(request.Entity);
-        var requester = GetEntity(request.Requester);
-        var attackTarget = GetEntity(request.Attack);
+                npc.Blackboard.SetValue(AttackTargetCoordinatesKey, targetCoords);
+                npc.Blackboard.SetValue(AttackTargetKey, target);
 
-        if (!_npc.TryGetNpc(entity, out var npc)
-            || !_world.IsPlayerFactionMember(requester, entity)
-            || _world.IsPlayerFactionMember(requester, attackTarget))
-            return;
+                SetTask(entity, task, AttackCompound);
+                break;
+            case NpcTaskType.PickUp:
+                npc.Blackboard.SetValue(PickUpTargetCoordinatesKey, targetCoords);
+                npc.Blackboard.SetValue(PickUpTargetKey, target);
 
-        var coordinates = Transform(attackTarget).Coordinates;
-        npc.Blackboard.SetValue(AttackTargetCoordinatesKey, coordinates);
-        npc.Blackboard.SetValue(AttackTargetKey, attackTarget);
-
-        SetTask(entity, new NpcTask(attackTarget), AttackCompound);
+                SetTask(entity, task, PickUpCompound);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     private void OnTaskResetRequest(NpcTaskResetRequest request)

@@ -11,26 +11,14 @@ public abstract class SharedNpcControlSystem : EntitySystem
 public sealed class NpcTask
 {
     public NpcTaskType Type { get; }
-    public EntityCoordinates? MoveTo { get; }
-    public EntityUid? Attack { get; }
+    public EntityUid Target { get; }
+    public EntityCoordinates Coordinates { get; }
 
-    public NpcTask(EntityCoordinates coordinates)
-    {
-        Type = NpcTaskType.Move;
-        MoveTo = coordinates;
-    }
-
-    public NpcTask(EntityUid uid)
-    {
-        Type = NpcTaskType.Attack;
-        Attack = uid;
-    }
-
-    public NpcTask(NpcTaskType type, EntityCoordinates? coordinates, EntityUid? attack)
+    public NpcTask(NpcTaskType type, EntityUid target, EntityCoordinates coords)
     {
         Type = type;
-        MoveTo = coordinates;
-        Attack = attack;
+        Target = target;
+        Coordinates = coords;
     }
 }
 
@@ -38,6 +26,7 @@ public enum NpcTaskType : byte
 {
     Move,
     Attack,
+    PickUp,
 }
 
 [Serializable, NetSerializable]
@@ -45,8 +34,8 @@ public sealed class NpcTaskInfoMessage : EntityEventArgs
 {
     public NetEntity Entity { get; set; }
     public NpcTaskType TaskType { get; set; }
-    public NetCoordinates? MoveTo { get; set; }
-    public NetEntity? Attack { get; set; }
+    public NetEntity Target { get; set; }
+    public NetCoordinates TargetCoordinates { get; set; }
 }
 
 [Serializable, NetSerializable]
@@ -57,17 +46,11 @@ public sealed class NpcTaskResetRequest : EntityEventArgs
 }
 
 [Serializable, NetSerializable]
-public sealed class NpcMoveToRequest : EntityEventArgs
+public sealed class NpcTaskRequest : EntityEventArgs
 {
     public NetEntity Requester { get; set; }
     public NetEntity Entity { get; set; }
-    public NetCoordinates Target { get; set; }
-}
-
-[Serializable, NetSerializable]
-public sealed class NpcAttackRequest : EntityEventArgs
-{
-    public NetEntity Requester { get; set; }
-    public NetEntity Entity { get; set; }
-    public NetEntity Attack { get; set; }
+    public NetEntity Target { get; set; }
+    public NetCoordinates TargetCoordinates { get; set; }
+    public NpcTaskType TaskType { get; set; }
 }

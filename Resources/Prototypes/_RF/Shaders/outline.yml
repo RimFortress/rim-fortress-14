@@ -11,3 +11,10 @@
   path: "/Textures/Shaders/outline.swsl"
   params:
     outline_color: "#A10B0BAA"
+
+- type: shader
+  id: SelectionOutlineYellow
+  kind: source
+  path: "/Textures/Shaders/outline.swsl"
+  params:
+    outline_color: "#9DB526"

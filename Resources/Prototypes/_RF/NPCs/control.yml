@@ -29,15 +29,18 @@
     - preconditions:
         - !type:KeyExistsPrecondition
           key: MoveToTargetCoordinates
-        - !type:KeyExistsPrecondition
-          key: MoveToCloseRange
       tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetFloatOperator
+            targetKey: MoveToCloseRange
+            amount: 0.30
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             targetKey: MoveToTargetCoordinates
             rangeKey: MoveToCloseRange
             removeKeyOnFinish: false
+
 
 - type: htnCompound
   id: AttackTargetCompound
@@ -122,7 +125,7 @@
             rangeKey: MeleeRange
         - !type:HTNPrimitiveTask
           operator: !type:JukeOperator
-            jukeType: AdjacentTile
+            jukeType: Away
         # Attack with a gun
         - !type:HTNPrimitiveTask
           operator: !type:GunOperator
@@ -157,3 +160,65 @@
               rangeKey: MeleeRange
           operator: !type:MeleeOperator
             targetKey: AttackTarget
+
+
+- type: htnCompound
+  id: PickUpCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # Drop item in hands
+    - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:KeyExistsPrecondition
+          key: PickUpTarget
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Move to target and pick up
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: PickUpTarget
+        - !type:KeyExistsPrecondition
+          key: PickUpTargetCoordinates
+        - !type:ActiveHandFreePrecondition
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            targetKey: PickUpTargetCoordinates
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+        - !type:HTNPrimitiveTask
+          preconditions:
+            - !type:TargetInRangePrecondition
+              targetKey: PickUpTarget
+              rangeKey: InteractRange
+          operator: !type:InteractWithOperator
+            targetKey: PickUpTarget

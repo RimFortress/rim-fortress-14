@@ -2,6 +2,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Client.NPC.HTN;
 using Content.Shared._RF.NPC;
+using Content.Shared.Item;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Robust.Client.Graphics;
@@ -81,16 +82,22 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             return false;
 
         var box = Box2.CenteredAround(coords.Position, new Vector2(0.05f));
-        var entities = _lookup.GetEntitiesIntersecting(coords.EntityId, box, LookupFlags.Dynamic);
+        var entities = _lookup.GetEntitiesIntersecting(coords.EntityId, box);
 
         foreach (var entity in entities)
         {
-            if (!TryComp(entity, out HTNComponent? _))
-                continue;
+            if (TryComp(entity, out HTNComponent? _))
+            {
+                // Create a task to attack a creature if it is under the cursor
+                SetAttack(userUid, entity);
+                return true;
+            }
 
-            // Create a task to attack a creature if it is under the cursor
-            SetAttack(userUid, entity);
-            return true;
+            if (TryComp(entity, out ItemComponent? _))
+            {
+                SetPickUp(userUid, entity);
+                return true;
+            }
         }
 
         if (Selected.Count == 0
@@ -106,7 +113,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnTaskInfo(NpcTaskInfoMessage msg)
     {
-        var task = new NpcTask(msg.TaskType, GetCoordinates(msg.MoveTo), GetEntity(msg.Attack));
+        var task = new NpcTask(msg.TaskType, GetEntity(msg.Target), GetCoordinates(msg.TargetCoordinates));
         Tasks[GetEntity(msg.Entity)] = task;
     }
 
@@ -158,8 +165,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         foreach (var entity in Selected)
         {
-            var msg = new NpcAttackRequest
-                { Entity = GetNetEntity(entity), Attack = GetNetEntity(uid), Requester = GetNetEntity(requester), };
+            var msg = new NpcTaskRequest
+            {
+                Requester = GetNetEntity(requester),
+                Entity = GetNetEntity(entity),
+                Target = GetNetEntity(uid),
+                TargetCoordinates = GetNetCoordinates(Transform(uid).Coordinates),
+                TaskType = NpcTaskType.Attack,
+            };
             RaiseNetworkEvent(msg);
         }
     }
@@ -170,7 +183,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private void SetMove(EntityUid requester, TileRef tileRef)
     {
         var previousTargets = new List<TileRef>();
-        var tileCenter = _turf.GetTileCenter(tileRef);
+        var startTileCenter = _turf.GetTileCenter(tileRef);
 
         foreach (var entity in Selected)
         {
@@ -180,11 +193,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                     return;
 
                 previousTargets.Add(tileRef);
-                RaiseNetworkEvent(new NpcMoveToRequest
+                RaiseNetworkEvent(new NpcTaskRequest
                 {
                     Requester = GetNetEntity(requester),
                     Entity = GetNetEntity(entity),
-                    Target = GetNetCoordinates(tileCenter),
+                    Target = GetNetEntity(startTileCenter.EntityId),
+                    TargetCoordinates = GetNetCoordinates(startTileCenter),
+                    TaskType = NpcTaskType.Move,
                 });
 
                 continue;
@@ -194,12 +209,35 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 continue;
 
             previousTargets.Add(tile);
-            RaiseNetworkEvent(new NpcMoveToRequest
+            var tileCenter = _turf.GetTileCenter(tile);
+
+            RaiseNetworkEvent(new NpcTaskRequest
             {
                 Requester = GetNetEntity(requester),
                 Entity = GetNetEntity(entity),
-                Target = GetNetCoordinates(_turf.GetTileCenter(tile)),
+                Target = GetNetEntity(tileCenter.EntityId),
+                TargetCoordinates = GetNetCoordinates(tileCenter),
+                TaskType = NpcTaskType.Move,
             });
+        }
+    }
+
+    /// <summary>
+    /// Gives all selected entities the task to pick up a given entity
+    /// </summary>
+    private void SetPickUp(EntityUid requester, EntityUid uid)
+    {
+        foreach (var entity in Selected)
+        {
+            var msg = new NpcTaskRequest
+            {
+                Requester = GetNetEntity(requester),
+                Entity = GetNetEntity(entity),
+                Target = GetNetEntity(uid),
+                TargetCoordinates = GetNetCoordinates(Transform(uid).Coordinates),
+                TaskType = NpcTaskType.PickUp,
+            };
+            RaiseNetworkEvent(msg);
         }
     }
 
