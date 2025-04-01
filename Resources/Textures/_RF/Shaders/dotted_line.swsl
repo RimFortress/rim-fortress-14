@@ -1,0 +1,41 @@
+uniform sampler2D SCREEN_TEXTURE;
+uniform highp vec2 start;
+uniform highp vec2 end;
+uniform lowp vec4 color;
+uniform highp float dashLen;
+uniform highp float gapLen;
+uniform highp float unit;
+uniform highp float thickness;
+uniform highp float startOffset;
+uniform highp float endOffset;
+
+void fragment() {
+    highp vec2 lineDir = end - start;
+    highp float fullLength = length(lineDir);
+    lineDir = normalize(lineDir);
+
+    highp vec2 perp = vec2(-lineDir.y, lineDir.x);
+
+    highp vec2 AP = FRAGCOORD.xy - start;
+    highp float t = dot(AP, lineDir);
+
+    highp float effectiveLength = fullLength - startOffset * unit - endOffset * unit;
+    highp float effectiveT = t - endOffset * unit;
+
+    highp float dist = abs(dot(AP, perp));
+
+    highp float unitThickness = thickness * unit;
+    highp float inThickness = smoothstep(unitThickness, unitThickness - 1.0, dist);
+
+    highp float inSegment = smoothstep(0.0, 1.0, effectiveT)
+                          - smoothstep(effectiveLength, effectiveLength+1.0, effectiveT);
+
+    highp float totalSegment = dashLen + gapLen;
+    highp float dashPos = mod(effectiveT, totalSegment);
+    highp float inDash = smoothstep(0.0, 1.0, dashPos)
+                       - smoothstep(dashLen, dashLen+1.0, dashPos);
+
+    highp float alpha = inThickness * inSegment * inDash;
+
+    COLOR = vec4(color.rgb, color.a * alpha);
+}

@@ -1,33 +1,37 @@
 using System.Numerics;
 using Content.Shared._RF.NPC;
+using Content.Shared.Hands.Components;
+using Content.Shared.Mobs;
+using Content.Shared.Mobs.Components;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Shared.Enums;
+using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.NPC;
 
 public sealed class NpcControlOverlay : Overlay
 {
+    public override bool RequestScreenTexture => true;
+
     public override OverlaySpace Space => OverlaySpace.WorldSpace;
 
     [ValidatePrototypeId<ShaderPrototype>]
-    private const string SelectShader = "SelectionOutlineWhite";
+    private const string SelectShader = "DottedOutline";
     [ValidatePrototypeId<ShaderPrototype>]
-    private const string AttackShader = "SelectionOutlineRed";
+    private const string PointCircleShader = "DottedCircle";
     [ValidatePrototypeId<ShaderPrototype>]
-    private const string PickUpShader = "SelectionOutlineYellow";
+    private const string PointLineShader = "DottedLine";
 
     private readonly NpcControlSystem _npcControl;
     private readonly SharedTransformSystem _transform;
     private readonly IEntityManager _entityManager;
+    private readonly IPrototypeManager _prototype;
 
     private readonly Color _selectColor = Color.LightGray.WithAlpha(0.80f);
     private readonly Color _attackColor = Color.Red.WithAlpha(0.80f);
     private readonly Color _pickUpColor = Color.Yellow.WithAlpha(0.80f);
-    private readonly ShaderInstance _selectShader;
-    private readonly ShaderInstance _attackShader;
-    private readonly ShaderInstance _pickUpShader;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
@@ -40,9 +44,7 @@ public sealed class NpcControlOverlay : Overlay
         _npcControl = npcControl;
         _transform = transform;
         _entityManager = entityManager;
-        _selectShader = prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
-        _attackShader = prototype.Index<ShaderPrototype>(AttackShader).InstanceUnique();
-        _pickUpShader = prototype.Index<ShaderPrototype>(PickUpShader).InstanceUnique();
+        _prototype = prototype;
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -57,76 +59,44 @@ public sealed class NpcControlOverlay : Overlay
 
         foreach (var entity in _npcControl.Selected)
         {
-            if (!_entityManager.TryGetComponent(entity, out SpriteComponent? sprite) || !sprite.Visible)
+            SetShader(entity, _selectColor);
+
+            if (!_npcControl.Tasks.TryGetValue(entity, out var task)
+                || !_entityManager.TryGetComponent(entity, out TransformComponent? entityForm))
                 continue;
 
-            _highlightedSprites.Add(sprite);
-            sprite.PostShader = _selectShader;
-            sprite.RenderOrder = _entityManager.CurrentTick.Value;
-
-            if (!_npcControl.Tasks.TryGetValue(entity, out var task))
-                continue;
+            var start = _transform.ToMapCoordinates(entityForm.Coordinates);
+            var end = _transform.ToMapCoordinates(task.Coordinates);
 
             switch (task.Type)
             {
                 case NpcTaskType.Move:
                 {
-                    var startPos = _transform.GetWorldPosition(entity);
-                    var direction = task.Coordinates.Position - startPos;
-                    var endPos = task.Coordinates.Position + Vector2.Normalize(direction) * -0.35f;
+                    if ((end.Position - start.Position).Length() < 0.5f)
+                        break;
 
-                    if (direction.Length() > 0.5f)
-                    {
-                        args.WorldHandle.DrawCircle(task.Coordinates.Position, 0.35f, _selectColor, false);
-                        args.WorldHandle.DrawCircle(task.Coordinates.Position, 0.34f, _selectColor, false);
-                        args.WorldHandle.DrawLine(startPos, endPos, _selectColor);
-                    }
-
+                    DrawPointCircle(args, end, _selectColor);
+                    DrawLine(args, _selectColor, start, end);
                     break;
                 }
                 case NpcTaskType.Attack:
                 {
-                    if (_entityManager.TryGetComponent(task.Target, out SpriteComponent? attackSprite)
-                        && !_highlightedSprites.Contains(attackSprite)
-                        && attackSprite.Visible)
-                    {
-                        _highlightedSprites.Add(attackSprite);
-                        attackSprite.PostShader = _attackShader;
-                        attackSprite.RenderOrder = _entityManager.CurrentTick.Value;
-                    }
-
-                    if (!_entityManager.TryGetComponent(task.Target, out TransformComponent? xform))
+                    if (_entityManager.TryGetComponent(task.Target, out MobStateComponent? state)
+                        && state.CurrentState != MobState.Alive)
                         break;
 
-                    var startPos = _transform.GetWorldPosition(entity);
-                    var endPos = xform.Coordinates.Position;
-                    var direction = endPos - startPos;
-                    if (direction.Length() > 0.5f)
-                        args.WorldHandle.DrawLine(startPos, endPos, _attackColor);
-
+                    SetShader(task.Target, _attackColor);
+                    DrawLine(args, _attackColor, start, end, 0.5f);
                     break;
                 }
                 case NpcTaskType.PickUp:
                 {
-                    if (_entityManager.TryGetComponent(task.Target, out SpriteComponent? pickUpSprite)
-                        && !_highlightedSprites.Contains(pickUpSprite)
-                        && pickUpSprite.Visible)
-                    {
-                        _highlightedSprites.Add(pickUpSprite);
-                        pickUpSprite.PostShader = _pickUpShader;
-                        pickUpSprite.RenderOrder = _entityManager.CurrentTick.Value;
-                    }
-
-                    if (!_entityManager.TryGetComponent(task.Target, out TransformComponent? xform)
-                        || xform.Coordinates.Position == Vector2.Zero) // Entities in the inventory have zero coordinates
+                    if (_entityManager.TryGetComponent(entity, out HandsComponent? hands)
+                        && hands.ActiveHand?.HeldEntity == task.Target)
                         break;
 
-                    var startPos = _transform.GetWorldPosition(entity);
-                    var endPos = xform.Coordinates.Position;
-                    var direction = endPos - startPos;
-                    if (direction.Length() > 0.5f)
-                        args.WorldHandle.DrawLine(startPos, endPos, _pickUpColor);
-
+                    SetShader(task.Target, _pickUpColor);
+                    DrawLine(args, _pickUpColor, start, end, 0.5f);
                     break;
                 }
                 default:
@@ -134,10 +104,76 @@ public sealed class NpcControlOverlay : Overlay
             }
         }
 
-        if (_npcControl is { StartPoint: { } start, EndPoint: { } end })
+        if (_npcControl is { StartPoint: { } startPoint, EndPoint: { } endPoint })
         {
-            var area = new Box2(start.Position, end.Position);
+            var area = new Box2(startPoint.Position, endPoint.Position);
             args.WorldHandle.DrawRect(area, Color.White, false);
         }
+    }
+
+    private void SetShader(EntityUid entity, Color color)
+    {
+        if (!_entityManager.TryGetComponent(entity, out SpriteComponent? sprite)
+            || _highlightedSprites.Contains(sprite)
+            || !sprite.Visible)
+            return;
+
+        var shader = _prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
+        _highlightedSprites.Add(sprite);
+        shader.SetParameter("color", color);
+
+        sprite.PostShader = shader;
+        sprite.RenderOrder = _entityManager.CurrentTick.Value;
+    }
+
+    private void DrawLine(
+        in OverlayDrawArgs args,
+        Color color,
+        MapCoordinates start,
+        MapCoordinates end,
+        float? minLength = null)
+    {
+        if (start.Position == Vector2.Zero // Probably out-of-sight entity
+            || end.Position == Vector2.Zero
+            || minLength != null
+            && (start.Position - end.Position).Length() < minLength)
+            return;
+
+        var shader = _prototype.Index<ShaderPrototype>(PointLineShader).InstanceUnique();
+        args.WorldHandle.UseShader(shader);
+
+        var screenEnd = args.Viewport.WorldToLocal(end.Position);
+        screenEnd.Y = args.Viewport.Size.Y - screenEnd.Y;
+
+        var screeStart = args.Viewport.WorldToLocal(start.Position);
+        screeStart.Y = args.Viewport.Size.Y - screeStart.Y;
+
+        // Find the number of pixels in the coordinate unit to scale the size correctly.
+        // It can probably be done in a better way, but my head is about to explode
+        var unit = (args.Viewport.WorldToLocal(start.Position + Vector2.UnitX) - args.Viewport.WorldToLocal(start.Position)).X;
+        shader.SetParameter("unit", unit);
+
+        shader.SetParameter("color", color);
+        shader.SetParameter("start", screenEnd);
+        shader.SetParameter("end", screeStart);
+
+        args.WorldHandle.DrawRect(new Box2(start.Position, end.Position), Color.White);
+    }
+
+    private void DrawPointCircle(in OverlayDrawArgs args, MapCoordinates worldCoords, Color color)
+    {
+        var shader = _prototype.Index<ShaderPrototype>(PointCircleShader).InstanceUnique();
+        args.WorldHandle.UseShader(shader);
+
+        var position = args.Viewport.WorldToLocal(worldCoords.Position);
+        var unit = (args.Viewport.WorldToLocal(worldCoords.Position + Vector2.UnitX) - position).X;
+        shader.SetParameter("unit", unit);
+
+        position.Y = args.Viewport.Size.Y - position.Y;
+        shader.SetParameter("position", position);
+
+        shader.SetParameter("color", color);
+
+        args.WorldHandle.DrawRect(Box2.CenteredAround(worldCoords.Position, Vector2.One), Color.White);
     }
 }
