@@ -87,14 +87,14 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     {
         for (var x = box.Bottom; x < box.Top; x++)
         {
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Left), id));
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Right), id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Left) + new Vector2(0.5f), id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Right) + new Vector2(0.5f), id));
         }
 
         for (var y = box.Left + 1; y < box.Right; y++)
         {
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Top, y), id));
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Bottom, y), id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Top, y) + new Vector2(0.5f), id));
+            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Bottom, y) + new Vector2(0.5f), id));
         }
     }
 
@@ -202,8 +202,8 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             if (hardSpawn)
             {
                 var tileRef = _map.GetTileRef(gridUid, grid, new EntityCoordinates(gridUid, area.Center));
-                var box = Box2.CenteredAround(_turf.GetTileCenter(tileRef).Position, new Vector2(5f));
-                var entities = _lookup.GetEntitiesIntersecting(gridUid, box, LookupFlags.Static ^ LookupFlags.Approximate);
+                var box = Box2.CenteredAround(_turf.GetTileCenter(tileRef).Position, Vector2.One);
+                var entities = _lookup.GetEntitiesIntersecting(gridUid, box, LookupFlags.Static);
 
                 foreach (var entity in entities)
                 {

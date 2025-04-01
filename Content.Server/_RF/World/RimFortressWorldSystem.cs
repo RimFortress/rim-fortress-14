@@ -108,10 +108,5 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         if (GetPlayerFaction(mob) is { } faction)
             player.Faction = faction;
-
-        // Spawn roundstart settlements
-        var area = Box2.CenteredAround(center.Position, new Vector2(rule.RoundStartSpawnRadius));
-        var pops = SpawnPop(worldMap.Owner, area, amount: rule.RoundstartPops, hardSpawn: true);
-        player.Pops.AddRange(pops);
     }
 }

@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Numerics;
 using Content.Server._RF.World;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
@@ -54,6 +55,26 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
 
             ev.Handled = true;
             return;
+        }
+    }
+
+    protected override void ActiveTick(EntityUid uid, RimFortressRuleComponent component, GameRuleComponent gameRule, float frameTime)
+    {
+        base.ActiveTick(uid, component, gameRule, frameTime);
+
+        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
+        while (query.MoveNext(out var player, out var comp))
+        {
+            if (comp.OwnedMaps.Count != 1
+                || comp.Pops.Count != 0)
+                continue;
+
+            // We can't spawn pops before the player spawns,
+            // as the world is not yet loaded and checking for obstacles will be incorrect
+            var area = Box2.CenteredAround(Transform(player).Coordinates.Position, new Vector2(component.RoundStartSpawnRadius));
+            var pops = _world.SpawnPop(comp.OwnedMaps[0], area, amount: component.RoundstartPops, hardSpawn: true);
+
+            comp.Pops.AddRange(pops);
         }
     }
 
