@@ -88,6 +88,23 @@
 
 
     # ENTITY
+    # Water
+    - !type:BiomeEntityLayer
+      threshold: 0.50
+      noise:
+        seed: 2
+        noiseType: OpenSimplex2
+        frequency: 0.08
+        lacunarity: 2.50
+        fractalType: Ridged
+        gain: 1.5
+        mGain: 1.9
+        octaves: 4
+      allowedTiles:
+        - FloorIce
+      entities:
+        - FloorWaterEntity
+
     - !type:BiomeEntityLayer
       threshold: 0.5
       noise:
@@ -111,7 +128,6 @@
         frequency: 2
       allowedTiles:
         - FloorSnow
-        - FloorSnowDug
       entities:
         - IceCrust
 
