@@ -17,10 +17,5 @@
 - type: weightedRandom
   id: RandomBiome
   weights:
-    Continental: 1.0
-    LowDesert: 0.35
-    Grasslands: 1.0
-    Lava: 0.10
-    Snow: 0.20
-    Shadow: 0.10
-    Caves: 0.15
+    RfGrassland: 1.0
+    RfSnow: 0.4

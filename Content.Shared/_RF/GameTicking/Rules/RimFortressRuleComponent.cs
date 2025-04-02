@@ -1,5 +1,6 @@
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.EntityTable.EntitySelectors;
+using Content.Shared.NPC.Prototypes;
 using Content.Shared.Random;
 using Robust.Shared.Prototypes;
 
@@ -58,13 +59,13 @@ public sealed partial class RimFortressRuleComponent : Component
     /// Standard friendly factions for the player
     /// </summary>
     [DataField]
-    public List<string> PlayerFactionFriends = new();
+    public List<ProtoId<NpcFactionPrototype>> PlayerFactionFriends = new();
 
     /// <summary>
     /// Standard hostile factions for the player
     /// </summary>
     [DataField]
-    public List<string> PlayerFactionHostiles = new();
+    public List<ProtoId<NpcFactionPrototype>> PlayerFactionHostiles = new();
 
     /// <summary>
     /// Duration of the day
