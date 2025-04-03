@@ -18,4 +18,6 @@
   id: RandomBiome
   weights:
     RfGrassland: 1.0
+    RfJungle: 0.5
     RfSnow: 0.4
+    RfDesert: 0.2
