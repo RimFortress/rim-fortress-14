@@ -1,43 +1,42 @@
 - type: biomeTemplate
-  id: RfGrassland
+  id: RfJungle
   layers:
     # FLOOR
     - !type:BiomeTileLayer
       threshold: -1
-      tile: FloorPlanetGrass
+      tile: FloorPlanetDirt
 
     # Random sand
-    - !type:BiomeTileLayer
-      tile: FloorLowDesert
-      threshold: 0.50
-      noise:
-        seed: 2
-        noiseType: OpenSimplex2
-        frequency: 0.08
-        lacunarity: 2.50
-        fractalType: Ridged
-        gain: 1.5
-        mGain: 1.9
-        octaves: 4
+  # - !type:BiomeTileLayer
+  #   tile: FloorLowDesert
+  #   threshold: 0.50
+  #   noise:
+  #     seed: 2
+  #     noiseType: OpenSimplex2
+  #     frequency: 0.08
+  #     lacunarity: 2.50
+  #     fractalType: Ridged
+  #     gain: 1.5
+  #     mGain: 1.9
+  #     octaves: 4
 
-    # Caves
+    # Grass
     - !type:BiomeTileLayer
-      threshold: -0.35
-      tile: FloorCaveDrought
+      threshold: -0.25
+      tile: FloorGrassLight
       noise:
-        seed: 5
-        noiseType: Cellular
-        frequency: 0.01
-        lacunarity: 1.50
+        seed: 18
+        frequency: 0.040
+        noiseType: Perlin
         fractalType: FBm
-        cellularDistanceFunction: EuclideanSq
-        cellularReturnType: Distance2Div
-        octaves: 4
-
-    # Dirt
+        transformType3D: ImproveXZPlanes
+        mLacunarity: 1.8
+        gain: 0.5
+        mGain: 0.7
+        octaves: 3
     - !type:BiomeTileLayer
-      threshold: 0.25
-      tile: FloorPlanetDirt
+      threshold: 0.15
+      tile: FloorGrassDark
       noise:
         seed: 18
         frequency: 0.040
@@ -49,35 +48,29 @@
         mGain: 0.7
         octaves: 4
 
-    # River and road
+    # Caves
     - !type:BiomeTileLayer
-      tile: FloorLowDesert
-      threshold: 0.85
+      threshold: 0.40
+      tile: FloorCave
       noise:
-        seed: 3
+        seed: 5
         noiseType: OpenSimplex2
-        frequency: 0.003
-        lacunarity: 2.50
-        fractalType: Ridged
-        octaves: 1
+        frequency: 0.04
+        lacunarity: 1.50
+        fractalType: FBm
+        cellularDistanceFunction: EuclideanSq
+        cellularReturnType: Distance2Div
+        octaves: 5
+
+    # Road
     - !type:BiomeTileLayer
-      tile: FloorAsteroidSand
+      tile: FloorCaveDrought
       threshold: 0.85
       noise:
         seed: 6
         noiseType: OpenSimplex2
-        frequency: 0.01
+        frequency: 0.02
         lacunarity: 1.50
-        fractalType: Ridged
-        octaves: 1
-    - !type:BiomeTileLayer
-      tile: FloorDesert
-      threshold: 0.92
-      noise:
-        seed: 3
-        noiseType: OpenSimplex2
-        frequency: 0.003
-        lacunarity: 2.50
         fractalType: Ridged
         octaves: 1
 
@@ -85,26 +78,12 @@
     # ENTITY
     # Water
     - !type:BiomeEntityLayer
-      threshold: 0.80
-      noise:
-        seed: 3
-        noiseType: OpenSimplex2
-        frequency: 0.003
-        lacunarity: 2.50
-        fractalType: Ridged
-        octaves: 1
-      allowedTiles:
-        - FloorDesert
-      entities:
-        - FloorWaterEntity
-    - !type:BiomeEntityLayer
-      threshold: 0.3
+      threshold: -0.10
       noise:
         seed: 18
-        frequency: 0.04
-        noiseType: Perlin
+        noiseType: OpenSimplex2
         fractalType: FBm
-        transformType3D: ImproveXZPlanes
+        frequency: 2.0
         mLacunarity: 1.8
         gain: 0.5
         mGain: 0.7
@@ -114,19 +93,43 @@
       entities:
         - FloorWaterEntity
 
+    # Trees
     - !type:BiomeEntityLayer
-      threshold: 0.5
+      threshold: 0.7
       noise:
         seed: 0
         noiseType: OpenSimplex2
         fractalType: FBm
         frequency: 2
       allowedTiles:
-        - FloorPlanetGrass
+        - FloorGrassLight
+      entities:
+        - FloraTree
+        - FloraTreeStump
+    - !type:BiomeEntityLayer
+      threshold: 0.10
+      noise:
+        seed: 1
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 2
+      allowedTiles:
+        - FloorGrassDark
       entities:
         - FloraTree
         - FloraTreeLarge
-        - FloraTreeStump
+
+    - !type:BiomeEntityLayer
+      threshold: 0.75
+      noise:
+        seed: 10
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 2
+      allowedTiles:
+        - FloorGrassLight
+      entities:
+        - FloraRockSolid
 
     # Caves
     - !type:BiomeEntityLayer
@@ -137,12 +140,12 @@
         fractalType: FBm
         frequency: 2
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - FloraStalagmite
     - !type:BiomeEntityLayer
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       noise:
         seed: 183
         noiseType: OpenSimplex2
@@ -154,7 +157,7 @@
     # Walls
     - !type:BiomeEntityLayer
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       threshold: -0.30
       noise:
         seed: 0
@@ -169,7 +172,7 @@
         - WallRock
     - !type:BiomeEntityLayer
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       threshold: -0.30
       noise:
         seed: 123
@@ -192,7 +195,7 @@
         fractalType: FBm
         frequency: 3
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockBasaltTin
     - !type:BiomeEntityLayer
@@ -203,7 +206,7 @@
         fractalType: FBm
         frequency: 3
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockCoal
     - !type:BiomeEntityLayer
@@ -214,7 +217,7 @@
         fractalType: FBm
         frequency: 0.09
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockSalt
     - !type:BiomeEntityLayer
@@ -225,7 +228,7 @@
         fractalType: FBm
         frequency: 0.08
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockBasaltGold
     - !type:BiomeEntityLayer
@@ -236,7 +239,7 @@
         fractalType: FBm
         frequency: 0.07
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockBasaltSilver
     - !type:BiomeEntityLayer
@@ -247,7 +250,7 @@
         fractalType: FBm
         frequency: 0.06
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockBasaltPlasma
     - !type:BiomeEntityLayer
@@ -258,7 +261,7 @@
         fractalType: FBm
         frequency: 0.05
       allowedTiles:
-        - FloorCaveDrought
+        - FloorCave
       entities:
         - WallRockBasaltUranium
 
@@ -269,6 +272,7 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorPlanetGrass
+        - FloorGrassLight
       divisions: 1
       threshold: 0.70
       noise:
@@ -295,6 +299,7 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorPlanetGrass
+        - FloorGrassLight
       divisions: 1
       threshold: 0.70
       noise:
@@ -307,38 +312,41 @@
         - BushDThree
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorPlanetGrass
-      divisions: 1.0
-      threshold: 0.50
+        - FloorGrassDark
+      divisions: 0.25
+      threshold: 0.31
+      noise:
+        seed: 12
+        fractalType: FBm
+        frequency: 0.07
+      decals:
+        - Grassd2
+        - Grasse1
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorGrassDark
+      divisions: 1.5
+      threshold: 0.30
       noise:
         seed: 13
         fractalType: FBm
-        frequency: 0.03
+        frequency: 0.09
       decals:
-        - Grassa1
-        - Grassa2
-        - Grassa3
-        - Grassb4
-        - Grassb5
-        - Grassc1
-        - Grassc2
+        - Grassd1
+        - Grasse3
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorPlanetGrass
-      divisions: 1.0
-      threshold: 0.55
+        - FloorGrassDark
+      divisions: 0.5
+      threshold: 0.29
       noise:
         seed: 14
         fractalType: FBm
-        frequency: 0.04
+        frequency: 0.07
       decals:
-        - Grassa4
-        - Grassa5
-        - Grassb1
-        - Grassb2
-        - Grassb3
-        - Grassc3
-        - Grassc4
+        - Grassd3
+        - Grasse2
+
     # Dirt
     - !type:BiomeDecalLayer
       allowedTiles:
@@ -401,6 +409,8 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorPlanetGrass
+        - FloorGrassLight
+        - FloorGrassDark
       noise:
         seed: 12
         fractalType: FBm
@@ -417,6 +427,8 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorPlanetGrass
+        - FloorGrassLight
+        - FloorGrassDark
       noise:
         seed: 13
         fractalType: FBm
@@ -430,6 +442,8 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorPlanetGrass
+        - FloorGrassLight
+        - FloorGrassDark
       noise:
         seed: 14
         fractalType: FBm
@@ -445,10 +459,8 @@
     # Rocks
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorPlanetGrass
-        - FloorLowDesert
-        - FloorAsteroidSand
         - FloorCaveDrought
+        - FloorCave
       noise:
         seed: 15
         fractalType: FBm
@@ -462,10 +474,9 @@
         - Rock4
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorPlanetGrass
-        - FloorLowDesert
-        - FloorAsteroidSand
+        - FloorGrassDark
         - FloorCaveDrought
+        - FloorCave
       noise:
         seed: 16
         fractalType: FBm
