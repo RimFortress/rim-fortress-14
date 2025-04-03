@@ -21,6 +21,8 @@
     - Vox
   components:
     - type: NpcFactionMember
+      factions:
+        - RimFortress
     - type: Loadout
       prototypes:
         - RfSafariGear

@@ -4,8 +4,6 @@
   components:
     - type: RimFortressRule
       biomeSet: RandomBiome
-      playerFactionHostiles:
-        - AllHostile
       popsProtoIds:
         - RandomHumanoidSpawnerRfPop
       worldEvents: !type:NestedSelector

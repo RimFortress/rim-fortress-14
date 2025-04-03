@@ -1,6 +1,5 @@
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.EntityTable.EntitySelectors;
-using Content.Shared.NPC.Prototypes;
 using Content.Shared.Random;
 using Robust.Shared.Prototypes;
 
@@ -45,27 +44,6 @@ public sealed partial class RimFortressRuleComponent : Component
     /// </summary>
     [DataField(required: true), ValidatePrototypeId<WeightedRandomPrototype>]
     public ProtoId<WeightedRandomPrototype> BiomeSet;
-
-    // Yeah, I've made 100 faction prototypes that differ only by the number in the id, so....
-    // That's the prefix that starts the ids of all these factions.
-    // It's done to avoid messing with the official code.
-    /// <summary>
-    /// Prototypes of player factions that start out the same and differ only by the numbers at the end
-    /// </summary>
-    [DataField]
-    public string FactionProtoPrefix = "RimFortressFaction";
-
-    /// <summary>
-    /// Standard friendly factions for the player
-    /// </summary>
-    [DataField]
-    public List<ProtoId<NpcFactionPrototype>> PlayerFactionFriends = new();
-
-    /// <summary>
-    /// Standard hostile factions for the player
-    /// </summary>
-    [DataField]
-    public List<ProtoId<NpcFactionPrototype>> PlayerFactionHostiles = new();
 
     /// <summary>
     /// Duration of the day

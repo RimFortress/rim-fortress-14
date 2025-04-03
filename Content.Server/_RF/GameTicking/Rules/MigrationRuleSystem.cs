@@ -3,7 +3,6 @@ using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared.GameTicking.Components;
-using Content.Shared.NPC.Systems;
 using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Random;
 
@@ -16,7 +15,6 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
 {
     [Dependency] private readonly RimFortressWorldSystem _world = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly NpcFactionSystem _faction = default!;
     [Dependency] private readonly RimFortressRuleSystem _rimRule = default!;
 
     protected override void Added(EntityUid uid, MigrationRuleComponent component, GameRuleComponent gameRule, GameRuleAddedEvent args)
@@ -48,11 +46,7 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
             || !TryComp(playerUid, out RimFortressPlayerComponent? playerComp))
             return;
 
-        playerComp.Pops.AddRange(pops);
-
-        if (component.AddToPlayerFaction)
-        {
-            _faction.AddFaction((playerUid, null), playerComp.Faction);
-        }
+        if (component.AddToPops)
+            playerComp.Pops.AddRange(pops);
     }
 }

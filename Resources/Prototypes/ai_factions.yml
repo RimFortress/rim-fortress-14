@@ -119,6 +119,7 @@
   - Zombie
   - Revolutionary
   - Wizard
+  - RimFortress # RimFortress
 
 - type: npcFaction
   id: Wizard

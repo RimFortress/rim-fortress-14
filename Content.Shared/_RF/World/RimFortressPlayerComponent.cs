@@ -1,6 +1,3 @@
-using Content.Shared.NPC.Prototypes;
-using Robust.Shared.Prototypes;
-
 namespace Content.Shared._RF.World;
 
 /// <summary>
@@ -9,9 +6,6 @@ namespace Content.Shared._RF.World;
 [RegisterComponent]
 public sealed partial class RimFortressPlayerComponent : Component
 {
-    [ViewVariables]
-    public ProtoId<NpcFactionPrototype> Faction { get; set; }
-
     /// <summary>
     /// Maps owned by a player
     /// </summary>

@@ -39,7 +39,7 @@
   components:
     - type: MigrationRule
       spawn: [ RandomHumanoidSpawnerRfPop ]
-      addToPlayerFaction: true
+      addToPops: true
 
 # Animals migration
 # Neutral

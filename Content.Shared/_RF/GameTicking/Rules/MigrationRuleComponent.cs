@@ -23,10 +23,10 @@ public sealed partial class MigrationRuleComponent : Component
     public List<EntProtoId> Spawn { get; set; } = new();
 
     /// <summary>
-    /// Should spawn entities be added to a player's faction
+    /// Should spawn entities be added to a player's pops list
     /// </summary>
     [DataField]
-    public bool AddToPlayerFaction { get; set; }
+    public bool AddToPops { get; set; }
 
     /// <summary>
     /// On maps with only these templates, this event can happen.

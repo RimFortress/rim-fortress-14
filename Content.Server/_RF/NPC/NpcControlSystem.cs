@@ -1,7 +1,7 @@
-using Content.Server._RF.World;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.World;
 
 namespace Content.Server._RF.NPC;
 
@@ -9,7 +9,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 {
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
-    [Dependency] private readonly RimFortressWorldSystem _world = default!;
 
     [ValidatePrototypeId<HTNCompoundPrototype>]
     private const string MoveToCompound = "MoveToCompound";
@@ -76,7 +75,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var task = new NpcTask(request.TaskType, target, targetCoords);
 
         if (!_npc.TryGetNpc(entity, out var npc)
-            || !_world.IsPlayerFactionMember(requester, entity))
+            || !TryComp(requester, out RimFortressPlayerComponent? player)
+            || !player.Pops.Contains(entity))
             return;
 
         switch (request.TaskType)
@@ -87,9 +87,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 SetTask(entity, task, MoveToCompound);
                 break;
             case NpcTaskType.Attack:
-                if (_world.IsPlayerFactionMember(requester, target))
-                    break;
-
                 npc.Blackboard.SetValue(AttackTargetCoordinatesKey, targetCoords);
                 npc.Blackboard.SetValue(AttackTargetKey, target);
 
@@ -111,7 +108,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var entity = GetEntity(request.Entity);
         var requester = GetEntity(request.Requester);
 
-        if (!_world.IsPlayerFactionMember(requester, entity)
+        if (!TryComp(requester, out RimFortressPlayerComponent? player)
+            || !player.Pops.Contains(entity)
             || !_tasks.ContainsKey(entity)
             || !_npc.TryGetNpc(entity, out var npc)
             || npc is not HTNComponent htn)

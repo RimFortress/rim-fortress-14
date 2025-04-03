@@ -4,7 +4,6 @@ using Content.Server.Parallax;
 using Content.Shared._RF.World;
 using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
-using Content.Shared.Parallax.Biomes.Markers;
 using Content.Shared.Random.Helpers;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
@@ -26,14 +25,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
-
-    public void SpawnMarker(EntityUid gridUid, ProtoId<BiomeMarkerLayerPrototype> marker)
-    {
-        if (!TryComp(gridUid, out BiomeComponent? biome))
-            return;
-
-        _biome.AddMarkerLayer(gridUid, biome, marker);
-    }
 
     private EntityUid CreateMap()
     {
@@ -105,8 +96,5 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         player.OwnedMaps.Add(worldMap.Owner);
 
         worldMap.Comp.OwnerPlayer = mob;
-
-        if (GetPlayerFaction(mob) is { } faction)
-            player.Faction = faction;
     }
 }

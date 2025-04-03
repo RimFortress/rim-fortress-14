@@ -1,8 +1,6 @@
 using System.Numerics;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
-using Content.Shared.NPC.Components;
-using Content.Shared.NPC.Systems;
 using Content.Shared.Physics;
 using Content.Shared.Tag;
 using Robust.Shared.Map;
@@ -16,7 +14,6 @@ namespace Content.Shared._RF.World;
 public abstract class SharedRimFortressWorldSystem : EntitySystem
 {
     [Dependency] private readonly TagSystem _tag = default!;
-    [Dependency] private readonly NpcFactionSystem _faction = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
@@ -25,8 +22,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
     [ValidatePrototypeId<TagPrototype>]
     private readonly ProtoId<TagPrototype> _factionPopTag = "PlayerFactionPop";
-
-    private int _lastFaction = 1;
 
     protected RimFortressRuleComponent? Rule;
     protected EntityUid?[,] Worlds = new EntityUid?[0, 0]; // [Y,X]
@@ -52,9 +47,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     {
         if (_tag.HasTag(uid, _factionPopTag)
             && GetPlayerByMap(_map.GetMap(Transform(uid).MapID)) is { } player)
-        {
-            _faction.AddFaction((uid, null), player.Faction);
-        }
+            player.Pops.Add(uid);
     }
 
     /// <summary>
@@ -96,37 +89,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Top, y) + new Vector2(0.5f), id));
             Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Bottom, y) + new Vector2(0.5f), id));
         }
-    }
-
-    /// <summary>
-    /// Creates a faction for a player
-    /// </summary>
-    protected string? GetPlayerFaction(EntityUid uid)
-    {
-        if (Rule is not { } rule)
-            return null;
-
-        var factionId = $"{rule.FactionProtoPrefix}{_lastFaction + 1}";
-        _faction.AddFaction((uid, null), factionId);
-        _lastFaction++;
-
-        EnsureComp<RimFortressPlayerComponent>(uid).Faction = factionId;
-
-        // Add friends
-        foreach (var friend in rule.PlayerFactionFriends)
-        {
-            _faction.MakeFriendly(factionId, friend);
-            _faction.MakeFriendly(friend, factionId);
-        }
-
-        // Add hostiles
-        foreach (var hostile in rule.PlayerFactionHostiles)
-        {
-            _faction.MakeHostile(factionId, hostile);
-            _faction.MakeHostile(hostile, factionId);
-        }
-
-        return factionId;
     }
 
     public List<EntityUid> SpawnPopAlongBounds(
@@ -245,19 +207,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
         return Math.Abs(coordinates.X) <= rule.PlanetChunkLoadDistance * ChunkSize
                && Math.Abs(coordinates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
-    }
-
-    /// <summary>
-    /// Checks if the entity is part of the player's faction
-    /// </summary>
-    public bool IsPlayerFactionMember(EntityUid playerUid, EntityUid uid)
-    {
-        if (!PlayerQuery.TryComp(playerUid, out var player)
-            || !TryComp(uid, out NpcFactionMemberComponent? comp)
-            || !_faction.IsMember(new Entity<NpcFactionMemberComponent?>(uid, comp), player.Faction))
-            return false;
-
-        return true;
     }
 
     public RimFortressPlayerComponent? GetPlayerByMap(EntityUid mapId)

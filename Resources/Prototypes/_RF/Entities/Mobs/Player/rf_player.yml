@@ -31,3 +31,5 @@
   - type: MouseDragMove
   - type: NpcControl
   - type: NpcFactionMember
+    factions:
+      - RimFortress
