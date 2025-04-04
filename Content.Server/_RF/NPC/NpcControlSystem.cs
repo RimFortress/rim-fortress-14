@@ -9,19 +9,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
 
-    [ValidatePrototypeId<HTNCompoundPrototype>]
-    private const string MoveToCompound = "MoveToCompound";
-    private const string MoveToTargetKey = "MoveToTargetCoordinates";
-
-    [ValidatePrototypeId<HTNCompoundPrototype>]
-    private const string AttackCompound = "AttackTargetCompound";
-    private const string AttackTargetKey = "AttackTarget";
-    private const string AttackTargetCoordinatesKey = "AttackTargetCoordinates";
-
-    [ValidatePrototypeId<HTNCompoundPrototype>]
-    private const string PickUpCompound = "PickUpCompound";
-    private const string PickUpTargetKey = "PickUpTarget";
-    private const string PickUpTargetCoordinatesKey = "PickUpTargetCoordinates";
+    private const string TargetKey = "Target";
+    private const string TargetCoordinatesKey = "TargetCoordinates";
 
     private readonly Dictionary<EntityUid, HTNCompoundTask> _originCompounds = new();
     private readonly Dictionary<EntityUid, NpcTask> _tasks = new();
@@ -75,31 +64,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         if (!_npc.TryGetNpc(entity, out var npc)
             || !TryComp(entity, out ControllableNpcComponent? controllable)
-            || !controllable.CanControl.Contains(requester))
+            || !controllable.CanControl.Contains(requester)
+            || !controllable.Compounds.TryGetValue(task.Type, out var compoundTask))
             return;
 
-        switch (request.TaskType)
-        {
-            case NpcTaskType.Move:
-                npc.Blackboard.SetValue(MoveToTargetKey, targetCoords);
-
-                SetTask(entity, task, MoveToCompound);
-                break;
-            case NpcTaskType.Attack:
-                npc.Blackboard.SetValue(AttackTargetCoordinatesKey, targetCoords);
-                npc.Blackboard.SetValue(AttackTargetKey, target);
-
-                SetTask(entity, task, AttackCompound);
-                break;
-            case NpcTaskType.PickUp:
-                npc.Blackboard.SetValue(PickUpTargetCoordinatesKey, targetCoords);
-                npc.Blackboard.SetValue(PickUpTargetKey, target);
-
-                SetTask(entity, task, PickUpCompound);
-                break;
-            default:
-                throw new NotImplementedException();
-        }
+        npc.Blackboard.SetValue(TargetCoordinatesKey, targetCoords);
+        npc.Blackboard.SetValue(TargetKey, target);
+        SetTask(entity, task, compoundTask);
     }
 
     private void OnTaskResetRequest(NpcTaskResetRequest request)

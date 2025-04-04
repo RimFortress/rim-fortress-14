@@ -27,23 +27,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<ControllableNpcComponent, MapInitEvent>(OnSpawn);
-    }
-
-    // We use RandomHumanoidSpawner to spawn pops,
-    // so we can't set the faction at once, so we resort to these crutches
-    private void OnSpawn(EntityUid uid, ControllableNpcComponent component, MapInitEvent args)
-    {
-        if (GetPlayerByMap(_map.GetMap(Transform(uid).MapID)) is not { } player)
-            return;
-
-        component.CanControl.Add(player);
-    }
-
     private EntityUid CreateMap()
     {
         if (Rule is not { } rule)

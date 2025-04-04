@@ -28,7 +28,7 @@
     # Move to target
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: MoveToTargetCoordinates
+          key: TargetCoordinates
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:SetFloatOperator
@@ -37,7 +37,7 @@
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
-            targetKey: MoveToTargetCoordinates
+            targetKey: TargetCoordinates
             rangeKey: MoveToCloseRange
             removeKeyOnFinish: false
 
@@ -111,9 +111,9 @@
         - !type:GunAmmoPrecondition
           minPercent: 0.001
         - !type:KeyExistsPrecondition
-          key: AttackTarget
+          key: Target
         - !type:KeyExistsPrecondition
-          key: AttackTargetCoordinates
+          key: TargetCoordinates
       tasks:
         # Move to the target
         - !type:HTNPrimitiveTask
@@ -121,7 +121,7 @@
             pathfindInPlanning: true
             removeKeyOnFinish: false
             stopOnLineOfSight: true
-            targetKey: AttackTargetCoordinates
+            targetKey: TargetCoordinates
             rangeKey: MeleeRange
         - !type:HTNPrimitiveTask
           operator: !type:JukeOperator
@@ -129,7 +129,7 @@
         # Attack with a gun
         - !type:HTNPrimitiveTask
           operator: !type:GunOperator
-            targetKey: AttackTarget
+            targetKey: Target
             opaqueKey: true
 
     # Melee
@@ -139,27 +139,27 @@
             - type: Gun
           invert: true
         - !type:KeyExistsPrecondition
-          key: AttackTarget
+          key: Target
         - !type:KeyExistsPrecondition
-          key: AttackTargetCoordinates
+          key: TargetCoordinates
       tasks:
         # Else go to the target at melee distance
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             removeKeyOnFinish: false
-            targetKey: AttackTargetCoordinates
+            targetKey: TargetCoordinates
             rangeKey: MeleeRange
         # Attack in close combat if no gun is available
         - !type:HTNPrimitiveTask
           preconditions:
             - !type:KeyExistsPrecondition
-              key: AttackTarget
+              key: Target
             - !type:TargetInRangePrecondition
-              targetKey: AttackTarget
+              targetKey: Target
               rangeKey: MeleeRange
           operator: !type:MeleeOperator
-            targetKey: AttackTarget
+            targetKey: Target
 
 
 - type: htnCompound
@@ -193,9 +193,9 @@
     - preconditions:
         - !type:ActiveHandEntityPrecondition
         - !type:KeyExistsPrecondition
-          key: PickUpTarget
+          key: Target
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
+          targetKey: Target
           invert: true
       tasks:
         - !type:HTNPrimitiveTask
@@ -204,21 +204,21 @@
     # Move to target and pick up
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: PickUpTarget
+          key: Target
         - !type:KeyExistsPrecondition
-          key: PickUpTargetCoordinates
+          key: TargetCoordinates
         - !type:ActiveHandFreePrecondition
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
-            targetKey: PickUpTargetCoordinates
+            targetKey: TargetCoordinates
             rangeKey: InteractRange
             removeKeyOnFinish: false
         - !type:HTNPrimitiveTask
           preconditions:
             - !type:TargetInRangePrecondition
-              targetKey: PickUpTarget
+              targetKey: Target
               rangeKey: InteractRange
           operator: !type:InteractWithOperator
-            targetKey: PickUpTarget
+            targetKey: Target

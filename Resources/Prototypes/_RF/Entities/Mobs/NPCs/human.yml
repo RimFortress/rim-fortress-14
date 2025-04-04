@@ -1,28 +1,14 @@
 - type: entity
-  id: RandomHumanoidSpawnerRfPop
-  name: Habitant
-  suffix: RimFortress, RF
+  id: RimFortressMobPop
+  parent: BaseMobHuman
+  save: false
   components:
-    - type: Sprite
-      sprite: Markers/cross.rsi
-      state: green
+    - type: RandomHumanoidAppearance
+      randomizeName: false
     - type: RandomMetadata
       nameSegments:
-      - NamesFirst
-      - NamesLast
-    - type: RandomHumanoidSpawner
-      settings: RimFortressPop
-
-
-- type: randomHumanoidSettings
-  id: RimFortressPop
-  speciesBlacklist:
-    - Diona
-    - Vox
-  components:
-    - type: NpcFactionMember
-      factions:
-        - RimFortress
+        - NamesFirst
+        - NamesLast
     - type: Loadout
       prototypes:
         - RfSafariGear
@@ -34,4 +20,11 @@
     - type: HTN
       rootTask:
         task: IdleCompound
+    - type: NpcFactionMember
+      factions:
+      - RimFortress
     - type: ControllableNpc
+      compounds:
+        Move: MoveToCompound
+        Attack: AttackTargetCompound
+        PickUp: PickUpCompound

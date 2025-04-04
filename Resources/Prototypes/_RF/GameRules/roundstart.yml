@@ -5,7 +5,7 @@
     - type: RimFortressRule
       biomeSet: RandomBiome
       popsProtoIds:
-        - RandomHumanoidSpawnerRfPop
+        - RimFortressMobPop
       worldEvents: !type:NestedSelector
         tableId: BasicWorldRulesTable
       minMaxEventTiming:
