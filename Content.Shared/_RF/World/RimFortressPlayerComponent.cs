@@ -17,4 +17,6 @@ public sealed partial class RimFortressPlayerComponent : Component
     /// </summary>
     [ViewVariables]
     public List<EntityUid> Pops { get; set; } = new();
+
+    public bool GotRoundstartPops;
 }

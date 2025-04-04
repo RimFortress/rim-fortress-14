@@ -70,10 +70,11 @@ public sealed partial class RimFortressRuleComponent : Component
     public float RoundStartSpawnRadius = 20f;
 
     /// <summary>
-    /// Time to the first event on the map, after the establishment of a settlement on the map, in minutes
+    /// The time from the start of the round after which the settlers will fall asleep.
+    /// It is necessary to give time for the map to load and for the spawning to work properly.
     /// </summary>
     [DataField]
-    public int MinimumTimeUntilFirstEvent = 10;
+    public TimeSpan MinimumTimeUntilFirstEvent = TimeSpan.FromSeconds(2);
 
     /// <summary>
     /// Table with random events that can happen on the world map

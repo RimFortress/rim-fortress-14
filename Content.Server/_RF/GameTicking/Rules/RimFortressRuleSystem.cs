@@ -2,13 +2,11 @@ using System.Linq;
 using System.Numerics;
 using Content.Server._RF.World;
 using Content.Server.GameTicking.Rules;
-using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
-using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -25,8 +23,6 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly BiomeSystem _biome = default!;
 
     private readonly Dictionary<EntityUid, Dictionary<EntProtoId, TimeSpan>> _nextEventTime = new ();
     private readonly List<Entity<WorldMapComponent>> _eventQueue = new();
@@ -62,32 +58,6 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         }
     }
 
-    protected override void ActiveTick(EntityUid uid, RimFortressRuleComponent component, GameRuleComponent gameRule, float frameTime)
-    {
-        base.ActiveTick(uid, component, gameRule, frameTime);
-
-        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
-        while (query.MoveNext(out var player, out var comp))
-        {
-            if (comp.OwnedMaps.Count != 1
-                || comp.Pops.Count != 0)
-                continue;
-
-            var xform = Transform(player);
-            if (_transform.GetMap(xform.Coordinates) is not { } map
-                || !TryComp(map, out BiomeComponent? biome)
-                || _biome.IsChunkLoaded(biome, Vector2i.Zero))
-                continue;
-
-            // We can't spawn pops before the player spawns,
-            // as the world is not yet loaded and checking for obstacles will be incorrect
-            var area = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(component.RoundStartSpawnRadius));
-            var pops = _world.SpawnPop(comp.OwnedMaps[0], area, amount: component.RoundstartPops, hardSpawn: true);
-
-            comp.Pops.AddRange(pops);
-        }
-    }
-
     private void OnMapAvailable(WorldMapAvailableForEvent ev)
     {
         var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
@@ -95,6 +65,22 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         {
             if (!GameTicker.IsGameRuleActive(ruleUid, rule))
                 continue;
+
+            if (ev.Map.Comp.OwnerPlayer is { } uid
+                && TryComp(uid, out RimFortressPlayerComponent? player)
+                && !player.GotRoundstartPops)
+            {
+                foreach (var map in player.OwnedMaps)
+                {
+                    var area = Box2.CenteredAround(Transform(uid).Coordinates.Position, new Vector2(rf.RoundStartSpawnRadius));
+                    var pops = _world.SpawnPop(map, area, amount: rf.RoundstartPops, hardSpawn: true);
+
+                    player.Pops.AddRange(pops);
+                }
+
+                player.GotRoundstartPops = true;
+                return;
+            }
 
             var addRule = _random.Pick(AvailableRules(ev.Map));
             ResetTime(rf, ev.Map, addRule);

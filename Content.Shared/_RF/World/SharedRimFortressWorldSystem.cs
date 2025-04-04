@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
@@ -121,7 +122,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     }
 
     /// <summary>
-    /// Spawns entities in random free tiles of a given area
+    /// Spawns entities in random free tiles, connected to the map border, of a given area
     /// </summary>
     /// <returns>List of spawned entities</returns>
     public List<EntityUid> SpawnPop(
@@ -133,7 +134,8 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     {
         var spawned = new List<EntityUid>();
 
-        if (!TryComp(gridUid, out MapGridComponent? grid))
+        if (!TryComp(gridUid, out MapGridComponent? grid)
+            || Rule is not { } rule)
             return spawned;
 
         var tileEnumerator = _map.GetTilesEnumerator(gridUid, grid, area);
@@ -148,45 +150,99 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             freeTiles.Add(tileRef);
         }
 
-        var protoId = popProto;
-        if (popProto == null)
+        while (freeTiles.Count > 0)
         {
-            if (Rule is not { } rule)
+            if (amount == 0)
                 return spawned;
 
-            protoId = _random.Pick(rule.PopsProtoIds);
+            var randomTile = _random.Pick(freeTiles);
+            freeTiles.Remove(randomTile);
+
+            if (IsConnectedToBorder(randomTile, Rule.PlanetBorderProtoId, out var tiles))
+            {
+                freeTiles = freeTiles.Where(tile => tiles.Contains(tile)).ToList();
+                break;
+            }
+
+            foreach (var visited in tiles)
+            {
+                freeTiles.Remove(visited);
+            }
+        }
+
+        // If we really want to spawn these entities, but we can't,
+        // we remove everything that's in our way.
+        if (freeTiles.Count == 0 && hardSpawn)
+        {
+            var tileRef = _map.GetTileRef(gridUid, grid, new EntityCoordinates(gridUid, area.Center));
+            var box = Box2.CenteredAround(_turf.GetTileCenter(tileRef).Position, Vector2.One);
+            var entities = _lookup.GetEntitiesIntersecting(gridUid, box, LookupFlags.Static);
+
+            foreach (var entity in entities)
+            {
+                EntityManager.DeleteEntity(entity);
+            }
+
+            freeTiles.Add(tileRef);
         }
 
         if (freeTiles.Count == 0)
-        {
-            // If we really want to spawn these entities, but we can't,
-            // we remove everything that's in our way.
-            if (hardSpawn)
-            {
-                var tileRef = _map.GetTileRef(gridUid, grid, new EntityCoordinates(gridUid, area.Center));
-                var box = Box2.CenteredAround(_turf.GetTileCenter(tileRef).Position, Vector2.One);
-                var entities = _lookup.GetEntitiesIntersecting(gridUid, box, LookupFlags.Static);
+            return spawned;
 
-                foreach (var entity in entities)
-                {
-                    EntityManager.DeleteEntity(entity);
-                }
-
-                freeTiles.Add(tileRef);
-            }
-            else
-                return spawned;
-        }
-
-        // Spawn the entity on a random free tile
-        for (var i = 0; i < amount; i++)
+        // Spawn the entities on a random free tile
+        while (amount > 0)
         {
             var spawnCoords = _turf.GetTileCenter(_random.Pick(freeTiles));
+            var protoId = popProto;
+
+            if (popProto == null)
+                protoId = _random.Pick(rule.PopsProtoIds);
+
             var spawnedUid = Spawn(protoId, spawnCoords);
             spawned.Add(spawnedUid);
+            amount--;
         }
 
         return spawned;
+    }
+
+    /// <summary>
+    /// Checks if the tile is connected to the map border
+    /// </summary>
+    /// <param name="tileRef">tile from which the check will start</param>
+    /// <param name="border">border entity prototype id</param>
+    /// <param name="visited">list of visited tiles</param>
+    protected bool IsConnectedToBorder(TileRef tileRef, EntProtoId border, out HashSet<TileRef> visited)
+    {
+        var directions = new[] { Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down };
+        var queue = new Queue<TileRef>();
+
+        queue.Enqueue(tileRef);
+        visited = new();
+
+        var gridUid = tileRef.GridUid;
+        var gridComp = Comp<MapGridComponent>(gridUid);
+
+        while (queue.TryDequeue(out var node))
+        {
+            if (!visited.Add(node))
+                continue;
+
+            if (_turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+                continue;
+
+            // NOTE: space is all unloaded map tiles, even if they are not map boundaries.
+            if (node.IsSpace())
+                return true;
+
+            foreach (var offset in directions)
+            {
+                var nextTile = _map.GetTileRef((gridUid, gridComp), node.GridIndices + offset);
+                queue.Enqueue(nextTile);
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

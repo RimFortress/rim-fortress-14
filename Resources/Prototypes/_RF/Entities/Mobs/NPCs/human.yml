@@ -34,6 +34,6 @@
     - type: HTN
       rootTask:
         task: IdleCompound
-    - type: Tag
+    - type: tag
       tags:
         - PlayerFactionPop

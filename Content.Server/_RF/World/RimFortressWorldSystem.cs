@@ -82,8 +82,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         // Create or get map for player
         var worldMap = CreateOrGetMap(mapCoords);
-        worldMap.Comp.NextEventTime = _timing.CurTime + TimeSpan.FromMinutes(rule.MinimumTimeUntilFirstEvent)
-            + TimeSpan.FromSeconds(_random.NextFloat(120)); // Offset, so that events on the maps do not start at the same time
+        worldMap.Comp.NextEventTime = _timing.CurTime + rule.MinimumTimeUntilFirstEvent;
 
         // Spawn RF player entity
         var newMind = _mind.CreateMind(session.UserId, session.Name);
