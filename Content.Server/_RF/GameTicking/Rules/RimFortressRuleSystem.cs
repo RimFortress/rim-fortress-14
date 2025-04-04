@@ -2,11 +2,13 @@ using System.Linq;
 using System.Numerics;
 using Content.Server._RF.World;
 using Content.Server.GameTicking.Rules;
+using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
+using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -23,6 +25,8 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly BiomeSystem _biome = default!;
 
     private readonly Dictionary<EntityUid, Dictionary<EntProtoId, TimeSpan>> _nextEventTime = new ();
     private readonly List<Entity<WorldMapComponent>> _eventQueue = new();
@@ -69,9 +73,15 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
                 || comp.Pops.Count != 0)
                 continue;
 
+            var xform = Transform(player);
+            if (_transform.GetMap(xform.Coordinates) is not { } map
+                || !TryComp(map, out BiomeComponent? biome)
+                || _biome.IsChunkLoaded(biome, Vector2i.Zero))
+                continue;
+
             // We can't spawn pops before the player spawns,
             // as the world is not yet loaded and checking for obstacles will be incorrect
-            var area = Box2.CenteredAround(Transform(player).Coordinates.Position, new Vector2(component.RoundStartSpawnRadius));
+            var area = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(component.RoundStartSpawnRadius));
             var pops = _world.SpawnPop(comp.OwnedMaps[0], area, amount: component.RoundstartPops, hardSpawn: true);
 
             comp.Pops.AddRange(pops);

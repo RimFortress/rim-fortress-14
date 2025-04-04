@@ -1094,4 +1094,14 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
 
         _mapSystem.SetTiles(mapUid, mapGrid, tiles);
     }
+
+    // RimFortress Start
+    public bool IsChunkLoaded(BiomeComponent biome, Vector2i ind)
+    {
+        if (!_activeChunks.TryGetValue(biome, out var chunk))
+            return false;
+        
+        return chunk.Contains(ind);
+    }
+    // RimFotress End
 }

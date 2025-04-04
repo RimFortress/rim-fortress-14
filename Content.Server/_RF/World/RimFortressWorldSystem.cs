@@ -40,7 +40,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             cycle.Duration = rule.DayDuration;
             cycle.Offset = rule.DayDuration / 3; // For roundstart day time
             cycle.InitialOffset = false;
-            cycle.MinLightLevel = 0.5f;
+            cycle.MinLightLevel = 1f;
         }
 
         // Build map borders around map center
