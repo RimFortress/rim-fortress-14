@@ -364,8 +364,6 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorCaveDrought
-        - FloorCave
-        - FloorSnow
       noise:
         seed: 15
         fractalType: FBm
@@ -380,8 +378,6 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorCaveDrought
-        - FloorCave
-        - FloorSnow
       noise:
         seed: 16
         fractalType: FBm

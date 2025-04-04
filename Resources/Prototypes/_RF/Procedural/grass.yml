@@ -448,7 +448,6 @@
         - FloorPlanetGrass
         - FloorLowDesert
         - FloorAsteroidSand
-        - FloorCaveDrought
       noise:
         seed: 15
         fractalType: FBm
@@ -465,7 +464,6 @@
         - FloorPlanetGrass
         - FloorLowDesert
         - FloorAsteroidSand
-        - FloorCaveDrought
       noise:
         seed: 16
         fractalType: FBm

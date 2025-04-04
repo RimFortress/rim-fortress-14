@@ -7,7 +7,7 @@
     visible: false
     noRot: true
   - type: ContentEye
-    maxZoom: 8.916104, 8.916104
+    maxZoom: 6,6
   - type: Eye
     drawFov: false
   - type: Input

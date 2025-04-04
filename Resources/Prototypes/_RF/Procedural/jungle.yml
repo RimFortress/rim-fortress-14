@@ -446,7 +446,6 @@
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorCaveDrought
-        - FloorCave
       noise:
         seed: 15
         fractalType: FBm
@@ -462,7 +461,6 @@
       allowedTiles:
         - FloorGrassDark
         - FloorCaveDrought
-        - FloorCave
       noise:
         seed: 16
         fractalType: FBm
