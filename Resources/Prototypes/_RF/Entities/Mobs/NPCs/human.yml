@@ -34,6 +34,4 @@
     - type: HTN
       rootTask:
         task: IdleCompound
-    - type: tag
-      tags:
-        - PlayerFactionPop
+    - type: ControllableNpc

@@ -1,7 +1,6 @@
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
-using Content.Shared._RF.World;
 
 namespace Content.Server._RF.NPC;
 
@@ -75,8 +74,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var task = new NpcTask(request.TaskType, target, targetCoords);
 
         if (!_npc.TryGetNpc(entity, out var npc)
-            || !TryComp(requester, out RimFortressPlayerComponent? player)
-            || !player.Pops.Contains(entity))
+            || !TryComp(entity, out ControllableNpcComponent? controllable)
+            || !controllable.CanControl.Contains(requester))
             return;
 
         switch (request.TaskType)
@@ -108,8 +107,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var entity = GetEntity(request.Entity);
         var requester = GetEntity(request.Requester);
 
-        if (!TryComp(requester, out RimFortressPlayerComponent? player)
-            || !player.Pops.Contains(entity)
+        if (!TryComp(entity, out ControllableNpcComponent? controllable)
+            || !controllable.CanControl.Contains(requester)
             || !_tasks.ContainsKey(entity)
             || !_npc.TryGetNpc(entity, out var npc)
             || npc is not HTNComponent htn)

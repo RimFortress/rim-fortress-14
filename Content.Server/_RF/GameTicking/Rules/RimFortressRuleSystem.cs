@@ -74,8 +74,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
                 {
                     var area = Box2.CenteredAround(Transform(uid).Coordinates.Position, new Vector2(rf.RoundStartSpawnRadius));
                     var pops = _world.SpawnPop(map, area, amount: rf.RoundstartPops, hardSpawn: true);
-
-                    player.Pops.AddRange(pops);
+                    _world.AddPops((uid, player), pops);
                 }
 
                 player.GotRoundstartPops = true;

@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Server._RF.NPC;
 using Content.Server.Mind;
 using Content.Server.Parallax;
 using Content.Shared._RF.World;
@@ -25,6 +26,23 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<ControllableNpcComponent, MapInitEvent>(OnSpawn);
+    }
+
+    // We use RandomHumanoidSpawner to spawn pops,
+    // so we can't set the faction at once, so we resort to these crutches
+    private void OnSpawn(EntityUid uid, ControllableNpcComponent component, MapInitEvent args)
+    {
+        if (GetPlayerByMap(_map.GetMap(Transform(uid).MapID)) is not { } player)
+            return;
+
+        component.CanControl.Add(player);
+    }
 
     private EntityUid CreateMap()
     {
@@ -95,5 +113,17 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         player.OwnedMaps.Add(worldMap.Owner);
 
         worldMap.Comp.OwnerPlayer = mob;
+    }
+
+    public void AddPops(Entity<RimFortressPlayerComponent?> player, List<EntityUid> pops)
+    {
+        if (!Resolve(player.Owner, ref player.Comp))
+            return;
+
+        foreach (var pop in pops)
+        {
+            var comp = EnsureComp<ControllableNpcComponent>(pop);
+            comp.CanControl.Add(player);
+        }
     }
 }

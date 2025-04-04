@@ -3,7 +3,6 @@ using System.Numerics;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
-using Content.Shared.Tag;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
@@ -14,15 +13,11 @@ namespace Content.Shared._RF.World;
 
 public abstract class SharedRimFortressWorldSystem : EntitySystem
 {
-    [Dependency] private readonly TagSystem _tag = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
-
-    [ValidatePrototypeId<TagPrototype>]
-    private readonly ProtoId<TagPrototype> _factionPopTag = "PlayerFactionPop";
 
     protected RimFortressRuleComponent? Rule;
     protected EntityUid?[,] Worlds = new EntityUid?[0, 0]; // [Y,X]
@@ -38,17 +33,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
         MapQuery = GetEntityQuery<WorldMapComponent>();
         PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
-
-        SubscribeLocalEvent<TagComponent, MapInitEvent>(OnSpawn);
-    }
-
-    // We use RandomHumanoidSpawner to spawn pops,
-    // so we can't set the faction at once, so we resort to these crutches
-    private void OnSpawn(EntityUid uid, TagComponent component, MapInitEvent args)
-    {
-        if (_tag.HasTag(uid, _factionPopTag)
-            && GetPlayerByMap(_map.GetMap(Transform(uid).MapID)) is { } player)
-            player.Pops.Add(uid);
     }
 
     /// <summary>
@@ -265,13 +249,13 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
                && Math.Abs(coordinates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
     }
 
-    public RimFortressPlayerComponent? GetPlayerByMap(EntityUid mapId)
+    public Entity<RimFortressPlayerComponent>? GetPlayerByMap(EntityUid mapId)
     {
         var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
-        while (query.MoveNext(out var player))
+        while (query.MoveNext(out var uid, out var player))
         {
             if (player.OwnedMaps.Contains(mapId))
-                return player;
+                return (uid, player);
         }
 
         return null;

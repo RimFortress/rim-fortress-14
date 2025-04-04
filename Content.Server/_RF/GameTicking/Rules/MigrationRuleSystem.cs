@@ -42,11 +42,8 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
             spawn,
             amount: component.Amount.Next(_random));
 
-        if (map.Comp.OwnerPlayer is not { } playerUid
-            || !TryComp(playerUid, out RimFortressPlayerComponent? playerComp))
-            return;
-
-        if (component.AddToPops)
-            playerComp.Pops.AddRange(pops);
+        if (map.Comp.OwnerPlayer is { } playerUid
+            && component.AddToPops)
+            _world.AddPops((playerUid, null), pops);
     }
 }
