@@ -11,7 +11,7 @@ public sealed partial class ActiveHandEntityIsPrecondition : HTNPrecondition
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
 
-    [DataField]
+    [DataField(required: true)]
     public string TargetKey = default!;
 
     [DataField]

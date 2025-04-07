@@ -35,6 +35,9 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {"RotateSpeed", float.MaxValue},
         {"VisionRadius", 10f},
         {"AggroVisionRadius", 10f},
+        // RimFortress Start
+        {CloseInteractRange, SharedInteractionSystem.InteractionRange / 2},
+        // RimFortress End
     };
 
     /// <summary>
@@ -339,6 +342,10 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
     /// A configurable target that's ordered by external sources.
     /// </summary>
     public const string CurrentOrderedTarget = "CurrentOrderedTarget";
+
+    // RimFortress Start
+    public const string CloseInteractRange = "CloseInteractRange";
+    // RimFortress End
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
     {

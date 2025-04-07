@@ -1,0 +1,54 @@
+- type: utilityQuery
+  id: TargetMaterials
+  query:
+    - !type:ComponentQuery
+      components:
+        - type: Stack
+          stackType: Steel # Just serialization stuff
+    - !type:MaterialFilter
+      targetKey: Material
+      amountKey: Amount
+      invert: true
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: TargetTags
+  query:
+    - !type:ComponentQuery
+      components:
+        - type: Tag
+    - !type:TagFilter
+      tagsKey: Tags
+      requireAllKey: AllTags
+      invert: true
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: TargetTool
+  query:
+    - !type:ComponentQuery
+      components:
+        - type: Tool
+    - !type:ToolQualityFilter
+      qualityKey: ToolQuality
+      invert: true
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: TargetComponent
+  query:
+    - !type:KeyComponentQuery
+      key: Component
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance

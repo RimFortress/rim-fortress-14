@@ -27,6 +27,7 @@ public enum NpcTaskType : byte
     Move,
     Attack,
     PickUp,
+    Build,
 }
 
 [Serializable, NetSerializable]
@@ -49,8 +50,7 @@ public sealed class NpcTaskResetRequest : EntityEventArgs
 public sealed class NpcTaskRequest : EntityEventArgs
 {
     public NetEntity Requester { get; set; }
-    public NetEntity Entity { get; set; }
-    public NetEntity Target { get; set; }
+    public List<NetEntity> Entities { get; set; } = new();
+    public List<NetEntity> Targets { get; set; } = new();
     public NetCoordinates TargetCoordinates { get; set; }
-    public NpcTaskType TaskType { get; set; }
 }

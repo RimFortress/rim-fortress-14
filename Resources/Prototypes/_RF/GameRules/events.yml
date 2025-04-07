@@ -38,7 +38,7 @@
   parent: BaseGameRule
   components:
     - type: MigrationRule
-      spawn: [ RandomHumanoidSpawnerRfPop ]
+      spawn: [ RimFortressMobPop ]
       addToPops: true
 
 # Animals migration

@@ -29,9 +29,10 @@ public sealed class NpcControlOverlay : Overlay
     private readonly IEntityManager _entityManager;
     private readonly IPrototypeManager _prototype;
 
-    private readonly Color _selectColor = Color.LightGray.WithAlpha(0.80f);
-    private readonly Color _attackColor = Color.Red.WithAlpha(0.80f);
-    private readonly Color _pickUpColor = Color.Yellow.WithAlpha(0.80f);
+    private readonly Color _selectColor = Color.LightGray;
+    private readonly Color _attackColor = Color.Red;
+    private readonly Color _pickUpColor = Color.Blue;
+    private readonly Color _buildColor = Color.Yellow;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
@@ -56,6 +57,12 @@ public sealed class NpcControlOverlay : Overlay
         }
 
         _highlightedSprites.Clear();
+
+        if (_npcControl is { StartPoint: { } startPoint, EndPoint: { } endPoint })
+        {
+            var area = new Box2(startPoint.Position, endPoint.Position);
+            args.WorldHandle.DrawRect(area, _selectColor, false);
+        }
 
         foreach (var entity in _npcControl.Selected)
         {
@@ -99,15 +106,17 @@ public sealed class NpcControlOverlay : Overlay
                     DrawLine(args, _pickUpColor, start, end, 0.5f);
                     break;
                 }
+                case NpcTaskType.Build:
+                {
+                    if ((end.Position - start.Position).Length() > 0.5f)
+                        DrawLine(args, _buildColor, start, end);
+
+                    SetShader(task.Target, _buildColor);
+                    break;
+                }
                 default:
                     throw new NotImplementedException();
             }
-        }
-
-        if (_npcControl is { StartPoint: { } startPoint, EndPoint: { } endPoint })
-        {
-            var area = new Box2(startPoint.Position, endPoint.Position);
-            args.WorldHandle.DrawRect(area, Color.White, false);
         }
     }
 

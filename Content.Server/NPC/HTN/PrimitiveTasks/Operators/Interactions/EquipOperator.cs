@@ -9,6 +9,11 @@ public sealed partial class EquipOperator : HTNOperator
     [DataField("target")]
     public string Target = "Target";
 
+    // RimFortress Start
+    [DataField]
+    public bool RemoveKeyOnFinish;
+    // RimFortress End
+
     public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
     {
         if (!blackboard.TryGetValue<EntityUid>(Target, out var target, _entManager))
@@ -27,4 +32,12 @@ public sealed partial class EquipOperator : HTNOperator
 
         return HTNOperatorStatus.Failed;
     }
+
+    // RimFortress Start
+    public override void TaskShutdown(NPCBlackboard blackboard, HTNOperatorStatus status)
+    {
+        if (RemoveKeyOnFinish)
+            blackboard.Remove<EntityUid>(Target);
+    }
+    // RimFortress End
 }

@@ -28,3 +28,4 @@
         Move: MoveToCompound
         Attack: AttackTargetCompound
         PickUp: PickUpCompound
+        Build: BuildCompound
