@@ -5,9 +5,9 @@ using Content.Server.NPC.HTN.PrimitiveTasks;
 namespace Content.Server._RF.NPC.HTN.Operators;
 
 /// <summary>
-/// Deletes a key of type EntityUid from blackboard
+/// Deletes a key of a given type from blackboard
 /// </summary>
-public sealed partial class RemoveEntityKeyOperator : HTNOperator
+public abstract partial class RemoveKeyOperator<T> : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
 
@@ -16,10 +16,15 @@ public sealed partial class RemoveEntityKeyOperator : HTNOperator
 
     public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
     {
-        if (!blackboard.TryGetValue(Key, out EntityUid _, _entManager))
+        if (!blackboard.TryGetValue<T>(Key, out _, _entManager))
             return HTNOperatorStatus.Failed;
 
-        blackboard.Remove<EntityUid>(Key);
+        blackboard.Remove<T>(Key);
         return HTNOperatorStatus.Finished;
     }
+}
+
+public sealed partial class RemoveEntityKeyOperator : RemoveKeyOperator<EntityUid>
+{
+
 }

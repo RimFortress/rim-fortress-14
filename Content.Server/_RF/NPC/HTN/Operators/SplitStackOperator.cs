@@ -10,17 +10,25 @@ namespace Content.Server._RF.NPC.HTN.Operators;
 /// <summary>
 /// Divides a stack of material, creating a stack of the required quantity
 /// </summary>
-public sealed partial class SplitStackOperator : HTNOperator
+public sealed partial class SplitStackOperator : HTNOperator, IHtnConditionalShutdown
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
     private StackSystem _stack = default!;
     private SharedTransformSystem _transform = default!;
+
+    public HTNPlanState ShutdownState { get; } = HTNPlanState.TaskFinished;
 
     [DataField(required: true)]
     public string TargetKey = default!;
 
     [DataField(required: true)]
     public string AmountKey = default!;
+
+    [DataField]
+    public bool RemoveTargetOnFinish;
+
+    [DataField]
+    public bool RemoveAmountOnFinish;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
@@ -50,5 +58,14 @@ public sealed partial class SplitStackOperator : HTNOperator
         var newStack = _stack.Split(target, amount, coords, stackComp);
         blackboard.SetValue(TargetKey, newStack ?? target);
         return HTNOperatorStatus.Finished;
+    }
+
+    public void ConditionalShutdown(NPCBlackboard blackboard)
+    {
+        if (RemoveTargetOnFinish)
+            blackboard.Remove<EntityUid>(TargetKey);
+
+        if (RemoveAmountOnFinish)
+            blackboard.Remove<int>(AmountKey);
     }
 }

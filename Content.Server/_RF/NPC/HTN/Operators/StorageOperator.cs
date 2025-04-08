@@ -40,7 +40,7 @@ public sealed partial class StorageOperator : HTNOperator
             if (!_entManager.TryGetComponent(entity, out StorageComponent? storage))
                 continue;
 
-            if (_storage.Insert(heldEntity, entity, out _, storageComp: storage))
+            if (_storage.Insert(entity, heldEntity, out _, storageComp: storage))
                 return (true, new() { {NPCBlackboard.ActiveHandFree, true} });
         }
 

@@ -25,12 +25,20 @@
         - !type:HTNCompoundTask
           task: EscapeCompound
 
+    ##########################
+    # CONSTRUCT REQUIREMENTS #
+    ##########################
+
+    # We don't merge conditions and steps to avoid overwriting keys
+
+    # Conditions
     - preconditions:
         - !type:KeyExistsPrecondition
           key: Target
         - !type:KeysExistsPrecondition
           invert: true
           keys:
+            - ItemEntityTarget
             - MaterialTarget
             - MaterialInsertAmount
             - TagsTarget
@@ -38,6 +46,33 @@
             - ToolQualityTarget
             - ToolFuelTarget
             - ComponentTarget
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:GetConstructionConditionsOperator
+
+    # Steps
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:KeysExistsPrecondition
+          invert: true
+          keys:
+            - ItemEntityTarget
+            - MaterialTarget
+            - MaterialInsertAmount
+            - TagsTarget
+            - AllTagsRequired
+            - ToolQualityTarget
+            - ToolFuelTarget
+            - ComponentTarget
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:GetConstructionStepsOperator
@@ -164,16 +199,16 @@
             rangeKey: InteractRange
             removeKeyOnFinish: true
 
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: ItemEntityTarget
-        - !type:ActiveHandEntityPrecondition
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: ItemEntityTarget
-          invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:SwapToFreeHandOperator
+    #- preconditions:
+    #   - !type:KeyExistsPrecondition
+    #     key: ItemEntityTarget
+    #   - !type:ActiveHandEntityPrecondition
+    #   - !type:ActiveHandEntityIsPrecondition
+    #     targetKey: ItemEntityTarget
+    #     invert: true
+    # tasks:
+    #   - !type:HTNPrimitiveTask
+    #     operator: !type:SwapToFreeHandOperator
 
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -204,44 +239,47 @@
     # Divide the stack of material, if necessary
     - preconditions:
         - !type:KeysExistsPrecondition
-            keys:
-              - ItemEntityTarget
-              - Amount
+          keys:
+            - ItemEntityTarget
+            - Amount
         - !type:TargetInRangePrecondition
           targetKey: ItemEntityTarget
           rangeKey: InteractRange
-        - !type:ActiveHandFreePrecondition
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:SplitStackOperator
             targetKey: ItemEntityTarget
             amountKey: Amount
-        - !type:HTNPrimitiveTask
-          operator: !type:EquipOperator
-            target: ItemEntityTarget
-            removeKeyOnFinish: true
+            removeAmountOnFinish: true
 
     # Pick up the item
     - preconditions:
         - !type:KeyExistsPrecondition
           key: ItemEntityTarget
+        - !type:KeyNotExistsPrecondition
+          key: Amount
         - !type:TargetInRangePrecondition
           targetKey: ItemEntityTarget
           rangeKey: InteractRange
-        - !type:ActiveHandFreePrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:EquipOperator
             target: ItemEntityTarget
-            removeKeyOnFinish: true
 
     # Go to the construction target
     - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - ItemEntityTarget
         - !type:TargetNotInRangePrecondition
           targetKey: Target
           rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
@@ -254,11 +292,15 @@
 
     # Using the item for construction
     - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - ItemEntityTarget
         - !type:TargetInRangePrecondition
           targetKey: Target
           rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
         - !type:HasComponentPrecondition
           components:
             - type: ActiveDoAfter
@@ -267,14 +309,6 @@
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
-
-    # Yes, it looks very crutchy,
-    # but when using a material, if it runs out,
-    # the ItemEntityTarget is invalid and npc have to look for a new material
-    - preconditions:
-        - !type:EntityDeletedPrecondition
-          key: ItemEntityTarget
-      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:RemoveEntityKeyOperator
             key: ItemEntityTarget

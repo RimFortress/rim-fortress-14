@@ -3,22 +3,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
+using Content.Server.Construction.Conditions;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
-using Content.Shared.Construction.Steps;
+using Content.Shared.Construction;
+using Content.Shared.Tools;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 
 /// <summary>
-/// Obtains and stores the necessary steps to execute the current construction edge
+/// Obtains and stores the necessary conditions to execute the current construction edge
 /// </summary>
-public sealed partial class GetConstructionStepsOperator : HTNOperator
+public sealed partial class GetConstructionConditionsOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
     private ConstructionSystem _construction = default!;
 
     /// <summary>
-    /// The structure whose requirements are to be received
+    /// The structure whose conditions are to be received
     /// </summary>
     [DataField]
     public string TargetKey = "Target";
@@ -65,6 +68,15 @@ public sealed partial class GetConstructionStepsOperator : HTNOperator
     [DataField]
     public string ComponentKey = "ComponentTarget";
 
+    [ValidatePrototypeId<ToolQualityPrototype>]
+    private readonly ProtoId<ToolQualityPrototype> _anchoringQuality = "Anchoring";
+
+    [ValidatePrototypeId<ToolQualityPrototype>]
+    private readonly ProtoId<ToolQualityPrototype> _weldingQuality = "Welding";
+
+    [ValidatePrototypeId<ToolQualityPrototype>]
+    private readonly ProtoId<ToolQualityPrototype> _screwingQuality = "Screwing";
+
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
@@ -96,42 +108,75 @@ public sealed partial class GetConstructionStepsOperator : HTNOperator
         var toolFuels = new List<float>();
         var components = new List<string>();
 
-        foreach (var step in edge.Steps)
+        var conditions = new Queue<IGraphCondition>(edge.Conditions);
+        while (conditions.TryDequeue(out var condition))
         {
-            switch (step)
-            {
-                case MaterialConstructionGraphStep insertMaterial:
-                    materials.Add(insertMaterial.MaterialPrototypeId);
-                    materialAmounts.Add(insertMaterial.Amount);
-                    break;
-                case TagConstructionGraphStep insertTag:
-                    if (insertTag.Tag == null)
-                        break;
+            if (condition.Condition(uid, _entManager))
+                continue;
 
-                    tags.Add(new() { insertTag.Tag });
+            switch (condition)
+            {
+                case AllConditions all:
+                    foreach (var cond in all.Conditions)
+                    {
+                        conditions.Enqueue(cond);
+                    }
+                    break;
+                case AnyConditions any:
+                    foreach (var cond in any.Conditions)
+                    {
+                        // Take the first supported condition
+                        if (cond is not (AllConditions
+                            or AnyConditions
+                            or EntityAnchored
+                            or DoorWelded
+                            or StorageWelded
+                            or WirePanel
+                            or HasTag
+                            or MachineFrameComplete))
+                            continue;
+
+                        conditions.Enqueue(cond);
+                        break;
+                    }
+                    break;
+                case EntityAnchored:
+                    toolQualities.Add(_anchoringQuality);
+                    toolFuels.Add(0);
+                    break;
+                case DoorWelded:
+                case StorageWelded:
+                    toolQualities.Add(_weldingQuality);
+                    toolFuels.Add(10f);
+                    break;
+                case WirePanel:
+                    toolQualities.Add(_screwingQuality);
+                    toolFuels.Add(0);
+                    break;
+                case HasTag tag:
+                    tags.Add(new() { tag.Tag });
                     allTags.Add(true);
                     break;
-                case MultipleTagsConstructionGraphStep insertMultipleTags:
-                    if (insertMultipleTags.AllTag != null)
-                    {
-                        tags.Add(insertMultipleTags.AllTag.Select(t => (string)t).ToList());
-                        allTags.Add(true);
+                case MachineFrameComplete:
+                    if (!_entManager.TryGetComponent(uid, out MachineFrameComponent? frame))
                         break;
-                    }
 
-                    if (insertMultipleTags.AnyTag != null)
+                    foreach (var (type, amount) in frame.MaterialRequirements)
                     {
-                        tags.Add(insertMultipleTags.AnyTag.Select(t => (string)t).ToList());
-                        allTags.Add(false);
+                        materials.Add(type);
+                        materialAmounts.Add(amount);
                     }
 
-                    break;
-                case ToolConstructionGraphStep insertTool:
-                    toolQualities.Add(insertTool.Tool);
-                    toolFuels.Add(insertTool.Fuel);
-                    break;
-                case ComponentConstructionGraphStep insertComponent:
-                    components.Add(insertComponent.Component);
+                    foreach (var (compName, _) in frame.ComponentRequirements)
+                    {
+                        components.Add(compName);
+                    }
+
+                    foreach (var (tagName, _) in frame.TagRequirements)
+                    {
+                        tags.Add(new() { tagName });
+                        allTags.Add(true);
+                    }
                     break;
             }
         }
