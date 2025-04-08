@@ -698,7 +698,30 @@ public sealed class NPCUtilitySystem : EntitySystem
 
                 break;
             }
-            // RimFortress ENd
+            case InventoryFilter inventoryFilter:
+            {
+                foreach (var ent in entities)
+                {
+                    if (_inventory.InSlotWithFlags(ent, SlotFlags.All))
+                    {
+                        if (!inventoryFilter.Invert)
+                            _entityList.Add(ent);
+
+                        continue;
+                    }
+
+                    if (inventoryFilter.Invert)
+                        _entityList.Add(ent);
+                }
+
+                foreach (var ent in _entityList)
+                {
+                    entities.Remove(ent);
+                }
+
+                break;
+            }
+            // RimFortress End
             default:
                 throw new NotImplementedException();
         }

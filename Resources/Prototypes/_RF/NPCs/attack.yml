@@ -26,6 +26,28 @@
           task: EscapeCompound
 
     - preconditions:
+        - !type:ActiveFreeEntityPrecondition
+      task:
+        - !type:HTNPrimitiveTask
+          operator: UtilityOperator
+            proto: InventoryGuns
+            key: Item
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Item
+
+    - preconditions:
+        - !type:ActiveFreeEntityPrecondition
+      task:
+        - !type:HTNPrimitiveTask
+          operator: UtilityOperator
+            proto: InventoryMelees
+            key: Item
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Item
+
+    - preconditions:
         - !type:ActiveHandComponentPrecondition
           components:
             - type: Wieldable

@@ -11,6 +11,7 @@
       minMaxEventTiming:
         min: 600 #10 min
         max: 1800 #20 min
+      dayDuration: 1200 #20 min
 
 - type: weightedRandom
   id: RandomBiome

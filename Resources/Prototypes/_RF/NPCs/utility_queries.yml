@@ -9,6 +9,7 @@
       targetKey: Material
       amountKey: Amount
       invert: true
+    - !type:InventoryFilter
   considerations:
     - !type:TargetDistanceCon
       curve: !type:PresetCurve
@@ -24,6 +25,7 @@
       tagsKey: Tags
       requireAllKey: AllTags
       invert: true
+    - !type:InventoryFilter
   considerations:
     - !type:TargetDistanceCon
       curve: !type:PresetCurve
@@ -38,6 +40,7 @@
     - !type:ToolQualityFilter
       qualityKey: ToolQuality
       invert: true
+    - !type:InventoryFilter
   considerations:
     - !type:TargetDistanceCon
       curve: !type:PresetCurve
@@ -48,7 +51,19 @@
   query:
     - !type:KeyComponentQuery
       key: Component
+    - !type:InventoryFilter
   considerations:
     - !type:TargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+- type: utilityQuery
+  id: InventoryMelees
+  query:
+    - !type:InventoryQuery
+    - !type:ComponentFilter
+      components:
+        - type: MeleeWeapon
+          damage:
+            types:
+              Slash: 0
