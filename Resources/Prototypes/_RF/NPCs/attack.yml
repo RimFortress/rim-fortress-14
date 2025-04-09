@@ -38,7 +38,7 @@
 
     - preconditions:
         - !type:ActiveHandFreePrecondition
-      task:
+      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: InventoryMelees
