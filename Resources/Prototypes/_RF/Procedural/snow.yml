@@ -17,7 +17,6 @@
         lacunarity: 2.50
         fractalType: Ridged
         gain: 1.5
-        mGain: 1.9
         octaves: 4
 
     # Caves
@@ -44,9 +43,7 @@
         noiseType: Perlin
         fractalType: FBm
         transformType3D: ImproveXZPlanes
-        mLacunarity: 1.8
         gain: 0.5
-        mGain: 0.7
         octaves: 4
     - !type:BiomeTileLayer
       threshold: 0.35
@@ -57,9 +54,7 @@
         noiseType: Perlin
         fractalType: FBm
         transformType3D: ImproveXZPlanes
-        mLacunarity: 1.8
         gain: 0.5
-        mGain: 0.7
         octaves: 4
 
     # Road
@@ -98,7 +93,6 @@
         lacunarity: 2.50
         fractalType: Ridged
         gain: 1.5
-        mGain: 1.9
         octaves: 4
       allowedTiles:
         - FloorIce
@@ -391,10 +385,10 @@
       divisions: 1
       threshold: 0.55
       decals:
-        - Rock1
-        - Rock2
-        - Rock3
-        - Rock4
+        - Rock01
+        - Rock02
+        - Rock03
+        - Rock04
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorConcreteSmooth

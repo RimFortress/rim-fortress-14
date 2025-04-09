@@ -36,7 +36,7 @@
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: TargetTool
-            id: Tool
+            key: Tool
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: Tool

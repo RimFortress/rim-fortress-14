@@ -86,7 +86,7 @@
     - type: MigrationRule
       spawn: [ MobFoxRenault ]
       requiredBiomes:
-        - RfGrasslands
+        - RfGrassland
         - RfSnow
         - RfSnowMountain
       amount:
@@ -112,7 +112,7 @@
     - type: MigrationRule
       spawn: [ MobGoat ]
       requiredBiomes:
-        - RfGrasslands
+        - RfGrassland
         - RfSnowMountain
         - RfGrassMountain
       amount:
@@ -126,7 +126,7 @@
     - type: MigrationRule
       spawn: [ MobCow ]
       requiredBiomes:
-        - RfGrasslands
+        - RfGrassland
       amount:
         min: 1
         max: 3
@@ -148,7 +148,7 @@
     - type: MigrationRule
       spawn: [ MobFrog ]
       requiredBiomes:
-        - RfGrasslands
+        - RfGrassland
         - RfJungle
       amount:
         min: 6
@@ -193,7 +193,7 @@
     - type: MigrationRule
       spawn: [ MobMonkey ]
       requiredBiomes:
-        - RfGrasslands
+        - RfGrassland
         - RfJungle
       amount:
         min: 4
@@ -238,7 +238,7 @@
     - type: MigrationRule
       spawn: [ MobSnake ]
       requiredBiomes:
-        - RfGrasslands
+        - RfGrassland
       amount:
         min: 3
         max: 5

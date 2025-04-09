@@ -30,9 +30,7 @@
         noiseType: Perlin
         fractalType: FBm
         transformType3D: ImproveXZPlanes
-        mLacunarity: 1.8
         gain: 0.5
-        mGain: 0.7
         octaves: 4
 
     # Road
@@ -407,10 +405,10 @@
       divisions: 1
       threshold: 0.55
       decals:
-        - Rock1
-        - Rock2
-        - Rock3
-        - Rock4
+        - Rock01
+        - Rock02
+        - Rock03
+        - Rock04
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorCaveDrought

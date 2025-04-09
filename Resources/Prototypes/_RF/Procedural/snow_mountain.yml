@@ -40,9 +40,7 @@
         frequency: 0.025
         noiseType: OpenSimplex2
         fractalType: FBm
-        mLacunarity: 1.8
         gain: 0.5
-        mGain: 0.7
         octaves: 1
     - !type:BiomeTileLayer
       threshold: 0.82
@@ -52,9 +50,7 @@
         frequency: 0.025
         noiseType: OpenSimplex2
         fractalType: FBm
-        mLacunarity: 1.8
         gain: 0.5
-        mGain: 0.7
         octaves: 1
 
     # Road
@@ -79,9 +75,7 @@
         frequency: 2
         noiseType: OpenSimplex2
         fractalType: FBm
-        mLacunarity: 1.8
         gain: 0.5
-        mGain: 0.7
         octaves: 1
       allowedTiles:
         - FloorIce
@@ -371,10 +365,10 @@
       divisions: 1
       threshold: 0.55
       decals:
-        - Rock1
-        - Rock2
-        - Rock3
-        - Rock4
+        - Rock01
+        - Rock02
+        - Rock03
+        - Rock04
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorCaveDrought

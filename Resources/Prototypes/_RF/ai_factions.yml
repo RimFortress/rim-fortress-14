@@ -1,5 +1,6 @@
 - type: npcFaction
   id: RimFortress
+  hostile:
     - Xeno
     - Zombie
     - AllHostile

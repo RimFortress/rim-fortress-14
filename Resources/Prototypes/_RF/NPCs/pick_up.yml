@@ -69,4 +69,4 @@
               targetKey: Target
               rangeKey: InteractRange
           operator: !type:EquipOperator
-            targetKey: Target
+            target: Target
