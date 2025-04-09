@@ -26,7 +26,7 @@
           task: EscapeCompound
 
     - preconditions:
-        - !type:ActiveFreeEntityPrecondition
+        - !type:ActiveHandFreePrecondition
       task:
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
@@ -37,7 +37,7 @@
             target: Item
 
     - preconditions:
-        - !type:ActiveFreeEntityPrecondition
+        - !type:ActiveHandFreePrecondition
       task:
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
