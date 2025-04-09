@@ -29,9 +29,10 @@
         - !type:KeyNotExistsPrecondition
           key: Tool
       tasks:
-        - !type:SetStringOperator
-          key: ToolQuality
-          value: Prying
+        - !type:HTNPrimitiveTask
+          operator: !type:SetStringOperator
+            key: ToolQuality
+            value: Prying
         - !type:UtilityOperator
           proto: TargetTool
           id: Tool
