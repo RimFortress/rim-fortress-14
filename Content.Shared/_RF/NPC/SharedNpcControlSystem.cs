@@ -28,6 +28,7 @@ public enum NpcTaskType : byte
     Attack,
     PickUp,
     Build,
+    Pry,
 }
 
 [Serializable, NetSerializable]

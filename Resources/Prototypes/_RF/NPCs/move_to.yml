@@ -31,10 +31,6 @@
           key: TargetCoordinates
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:SetFloatOperator
-            targetKey: MoveToCloseRange
-            amount: 0.30
-        - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             targetKey: TargetCoordinates

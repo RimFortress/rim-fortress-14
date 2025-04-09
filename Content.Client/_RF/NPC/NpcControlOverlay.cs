@@ -32,6 +32,7 @@ public sealed class NpcControlOverlay : Overlay
     private readonly Color _selectColor = Color.LightGray;
     private readonly Color _attackColor = Color.Red;
     private readonly Color _pickUpColor = Color.Blue;
+    private readonly Color _pryingColor = Color.Blue;
     private readonly Color _buildColor = Color.Yellow;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
@@ -112,6 +113,14 @@ public sealed class NpcControlOverlay : Overlay
                         DrawLine(args, _buildColor, start, end);
 
                     SetShader(task.Target, _buildColor);
+                    break;
+                }
+                case NpcTaskType.Pry:
+                {
+                    if ((end.Position - start.Position).Length() > 0.5f)
+                        DrawLine(args, _pryingColor, start, end);
+
+                    SetShader(task.Target, _pryingColor);
                     break;
                 }
                 default:

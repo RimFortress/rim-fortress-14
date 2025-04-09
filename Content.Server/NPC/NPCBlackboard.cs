@@ -36,7 +36,7 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {"VisionRadius", 10f},
         {"AggroVisionRadius", 10f},
         // RimFortress Start
-        {CloseInteractRange, SharedInteractionSystem.InteractionRange / 2},
+        {MoveToCloseRange, 0.3f},
         // RimFortress End
     };
 
@@ -344,7 +344,7 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
     public const string CurrentOrderedTarget = "CurrentOrderedTarget";
 
     // RimFortress Start
-    public const string CloseInteractRange = "CloseInteractRange";
+    public const string MoveToCloseRange = "MoveToCloseRange";
     // RimFortress End
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()

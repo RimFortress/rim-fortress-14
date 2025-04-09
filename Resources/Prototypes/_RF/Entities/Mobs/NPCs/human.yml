@@ -29,3 +29,4 @@
         Attack: AttackTargetCompound
         PickUp: PickUpCompound
         Build: BuildCompound
+        Pry: PryCompound

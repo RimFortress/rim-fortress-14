@@ -313,3 +313,14 @@
         - !type:HTNPrimitiveTask
           operator: !type:RemoveEntityKeyOperator
             key: ItemEntityTarget
+
+    # Yes, it looks very crutchy,
+    # if someone else has used the item,
+    # the ItemEntityTarget is invalid and npc have to look for a new material
+    - preconditions:
+        - !type:EntityDeletedPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget

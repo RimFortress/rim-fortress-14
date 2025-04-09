@@ -7,6 +7,7 @@ using Content.Shared._RF.NPC;
 using Content.Shared.Item;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
+using Content.Shared.Prying.Components;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 
@@ -77,7 +78,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         foreach (var entity in targets)
         {
-            if (TryComp(entity, out HTNComponent? _))
+            if (TryComp(entity, out HTNComponent? _) &&
+                (!TryComp(entity, out ControllableNpcComponent? controllable) || !controllable.CanControl.Contains(requester)))
             {
                 type = NpcTaskType.Attack;
                 target = entity;
@@ -94,6 +96,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (TryComp(entity, out ConstructionComponent? _))
             {
                 type = NpcTaskType.Build;
+                target = entity;
+                break;
+            }
+
+            if (TryComp(entity, out PryingComponent? _))
+            {
+                type = NpcTaskType.Pry;
                 target = entity;
                 break;
             }
