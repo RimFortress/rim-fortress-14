@@ -33,9 +33,10 @@
           operator: !type:SetStringOperator
             key: ToolQuality
             value: Prying
-        - !type:UtilityOperator
-          proto: TargetTool
-          id: Tool
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetTool
+            id: Tool
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: Tool
