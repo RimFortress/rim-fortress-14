@@ -29,7 +29,7 @@
         - !type:ActiveFreeEntityPrecondition
       task:
         - !type:HTNPrimitiveTask
-          operator: UtilityOperator
+          operator: !type:UtilityOperator
             proto: InventoryGuns
             key: Item
         - !type:HTNPrimitiveTask
@@ -40,7 +40,7 @@
         - !type:ActiveFreeEntityPrecondition
       task:
         - !type:HTNPrimitiveTask
-          operator: UtilityOperator
+          operator: !type:UtilityOperator
             proto: InventoryMelees
             key: Item
         - !type:HTNPrimitiveTask
