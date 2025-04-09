@@ -24,9 +24,3 @@
       factions:
       - RimFortress
     - type: ControllableNpc
-      compounds:
-        Move: MoveToCompound
-        Attack: AttackTargetCompound
-        PickUp: PickUpCompound
-        Build: BuildCompound
-        Pry: PryCompound

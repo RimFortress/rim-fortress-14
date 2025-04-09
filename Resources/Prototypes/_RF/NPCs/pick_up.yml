@@ -53,16 +53,15 @@
     - preconditions:
         - !type:KeyExistsPrecondition
           key: Target
-        - !type:KeyExistsPrecondition
-          key: TargetCoordinates
         - !type:ActiveHandFreePrecondition
       tasks:
         - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
-            targetKey: TargetCoordinates
             rangeKey: InteractRange
-            removeKeyOnFinish: false
         - !type:HTNPrimitiveTask
           preconditions:
             - !type:TargetInRangePrecondition

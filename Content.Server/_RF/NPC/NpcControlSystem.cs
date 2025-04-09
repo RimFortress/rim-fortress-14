@@ -1,15 +1,14 @@
 using System.Linq;
 using Content.Server.Construction;
-using Content.Server.Construction.Components;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
-using Content.Shared.Item;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
-using Content.Shared.Prying.Components;
+using Content.Shared.Whitelist;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC;
 
@@ -19,12 +18,16 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly NPCSystem _npc = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
     private const string TargetKey = "Target";
     private const string TargetCoordinatesKey = "TargetCoordinates";
 
     private readonly Dictionary<EntityUid, HTNCompoundTask> _originCompounds = new();
-    private readonly Dictionary<EntityUid, NpcTask> _tasks = new();
+    private readonly Dictionary<EntityUid, (EntityUid? Target, EntityCoordinates? Coords)> _targets = new();
+
+    private Dictionary<NpcTaskPrototype, List<EntityUid>> _tasks = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -34,15 +37,36 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         SubscribeNetworkEvent<NpcTaskRequest>(OnTaskRequest);
         SubscribeNetworkEvent<NpcTaskResetRequest>(OnTaskResetRequest);
         SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
+
+        _prototype.PrototypesReloaded += args =>
+        {
+            if (args.WasModified<NpcTaskPrototype>())
+                OnReloadPrototypes();
+        };
+
+        OnReloadPrototypes();
+    }
+
+    private void OnReloadPrototypes()
+    {
+        var tasks = new Dictionary<NpcTaskPrototype, List<EntityUid>>();
+        foreach (var proto in _prototype.EnumeratePrototypes<NpcTaskPrototype>())
+        {
+            _tasks.TryGetValue(proto, out var entities);
+            tasks.Add(proto, entities ?? new());
+        }
+
+        _tasks = tasks;
     }
 
     /// <summary>
     /// Creates a new task for the NPC and saves the old one
     /// </summary>
-    private void SetTask(EntityUid entity, NpcTask task, string compoundTask)
+    private void SetTask(EntityUid entity, NpcTaskPrototype proto, EntityUid? target, EntityCoordinates? coords)
     {
         if (!_npc.TryGetNpc(entity, out var npc)
-            || npc is not HTNComponent htn)
+            || npc is not HTNComponent htn
+            || !TryComp(entity, out ControllableNpcComponent? control))
             return;
 
         if (htn.Plan != null)
@@ -51,16 +75,24 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (!_originCompounds.ContainsKey(entity))
             _originCompounds[entity] = htn.RootTask;
 
-        _tasks[entity] = task;
-        htn.RootTask = new HTNCompoundTask { Task = compoundTask };
+        _targets[entity] = (target, coords);
+        _tasks[proto].Add(entity);
+        control.CurrentTask = proto;
+
+        if (target != null)
+            npc.Blackboard.SetValue(TargetKey, target);
+        if (coords != null)
+            npc.Blackboard.SetValue(TargetCoordinatesKey, coords);
+
+        htn.RootTask = new HTNCompoundTask { Task = proto.Compound };
         _htn.Replan(htn);
 
         var msg = new NpcTaskInfoMessage
         {
             Entity = GetNetEntity(entity),
-            TaskType = task.Type,
-            Target = GetNetEntity(task.Target),
-            TargetCoordinates = GetNetCoordinates(task.Coordinates),
+            Color = proto.OverlayColor,
+            Target = GetNetEntity(target),
+            TargetCoordinates = GetNetCoordinates(coords),
         };
 
         RaiseNetworkEvent(msg);
@@ -74,52 +106,43 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var targetCoords = GetCoordinates(request.TargetCoordinates);
 
         EntityUid? target = null;
-        var type = NpcTaskType.Move;
+        NpcTaskPrototype? task = null;
 
+        // Get the first suitable task
         foreach (var entity in targets)
         {
-            if (TryComp(entity, out HTNComponent? _) &&
-                (!TryComp(entity, out ControllableNpcComponent? controllable) || !controllable.CanControl.Contains(requester)))
-            {
-                type = NpcTaskType.Attack;
-                target = entity;
+            if (target != null)
                 break;
-            }
 
-            if (TryComp(entity, out ItemComponent? _))
+            var sorted = _tasks.Keys.OrderBy(x => x.Priority).ToList();
+            foreach (var proto in sorted)
             {
-                type = NpcTaskType.PickUp;
-                target = entity;
-                break;
-            }
+                if (!_whitelist.IsWhitelistPass(proto.StartWhitelist, entity))
+                    continue;
 
-            if (TryComp(entity, out ConstructionComponent? _))
-            {
-                type = NpcTaskType.Build;
-                target = entity;
-                break;
-            }
-
-            if (TryComp(entity, out PryingComponent? _))
-            {
-                type = NpcTaskType.Pry;
+                task = proto;
                 target = entity;
                 break;
             }
         }
 
+        // Or take the task without requirements
+        task ??= _tasks.Keys.FirstOrDefault(proto => proto.StartWhitelist == null);
+        if (task == null)
+            return;
+
         var previousTargets = new List<TileRef>();
 
         foreach (var entity in entities)
         {
-            if (!_npc.TryGetNpc(entity, out var npc)
-                || !TryComp(entity, out ControllableNpcComponent? controllable)
-                || !controllable.CanControl.Contains(requester)
-                || !controllable.Compounds.TryGetValue(type, out var compoundTask))
+            if (!TryComp(entity, out ControllableNpcComponent? controllable)
+                || !controllable.CanControl.Contains(requester))
                 continue;
 
-            // Gives all selected entities a task to go to a given tile
-            if (type == NpcTaskType.Move)
+            if (_tasks[task].Count >= task.MaxNpc)
+                break;
+
+            if (target == null)
             {
                 if (previousTargets.Count == 0)
                 {
@@ -131,8 +154,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                     previousTargets.Add(tileRef);
 
                     var tileCoords = _turf.GetTileCenter(tileRef);
-                    npc.Blackboard.SetValue(TargetCoordinatesKey, tileCoords);
-                    SetTask(entity, new NpcTask(NpcTaskType.Move, tileCoords.EntityId, tileCoords), compoundTask);
+                    SetTask(entity, task, null, tileCoords);
                     continue;
                 }
 
@@ -140,59 +162,60 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                     continue;
 
                 previousTargets.Add(tile);
+
                 var tileCenter = _turf.GetTileCenter(tile);
-
-                var task = new NpcTask(NpcTaskType.Move, targetCoords.EntityId, tileCenter);
-                npc.Blackboard.SetValue(TargetCoordinatesKey, tileCenter);
-
-                SetTask(entity, task, compoundTask);
+                SetTask(entity, task, null, tileCenter);
                 continue;
             }
 
-            if (target is not { } uid)
-                continue;
-
-            var coords = Transform(uid).Coordinates;
-
-            npc.Blackboard.SetValue(TargetKey, target);
-            npc.Blackboard.SetValue(TargetCoordinatesKey, coords);
-
-            SetTask(entity, new NpcTask(type, uid, coords), compoundTask);
+            SetTask(entity, task, target.Value, null);
         }
     }
 
     private void OnTaskResetRequest(NpcTaskResetRequest request)
     {
         var entity = GetEntity(request.Entity);
-        var requester = GetEntity(request.Requester);
 
         if (!TryComp(entity, out ControllableNpcComponent? controllable)
-            || !controllable.CanControl.Contains(requester)
-            || !_tasks.ContainsKey(entity)
-            || !_npc.TryGetNpc(entity, out var npc)
-            || npc is not HTNComponent htn)
+            || !controllable.CanControl.Contains(GetEntity(request.Requester)))
             return;
 
-        if (htn.Plan != null)
-            _htn.ShutdownPlan(htn);
-
-        htn.RootTask = _originCompounds[entity];
-
-        _originCompounds.Remove(entity);
-        _tasks.Remove(entity);
+        ResetTask(entity);
     }
 
     // Help construction NPCs keep up-to-date information on the entity to be built
     private void OnEntityChange(ConstructionChangeEntityEvent ev)
     {
-        foreach (var (uid, task) in _tasks)
+        foreach (var (uid, task) in _targets)
         {
-            if (task.Type != NpcTaskType.Build
-                || task.Target != ev.Old
+            if (task.Target != ev.Old
                 || !_npc.TryGetNpc(uid, out var npc))
                 continue;
 
             npc.Blackboard.SetValue(TargetKey, ev.New);
+        }
+    }
+
+    private void ResetTask(Entity<HTNComponent?, ControllableNpcComponent?> entity)
+    {
+        if (!Resolve(entity.Owner, ref entity.Comp1)
+            || !Resolve(entity.Owner, ref entity.Comp2)
+            || !_targets.ContainsKey(entity))
+            return;
+
+        if (entity.Comp1.Plan != null)
+            _htn.ShutdownPlan(entity.Comp1);
+
+        entity.Comp1.RootTask = _originCompounds[entity];
+        entity.Comp2.CurrentTask = null;
+
+        _originCompounds.Remove(entity);
+        _targets.Remove(entity);
+
+        foreach (var (_, entities) in _tasks)
+        {
+            if (entities.Remove(entity))
+                break;
         }
     }
 
@@ -222,5 +245,37 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
 
         return null;
+    }
+
+    public override void Update(float frameTime)
+    {
+        var query = EntityQueryEnumerator<ControllableNpcComponent, HTNComponent>();
+        while (query.MoveNext(out var uid, out var comp, out var htn))
+        {
+            if (comp.CurrentTask == null)
+                continue;
+
+            if (comp.TaskFinishAccumulator < 0)
+            {
+                var proto = _prototype.Index<NpcTaskPrototype>(comp.CurrentTask);
+                var needFinish = proto.FinishPreconditions.Count != 0;
+
+                foreach (var precondition in proto.FinishPreconditions)
+                {
+                    if (precondition.IsMet(htn.Blackboard))
+                        continue;
+
+                    needFinish = false;
+                    break;
+                }
+
+                if (needFinish)
+                    ResetTask(uid);
+
+                comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
+            }
+
+            comp.TaskFinishAccumulator -= frameTime;
+        }
     }
 }

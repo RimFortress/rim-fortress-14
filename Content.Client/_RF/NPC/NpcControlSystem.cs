@@ -31,7 +31,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         base.Initialize();
 
-        _overlay.AddOverlay(new NpcControlOverlay(this, _transform, _prototype, EntityManager));
+        _overlay.AddOverlay(new NpcControlOverlay(_prototype, EntityManager, EntityManager.EntitySysManager));
 
         CommandBinds.Builder
             .Bind(EngineKeyFunctions.Use, new PointerStateInputCmdHandler(OnSelectEnabled, OnSelectDisabled))
@@ -91,7 +91,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnTaskInfo(NpcTaskInfoMessage msg)
     {
-        var task = new NpcTask(msg.TaskType, GetEntity(msg.Target), GetCoordinates(msg.TargetCoordinates));
+        var task = new NpcTask(msg.Color, GetEntity(msg.Target), GetCoordinates(msg.TargetCoordinates));
         Tasks[GetEntity(msg.Entity)] = task;
     }
 

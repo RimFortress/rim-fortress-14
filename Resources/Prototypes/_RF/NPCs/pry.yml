@@ -44,7 +44,6 @@
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             rangeKey: InteractRange
-            removeKeyOnFinish: true
 
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -84,7 +83,6 @@
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             rangeKey: InteractRange
-            removeKeyOnFinish: true
 
     - preconditions:
         - !type:KeyNotExistsPrecondition

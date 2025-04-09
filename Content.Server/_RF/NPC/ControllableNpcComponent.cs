@@ -1,5 +1,3 @@
-using Content.Server.NPC.HTN;
-using Content.Shared._RF.NPC;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC;
@@ -13,12 +11,21 @@ public sealed partial class ControllableNpcComponent : Component
     /// <summary>
     /// Entities that can control this npc.
     /// </summary>
-    [DataField]
+    [ViewVariables]
     public List<EntityUid> CanControl = new();
 
     /// <summary>
-    /// Compounds that will be assigned to NPCs with different tasks
+    /// The current specified task for this entity is
     /// </summary>
-    [DataField]
-    public Dictionary<NpcTaskType, ProtoId<HTNCompoundPrototype>> Compounds = new();
+    [ViewVariables]
+    public ProtoId<NpcTaskPrototype>? CurrentTask;
+
+    /// <summary>
+    /// How often is there a check for finishing an task
+    /// </summary>
+    [DataField, ViewVariables]
+    public float TaskFinishCheckRate = 10f;
+
+    [ViewVariables]
+    public float TaskFinishAccumulator = 0f;
 }

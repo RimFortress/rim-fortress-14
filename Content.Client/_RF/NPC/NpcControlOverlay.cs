@@ -1,8 +1,4 @@
 using System.Numerics;
-using Content.Shared._RF.NPC;
-using Content.Shared.Hands.Components;
-using Content.Shared.Mobs;
-using Content.Shared.Mobs.Components;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Shared.Enums;
@@ -24,27 +20,23 @@ public sealed class NpcControlOverlay : Overlay
     [ValidatePrototypeId<ShaderPrototype>]
     private const string PointLineShader = "DottedLine";
 
+    private readonly Color _selectColor = Color.LightGray;
+
     private readonly NpcControlSystem _npcControl;
     private readonly SharedTransformSystem _transform;
     private readonly IEntityManager _entityManager;
     private readonly IPrototypeManager _prototype;
 
-    private readonly Color _selectColor = Color.LightGray;
-    private readonly Color _attackColor = Color.Red;
-    private readonly Color _pickUpColor = Color.Blue;
-    private readonly Color _pryingColor = Color.Blue;
-    private readonly Color _buildColor = Color.Yellow;
-
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
     public NpcControlOverlay(
-        NpcControlSystem npcControl,
-        SharedTransformSystem transform,
         IPrototypeManager prototype,
-        IEntityManager entityManager)
+        IEntityManager entityManager,
+        IEntitySystemManager entSysManager)
     {
-        _npcControl = npcControl;
-        _transform = transform;
+        _npcControl = entSysManager.GetEntitySystem<NpcControlSystem>();
+        _transform = entSysManager.GetEntitySystem<SharedTransformSystem>();
+
         _entityManager = entityManager;
         _prototype = prototype;
     }
@@ -73,59 +65,27 @@ public sealed class NpcControlOverlay : Overlay
                 || !_entityManager.TryGetComponent(entity, out TransformComponent? entityForm))
                 continue;
 
+            _entityManager.TryGetComponent(task.Target, out TransformComponent? xform);
+
+            if (xform == null && task.Coordinates == null)
+                return;
+
+            var coords = task.Coordinates ?? xform!.Coordinates;
             var start = _transform.ToMapCoordinates(entityForm.Coordinates);
-            var end = _transform.ToMapCoordinates(task.Coordinates);
+            var end = _transform.ToMapCoordinates(coords);
+            var dist = (end.Position - start.Position).Length();
 
-            switch (task.Type)
+            if (task.Target != null)
             {
-                case NpcTaskType.Move:
-                {
-                    if ((end.Position - start.Position).Length() < 0.5f)
-                        break;
-
-                    DrawPointCircle(args, end, _selectColor);
-                    DrawLine(args, _selectColor, start, end);
-                    break;
-                }
-                case NpcTaskType.Attack:
-                {
-                    if (_entityManager.TryGetComponent(task.Target, out MobStateComponent? state)
-                        && state.CurrentState != MobState.Alive)
-                        break;
-
-                    SetShader(task.Target, _attackColor);
-                    DrawLine(args, _attackColor, start, end, 0.5f);
-                    break;
-                }
-                case NpcTaskType.PickUp:
-                {
-                    if (_entityManager.TryGetComponent(entity, out HandsComponent? hands)
-                        && hands.ActiveHand?.HeldEntity == task.Target)
-                        break;
-
-                    SetShader(task.Target, _pickUpColor);
-                    DrawLine(args, _pickUpColor, start, end, 0.5f);
-                    break;
-                }
-                case NpcTaskType.Build:
-                {
-                    if ((end.Position - start.Position).Length() > 0.5f)
-                        DrawLine(args, _buildColor, start, end);
-
-                    SetShader(task.Target, _buildColor);
-                    break;
-                }
-                case NpcTaskType.Pry:
-                {
-                    if ((end.Position - start.Position).Length() > 0.5f)
-                        DrawLine(args, _pryingColor, start, end);
-
-                    SetShader(task.Target, _pryingColor);
-                    break;
-                }
-                default:
-                    throw new NotImplementedException();
+                SetShader(task.Target.Value, task.Color);
             }
+            else
+            {
+                if (dist > 0.5f)
+                    DrawPointCircle(args, end, task.Color);
+            }
+
+            DrawLine(args, task.Color, start, end);
         }
     }
 
@@ -148,13 +108,10 @@ public sealed class NpcControlOverlay : Overlay
         in OverlayDrawArgs args,
         Color color,
         MapCoordinates start,
-        MapCoordinates end,
-        float? minLength = null)
+        MapCoordinates end)
     {
         if (start.Position == Vector2.Zero // Probably out-of-sight entity
-            || end.Position == Vector2.Zero
-            || minLength != null
-            && (start.Position - end.Position).Length() < minLength)
+            || end.Position == Vector2.Zero)
             return;
 
         var shader = _prototype.Index<ShaderPrototype>(PointLineShader).InstanceUnique();

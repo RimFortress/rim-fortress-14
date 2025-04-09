@@ -27,8 +27,7 @@ public sealed partial class ActiveHandComponentPrecondition : HTNPrecondition
         {
             var hasComp = _entManager.HasComponent(hand.HeldEntity, comp.Value.Component.GetType());
 
-            if (!hasComp ||
-                Invert && hasComp)
+            if (hasComp == Invert) // RimFortress: fix shit code
             {
                 return false;
             }

@@ -10,34 +10,25 @@ public abstract class SharedNpcControlSystem : EntitySystem
 
 public sealed class NpcTask
 {
-    public NpcTaskType Type { get; }
-    public EntityUid Target { get; }
-    public EntityCoordinates Coordinates { get; }
+    public Color Color { get; }
+    public EntityUid? Target { get; }
+    public EntityCoordinates? Coordinates { get; }
 
-    public NpcTask(NpcTaskType type, EntityUid target, EntityCoordinates coords)
+    public NpcTask(Color color, EntityUid? target, EntityCoordinates? coords)
     {
-        Type = type;
+        Color = color;
         Target = target;
         Coordinates = coords;
     }
-}
-
-public enum NpcTaskType : byte
-{
-    Move,
-    Attack,
-    PickUp,
-    Build,
-    Pry,
 }
 
 [Serializable, NetSerializable]
 public sealed class NpcTaskInfoMessage : EntityEventArgs
 {
     public NetEntity Entity { get; set; }
-    public NpcTaskType TaskType { get; set; }
-    public NetEntity Target { get; set; }
-    public NetCoordinates TargetCoordinates { get; set; }
+    public Color Color { get; set; }
+    public NetEntity? Target { get; set; }
+    public NetCoordinates? TargetCoordinates { get; set; }
 }
 
 [Serializable, NetSerializable]
