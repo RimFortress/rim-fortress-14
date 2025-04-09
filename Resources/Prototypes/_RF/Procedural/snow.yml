@@ -320,15 +320,15 @@
         fractalType: FBm
         frequency: 0.03
       decals:
-        - grasssnow1
-        - grasssnow2
-        - grasssnow3
-        - grasssnow4
-        - grasssnow5
-        - grasssnow6
-        - grasssnow7
-        - grasssnow8
-        - grasssnow9
+        - grasssnow01
+        - grasssnow02
+        - grasssnow03
+        - grasssnow04
+        - grasssnow05
+        - grasssnow06
+        - grasssnow07
+        - grasssnow08
+        - grasssnow09
         - grasssnow10
         - grasssnow11
         - grasssnow12
