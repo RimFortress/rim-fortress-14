@@ -1,0 +1,41 @@
+- type: entity
+  parent: [ Incorporeal, BaseMob ]
+  id: RimFortressObserver
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    visible: false
+    noRot: true
+  - type: ContentEye
+    maxZoom: 6,6
+  - type: Eye
+    drawFov: false
+  - type: Input
+    context: "ghost"
+  - type: Examiner
+    skipChecks: true
+  - type: GhostHearing
+  - type: IntrinsicRadioReceiver
+  - type: ActiveRadio
+    receiveAllChannels: true
+    globalReceive: true
+  - type: MovementSpeedModifier
+    baseWalkSpeed: 13
+    baseSprintSpeed: 20
+  - type: Tag
+    tags:
+    - BypassInteractionRangeChecks
+  - type: ComplexInteraction
+  - type: NoRotateOnInteract
+  - type: NoRotateOnMove
+  - type: MouseDragMove
+  - type: NpcControl
+    tasks:
+      - MoveTo
+      - Attack
+      - PickUp
+      - Pry
+      - Build
+  - type: NpcFactionMember
+    factions:
+      - RimFortress

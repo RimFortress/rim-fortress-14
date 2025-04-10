@@ -13,5 +13,9 @@ namespace Content.Shared.Construction.Steps
             var tagSystem = entityManager.EntitySysManager.GetEntitySystem<TagSystem>();
             return !string.IsNullOrEmpty(_tag) && tagSystem.HasTag(uid, _tag);
         }
+
+        // RimFortress Start
+        public string? Tag => _tag; // I'm sorry, but we need this for GetBuildItemOperator
+        // RimFortress End
     }
 }

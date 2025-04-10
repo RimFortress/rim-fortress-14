@@ -1,0 +1,58 @@
+- type: npcTask
+  id: MoveTo
+  overlayColor: "#D3D3D3FF"
+  compound: MoveToCompound
+  finishPreconditions:
+    - !type:KeyExistsPrecondition
+      key: TargetCoordinates
+    - !type:CoordinatesInRangePrecondition
+      targetKey: TargetCoordinates
+      rangeKey: MoveToCloseRange
+
+- type: npcTask
+  id: Attack
+  overlayColor: "#FF0000FF"
+  compound: AttackTargetCompound
+  startWhitelist:
+    components:
+      - HTN
+  finishPreconditions:
+    - !type:KeyExistsPrecondition
+      key: Target
+    - !type:MobStatePrecondition
+      targetKey: Target
+      state: Alive
+      invert: true
+
+- type: npcTask
+  id: PickUp
+  overlayColor: "#00D5FFFF"
+  compound: PickUpCompound
+  startWhitelist:
+    components:
+      - Item
+  finishPreconditions:
+    - !type:KeyExistsPrecondition
+      key: Target
+    - !type:ActiveHandEntityIsPrecondition
+      targetKey: Target
+
+- type: npcTask
+  id: Pry
+  overlayColor: "#00D5FFFF"
+  compound: PryCompound
+  priority: 11
+  startWhitelist:
+    components:
+      - Prying
+  #finishPreconditions:
+
+- type: npcTask
+  id: Build
+  overlayColor: "#FFFF00FF"
+  compound: BuildCompound
+  priority: 10
+  startWhitelist:
+    components:
+      - Construction
+  #finishPreconditions:

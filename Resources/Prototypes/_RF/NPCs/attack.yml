@@ -1,0 +1,168 @@
+- type: htnCompound
+  id: AttackTargetCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    - preconditions:
+        - !type:ActiveHandFreePrecondition
+        - !type:KeyNotExistsPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: InventoryGuns
+            key: Item
+
+    - preconditions:
+        - !type:ActiveHandFreePrecondition
+        - !type:KeyNotExistsPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: InventoryMelees
+            key: Item
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+            - type: MeleeWeapon
+              damage:
+                types:
+                  Slash: 0
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Item
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Item
+
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Wieldable
+            - type: GunRequiresWield
+        - !type:WieldedPrecondition
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:WieldOperator
+
+    # Insert the cartridge into the chamber, if necessary
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: ChamberMagazineAmmoProvider
+        - !type:BoltClosedPrecondition
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SwitchBoltClosedOperator
+
+    # Drop the gun NOW!!!
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+        - !type:ActiveHandEntityPrecondition
+        - !type:GunAmmoPrecondition
+          maxPercent: 0.001
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Gun
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+        - !type:GunAmmoPrecondition
+          minPercent: 0.001
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        # Move to the target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            stopOnLineOfSight: true
+            rangeKey: MeleeRange
+        - !type:HTNPrimitiveTask
+          operator: !type:JukeOperator
+            jukeType: Away
+        # Attack with a gun
+        - !type:HTNPrimitiveTask
+          operator: !type:GunOperator
+            targetKey: Target
+            opaqueKey: true
+
+    # Melee
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+          invert: true
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        # Else go to the target at melee distance
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: MeleeRange
+
+    # Attack in close combat if no gun is available
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MeleeOperator
+            targetKey: Target

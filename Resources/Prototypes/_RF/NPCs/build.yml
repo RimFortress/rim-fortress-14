@@ -1,0 +1,324 @@
+- type: htnCompound
+  id: BuildCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    ##########################
+    # CONSTRUCT REQUIREMENTS #
+    ##########################
+
+    # We don't merge conditions and steps to avoid overwriting keys
+
+    # Conditions
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:KeysExistsPrecondition
+          invert: true
+          keys:
+            - ItemEntityTarget
+            - MaterialTarget
+            - MaterialInsertAmount
+            - TagsTarget
+            - AllTagsRequired
+            - ToolQualityTarget
+            - ToolFuelTarget
+            - ComponentTarget
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:GetConstructionConditionsOperator
+
+    # Steps
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:KeysExistsPrecondition
+          invert: true
+          keys:
+            - ItemEntityTarget
+            - MaterialTarget
+            - MaterialInsertAmount
+            - TagsTarget
+            - AllTagsRequired
+            - ToolQualityTarget
+            - ToolFuelTarget
+            - ComponentTarget
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:GetConstructionStepsOperator
+
+    ############
+    # MATERIAL #
+    ############
+
+    # Find the material for construction
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: ItemEntityTarget
+        - !type:KeysExistsPrecondition
+          keys:
+            - MaterialTarget
+            - MaterialInsertAmount
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:PopStringOperator
+            key: MaterialTarget
+            outKey: Material
+        - !type:HTNPrimitiveTask
+          operator: !type:PopIntOperator
+            key: MaterialInsertAmount
+            outKey: Amount
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetMaterials
+            key: ItemEntityTarget
+
+    ########
+    # TAGS #
+    ########
+
+    # Find entity with the required tags
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: ItemEntityTarget
+        - !type:KeysExistsPrecondition
+          keys:
+            - TagsTarget
+            - AllTagsRequired
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:PopStringListOperator
+            key: TagsTarget
+            outKey: Tags
+        - !type:HTNPrimitiveTask
+          operator: !type:PopBoolOperator
+            key: AllTagsRequired
+            outKey: AllTags
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetTags
+            key: ItemEntityTarget
+
+    #########
+    # TOOLS #
+    #########
+
+    # Find required tool
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: ItemEntityTarget
+        - !type:KeysExistsPrecondition
+          keys:
+            - ToolQualityTarget
+            - ToolFuelTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:PopStringOperator
+            key: ToolQualityTarget
+            outKey: ToolQuality
+        - !type:HTNPrimitiveTask
+          operator: !type:PopFloatOperator
+            key: ToolFuelTarget
+            outKey: ToolFuel
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetTool
+            key: ItemEntityTarget
+
+    #############
+    # COMPONENT #
+    #############
+
+    # Find entity with the required component
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: ItemEntityTarget
+        - !type:KeyExistsPrecondition
+          key: ComponentTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:PopStringOperator
+            key: ComponentTarget
+            outKey: Component
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetComponent
+            key: ItemEntityTarget
+
+    #########
+    # BUILD #
+    #########
+
+    # Goes to the found object for construction
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: ItemEntityTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    #- preconditions:
+    #   - !type:KeyExistsPrecondition
+    #     key: ItemEntityTarget
+    #   - !type:ActiveHandEntityPrecondition
+    #   - !type:ActiveHandEntityIsPrecondition
+    #     targetKey: ItemEntityTarget
+    #     invert: true
+    # tasks:
+    #   - !type:HTNPrimitiveTask
+    #     operator: !type:SwapToFreeHandOperator
+
+    # Put the item in inventory if hands are full
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StorageOperator
+
+    # If hands are still full throw the item away
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:TargetInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Divide the stack of material, if necessary
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - ItemEntityTarget
+            - Amount
+        - !type:TargetInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SplitStackOperator
+            targetKey: ItemEntityTarget
+            amountKey: Amount
+            removeAmountOnFinish: true
+
+    # Pick up the item
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:KeyNotExistsPrecondition
+          key: Amount
+        - !type:TargetInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: ItemEntityTarget
+
+    # Go to the construction target
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - ItemEntityTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # Using the item for construction
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - ItemEntityTarget
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+
+    # Yes, it looks very crutchy,
+    # if someone else has used the item,
+    # the ItemEntityTarget is invalid and npc have to look for a new material
+    - preconditions:
+        - !type:EntityDeletedPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget

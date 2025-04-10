@@ -1,0 +1,38 @@
+- type: htnCompound
+  id: MoveToCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # Move to target
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TargetCoordinates
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            targetKey: TargetCoordinates
+            rangeKey: MoveToCloseRange
+            removeKeyOnFinish: false

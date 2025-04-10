@@ -32,6 +32,7 @@ using Robust.Shared.Random;
 using Robust.Shared.Threading;
 using Robust.Shared.Utility;
 using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumerator;
+using Content.Server._RF.World; // RimFortress
 
 namespace Content.Server.Parallax;
 
@@ -50,6 +51,7 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly ShuttleSystem _shuttles = default!;
+    [Dependency] private readonly RimFortressWorldSystem _world = default!; // RimFortress
 
     private EntityQuery<BiomeComponent> _biomeQuery;
     private EntityQuery<FixturesComponent> _fixturesQuery;
@@ -446,10 +448,16 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         BuildMarkerChunks(component, gridUid, grid, seed);
 
         var active = _activeChunks[component];
+        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in active)
         {
             LoadChunkMarkers(component, gridUid, grid, chunk, seed);
+
+            // RimFortress Start
+            if (isWorldMap && !_world.InMapLimits(chunk))
+                continue;
+            // RimFortress End
 
             if (!component.LoadedChunks.Add(chunk))
                 continue;
@@ -884,9 +892,15 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     {
         var active = _activeChunks[component];
         List<(Vector2i, Tile)>? tiles = null;
+        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in component.LoadedChunks)
         {
+            // RimFortress Start
+            if (isWorldMap && _world.InMapLimits(chunk))
+                continue;
+            // RimFortress End
+
             if (active.Contains(chunk) || !component.LoadedChunks.Remove(chunk))
                 continue;
 

@@ -1,0 +1,21 @@
+- type: entity
+  id: GhostImpassableWall
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Transform
+    anchored: true
+  - type: Sprite
+    visible: false
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.5,-0.5,0.5,0.5"
+        mask:
+        - GhostImpassable
+        layer:
+        - GhostImpassable
+        density: 1000

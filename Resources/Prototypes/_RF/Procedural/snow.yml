@@ -1,0 +1,411 @@
+- type: biomeTemplate
+  id: RfSnow
+  layers:
+    # FLOOR
+    - !type:BiomeTileLayer
+      threshold: -1
+      tile: FloorSnow
+
+    # Random dug snow
+    - !type:BiomeTileLayer
+      tile: FloorSnowDug
+      threshold: 0.50
+      noise:
+        seed: 2
+        noiseType: OpenSimplex2
+        frequency: 0.08
+        lacunarity: 2.50
+        fractalType: Ridged
+        gain: 1.5
+        octaves: 4
+
+    # Caves
+    - !type:BiomeTileLayer
+      threshold: -0.35
+      tile: FloorConcreteSmooth
+      noise:
+        seed: 5
+        noiseType: Cellular
+        frequency: 0.01
+        lacunarity: 1.50
+        fractalType: FBm
+        cellularDistanceFunction: EuclideanSq
+        cellularReturnType: Distance2Div
+        octaves: 4
+
+    # Dug snow
+    - !type:BiomeTileLayer
+      threshold: 0.25
+      tile: FloorSnowDug
+      noise:
+        seed: 18
+        frequency: 0.04
+        noiseType: Perlin
+        fractalType: FBm
+        transformType3D: ImproveXZPlanes
+        gain: 0.5
+        octaves: 4
+    - !type:BiomeTileLayer
+      threshold: 0.35
+      tile: FloorIce
+      noise:
+        seed: 18
+        frequency: 0.04
+        noiseType: Perlin
+        fractalType: FBm
+        transformType3D: ImproveXZPlanes
+        gain: 0.5
+        octaves: 4
+
+    # Road
+    - !type:BiomeTileLayer
+      tile: FloorSnowDug
+      threshold: 0.85
+      noise:
+        seed: 6
+        noiseType: OpenSimplex2
+        frequency: 0.01
+        lacunarity: 1.50
+        fractalType: Ridged
+        octaves: 1
+
+    # River
+    - !type:BiomeTileLayer
+      tile: FloorIce
+      threshold: 0.92
+      noise:
+        seed: 3
+        noiseType: OpenSimplex2
+        frequency: 0.003
+        lacunarity: 2.50
+        fractalType: Ridged
+        octaves: 1
+
+
+    # ENTITY
+    # Water
+    - !type:BiomeEntityLayer
+      threshold: 0.50
+      noise:
+        seed: 2
+        noiseType: OpenSimplex2
+        frequency: 0.08
+        lacunarity: 2.50
+        fractalType: Ridged
+        gain: 1.5
+        octaves: 4
+      allowedTiles:
+        - FloorIce
+      entities:
+        - FloorWaterEntity
+
+    - !type:BiomeEntityLayer
+      threshold: 0.5
+      noise:
+        seed: 0
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 2
+      allowedTiles:
+        - FloorSnow
+      entities:
+        - FloraTreeSnow
+        - FloraTreeConifer
+        - FloraTreeStumpConifer
+
+    - !type:BiomeEntityLayer
+      threshold: 0.5
+      noise:
+        seed: 0
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 2
+      allowedTiles:
+        - FloorSnow
+      entities:
+        - IceCrust
+
+    # Caves
+    - !type:BiomeEntityLayer
+      threshold: 0.4
+      noise:
+        seed: 123
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 2
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - FloraStalagmite
+    - !type:BiomeEntityLayer
+      threshold: 0.8
+      allowedTiles:
+        - FloorConcreteSmooth
+      noise:
+        seed: 231
+        noiseType: OpenSimplex2
+        frequency: 1
+      entities:
+        - Spaceshroom
+    - !type:BiomeEntityLayer
+      threshold: 0.85
+      allowedTiles:
+        - FloorConcreteSmooth
+      noise:
+        seed: 233
+        noiseType: OpenSimplex2
+        frequency: 1
+      entities:
+        - CrystalBlue
+        - CrystalCyan
+
+    # Walls
+    - !type:BiomeEntityLayer
+      allowedTiles:
+        - FloorConcreteSmooth
+      threshold: -0.10
+      noise:
+        seed: 0
+        noiseType: Cellular
+        frequency: 0.05
+        lacunarity: 2
+        fractalType: FBm
+        octaves: 5
+        cellularDistanceFunction: Euclidean
+        cellularReturnType: Distance2
+      entities:
+        - WallIce
+    - !type:BiomeEntityLayer
+      allowedTiles:
+        - FloorConcreteSmooth
+      threshold: -0.30
+      noise:
+        seed: 123
+        noiseType: Cellular
+        frequency: 0.15
+        lacunarity: 2
+        fractalType: FBm
+        octaves: 5
+        cellularDistanceFunction: Euclidean
+        cellularReturnType: Distance2
+      entities:
+        - WallRockAndesite
+
+    # Ores
+    - !type:BiomeEntityLayer
+      threshold: 0.7
+      noise:
+        seed: 0
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 3
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteQuartz
+    - !type:BiomeEntityLayer
+      threshold: 0.6
+      noise:
+        seed: 5
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 3
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteTin
+    - !type:BiomeEntityLayer
+      threshold: 0.5
+      noise:
+        seed: 10
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 3
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteCoal
+    - !type:BiomeEntityLayer
+      threshold: 0.7
+      noise:
+        seed: 20
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 0.09
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteSalt
+    - !type:BiomeEntityLayer
+      threshold: 0.77
+      noise:
+        seed: 30
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 0.08
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteGold
+    - !type:BiomeEntityLayer
+      threshold: 0.77
+      noise:
+        seed: 40
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 0.07
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteSilver
+    - !type:BiomeEntityLayer
+      threshold: 0.79
+      noise:
+        seed: 50
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 0.06
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesitePlasma
+    - !type:BiomeEntityLayer
+      threshold: 0.8
+      noise:
+        seed: 60
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        frequency: 0.05
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - WallRockAndesiteUranium
+
+
+    # DECALS
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorSnow
+      divisions: 1
+      threshold: 0.70
+      noise:
+        seed: 10
+        fractalType: FBm
+        frequency: 0.1
+        octaves: 2
+      decals:
+        - bushsnowa1
+        - bushsnowa2
+        - bushsnowa3
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorSnow
+      divisions: 1
+      threshold: 0.70
+      noise:
+        seed: 11
+        fractalType: FBm
+        frequency: 0.1
+      decals:
+        - bushsnowb1
+        - bushsnowb2
+        - bushsnowb3
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorSnow
+      divisions: 1.0
+      threshold: 0.50
+      noise:
+        seed: 13
+        fractalType: FBm
+        frequency: 0.03
+      decals:
+        - grasssnow01
+        - grasssnow02
+        - grasssnow03
+        - grasssnow04
+        - grasssnow05
+        - grasssnow06
+        - grasssnow07
+        - grasssnow08
+        - grasssnow09
+        - grasssnow10
+        - grasssnow11
+        - grasssnow12
+        - grasssnow13
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorSnow
+      divisions: 1.0
+      threshold: 0.40
+      noise:
+        seed: 14
+        fractalType: FBm
+        frequency: 0.04
+      decals:
+        - grasssnowa1
+        - grasssnowa2
+        - grasssnowa3
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorSnow
+      divisions: 1.0
+      threshold: 0.35
+      noise:
+        seed: 14
+        fractalType: FBm
+        frequency: 0.04
+      decals:
+        - grasssnowb1
+        - grasssnowb2
+        - grasssnowb3
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorSnow
+      divisions: 1.0
+      threshold: 0.30
+      noise:
+        seed: 14
+        fractalType: FBm
+        frequency: 0.04
+      decals:
+        - grasssnowc1
+        - grasssnowc2
+        - grasssnowc3
+
+    # Rocks
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorConcreteSmooth
+        - FloorSnowDug
+      noise:
+        seed: 15
+        fractalType: FBm
+        frequency: 1
+      divisions: 1
+      threshold: 0.55
+      decals:
+        - Rock01
+        - Rock02
+        - Rock03
+        - Rock04
+    - !type:BiomeDecalLayer
+      allowedTiles:
+        - FloorConcreteSmooth
+        - FloorSnowDug
+      noise:
+        seed: 16
+        fractalType: FBm
+        frequency: 1
+      divisions: 1
+      threshold: 0.56
+      decals:
+        - Basalt1
+        - Basalt2
+        - Basalt3
+        - Basalt4
+        - Basalt5
+        - Basalt6
+        - Basalt7
+        - Basalt8
+        - Basalt9

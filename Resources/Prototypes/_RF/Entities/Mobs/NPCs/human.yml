@@ -1,0 +1,26 @@
+- type: entity
+  id: RimFortressMobPop
+  parent: BaseMobHuman
+  save: false
+  components:
+    - type: RandomHumanoidAppearance
+      randomizeName: false
+    - type: RandomMetadata
+      nameSegments:
+        - NamesFirst
+        - NamesLast
+    - type: Loadout
+      prototypes:
+        - RfSafariGear
+        - RfMercenaryGear
+        - RfCossacGear
+        - RfRandomVisualGear
+    - type: InputMover
+    - type: MobMover
+    - type: HTN
+      rootTask:
+        task: IdleCompound
+    - type: NpcFactionMember
+      factions:
+      - RimFortress
+    - type: ControllableNpc

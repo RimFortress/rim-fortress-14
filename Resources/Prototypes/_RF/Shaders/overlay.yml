@@ -1,0 +1,31 @@
+- type: shader
+  id: DottedCircle
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_circle.swsl"
+  params:
+    radius: 0.35
+    thickness: 0.04
+    frequency: 6
+    rotationSpeed: 1
+    pulseSpeed: 3
+    pulseAmplitude: 0.15
+
+- type: shader
+  id: DottedLine
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_line.swsl"
+  params:
+    startOffset: 0.2
+    endOffset: 0.5
+    thickness: 0.02
+    dashLen: 10
+    gapLen: 15
+
+- type: shader
+  id: DottedOutline
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_outline.swsl"
+  params:
+    width: 4
+    frequency: 10
+    rotationSpeed: 1

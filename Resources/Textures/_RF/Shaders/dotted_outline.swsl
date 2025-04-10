@@ -1,0 +1,34 @@
+uniform highp float width;
+uniform highp vec4 color;
+uniform highp float frequency;
+uniform highp float rotationSpeed;
+
+const highp float pi = 3.14159265359;
+const highp float twopi = 2.0 * pi;
+
+void fragment() {
+    highp vec4 col = texture2D(TEXTURE, UV);
+
+    highp vec2 ps = TEXTURE_PIXEL_SIZE;
+    highp float maxa = col.a;
+
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(0.0, -width)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(0.0, width)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(-width, 0.0)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(width, 0.0)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(-width, -width)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(width, -width)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(-width, width)*ps).a);
+    maxa = max(maxa, texture2D(TEXTURE, UV + vec2(width, width)*ps).a);
+
+    highp vec2 center = vec2(0.5);
+    highp vec2 dir = UV - center;
+    highp float angle = mod(atan(dir.y, dir.x) + pi + TIME * rotationSpeed, twopi);
+
+    highp float dash = mod(angle * frequency / twopi, 1.0);
+    highp float visible = step(0.5, dash);
+
+    highp float outline_strength = visible * (1.0 - col.a) * maxa;
+
+    COLOR = mix(col, color, outline_strength * color.a);
+}

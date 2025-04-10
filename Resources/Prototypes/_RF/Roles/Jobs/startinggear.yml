@@ -1,0 +1,50 @@
+- type: startingGear
+  id: RfSafariGear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitSafari
+    back: ClothingBackpackSatchelLeather
+    head: ClothingHeadHatBeretQM
+    shoes: ClothingShoesLeather
+  storage:
+    back:
+      - MedkitFilled
+      - BoxMRE
+
+- type: startingGear
+  id: RfMercenaryGear
+  equipment:
+    eyes: ClothingEyesGlassesMercenary
+    mask: ClothingMaskBandMerc
+    gloves: ClothingHandsMercGlovesCombat
+    jumpsuit: ClothingUniformJumpsuitMercenary
+    outerClothing: ClothingOuterVestWebMerc
+    back: ClothingBackpackMerc
+    head: ClothingHeadBandMerc
+    shoes: ClothingShoesBootsMerc
+  storage:
+    back:
+      - SurvivalKnife
+
+- type: startingGear
+  id: RfCossacGear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitCossack
+    back: ClothingBackpackSatchelSalvage
+    head: ClothingHeadHatFedoraBrown
+    shoes: ClothingShoesBootsCowboyBrown
+  storage:
+    back:
+      - SurvivalKnife
+  inhand:
+    - WeaponShotgunHandmade
+
+- type: startingGear
+  id: RfRandomVisualGear
+  equipment:
+    jumpsuit: ClothingUniformRandomStandard
+    back: ClothingBackpack
+    shoes: ClothingShoesColorBlack
+  storage:
+    back:
+      - DrinkWaterBottleFull
+      - FoodTinMRE

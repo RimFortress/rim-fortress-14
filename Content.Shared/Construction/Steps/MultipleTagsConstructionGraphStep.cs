@@ -33,5 +33,11 @@ namespace Content.Shared.Construction.Steps
             // This entity is valid!
             return true;
         }
+
+        // RimFortress Start
+        // I'm sorry, but we need this for GetBuildItemOperator
+        public List<ProtoId<TagPrototype>>? AllTag => _allTags;
+        public List<ProtoId<TagPrototype>>? AnyTag => _anyTags;
+        // RimFortress End
     }
 }

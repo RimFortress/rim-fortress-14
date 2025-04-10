@@ -1,0 +1,35 @@
+uniform sampler2D SCREEN_TEXTURE;
+uniform highp vec2 position;
+uniform lowp vec4 color;
+uniform highp float unit;
+uniform highp float radius;
+uniform highp float thickness;
+uniform highp float frequency;
+uniform highp float rotationSpeed;
+uniform highp float pulseSpeed;
+uniform highp float pulseAmplitude;
+
+const highp float pi = 3.14159265;
+const highp float twopi = 2.0 * pi;
+
+void fragment() {
+   highp vec2 d = FRAGCOORD.xy - position;
+   highp float dist = length(d);
+   highp float currentRotation = TIME * rotationSpeed;
+
+   highp float baseAngle = atan(d.y, d.x);
+   highp float rotation = mod(TIME * rotationSpeed, twopi);
+   highp float angle = mod(baseAngle + rotation + pi, twopi);
+
+   highp float pulse = sin(TIME * pulseSpeed) * pulseAmplitude;
+   highp float currentRadius = radius * unit * (1.0 + pulse);
+
+   highp float t = thickness * unit;
+   float outline = smoothstep(currentRadius - t, currentRadius, dist)
+                 - smoothstep(currentRadius, currentRadius + t, dist);
+
+   highp float dash = mod(angle * frequency / twopi, 1.0);
+   highp float visible = step(0.5, dash);
+
+   COLOR = vec4(color.rgb, color.a * outline * visible);
+}

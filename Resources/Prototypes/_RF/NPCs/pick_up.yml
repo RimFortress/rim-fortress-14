@@ -1,0 +1,71 @@
+- type: htnCompound
+  id: PickUpCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # Put the item in inventory if hands are full
+    - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Target
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StorageOperator
+
+    # Drop item in hands
+    - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Target
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Move to target and pick up
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:ActiveHandFreePrecondition
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+        - !type:HTNPrimitiveTask
+          preconditions:
+            - !type:TargetInRangePrecondition
+              targetKey: Target
+              rangeKey: InteractRange
+          operator: !type:EquipOperator
+            target: Target

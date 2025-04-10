@@ -116,6 +116,9 @@ namespace Content.Client.Input
             ghost.AddFunction(EngineKeyFunctions.MoveLeft);
             ghost.AddFunction(EngineKeyFunctions.MoveRight);
             ghost.AddFunction(EngineKeyFunctions.Walk);
+            // RimFortress Start
+            ghost.AddFunction(ContentKeyFunctions.DragMove);
+            // RimFortress End
 
             common.AddFunction(ContentKeyFunctions.OpenEntitySpawnWindow);
             common.AddFunction(ContentKeyFunctions.OpenSandboxWindow);

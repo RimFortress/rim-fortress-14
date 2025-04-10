@@ -1,0 +1,98 @@
+- type: htnCompound
+  id: PryCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Tool
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetStringOperator
+            key: ToolQuality
+            value: Prying
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetTool
+            key: Tool
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Tool
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Tool
+        - !type:TargetInRangePrecondition
+          targetKey: Tool
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Tool
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+
+    - preconditions:
+        - !type:EntityDeletedPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Tool
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Tool
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
