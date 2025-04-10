@@ -9,7 +9,7 @@ namespace Content.Server._RF.NPC;
 public sealed partial class NpcTaskPrototype : IPrototype
 {
     /// <inheritdoc/>
-    [IdDataField]
+    [IdDataField, ViewVariables]
     public string ID { get; } = default!;
 
     /// <summary>
