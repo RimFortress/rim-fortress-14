@@ -4,6 +4,8 @@ using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
 using Content.Shared.Maps;
+using Content.Shared.Mobs;
+using Content.Shared.Mobs.Components;
 using Content.Shared.Physics;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
@@ -36,7 +38,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         SubscribeNetworkEvent<NpcTaskRequest>(OnTaskRequest);
         SubscribeNetworkEvent<NpcTaskResetRequest>(OnTaskResetRequest);
+
         SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
+        SubscribeLocalEvent<MobStateChangedEvent>(OnMobStateChanged);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -47,6 +51,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         OnReloadPrototypes();
     }
 
+    #region Event Handle
     private void OnReloadPrototypes()
     {
         var tasks = new Dictionary<NpcTaskPrototype, List<EntityUid>>();
@@ -62,45 +67,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
 
         _tasks = tasks;
-    }
-
-    /// <summary>
-    /// Creates a new task for the NPC and saves the old one
-    /// </summary>
-    private void SetTask(EntityUid entity, NpcTaskPrototype proto, EntityUid? target, EntityCoordinates? coords)
-    {
-        if (!_npc.TryGetNpc(entity, out var npc)
-            || npc is not HTNComponent htn
-            || !TryComp(entity, out ControllableNpcComponent? control))
-            return;
-
-        if (htn.Plan != null)
-            _htn.ShutdownPlan(htn);
-
-        if (!_originCompounds.ContainsKey(entity))
-            _originCompounds[entity] = htn.RootTask;
-
-        _targets[entity] = (target, coords);
-        _tasks[proto].Add(entity);
-        control.CurrentTask = proto;
-
-        if (target != null)
-            npc.Blackboard.SetValue(TargetKey, target);
-        if (coords != null)
-            npc.Blackboard.SetValue(TargetCoordinatesKey, coords);
-
-        htn.RootTask = new HTNCompoundTask { Task = proto.Compound };
-        _htn.Replan(htn);
-
-        var msg = new NpcTaskInfoMessage
-        {
-            Entity = GetNetEntity(entity),
-            Color = proto.OverlayColor,
-            Target = GetNetEntity(target),
-            TargetCoordinates = GetNetCoordinates(coords),
-        };
-
-        RaiseNetworkEvent(msg);
     }
 
     private void OnTaskRequest(NpcTaskRequest request)
@@ -147,8 +113,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         foreach (var entity in entities)
         {
-            if (!TryComp(entity, out ControllableNpcComponent? controllable)
-                || !controllable.CanControl.Contains(requester))
+            if (!CanControl(requester, entity))
                 continue;
 
             if (_tasks[task].Count >= task.MaxNpc)
@@ -186,10 +151,10 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnTaskResetRequest(NpcTaskResetRequest request)
     {
+        var requester = GetEntity(request.Requester);
         var entity = GetEntity(request.Entity);
 
-        if (!TryComp(entity, out ControllableNpcComponent? controllable)
-            || !controllable.CanControl.Contains(GetEntity(request.Requester)))
+        if (!CanControl(requester, entity))
             return;
 
         ResetTask(entity);
@@ -208,6 +173,55 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
     }
 
+    private void OnMobStateChanged(MobStateChangedEvent ev)
+    {
+        if (_targets.ContainsKey(ev.Target) && ev.NewMobState != MobState.Alive)
+            ResetTask(ev.Target);
+    }
+    #endregion
+
+    /// <summary>
+    /// Creates a new task for the NPC and saves the old one
+    /// </summary>
+    private void SetTask(EntityUid entity, NpcTaskPrototype proto, EntityUid? target, EntityCoordinates? coords)
+    {
+        if (!_npc.TryGetNpc(entity, out var npc)
+            || npc is not HTNComponent htn
+            || !TryComp(entity, out ControllableNpcComponent? control))
+            return;
+
+        if (htn.Plan != null)
+            _htn.ShutdownPlan(htn);
+
+        if (!_originCompounds.ContainsKey(entity))
+            _originCompounds[entity] = htn.RootTask;
+
+        _targets[entity] = (target, coords);
+        _tasks[proto].Add(entity);
+        control.CurrentTask = proto;
+
+        if (target != null)
+            npc.Blackboard.SetValue(TargetKey, target);
+        if (coords != null)
+            npc.Blackboard.SetValue(TargetCoordinatesKey, coords);
+
+        htn.RootTask = new HTNCompoundTask { Task = proto.Compound };
+        _htn.Replan(htn);
+
+        var msg = new NpcTaskInfoMessage
+        {
+            Entity = GetNetEntity(entity),
+            Color = proto.OverlayColor,
+            Target = GetNetEntity(target),
+            TargetCoordinates = GetNetCoordinates(coords),
+        };
+
+        RaiseNetworkEvent(msg);
+    }
+
+    /// <summary>
+    /// Restores the entity's original task
+    /// </summary>
     private void ResetTask(Entity<HTNComponent?, ControllableNpcComponent?> entity)
     {
         if (!Resolve(entity.Owner, ref entity.Comp1)
@@ -229,7 +243,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (entities.Remove(entity))
                 break;
         }
-        
+
         RaiseNetworkEvent(new NpcTaskResetMessage { Entity = GetNetEntity(entity) });
     }
 
@@ -259,6 +273,18 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
 
         return null;
+    }
+
+    public bool CanControl(Entity<NpcControlComponent?> requester, Entity<ControllableNpcComponent?, MobStateComponent?> entity)
+    {
+        if (!Resolve(requester.Owner, ref requester.Comp)
+            || !Resolve(entity.Owner, ref entity.Comp1)
+            || !Resolve(entity.Owner, ref entity.Comp2)
+            || entity.Comp2.CurrentState != MobState.Alive
+            || !entity.Comp1.CanControl.Contains(requester))
+            return false;
+
+        return true;
     }
 
     public override void Update(float frameTime)
