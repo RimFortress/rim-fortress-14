@@ -32,6 +32,12 @@ public sealed class NpcTaskInfoMessage : EntityEventArgs
 }
 
 [Serializable, NetSerializable]
+public sealed class NpcTaskResetMessage : EntityEventArgs
+{
+    public NetEntity Entity { get; set; }
+}
+
+[Serializable, NetSerializable]
 public sealed class NpcTaskResetRequest : EntityEventArgs
 {
     public NetEntity Requester { get; set; }

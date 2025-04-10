@@ -54,6 +54,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         {
             _tasks.TryGetValue(proto, out var entities);
             tasks.Add(proto, entities ?? new());
+
+            foreach (var precondition in proto.FinishPreconditions)
+            {
+                precondition.Initialize(EntityManager.EntitySysManager);
+            }
         }
 
         _tasks = tasks;
@@ -108,13 +113,20 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         EntityUid? target = null;
         NpcTaskPrototype? task = null;
 
+        if (!TryComp(requester, out NpcControlComponent? control))
+            return;
+
+        var sorted = control.Tasks
+            .Select(t => _prototype.Index(t))
+            .OrderBy(x => x.Priority)
+            .ToList();
+
         // Get the first suitable task
         foreach (var entity in targets)
         {
             if (target != null)
                 break;
 
-            var sorted = _tasks.Keys.OrderBy(x => x.Priority).ToList();
             foreach (var proto in sorted)
             {
                 if (!_whitelist.IsWhitelistPass(proto.StartWhitelist, entity))
@@ -127,7 +139,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
 
         // Or take the task without requirements
-        task ??= _tasks.Keys.FirstOrDefault(proto => proto.StartWhitelist == null);
+        task ??= sorted.FirstOrDefault(proto => proto.StartWhitelist == null);
         if (task == null)
             return;
 
@@ -217,6 +229,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (entities.Remove(entity))
                 break;
         }
+        
+        RaiseNetworkEvent(new NpcTaskResetMessage { Entity = GetNetEntity(entity) });
     }
 
     /// <summary>

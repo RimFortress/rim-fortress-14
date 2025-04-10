@@ -30,6 +30,12 @@
   - type: NoRotateOnMove
   - type: MouseDragMove
   - type: NpcControl
+    tasks:
+      - MoveTo
+      - Attack
+      - PickUp
+      - Pry
+      - Build
   - type: NpcFactionMember
     factions:
       - RimFortress
