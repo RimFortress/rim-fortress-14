@@ -128,7 +128,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         // Find all free tiles in the specified area
         while (tileEnumerator.MoveNext(out var tileRef))
         {
-            if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            if (_turf.IsTileBlocked(tileRef, CollisionGroup.AllMask))
                 continue;
 
             freeTiles.Add(tileRef);
