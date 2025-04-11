@@ -148,8 +148,21 @@
 
     # Walls
     - !type:BiomeEntityLayer
+      threshold: -1
+      noise:
+        seed: 0
+        noiseType: Cellular
+        frequency: 0.05
+        lacunarity: 2
+        fractalType: FBm
+        octaves: 5
+        cellularDistanceFunction: Euclidean
+        cellularReturnType: Distance2
       allowedTiles:
         - FloorCaveDrought
+      entities:
+        - RoofMarker
+    - !type:BiomeEntityLayer
       threshold: -0.30
       noise:
         seed: 0
@@ -160,6 +173,8 @@
         octaves: 5
         cellularDistanceFunction: Euclidean
         cellularReturnType: Distance2
+      allowedTiles:
+        - FloorCaveDrought
       entities:
         - WallRock
     - !type:BiomeEntityLayer

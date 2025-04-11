@@ -161,6 +161,21 @@
 
     # Walls
     - !type:BiomeEntityLayer
+      threshold: -1
+      noise:
+        seed: 5
+        noiseType: Cellular
+        frequency: 0.01
+        lacunarity: 1.50
+        fractalType: FBm
+        cellularDistanceFunction: EuclideanSq
+        cellularReturnType: Distance2Div
+        octaves: 4
+      allowedTiles:
+        - FloorConcreteSmooth
+      entities:
+        - RoofMarker
+    - !type:BiomeEntityLayer
       allowedTiles:
         - FloorConcreteSmooth
       threshold: -0.10
