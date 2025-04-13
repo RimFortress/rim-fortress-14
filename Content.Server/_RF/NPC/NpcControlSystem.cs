@@ -73,10 +73,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         var entities = request.Entities.Select(GetEntity).ToList();
         var requester = GetEntity(request.Requester);
-        var targets = request.Targets.Select(GetEntity).ToList();
+        var target = GetEntity(request.Target);
         var targetCoords = GetCoordinates(request.TargetCoordinates);
 
-        EntityUid? target = null;
         NpcTaskPrototype? task = null;
 
         if (!TryComp(requester, out NpcControlComponent? control))
@@ -88,24 +87,19 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             .ToList();
 
         // Get the first suitable task
-        foreach (var entity in targets)
+        foreach (var proto in sorted)
         {
-            if (target != null)
-                break;
-
-            foreach (var proto in sorted)
-            {
-                if (!_whitelist.IsWhitelistPass(proto.StartWhitelist, entity))
-                    continue;
-
+            if (task == null && proto.StartWhitelist == null)
                 task = proto;
-                target = entity;
-                break;
-            }
+
+            if (target != null
+                && !_whitelist.IsWhitelistPass(proto.StartWhitelist, target.Value))
+                continue;
+
+            task = proto;
+            break;
         }
 
-        // Or take the task without requirements
-        task ??= sorted.FirstOrDefault(proto => proto.StartWhitelist == null);
         if (task == null)
             return;
 

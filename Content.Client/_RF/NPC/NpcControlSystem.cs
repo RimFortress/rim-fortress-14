@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Numerics;
 using Content.Client.NPC.HTN;
 using Content.Shared._RF.NPC;
 using Robust.Client.Graphics;
@@ -76,14 +75,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             || Selected.Count == 0)
             return false;
 
-        var box = Box2.CenteredAround(coords.Position, new Vector2(0.05f));
-        var entities = _lookup.GetEntitiesIntersecting(coords.EntityId, box);
-
         RaiseNetworkEvent(new NpcTaskRequest
         {
             Requester = GetNetEntity(requester),
             Entities = Selected.Select(entity => GetNetEntity(entity)).ToList(),
-            Targets = entities.Select(entity => GetNetEntity(entity)).ToList(),
+            Target = uid.IsValid() ? GetNetEntity(uid) : null,
             TargetCoordinates = GetNetCoordinates(coords),
         });
 

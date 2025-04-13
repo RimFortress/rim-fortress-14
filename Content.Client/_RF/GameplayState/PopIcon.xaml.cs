@@ -52,7 +52,7 @@ public sealed partial class PopIcon : Control
             && _player.LocalEntity is { } entity)
         {
             Pressed = true;
-            
+
             // THIS IS HORRIBLE,
             // but we can't work properly with the FollowerSystem on the client
             // and have to send the message to the server
