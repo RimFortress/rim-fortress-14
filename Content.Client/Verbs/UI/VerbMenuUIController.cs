@@ -13,6 +13,8 @@ using Robust.Shared.Collections;
 using Robust.Shared.Input;
 using Robust.Shared.Utility;
 
+using Content.Client._RF.GameplayState; // RimFortress
+
 namespace Content.Client.Verbs.UI
 {
     /// <summary>
@@ -26,6 +28,7 @@ namespace Content.Client.Verbs.UI
     public sealed class VerbMenuUIController : UIController,
         IOnStateEntered<GameplayState>, IOnStateExited<GameplayState>,
         IOnStateEntered<MappingState>, IOnStateExited<MappingState>
+        , IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState> // RimFortress
     {
         [Dependency] private readonly IPlayerManager _playerManager = default!;
         [Dependency] private readonly ContextMenuUIController _context = default!;
@@ -74,6 +77,24 @@ namespace Content.Client.Verbs.UI
                 _verbSystem.OnVerbsResponse -= HandleVerbsResponse;
             Close();
         }
+
+        // RimFortress Start
+        public void OnStateEntered(RimFortressState state)
+        {
+            _context.OnContextKeyEvent += OnKeyBindDown;
+            _context.OnContextClosed += Close;
+            _verbSystem.OnVerbsResponse += HandleVerbsResponse;
+        }
+
+        public void OnStateExited(RimFortressState state)
+        {
+            _context.OnContextKeyEvent -= OnKeyBindDown;
+            _context.OnContextClosed -= Close;
+            if (_verbSystem != null)
+                _verbSystem.OnVerbsResponse -= HandleVerbsResponse;
+            Close();
+        }
+        // RimFortress End
 
         /// <summary>
         ///     Open a verb menu and fill it with verbs applicable to the given target entity.

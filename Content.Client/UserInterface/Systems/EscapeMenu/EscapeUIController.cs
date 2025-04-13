@@ -13,10 +13,13 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Utility;
 using static Robust.Client.UserInterface.Controls.BaseButton;
 
+using Content.Client._RF.GameplayState; // RimFortress
+
 namespace Content.Client.UserInterface.Systems.EscapeMenu;
 
 [UsedImplicitly]
 public sealed class EscapeUIController : UIController, IOnStateEntered<GameplayState>, IOnStateExited<GameplayState>
+    , IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState> // RimFortress
 {
     [Dependency] private readonly IClientConsoleHost _console = default!;
     [Dependency] private readonly IUriOpener _uri = default!;
@@ -122,6 +125,77 @@ public sealed class EscapeUIController : UIController, IOnStateEntered<GameplayS
 
         CommandBinds.Unregister<EscapeUIController>();
     }
+
+    // RimFortress Start
+    public void OnStateEntered(RimFortressState state)
+    {
+        DebugTools.Assert(_escapeWindow == null);
+
+        _escapeWindow = UIManager.CreateWindow<Options.UI.EscapeMenu>();
+
+        _escapeWindow.OnClose += DeactivateButton;
+        _escapeWindow.OnOpen += ActivateButton;
+
+        _escapeWindow.ChangelogButton.OnPressed += _ =>
+        {
+            CloseEscapeWindow();
+            _changelog.ToggleWindow();
+        };
+
+        _escapeWindow.RulesButton.OnPressed += _ =>
+        {
+            CloseEscapeWindow();
+            _info.OpenWindow();
+        };
+
+        _escapeWindow.DisconnectButton.OnPressed += _ =>
+        {
+            CloseEscapeWindow();
+            _console.ExecuteCommand("disconnect");
+        };
+
+        _escapeWindow.OptionsButton.OnPressed += _ =>
+        {
+            CloseEscapeWindow();
+            _options.OpenWindow();
+        };
+
+        _escapeWindow.QuitButton.OnPressed += _ =>
+        {
+            CloseEscapeWindow();
+            _console.ExecuteCommand("quit");
+        };
+
+        _escapeWindow.WikiButton.OnPressed += _ =>
+        {
+            _uri.OpenUri(_cfg.GetCVar(CCVars.InfoLinksWiki));
+        };
+
+        _escapeWindow.GuidebookButton.OnPressed += _ =>
+        {
+            _guidebook.ToggleGuidebook();
+        };
+
+        // Hide wiki button if we don't have a link for it.
+        _escapeWindow.WikiButton.Visible = _cfg.GetCVar(CCVars.InfoLinksWiki) != "";
+
+        CommandBinds.Builder
+            .Bind(EngineKeyFunctions.EscapeMenu,
+                InputCmdHandler.FromDelegate(_ => ToggleWindow()))
+            .Register<EscapeUIController>();
+    }
+
+    public void OnStateExited(RimFortressState state)
+    {
+        if (_escapeWindow != null)
+        {
+            _escapeWindow.Dispose();
+            _escapeWindow = null;
+        }
+
+        CommandBinds.Unregister<EscapeUIController>();
+    }
+    // RimFortress End
 
     private void EscapeButtonOnOnPressed(ButtonEventArgs obj)
     {

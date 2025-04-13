@@ -32,7 +32,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         base.Initialize();
 
         MapQuery = GetEntityQuery<WorldMapComponent>();
-        PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
     }
 
     /// <summary>
@@ -304,6 +303,14 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             return null;
 
         return (map, mapComp);
+    }
+
+    public List<EntityUid>? GetPLayerPops(EntityUid uid)
+    {
+        if (!TryComp(uid, out RimFortressPlayerComponent? player))
+            return null;
+
+        return player.Pops.Count == 0 ? null : player.Pops;
     }
 
     public override void Update(float frameTime)

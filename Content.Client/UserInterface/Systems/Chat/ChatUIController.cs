@@ -41,6 +41,8 @@ using Robust.Shared.Replays;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
+using Content.Client._RF.GameplayState; // RimFortress
+
 namespace Content.Client.UserInterface.Systems.Chat;
 
 public sealed class ChatUIController : UIController
@@ -307,6 +309,13 @@ public sealed class ChatUIController : UIController
                 chatSizeRaw = _config.GetCVar(CCVars.SeparatedScreenChatSize);
                 SetChatSizing(chatSizeRaw, separatedScreen, setting);
                 break;
+            // RimFortress Start
+            case RimFortressScreen rfScreen:
+                chatBox = rfScreen.ChatBox;
+                chatSizeRaw = _config.GetCVar(CCVars.DefaultScreenChatSize);
+                SetChatSizing(chatSizeRaw, rfScreen, setting);
+                break;
+            // RimFortress End
             default:
                 // this could be better?
                 var maybeChat = UIManager.ActiveScreen.GetWidget<ChatBox>();

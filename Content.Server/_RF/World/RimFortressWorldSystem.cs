@@ -96,6 +96,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         player.OwnedMaps.Add(worldMap.Owner);
 
         worldMap.Comp.OwnerPlayer = mob;
+        Dirty(mob, player);
     }
 
     public void AddPops(Entity<RimFortressPlayerComponent?> player, List<EntityUid> pops)
@@ -108,5 +109,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             var comp = EnsureComp<ControllableNpcComponent>(pop);
             comp.CanControl.Add(player);
         }
+
+        player.Comp.Pops.AddRange(pops);
+        Dirty(player);
     }
 }
