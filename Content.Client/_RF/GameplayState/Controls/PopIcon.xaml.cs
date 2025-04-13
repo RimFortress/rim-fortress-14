@@ -8,7 +8,7 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Timing;
 
-namespace Content.Client._RF.GameplayState;
+namespace Content.Client._RF.GameplayState.Controls;
 
 [GenerateTypedNameReferences]
 public sealed partial class PopIcon : Control
