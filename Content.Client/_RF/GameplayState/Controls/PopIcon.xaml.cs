@@ -30,13 +30,14 @@ public sealed partial class PopIcon : Control
         Button.OnToggled += OnButtonToggled;
     }
 
-    public PopIcon(EntityUid uid)
+    public PopIcon(EntityUid uid, string? name)
     {
         RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);
 
         Icon.OverrideDirection = Direction.South;
         Icon.SetEntity(uid);
+        Name.Text = name;
 
         Button.OnToggled += OnButtonToggled;
     }
