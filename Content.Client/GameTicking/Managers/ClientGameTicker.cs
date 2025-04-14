@@ -12,6 +12,8 @@ using Robust.Client.UserInterface;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Audio;
 
+using Content.Client._RF.GameplayState; // RimFortress
+
 namespace Content.Client.GameTicking.Managers
 {
     [UsedImplicitly]
@@ -137,7 +139,7 @@ namespace Content.Client.GameTicking.Managers
 
         private void JoinGame(TickerJoinGameEvent message)
         {
-            _stateManager.RequestStateChange<GameplayState>();
+            _stateManager.RequestStateChange<RimFortressState>(); // RimFortress
         }
 
         private void LobbyCountdown(TickerLobbyCountdownEvent message)
