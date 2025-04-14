@@ -1,8 +1,11 @@
 using Content.Client._RF.GameplayState.Controls;
 using Content.Client._RF.World;
 using Content.Client.Gameplay;
+using Content.Client.GameTicking.Managers;
 using Content.Client.UserInterface.Controls;
 using Content.Client.UserInterface.Systems.Gameplay;
+using Content.Shared.Light.Components;
+using Robust.Client.GameObjects;
 using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Shared.Input.Binding;
@@ -14,8 +17,12 @@ public sealed class RimFortressState : GameplayStateBase
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
     private RimFortressWorldSystem _world = default!;
+    private MetaDataSystem _meta = default!;
+    private MapSystem _map = default!;
+    private ClientGameTicker _ticker = default!;
 
     private bool _setup;
 
@@ -62,6 +69,9 @@ public sealed class RimFortressState : GameplayStateBase
 
         _setup = true;
         _world = _entityManager.System<RimFortressWorldSystem>();
+        _meta = _entityManager.System<MetaDataSystem>();
+        _map = _entityManager.System<MapSystem>();
+        _ticker = _entityManager.System<ClientGameTicker>();
     }
 
     protected override void OnKeyBindStateChanged(ViewportBoundKeyEventArgs args)
@@ -77,11 +87,27 @@ public sealed class RimFortressState : GameplayStateBase
         base.FrameUpdate(e);
 
         if (_player.LocalEntity is not { } entity
-            || _world.GetPLayerPops(entity) is not { } pops
-            || _lastPops == pops)
+            || !_entityManager.TryGetComponent(entity, out TransformComponent? xform))
             return;
 
-        Screen.PopList.SetPops(pops);
-        _lastPops = pops;
+        if (_world.GetPLayerPops(entity) is { } pops
+            && _lastPops != pops)
+        {
+            Screen.PopList.SetPops(pops);
+            _lastPops = pops;
+        }
+
+        var map = _map.GetMap(xform.MapID);
+        var pausedTime = _meta.GetPauseTime(map);
+
+        if (_entityManager.TryGetComponent(map, out LightCycleComponent? cycle))
+        {
+            var time = _timing.CurTime
+                .Add(cycle.Offset)
+                .Subtract(_ticker.RoundStartTimeSpan)
+                .Subtract(pausedTime);
+
+            Screen.Datetime.UpdateInfo(time, cycle.Duration); // TODO: dynamic world map temperature
+        }
     }
 }

@@ -51,7 +51,7 @@ public sealed partial class PopIcon : Control
         if (_lastClicked > time - TimeSpan.FromSeconds(0.333)
             && _player.LocalEntity is { } entity)
         {
-            Pressed = true;
+            Pressed = false;
 
             // THIS IS HORRIBLE,
             // but we can't work properly with the FollowerSystem on the client

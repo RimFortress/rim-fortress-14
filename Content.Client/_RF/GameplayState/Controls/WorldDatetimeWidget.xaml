@@ -1,0 +1,59 @@
+<state:WorldDatetimeWidget
+    xmlns="https://spacestation14.io"
+    xmlns:state="clr-namespace:Content.Client._RF.GameplayState.Controls"
+    xmlns:graphics="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+    xmlns:xNamespace="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:style="clr-namespace:Content.Client.Stylesheets"
+    SetWidth="465">
+    <PanelContainer HorizontalExpand="True" VerticalExpand="True">
+        <PanelContainer.PanelOverride>
+            <graphics:StyleBoxFlat BackgroundColor="{xNamespace:Static style:StyleNano.PanelDark}" />
+        </PanelContainer.PanelOverride>
+        <BoxContainer Orientation="Horizontal">
+            <PanelContainer SetSize="47 47" Margin="3 3 0 3">
+                <PanelContainer.PanelOverride>
+                    <graphics:StyleBoxFlat BackgroundColor="#2a2a30" />
+                </PanelContainer.PanelOverride>
+                <TextureRect Name="Icon" Access="Protected"
+                             SetSize="40 40" Stretch="KeepAspectCentered"
+                             VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </PanelContainer>
+            <state:VLine Color="{xNamespace:Static style:StyleNano.NanoGold}"
+                         Thickness="4" Margin="10 3"/>
+            <PanelContainer Margin="0 3" HorizontalExpand="True" VerticalExpand="True">
+                <PanelContainer.PanelOverride>
+                    <graphics:StyleBoxFlat BackgroundColor="#2a2a30" />
+                </PanelContainer.PanelOverride>
+                <Label Name="Text" Access="Protected"
+                       Align="Fill" Margin="5 0" ClipText="False"/>
+            </PanelContainer>
+            <state:VLine Color="{xNamespace:Static style:StyleNano.NanoGold}"
+                         Thickness="4" Margin="10 3"/>
+            <PanelContainer HorizontalExpand="True" Margin="0 3">
+                <PanelContainer.PanelOverride>
+                    <graphics:StyleBoxFlat BackgroundColor="#2a2a30" />
+                </PanelContainer.PanelOverride>
+                <TextureRect Name="TempIcon" Access="Protected"
+                             Stretch="KeepAspectCentered"
+                             SetSize="20 20" Margin="3 0 0 0"
+                             HorizontalAlignment="Left"/>
+                <Label Name="Temperature" Access="Protected"
+                       Align="Fill" ClipText="False"
+                       Margin="23 0 3 0"
+                       HorizontalAlignment="Left"/>
+                <BoxContainer HorizontalExpand="True"/>
+            </PanelContainer>
+            <state:VLine Color="{xNamespace:Static style:StyleNano.NanoGold}"
+                         Thickness="4" Margin="10 3"/>
+            <Button Name="ChatToggle" Access="Public"
+                    ToggleMode="True" SetSize="47 47"
+                    Margin="0 3 3 3"
+                    StyleClasses="ButtonSquare">
+                <TextureRect Stretch="Scale" SetSize="30 30"
+                             ModulateSelfOverride="#7b7e9e"
+                             HorizontalExpand="True" VerticalExpand="True"
+                             TexturePath="/Textures/_RF/Interface/comment-dots-regular.svg.192dpi.png"/>
+            </Button>
+        </BoxContainer>
+    </PanelContainer>
+</state:WorldDatetimeWidget>

@@ -22,9 +22,11 @@ public sealed partial class RimFortressScreen : InGameScreen
         SetAnchorPreset(ViewportContainer, LayoutPreset.Wide);
         SetAnchorAndMarginPreset(TopLeft, LayoutPreset.TopLeft, margin: 10);
         SetAnchorAndMarginPreset(Chat, LayoutPreset.TopRight, margin: 10);
+        SetAnchorAndMarginPreset(Right, LayoutPreset.RightWide, margin: 10);
         SetAnchorAndMarginPreset(PopList, LayoutPreset.BottomRight, margin: 10);
 
         Chat.OnChatResizeFinish += ChatOnResizeFinish;
+        Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
     }
 
     private void ChatOnResizeFinish(Vector2 _)

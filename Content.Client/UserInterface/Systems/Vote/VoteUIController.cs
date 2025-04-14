@@ -4,7 +4,7 @@ using Content.Client.Voting;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface.Controllers;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.GameplayState.Controls; // RimFortress
 
 namespace Content.Client.UserInterface.Systems.Vote;
 
