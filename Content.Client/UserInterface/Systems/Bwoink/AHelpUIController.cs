@@ -27,10 +27,13 @@ using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Utility;
 
+using Content.Client._RF.GameplayState; // RimFortress
+
 namespace Content.Client.UserInterface.Systems.Bwoink;
 
 [UsedImplicitly]
 public sealed class AHelpUIController: UIController, IOnSystemChanged<BwoinkSystem>, IOnStateChanged<GameplayState>, IOnStateChanged<LobbyState>
+    , IOnStateChanged<RimFortressState> // RimFortress
 {
     [Dependency] private readonly IClientAdminManager _adminManager = default!;
     [Dependency] private readonly IConfigurationManager _config = default!;
@@ -309,6 +312,33 @@ public sealed class AHelpUIController: UIController, IOnSystemChanged<BwoinkSyst
         if (LobbyAHelpButton != null)
             LobbyAHelpButton.OnPressed -= AHelpButtonPressed;
     }
+
+    // RimFortress Start
+    public void OnStateEntered(RimFortressState state)
+    {
+        if (GameAHelpButton != null)
+        {
+            GameAHelpButton.OnPressed -= AHelpButtonPressed;
+            GameAHelpButton.OnPressed += AHelpButtonPressed;
+            GameAHelpButton.Pressed = UIHelper?.IsOpen ?? false;
+
+            if (_hasUnreadAHelp)
+            {
+                UnreadAHelpReceived();
+            }
+            else
+            {
+                UnreadAHelpRead();
+            }
+        }
+    }
+
+    public void OnStateExited(RimFortressState state)
+    {
+        if (GameAHelpButton != null)
+            GameAHelpButton.OnPressed -= AHelpButtonPressed;
+    }
+    // RimFortress End
 }
 
 // please kill all this indirection
