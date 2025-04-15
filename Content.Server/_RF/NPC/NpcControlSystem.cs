@@ -103,6 +103,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (task == null)
             return;
 
+        if (task.StartWhitelist == null)
+            target = null;
+
         var previousTargets = new List<TileRef>();
 
         foreach (var entity in entities)
@@ -139,10 +142,10 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 continue;
             }
 
-            if (target.Value == entity)
+            if (target == entity)
                 continue;
 
-            SetTask(entity, task, target.Value, null);
+            SetTask(entity, task, target, null);
         }
     }
 
