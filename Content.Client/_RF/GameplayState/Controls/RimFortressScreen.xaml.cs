@@ -23,7 +23,6 @@ public sealed partial class RimFortressScreen : InGameScreen
         SetAnchorAndMarginPreset(TopLeft, LayoutPreset.TopLeft, margin: 10);
         SetAnchorAndMarginPreset(Chat, LayoutPreset.TopRight, margin: 10);
         SetAnchorAndMarginPreset(Right, LayoutPreset.RightWide, margin: 10);
-        SetAnchorAndMarginPreset(PopList, LayoutPreset.BottomRight, margin: 10);
 
         // We dont need it
         TopBar.CharacterButton.Visible = false;

@@ -123,12 +123,12 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             return spawned;
 
         var tileEnumerator = _map.GetTilesEnumerator(gridUid, grid, area);
-        var freeTiles = new List<TileRef>();
+        var freeTiles = new HashSet<TileRef>();
 
         // Find all free tiles in the specified area
         while (tileEnumerator.MoveNext(out var tileRef))
         {
-            if (_turf.IsTileBlocked(tileRef, CollisionGroup.AllMask))
+            if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
                 continue;
 
             freeTiles.Add(tileRef);
@@ -142,9 +142,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             var randomTile = _random.Pick(freeTiles);
             freeTiles.Remove(randomTile);
 
-            if (IsConnectedToBorder(randomTile, Rule.PlanetBorderProtoId, out var tiles))
+            if (IsConnectedToBorder(randomTile, freeTiles, out var tiles))
             {
-                freeTiles = freeTiles.Where(tile => tiles.Contains(tile)).ToList();
+                freeTiles = freeTiles.Where(tile => tiles.Contains(tile)).ToHashSet();
                 break;
             }
 
@@ -194,9 +194,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     /// Checks if the tile is connected to the map border
     /// </summary>
     /// <param name="tileRef">tile from which the check will start</param>
-    /// <param name="border">border entity prototype id</param>
+    /// <param name="freeTilesCache">A list of free tiles that have been checked before, to prevent double-checking</param>
     /// <param name="visited">list of visited tiles</param>
-    protected bool IsConnectedToBorder(TileRef tileRef, EntProtoId border, out HashSet<TileRef> visited)
+    protected bool IsConnectedToBorder(TileRef tileRef, HashSet<TileRef> freeTilesCache, out HashSet<TileRef> visited)
     {
         var directions = new[] { Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down };
         var queue = new Queue<TileRef>();
@@ -212,12 +212,13 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             if (!visited.Add(node))
                 continue;
 
-            if (_turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
-                continue;
-
             // NOTE: space is all unloaded map tiles, even if they are not map boundaries.
             if (node.IsSpace())
                 return true;
+
+            if (!freeTilesCache.Contains(node)
+                || _turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+                continue;
 
             foreach (var offset in directions)
             {
