@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Numerics;
 using Content.Server._RF.World;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
@@ -65,21 +64,6 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         {
             if (!GameTicker.IsGameRuleActive(ruleUid, rule))
                 continue;
-
-            if (ev.Map.Comp.OwnerPlayer is { } uid
-                && TryComp(uid, out RimFortressPlayerComponent? player)
-                && !player.GotRoundstartPops)
-            {
-                foreach (var map in player.OwnedMaps)
-                {
-                    var area = Box2.CenteredAround(Transform(uid).Coordinates.Position, new Vector2(rf.RoundStartSpawnRadius));
-                    var pops = _world.SpawnPop(map, area, amount: rf.RoundstartPops, hardSpawn: true);
-                    _world.AddPops((uid, player), pops);
-                }
-
-                player.GotRoundstartPops = true;
-                return;
-            }
 
             var addRule = _random.Pick(AvailableRules(ev.Map));
             ResetTime(rf, ev.Map, addRule);
