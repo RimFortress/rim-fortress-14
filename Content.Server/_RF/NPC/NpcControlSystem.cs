@@ -139,6 +139,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 continue;
             }
 
+            if (target.Value == entity)
+                continue;
+
             SetTask(entity, task, target.Value, null);
         }
     }
@@ -271,8 +274,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     public bool CanControl(Entity<NpcControlComponent?> requester, Entity<ControllableNpcComponent?, MobStateComponent?> entity)
     {
-        if (requester.Owner == entity.Owner
-            || !Resolve(requester.Owner, ref requester.Comp)
+        if (!Resolve(requester.Owner, ref requester.Comp)
             || !Resolve(entity.Owner, ref entity.Comp1)
             || !Resolve(entity.Owner, ref entity.Comp2)
             || entity.Comp2.CurrentState != MobState.Alive
