@@ -52,5 +52,11 @@ public sealed partial class PopList : UIWidget
             AddPop(pop);
         }
     }
+
+    public void Clear()
+    {
+        Icons.RemoveAllChildren();
+        _icons.Clear();
+    }
 }
 

@@ -53,6 +53,7 @@ public sealed class RimFortressState : GameplayStateBase
         _loadController.UnloadScreen();
         UserInterfaceManager.UnloadScreen();
 
+        Screen.PopList.Clear();
         base.Shutdown();
     }
 

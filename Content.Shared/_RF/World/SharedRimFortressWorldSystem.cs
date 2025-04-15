@@ -128,7 +128,12 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         // Find all free tiles in the specified area
         while (tileEnumerator.MoveNext(out var tileRef))
         {
-            if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            // We also check entities with non-hard fixtures to avoid spawning on entities like water, lava, chasms.
+            // It's obviously not the best solution to interfere with the TurfSystem code,
+            // a better solution would be to have some list of entities on which we can't spawn entities
+            // and check the tile for those entities, but then we'd have to write own version of IsTileBlocked
+            // to avoid calling GetEntitiesIntersecting repeatedly from EntityLookupSystem
+            if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable, checkNonHard: true))
                 continue;
 
             freeTiles.Add(tileRef);
