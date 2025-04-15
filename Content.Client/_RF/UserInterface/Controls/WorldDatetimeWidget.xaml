@@ -1,6 +1,6 @@
 <state:WorldDatetimeWidget
     xmlns="https://spacestation14.io"
-    xmlns:state="clr-namespace:Content.Client._RF.GameplayState.Controls"
+    xmlns:state="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:graphics="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:xNamespace="http://schemas.microsoft.com/winfx/2006/xaml"

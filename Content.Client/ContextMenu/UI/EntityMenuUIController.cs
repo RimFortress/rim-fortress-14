@@ -23,7 +23,7 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.UserInterface; // RimFortress
 
 namespace Content.Client.ContextMenu.UI
 {

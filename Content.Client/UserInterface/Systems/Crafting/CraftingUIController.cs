@@ -6,7 +6,7 @@ using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Utility;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.UserInterface; // RimFortress
 
 namespace Content.Client.UserInterface.Systems.Crafting;
 

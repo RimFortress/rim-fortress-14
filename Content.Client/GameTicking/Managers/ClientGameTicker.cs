@@ -12,7 +12,7 @@ using Robust.Client.UserInterface;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Audio;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.UserInterface; // RimFortress
 
 namespace Content.Client.GameTicking.Managers
 {

@@ -41,7 +41,7 @@ using Robust.Shared.Replays;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
-using Content.Client._RF.GameplayState.Controls; // RimFortress
+using Content.Client._RF.UserInterface.Controls; // RimFortress
 
 namespace Content.Client.UserInterface.Systems.Chat;
 

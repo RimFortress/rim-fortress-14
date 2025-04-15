@@ -1,7 +1,7 @@
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface.Controls;
 
-namespace Content.Client._RF.GameplayState.Controls;
+namespace Content.Client._RF.UserInterface.Controls;
 
 public sealed class VLine : Container
 {

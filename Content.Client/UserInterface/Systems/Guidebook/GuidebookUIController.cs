@@ -17,7 +17,7 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.UserInterface; // RimFortress
 
 namespace Content.Client.UserInterface.Systems.Guidebook;
 

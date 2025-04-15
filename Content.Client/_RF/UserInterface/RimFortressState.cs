@@ -1,4 +1,4 @@
-using Content.Client._RF.GameplayState.Controls;
+using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Gameplay;
 using Content.Client.GameTicking.Managers;
 using Content.Client.UserInterface.Controls;
@@ -10,7 +10,7 @@ using Robust.Client.Player;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Timing;
 
-namespace Content.Client._RF.GameplayState;
+namespace Content.Client._RF.UserInterface;
 
 public sealed class RimFortressState : GameplayStateBase
 {

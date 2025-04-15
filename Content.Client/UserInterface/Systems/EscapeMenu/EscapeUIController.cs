@@ -13,7 +13,7 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Utility;
 using static Robust.Client.UserInterface.Controls.BaseButton;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.UserInterface; // RimFortress
 
 namespace Content.Client.UserInterface.Systems.EscapeMenu;
 

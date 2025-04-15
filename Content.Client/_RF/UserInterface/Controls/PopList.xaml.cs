@@ -6,7 +6,7 @@ using Robust.Client.Player;
 using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 
-namespace Content.Client._RF.GameplayState.Controls;
+namespace Content.Client._RF.UserInterface.Controls;
 
 [GenerateTypedNameReferences]
 public sealed partial class PopList : UIWidget

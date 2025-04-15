@@ -13,7 +13,7 @@ using Robust.Shared.Collections;
 using Robust.Shared.Input;
 using Robust.Shared.Utility;
 
-using Content.Client._RF.GameplayState; // RimFortress
+using Content.Client._RF.UserInterface; // RimFortress
 
 namespace Content.Client.Verbs.UI
 {
