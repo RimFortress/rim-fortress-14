@@ -49,6 +49,6 @@ public sealed class NpcTaskRequest : EntityEventArgs
 {
     public NetEntity Requester { get; set; }
     public List<NetEntity> Entities { get; set; } = new();
-    public List<NetEntity> Targets { get; set; } = new();
+    public NetEntity? Target { get; set; } = new();
     public NetCoordinates TargetCoordinates { get; set; }
 }

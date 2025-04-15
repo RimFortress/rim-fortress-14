@@ -4,6 +4,8 @@ using Content.Client.Voting;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface.Controllers;
 
+using Content.Client._RF.UserInterface.Controls; // RimFortress
+
 namespace Content.Client.UserInterface.Systems.Vote;
 
 [UsedImplicitly]
@@ -29,6 +31,11 @@ public sealed class VoteUIController : UIController
             case SeparatedChatGameScreen separated:
                 _votes.SetPopupContainer(separated.VoteMenu);
                 break;
+            // RimFortress Start
+            case RimFortressScreen rimFortress:
+                _votes.SetPopupContainer(rimFortress.VoteMenu);
+                break;
+            // RimFortress End
         }
     }
 

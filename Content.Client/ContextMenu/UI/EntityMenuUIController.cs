@@ -23,6 +23,8 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
+using Content.Client._RF.UserInterface; // RimFortress
+
 namespace Content.Client.ContextMenu.UI
 {
     /// <summary>
@@ -34,6 +36,7 @@ namespace Content.Client.ContextMenu.UI
     ///     them from the menu as they move out of sight.
     /// </remarks>
     public sealed partial class EntityMenuUIController : UIController, IOnStateEntered<GameplayState>, IOnStateExited<GameplayState>
+        , IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState> // RimFortress
     {
         [Dependency] private readonly IEntitySystemManager _systemManager = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
@@ -81,6 +84,28 @@ namespace Content.Client.ContextMenu.UI
             _context.OnContextKeyEvent -= OnKeyBindDown;
             CommandBinds.Unregister<EntityMenuUIController>();
         }
+
+        // RimFortress Start
+        public void OnStateEntered(RimFortressState state)
+        {
+            _updating = true;
+            _cfg.OnValueChanged(CCVars.EntityMenuGroupingType, OnGroupingChanged, true);
+            _context.OnContextKeyEvent += OnKeyBindDown;
+
+            CommandBinds.Builder
+                .Bind(EngineKeyFunctions.UseSecondary,  new PointerInputCmdHandler(HandleOpenEntityMenu, outsidePrediction: true))
+                .Register<EntityMenuUIController>();
+        }
+
+        public void OnStateExited(RimFortressState state)
+        {
+            _updating = false;
+            Elements.Clear();
+            _cfg.UnsubValueChanged(CCVars.EntityMenuGroupingType, OnGroupingChanged);
+            _context.OnContextKeyEvent -= OnKeyBindDown;
+            CommandBinds.Unregister<EntityMenuUIController>();
+        }
+        // RimFortress End
 
         /// <summary>
         ///     Given a list of entities, sort them into groups and them to a new entity menu.

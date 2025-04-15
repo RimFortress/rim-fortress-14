@@ -20,6 +20,8 @@ using Robust.Shared.Physics.Systems;
 using Robust.Shared.Player;
 using Robust.Shared.Utility;
 
+using Robust.Shared.Serialization; // RimFortress
+
 namespace Content.Shared.Follower;
 
 public sealed class FollowerSystem : EntitySystem
@@ -47,6 +49,8 @@ public sealed class FollowerSystem : EntitySystem
         SubscribeLocalEvent<FollowedComponent, EntityTerminatingEvent>(OnFollowedTerminating);
         SubscribeLocalEvent<BeforeSerializationEvent>(OnBeforeSave);
         SubscribeLocalEvent<FollowedComponent, PolymorphedEvent>(OnFollowedPolymorphed);
+
+        SubscribeNetworkEvent<FollowEntityRequest>(OnFollowEntityRequest); // RimFortress
     }
 
     private void OnFollowedAttempt(Entity<FollowedComponent> ent, ref ComponentGetStateAttemptEvent args)
@@ -325,6 +329,20 @@ public sealed class FollowerSystem : EntitySystem
 
         return picked;
     }
+
+    // RimFortress Start
+    private void OnFollowEntityRequest(FollowEntityRequest request)
+    {
+        var follower = GetEntity(request.Follower);
+        var entity = GetEntity(request.Entity);
+
+        if (!TryComp(follower, out TransformComponent? _)
+            || !TryComp(entity, out TransformComponent? _))
+            return;
+
+        StartFollowingEntity(follower, entity);
+    }
+    // RimFortress End
 }
 
 public abstract class FollowEvent : EntityEventArgs
@@ -378,3 +396,12 @@ public sealed class EntityStoppedFollowingEvent : FollowEvent
     {
     }
 }
+
+// RimFortress Start
+[Serializable, NetSerializable]
+public sealed class FollowEntityRequest : EntityEventArgs
+{
+    public NetEntity Follower;
+    public NetEntity Entity;
+}
+// RimFortress End

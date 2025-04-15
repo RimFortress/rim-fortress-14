@@ -1,0 +1,33 @@
+<screens:RimFortressScreen
+    xmlns="https://spacestation14.io"
+    xmlns:screens="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:menuBar="clr-namespace:Content.Client.UserInterface.Systems.MenuBar.Widgets"
+    xmlns:chat="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    VerticalExpand="False"
+    VerticalAlignment="Bottom"
+    HorizontalAlignment="Center">
+    <LayoutContainer Name="ViewportContainer" HorizontalExpand="True" VerticalExpand="True">
+        <controls:MainViewport Name="MainViewport"/>
+    </LayoutContainer>
+    <BoxContainer Name="TopLeft" Access="Protected" Orientation="Vertical"/>
+    <chat:ResizableChatBox Name="Chat" Access="Protected"
+                           Margin="0 55 0 0" Visible="False"/>
+    <BoxContainer Name="Right" Access="Protected"
+                  Orientation="Vertical" VerticalExpand="True">
+        <screens:WorldDatetimeWidget Name="Datetime" Access="Public"
+                                     HorizontalExpand="True"/>
+        <screens:PopList Name="PopList" Access="Public"
+                         HorizontalAlignment="Right"
+                         VerticalAlignment="Bottom"/>
+        <BoxContainer Name="VoteMenu" Access="Public"
+                      Margin="0 10 0 10" Orientation="Vertical"
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+        <BoxContainer Orientation="Horizontal"
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <menuBar:GameTopMenuBar Name="TopBar" Access="Protected" />
+            <!-- Buffer so big votes don't skew it -->
+            <Control/>
+        </BoxContainer>
+    </BoxContainer>
+</screens:RimFortressScreen>

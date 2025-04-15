@@ -1,0 +1,26 @@
+<controls:PopIcon
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:graphics="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+    xmlns:xNamespace="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:style="clr-namespace:Content.Client.Stylesheets"
+    SetSize="90 90"
+    Margin="0 0 0 25">
+    <PanelContainer HorizontalExpand="True" VerticalExpand="True">
+        <PanelContainer.PanelOverride>
+            <graphics:StyleBoxFlat BackgroundColor="{xNamespace:Static style:StyleNano.NanoGold}" />
+        </PanelContainer.PanelOverride>
+        <PanelContainer Name="Marker" Access="Protected" SetSize="15 15"
+                        VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+        <Button Name="Button" Access="Protected"
+                SetSize="87 87" ToggleMode="True"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <SpriteView Name="Icon" Access="Public"
+                        SetSize="65 65" Stretch="Fill"
+                        VerticalAlignment="Top" HorizontalAlignment="Center"/>
+            <Label Name="Name" Access="Protected"
+                   HorizontalExpand="True" VerticalAlignment="Bottom"
+                   Align="Center" VAlign="Bottom" ClipText="True"/>
+        </Button>
+    </PanelContainer>
+</controls:PopIcon>

@@ -17,9 +17,12 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
+using Content.Client._RF.UserInterface; // RimFortress
+
 namespace Content.Client.UserInterface.Systems.Guidebook;
 
 public sealed class GuidebookUIController : UIController, IOnStateEntered<LobbyState>, IOnStateEntered<GameplayState>, IOnStateExited<LobbyState>, IOnStateExited<GameplayState>, IOnSystemChanged<GuidebookSystem>
+    , IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState> // RimFortress
 {
     [UISystemDependency] private readonly GuidebookSystem _guidebookSystem = default!;
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
@@ -89,6 +92,18 @@ public sealed class GuidebookUIController : UIController, IOnStateEntered<LobbyS
         _guideWindow = null;
         CommandBinds.Unregister<GuidebookUIController>();
     }
+
+    // RimFortress Start
+    public void OnStateEntered(RimFortressState state)
+    {
+        HandleStateEntered(state);
+    }
+
+    public void OnStateExited(RimFortressState state)
+    {
+        HandleStateExited();
+    }
+    // RimFortress End
 
     public void OnSystemLoaded(GuidebookSystem system)
     {
