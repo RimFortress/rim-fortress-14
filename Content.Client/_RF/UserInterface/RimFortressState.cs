@@ -49,11 +49,12 @@ public sealed class RimFortressState : GameplayStateBase
     {
         CommandBinds.Unregister<RimFortressState>();
 
+        Screen.PopList.Clear();
+
         UserInterfaceManager.ClearWindows();
         _loadController.UnloadScreen();
         UserInterfaceManager.UnloadScreen();
 
-        Screen.PopList.Clear();
         base.Shutdown();
     }
 
