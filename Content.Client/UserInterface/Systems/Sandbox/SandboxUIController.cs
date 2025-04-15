@@ -23,11 +23,14 @@ using Robust.Shared.Player;
 using Robust.Shared.Utility;
 using static Robust.Client.UserInterface.Controls.BaseButton;
 
+using Content.Client._RF.GameplayState; // RimFortress
+
 namespace Content.Client.UserInterface.Systems.Sandbox;
 
 // TODO hud refactor should part of this be in engine?
 [UsedImplicitly]
 public sealed class SandboxUIController : UIController, IOnStateChanged<GameplayState>, IOnSystemChanged<SandboxSystem>
+    , IOnStateChanged<RimFortressState> // RimFortress
 {
     [Dependency] private readonly IConsoleHost _console = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
@@ -231,4 +234,53 @@ public sealed class SandboxUIController : UIController, IOnStateChanged<Gameplay
     }
 
     #endregion
+
+    // RimFortress Start
+    public void OnStateEntered(RimFortressState state)
+    {
+        DebugTools.Assert(_window == null);
+        EnsureWindow();
+
+        CheckSandboxVisibility();
+
+        _input.SetInputCommand(ContentKeyFunctions.OpenEntitySpawnWindow,
+            InputCmdHandler.FromDelegate(_ =>
+            {
+                if (!_admin.CanAdminPlace())
+                    return;
+                EntitySpawningController.ToggleWindow();
+            }));
+        _input.SetInputCommand(ContentKeyFunctions.OpenSandboxWindow,
+            InputCmdHandler.FromDelegate(_ => ToggleWindow()));
+        _input.SetInputCommand(ContentKeyFunctions.OpenTileSpawnWindow,
+            InputCmdHandler.FromDelegate(_ =>
+            {
+                if (!_admin.CanAdminPlace())
+                    return;
+                TileSpawningController.ToggleWindow();
+            }));
+        _input.SetInputCommand(ContentKeyFunctions.OpenDecalSpawnWindow,
+            InputCmdHandler.FromDelegate(_ =>
+            {
+                if (!_admin.CanAdminPlace())
+                    return;
+                DecalPlacerController.ToggleWindow();
+            }));
+
+        CommandBinds.Builder
+            .Bind(ContentKeyFunctions.EditorCopyObject, new PointerInputCmdHandler(Copy))
+            .Register<SandboxSystem>();
+    }
+
+    public void OnStateExited(RimFortressState state)
+    {
+        if (_window != null)
+        {
+            _window.Close();
+            _window = null;
+        }
+
+        CommandBinds.Unregister<SandboxSystem>();
+    }
+    // RimFortress End
 }
