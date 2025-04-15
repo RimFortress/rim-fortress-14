@@ -217,7 +217,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
                 return true;
 
             if (!freeTilesCache.Contains(node)
-                || _turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+                && _turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
                 continue;
 
             foreach (var offset in directions)
