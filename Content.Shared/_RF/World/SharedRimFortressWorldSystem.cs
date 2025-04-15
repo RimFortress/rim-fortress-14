@@ -1,13 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
+using Content.Shared.Preferences;
+using Content.Shared.Roles;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.World;
 
@@ -15,9 +19,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 {
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] protected readonly TurfSystem Turf = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     protected RimFortressRuleComponent? Rule;
     protected EntityUid?[,] Worlds = new EntityUid?[0, 0]; // [Y,X]
@@ -80,8 +84,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         EntityUid gridUid,
         int spawnChunks,
         EntProtoId? popProto = null,
-        int amount = 1,
-        bool hardSpawn = false)
+        int amount = 1)
     {
         if (Rule is not { } rule)
             return new List<EntityUid>();
@@ -102,27 +105,62 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             chunks.Add(Box2.CenteredAround(new Vector2(-ind * chunkSize, y * chunkSize), new Vector2(chunkSize)));
         }
 
-        return SpawnPop(gridUid, _random.Pick(chunks), popProto, amount, hardSpawn);
+        return SpawnPop(gridUid, _random.Pick(chunks), popProto, amount);
     }
 
     /// <summary>
     /// Spawns entities in random free tiles, connected to the map border, of a given area
     /// </summary>
+    /// <param name="gridUid">Grid on which to spawn entities</param>
+    /// <param name="area">Area within which spawning can occur</param>
+    /// <param name="popProto">Prototype of the entity to be spawned</param>
+    /// <param name="amount">Amount of entities to be spawned</param>
+    /// <param name="entities">Entities spawned elsewhere previously that will be used in place of the prototype spawning</param>
     /// <returns>List of spawned entities</returns>
     public List<EntityUid> SpawnPop(
         EntityUid gridUid,
         Box2 area,
         EntProtoId? popProto = null,
         int amount = 1,
-        bool hardSpawn = false)
+        List<EntityUid>? entities = null)
     {
-        var spawned = new List<EntityUid>();
+        DebugTools.Assert(popProto != null || entities?.Count == amount);
 
-        if (!TryComp(gridUid, out MapGridComponent? grid)
-            || Rule is not { } rule)
+        var spawned = new List<EntityUid>();
+        var freeTiles = GetFreeTiles(gridUid, area);
+
+        if (freeTiles.Count == 0)
             return spawned;
 
-        var tileEnumerator = _map.GetTilesEnumerator(gridUid, grid, area);
+        // Spawn the entities on a random free tile
+        while (amount > 0)
+        {
+            var spawnCoords = Turf.GetTileCenter(_random.Pick(freeTiles));
+
+            // If we already have entities ready to go, we simply move them to the free places
+            if (entities?.Count > 0)
+            {
+                var entity = entities.Pop();
+                _transform.AttachToGridOrMap(entity);
+                _transform.SetCoordinates(entity, spawnCoords);
+                amount--;
+                continue;
+            }
+
+            var spawnedUid = Spawn(popProto, spawnCoords);
+            spawned.Add(spawnedUid);
+            amount--;
+        }
+
+        return spawned;
+    }
+
+    protected HashSet<TileRef> GetFreeTiles(Entity<MapGridComponent?> grid, Box2 area)
+    {
+        if (!Resolve(grid, ref grid.Comp))
+            return new();
+
+        var tileEnumerator = _map.GetTilesEnumerator(grid, grid.Comp, area);
         var freeTiles = new HashSet<TileRef>();
 
         // Find all free tiles in the specified area
@@ -133,7 +171,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             // a better solution would be to have some list of entities on which we can't spawn entities
             // and check the tile for those entities, but then we'd have to write own version of IsTileBlocked
             // to avoid calling GetEntitiesIntersecting repeatedly from EntityLookupSystem
-            if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable, checkNonHard: true))
+            if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable, checkNonHard: true))
                 continue;
 
             freeTiles.Add(tileRef);
@@ -141,9 +179,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
         while (freeTiles.Count > 0)
         {
-            if (amount == 0)
-                return spawned;
-
             var randomTile = _random.Pick(freeTiles);
             freeTiles.Remove(randomTile);
 
@@ -159,40 +194,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             }
         }
 
-        // If we really want to spawn these entities, but we can't,
-        // we remove everything that's in our way.
-        if (freeTiles.Count == 0 && hardSpawn)
-        {
-            var tileRef = _map.GetTileRef(gridUid, grid, new EntityCoordinates(gridUid, area.Center));
-            var box = Box2.CenteredAround(_turf.GetTileCenter(tileRef).Position, Vector2.One);
-            var entities = _lookup.GetEntitiesIntersecting(gridUid, box, LookupFlags.Static);
-
-            foreach (var entity in entities)
-            {
-                EntityManager.DeleteEntity(entity);
-            }
-
-            freeTiles.Add(tileRef);
-        }
-
-        if (freeTiles.Count == 0)
-            return spawned;
-
-        // Spawn the entities on a random free tile
-        while (amount > 0)
-        {
-            var spawnCoords = _turf.GetTileCenter(_random.Pick(freeTiles));
-            var protoId = popProto;
-
-            if (popProto == null)
-                protoId = _random.Pick(rule.PopsProtoIds);
-
-            var spawnedUid = Spawn(protoId, spawnCoords);
-            spawned.Add(spawnedUid);
-            amount--;
-        }
-
-        return spawned;
+        return freeTiles;
     }
 
     /// <summary>
@@ -222,7 +224,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
                 return true;
 
             if (!freeTilesCache.Contains(node)
-                && _turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+                && Turf.IsTileBlocked(node, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
                 continue;
 
             foreach (var offset in directions)
@@ -318,6 +320,37 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             return null;
 
         return player.Pops.Count == 0 ? null : player.Pops;
+    }
+
+    public ProtoId<JobPrototype>? PickPopJob(IReadOnlyDictionary<ProtoId<JobPrototype>, JobPriority> jobPriorities)
+    {
+        if (TryPick(JobPriority.High, out var picked))
+            return picked;
+
+        if (TryPick(JobPriority.Medium, out picked))
+            return picked;
+
+        if (TryPick(JobPriority.Low, out picked))
+            return picked;
+
+        return null;
+
+        bool TryPick(JobPriority priority, [NotNullWhen(true)] out ProtoId<JobPrototype>? jobId)
+        {
+            var filtered = jobPriorities
+                .Where(p => p.Value == priority)
+                .Select(p => p.Key)
+                .ToList();
+
+            if (filtered.Count != 0)
+            {
+                jobId = _random.Pick(filtered);
+                return true;
+            }
+
+            jobId = null;
+            return false;
+        }
     }
 
     public override void Update(float frameTime)

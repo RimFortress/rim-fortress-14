@@ -4,14 +4,20 @@
   components:
     - type: RimFortressRule
       biomeSet: RandomBiome
-      popsProtoIds:
-        - RimFortressMobPop
+      defaultPopsJob: Passenger
       worldEvents: !type:NestedSelector
         tableId: BasicWorldRulesTable
       minMaxEventTiming:
         min: 600 #10 min
         max: 1800 #20 min
       dayDuration: 1200 #20 min
+      popsComponentsOverride:
+        - type: HTN
+          rootTask:
+            task: IdleCompound
+        - type: NpcFactionMember
+          factions:
+          - RimFortress
 
 - type: weightedRandom
   id: RandomBiome

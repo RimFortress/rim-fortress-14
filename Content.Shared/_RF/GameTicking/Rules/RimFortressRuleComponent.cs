@@ -1,6 +1,7 @@
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.EntityTable.EntitySelectors;
 using Content.Shared.Random;
+using Content.Shared.Roles;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.GameTicking.Rules;
@@ -52,16 +53,22 @@ public sealed partial class RimFortressRuleComponent : Component
     public TimeSpan DayDuration = TimeSpan.FromMinutes(10);
 
     /// <summary>
-    /// Prototypes of entities that may join the settlement as refugees or appear at the roundstart
+    /// Basic role for settlers unless another is obtained
     /// </summary>
     [DataField(required: true)]
-    public List<EntProtoId> PopsProtoIds = new();
+    public ProtoId<JobPrototype> DefaultPopsJob;
 
     /// <summary>
-    /// Number of settlers at the roundstart
+    /// Components that will be added to the pops when spawned
     /// </summary>
     [DataField]
-    public int RoundstartPops = 5;
+    public ComponentRegistry? PopsComponentsOverride = new();
+
+    /// <summary>
+    /// Maximum number of settlers at the roundstart
+    /// </summary>
+    [DataField]
+    public int MaxRoundstartPops = 5;
 
     /// <summary>
     /// The area around the center of the map where settlers can appear
@@ -74,7 +81,7 @@ public sealed partial class RimFortressRuleComponent : Component
     /// It is necessary to give time for the map to load and for the spawning to work properly.
     /// </summary>
     [DataField]
-    public TimeSpan MinimumTimeUntilFirstEvent = TimeSpan.FromSeconds(2);
+    public TimeSpan MinimumTimeUntilFirstEvent = TimeSpan.FromMinutes(20);
 
     /// <summary>
     /// Table with random events that can happen on the world map
