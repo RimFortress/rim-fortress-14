@@ -1,5 +1,4 @@
 using Content.Client._RF.GameplayState.Controls;
-using Content.Client._RF.World;
 using Content.Client.Gameplay;
 using Content.Client.GameTicking.Managers;
 using Content.Client.UserInterface.Controls;
@@ -19,7 +18,6 @@ public sealed class RimFortressState : GameplayStateBase
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
-    private RimFortressWorldSystem _world = default!;
     private MetaDataSystem _meta = default!;
     private MapSystem _map = default!;
     private ClientGameTicker _ticker = default!;
@@ -30,8 +28,6 @@ public sealed class RimFortressState : GameplayStateBase
     private MainViewport Viewport => UserInterfaceManager.ActiveScreen!.GetWidget<MainViewport>()!;
 
     private readonly GameplayStateLoadController _loadController;
-
-    private List<EntityUid> _lastPops = new();
 
     public RimFortressState()
     {
@@ -57,8 +53,6 @@ public sealed class RimFortressState : GameplayStateBase
         _loadController.UnloadScreen();
         UserInterfaceManager.UnloadScreen();
 
-        _lastPops.Clear();
-
         base.Shutdown();
     }
 
@@ -68,7 +62,6 @@ public sealed class RimFortressState : GameplayStateBase
             return;
 
         _setup = true;
-        _world = _entityManager.System<RimFortressWorldSystem>();
         _meta = _entityManager.System<MetaDataSystem>();
         _map = _entityManager.System<MapSystem>();
         _ticker = _entityManager.System<ClientGameTicker>();
@@ -89,13 +82,6 @@ public sealed class RimFortressState : GameplayStateBase
         if (_player.LocalEntity is not { } entity
             || !_entityManager.TryGetComponent(entity, out TransformComponent? xform))
             return;
-
-        if (_world.GetPLayerPops(entity) is { } pops
-            && _lastPops != pops)
-        {
-            Screen.PopList.SetPops(pops);
-            _lastPops = pops;
-        }
 
         var map = _map.GetMap(xform.MapID);
         var pausedTime = _meta.GetPauseTime(map);

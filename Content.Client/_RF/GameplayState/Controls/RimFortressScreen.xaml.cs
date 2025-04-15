@@ -45,7 +45,7 @@ public sealed partial class RimFortressScreen : InGameScreen
     protected override void FrameUpdate(FrameEventArgs args)
     {
         base.FrameUpdate(args);
-        PopList.UpdateSelected();
+        PopList.Update();
     }
 }
 

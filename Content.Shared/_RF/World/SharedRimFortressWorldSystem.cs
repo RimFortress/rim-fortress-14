@@ -32,6 +32,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         base.Initialize();
 
         MapQuery = GetEntityQuery<WorldMapComponent>();
+        PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
     }
 
     /// <summary>
