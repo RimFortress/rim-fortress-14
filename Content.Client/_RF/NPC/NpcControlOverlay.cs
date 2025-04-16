@@ -16,6 +16,8 @@ public sealed class NpcControlOverlay : Overlay
     [ValidatePrototypeId<ShaderPrototype>]
     private const string SelectShader = "DottedOutline";
     [ValidatePrototypeId<ShaderPrototype>]
+    private const string SelectAreaShader = "DottedSquareOutline";
+    [ValidatePrototypeId<ShaderPrototype>]
     private const string PointCircleShader = "DottedCircle";
     [ValidatePrototypeId<ShaderPrototype>]
     private const string PointLineShader = "DottedLine";
@@ -26,6 +28,8 @@ public sealed class NpcControlOverlay : Overlay
     private readonly SharedTransformSystem _transform;
     private readonly IEntityManager _entityManager;
     private readonly IPrototypeManager _prototype;
+
+    private readonly ShaderInstance _selectAreaShader;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
@@ -39,6 +43,9 @@ public sealed class NpcControlOverlay : Overlay
 
         _entityManager = entityManager;
         _prototype = prototype;
+
+        _selectAreaShader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
+        _selectAreaShader.SetParameter("color", _selectColor);
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -54,7 +61,24 @@ public sealed class NpcControlOverlay : Overlay
         if (_npcControl is { StartPoint: { } startPoint, EndPoint: { } endPoint })
         {
             var area = new Box2(startPoint.Position, endPoint.Position);
-            args.WorldHandle.DrawRect(area, _selectColor, false);
+
+            var bottomLeft = args.Viewport.WorldToLocal(area.BottomLeft);
+            bottomLeft.Y = args.Viewport.Size.Y - bottomLeft.Y;
+            var bottomRight = args.Viewport.WorldToLocal(area.BottomRight);
+            bottomRight.Y = args.Viewport.Size.Y - bottomRight.Y;
+
+            var topLeft = args.Viewport.WorldToLocal(area.TopLeft);
+            topLeft.Y = args.Viewport.Size.Y - topLeft.Y;
+            var topRight = args.Viewport.WorldToLocal(area.TopRight);
+            topRight.Y = args.Viewport.Size.Y - topRight.Y;
+
+            _selectAreaShader.SetParameter("point1", bottomLeft);
+            _selectAreaShader.SetParameter("point2", bottomRight);
+            _selectAreaShader.SetParameter("point3", topLeft);
+            _selectAreaShader.SetParameter("point4", topRight);
+
+            args.WorldHandle.UseShader(_selectAreaShader);
+            args.WorldHandle.DrawRect(area, Color.White);
         }
 
         foreach (var entity in _npcControl.Selected)
