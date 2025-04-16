@@ -26,6 +26,15 @@
   kind: source
   path: "/Textures/_RF/Shaders/dotted_outline.swsl"
   params:
-    width: 4
+    width: 2
     frequency: 10
     rotationSpeed: 1
+
+- type: shader
+  id: DottedSquareOutline
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_square.swsl"
+  params:
+    thickness: 2
+    dashLength: 10
+    gapLength: 10
