@@ -4,6 +4,8 @@ using Content.Shared.Preferences;
 using Robust.Client.State;
 using Robust.Shared.Network;
 
+using Content.Client._RF.Lobby; // RimFortress
+
 namespace Content.IntegrationTests.Tests.Lobby
 {
     [TestFixture]
@@ -28,7 +30,7 @@ namespace Content.IntegrationTests.Tests.Lobby
             // Need to run them in sync to receive the messages.
             await pair.RunTicksSync(1);
 
-            await PoolManager.WaitUntil(client, () => clientStateManager.CurrentState is LobbyState, 600);
+            await PoolManager.WaitUntil(client, () => clientStateManager.CurrentState is RimFortressLobbyState, 600); // RimFortress: Lobby
 
             Assert.That(clientNetManager.ServerChannel, Is.Not.Null);
 
@@ -45,7 +47,7 @@ namespace Content.IntegrationTests.Tests.Lobby
                 {
                     Assert.That(clientCharacters, Has.Count.EqualTo(1));
 
-                    Assert.That(clientStateManager.CurrentState, Is.TypeOf<LobbyState>());
+                    Assert.That(clientStateManager.CurrentState, Is.TypeOf<RimFortressLobbyState>()); // RimFortress: Lobby
                 });
 
                 profile = HumanoidCharacterProfile.Random();

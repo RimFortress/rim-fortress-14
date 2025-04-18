@@ -29,6 +29,7 @@ namespace Content.Client.Lobby
             _netManager.RegisterNetMessage<MsgUpdateCharacter>();
             _netManager.RegisterNetMessage<MsgSelectCharacter>();
             _netManager.RegisterNetMessage<MsgDeleteCharacter>();
+            _netManager.RegisterNetMessage<MsgUpdateCharacters>(); // RimFortress
 
             _baseClient.RunLevelChanged += BaseClientOnRunLevelChanged;
         }
@@ -70,6 +71,21 @@ namespace Content.Client.Lobby
             };
             _netManager.ClientSendMessage(msg);
         }
+
+        // RimFortress Start
+        public void UpdateCharacters(Dictionary<int, ICharacterProfile> profiles)
+        {
+            var characters = new Dictionary<int, ICharacterProfile>(Preferences.Characters);
+
+            foreach (var (slot, profile) in profiles)
+            {
+                characters[slot] = profile;
+            }
+
+            Preferences = new PlayerPreferences(characters, Preferences.SelectedCharacterIndex, Preferences.AdminOOCColor);
+            _netManager.ClientSendMessage(new MsgUpdateCharacters { Profiles = characters });
+        }
+        // RimFortress End
 
         public void CreateCharacter(ICharacterProfile profile)
         {

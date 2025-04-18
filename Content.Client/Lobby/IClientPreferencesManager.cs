@@ -17,5 +17,6 @@ namespace Content.Client.Lobby
         void CreateCharacter(ICharacterProfile profile);
         void DeleteCharacter(ICharacterProfile profile);
         void DeleteCharacter(int slot);
+        void UpdateCharacters(Dictionary<int, ICharacterProfile> profiles); // RimFortress
     }
 }

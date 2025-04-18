@@ -65,12 +65,6 @@ public sealed partial class RimFortressRuleComponent : Component
     public ComponentRegistry? PopsComponentsOverride = new();
 
     /// <summary>
-    /// Maximum number of settlers at the roundstart
-    /// </summary>
-    [DataField]
-    public int MaxRoundstartPops = 5;
-
-    /// <summary>
     /// The area around the center of the map where settlers can appear
     /// </summary>
     [DataField]
