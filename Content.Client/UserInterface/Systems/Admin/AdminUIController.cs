@@ -20,7 +20,10 @@ using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using static Robust.Client.UserInterface.Controls.BaseButton;
 
-using Content.Client._RF.UserInterface; // RimFortress
+// RimFortress Start
+using Content.Client._RF.Lobby;
+using Content.Client._RF.UserInterface;
+// RimFortress End
 
 namespace Content.Client.UserInterface.Systems.Admin;
 
@@ -29,7 +32,7 @@ public sealed class AdminUIController : UIController,
     IOnStateEntered<GameplayState>,
     IOnStateEntered<LobbyState>,
     IOnSystemChanged<AdminSystem>
-    , IOnStateEntered<RimFortressState> // RimFortress
+    , IOnStateEntered<RimFortressState>, IOnStateEntered<RimFortressLobbyState> // RimFortress
 {
     [Dependency] private readonly IClientAdminManager _admin = default!;
     [Dependency] private readonly IClientConGroupController _conGroups = default!;
@@ -73,6 +76,12 @@ public sealed class AdminUIController : UIController,
 
     // RimFortress Start
     public void OnStateEntered(RimFortressState state)
+    {
+        EnsureWindow();
+        AdminStatusUpdated();
+    }
+
+    public void OnStateEntered(RimFortressLobbyState state)
     {
         EnsureWindow();
         AdminStatusUpdated();

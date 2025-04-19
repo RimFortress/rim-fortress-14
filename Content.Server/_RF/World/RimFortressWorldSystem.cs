@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Server._RF.NPC;
 using Content.Server.Mind;
@@ -5,12 +6,14 @@ using Content.Server.Parallax;
 using Content.Server.Preferences.Managers;
 using Content.Server.Station.Systems;
 using Content.Shared._RF.World;
+using Content.Shared.CCVar;
 using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Preferences;
 using Content.Shared.Random.Helpers;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
+using Robust.Shared.Configuration;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
@@ -35,6 +38,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly StationSpawningSystem _station = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly IConfigurationManager _cvar = default!;
 
     /// <summary>
     /// A queue of pending requests to spawn starting settlements
@@ -180,12 +184,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
                 freeTiles.Add(tileRef);
             }
 
-            var index = 0;
-            foreach (var (_, profile) in prefs.Characters)
+            foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(CCVars.MaxRoundstartPops)))
             {
-                if (index == rule.MaxRoundstartPops)
-                    break;
-
                 var coords = Turf.GetTileCenter(_random.Pick(freeTiles));
                 var character = (HumanoidCharacterProfile) profile;
                 var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
@@ -195,7 +195,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
                     EntityManager.AddComponents(pop, rule.PopsComponentsOverride, false);
 
                 pops.Add(pop);
-                index++;
             }
 
             AddPops(player, pops);

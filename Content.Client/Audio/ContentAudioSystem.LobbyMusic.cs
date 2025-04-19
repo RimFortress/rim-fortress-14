@@ -13,6 +13,8 @@ using Robust.Shared.Player;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
+using Content.Client._RF.Lobby; // RimFortress
+
 namespace Content.Client.Audio;
 
 // Part of ContentAudioSystem that is responsible for lobby music playing/stopping and round-end sound-effect.
@@ -87,6 +89,7 @@ public sealed partial class ContentAudioSystem
     {
         switch (args.NewState)
         {
+            case RimFortressLobbyState: // RimFortress
             case LobbyState:
                 StartLobbyMusic();
                 break;

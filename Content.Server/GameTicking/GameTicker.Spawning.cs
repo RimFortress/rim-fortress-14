@@ -45,6 +45,17 @@ namespace Content.Server.GameTicking
         // Mainly to avoid allocations.
         private readonly List<EntityCoordinates> _possiblePositions = new();
 
+        // RimFortress Start
+        public void BeforeSpawn(ICommonSession session, string? jobId, bool lateJoin, EntityUid? station)
+        {
+            RaiseLocalEvent(new PlayerBeforeSpawnEvent(session,
+                GetPlayerProfile(session),
+                jobId,
+                lateJoin,
+                station ?? EntityUid.Invalid));
+        }
+        // RimFortress End
+
         private List<EntityUid> GetSpawnableStations()
         {
             var spawnableStations = new List<EntityUid>();

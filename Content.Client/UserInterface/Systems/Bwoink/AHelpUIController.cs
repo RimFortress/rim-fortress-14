@@ -27,13 +27,16 @@ using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Utility;
 
-using Content.Client._RF.UserInterface; // RimFortress
+// RimFortress Start
+using Content.Client._RF.Lobby;
+using Content.Client._RF.UserInterface;
+// RimFortress End
 
 namespace Content.Client.UserInterface.Systems.Bwoink;
 
 [UsedImplicitly]
 public sealed class AHelpUIController: UIController, IOnSystemChanged<BwoinkSystem>, IOnStateChanged<GameplayState>, IOnStateChanged<LobbyState>
-    , IOnStateChanged<RimFortressState> // RimFortress
+    , IOnStateChanged<RimFortressState>, IOnStateChanged<RimFortressLobbyState> // RimFortress
 {
     [Dependency] private readonly IClientAdminManager _adminManager = default!;
     [Dependency] private readonly IConfigurationManager _config = default!;
@@ -337,6 +340,31 @@ public sealed class AHelpUIController: UIController, IOnSystemChanged<BwoinkSyst
     {
         if (GameAHelpButton != null)
             GameAHelpButton.OnPressed -= AHelpButtonPressed;
+    }
+
+    public void OnStateEntered(RimFortressLobbyState state)
+    {
+        if (LobbyAHelpButton != null)
+        {
+            LobbyAHelpButton.OnPressed -= AHelpButtonPressed;
+            LobbyAHelpButton.OnPressed += AHelpButtonPressed;
+            LobbyAHelpButton.Pressed = UIHelper?.IsOpen ?? false;
+
+            if (_hasUnreadAHelp)
+            {
+                UnreadAHelpReceived();
+            }
+            else
+            {
+                UnreadAHelpRead();
+            }
+        }
+    }
+
+    public void OnStateExited(RimFortressLobbyState state)
+    {
+        if (LobbyAHelpButton != null)
+            LobbyAHelpButton.OnPressed -= AHelpButtonPressed;
     }
     // RimFortress End
 }

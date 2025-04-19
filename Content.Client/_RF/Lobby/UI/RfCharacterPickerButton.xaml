@@ -1,0 +1,39 @@
+<ContainerButton xmlns="https://spacestation14.io"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:style="clr-namespace:Content.Client.Stylesheets">
+    <BoxContainer Orientation="Horizontal"
+                  HorizontalExpand="True"
+                  SeparationOverride="0"
+                  Name="InternalHBox">
+        <BoxContainer VerticalExpand="True" Orientation="Vertical">
+            <Button Name="Up" Access="Public"
+                    VerticalAlignment="Top" VerticalExpand="True"
+                    SetWidth="30" StyleClasses="OpenLeft" Disabled="True">
+                <TextureRect SetSize="25 25" Margin="4 10 0 0" Stretch="KeepAspectCentered"
+                             TexturePath="/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Button>
+            <Button Name="Down" Access="Public"
+                    VerticalAlignment="Bottom" VerticalExpand="True"
+                    SetWidth="30" StyleClasses="OpenRight" Disabled="True">
+                <TextureRect SetSize="25 25" Margin="0 0 4 10" Stretch="KeepAspectCentered"
+                             TexturePath="/Textures/_RF/Interface/sort-down-solid.svg.192dpi.png"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Button>
+        </BoxContainer>
+        <SpriteView Scale="2 2"
+                    Margin="0 4 4 4"
+                    OverrideDirection="South"
+                    Name="View"
+                    SetSize="64 64"/>
+        <Label Name="DescriptionLabel"
+               ClipText="True"
+               HorizontalExpand="True"/>
+        <Button Name="DeleteButton"
+                Text="{Loc 'character-setup-gui-character-picker-button-delete-button'}"/>
+        <Button Name="ConfirmDeleteButton"
+                Text="{Loc 'character-setup-gui-character-picker-button-confirm-delete-button'}"
+                Visible="False"
+                ModulateSelfOverride="{x:Static style:StyleNano.ButtonColorCautionDefault}"/>
+    </BoxContainer>
+</ContainerButton>
