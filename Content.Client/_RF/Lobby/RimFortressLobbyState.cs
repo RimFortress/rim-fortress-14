@@ -1,7 +1,6 @@
 using Content.Client._RF.Lobby.UI;
 using Content.Client.Audio;
 using Content.Client.GameTicking.Managers;
-using Content.Client.LateJoin;
 using Content.Client.Message;
 using Content.Client.UserInterface.Systems.Chat;
 using Content.Client.Voting;
@@ -110,7 +109,8 @@ namespace Content.Client._RF.Lobby
                 return;
             }
 
-            new LateJoinGui().OpenCentered();
+            _consoleHost.ExecuteCommand("rfjoingame");
+            _consoleHost.ExecuteCommand("scene RimFortressState");
         }
 
         private void OnReadyToggled(BaseButton.ButtonToggledEventArgs args)

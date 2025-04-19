@@ -196,8 +196,8 @@ public sealed partial class RfCharacterSetupGui : Control
             {
                 var old = SelectedProfileIndex;
                 SelectedProfileIndex = slot;
-                ReloadCharacterPickers();
                 OnSelected?.Invoke(old);
+                ReloadCharacterPickers();
             };
 
             characterPickerButton.OnDeletePressed += () =>
