@@ -44,13 +44,14 @@ public sealed partial class RfLobbyCharacterPreviewPanel : Control
             {
                 Orientation = BoxContainer.LayoutOrientation.Vertical,
                 Margin = new Thickness(3f, 0),
+                VerticalExpand = true,
             };
 
             var label = new Label
             {
                 Text = name,
                 ClipText = true,
-                Align = Label.AlignMode.Fill,
+                Align = Label.AlignMode.Center,
             };
 
             var spriteView = new SpriteView
@@ -59,6 +60,7 @@ public sealed partial class RfLobbyCharacterPreviewPanel : Control
                 Scale = new Vector2(4f, 4f),
                 MaxSize = new Vector2(112, 112),
                 Stretch = SpriteView.StretchMode.Fill,
+                VerticalExpand = true,
             };
 
             spriteView.SetEntity(uid);

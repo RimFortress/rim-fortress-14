@@ -257,14 +257,18 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
             CloseProfileEditor();
         };
 
+        _characterSetup.OnBeforeSave += delegate
+        {
+            if (_characterSetup?.SelectedProfile != null && _profileEditor?.Profile != null)
+                _characterSetup.SelectedProfile = _profileEditor.Profile;
+        };
         _characterSetup.OnSave += ReloadCharacterSetup;
         _characterSetup.OnDirty += UpdateSaveButton;
-        _characterSetup.OnSelected += delegate
+        _characterSetup.OnSelected += args =>
         {
             if (_profileEditor is { Profile: not null, CharacterSlot: not null } && _characterSetup?.Profiles != null)
-                _characterSetup.Profiles[_profileEditor.CharacterSlot.Value] = _profileEditor.Profile;
+                _characterSetup.Profiles[args] = _profileEditor.Profile;
 
-            _characterSetup?.ReloadCharacterPickers();
             _profileEditor?.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
                 _characterSetup?.SelectedProfileIndex);
         };

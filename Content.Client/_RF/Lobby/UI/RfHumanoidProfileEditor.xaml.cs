@@ -311,21 +311,6 @@ namespace Content.Client._RF.Lobby.UI
 
             #endregion Hair
 
-            #region SpawnPriority
-
-            foreach (var value in Enum.GetValues<SpawnPriorityPreference>())
-            {
-                SpawnPriorityButton.AddItem(Loc.GetString($"humanoid-profile-editor-preference-spawn-priority-{value.ToString().ToLower()}"), (int) value);
-            }
-
-            SpawnPriorityButton.OnItemSelected += args =>
-            {
-                SpawnPriorityButton.SelectId(args.Id);
-                SetSpawnPriority((SpawnPriorityPreference) args.Id);
-            };
-
-            #endregion SpawnPriority
-
             #region Eyes
 
             EyeColorPicker.OnEyeColorPicked += newColor =>
@@ -369,9 +354,7 @@ namespace Content.Client._RF.Lobby.UI
 
             RefreshTraits();
 
-            #region Markings
-
-            TabContainer.SetTabTitle(3, Loc.GetString("humanoid-profile-editor-markings-tab"));
+            #region Markings;
 
             Markings.OnMarkingAdded += OnMarkingChange;
             Markings.OnMarkingRemoved += OnMarkingChange;
@@ -644,7 +627,6 @@ namespace Content.Client._RF.Lobby.UI
             UpdateSexControls();
             UpdateGenderControls();
             UpdateSkinColor();
-            UpdateSpawnPriorityControls();
             UpdateAgeEdit();
             UpdateEyePickers();
             UpdateMarkings();
@@ -860,7 +842,7 @@ namespace Content.Client._RF.Lobby.UI
                     // else
                     else
                     {
-                        loadoutWindowBtn.OnPressed += args =>
+                        loadoutWindowBtn.OnPressed += _ =>
                         {
                             RoleLoadout? loadout = null;
 
@@ -1115,12 +1097,6 @@ namespace Content.Client._RF.Lobby.UI
             _entManager.System<MetaDataSystem>().SetEntityName(PreviewDummy, newName);
         }
 
-        private void SetSpawnPriority(SpawnPriorityPreference newSpawnPriority)
-        {
-            Profile = Profile?.WithSpawnPriorityPreference(newSpawnPriority);
-            SetDirty();
-        }
-
         public bool IsDirty
         {
             get => _isDirty;
@@ -1303,16 +1279,6 @@ namespace Content.Client._RF.Lobby.UI
             PronounsButton.SelectId((int) Profile.Gender);
         }
 
-        private void UpdateSpawnPriorityControls()
-        {
-            if (Profile == null)
-            {
-                return;
-            }
-
-            SpawnPriorityButton.SelectId((int) Profile.SpawnPriority);
-        }
-
         private void UpdateHairPickers()
         {
             if (Profile == null)
@@ -1430,7 +1396,7 @@ namespace Content.Client._RF.Lobby.UI
         {
             Profile = HumanoidCharacterProfile.Random();
             SetProfile(Profile, CharacterSlot);
-            SetDirty();
+            IsDirty = true;
         }
 
         private void RandomizeName()

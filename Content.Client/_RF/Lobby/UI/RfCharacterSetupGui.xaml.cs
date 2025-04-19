@@ -33,8 +33,9 @@ public sealed partial class RfCharacterSetupGui : Control
 
     private readonly Button _createNewCharacterButton;
 
-    public event Action? OnSelected;
+    public event Action<int>? OnSelected;
     public event Action? OnDirty;
+    public event Action? OnBeforeSave;
     public event Action? OnSave;
 
     public Dictionary<int, ICharacterProfile>? Profiles;
@@ -193,8 +194,10 @@ public sealed partial class RfCharacterSetupGui : Control
 
             characterPickerButton.OnPressed += _ =>
             {
+                var old = SelectedProfileIndex;
                 SelectedProfileIndex = slot;
-                OnSelected?.Invoke();
+                ReloadCharacterPickers();
+                OnSelected?.Invoke(old);
             };
 
             characterPickerButton.OnDeletePressed += () =>
@@ -210,6 +213,8 @@ public sealed partial class RfCharacterSetupGui : Control
         }
 
         _createNewCharacterButton.Disabled = numberOfFullSlots >= _preferencesManager.Settings.MaxCharacterSlots;
+        CharactersCount.Text =
+            $"{Loc.GetString("lobby-characters-preview-panel-header")} ({numberOfFullSlots}/{maxPops}):";
         Characters.AddChild(_createNewCharacterButton);
     }
 
@@ -217,6 +222,8 @@ public sealed partial class RfCharacterSetupGui : Control
     {
         if (Profiles == null)
             return;
+
+        OnBeforeSave?.Invoke();
 
         foreach (var (slot, profile) in Profiles)
         {

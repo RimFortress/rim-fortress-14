@@ -67,11 +67,13 @@
                             VerticalAlignment="Stretch">
                 <BoxContainer Orientation="Vertical" HorizontalExpand="True">
                     <!-- Top row -->
-                    <BoxContainer Orientation="Horizontal" MinSize="0 40" Name="HeaderContainer" Access="Public"
-                                  SeparationOverride="4">
-                        <Label Name="ServerName" Access="Public" StyleClasses="LabelHeadingBigger" VAlign="Center"
-                               HorizontalExpand="True" HorizontalAlignment="Center" />
-                    </BoxContainer>
+                    <controls:StripeBack>
+                        <BoxContainer Orientation="Horizontal" MinSize="0 40" Name="HeaderContainer" Access="Public"
+                                      SeparationOverride="4">
+                            <Label Name="ServerName" Access="Public" StyleClasses="LabelHeadingBigger" VAlign="Center"
+                                   HorizontalExpand="True" HorizontalAlignment="Center" />
+                        </BoxContainer>
+                    </controls:StripeBack>
                     <!-- Gold line -->
                     <controls:HLine Color="{x:Static style:StyleNano.NanoGold}" Thickness="2" />
                     <controls:HSpacer Spacing="10" />
