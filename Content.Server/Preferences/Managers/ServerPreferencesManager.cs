@@ -41,7 +41,6 @@ namespace Content.Server.Preferences.Managers
             _netManager.RegisterNetMessage<MsgSelectCharacter>(HandleSelectCharacterMessage);
             _netManager.RegisterNetMessage<MsgUpdateCharacter>(HandleUpdateCharacterMessage);
             _netManager.RegisterNetMessage<MsgDeleteCharacter>(HandleDeleteCharacterMessage);
-            _netManager.RegisterNetMessage<MsgUpdateCharacters>(HandleUpdateCharactersMessage); // RimFortress
             _sawmill = _log.GetSawmill("prefs");
         }
 
@@ -114,40 +113,6 @@ namespace Content.Server.Preferences.Managers
             if (ShouldStorePrefs(session.Channel.AuthType))
                 await _db.SaveCharacterSlotAsync(userId, profile, slot);
         }
-
-        // RimFortress Start
-        private async void HandleUpdateCharactersMessage(MsgUpdateCharacters message)
-        {
-            var userId = message.MsgChannel.UserId;
-            await SetProfiles(userId, message.Profiles);
-        }
-
-        public async Task SetProfiles(NetUserId userId, Dictionary<int, ICharacterProfile> profiles)
-        {
-            if (!_cachedPlayerPrefs.TryGetValue(userId, out var prefsData) || !prefsData.PrefsLoaded)
-            {
-                _sawmill.Error($"Tried to modify user {userId} preferences before they loaded.");
-                return;
-            }
-
-            var curPrefs = prefsData.Prefs!;
-            var session = _playerManager.GetSessionById(userId);
-            var newProfiles = new Dictionary<int, ICharacterProfile>(curPrefs.Characters);
-
-            foreach (var (slot, profile) in profiles)
-            {
-                if (slot < 0 || slot >= MaxCharacterSlots)
-                    continue;
-
-                profile.EnsureValid(session, _dependencies);
-                newProfiles[slot] = profile;
-            }
-
-            prefsData.Prefs = new PlayerPreferences(newProfiles, curPrefs.SelectedCharacterIndex, curPrefs.AdminOOCColor);
-            if (ShouldStorePrefs(session.Channel.AuthType))
-                await _db.SaveCharacterSlotsAsync(userId, newProfiles!);
-        }
-        // RimFortress End
 
         private async void HandleDeleteCharacterMessage(MsgDeleteCharacter message)
         {

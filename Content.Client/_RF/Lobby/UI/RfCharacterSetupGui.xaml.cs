@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Client.Info;
 using Content.Client.Info.PlaytimeStats;
 using Content.Client.Lobby;
@@ -14,6 +15,7 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Lobby.UI;
 
@@ -31,14 +33,53 @@ public sealed partial class RfCharacterSetupGui : Control
 
     private readonly Button _createNewCharacterButton;
 
-    public event Action<int>? SelectCharacter;
-    public event Action<int>? DeleteCharacter;
-    public event Action<(int Prev, int Next)>? OnSwitchCharacter; // RimFortress
+    public event Action? OnSelected;
+    public event Action? OnDirty;
+    public event Action? OnSave;
+
+    public Dictionary<int, ICharacterProfile>? Profiles;
+    public int SelectedProfileIndex = -1;
+
+    public ICharacterProfile? SelectedProfile
+    {
+        set
+        {
+            if (Profiles == null
+                || SelectedProfileIndex == -1
+                || SelectedProfileIndex > Profiles.Count)
+                return;
+
+            Profiles[SelectedProfileIndex] = value!;
+        }
+        get
+        {
+            if (Profiles == null
+                || SelectedProfileIndex == -1
+                || SelectedProfileIndex > Profiles.Count)
+                return null;
+
+            return Profiles[SelectedProfileIndex];
+        }
+    }
+
+    private bool _isDirty;
+
+    public bool IsDirty
+    {
+        get => _isDirty;
+        set
+        {
+            _isDirty = value;
+            OnDirty?.Invoke();
+        }
+    }
 
     public RfCharacterSetupGui(RfHumanoidProfileEditor profileEditor)
     {
         RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);
+
+        Profiles = _preferencesManager.Preferences?.Characters.ToDictionary();
 
         var panelTex = _resourceCache.GetTexture("/Textures/Interface/Nano/button.svg.96dpi.png");
         var back = new StyleBoxTexture
@@ -57,15 +98,32 @@ public sealed partial class RfCharacterSetupGui : Control
 
         _createNewCharacterButton.OnPressed += args =>
         {
-            _preferencesManager.CreateCharacter(HumanoidCharacterProfile.Random());
+            if (Profiles == null || _preferencesManager.Settings == null)
+                return;
+
+            var lowest = Enumerable.Range(0, _preferencesManager.Settings.MaxCharacterSlots)
+                .Except(Profiles.Keys)
+                .FirstOrNull();
+
+            if (lowest == null)
+                return;
+
+            Profiles?.Add(lowest.Value, HumanoidCharacterProfile.Random());
             ReloadCharacterPickers();
             args.Event.Handle();
+            IsDirty = true;
         };
 
         CharEditor.AddChild(profileEditor);
-        RulesButton.OnPressed += _ => new RulesAndInfoWindow().Open();
 
+        RulesButton.OnPressed += _ => new RulesAndInfoWindow().Open();
         StatsButton.OnPressed += _ => new PlaytimeStatsWindow().OpenCentered();
+        SaveProfilesButton.OnPressed += _ => SaveProfiles();
+        ResetButton.OnPressed += _ =>
+        {
+            Profiles = null;
+            OnSave?.Invoke();
+        };
 
         _cfg.OnValueChanged(CCVars.SeeOwnNotes, p => AdminRemarksButton.Visible = p, true);
     }
@@ -81,39 +139,40 @@ public sealed partial class RfCharacterSetupGui : Control
         var numberOfFullSlots = 0;
         var characterButtonsGroup = new ButtonGroup();
 
-        if (!_preferencesManager.ServerDataLoaded)
-        {
+        if (!_preferencesManager.ServerDataLoaded
+            || _preferencesManager.Preferences == null)
             return;
+
+        if (Profiles == null)
+        {
+            Profiles = _preferencesManager.Preferences.Characters.ToDictionary();
+            SelectedProfileIndex = _preferencesManager.Preferences.SelectedCharacterIndex;
         }
 
         _createNewCharacterButton.ToolTip =
             Loc.GetString("character-setup-gui-create-new-character-button-tooltip",
                 ("maxCharacters", _preferencesManager.Settings!.MaxCharacterSlots));
 
-        var selectedSlot = _preferencesManager.Preferences?.SelectedCharacterIndex;
-        // RimFortress Start
         (RfCharacterPickerButton Button, int Slot)? prevSlot = null;
         var maxPops = _cfg.GetCVar(CCVars.MaxRoundstartPops);
         var separatorAdded = false;
-        // RimFortress End
 
-        foreach (var (slot, character) in _preferencesManager.Preferences!.Characters)
+        foreach (var (slot, character) in Profiles)
         {
             numberOfFullSlots++;
             var characterPickerButton = new RfCharacterPickerButton(_entManager,
                 _protomanager,
                 characterButtonsGroup,
                 character,
-                slot == selectedSlot);
+                slot == SelectedProfileIndex);
 
-            // RimFortress Start
             if (prevSlot is { } prev)
             {
                 characterPickerButton.Up.Disabled = false;
                 prev.Button.Down.Disabled = false;
 
-                characterPickerButton.Up.OnPressed += _ => SwitchCharacter(prev, (characterPickerButton, slot));
-                prev.Button.Down.OnPressed += _ => SwitchCharacter(prev, (characterPickerButton, slot));
+                characterPickerButton.Up.OnPressed += _ => SwitchCharacter(prev.Slot, slot);
+                prev.Button.Down.OnPressed += _ => SwitchCharacter(prev.Slot, slot);
             }
 
             prevSlot = (characterPickerButton, slot);
@@ -129,18 +188,24 @@ public sealed partial class RfCharacterSetupGui : Control
 
                 separatorAdded = true;
             }
-            // RimFortress End
 
             Characters.AddChild(characterPickerButton);
 
             characterPickerButton.OnPressed += _ =>
             {
-                SelectCharacter?.Invoke(slot);
+                SelectedProfileIndex = slot;
+                OnSelected?.Invoke();
             };
 
             characterPickerButton.OnDeletePressed += () =>
             {
-                DeleteCharacter?.Invoke(slot);
+                Profiles.Remove(slot);
+
+                if (SelectedProfileIndex == slot)
+                    SelectedProfileIndex = -1;
+
+                IsDirty = true;
+                ReloadCharacterPickers();
             };
         }
 
@@ -148,35 +213,41 @@ public sealed partial class RfCharacterSetupGui : Control
         Characters.AddChild(_createNewCharacterButton);
     }
 
-    // RimFortress Start
-    private void SwitchCharacter((RfCharacterPickerButton Button, int Slot) prev, (RfCharacterPickerButton Button, int Slot) next)
+    public void SaveProfiles()
     {
-        if (prev.Slot == next.Slot)
+        if (Profiles == null)
             return;
 
-        if (prev.Button.Up.Disabled)
+        foreach (var (slot, profile) in Profiles)
         {
-            prev.Button.Up.Disabled = false;
-            next.Button.Down.Disabled = true;
-        }
-        else if (next.Button.Up.Disabled)
-        {
-            next.Button.Up.Disabled = false;
-            prev.Button.Up.Disabled = true;
+            if (_preferencesManager.Preferences!.Characters.ContainsKey(slot))
+                _preferencesManager.UpdateCharacter(profile, slot);
+            else
+                _preferencesManager.CreateCharacter(profile);
         }
 
-        if (prev.Button.Down.Disabled)
+        foreach (var (slot, _) in _preferencesManager.Preferences!.Characters)
         {
-            prev.Button.Down.Disabled = false;
-            next.Button.Down.Disabled = true;
-        }
-        else if (next.Button.Down.Disabled)
-        {
-            next.Button.Down.Disabled = false;
-            prev.Button.Down.Disabled = true;
+            if (!Profiles.ContainsKey(slot))
+                _preferencesManager.DeleteCharacter(slot);
         }
 
-        OnSwitchCharacter?.Invoke((prev.Slot, next.Slot));
+        _preferencesManager.SelectCharacter(SelectedProfileIndex);
+        OnSave?.Invoke();
     }
-    // RimFortress End
+
+    private void SwitchCharacter(int prev, int next)
+    {
+        if (prev == next || prev == -1 || next == -1 || Profiles == null)
+            return;
+
+        if (SelectedProfileIndex == prev)
+            SelectedProfileIndex = next;
+        else if (SelectedProfileIndex == next)
+            SelectedProfileIndex = prev;
+
+        (Profiles[prev], Profiles[next]) = (Profiles[next], Profiles[prev]);
+        ReloadCharacterPickers();
+        IsDirty = true;
+    }
 }

@@ -5,7 +5,6 @@ using Content.Client.Guidebook;
 using Content.Client.Humanoid;
 using Content.Client.Inventory;
 using Content.Client.Lobby;
-using Content.Client.Lobby.UI;
 using Content.Client.Players.PlayTimeTracking;
 using Content.Client.Station;
 using Content.Shared.CCVar;
@@ -52,16 +51,9 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
     private RfCharacterSetupGuiSavePanel? _savePanel;
 
     /// <summary>
-    /// This is the characher preview panel in the chat. This should only update if their character updates.
+    /// This is the character preview panel in the chat. This should only update if their character updates.
     /// </summary>
     private RfLobbyCharacterPreviewPanel? PreviewPanel => GetLobbyPreview();
-
-    /// <summary>
-    /// This is the modified profile currently being edited.
-    /// </summary>
-    private HumanoidCharacterProfile? EditedProfile => _profileEditor?.Profile;
-
-    private int? EditedSlot => _profileEditor?.CharacterSlot;
 
     public override void Initialize()
     {
@@ -70,13 +62,8 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         _preferencesManager.OnServerDataLoaded += PreferencesDataLoaded;
         _requirements.Updated += OnRequirementsUpdated;
 
-        _configurationManager.OnValueChanged(CCVars.FlavorText, args =>
-        {
-            _profileEditor?.RefreshFlavorText();
-        });
-
+        _configurationManager.OnValueChanged(CCVars.FlavorText, _ => _profileEditor?.RefreshFlavorText());
         _configurationManager.OnValueChanged(CCVars.GameRoleTimers, _ => RefreshProfileEditor());
-
         _configurationManager.OnValueChanged(CCVars.GameRoleWhitelist, _ => RefreshProfileEditor());
     }
 
@@ -90,8 +77,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
 
     private void OnRequirementsUpdated()
     {
-        if (_profileEditor != null)
-            _profileEditor.RefreshJobs();
+        _profileEditor?.RefreshJobs();
     }
 
     private void OnProtoReload(PrototypesReloadedEventArgs obj)
@@ -157,9 +143,11 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         RefreshLobbyPreview();
         var (characterGui, profileEditor) = EnsureGui();
         characterGui.ReloadCharacterPickers();
-        profileEditor.SetProfile(
-            (HumanoidCharacterProfile?) _preferencesManager.Preferences?.SelectedCharacter,
-            _preferencesManager.Preferences?.SelectedCharacterIndex);
+        profileEditor.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
+            _characterSetup?.SelectedProfileIndex);
+
+        characterGui.IsDirty = false;
+        profileEditor.IsDirty = false;
     }
 
     /// <summary>
@@ -194,29 +182,12 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         _profileEditor?.RefreshLoadouts();
     }
 
-    private void SaveProfile()
-    {
-        DebugTools.Assert(EditedProfile != null);
-
-        if (EditedProfile == null || EditedSlot == null)
-            return;
-
-        var selected = _preferencesManager.Preferences?.SelectedCharacterIndex;
-
-        if (selected == null)
-            return;
-
-        _preferencesManager.UpdateCharacter(EditedProfile, EditedSlot.Value);
-        ReloadCharacterSetup();
-    }
-
     private void CloseProfileEditor()
     {
         if (_profileEditor == null)
             return;
 
         _profileEditor.SetProfile(null, null);
-        _profileEditor.Visible = false;
 
         if (_stateManager.CurrentState is RimFortressLobbyState lobbyGui)
         {
@@ -233,17 +204,14 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
 
         _savePanel.SaveButton.OnPressed += _ =>
         {
-            SaveProfile();
-
+            _characterSetup?.SaveProfiles();
             _savePanel.Close();
-
             CloseProfileEditor();
         };
 
         _savePanel.NoSaveButton.OnPressed += _ =>
         {
             _savePanel.Close();
-
             CloseProfileEditor();
         };
 
@@ -255,12 +223,10 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         if (_characterSetup != null && _profileEditor != null)
         {
             _characterSetup.Visible = true;
-            _profileEditor.Visible = true;
             return (_characterSetup, _profileEditor);
         }
 
         _profileEditor = new RfHumanoidProfileEditor(
-            _preferencesManager,
             _configurationManager,
             EntityManager,
             _dialogManager,
@@ -272,13 +238,15 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
             _markings);
 
         _profileEditor.OnOpenGuidebook += _guide.OpenHelp;
+        _profileEditor.OnDirty += UpdateSaveButton;
 
         _characterSetup = new RfCharacterSetupGui(_profileEditor);
 
         _characterSetup.CloseButton.OnPressed += _ =>
         {
             // Open the save panel if we have unsaved changes.
-            if (_profileEditor.Profile != null && _profileEditor.IsDirty)
+            if (_profileEditor.Profile != null
+                && (_profileEditor.IsDirty || _characterSetup.IsDirty))
             {
                 OpenSavePanel();
 
@@ -289,56 +257,35 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
             CloseProfileEditor();
         };
 
-        _profileEditor.Save += SaveProfile;
-
-        _characterSetup.SelectCharacter += args =>
+        _characterSetup.OnSave += ReloadCharacterSetup;
+        _characterSetup.OnDirty += UpdateSaveButton;
+        _characterSetup.OnSelected += delegate
         {
-            _preferencesManager.SelectCharacter(args);
-            ReloadCharacterSetup();
+            if (_profileEditor is { Profile: not null, CharacterSlot: not null } && _characterSetup?.Profiles != null)
+                _characterSetup.Profiles[_profileEditor.CharacterSlot.Value] = _profileEditor.Profile;
+
+            _characterSetup?.ReloadCharacterPickers();
+            _profileEditor?.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
+                _characterSetup?.SelectedProfileIndex);
         };
-
-        _characterSetup.DeleteCharacter += args =>
-        {
-            _preferencesManager.DeleteCharacter(args);
-
-            ReloadCharacterSetup(); // RimFortress
-            /*
-            // Reload everything
-            if (EditedSlot == args)
-            {
-                ReloadCharacterSetup();
-            }
-            else
-            {
-                // Only need to reload character pickers
-                _characterSetup?.ReloadCharacterPickers();
-            }
-            */
-        };
-
-        // RimFortress Start
-        _characterSetup.OnSwitchCharacter += args =>
-        {
-            if (_preferencesManager.Preferences?.GetProfile(args.Prev) is not { } prevProfile
-                || _preferencesManager.Preferences?.GetProfile(args.Next) is not { } nextProfile)
-                return;
-
-            _preferencesManager.UpdateCharacters(new()
-            {
-                { args.Prev, nextProfile},
-                { args.Next, prevProfile},
-            });
-
-            ReloadCharacterSetup();
-        };
-        // RimFortress End
 
         if (_stateManager.CurrentState is RimFortressLobbyState lobby)
         {
             lobby.Lobby?.CharacterSetupState.AddChild(_characterSetup);
         }
 
+        UpdateSaveButton();
         return (_characterSetup, _profileEditor);
+    }
+
+    private void UpdateSaveButton()
+    {
+        if (_characterSetup == null)
+            return;
+
+        var dirty = !(_characterSetup.IsDirty || (_profileEditor?.IsDirty ?? false));
+        _characterSetup.SaveProfilesButton.Disabled = dirty;
+        _characterSetup.ResetButton.Disabled = dirty;
     }
 
     #region Helpers
@@ -474,7 +421,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         {
             job ??= GetPreferredJob(humanoid);
 
-            previewEntity = job.JobPreviewEntity ?? (EntProtoId?)job?.JobEntity;
+            previewEntity = job.JobPreviewEntity ?? (EntProtoId?)job.JobEntity;
         }
 
         if (previewEntity != null)
@@ -485,7 +432,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         }
         else if (humanoid is not null)
         {
-            var dummy = _prototypeManager.Index<SpeciesPrototype>(humanoid.Species).DollPrototype;
+            var dummy = _prototypeManager.Index(humanoid.Species).DollPrototype;
             dummyEnt = EntityManager.SpawnEntity(dummy, MapCoordinates.Nullspace);
         }
         else

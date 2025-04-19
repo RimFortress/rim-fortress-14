@@ -11,22 +11,29 @@
                 <Label Text="{Loc 'character-setup-gui-character-setup-label'}"
                        Margin="8 0 0 0" VAlign="Center"
                        StyleClasses="LabelHeadingBigger" />
-
-                <Button Name="StatsButton" HorizontalExpand="True"
-                        Text="{Loc 'character-setup-gui-character-setup-stats-button'}"
-                        StyleClasses="ButtonBig"
-                        HorizontalAlignment="Right" />
-                <cc:CommandButton Name="AdminRemarksButton"
-                                  Command="adminremarks"
-                                  Text="{Loc 'character-setup-gui-character-setup-adminremarks-button'}"
-                                  StyleClasses="ButtonBig" />
-                <Button Name="RulesButton"
-                        Text="{Loc 'character-setup-gui-character-setup-rules-button'}"
-                        StyleClasses="ButtonBig"/>
-                <Button Name="CloseButton"
-                        Access="Public"
-                        Text="{Loc 'character-setup-gui-character-setup-close-button'}"
-                        StyleClasses="ButtonBig"/>
+                <BoxContainer HorizontalExpand="True"/>
+                <BoxContainer Orientation="Horizontal">
+                    <Button Name="ResetButton" Access="Public" HorizontalExpand="True"
+                            Text="{Loc 'humanoid-profile-editor-reset-button'}"
+                            StyleClasses="ButtonBig"/>
+                    <Button Name="SaveProfilesButton" Access="Public" HorizontalExpand="True"
+                            Text="{Loc 'character-setup-gui-character-setup-save-profiles-button'}"
+                            StyleClasses="ButtonBig"/>
+                    <Button Name="StatsButton" HorizontalExpand="True"
+                            Text="{Loc 'character-setup-gui-character-setup-stats-button'}"
+                            StyleClasses="ButtonBig"/>
+                    <cc:CommandButton Name="AdminRemarksButton"
+                                      Command="adminremarks"
+                                      Text="{Loc 'character-setup-gui-character-setup-adminremarks-button'}"
+                                      StyleClasses="ButtonBig" />
+                    <Button Name="RulesButton"
+                            Text="{Loc 'character-setup-gui-character-setup-rules-button'}"
+                            StyleClasses="ButtonBig"/>
+                    <Button Name="CloseButton"
+                            Access="Public"
+                            Text="{Loc 'character-setup-gui-character-setup-close-button'}"
+                            StyleClasses="ButtonBig"/>
+                </BoxContainer>
             </BoxContainer>
             <PanelContainer>
                 <PanelContainer.PanelOverride>

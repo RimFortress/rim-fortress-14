@@ -40,8 +40,6 @@ namespace Content.Server.Database
 
         Task SaveCharacterSlotAsync(NetUserId userId, ICharacterProfile? profile, int slot);
 
-        Task SaveCharacterSlotsAsync(NetUserId userId, Dictionary<int, ICharacterProfile?> profiles); // RimFortress
-
         Task SaveAdminOOCColorAsync(NetUserId userId, Color color);
 
         // Single method for two operations for transaction.
@@ -476,14 +474,6 @@ namespace Content.Server.Database
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.SaveCharacterSlotAsync(userId, profile, slot));
         }
-
-        // RimFortress Start
-        public Task SaveCharacterSlotsAsync(NetUserId userId, Dictionary<int, ICharacterProfile?> profiles)
-        {
-            DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.SaveCharacterSlotsAsync(userId, profiles));
-        }
-        // RimFortress End
 
         public Task DeleteSlotAndSetSelectedIndex(NetUserId userId, int deleteSlot, int newSlot)
         {

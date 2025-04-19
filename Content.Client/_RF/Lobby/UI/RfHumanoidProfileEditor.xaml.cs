@@ -41,7 +41,6 @@ namespace Content.Client._RF.Lobby.UI
     [GenerateTypedNameReferences]
     public sealed partial class RfHumanoidProfileEditor : BoxContainer
     {
-        private readonly IClientPreferencesManager _preferencesManager;
         private readonly IConfigurationManager _cfgManager;
         private readonly IEntityManager _entManager;
         private readonly IFileDialogManager _dialogManager;
@@ -60,11 +59,6 @@ namespace Content.Client._RF.Lobby.UI
 
         private bool _exporting;
         private bool _imaging;
-
-        /// <summary>
-        /// If we're attempting to save.
-        /// </summary>
-        public event Action? Save;
 
         /// <summary>
         /// Entity used for the profile editor preview
@@ -86,27 +80,25 @@ namespace Content.Client._RF.Lobby.UI
         /// </summary>
         public HumanoidCharacterProfile? Profile;
 
-        private List<SpeciesPrototype> _species = new();
+        public HumanoidCharacterProfile? OriginalProfile;
 
-        private List<(string, RequirementsSelector)> _jobPriorities = new();
-
+        private readonly List<SpeciesPrototype> _species = new();
+        private readonly List<(string, RequirementsSelector)> _jobPriorities = new();
         private readonly Dictionary<string, BoxContainer> _jobCategories;
+        private readonly ColorSelectorSliders _rgbSkinColorSelector;
 
         private Direction _previewRotation = Direction.North;
-
-        private ColorSelectorSliders _rgbSkinColorSelector;
-
         private bool _isDirty;
 
         [ValidatePrototypeId<GuideEntryPrototype>]
         private const string DefaultSpeciesGuidebook = "Species";
 
         public event Action<List<ProtoId<GuideEntryPrototype>>>? OnOpenGuidebook;
+        public event Action? OnDirty;
 
         private ISawmill _sawmill;
 
         public RfHumanoidProfileEditor(
-            IClientPreferencesManager preferencesManager,
             IConfigurationManager configurationManager,
             IEntityManager entManager,
             IFileDialogManager dialogManager,
@@ -125,48 +117,22 @@ namespace Content.Client._RF.Lobby.UI
             _playerManager = playerManager;
             _prototypeManager = prototypeManager;
             _markingManager = markings;
-            _preferencesManager = preferencesManager;
             _resManager = resManager;
             _requirements = requirements;
             _controller = UserInterfaceManager.GetUIController<RfLobbyUIController>();
 
-            ImportButton.OnPressed += args =>
-            {
-                ImportProfile();
-            };
-
-            ExportButton.OnPressed += args =>
-            {
-                ExportProfile();
-            };
-
-            ExportImageButton.OnPressed += args =>
-            {
-                ExportImage();
-            };
-
-            OpenImagesButton.OnPressed += args =>
-            {
-                _resManager.UserData.OpenOsWindow(ContentSpriteSystem.Exports);
-            };
-
-            ResetButton.OnPressed += args =>
-            {
-                SetProfile((HumanoidCharacterProfile?) _preferencesManager.Preferences?.SelectedCharacter, _preferencesManager.Preferences?.SelectedCharacterIndex);
-            };
-
-            SaveButton.OnPressed += args =>
-            {
-                Save?.Invoke();
-            };
+            ImportButton.OnPressed += _ => ImportProfile();
+            ExportButton.OnPressed += _ => ExportProfile();
+            ExportImageButton.OnPressed += _ => ExportImage();
+            OpenImagesButton.OnPressed += _ => _resManager.UserData.OpenOsWindow(ContentSpriteSystem.Exports);
 
             #region Left
 
             #region Name
 
             NameEdit.OnTextChanged += args => { SetName(args.Text); };
-            NameRandomize.OnPressed += args => RandomizeName();
-            RandomizeEverythingButton.OnPressed += args => { RandomizeEverything(); };
+            NameRandomize.OnPressed += _ => RandomizeName();
+            RandomizeEverythingButton.OnPressed += _ => { RandomizeEverything(); };
             WarningLabel.SetMarkup($"[color=red]{Loc.GetString("humanoid-profile-editor-naming-rules-warning")}[/color]");
 
             #endregion Name
@@ -301,12 +267,13 @@ namespace Content.Client._RF.Lobby.UI
                 ReloadPreview();
             };
 
-            HairStylePicker.OnSlotAdd += delegate()
+            HairStylePicker.OnSlotAdd += delegate
             {
                 if (Profile is null)
                     return;
 
-                var hair = _markingManager.MarkingsByCategoryAndSpecies(MarkingCategories.Hair, Profile.Species).Keys
+                var hair = _markingManager.MarkingsByCategoryAndSpecies(MarkingCategories.Hair, Profile.Species)
+                    .Keys
                     .FirstOrDefault();
 
                 if (string.IsNullOrEmpty(hair))
@@ -321,12 +288,13 @@ namespace Content.Client._RF.Lobby.UI
                 ReloadPreview();
             };
 
-            FacialHairPicker.OnSlotAdd += delegate()
+            FacialHairPicker.OnSlotAdd += delegate
             {
                 if (Profile is null)
                     return;
 
-                var hair = _markingManager.MarkingsByCategoryAndSpecies(MarkingCategories.FacialHair, Profile.Species).Keys
+                var hair = _markingManager.MarkingsByCategoryAndSpecies(MarkingCategories.FacialHair, Profile.Species)
+                    .Keys
                     .FirstOrDefault();
 
                 if (string.IsNullOrEmpty(hair))
@@ -431,7 +399,7 @@ namespace Content.Client._RF.Lobby.UI
 
             #endregion Left
 
-            ShowClothes.OnToggled += args =>
+            ShowClothes.OnToggled += _ =>
             {
                 ReloadPreview();
             };
@@ -439,7 +407,6 @@ namespace Content.Client._RF.Lobby.UI
             SpeciesInfoButton.OnPressed += OnSpeciesInfoButtonPressed;
 
             UpdateSpeciesGuidebookIcon();
-            IsDirty = false;
         }
 
         /// <summary>
@@ -620,7 +587,7 @@ namespace Content.Client._RF.Lobby.UI
         private void SetDirty()
         {
             // If it equals default then reset the button.
-            if (Profile == null || _preferencesManager.Preferences?.SelectedCharacter.MemberwiseEquals(Profile) == true)
+            if (Profile == null || OriginalProfile?.MemberwiseEquals(Profile) == true)
             {
                 IsDirty = false;
                 return;
@@ -661,20 +628,12 @@ namespace Content.Client._RF.Lobby.UI
         }
 
         /// <summary>
-        /// Resets the profile to the defaults.
-        /// </summary>
-        public void ResetToDefault()
-        {
-            SetProfile(
-                (HumanoidCharacterProfile?) _preferencesManager.Preferences?.SelectedCharacter,
-                _preferencesManager.Preferences?.SelectedCharacterIndex);
-        }
-
-        /// <summary>
         /// Sets the editor to the specified profile with the specified slot.
         /// </summary>
         public void SetProfile(HumanoidCharacterProfile? profile, int? slot)
         {
+            Visible = profile != null && slot != null;
+            OriginalProfile = profile?.Clone();
             Profile = profile?.Clone();
             CharacterSlot = slot;
             IsDirty = false;
@@ -688,7 +647,6 @@ namespace Content.Client._RF.Lobby.UI
             UpdateSpawnPriorityControls();
             UpdateAgeEdit();
             UpdateEyePickers();
-            UpdateSaveButton();
             UpdateMarkings();
             UpdateHairPickers();
             UpdateCMarkingsHair();
@@ -845,7 +803,7 @@ namespace Content.Client._RF.Lobby.UI
                     icon.Texture = jobIcon.Icon.Frame0();
                     selector.Setup(items, job.LocalizedName, 200, job.LocalizedDescription, icon, job.Guides);
 
-                    if (!_requirements.IsAllowed(job, (HumanoidCharacterProfile?)_preferencesManager.Preferences?.SelectedCharacter, out var reason))
+                    if (!_requirements.IsAllowed(job, Profile, out var reason))
                     {
                         selector.LockRequirements(reason);
                     }
@@ -1009,9 +967,10 @@ namespace Content.Client._RF.Lobby.UI
 
         private void OnSkinColorOnValueChanged()
         {
-            if (Profile is null) return;
+            if (Profile is null)
+                return;
 
-            var skin = _prototypeManager.Index<SpeciesPrototype>(Profile.Species).SkinColoration;
+            var skin = _prototypeManager.Index(Profile.Species).SkinColoration;
 
             switch (skin)
             {
@@ -1171,7 +1130,7 @@ namespace Content.Client._RF.Lobby.UI
                     return;
 
                 _isDirty = value;
-                UpdateSaveButton();
+                OnDirty?.Invoke();
             }
         }
 
@@ -1215,7 +1174,7 @@ namespace Content.Client._RF.Lobby.UI
             var sexes = new List<Sex>();
 
             // add species sex options, default to just none if we are in bizzaro world and have no species
-            if (_prototypeManager.TryIndex<SpeciesPrototype>(Profile.Species, out var speciesProto))
+            if (_prototypeManager.TryIndex(Profile.Species, out var speciesProto))
             {
                 foreach (var sex in speciesProto.Sexes)
                 {
@@ -1244,7 +1203,7 @@ namespace Content.Client._RF.Lobby.UI
             if (Profile == null)
                 return;
 
-            var skin = _prototypeManager.Index<SpeciesPrototype>(Profile.Species).SkinColoration;
+            var skin = _prototypeManager.Index(Profile.Species).SkinColoration;
 
             switch (skin)
             {
@@ -1308,7 +1267,7 @@ namespace Content.Client._RF.Lobby.UI
             if (species is null)
                 return;
 
-            if (!_prototypeManager.TryIndex<SpeciesPrototype>(species, out var speciesProto))
+            if (!_prototypeManager.TryIndex(species, out _))
                 return;
 
             // Don't display the info button if no guide entry is found
@@ -1326,8 +1285,11 @@ namespace Content.Client._RF.Lobby.UI
                 return;
             }
 
-            Markings.SetData(Profile.Appearance.Markings, Profile.Species,
-                Profile.Sex, Profile.Appearance.SkinColor, Profile.Appearance.EyeColor
+            Markings.SetData(Profile.Appearance.Markings,
+                Profile.Species,
+                Profile.Sex,
+                Profile.Appearance.SkinColor,
+                Profile.Appearance.EyeColor
             );
         }
 
@@ -1459,12 +1421,6 @@ namespace Content.Client._RF.Lobby.UI
             EyeColorPicker.SetData(Profile.Appearance.EyeColor);
         }
 
-        private void UpdateSaveButton()
-        {
-            SaveButton.Disabled = Profile is null || !IsDirty;
-            ResetButton.Disabled = Profile is null || !IsDirty;
-        }
-
         private void SetPreviewRotation(Direction direction)
         {
             SpriteView.OverrideDirection = (Direction) ((int) direction % 4 * 2);
@@ -1479,7 +1435,9 @@ namespace Content.Client._RF.Lobby.UI
 
         private void RandomizeName()
         {
-            if (Profile == null) return;
+            if (Profile == null)
+                return;
+
             var name = HumanoidCharacterProfile.GetName(Profile.Species, Profile.Gender);
             SetName(name);
             UpdateNameEdit();
@@ -1492,7 +1450,7 @@ namespace Content.Client._RF.Lobby.UI
 
             var dir = SpriteView.OverrideDirection ?? Direction.South;
 
-            // I tried disabling the button but it looks sorta goofy as it only takes a frame or two to save
+            // I tried disabling the button, but it looks sorta goofy as it only takes a frame or two to save
             _imaging = true;
             await _entManager.System<ContentSpriteSystem>().Export(PreviewDummy, dir, includeId: false);
             _imaging = false;
@@ -1500,7 +1458,7 @@ namespace Content.Client._RF.Lobby.UI
 
         private async void ImportProfile()
         {
-            if (_exporting || CharacterSlot == null || Profile == null)
+            if (_exporting || Profile == null)
                 return;
 
             StartExport();

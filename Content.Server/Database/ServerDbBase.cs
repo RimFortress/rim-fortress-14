@@ -120,53 +120,6 @@ namespace Content.Server.Database
             await db.DbContext.SaveChangesAsync();
         }
 
-        // RimFortress Start
-        public async Task SaveCharacterSlotsAsync(NetUserId userId, Dictionary<int, ICharacterProfile?> profiles)
-        {
-            await using var db = await GetDb();
-
-            foreach (var (slot, profile) in profiles)
-            {
-                if (profile is null)
-                {
-                    await DeleteCharacterSlot(db.DbContext, userId, slot);
-                    continue;
-                }
-
-                if (profile is not HumanoidCharacterProfile humanoid)
-                {
-                    // TODO: Handle other ICharacterProfile implementations properly
-                    throw new NotImplementedException();
-                }
-
-                var oldProfile = db.DbContext.Profile
-                    .Include(p => p.Preference)
-                    .Where(p => p.Preference.UserId == userId.UserId)
-                    .Include(p => p.Jobs)
-                    .Include(p => p.Antags)
-                    .Include(p => p.Traits)
-                    .Include(p => p.Loadouts)
-                    .ThenInclude(l => l.Groups)
-                    .ThenInclude(group => group.Loadouts)
-                    .AsSplitQuery()
-                    .SingleOrDefault(h => h.Slot == slot);
-
-                var newProfile = ConvertProfiles(humanoid, slot, oldProfile);
-                if (oldProfile == null)
-                {
-                    var prefs = await db.DbContext
-                        .Preference
-                        .Include(p => p.Profiles)
-                        .SingleAsync(p => p.UserId == userId.UserId);
-
-                    prefs.Profiles.Add(newProfile);
-                }
-            }
-
-            await db.DbContext.SaveChangesAsync();
-        }
-        // RimFortress End
-
         private static async Task DeleteCharacterSlot(ServerDbContext db, NetUserId userId, int slot)
         {
             var profile = await db.Profile.Include(p => p.Preference)
