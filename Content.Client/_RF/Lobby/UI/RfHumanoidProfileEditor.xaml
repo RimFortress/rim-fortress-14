@@ -6,7 +6,6 @@
          xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
          xmlns:style="clr-namespace:Content.Client.Stylesheets"
          HorizontalExpand="True">
-        <!-- Left side -->
         <BoxContainer Orientation="Vertical" Margin="10" HorizontalExpand="True">
             <!-- Middle container -->
             <BoxContainer Orientation="Horizontal" SeparationOverride="10" HorizontalExpand="True">

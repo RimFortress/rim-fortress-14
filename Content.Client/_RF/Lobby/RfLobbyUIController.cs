@@ -7,6 +7,7 @@ using Content.Client.Inventory;
 using Content.Client.Lobby;
 using Content.Client.Players.PlayTimeTracking;
 using Content.Client.Station;
+using Content.Shared._RF.Preferences;
 using Content.Shared.CCVar;
 using Content.Shared.Clothing;
 using Content.Shared.GameTicking;
@@ -49,6 +50,8 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
     private RfCharacterSetupGui? _characterSetup;
     private RfHumanoidProfileEditor? _profileEditor;
     private RfCharacterSetupGuiSavePanel? _savePanel;
+    private RfCharacterSetupGuiSavePanel? _saveEquipmentPanel;
+    private RfExpeditionEquipmentEditor? _equipmentEditor;
 
     /// <summary>
     /// This is the character preview panel in the chat. This should only update if their character updates.
@@ -107,6 +110,9 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
                 _profileEditor.RefreshTraits();
             }
         }
+
+        if (obj.WasModified<ExpeditionEquipmentPrototype>())
+            _equipmentEditor?.BuildList();
     }
 
     private void PreferencesDataLoaded()
@@ -128,11 +134,13 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
     public void OnStateExited(RimFortressLobbyState state)
     {
         PreviewPanel?.SetLoaded(false);
-        _profileEditor?.Dispose();
-        _characterSetup?.Dispose();
+        _profileEditor?.Parent?.RemoveChild(_profileEditor);
+        _characterSetup?.Parent?.RemoveChild(_characterSetup);
+        _equipmentEditor?.Parent?.RemoveChild(_equipmentEditor);
 
         _characterSetup = null;
         _profileEditor = null;
+        _equipmentEditor = null;
     }
 
     /// <summary>
@@ -141,10 +149,12 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
     public void ReloadCharacterSetup()
     {
         RefreshLobbyPreview();
-        var (characterGui, profileEditor) = EnsureGui();
+        var (characterGui, profileEditor, equipmentEditor) = EnsureGui();
+
         characterGui.ReloadCharacterPickers();
         profileEditor.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
             _characterSetup?.SelectedProfileIndex);
+        equipmentEditor.BuildList();
 
         characterGui.IsDirty = false;
         profileEditor.IsDirty = false;
@@ -218,12 +228,46 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         _savePanel.OpenCentered();
     }
 
-    private (RfCharacterSetupGui, RfHumanoidProfileEditor) EnsureGui()
+    private void CloseEquipmentEditor()
     {
-        if (_characterSetup != null && _profileEditor != null)
+        if (_equipmentEditor == null)
+            return;
+
+        if (_stateManager.CurrentState is RimFortressLobbyState lobbyGui)
+            lobbyGui.SwitchState(RfLobbyGui.LobbyGuiState.Default);
+    }
+
+    private void OpenSaveEquipmentPanel()
+    {
+        if (_saveEquipmentPanel is { IsOpen: true })
+            return;
+
+        _saveEquipmentPanel = new RfCharacterSetupGuiSavePanel();
+
+        _saveEquipmentPanel.SaveButton.OnPressed += _ =>
+        {
+            // TODO: save
+            _saveEquipmentPanel.Close();
+            CloseEquipmentEditor();
+        };
+
+        _saveEquipmentPanel.NoSaveButton.OnPressed += _ =>
+        {
+            _saveEquipmentPanel.Close();
+            CloseEquipmentEditor();
+        };
+
+        _saveEquipmentPanel.OpenCentered();
+    }
+
+    private (RfCharacterSetupGui, RfHumanoidProfileEditor, RfExpeditionEquipmentEditor) EnsureGui()
+    {
+        if (_characterSetup != null
+            && _profileEditor != null
+            && _equipmentEditor != null)
         {
             _characterSetup.Visible = true;
-            return (_characterSetup, _profileEditor);
+            return (_characterSetup, _profileEditor, _equipmentEditor);
         }
 
         _profileEditor = new RfHumanoidProfileEditor(
@@ -241,7 +285,6 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         _profileEditor.OnDirty += UpdateSaveButton;
 
         _characterSetup = new RfCharacterSetupGui(_profileEditor);
-
         _characterSetup.CloseButton.OnPressed += _ =>
         {
             // Open the save panel if we have unsaved changes.
@@ -273,13 +316,26 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
                 _characterSetup?.SelectedProfileIndex);
         };
 
+        _equipmentEditor = new RfExpeditionEquipmentEditor();
+        _equipmentEditor.CloseButton.OnPressed += _ =>
+        {
+            if (_equipmentEditor is { IsDirty: true })
+            {
+                OpenSaveEquipmentPanel();
+                return;
+            }
+
+            CloseEquipmentEditor();
+        };
+
         if (_stateManager.CurrentState is RimFortressLobbyState lobby)
         {
             lobby.Lobby?.CharacterSetupState.AddChild(_characterSetup);
+            lobby.Lobby?.EquipmentEditorState.AddChild(_equipmentEditor);
         }
 
         UpdateSaveButton();
-        return (_characterSetup, _profileEditor);
+        return (_characterSetup, _profileEditor, _equipmentEditor);
     }
 
     private void UpdateSaveButton()

@@ -12,6 +12,7 @@ public sealed partial class RfLobbyCharacterPreviewPanel : Control
     [Dependency] private readonly IEntityManager _entManager = default!;
 
     public Button CharacterSetupButton => CharacterSetup;
+    public Button EquipmentSetupButton => EquipmentSetup;
 
     private readonly List<EntityUid> _previewDummies = new();
 

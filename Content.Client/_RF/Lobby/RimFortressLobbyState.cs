@@ -64,6 +64,7 @@ namespace Content.Client._RF.Lobby
             UpdateLobbyUi();
 
             Lobby.CharacterPreview.CharacterSetupButton.OnPressed += OnSetupPressed;
+            Lobby.CharacterPreview.EquipmentSetupButton.OnPressed += OnEquipmentSetupPressed;
             Lobby.ReadyButton.OnPressed += OnReadyPressed;
             Lobby.ReadyButton.OnToggled += OnReadyToggled;
 
@@ -84,6 +85,7 @@ namespace Content.Client._RF.Lobby
             _voteManager.ClearPopupContainer();
 
             Lobby!.CharacterPreview.CharacterSetupButton.OnPressed -= OnSetupPressed;
+            Lobby!.CharacterPreview.EquipmentSetupButton.OnPressed -= OnEquipmentSetupPressed;
             Lobby!.ReadyButton.OnPressed -= OnReadyPressed;
             Lobby!.ReadyButton.OnToggled -= OnReadyToggled;
 
@@ -92,7 +94,7 @@ namespace Content.Client._RF.Lobby
 
         public void SwitchState(RfLobbyGui.LobbyGuiState state)
         {
-            // Yeah I hate this but RimFortressLobbyState contains all the badness for now.
+            // Yeah I hate this but LobbyState contains all the badness for now.
             Lobby?.SwitchState(state);
         }
 
@@ -100,6 +102,12 @@ namespace Content.Client._RF.Lobby
         {
             SetReady(false);
             Lobby?.SwitchState(RfLobbyGui.LobbyGuiState.CharacterSetup);
+        }
+
+        private void OnEquipmentSetupPressed(BaseButton.ButtonEventArgs args)
+        {
+            SetReady(false);
+            Lobby?.SwitchState(RfLobbyGui.LobbyGuiState.EquipmentSetup);
         }
 
         private void OnReadyPressed(BaseButton.ButtonEventArgs args)
