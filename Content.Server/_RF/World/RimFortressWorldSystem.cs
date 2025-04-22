@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Numerics;
+using Content.Server._RF.Equipment;
 using Content.Server._RF.NPC;
 using Content.Server.Mind;
 using Content.Server.Parallax;
@@ -39,6 +40,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly StationSpawningSystem _station = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IConfigurationManager _cvar = default!;
+    [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
 
     /// <summary>
     /// A queue of pending requests to spawn starting settlements
@@ -144,10 +146,12 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     }
 
     /// <summary>
-    /// Creates starting settlement for the player according to the rule,
-    /// also sets their settings according to the player's preferences
+    /// Spawns starting pops and expedition equipment for the player
     /// </summary>
-    private void SpawnRoundstartPops(Entity<RimFortressPlayerComponent?> player)
+    /// <remarks>
+    /// The number of spawned pops cannot be greater than <see cref="CCVars.MaxRoundstartPops"/>
+    /// </remarks>
+    private void RoundstartSpawn(Entity<RimFortressPlayerComponent?> player)
     {
         if (Rule is not { } rule
             || !Resolve(player.Owner, ref player.Comp)
@@ -184,6 +188,21 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
                 freeTiles.Add(tileRef);
             }
 
+            // Spawn player equipment
+            if (_equipment.GetPlayerEquipment(session.UserId) is { } equipment)
+            {
+                foreach (var (protoId, count) in equipment)
+                {
+                    for (var i = 0; i < count; i++)
+                    {
+                        var tileCenter = Turf.GetTileCenter(_random.Pick(freeTiles));
+                        var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
+                        Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
+                    }
+                }
+            }
+
+            // Spawn roundstart pops
             foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(CCVars.MaxRoundstartPops)))
             {
                 var coords = Turf.GetTileCenter(_random.Pick(freeTiles));
@@ -212,7 +231,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             if (time > _timing.CurTime)
                 break;
 
-            SpawnRoundstartPops(player);
+            RoundstartSpawn(player);
             _roundstartSpawnQueue.Remove((player, time));
         }
     }

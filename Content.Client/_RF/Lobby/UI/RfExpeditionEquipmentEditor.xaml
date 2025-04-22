@@ -55,6 +55,8 @@
                                 <Button Name="ClearSearch" Margin="0 2 2 2" SetSize="60 60"
                                         Text="✕" StyleClasses="ButtonSquare"/>
                             </BoxContainer>
+                            <controls:HLine Thickness="2" Margin="2 3 5 3"
+                                            Color="{x:Static style:StyleNano.NanoGold}"/>
                             <Label Name="PointsLabel" Align="Left" Margin="3 2 0 0"/>
                         </BoxContainer>
                     </lobby:RfHighlightedContainer>
