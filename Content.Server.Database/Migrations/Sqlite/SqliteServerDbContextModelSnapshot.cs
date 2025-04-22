@@ -15,7 +15,7 @@ namespace Content.Server.Database.Migrations.Sqlite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
 
             modelBuilder.Entity("Content.Server.Database.Admin", b =>
                 {
@@ -265,6 +265,7 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .HasColumnName("expiration_time");
 
                     b.Property<DateTime>("LastEditedAt")
+                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("last_edited_at");
 
@@ -393,6 +394,7 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .HasColumnName("expiration_time");
 
                     b.Property<DateTime>("LastEditedAt")
+                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("last_edited_at");
 
@@ -597,6 +599,7 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.ToTable("connection_log", (string)null);
                 });
 
+            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Equipment", b =>
                 {
                     b.Property<Guid>("PlayerUserId")
@@ -616,6 +619,7 @@ namespace Content.Server.Database.Migrations.Sqlite
 
                     b.ToTable("equipment", (string)null);
                 });
+            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
                 {
@@ -1638,6 +1642,7 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.Navigation("Server");
                 });
 
+            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Equipment", b =>
                 {
                     b.HasOne("Content.Server.Database.Player", "Player")
@@ -1650,6 +1655,7 @@ namespace Content.Server.Database.Migrations.Sqlite
 
                     b.Navigation("Player");
                 });
+            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.Job", b =>
                 {
@@ -2013,7 +2019,7 @@ namespace Content.Server.Database.Migrations.Sqlite
 
                     b.Navigation("JobWhitelists");
 
-                    b.Navigation("RoundstartEquipments");
+                    b.Navigation("RoundstartEquipments"); // RimFortress
                 });
 
             modelBuilder.Entity("Content.Server.Database.Preference", b =>
