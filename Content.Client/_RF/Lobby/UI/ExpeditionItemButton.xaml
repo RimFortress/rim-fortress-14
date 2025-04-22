@@ -15,8 +15,7 @@
             </controls:RfHighlightedContainer>
             <rf:VLine Color="{x:Static style:StyleNano.NanoGold}"
                       Thickness="2" Margin="10 2"/>
-            <TextureButton Name="Button" TooltipDelay="0"
-                           HorizontalExpand="True" VerticalExpand="True">
+            <TextureButton Name="Button" HorizontalExpand="True" VerticalExpand="True">
                 <Label Name="NameLabel" Access="Public"
                        Align="Left" ClipText="True" VAlign="Bottom"
                        StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"/>

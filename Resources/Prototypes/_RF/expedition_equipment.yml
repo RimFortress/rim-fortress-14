@@ -65,6 +65,92 @@
     SpeedLoaderMagnum: 15
 
 - type: expeditionEquipment
+  id: Medical
+  name: expedition-equipment-category-medical
+  items:
+    MedkitFilled: 10
+    MedkitToxinFilled: 10
+    MedkitAdvancedFilled: 15
+    MedkitBruteFilled: 15
+    MedkitBurnFilled: 10
+    MedkitCombatFilled: 20
+    Bloodpack: 5
+    Brutepack: 5
+    Gauze: 5
+    Ointment: 5
+    Cautery: 5
+    Drill: 5
+    Saw: 5
+    Hemostat: 5
+    Retractor: 5
+    Scalpel: 5
+
+- type: expeditionEquipment
+  id: Food
+  name: expedition-equipment-category-food
+  items:
+    FoodSnackNutribrick: 5
+    FoodBreadPlain: 5
+    FoodSnackMREBrownie: 5
+    BoxMRE: 15
+
+- type: expeditionEquipment
+  id: Drink
+  name: expedition-equipment-category-drink
+  items:
+    DrinkMREFlask: 5
+    DrinkWaterBottleFull: 5
+    DrinkMilkCarton: 5
+    DrinkJuiceOrangeCarton: 5
+    DrinkJuiceLemonCarton: 5
+    DrinkJuiceLimeCarton: 5
+    DrinkGrenadineBottleFull: 10
+    DrinkTequilaBottleFull: 10
+    DrinkRumBottleFull: 10
+    DrinkWineBottleFull: 10
+    DrinkDrGibbJug: 10
+    DrinkMelonLiquorBottleFull: 10
+    DrinkGildlagerBottleFull: 10
+    DrinkVermouthBottleFull: 10
+    DrinkGinBottleFull: 10
+    DrinkAbsintheBottleFull: 10
+    DrinkAleBottleFull: 10
+    DrinkBlueCuracaoBottleFull: 10
+    DrinkPoisonWinebottleFull: 10
+    DrinkBeerBottleFull: 10
+    DrinkChampagneBottleFull: 10
+    DrinkCoffeeLiqueurBottleFull: 10
+    DrinkCognacBottleFull: 10
+    DrinkVodkaBottleFull: 10
+
+- type: expeditionEquipment
+  id: Ingredient
+  name: expedition-equipment-category-ingredient
+  items:
+    FoodMeatBear: 5
+    FoodMeatFish: 5
+    FoodMeatChicken: 5
+    FoodMeatCrab: 5
+    FoodMeatDuck: 5
+    FoodMeatLizard: 5
+    FoodMeat: 5
+    FoodDoughPastryBaseRaw: 5
+    FoodMeatPenguin: 5
+    FoodMeatPlant: 5
+    FoodMeatRat: 5
+    FoodMeatSnail: 5
+    FoodMeatSnake: 5
+    FoodMeatSpider: 5
+    FoodCheese: 10
+    FoodContainerEgg: 10
+    FoodButter: 5
+    ReagentContainerSugar: 5
+    ReagentContainerOliveoil: 5
+    FoodCondimentBottleKetchup: 5
+    FoodChevre: 5
+    ReagentContainerRiceSmall: 5
+
+- type: expeditionEquipment
   id: Seeds
   name: expedition-equipment-category-seed
   items:
