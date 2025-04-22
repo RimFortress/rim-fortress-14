@@ -22,7 +22,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
     [Dependency] private readonly UserDbDataManager _userDb = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
 
-    private readonly Dictionary<EntProtoId, int> _costs = new();
+    private Dictionary<EntProtoId, int>? _costs;
     private readonly Dictionary<NetUserId, PlayerEquipData> _cachedPlayerPrefs = new();
 
     private ISawmill _sawmill = default!;
@@ -70,7 +70,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
     public async Task LoadData(ICommonSession session, CancellationToken cancel)
     {
         var equip = await _db.GetPlayerEquipment(session.UserId) ?? new();
-        _cachedPlayerPrefs[session.UserId] = new PlayerEquipData(equip);
+        _cachedPlayerPrefs[session.UserId] = new PlayerEquipData(SanitizeEquipment(equip));
     }
 
     public void FinishLoad(ICommonSession session)
@@ -90,7 +90,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
 
     private void UpdateCosts()
     {
-        _costs.Clear();
+        _costs = new();
 
         var prototypes = _prototype.EnumeratePrototypes<ExpeditionEquipmentPrototype>();
         foreach (var prototype in prototypes)
@@ -112,13 +112,13 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
         var maxPoints = _cfg.GetCVar(CCVars.RoundstartEquipmentPoints);
         var sanitized = new Dictionary<EntProtoId, int>();
 
-        if (_costs.Count == 0)
+        if (_costs == null)
             UpdateCosts();
 
         var total = 0;
         foreach (var (proto, count) in equip)
         {
-            if (!_costs.TryGetValue(proto, out var cost))
+            if (!_costs!.TryGetValue(proto, out var cost))
                 continue;
 
             total += cost;
