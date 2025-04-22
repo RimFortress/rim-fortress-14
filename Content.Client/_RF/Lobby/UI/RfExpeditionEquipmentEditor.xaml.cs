@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Client.Resources;
 using Content.Shared._RF.Preferences;
 using Content.Shared.CCVar;
@@ -19,12 +20,13 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
     [Dependency] private readonly ILocalizationManager _locManager = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
+    [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
 
     private bool _isDirty;
     private int _pointsUsed;
     private ExpeditionEquipmentPrototype? _selectedCategory;
+    private Dictionary<EntProtoId, int> _itemsSelected = new();
     private readonly Dictionary<EntProtoId, int> _costs = new();
-    private readonly Dictionary<EntProtoId, int> _itemsSelected = new();
     private readonly Dictionary<EntProtoId, ExpeditionItemButton> _buttons = new();
 
     public bool IsDirty
@@ -51,23 +53,33 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
             Modulate = new Color(37, 37, 42)
         };
 
+        ResetButton.OnPressed += _ => BuildList();
+        SaveButton.OnPressed += _ => SaveSettings();
+        Search.OnTextChanged += _ => BuildItems();
+        ClearSearch.OnPressed += _ => Search.SetText(string.Empty, true);
+
         back.SetPatchMargin(StyleBox.Margin.All, 10);
         BackgroundPanel.PanelOverride = back;
+    }
+
+    public void SaveSettings()
+    {
+        _equipment.SetPlayerEquipment(_itemsSelected);
+        IsDirty = false;
     }
 
     public void BuildList()
     {
         _costs.Clear();
-        _itemsSelected.Clear();
-        _selectedCategory = null;
+        _itemsSelected = new(_equipment.Equipment);
         IsDirty = false;
         CategoryBox.RemoveAllChildren();
 
-        PointsLabel.Text =
-            $"{Loc.GetString("expedition-equipment-editor-points-left")}: {_cfg.GetCVar(CCVars.RoundstartEquipmentPoints)}";
-
-        var prototypes = _protoManager.EnumeratePrototypes<ExpeditionEquipmentPrototype>();
+        var prototypes = _protoManager.EnumeratePrototypes<ExpeditionEquipmentPrototype>().ToList();
         var categoryGroup = new ButtonGroup();
+
+        if (_selectedCategory != null && !prototypes.Contains(_selectedCategory))
+            _selectedCategory = null;
 
         foreach (var proto in prototypes)
         {
@@ -96,6 +108,9 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
             categoryButton.AddStyleClass("ButtonBig");
             CategoryBox.AddChild(categoryButton);
         }
+
+        BuildItems();
+        Recount();
     }
 
     private void BuildItems()
@@ -107,17 +122,29 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
             return;
 
         var maxPoints = _cfg.GetCVar(CCVars.RoundstartEquipmentPoints);
-        
+
         foreach (var (proto, cost) in _selectedCategory.Items)
         {
             var count = _itemsSelected.GetValueOrDefault(proto, 0);
             var itemButton = new ExpeditionItemButton(proto, cost, count);
-            itemButton.Plus.Disabled = cost + _pointsUsed > maxPoints;
 
-            itemButton.OnCountSet += args =>
+            if (!string.IsNullOrEmpty(Search.Text)
+                && (itemButton.NameLabel.Text == null
+                || !itemButton.NameLabel.Text.Contains(Search.Text)))
+                continue;
+
+            itemButton.Plus.Disabled = cost + _pointsUsed > maxPoints;
+            itemButton.OnPointsSet += args =>
             {
-                _itemsSelected[proto] = args;
+                var newPoints = _pointsUsed - args.Old + args.New;
+                if (newPoints >= maxPoints)
+                    itemButton.Count = (maxPoints - (_pointsUsed - args.Old)) / itemButton.Cost;
+                else if (newPoints < 0)
+                    itemButton.Count = 0;
+
+                _itemsSelected[proto] = itemButton.Count;
                 Recount();
+                SetDirty();
             };
 
             _buttons.Add(proto, itemButton);
@@ -127,14 +154,12 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
 
     private void Recount()
     {
-        var oldPoints = _pointsUsed;
         _pointsUsed = 0;
-
         var maxPoints = _cfg.GetCVar(CCVars.RoundstartEquipmentPoints);
 
-        foreach (var (proto, cost) in _costs)
+        foreach (var (proto, count) in _itemsSelected)
         {
-            if (!_itemsSelected.TryGetValue(proto, out var count))
+            if (!_costs.TryGetValue(proto, out var cost))
                 continue;
 
             _pointsUsed += count * cost;
@@ -150,9 +175,23 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
 
         PointsLabel.Text =
             $"{Loc.GetString("expedition-equipment-editor-points-left")}: {maxPoints - _pointsUsed}";
+    }
 
-        if (oldPoints != _pointsUsed)
+    private void SetDirty()
+    {
+        foreach (var (proto, count) in _itemsSelected)
+        {
+            if (_equipment.Equipment.TryGetValue(proto, out var value) && value == count)
+                continue;
+
+            if (count == 0 && !_equipment.Equipment.ContainsKey(proto))
+                continue;
+
             IsDirty = true;
+            return;
+        }
+
+        IsDirty = false;
     }
 }
 

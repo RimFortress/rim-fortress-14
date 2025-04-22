@@ -246,13 +246,14 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
 
         _saveEquipmentPanel.SaveButton.OnPressed += _ =>
         {
-            // TODO: save
+            _equipmentEditor?.SaveSettings();
             _saveEquipmentPanel.Close();
             CloseEquipmentEditor();
         };
 
         _saveEquipmentPanel.NoSaveButton.OnPressed += _ =>
         {
+            _equipmentEditor?.BuildList();
             _saveEquipmentPanel.Close();
             CloseEquipmentEditor();
         };

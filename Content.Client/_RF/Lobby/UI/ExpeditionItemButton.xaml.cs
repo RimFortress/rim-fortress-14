@@ -13,9 +13,21 @@ public sealed partial class ExpeditionItemButton : Control
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly ILocalizationManager _locManager = default!;
 
-    public event Action<int>? OnCountSet;
+    public event Action<(int Old, int New)>? OnPointsSet;
 
-    public int Count { get; private set; }
+    private int _count;
+
+    public int Count
+    {
+        get => _count;
+        set
+        {
+            _count = value;
+            CountLine.Text = $"{Count}";
+            Minus.Disabled = Count <= 0;
+        }
+    }
+    public int Cost { get; private set; }
 
     public ExpeditionItemButton(EntProtoId protoId, int cost, int count)
     {
@@ -23,6 +35,7 @@ public sealed partial class ExpeditionItemButton : Control
         RobustXamlLoader.Load(this);
 
         Count = count;
+        Cost = cost;
 
         if (!_protoManager.TryIndex(protoId, out var proto))
             return;
@@ -31,31 +44,27 @@ public sealed partial class ExpeditionItemButton : Control
         Texture.Texture = spriteSys.Frame0(proto);
 
         NameLabel.Text = proto.Name;
-        NameLabel.ToolTip = proto.Description;
-        CostLabel.Text = $"{_locManager.GetString("expedition-equipment-editor-points")}: {cost}";
-        CountLine.Text = $"{Count}";
+        Button.ToolTip = proto.Description;
+        CostLabel.Text = $"{_locManager.GetString("expedition-equipment-editor-points")}: {Cost}";
         Minus.Disabled = Count == 0;
 
         Plus.OnPressed += _ =>
         {
             Count++;
-            CountLine.Text = $"{Count}";
-            Minus.Disabled = Count == 0;
-            OnCountSet?.Invoke(Count);
+            OnPointsSet?.Invoke(((Count - 1) * Cost, Count * Cost));
         };
 
         Minus.OnPressed += _ =>
         {
             Count--;
-            CountLine.Text = $"{Count}";
-            Minus.Disabled = Count == 0;
-            OnCountSet?.Invoke(Count);
+            OnPointsSet?.Invoke(((Count + 1) * Cost, Count * Cost));
         };
 
         CountLine.OnTextChanged += _ =>
         {
+            var oldCount = Count;
             Count = int.TryParse(CountLine.Text, out var value) ? value : 0;
-            OnCountSet?.Invoke(Count);
+            OnPointsSet?.Invoke((oldCount * Cost, Count * Cost));
         };
     }
 }

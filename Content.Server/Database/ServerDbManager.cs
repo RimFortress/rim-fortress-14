@@ -360,6 +360,11 @@ namespace Content.Server.Database
         Task SendNotification(DatabaseNotification notification);
 
         #endregion
+
+        // RimFortress Start
+        Task<Dictionary<EntProtoId, int>?> GetPlayerEquipment(NetUserId userId);
+        Task SaveEquipmentsAsync(NetUserId userId, Dictionary<EntProtoId, int> equipments);
+        // RimFortress End
     }
 
     /// <summary>
@@ -462,6 +467,20 @@ namespace Content.Server.Database
             DbWriteOpsMetric.Inc();
             return RunDbCommand(() => _db.InitPrefsAsync(userId, defaultProfile));
         }
+
+        // RimFortress Start
+        public Task<Dictionary<EntProtoId, int>?> GetPlayerEquipment(NetUserId userId)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.GetPlayerEquipment(userId));
+        }
+
+        public Task SaveEquipmentsAsync(NetUserId userId, Dictionary<EntProtoId, int> equipments)
+        {
+            DbWriteOpsMetric.Inc();
+            return RunDbCommand(() => _db.SaveEquipmentsAsync(userId, equipments));
+        }
+        // RimFortress End
 
         public Task SaveSelectedCharacterIndexAsync(NetUserId userId, int index)
         {

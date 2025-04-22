@@ -25,6 +25,8 @@ using Content.Shared.Chat;
 using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Players.RateLimiting;
 
+using Content.Client._RF.Lobby; // RimFortress
+
 namespace Content.Client.IoC
 {
     internal static class ClientContentIoC
@@ -33,6 +35,7 @@ namespace Content.Client.IoC
         {
             var collection = IoCManager.Instance!;
 
+            collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>(); // RimFortress
             collection.Register<IParallaxManager, ParallaxManager>();
             collection.Register<IChatManager, ChatManager>();
             collection.Register<ISharedChatManager, ChatManager>();

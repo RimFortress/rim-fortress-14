@@ -31,8 +31,9 @@
             <!-- Left panel -->
             <BoxContainer Margin="15" MinWidth="325" Orientation="Vertical">
                 <controls:StripeBack>
-                    <Label Name="PointsLabel" Margin="2"
-                           Align="Fill" VAlign="Fill" MinHeight="30" HorizontalExpand="True"/>
+                    <Label Margin="2" Align="Center" VAlign="Center"
+                           StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"
+                           Text="{Loc 'expedition-equipment-editor-categories'}"/>
                 </controls:StripeBack>
                 <ScrollContainer VerticalExpand="True">
                     <lobby:RfHighlightedContainer VerticalExpand="True">
@@ -44,13 +45,28 @@
             </BoxContainer>
             <rf:VLine Thickness="3" Margin="10 0 10 15" Color="{x:Static style:StyleNano.NanoGold}"/>
             <!-- Right panel -->
-            <ScrollContainer HorizontalExpand="True">
-                <lobby:RfHighlightedContainer Margin="15">
-                    <BoxContainer Name="ItemBox" Orientation="Vertical" Margin="5">
+            <BoxContainer HorizontalExpand="True" Orientation="Vertical">
+                <BoxContainer HorizontalExpand="True">
+                    <lobby:RfHighlightedContainer HorizontalExpand="True" Margin="15 15 15 0">
+                        <BoxContainer Orientation="Vertical">
+                            <BoxContainer Orientation="Horizontal">
+                                <LineEdit Name="Search" Margin="2 3 0 3" HorizontalExpand="True"
+                                          PlaceHolder="{Loc 'expedition-equipment-editor-search'}"/>
+                                <Button Name="ClearSearch" Margin="0 2 2 2" SetSize="60 60"
+                                        Text="✕" StyleClasses="ButtonSquare"/>
+                            </BoxContainer>
+                            <Label Name="PointsLabel" Align="Left" Margin="3 2 0 0"/>
+                        </BoxContainer>
+                    </lobby:RfHighlightedContainer>
+                </BoxContainer>
+                <ScrollContainer VerticalExpand="True" ReservesSpace="True">
+                    <lobby:RfHighlightedContainer Margin="15">
+                        <BoxContainer Name="ItemBox" Orientation="Vertical" Margin="5">
 
-                    </BoxContainer>
-                </lobby:RfHighlightedContainer>
-            </ScrollContainer>
+                        </BoxContainer>
+                    </lobby:RfHighlightedContainer>
+                </ScrollContainer>
+            </BoxContainer>
         </BoxContainer>
     </BoxContainer>
 </Control>

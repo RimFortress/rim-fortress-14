@@ -1846,5 +1846,60 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
 
         }
+
+        // RimFortress Start
+        public async Task<Dictionary<EntProtoId, int>?> GetPlayerEquipment(NetUserId userId)
+        {
+            await using var db = await GetDb();
+
+            var player = await db.DbContext.Player
+                .Where(p => p.UserId == userId.UserId)
+                .Include(player => player.RoundstartEquipments)
+                .SingleOrDefaultAsync(p => p.UserId == userId.UserId);
+
+            return player?.RoundstartEquipments
+                .Select(x => ((EntProtoId) x.ProtoId, x.Amount))
+                .ToDictionary();
+        }
+
+        public async Task SaveEquipmentsAsync(NetUserId userId, Dictionary<EntProtoId, int> equipments)
+        {
+            await using var db = await GetDb();
+
+            var player = await db.DbContext.Player
+                .Where(p => p.UserId == userId.UserId)
+                .Include(player => player.RoundstartEquipments)
+                .SingleOrDefaultAsync(p => p.UserId == userId.UserId);
+
+            if (player == null)
+                return;
+
+            foreach (var (protoId, amount) in equipments)
+            {
+                var existingEquipment = player.RoundstartEquipments
+                    .FirstOrDefault(e => e.ProtoId == protoId);
+
+                if (existingEquipment != null)
+                {
+                    if (amount == 0)
+                        player.RoundstartEquipments.Remove(existingEquipment);
+                    else
+                        existingEquipment.Amount = amount;
+                }
+                else if (amount != 0)
+                {
+                    player.RoundstartEquipments.Add(new Equipment
+                    {
+                        PlayerUserId = userId.UserId,
+                        Player = player,
+                        ProtoId = protoId,
+                        Amount = amount,
+                    });
+                }
+            }
+
+            await db.DbContext.SaveChangesAsync();
+        }
+        // RimFortress End
     }
 }

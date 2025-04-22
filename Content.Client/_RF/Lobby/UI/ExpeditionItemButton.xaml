@@ -15,11 +15,15 @@
             </controls:RfHighlightedContainer>
             <rf:VLine Color="{x:Static style:StyleNano.NanoGold}"
                       Thickness="2" Margin="10 2"/>
-            <Label Name="NameLabel" Align="Left"
-                   ClipText="True" VAlign="Bottom" TooltipDelay="0"
-                   HorizontalExpand="True" VerticalExpand="True"/>
+            <TextureButton Name="Button" TooltipDelay="0"
+                           HorizontalExpand="True" VerticalExpand="True">
+                <Label Name="NameLabel" Access="Public"
+                       Align="Left" ClipText="True" VAlign="Bottom"
+                       StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"/>
+            </TextureButton>
             <Label Name="CostLabel" Align="Left"
-                   VAlign="Bottom" VerticalExpand="True"/>
+                   VAlign="Bottom" VerticalExpand="True"
+                   StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"/>
             <rf:VLine Color="{x:Static style:StyleNano.NanoGold}"
                       Thickness="2" Margin="10 2"/>
             <Button Name="Plus" Access="Public" Margin="2"

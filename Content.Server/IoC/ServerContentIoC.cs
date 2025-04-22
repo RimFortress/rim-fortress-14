@@ -30,12 +30,15 @@ using Content.Shared.Kitchen;
 using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Players.RateLimiting;
 
+using Content.Server._RF.Equipment; // RimFortress
+
 namespace Content.Server.IoC
 {
     internal static class ServerContentIoC
     {
         public static void Register()
         {
+            IoCManager.Register<IPlayerEquipmentManager, PlayerEquipmentManager>(); // RimFortress
             IoCManager.Register<IChatManager, ChatManager>();
             IoCManager.Register<ISharedChatManager, ChatManager>();
             IoCManager.Register<IChatSanitizationManager, ChatSanitizationManager>();
