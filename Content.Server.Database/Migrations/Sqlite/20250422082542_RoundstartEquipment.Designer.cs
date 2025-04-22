@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Content.Server.Database.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteServerDbContext))]
-    [Migration("20250422022244_RoundstartEquipment")]
+    [Migration("20250422082542_RoundstartEquipment")]
     partial class RoundstartEquipment
     {
         /// <inheritdoc />

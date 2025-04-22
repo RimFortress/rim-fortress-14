@@ -599,7 +599,6 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.ToTable("connection_log", (string)null);
                 });
 
-            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Equipment", b =>
                 {
                     b.Property<Guid>("PlayerUserId")
@@ -619,7 +618,6 @@ namespace Content.Server.Database.Migrations.Sqlite
 
                     b.ToTable("equipment", (string)null);
                 });
-            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
                 {
@@ -1642,7 +1640,6 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.Navigation("Server");
                 });
 
-            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Equipment", b =>
                 {
                     b.HasOne("Content.Server.Database.Player", "Player")
@@ -1655,7 +1652,6 @@ namespace Content.Server.Database.Migrations.Sqlite
 
                     b.Navigation("Player");
                 });
-            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.Job", b =>
                 {
@@ -2019,7 +2015,7 @@ namespace Content.Server.Database.Migrations.Sqlite
 
                     b.Navigation("JobWhitelists");
 
-                    b.Navigation("RoundstartEquipments"); // RimFortress
+                    b.Navigation("RoundstartEquipments");
                 });
 
             modelBuilder.Entity("Content.Server.Database.Preference", b =>

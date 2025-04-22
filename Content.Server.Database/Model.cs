@@ -1346,7 +1346,7 @@ namespace Content.Server.Database
     /// <summary>
     /// Provides information about setting the quantity of one particular outfit
     /// </summary>
-    [PrimaryKey(nameof(PlayerUserId), nameof(ProtoId))]
+    [Table("equipment"), PrimaryKey(nameof(PlayerUserId), nameof(ProtoId))]
     public class Equipment
     {
         [Required, ForeignKey("Player")]
