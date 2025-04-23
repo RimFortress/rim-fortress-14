@@ -22,7 +22,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
     [Dependency] private readonly UserDbDataManager _userDb = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
 
-    private Dictionary<EntProtoId, int>? _costs;
+    private Dictionary<string, int>? _costs;
     private readonly Dictionary<NetUserId, PlayerEquipData> _cachedPlayerPrefs = new();
 
     private ISawmill _sawmill = default!;
@@ -60,7 +60,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
         }
 
         var equip = SanitizeEquipment(message.Equipment
-            .Select(x => ((EntProtoId) x.Key, x.Value))
+            .Select(x => (x.Key, x.Value))
             .ToDictionary());
         data.Equip = equip;
 
@@ -69,8 +69,9 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
 
     public async Task LoadData(ICommonSession session, CancellationToken cancel)
     {
-        var equip = await _db.GetPlayerEquipment(session.UserId) ?? new();
-        _cachedPlayerPrefs[session.UserId] = new PlayerEquipData(SanitizeEquipment(equip));
+        var equip = await _db.GetPlayerEquipment(session.UserId, cancel);
+        cancel.ThrowIfCancellationRequested();
+        _cachedPlayerPrefs[session.UserId] = new PlayerEquipData(SanitizeEquipment(equip ?? new()));
     }
 
     public void FinishLoad(ICommonSession session)
@@ -79,7 +80,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
         DebugTools.Assert(data.Equip != null);
         data.Loaded = true;
 
-        var msg = new MsgPlayerEquipment { Equipment = data.Equip.Select(x => ((string) x.Key, x.Value)).ToDictionary() };
+        var msg = new MsgPlayerEquipment { Equipment = data.Equip };
         _net.ServerSendMessage(msg, session.Channel);
     }
 
@@ -102,15 +103,15 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
         }
     }
 
-    public Dictionary<EntProtoId, int>? GetPlayerEquipment(NetUserId userId)
+    public Dictionary<string, int>? GetPlayerEquipment(NetUserId userId)
     {
         return _cachedPlayerPrefs.GetValueOrDefault(userId)?.Equip;
     }
 
-    private Dictionary<EntProtoId, int> SanitizeEquipment(Dictionary<EntProtoId, int> equip)
+    private Dictionary<string, int> SanitizeEquipment(Dictionary<string, int> equip)
     {
         var maxPoints = _cfg.GetCVar(CCVars.RoundstartEquipmentPoints);
-        var sanitized = new Dictionary<EntProtoId, int>();
+        var sanitized = new Dictionary<string, int>();
 
         if (_costs == null)
             UpdateCosts();
@@ -131,10 +132,10 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
         return sanitized;
     }
 
-    private sealed class PlayerEquipData(Dictionary<EntProtoId, int>? equip)
+    private sealed class PlayerEquipData(Dictionary<string, int>? equip)
     {
         public bool Loaded;
-        public Dictionary<EntProtoId, int>? Equip = equip;
+        public Dictionary<string, int>? Equip = equip;
     }
 }
 
@@ -144,5 +145,5 @@ public interface IPlayerEquipmentManager
     void FinishLoad(ICommonSession session);
     void OnClientDisconnected(ICommonSession session);
 
-    Dictionary<EntProtoId, int>? GetPlayerEquipment(NetUserId userId);
+    Dictionary<string, int>? GetPlayerEquipment(NetUserId userId);
 }

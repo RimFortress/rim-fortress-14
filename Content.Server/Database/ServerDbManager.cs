@@ -362,8 +362,8 @@ namespace Content.Server.Database
         #endregion
 
         // RimFortress Start
-        Task<Dictionary<EntProtoId, int>?> GetPlayerEquipment(NetUserId userId);
-        Task SaveEquipmentsAsync(NetUserId userId, Dictionary<EntProtoId, int> equipments);
+        Task<Dictionary<string, int>?> GetPlayerEquipment(NetUserId userId, CancellationToken cancel = default);
+        Task SaveEquipmentsAsync(NetUserId userId, Dictionary<string, int> equipments, CancellationToken cancel = default);
         // RimFortress End
     }
 
@@ -469,16 +469,16 @@ namespace Content.Server.Database
         }
 
         // RimFortress Start
-        public Task<Dictionary<EntProtoId, int>?> GetPlayerEquipment(NetUserId userId)
+        public Task<Dictionary<string, int>?> GetPlayerEquipment(NetUserId userId, CancellationToken cancel = default)
         {
             DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.GetPlayerEquipment(userId));
+            return RunDbCommand(() => _db.GetPlayerEquipment(userId, cancel));
         }
 
-        public Task SaveEquipmentsAsync(NetUserId userId, Dictionary<EntProtoId, int> equipments)
+        public Task SaveEquipmentsAsync(NetUserId userId, Dictionary<string, int> equipments, CancellationToken cancel = default)
         {
             DbWriteOpsMetric.Inc();
-            return RunDbCommand(() => _db.SaveEquipmentsAsync(userId, equipments));
+            return RunDbCommand(() => _db.SaveEquipmentsAsync(userId, equipments, cancel));
         }
         // RimFortress End
 

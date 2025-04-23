@@ -375,7 +375,7 @@ namespace Content.Server.Database
             // RimFortress Start
             modelBuilder.Entity<Equipment>()
                 .HasOne(e => e.Player)
-                .WithMany(e => e.RoundstartEquipments)
+                .WithMany(p => p.RoundstartEquipments)
                 .HasForeignKey(e => e.PlayerUserId)
                 .HasPrincipalKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -1356,6 +1356,7 @@ namespace Content.Server.Database
         /// <summary>
         /// Equipment prototype ID
         /// </summary>
+        [Required]
         public string ProtoId { get; set; } = default!;
 
         /// <summary>

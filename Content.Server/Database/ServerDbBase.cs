@@ -1848,28 +1848,25 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         }
 
         // RimFortress Start
-        public async Task<Dictionary<EntProtoId, int>?> GetPlayerEquipment(NetUserId userId)
+        public async Task<Dictionary<string, int>?> GetPlayerEquipment(NetUserId userId, CancellationToken cancel)
         {
-            await using var db = await GetDb();
+            await using var db = await GetDb(cancel);
 
             var player = await db.DbContext.Player
-                .Where(p => p.UserId == userId.UserId)
                 .Include(player => player.RoundstartEquipments)
-                .SingleOrDefaultAsync(p => p.UserId == userId.UserId);
+                .SingleOrDefaultAsync(p => p.UserId == userId.UserId, cancel);
 
             return player?.RoundstartEquipments
-                .Select(x => ((EntProtoId) x.ProtoId, x.Amount))
-                .ToDictionary();
+                .ToDictionary(x => x.ProtoId, x => x.Amount);
         }
 
-        public async Task SaveEquipmentsAsync(NetUserId userId, Dictionary<EntProtoId, int> equipments)
+        public async Task SaveEquipmentsAsync(NetUserId userId, Dictionary<string, int> equipments, CancellationToken cancel)
         {
-            await using var db = await GetDb();
+            await using var db = await GetDb(cancel);
 
             var player = await db.DbContext.Player
-                .Where(p => p.UserId == userId.UserId)
                 .Include(player => player.RoundstartEquipments)
-                .SingleOrDefaultAsync(p => p.UserId == userId.UserId);
+                .SingleOrDefaultAsync(p => p.UserId == userId.UserId, cancel);
 
             if (player == null)
                 return;
@@ -1898,7 +1895,7 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
                 }
             }
 
-            await db.DbContext.SaveChangesAsync();
+            await db.DbContext.SaveChangesAsync(cancel);
         }
         // RimFortress End
     }
