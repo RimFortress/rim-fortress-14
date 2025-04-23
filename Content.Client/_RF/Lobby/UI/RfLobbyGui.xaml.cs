@@ -30,6 +30,10 @@ namespace Content.Client._RF.Lobby.UI
         {
             DefaultState.Visible = false;
             CharacterSetupState.Visible = false;
+            EquipmentEditorState.Visible = false;
+
+            var actualWidth = (float) UserInterfaceManager.RootControl.PixelWidth;
+            var setupWidth = (float) LeftSide.PixelWidth;
 
             switch (state)
             {
@@ -40,15 +44,16 @@ namespace Content.Client._RF.Lobby.UI
                 case LobbyGuiState.CharacterSetup:
                     CharacterSetupState.Visible = true;
 
-                    var actualWidth = (float) UserInterfaceManager.RootControl.PixelWidth;
-                    var setupWidth = (float) LeftSide.PixelWidth;
-
-                    if (1 - (setupWidth / actualWidth) > 0.30)
-                    {
+                    if (1 - setupWidth / actualWidth > 0.30)
                         RightSide.Visible = false;
-                    }
 
                     UserInterfaceManager.GetUIController<RfLobbyUIController>().ReloadCharacterSetup();
+                    break;
+                case LobbyGuiState.EquipmentSetup:
+                    EquipmentEditorState.Visible = true;
+
+                    if (1 - setupWidth / actualWidth > 0.30)
+                        RightSide.Visible = false;
 
                     break;
             }
@@ -57,13 +62,17 @@ namespace Content.Client._RF.Lobby.UI
         public enum LobbyGuiState : byte
         {
             /// <summary>
-            ///  The default state, i.e., what's seen on launch.
+            /// The default state, i.e., what's seen on launch.
             /// </summary>
             Default,
             /// <summary>
-            ///  The character setup state.
+            /// The character setup state.
             /// </summary>
-            CharacterSetup
+            CharacterSetup,
+            /// <summary>
+            /// The expedition equipment state/
+            /// </summary>
+            EquipmentSetup,
         }
     }
 }

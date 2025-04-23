@@ -371,6 +371,15 @@ namespace Content.Server.Database
                 .OwnsOne(p => p.HWId)
                 .Property(p => p.Type)
                 .HasDefaultValue(HwidType.Legacy);
+
+            // RimFortress Start
+            modelBuilder.Entity<Equipment>()
+                .HasOne(e => e.Player)
+                .WithMany(p => p.RoundstartEquipments)
+                .HasForeignKey(e => e.PlayerUserId)
+                .HasPrincipalKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // RimFortress End
         }
 
         public virtual IQueryable<AdminLog> SearchLogs(IQueryable<AdminLog> query, string searchText)
@@ -594,6 +603,7 @@ namespace Content.Server.Database
         public List<ServerRoleBan> AdminServerRoleBansCreated { get; set; } = null!;
         public List<ServerRoleBan> AdminServerRoleBansLastEdited { get; set; } = null!;
         public List<RoleWhitelist> JobWhitelists { get; set; } = null!;
+        public List<Equipment> RoundstartEquipments { get; set; } = null!; // RimFortress
     }
 
     [Table("whitelist")]
@@ -1329,4 +1339,32 @@ namespace Content.Server.Database
         /// </summary>
         public float Score { get; set; }
     }
+
+    // RimFortress End
+    #region Roundstart Equipment
+
+    /// <summary>
+    /// Provides information about setting the quantity of one particular outfit
+    /// </summary>
+    [Table("equipment"), PrimaryKey(nameof(PlayerUserId), nameof(ProtoId))]
+    public class Equipment
+    {
+        [Required, ForeignKey("Player")]
+        public Guid PlayerUserId { get; set; }
+        public Player Player { get; set; } = default!;
+
+        /// <summary>
+        /// Equipment prototype ID
+        /// </summary>
+        [Required]
+        public string ProtoId { get; set; } = default!;
+
+        /// <summary>
+        /// Equipment amount setting
+        /// </summary>
+        public int Amount { get; set; }
+    }
+
+    #endregion
+    // RimFortress End
 }

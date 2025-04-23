@@ -264,7 +264,7 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .HasColumnType("TEXT")
                         .HasColumnName("expiration_time");
 
-                    b.Property<DateTime?>("LastEditedAt")
+                    b.Property<DateTime>("LastEditedAt")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("last_edited_at");
@@ -393,7 +393,7 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .HasColumnType("TEXT")
                         .HasColumnName("expiration_time");
 
-                    b.Property<DateTime?>("LastEditedAt")
+                    b.Property<DateTime>("LastEditedAt")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("last_edited_at");
@@ -597,6 +597,26 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.HasIndex("UserId");
 
                     b.ToTable("connection_log", (string)null);
+                });
+
+            modelBuilder.Entity("Content.Server.Database.Equipment", b =>
+                {
+                    b.Property<Guid>("PlayerUserId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("player_user_id");
+
+                    b.Property<string>("ProtoId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("proto_id");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("amount");
+
+                    b.HasKey("PlayerUserId", "ProtoId")
+                        .HasName("PK_equipment");
+
+                    b.ToTable("equipment", (string)null);
                 });
 
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
@@ -1620,6 +1640,19 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.Navigation("Server");
                 });
 
+            modelBuilder.Entity("Content.Server.Database.Equipment", b =>
+                {
+                    b.HasOne("Content.Server.Database.Player", "Player")
+                        .WithMany("RoundstartEquipments")
+                        .HasForeignKey("PlayerUserId")
+                        .HasPrincipalKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_equipment_player_player_user_id");
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Content.Server.Database.Job", b =>
                 {
                     b.HasOne("Content.Server.Database.Profile", "Profile")
@@ -1981,6 +2014,8 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.Navigation("AdminWatchlistsReceived");
 
                     b.Navigation("JobWhitelists");
+
+                    b.Navigation("RoundstartEquipments");
                 });
 
             modelBuilder.Entity("Content.Server.Database.Preference", b =>

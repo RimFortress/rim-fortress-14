@@ -12,9 +12,12 @@
 
             </BoxContainer>
             <controls:VSpacer/>
-            <Button Name="CharacterSetup" Text="{Loc 'lobby-character-preview-panel-character-setup-button'}"
-                    HorizontalAlignment="Center"
-                    Margin="0 5 0 0"/>
+            <BoxContainer HorizontalAlignment="Center" Margin="0 5 0 0">
+                <Button Name="CharacterSetup" Text="{Loc 'lobby-character-preview-panel-characters-setup-button'}"
+                        StyleClasses="OpenRight"/>
+                <Button Name="EquipmentSetup" Text="{Loc 'lobby-character-preview-panel-equipment-setup-button'}"
+                        StyleClasses="OpenLeft"/>
+            </BoxContainer>
         </BoxContainer>
         <Label Name="Unloaded" Text="{Loc 'lobby-character-preview-panel-unloaded-preferences-label'}"/>
     </BoxContainer>

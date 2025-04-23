@@ -1,0 +1,74 @@
+<Control
+    xmlns="https://spacestation14.io"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:lobby="clr-namespace:Content.Client._RF.Lobby.UI"
+    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:style="clr-namespace:Content.Client.Stylesheets"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    VerticalExpand="True">
+    <PanelContainer Name="BackgroundPanel"/>
+    <BoxContainer Orientation="Vertical">
+        <!-- Top panel -->
+        <controls:StripeBack>
+            <BoxContainer Orientation="Horizontal" MinSize="0 40" Margin="0 5">
+                <Label Text="{Loc 'expedition-equipment-editor-label'}"
+                       Margin="8 0 0 0" VAlign="Center"
+                       StyleClasses="LabelHeadingBigger" />
+                <BoxContainer HorizontalExpand="True"/>
+                <Button Name="SaveButton" Access="Public"
+                        Text="{Loc 'expedition-equipment-editor-save-button'}"
+                        StyleClasses="ButtonBig" VerticalExpand="True"/>
+                <Button Name="ResetButton" Access="Public"
+                        Text="{Loc 'expedition-equipment-editor-reset-button'}"
+                        StyleClasses="ButtonBig" VerticalExpand="True"/>
+                <Button Name="CloseButton" Access="Public"
+                        Text="{Loc 'expedition-equipment-editor-close-button'}"
+                        StyleClasses="ButtonBig" VerticalExpand="True"/>
+            </BoxContainer>
+        </controls:StripeBack>
+        <controls:HLine Thickness="3" Margin="15 5 15 0" Color="{x:Static style:StyleNano.NanoGold}"/>
+        <BoxContainer Orientation="Horizontal" VerticalExpand="True">
+            <!-- Left panel -->
+            <BoxContainer Margin="15" MinWidth="325" Orientation="Vertical">
+                <controls:StripeBack>
+                    <Label Margin="2" Align="Center" VAlign="Center"
+                           StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"
+                           Text="{Loc 'expedition-equipment-editor-categories'}"/>
+                </controls:StripeBack>
+                <ScrollContainer VerticalExpand="True">
+                    <lobby:RfHighlightedContainer VerticalExpand="True">
+                        <BoxContainer Name="CategoryBox" Orientation="Vertical" Margin="5">
+
+                        </BoxContainer>
+                    </lobby:RfHighlightedContainer>
+                </ScrollContainer>
+            </BoxContainer>
+            <rf:VLine Thickness="3" Margin="10 0 10 15" Color="{x:Static style:StyleNano.NanoGold}"/>
+            <!-- Right panel -->
+            <BoxContainer HorizontalExpand="True" Orientation="Vertical">
+                <BoxContainer HorizontalExpand="True">
+                    <lobby:RfHighlightedContainer HorizontalExpand="True" Margin="15 15 15 0">
+                        <BoxContainer Orientation="Vertical">
+                            <BoxContainer Orientation="Horizontal">
+                                <LineEdit Name="Search" Margin="2 3 0 3" HorizontalExpand="True"
+                                          PlaceHolder="{Loc 'expedition-equipment-editor-search'}"/>
+                                <Button Name="ClearSearch" Margin="0 2 2 2" SetSize="60 60"
+                                        Text="✕" StyleClasses="ButtonSquare"/>
+                            </BoxContainer>
+                            <controls:HLine Thickness="2" Margin="2 3 5 3"
+                                            Color="{x:Static style:StyleNano.NanoGold}"/>
+                            <Label Name="PointsLabel" Align="Left" Margin="3 2 0 0"/>
+                        </BoxContainer>
+                    </lobby:RfHighlightedContainer>
+                </BoxContainer>
+                <ScrollContainer VerticalExpand="True" ReservesSpace="True">
+                    <lobby:RfHighlightedContainer Margin="15">
+                        <BoxContainer Name="ItemBox" Orientation="Vertical" Margin="5">
+
+                        </BoxContainer>
+                    </lobby:RfHighlightedContainer>
+                </ScrollContainer>
+            </BoxContainer>
+        </BoxContainer>
+    </BoxContainer>
+</Control>

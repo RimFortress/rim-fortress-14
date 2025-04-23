@@ -1846,5 +1846,57 @@ INSERT INTO player_round (players_id, rounds_id) VALUES ({players[player]}, {id}
         {
 
         }
+
+        // RimFortress Start
+        public async Task<Dictionary<string, int>?> GetPlayerEquipment(NetUserId userId, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            var player = await db.DbContext.Player
+                .Include(player => player.RoundstartEquipments)
+                .SingleOrDefaultAsync(p => p.UserId == userId.UserId, cancel);
+
+            return player?.RoundstartEquipments
+                .ToDictionary(x => x.ProtoId, x => x.Amount);
+        }
+
+        public async Task SaveEquipmentsAsync(NetUserId userId, Dictionary<string, int> equipments, CancellationToken cancel)
+        {
+            await using var db = await GetDb(cancel);
+
+            var player = await db.DbContext.Player
+                .Include(player => player.RoundstartEquipments)
+                .SingleOrDefaultAsync(p => p.UserId == userId.UserId, cancel);
+
+            if (player == null)
+                return;
+
+            foreach (var (protoId, amount) in equipments)
+            {
+                var existingEquipment = player.RoundstartEquipments
+                    .FirstOrDefault(e => e.ProtoId == protoId);
+
+                if (existingEquipment != null)
+                {
+                    if (amount == 0)
+                        player.RoundstartEquipments.Remove(existingEquipment);
+                    else
+                        existingEquipment.Amount = amount;
+                }
+                else if (amount != 0)
+                {
+                    player.RoundstartEquipments.Add(new Equipment
+                    {
+                        PlayerUserId = userId.UserId,
+                        Player = player,
+                        ProtoId = protoId,
+                        Amount = amount,
+                    });
+                }
+            }
+
+            await db.DbContext.SaveChangesAsync(cancel);
+        }
+        // RimFortress End
     }
 }
