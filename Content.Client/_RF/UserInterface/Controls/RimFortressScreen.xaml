@@ -11,6 +11,13 @@
         <controls:MainViewport Name="MainViewport"/>
     </LayoutContainer>
     <BoxContainer Name="TopLeft" Access="Protected" Orientation="Vertical"/>
+    <BoxContainer Name="Left" Orientation="Horizontal">
+        <screens:ActionsHotbarWidget Name="Hotbar"/>
+        <BoxContainer Margin="10 0 0 0" Orientation="Vertical"
+                      HorizontalExpand="True">
+
+        </BoxContainer>
+    </BoxContainer>
     <chat:ResizableChatBox Name="Chat" Access="Protected"
                            Margin="0 55 0 0" Visible="False"/>
     <BoxContainer Name="Right" Access="Protected"

@@ -1,0 +1,16 @@
+<rf:HotbarActionButton
+    xmlns="https://spacestation14.io"
+    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    xmlns:lobby="clr-namespace:Content.Client._RF.Lobby.UI">
+    <TextureButton Name="Button">
+        <lobby:RfHighlightedContainer>
+            <controls:StripeBack Margin="3"
+                HasBottomEdge="False" HasTopEdge="False">
+                <TextureRect Name="Texture" SetSize="32 32" Stretch="KeepAspectCentered">
+
+                </TextureRect>
+            </controls:StripeBack>
+        </lobby:RfHighlightedContainer>
+    </TextureButton>
+</rf:HotbarActionButton>
