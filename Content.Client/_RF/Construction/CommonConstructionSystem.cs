@@ -59,7 +59,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         RaiseNetworkEvent(msg);
     }
 
-    public void SetSprite(EntityUid uid, ConstructionPrototype prototype)
+    private void SetSprite(EntityUid uid, ConstructionPrototype prototype)
     {
         if (!TryComp(uid, out SpriteComponent? sprite))
             return;
@@ -78,8 +78,8 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (!TryComp(uid, out CommonConstructionGhostComponent? _))
             return;
 
-        QueueDel(uid);
         var msg = new ConstructionGhostClearRequest(GetNetEntity(uid));
+        Deleted(uid);
         RaiseNetworkEvent(msg);
     }
 }

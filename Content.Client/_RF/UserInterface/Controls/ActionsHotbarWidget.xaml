@@ -1,8 +1,15 @@
 <controls:ActionsHotbarWidget
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
-    <BoxContainer Orientation="Vertical">
-        <controls:HotbarActionButton Name="BuildButton" Access="Public"
-                                     TexturePath="/Textures/_RF/Interface/hammer-solid.svg.192dpi.png"/>
-    </BoxContainer>
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client">
+    <PanelContainer HorizontalExpand="True">
+        <PanelContainer.PanelOverride>
+            <gfx:StyleBoxFlat BackgroundColor="#1E1E22BB"
+                              BorderColor="#1E1E22DD" BorderThickness="2"/>
+        </PanelContainer.PanelOverride>
+        <BoxContainer Orientation="Vertical">
+            <controls:HotbarActionButton Name="BuildButton" Access="Public" IconModulate="#F77F00FF"
+                                         IconTexturePath="/Textures/_RF/Interface/hammer-solid.svg.192dpi.png"/>
+        </BoxContainer>
+    </PanelContainer>
 </controls:ActionsHotbarWidget>

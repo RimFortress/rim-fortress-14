@@ -11,6 +11,7 @@ namespace Content.Server.Database.Migrations.Sqlite
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.CreateTable(
                 name: "equipment",
                 columns: table => new
@@ -29,13 +30,16 @@ namespace Content.Server.Database.Migrations.Sqlite
                         principalColumn: "user_id",
                         onDelete: ReferentialAction.Cascade);
                 });
+            */
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.DropTable(
                 name: "equipment");
+            */
         }
     }
 }

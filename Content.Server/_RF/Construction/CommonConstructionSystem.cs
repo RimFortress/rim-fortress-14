@@ -1,7 +1,7 @@
 using Content.Shared._RF.Construction;
 using Content.Shared.Construction.Prototypes;
 using Content.Shared.Examine;
-using Robust.Client.Player;
+using Robust.Server.Player;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Construction;

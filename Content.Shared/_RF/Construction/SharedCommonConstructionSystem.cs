@@ -47,7 +47,6 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
         if (prototype.CanBuildInImpassable)
             EnsureComp<WallMountComponent>(ghost.Value).Arc = new(Math.Tau);
 
-        Dirty(ghost.Value, comp);
         return true;
     }
 

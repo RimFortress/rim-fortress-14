@@ -10,13 +10,16 @@
     <LayoutContainer Name="ViewportContainer" HorizontalExpand="True" VerticalExpand="True">
         <controls:MainViewport Name="MainViewport"/>
     </LayoutContainer>
-    <BoxContainer Name="TopLeft" Access="Protected" Orientation="Vertical"/>
-    <BoxContainer Name="Left" Orientation="Horizontal">
-        <screens:ActionsHotbarWidget Name="Hotbar"/>
-        <BoxContainer Margin="10 0 0 0" Orientation="Vertical"
-                      HorizontalExpand="True">
-
+    <BoxContainer Name="Left" Orientation="Vertical">
+        <BoxContainer VerticalExpand="True"/>
+        <BoxContainer Orientation="Horizontal" VerticalExpand="True" SizeFlagsStretchRatio="2.5">
+            <screens:ActionsHotbarWidget Name="Hotbar"/>
+            <BoxContainer Margin="10 0 0 0" Orientation="Vertical">
+                <screens:RfConstructionMenu Name="ConstructionMenu" Margin="10 0 0 0"
+                                            VerticalExpand="True" Visible="False"/>
+            </BoxContainer>
         </BoxContainer>
+        <BoxContainer VerticalExpand="True"/>
     </BoxContainer>
     <chat:ResizableChatBox Name="Chat" Access="Protected"
                            Margin="0 55 0 0" Visible="False"/>

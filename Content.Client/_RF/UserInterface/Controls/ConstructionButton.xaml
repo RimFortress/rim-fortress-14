@@ -1,0 +1,32 @@
+<Button
+    xmlns="https://spacestation14.io"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    xmlns:lobby="clr-namespace:Content.Client._RF.Lobby.UI"
+    xmlns:style="clr-namespace:Content.Client.Stylesheets"
+    Margin="2 0 2 5" MinHeight="50" ToggleMode="False">
+    <lobby:RfHighlightedContainer>
+        <BoxContainer Orientation="Vertical">
+            <controls:HLine Name="TopLine" Thickness="2" Margin="2" Visible="False"
+                            Color="{x:Static style:StyleNano.ButtonColorHovered}"/>
+            <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
+                <rf:VLine Thickness="2" Margin="2"
+                          Color="{x:Static style:StyleNano.PanelDark}"/>
+                <lobby:RfHighlightedContainer SetSize="50 50">
+                    <LayeredTextureRect Name="Texture" Access="Public"
+                                        SetSize="48 48" Stretch="KeepAspectCentered"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </lobby:RfHighlightedContainer>
+                <rf:VLine Margin="5 2" Thickness="3"
+                                Color="{x:Static style:StyleNano.NanoGold}"/>
+                <Label Name="Label" Align="Left" VAlign="Fill"
+                       ClipText="True" HorizontalExpand="True"/>
+                <rf:VLine Thickness="2" Margin="2"
+                          Color="{x:Static style:StyleNano.PanelDark}"/>
+            </BoxContainer>
+            <controls:HLine Name="BottomLine" Thickness="2" Margin="2" Visible="True"
+                            Color="{x:Static style:StyleNano.ButtonColorHovered}"/>
+        </BoxContainer>
+    </lobby:RfHighlightedContainer>
+</Button>
