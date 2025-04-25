@@ -29,7 +29,7 @@
                                      HorizontalExpand="True"/>
         <screens:PopList Name="PopList" Access="Public"
                          HorizontalAlignment="Right"
-                         VerticalAlignment="Bottom"/>
+                         VerticalAlignment="Center"/>
         <BoxContainer Name="VoteMenu" Access="Public"
                       Margin="0 10 0 10" Orientation="Vertical"
                       HorizontalAlignment="Right" VerticalAlignment="Bottom"/>

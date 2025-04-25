@@ -44,7 +44,7 @@
             </ScrollContainer>
         </BoxContainer>
         <BoxContainer Name="Metadata" MinHeight="200" VerticalExpand="True"
-                      Orientation="Vertical" Visible="False" SizeFlagsStretchRatio="0.4">
+                      Orientation="Vertical" Visible="False" SizeFlagsStretchRatio="0.6">
             <lobby:RfHighlightedContainer VerticalExpand="True" HorizontalExpand="True">
                 <BoxContainer Orientation="Vertical" HorizontalExpand="True">
                     <BoxContainer Orientation="Horizontal">
@@ -55,7 +55,7 @@
                     </BoxContainer>
                     <controls:HLine Margin="2 10" Thickness="3"
                                     Color="{x:Static style:StyleNano.NanoGold}"/>
-                    <TextEdit Name="MetaDescription" Access="Public" SizeFlagsStretchRatio="0.6"
+                    <TextEdit Name="MetaDescription" Access="Public" SizeFlagsStretchRatio="1.1"
                               HorizontalExpand="True" Editable="False" VerticalExpand="True"/>
                     <controls:HLine Margin="2 10" Thickness="3"
                                     Color="{x:Static style:StyleNano.NanoGold}"/>

@@ -4,7 +4,7 @@
     xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client">
     <PanelContainer HorizontalExpand="True">
         <PanelContainer.PanelOverride>
-            <gfx:StyleBoxFlat BackgroundColor="#1E1E22BB"
+            <gfx:StyleBoxFlat BackgroundColor="#1E1E22AA"
                               BorderColor="#1E1E22DD" BorderThickness="2"/>
         </PanelContainer.PanelOverride>
         <BoxContainer Orientation="Vertical">
