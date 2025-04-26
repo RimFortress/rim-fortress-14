@@ -25,6 +25,12 @@ public sealed partial class NpcTaskPrototype : IPrototype
     public ProtoId<HTNCompoundPrototype> Compound;
 
     /// <summary>
+    /// HTNCompound which will be executed when the task is completed
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<HTNCompoundPrototype> OnFinish;
+
+    /// <summary>
     /// Conditions to be imposed on the task target to start execution
     /// </summary>
     [DataField]

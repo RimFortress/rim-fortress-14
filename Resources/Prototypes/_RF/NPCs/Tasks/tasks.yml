@@ -2,6 +2,7 @@
   id: MoveTo
   overlayColor: "#D3D3D3FF"
   compound: MoveToCompound
+  onFinish: IdleCompound
   finishPreconditions:
     - !type:KeyExistsPrecondition
       key: TargetCoordinates
@@ -13,21 +14,25 @@
   id: Attack
   overlayColor: "#FF0000FF"
   compound: AttackTargetCompound
+  onFinish: IdleCompound
   startWhitelist:
     components:
       - HTN
   finishPreconditions:
-    - !type:KeyExistsPrecondition
-      key: Target
-    - !type:MobStatePrecondition
-      targetKey: Target
-      state: Alive
-      invert: true
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:MobStatePrecondition
+          targetKey: Target
+          state: Alive
+          invert: true
 
 - type: npcTask
   id: PickUp
   overlayColor: "#00D5FFFF"
   compound: PickUpCompound
+  onFinish: IdleCompound
   startWhitelist:
     components:
       - Item
@@ -41,6 +46,7 @@
   id: Pry
   overlayColor: "#00D5FFFF"
   compound: PryCompound
+  onFinish: IdleCompound
   priority: 11
   startWhitelist:
     components:
@@ -51,6 +57,7 @@
   id: Build
   overlayColor: "#FFFF00FF"
   compound: BuildCompound
+  onFinish: IdleCompound
   priority: 10
   startWhitelist:
     components:

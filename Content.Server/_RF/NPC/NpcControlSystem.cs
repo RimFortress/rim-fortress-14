@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Server.Construction;
+using Content.Server.NPC.Components;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
@@ -26,8 +27,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private const string TargetKey = "Target";
     private const string TargetCoordinatesKey = "TargetCoordinates";
 
-    private readonly Dictionary<EntityUid, HTNCompoundTask> _originCompounds = new();
-    private readonly Dictionary<EntityUid, (EntityUid? Target, EntityCoordinates? Coords)> _targets = new();
+    private EntityQuery<ControllableNpcComponent> _controllableQuery;
 
     private Dictionary<NpcTaskPrototype, List<EntityUid>> _tasks = new();
 
@@ -40,7 +40,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         SubscribeNetworkEvent<NpcTaskResetRequest>(OnTaskResetRequest);
 
         SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
-        SubscribeLocalEvent<MobStateChangedEvent>(OnMobStateChanged);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -48,10 +47,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 OnReloadPrototypes();
         };
 
+        _controllableQuery = GetEntityQuery<ControllableNpcComponent>();
+
         OnReloadPrototypes();
     }
 
     #region Event Handle
+
     private void OnReloadPrototypes()
     {
         var tasks = new Dictionary<NpcTaskPrototype, List<EntityUid>>();
@@ -163,21 +165,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     // Help construction NPCs keep up-to-date information on the entity to be built
     private void OnEntityChange(ConstructionChangeEntityEvent ev)
     {
-        foreach (var (uid, task) in _targets)
+        var entities = EntityQueryEnumerator<ControllableNpcComponent, NPCComponent>();
+        while (entities.MoveNext(out _, out var npc))
         {
-            if (task.Target != ev.Old
-                || !_npc.TryGetNpc(uid, out var npc))
-                continue;
-
-            npc.Blackboard.SetValue(TargetKey, ev.New);
+            if (npc.Blackboard.TryGetValue(TargetKey, out EntityUid? target, EntityManager) && target == ev.Old)
+                npc.Blackboard.SetValue(TargetKey, ev.New);
         }
     }
 
-    private void OnMobStateChanged(MobStateChangedEvent ev)
-    {
-        if (_targets.ContainsKey(ev.Target) && ev.NewMobState != MobState.Alive)
-            ResetTask(ev.Target);
-    }
     #endregion
 
     /// <summary>
@@ -187,16 +182,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         if (!_npc.TryGetNpc(entity, out var npc)
             || npc is not HTNComponent htn
-            || !TryComp(entity, out ControllableNpcComponent? control))
+            || !_controllableQuery.TryComp(entity, out var control))
             return;
 
         if (htn.Plan != null)
             _htn.ShutdownPlan(htn);
 
-        if (!_originCompounds.ContainsKey(entity))
-            _originCompounds[entity] = htn.RootTask;
-
-        _targets[entity] = (target, coords);
         _tasks[proto].Add(entity);
         control.CurrentTask = proto;
 
@@ -226,17 +217,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         if (!Resolve(entity.Owner, ref entity.Comp1)
             || !Resolve(entity.Owner, ref entity.Comp2)
-            || !_targets.ContainsKey(entity))
+            || !_prototype.TryIndex(entity.Comp2.CurrentTask, out var proto))
             return;
 
         if (entity.Comp1.Plan != null)
             _htn.ShutdownPlan(entity.Comp1);
 
-        entity.Comp1.RootTask = _originCompounds[entity];
+        entity.Comp1.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         entity.Comp2.CurrentTask = null;
-
-        _originCompounds.Remove(entity);
-        _targets.Remove(entity);
 
         foreach (var (_, entities) in _tasks)
         {
