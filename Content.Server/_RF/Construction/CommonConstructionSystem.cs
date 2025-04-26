@@ -1,6 +1,6 @@
+using Content.Server.Construction.Components;
 using Content.Shared._RF.Construction;
 using Content.Shared.Construction.Prototypes;
-using Content.Shared.Examine;
 using Robust.Server.Player;
 using Robust.Shared.Prototypes;
 
@@ -18,7 +18,6 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 
         SubscribeNetworkEvent<ConstructionGhostSpawnRequest>(OnSpawnRequest);
         SubscribeNetworkEvent<ConstructionGhostClearRequest>(OnClearRequest);
-        SubscribeLocalEvent<CommonConstructionGhostComponent, ExaminedEvent>(OnExamine);
     }
 
     private void OnSpawnRequest(ConstructionGhostSpawnRequest request)
@@ -32,41 +31,25 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 
         TrySpawnGhost(user, proto, coords, request.Direction, out var ghost);
 
+        if (ghost != null && _prototype.TryIndex(proto.Graph, out ConstructionGraphPrototype? graph))
+        {
+            var comp = EntityManager.ComponentFactory.GetComponent<ConstructionComponent>();
+
+            comp.Graph = proto.Graph;
+            comp.TargetNode = proto.TargetNode;
+            comp.Node = proto.StartNode;
+            comp.Node = graph.Nodes[proto.StartNode].Name;
+            comp.EdgeIndex = 0;
+
+            AddComp(ghost.Value, comp);
+        }
+
         var msg = new ConstructionGhostSpawnMessage(request.Coordinates, GetNetEntity(ghost), request.ProtoId);
         RaiseNetworkEvent(msg, session);
     }
 
     private void OnClearRequest(ConstructionGhostClearRequest request)
     {
-        var uid = GetEntity(request.Entity);
-
-        if (!TryComp(uid, out CommonConstructionGhostComponent? _))
-            return;
-
-        QueueDel(uid);
-    }
-
-    private void OnExamine(EntityUid uid, CommonConstructionGhostComponent component, ExaminedEvent args)
-    {
-        using (args.PushGroup(nameof(CommonConstructionGhostComponent)))
-        {
-            args.PushMarkup(Loc.GetString(
-                "construction-ghost-examine-message",
-                ("name", component.Prototype.Name)));
-
-            if (!_prototype.TryIndex(component.Prototype.Graph, out ConstructionGraphPrototype? graph))
-                return;
-
-            var startNode = graph.Nodes[component.Prototype.StartNode];
-
-            if (!graph.TryPath(component.Prototype.StartNode, component.Prototype.TargetNode, out var path)
-                || !startNode.TryGetEdge(path[0].Name, out var edge))
-                return;
-
-            foreach (var step in edge.Steps)
-            {
-                step.DoExamine(args);
-            }
-        }
+        QueueDel(GetEntity(request.Entity));
     }
 }

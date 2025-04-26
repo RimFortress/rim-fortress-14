@@ -2,9 +2,11 @@ using Content.Shared.Construction.Prototypes;
 using Content.Shared.DoAfter;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 
+using Content.Server._RF.Construction; // RimFortress
+
 namespace Content.Server.Construction.Components
 {
-    [RegisterComponent, Access(typeof(ConstructionSystem))]
+    [RegisterComponent, Access(typeof(ConstructionSystem), typeof(CommonConstructionSystem))] // RimFortress: Access
     public sealed partial class ConstructionComponent : Component
     {
         [DataField("graph", required:true, customTypeSerializer:typeof(PrototypeIdSerializer<ConstructionGraphPrototype>))]

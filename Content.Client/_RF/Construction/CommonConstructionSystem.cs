@@ -75,9 +75,6 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 
     public void ClearGhost(EntityUid uid)
     {
-        if (!TryComp(uid, out CommonConstructionGhostComponent? _))
-            return;
-
         var msg = new ConstructionGhostClearRequest(GetNetEntity(uid));
         Deleted(uid);
         RaiseNetworkEvent(msg);

@@ -5,7 +5,6 @@
   components:
   - type: Sprite
     color: '#00B4D8CC'
-  - type: CommonConstructionGhost
   - type: Clickable
   - type: InteractionOutline
   - type: GuideHelp

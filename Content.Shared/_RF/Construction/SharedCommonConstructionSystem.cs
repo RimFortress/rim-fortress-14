@@ -40,8 +40,6 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
             return false;
 
         ghost = Spawn(ConstructionGhostId, loc);
-        var comp = Comp<CommonConstructionGhostComponent>(ghost.Value);
-        comp.Prototype = prototype;
         Comp<TransformComponent>(ghost.Value).LocalRotation = dir.ToAngle();
 
         if (prototype.CanBuildInImpassable)
@@ -80,7 +78,7 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
 
         foreach (var entity in entities)
         {
-            if (TryComp(entity, out CommonConstructionGhostComponent? _))
+            if (MetaData(entity).EntityPrototype?.ID == (string) ConstructionGhostId)
                 return true;
         }
 
