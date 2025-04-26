@@ -20,7 +20,7 @@ public sealed partial class RimFortressScreen : InGameScreen
 
         SetAnchorPreset(MainViewport, LayoutPreset.Wide);
         SetAnchorPreset(ViewportContainer, LayoutPreset.Wide);
-        SetAnchorAndMarginPreset(TopLeft, LayoutPreset.TopLeft, margin: 10);
+        SetAnchorAndMarginPreset(Left, LayoutPreset.LeftWide, margin: 10);
         SetAnchorAndMarginPreset(Chat, LayoutPreset.TopRight, margin: 10);
         SetAnchorAndMarginPreset(Right, LayoutPreset.RightWide, margin: 10);
 
@@ -28,9 +28,11 @@ public sealed partial class RimFortressScreen : InGameScreen
         TopBar.CharacterButton.Visible = false;
         TopBar.ActionButton.Visible = false;
         TopBar.EmotesButton.Visible = false;
+        TopBar.CraftingButton.Visible = false;
 
         Chat.OnChatResizeFinish += ChatOnResizeFinish;
         Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
+        Hotbar.BuildButton.OnPressed += _ => ConstructionMenu.Visible = !ConstructionMenu.Visible;
     }
 
     private void ChatOnResizeFinish(Vector2 _)
@@ -50,6 +52,11 @@ public sealed partial class RimFortressScreen : InGameScreen
     {
         base.FrameUpdate(args);
         PopList.Update();
+    }
+
+    public void EnsureSetup()
+    {
+        ConstructionMenu.EnsureSetup();
     }
 }
 

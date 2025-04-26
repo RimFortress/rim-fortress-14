@@ -43,6 +43,8 @@ public sealed class RimFortressState : GameplayStateBase
 
         UserInterfaceManager.LoadScreen<RimFortressScreen>();
         _loadController.LoadScreen();
+
+        Screen.EnsureSetup();
     }
 
     protected override void Shutdown()

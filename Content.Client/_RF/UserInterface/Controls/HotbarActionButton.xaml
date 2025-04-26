@@ -1,0 +1,7 @@
+<TextureButton
+    xmlns="https://spacestation14.io"
+    SetSize="84 84" StyleClasses="RadialMenuButton"
+    MouseFilter="Pass" VerticalAlignment="Top">
+    <TextureRect Name="Texture" Stretch="KeepAspectCentered" SetSize="48 48"
+                 HorizontalAlignment="Center" VerticalExpand="True"/>
+</TextureButton>

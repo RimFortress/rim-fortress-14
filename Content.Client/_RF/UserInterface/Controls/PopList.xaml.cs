@@ -22,7 +22,7 @@ public sealed partial class PopList : UIWidget
         RobustXamlLoader.Load(this);
     }
 
-    public void AddPop(EntityUid uid)
+    private void AddPop(EntityUid uid)
     {
         if (_icons.ContainsKey(uid)
             || !_entityManager.EntityExists(uid))

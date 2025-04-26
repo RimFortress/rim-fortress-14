@@ -6,13 +6,10 @@ using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Utility;
 
-using Content.Client._RF.UserInterface; // RimFortress
-
 namespace Content.Client.UserInterface.Systems.Crafting;
 
 [UsedImplicitly]
 public sealed class CraftingUIController : UIController, IOnStateChanged<GameplayState>
-    , IOnStateChanged<RimFortressState> // RimFortress
 {
     private ConstructionMenuPresenter? _presenter;
     private MenuButton? CraftingButton => UIManager.GetActiveUIWidgetOrNull<MenuBar.Widgets.GameTopMenuBar>()?.CraftingButton;
@@ -31,23 +28,6 @@ public sealed class CraftingUIController : UIController, IOnStateChanged<Gamepla
         _presenter.Dispose();
         _presenter = null;
     }
-
-    // RimFortress Start
-    public void OnStateEntered(RimFortressState state)
-    {
-        DebugTools.Assert(_presenter == null);
-        _presenter = new ConstructionMenuPresenter();
-    }
-
-    public void OnStateExited(RimFortressState state)
-    {
-        if (_presenter == null)
-            return;
-        UnloadButton(_presenter);
-        _presenter.Dispose();
-        _presenter = null;
-    }
-    // RimFortress End
 
     internal void UnloadButton(ConstructionMenuPresenter? presenter = null)
     {
