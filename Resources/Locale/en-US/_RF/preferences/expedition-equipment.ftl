@@ -2,6 +2,7 @@ expedition-equipment-category-material = Materials
 expedition-equipment-category-animal = Animals
 expedition-equipment-category-weapon = Weapons
 expedition-equipment-category-ammo = Ammo
+expedition-equipment-category-tool = Tools
 expedition-equipment-category-medical = Medicine
 expedition-equipment-category-food = Food
 expedition-equipment-category-drink = Drinks

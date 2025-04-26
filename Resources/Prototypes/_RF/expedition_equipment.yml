@@ -65,6 +65,17 @@
     SpeedLoaderMagnum: 15
 
 - type: expeditionEquipment
+  id: Tool
+  name: expedition-equipment-category-tool
+  items:
+    Pickaxe: 15
+    Welder: 10
+    Wrench: 10
+    Wirecutter: 10
+    Screwdriver: 10
+    Crowbar: 10
+
+- type: expeditionEquipment
   id: Medical
   name: expedition-equipment-category-medical
   items:

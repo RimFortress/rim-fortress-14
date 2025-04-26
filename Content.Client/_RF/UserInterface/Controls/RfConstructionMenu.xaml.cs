@@ -167,6 +167,7 @@ public sealed partial class RfConstructionMenu : Control
                 SearchBar.Visible = true;
 
                 _selectedCategory = name;
+                Search.SetText(string.Empty);
                 BuildItems();
             };
 

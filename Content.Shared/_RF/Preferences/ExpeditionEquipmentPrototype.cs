@@ -6,7 +6,7 @@ namespace Content.Shared._RF.Preferences;
 /// A prototype containing items available for selection as expedition starter equipment
 /// </summary>
 [Prototype]
-public sealed partial class ExpeditionEquipmentPrototype : IPrototype
+public sealed class ExpeditionEquipmentPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
@@ -15,8 +15,10 @@ public sealed partial class ExpeditionEquipmentPrototype : IPrototype
     /// <summary>
     /// Name of equipment category, supports localization
     /// </summary>
-    [DataField(required: true)]
-    public string Name { get; } = string.Empty;
+    [DataField("name", required: true)]
+    private string _name { get; } = string.Empty;
+
+    public string Name => Loc.GetString(_name);
 
     /// <summary>
     /// Whether this category should be hidden in the lobby

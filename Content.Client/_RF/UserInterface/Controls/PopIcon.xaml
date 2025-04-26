@@ -6,7 +6,7 @@
     SetSize="120 120"
     Margin="0 0 0 15">
     <controls:Placeholder Name="Border"/>
-    <PanelContainer Name="Background" Margin="13"
+    <PanelContainer Name="Background" Margin="14 14 11 11"
                     HorizontalExpand="True" VerticalExpand="True">
         <PanelContainer.PanelOverride>
             <graphics:StyleBoxFlat BackgroundColor="#1E1E22AA" />

@@ -17,7 +17,6 @@ namespace Content.Client._RF.Lobby.UI;
 public sealed partial class RfExpeditionEquipmentEditor : Control
 {
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
-    [Dependency] private readonly ILocalizationManager _locManager = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
@@ -32,7 +31,7 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
     public bool IsDirty
     {
         get => _isDirty;
-        set
+        private set
         {
             _isDirty = value;
 
@@ -91,12 +90,11 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
                 _costs.Add(entProto, cost);
             }
 
-            var name = _locManager.TryGetString(proto.Name, out var locName) ? locName : proto.Name;
             var categoryButton = new Button
             {
                 Group = categoryGroup,
                 HorizontalExpand = true,
-                Text = $"{name} ({proto.Items.Count})",
+                Text = $"{proto.Name} ({proto.Items.Count})",
             };
 
             categoryButton.OnPressed += _ =>
