@@ -1,20 +1,13 @@
-<controls:PopList
+<rf:PopList
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
-    xmlns:graphics="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
     VerticalExpand="True" HorizontalExpand="True"
-    MinWidth="120" MinHeight="650">
-    <PanelContainer HorizontalExpand="True">
-        <PanelContainer.PanelOverride>
-            <graphics:StyleBoxFlat BackgroundColor="#1E1E22AA"
-                                   BorderColor="#1E1E22DD" BorderThickness="2"/>
-        </PanelContainer.PanelOverride>
-        <BoxContainer VerticalExpand="True" HorizontalExpand="True" Orientation="Vertical">
-            <ScrollContainer Margin="8" VerticalExpand="True" HorizontalExpand="True"
-                             HScrollEnabled="False" ReserveScrollbarSpace="True">
-                <BoxContainer Name="Icons" Access="Protected" Orientation="Vertical"
-                              VerticalExpand="True" HorizontalExpand="True"/>
-            </ScrollContainer>
-        </BoxContainer>
-    </PanelContainer>
-</controls:PopList>
+    MinWidth="150" MinHeight="700">
+    <BoxContainer VerticalExpand="True" HorizontalExpand="True" Orientation="Vertical">
+        <ScrollContainer Margin="8" VerticalExpand="True" HorizontalExpand="True"
+                         HScrollEnabled="False" ReserveScrollbarSpace="True">
+            <BoxContainer Name="Icons" Access="Protected" Orientation="Vertical"
+                          VerticalExpand="True" HorizontalExpand="True"/>
+        </ScrollContainer>
+    </BoxContainer>
+</rf:PopList>
