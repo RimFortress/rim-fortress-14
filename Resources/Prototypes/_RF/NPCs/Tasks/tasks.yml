@@ -2,19 +2,21 @@
   id: MoveTo
   overlayColor: "#D3D3D3FF"
   compound: MoveToCompound
-  onFinish: IdleCompound
+  onFinish: BaseFinishCompound
   finishPreconditions:
-    - !type:KeyExistsPrecondition
-      key: TargetCoordinates
-    - !type:CoordinatesInRangePrecondition
-      targetKey: TargetCoordinates
-      rangeKey: MoveToCloseRange
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: TargetCoordinates
+        - !type:CoordinatesInRangePrecondition
+          targetKey: TargetCoordinates
+          rangeKey: MoveToCloseRange
 
 - type: npcTask
   id: Attack
   overlayColor: "#FF0000FF"
   compound: AttackTargetCompound
-  onFinish: IdleCompound
+  onFinish: BaseFinishCompound
   startWhitelist:
     components:
       - HTN
@@ -32,35 +34,47 @@
   id: PickUp
   overlayColor: "#00D5FFFF"
   compound: PickUpCompound
-  onFinish: IdleCompound
+  onFinish: BaseFinishCompound
   startWhitelist:
     components:
       - Item
   finishPreconditions:
-    - !type:KeyExistsPrecondition
-      key: Target
-    - !type:ActiveHandEntityIsPrecondition
-      targetKey: Target
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Target
 
 - type: npcTask
   id: Pry
   overlayColor: "#00D5FFFF"
   compound: PryCompound
-  onFinish: IdleCompound
-  priority: 11
+  onFinish: BaseFinishCompound
+  priority: 10
   startWhitelist:
     components:
       - Prying
-  #finishPreconditions:
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        # TODO: pry precondition
 
 - type: npcTask
   id: Build
   overlayColor: "#FFFF00FF"
   compound: BuildCompound
-  onFinish: IdleCompound
-  priority: 10
+  onFinish: BuildFinishCompound
+  priority: 11
   startWhitelist:
     components:
       - Construction
-      - CommonConstructionGhost
-  #finishPreconditions:
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:ConstructionFinishedPrecondition
+          key: Target

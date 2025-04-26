@@ -1,0 +1,117 @@
+- type: htnCompound
+  id: BuildFinishCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Target
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TargetCoordinates
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityCoordinatesKeyOperator
+            key: TargetCoordinates
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: MaterialTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringListKeyOperator
+            key: MaterialTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TagsTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveIntListKeyOperator
+            key: MaterialInsertAmount
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TagsTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringListKeyOperator
+            key: TagsTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: AllTagsRequired
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveBoolListKeyOperator
+            key: AllTagsRequired
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ToolQualityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringListKeyOperator
+            key: ToolQualityTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ToolFuelTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveFloatListKeyOperator
+            key: ToolFuelTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: MaterialTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringListKeyOperator
+            key: MaterialTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ComponentTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringListKeyOperator
+            key: ComponentTarget
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: IdleCompound
+
+- type: htnCompound
+  id: BaseFinishCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Target
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TargetCoordinates
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityCoordinatesKeyOperator
+            key: TargetCoordinates
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: IdleCompound

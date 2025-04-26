@@ -1,6 +1,7 @@
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.PrimitiveTasks;
+using Robust.Shared.Map;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 
@@ -25,6 +26,31 @@ public abstract partial class RemoveKeyOperator<T> : HTNOperator
 }
 
 public sealed partial class RemoveEntityKeyOperator : RemoveKeyOperator<EntityUid>
+{
+
+}
+
+public sealed partial class RemoveEntityCoordinatesKeyOperator : RemoveKeyOperator<EntityCoordinates>
+{
+
+}
+
+public sealed partial class RemoveStringListKeyOperator : RemoveKeyOperator<List<string>>
+{
+
+}
+
+public sealed partial class RemoveBoolListKeyOperator : RemoveKeyOperator<List<bool>>
+{
+
+}
+
+public sealed partial class RemoveIntListKeyOperator : RemoveKeyOperator<List<int>>
+{
+
+}
+
+public sealed partial class RemoveFloatListKeyOperator : RemoveKeyOperator<List<float>>
 {
 
 }

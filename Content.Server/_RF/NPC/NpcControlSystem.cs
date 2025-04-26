@@ -1,6 +1,5 @@
 using System.Linq;
 using Content.Server.Construction;
-using Content.Server.NPC.Components;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
@@ -165,11 +164,25 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     // Help construction NPCs keep up-to-date information on the entity to be built
     private void OnEntityChange(ConstructionChangeEntityEvent ev)
     {
-        var entities = EntityQueryEnumerator<ControllableNpcComponent, NPCComponent>();
-        while (entities.MoveNext(out _, out var npc))
+        var entities = EntityQueryEnumerator<ControllableNpcComponent, HTNComponent>();
+        while (entities.MoveNext(out var uid, out var control, out var htn))
         {
-            if (npc.Blackboard.TryGetValue(TargetKey, out EntityUid? target, EntityManager) && target == ev.Old)
-                npc.Blackboard.SetValue(TargetKey, ev.New);
+            if (!_prototype.TryIndex(control.CurrentTask, out var proto)
+                || !htn.Blackboard.TryGetValue(TargetKey, out EntityUid? target, EntityManager)
+                || target != ev.Old)
+                continue;
+
+            htn.Blackboard.SetValue(TargetKey, ev.New);
+
+            var msg = new NpcTaskInfoMessage
+            {
+                Entity = GetNetEntity(uid),
+                Color = proto.OverlayColor,
+                Target = GetNetEntity(target),
+                TargetCoordinates = GetNetCoordinates(Transform(uid).Coordinates),
+            };
+
+            RaiseNetworkEvent(msg);
         }
     }
 
@@ -226,11 +239,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         entity.Comp1.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         entity.Comp2.CurrentTask = null;
 
-        foreach (var (_, entities) in _tasks)
-        {
-            if (entities.Remove(entity))
-                break;
-        }
+        if (_tasks.TryGetValue(proto, out var entities))
+            entities.Remove(entity);
 
         RaiseNetworkEvent(new NpcTaskResetMessage { Entity = GetNetEntity(entity) });
     }
