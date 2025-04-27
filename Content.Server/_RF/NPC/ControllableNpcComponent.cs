@@ -24,7 +24,7 @@ public sealed partial class ControllableNpcComponent : Component
     /// How often is there a check for finishing an task
     /// </summary>
     [DataField, ViewVariables]
-    public float TaskFinishCheckRate = 5f;
+    public float TaskFinishCheckRate = 1f;
 
     [ViewVariables]
     public float TaskFinishAccumulator = 0f;

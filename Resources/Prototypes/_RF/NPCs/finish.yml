@@ -93,6 +93,88 @@
         - !type:HTNCompoundTask
           task: IdleCompound
 
+# Prying
+
+- type: htnCompound
+  id: PryFinishCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Target
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TargetCoordinates
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityCoordinatesKeyOperator
+            key: TargetCoordinates
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ToolQuality
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringKeyOperator
+            key: ToolQuality
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Tool
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Tool
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: IdleCompound
+
+# Attack
+
+- type: htnCompound
+  id: AttackFinishCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Target
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TargetCoordinates
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityCoordinatesKeyOperator
+            key: TargetCoordinates
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Item
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: IdleCompound
+
 - type: htnCompound
   id: BaseFinishCompound
   branches:

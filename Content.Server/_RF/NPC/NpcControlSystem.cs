@@ -82,13 +82,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (!TryComp(requester, out NpcControlComponent? control))
             return;
 
-        var sorted = control.Tasks
-            .Select(t => _prototype.Index(t))
-            .OrderBy(x => x.Priority)
-            .ToList();
-
         // Get the first suitable task
-        foreach (var proto in sorted)
+        foreach (var proto in control.Tasks.Select(t => _prototype.Index(t)).OrderBy(x => x.Priority))
         {
             if (task == null && proto.StartWhitelist == null)
                 task = proto;

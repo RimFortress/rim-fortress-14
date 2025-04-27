@@ -1,6 +1,6 @@
 - type: npcTask
   id: MoveTo
-  overlayColor: "#D3D3D3FF"
+  overlayColor: "#D3D3D3"
   compound: MoveToCompound
   onFinish: BaseFinishCompound
   finishPreconditions:
@@ -14,7 +14,7 @@
 
 - type: npcTask
   id: Attack
-  overlayColor: "#FF0000FF"
+  overlayColor: "#FF0000"
   compound: AttackTargetCompound
   onFinish: BaseFinishCompound
   startWhitelist:
@@ -29,10 +29,16 @@
           targetKey: Target
           state: Alive
           invert: true
+        - !type:MobStatePrecondition
+          targetKey: Owner
+          state: Alive
+          invert: true
+        - !type:IsFriendlyPrecondition
+          targetKey: Target
 
 - type: npcTask
   id: PickUp
-  overlayColor: "#00D5FFFF"
+  overlayColor: "#00D5FF"
   compound: PickUpCompound
   onFinish: BaseFinishCompound
   startWhitelist:
@@ -48,23 +54,26 @@
 
 - type: npcTask
   id: Pry
-  overlayColor: "#00D5FFFF"
+  overlayColor: "#00D5FF"
   compound: PryCompound
-  onFinish: BaseFinishCompound
+  onFinish: PryFinishCompound
   priority: 10
   startWhitelist:
     components:
-      - Prying
+      - Door
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
         - !type:KeyNotExistsPrecondition
           key: Target
-        # TODO: pry precondition
+        - !type:DoorStatePrecondition
+          key: Target
+          state: Closed
+          invert: true
 
 - type: npcTask
   id: Build
-  overlayColor: "#FFFF00FF"
+  overlayColor: "#FFFF00"
   compound: BuildCompound
   onFinish: BuildFinishCompound
   priority: 11

@@ -35,6 +35,11 @@ public sealed partial class RemoveEntityCoordinatesKeyOperator : RemoveKeyOperat
 
 }
 
+public sealed partial class RemoveStringKeyOperator : RemoveKeyOperator<string>
+{
+
+}
+
 public sealed partial class RemoveStringListKeyOperator : RemoveKeyOperator<List<string>>
 {
 
