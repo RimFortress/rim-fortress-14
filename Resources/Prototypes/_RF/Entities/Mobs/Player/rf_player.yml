@@ -36,6 +36,8 @@
       - PickUp
       - Pry
       - Build
+      - Dig
+      - FreeHandInteract
   - type: NpcFactionMember
     factions:
       - RimFortress

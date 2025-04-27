@@ -1,0 +1,154 @@
+- type: htnCompound
+  id: DigCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # If NPC don't have a pickaxe in hands, look for it.
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+          invert: true
+        - !type:KeyNotExistsPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetStringListOperator
+            key: Tags
+            value:
+              - Pickaxe
+        - !type:HTNPrimitiveTask
+          operator: !type:SetBoolOperator
+            key: AllTags
+            value: true
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetTags
+            key: ItemEntityTarget
+
+    # Cleanup
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:KeysExistsPrecondition
+          keys:
+            - Tags
+            - AllTags
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringListKeyOperator
+            key: Tags
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveBoolKeyOperator
+            key: AllTags
+
+    # Go to the pickaxe we found
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: ItemEntityTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # If we are about to take a pick in our hands,
+    # but they are busy - drop the item in our hands
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:TargetInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityPrecondition
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Take the pickaxe in hand
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:TargetInRangePrecondition
+          targetKey: ItemEntityTarget
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: ItemEntityTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:WieldOperator
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:EntityDeletedPrecondition
+          key: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: ItemEntityTarget
+
+    # Goes to the target if we're far from it.
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # And finally, digging
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MeleeOperator
+            targetKey: Target

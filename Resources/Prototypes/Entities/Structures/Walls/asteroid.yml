@@ -748,6 +748,11 @@
           state: rock_north
         - map: [ "enum.EdgeLayer.West" ]
           state: rock_west
+    # RimFortress Start
+    - type: Tag
+      tags:
+        - Diggable
+    # RimFortress End
 
 # Ore veins
 - type: entity

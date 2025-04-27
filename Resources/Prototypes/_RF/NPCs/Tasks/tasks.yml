@@ -1,6 +1,7 @@
 - type: npcTask
   id: MoveTo
   overlayColor: "#D3D3D3"
+  priority: -100
   compound: MoveToCompound
   onFinish: BaseFinishCompound
   finishPreconditions:
@@ -86,4 +87,36 @@
         - !type:KeyNotExistsPrecondition
           key: Target
         - !type:ConstructionFinishedPrecondition
+          key: Target
+
+- type: npcTask
+  id: Dig
+  overlayColor: "#E36414"
+  compound: DigCompound
+  onFinish: BaseFinishCompound
+  startWhitelist:
+    tags:
+      - Diggable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
+
+- type: npcTask
+  id: FreeHandInteract
+  overlayColor: "#00D5FF"
+  compound: FreeHandInteractCompound
+  onFinish: BaseFinishCompound
+  startWhitelist:
+    tags:
+      - HandGatherable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
           key: Target

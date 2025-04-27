@@ -12,7 +12,7 @@ public abstract partial class SetOperator<T> : HTNOperator
 {
     [DataField(required: true)]
     public string Key = default!;
-    
+
     [DataField(required: true)]
     public T Value = default!;
 
@@ -24,5 +24,15 @@ public abstract partial class SetOperator<T> : HTNOperator
 
 public sealed partial class SetStringOperator: SetOperator<string>
 {
-    
+
+}
+
+public sealed partial class SetStringListOperator: SetOperator<List<string>>
+{
+
+}
+
+public sealed partial class SetBoolOperator: SetOperator<bool>
+{
+
 }

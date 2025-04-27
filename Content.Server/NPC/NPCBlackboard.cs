@@ -23,7 +23,7 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {"FollowCloseRange", 3f},
         {"FollowRange", 7f},
         {"IdleRange", 7f},
-        {"InteractRange", SharedInteractionSystem.InteractionRange},
+        {"InteractRange", SharedInteractionSystem.InteractionRange - 0.15f }, // RimFortress: closer interact range
         {"MaximumIdleTime", 7f},
         {MedibotInjectRange, 4f},
         {MeleeMissChance, 0.3f},

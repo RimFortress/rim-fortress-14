@@ -1,0 +1,73 @@
+# Interact with the Target
+- type: htnCompound
+  id: InteractCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # Move to the target
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # Interact
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Target
+
+# Interact with the Target with the free hand
+- type: htnCompound
+  id: FreeHandInteractCompound
+  branches:
+    # Drop the item in hand
+    - preconditions:
+        - !type:ActiveHandEntityPrecondition
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: InteractCompound
