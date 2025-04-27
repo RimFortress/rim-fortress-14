@@ -53,4 +53,10 @@ public sealed partial class NpcTaskPrototype : IPrototype
     /// </summary>
     [DataField]
     public int Priority;
+
+    /// <summary>
+    /// Could the target of this task be the entity that performs it
+    /// </summary>
+    [DataField]
+    public bool SelfPerform;
 }

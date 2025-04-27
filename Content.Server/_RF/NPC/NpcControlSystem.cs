@@ -36,8 +36,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         base.Initialize();
 
         SubscribeNetworkEvent<NpcTaskRequest>(OnTaskRequest);
-        SubscribeNetworkEvent<NpcTaskResetRequest>(OnTaskResetRequest);
-
         SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
 
         _prototype.PrototypesReloaded += args =>
@@ -138,22 +136,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 continue;
             }
 
-            if (target == entity)
+            if (target == entity && !task.SelfPerform)
                 continue;
 
             SetTask(entity, task, target, null);
         }
-    }
-
-    private void OnTaskResetRequest(NpcTaskResetRequest request)
-    {
-        var requester = GetEntity(request.Requester);
-        var entity = GetEntity(request.Entity);
-
-        if (!CanControl(requester, entity))
-            return;
-
-        ResetTask(entity);
     }
 
     // Help construction NPCs keep up-to-date information on the entity to be built
@@ -219,28 +206,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     /// <summary>
-    /// Restores the entity's original task
-    /// </summary>
-    private void ResetTask(Entity<HTNComponent?, ControllableNpcComponent?> entity)
-    {
-        if (!Resolve(entity.Owner, ref entity.Comp1)
-            || !Resolve(entity.Owner, ref entity.Comp2)
-            || !_prototype.TryIndex(entity.Comp2.CurrentTask, out var proto))
-            return;
-
-        if (entity.Comp1.Plan != null)
-            _htn.ShutdownPlan(entity.Comp1);
-
-        entity.Comp1.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
-        entity.Comp2.CurrentTask = null;
-
-        if (_tasks.TryGetValue(proto, out var entities))
-            entities.Remove(entity);
-
-        RaiseNetworkEvent(new NpcTaskResetMessage { Entity = GetNetEntity(entity) });
-    }
-
-    /// <summary>
     /// Returns the first free neighboring tile for the tile list
     /// </summary>
     private TileRef? GetNeighborTile(List<TileRef> tiles)
@@ -303,7 +268,16 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 }
 
                 if (needFinish)
-                    ResetTask(uid);
+                {
+                    if (htn.Plan != null)
+                        _htn.ShutdownPlan(htn);
+
+                    htn.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
+                    comp.CurrentTask = null;
+
+                    if (_tasks.TryGetValue(proto, out var entities))
+                        entities.Remove(uid);
+                }
 
                 comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
             }
