@@ -1,0 +1,291 @@
+- type: htnCompound
+  id: HealCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # Turns out stopping the bleeding is not a very
+    # important part of the healing and it goes away on its own,
+    # so I think we can remove it
+
+    # Stop bleeding
+    #- preconditions:
+    #    - !type:KeyExistsPrecondition
+    #      key: Target
+    #    - !type:BleedingPrecondition
+    #      targetKey: Target
+    #  tasks:
+    #    - !type:HTNCompoundTask
+    #      task: StopBleedingCompound
+
+    # Heal
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNCompoundTask
+          task: BaseHealCompound
+
+- type: htnCompound
+  id: BaseHealCompound
+  branches:
+    # Finding the right medicine
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Item
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:GetEntityDamageOperator
+            key: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetHeal
+            key: Item
+
+    # Cleanup
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Item
+            - DamageType
+            - DamageContainer
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringKeyOperator
+            key: DamageType
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveStringKeyOperator
+            key: DamageContainer
+
+    # Go to the item we found
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:TargetNotInRangePrecondition
+          targetKey: Item
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Item
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # Remove anything from the hands that prevents from picking up the item
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StorageOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Take the object in hand
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:TargetInRangePrecondition
+          targetKey: Item
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Item
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:EntityDeletedPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Item
+
+    # Go to the target for healing if it's far away
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # And finally, healing the target
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - Item
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Item
+
+- type: htnCompound
+  id: StopBleedingCompound
+  branches:
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: HeatMelee
+            key: Item
+
+    # Go to the item we found
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:TargetNotInRangePrecondition
+          targetKey: Item
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Item
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # Remove anything from the hands that prevents from picking up the item
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StorageOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Take the object in hand
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:TargetInRangePrecondition
+          targetKey: Item
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Item
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:EntityDeletedPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Item
+
+    # Go to the target for healing if it's far away
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: MeleeRange
+
+    # And finally, healing the target
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - Item
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+        - !type:BleedingPrecondition
+          targetKey: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MeleeOperator
+            targetKey: Target
+
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - Item
+        - !type:BleedingPrecondition
+          targetKey: Target
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Item

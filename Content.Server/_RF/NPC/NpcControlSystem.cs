@@ -75,42 +75,19 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var target = GetEntity(request.Target);
         var targetCoords = GetCoordinates(request.TargetCoordinates);
 
-        NpcTaskPrototype? task = null;
-
         if (!TryComp(requester, out NpcControlComponent? control))
             return;
 
-        // Get the first suitable task
-        foreach (var proto in control.Tasks.Select(t => _prototype.Index(t)).OrderBy(x => x.Priority))
-        {
-            if (task == null && proto.StartWhitelist == null)
-                task = proto;
-
-            if (target != null
-                && !_whitelist.IsWhitelistPass(proto.StartWhitelist, target.Value))
-                continue;
-
-            task = proto;
-            break;
-        }
-
-        if (task == null)
-            return;
-
-        if (task.StartWhitelist == null)
-            target = null;
-
+        var sortedTasks = control.Tasks.Select(t => _prototype.Index(t)).OrderBy(x => x.Priority).ToList();
         var previousTargets = new List<TileRef>();
 
         foreach (var entity in entities)
         {
-            if (!CanControl(requester, entity))
+            if (!CanControl(requester, entity)
+                || GetSatisfiedTask(entity, target, sortedTasks) is not { } task)
                 continue;
 
-            if (_tasks[task].Count >= task.MaxNpc)
-                break;
-
-            if (target == null)
+            if (task.StartWhitelist == null)
             {
                 if (previousTargets.Count == 0)
                 {
@@ -135,9 +112,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 SetTask(entity, task, null, tileCenter);
                 continue;
             }
-
-            if (target == entity && !task.SelfPerform)
-                continue;
 
             SetTask(entity, task, target, null);
         }
@@ -169,6 +143,27 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     #endregion
+
+    private NpcTaskPrototype? GetSatisfiedTask(EntityUid? uid, EntityUid? target, List<NpcTaskPrototype> tasks)
+    {
+        NpcTaskPrototype? task = null;
+
+        foreach (var proto in tasks)
+        {
+            if (proto.StartWhitelist == null)
+                task = proto;
+
+            if (target != null
+                && !_whitelist.IsWhitelistPass(proto.StartWhitelist, target.Value)
+                || uid == target && !proto.SelfPerform
+                || _tasks[proto].Count >= proto.MaxNpc)
+                continue;
+
+            return proto;
+        }
+
+        return task;
+    }
 
     /// <summary>
     /// Creates a new task for the NPC and saves the old one
@@ -277,6 +272,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
                     if (_tasks.TryGetValue(proto, out var entities))
                         entities.Remove(uid);
+
+                    RaiseNetworkEvent(new NpcTaskInfoMessage
+                    {
+                        Entity = GetNetEntity(uid),
+                        Color = proto.OverlayColor,
+                    });
                 }
 
                 comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;

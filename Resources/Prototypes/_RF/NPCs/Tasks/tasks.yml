@@ -26,6 +26,8 @@
       preconditions:
         - !type:KeyNotExistsPrecondition
           key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
         - !type:MobStatePrecondition
           targetKey: Target
           state: Alive
@@ -50,6 +52,8 @@
       preconditions:
         - !type:KeyNotExistsPrecondition
           key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
         - !type:ActiveHandEntityIsPrecondition
           targetKey: Target
 
@@ -66,6 +70,8 @@
     - !type:OrPrecondition
       preconditions:
         - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
           key: Target
         - !type:DoorStatePrecondition
           key: Target
@@ -120,3 +126,33 @@
           key: Target
         - !type:EntityDeletedPrecondition
           key: Target
+
+- type: npcTask
+  id: Heal
+  overlayColor: "#16C934"
+  selfPerform: true
+  compound: HealCompound
+  onFinish: BaseFinishCompound
+  startWhitelist:
+    components:
+      - Damageable
+      - HTN
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
+        - !type:AndPrecondition
+          preconditions:
+            - !type:BleedingPrecondition
+              targetKey: Target
+              invert: true
+            - !type:TotalDamagePrecondition
+              targetKey: Target
+              lessThan: 20.0
+        # Doctor, we've lost him
+        - !type:MobStatePrecondition
+          targetKey: Target
+          state: Dead

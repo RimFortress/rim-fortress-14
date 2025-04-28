@@ -32,6 +32,7 @@ using Robust.Shared.Utility;
 using System.Linq;
 // RimFortress Start
 using Content.Server._RF.NPC.Queries.Queries;
+using Content.Server.Medical.Components;
 using Content.Shared.Stacks;
 using Content.Shared.Tag;
 using Content.Shared.Tools.Components;
@@ -711,6 +712,64 @@ public sealed class NPCUtilitySystem : EntitySystem
                     }
 
                     if (inventoryFilter.Invert)
+                        _entityList.Add(ent);
+                }
+
+                foreach (var ent in _entityList)
+                {
+                    entities.Remove(ent);
+                }
+
+                break;
+            }
+            case HealingFilter healingFilter:
+            {
+                if (!blackboard.TryGetValue(healingFilter.DamageContainerKey, out string? damageContainer, EntityManager)
+                    || !blackboard.TryGetValue(healingFilter.DamageTypeKey, out string? damageType, EntityManager))
+                    return;
+
+                foreach (var ent in entities)
+                {
+                    if (!TryComp(ent, out HealingComponent? comp))
+                        continue;
+
+                    if (comp.DamageContainers != null
+                        && comp.DamageContainers.Contains(damageContainer)
+                        && comp.Damage.DamageDict.ContainsKey(damageType))
+                    {
+                        if (!healingFilter.Invert)
+                            _entityList.Add(ent);
+
+                        continue;
+                    }
+
+                    if (healingFilter.Invert)
+                        _entityList.Add(ent);
+                }
+
+                foreach (var ent in _entityList)
+                {
+                    entities.Remove(ent);
+                }
+
+                break;
+            }
+            case MeleeDamageTypeFilter damageTypeFilter:
+            {
+                foreach (var ent in entities)
+                {
+                    if (!TryComp(ent, out MeleeWeaponComponent? comp))
+                        continue;
+
+                    if (comp.Damage.DamageDict.ContainsKey(damageTypeFilter.DamageType))
+                    {
+                        if (!damageTypeFilter.Invert)
+                            _entityList.Add(ent);
+
+                        continue;
+                    }
+
+                    if (damageTypeFilter.Invert)
                         _entityList.Add(ent);
                 }
 

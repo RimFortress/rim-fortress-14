@@ -67,3 +67,38 @@
           damage:
             types:
               Slash: 0
+
+- type: utilityQuery
+  id: TargetHeal
+  query:
+    - !type:ComponentQuery
+      components:
+        - type: Healing
+          damageContainers:
+            - Biological
+          damage:
+            types:
+              Heat: 0
+    - !type:HealingFilter
+      invert: true
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: HeatMelee
+  query:
+    - !type:ComponentQuery
+      components:
+        - type: MeleeWeapon
+          damage:
+            types:
+              Slash: 0
+    - !type:MeleeDamageTypeFilter
+      damageType: Heat
+      invert: true
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance

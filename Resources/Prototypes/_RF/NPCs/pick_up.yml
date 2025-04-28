@@ -25,7 +25,7 @@
         - !type:HTNCompoundTask
           task: EscapeCompound
 
-    # Put the item in inventory if hands are full
+    # Remove anything from the hands that prevents from picking up the item
     - preconditions:
         - !type:ActiveHandEntityPrecondition
         - !type:KeyExistsPrecondition
@@ -36,16 +36,6 @@
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:StorageOperator
-
-    # Drop item in hands
-    - preconditions:
-        - !type:ActiveHandEntityPrecondition
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: Target
-          invert: true
-      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:DropOperator
 
@@ -63,9 +53,15 @@
             pathfindInPlanning: true
             rangeKey: InteractRange
         - !type:HTNPrimitiveTask
-          preconditions:
-            - !type:TargetInRangePrecondition
-              targetKey: Target
-              rangeKey: InteractRange
           operator: !type:EquipOperator
             target: Target
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveEntityKeyOperator
+            key: Target

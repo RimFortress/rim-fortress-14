@@ -38,7 +38,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             .Register<SharedNpcControlSystem>();
 
         SubscribeNetworkEvent<NpcTaskInfoMessage>(OnTaskInfo);
-        SubscribeNetworkEvent<NpcTaskResetMessage>(OnTaskReset);
     }
 
     public override void Shutdown()
@@ -88,13 +87,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnTaskInfo(NpcTaskInfoMessage msg)
     {
+        if (msg.Target == null && msg.TargetCoordinates == null)
+        {
+            Tasks.Remove(GetEntity(msg.Entity));
+            return;
+        }
+
         var task = new NpcTask(msg.Color, GetEntity(msg.Target), GetCoordinates(msg.TargetCoordinates));
         Tasks[GetEntity(msg.Entity)] = task;
-    }
-
-    private void OnTaskReset(NpcTaskResetMessage msg)
-    {
-        Tasks.Remove(GetEntity(msg.Entity));
     }
 
     public override void Update(float frameTime)
