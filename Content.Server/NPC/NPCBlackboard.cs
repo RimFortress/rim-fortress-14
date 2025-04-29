@@ -273,6 +273,15 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         return _blackboard.Remove(key);
     }
 
+    // RimFortress Start
+    // Type checking is very annoying
+    public bool Remove(string key)
+    {
+        DebugTools.Assert(_blackboard.ContainsKey(key));
+        return _blackboard.Remove(key);
+    }
+    // RimFortress End
+
     public string GetVisionRadiusKey(IEntityManager entMan)
     {
         return TryGetValue<EntityUid>("Target", out _, entMan)

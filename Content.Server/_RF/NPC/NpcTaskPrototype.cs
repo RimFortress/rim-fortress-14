@@ -1,3 +1,4 @@
+using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.Preconditions;
 using Content.Shared.Whitelist;
@@ -5,6 +6,9 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC;
 
+/// <summary>
+/// A prototype of the various complex tasks that <see cref="NpcControlComponent"/> owners can issue for NPCs
+/// </summary>
 [Prototype]
 public sealed partial class NpcTaskPrototype : IPrototype
 {
@@ -37,6 +41,12 @@ public sealed partial class NpcTaskPrototype : IPrototype
     public EntityWhitelist? StartWhitelist;
 
     /// <summary>
+    /// Additional conditions required to start the task
+    /// </summary>
+    [DataField]
+    public List<HTNPrecondition> StartPreconditions = new();
+
+    /// <summary>
     /// The conditions for finishing this assignment are
     /// </summary>
     [DataField]
@@ -46,7 +56,7 @@ public sealed partial class NpcTaskPrototype : IPrototype
     /// Maximum number of entities that can perform this task on a one target
     /// </summary>
     [DataField]
-    public int MaxNpc = int.MaxValue;
+    public int MaxPerformers = int.MaxValue;
 
     /// <summary>
     /// Priority for checking this task
@@ -59,4 +69,28 @@ public sealed partial class NpcTaskPrototype : IPrototype
     /// </summary>
     [DataField]
     public bool SelfPerform;
+
+    /// <summary>
+    /// The key that will be used to save the task target to the <see cref="NPCBlackboard"/>
+    /// </summary>
+    [DataField]
+    public string TargetKey = "Target";
+
+    /// <summary>
+    /// The key to store the coordinates of the task target in the <see cref="NPCBlackboard"/>
+    /// </summary>
+    [DataField]
+    public string TargetCoordinatesKey = "TargetCoordinates";
+
+    /// <summary>
+    /// Whether the task target keys should be deleted when the task is finished
+    /// </summary>
+    [DataField]
+    public bool DeleteKeysOnFinish = true;
+
+    /// <summary>
+    /// Temporary keys that are used to execute a task and will be deleted when the task is completed
+    /// </summary>
+    [DataField]
+    public List<string> TempKeys = new();
 }

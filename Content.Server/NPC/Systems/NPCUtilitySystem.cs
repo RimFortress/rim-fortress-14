@@ -30,13 +30,8 @@ using Robust.Server.Containers;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 using System.Linq;
-// RimFortress Start
-using Content.Server._RF.NPC.Queries.Queries;
-using Content.Server.Medical.Components;
-using Content.Shared.Stacks;
-using Content.Shared.Tag;
-using Content.Shared.Tools.Components;
-// RimFortress End
+
+using Content.Server._RF.NPC.Queries.Queries; // RimFortress
 
 namespace Content.Server.NPC.Systems;
 
@@ -62,7 +57,6 @@ public sealed class NPCUtilitySystem : EntitySystem
     [Dependency] private readonly EntityWhitelistSystem _whitelistSystem = default!;
     [Dependency] private readonly MobThresholdSystem _thresholdSystem = default!;
     [Dependency] private readonly TurretTargetSettingsSystem _turretTargetSettings = default!;
-    [Dependency] private readonly TagSystem _tag = default!; // RimFortress
 
     private EntityQuery<PuddleComponent> _puddleQuery;
     private EntityQuery<TransformComponent> _xformQuery;
@@ -80,7 +74,37 @@ public sealed class NPCUtilitySystem : EntitySystem
         base.Initialize();
         _puddleQuery = GetEntityQuery<PuddleComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
+
+        // RimFortress Start
+        _proto.PrototypesReloaded += args =>
+        {
+            if (args.WasModified<UtilityQueryPrototype>())
+                ReloadPrototypes();
+        };
+        ReloadPrototypes();
+        // RimFortress End
     }
+
+    // RimFortress Start
+    private void ReloadPrototypes()
+    {
+        foreach (var proto in _proto.EnumeratePrototypes<UtilityQueryPrototype>())
+        {
+            foreach (var query in proto.Query)
+            {
+                switch (query)
+                {
+                    case RfUtilityQuery rfQuery:
+                        rfQuery.Initialize(EntityManager);
+                        break;
+                    case RfUtilityQueryFilter rfFilter:
+                        rfFilter.Initialize(EntityManager);
+                        break;
+                }
+            }
+        }
+    }
+    // RimFortress End
 
     /// <summary>
     /// Runs the UtilityQueryPrototype and returns the best-matching entities.
@@ -101,6 +125,10 @@ public sealed class NPCUtilitySystem : EntitySystem
             switch (query)
             {
                 case UtilityQueryFilter filter:
+                    // RimFortress Start
+                    if (filter is RfUtilityQueryFilter rfFilter && !rfFilter.Startup(blackboard))
+                        return UtilityResult.Empty;
+                    // RimFortress End
                     Filter(blackboard, ents, filter);
                     break;
                 default:
@@ -480,36 +508,9 @@ public sealed class NPCUtilitySystem : EntitySystem
                 break;
             }
             // RimFortress Start
-            case KeyComponentQuery compQuery:
-            {
-                if (!blackboard.TryGetValue(compQuery.Key, out string? compId, EntityManager))
-                    return;
-
-                var mapPos = _transform.GetMapCoordinates(owner, xform: _xformQuery.GetComponent(owner));
-                var comp = EntityManager.ComponentFactory.GetComponent(compId);
-
-                _entitySet.Clear();
-                _lookup.GetEntitiesInRange(comp.GetType(), mapPos, vision * 10, _entitySet);
-
-                foreach (var ent in _entitySet)
-                {
-                    if (ent.Owner == owner)
-                        continue;
-
-                    if (HasComp(ent, comp.GetType()))
-                    {
-                        if (!compQuery.Invert)
-                            entities.Add(ent);
-
-                        continue;
-                    }
-
-                    if (compQuery.Invert)
-                        entities.Add(ent);
-                }
-
+            case RfUtilityQuery rfQuery:
+                entities.UnionWith(rfQuery.Query(blackboard));
                 break;
-            }
             // RimFortress End
             default:
                 throw new NotImplementedException();
@@ -598,27 +599,14 @@ public sealed class NPCUtilitySystem : EntitySystem
                 break;
             }
             // RimFortress Start
-            case MaterialFilter materialFilter:
-            {
+            case RfUtilityQueryFilter rfFilter:
                 _entityList.Clear();
 
-                if (!blackboard.TryGetValue(materialFilter.TargetKey, out string? stackId, EntityManager)
-                    || !blackboard.TryGetValue(materialFilter.AmountKey, out int? amount, EntityManager))
-                    break;
-
                 foreach (var ent in entities)
                 {
-                    if (TryComp(ent, out StackComponent? stack)
-                        && stack.StackTypeId == stackId
-                        && stack.Count >= amount)
-                    {
-                        if (!materialFilter.Invert)
-                            _entityList.Add(ent);
+                    var filtered = rfFilter.Filter(ent, blackboard);
 
-                        continue;
-                    }
-
-                    if (materialFilter.Invert)
+                    if (rfFilter.Invert ? !filtered : filtered)
                         _entityList.Add(ent);
                 }
 
@@ -628,158 +616,6 @@ public sealed class NPCUtilitySystem : EntitySystem
                 }
 
                 break;
-            }
-            case TagFilter tagFilter:
-            {
-                _entityList.Clear();
-
-                if (!blackboard.TryGetValue(tagFilter.RequireAllKey, out bool all, EntityManager)
-                    || !blackboard.TryGetValue(tagFilter.TagsKey, out List<string>? tags, EntityManager))
-                    break;
-
-                var tagPrototypes = tags.Select(t => (ProtoId<TagPrototype>)t).ToList();
-
-                foreach (var ent in entities)
-                {
-                    if (all && _tag.HasAllTags(ent, tagPrototypes))
-                    {
-                        if (!tagFilter.Invert)
-                            _entityList.Add(ent);
-
-                        continue;
-                    }
-
-                    if (!all && _tag.HasAnyTag(ent, tagPrototypes))
-                    {
-                        if (!tagFilter.Invert)
-                            _entityList.Add(ent);
-
-                        continue;
-                    }
-
-                    if (tagFilter.Invert)
-                        _entityList.Add(ent);
-                }
-
-                foreach (var ent in _entityList)
-                {
-                    entities.Remove(ent);
-                }
-
-                break;
-            }
-            case ToolQualityFilter qualityFilter:
-            {
-                _entityList.Clear();
-
-                if (!blackboard.TryGetValue(qualityFilter.QualityKey, out string? quality, EntityManager))
-                    break;
-
-                foreach (var ent in entities)
-                {
-                    if (!TryComp(ent, out ToolComponent? tool))
-                        continue;
-
-                    if (tool.Qualities.ToList().Contains(quality))
-                    {
-                        if (!qualityFilter.Invert)
-                            _entityList.Add(ent);
-
-                        continue;
-                    }
-
-                    if (qualityFilter.Invert)
-                        _entityList.Add(ent);
-                }
-
-                foreach (var ent in _entityList)
-                {
-                    entities.Remove(ent);
-                }
-
-                break;
-            }
-            case InventoryFilter inventoryFilter:
-            {
-                foreach (var ent in entities)
-                {
-                    if (_inventory.InSlotWithFlags(ent, SlotFlags.All))
-                    {
-                        if (!inventoryFilter.Invert)
-                            _entityList.Add(ent);
-
-                        continue;
-                    }
-
-                    if (inventoryFilter.Invert)
-                        _entityList.Add(ent);
-                }
-
-                foreach (var ent in _entityList)
-                {
-                    entities.Remove(ent);
-                }
-
-                break;
-            }
-            case HealingFilter healingFilter:
-            {
-                if (!blackboard.TryGetValue(healingFilter.DamageContainerKey, out string? damageContainer, EntityManager)
-                    || !blackboard.TryGetValue(healingFilter.DamageTypeKey, out string? damageType, EntityManager))
-                    return;
-
-                foreach (var ent in entities)
-                {
-                    if (!TryComp(ent, out HealingComponent? comp))
-                        continue;
-
-                    if (comp.DamageContainers != null
-                        && comp.DamageContainers.Contains(damageContainer)
-                        && comp.Damage.DamageDict.ContainsKey(damageType))
-                    {
-                        if (!healingFilter.Invert)
-                            _entityList.Add(ent);
-
-                        continue;
-                    }
-
-                    if (healingFilter.Invert)
-                        _entityList.Add(ent);
-                }
-
-                foreach (var ent in _entityList)
-                {
-                    entities.Remove(ent);
-                }
-
-                break;
-            }
-            case MeleeDamageTypeFilter damageTypeFilter:
-            {
-                foreach (var ent in entities)
-                {
-                    if (!TryComp(ent, out MeleeWeaponComponent? comp))
-                        continue;
-
-                    if (comp.Damage.DamageDict.ContainsKey(damageTypeFilter.DamageType))
-                    {
-                        if (!damageTypeFilter.Invert)
-                            _entityList.Add(ent);
-
-                        continue;
-                    }
-
-                    if (damageTypeFilter.Invert)
-                        _entityList.Add(ent);
-                }
-
-                foreach (var ent in _entityList)
-                {
-                    entities.Remove(ent);
-                }
-
-                break;
-            }
             // RimFortress End
             default:
                 throw new NotImplementedException();

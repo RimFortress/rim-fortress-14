@@ -3,7 +3,7 @@
   overlayColor: "#D3D3D3"
   priority: -100
   compound: MoveToCompound
-  onFinish: BaseFinishCompound
+  onFinish: IdleCompound
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -17,10 +17,20 @@
   id: Attack
   overlayColor: "#FF0000"
   compound: AttackTargetCompound
-  onFinish: BaseFinishCompound
+  onFinish: IdleCompound
+  tempKeys:
+    - Item
   startWhitelist:
     components:
       - HTN
+  startPreconditions:
+    - !type:MobStatePrecondition
+      targetKey: Target
+      state: Dead
+      invert: true
+    - !type:IsFriendlyPrecondition
+      targetKey: Target
+      invert: true
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -41,12 +51,17 @@
 
 - type: npcTask
   id: PickUp
+  maxPerformers: 1
   overlayColor: "#00D5FF"
   compound: PickUpCompound
-  onFinish: BaseFinishCompound
+  onFinish: IdleCompound
   startWhitelist:
     components:
       - Item
+  startPreconditions:
+    - !type:ActiveHandEntityIsPrecondition
+      targetKey: Target
+      invert: true
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -59,13 +74,22 @@
 
 - type: npcTask
   id: Pry
+  maxPerformers: 1
   overlayColor: "#00D5FF"
   compound: PryCompound
-  onFinish: PryFinishCompound
+  onFinish: IdleCompound
   priority: 10
+  tempKeys:
+    - Tool
+    - ToolQuality
   startWhitelist:
     components:
       - Door
+  startPreconditions:
+    - !type:DoorStatePrecondition
+      key: Target
+      state: Closed
+      invert: true
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -80,13 +104,27 @@
 
 - type: npcTask
   id: Build
+  maxPerformers: 1
   overlayColor: "#FFFF00"
   compound: BuildCompound
-  onFinish: BuildFinishCompound
+  onFinish: IdleCompound
   priority: 11
+  tempKeys:
+    - ItemEntityTarget
+    - MaterialTarget
+    - MaterialInsertAmount
+    - TagsTarget
+    - AllTagsRequired
+    - ToolQualityTarget
+    - ToolFuelTarget
+    - ComponentTarget
   startWhitelist:
     components:
       - Construction
+  startPreconditions:
+    - !type:ConstructionFinishedPrecondition
+      key: Target
+      invert: true
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -97,9 +135,14 @@
 
 - type: npcTask
   id: Dig
+  maxPerformers: 1
   overlayColor: "#E36414"
   compound: DigCompound
-  onFinish: BaseFinishCompound
+  onFinish: IdleCompound
+  tempKeys:
+    - Tags
+    - AllTags
+    - ItemEntityTarget
   startWhitelist:
     tags:
       - Diggable
@@ -115,7 +158,7 @@
   id: FreeHandInteract
   overlayColor: "#00D5FF"
   compound: FreeHandInteractCompound
-  onFinish: BaseFinishCompound
+  onFinish: IdleCompound
   startWhitelist:
     tags:
       - HandGatherable
@@ -132,11 +175,23 @@
   overlayColor: "#16C934"
   selfPerform: true
   compound: HealCompound
-  onFinish: BaseFinishCompound
+  onFinish: IdleCompound
+  tempKeys:
+    - Item
+    - DamageType
+    - DamageContainer
   startWhitelist:
     components:
       - Damageable
       - HTN
+  startPreconditions:
+    - !type:MobStatePrecondition
+      targetKey: Target
+      state: Dead
+      invert: true
+    - !type:TotalDamagePrecondition
+      targetKey: Target
+      moreThan: 5.0
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -151,7 +206,7 @@
               invert: true
             - !type:TotalDamagePrecondition
               targetKey: Target
-              lessThan: 20.0
+              lessThan: 10.0
         # Doctor, we've lost him
         - !type:MobStatePrecondition
           targetKey: Target

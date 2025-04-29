@@ -39,6 +39,17 @@
     #    - !type:HTNCompoundTask
     #      task: StopBleedingCompound
 
+    # Restore blood level
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:BloodLevelPrecondition
+          targetKey: Target
+          lessThan: 1.0
+      tasks:
+        - !type:HTNCompoundTask
+          task: RestoreBloodLevelCompound
+
     # Heal
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -61,26 +72,11 @@
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:GetEntityDamageOperator
-            key: Target
+            targetKey: Target
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: TargetHeal
             key: Item
-
-    # Cleanup
-    - preconditions:
-        - !type:KeysExistsPrecondition
-          keys:
-            - Item
-            - DamageType
-            - DamageContainer
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveStringKeyOperator
-            key: DamageType
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveStringKeyOperator
-            key: DamageContainer
 
     # Go to the item we found
     - preconditions:
@@ -134,16 +130,20 @@
           key: Item
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: Item
 
     # Go to the target for healing if it's far away
     - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - Item
         - !type:TargetNotInRangePrecondition
           targetKey: Target
           rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
@@ -173,8 +173,9 @@
           operator: !type:InteractWithOperator
             targetKey: Target
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: Item
+
 
 - type: htnCompound
   id: StopBleedingCompound
@@ -240,7 +241,7 @@
           key: Item
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: Item
 
     # Go to the target for healing if it's far away
@@ -259,7 +260,6 @@
             pathfindInPlanning: true
             rangeKey: MeleeRange
 
-    # And finally, healing the target
     - preconditions:
         - !type:KeysExistsPrecondition
             keys:
@@ -287,5 +287,121 @@
           invert: true
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
+            key: Item
+
+
+- type: htnCompound
+  id: RestoreBloodLevelCompound
+  branches:
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: BloodLevelHeal
+            key: Item
+
+    # Go to the item we found
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:TargetNotInRangePrecondition
+          targetKey: Item
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Item
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+
+    # Remove anything from the hands that prevents from picking up the item
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StorageOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    # Take the object in hand
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:TargetInRangePrecondition
+          targetKey: Item
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EquipOperator
+            target: Item
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Item
+        - !type:EntityDeletedPrecondition
+          key: Item
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: Item
+
+    # Go to the target for healing if it's far away
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: MeleeRange
+
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - Item
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: Item
+        - !type:BloodLevelPrecondition
+          targetKey: Target
+          lessThan: 1.0
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - Item
+        - !type:BloodLevelPrecondition
+          targetKey: Target
+          lessThan: 1.0
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
             key: Item

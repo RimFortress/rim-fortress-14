@@ -56,15 +56,17 @@
           operator: !type:EquipOperator
             target: Tool
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
-            key: ItemEntityTarget
+          operator: !type:RemoveKeyOperator
+            key: Tool
 
     - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
         - !type:EntityDeletedPrecondition
           key: ItemEntityTarget
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: ItemEntityTarget
 
     - preconditions:

@@ -69,7 +69,7 @@
           operator: !type:EquipOperator
             target: Item
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: Item
 
     - preconditions:

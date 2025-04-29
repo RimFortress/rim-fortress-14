@@ -1,12 +1,17 @@
-using Content.Server.NPC.Queries.Queries;
+using System.Linq;
+using Content.Server.NPC;
+using Content.Shared.Tag;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Queries.Queries;
 
 /// <summary>
 /// Filters the entities for the presence of tags
 /// </summary>
-public sealed partial class TagFilter : UtilityQueryFilter
+public sealed partial class TagFilter : RfUtilityQueryFilter
 {
+    private TagSystem _tag = default!;
+
     /// <summary>
     /// Tags to be filtered out
     /// </summary>
@@ -19,6 +24,33 @@ public sealed partial class TagFilter : UtilityQueryFilter
     [DataField(required: true)]
     public string RequireAllKey = default!;
 
-    [DataField]
-    public bool Invert;
+    private bool _allTagsRequired;
+    private List<ProtoId<TagPrototype>>? _tags;
+
+    public override void Initialize(IEntityManager entManager)
+    {
+        base.Initialize(entManager);
+        _tag = entManager.System<TagSystem>();
+    }
+
+    public override bool Startup(NPCBlackboard blackboard)
+    {
+        if (!blackboard.TryGetValue(RequireAllKey, out _allTagsRequired, EntityManager)
+            || !blackboard.TryGetValue(TagsKey, out List<string>? tags, EntityManager))
+            return false;
+
+        _tags = tags.Select(x => (ProtoId<TagPrototype>) x).ToList();
+        return true;
+    }
+
+    public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
+    {
+        if (_allTagsRequired && _tag.HasAllTags(uid, _tags!))
+            return true;
+
+        if (!_allTagsRequired && _tag.HasAnyTag(uid, _tags!))
+            return true;
+
+        return false;
+    }
 }

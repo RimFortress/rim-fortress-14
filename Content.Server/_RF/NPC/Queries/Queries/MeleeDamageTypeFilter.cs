@@ -1,15 +1,27 @@
-using Content.Server.NPC.Queries.Queries;
+using Content.Server.NPC;
+using Content.Shared.Weapons.Melee;
 
 namespace Content.Server._RF.NPC.Queries.Queries;
 
 /// <summary>
 /// Filters melee weapons by damage type
 /// </summary>
-public sealed partial class MeleeDamageTypeFilter : UtilityQueryFilter
+public sealed partial class MeleeDamageTypeFilter : RfUtilityQueryFilter
 {
+    private EntityQuery<MeleeWeaponComponent> _meleeQuery;
+
     [DataField(required: true)]
     public string DamageType = default!;
 
-    [DataField]
-    public bool Invert;
+    public override void Initialize(IEntityManager entManager)
+    {
+        base.Initialize(entManager);
+        _meleeQuery = entManager.GetEntityQuery<MeleeWeaponComponent>();
+    }
+
+    public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
+    {
+        return _meleeQuery.TryComp(uid, out var comp)
+               && comp.Damage.DamageDict.ContainsKey(DamageType);
+    }
 }

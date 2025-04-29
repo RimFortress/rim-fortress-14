@@ -21,7 +21,7 @@ public sealed partial class BleedingPrecondition : HTNPrecondition
     {
         if (blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entManager)
             && _entManager.TryGetComponent(uid, out BloodstreamComponent? bloodstream)
-            && bloodstream.BleedReductionAmount > 0)
+            && bloodstream.BleedAmount > 0)
             return !Invert;
 
         return Invert;

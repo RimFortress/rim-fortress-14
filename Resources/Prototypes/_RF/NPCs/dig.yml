@@ -48,22 +48,6 @@
             proto: TargetTags
             key: ItemEntityTarget
 
-    # Cleanup
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: ItemEntityTarget
-        - !type:KeysExistsPrecondition
-          keys:
-            - Tags
-            - AllTags
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveStringListKeyOperator
-            key: Tags
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveBoolKeyOperator
-            key: AllTags
-
     # Go to the pickaxe we found
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -108,7 +92,7 @@
           operator: !type:EquipOperator
             target: ItemEntityTarget
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: ItemEntityTarget
         - !type:HTNPrimitiveTask
           operator: !type:WieldOperator
@@ -120,7 +104,7 @@
           key: ItemEntityTarget
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: ItemEntityTarget
 
     # Goes to the target if we're far from it.

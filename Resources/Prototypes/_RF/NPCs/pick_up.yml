@@ -63,5 +63,5 @@
           key: Target
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: Target

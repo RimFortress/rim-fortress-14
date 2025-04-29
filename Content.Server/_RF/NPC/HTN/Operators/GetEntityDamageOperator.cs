@@ -36,14 +36,15 @@ public sealed partial class GetEntityDamageOperator : HTNOperator
                 maxDamage = (type, value);
         }
 
-        var result = new Dictionary<string, object>
-        {
-            { DamageContainerKey, (string) damageable.DamageContainerID },
-        };
-
         if (maxDamage != null)
-            result.Add(DamageTypeKey, maxDamage.Value.Type);
+        {
+            return (true, new()
+            {
+                { DamageContainerKey, (string)damageable.DamageContainerID },
+                { DamageTypeKey, maxDamage.Value.Type },
+            });
+        }
 
-        return (true, result);
+        return (false, null);
     }
 }

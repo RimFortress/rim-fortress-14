@@ -1,66 +1,48 @@
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.PrimitiveTasks;
-using Robust.Shared.Map;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 
 /// <summary>
-/// Deletes a key of a given type from blackboard
+/// Deletes a key from blackboard
 /// </summary>
-public abstract partial class RemoveKeyOperator<T> : HTNOperator
+public sealed partial class RemoveKeyOperator : HTNOperator
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     [DataField(required: true)]
     public string Key = default!;
 
     public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
     {
-        if (!blackboard.TryGetValue<T>(Key, out _, _entManager))
+        if (!blackboard.ContainsKey(Key))
             return HTNOperatorStatus.Failed;
 
-        blackboard.Remove<T>(Key);
+        blackboard.Remove(Key);
         return HTNOperatorStatus.Finished;
     }
 }
 
-public sealed partial class RemoveEntityKeyOperator : RemoveKeyOperator<EntityUid>
+/// <summary>
+/// Deletes a keys from blackboard
+/// </summary>
+public sealed partial class RemoveKeysOperator : HTNOperator
 {
+    [DataField(required: true)]
+    public List<string> Keys = default!;
 
-}
+    public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
+    {
+        foreach (var key in Keys)
+        {
+            if (!blackboard.ContainsKey(key))
+                return HTNOperatorStatus.Failed;
+        }
 
-public sealed partial class RemoveEntityCoordinatesKeyOperator : RemoveKeyOperator<EntityCoordinates>
-{
+        foreach (var key in Keys)
+        {
+            blackboard.Remove(key);
+        }
 
-}
-
-public sealed partial class RemoveStringKeyOperator : RemoveKeyOperator<string>
-{
-
-}
-
-public sealed partial class RemoveBoolKeyOperator : RemoveKeyOperator<bool>
-{
-
-}
-
-public sealed partial class RemoveStringListKeyOperator : RemoveKeyOperator<List<string>>
-{
-
-}
-
-public sealed partial class RemoveBoolListKeyOperator : RemoveKeyOperator<List<bool>>
-{
-
-}
-
-public sealed partial class RemoveIntListKeyOperator : RemoveKeyOperator<List<int>>
-{
-
-}
-
-public sealed partial class RemoveFloatListKeyOperator : RemoveKeyOperator<List<float>>
-{
-
+        return HTNOperatorStatus.Finished;
+    }
 }

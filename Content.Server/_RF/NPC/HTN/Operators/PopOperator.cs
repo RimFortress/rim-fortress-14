@@ -38,7 +38,6 @@ public abstract partial class PopOperator<T> : HTNOperator
             return (false, null);
 
         var value = list.Pop();
-        list.Remove(value);
 
         return (true, new()
         {

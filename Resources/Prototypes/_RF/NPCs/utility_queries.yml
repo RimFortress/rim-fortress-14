@@ -87,6 +87,24 @@
         preset: TargetDistance
 
 - type: utilityQuery
+  id: BloodLevelHeal
+  query:
+    - !type:ComponentQuery
+      components:
+        - type: Healing
+          damageContainers:
+            - Biological
+          damage:
+            types:
+              Heat: 0
+    - !type:BloodHealingFilter
+      invert: true
+  considerations:
+    - !type:TargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
   id: HeatMelee
   query:
     - !type:ComponentQuery
