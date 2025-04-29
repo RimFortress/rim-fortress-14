@@ -1,7 +1,7 @@
 - type: utilityQuery
   id: TargetMaterials
   query:
-    - !type:ComponentQuery
+    - !type:MapComponentQuery
       components:
         - type: Stack
           stackType: Steel # Just serialization stuff
@@ -18,7 +18,7 @@
 - type: utilityQuery
   id: TargetTags
   query:
-    - !type:ComponentQuery
+    - !type:MapComponentQuery
       components:
         - type: Tag
     - !type:TagFilter
@@ -34,7 +34,7 @@
 - type: utilityQuery
   id: TargetTool
   query:
-    - !type:ComponentQuery
+    - !type:MapComponentQuery
       components:
         - type: Tool
     - !type:ToolQualityFilter
@@ -71,7 +71,7 @@
 - type: utilityQuery
   id: TargetHeal
   query:
-    - !type:ComponentQuery
+    - !type:MapComponentQuery
       components:
         - type: Healing
           damageContainers:
@@ -89,7 +89,7 @@
 - type: utilityQuery
   id: BloodLevelHeal
   query:
-    - !type:ComponentQuery
+    - !type:MapComponentQuery
       components:
         - type: Healing
           damageContainers:
@@ -107,7 +107,7 @@
 - type: utilityQuery
   id: HeatMelee
   query:
-    - !type:ComponentQuery
+    - !type:MapComponentQuery
       components:
         - type: MeleeWeapon
           damage:
