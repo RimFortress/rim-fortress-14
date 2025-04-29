@@ -20,7 +20,7 @@
   onFinish: IdleCompound
   tempKeys:
     - Item
-  startWhitelist:
+  targetWhitelist:
     components:
       - HTN
   startPreconditions:
@@ -56,7 +56,7 @@
   compound: PickUpCompound
   onFinish: IdleCompound
   targetKey: PickUpTarget
-  startWhitelist:
+  targetWhitelist:
     components:
       - Item
   startPreconditions:
@@ -83,7 +83,7 @@
   tempKeys:
     - Tool
     - ToolQuality
-  startWhitelist:
+  targetWhitelist:
     components:
       - Door
   startPreconditions:
@@ -118,7 +118,7 @@
     - ToolQualityTarget
     - ToolFuelTarget
     - ComponentTarget
-  startWhitelist:
+  targetWhitelist:
     components:
       - Construction
   startPreconditions:
@@ -143,7 +143,7 @@
     - Tags
     - AllTags
     - ItemEntityTarget
-  startWhitelist:
+  targetWhitelist:
     tags:
       - Diggable
   finishPreconditions:
@@ -159,7 +159,7 @@
   overlayColor: "#00D5FF"
   compound: FreeHandInteractCompound
   onFinish: IdleCompound
-  startWhitelist:
+  targetWhitelist:
     tags:
       - HandGatherable
   finishPreconditions:
@@ -180,7 +180,7 @@
     - Item
     - DamageType
     - DamageContainer
-  startWhitelist:
+  targetWhitelist:
     components:
       - Damageable
       - HTN

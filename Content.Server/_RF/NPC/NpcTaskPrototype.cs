@@ -38,7 +38,7 @@ public sealed partial class NpcTaskPrototype : IPrototype
     /// Conditions to be imposed on the task target to start execution
     /// </summary>
     [DataField]
-    public EntityWhitelist? StartWhitelist;
+    public EntityWhitelist? TargetWhitelist;
 
     /// <summary>
     /// Additional conditions required to start the task

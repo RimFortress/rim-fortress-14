@@ -82,7 +82,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 || FindSatisfiedTask(entity, target, sortedTasks) is not { } task)
                 continue;
 
-            if (task.StartWhitelist == null)
+            if (task.TargetWhitelist == null)
             {
                 if (previousTargets.Count == 0)
                 {
@@ -151,11 +151,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         foreach (var proto in tasks)
         {
-            if (proto.StartWhitelist == null)
+            if (proto.TargetWhitelist == null)
                 task = proto;
 
             if (target != null
-                && !_whitelist.IsWhitelistPass(proto.StartWhitelist, target.Value)
+                && !_whitelist.IsWhitelistPass(proto.TargetWhitelist, target.Value)
                 || uid == target && !proto.SelfPerform
                 || _tasks.TryGetValue((target, target != null ? Transform(target.Value).Coordinates : null, proto.ID), out var list)
                 && list.Count >= proto.MaxPerformers)
