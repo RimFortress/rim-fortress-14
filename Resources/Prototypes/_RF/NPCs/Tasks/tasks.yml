@@ -81,7 +81,7 @@
   onFinish: IdleCompound
   priority: 10
   tempKeys:
-    - Tool
+    - PickUpTarget
     - ToolQuality
   targetWhitelist:
     components:
@@ -142,7 +142,7 @@
   tempKeys:
     - Tags
     - AllTags
-    - ItemEntityTarget
+    - PickUpTarget
   targetWhitelist:
     tags:
       - Diggable
@@ -177,7 +177,7 @@
   compound: HealCompound
   onFinish: IdleCompound
   tempKeys:
-    - Item
+    - PickUpTarget
     - DamageType
     - DamageContainer
   targetWhitelist:
