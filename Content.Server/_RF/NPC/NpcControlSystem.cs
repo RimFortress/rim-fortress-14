@@ -24,7 +24,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
-    private readonly Dictionary<(EntityUid? Entity, EntityCoordinates? Coords, ProtoId<NpcTaskPrototype> Proto), List<EntityUid>> _tasks = new();
+    private readonly Dictionary<(EntityUid? Entity, ProtoId<NpcTaskPrototype> Proto), List<EntityUid>> _tasks = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -157,7 +157,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (target != null
                 && !_whitelist.IsWhitelistPass(proto.TargetWhitelist, target.Value)
                 || uid == target && !proto.SelfPerform
-                || _tasks.TryGetValue((target, target != null ? Transform(target.Value).Coordinates : null, proto.ID), out var list)
+                || _tasks.TryGetValue((target, proto.ID), out var list)
                 && list.Count >= proto.MaxPerformers)
                 continue;
 
@@ -199,7 +199,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             || !_controllableQuery.TryComp(entity, out var control))
             return;
 
-        var task = (target, coords, proto.ID);
+        var task = (target, proto.ID);
 
         if (!_tasks.ContainsKey(task))
             _tasks[task] = new();
@@ -238,7 +238,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         entity.Comp2.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         entity.Comp1.CurrentTask = null;
 
-        foreach (var ((_, _, protoId), list) in _tasks)
+        foreach (var ((_, protoId), list) in _tasks)
         {
             if (protoId != proto.ID)
                 continue;
