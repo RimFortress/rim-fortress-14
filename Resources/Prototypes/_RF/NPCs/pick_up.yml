@@ -1,67 +1,63 @@
 - type: htnCompound
   id: PickUpCompound
   branches:
-    # Unbuckle
+    # Move to target
     - preconditions:
-        - !type:BuckledPrecondition
-          isBuckled: true
+        - !type:KeyExistsPrecondition
+          key: PickUpTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: PickUpTarget
+          rangeKey: InteractRange
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:UnbuckleOperator
-
-    # Unpull
-    - preconditions:
-        - !type:PulledPrecondition
-          isPulled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnPullOperator
-
-    # Leave the container
-    - preconditions:
-        - !type:InContainerPrecondition
-          isInContainer: true
-      tasks:
+          operator: !type:EntityCoordinatesOperator
+            targetKey: PickUpTarget
         - !type:HTNCompoundTask
-          task: EscapeCompound
+          task: MoveToInteractCompound
 
     # Remove anything from the hands that prevents from picking up the item
     - preconditions:
         - !type:ActiveHandEntityPrecondition
         - !type:KeyExistsPrecondition
-          key: Target
+          key: PickUpTarget
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Target
+          targetKey: PickUpTarget
           invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:StorageOperator
+    - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:KeyExistsPrecondition
+          key: PickUpTarget
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:DropOperator
 
-    # Move to target and pick up
+    # Pick up the item
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: Target
-        - !type:ActiveHandFreePrecondition
+          key: PickUpTarget
+        - !type:TargetInRangePrecondition
+          targetKey: PickUpTarget
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
-        - !type:HTNPrimitiveTask
           operator: !type:EquipOperator
-            target: Target
+            target: PickUpTarget
 
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: Target
+          key: PickUpTarget
         - !type:EntityDeletedPrecondition
-          key: Target
+          key: PickUpTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
-            key: Target
+            key: PickUpTarget

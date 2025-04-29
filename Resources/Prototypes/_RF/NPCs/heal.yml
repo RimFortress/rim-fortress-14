@@ -1,30 +1,6 @@
 - type: htnCompound
   id: HealCompound
   branches:
-    # Unbuckle
-    - preconditions:
-        - !type:BuckledPrecondition
-          isBuckled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnbuckleOperator
-
-    # Unpull
-    - preconditions:
-        - !type:PulledPrecondition
-          isPulled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnPullOperator
-
-    # Leave the container
-    - preconditions:
-        - !type:InContainerPrecondition
-          isInContainer: true
-      tasks:
-        - !type:HTNCompoundTask
-          task: EscapeCompound
-
     # Turns out stopping the bleeding is not a very
     # important part of the healing and it goes away on its own,
     # so I think we can remove it
@@ -64,7 +40,7 @@
     # Finding the right medicine
     - preconditions:
         - !type:KeyNotExistsPrecondition
-          key: Item
+          key: PickUpTarget
         - !type:HasComponentPrecondition
           components:
             - type: ActiveDoAfter
@@ -76,89 +52,36 @@
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: TargetHeal
-            key: Item
+            key: PickUpTarget
 
-    # Go to the item we found
+    # Pick up finded item
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: Item
-        - !type:TargetNotInRangePrecondition
-          targetKey: Item
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Item
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
-
-    # Remove anything from the hands that prevents from picking up the item
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:ActiveHandEntityPrecondition
+          key: PickUpTarget
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          targetKey: PickUpTarget
           invert: true
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:StorageOperator
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
-
-    # Take the object in hand
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:TargetInRangePrecondition
-          targetKey: Item
-          rangeKey: InteractRange
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
-          invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EquipOperator
-            target: Item
-
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:EntityDeletedPrecondition
-          key: Item
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: Item
+        - !type:HTNCompoundTask
+          task: PickUpTarget
 
     # Go to the target for healing if it's far away
     - preconditions:
-        - !type:KeysExistsPrecondition
-            keys:
-              - Target
-              - Item
+        - !type:KeyExistsPrecondition
+          key: Target
         - !type:TargetNotInRangePrecondition
           targetKey: Target
-          rangeKey: InteractRange
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          rangeKey: MeleeRange
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
 
     # And finally, healing the target
     - preconditions:
         - !type:KeysExistsPrecondition
             keys:
               - Target
-              - Item
+              - PickUpTarget
         - !type:TargetInRangePrecondition
           targetKey: Target
           rangeKey: InteractRange
@@ -167,14 +90,14 @@
             - type: ActiveDoAfter
           invert: true
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          targetKey: PickUpTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
-            key: Item
+            key: PickUpTarget
 
 
 - type: htnCompound
@@ -182,67 +105,23 @@
   branches:
     - preconditions:
         - !type:KeyNotExistsPrecondition
-          key: Item
+          key: PickUpTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: HeatMelee
-            key: Item
+            key: PickUpTarget
 
-    # Go to the item we found
+    # Pick up finded item
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: Item
-        - !type:TargetNotInRangePrecondition
-          targetKey: Item
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Item
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
-
-    # Remove anything from the hands that prevents from picking up the item
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:ActiveHandEntityPrecondition
+          key: PickUpTarget
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          targetKey: PickUpTarget
           invert: true
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:StorageOperator
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
-
-    # Take the object in hand
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:TargetInRangePrecondition
-          targetKey: Item
-          rangeKey: InteractRange
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
-          invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EquipOperator
-            target: Item
-
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:EntityDeletedPrecondition
-          key: Item
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: Item
+        - !type:HTNCompoundTask
+          task: PickUpTarget
 
     # Go to the target for healing if it's far away
     - preconditions:
@@ -252,43 +131,28 @@
           targetKey: Target
           rangeKey: MeleeRange
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: MeleeRange
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
 
     - preconditions:
         - !type:KeysExistsPrecondition
             keys:
               - Target
-              - Item
+              - PickUpTarget
         - !type:TargetInRangePrecondition
           targetKey: Target
           rangeKey: MeleeRange
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          targetKey: PickUpTarget
         - !type:BleedingPrecondition
           targetKey: Target
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:MeleeOperator
             targetKey: Target
-
-    - preconditions:
-        - !type:KeysExistsPrecondition
-            keys:
-              - Target
-              - Item
-        - !type:BleedingPrecondition
-          targetKey: Target
-          invert: true
-      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
-            key: Item
+            key: PickUpTarget
 
 
 - type: htnCompound
@@ -296,67 +160,23 @@
   branches:
     - preconditions:
         - !type:KeyNotExistsPrecondition
-          key: Item
+          key: PickUpTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: BloodLevelHeal
-            key: Item
+            key: PickUpTarget
 
-    # Go to the item we found
+    # Pick up finded item
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: Item
-        - !type:TargetNotInRangePrecondition
-          targetKey: Item
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Item
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
-
-    # Remove anything from the hands that prevents from picking up the item
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:ActiveHandEntityPrecondition
+          key: PickUpTarget
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          targetKey: PickUpTarget
           invert: true
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:StorageOperator
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
-
-    # Take the object in hand
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:TargetInRangePrecondition
-          targetKey: Item
-          rangeKey: InteractRange
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
-          invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EquipOperator
-            target: Item
-
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:EntityDeletedPrecondition
-          key: Item
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: Item
+        - !type:HTNCompoundTask
+          task: PickUpTarget
 
     # Go to the target for healing if it's far away
     - preconditions:
@@ -366,24 +186,19 @@
           targetKey: Target
           rangeKey: MeleeRange
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: MeleeRange
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
 
     - preconditions:
         - !type:KeysExistsPrecondition
             keys:
               - Target
-              - Item
+              - PickUpTarget
         - !type:TargetInRangePrecondition
           targetKey: Target
           rangeKey: MeleeRange
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Item
+          targetKey: PickUpTarget
         - !type:BloodLevelPrecondition
           targetKey: Target
           lessThan: 1.0
@@ -391,17 +206,6 @@
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
-
-    - preconditions:
-        - !type:KeysExistsPrecondition
-            keys:
-              - Target
-              - Item
-        - !type:BloodLevelPrecondition
-          targetKey: Target
-          lessThan: 1.0
-          invert: true
-      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
-            key: Item
+            key: PickUpTarget

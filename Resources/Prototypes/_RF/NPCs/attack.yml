@@ -26,6 +26,20 @@
           task: EscapeCompound
 
     - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+            - type: MeleeWeapon
+              damage:
+                types:
+                  Slash: 0
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    - preconditions:
         - !type:ActiveHandFreePrecondition
         - !type:KeyNotExistsPrecondition
           key: Item
@@ -46,9 +60,6 @@
             key: Item
 
     - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:ActiveHandEntityPrecondition
         - !type:ActiveHandComponentPrecondition
           components:
             - type: Gun
@@ -57,11 +68,7 @@
                 types:
                   Slash: 0
           invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
-
-    - preconditions:
+        - !type:ActiveHandFreePrecondition
         - !type:KeyExistsPrecondition
           key: Item
       tasks:
@@ -94,7 +101,7 @@
         - !type:HTNPrimitiveTask
           operator: !type:SwitchBoltClosedOperator
 
-    # Drop the gun NOW!!!
+    # Drop the gun NOW!!! (if no ammo)
     - preconditions:
         - !type:ActiveHandComponentPrecondition
           components:

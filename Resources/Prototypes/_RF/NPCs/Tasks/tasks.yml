@@ -55,22 +55,23 @@
   overlayColor: "#00D5FF"
   compound: PickUpCompound
   onFinish: IdleCompound
+  targetKey: PickUpTarget
   startWhitelist:
     components:
       - Item
   startPreconditions:
     - !type:ActiveHandEntityIsPrecondition
-      targetKey: Target
+      targetKey: PickUpTarget
       invert: true
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
         - !type:KeyNotExistsPrecondition
-          key: Target
+          key: PickUpTarget
         - !type:EntityDeletedPrecondition
-          key: Target
+          key: PickUpTarget
         - !type:ActiveHandEntityIsPrecondition
-          targetKey: Target
+          targetKey: PickUpTarget
 
 - type: npcTask
   id: Pry
@@ -89,7 +90,6 @@
     - !type:DoorStatePrecondition
       key: Target
       state: Closed
-      invert: true
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:

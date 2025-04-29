@@ -206,6 +206,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         _tasks[task].Add(entity);
 
+        if (htn.Plan != null)
+            _htn.ShutdownPlan(htn);
+
         if (control.CurrentTask != null)
             FinishTask((entity, control, htn), _prototype.Index(control.CurrentTask.Value));
 
@@ -232,9 +235,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void FinishTask(Entity<ControllableNpcComponent, HTNComponent> entity, NpcTaskPrototype proto)
     {
-        if (entity.Comp2.Plan != null)
-            _htn.ShutdownPlan(entity.Comp2);
-
         entity.Comp2.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         entity.Comp1.CurrentTask = null;
 
@@ -329,7 +329,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 }
 
                 if (needFinish)
+                {
+                    if (htn.Plan != null)
+                        _htn.ShutdownPlan(htn);
+
                     FinishTask(new(uid, comp, htn), proto);
+                }
 
                 comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
             }

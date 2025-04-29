@@ -2,30 +2,6 @@
 - type: htnCompound
   id: InteractCompound
   branches:
-    # Unbuckle
-    - preconditions:
-        - !type:BuckledPrecondition
-          isBuckled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnbuckleOperator
-
-    # Unpull
-    - preconditions:
-        - !type:PulledPrecondition
-          isPulled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnPullOperator
-
-    # Leave the container
-    - preconditions:
-        - !type:InContainerPrecondition
-          isInContainer: true
-      tasks:
-        - !type:HTNCompoundTask
-          task: EscapeCompound
-
     # Move to the target
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -34,13 +10,8 @@
           targetKey: Target
           rangeKey: InteractRange
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
 
     # Interact
     - preconditions:
@@ -49,6 +20,10 @@
         - !type:TargetInRangePrecondition
           targetKey: Target
           rangeKey: InteractRange
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator

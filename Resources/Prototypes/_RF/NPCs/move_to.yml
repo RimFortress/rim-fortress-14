@@ -36,3 +36,58 @@
             targetKey: TargetCoordinates
             rangeKey: MoveToCloseRange
             removeKeyOnFinish: false
+
+- type: htnCompound
+  id: MoveToInteractCompound
+  branches:
+    # Unbuckle
+    - preconditions:
+        - !type:BuckledPrecondition
+          isBuckled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnbuckleOperator
+
+    # Unpull
+    - preconditions:
+        - !type:PulledPrecondition
+          isPulled: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    # Leave the container
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
+    # Move to target
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: TargetCoordinates
+        - !type:CoordinatesNotInRangePrecondition
+          targetKey: TargetCoordinates
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            targetKey: TargetCoordinates
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
+
+- type: htnCompound
+  id: MoveToEntityCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNCompoundTask
+          task: MoveToInteractCompound
