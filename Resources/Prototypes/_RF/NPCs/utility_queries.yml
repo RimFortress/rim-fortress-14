@@ -11,7 +11,7 @@
       invert: true
     - !type:InventoryFilter
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
 
@@ -27,7 +27,7 @@
       invert: true
     - !type:InventoryFilter
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
 
@@ -42,7 +42,7 @@
       invert: true
     - !type:InventoryFilter
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
 
@@ -53,7 +53,7 @@
       key: Component
     - !type:InventoryFilter
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
 
@@ -82,7 +82,7 @@
     - !type:HealingFilter
       invert: true
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
 
@@ -100,7 +100,7 @@
     - !type:BloodHealingFilter
       invert: true
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
 
@@ -117,6 +117,44 @@
       damageType: Heat
       invert: true
   considerations:
-    - !type:TargetDistanceCon
+    - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+- type: utilityQuery
+  id: Food
+  query:
+    - !type:MapComponentQuery
+      components:
+      - type: Food
+  considerations:
+    - !type:TargetIsAliveCon
+      curve: !type:InverseBoolCurve
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+    - !type:FoodValueCon
+      curve: !type:QuadraticCurve
+        slope: 1.0
+        exponent: 0.4
+    - !type:TargetAccessibleCon
+      curve: !type:BoolCurve
+
+- type: utilityQuery
+  id: Drink
+  query:
+  - !type:MapComponentQuery
+    components:
+    - type: Drink
+  considerations:
+  - !type:TargetIsAliveCon
+    curve: !type:InverseBoolCurve
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:DrinkValueCon
+    curve: !type:QuadraticCurve
+      slope: 1.0
+      exponent: 0.4
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve

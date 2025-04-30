@@ -14,7 +14,7 @@
       popsComponentsOverride:
         - type: HTN
           rootTask:
-            task: IdleCompound
+            task: RfIdleCompound
         - type: NpcFactionMember
           factions:
           - RimFortress

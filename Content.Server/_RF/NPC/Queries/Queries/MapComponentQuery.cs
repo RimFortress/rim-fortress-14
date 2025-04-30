@@ -27,7 +27,8 @@ public sealed partial class MapComponentQuery : RfUtilityQuery
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
         var mapId = _xformQuery.GetComponent(owner).MapID;
 
-        var enumerator = EntityManager.AllEntityQueryEnumerator(Components.GetType());
+        // It's clearly not the most optimized option
+        var enumerator = EntityManager.AllEntityQueryEnumerator(Components.Values.First().Component.GetType());
         while (enumerator.MoveNext(out var uid, out _))
         {
             if (!_xformQuery.TryComp(uid, out var xform) || xform.MapID != mapId)
@@ -36,7 +37,7 @@ public sealed partial class MapComponentQuery : RfUtilityQuery
             var hasComp = true;
             foreach (var comp in Components.Values)
             {
-                if (EntityManager.HasComponent(uid, comp.GetType()))
+                if (EntityManager.HasComponent(uid, comp.Component.GetType()))
                     continue;
 
                 hasComp = false;

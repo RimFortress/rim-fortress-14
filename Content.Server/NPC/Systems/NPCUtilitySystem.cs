@@ -31,7 +31,10 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 using System.Linq;
 
-using Content.Server._RF.NPC.Queries.Queries; // RimFortress
+// RimFortress Start
+using Content.Server._RF.NPC.Queries.Considerations;
+using Content.Server._RF.NPC.Queries.Queries;
+// RimFortress End
 
 namespace Content.Server.NPC.Systems;
 
@@ -301,7 +304,7 @@ public sealed class NPCUtilitySystem : EntitySystem
 
                 return 1f;
             }
-            case TargetDistanceCon:
+            case Queries.Considerations.TargetDistanceCon:
             {
                 var radius = blackboard.GetValueOrDefault<float>(blackboard.GetVisionRadiusKey(EntityManager), EntityManager);
 
@@ -319,6 +322,19 @@ public sealed class NPCUtilitySystem : EntitySystem
 
                 return Math.Clamp(distance / radius, 0f, 1f);
             }
+            // RimFortress Start
+            case NormTargetDistanceCon:
+            {
+                if (!TryComp(targetUid, out TransformComponent? targetXform) ||
+                    !TryComp(owner, out TransformComponent? xform))
+                    return 0f;
+
+                if (!targetXform.Coordinates.TryDistance(EntityManager, _transform, xform.Coordinates, out var distance))
+                    return 0f;
+
+                return 1f / distance;
+            }
+            // RimFortress End
             case TargetAmmoCon:
             {
                 if (!HasComp<GunComponent>(targetUid))
