@@ -1,8 +1,10 @@
 using Content.Client._RF.UserInterface.Controls;
+using Content.Client.ContextMenu.UI;
 using Content.Client.Gameplay;
 using Content.Client.GameTicking.Managers;
 using Content.Client.UserInterface.Controls;
 using Content.Client.UserInterface.Systems.Gameplay;
+using Content.Client.Verbs;
 using Content.Shared.Light.Components;
 using Robust.Client.GameObjects;
 using Robust.Client.Input;
@@ -15,12 +17,14 @@ namespace Content.Client._RF.UserInterface;
 public sealed class RimFortressState : GameplayStateBase
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
+    [Dependency] private readonly IInputManager _input  = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     private MetaDataSystem _meta = default!;
     private MapSystem _map = default!;
     private ClientGameTicker _ticker = default!;
+    private VerbSystem _verbs = default!;
 
     private bool _setup;
 
@@ -28,12 +32,14 @@ public sealed class RimFortressState : GameplayStateBase
     private MainViewport Viewport => UserInterfaceManager.ActiveScreen!.GetWidget<MainViewport>()!;
 
     private readonly GameplayStateLoadController _loadController;
+    private readonly EntityMenuUIController _entityMenuController;
 
     public RimFortressState()
     {
         IoCManager.InjectDependencies(this);
 
         _loadController = UserInterfaceManager.GetUIController<GameplayStateLoadController>();
+        _entityMenuController = UserInterfaceManager.GetUIController<EntityMenuUIController>();
     }
 
     protected override void Startup()
@@ -69,6 +75,7 @@ public sealed class RimFortressState : GameplayStateBase
         _meta = _entityManager.System<MetaDataSystem>();
         _map = _entityManager.System<MapSystem>();
         _ticker = _entityManager.System<ClientGameTicker>();
+        _verbs = _entityManager.System<VerbSystem>();
     }
 
     protected override void OnKeyBindStateChanged(ViewportBoundKeyEventArgs args)
@@ -77,6 +84,16 @@ public sealed class RimFortressState : GameplayStateBase
             base.OnKeyBindStateChanged(new ViewportBoundKeyEventArgs(args.KeyEventArgs, Viewport.Viewport));
         else
             base.OnKeyBindStateChanged(args);
+    }
+
+    public void OpenContextMenu()
+    {
+        if (_input.MouseScreenPosition is not { IsValid: true } screenPos)
+            return;
+
+        var coords = Viewport.Viewport.PixelToMap(screenPos.Position);
+        if (_verbs.TryGetEntityMenuEntities(coords, out var entities))
+            _entityMenuController.OpenRootMenu(entities);
     }
 
     public override void FrameUpdate(FrameEventArgs e)

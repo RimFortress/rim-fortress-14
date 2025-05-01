@@ -332,7 +332,7 @@ public sealed class NPCUtilitySystem : EntitySystem
                 if (!targetXform.Coordinates.TryDistance(EntityManager, _transform, xform.Coordinates, out var distance))
                     return 0f;
 
-                return 1f / distance;
+                return 1f - 1f / distance;
             }
             // RimFortress End
             case TargetAmmoCon:

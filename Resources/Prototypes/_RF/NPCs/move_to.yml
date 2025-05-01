@@ -26,11 +26,11 @@
           task: EscapeCompound
 
     # Move to target
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: TargetCoordinates
-      tasks:
+    - tasks:
         - !type:HTNPrimitiveTask
+          preconditions:
+            - !type:KeyExistsPrecondition
+              key: TargetCoordinates
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             targetKey: TargetCoordinates

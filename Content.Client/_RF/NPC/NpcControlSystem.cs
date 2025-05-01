@@ -1,8 +1,10 @@
 using System.Linq;
+using Content.Client._RF.UserInterface;
 using Content.Client.NPC.HTN;
 using Content.Shared._RF.NPC;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
+using Robust.Client.State;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
@@ -19,6 +21,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IOverlayManager _overlay = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IStateManager _state  = default!;
 
     public MapCoordinates? StartPoint { get; private set; }
     public MapCoordinates? EndPoint { get; private set; }
@@ -38,6 +41,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             .Register<SharedNpcControlSystem>();
 
         SubscribeNetworkEvent<NpcTaskInfoMessage>(OnTaskInfo);
+        SubscribeNetworkEvent<NpcTasksContextMenuMessage>(OnContextMenu);
     }
 
     public override void Shutdown()
@@ -95,6 +99,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         var task = new NpcTask(msg.Color, GetEntity(msg.Target), GetCoordinates(msg.TargetCoordinates));
         Tasks[GetEntity(msg.Entity)] = task;
+    }
+
+    private void OnContextMenu(NpcTasksContextMenuMessage msg)
+    {
+        if (_state.CurrentState is RimFortressState state)
+            state.OpenContextMenu();
     }
 
     public override void Update(float frameTime)

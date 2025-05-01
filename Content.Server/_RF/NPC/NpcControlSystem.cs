@@ -3,10 +3,12 @@ using Content.Server.Construction;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC;
+using Content.Shared.Database;
 using Content.Shared.Maps;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Physics;
+using Content.Shared.Verbs;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -24,6 +26,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
+    private readonly Dictionary<EntityUid, List<EntityUid>> _selected = new();
     private readonly Dictionary<(EntityUid? Entity, ProtoId<NpcTaskPrototype> Proto), List<EntityUid>> _tasks = new();
 
     /// <inheritdoc/>
@@ -33,6 +36,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         SubscribeNetworkEvent<NpcTaskRequest>(OnTaskRequest);
         SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
+        SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -73,14 +77,37 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (!TryComp(requester, out NpcControlComponent? control))
             return;
 
-        var sortedTasks = control.Tasks.Select(t => _prototype.Index(t)).OrderBy(x => x.Priority).ToList();
+        var allTasks = control.Tasks.Select(t => _prototype.Index(t)).ToList();
         var previousTargets = new List<TileRef>();
+        _selected[requester] = new();
+
+        var verb = false;
+        var satisfiedTasks = new Dictionary<EntityUid, List<NpcTaskPrototype>>();
 
         foreach (var entity in entities)
         {
             if (!CanControl(requester, entity)
-                || FindSatisfiedTask(entity, target, sortedTasks) is not { } task)
+                || FindSatisfiedTasks(entity, target, allTasks) is not { } satisfied)
                 continue;
+
+            satisfiedTasks.Add(entity, satisfied);
+            _selected[requester].Add(entity);
+
+            if (satisfied.Count > 1 || satisfied.FirstOrDefault(x => x.VerbOnly) != null)
+                verb = true;
+        }
+
+        if (verb)
+        {
+            RaiseNetworkEvent(new NpcTasksContextMenuMessage());
+            return;
+        }
+
+        _selected.Remove(requester);
+
+        foreach (var (entity, tasks) in satisfiedTasks)
+        {
+            var task = tasks[0];
 
             if (task.TargetWhitelist == null)
             {
@@ -137,35 +164,77 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
     }
 
+    private void OnGetVerbs(GetVerbsEvent<Verb> ev)
+    {
+        if (!TryComp(ev.User, out NpcControlComponent? control)
+            || !_selected.TryGetValue(ev.User, out var selected))
+            return;
+
+        var tasks = new Dictionary<NpcTaskPrototype, List<EntityUid>>();
+        foreach (var entity in selected)
+        {
+            if (FindSatisfiedTasks(entity, ev.Target, control.Tasks.Select(_prototype.Index).ToList()) is not { } suitable)
+                continue;
+
+            foreach (var task in suitable)
+            {
+                if (tasks.TryGetValue(task, out var value))
+                    value.Add(ev.Target);
+                else
+                    tasks.Add(task, new() { entity });
+            }
+        }
+
+        foreach (var (task, entities) in tasks)
+        {
+            ev.Verbs.Add(new()
+            {
+                Text = task.Name,
+                Icon = task.VerbIcon,
+                Message = task.Description,
+                Category = VerbCategory.NpcTask,
+                Impact = LogImpact.Low,
+                Act = () =>
+                {
+                    entities.ForEach(entity => SetTask(entity, task, ev.Target, null));
+                    _selected.Remove(ev.User);
+                },
+            });
+        }
+    }
+
     #endregion
 
     /// <summary>
-    /// Finds the most appropriate task for the target from the task list
+    /// Finds the suitable tasks for the target from the task list
     /// </summary>
-    private NpcTaskPrototype? FindSatisfiedTask(EntityUid uid, EntityUid? target, List<NpcTaskPrototype> tasks)
+    private List<NpcTaskPrototype>? FindSatisfiedTasks(EntityUid uid, EntityUid? target, List<NpcTaskPrototype> tasks)
     {
-        NpcTaskPrototype? task = null;
+        var suitable = new List<NpcTaskPrototype>();
 
         if (!_npc.TryGetNpc(uid, out var npc))
             return null;
 
         foreach (var proto in tasks)
         {
-            if (proto.TargetWhitelist == null)
-                task = proto;
+            if (target == null)
+            {
+                if (proto.TargetWhitelist == null)
+                    suitable.Add(proto);
 
-            if (target != null
-                && !_whitelist.IsWhitelistPass(proto.TargetWhitelist, target.Value)
+                continue;
+            }
+
+            if (!_whitelist.IsWhitelistPass(proto.TargetWhitelist, target.Value)
                 || uid == target && !proto.SelfPerform
-                || _tasks.TryGetValue((target, proto.ID), out var list)
+                || _tasks.TryGetValue(new(target, proto.ID), out var list)
                 && list.Count >= proto.MaxPerformers)
                 continue;
 
             var valid = true;
 
             // Set a temporary variable in NPCBlackboard to check conditions
-            if (target != null)
-                npc.Blackboard.SetValue(proto.TargetKey, target);
+            npc.Blackboard.SetValue(proto.TargetKey, target);
 
             // Checking the fulfillment of additional starting conditions
             foreach (var condition in proto.StartPreconditions)
@@ -177,16 +246,15 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 break;
             }
 
-            if (target != null)
-                npc.Blackboard.Remove<EntityUid>(proto.TargetKey);
+            npc.Blackboard.Remove<EntityUid>(proto.TargetKey);
 
             if (!valid)
                 continue;
 
-            return proto;
+            suitable.Add(proto);
         }
 
-        return task;
+        return suitable.Count == 0 ? null : suitable;
     }
 
     /// <summary>
@@ -207,7 +275,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         _tasks[task].Add(entity);
 
         if (htn.Plan != null)
+        {
+            _htn.ShutdownTask(htn.Plan.CurrentOperator, htn.Blackboard, HTNOperatorStatus.Failed);
             _htn.ShutdownPlan(htn);
+            htn.Plan = null;
+        }
 
         if (control.CurrentTask != null)
             FinishTask((entity, control, htn), _prototype.Index(control.CurrentTask.Value));
@@ -294,13 +366,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         return null;
     }
 
-    public bool CanControl(Entity<NpcControlComponent?> requester, Entity<ControllableNpcComponent?, MobStateComponent?> entity)
+    public bool CanControl(EntityUid requester, EntityUid entity)
     {
-        if (!Resolve(requester.Owner, ref requester.Comp)
-            || !Resolve(entity.Owner, ref entity.Comp1)
-            || !Resolve(entity.Owner, ref entity.Comp2)
-            || entity.Comp2.CurrentState != MobState.Alive
-            || !entity.Comp1.CanControl.Contains(requester))
+        if (!_controllableQuery.TryComp(entity, out var control)
+            || !TryComp(entity, out MobStateComponent? mobState)
+            || mobState.CurrentState != MobState.Alive
+            || !control.CanControl.Contains(requester))
             return false;
 
         return true;
@@ -331,7 +402,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 if (needFinish)
                 {
                     if (htn.Plan != null)
+                    {
+                        _htn.ShutdownTask(htn.Plan.CurrentOperator, htn.Blackboard, HTNOperatorStatus.Failed);
                         _htn.ShutdownPlan(htn);
+                        htn.Plan = null;
+                    }
 
                     FinishTask(new(uid, comp, htn), proto);
                 }

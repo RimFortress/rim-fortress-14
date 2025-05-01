@@ -63,7 +63,7 @@
           invert: true
       tasks:
         - !type:HTNCompoundTask
-          task: PickUpTarget
+          task: PickUpCompound
 
     # Go to the target for healing if it's far away
     - preconditions:
@@ -121,7 +121,7 @@
           invert: true
       tasks:
         - !type:HTNCompoundTask
-          task: PickUpTarget
+          task: PickUpCompound
 
     # Go to the target for healing if it's far away
     - preconditions:
@@ -176,7 +176,7 @@
           invert: true
       tasks:
         - !type:HTNCompoundTask
-          task: PickUpTarget
+          task: PickUpCompound
 
     # Go to the target for healing if it's far away
     - preconditions:

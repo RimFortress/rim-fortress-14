@@ -163,13 +163,13 @@
             rangeKey: MeleeRange
 
     # Attack in close combat if no gun is available
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetInRangePrecondition
-          targetKey: Target
-          rangeKey: MeleeRange
-      tasks:
+    - tasks:
         - !type:HTNPrimitiveTask
+          preconditions:
+            - !type:KeyExistsPrecondition
+              key: Target
+            - !type:TargetInRangePrecondition
+              targetKey: Target
+              rangeKey: MeleeRange
           operator: !type:MeleeOperator
             targetKey: Target

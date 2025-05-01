@@ -3,6 +3,8 @@ using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.Preconditions;
 using Content.Shared.Whitelist;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
+using Robust.Shared.Utility;
 
 namespace Content.Server._RF.NPC;
 
@@ -10,17 +12,50 @@ namespace Content.Server._RF.NPC;
 /// A prototype of the various complex tasks that <see cref="NpcControlComponent"/> owners can issue for NPCs
 /// </summary>
 [Prototype]
-public sealed partial class NpcTaskPrototype : IPrototype
+public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
 {
+    private ILocalizationManager _loc = default!;
+
     /// <inheritdoc/>
     [IdDataField, ViewVariables]
     public string ID { get; } = default!;
+
+    /// <summary>
+    /// Task name that is used when displayed in the context menu
+    /// </summary>
+    [DataField("Name")]
+    private string? _name;
+
+    public string Name => _loc.TryGetString($"npc-task-{ID}-name", out var name) ? name : _name ?? ID;
+
+    /// <summary>
+    /// Task description, which is shown as a tooltip in the context menu when hovering over it
+    /// </summary>
+    [DataField("Description")]
+    private string? _description;
+
+    public string? Description => _loc.TryGetString($"npc-task-{ID}-desc", out var desc) ? desc : _description;
 
     /// <summary>
     /// What color the execution of this task in NpcControlOverlay will be drawn in
     /// </summary>
     [DataField]
     public Color OverlayColor = Color.LightGray;
+
+    /// <summary>
+    /// Path to the icon of this task when displayed in the context menu
+    /// </summary>
+    [DataField("verbIcon")]
+    private string? _verbIcon;
+
+    public SpriteSpecifier.Texture? VerbIcon
+        => _verbIcon != null ? new SpriteSpecifier.Texture(new(_verbIcon)) : null;
+
+    /// <summary>
+    /// If true, the task can only be issued via the context menu
+    /// </summary>
+    [DataField]
+    public bool VerbOnly;
 
     /// <summary>
     /// HTNCompound that will be executed by entities with this task
@@ -59,12 +94,6 @@ public sealed partial class NpcTaskPrototype : IPrototype
     public int MaxPerformers = int.MaxValue;
 
     /// <summary>
-    /// Priority for checking this task
-    /// </summary>
-    [DataField]
-    public int Priority;
-
-    /// <summary>
     /// Could the target of this task be the entity that performs it
     /// </summary>
     [DataField]
@@ -93,4 +122,9 @@ public sealed partial class NpcTaskPrototype : IPrototype
     /// </summary>
     [DataField]
     public List<string> TempKeys = new();
+
+    void ISerializationHooks.AfterDeserialization()
+    {
+        _loc = IoCManager.Resolve<ILocalizationManager>();
+    }
 }
