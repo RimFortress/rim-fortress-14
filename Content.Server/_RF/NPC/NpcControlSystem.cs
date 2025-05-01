@@ -13,6 +13,7 @@ using Content.Shared.Whitelist;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 
 namespace Content.Server._RF.NPC;
 
@@ -21,6 +22,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
@@ -28,6 +30,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
     private readonly Dictionary<EntityUid, List<EntityUid>> _selected = new();
     private readonly Dictionary<(EntityUid? Entity, ProtoId<NpcTaskPrototype> Proto), List<EntityUid>> _tasks = new();
+    private readonly Dictionary<TimeSpan, EntityUid> _fails = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -37,6 +40,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         SubscribeNetworkEvent<NpcTaskRequest>(OnTaskRequest);
         SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
+        SubscribeLocalEvent<HtnPlanningFailed>(OnPlanningFailed);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -150,6 +154,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 || target != ev.Old)
                 continue;
 
+            if (_tasks.TryGetValue((ev.Old, control.CurrentTask!.Value), out var tasks))
+            {
+                _tasks[(ev.New, control.CurrentTask!.Value)] = tasks;
+                _tasks.Remove((ev.Old, control.CurrentTask!.Value));
+            }
+
             htn.Blackboard.SetValue(proto.TargetKey, ev.New);
 
             var msg = new NpcTaskInfoMessage
@@ -201,6 +211,15 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 },
             });
         }
+    }
+
+    private void OnPlanningFailed(HtnPlanningFailed ev)
+    {
+        if (!_controllableQuery.TryComp(ev.Entity, out var control)
+            || !_prototype.TryIndex(control.CurrentTask, out var proto))
+            return;
+
+        _fails.Add(_timing.CurTime + proto.FailAwaitTime, ev.Entity);
     }
 
     #endregion
@@ -267,6 +286,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             || !_controllableQuery.TryComp(entity, out var control))
             return;
 
+        if (control.CurrentTask != null)
+            FinishTask((entity, control, htn));
+
         var task = (target, proto.ID);
 
         if (!_tasks.ContainsKey(task))
@@ -281,10 +303,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             htn.Plan = null;
         }
 
-        if (control.CurrentTask != null)
-            FinishTask((entity, control, htn), _prototype.Index(control.CurrentTask.Value));
-
         control.CurrentTask = proto;
+        control.TaskTarget = target;
 
         if (target != null)
             npc.Blackboard.SetValue(proto.TargetKey, target);
@@ -305,19 +325,19 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         RaiseNetworkEvent(msg);
     }
 
-    private void FinishTask(Entity<ControllableNpcComponent, HTNComponent> entity, NpcTaskPrototype proto)
+    private void FinishTask(Entity<ControllableNpcComponent?, HTNComponent?> entity)
     {
+        if (!Resolve(entity, ref entity.Comp1)
+            || !Resolve(entity, ref entity.Comp2)
+            || !_prototype.TryIndex(entity.Comp1.CurrentTask, out var proto))
+            return;
+
+        if (_tasks.TryGetValue((entity.Comp1.TaskTarget, entity.Comp1.CurrentTask!.Value), out var list))
+            list.Remove(entity);
+
         entity.Comp2.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         entity.Comp1.CurrentTask = null;
-
-        foreach (var ((_, protoId), list) in _tasks)
-        {
-            if (protoId != proto.ID)
-                continue;
-
-            list.Remove(entity);
-            break;
-        }
+        entity.Comp1.TaskTarget = null;
 
         if (proto.DeleteKeysOnFinish)
         {
@@ -408,13 +428,24 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                         htn.Plan = null;
                     }
 
-                    FinishTask(new(uid, comp, htn), proto);
+                    FinishTask(new(uid, comp, htn));
                 }
 
                 comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
             }
 
             comp.TaskFinishAccumulator -= frameTime;
+        }
+
+        foreach (var (time, uid) in _fails)
+        {
+            if (time > _timing.CurTime)
+                continue;
+
+            if (TryComp(uid, out HTNComponent? htn) && htn.Plan == null)
+                FinishTask(new(uid, null, htn));
+
+            _fails.Remove(time);
         }
     }
 }

@@ -123,6 +123,13 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     [DataField]
     public List<string> TempKeys = new();
 
+    /// <summary>
+    /// The time to be waited after a task has been unsuccessfully planned.
+    /// If the NPC still fails to plan the task in this time, the task will be finished
+    /// </summary>
+    [DataField]
+    public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(5);
+
     void ISerializationHooks.AfterDeserialization()
     {
         _loc = IoCManager.Resolve<ILocalizationManager>();

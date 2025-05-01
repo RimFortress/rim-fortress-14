@@ -21,6 +21,12 @@ public sealed partial class ControllableNpcComponent : Component
     public ProtoId<NpcTaskPrototype>? CurrentTask;
 
     /// <summary>
+    /// Entity, target of the current task, if any
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? TaskTarget;
+
+    /// <summary>
     /// How often is there a check for finishing an task
     /// </summary>
     [DataField, ViewVariables]
