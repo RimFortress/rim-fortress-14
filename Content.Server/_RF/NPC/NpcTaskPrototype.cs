@@ -130,6 +130,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     [DataField]
     public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(5);
 
+    /// <inheritdoc/>
     void ISerializationHooks.AfterDeserialization()
     {
         _loc = IoCManager.Resolve<ILocalizationManager>();

@@ -101,6 +101,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 verb = true;
         }
 
+        // If there is more than one suitable task for at least one entity, call the context menu
         if (verb)
         {
             RaiseNetworkEvent(new NpcTasksContextMenuMessage());
@@ -113,33 +114,33 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         {
             var task = tasks[0];
 
-            if (task.TargetWhitelist == null)
+            if (task.TargetWhitelist != null)
             {
-                if (previousTargets.Count == 0)
-                {
-                    if (!TryComp(targetCoords.EntityId, out MapGridComponent? grid)
-                        || !_map.TryGetTileRef(targetCoords.EntityId, grid, targetCoords, out var tileRef)
-                        || _turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
-                        break;
-
-                    previousTargets.Add(tileRef);
-
-                    var tileCoords = _turf.GetTileCenter(tileRef);
-                    SetTask(entity, task, null, tileCoords);
-                    continue;
-                }
-
-                if (GetNeighborTile(previousTargets) is not { } tile)
-                    continue;
-
-                previousTargets.Add(tile);
-
-                var tileCenter = _turf.GetTileCenter(tile);
-                SetTask(entity, task, null, tileCenter);
+                SetTask(entity, task, target, null);
                 continue;
             }
 
-            SetTask(entity, task, target, null);
+            if (previousTargets.Count == 0)
+            {
+                if (!TryComp(targetCoords.EntityId, out MapGridComponent? grid)
+                    || !_map.TryGetTileRef(targetCoords.EntityId, grid, targetCoords, out var tileRef)
+                    || _turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+                    break;
+
+                previousTargets.Add(tileRef);
+
+                var tileCoords = _turf.GetTileCenter(tileRef);
+                SetTask(entity, task, null, tileCoords);
+                continue;
+            }
+
+            if (GetNeighborTile(previousTargets) is not { } tile)
+                continue;
+
+            previousTargets.Add(tile);
+
+            var tileCenter = _turf.GetTileCenter(tile);
+            SetTask(entity, task, null, tileCenter);
         }
     }
 
@@ -219,6 +220,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             || !_prototype.TryIndex(control.CurrentTask, out var proto))
             return;
 
+        // If the task planning fails, we start the countdown,
+        // at the end of which we check again whether the task planning succeeded or not
         _fails.Add(_timing.CurTime + proto.FailAwaitTime, ev.Entity);
     }
 
@@ -236,6 +239,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         foreach (var proto in tasks)
         {
+            // If the target is null, we select only tasks that do not require an entity target
             if (target == null)
             {
                 if (proto.TargetWhitelist == null)
@@ -338,17 +342,19 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         entity.Comp2.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         entity.Comp1.CurrentTask = null;
         entity.Comp1.TaskTarget = null;
+        var blackboard = entity.Comp2.Blackboard;
 
+        // Remove temporary keys from HTNBlackboard
         if (proto.DeleteKeysOnFinish)
         {
-            entity.Comp2.Blackboard.Remove<EntityUid>(proto.TargetKey);
-            entity.Comp2.Blackboard.Remove<EntityCoordinates>(proto.TargetCoordinatesKey);
+            blackboard.Remove<EntityUid>(proto.TargetKey);
+            blackboard.Remove<EntityCoordinates>(proto.TargetCoordinatesKey);
         }
 
         foreach (var key in proto.TempKeys)
         {
-            if (entity.Comp2.Blackboard.ContainsKey(key))
-                entity.Comp2.Blackboard.Remove(key);
+            if (blackboard.ContainsKey(key))
+                blackboard.Remove(key);
         }
 
         RaiseNetworkEvent(new NpcTaskInfoMessage
@@ -386,15 +392,15 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         return null;
     }
 
-    public bool CanControl(EntityUid requester, EntityUid entity)
+    /// <summary>
+    /// Checks if the user can control this NPC
+    /// </summary>
+    public bool CanControl(EntityUid user, EntityUid entity)
     {
-        if (!_controllableQuery.TryComp(entity, out var control)
-            || !TryComp(entity, out MobStateComponent? mobState)
-            || mobState.CurrentState != MobState.Alive
-            || !control.CanControl.Contains(requester))
-            return false;
-
-        return true;
+        return _controllableQuery.TryComp(entity, out var control)
+               && TryComp(entity, out MobStateComponent? mobState)
+               && mobState.CurrentState == MobState.Alive
+               && control.CanControl.Contains(user);
     }
 
     public override void Update(float frameTime)
@@ -402,41 +408,42 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var query = EntityQueryEnumerator<ControllableNpcComponent, HTNComponent>();
         while (query.MoveNext(out var uid, out var comp, out var htn))
         {
-            if (comp.CurrentTask == null)
+            if (!_prototype.TryIndex(comp.CurrentTask, out var proto))
                 continue;
 
-            if (comp.TaskFinishAccumulator < 0)
+            comp.TaskFinishAccumulator -= frameTime;
+
+            if (comp.TaskFinishAccumulator > 0)
+                continue;
+
+            var needFinish = proto.FinishPreconditions.Count != 0;
+            comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
+
+            // Check if the conditions for task finishing are met
+            foreach (var precondition in proto.FinishPreconditions)
             {
-                var proto = _prototype.Index<NpcTaskPrototype>(comp.CurrentTask);
-                var needFinish = proto.FinishPreconditions.Count != 0;
+                if (precondition.IsMet(htn.Blackboard))
+                    continue;
 
-                foreach (var precondition in proto.FinishPreconditions)
-                {
-                    if (precondition.IsMet(htn.Blackboard))
-                        continue;
-
-                    needFinish = false;
-                    break;
-                }
-
-                if (needFinish)
-                {
-                    if (htn.Plan != null)
-                    {
-                        _htn.ShutdownTask(htn.Plan.CurrentOperator, htn.Blackboard, HTNOperatorStatus.Failed);
-                        _htn.ShutdownPlan(htn);
-                        htn.Plan = null;
-                    }
-
-                    FinishTask(new(uid, comp, htn));
-                }
-
-                comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
+                needFinish = false;
+                break;
             }
 
-            comp.TaskFinishAccumulator -= frameTime;
+            if (!needFinish)
+                continue;
+
+            // Finishing the task
+            if (htn.Plan != null)
+            {
+                _htn.ShutdownTask(htn.Plan.CurrentOperator, htn.Blackboard, HTNOperatorStatus.Failed);
+                _htn.ShutdownPlan(htn);
+                htn.Plan = null;
+            }
+
+            FinishTask(new(uid, comp, htn));
         }
 
+        // Checking recently failed assignments
         foreach (var (time, uid) in _fails)
         {
             if (time > _timing.CurTime)
