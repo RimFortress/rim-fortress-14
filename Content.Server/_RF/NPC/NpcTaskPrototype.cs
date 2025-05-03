@@ -136,6 +136,12 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     [DataField]
     public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(5);
 
+    /// <summary>
+    /// Once at what interval a check for task completion will take place
+    /// </summary>
+    [DataField, ViewVariables]
+    public TimeSpan FinishCheckRate = TimeSpan.FromSeconds(1);
+
     /// <inheritdoc/>
     void ISerializationHooks.AfterDeserialization()
     {

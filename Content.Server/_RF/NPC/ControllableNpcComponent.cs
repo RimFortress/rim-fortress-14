@@ -26,12 +26,6 @@ public sealed partial class ControllableNpcComponent : Component
     [ViewVariables]
     public EntityUid? TaskTarget;
 
-    /// <summary>
-    /// How often is there a check for finishing an task
-    /// </summary>
-    [DataField, ViewVariables]
-    public float TaskFinishCheckRate = 1f;
-
     [ViewVariables]
-    public float TaskFinishAccumulator = 0f;
+    public TimeSpan TaskFinishCheckTime = TimeSpan.Zero;
 }

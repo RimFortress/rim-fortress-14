@@ -545,13 +545,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (!_prototype.TryIndex(comp.CurrentTask, out var proto))
                 continue;
 
-            comp.TaskFinishAccumulator -= frameTime;
-
-            if (comp.TaskFinishAccumulator > 0)
+            if (comp.TaskFinishCheckTime > _timing.CurTime)
                 continue;
 
+            comp.TaskFinishCheckTime = _timing.CurTime + proto.FinishCheckRate;
             var needFinish = proto.FinishPreconditions.Count != 0;
-            comp.TaskFinishAccumulator = comp.TaskFinishCheckRate;
 
             // Check if the conditions for task finishing are met
             foreach (var precondition in proto.FinishPreconditions)
