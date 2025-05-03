@@ -8,8 +8,12 @@
                               BorderColor="#1E1E22DD" BorderThickness="2"/>
         </PanelContainer.PanelOverride>
         <BoxContainer Orientation="Vertical">
-            <controls:HotbarActionButton Name="BuildButton" Access="Public" IconModulate="#F77F00FF"
+            <controls:HotbarActionButton Name="BuildButton" Access="Public" IconModulate="#F77F00"
+                                         ToolTip="{Loc 'actions-hotbar-widgets-build-tooltip'}"
                                          IconTexturePath="/Textures/_RF/Interface/hammer-solid.svg.192dpi.png"/>
+            <controls:HotbarActionButton Name="PassiveTasksButton" Access="Public" IconModulate="#FFFFFF"
+                                         ToolTip="{Loc 'actions-hotbar-widgets-passive-tasks-tooltip'}"
+                                         IconTexturePath="/Textures/_RF/Interface/vector-square-solid.svg.192dpi.png"/>
         </BoxContainer>
     </PanelContainer>
 </controls:ActionsHotbarWidget>

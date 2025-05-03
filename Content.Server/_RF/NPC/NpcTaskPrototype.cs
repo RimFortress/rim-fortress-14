@@ -58,6 +58,12 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     public bool VerbOnly;
 
     /// <summary>
+    /// Can this task be set as a passive task, i.e. a task that has a target but currently has no active performer
+    /// </summary>
+    [DataField]
+    public bool Passive;
+
+    /// <summary>
     /// HTNCompound that will be executed by entities with this task
     /// </summary>
     [DataField(required: true)]

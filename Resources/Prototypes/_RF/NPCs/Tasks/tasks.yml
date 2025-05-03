@@ -17,6 +17,7 @@
   verbOnly: true
   compound: AttackTargetCompound
   onFinish: RfIdleCompound
+  passive: true
   tempKeys:
     - Item
   targetWhitelist:
@@ -131,9 +132,10 @@
   name: Dig
   maxPerformers: 1
   overlayColor: "#E36414"
-  verbIcon: /Textures/_RF/Interface/person-digging-solid.svg.192dpi.png
+  verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   compound: DigCompound
   onFinish: RfIdleCompound
+  passive: true
   tempKeys:
     - Tags
     - AllTags
@@ -149,7 +151,7 @@
   id: FreeHandInteract
   name: Interact
   overlayColor: "#00D5FF"
-  verbIcon: /Textures/_RF/Interface/hand-pointer-solid.svg.192dpi.png
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
   compound: FreeHandInteractCompound
   onFinish: RfIdleCompound
   targetWhitelist:
