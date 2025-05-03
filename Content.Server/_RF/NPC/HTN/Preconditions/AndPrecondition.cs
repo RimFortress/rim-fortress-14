@@ -6,7 +6,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// <summary>
 /// Combines multiple preconditions into a logical AND
 /// </summary>
-public sealed partial class AndPrecondition : HTNPrecondition
+public sealed partial class AndPrecondition : InvertiblePrecondition
 {
     [DataField]
     public List<HTNPrecondition> Preconditions = new();
@@ -20,7 +20,7 @@ public sealed partial class AndPrecondition : HTNPrecondition
         }
     }
 
-    public override bool IsMet(NPCBlackboard blackboard)
+    public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
         foreach (var precondition in Preconditions)
         {

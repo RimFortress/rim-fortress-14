@@ -1,5 +1,4 @@
 using Content.Server.NPC;
-using Content.Server.NPC.HTN.Preconditions;
 using Content.Shared.NPC.Systems;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
@@ -7,7 +6,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// <summary>
 /// Checks whether one entity is friendly to another entity
 /// </summary>
-public sealed partial class IsFriendlyPrecondition : HTNPrecondition
+public sealed partial class IsFriendlyPrecondition : InvertiblePrecondition
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
 
@@ -25,22 +24,16 @@ public sealed partial class IsFriendlyPrecondition : HTNPrecondition
     [DataField(required: true)]
     public string TargetKey = default!;
 
-    [DataField]
-    public bool Invert;
-
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
         _faction = sysManager.GetEntitySystem<NpcFactionSystem>();
     }
 
-    public override bool IsMet(NPCBlackboard blackboard)
+    public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        if (blackboard.TryGetValue<EntityUid>(Key, out var entity, _entManager)
-            && blackboard.TryGetValue<EntityUid>(TargetKey, out var target, _entManager)
-            && _faction.IsEntityFriendly(entity, target))
-            return !Invert;
-
-        return Invert;
+        return blackboard.TryGetValue<EntityUid>(Key, out var entity, _entManager)
+               && blackboard.TryGetValue<EntityUid>(TargetKey, out var target, _entManager)
+               && _faction.IsEntityFriendly(entity, target);
     }
 }

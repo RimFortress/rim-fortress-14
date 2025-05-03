@@ -1,5 +1,4 @@
 using Content.Server.NPC;
-using Content.Server.NPC.HTN.Preconditions;
 using Content.Shared.Damage;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
@@ -7,7 +6,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// <summary>
 /// Checks the total amount of damage to the entity
 /// </summary>
-public sealed partial class TotalDamagePrecondition : HTNPrecondition
+public sealed partial class TotalDamagePrecondition : InvertiblePrecondition
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
 
@@ -20,21 +19,13 @@ public sealed partial class TotalDamagePrecondition : HTNPrecondition
     [DataField]
     public float? LessThan;
 
-    [DataField]
-    public bool Invert;
-
-    public override bool IsMet(NPCBlackboard blackboard)
+    public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
         if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entManager)
             || !_entManager.TryGetComponent(uid, out DamageableComponent? damageable))
-            return Invert;
+            return false;
 
-        if (MoreThan != null && damageable.TotalDamage.Float() > MoreThan)
-            return !Invert;
-
-        if (LessThan != null && damageable.TotalDamage.Float() < LessThan)
-            return !Invert;
-
-        return Invert;
+        return MoreThan != null && damageable.TotalDamage.Float() > MoreThan
+               || LessThan != null && damageable.TotalDamage.Float() < LessThan;
     }
 }
