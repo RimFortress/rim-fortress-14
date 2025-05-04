@@ -41,6 +41,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
+    [Dependency] private readonly NpcControlSystem _npc = default!;
 
     /// <summary>
     /// A queue of pending requests to spawn starting settlements
@@ -137,8 +138,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         foreach (var pop in pops)
         {
-            var comp = EnsureComp<ControllableNpcComponent>(pop);
-            comp.CanControl.Add(player);
+            _npc.AddNpcControl(player.Owner, pop);
         }
 
         player.Comp.Pops.AddRange(pops);

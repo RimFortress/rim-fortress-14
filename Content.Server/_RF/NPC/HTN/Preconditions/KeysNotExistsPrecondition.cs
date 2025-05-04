@@ -4,9 +4,9 @@ using Content.Server.NPC.HTN.Preconditions;
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
 /// <summary>
-/// Checks if the entire list of keys exists
+/// Checks if the entire list of keys not exists
 /// </summary>
-public sealed partial class KeysExistsPrecondition : HTNPrecondition
+public sealed partial class KeysNotExistsPrecondition : HTNPrecondition
 {
     [DataField]
     public List<string> Keys = new();
@@ -15,7 +15,7 @@ public sealed partial class KeysExistsPrecondition : HTNPrecondition
     {
         foreach (var key in Keys)
         {
-            if (!blackboard.ContainsKey(key))
+            if (blackboard.ContainsKey(key))
                 return false;
         }
 

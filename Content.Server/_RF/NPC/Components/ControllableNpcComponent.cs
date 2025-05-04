@@ -1,11 +1,11 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Components;
 
 /// <summary>
 /// Npc that can be controlled by the player
 /// </summary>
-[RegisterComponent]
+[RegisterComponent, Access(typeof(NpcControlSystem))]
 public sealed partial class ControllableNpcComponent : Component
 {
     /// <summary>

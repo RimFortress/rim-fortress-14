@@ -10,6 +10,10 @@
           task: EatCompound
 
     - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RoutineTaskOperator
+
+    - tasks:
         - !type:HTNCompoundTask
           task: IdleMoveCompound
 

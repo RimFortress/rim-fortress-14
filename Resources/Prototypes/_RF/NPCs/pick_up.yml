@@ -1,6 +1,18 @@
 - type: htnCompound
   id: PickUpCompound
   branches:
+    - preconditions:
+        - !type:OrPrecondition
+          preconditions:
+            - !type:EntityDeletedPrecondition
+              key: PickUpTarget
+            - !type:InInventoryPrecondition
+              targetKey: PickUpTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: PickUpTarget
+
     # Move to target
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -51,13 +63,3 @@
         - !type:HTNPrimitiveTask
           operator: !type:EquipOperator
             target: PickUpTarget
-
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: PickUpTarget

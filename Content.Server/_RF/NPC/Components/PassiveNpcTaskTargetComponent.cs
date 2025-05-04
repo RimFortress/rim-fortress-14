@@ -1,12 +1,12 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Components;
 
 /// <summary>
 /// An entity that is the passive target of a certain task.
 /// Entities for active task targets can be selected from the list of such entities
 /// </summary>
-[RegisterComponent]
+[RegisterComponent, Access(typeof(NpcControlSystem))]
 public sealed partial class PassiveNpcTaskTargetComponent : Component
 {
     /// <summary>

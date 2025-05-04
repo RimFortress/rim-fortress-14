@@ -155,6 +155,10 @@
   compound: FreeHandInteractCompound
   onFinish: RfIdleCompound
   targetWhitelist:
+    requireAll: false
+    components:
+      - Strap
+      - Door
     tags:
       - HandGatherable
   finishPreconditions:

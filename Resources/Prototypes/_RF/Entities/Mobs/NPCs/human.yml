@@ -24,3 +24,7 @@
       factions:
       - RimFortress
     - type: ControllableNpc
+    - type: RoutineNpcTasks
+      tasks:
+        - id: Dig
+        - id: Attack

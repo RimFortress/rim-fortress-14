@@ -53,6 +53,8 @@
 
     # Goes to the target if we're far from it.
     - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
         - !type:ActiveHandEntityTagsPrecondition
           tags:
             - Pickaxe
@@ -65,6 +67,8 @@
 
     # And finally, digging
     - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
         - !type:ActiveHandEntityTagsPrecondition
           tags:
             - Pickaxe

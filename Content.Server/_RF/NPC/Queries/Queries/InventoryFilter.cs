@@ -18,6 +18,6 @@ public sealed partial class InventoryFilter : RfUtilityQueryFilter
 
     public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
     {
-        return _inventory.InSlotWithFlags(uid, SlotFlags.All);
+        return _inventory.TryGetContainingSlot(uid, out _);
     }
 }

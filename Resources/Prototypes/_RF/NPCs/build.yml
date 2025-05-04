@@ -35,8 +35,7 @@
     - preconditions:
         - !type:KeyExistsPrecondition
           key: Target
-        - !type:KeysExistsPrecondition
-          invert: true
+        - !type:KeysNotExistsPrecondition
           keys:
             - ItemEntityTarget
             - MaterialTarget
@@ -58,8 +57,7 @@
     - preconditions:
         - !type:KeyExistsPrecondition
           key: Target
-        - !type:KeysExistsPrecondition
-          invert: true
+        - !type:KeysNotExistsPrecondition
           keys:
             - ItemEntityTarget
             - MaterialTarget
@@ -179,6 +177,20 @@
     # BUILD #
     #########
 
+    # If someone else has used the item,
+    # the ItemEntityTarget is invalid and npc have to look for a new material
+    - preconditions:
+        - !type:OrPrecondition
+          preconditions:
+            - !type:EntityDeletedPrecondition
+              key: ItemEntityTarget
+            - !type:InInventoryPrecondition
+              targetKey: ItemEntityTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: ItemEntityTarget
+
     # Goes to the found object for construction
     - preconditions:
         - !type:KeyExistsPrecondition
@@ -295,19 +307,6 @@
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: ItemEntityTarget
-
-    # Yes, it looks very crutchy,
-    # if someone else has used the item,
-    # the ItemEntityTarget is invalid and npc have to look for a new material
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: ItemEntityTarget
-        - !type:EntityDeletedPrecondition
-          key: ItemEntityTarget
-      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
             key: ItemEntityTarget
