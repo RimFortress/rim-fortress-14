@@ -5,10 +5,11 @@
       components:
         - type: Stack
           stackType: Steel # Just serialization stuff
-    - !type:MaterialFilter
+    - !type:MaterialKeyFilter
       targetKey: Material
       amountKey: Amount
       invert: true
+    - !type:InventoryFilter
     - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
@@ -21,10 +22,11 @@
     - !type:MapComponentQuery
       components:
         - type: Tag
-    - !type:TagFilter
+    - !type:TagKeyFilter
       tagsKey: Tags
       requireAllKey: AllTags
       invert: true
+    - !type:InventoryFilter
     - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
@@ -37,9 +39,10 @@
     - !type:MapComponentQuery
       components:
         - type: Tool
-    - !type:ToolQualityFilter
+    - !type:ToolQualityKeyFilter
       qualityKey: ToolQuality
       invert: true
+    - !type:InventoryFilter
     - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
@@ -49,8 +52,9 @@
 - type: utilityQuery
   id: TargetComponent
   query:
-    - !type:KeyComponentQuery
+    - !type:ComponentKeyQuery
       key: Component
+    - !type:InventoryFilter
     - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
@@ -125,6 +129,23 @@
         preset: TargetDistance
 
 - type: utilityQuery
+  id: Pickaxe
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Tag
+    - !type:TagFilter
+      tags:
+        - Pickaxe
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
   id: Food
   query:
     - !type:MapComponentQuery
@@ -152,14 +173,30 @@
       - type: Drink
     - !type:InHandsFilter
   considerations:
-  - !type:TargetIsAliveCon
-    curve: !type:InverseBoolCurve
-  - !type:NormTargetDistanceCon
-    curve: !type:PresetCurve
-      preset: TargetDistance
-  - !type:DrinkValueCon
-    curve: !type:QuadraticCurve
-      slope: 1.0
-      exponent: 0.4
-  - !type:TargetAccessibleCon
-    curve: !type:BoolCurve
+    - !type:TargetIsAliveCon
+      curve: !type:InverseBoolCurve
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+    - !type:DrinkValueCon
+      curve: !type:QuadraticCurve
+        slope: 1.0
+        exponent: 0.4
+    - !type:TargetAccessibleCon
+      curve: !type:BoolCurve
+
+# Tasks targets query
+
+- type: utilityQuery
+  id: BuildTaskTarget
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Construction
+          graph: FloorBananium
+          node: BananiumFloor
+    - !type:ConstructionFinishedFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance

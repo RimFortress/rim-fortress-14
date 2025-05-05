@@ -2,6 +2,7 @@ using Content.Server._RF.NPC.Components;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.Preconditions;
+using Content.Server.NPC.Queries;
 using Content.Shared.Whitelist;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -24,7 +25,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// <summary>
     /// Task name that is used when displayed in the context menu
     /// </summary>
-    [DataField("Name")]
+    [DataField("name")]
     private string? _name;
 
     public string Name => _loc.TryGetString($"npc-task-{ID}-name", out var name) ? name : _name ?? ID;
@@ -32,7 +33,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// <summary>
     /// Task description, which is shown as a tooltip in the context menu when hovering over it
     /// </summary>
-    [DataField("Description")]
+    [DataField("description")]
     private string? _description;
 
     public string? Description => _loc.TryGetString($"npc-task-{ID}-desc", out var desc) ? desc : _description;
@@ -81,6 +82,13 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// </summary>
     [DataField]
     public EntityWhitelist? TargetWhitelist;
+
+    /// <summary>
+    /// Utility queue that can be used to automatically find the target of routine tasks.
+    /// </summary>
+    /// <seealso cref="RoutineNpcTasksComponent"/>
+    [DataField]
+    public ProtoId<UtilityQueryPrototype>? TargetsQuery;
 
     /// <summary>
     /// Additional conditions required to start the task
@@ -135,7 +143,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// If the NPC still fails to plan the task in this time, the task will be finished
     /// </summary>
     [DataField]
-    public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(2);
+    public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Once at what interval a check for task completion will take place

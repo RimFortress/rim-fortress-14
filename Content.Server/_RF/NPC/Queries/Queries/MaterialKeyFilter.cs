@@ -3,7 +3,7 @@ using Content.Shared.Stacks;
 
 namespace Content.Server._RF.NPC.Queries.Queries;
 
-public sealed partial class MaterialFilter : RfUtilityQueryFilter
+public sealed partial class MaterialKeyFilter : RfUtilityQueryFilter
 {
     private EntityQuery<StackComponent> _stackQuery;
 

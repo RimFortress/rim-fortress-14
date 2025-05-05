@@ -41,6 +41,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// </summary>
     public Dictionary<EntityUid, NpcTask> Tasks { get; } = new();
 
+    // TODO: Instead, it is worth storing this in the client side of the PassiveTaskTargetComponent
     public Dictionary<NpcTask, List<EntityUid>> PassiveTasks { get; } = new();
 
     /// <summary>

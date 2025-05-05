@@ -22,6 +22,7 @@
           tasks:
             - id: Dig
             - id: Attack
+            - id: Build
 
 - type: weightedRandom
   id: RandomBiome

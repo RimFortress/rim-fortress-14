@@ -7,7 +7,7 @@ namespace Content.Server._RF.NPC.Queries.Queries;
 /// <summary>
 /// Filters tools with a certain quality
 /// </summary>
-public sealed partial class ToolQualityFilter : RfUtilityQueryFilter
+public sealed partial class ToolQualityKeyFilter : RfUtilityQueryFilter
 {
     private EntityQuery<ToolComponent> _toolQuery;
 

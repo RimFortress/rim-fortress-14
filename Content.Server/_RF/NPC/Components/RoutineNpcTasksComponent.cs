@@ -61,7 +61,7 @@ public sealed partial class RoutineTaskData
     /// The time that this task cannot be called after a failed completion
     /// </summary>
     [DataField, ViewVariables]
-    public TimeSpan? CooldownOnFail = TimeSpan.FromSeconds(10);
+    public TimeSpan? CooldownOnFail;
 
     [ViewVariables]
     public TimeSpan? AvailableOn;

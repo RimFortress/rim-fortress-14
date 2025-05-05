@@ -7,49 +7,24 @@
           tags:
             - Pickaxe
           invert: true
-        - !type:KeyNotExistsPrecondition
-          key: PickUpTarget
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:SetStringListOperator
-            key: Tags
-            value:
-              - Pickaxe
-        - !type:HTNPrimitiveTask
-          operator: !type:SetBoolOperator
-            key: AllTags
-            value: true
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
-            proto: TargetTags
+            proto: Pickaxe
             key: PickUpTarget
-
-    # Go to the pickaxe we found
-    - preconditions:
-        - !type:ActiveHandEntityTagsPrecondition
-          tags:
-            - Pickaxe
-          invert: true
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
-          invert: true
-      tasks:
+        # Go to the pickaxe we found
         - !type:HTNCompoundTask
           task: PickUpCompound
 
     - preconditions:
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+        - !type:WieldedPrecondition
+          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:WieldOperator
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: PickUpTarget
 
     # Goes to the target if we're far from it.
     - preconditions:

@@ -26,8 +26,7 @@
   startPreconditions:
     - !type:MobStatePrecondition
       targetKey: Target
-      state: Dead
-      invert: true
+      state: Alive
     - !type:IsFriendlyPrecondition
       targetKey: Target
       invert: true
@@ -116,6 +115,7 @@
     - ToolQualityTarget
     - ToolFuelTarget
     - ComponentTarget
+  targetsQuery: BuildTaskTarget
   targetWhitelist:
     components:
       - Construction
@@ -150,6 +150,7 @@
 - type: npcTask
   id: FreeHandInteract
   name: Interact
+  maxPerformers: 1
   overlayColor: "#00D5FF"
   verbIcon: /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
   compound: FreeHandInteractCompound

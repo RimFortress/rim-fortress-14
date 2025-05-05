@@ -28,3 +28,4 @@
       tasks:
         - id: Dig
         - id: Attack
+        - id: Build

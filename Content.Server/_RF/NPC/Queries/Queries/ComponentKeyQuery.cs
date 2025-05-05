@@ -3,7 +3,7 @@ using Content.Server.NPC;
 namespace Content.Server._RF.NPC.Queries.Queries;
 
 
-public sealed partial class KeyComponentQuery : RfUtilityQuery
+public sealed partial class ComponentKeyQuery : RfUtilityQuery
 {
     /// <summary>
     /// Component to be filtered out
