@@ -1,25 +1,20 @@
-<p align="center"> <img alt="Space Station 14" width="880" height="300" src="https://raw.githubusercontent.com/space-wizards/asset-dump/de329a7898bb716b9d5ba9a0cd07f38e61f1ed05/github-logo.svg" /></p>
+RimFortress is a project inspired by the genre of settlement management games and is based on Space Station 14.
 
-Space Station 14 is a remake of SS13 that runs on [Robust Toolbox](https://github.com/space-wizards/RobustToolbox), our homegrown engine written in C#.
+To prevent people forking RobustToolbox, a "content" pack is loaded by the client and server. This content pack contains everything needed to play the game on one specific server this is the content pack for RimFortress.
 
-This is the primary repo for Space Station 14. To prevent people forking RobustToolbox, a "content" pack is loaded by the client and server. This content pack contains everything needed to play the game on one specific server.
-
-If you want to host or create content for SS14, this is the repo you need. It contains both RobustToolbox and the content pack for development of new content packs.
+If you want to host or create content for SS14, go to the [Space Station 14](https://github.com/space-wizards/space-station-14) repository as it contains both RobustToolbox and the content pack for development of new content packs and is the base for your fork.
 
 ## Links
 
-[Website](https://spacestation14.io/) | [Discord](https://discord.ss14.io/) | [Forum](https://forum.spacestation14.io/) | [Steam](https://store.steampowered.com/app/1255460/Space_Station_14/) | [Standalone Download](https://spacestation14.io/about/nightlies/)
+| [Steam](https://store.steampowered.com/app/1255460/Space_Station_14/) |
 
-## Documentation/Wiki
+## Documentation
 
-Our [docs site](https://docs.spacestation14.io/) has documentation on SS14s content, engine, game design and more. We also have lots of resources for new contributors to the project.
+The engine documentation and space station 14, on which our project is based, can be found on the https://docs.spacestation14.io/.
 
 ## Contributing
 
-We are happy to accept contributions from anybody. Get in Discord if you want to help. We've got a [list of issues](https://github.com/space-wizards/space-station-14-content/issues) that need to be done and anybody can pick them up. Don't be afraid to ask for help either!  
-Just make sure your changes and pull requests are in accordance with the [contribution guidelines](https://docs.spacestation14.com/en/general-development/codebase-info/pull-request-guidelines.html).
-
-We are not currently accepting translations of the game on our main repository. If you would like to translate the game into another language consider creating a fork or contributing to a fork.
+We are happy to accept contributions from anybody. Get in Discord if you want to help. We've got a [list of issues](https://github.com/RimFortress/rim-fortress-14/issues) that need to be done and anybody can pick them up. Don't be afraid to ask for help either!
 
 ## Building
 
@@ -31,8 +26,22 @@ We are not currently accepting translations of the game on our main repository. 
 
 ## License
 
-All code for the content repository is licensed under [MIT](https://github.com/space-wizards/space-station-14/blob/master/LICENSE.TXT).
+#### **1. Source Code**  
+All original code in this repository (unless explicitly stated otherwise) is licensed under **[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)** or any later version.  
 
-Most assets are licensed under [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) unless stated otherwise. Assets have their license and the copyright in the metadata file. [Example](https://github.com/space-wizards/space-station-14/blob/master/Resources/Textures/Objects/Tools/crowbar.rsi/meta.json).
+- Code created for **RimFortress** is located in `_RF/` directories or marked with special comments. [Example](https://github.com/RimFortress/rim-fortress-14/blob/master/Content.Server/NPC/Systems/NPCUtilitySystem.cs).  
+- Some files may be available under **alternative licenses** (noted in file headers or `.license` files). This enables compatibility with non-AGPL projects. Full license texts are available in `LICENSES/`.  
 
-Note that some assets are licensed under the non-commercial [CC-BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) or similar non-commercial licenses and will need to be removed if you wish to use this project commercially.
+#### **2. Dependencies & Third-Party Code**  
+- This repository incorporates code from **[space-wizards/space-station-14](https://github.com/space-wizards/space-station-14)**, licensed under the **[MIT License](https://github.com/space-wizards/space-station-14/blob/master/LICENSE.TXT)**.  
+- If using derived code, ensure compliance with **all applicable licenses**.  
+
+#### **3. Media Assets (Art, Sounds, Textures)**  
+- Most media files are licensed under **[CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)** unless otherwise specified. Authorship and licensing details are provided in metadata files.  
+- **Important**: Some assets use **non-commercial licenses** (e.g., [CC-BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/)). These **cannot be used in commercial projects**—remove or replace such files before commercial distribution.  
+
+#### **4. Commercial Use**  
+- AGPL-3.0 **permits commercial use** but requires:  
+  - Open-sourcing derivative works.  
+  - Preserving license notices and copyright.  
+- For commercialization, verify licenses of **all components** (especially NC-licensed media).
