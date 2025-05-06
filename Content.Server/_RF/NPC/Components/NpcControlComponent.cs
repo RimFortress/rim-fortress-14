@@ -1,14 +1,14 @@
 using Content.Shared._RF.NPC;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Components;
 
-[RegisterComponent]
+[RegisterComponent, Access(typeof(NpcControlSystem))]
 public sealed partial class NpcControlComponent : SharedNpcControlComponent
 {
     /// <summary>
     /// Tasks that this entity can issue
     /// </summary>
-    [DataField]
+    [DataField(required: true)]
     public List<ProtoId<NpcTaskPrototype>> Tasks = new();
 }

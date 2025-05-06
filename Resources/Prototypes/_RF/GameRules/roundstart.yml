@@ -10,14 +10,19 @@
       minMaxEventTiming:
         min: 600 #10 min
         max: 1800 #20 min
-      dayDuration: 1200 #20 min
+      dayDuration: 1800 #30 min
       popsComponentsOverride:
         - type: HTN
           rootTask:
-            task: IdleCompound
+            task: RfIdleCompound
         - type: NpcFactionMember
           factions:
           - RimFortress
+        - type: RoutineNpcTasks
+          tasks:
+            - id: Dig
+            - id: Attack
+            - id: Build
 
 - type: weightedRandom
   id: RandomBiome

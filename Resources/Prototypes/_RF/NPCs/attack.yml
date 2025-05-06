@@ -26,6 +26,20 @@
           task: EscapeCompound
 
     - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Gun
+            - type: MeleeWeapon
+              damage:
+                types:
+                  Slash: 0
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    - preconditions:
         - !type:ActiveHandFreePrecondition
         - !type:KeyNotExistsPrecondition
           key: Item
@@ -46,9 +60,6 @@
             key: Item
 
     - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Item
-        - !type:ActiveHandEntityPrecondition
         - !type:ActiveHandComponentPrecondition
           components:
             - type: Gun
@@ -57,11 +68,7 @@
                 types:
                   Slash: 0
           invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
-
-    - preconditions:
+        - !type:ActiveHandFreePrecondition
         - !type:KeyExistsPrecondition
           key: Item
       tasks:
@@ -69,7 +76,7 @@
           operator: !type:EquipOperator
             target: Item
         - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
+          operator: !type:RemoveKeyOperator
             key: Item
 
     - preconditions:
@@ -94,7 +101,7 @@
         - !type:HTNPrimitiveTask
           operator: !type:SwitchBoltClosedOperator
 
-    # Drop the gun NOW!!!
+    # Drop the gun NOW!!! (if no ammo)
     - preconditions:
         - !type:ActiveHandComponentPrecondition
           components:
@@ -156,13 +163,13 @@
             rangeKey: MeleeRange
 
     # Attack in close combat if no gun is available
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetInRangePrecondition
-          targetKey: Target
-          rangeKey: MeleeRange
-      tasks:
+    - tasks:
         - !type:HTNPrimitiveTask
+          preconditions:
+            - !type:KeyExistsPrecondition
+              key: Target
+            - !type:TargetInRangePrecondition
+              targetKey: Target
+              rangeKey: MeleeRange
           operator: !type:MeleeOperator
             targetKey: Target

@@ -1,0 +1,284 @@
+- type: htnCompound
+  id: HealCompound
+  branches:
+    - preconditions:
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetFloatOperator
+            targetKey: Time
+            amount: 0.5
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: Time
+
+    # Turns out stopping the bleeding is not a very
+    # important part of the healing and it goes away on its own,
+    # so I think we can remove it
+
+    # Stop bleeding
+    #- preconditions:
+    #    - !type:KeyExistsPrecondition
+    #      key: Target
+    #    - !type:BleedingPrecondition
+    #      targetKey: Target
+    #  tasks:
+    #    - !type:HTNCompoundTask
+    #      task: StopBleedingCompound
+
+    - preconditions:
+        - !type:TargetBuckledPrecondition
+          targetKey: Target
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: BuckleToBedCompound
+
+    # Restore blood level
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:BloodLevelPrecondition
+          targetKey: Target
+          lessThan: 1.0
+      tasks:
+        - !type:HTNCompoundTask
+          task: RestoreBloodLevelCompound
+
+    # Heal
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+      tasks:
+        - !type:HTNCompoundTask
+          task: BaseHealCompound
+
+- type: htnCompound
+  id: BaseHealCompound
+  branches:
+    # Finding the right medicine
+    - preconditions:
+        - !type:OrPrecondition
+          preconditions:
+            - !type:KeyNotExistsPrecondition
+              key: PickUpTarget
+            - !type:ActiveHandEntityIsPrecondition
+              targetKey: PickUpTarget
+              invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:GetEntityDamageOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: TargetHeal
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    # Go to the target for healing if it's far away
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - PickUpTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+      tasks:
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
+
+    # And finally, healing the target
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - PickUpTarget
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: PickUpTarget
+
+
+- type: htnCompound
+  id: StopBleedingCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: PickUpTarget
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: PickUpTarget
+
+    - preconditions:
+        - !type:OrPrecondition
+          preconditions:
+            - !type:KeyNotExistsPrecondition
+              key: PickUpTarget
+            - !type:ActiveHandEntityIsPrecondition
+              targetKey: PickUpTarget
+              invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: HeatMelee
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    # Go to the target for healing if it's far away
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - PickUpTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+      tasks:
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
+
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - PickUpTarget
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+        - !type:BleedingPrecondition
+          targetKey: Target
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MeleeOperator
+            targetKey: Target
+
+
+- type: htnCompound
+  id: RestoreBloodLevelCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: PickUpTarget
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: PickUpTarget
+
+    - preconditions:
+        - !type:OrPrecondition
+          preconditions:
+            - !type:KeyNotExistsPrecondition
+              key: PickUpTarget
+            - !type:ActiveHandEntityIsPrecondition
+              targetKey: PickUpTarget
+              invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: BloodLevelHeal
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    # Go to the target for healing if it's far away
+    - preconditions:
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - PickUpTarget
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+      tasks:
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
+
+    - preconditions:
+        - !type:KeysExistsPrecondition
+            keys:
+              - Target
+              - PickUpTarget
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MeleeRange
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+        - !type:BloodLevelPrecondition
+          targetKey: Target
+          lessThan: 1.0
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+
+
+- type: htnCompound
+  id: BuckleToBedCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: BedTarget
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MoveToCloseRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:PullOperator
+            targetKey: Target
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: BedTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: MoveToCloseRange
+            removeKeyOnFinish: true
+
+        - !type:HTNPrimitiveTask
+          operator: !type:BuckleOperator
+            targetKey: Target
+            buckleKey: BedTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: HealingBed
+            key: BedTarget
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true

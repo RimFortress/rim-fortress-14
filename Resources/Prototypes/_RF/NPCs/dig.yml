@@ -1,0 +1,56 @@
+- type: htnCompound
+  id: DigCompound
+  branches:
+    # If NPC don't have a pickaxe in hands, look for it.
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Pickaxe
+            key: PickUpTarget
+        # Go to the pickaxe we found
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+        - !type:WieldedPrecondition
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:WieldOperator
+
+    # Goes to the target if we're far from it.
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+        - !type:TargetNotInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNCompoundTask
+          task: MoveToEntityCompound
+
+    # And finally, digging
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: Target
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Pickaxe
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: InteractRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:MeleeOperator
+            targetKey: Target

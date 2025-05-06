@@ -11,15 +11,11 @@ public sealed partial class KeysExistsPrecondition : HTNPrecondition
     [DataField]
     public List<string> Keys = new();
 
-    [DataField]
-    public bool Invert;
-
     public override bool IsMet(NPCBlackboard blackboard)
     {
         foreach (var key in Keys)
         {
-            var contains = blackboard.ContainsKey(key);
-            if (!contains && !Invert || contains && Invert)
+            if (!blackboard.ContainsKey(key))
                 return false;
         }
 

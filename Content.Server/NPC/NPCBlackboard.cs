@@ -23,7 +23,7 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {"FollowCloseRange", 3f},
         {"FollowRange", 7f},
         {"IdleRange", 7f},
-        {"InteractRange", SharedInteractionSystem.InteractionRange},
+        {"InteractRange", SharedInteractionSystem.InteractionRange - 0.15f }, // RimFortress: closer interact range
         {"MaximumIdleTime", 7f},
         {MedibotInjectRange, 4f},
         {MeleeMissChance, 0.3f},
@@ -272,6 +272,15 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         DebugTools.Assert(!_blackboard.ContainsKey(key) || _blackboard[key] is T);
         return _blackboard.Remove(key);
     }
+
+    // RimFortress Start
+    // Type checking is very annoying
+    public bool Remove(string key)
+    {
+        DebugTools.Assert(_blackboard.ContainsKey(key));
+        return _blackboard.Remove(key);
+    }
+    // RimFortress End
 
     public string GetVisionRadiusKey(IEntityManager entMan)
     {

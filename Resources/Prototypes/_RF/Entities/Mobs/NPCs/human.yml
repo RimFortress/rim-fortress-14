@@ -19,8 +19,13 @@
     - type: MobMover
     - type: HTN
       rootTask:
-        task: IdleCompound
+        task: RfIdleCompound
     - type: NpcFactionMember
       factions:
       - RimFortress
     - type: ControllableNpc
+    - type: RoutineNpcTasks
+      tasks:
+        - id: Dig
+        - id: Attack
+        - id: Build

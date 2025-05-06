@@ -1,11 +1,11 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Components;
 
 /// <summary>
 /// Npc that can be controlled by the player
 /// </summary>
-[RegisterComponent]
+[RegisterComponent, Access(typeof(NpcControlSystem))]
 public sealed partial class ControllableNpcComponent : Component
 {
     /// <summary>
@@ -21,11 +21,11 @@ public sealed partial class ControllableNpcComponent : Component
     public ProtoId<NpcTaskPrototype>? CurrentTask;
 
     /// <summary>
-    /// How often is there a check for finishing an task
+    /// Entity, target of the current task, if any
     /// </summary>
-    [DataField, ViewVariables]
-    public float TaskFinishCheckRate = 5f;
+    [ViewVariables]
+    public EntityUid? TaskTarget;
 
     [ViewVariables]
-    public float TaskFinishAccumulator = 0f;
+    public TimeSpan TaskFinishCheckTime = TimeSpan.Zero;
 }

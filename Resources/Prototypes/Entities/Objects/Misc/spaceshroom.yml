@@ -36,6 +36,11 @@
           behaviors:
             - !type:DoActsBehavior
               acts: [ "Destruction" ]
+    # RimFortress Start
+    - type: Tag
+      tags:
+        - HandGatherable
+    # RimFortress End
 
 - type: entityLootTable
   id: SpaceshroomGather

@@ -1,33 +1,9 @@
 - type: htnCompound
   id: PryCompound
   branches:
-    # Unbuckle
-    - preconditions:
-        - !type:BuckledPrecondition
-          isBuckled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnbuckleOperator
-
-    # Unpull
-    - preconditions:
-        - !type:PulledPrecondition
-          isPulled: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UnPullOperator
-
-    # Leave the container
-    - preconditions:
-        - !type:InContainerPrecondition
-          isInContainer: true
-      tasks:
-        - !type:HTNCompoundTask
-          task: EscapeCompound
-
     - preconditions:
         - !type:KeyNotExistsPrecondition
-          key: Tool
+          key: PickUpTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:SetStringOperator
@@ -36,63 +12,25 @@
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: TargetTool
-            key: Tool
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Tool
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
+            key: PickUpTarget
 
     - preconditions:
         - !type:KeyExistsPrecondition
-          key: Tool
-        - !type:TargetInRangePrecondition
-          targetKey: Tool
-          rangeKey: InteractRange
+          key: PickUpTarget
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EquipOperator
-            target: Tool
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
-            key: ItemEntityTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
 
     - preconditions:
-        - !type:EntityDeletedPrecondition
-          key: ItemEntityTarget
+        - !type:KeysExistsPrecondition
+          keys:
+            - Target
+            - PickUpTarget
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveEntityKeyOperator
-            key: ItemEntityTarget
-
-    - preconditions:
-        - !type:KeyNotExistsPrecondition
-          key: Tool
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetNotInRangePrecondition
-          targetKey: Target
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
-
-    - preconditions:
-        - !type:KeyNotExistsPrecondition
-          key: Tool
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetInRangePrecondition
-          targetKey: Target
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:InteractWithOperator
-            targetKey: Target
+        - !type:HTNCompoundTask
+          task: InteractCompound

@@ -1,17 +1,24 @@
 using System.Numerics;
+using Content.Client.Stylesheets;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
+using Robust.Client.Input;
+using Robust.Client.ResourceManagement;
+using Robust.Client.Utility;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.NPC;
 
 public sealed class NpcControlOverlay : Overlay
 {
-    public override bool RequestScreenTexture => true;
-
-    public override OverlaySpace Space => OverlaySpace.WorldSpace;
+    [Dependency] private readonly IEntityManager _entityManager = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IResourceCache _resourceCache = default!;
+    [Dependency] private readonly IInputManager _input = default!;
+    [Dependency] private readonly IEyeManager _eye = default!;
 
     [ValidatePrototypeId<ShaderPrototype>]
     private const string SelectShader = "DottedOutline";
@@ -22,30 +29,29 @@ public sealed class NpcControlOverlay : Overlay
     [ValidatePrototypeId<ShaderPrototype>]
     private const string PointLineShader = "DottedLine";
 
-    private readonly Color _selectColor = Color.LightGray;
-
     private readonly NpcControlSystem _npcControl;
     private readonly SharedTransformSystem _transform;
-    private readonly IEntityManager _entityManager;
-    private readonly IPrototypeManager _prototype;
 
     private readonly ShaderInstance _selectAreaShader;
 
+    private readonly Color _selectColor = Color.LightGray;
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
-    public NpcControlOverlay(
-        IPrototypeManager prototype,
-        IEntityManager entityManager,
-        IEntitySystemManager entSysManager)
-    {
-        _npcControl = entSysManager.GetEntitySystem<NpcControlSystem>();
-        _transform = entSysManager.GetEntitySystem<SharedTransformSystem>();
+    private readonly EntityQuery<TransformComponent> _transformQuery;
 
-        _entityManager = entityManager;
-        _prototype = prototype;
+    public override bool RequestScreenTexture => true;
+
+    public override OverlaySpace Space => OverlaySpace.WorldSpace;
+
+    public NpcControlOverlay()
+    {
+        IoCManager.InjectDependencies(this);
+
+        _npcControl = _entityManager.System<NpcControlSystem>();
+        _transform = _entityManager.System<SharedTransformSystem>();
 
         _selectAreaShader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
-        _selectAreaShader.SetParameter("color", _selectColor);
+        _transformQuery = _entityManager.GetEntityQuery<TransformComponent>();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -59,39 +65,26 @@ public sealed class NpcControlOverlay : Overlay
         _highlightedSprites.Clear();
 
         if (_npcControl is { StartPoint: { } startPoint, EndPoint: { } endPoint })
-        {
-            var area = new Box2(startPoint.Position, endPoint.Position);
+            DrawSelectArea(args, startPoint, endPoint);
 
-            var bottomLeft = args.Viewport.WorldToLocal(area.BottomLeft);
-            bottomLeft.Y = args.Viewport.Size.Y - bottomLeft.Y;
-            var bottomRight = args.Viewport.WorldToLocal(area.BottomRight);
-            bottomRight.Y = args.Viewport.Size.Y - bottomRight.Y;
+        DrawPassiveTasks(args);
 
-            var topLeft = args.Viewport.WorldToLocal(area.TopLeft);
-            topLeft.Y = args.Viewport.Size.Y - topLeft.Y;
-            var topRight = args.Viewport.WorldToLocal(area.TopRight);
-            topRight.Y = args.Viewport.Size.Y - topRight.Y;
+        if (_npcControl.SelectedTask is { IconPath: not null } selectedTask)
+            DrawMouseIcon(args, selectedTask.IconPath, selectedTask.Color);
 
-            _selectAreaShader.SetParameter("point1", bottomLeft);
-            _selectAreaShader.SetParameter("point2", bottomRight);
-            _selectAreaShader.SetParameter("point3", topLeft);
-            _selectAreaShader.SetParameter("point4", topRight);
-
-            args.WorldHandle.UseShader(_selectAreaShader);
-            args.WorldHandle.DrawRect(area, Color.White);
-        }
+        if (_npcControl.Eraser)
+            DrawMouseIcon(args, "/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png", Color.White);
 
         foreach (var entity in _npcControl.Selected)
         {
             SetShader(entity, _selectColor);
 
             if (!_npcControl.Tasks.TryGetValue(entity, out var task)
-                || !_entityManager.TryGetComponent(entity, out TransformComponent? entityForm))
+                || !_transformQuery.TryComp(entity, out var entityForm))
                 continue;
 
-            _entityManager.TryGetComponent(task.Target, out TransformComponent? xform);
-
-            if (xform == null && task.Coordinates == null)
+            if (!_transformQuery.TryComp(task.Target, out var xform)
+                && task.Coordinates == null)
                 return;
 
             var coords = task.Coordinates ?? xform!.Coordinates;
@@ -174,5 +167,71 @@ public sealed class NpcControlOverlay : Overlay
         shader.SetParameter("color", color);
 
         args.WorldHandle.DrawRect(Box2.CenteredAround(worldCoords.Position, Vector2.One), Color.White);
+    }
+
+    private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
+    {
+        var area = new Box2(start.Position, end.Position);
+
+        var bottomLeft = args.Viewport.WorldToLocal(area.BottomLeft);
+        bottomLeft.Y = args.Viewport.Size.Y - bottomLeft.Y;
+        var bottomRight = args.Viewport.WorldToLocal(area.BottomRight);
+        bottomRight.Y = args.Viewport.Size.Y - bottomRight.Y;
+
+        var topLeft = args.Viewport.WorldToLocal(area.TopLeft);
+        topLeft.Y = args.Viewport.Size.Y - topLeft.Y;
+        var topRight = args.Viewport.WorldToLocal(area.TopRight);
+        topRight.Y = args.Viewport.Size.Y - topRight.Y;
+
+        var color = _npcControl.SelectedTask?.Color ?? _selectColor;
+
+        _selectAreaShader.SetParameter("color", color);
+        _selectAreaShader.SetParameter("point1", bottomLeft);
+        _selectAreaShader.SetParameter("point2", bottomRight);
+        _selectAreaShader.SetParameter("point3", topLeft);
+        _selectAreaShader.SetParameter("point4", topRight);
+
+        args.WorldHandle.UseShader(_selectAreaShader);
+        args.WorldHandle.DrawRect(area, Color.White);
+        args.WorldHandle.UseShader(null);
+    }
+
+    private void DrawPassiveTasks(in OverlayDrawArgs args)
+    {
+        foreach (var (task, targets) in _npcControl.PassiveTasks)
+        {
+            if (task.IconPath == null)
+                continue;
+
+            foreach (var target in targets)
+            {
+                if (!_transformQuery.TryComp(target, out var xform))
+                    continue;
+
+                var icon = new SpriteSpecifier.Texture(new ResPath(task.IconPath)).GetTexture(_resourceCache);
+                var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(0.5f));
+
+                args.WorldHandle.DrawRect(box, StyleNano.PanelDark.WithAlpha(0.3f));
+                args.WorldHandle.DrawTextureRect(icon, box, task.Color.WithAlpha(0.6f));
+            }
+        }
+    }
+
+    private void DrawMouseIcon(in OverlayDrawArgs args, string path, Color color)
+    {
+        if (_input.MouseScreenPosition is not { IsValid: true } mousePos)
+            return;
+
+        var size = 0.5f;
+        var mapPos = _eye.PixelToMap(mousePos);
+
+        if (mapPos.Position == Vector2.Zero)
+            return;
+
+        var icon = new SpriteSpecifier.Texture(new ResPath(path)).GetTexture(_resourceCache);
+        var box = new Box2(new Vector2(mapPos.X, mapPos.Y - size), new Vector2(mapPos.X + size, mapPos.Y));
+
+        args.WorldHandle.DrawRect(box, StyleNano.PanelDark.WithAlpha(0.6f));
+        args.WorldHandle.DrawTextureRect(icon, box, color);
     }
 }

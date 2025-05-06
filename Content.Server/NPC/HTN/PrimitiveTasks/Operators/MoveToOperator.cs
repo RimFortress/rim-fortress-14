@@ -136,6 +136,7 @@ public sealed partial class MoveToOperator : HTNOperator, IHtnConditionalShutdow
     public override void Startup(NPCBlackboard blackboard)
     {
         base.Startup(blackboard);
+        if (!blackboard.ContainsKey(TargetKey)) return; // RimFortress: Fix some wierd shit
 
         // Need to remove the planning value for execution.
         blackboard.Remove<EntityCoordinates>(NPCBlackboard.OwnerCoordinates);

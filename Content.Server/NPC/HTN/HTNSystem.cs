@@ -222,6 +222,11 @@ public sealed class HTNSystem : EntitySystem
                     }
                 }
 
+                // RimFortress Start
+                if (comp.PlanningJob.Result == null)
+                    RaiseLocalEvent(new HtnPlanningFailed { Entity = new(uid, comp) });
+                // RimFortress End
+
                 if (comp.Plan == null || newPlanBetter)
                 {
                     comp.CheckServices = false;
@@ -533,3 +538,11 @@ public enum HTNOperatorStatus : byte
     /// </summary>
     BetterPlan,
 }
+
+// RimFortress Start
+[Serializable]
+public sealed class HtnPlanningFailed : EntityEventArgs
+{
+    public Entity<HTNComponent> Entity { get; set; }
+}
+// RimFortress End

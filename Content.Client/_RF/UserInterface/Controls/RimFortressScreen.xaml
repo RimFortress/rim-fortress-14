@@ -17,6 +17,8 @@
             <BoxContainer Margin="10 0 0 0" Orientation="Vertical">
                 <screens:RfConstructionMenu Name="ConstructionMenu" Margin="10 0 0 0"
                                             VerticalExpand="True" Visible="False"/>
+                <screens:PassiveTasksMenu Name="PassiveTasksMenu" Margin="10 0 0 0"
+                                          VerticalExpand="True" Visible="False"/>
             </BoxContainer>
         </BoxContainer>
         <BoxContainer VerticalExpand="True"/>

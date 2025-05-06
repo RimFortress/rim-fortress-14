@@ -85,5 +85,10 @@ namespace Content.Shared.Verbs
         public static readonly VerbCategory SelectType = new("verb-categories-select-type", null);
 
         public static readonly VerbCategory PowerLevel = new("verb-categories-power-level", null);
+
+        // RimFortress Start
+        public static readonly VerbCategory NpcTask =
+            new("verb-categories-npc-task", "/Textures/_RF/Interface/VerbIcons/list-check-solid.svg.192dpi.png");
+        // RimFortress End
     }
 }

@@ -1,59 +1,218 @@
 - type: npcTask
   id: MoveTo
-  overlayColor: "#D3D3D3FF"
+  name: Go here
+  overlayColor: "#D3D3D3"
   compound: MoveToCompound
+  onFinish: RfIdleCompound
   finishPreconditions:
-    - !type:KeyExistsPrecondition
-      key: TargetCoordinates
     - !type:CoordinatesInRangePrecondition
       targetKey: TargetCoordinates
       rangeKey: MoveToCloseRange
 
 - type: npcTask
   id: Attack
-  overlayColor: "#FF0000FF"
+  name: Attack
+  overlayColor: "#FF0000"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
+  verbOnly: true
   compound: AttackTargetCompound
-  startWhitelist:
+  onFinish: RfIdleCompound
+  passive: true
+  tempKeys:
+    - Item
+  targetWhitelist:
     components:
       - HTN
-  finishPreconditions:
-    - !type:KeyExistsPrecondition
-      key: Target
+  startPreconditions:
     - !type:MobStatePrecondition
       targetKey: Target
       state: Alive
+    - !type:IsFriendlyPrecondition
+      targetKey: Target
       invert: true
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: Target
+        - !type:MobStatePrecondition
+          targetKey: Target
+          state: Alive
+          invert: true
+        - !type:MobStatePrecondition
+          targetKey: Owner
+          state: Alive
+          invert: true
+        - !type:IsFriendlyPrecondition
+          targetKey: Target
 
 - type: npcTask
   id: PickUp
-  overlayColor: "#00D5FFFF"
+  name: Take it
+  maxPerformers: 1
+  overlayColor: "#00D5FF"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   compound: PickUpCompound
-  startWhitelist:
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  targetWhitelist:
     components:
       - Item
-  finishPreconditions:
-    - !type:KeyExistsPrecondition
-      key: Target
+  startPreconditions:
     - !type:ActiveHandEntityIsPrecondition
-      targetKey: Target
+      targetKey: PickUpTarget
+      invert: true
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
 
 - type: npcTask
   id: Pry
-  overlayColor: "#00D5FFFF"
+  name: Open
+  maxPerformers: 1
+  overlayColor: "#00D5FF"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
   compound: PryCompound
-  priority: 11
-  startWhitelist:
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+    - ToolQuality
+  targetWhitelist:
     components:
-      - Prying
-  #finishPreconditions:
+      - Door
+  startPreconditions:
+    - !type:DoorStatePrecondition
+      key: Target
+      state: Closed
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: Target
+        - !type:DoorStatePrecondition
+          key: Target
+          state: Closed
+          invert: true
 
 - type: npcTask
   id: Build
-  overlayColor: "#FFFF00FF"
+  name: Build
+  maxPerformers: 1
+  overlayColor: "#FFFF00"
+  verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
   compound: BuildCompound
-  priority: 10
-  startWhitelist:
+  onFinish: RfIdleCompound
+  tempKeys:
+    - ItemEntityTarget
+    - MaterialTarget
+    - MaterialInsertAmount
+    - TagsTarget
+    - AllTagsRequired
+    - ToolQualityTarget
+    - ToolFuelTarget
+    - ComponentTarget
+  targetsQuery: BuildTaskTarget
+  targetWhitelist:
     components:
       - Construction
-      - CommonConstructionGhost
-  #finishPreconditions:
+  startPreconditions:
+    - !type:ConstructionFinishedPrecondition
+      key: Target
+      invert: true
+  finishPreconditions:
+    - !type:ConstructionFinishedPrecondition
+      key: Target
+
+- type: npcTask
+  id: Dig
+  name: Dig
+  maxPerformers: 1
+  overlayColor: "#E36414"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  compound: DigCompound
+  onFinish: RfIdleCompound
+  passive: true
+  tempKeys:
+    - Tags
+    - AllTags
+    - PickUpTarget
+  targetWhitelist:
+    tags:
+      - Diggable
+  finishPreconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
+
+- type: npcTask
+  id: FreeHandInteract
+  name: Interact
+  maxPerformers: 1
+  overlayColor: "#00D5FF"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
+  compound: FreeHandInteractCompound
+  onFinish: RfIdleCompound
+  targetWhitelist:
+    requireAll: false
+    components:
+      - Strap
+      - Door
+    tags:
+      - HandGatherable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
+
+- type: npcTask
+  id: Heal
+  name: Heal
+  overlayColor: "#16C934"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png
+  verbOnly: true
+  selfPerform: true
+  compound: HealCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+    - DamageType
+    - DamageContainer
+  targetWhitelist:
+    components:
+      - Damageable
+      - HTN
+  startPreconditions:
+    - !type:MobStatePrecondition
+      targetKey: Target
+      state: Dead
+      invert: true
+    - !type:OrPrecondition
+      preconditions:
+        - !type:BleedingPrecondition
+          targetKey: Target
+        - !type:TotalDamagePrecondition
+          targetKey: Target
+          moreThan: 5.0
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: Target
+        - !type:AndPrecondition
+          preconditions:
+            - !type:BleedingPrecondition
+              targetKey: Target
+              invert: true
+            - !type:TotalDamagePrecondition
+              targetKey: Target
+              lessThan: 5.0
+        # Doctor, we've lost him
+        - !type:MobStatePrecondition
+          targetKey: Target
+          state: Dead
