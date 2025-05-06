@@ -57,9 +57,9 @@ public sealed class NpcTaskRequest : EntityEventArgs
 }
 
 [Serializable, NetSerializable]
-public sealed class NpcTasksContextMenuMessage : EntityEventArgs
+public sealed class NpcTasksContextMenuMessage(NetEntity target) : EntityEventArgs
 {
-
+    public NetEntity Target { get; set; } = target;
 }
 
 [Serializable, NetSerializable]

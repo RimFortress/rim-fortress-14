@@ -117,9 +117,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
 
         // If there is more than one suitable task for at least one entity, call the context menu
-        if (verb)
+        if (verb && target != null)
         {
-            RaiseNetworkEvent(new NpcTasksContextMenuMessage(), requester);
+            RaiseNetworkEvent(new NpcTasksContextMenuMessage(GetNetEntity(target.Value)), requester);
             return;
         }
 
@@ -129,9 +129,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         {
             var task = tasks[0];
 
-            if (task.TargetWhitelist != null)
+            if (task.TargetWhitelist != null && target != null)
             {
-                TrySetTask(entity, task, target);
+                TrySetTask(entity, task, target.Value);
                 continue;
             }
 
@@ -145,7 +145,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 previousTargets.Add(tileRef);
 
                 var tileCoords = _turf.GetTileCenter(tileRef);
-                TrySetTask(entity, task, null, tileCoords);
+                TrySetTask(entity, task, tileCoords);
                 continue;
             }
 
@@ -155,7 +155,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             previousTargets.Add(tile);
 
             var tileCenter = _turf.GetTileCenter(tile);
-            TrySetTask(entity, task, null, tileCenter);
+            TrySetTask(entity, task, tileCenter);
         }
     }
 
@@ -270,7 +270,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 Impact = LogImpact.Low,
                 Act = () =>
                 {
-                    entities.ForEach(entity => TrySetTask(entity, task, ev.Target));
+                    entities.ForEach(entity =>
+                    {
+                        if (task.TargetWhitelist != null)
+                            TrySetTask(entity, task, ev.Target);
+                        else
+                            TrySetTask(entity, task, Transform(ev.Target).Coordinates);
+                    });
+
                     _selected.Remove(ev.User);
                 },
             });
@@ -368,15 +375,30 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     public bool TrySetTask(
         Entity<HTNComponent?> npc,
         NpcTaskPrototype proto,
-        EntityUid? target = null,
-        EntityCoordinates? targetCoords = null)
+        EntityUid target)
     {
         if (!Resolve(npc, ref npc.Comp)
             || !_controllableQuery.TryComp(npc, out var control)
-            || target != null && !CheckTaskStart(npc.Comp.Blackboard, proto, target.Value))
+            || !CheckTaskStart(npc.Comp.Blackboard, proto, target))
             return false;
 
-        SetTask(new(npc.Owner, npc.Comp, control), proto, target, targetCoords);
+        SetTask(new(npc.Owner, npc.Comp, control), proto, target);
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to set a new task for an NPC, checking all the required conditions
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(
+        Entity<HTNComponent?> npc,
+        NpcTaskPrototype proto,
+        EntityCoordinates? targetCoords)
+    {
+        if (!Resolve(npc, ref npc.Comp) || !_controllableQuery.TryComp(npc, out var control))
+            return false;
+
+        SetTask(new(npc.Owner, npc.Comp, control), proto, null, targetCoords);
         return true;
     }
 

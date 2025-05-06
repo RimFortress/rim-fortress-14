@@ -1,10 +1,10 @@
 using System.Linq;
-using Content.Client._RF.UserInterface;
+using Content.Client.ContextMenu.UI;
 using Content.Client.NPC.HTN;
 using Content.Shared._RF.NPC;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
-using Robust.Client.State;
+using Robust.Client.UserInterface;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
@@ -19,7 +19,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly IEyeManager _eye = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IOverlayManager _overlay = default!;
-    [Dependency] private readonly IStateManager _state  = default!;
+    [Dependency] private readonly IUserInterfaceManager _ui = default!;
 
     /// <summary>
     /// Selection frame start point
@@ -207,8 +207,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnContextMenu(NpcTasksContextMenuMessage msg)
     {
-        if (_state.CurrentState is RimFortressState state)
-            state.OpenContextMenu();
+        _ui.GetUIController<EntityMenuUIController>().OpenRootMenu(new() { GetEntity(msg.Target) });
     }
 
     private void OnAttached(EntityUid uid, NpcControlComponent component, PlayerAttachedEvent args)
