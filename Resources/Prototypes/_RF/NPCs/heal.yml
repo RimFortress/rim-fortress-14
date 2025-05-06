@@ -9,7 +9,7 @@
         - !type:HTNPrimitiveTask
           operator: !type:SetFloatOperator
             targetKey: Time
-            value: 0.5
+            amount: 0.5
         - !type:HTNPrimitiveTask
           operator: !type:WaitOperator
             key: Time
