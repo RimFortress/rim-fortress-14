@@ -143,7 +143,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// If the NPC still fails to plan the task in this time, the task will be finished
     /// </summary>
     [DataField]
-    public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(5);
+    public TimeSpan FailAwaitTime = TimeSpan.FromSeconds(2);
 
     /// <summary>
     /// Once at what interval a check for task completion will take place
