@@ -31,8 +31,3 @@ public sealed partial class SetStringListOperator: SetOperator<List<string>>
 {
 
 }
-
-public sealed partial class SetBoolOperator: SetOperator<bool>
-{
-
-}

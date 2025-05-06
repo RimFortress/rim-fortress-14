@@ -56,12 +56,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// </summary>
     private readonly Dictionary<EntityUid, TimeSpan> _fails = new();
 
-    /// <summary>
-    /// Stores failures of passive tasks so that when you search for a target again,
-    /// you don't have to perform a previously failed one
-    /// </summary>
-    private readonly List<EntityUid> _passiveTasksFails = new();
-
     /// <inheritdoc/>
     public override void Initialize()
     {
@@ -189,7 +183,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 continue;
 
             EntityManager.RemoveComponent(uid, comp);
-            _passiveTasksFails.Remove(uid);
             removed.Add(uid);
         }
 
@@ -260,7 +253,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             foreach (var task in suitable)
             {
                 if (tasks.TryGetValue(task, out var value))
-                    value.Add(ev.Target);
+                    value.Add(entity);
                 else
                     tasks.Add(task, new() { entity });
             }
@@ -438,7 +431,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <summary>
     /// Ends the current entity task and deletes all temporary keys and notifies the users
     /// </summary>
-    public void FinishTask(Entity<ControllableNpcComponent?, HTNComponent?> npc, bool failed)
+    public void FinishTask(Entity<ControllableNpcComponent?, HTNComponent?> npc, bool failed = false)
     {
         if (!Resolve(npc, ref npc.Comp1)
             || !Resolve(npc, ref npc.Comp2)
@@ -451,22 +444,21 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (_tasks.TryGetValue((control.TaskTarget, control.CurrentTask!.Value), out var list))
             list.Remove(npc);
 
-        if (control.TaskTarget != null)
+        if (control.TaskTarget != null
+            && !failed
+            && _passiveTaskQuery.TryComp(control.TaskTarget, out var comp)
+            && comp.Task == control.CurrentTask)
         {
-            if (!failed && _passiveTaskQuery.TryComp(control.TaskTarget, out var comp)
-                        && comp.Task == control.CurrentTask)
-            {
-                EntityManager.RemoveComponent(control.TaskTarget.Value, comp);
-                var msg = new PassiveNpcTaskRemoveMessage(new() { GetNetEntity(control.TaskTarget.Value) });
-                foreach (var user in control.CanControl)
-                {
-                    RaiseNetworkEvent(msg, user);
-                }
-            }
+            EntityManager.RemoveComponent(control.TaskTarget.Value, comp);
+            var msg = new PassiveNpcTaskRemoveMessage(new() { GetNetEntity(control.TaskTarget.Value) });
 
-            _passiveTasksFails.Remove(control.TaskTarget.Value);
+            foreach (var user in control.CanControl)
+            {
+                RaiseNetworkEvent(msg, user);
+            }
         }
 
+        var target = control.TaskTarget;
         htn.RootTask = new HTNCompoundTask { Task = proto.OnFinish };
         control.CurrentTask = null;
         control.TaskTarget = null;
@@ -490,7 +482,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             RaiseNetworkEvent(new NpcTaskFinishMessage(proto.ID, GetNetEntity(npc)), uid);
         }
 
-        RaiseLocalEvent(npc, new NpcTaskFinished(failed, proto));
+        RaiseLocalEvent(npc, new NpcTaskFinished(failed, proto, target));
     }
 
     /// <summary>
@@ -553,7 +545,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             comp.User = user;
 
             response.Add(GetNetEntity(uid));
-            _passiveTasksFails.Remove(uid);
         }
 
         if (response.Count == 0)
@@ -584,7 +575,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
             if (!canControlCache[comp.User]
                 || comp.Task != task
-                || _passiveTasksFails.Contains(uid)
                 || !CheckTaskStart(npc.Comp.Blackboard, task, uid)
                 || !_xformQuery.TryComp(npc, out var xform)
                 || !xform.Coordinates.TryDistance(EntityManager, targetXform.Coordinates, out var distance)
@@ -680,7 +670,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 htn.Plan = null;
             }
 
-            FinishTask(new(uid, comp, htn), false);
+            FinishTask(new(uid, comp, htn));
         }
 
         // Checking recently failed tasks
@@ -692,12 +682,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (_htnQuery.TryComp(uid, out var htn)
                 && _controllableQuery.TryComp(uid, out var comp)
                 && htn.Plan == null)
-            {
-                if (_passiveTaskQuery.TryComp(comp.TaskTarget, out var passiveTask) && passiveTask.Task == comp.CurrentTask)
-                    _passiveTasksFails.Add(uid);
-
                 FinishTask(new(uid, comp, htn), true);
-            }
 
             _fails.Remove(uid);
         }
@@ -707,8 +692,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 /// <summary>
 /// Raised when an NPC has completed its current task
 /// </summary>
-[Serializable]
-public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task) : EntityEventArgs
+public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task, EntityUid? target) : EntityEventArgs
 {
     /// <summary>
     /// Task failed or completed successfully
@@ -716,4 +700,6 @@ public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task)
     public bool Failed = failed;
 
     public ProtoId<NpcTaskPrototype> Task = task;
+
+    public EntityUid? Target = target;
 }
