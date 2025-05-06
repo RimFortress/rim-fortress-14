@@ -6,7 +6,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// <summary>
 /// Combines multiple preconditions into a logical OR
 /// </summary>
-public sealed partial class OrPrecondition : InvertiblePrecondition
+public sealed partial class OrPrecondition : HTNPrecondition
 {
     [DataField]
     public List<HTNPrecondition> Preconditions = new();
@@ -20,7 +20,7 @@ public sealed partial class OrPrecondition : InvertiblePrecondition
         }
     }
 
-    public override bool IsMetInvertible(NPCBlackboard blackboard)
+    public override bool IsMet(NPCBlackboard blackboard)
     {
         foreach (var precondition in Preconditions)
         {

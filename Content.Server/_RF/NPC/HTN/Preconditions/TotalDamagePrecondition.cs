@@ -8,8 +8,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class TotalDamagePrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     [DataField]
     public string TargetKey = NPCBlackboard.Owner;
 
@@ -21,8 +19,8 @@ public sealed partial class TotalDamagePrecondition : InvertiblePrecondition
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entManager)
-            || !_entManager.TryGetComponent(uid, out DamageableComponent? damageable))
+        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager)
+            || !EntityManager.TryGetComponent(uid, out DamageableComponent? damageable))
             return false;
 
         return MoreThan != null && damageable.TotalDamage.Float() > MoreThan

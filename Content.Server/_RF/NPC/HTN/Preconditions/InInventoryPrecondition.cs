@@ -11,8 +11,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class InInventoryPrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-
     private InventorySystem _inventory = default!;
     private ContainerSystem _container = default!;
 
@@ -34,15 +32,15 @@ public sealed partial class InInventoryPrecondition : InvertiblePrecondition
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? target, _entityManager)
-            || !blackboard.TryGetValue(NPCBlackboard.Owner, out EntityUid? owner, _entityManager))
+        if (!blackboard.TryGetValue(TargetKey, out EntityUid? target, EntityManager)
+            || !blackboard.TryGetValue(NPCBlackboard.Owner, out EntityUid? owner, EntityManager))
             return false;
 
         if (ExcludeSelf && _inventory.GetHandOrInventoryEntities(owner.Value).ToList().Contains(target.Value))
             return false;
 
         if (_container.TryGetContainingContainer(new(target.Value, null, null), out var container)
-            && _entityManager.TryGetComponent(container.Owner, out HandsComponent? hands)
+            && EntityManager.TryGetComponent(container.Owner, out HandsComponent? hands)
             && hands.Hands.Any(x => x.Value.Container == container)
             && (!ExcludeSelf || container.Owner != owner))
             return true;

@@ -8,6 +8,8 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public abstract partial class InvertiblePrecondition : HTNPrecondition
 {
+    [Dependency] protected readonly IEntityManager EntityManager = default!;
+
     /// <summary>
     /// Whether the output data should be inverted or not
     /// </summary>

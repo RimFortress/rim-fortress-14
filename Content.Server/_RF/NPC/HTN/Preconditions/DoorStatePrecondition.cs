@@ -8,8 +8,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class DoorStatePrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     [DataField(required: true)]
     public string Key = default!;
 
@@ -18,8 +16,8 @@ public sealed partial class DoorStatePrecondition : InvertiblePrecondition
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue<EntityUid>(Key, out var entity, _entManager)
-               && _entManager.TryGetComponent(entity, out DoorComponent? door)
+        return blackboard.TryGetValue<EntityUid>(Key, out var entity, EntityManager)
+               && EntityManager.TryGetComponent(entity, out DoorComponent? door)
                && door.State == State;
     }
 }

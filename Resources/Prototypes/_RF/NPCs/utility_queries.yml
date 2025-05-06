@@ -1,3 +1,5 @@
+# Build task
+
 - type: utilityQuery
   id: TargetMaterials
   query:
@@ -61,6 +63,8 @@
       curve: !type:PresetCurve
         preset: TargetDistance
 
+# Attack task
+
 - type: utilityQuery
   id: InventoryMelees
   query:
@@ -71,6 +75,8 @@
           damage:
             types:
               Slash: 0
+
+# Heal task
 
 - type: utilityQuery
   id: TargetHeal
@@ -85,6 +91,7 @@
               Heat: 0
     - !type:HealingFilter
       invert: true
+    - !type:InHandsFilter
     - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
@@ -105,6 +112,7 @@
     - !type:BloodHealingFilter
       invert: true
     - !type:InHandsFilter
+    - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
@@ -122,11 +130,28 @@
     - !type:MeleeDamageTypeFilter
       damageType: Heat
       invert: true
+    - !type:InventoryFilter
     - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+- type: utilityQuery
+  id: HealingBed
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: HealOnBuckle
+          damage:
+            types:
+              Poison: 0
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+# Dig task
 
 - type: utilityQuery
   id: Pickaxe
@@ -144,6 +169,8 @@
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+# For idle compound
 
 - type: utilityQuery
   id: Food

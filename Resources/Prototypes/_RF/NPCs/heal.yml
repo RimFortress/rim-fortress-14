@@ -1,6 +1,19 @@
 - type: htnCompound
   id: HealCompound
   branches:
+    - preconditions:
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetFloatOperator
+            targetKey: Time
+            value: 0.5
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: Time
+
     # Turns out stopping the bleeding is not a very
     # important part of the healing and it goes away on its own,
     # so I think we can remove it
@@ -14,6 +27,14 @@
     #  tasks:
     #    - !type:HTNCompoundTask
     #      task: StopBleedingCompound
+
+    - preconditions:
+        - !type:TargetBuckledPrecondition
+          targetKey: Target
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: BuckleToBedCompound
 
     # Restore blood level
     - preconditions:
@@ -37,19 +58,6 @@
 - type: htnCompound
   id: BaseHealCompound
   branches:
-    - preconditions:
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:SetFloatOperator
-            targetKey: Time
-            value: 0.5
-        - !type:HTNPrimitiveTask
-          operator: !type:WaitOperator
-            key: Time
-
     # Finding the right medicine
     - preconditions:
         - !type:OrPrecondition
@@ -108,19 +116,6 @@
 - type: htnCompound
   id: StopBleedingCompound
   branches:
-    - preconditions:
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:SetFloatOperator
-            targetKey: Time
-            value: 0.5
-        - !type:HTNPrimitiveTask
-          operator: !type:WaitOperator
-            key: Time
-
     - preconditions:
         - !type:KeyExistsPrecondition
           key: PickUpTarget
@@ -184,19 +179,6 @@
   id: RestoreBloodLevelCompound
   branches:
     - preconditions:
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:SetFloatOperator
-            targetKey: Time
-            value: 0.5
-        - !type:HTNPrimitiveTask
-          operator: !type:WaitOperator
-            key: Time
-
-    - preconditions:
         - !type:KeyExistsPrecondition
           key: PickUpTarget
         - !type:EntityDeletedPrecondition
@@ -254,3 +236,49 @@
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
+
+
+- type: htnCompound
+  id: BuckleToBedCompound
+  branches:
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: BedTarget
+        - !type:TargetInRangePrecondition
+          targetKey: Target
+          rangeKey: MoveToCloseRange
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:PullOperator
+            targetKey: Target
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: BedTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: MoveToCloseRange
+            removeKeyOnFinish: true
+
+        - !type:HTNPrimitiveTask
+          operator: !type:BuckleOperator
+            targetKey: Target
+            buckleKey: BedTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullOperator
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: HealingBed
+            key: BedTarget
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true

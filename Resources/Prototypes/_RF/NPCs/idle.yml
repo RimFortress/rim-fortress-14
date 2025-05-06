@@ -45,11 +45,11 @@
             maxKey: MaximumIdleTime
 
         - !type:HTNPrimitiveTask
-          operator: !type:WaitOperator
-            key: IdleTime
           preconditions:
             - !type:KeyExistsPrecondition
               key: IdleTime
+          operator: !type:WaitOperator
+            key: IdleTime
 
 - type: htnCompound
   id: EatCompound

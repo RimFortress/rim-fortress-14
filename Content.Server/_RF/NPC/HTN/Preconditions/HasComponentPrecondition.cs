@@ -8,8 +8,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class HasComponentPrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     [DataField]
     public string TargetKey = NPCBlackboard.Owner;
 
@@ -18,12 +16,12 @@ public sealed partial class HasComponentPrecondition : InvertiblePrecondition
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var owner, _entManager))
+        if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var owner, EntityManager))
             return false;
 
         foreach (var comp in Components)
         {
-            if (!_entManager.HasComponent(owner, comp.Value.Component.GetType()))
+            if (!EntityManager.HasComponent(owner, comp.Value.Component.GetType()))
                 return false;
         }
 

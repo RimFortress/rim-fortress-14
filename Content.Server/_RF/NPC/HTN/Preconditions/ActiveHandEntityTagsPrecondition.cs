@@ -10,8 +10,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class ActiveHandEntityTagsPrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     private TagSystem _tag = default!;
 
     /// <summary>
@@ -34,7 +32,7 @@ public sealed partial class ActiveHandEntityTagsPrecondition : InvertiblePrecond
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue(NPCBlackboard.ActiveHand, out Hand? activeHand, _entManager)
+        return blackboard.TryGetValue(NPCBlackboard.ActiveHand, out Hand? activeHand, EntityManager)
                && activeHand.HeldEntity != null
                && (!RequireAll || _tag.HasAllTags(activeHand.HeldEntity.Value, Tags))
                && (RequireAll || _tag.HasAnyTag(activeHand.HeldEntity.Value, Tags));

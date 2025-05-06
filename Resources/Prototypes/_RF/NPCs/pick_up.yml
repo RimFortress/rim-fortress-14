@@ -2,12 +2,8 @@
   id: PickUpCompound
   branches:
     - preconditions:
-        - !type:OrPrecondition
-          preconditions:
-            - !type:EntityDeletedPrecondition
-              key: PickUpTarget
-            - !type:InInventoryPrecondition
-              targetKey: PickUpTarget
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
@@ -24,8 +20,11 @@
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: PickUpTarget
-        - !type:HTNCompoundTask
-          task: MoveToInteractCompound
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
 
     # Remove anything from the hands that prevents from picking up the item
     - preconditions:

@@ -211,7 +211,7 @@
               invert: true
             - !type:TotalDamagePrecondition
               targetKey: Target
-              lessThan: 10.0
+              lessThan: 5.0
         # Doctor, we've lost him
         - !type:MobStatePrecondition
           targetKey: Target

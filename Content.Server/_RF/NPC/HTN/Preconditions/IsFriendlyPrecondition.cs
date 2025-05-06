@@ -8,8 +8,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class IsFriendlyPrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     private NpcFactionSystem _faction = default!;
 
     /// <summary>
@@ -32,8 +30,8 @@ public sealed partial class IsFriendlyPrecondition : InvertiblePrecondition
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue<EntityUid>(Key, out var entity, _entManager)
-               && blackboard.TryGetValue<EntityUid>(TargetKey, out var target, _entManager)
+        return blackboard.TryGetValue<EntityUid>(Key, out var entity, EntityManager)
+               && blackboard.TryGetValue<EntityUid>(TargetKey, out var target, EntityManager)
                && _faction.IsEntityFriendly(entity, target);
     }
 }

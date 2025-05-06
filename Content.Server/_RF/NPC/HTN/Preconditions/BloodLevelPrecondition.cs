@@ -8,8 +8,6 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class BloodLevelPrecondition : InvertiblePrecondition
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-
     private BloodstreamSystem _bloodstream = default!;
 
     [DataField]
@@ -29,7 +27,7 @@ public sealed partial class BloodLevelPrecondition : InvertiblePrecondition
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entManager))
+        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager))
             return false;
 
         var bloodLevel = _bloodstream.GetBloodLevelPercentage(uid.Value);
