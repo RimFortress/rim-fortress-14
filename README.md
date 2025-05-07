@@ -1,3 +1,7 @@
+<div class="header" align="center">  
+<img alt="RimFortress" width="880" height="458" src="https://github.com/user-attachments/assets/15b69ab0-4d47-4ea3-840f-c55b52b77fca">  
+</div>
+
 RimFortress is a project inspired by the genre of settlement management games and is based on Space Station 14.
 
 To prevent people forking RobustToolbox, a "content" pack is loaded by the client and server. This content pack contains everything needed to play the game on one specific server this is the content pack for RimFortress.
@@ -6,7 +10,11 @@ If you want to host or create content for SS14, go to the [Space Station 14](htt
 
 ## Links
 
-| [Steam](https://store.steampowered.com/app/1255460/Space_Station_14/) |
+<div class="header" align="center">
+
+| [Discord](https://discord.gg/w75mwYgTEu) | [Steam](https://store.steampowered.com/app/1255460/Space_Station_14/) |
+
+</div>
 
 ## Documentation
 
@@ -18,9 +26,18 @@ We are happy to accept contributions from anybody. Get in Discord if you want to
 
 ## Building
 
-1. Clone this repo.
-2. Run `RUN_THIS.py` to init submodules and download the engine.
-3. Compile the solution.
+1. Clone this repo:
+```shell
+git clone https://github.com/RimFortress/rim-fortress-14.git
+```
+2. Go to the project folder and run `RUN_THIS.py` to initialize the submodules and load the engine:
+```shell
+cd space-station-14
+python RUN_THIS.py
+```
+3. Compile the solution:  
+
+Build the server using `dotnet build`.
 
 [More detailed instructions on building the project.](https://docs.spacestation14.com/en/general-development/setup.html)
 
