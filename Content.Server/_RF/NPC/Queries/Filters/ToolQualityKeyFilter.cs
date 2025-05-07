@@ -2,7 +2,7 @@ using System.Linq;
 using Content.Server.NPC;
 using Content.Shared.Tools.Components;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 /// <summary>
 /// Filters tools with a certain quality

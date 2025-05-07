@@ -3,7 +3,7 @@ using Content.Server.NPC;
 using Content.Shared.Tag;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 /// <summary>
 /// Filters the entities for the presence of tags

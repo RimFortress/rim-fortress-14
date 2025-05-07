@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Content.Server.NPC.Queries.Queries;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries;
 
 /// <summary>
 /// Adds entities to a query. A prettier and less crutchy version of UtilityQuery

@@ -3,7 +3,7 @@ using Content.Server.NPC;
 using Content.Shared.Hands.Components;
 using Robust.Server.Containers;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 /// <summary>
 /// Filters entities in someone's hands

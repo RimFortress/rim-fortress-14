@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Content.Shared.Stacks;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 public sealed partial class MaterialKeyFilter : RfUtilityQueryFilter
 {

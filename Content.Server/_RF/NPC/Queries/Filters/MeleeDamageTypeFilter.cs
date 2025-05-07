@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Content.Shared.Weapons.Melee;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 /// <summary>
 /// Filters melee weapons by damage type

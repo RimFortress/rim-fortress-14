@@ -2,7 +2,7 @@ using Content.Server.NPC;
 using Content.Server.NPC.Queries.Queries;
 using Content.Server.NPC.Systems;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries;
 
 /// <summary>
 /// Filters entities from the queue. A prettier and less crutchy version of <see cref="UtilityQueryFilter"/>
