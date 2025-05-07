@@ -12,7 +12,7 @@ If you want to host or create content for SS14, go to the [Space Station 14](htt
 
 <div class="header" align="center">
 
-| [Discord](https://discord.gg/w75mwYgTEu) | [Steam](https://store.steampowered.com/app/1255460/Space_Station_14/) |
+| [Discord](https://discord.gg/rmK3AcNdz3) | [Steam](https://store.steampowered.com/app/1255460/Space_Station_14/) |
 
 </div>
 
