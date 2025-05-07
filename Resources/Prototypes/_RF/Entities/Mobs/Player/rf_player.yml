@@ -36,6 +36,7 @@
       - PickUp
       - Pry
       - Build
+      - Deconstruct
       - Dig
       - FreeHandInteract
       - Heal

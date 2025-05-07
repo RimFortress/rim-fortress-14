@@ -3,7 +3,7 @@ using Content.Server.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
-public sealed partial class ConstructionFinishedPrecondition : InvertiblePrecondition
+public sealed partial class DeconstructionPrecondition : InvertiblePrecondition
 {
     [DataField(required: true)]
     public string Key = default!;
@@ -12,6 +12,6 @@ public sealed partial class ConstructionFinishedPrecondition : InvertiblePrecond
     {
         return blackboard.TryGetValue(Key, out EntityUid? target, EntityManager)
                && EntityManager.TryGetComponent(target, out ConstructionComponent? component)
-               && string.IsNullOrEmpty(component.TargetNode);
+               && !string.IsNullOrEmpty(component.DeconstructionNode);
     }
 }

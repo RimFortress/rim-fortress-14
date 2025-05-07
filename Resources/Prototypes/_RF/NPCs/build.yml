@@ -25,6 +25,19 @@
         - !type:HTNCompoundTask
           task: EscapeCompound
 
+    - preconditions:
+        - !type:HasComponentPrecondition
+          components:
+            - type: ActiveDoAfter
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetFloatOperator
+            targetKey: Time
+            amount: 0.5
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: Time
+
     ##########################
     # CONSTRUCT REQUIREMENTS #
     ##########################
@@ -45,10 +58,6 @@
             - ToolQualityTarget
             - ToolFuelTarget
             - ComponentTarget
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:GetConstructionConditionsOperator
@@ -67,10 +76,6 @@
             - ToolQualityTarget
             - ToolFuelTarget
             - ComponentTarget
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:GetConstructionStepsOperator
@@ -180,6 +185,8 @@
     # If someone else has used the item,
     # the ItemEntityTarget is invalid and npc have to look for a new material
     - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
         - !type:OrPrecondition
           preconditions:
             - !type:EntityDeletedPrecondition
@@ -232,6 +239,16 @@
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:StorageOperator
+
+    # Drop item if hands are full
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:DropOperator
 
@@ -288,6 +305,21 @@
             pathfindInPlanning: true
             rangeKey: InteractRange
 
+    # Turn on welder
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: ItemEntityTarget
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Welder
+        - !type:ItemTogglePrecondition
+          targetKey: ItemEntityTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: ItemEntityTarget
+
     # Using the item for construction
     - preconditions:
         - !type:KeysExistsPrecondition
@@ -299,10 +331,6 @@
           rangeKey: InteractRange
         - !type:ActiveHandEntityIsPrecondition
           targetKey: ItemEntityTarget
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-          invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
@@ -310,3 +338,13 @@
         - !type:HTNPrimitiveTask
           operator: !type:RemoveKeyOperator
             key: ItemEntityTarget
+
+- type: htnCompound
+  id: DeconstructionCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StartDeconstructionOperator
+            targetKey: Target
+        - !type:HTNCompoundTask
+          task: BuildCompound

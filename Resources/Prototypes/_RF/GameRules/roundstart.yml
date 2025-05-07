@@ -23,6 +23,7 @@
             - id: Dig
             - id: Attack
             - id: Build
+            - id: Deconstruct
 
 - type: weightedRandom
   id: RandomBiome

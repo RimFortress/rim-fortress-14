@@ -128,6 +128,35 @@
       key: Target
 
 - type: npcTask
+  id: Deconstruct
+  name: Deconstruct
+  maxPerformers: 1
+  overlayColor: "#945A1C"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
+  verbOnly: true
+  compound: DeconstructionCompound
+  onFinish: RfIdleCompound
+  passive: true
+  tempKeys:
+    - ItemEntityTarget
+    - MaterialTarget
+    - MaterialInsertAmount
+    - TagsTarget
+    - AllTagsRequired
+    - ToolQualityTarget
+    - ToolFuelTarget
+    - ComponentTarget
+  targetWhitelist:
+    components:
+      - Construction
+  startPreconditions:
+    - !type:DeconstructionPrecondition
+      key: Target
+  finishPreconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
+
+- type: npcTask
   id: Dig
   name: Dig
   maxPerformers: 1
