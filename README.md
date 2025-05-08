@@ -1,6 +1,7 @@
 <div class="header" align="center">  
-<img alt="RimFortress" width="880" height="458" src="https://github.com/user-attachments/assets/15b69ab0-4d47-4ea3-840f-c55b52b77fca">  
+<img alt="RimFortress" width="880" height="451" src="https://github.com/user-attachments/assets/1a98bb7e-b07b-4182-a921-a75ce0d8b866">  
 </div>
+
 
 RimFortress is a project inspired by the genre of settlement management games and is based on Space Station 14.
 
