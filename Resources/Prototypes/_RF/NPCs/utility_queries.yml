@@ -100,6 +100,24 @@
       curve: !type:PresetCurve
         preset: TargetDistance
 
+# Pry task
+
+- type: utilityQuery
+  id: Crowbar
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Tool
+    - !type:ToolQualityFilter
+      quality: Prying
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
 # Dig task
 
 - type: utilityQuery

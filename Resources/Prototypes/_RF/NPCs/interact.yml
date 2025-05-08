@@ -2,32 +2,20 @@
 - type: htnCompound
   id: InteractCompound
   branches:
-    # Move to the target
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetNotInRangePrecondition
-          targetKey: Target
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNCompoundTask
-          task: MoveToEntityCompound
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
 
-    # Interact
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetInRangePrecondition
-          targetKey: Target
-          rangeKey: InteractRange
-        - !type:HasComponentPrecondition
-          components:
-            - type: ActiveDoAfter
-          invert: true
-      tasks:
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
+
         # Remove the key to signify the completion of the task.
         # I guess that's the normal solution?
         - !type:HTNPrimitiveTask
