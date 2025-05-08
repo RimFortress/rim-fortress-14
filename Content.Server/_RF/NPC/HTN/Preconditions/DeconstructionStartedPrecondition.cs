@@ -3,7 +3,7 @@ using Content.Server.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
-    
+
 public sealed partial class DeconstructionStartedPrecondition : InvertiblePrecondition
 {
     private EntityQuery<ConstructionComponent> _constructionQuery;
