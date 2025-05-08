@@ -107,14 +107,8 @@
   compound: BuildCompound
   onFinish: RfIdleCompound
   tempKeys:
-    - ItemEntityTarget
-    - MaterialTarget
-    - MaterialInsertAmount
-    - TagsTarget
-    - AllTagsRequired
-    - ToolQualityTarget
-    - ToolFuelTarget
-    - ComponentTarget
+    - PickUpTarget
+    - Amount
   targetsQuery: BuildTaskTarget
   targetWhitelist:
     components:
@@ -127,6 +121,9 @@
     - !type:ConstructionFinishedPrecondition
       key: Target
 
+# In fact, the only thing this task does is set the path in the graph to disassembly.
+# The NPC then automatically switches to the construction task via routine tasks.
+# Otherwise we would get NPC conflict for construction
 - type: npcTask
   id: Deconstruct
   name: Deconstruct
@@ -137,24 +134,21 @@
   compound: DeconstructionCompound
   onFinish: RfIdleCompound
   passive: true
-  tempKeys:
-    - ItemEntityTarget
-    - MaterialTarget
-    - MaterialInsertAmount
-    - TagsTarget
-    - AllTagsRequired
-    - ToolQualityTarget
-    - ToolFuelTarget
-    - ComponentTarget
   targetWhitelist:
     components:
       - Construction
   startPreconditions:
+    # We dont want deconstruct items for now
+    - !type:HasComponentPrecondition
+      targetKey: Target
+      components:
+        - type: Item
+      invert: true
     - !type:DeconstructionPrecondition
       key: Target
   finishPreconditions:
-    - !type:EntityDeletedPrecondition
-      key: Target
+    - !type:DeconstructionStartedPrecondition
+      targetKey: Target
 
 - type: npcTask
   id: Dig

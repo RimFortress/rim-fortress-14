@@ -1,6 +1,18 @@
 # Build task
 
 - type: utilityQuery
+  id: Construction
+  query:
+    - !type:ConstructionQuery
+      targetKey: Target
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
   id: TargetMaterials
   query:
     - !type:MapComponentQuery

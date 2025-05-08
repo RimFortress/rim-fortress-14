@@ -1,22 +1,7 @@
 - type: htnCompound
   id: PickUpCompound
   branches:
-    - preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: PickUpTarget
-
-    # Move to target
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:TargetNotInRangePrecondition
-          targetKey: PickUpTarget
-          rangeKey: InteractRange
-      tasks:
+    - tasks:
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: PickUpTarget
@@ -26,39 +11,46 @@
             rangeKey: InteractRange
             removeKeyOnFinish: true
 
-    # Remove anything from the hands that prevents from picking up the item
-    - preconditions:
-        - !type:ActiveHandEntityPrecondition
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
-          invert: true
-      tasks:
+        # Split material stack
+        # Added specifically for BuildCompound,
+        # as I don't want to create a huge code duplication
+        # for the sake of such a small thing
         - !type:HTNPrimitiveTask
-          operator: !type:StorageOperator
-    - preconditions:
-        - !type:ActiveHandEntityPrecondition
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
-          invert: true
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:KeyExistsPrecondition
+                  key: Amount
+                - !type:HasComponentPrecondition
+                  targetKey: PickUpTarget
+                  components:
+                    - type: Stack
+                      stackType: Glass
+              operator: !type:SplitStackOperator
+                targetKey: PickUpTarget
+                amountKey: Amount
 
-    # Pick up the item
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:TargetInRangePrecondition
-          targetKey: PickUpTarget
-          rangeKey: InteractRange
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
-          invert: true
-      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandEntityPrecondition
+                - !type:ActiveHandEntityIsPrecondition
+                  targetKey: PickUpTarget
+                  invert: true
+                - !type:CanInsertPrecondition
+              operator: !type:StorageOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandEntityPrecondition
+                - !type:ActiveHandEntityIsPrecondition
+                  targetKey: PickUpTarget
+                  invert: true
+              operator: !type:DropOperator
+
         - !type:HTNPrimitiveTask
           operator: !type:EquipOperator
             target: PickUpTarget
