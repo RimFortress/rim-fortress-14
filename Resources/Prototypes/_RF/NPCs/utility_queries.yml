@@ -179,6 +179,39 @@
     - !type:TargetAccessibleCon
       curve: !type:BoolCurve
 
+# Farming
+- type: utilityQuery
+  id: Seed
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Seed
+          seedId: wheat
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+# Chop task
+- type: utilityQuery
+  id: Axe
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Tag
+    - !type:TagFilter
+      tags:
+        - FireAxe
+        - BotanyHatchet
+      requireAll: false
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
 # Tasks targets query
 
 - type: utilityQuery
@@ -190,6 +223,18 @@
           graph: FloorBananium
           node: BananiumFloor
     - !type:ConstructionFinishedFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: PlantTaskTarget
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: PlantHolder
+    - !type:PlantHolderFilledFilter
   considerations:
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve

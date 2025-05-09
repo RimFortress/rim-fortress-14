@@ -74,6 +74,7 @@
     Wirecutter: 10
     Screwdriver: 10
     Crowbar: 10
+    HydroponicsToolHatchet: 15
 
 - type: expeditionEquipment
   id: Medical

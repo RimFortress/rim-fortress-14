@@ -40,6 +40,8 @@
       - Dig
       - FreeHandInteract
       - Heal
+      - Plant
+      - Chop
   - type: NpcFactionMember
     factions:
       - RimFortress

@@ -239,3 +239,43 @@
         - !type:MobStatePrecondition
           targetKey: Target
           state: Dead
+
+- type: npcTask
+  id: Plant
+  name: Plant
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  compound: PlantingCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+  targetsQuery: PlantTaskTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+  startPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+      invert: true
+  finishPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+
+- type: npcTask
+  id: Chop
+  name: Chop down
+  maxPerformers: 1
+  overlayColor: "#452615"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  compound: ChopCompound
+  onFinish: RfIdleCompound
+  passive: true
+  tempKeys:
+    - PickUpTarget
+  targetWhitelist:
+    tags:
+      - Tree
+  finishPreconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target

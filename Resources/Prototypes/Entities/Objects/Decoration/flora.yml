@@ -90,6 +90,11 @@
           Log:
             min: 2
             max: 8
+  # RimFortress Start
+  - type: Tag
+    tags:
+      - Tree
+  # RimFortress End
 
 - type: entity
   parent: BaseTree

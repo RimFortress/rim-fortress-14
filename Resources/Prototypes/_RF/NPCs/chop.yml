@@ -1,25 +1,27 @@
 - type: htnCompound
-  id: DigCompound
+  id: ChopCompound
   branches:
-    # If NPC don't have a pickaxe in hands, look for it.
     - preconditions:
         - !type:ActiveHandEntityTagsPrecondition
           tags:
-            - Pickaxe
+            - FireAxe
+            - BotanyHatchet
+          requireAll: false
           invert: true
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
-            proto: Pickaxe
+            proto: Axe
             key: PickUpTarget
-        # Go to the pickaxe we found
         - !type:HTNCompoundTask
           task: PickUpCompound
 
     - preconditions:
         - !type:ActiveHandEntityTagsPrecondition
           tags:
-            - Pickaxe
+            - FireAxe
+            - BotanyHatchet
+          requireAll: false
       tasks:
         - !type:HTNPrimitiveTask
           operator: !type:TryOperator
@@ -32,7 +34,6 @@
                   invert: true
               operator: !type:WieldOperator
 
-        # Goes to the target
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: Target
@@ -42,7 +43,7 @@
             rangeKey: InteractRange
             removeKeyOnFinish: true
 
-        # And finally, digging
+        # Chop down tree
         - !type:HTNPrimitiveTask
           operator: !type:MeleeOperator
             targetKey: Target

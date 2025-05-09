@@ -24,6 +24,7 @@
             - id: Attack
             - id: Build
             - id: Deconstruct
+            - id: Plant
 
 - type: weightedRandom
   id: RandomBiome

@@ -1,0 +1,23 @@
+- type: htnCompound
+  id: PlantingCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Seed
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
+
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
