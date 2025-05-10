@@ -3,7 +3,7 @@ using Content.Server.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Farming;
 
-public sealed partial class PlantDeadPrecondition : InvertiblePrecondition
+public sealed partial class PlantSampledPrecondition : InvertiblePrecondition
 {
     [DataField(required: true)]
     public string TargetKey;
@@ -12,6 +12,6 @@ public sealed partial class PlantDeadPrecondition : InvertiblePrecondition
     {
         return blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager)
                && EntityManager.TryGetComponent(uid, out PlantHolderComponent? comp)
-               && comp.Dead;
+               && comp.Sampled;
     }
 }
