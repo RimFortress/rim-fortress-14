@@ -8,7 +8,7 @@ using Robust.Shared.Utility;
 namespace Content.Server._RF.NPC.HTN.Operators;
 
 /// <summary>
-/// Pop a float from the list by the given key
+/// Pop a value from the list by the given key
 /// </summary>
 public abstract partial class PopOperator<T> : HTNOperator
 {
@@ -66,11 +66,6 @@ public sealed partial class PopIntOperator : PopOperator<int>
 }
 
 public sealed partial class PopStringOperator : PopOperator<string>
-{
-
-}
-
-public sealed partial class PopStringListOperator : PopOperator<List<string>>
 {
 
 }

@@ -6,4 +6,7 @@
 - type: Tag
   id: HandGatherable
 
+- type: Tag
+  id: Tree
+
 # ALPHABETICALLY

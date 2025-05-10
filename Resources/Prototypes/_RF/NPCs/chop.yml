@@ -1,0 +1,50 @@
+- type: htnCompound
+  id: ChopCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - FireAxe
+            - BotanyHatchet
+          requireAll: false
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Axe
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - preconditions:
+        - !type:ActiveHandEntityPrecondition
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - FireAxe
+            - BotanyHatchet
+          requireAll: false
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandComponentPrecondition
+                  components:
+                    - type: Wieldable
+                - !type:WieldedPrecondition
+                  invert: true
+              operator: !type:WieldOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
+
+        # Chop down tree
+        - !type:HTNPrimitiveTask
+          operator: !type:MeleeOperator
+            targetKey: Target

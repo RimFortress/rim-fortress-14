@@ -33,7 +33,7 @@ using System.Linq;
 
 // RimFortress Start
 using Content.Server._RF.NPC.Queries.Considerations;
-using Content.Server._RF.NPC.Queries.Queries;
+using Content.Server._RF.NPC.Queries;
 // RimFortress End
 
 namespace Content.Server.NPC.Systems;

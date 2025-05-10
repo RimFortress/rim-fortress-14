@@ -107,14 +107,8 @@
   compound: BuildCompound
   onFinish: RfIdleCompound
   tempKeys:
-    - ItemEntityTarget
-    - MaterialTarget
-    - MaterialInsertAmount
-    - TagsTarget
-    - AllTagsRequired
-    - ToolQualityTarget
-    - ToolFuelTarget
-    - ComponentTarget
+    - PickUpTarget
+    - Amount
   targetsQuery: BuildTaskTarget
   targetWhitelist:
     components:
@@ -126,6 +120,35 @@
   finishPreconditions:
     - !type:ConstructionFinishedPrecondition
       key: Target
+
+# In fact, the only thing this task does is set the path in the graph to disassembly.
+# The NPC then automatically switches to the construction task via routine tasks.
+# Otherwise we would get NPC conflict for construction
+- type: npcTask
+  id: Deconstruct
+  name: Deconstruct
+  maxPerformers: 1
+  overlayColor: "#945A1C"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
+  verbOnly: true
+  compound: DeconstructionCompound
+  onFinish: RfIdleCompound
+  passive: true
+  targetWhitelist:
+    components:
+      - Construction
+  startPreconditions:
+    # We dont want deconstruct items for now
+    - !type:HasComponentPrecondition
+      targetKey: Target
+      components:
+        - type: Item
+      invert: true
+    - !type:DeconstructionPrecondition
+      key: Target
+  finishPreconditions:
+    - !type:DeconstructionStartedPrecondition
+      targetKey: Target
 
 - type: npcTask
   id: Dig
@@ -216,3 +239,144 @@
         - !type:MobStatePrecondition
           targetKey: Target
           state: Dead
+
+- type: npcTask
+  id: Plant
+  name: Plant
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  compound: PlantingCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+  targetsQuery: PlantTaskTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+  startPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+      invert: true
+  finishPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+
+- type: npcTask
+  id: RemovePlant
+  name: Remove plant
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  compound: PlantInteractCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+  targetsQuery: PlantRemoveTaskTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+  startPreconditions:
+    - !type:PlantDeadPrecondition
+      targetKey: Target
+  finishPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+      invert: true
+
+- type: npcTask
+  id: HarvestPlant
+  name: Harvet
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  compound: PlantInteractCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+    - Seed
+  targetsQuery: PlantHarvestTaskTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+  startPreconditions:
+    - !type:PlantDeadPrecondition
+      targetKey: Target
+      invert: true
+    - !type:CanHarvestPrecondition
+      targetKey: Target
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:CanHarvestPrecondition
+          targetKey: Target
+          invert: true
+        - !type:PlantDeadPrecondition
+          targetKey: Target
+
+- type: npcTask
+  id: WaterPlant
+  name: Water the plant
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  compound: PlantWaterCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+  targetsQuery: PlantWaterTaskTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+      - RefillableSolution
+  startPreconditions:
+    - !type:RefillableSolutionPrecondition
+      targetKey: Target
+      reagent: Water
+      lessThan: 50.0
+  finishPreconditions:
+    - !type:RefillableSolutionPrecondition
+      targetKey: Target
+      reagent: Water
+      moreThan: 100.0
+
+- type: npcTask
+  id: RemoveWeed
+  name: Remove weeds
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  compound: RemoveWeedCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+  targetsQuery: RemoveWeedTaskTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+  startPreconditions:
+    - !type:WeedLevelPrecondition
+      targetKey: Target
+      moreThan: 0
+  finishPreconditions:
+    - !type:WeedLevelPrecondition
+      targetKey: Target
+      lessThan: 0.1
+
+- type: npcTask
+  id: Chop
+  name: Chop down
+  maxPerformers: 1
+  overlayColor: "#452615"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  compound: ChopCompound
+  onFinish: RfIdleCompound
+  passive: true
+  tempKeys:
+    - PickUpTarget
+  targetWhitelist:
+    tags:
+      - Tree
+  finishPreconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
