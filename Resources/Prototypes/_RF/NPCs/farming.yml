@@ -27,9 +27,10 @@
   branches:
     # Getting seeds instead of harvesting if we don't have them
     - preconditions:
-        - !type:KeyNotExistsPrecondition
-          key: Seed
         - !type:PlantDeadPrecondition
+          targetKey: Target
+          invert: true
+        - !type:PlantSampledPrecondition
           targetKey: Target
           invert: true
       tasks:
@@ -41,14 +42,14 @@
         - !type:HTNPrimitiveTask
           operator: !type:UtilityCountOperator
             proto: KeySeed
-            lessThan: 2
+            lessThan: 10
 
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
             proto: PlantSampleTaker
             key: PickUpTarget
         - !type:HTNCompoundTask
-          task: PickUpCompound
+          task: PickUpAndInteractCompound
 
     - preconditions:
         - !type:NeedSharpForHarvestPrecondition

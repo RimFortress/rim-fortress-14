@@ -30,6 +30,7 @@
         - id: Attack
         - id: Build
         - id: Deconstruct
+        - id: Chop
         - id: Plant
         - id: RemovePlant
         - id: HarvestPlant

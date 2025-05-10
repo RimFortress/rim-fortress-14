@@ -54,3 +54,19 @@
         - !type:HTNPrimitiveTask
           operator: !type:EquipOperator
             target: PickUpTarget
+
+
+- type: htnCompound
+  id: PickUpAndInteractCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: InteractCompound
