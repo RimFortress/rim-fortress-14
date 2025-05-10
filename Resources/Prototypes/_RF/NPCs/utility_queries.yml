@@ -192,6 +192,103 @@
       curve: !type:PresetCurve
         preset: TargetDistance
 
+- type: utilityQuery
+  id: Sharp
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Sharp
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: Bucket
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: SolutionTransfer
+        - type: Item
+    - !type:DrainableSolutionFilter
+      maxVolumeLessThan: 80.0
+    - !type:OrFilter
+      filters:
+        - !type:DrainableEmptyFilter
+        - !type:DrainableOnlyReagentFilter
+          reagent: Water
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: WaterSource
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: DrainableSolution
+    - !type:DrainableReagentFilter
+      reagent: Water
+      moreThan: 80.0
+      invert: true
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: Hoe
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Tag
+    - !type:TagFilter
+      tags:
+        - Hoe
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: KeySeed
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Seed
+          seedId: wheat
+    - !type:KeySeedFilter
+      key: Seed
+      invert: true
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: PlantSampleTaker
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: Tag
+    - !type:TagFilter
+      tags:
+        - PlantSampleTaker
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
 # Chop task
 - type: utilityQuery
   id: Axe
@@ -235,6 +332,59 @@
       components:
         - type: PlantHolder
     - !type:PlantHolderFilledFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: PlantRemoveTaskTarget
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: PlantHolder
+    - !type:PlantDeadFilter
+      invert: true
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: PlantHarvestTaskTarget
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: PlantHolder
+    - !type:HarvestFilter
+      invert: true
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: PlantWaterTaskTarget
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: PlantHolder
+    - !type:RefillableReagentFilter
+      reagent: Water
+      moreThan: 15
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: RemoveWeedTaskTarget
+  query:
+    - !type:MapComponentQuery
+      components:
+        - type: PlantHolder
+    - !type:WeedLevelFilter
+      lessThan: 5
   considerations:
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve

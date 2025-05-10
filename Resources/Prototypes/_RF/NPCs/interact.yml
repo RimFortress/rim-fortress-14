@@ -16,12 +16,6 @@
           operator: !type:InteractWithOperator
             targetKey: Target
 
-        # Remove the key to signify the completion of the task.
-        # I guess that's the normal solution?
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: Target
-
 # Interact with the Target with the free hand
 - type: htnCompound
   id: FreeHandInteractCompound
@@ -36,3 +30,9 @@
     - tasks:
         - !type:HTNCompoundTask
           task: InteractCompound
+
+        # Remove the key to signify the completion of the task.
+        # I guess that's the normal solution?
+        - !type:HTNPrimitiveTask
+          operator: !type:RemoveKeyOperator
+            key: Target

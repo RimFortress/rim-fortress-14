@@ -75,6 +75,8 @@
     Screwdriver: 10
     Crowbar: 10
     HydroponicsToolHatchet: 15
+    HydroponicsToolMiniHoe: 10
+    Bucket: 5
 
 - type: expeditionEquipment
   id: Medical

@@ -1,9 +1,9 @@
 using Content.Server.Botany.Components;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Farming;
 
-public sealed partial class PlantHolderFilledPrecondition : InvertiblePrecondition
+public sealed partial class CanHarvestPrecondition : InvertiblePrecondition
 {
     [DataField(required: true)]
     public string TargetKey;
@@ -12,6 +12,6 @@ public sealed partial class PlantHolderFilledPrecondition : InvertiblePreconditi
     {
         return blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager)
                && EntityManager.TryGetComponent(uid, out PlantHolderComponent? comp)
-               && comp.Seed != null;
+               && comp.Harvest;
     }
 }

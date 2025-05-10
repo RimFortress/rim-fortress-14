@@ -25,6 +25,10 @@
             - id: Build
             - id: Deconstruct
             - id: Plant
+            - id: RemovePlant
+            - id: HarvestPlant
+            - id: WaterPlant
+            - id: RemoveWeed
 
 - type: weightedRandom
   id: RandomBiome

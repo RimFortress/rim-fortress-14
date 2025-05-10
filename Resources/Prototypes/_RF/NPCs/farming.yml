@@ -21,3 +21,140 @@
         - !type:HTNPrimitiveTask
           operator: !type:InteractWithOperator
             targetKey: Target
+
+- type: htnCompound
+  id: PlantInteractCompound
+  branches:
+    # Getting seeds instead of harvesting if we don't have them
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: Seed
+        - !type:PlantDeadPrecondition
+          targetKey: Target
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:GetHolderSeedOperator
+            targetKey: Target
+            seedKey: Seed
+
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityCountOperator
+            proto: KeySeed
+            lessThan: 2
+
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: PlantSampleTaker
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - preconditions:
+        - !type:NeedSharpForHarvestPrecondition
+          targetKey: Target
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: Sharp
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Sharp
+            key: PickUpTarget
+
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - preconditions:
+        - !type:NeedSharpForHarvestPrecondition
+          targetKey: Target
+          invert: true
+        - !type:ActiveHandEntityPrecondition
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropOperator
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: InteractCompound
+
+- type: htnCompound
+  id: PlantWaterCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: SolutionTransfer
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Bucket
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: SolutionTransfer
+        - !type:ActiveHandDrainableSolutionPrecondition
+          reagent: Water
+          moreThan: 0
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
+
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: Target
+
+    - preconditions:
+        - !type:ActiveHandComponentPrecondition
+          components:
+            - type: SolutionTransfer
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: WaterSource
+            key: WaterSourceTarget
+
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: WaterSourceTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
+
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractWithOperator
+            targetKey: WaterSourceTarget
+
+- type: htnCompound
+  id: RemoveWeedCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Hoe
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Hoe
+            key: PickUpTarget
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: InteractCompound
