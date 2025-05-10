@@ -227,6 +227,7 @@
 
 - type: utilityQuery
   id: WaterSource
+  limit: 1000
   query:
     - !type:MapComponentQuery
       components:
