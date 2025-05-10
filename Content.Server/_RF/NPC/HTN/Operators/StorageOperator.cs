@@ -32,10 +32,7 @@ public sealed partial class StorageOperator : HTNOperator
             || hand.HeldEntity is not { } heldEntity)
             return (false, null);
 
-        var entities =
-            _inventory.GetHandOrInventoryEntities(owner, SlotFlags.BACK ^ SlotFlags.BELT ^ SlotFlags.POCKET);
-
-        foreach (var entity in entities)
+        foreach (var entity in _inventory.GetHandOrInventoryEntities(owner))
         {
             if (!_entManager.TryGetComponent(entity, out StorageComponent? storage))
                 continue;

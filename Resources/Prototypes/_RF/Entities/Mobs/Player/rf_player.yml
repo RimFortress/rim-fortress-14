@@ -35,10 +35,11 @@
       - Attack
       - PickUp
       - Pry
-      - Build
+      - Deconstruct
       - Dig
       - FreeHandInteract
       - Heal
+      - Chop
   - type: NpcFactionMember
     factions:
       - RimFortress

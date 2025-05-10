@@ -1,7 +1,7 @@
 using Content.Server.Construction.Components;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 /// <summary>
 /// Filters completed constructions

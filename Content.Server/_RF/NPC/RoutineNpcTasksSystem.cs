@@ -53,8 +53,8 @@ public sealed class RoutineNpcTasksSystem : EntitySystem
         foreach (var taskData in entity.Comp.Tasks.OrderBy(x => x.Priority))
         {
             if (!_prototype.TryIndex(taskData.Id, out var task)
-                || !_controlSystem.TrySetPassiveTask(entity.Owner, task)
-                || taskData.AvailableOn != null && _timing.CurTime < taskData.AvailableOn)
+                || taskData.AvailableOn != null && _timing.CurTime < taskData.AvailableOn
+                || !_controlSystem.TrySetPassiveTask(entity.Owner, task))
                 continue;
 
             taskData.AvailableOn = null;

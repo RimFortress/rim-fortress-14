@@ -20,37 +20,29 @@
         - !type:ActiveHandEntityTagsPrecondition
           tags:
             - Pickaxe
-        - !type:WieldedPrecondition
-          invert: true
       tasks:
         - !type:HTNPrimitiveTask
-          operator: !type:WieldOperator
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandComponentPrecondition
+                  components:
+                    - type: Wieldable
+                - !type:WieldedPrecondition
+                  invert: true
+              operator: !type:WieldOperator
 
-    # Goes to the target if we're far from it.
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:ActiveHandEntityTagsPrecondition
-          tags:
-            - Pickaxe
-        - !type:TargetNotInRangePrecondition
-          targetKey: Target
-          rangeKey: InteractRange
-      tasks:
-        - !type:HTNCompoundTask
-          task: MoveToEntityCompound
+        # Goes to the target
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
 
-    # And finally, digging
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:ActiveHandEntityTagsPrecondition
-          tags:
-            - Pickaxe
-        - !type:TargetInRangePrecondition
-          targetKey: Target
-          rangeKey: InteractRange
-      tasks:
+        # And finally, digging
         - !type:HTNPrimitiveTask
           operator: !type:MeleeOperator
             targetKey: Target

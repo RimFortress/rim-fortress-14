@@ -1,7 +1,7 @@
 using Content.Server.Medical.Components;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.Queries.Queries;
+namespace Content.Server._RF.NPC.Queries.Filters;
 
 /// <summary>
 /// Filters items for healing by damage container and the type of damage it heals

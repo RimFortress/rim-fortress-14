@@ -199,7 +199,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         var info = control.Tasks
             .Select(x => _prototype.Index(x))
-            .Where(x => x.Passive)
+            .Where(x => x.Passive && control.Tasks.Contains(x))
             .Select(x => NpcTaskInfo(requester, x))
             .ToList();
 

@@ -144,8 +144,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             SetEraser(false);
 
         if (player is not { AttachedEntity: { Valid: true} requester }
-            || SelectedTask != null
-            || Eraser
             || Selected.Count == 0)
             return false;
 

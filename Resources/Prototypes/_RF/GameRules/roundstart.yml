@@ -23,6 +23,13 @@
             - id: Dig
             - id: Attack
             - id: Build
+            - id: Deconstruct
+            - id: Chop
+            - id: Plant
+            - id: RemovePlant
+            - id: HarvestPlant
+            - id: WaterPlant
+            - id: RemoveWeed
 
 - type: weightedRandom
   id: RandomBiome

@@ -13,16 +13,15 @@ namespace Content.Server._RF.NPC.HTN.Operators;
 public sealed partial class SplitStackOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
+
     private StackSystem _stack = default!;
     private SharedTransformSystem _transform = default!;
 
-    public HTNPlanState ShutdownState { get; } = HTNPlanState.TaskFinished;
+    [DataField(required: true)]
+    public string TargetKey;
 
     [DataField(required: true)]
-    public string TargetKey = default!;
-
-    [DataField(required: true)]
-    public string AmountKey = default!;
+    public string AmountKey;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {

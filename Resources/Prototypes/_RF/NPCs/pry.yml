@@ -2,35 +2,19 @@
   id: PryCompound
   branches:
     - preconditions:
-        - !type:KeyNotExistsPrecondition
-          key: PickUpTarget
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:SetStringOperator
-            key: ToolQuality
-            value: Prying
-        - !type:HTNPrimitiveTask
-          operator: !type:UtilityOperator
-            proto: TargetTool
-            key: PickUpTarget
-
-    - preconditions:
-        - !type:KeyExistsPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
+        - !type:ActiveHandEntityTagsPrecondition
+          tags:
+            - Crowbar
           invert: true
       tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: Crowbar
+            key: PickUpTarget
+
         - !type:HTNCompoundTask
           task: PickUpCompound
 
-    - preconditions:
-        - !type:KeysExistsPrecondition
-          keys:
-            - Target
-            - PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
-      tasks:
+    - tasks:
         - !type:HTNCompoundTask
           task: InteractCompound

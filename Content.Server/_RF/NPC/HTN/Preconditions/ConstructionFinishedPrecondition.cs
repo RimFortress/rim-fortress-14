@@ -3,9 +3,6 @@ using Content.Server.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
-/// <summary>
-/// Checks the entity for components
-/// </summary>
 public sealed partial class ConstructionFinishedPrecondition : InvertiblePrecondition
 {
     [DataField(required: true)]

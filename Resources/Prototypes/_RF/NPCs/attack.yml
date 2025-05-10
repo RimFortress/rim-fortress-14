@@ -80,10 +80,19 @@
             key: Item
 
     - preconditions:
-        - !type:ActiveHandComponentPrecondition
-          components:
-            - type: Wieldable
-            - type: GunRequiresWield
+        - !type:OrPrecondition
+          preconditions:
+            - !type:ActiveHandComponentPrecondition
+              components:
+                - type: Wieldable
+                - type: GunRequiresWield
+            - !type:ActiveHandComponentPrecondition
+              components:
+                - type: Wieldable
+                - type: IncreaseDamageOnWield
+                  damage:
+                    types:
+                      Blunt: 0
         - !type:WieldedPrecondition
           invert: true
       tasks:
@@ -123,18 +132,20 @@
         - !type:KeyExistsPrecondition
           key: Target
       tasks:
+        # Move to the target
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: Target
-        # Move to the target
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             stopOnLineOfSight: true
             rangeKey: MeleeRange
+
         - !type:HTNPrimitiveTask
           operator: !type:JukeOperator
             jukeType: Away
+
         # Attack with a gun
         - !type:HTNPrimitiveTask
           operator: !type:GunOperator
@@ -147,23 +158,32 @@
           components:
             - type: Gun
           invert: true
-        - !type:KeyExistsPrecondition
-          key: Target
-        - !type:TargetNotInRangePrecondition
-          targetKey: Target
-          rangeKey: MeleeRange
       tasks:
+        # Go to the target at melee distance
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
             targetKey: Target
-        # Else go to the target at melee distance
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             rangeKey: MeleeRange
 
-    # Attack in close combat if no gun is available
-    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandComponentPrecondition
+                  components:
+                    - type: IncreaseDamageOnWield
+                      damage:
+                        types:
+                          Piercing: 0
+                    - type: Wieldable
+                - !type:WieldedPrecondition
+                  invert: true
+              operator: !type:WieldOperator
+
+        # Attack in close combat
         - !type:HTNPrimitiveTask
           preconditions:
             - !type:KeyExistsPrecondition

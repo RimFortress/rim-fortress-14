@@ -60,7 +60,7 @@ public sealed partial class PassiveTasksMenu : Control
             if (task.IconPath != null)
                 button.IconTexturePath = task.IconPath;
 
-            button.OnToggled += args => _npcControl.SetSelectedTask(args.Pressed ? task.TaskName : null);
+            button.OnToggled += args => _npcControl.SetSelectedTask(args.Pressed ? task.TaskId : null);
             _buttons.Add(id, button);
             Container.AddChild(button);
         }
