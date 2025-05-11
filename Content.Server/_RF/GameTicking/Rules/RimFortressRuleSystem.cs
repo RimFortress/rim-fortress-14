@@ -70,6 +70,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             _eventQueue.Add(ev.Map);
 
             GameTicker.AddGameRule(addRule);
+            GameTicker.StartGameRule(addRule);
         }
     }
 
@@ -109,6 +110,9 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
 
     public Entity<WorldMapComponent>? GetWorldMap()
     {
+        if (_eventQueue.Count == 0)
+            return null;
+
         return _eventQueue.Pop();
     }
 }

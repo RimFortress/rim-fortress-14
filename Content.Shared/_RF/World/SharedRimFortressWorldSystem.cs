@@ -171,7 +171,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             // a better solution would be to have some list of entities on which we can't spawn entities
             // and check the tile for those entities, but then we'd have to write own version of IsTileBlocked
             // to avoid calling GetEntitiesIntersecting repeatedly from EntityLookupSystem
-            if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable, checkNonHard: true))
+            if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
                 continue;
 
             freeTiles.Add(tileRef);

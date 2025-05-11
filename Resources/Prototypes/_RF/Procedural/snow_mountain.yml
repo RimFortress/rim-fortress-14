@@ -106,7 +106,7 @@
       entities:
         - Spaceshroom
 
-    # Walls
+    # Roof
     - !type:BiomeEntityLayer
       threshold: -1
       noise:
@@ -123,16 +123,44 @@
       entities:
         - RoofMarker
     - !type:BiomeEntityLayer
-      threshold: -0.30
+      threshold: -1
+      noise:
+        seed: 18
+        frequency: 0.025
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        gain: 0.5
+        octaves: 1
+      allowedTiles:
+        - FloorCave
+      entities:
+        - RoofMarker
+
+    # Walls
+    - !type:BiomeEntityLayer
+      threshold: -0.20
       noise:
         seed: 5
         noiseType: Cellular
-        frequency: 0.01
+        frequency: 0.1
         lacunarity: 1.50
         fractalType: FBm
         cellularDistanceFunction: EuclideanSq
         cellularReturnType: Distance2Div
-        octaves: 4
+        octaves: 5
+      allowedTiles:
+        - FloorCave
+      entities:
+        - WallRockBasalt
+    - !type:BiomeEntityLayer
+      threshold: -0.10
+      noise:
+        seed: 18
+        frequency: 0.05
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        gain: 0.5
+        octaves: 2
       allowedTiles:
         - FloorCave
       entities:
@@ -370,20 +398,6 @@
         - Bushk3
 
     # Rocks
-    - !type:BiomeDecalLayer
-      allowedTiles:
-        - FloorCaveDrought
-      noise:
-        seed: 15
-        fractalType: FBm
-        frequency: 1
-      divisions: 1
-      threshold: 0.55
-      decals:
-        - Rock01
-        - Rock02
-        - Rock03
-        - Rock04
     - !type:BiomeDecalLayer
       allowedTiles:
         - FloorCaveDrought

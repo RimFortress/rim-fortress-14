@@ -9,7 +9,7 @@
     # Random sand
     - !type:BiomeTileLayer
       tile: FloorLowDesert
-      threshold: 0.50
+      threshold: 0.60
       noise:
         seed: 2
         noiseType: OpenSimplex2
@@ -49,21 +49,21 @@
     # River and road
     - !type:BiomeTileLayer
       tile: FloorLowDesert
-      threshold: 0.85
+      threshold: 0.86
       noise:
         seed: 3
         noiseType: OpenSimplex2
-        frequency: 0.003
-        lacunarity: 2.50
+        frequency: 0.004
+        lacunarity: 3.50
         fractalType: Ridged
         octaves: 1
     - !type:BiomeTileLayer
       tile: FloorAsteroidSand
       threshold: 0.85
       noise:
-        seed: 6
+        seed: 61
         noiseType: OpenSimplex2
-        frequency: 0.01
+        frequency: 0.011
         lacunarity: 1.50
         fractalType: Ridged
         octaves: 1

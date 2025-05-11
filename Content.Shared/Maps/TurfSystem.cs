@@ -17,8 +17,8 @@ public sealed class TurfSystem : EntitySystem
     /// <summary>
     ///     Returns true if a given tile is blocked by physics-enabled entities.
     /// </summary>
-    public bool IsTileBlocked(TileRef turf, CollisionGroup mask, float minIntersectionArea = 0.1f, bool checkNonHard = false) // RimFortress: checkNonHard
-        => IsTileBlocked(turf.GridUid, turf.GridIndices, mask, minIntersectionArea: minIntersectionArea, checkNonHard: checkNonHard);// RimFortress: checkNonHard
+    public bool IsTileBlocked(TileRef turf, CollisionGroup mask, float minIntersectionArea = 0.1f)
+        => IsTileBlocked(turf.GridUid, turf.GridIndices, mask, minIntersectionArea: minIntersectionArea);
 
     /// <summary>
     ///     Returns true if a given tile is blocked by physics-enabled entities.
@@ -29,14 +29,12 @@ public sealed class TurfSystem : EntitySystem
     /// <param name="grid">Grid component</param>
     /// <param name="gridXform">Grid's transform</param>
     /// <param name="minIntersectionArea">Minimum area that must be covered for a tile to be considered blocked</param>
-    /// <param name="checkNonHard">Should entities with non-hard fixtures be counted as blocking tiles</param> // RimFortress: checkNonHard
     public bool IsTileBlocked(EntityUid gridUid,
         Vector2i indices,
         CollisionGroup mask,
         MapGridComponent? grid = null,
         TransformComponent? gridXform = null,
-        float minIntersectionArea = 0.1f,
-        bool checkNonHard = false) // RimFortress: checkNonHard
+        float minIntersectionArea = 0.1f)
     {
         if (!Resolve(gridUid, ref grid, ref gridXform))
             return false;
@@ -69,7 +67,7 @@ public sealed class TurfSystem : EntitySystem
 
             foreach (var fixture in fixtures.Fixtures.Values)
             {
-                if (!fixture.Hard && !checkNonHard) // RimFortress: checkNonHard
+                if (!fixture.Hard)
                     continue;
 
                 if ((fixture.CollisionLayer & (int) mask) == 0)

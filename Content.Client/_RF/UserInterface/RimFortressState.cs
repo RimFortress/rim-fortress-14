@@ -81,8 +81,6 @@ public sealed class RimFortressState : GameplayStateBase
 
     public override void FrameUpdate(FrameEventArgs e)
     {
-        base.FrameUpdate(e);
-
         if (_player.LocalEntity is not { } entity
             || !_entityManager.TryGetComponent(entity, out TransformComponent? xform))
             return;
