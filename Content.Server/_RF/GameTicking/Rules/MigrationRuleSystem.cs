@@ -17,9 +17,9 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly RimFortressRuleSystem _rimRule = default!;
 
-    protected override void Added(EntityUid uid, MigrationRuleComponent component, GameRuleComponent gameRule, GameRuleAddedEvent args)
+    protected override void Started(EntityUid uid, MigrationRuleComponent component, GameRuleComponent gameRule, GameRuleStartedEvent args)
     {
-        base.Added(uid, component, gameRule, args);
+        base.Started(uid, component, gameRule, args);
 
         if (_rimRule.GetWorldMap() is not { } map)
             return;

@@ -70,6 +70,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             _eventQueue.Add(ev.Map);
 
             GameTicker.AddGameRule(addRule);
+            GameTicker.StartGameRule(addRule);
         }
     }
 

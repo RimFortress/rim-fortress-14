@@ -47,11 +47,11 @@
     # Road
     - !type:BiomeTileLayer
       tile: FloorCaveDrought
-      threshold: 0.85
+      threshold: 0.90
       noise:
-        seed: 6
+        seed: 69
         noiseType: OpenSimplex2
-        frequency: 0.02
+        frequency: 0.016
         lacunarity: 1.50
         fractalType: Ridged
         octaves: 1

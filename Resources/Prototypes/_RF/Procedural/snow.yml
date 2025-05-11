@@ -159,7 +159,7 @@
         - CrystalBlue
         - CrystalCyan
 
-    # Walls
+    # Roof
     - !type:BiomeEntityLayer
       threshold: -1
       noise:
@@ -175,6 +175,8 @@
         - FloorConcreteSmooth
       entities:
         - RoofMarker
+
+    # Walls
     - !type:BiomeEntityLayer
       allowedTiles:
         - FloorConcreteSmooth
@@ -387,40 +389,3 @@
         - grasssnowc1
         - grasssnowc2
         - grasssnowc3
-
-    # Rocks
-    - !type:BiomeDecalLayer
-      allowedTiles:
-        - FloorConcreteSmooth
-        - FloorSnowDug
-      noise:
-        seed: 15
-        fractalType: FBm
-        frequency: 1
-      divisions: 1
-      threshold: 0.55
-      decals:
-        - Rock01
-        - Rock02
-        - Rock03
-        - Rock04
-    - !type:BiomeDecalLayer
-      allowedTiles:
-        - FloorConcreteSmooth
-        - FloorSnowDug
-      noise:
-        seed: 16
-        fractalType: FBm
-        frequency: 1
-      divisions: 1
-      threshold: 0.56
-      decals:
-        - Basalt1
-        - Basalt2
-        - Basalt3
-        - Basalt4
-        - Basalt5
-        - Basalt6
-        - Basalt7
-        - Basalt8
-        - Basalt9
