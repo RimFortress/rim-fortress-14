@@ -110,6 +110,9 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
 
     public Entity<WorldMapComponent>? GetWorldMap()
     {
+        if (_eventQueue.Count == 0)
+            return null;
+
         return _eventQueue.Pop();
     }
 }
