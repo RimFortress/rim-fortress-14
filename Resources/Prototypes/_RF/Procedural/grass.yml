@@ -51,7 +51,7 @@
       tile: FloorLowDesert
       threshold: 0.86
       noise:
-        seed: 3
+        seed: 13
         noiseType: OpenSimplex2
         frequency: 0.004
         lacunarity: 3.50
@@ -71,10 +71,10 @@
       tile: FloorDesert
       threshold: 0.92
       noise:
-        seed: 3
+        seed: 13
         noiseType: OpenSimplex2
-        frequency: 0.003
-        lacunarity: 2.50
+        frequency: 0.004
+        lacunarity: 3.50
         fractalType: Ridged
         octaves: 1
 
