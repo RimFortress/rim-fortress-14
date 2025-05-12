@@ -381,6 +381,22 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
             }
         }
 
+        // RimFortress Start
+        if (_world.GetPreloadChunks() is { } preload)
+        {
+            foreach (var worldPos in preload.Coords)
+            {
+                AddChunksInRange(preload.Biome, worldPos.Position);
+
+                foreach (var layer in preload.Biome.MarkerLayers)
+                {
+                    var layerProto = ProtoManager.Index(layer);
+                    AddMarkerChunksInRange(preload.Biome, worldPos.Position, layerProto);
+                }
+            }
+        }
+        // RimFortress End
+
         var loadBiomes = AllEntityQuery<BiomeComponent, MapGridComponent>();
 
         while (loadBiomes.MoveNext(out var gridUid, out var biome, out var grid))
@@ -448,16 +464,10 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         BuildMarkerChunks(component, gridUid, grid, seed);
 
         var active = _activeChunks[component];
-        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in active)
         {
             LoadChunkMarkers(component, gridUid, grid, chunk, seed);
-
-            // RimFortress Start
-            if (isWorldMap && !_world.InMapLimits(chunk))
-                continue;
-            // RimFortress End
 
             if (!component.LoadedChunks.Add(chunk))
                 continue;
@@ -892,15 +902,9 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     {
         var active = _activeChunks[component];
         List<(Vector2i, Tile)>? tiles = null;
-        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in component.LoadedChunks)
         {
-            // RimFortress Start
-            if (isWorldMap && _world.InMapLimits(chunk))
-                continue;
-            // RimFortress End
-
             if (active.Contains(chunk) || !component.LoadedChunks.Remove(chunk))
                 continue;
 

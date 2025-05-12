@@ -9,12 +9,6 @@ namespace Content.Shared._RF.World;
 public sealed partial class RimFortressPlayerComponent : Component
 {
     /// <summary>
-    /// Maps owned by a player
-    /// </summary>
-    [ViewVariables, AutoNetworkedField]
-    public List<EntityUid> OwnedMaps = new();
-
-    /// <summary>
     /// Pops owned by a player
     /// </summary>
     [ViewVariables, AutoNetworkedField]
@@ -22,4 +16,7 @@ public sealed partial class RimFortressPlayerComponent : Component
 
     [ViewVariables(VVAccess.ReadOnly)]
     public bool GotRoundstartPops;
+
+    [ViewVariables]
+    public TimeSpan NextEventTime { get; set; }
 }

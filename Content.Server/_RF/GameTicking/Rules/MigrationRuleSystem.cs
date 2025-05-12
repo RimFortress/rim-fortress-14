@@ -21,9 +21,10 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
     {
         base.Started(uid, component, gameRule, args);
 
-        if (_rimRule.GetWorldMap() is not { } map)
+        if (!_rimRule.TryGetEvent(out var coords, out var player))
             return;
 
+        /* TODO
         if (component.RequiredBiomes.Count != 0
             && TryComp(map, out BiomeComponent? biome)
             && biome.Template is { } template
@@ -34,16 +35,12 @@ public sealed class MigrationRuleSystem : GameRuleSystem<MigrationRuleComponent>
             RaiseLocalEvent(new WorldMapAvailableForEvent { Map = map });
             return;
         }
+        */
 
         var spawn = _random.Pick(component.Spawn);
-        var pops = _world.SpawnPopAlongBounds(
-            map,
-            component.ChunkSize,
-            spawn,
-            amount: component.Amount.Next(_random));
+        var pops = _world.SpawnPop(coords.Value, spawn, amount: component.Amount.Next(_random));
 
-        if (map.Comp.OwnerPlayer is { } playerUid
-            && component.AddToPops)
-            _world.AddPops((playerUid, null), pops);
+        if (component.AddToPops)
+            _world.AddPops((player.Value.Owner, player.Value.Comp), pops);
     }
 }
