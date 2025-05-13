@@ -65,30 +65,6 @@ public sealed partial class RimFortressRuleComponent : Component
     public ComponentRegistry? PopsComponentsOverride = new();
 
     /// <summary>
-    /// The area around the center of the map where settlers can appear
-    /// </summary>
-    [DataField]
-    public int RoundStartSpawnRadius = 20;
-
-    /// <summary>
-    /// The radius, from the player's settlement, closer to which other players or event entities cannot spawn
-    /// </summary>
-    [DataField]
-    public int PlayerSafeRadius = 100;
-
-    /// <summary>
-    /// Maximum range from player settlements, up to which other players or event entities can spawn
-    /// </summary>
-    [DataField]
-    public int MaxSpawnRange = 150;
-
-    /// <summary>
-    /// Minimum number of free tiles required to spawn a player
-    /// </summary>
-    [DataField]
-    public int MinSpawnAreaTiles = 100;
-
-    /// <summary>
     /// The time from the start of the round after which the settlers will fall asleep.
     /// It is necessary to give time for the map to load and for the spawning to work properly.
     /// </summary>

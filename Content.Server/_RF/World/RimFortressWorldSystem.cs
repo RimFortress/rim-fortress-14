@@ -2,6 +2,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
 using Content.Server._RF.NPC;
+using Content.Server.Administration.Managers;
 using Content.Server.Mind;
 using Content.Server.Parallax;
 using Content.Server.Preferences.Managers;
@@ -9,6 +10,7 @@ using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
+using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Preferences;
@@ -31,6 +33,7 @@ namespace Content.Server._RF.World;
 /// </summary>
 public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
+    [Dependency] private readonly IAdminManager _admin = default!;
     [Dependency] private readonly MindSystem _mind = default!;
     [Dependency] private readonly BiomeSystem _biome = default!;
     [Dependency] private readonly MapSystem _map = default!;
@@ -53,6 +56,28 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     /// and we cannot reliably search for obstacles
     /// </remarks>
     private readonly Queue<(ICommonSession Session, TimeSpan Time, EntityCoordinates Coords)> _roundstartSpawnQueue = new();
+
+    private readonly HashSet<ICommonSession> _debugSubscribers = new();
+
+    public override void Initialize()
+    {
+        base.Initialize();
+        SubscribeNetworkEvent<WorldDebugInfoRequest>(OnDebugRequest);
+    }
+
+    private void OnDebugRequest(WorldDebugInfoRequest msg, EntitySessionEventArgs args)
+    {
+        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug))
+        {
+            _debugSubscribers.Remove(args.SenderSession);
+            return;
+        }
+
+        if (_debugSubscribers.Add(args.SenderSession))
+            return;
+
+        _debugSubscribers.Remove(args.SenderSession);
+    }
 
     public EntityUid InitializeWorld(RimFortressRuleComponent rule)
     {
@@ -92,8 +117,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (Rule is not { } rule || WorldMap is not { } worldMap)
             return false;
 
-        var spawnBox = Box2.CenteredAround(targetCoordinates.Position, new Vector2(rule.RoundStartSpawnRadius));
-        var freeTiles = GetFreeTiles(worldMap, spawnBox, rule.MinSpawnAreaTiles);
+        var spawnBox = Box2.CenteredAround(targetCoordinates.Position, new Vector2(SpawnAreaRadius));
+        var freeTiles = GetFreeTiles(worldMap, spawnBox, MinSpawnAreaTiles);
 
         if (freeTiles == null || freeTiles.Count == 0)
             return false;
@@ -231,6 +256,20 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
             if (!SpawnPlayer(spawn.Session, spawn.Coords))
                 _roundstartSpawnQueue.Enqueue((spawn.Session, spawn.Time + TimeSpan.FromSeconds(2f), spawn.Coords));
+        }
+
+        if (_debugSubscribers.Count == 0)
+            return;
+
+        var coords = AllPlayersSettlements()
+            .Select(x
+                => (GetNetEntity(x.Key), x.Value.Select(y => GetNetCoordinates(y)).ToList()))
+            .ToDictionary();
+        var msg = new SettlementCoordinatesMessage(coords);
+
+        foreach (var subscriber in _debugSubscribers)
+        {
+            RaiseNetworkEvent(msg, subscriber);
         }
     }
 }

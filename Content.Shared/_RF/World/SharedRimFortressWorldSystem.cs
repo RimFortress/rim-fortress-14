@@ -12,6 +12,7 @@ using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -36,6 +37,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
     private int _maxSettlementRadius = 100;
     private int _minSettlementMembers = 2;
+    private int _playerSafeRadius = 100;
+    protected int SpawnAreaRadius = 20;
+    protected int MinSpawnAreaTiles = 100;
 
     public override void Initialize()
     {
@@ -45,6 +49,9 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
         Subs.CVar(_cvar, RfVars.MaxSettlementRadius, value => _maxSettlementRadius = value, true);
         Subs.CVar(_cvar, RfVars.MinSettlementMembers, value => _minSettlementMembers = value, true);
+        Subs.CVar(_cvar, RfVars.PlayerSafeRadius, value => _playerSafeRadius = value, true);
+        Subs.CVar(_cvar, RfVars.SpawnAreaRadius, value => SpawnAreaRadius = value, true);
+        Subs.CVar(_cvar, RfVars.MinSpawnAreaTiles, value => MinSpawnAreaTiles = value, true);
     }
 
     #region Spawning
@@ -99,7 +106,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         if (WorldMap is not { } worldMap)
             return new();
 
-        var settlements = AllPlayersSettlements();
+        var settlements = AllSettlements();
         var coords = settlements.Count > 0
             ? _random.Pick(settlements)
             : new EntityCoordinates(worldMap, Vector2.Zero);
@@ -124,14 +131,14 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 
     protected HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates)
     {
-        if (Rule is not { } rule || WorldMap is not { } worldMap)
+        if (WorldMap is not { } worldMap)
             return new();
 
         return GetSpawnTiles(worldMap,
             targetCoordinates,
-            rule.PlayerSafeRadius,
-            rule.MaxSpawnRange,
-            rule.MinSpawnAreaTiles);
+            _playerSafeRadius,
+            SpawnAreaRadius,
+            MinSpawnAreaTiles);
     }
 
     /// <summary>
@@ -151,10 +158,10 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     {
         if (!Resolve(grid, ref grid.Comp))
             return new();
-
-        var angle = (Angle) _random.NextFloat(360f);
+        
+        var angle = Angle.FromDegrees(_random.NextFloat(360f));
         var distance = radiusFromPlayers;
-        var settlements = AllPlayersSettlements();
+        var settlements = AllSettlements();
 
         while (true)
         {
@@ -308,14 +315,14 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
                 massCenter += point;
             }
 
-            massCenter /= clusters.Count;
+            massCenter /= cluster.Count;
             coords.Add(new EntityCoordinates(grid, massCenter));
         }
 
         return coords;
     }
 
-    public List<EntityCoordinates> AllPlayersSettlements()
+    public List<EntityCoordinates> AllSettlements()
     {
         var settlements = new List<EntityCoordinates>();
         var enumerator = EntityQueryEnumerator<RimFortressPlayerComponent>();
@@ -323,6 +330,19 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         while (enumerator.MoveNext(out var uid, out var comp))
         {
             settlements.AddRange(GetPlayerSettlements(new(uid, comp)));
+        }
+
+        return settlements;
+    }
+
+    public Dictionary<EntityUid, List<EntityCoordinates>> AllPlayersSettlements()
+    {
+        var settlements = new Dictionary<EntityUid, List<EntityCoordinates>>();
+        var enumerator = EntityQueryEnumerator<RimFortressPlayerComponent>();
+
+        while (enumerator.MoveNext(out var uid, out var comp))
+        {
+            settlements.Add(uid, GetPlayerSettlements(new(uid, comp)));
         }
 
         return settlements;
@@ -391,6 +411,17 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
 public sealed class PlayerAvailableForEvent : HandledEntityEventArgs
 {
     public Entity<RimFortressPlayerComponent> Player;
+}
+
+[Serializable, NetSerializable]
+public sealed class SettlementCoordinatesMessage(Dictionary<NetEntity, List<NetCoordinates>> coords) : EntityEventArgs
+{
+    public Dictionary<NetEntity, List<NetCoordinates>> Coords = coords;
+}
+
+[Serializable, NetSerializable]
+public sealed class WorldDebugInfoRequest : EntityEventArgs
+{
 }
 
 #region Helpers

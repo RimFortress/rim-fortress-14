@@ -30,4 +30,22 @@ public sealed class RfVars : CVars
     /// </summary>
     public static readonly CVarDef<int> MinSettlementMembers =
         CVarDef.Create("rimfortress.min_settlement_members", 2, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
+    /// Radius from the target point within which spawning can occur
+    /// </summary>
+    public static readonly CVarDef<int> SpawnAreaRadius =
+        CVarDef.Create("rimfortress.spawn_area_radius", 20, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
+    /// The radius, from the player's settlement, closer to which other players or event entities cannot spawn
+    /// </summary>
+    public static readonly CVarDef<int> PlayerSafeRadius =
+        CVarDef.Create("rimfortress.player_safe_radius", 100, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
+    /// Minimum number of free tiles required to spawn a player
+    /// </summary>
+    public static readonly CVarDef<int> MinSpawnAreaTiles =
+        CVarDef.Create("rimfortress.min_spawn_area_tiles", 100, CVar.SERVER | CVar.REPLICATED);
 }
