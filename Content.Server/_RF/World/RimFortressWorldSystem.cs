@@ -8,7 +8,7 @@ using Content.Server.Preferences.Managers;
 using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
-using Content.Shared.CCVar;
+using Content.Shared._RF.CCVar;
 using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Preferences;
@@ -135,7 +135,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     /// Spawns starting pops and expedition equipment for the player
     /// </summary>
     /// <remarks>
-    /// The number of spawned pops cannot be greater than <see cref="CCVars.MaxRoundstartPops"/>
+    /// The number of spawned pops cannot be greater than <see cref="RfVars.MaxRoundstartPops"/>
     /// </remarks>
     private void RoundstartSpawn(Entity<RimFortressPlayerComponent?> player, HashSet<TileRef> spawnTiles)
     {
@@ -181,7 +181,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         }
 
         // Spawn roundstart pops
-        foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(CCVars.MaxRoundstartPops)))
+        foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(RfVars.MaxRoundstartPops)))
         {
             var coords = Turf.GetTileCenter(_random.Pick(spawnTiles));
             var character = (HumanoidCharacterProfile) profile;

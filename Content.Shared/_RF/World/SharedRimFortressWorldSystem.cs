@@ -1,11 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
+using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
+using Robust.Shared.Configuration;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
@@ -22,6 +24,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] protected readonly TurfSystem Turf = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly IConfigurationManager _cvar = default!;
 
     protected RimFortressRuleComponent? Rule;
     protected EntityUid? WorldMap;
@@ -31,17 +34,23 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
     private EntityQuery<TransformComponent> _xformQuery;
 
+    private int _maxSettlementRadius = 100;
+    private int _minSettlementMembers = 2;
+
     public override void Initialize()
     {
         base.Initialize();
         PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
+
+        Subs.CVar(_cvar, RfVars.MaxSettlementRadius, value => _maxSettlementRadius = value, true);
+        Subs.CVar(_cvar, RfVars.MinSettlementMembers, value => _minSettlementMembers = value, true);
     }
 
     #region Spawning
 
     /// <summary>
-    /// Spawns entities in random free tiles, connected to the map border, of a given area
+    /// Spawns entities in random free tiles around a given center
     /// </summary>
     /// <param name="targetCoords">Spawning coordinates</param>
     /// <param name="popProto">Prototype of the entity to be spawned</param>
@@ -287,7 +296,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         var coords = new List<EntityCoordinates>();
 
         // Divide pop coordinates into clusters
-        var (clusters, _) = DbScan.Cluster(points, 100f, 1);
+        var (clusters, _) = DbScan.Cluster(points, _maxSettlementRadius, _minSettlementMembers);
 
         // Find the center of mass of all clusters of points
         foreach (var cluster in clusters)

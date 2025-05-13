@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Content.Server.Database;
 using Content.Shared._RF.Equipment;
 using Content.Shared._RF.Preferences;
-using Content.Shared.CCVar;
+using Content.Shared._RF.CCVar;
 using Robust.Shared.Configuration;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
@@ -110,7 +110,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
 
     private Dictionary<string, int> SanitizeEquipment(Dictionary<string, int> equip)
     {
-        var maxPoints = _cfg.GetCVar(CCVars.RoundstartEquipmentPoints);
+        var maxPoints = _cfg.GetCVar(RfVars.RoundstartEquipmentPoints);
         var sanitized = new Dictionary<string, int>();
 
         if (_costs == null)
