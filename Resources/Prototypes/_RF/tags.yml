@@ -6,6 +6,10 @@
 - type: Tag
   id: HandGatherable
 
+# Entities with this tag will never be saved when unloading biome chunks
+- type: Tag
+  id: NoSaveOnModify
+
 - type: Tag
   id: Tree
 

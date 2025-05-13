@@ -94,6 +94,7 @@
   - type: Tag
     tags:
       - Tree
+      - NoSaveOnModify
   # RimFortress End
 
 - type: entity

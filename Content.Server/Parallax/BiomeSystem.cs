@@ -32,7 +32,11 @@ using Robust.Shared.Random;
 using Robust.Shared.Threading;
 using Robust.Shared.Utility;
 using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumerator;
-using Content.Server._RF.World; // RimFortress
+
+// RimFortress Start
+using Content.Server._RF.World;
+using Content.Shared.Tag;
+// RimFortress End
 
 namespace Content.Server.Parallax;
 
@@ -51,7 +55,13 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly ShuttleSystem _shuttles = default!;
-    [Dependency] private readonly RimFortressWorldSystem _world = default!; // RimFortress
+    // RimFortress Start
+    [Dependency] private readonly RimFortressWorldSystem _world = default!;
+    [Dependency] private readonly TagSystem _tag = default!;
+
+    [ValidatePrototypeId<TagPrototype>]
+    private readonly ProtoId<TagPrototype> _noSaveTag = "NoSaveOnModify";
+    // RinFortress End
 
     private EntityQuery<BiomeComponent> _biomeQuery;
     private EntityQuery<FixturesComponent> _fixturesQuery;
@@ -943,6 +953,14 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
 
         foreach (var (ent, tile) in component.LoadedEntities[chunk])
         {
+            // RimFortress Start
+            if (!Deleted(ent) && _tag.HasTag(ent, _noSaveTag))
+            {
+                Del(ent);
+                continue;
+            }
+            // RimFortress End
+
             if (Deleted(ent) || !xformQuery.TryGetComponent(ent, out var xform))
             {
                 modified.Add(tile);
