@@ -3,7 +3,7 @@
   parent: BaseGameRule
   components:
     - type: RimFortressRule
-      biomeSet: RandomBiome
+      biome: RfContinental
       defaultPopsJob: Passenger
       worldEvents: !type:NestedSelector
         tableId: BasicWorldRulesTable
@@ -30,13 +30,3 @@
             - id: HarvestPlant
             - id: WaterPlant
             - id: RemoveWeed
-
-- type: weightedRandom
-  id: RandomBiome
-  weights:
-    RfGrassland: 1.0
-    RfJungle: 0.5
-    RfGrassMountain: 0.4
-    RfSnow: 0.3
-    RfSnowMountain: 0.2
-    RfLowDesert: 0.2

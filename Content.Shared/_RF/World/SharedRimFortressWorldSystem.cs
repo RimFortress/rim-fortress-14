@@ -158,7 +158,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     {
         if (!Resolve(grid, ref grid.Comp))
             return new();
-        
+
         var angle = Angle.FromDegrees(_random.NextFloat(360f));
         var distance = radiusFromPlayers;
         var settlements = AllSettlements();

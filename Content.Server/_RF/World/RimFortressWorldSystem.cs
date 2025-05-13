@@ -14,7 +14,6 @@ using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Preferences;
-using Content.Shared.Random.Helpers;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
 using Robust.Shared.Configuration;
@@ -83,8 +82,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     {
         Rule = rule;
         var map = _map.CreateMap();
-        var templateId = _prototype.Index(rule.BiomeSet).Pick(_random);
-        _biome.EnsurePlanet(map, _prototype.Index<BiomeTemplatePrototype>(templateId));
+        _biome.EnsurePlanet(map, _prototype.Index(rule.Biome));
 
         if (TryComp(map, out LightCycleComponent? cycle))
         {

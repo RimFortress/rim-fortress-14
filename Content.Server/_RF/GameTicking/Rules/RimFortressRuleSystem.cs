@@ -7,6 +7,7 @@ using Content.Shared._RF.World;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
+using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
@@ -24,6 +25,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
+    [Dependency] private readonly TransformSystem _transform = default!;
 
     private readonly Dictionary<EntityUid, Dictionary<EntProtoId, TimeSpan>> _nextEventTime = new ();
     private readonly List<Entity<RimFortressPlayerComponent>> _eventQueue = new();
@@ -111,11 +113,13 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     }
 
     public bool TryGetEvent(
+        [NotNullWhen(true)] out EntityUid? gridUid,
         [NotNullWhen(true)] out EntityCoordinates? coords,
         [NotNullWhen(true)] out Entity<RimFortressPlayerComponent>? player)
     {
         coords = null;
         player = null;
+        gridUid = null;
 
         if (_eventQueue.Count == 0)
             return false;
@@ -127,6 +131,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             return false;
 
         coords = _random.Pick(settlements);
-        return true;
+        gridUid = _transform.GetGrid(coords.Value);
+        return gridUid != null;
     }
 }
