@@ -18,6 +18,7 @@
         - type: NpcFactionMember
           factions:
           - RimFortress
+        - type: BiomeLoader
         - type: RoutineNpcTasks
           tasks:
             - id: Dig

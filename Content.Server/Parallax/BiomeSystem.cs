@@ -35,6 +35,7 @@ using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumera
 
 // RimFortress Start
 using Content.Server._RF.World;
+using Content.Shared._RF.Parallax.Biomes;
 using Content.Shared.Tag;
 // RimFortress End
 
@@ -403,6 +404,27 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
                     var layerProto = ProtoManager.Index(layer);
                     AddMarkerChunksInRange(preload.Biome, worldPos.Position, layerProto);
                 }
+            }
+        }
+
+        var entities = EntityQueryEnumerator<TransformComponent, BiomeLoaderComponent>();
+        while (entities.MoveNext(out var uid, out var xform, out var comp))
+        {
+            if (!_biomeQuery.TryComp(_transform.GetGrid(uid), out var biome))
+                continue;
+
+            var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(comp.Radius));
+            var enumerator = new ChunkIndicesEnumerator(box, ChunkSize);
+
+            while (enumerator.MoveNext(out var chunkOrigin))
+            {
+                _activeChunks[biome].Add(chunkOrigin.Value * ChunkSize);
+            }
+
+            foreach (var layer in biome.MarkerLayers)
+            {
+                var layerProto = ProtoManager.Index(layer);
+                AddMarkerChunksInRange(biome, xform.Coordinates.Position, layerProto);
             }
         }
         // RimFortress End

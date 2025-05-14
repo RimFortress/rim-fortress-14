@@ -14,6 +14,7 @@
     context: "ghost"
   - type: Examiner
     skipChecks: true
+  - type: Ghost
   - type: GhostHearing
   - type: IntrinsicRadioReceiver
   - type: ActiveRadio
