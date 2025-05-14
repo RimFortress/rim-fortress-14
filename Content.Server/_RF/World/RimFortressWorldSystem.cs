@@ -10,6 +10,7 @@ using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
+using Content.Shared._RF.NPC;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Parallax.Biomes;
@@ -198,7 +199,9 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
                 {
                     var tileCenter = Turf.GetTileCenter(_random.Pick(spawnTiles));
                     var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
-                    Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
+                    var equip = Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
+
+                    EnsureComp<OwnedComponent>(equip).Owners.Add(player);
                 }
             }
         }

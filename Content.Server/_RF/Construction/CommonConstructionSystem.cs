@@ -1,5 +1,6 @@
 using Content.Server.Construction.Components;
 using Content.Shared._RF.Construction;
+using Content.Shared._RF.NPC;
 using Content.Shared.Construction.Prototypes;
 using Robust.Server.Player;
 using Robust.Shared.Prototypes;
@@ -42,6 +43,9 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
             comp.EdgeIndex = 0;
 
             AddComp(ghost.Value, comp);
+
+            var owned = EnsureComp<OwnedComponent>(ghost.Value);
+            owned.Owners.Add(user);
         }
 
         var msg = new ConstructionGhostSpawnMessage(request.Coordinates, GetNetEntity(ghost), request.ProtoId);

@@ -234,6 +234,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 }
             }
         }
+
+        if (TryComp(ev.Old, out OwnedComponent? comp))
+            EnsureComp<OwnedComponent>(ev.New).Owners = comp.Owners;
     }
 
     private void OnGetVerbs(GetVerbsEvent<Verb> ev)

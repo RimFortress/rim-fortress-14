@@ -30,14 +30,7 @@
 - type: utilityQuery
   id: TargetHeal
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Healing
-          damageContainers:
-            - Biological
-          damage:
-            types:
-              Heat: 0
+    - !type:OwnedQuery
     - !type:HealingFilter
       invert: true
     - !type:InHandsFilter
@@ -50,14 +43,7 @@
 - type: utilityQuery
   id: BloodLevelHeal
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Healing
-          damageContainers:
-            - Biological
-          damage:
-            types:
-              Heat: 0
+    - !type:OwnedQuery
     - !type:BloodHealingFilter
       invert: true
     - !type:InHandsFilter
@@ -70,12 +56,7 @@
 - type: utilityQuery
   id: HeatMelee
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: MeleeWeapon
-          damage:
-            types:
-              Slash: 0
+    - !type:OwnedQuery
     - !type:MeleeDamageTypeFilter
       damageType: Heat
       invert: true
@@ -89,7 +70,8 @@
 - type: utilityQuery
   id: HealingBed
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
         - type: HealOnBuckle
           damage:
@@ -105,9 +87,7 @@
 - type: utilityQuery
   id: Crowbar
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Tool
+    - !type:OwnedQuery
     - !type:ToolQualityFilter
       quality: Prying
       invert: true
@@ -123,9 +103,7 @@
 - type: utilityQuery
   id: Pickaxe
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Tag
+    - !type:OwnedQuery
     - !type:TagFilter
       tags:
         - Pickaxe
@@ -142,7 +120,8 @@
 - type: utilityQuery
   id: Food
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
       - type: Food
     - !type:InHandsFilter
@@ -162,7 +141,8 @@
 - type: utilityQuery
   id: Drink
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
       - type: Drink
     - !type:InHandsFilter
@@ -183,7 +163,8 @@
 - type: utilityQuery
   id: Seed
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
         - type: Seed
           seedId: wheat
@@ -195,7 +176,8 @@
 - type: utilityQuery
   id: Sharp
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
         - type: Sharp
   considerations:
@@ -206,7 +188,8 @@
 - type: utilityQuery
   id: Bucket
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
         - type: SolutionTransfer
         - type: Item
@@ -229,7 +212,7 @@
   id: WaterSource
   limit: 1000
   query:
-    - !type:MapComponentQuery
+    - !type:RangeComponentQuery
       components:
         - type: DrainableSolution
     - !type:DrainableReagentFilter
@@ -244,9 +227,7 @@
 - type: utilityQuery
   id: Hoe
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Tag
+    - !type:OwnedQuery
     - !type:TagFilter
       tags:
         - Hoe
@@ -261,10 +242,7 @@
 - type: utilityQuery
   id: KeySeed
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Seed
-          seedId: wheat
+    - !type:OwnedQuery
     - !type:KeySeedFilter
       key: Seed
       invert: true
@@ -276,9 +254,7 @@
 - type: utilityQuery
   id: PlantSampleTaker
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Tag
+    - !type:OwnedQuery
     - !type:TagFilter
       tags:
         - PlantSampleTaker
@@ -294,9 +270,7 @@
 - type: utilityQuery
   id: Axe
   query:
-    - !type:MapComponentQuery
-      components:
-        - type: Tag
+    - !type:OwnedQuery
     - !type:TagFilter
       tags:
         - FireAxe
@@ -315,7 +289,8 @@
 - type: utilityQuery
   id: BuildTaskTarget
   query:
-    - !type:MapComponentQuery
+    - !type:OwnedQuery
+    - !type:ComponentFilter
       components:
         - type: Construction
           graph: FloorBananium
@@ -329,7 +304,7 @@
 - type: utilityQuery
   id: PlantTaskTarget
   query:
-    - !type:MapComponentQuery
+    - !type:RangeComponentQuery
       components:
         - type: PlantHolder
     - !type:PlantHolderFilledFilter
@@ -341,7 +316,7 @@
 - type: utilityQuery
   id: PlantRemoveTaskTarget
   query:
-    - !type:MapComponentQuery
+    - !type:RangeComponentQuery
       components:
         - type: PlantHolder
     - !type:PlantDeadFilter
@@ -354,7 +329,7 @@
 - type: utilityQuery
   id: PlantHarvestTaskTarget
   query:
-    - !type:MapComponentQuery
+    - !type:RangeComponentQuery
       components:
         - type: PlantHolder
     - !type:HarvestFilter
@@ -367,7 +342,7 @@
 - type: utilityQuery
   id: PlantWaterTaskTarget
   query:
-    - !type:MapComponentQuery
+    - !type:RangeComponentQuery
       components:
         - type: PlantHolder
     - !type:RefillableReagentFilter
@@ -381,7 +356,7 @@
 - type: utilityQuery
   id: RemoveWeedTaskTarget
   query:
-    - !type:MapComponentQuery
+    - !type:RangeComponentQuery
       components:
         - type: PlantHolder
     - !type:WeedLevelFilter
