@@ -1,0 +1,43 @@
+- type: biomeTemplate
+  id: RfContinental
+  layers:
+    - !type:BiomeMetaLayer
+      template: RfGrassland
+      threshold: -1
+      noise:
+        frequency: 0.001
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        octaves: 2
+        lacunarity: 2
+
+    - !type:BiomeMetaLayer
+      template: RfGrassMountain
+      threshold: 0.3
+      noise:
+        frequency: 0.01
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        octaves: 5
+        lacunarity: 2
+
+    - !type:BiomeMetaLayer
+      template: RfSnowMountain
+      threshold: 0.6
+      noise:
+        frequency: 0.01
+        noiseType: OpenSimplex2
+        fractalType: FBm
+        octaves: 5
+        lacunarity: 2
+
+    - !type:BiomeMetaLayer
+      template: RfLowDesert
+      threshold: -0.7
+      noise:
+        seed: 18
+        frequency: 0.003
+        noiseType: Cellular
+        fractalType: FBm
+        gain: 0.5
+        octaves: 1

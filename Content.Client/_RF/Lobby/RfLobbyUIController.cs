@@ -7,6 +7,7 @@ using Content.Client.Inventory;
 using Content.Client.Lobby;
 using Content.Client.Players.PlayTimeTracking;
 using Content.Client.Station;
+using Content.Shared._RF.CCVar;
 using Content.Shared._RF.Preferences;
 using Content.Shared.CCVar;
 using Content.Shared.Clothing;
@@ -169,7 +170,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
             return;
 
         var prefs = _preferencesManager.Preferences.Characters
-            .Take(_configurationManager.GetCVar(CCVars.MaxRoundstartPops));
+            .Take(_configurationManager.GetCVar(RfVars.MaxRoundstartPops));
         var profiles = new Dictionary<EntityUid, string>();
 
         foreach (var (_, profile) in prefs)

@@ -1,6 +1,6 @@
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.EntityTable.EntitySelectors;
-using Content.Shared.Random;
+using Content.Shared.Parallax.Biomes;
 using Content.Shared.Roles;
 using Robust.Shared.Prototypes;
 
@@ -41,10 +41,10 @@ public sealed partial class RimFortressRuleComponent : Component
     public Vector2i WorldSize = new(10, 10);
 
     /// <summary>
-    /// Biome templates that will be used in the creation of the world
+    /// Biome template that will be used in the creation of the world
     /// </summary>
-    [DataField(required: true), ValidatePrototypeId<WeightedRandomPrototype>]
-    public ProtoId<WeightedRandomPrototype> BiomeSet;
+    [DataField(required: true)]
+    public ProtoId<BiomeTemplatePrototype> Biome;
 
     /// <summary>
     /// Duration of the day
@@ -63,12 +63,6 @@ public sealed partial class RimFortressRuleComponent : Component
     /// </summary>
     [DataField]
     public ComponentRegistry? PopsComponentsOverride = new();
-
-    /// <summary>
-    /// The area around the center of the map where settlers can appear
-    /// </summary>
-    [DataField]
-    public float RoundStartSpawnRadius = 20f;
 
     /// <summary>
     /// The time from the start of the round after which the settlers will fall asleep.

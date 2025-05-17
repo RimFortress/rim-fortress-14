@@ -4,20 +4,7 @@
     # FLOOR
     - !type:BiomeTileLayer
       threshold: -1
-      tile: FloorAsteroidSand
-
-    # Random dugs
-    - !type:BiomeTileLayer
-      tile: FloorAsteroidSandDug
-      threshold: 0.60
-      noise:
-        seed: 2
-        noiseType: OpenSimplex2
-        frequency: 0.08
-        lacunarity: 2.50
-        fractalType: Ridged
-        gain: 1.5
-        octaves: 4
+      tile: FloorLowDesert
 
     # Caves
     - !type:BiomeTileLayer
@@ -33,35 +20,23 @@
         cellularReturnType: Distance2Div
         octaves: 5
 
-    # Road
-    - !type:BiomeTileLayer
-      tile: FloorAsteroidIronsand
-      threshold: 0.88
-      noise:
-        seed: 6
-        noiseType: OpenSimplex2
-        frequency: 0.015
-        lacunarity: 1.50
-        fractalType: Ridged
-        octaves: 1
-
     # Oasis
     - !type:BiomeTileLayer
-      threshold: 0.65
+      threshold: 0.75
       tile: FloorPlanetGrass
       noise:
         seed: 18
-        frequency: 0.025
+        frequency: 0.010
         noiseType: OpenSimplex2
         fractalType: FBm
         gain: 0.5
         octaves: 1
     - !type:BiomeTileLayer
-      threshold: 0.80
+      threshold: 0.85
       tile: FloorPlanetDirt
       noise:
         seed: 18
-        frequency: 0.025
+        frequency: 0.010
         noiseType: OpenSimplex2
         fractalType: FBm
         gain: 0.5
@@ -74,7 +49,7 @@
       threshold: 0.3
       noise:
         seed: 18
-        frequency: 0.025
+        frequency: 0.010
         noiseType: OpenSimplex2
         fractalType: FBm
         gain: 0.5
@@ -92,7 +67,7 @@
         fractalType: FBm
         frequency: 2
       allowedTiles:
-        - FloorAsteroidSand
+        - FloorLowDesert
       entities:
         - FloraTreeStump
     - !type:BiomeEntityLayer
@@ -366,7 +341,7 @@
 
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorAsteroidSand
+        - FloorLowDesert
       divisions: 1
       threshold: 0.60
       noise:
@@ -380,9 +355,7 @@
     # Rocks
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorAsteroidSand
         - FloorLowDesert
-        - FloorAsteroidIronsand
         - FloorDesert
       noise:
         seed: 15
@@ -397,9 +370,7 @@
         - Rock04
     - !type:BiomeDecalLayer
       allowedTiles:
-        - FloorAsteroidSand
         - FloorLowDesert
-        - FloorAsteroidIronsand
         - FloorDesert
       noise:
         seed: 16

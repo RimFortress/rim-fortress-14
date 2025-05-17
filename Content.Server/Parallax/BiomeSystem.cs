@@ -32,7 +32,11 @@ using Robust.Shared.Random;
 using Robust.Shared.Threading;
 using Robust.Shared.Utility;
 using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumerator;
-using Content.Server._RF.World; // RimFortress
+
+// RimFortress Start
+using Content.Shared._RF.Parallax.Biomes;
+using Content.Shared.Tag;
+// RimFortress End
 
 namespace Content.Server.Parallax;
 
@@ -51,7 +55,12 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly ShuttleSystem _shuttles = default!;
-    [Dependency] private readonly RimFortressWorldSystem _world = default!; // RimFortress
+    // RimFortress Start
+    [Dependency] private readonly TagSystem _tag = default!;
+
+    [ValidatePrototypeId<TagPrototype>]
+    private readonly ProtoId<TagPrototype> _noSaveTag = "NoSaveOnModify";
+    // RinFortress End
 
     private EntityQuery<BiomeComponent> _biomeQuery;
     private EntityQuery<FixturesComponent> _fixturesQuery;
@@ -381,6 +390,29 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
             }
         }
 
+        // RimFortress Start
+        var entities = EntityQueryEnumerator<TransformComponent, BiomeLoaderComponent>();
+        while (entities.MoveNext(out var uid, out var xform, out var comp))
+        {
+            if (!_biomeQuery.TryComp(_transform.GetGrid(uid), out var biome))
+                continue;
+
+            var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(comp.Radius));
+            var enumerator = new ChunkIndicesEnumerator(box, ChunkSize);
+
+            while (enumerator.MoveNext(out var chunkOrigin))
+            {
+                _activeChunks[biome].Add(chunkOrigin.Value * ChunkSize);
+            }
+
+            foreach (var layer in biome.MarkerLayers)
+            {
+                var layerProto = ProtoManager.Index(layer);
+                AddMarkerChunksInRange(biome, xform.Coordinates.Position, layerProto);
+            }
+        }
+        // RimFortress End
+
         var loadBiomes = AllEntityQuery<BiomeComponent, MapGridComponent>();
 
         while (loadBiomes.MoveNext(out var gridUid, out var biome, out var grid))
@@ -448,16 +480,10 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         BuildMarkerChunks(component, gridUid, grid, seed);
 
         var active = _activeChunks[component];
-        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in active)
         {
             LoadChunkMarkers(component, gridUid, grid, chunk, seed);
-
-            // RimFortress Start
-            if (isWorldMap && !_world.InMapLimits(chunk))
-                continue;
-            // RimFortress End
 
             if (!component.LoadedChunks.Add(chunk))
                 continue;
@@ -879,6 +905,8 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         {
             component.ModifiedTiles[chunk] = modified;
         }
+
+        RaiseLocalEvent(new BiomeChunkLoaded(new(gridUid, component, grid), chunk)); // RimFortress
     }
 
     #endregion
@@ -892,15 +920,9 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     {
         var active = _activeChunks[component];
         List<(Vector2i, Tile)>? tiles = null;
-        var isWorldMap = _world.IsWorldMap(gridUid); // RimFortress
 
         foreach (var chunk in component.LoadedChunks)
         {
-            // RimFortress Start
-            if (isWorldMap && _world.InMapLimits(chunk))
-                continue;
-            // RimFortress End
-
             if (active.Contains(chunk) || !component.LoadedChunks.Remove(chunk))
                 continue;
 
@@ -939,6 +961,14 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
 
         foreach (var (ent, tile) in component.LoadedEntities[chunk])
         {
+            // RimFortress Start
+            if (!Deleted(ent) && _tag.HasTag(ent, _noSaveTag))
+            {
+                Del(ent);
+                continue;
+            }
+            // RimFortress End
+
             if (Deleted(ent) || !xformQuery.TryGetComponent(ent, out var xform))
             {
                 modified.Add(tile);
@@ -1009,6 +1039,8 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         {
             component.ModifiedTiles[chunk] = modified;
         }
+
+        RaiseLocalEvent(new BiomeChunkUnloaded(new(gridUid, component, grid), chunk)); // RimFortress
     }
 
     #endregion

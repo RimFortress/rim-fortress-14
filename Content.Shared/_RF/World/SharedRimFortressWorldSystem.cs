@@ -1,15 +1,19 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
+using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
+using Content.Shared.Parallax.Biomes;
 using Content.Shared.Physics;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
+using Robust.Shared.Configuration;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -22,104 +26,48 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] protected readonly TurfSystem Turf = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly IConfigurationManager _cvar = default!;
+    [Dependency] private readonly SharedBiomeSystem _biome = default!;
 
     protected RimFortressRuleComponent? Rule;
-    protected EntityUid?[,] Worlds = new EntityUid?[0, 0]; // [Y,X]
+    protected EntityUid? WorldMap;
 
     protected const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
 
-    protected EntityQuery<WorldMapComponent> MapQuery;
     protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
+    private EntityQuery<TransformComponent> _xformQuery;
+
+    private int _maxSettlementRadius = 100;
+    private int _minSettlementMembers = 2;
+    private int _playerSafeRadius = 100;
+    protected int SpawnAreaRadius = 20;
+    protected int MinSpawnAreaTiles = 100;
 
     public override void Initialize()
     {
         base.Initialize();
-
-        MapQuery = GetEntityQuery<WorldMapComponent>();
         PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
+        _xformQuery = GetEntityQuery<TransformComponent>();
+
+        Subs.CVar(_cvar, RfVars.MaxSettlementRadius, value => _maxSettlementRadius = value, true);
+        Subs.CVar(_cvar, RfVars.MinSettlementMembers, value => _minSettlementMembers = value, true);
+        Subs.CVar(_cvar, RfVars.PlayerSafeRadius, value => _playerSafeRadius = value, true);
+        Subs.CVar(_cvar, RfVars.SpawnAreaRadius, value => SpawnAreaRadius = value, true);
+        Subs.CVar(_cvar, RfVars.MinSpawnAreaTiles, value => MinSpawnAreaTiles = value, true);
     }
+
+    #region Spawning
 
     /// <summary>
-    /// Create a world with the size specified in <see cref="RimFortressRuleComponent"/>.WorldSize
+    /// Spawns entities in random free tiles around a given center
     /// </summary>
-    /// <param name="rule">game rule component</param>
-    public void InitializeWorld(RimFortressRuleComponent rule)
-    {
-        var size = rule.WorldSize;
-        Worlds = new EntityUid?[size.Y, size.X];
-
-        for (var y = 0; y < size.Y; y++)
-        {
-            for (var x = 0; x < size.X; x++)
-            {
-                Worlds[y, x] = null;
-            }
-        }
-
-        Rule = rule;
-    }
-
-    /// <summary>
-    /// Creates a box of entities of a given prototype
-    /// </summary>
-    /// <param name="bordersProtoId">prototype from which the border will be constructed</param>
-    /// <param name="id">id of the map on which the border will be created</param>
-    /// <param name="box">border box</param>
-    protected void CreateMapBorders(string bordersProtoId, MapId id, Box2i box)
-    {
-        for (var x = box.Bottom; x < box.Top; x++)
-        {
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Left) + new Vector2(0.5f), id));
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(x, box.Right) + new Vector2(0.5f), id));
-        }
-
-        for (var y = box.Left + 1; y < box.Right; y++)
-        {
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Top, y) + new Vector2(0.5f), id));
-            Spawn(bordersProtoId, new MapCoordinates(new Vector2(box.Bottom, y) + new Vector2(0.5f), id));
-        }
-    }
-
-    public List<EntityUid> SpawnPopAlongBounds(
-        EntityUid gridUid,
-        int spawnChunks,
-        EntProtoId? popProto = null,
-        int amount = 1)
-    {
-        if (Rule is not { } rule)
-            return new List<EntityUid>();
-
-        var chunkSize = spawnChunks * ChunkSize;
-        var ind = rule.PlanetChunkLoadDistance / spawnChunks;
-        var chunks = new List<Box2>();
-
-        for (var x = -ind; x < ind; x++)
-        {
-            chunks.Add(Box2.CenteredAround(new Vector2(x * chunkSize, ind * chunkSize), new Vector2(chunkSize)));
-            chunks.Add(Box2.CenteredAround(new Vector2(x * chunkSize, -ind * chunkSize), new Vector2(chunkSize)));
-        }
-
-        for (var y = -ind + 1; y < ind - 1; y++)
-        {
-            chunks.Add(Box2.CenteredAround(new Vector2(ind * chunkSize, y * chunkSize), new Vector2(chunkSize)));
-            chunks.Add(Box2.CenteredAround(new Vector2(-ind * chunkSize, y * chunkSize), new Vector2(chunkSize)));
-        }
-
-        return SpawnPop(gridUid, _random.Pick(chunks), popProto, amount);
-    }
-
-    /// <summary>
-    /// Spawns entities in random free tiles, connected to the map border, of a given area
-    /// </summary>
-    /// <param name="gridUid">Grid on which to spawn entities</param>
-    /// <param name="area">Area within which spawning can occur</param>
+    /// <param name="targetCoords">Spawning coordinates</param>
     /// <param name="popProto">Prototype of the entity to be spawned</param>
     /// <param name="amount">Amount of entities to be spawned</param>
     /// <param name="entities">Entities spawned elsewhere previously that will be used in place of the prototype spawning</param>
     /// <returns>List of spawned entities</returns>
     public List<EntityUid> SpawnPop(
-        EntityUid gridUid,
-        Box2 area,
+        EntityCoordinates targetCoords,
         EntProtoId? popProto = null,
         int amount = 1,
         List<EntityUid>? entities = null)
@@ -127,7 +75,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         DebugTools.Assert(popProto != null || entities?.Count == amount);
 
         var spawned = new List<EntityUid>();
-        var freeTiles = GetFreeTiles(gridUid, area);
+        var freeTiles = GetSpawnTiles(targetCoords, amount);
 
         if (freeTiles.Count == 0)
             return spawned;
@@ -155,24 +103,120 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         return spawned;
     }
 
-    protected HashSet<TileRef> GetFreeTiles(Entity<MapGridComponent?> grid, Box2 area)
+    protected HashSet<TileRef> GetSpawnTiles(int amount)
+    {
+        if (WorldMap is not { } worldMap)
+            return new();
+
+        var settlements = AllSettlements();
+        var coords = settlements.Count > 0
+            ? _random.Pick(settlements)
+            : new EntityCoordinates(worldMap, Vector2.Zero);
+
+        return GetSpawnTiles(coords, amount);
+    }
+
+    protected HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates, int amount)
+    {
+        var tiles = GetSpawnTiles(targetCoordinates);
+        var result = new HashSet<TileRef>();
+
+        while (result.Count < amount && tiles.Count > 0)
+        {
+            var randomTile = _random.Pick(tiles);
+            tiles.Remove(randomTile);
+            result.Add(randomTile);
+        }
+
+        return result;
+    }
+
+    protected HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates)
+    {
+        if (WorldMap is not { } worldMap)
+            return new();
+
+        return GetSpawnTiles(worldMap,
+            targetCoordinates,
+            _playerSafeRadius,
+            SpawnAreaRadius,
+            MinSpawnAreaTiles);
+    }
+
+    /// <summary>
+    /// Returns the given number of free tails to spawn around the given area
+    /// </summary>
+    /// <param name="grid">Grid entity</param>
+    /// <param name="targetCoords">Spawning center coordinates</param>
+    /// <param name="radiusFromPlayers">The minimum radius beyond which the tile must be from any player</param>
+    /// <param name="spawnAreaRadius">The radius from the target point at which spawning tiles can be searched for</param>
+    /// <param name="minSpawnAreaTiles">The minimum number of free tiles to which a spawning tile must be connected.</param>
+    protected HashSet<TileRef> GetSpawnTiles(
+        Entity<MapGridComponent?> grid,
+        EntityCoordinates targetCoords,
+        int radiusFromPlayers,
+        int spawnAreaRadius,
+        int minSpawnAreaTiles)
     {
         if (!Resolve(grid, ref grid.Comp))
             return new();
 
-        var tileEnumerator = _map.GetTilesEnumerator(grid, grid.Comp, area);
+        var angle = Angle.FromDegrees(_random.NextFloat(360f));
+        var distance = radiusFromPlayers;
+        var settlements = AllSettlements();
+
+        while (true)
+        {
+            var pos = new Vector2((float) Math.Cos(angle), (float) Math.Sin(angle)) * distance + targetCoords.Position;
+            var valid = true;
+
+            distance += radiusFromPlayers / 2;
+
+            foreach (var settlement in settlements)
+            {
+                if (Vector2.Distance(pos, settlement.Position) >= radiusFromPlayers)
+                    continue;
+
+                valid = false;
+                break;
+            }
+
+            if (!valid)
+                continue;
+
+            var box = Box2.CenteredAround(pos, new Vector2(spawnAreaRadius));
+            var tiles = GetFreeTiles(grid, box, minSpawnAreaTiles);
+
+            if (tiles.Count == 0)
+                continue;
+
+            return tiles;
+        }
+    }
+
+    /// <summary>
+    /// Returns all free tiles in the biome chunk
+    /// </summary>
+    protected HashSet<TileRef> GetFreeTiles(Entity<MapGridComponent?, BiomeComponent?> grid, Box2 area, int areaMinSize)
+    {
+        if (!Resolve(grid, ref grid.Comp1) || !Resolve(grid, ref grid.Comp2))
+            return new();
+
+        var tileEnumerator = _map.GetTilesEnumerator(grid, grid.Comp1, area, ignoreEmpty: false);
         var freeTiles = new HashSet<TileRef>();
 
         // Find all free tiles in the specified area
         while (tileEnumerator.MoveNext(out var tileRef))
         {
-            // We also check entities with non-hard fixtures to avoid spawning on entities like water, lava, chasms.
-            // It's obviously not the best solution to interfere with the TurfSystem code,
-            // a better solution would be to have some list of entities on which we can't spawn entities
-            // and check the tile for those entities, but then we'd have to write own version of IsTileBlocked
-            // to avoid calling GetEntitiesIntersecting repeatedly from EntityLookupSystem
-            if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            if (tileRef.IsSpace())
+            {
+                if (_biome.TryGetEntity(tileRef.GridIndices, grid.Comp2, grid.Comp1, out _))
+                    continue;
+            }
+            else if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            {
                 continue;
+            }
 
             freeTiles.Add(tileRef);
         }
@@ -182,7 +226,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             var randomTile = _random.Pick(freeTiles);
             freeTiles.Remove(randomTile);
 
-            if (IsConnectedToBorder(randomTile, freeTiles, out var tiles))
+            if (ConnectedTilesCount(randomTile, areaMinSize, freeTiles, out var tiles))
             {
                 freeTiles = freeTiles.Where(tile => tiles.Contains(tile)).ToHashSet();
                 break;
@@ -198,12 +242,14 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     }
 
     /// <summary>
-    /// Checks if the tile is connected to the map border
+    /// Checks the number of free tiles connected to the given one.
     /// </summary>
     /// <param name="tileRef">tile from which the check will start</param>
+    /// <param name="moreThan">The minimum number of free tiles connected to the given one that we expect to be available</param>
     /// <param name="freeTilesCache">A list of free tiles that have been checked before, to prevent double-checking</param>
     /// <param name="visited">list of visited tiles</param>
-    protected bool IsConnectedToBorder(TileRef tileRef, HashSet<TileRef> freeTilesCache, out HashSet<TileRef> visited)
+    /// <returns>True, if the number of connected free tiles is greater than moreThan</returns>
+    private bool ConnectedTilesCount(TileRef tileRef, int moreThan, HashSet<TileRef> freeTilesCache, out HashSet<TileRef> visited)
     {
         var directions = new[] { Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down };
         var queue = new Queue<TileRef>();
@@ -219,8 +265,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             if (!visited.Add(node))
                 continue;
 
-            // NOTE: space is all unloaded map tiles, even if they are not map boundaries.
-            if (node.IsSpace())
+            if (queue.Count > moreThan)
                 return true;
 
             if (!freeTilesCache.Contains(node)
@@ -238,85 +283,79 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     }
 
     /// <summary>
-    /// Checks if the given map is part of the RimFortress world
+    /// Returns the coordinates of the player's settlements
     /// </summary>
-    public bool IsWorldMap(EntityUid uid)
+    public List<EntityCoordinates> GetPlayerSettlements(Entity<RimFortressPlayerComponent?> player)
     {
-        return MapQuery.HasComp(uid);
-    }
+        if (!Resolve(player, ref player.Comp)
+            || !_xformQuery.TryComp(player, out var playerXform)
+            || player.Comp.Pops.Count == 0)
+            return new();
 
-    /// <summary>
-    /// Checks if the coordinates are within the map borders
-    /// </summary>
-    public bool InMapLimits(Vector2i coordinates)
-    {
-        if (Rule is not { } rule)
-            return true;
-
-        return Math.Abs(coordinates.X) <= rule.PlanetChunkLoadDistance * ChunkSize
-               && Math.Abs(coordinates.Y) <= rule.PlanetChunkLoadDistance * ChunkSize;
-    }
-
-    public Entity<RimFortressPlayerComponent>? GetPlayerByMap(EntityUid mapId)
-    {
-        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
-        while (query.MoveNext(out var uid, out var player))
+        // Collect a list of the coordinates of all the player's pops
+        var points = new List<Vector2>();
+        foreach (var pop in player.Comp.Pops)
         {
-            if (player.OwnedMaps.Contains(mapId))
-                return (uid, player);
+            if (!_xformQuery.TryComp(pop, out var xform))
+                continue;
+
+            points.Add(xform.Coordinates.Position);
         }
 
-        return null;
-    }
+        var grid = playerXform.Coordinates.EntityId;
+        var coords = new List<EntityCoordinates>();
 
-    protected Vector2i? GetRandomFreeMap()
-    {
-        if (Rule is not { } rule)
-            return null;
+        // Divide pop coordinates into clusters
+        var (clusters, _) = DbScan.Cluster(points, _maxSettlementRadius, _minSettlementMembers);
 
-        var size = rule.WorldSize;
-        var freeWorlds = new List<Vector2i>();
-
-        for (var y = 0; y < size.Y; y++)
+        // Find the center of mass of all clusters of points
+        foreach (var cluster in clusters)
         {
-            for (var x = 0; x < size.X; x++)
+            var massCenter = Vector2.Zero;
+
+            foreach (var point in cluster)
             {
-                if (Worlds[y, x] is not { } worldMap
-                    || MapQuery.TryComp(worldMap, out var map)
-                    && map.OwnerPlayer == null)
-                    freeWorlds.Add(new Vector2i(x, y));
+                massCenter += point;
             }
+
+            massCenter /= cluster.Count;
+            coords.Add(new EntityCoordinates(grid, massCenter));
         }
 
-        if (freeWorlds.Count == 0)
-            return null;
-
-        return _random.Pick(freeWorlds);
+        return coords;
     }
 
-    public Entity<WorldMapComponent>? GetRandomPlayerMap()
+    public List<EntityCoordinates> AllSettlements()
     {
-        var freeWorlds = new List<EntityUid>();
+        var settlements = new List<EntityCoordinates>();
+        var enumerator = EntityQueryEnumerator<RimFortressPlayerComponent>();
 
-        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
-        while (query.MoveNext(out var player))
+        while (enumerator.MoveNext(out var uid, out var comp))
         {
-            freeWorlds.AddRange(player.OwnedMaps);
+            settlements.AddRange(GetPlayerSettlements(new(uid, comp)));
         }
 
-        if (freeWorlds.Count == 0)
-            return null;
-
-        var map = _random.Pick(freeWorlds);
-        if (!MapQuery.TryComp(map, out var mapComp))
-            return null;
-
-        return (map, mapComp);
+        return settlements;
     }
+
+    public Dictionary<EntityUid, List<EntityCoordinates>> AllPlayersSettlements()
+    {
+        var settlements = new Dictionary<EntityUid, List<EntityCoordinates>>();
+        var enumerator = EntityQueryEnumerator<RimFortressPlayerComponent>();
+
+        while (enumerator.MoveNext(out var uid, out var comp))
+        {
+            settlements.Add(uid, GetPlayerSettlements(new(uid, comp)));
+        }
+
+        return settlements;
+    }
+
+    #endregion
 
     public List<EntityUid>? GetPLayerPops(EntityUid uid)
     {
-        if (!TryComp(uid, out RimFortressPlayerComponent? player))
+        if (!PlayerQuery.TryComp(uid, out var player))
             return null;
 
         return player.Pops.Count == 0 ? null : player.Pops;
@@ -360,22 +399,110 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
         if (Rule is not { } rule)
             return;
 
-        var query = EntityQueryEnumerator<WorldMapComponent>();
-        while (query.MoveNext(out var uid, out var mapComp))
+        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
+        while (query.MoveNext(out var uid, out var comp))
         {
-            var entity = new Entity<WorldMapComponent>(uid, mapComp);
-
-            if (_timing.CurTime < mapComp.NextEventTime
-                || mapComp.OwnerPlayer == null)
+            if (_timing.CurTime < comp.NextEventTime)
                 continue;
 
-            entity.Comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(rule.MinMaxEventTiming.Next(_random));
-            RaiseLocalEvent(new WorldMapAvailableForEvent { Map = entity });
+            comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(rule.MinMaxEventTiming.Next(_random));
+            RaiseLocalEvent(new PlayerAvailableForEvent { Player = new(uid, comp) });
         }
     }
 }
 
-public sealed class WorldMapAvailableForEvent : HandledEntityEventArgs
+public sealed class PlayerAvailableForEvent : HandledEntityEventArgs
 {
-    public Entity<WorldMapComponent> Map { get; set; }
+    public Entity<RimFortressPlayerComponent> Player;
 }
+
+[Serializable, NetSerializable]
+public sealed class SettlementCoordinatesMessage(Dictionary<NetEntity, List<NetCoordinates>> coords) : EntityEventArgs
+{
+    public Dictionary<NetEntity, List<NetCoordinates>> Coords = coords;
+}
+
+[Serializable, NetSerializable]
+public sealed class WorldDebugInfoRequest : EntityEventArgs
+{
+}
+
+#region Helpers
+
+/// <summary>
+/// A class helper that extracts clusters and noise among an array of points using the DBSCAN algorithm
+/// </summary>
+public static class DbScan
+{
+    /// <summary>
+    /// Selects clusters and individual noise points among an array of points
+    /// </summary>
+    /// <param name="points">List of points from which to select a cluster</param>
+    /// <param name="radius">Maximum radius of one cluster</param>
+    /// <param name="minPts">Minimum required number of neighboring points to be considered as a cluster and not as noise</param>
+    /// <returns>List of point clusters and list of noisy points</returns>
+    public static (List<List<Vector2>> Clusters, List<Vector2> Noise) Cluster(
+        List<Vector2> points,
+        float radius,
+        int minPts)
+    {
+        List<List<Vector2>> clusters = new();
+        HashSet<Vector2> visited = new();
+        List<Vector2> noise = new();
+
+        foreach (var point in points)
+        {
+            if (!visited.Add(point))
+                continue;
+
+            var neighbors = GetNeighbors(points, point, radius);
+
+            if (neighbors.Count < minPts)
+            {
+                noise.Add(point);
+                continue;
+            }
+
+            List<Vector2> cluster = new();
+            ExpandCluster(points, point, neighbors, cluster, visited, radius, minPts);
+            clusters.Add(cluster);
+        }
+
+        return (clusters, noise);
+    }
+
+    private static void ExpandCluster(
+        List<Vector2> points,
+        Vector2 point,
+        List<Vector2> neighbors,
+        List<Vector2> cluster,
+        HashSet<Vector2> visited,
+        float radius,
+        int minPts)
+    {
+        cluster.Add(point);
+
+        for (var i = 0; i < neighbors.Count; i++)
+        {
+            var neighbor = neighbors[i];
+
+            if (visited.Add(neighbor))
+            {
+                var newNeighbors = GetNeighbors(points, neighbor, radius);
+
+                if (newNeighbors.Count >= minPts)
+                    neighbors.AddRange(newNeighbors);
+            }
+
+            if (!cluster.Contains(neighbor))
+                cluster.Add(neighbor);
+        }
+    }
+
+    private static List<Vector2> GetNeighbors(List<Vector2> points, Vector2 point, float radius)
+    {
+        return points.Where(p => Vector2.Distance(p, point) <= radius).ToList();
+    }
+}
+
+#endregion

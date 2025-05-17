@@ -2,16 +2,19 @@ using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
 using Content.Server._RF.NPC;
+using Content.Server.Administration.Managers;
 using Content.Server.Mind;
 using Content.Server.Parallax;
 using Content.Server.Preferences.Managers;
 using Content.Server.Station.Systems;
+using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
-using Content.Shared.CCVar;
+using Content.Shared._RF.CCVar;
+using Content.Shared._RF.NPC;
+using Content.Shared._RF.Parallax.Fog;
+using Content.Shared.Administration;
 using Content.Shared.Light.Components;
-using Content.Shared.Parallax.Biomes;
 using Content.Shared.Preferences;
-using Content.Shared.Random.Helpers;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
 using Robust.Shared.Configuration;
@@ -29,6 +32,7 @@ namespace Content.Server._RF.World;
 /// </summary>
 public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
+    [Dependency] private readonly IAdminManager _admin = default!;
     [Dependency] private readonly MindSystem _mind = default!;
     [Dependency] private readonly BiomeSystem _biome = default!;
     [Dependency] private readonly MapSystem _map = default!;
@@ -43,23 +47,35 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
     [Dependency] private readonly NpcControlSystem _npc = default!;
 
-    /// <summary>
-    /// A queue of pending requests to spawn starting settlements
-    /// </summary>
-    /// <remarks>
-    /// We cannot spawn them immediately, as the map has not been loaded yet,
-    /// and we cannot reliably search for obstacles
-    /// </remarks>
-    private readonly HashSet<(EntityUid, TimeSpan)> _roundstartSpawnQueue = new();
+    private readonly HashSet<ICommonSession> _debugSubscribers = new();
 
-    private EntityUid CreateMap()
+    public override void Initialize()
     {
-        if (Rule is not { } rule)
-            throw new InvalidOperationException("trying create world map before rule is set");
+        base.Initialize();
+        SubscribeNetworkEvent<WorldDebugInfoRequest>(OnDebugRequest);
+    }
 
-        var map = _map.CreateMap(out var mapId);
-        var templateId = _prototype.Index(rule.BiomeSet).Pick(_random);
-        _biome.EnsurePlanet(map, _prototype.Index<BiomeTemplatePrototype>(templateId));
+    private void OnDebugRequest(WorldDebugInfoRequest msg, EntitySessionEventArgs args)
+    {
+        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug))
+        {
+            _debugSubscribers.Remove(args.SenderSession);
+            return;
+        }
+
+        if (_debugSubscribers.Add(args.SenderSession))
+            return;
+
+        _debugSubscribers.Remove(args.SenderSession);
+    }
+
+    public EntityUid InitializeWorld(RimFortressRuleComponent rule)
+    {
+        Rule = rule;
+        var map = _map.CreateMap();
+        _biome.EnsurePlanet(map, _prototype.Index(rule.Biome));
+        var fog = EnsureComp<FogOfWarComponent>(map);
+        Dirty(map, fog);
 
         if (TryComp(map, out LightCycleComponent? cycle))
         {
@@ -69,61 +85,36 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             cycle.MinLightLevel = 1f;
         }
 
-        // Build map borders around map center
-        var borderBox = new Box2i(
-            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
-            -ChunkSize * rule.PlanetChunkLoadDistance - 1,
-            ChunkSize * (rule.PlanetChunkLoadDistance + 1),
-            ChunkSize * (rule.PlanetChunkLoadDistance + 1));
-        CreateMapBorders(rule.PlanetBorderProtoId, mapId, borderBox);
-
+        WorldMap = map;
         return map;
-    }
-
-    private Entity<WorldMapComponent> CreateOrGetMap(Vector2i coords)
-    {
-        var (x, y) = coords;
-
-        if (Worlds[y, x] is { } mapUid
-            && MapQuery.TryComp(Worlds[y, x], out var mapComp))
-            return (mapUid, mapComp);
-
-        var map = CreateMap();
-        var worldMap = EnsureComp<WorldMapComponent>(map);
-        Worlds[y, x] = map;
-        return (map, worldMap);
     }
 
     /// <summary>
     /// Creates or allocates a free map for the player
     /// </summary>
-    /// <exception cref="InvalidOperationException">if there are no maps available</exception>
-    public void CreateOwnerMap(ICommonSession session)
+    public void SpawnPlayer(ICommonSession session)
     {
-        if (Rule is not { } rule)
+        if (Rule is not { } rule || WorldMap is not { } worldMap)
+            return ;
+
+        var coords = Turf.GetTileCenter(GetSpawnTiles(1).First());
+        var spawnBox = Box2.CenteredAround(coords.Position, new Vector2(SpawnAreaRadius));
+        var freeTiles = GetFreeTiles(worldMap, spawnBox, MinSpawnAreaTiles);
+
+        if (freeTiles.Count == 0)
             return;
-
-        if (GetRandomFreeMap() is not { } mapCoords)
-            throw new InvalidOperationException("No free maps available");
-
-        // Create or get map for player
-        var worldMap = CreateOrGetMap(mapCoords);
-        worldMap.Comp.NextEventTime = _timing.CurTime + rule.MinimumTimeUntilFirstEvent;
 
         // Spawn RF player entity
         var newMind = _mind.CreateMind(session.UserId, session.Name);
         _mind.SetUserId(newMind, session.UserId);
-        var center = new EntityCoordinates(worldMap.Owner, new Vector2(ChunkSize / 2f));
-        var mob = Spawn(rule.PlayerProtoId, center);
+
+        var mob = Spawn(rule.PlayerProtoId, coords);
         _mind.TransferTo(newMind, mob);
 
         var player = EnsureComp<RimFortressPlayerComponent>(mob);
-        player.OwnedMaps.Add(worldMap.Owner);
+        player.NextEventTime = _timing.CurTime + rule.MinimumTimeUntilFirstEvent;
 
-        worldMap.Comp.OwnerPlayer = mob;
-
-        // Time offset so that the map has time to load
-        _roundstartSpawnQueue.Add((mob, _timing.CurTime + TimeSpan.FromSeconds(2f)));
+        RoundstartSpawn(new(mob, player), freeTiles);
 
         Dirty(mob, player);
     }
@@ -149,75 +140,68 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     /// Spawns starting pops and expedition equipment for the player
     /// </summary>
     /// <remarks>
-    /// The number of spawned pops cannot be greater than <see cref="CCVars.MaxRoundstartPops"/>
+    /// The number of spawned pops cannot be greater than <see cref="RfVars.MaxRoundstartPops"/>
     /// </remarks>
-    private void RoundstartSpawn(Entity<RimFortressPlayerComponent?> player)
+    private void RoundstartSpawn(Entity<RimFortressPlayerComponent?> player, HashSet<TileRef> spawnTiles)
     {
         if (Rule is not { } rule
+            || WorldMap is not { } worldMap
             || !Resolve(player.Owner, ref player.Comp)
             || player.Comp.GotRoundstartPops
             || !_player.TryGetSessionByEntity(player, out var session))
             return;
 
+        var pops = new List<EntityUid>();
         var prefs = _preferences.GetPreferences(session.UserId);
+        var grid = Comp<MapGridComponent>(worldMap);
+        var playerCoords = Transform(player).Coordinates;
 
-        foreach (var map in player.Comp.OwnedMaps)
+        // If we really want to spawn these entities, but we can't,
+        // we remove everything that's in our way.
+        if (spawnTiles.Count == 0)
         {
-            if (!TryComp(map, out MapGridComponent? grid))
-                continue;
+            var tileRef = _map.GetTileRef(worldMap, grid, playerCoords);
+            var box = Box2.CenteredAround(Turf.GetTileCenter(tileRef).Position, Vector2.One);
 
-            var area = Box2.CenteredAround(
-                Transform(player).Coordinates.Position,
-                new Vector2(rule.RoundStartSpawnRadius));
-
-            var pops = new List<EntityUid>();
-            var freeTiles = GetFreeTiles(map, area);
-
-            // If we really want to spawn these entities, but we can't,
-            // we remove everything that's in our way.
-            if (freeTiles.Count == 0)
+            foreach (var entity in _lookup.GetEntitiesIntersecting(worldMap, box, LookupFlags.Static))
             {
-                var tileRef = _map.GetTileRef(map, grid, new EntityCoordinates(map, area.Center));
-                var box = Box2.CenteredAround(Turf.GetTileCenter(tileRef).Position, Vector2.One);
-
-                foreach (var entity in _lookup.GetEntitiesIntersecting(map, box, LookupFlags.Static))
-                {
-                    EntityManager.DeleteEntity(entity);
-                }
-
-                freeTiles.Add(tileRef);
+                EntityManager.DeleteEntity(entity);
             }
 
-            // Spawn player equipment
-            if (_equipment.GetPlayerEquipment(session.UserId) is { } equipment)
-            {
-                foreach (var (protoId, count) in equipment)
-                {
-                    for (var i = 0; i < count; i++)
-                    {
-                        var tileCenter = Turf.GetTileCenter(_random.Pick(freeTiles));
-                        var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
-                        Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
-                    }
-                }
-            }
-
-            // Spawn roundstart pops
-            foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(CCVars.MaxRoundstartPops)))
-            {
-                var coords = Turf.GetTileCenter(_random.Pick(freeTiles));
-                var character = (HumanoidCharacterProfile) profile;
-                var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
-                var pop = _station.SpawnPlayerMob(coords, job, character, null);
-
-                if (rule.PopsComponentsOverride != null)
-                    EntityManager.AddComponents(pop, rule.PopsComponentsOverride, false);
-
-                pops.Add(pop);
-            }
-
-            AddPops(player, pops);
+            spawnTiles.Add(tileRef);
         }
+
+        // Spawn player equipment
+        if (_equipment.GetPlayerEquipment(session.UserId) is { } equipment)
+        {
+            foreach (var (protoId, count) in equipment)
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    var tileCenter = Turf.GetTileCenter(_random.Pick(spawnTiles));
+                    var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
+                    var equip = Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
+
+                    EnsureComp<OwnedComponent>(equip).Owners.Add(player);
+                }
+            }
+        }
+
+        // Spawn roundstart pops
+        foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(RfVars.MaxRoundstartPops)))
+        {
+            var coords = Turf.GetTileCenter(_random.Pick(spawnTiles));
+            var character = (HumanoidCharacterProfile) profile;
+            var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
+            var pop = _station.SpawnPlayerMob(coords, job, character, null);
+
+            if (rule.PopsComponentsOverride != null)
+                EntityManager.AddComponents(pop, rule.PopsComponentsOverride, false);
+
+            pops.Add(pop);
+        }
+
+        AddPops(player, pops);
 
         player.Comp.GotRoundstartPops = true;
     }
@@ -226,13 +210,18 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     {
         base.Update(frameTime);
 
-        foreach (var (player, time) in _roundstartSpawnQueue)
-        {
-            if (time > _timing.CurTime)
-                break;
+        if (_debugSubscribers.Count == 0)
+            return;
 
-            RoundstartSpawn(player);
-            _roundstartSpawnQueue.Remove((player, time));
+        var coords = AllPlayersSettlements()
+            .Select(x
+                => (GetNetEntity(x.Key), x.Value.Select(y => GetNetCoordinates(y)).ToList()))
+            .ToDictionary();
+        var msg = new SettlementCoordinatesMessage(coords);
+
+        foreach (var subscriber in _debugSubscribers)
+        {
+            RaiseNetworkEvent(msg, subscriber);
         }
     }
 }

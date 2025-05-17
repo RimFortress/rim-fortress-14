@@ -20,6 +20,7 @@
     - type: HTN
       rootTask:
         task: RfIdleCompound
+    - type: BiomeLoader
     - type: NpcFactionMember
       factions:
       - RimFortress

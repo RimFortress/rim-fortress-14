@@ -53,15 +53,15 @@
         gain: 0.5
         octaves: 1
 
-    # Road
+    # River
     - !type:BiomeTileLayer
-      tile: FloorCaveDrought
-      threshold: 0.85
+      tile: FloorIce
+      threshold: 0.92
       noise:
-        seed: 6
+        seed: 13
         noiseType: OpenSimplex2
-        frequency: 0.01
-        lacunarity: 1.50
+        frequency: 0.004
+        lacunarity: 3.50
         fractalType: Ridged
         octaves: 1
 

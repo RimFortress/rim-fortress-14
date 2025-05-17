@@ -18,7 +18,7 @@ public abstract class SharedBiomeSystem : EntitySystem
     [Dependency] protected readonly ITileDefinitionManager TileDefManager = default!;
     [Dependency] private readonly TileSystem _tile = default!;
 
-    protected const byte ChunkSize = 8;
+    public const byte ChunkSize = 8; // RimFortress: Access
 
     private T Pick<T>(List<T> collection, float value)
     {
@@ -329,6 +329,42 @@ public abstract class SharedBiomeSystem : EntitySystem
         return false;
     }
 
+    // RimFortress Start
+    /// <summary>
+    /// Returns the biome prototype for a specific tile
+    /// </summary>
+    public bool TryGetBiome(Vector2i indices,
+        Entity<BiomeComponent?, MapGridComponent?> grid,
+        [NotNullWhen(true)] out BiomeTemplatePrototype? biome)
+    {
+        biome = null;
+
+        if (!Resolve(grid, ref grid.Comp1) || !Resolve(grid, ref grid.Comp2))
+            return false;
+
+        foreach (var layer in grid.Comp1.Layers)
+        {
+            if (layer is not BiomeMetaLayer meta)
+                continue;
+
+            var template = ProtoManager.Index<BiomeTemplatePrototype>(meta.Template);
+
+            if (!TryGetBiomeTile(indices, template.Layers, grid.Comp1.Seed, grid, out _))
+                continue;
+
+            biome = template;
+            return true;
+
+        }
+
+        if (grid.Comp1.Template == null)
+            return false;
+
+        biome = ProtoManager.Index<BiomeTemplatePrototype>(grid.Comp1.Template);
+        return true;
+    }
+    // RimFortress End
+
     private FastNoiseLite GetNoise(FastNoiseLite seedNoise, int seed)
     {
         var noiseCopy = new FastNoiseLite();
@@ -339,3 +375,17 @@ public abstract class SharedBiomeSystem : EntitySystem
         return noiseCopy;
     }
 }
+
+// RimFortress Start
+public sealed class BiomeChunkLoaded(Entity<BiomeComponent, MapGridComponent> grid, Vector2i chunk) : EntityEventArgs
+{
+    public Entity<BiomeComponent, MapGridComponent> Grid = grid;
+    public Vector2i Chunk = chunk;
+}
+
+public sealed class BiomeChunkUnloaded(Entity<BiomeComponent, MapGridComponent> grid, Vector2i chunk) : EntityEventArgs
+{
+    public Entity<BiomeComponent, MapGridComponent> Grid = grid;
+    public Vector2i Chunk = chunk;
+}
+// RimFortress End

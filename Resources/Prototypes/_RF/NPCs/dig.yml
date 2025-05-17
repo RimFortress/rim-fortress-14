@@ -46,3 +46,6 @@
         - !type:HTNPrimitiveTask
           operator: !type:MeleeOperator
             targetKey: Target
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MarkOwnerInRangeOperator

@@ -51,6 +51,9 @@
         - !type:HTNCompoundTask
           task: PickUpAndInteractCompound
 
+        - !type:HTNPrimitiveTask
+          operator: !type:MarkOwnerInRangeOperator
+
     - preconditions:
         - !type:NeedSharpForHarvestPrecondition
           targetKey: Target
@@ -79,6 +82,9 @@
     - tasks:
         - !type:HTNCompoundTask
           task: InteractCompound
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MarkOwnerInRangeOperator
 
 - type: htnCompound
   id: PlantWaterCompound
