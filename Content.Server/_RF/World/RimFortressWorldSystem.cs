@@ -11,9 +11,9 @@ using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
-using Content.Shared.Parallax.Biomes;
 using Content.Shared.Preferences;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
@@ -24,7 +24,6 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 
 namespace Content.Server._RF.World;
 
@@ -47,15 +46,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
     [Dependency] private readonly NpcControlSystem _npc = default!;
-
-    /// <summary>
-    /// A queue of pending requests to spawn starting settlements
-    /// </summary>
-    /// <remarks>
-    /// We cannot spawn them immediately, as the map has not been loaded yet,
-    /// and we cannot reliably search for obstacles
-    /// </remarks>
-    private readonly Queue<(ICommonSession Session, TimeSpan Time, EntityCoordinates Coords)> _roundstartSpawnQueue = new();
 
     private readonly HashSet<ICommonSession> _debugSubscribers = new();
 
@@ -84,6 +74,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         Rule = rule;
         var map = _map.CreateMap();
         _biome.EnsurePlanet(map, _prototype.Index(rule.Biome));
+        var fog = EnsureComp<FogOfWarComponent>(map);
+        Dirty(map, fog);
 
         if (TryComp(map, out LightCycleComponent? cycle))
         {
@@ -97,36 +89,26 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         return map;
     }
 
-    public void AddSpawnQueue(ICommonSession session)
-    {
-        var tiles = GetSpawnTiles(1);
-        var coords = Turf.GetTileCenter(tiles.First());
-
-        DebugTools.Assert(tiles.Count == 1);
-
-        // Time offset so that the map has time to load
-        _roundstartSpawnQueue.Enqueue((session, _timing.CurTime + TimeSpan.FromSeconds(2f), coords));
-    }
-
     /// <summary>
     /// Creates or allocates a free map for the player
     /// </summary>
-    private bool SpawnPlayer(ICommonSession session, EntityCoordinates targetCoordinates)
+    public void SpawnPlayer(ICommonSession session)
     {
         if (Rule is not { } rule || WorldMap is not { } worldMap)
-            return false;
+            return ;
 
-        var spawnBox = Box2.CenteredAround(targetCoordinates.Position, new Vector2(SpawnAreaRadius));
+        var coords = Turf.GetTileCenter(GetSpawnTiles(1).First());
+        var spawnBox = Box2.CenteredAround(coords.Position, new Vector2(SpawnAreaRadius));
         var freeTiles = GetFreeTiles(worldMap, spawnBox, MinSpawnAreaTiles);
 
-        if (freeTiles == null || freeTiles.Count == 0)
-            return false;
+        if (freeTiles.Count == 0)
+            return;
 
         // Spawn RF player entity
         var newMind = _mind.CreateMind(session.UserId, session.Name);
         _mind.SetUserId(newMind, session.UserId);
 
-        var mob = Spawn(rule.PlayerProtoId, targetCoordinates);
+        var mob = Spawn(rule.PlayerProtoId, coords);
         _mind.TransferTo(newMind, mob);
 
         var player = EnsureComp<RimFortressPlayerComponent>(mob);
@@ -135,7 +117,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         RoundstartSpawn(new(mob, player), freeTiles);
 
         Dirty(mob, player);
-        return true;
     }
 
     /// <summary>
@@ -225,39 +206,9 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         player.Comp.GotRoundstartPops = true;
     }
 
-    public (BiomeComponent Biome, HashSet<EntityCoordinates> Coords)? GetPreloadChunks()
-    {
-        if (WorldMap is not { } worldMap
-            || !TryComp(worldMap, out BiomeComponent? biome))
-            return null;
-
-        var chunks = new HashSet<EntityCoordinates>();
-        foreach (var (_, _, coords) in _roundstartSpawnQueue)
-        {
-            chunks.Add(coords);
-        }
-
-        if (chunks.Count == 0)
-            return null;
-
-        return (biome, chunks);
-    }
-
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
-
-        while (_roundstartSpawnQueue.TryDequeue(out var spawn))
-        {
-            if (spawn.Time > _timing.CurTime)
-            {
-                _roundstartSpawnQueue.Enqueue(spawn);
-                break;
-            }
-
-            if (!SpawnPlayer(spawn.Session, spawn.Coords))
-                _roundstartSpawnQueue.Enqueue((spawn.Session, spawn.Time + TimeSpan.FromSeconds(2f), spawn.Coords));
-        }
 
         if (_debugSubscribers.Count == 0)
             return;

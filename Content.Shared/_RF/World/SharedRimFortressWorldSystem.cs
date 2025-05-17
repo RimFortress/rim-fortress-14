@@ -4,6 +4,7 @@ using System.Numerics;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
+using Content.Shared.Parallax.Biomes;
 using Content.Shared.Physics;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
@@ -26,6 +27,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly IConfigurationManager _cvar = default!;
+    [Dependency] private readonly SharedBiomeSystem _biome = default!;
 
     protected RimFortressRuleComponent? Rule;
     protected EntityUid? WorldMap;
@@ -185,9 +187,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             var box = Box2.CenteredAround(pos, new Vector2(spawnAreaRadius));
             var tiles = GetFreeTiles(grid, box, minSpawnAreaTiles);
 
-            if (tiles == null)
-                return new() { _map.GetTileRef(grid.Owner, grid.Comp, new EntityCoordinates(grid, pos)) };
-
             if (tiles.Count == 0)
                 continue;
 
@@ -198,22 +197,26 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     /// <summary>
     /// Returns all free tiles in the biome chunk
     /// </summary>
-    protected HashSet<TileRef>? GetFreeTiles(Entity<MapGridComponent?> grid, Box2 area, int areaMinSize)
+    protected HashSet<TileRef> GetFreeTiles(Entity<MapGridComponent?, BiomeComponent?> grid, Box2 area, int areaMinSize)
     {
-        if (!Resolve(grid, ref grid.Comp))
-            return null;
+        if (!Resolve(grid, ref grid.Comp1) || !Resolve(grid, ref grid.Comp2))
+            return new();
 
-        var tileEnumerator = _map.GetTilesEnumerator(grid, grid.Comp, area);
+        var tileEnumerator = _map.GetTilesEnumerator(grid, grid.Comp1, area, ignoreEmpty: false);
         var freeTiles = new HashSet<TileRef>();
-        var valid = false;
 
         // Find all free tiles in the specified area
         while (tileEnumerator.MoveNext(out var tileRef))
         {
-            valid = true;
-
-            if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            if (tileRef.IsSpace())
+            {
+                if (_biome.TryGetEntity(tileRef.GridIndices, grid.Comp2, grid.Comp1, out _))
+                    continue;
+            }
+            else if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            {
                 continue;
+            }
 
             freeTiles.Add(tileRef);
         }
@@ -235,7 +238,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             }
         }
 
-        return valid ? freeTiles : null;
+        return freeTiles;
     }
 
     /// <summary>

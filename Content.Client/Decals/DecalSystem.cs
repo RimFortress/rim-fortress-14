@@ -6,12 +6,24 @@ using Robust.Shared.GameStates;
 using Robust.Shared.Utility;
 using static Content.Shared.Decals.DecalGridComponent;
 
+// RimFortress Start
+using System.Numerics;
+using Content.Shared.Maps;
+using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
+// RimFortress End
+
 namespace Content.Client.Decals
 {
     public sealed class DecalSystem : SharedDecalSystem
     {
         [Dependency] private readonly IOverlayManager _overlayManager = default!;
         [Dependency] private readonly SpriteSystem _sprites = default!;
+
+        // RimFortress Start
+        [Dependency] private readonly MapSystem _map = default!;
+        [Dependency] private readonly TransformSystem _transform = default!;
+        // RimFortress End
 
         private DecalOverlay _overlay = default!;
 
@@ -177,5 +189,43 @@ namespace Content.Client.Decals
                 chunkCollection.Remove(index);
             }
         }
+
+        // RimFortress Start
+        public bool TryAddDecal(
+            Entity<DecalGridComponent?> grid,
+            string id,
+            Vector2 coordinates,
+            out uint decalId,
+            Color? color = null,
+            Angle? rotation = null,
+            int zIndex = 0,
+            bool cleanable = false)
+        {
+            rotation ??= Angle.Zero;
+            var decal = new Decal(coordinates, id, color, rotation.Value, zIndex, cleanable);
+
+            return TryAddDecal(grid, decal, out decalId);
+        }
+
+        public bool TryAddDecal(Entity<DecalGridComponent?> grid, Decal decal, out uint decalId)
+        {
+            decalId = 0;
+
+            if (!PrototypeManager.HasIndex<DecalPrototype>(decal.Id)
+                || !Resolve(grid, ref grid.Comp))
+                return false;
+
+            decalId = grid.Comp.ChunkCollection.NextDecalId++;
+            var chunkIndices = GetChunkIndices(decal.Coordinates);
+            var chunk = grid.Comp.ChunkCollection.ChunkCollection.GetOrNew(chunkIndices);
+            chunk.Decals[decalId] = decal;
+            grid.Comp.DecalIndex[decalId] = chunkIndices;
+
+            return true;
+        }
+
+        public override bool RemoveDecal(EntityUid gridId, uint decalId, DecalGridComponent? component = null)
+            => RemoveDecalInternal(gridId, decalId, out _, component);
+        // RimFortress End
     }
 }

@@ -132,7 +132,7 @@ public sealed class NpcControlOverlay : Overlay
             return;
 
         var shader = _prototype.Index<ShaderPrototype>(PointLineShader).InstanceUnique();
-        args.WorldHandle.UseShader(shader);
+        var prevShader = args.WorldHandle.GetShader();
 
         var screenEnd = args.Viewport.WorldToLocal(end.Position);
         screenEnd.Y = args.Viewport.Size.Y - screenEnd.Y;
@@ -149,13 +149,15 @@ public sealed class NpcControlOverlay : Overlay
         shader.SetParameter("start", screenEnd);
         shader.SetParameter("end", screeStart);
 
+        args.WorldHandle.UseShader(shader);
         args.WorldHandle.DrawRect(new Box2(start.Position, end.Position), Color.White);
+        args.WorldHandle.UseShader(prevShader);
     }
 
     private void DrawPointCircle(in OverlayDrawArgs args, MapCoordinates worldCoords, Color color)
     {
         var shader = _prototype.Index<ShaderPrototype>(PointCircleShader).InstanceUnique();
-        args.WorldHandle.UseShader(shader);
+        var prevShader = args.WorldHandle.GetShader();
 
         var position = args.Viewport.WorldToLocal(worldCoords.Position);
         var unit = (args.Viewport.WorldToLocal(worldCoords.Position + Vector2.UnitX) - position).X;
@@ -166,12 +168,15 @@ public sealed class NpcControlOverlay : Overlay
 
         shader.SetParameter("color", color);
 
+        args.WorldHandle.UseShader(shader);
         args.WorldHandle.DrawRect(Box2.CenteredAround(worldCoords.Position, Vector2.One), Color.White);
+        args.WorldHandle.UseShader(prevShader);
     }
 
     private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
     {
         var area = new Box2(start.Position, end.Position);
+        var prevShader = args.WorldHandle.GetShader();
 
         var bottomLeft = args.Viewport.WorldToLocal(area.BottomLeft);
         bottomLeft.Y = args.Viewport.Size.Y - bottomLeft.Y;
@@ -193,7 +198,7 @@ public sealed class NpcControlOverlay : Overlay
 
         args.WorldHandle.UseShader(_selectAreaShader);
         args.WorldHandle.DrawRect(area, Color.White);
-        args.WorldHandle.UseShader(null);
+        args.WorldHandle.UseShader(prevShader);
     }
 
     private void DrawPassiveTasks(in OverlayDrawArgs args)

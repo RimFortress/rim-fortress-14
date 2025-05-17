@@ -18,7 +18,7 @@ public abstract class SharedBiomeSystem : EntitySystem
     [Dependency] protected readonly ITileDefinitionManager TileDefManager = default!;
     [Dependency] private readonly TileSystem _tile = default!;
 
-    protected const byte ChunkSize = 8;
+    public const byte ChunkSize = 8; // RimFortress: Access
 
     private T Pick<T>(List<T> collection, float value)
     {
@@ -375,3 +375,17 @@ public abstract class SharedBiomeSystem : EntitySystem
         return noiseCopy;
     }
 }
+
+// RimFortress Start
+public sealed class BiomeChunkLoaded(Entity<BiomeComponent, MapGridComponent> grid, Vector2i chunk) : EntityEventArgs
+{
+    public Entity<BiomeComponent, MapGridComponent> Grid = grid;
+    public Vector2i Chunk = chunk;
+}
+
+public sealed class BiomeChunkUnloaded(Entity<BiomeComponent, MapGridComponent> grid, Vector2i chunk) : EntityEventArgs
+{
+    public Entity<BiomeComponent, MapGridComponent> Grid = grid;
+    public Vector2i Chunk = chunk;
+}
+// RimFortress End

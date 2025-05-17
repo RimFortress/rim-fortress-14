@@ -54,7 +54,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             if (!GameTicker.IsGameRuleActive(uid, rule))
                 continue;
 
-            _world.AddSpawnQueue(ev.Player);
+            _world.SpawnPlayer(ev.Player);
 
             ev.Handled = true;
             return;

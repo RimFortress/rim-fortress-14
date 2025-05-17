@@ -34,7 +34,6 @@ using Robust.Shared.Utility;
 using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumerator;
 
 // RimFortress Start
-using Content.Server._RF.World;
 using Content.Shared._RF.Parallax.Biomes;
 using Content.Shared.Tag;
 // RimFortress End
@@ -57,7 +56,6 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly ShuttleSystem _shuttles = default!;
     // RimFortress Start
-    [Dependency] private readonly RimFortressWorldSystem _world = default!;
     [Dependency] private readonly TagSystem _tag = default!;
 
     [ValidatePrototypeId<TagPrototype>]
@@ -393,20 +391,6 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         }
 
         // RimFortress Start
-        if (_world.GetPreloadChunks() is { } preload)
-        {
-            foreach (var worldPos in preload.Coords)
-            {
-                AddChunksInRange(preload.Biome, worldPos.Position);
-
-                foreach (var layer in preload.Biome.MarkerLayers)
-                {
-                    var layerProto = ProtoManager.Index(layer);
-                    AddMarkerChunksInRange(preload.Biome, worldPos.Position, layerProto);
-                }
-            }
-        }
-
         var entities = EntityQueryEnumerator<TransformComponent, BiomeLoaderComponent>();
         while (entities.MoveNext(out var uid, out var xform, out var comp))
         {
@@ -921,6 +905,8 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         {
             component.ModifiedTiles[chunk] = modified;
         }
+
+        RaiseLocalEvent(new BiomeChunkLoaded(new(gridUid, component, grid), chunk)); // RimFortress
     }
 
     #endregion
@@ -1053,6 +1039,8 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         {
             component.ModifiedTiles[chunk] = modified;
         }
+
+        RaiseLocalEvent(new BiomeChunkUnloaded(new(gridUid, component, grid), chunk)); // RimFortress
     }
 
     #endregion
