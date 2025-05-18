@@ -95,6 +95,9 @@
     tags:
       - Tree
       - NoSaveOnModify
+  - type: WorldMapStruct
+    mainColor: "#382413"
+    drawType: Dot
   # RimFortress End
 
 - type: entity

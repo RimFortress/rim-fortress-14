@@ -1101,6 +1101,11 @@
           state: rock_wall_north
         - map: [ "enum.EdgeLayer.West" ]
           state: rock_wall_west
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#4D4A4A"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltCoal
@@ -1124,6 +1129,11 @@
           state: rock_wall_west
         - state: rock_coal
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#1C1512"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltGold
@@ -1147,6 +1157,11 @@
           state: rock_wall_west
         - state: rock_gold
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#856400"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltDiamond
@@ -1170,6 +1185,11 @@
           state: rock_wall_west
         - state: rock_diamond
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#4BCBCB"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltPlasma
@@ -1193,6 +1213,11 @@
           state: rock_wall_west
         - state: rock_phoron
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#971E8B"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltQuartz
@@ -1216,6 +1241,11 @@
           state: rock_wall_west
         - state: rock_quartz
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#B2B2B2"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltSilver
@@ -1239,6 +1269,11 @@
           state: rock_wall_west
         - state: rock_silver
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#AAAAAA"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltTin
@@ -1262,6 +1297,11 @@
           state: rock_wall_west
         - state: rock_tin
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#545454"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltUranium
@@ -1285,6 +1325,11 @@
           state: rock_wall_west
         - state: rock_uranium
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#00A800"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 
 - type: entity
@@ -1309,6 +1354,11 @@
           state: rock_wall_west
         - state: rock_bananium
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#DBFF54"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltArtifactFragment
@@ -1332,6 +1382,11 @@
           state: rock_wall_west
         - state: rock_artifact_fragment
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#67265E"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 - type: entity
   id: WallRockBasaltSalt
@@ -1355,6 +1410,11 @@
           state: rock_wall_west
         - state: rock_salt
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#F6DCCE"
+      secondaryColor: "#2E2623"
+    # RimFortress End
 
 # Snow variants
 - type: entity
@@ -1653,6 +1713,11 @@
           state: rock_sand_north
         - map: [ "enum.EdgeLayer.West" ]
           state: rock_sand_west
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#B58161"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandCoal
@@ -1676,6 +1741,11 @@
           state: rock_sand_west
         - state: rock_coal
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#1C1512"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandGold
@@ -1699,6 +1769,11 @@
           state: rock_sand_west
         - state: rock_gold
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#856400"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandDiamond
@@ -1722,6 +1797,11 @@
           state: rock_sand_west
         - state: rock_diamond
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#4BCBCB"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandPlasma
@@ -1745,6 +1825,11 @@
           state: rock_sand_west
         - state: rock_phoron
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#971E8B"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandQuartz
@@ -1768,6 +1853,11 @@
           state: rock_sand_west
         - state: rock_quartz
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#B2B2B2"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandSilver
@@ -1791,6 +1881,11 @@
           state: rock_sand_west
         - state: rock_silver
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#AAAAAA"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandTin
@@ -1814,6 +1909,11 @@
           state: rock_sand_west
         - state: rock_tin
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#545454"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandUranium
@@ -1837,6 +1937,11 @@
           state: rock_sand_west
         - state: rock_uranium
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#00A800"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandBananium
@@ -1860,6 +1965,11 @@
           state: rock_sand_west
         - state: rock_bananium
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#DBFF54"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandArtifactFragment
@@ -1883,6 +1993,11 @@
           state: rock_sand_west
         - state: rock_artifact_fragment
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#67265E"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 - type: entity
   id: WallRockSandSalt
@@ -1906,6 +2021,11 @@
           state: rock_sand_west
         - state: rock_salt
           map: [ "enum.MiningScannerVisualLayers.Overlay" ]
+    # RimFortress Start
+    - type: WorldMapStruct
+      mainColor: "#F6DCCE"
+      secondaryColor: "#A7634E"
+    # RimFortress End
 
 # Chromite variants
 - type: entity

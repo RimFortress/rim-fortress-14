@@ -14,6 +14,7 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#45301F" # RimFortress
 
 # Desert
 - type: tile
@@ -34,6 +35,7 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#B5A372" # RimFortress
 
 - type: tile
   id: FloorLowDesert
@@ -53,6 +55,7 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#A98C47" # RimFortress
 
 # Grass
 - type: tile
@@ -83,6 +86,7 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#48723C" # RimFortress
 
 # Lava
 - type: tile
@@ -95,6 +99,7 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#2F2F2F" # RimFortress
 
 # Snow
 - type: tile
@@ -128,6 +133,7 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#DCDCDC" # RimFortress
 
 # Ice
 - type: tile
@@ -142,6 +148,7 @@
   mobFrictionNoInput: 0.05
   mobAcceleration: 2
   indestructible: true
+  navMapColor: "#B0E8F8" # RimFortress
 
 # Dug snow
 - type: tile
@@ -160,5 +167,6 @@
   heatCapacity: 10000
   weather: true
   indestructible: true
+  navMapColor: "#C6BFA5" # RimFortress
 
 # Wasteland

@@ -32,7 +32,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     protected RimFortressRuleComponent? Rule;
     protected EntityUid? WorldMap;
 
-    protected const byte ChunkSize = 8; // Copy of SharedBiomeSystem.ChunkSize
+    protected const byte ChunkSize = SharedBiomeSystem.ChunkSize;
 
     protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
     private EntityQuery<TransformComponent> _xformQuery;

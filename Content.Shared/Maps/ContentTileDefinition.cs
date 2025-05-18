@@ -115,6 +115,14 @@ namespace Content.Shared.Maps
         /// </summary>
         [DataField("indestructible")] public bool Indestructible = false;
 
+        // RimFortress Start
+        /// <summary>
+        /// The color with which the tile will be displayed on the world map
+        /// </summary>
+        [DataField]
+        public Color NavMapColor = Color.Gray;
+        // RimFortress End
+
         public void AssignTileId(ushort id)
         {
             TileId = id;

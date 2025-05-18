@@ -67,4 +67,7 @@
   - type: Tag
     tags:
       - NoSaveOnModify
+  - type: WorldMapStruct
+    mainColor: "#4184B4"
+    drawType: Tile
   # RimFortress End
