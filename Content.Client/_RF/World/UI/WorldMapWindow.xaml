@@ -5,7 +5,7 @@
     Title="{Loc 'world-map-user-interface-title'}"
     MinSize="1210 700">
     <BoxContainer Orientation="Vertical">
-        <controls1:StripeBack>
+        <controls1:StripeBack Name="Header">
             <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
                 <Label Name="Coordinates" Align="Left" VAlign="Center"/>
             </BoxContainer>
