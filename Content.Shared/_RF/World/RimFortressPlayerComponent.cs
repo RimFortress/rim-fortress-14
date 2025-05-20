@@ -19,4 +19,7 @@ public sealed partial class RimFortressPlayerComponent : Component
 
     [ViewVariables]
     public TimeSpan NextEventTime { get; set; }
+
+    [ViewVariables, AutoNetworkedField]
+    public Color FactionColor { get; set; } = Color.Blue;
 }

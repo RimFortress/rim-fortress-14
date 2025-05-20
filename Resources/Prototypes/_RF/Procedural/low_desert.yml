@@ -60,17 +60,6 @@
         - FloorWaterEntity
 
     - !type:BiomeEntityLayer
-      threshold: 0.65
-      noise:
-        seed: 1
-        noiseType: OpenSimplex2
-        fractalType: FBm
-        frequency: 2
-      allowedTiles:
-        - FloorLowDesert
-      entities:
-        - FloraTreeStump
-    - !type:BiomeEntityLayer
       threshold: 0.25
       noise:
         seed: 2

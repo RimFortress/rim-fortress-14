@@ -96,7 +96,7 @@
       - Tree
       - NoSaveOnModify
   - type: WorldMapStruct
-    mainColor: "#382413"
+    mainColor: "#965727"
     drawType: Dot
   # RimFortress End
 

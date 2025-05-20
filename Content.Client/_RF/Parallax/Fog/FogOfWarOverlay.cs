@@ -5,8 +5,6 @@ using Content.Shared.Parallax.Biomes;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
-using Robust.Shared;
-using Robust.Shared.Configuration;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -20,7 +18,6 @@ public sealed class FogOfWarOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IResourceCache _resource = default!;
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
 
     private readonly TransformSystem _transform;
     private readonly Texture _fogTexture;
@@ -48,7 +45,6 @@ public sealed class FogOfWarOverlay : Overlay
             return;
 
         var chunkSize = SharedBiomeSystem.ChunkSize;
-        var pvsRange = _cfg.GetCVar(CVars.NetMaxUpdateRange);
         var tileSize = grid.TileSize;
         var tileDimensions = new Vector2(tileSize, tileSize);
         var (_, _, worldMatrix, _) = _transform.GetWorldPositionRotationMatrixWithInv(comp.FowGrid);
@@ -65,8 +61,8 @@ public sealed class FogOfWarOverlay : Overlay
         // TODO: It's absolutely horrible and must be destroyed.
         // We on the client side just paint active chunks uploaded by other players black,
         // because the main grid is on the server side and how else it can be realized I can not imagine
-        var pvsArea = new Box2(-pvsRange, -pvsRange, pvsRange, pvsRange);
-        var chunks = new ChunkIndicesEnumerator(pvsArea.Translated(eye.Position.Position), chunkSize);
+        var viewBox = Box2.CenteredAround(eye.Position.Position, new Vector2(200f));
+        var chunks = new ChunkIndicesEnumerator(viewBox, chunkSize);
         while (chunks.MoveNext(out var chunk))
         {
             var ind = chunk.Value * chunkSize;

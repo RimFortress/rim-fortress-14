@@ -1,3 +1,4 @@
+using Content.Shared._RF.World; // RimFortress
 using Robust.Shared.GameStates;
 
 namespace Content.Shared.Pinpointer;
@@ -5,7 +6,7 @@ namespace Content.Shared.Pinpointer;
 /// <summary>
 /// Will show a marker on a NavMap.
 /// </summary>
-[RegisterComponent, NetworkedComponent, Access(typeof(SharedNavMapSystem))]
+[RegisterComponent, NetworkedComponent, Access(typeof(SharedNavMapSystem), typeof(SharedRimFortressWorldSystem))] // RimFortress: Access
 [AutoGenerateComponentState]
 public sealed partial class NavMapBeaconComponent : Component
 {
