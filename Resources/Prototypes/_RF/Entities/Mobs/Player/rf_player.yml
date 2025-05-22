@@ -3,44 +3,49 @@
   id: RimFortressObserver
   categories: [ HideSpawnMenu ]
   components:
-  - type: Sprite
-    visible: false
-    noRot: true
-  - type: ContentEye
-    maxZoom: 6,6
-  - type: Eye
-    drawFov: false
-  - type: Input
-    context: "ghost"
-  - type: Examiner
-    skipChecks: true
-  - type: Ghost
-  - type: GhostHearing
-  - type: IntrinsicRadioReceiver
-  - type: ActiveRadio
-    receiveAllChannels: true
-    globalReceive: true
-  - type: MovementSpeedModifier
-    baseWalkSpeed: 13
-    baseSprintSpeed: 20
-  - type: Tag
-    tags:
-    - BypassInteractionRangeChecks
-  - type: ComplexInteraction
-  - type: NoRotateOnInteract
-  - type: NoRotateOnMove
-  - type: MouseDragMove
-  - type: NpcControl
-    tasks:
-      - MoveTo
-      - Attack
-      - PickUp
-      - Pry
-      - Deconstruct
-      - Dig
-      - FreeHandInteract
-      - Heal
-      - Chop
-  - type: NpcFactionMember
-    factions:
-      - RimFortress
+    - type: Sprite
+      sprite: Mobs/Ghosts/ghost_human.rsi
+      color: "#FFFFFF00"
+      visible: false
+      noRot: true
+      layers:
+      - state: animated
+        shader: unshaded
+    - type: ContentEye
+      maxZoom: 6,6
+    - type: Eye
+      drawFov: false
+    - type: Input
+      context: "ghost"
+    - type: Examiner
+      skipChecks: true
+    - type: Ghost
+    - type: GhostHearing
+    - type: IntrinsicRadioReceiver
+    - type: ActiveRadio
+      receiveAllChannels: true
+      globalReceive: true
+    - type: MovementSpeedModifier
+      baseWalkSpeed: 13
+      baseSprintSpeed: 20
+    - type: Tag
+      tags:
+        - BypassInteractionRangeChecks
+    - type: ComplexInteraction
+    - type: NoRotateOnInteract
+    - type: NoRotateOnMove
+    - type: MouseDragMove
+    - type: NpcControl
+      tasks:
+        - MoveTo
+        - Attack
+        - PickUp
+        - Pry
+        - Deconstruct
+        - Dig
+        - FreeHandInteract
+        - Heal
+        - Chop
+    - type: NpcFactionMember
+      factions:
+        - RimFortress

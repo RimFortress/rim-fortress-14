@@ -81,19 +81,16 @@ public sealed class RimFortressState : GameplayStateBase
 
     public override void FrameUpdate(FrameEventArgs e)
     {
-        if (_player.LocalEntity is not { } entity
-            || !_entityManager.TryGetComponent(entity, out TransformComponent? xform))
+        if (!_entityManager.TryGetComponent(_player.LocalEntity, out TransformComponent? xform)
+            || !_map.TryGetMap(xform.MapID, out var map))
             return;
-
-        var map = _map.GetMap(xform.MapID);
-        var pausedTime = _meta.GetPauseTime(map);
 
         if (_entityManager.TryGetComponent(map, out LightCycleComponent? cycle))
         {
             var time = _timing.CurTime
                 .Add(cycle.Offset)
                 .Subtract(_ticker.RoundStartTimeSpan)
-                .Subtract(pausedTime);
+                .Subtract(_meta.GetPauseTime(map.Value));
 
             Screen.Datetime.UpdateInfo(time, cycle.Duration); // TODO: dynamic world map temperature
         }
