@@ -6,11 +6,13 @@ using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.Maps;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Physics;
+using Content.Shared.Pinpointer;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
 using Robust.Shared.Configuration;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization;
@@ -28,6 +30,7 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly SharedBiomeSystem _biome = default!;
+    [Dependency] private readonly INetManager _net = default!;
 
     protected RimFortressRuleComponent? Rule;
     protected EntityUid? WorldMap;
@@ -359,6 +362,47 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             return null;
 
         return player.Pops.Count == 0 ? null : player.Pops;
+    }
+
+    public void CreateMapBeacon(EntityUid gridUid, Vector2i indicates, Color color, string text)
+    {
+        var coords = _map.ToCoordinates(gridUid, indicates);
+        var uid = Spawn(null, coords);
+
+        var comp = EnsureComp<NavMapBeaconComponent>(uid);
+        comp.Color = color;
+        comp.Text = text;
+    }
+
+    public void ChangeBeacon(Entity<NavMapBeaconComponent?> entity, Color color, string text)
+    {
+        if (!Resolve(entity, ref entity.Comp))
+            return;
+
+        entity.Comp.Color = color;
+        entity.Comp.Text = text;
+    }
+
+    public void SetPlayerFactionColor(Entity<RimFortressPlayerComponent?> uid, Color color)
+    {
+        if (!Resolve(uid, ref uid.Comp))
+            return;
+
+        uid.Comp.FactionColor = color;
+
+        if (_net.IsServer)
+            Dirty(uid);
+
+        foreach (var pop in uid.Comp.Pops)
+        {
+            if (!TryComp(pop, out NavMapBeaconComponent? beacon))
+                continue;
+
+            beacon.Color = color;
+
+            if (_net.IsServer)
+                Dirty(pop, beacon);
+        }
     }
 
     public ProtoId<JobPrototype>? PickPopJob(IReadOnlyDictionary<ProtoId<JobPrototype>, JobPriority> jobPriorities)

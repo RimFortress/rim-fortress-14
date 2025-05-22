@@ -14,7 +14,9 @@ using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Client.ResourceManagement;
+using Robust.Client.UserInterface;
 using Robust.Shared.Collections;
+using Robust.Shared.Input;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Timing;
 
@@ -31,14 +33,20 @@ public sealed class WorldMapControl : MapGridControl
     private const float MinDisplayedRange = 8f;
     private const float MaxDisplayedRange = 128f;
     private const float DefaultDisplayedRange = 48f;
+    private const float NonScalePointsRadius = 5f;
 
     public EntityUid? MapUid;
+
     public Color FogColor = Color.Black.WithAlpha(0.5f);
     public Color RoofColor = Color.Black;
 
     private float _updateTimer = 1.0f;
+    private Vector2i _markerCoords;
+    private EntityUid? _marker;
 
     private readonly Font _font;
+    private readonly WorldMapContextWindow _contextWindow;
+    private readonly WorldMarkerWindow _markedWindow;
 
     private readonly Dictionary<Vector2i, Color> _tiles = new();
     private readonly HashSet<Vector2i> _roofs = new();
@@ -48,12 +56,71 @@ public sealed class WorldMapControl : MapGridControl
     private readonly Dictionary<Color, HashSet<UIBox2>> _chunks = new();
     private readonly Dictionary<Color, HashSet<UIBox2>> _regions = new();
     private readonly Dictionary<Color, List<(Vector2, string)>> _noScaleStrings = new();
+    private readonly Dictionary<Vector2, EntityUid> _beacons = new();
 
     protected override bool Draggable => true;
 
     public WorldMapControl() : base(MinDisplayedRange, MaxDisplayedRange, DefaultDisplayedRange)
     {
         _font = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSans/NotoSans-Regular.ttf"), 10);
+        _contextWindow = UserInterfaceManager.CreateWindow<WorldMapContextWindow>();
+        _markedWindow = UserInterfaceManager.CreateWindow<WorldMarkerWindow>();
+
+        _contextWindow.AddMarkerButton.OnPressed += _ => OpenMarkerWindow();
+        _contextWindow.ChangeMarkerButton.OnPressed += _ => OpenMarkerWindow();
+
+        _contextWindow.DeleteMarkerButton.OnPressed += _ =>
+        {
+            if (_marker != null)
+                EntManager.DeleteEntity(_marker);
+
+            _contextWindow.Close();
+        };
+
+        _markedWindow.OnSubmit += args =>
+        {
+            var world = EntManager.System<SharedRimFortressWorldSystem>();
+
+            if (MapUid != null && _marker == null)
+                world.CreateMapBeacon(MapUid.Value, _markerCoords, args.Color, args.Text);
+            else if (_marker != null)
+                world.ChangeBeacon(_marker.Value, args.Color, args.Text);
+
+            UpdateMap();
+        };
+    }
+
+    protected override void KeyBindDown(GUIBoundKeyEventArgs args)
+    {
+        base.KeyBindDown(args);
+
+        var mousePos = GetLocalPosition(_input.MouseScreenPosition);
+        _contextWindow.Close();
+
+        if (args.Function == EngineKeyFunctions.UseSecondary)
+        {
+            _marker = null;
+
+            if (GetIntersectPoint(mousePos) is { } point
+                && _beacons.TryGetValue(point, out var uid))
+            {
+                _marker = uid;
+                _contextWindow.SetState(WorldMapContextWindowState.Marker);
+            }
+            else
+            {
+                _markerCoords = (Vector2i) MousePos();
+                _contextWindow.SetState(WorldMapContextWindowState.World);
+            }
+
+            _contextWindow.Open(UserInterfaceManager.MousePositionScaled.Position);
+        }
+    }
+
+    private void OpenMarkerWindow()
+    {
+        _markedWindow.Open(UserInterfaceManager.MousePositionScaled.Position);
+        _contextWindow.Close();
     }
 
     public void CenterToCoordinates(Vector2 coordinates)
@@ -61,17 +128,31 @@ public sealed class WorldMapControl : MapGridControl
         Offset = coordinates;
     }
 
-    public Vector2i MousePos()
+    /// <summary>
+    /// Returns mouse coordinates converted to local world coordinates
+    /// </summary>
+    public Vector2 MousePos()
     {
         if (_input.MouseScreenPosition is not { IsValid: true } screen
             || !GlobalPixelRect.Contains((Vector2i) screen.Position))
             return Vector2i.Zero;
 
-        var pos = screen.Position / UIScale - GlobalPosition;
-        var a = (pos - MidPointVector) / MinimapScale;
-        var coords = new Vector2(a.X, -a.Y) + Offset;
+        var pos = GetLocalPosition(screen);
+        return InverseMapPosition(pos);
+    }
 
-        return (Vector2i) coords;
+    public Vector2? GetIntersectPoint(Vector2 pos)
+    {
+        foreach (var (_, points) in _noScaleCircles)
+        {
+            foreach (var point in points)
+            {
+                if (Vector2.Distance(ScaleOffsetPos(point), pos) <= NonScalePointsRadius)
+                    return point;
+            }
+        }
+
+        return null;
     }
 
     private void UpdateTiles()
@@ -230,7 +311,7 @@ public sealed class WorldMapControl : MapGridControl
         }
 
         var entities = EntManager.EntityQueryEnumerator<NavMapBeaconComponent, TransformComponent>();
-        while (entities.MoveNext(out var comp, out var xform))
+        while (entities.MoveNext(out var uid, out var comp, out var xform))
         {
             if (comp.Text == null)
                 continue;
@@ -245,6 +326,8 @@ public sealed class WorldMapControl : MapGridControl
 
             _noScaleCircles[comp.Color].Add(tileRef.GridIndices + new Vector2(0.5f));
             _noScaleStrings[comp.Color].Add((tileRef.GridIndices + new Vector2(1.5f), comp.Text));
+
+            _beacons[tileRef.GridIndices + new Vector2(0.5f)] = uid;
         }
     }
 
@@ -258,6 +341,7 @@ public sealed class WorldMapControl : MapGridControl
         _circles.Clear();
         _noScaleCircles.Clear();
         _noScaleStrings.Clear();
+        _beacons.Clear();
 
         UpdateTiles();
         ApplyRoof();
@@ -351,7 +435,7 @@ public sealed class WorldMapControl : MapGridControl
                 if (!viewBox.Contains(pos))
                     continue;
 
-                handle.DrawCircle(pos, 5, color);
+                handle.DrawCircle(pos, NonScalePointsRadius, color);
             }
         }
 

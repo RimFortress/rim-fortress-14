@@ -1,0 +1,15 @@
+<controls:FancyWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    Title="{Loc 'world-marker-user-interface-title'}"
+    Resizable="False">
+    <BoxContainer Orientation="Vertical">
+        <BoxContainer Orientation="Horizontal">
+            <LineEdit Name="TextEdit" SetWidth="150"
+                      PlaceHolder="{Loc 'world-marker-user-interface-text-placeholder'}"/>
+            <PanelContainer Name="ColorPanel" SetSize="32 32" HorizontalAlignment="Right"/>
+        </BoxContainer>
+        <ColorSelectorSliders Name="ColorSelectors" SelectorType="Rgb" IsAlphaVisible="False"/>
+        <Button Name="SubmitButton" Text="{Loc 'world-marker-user-interface-submit'}" StyleClasses="ButtonColorGreen"/>
+    </BoxContainer>
+</controls:FancyWindow>

@@ -8,6 +8,14 @@
         <controls1:StripeBack Name="Header">
             <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
                 <Label Name="Coordinates" Align="Left" VAlign="Center"/>
+                <BoxContainer HorizontalExpand="True"/>
+                <PanelContainer Name="ColorPanel" SetSize="32 32" HorizontalAlignment="Right"/>
+                <Button Name="FactionColorButton" SetSize="32 32" StyleClasses="ButtonSquare">
+                    <TextureRect Stretch="Scale" SetSize="24 24"
+                                 ModulateSelfOverride="#7b7e9e"
+                                 HorizontalExpand="True" VerticalExpand="True"
+                                 TexturePath="/Textures/_RF/Interface/eye-dropper-solid.svg.192dpi.png"/>
+                </Button>
             </BoxContainer>
         </controls1:StripeBack>
         <controls:WorldMapControl Name="WorldMap" Access="Public" SetSize="1210 700"
