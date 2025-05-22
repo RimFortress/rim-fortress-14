@@ -14,6 +14,7 @@ using Content.Shared._RF.NPC;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
+using Content.Shared.Pinpointer;
 using Content.Shared.Preferences;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
@@ -113,6 +114,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         var player = EnsureComp<RimFortressPlayerComponent>(mob);
         player.NextEventTime = _timing.CurTime + rule.MinimumTimeUntilFirstEvent;
+        player.FactionColor = new Color(_random.NextFloat(), _random.NextFloat(), _random.NextFloat());
 
         RoundstartSpawn(new(mob, player), freeTiles);
 
@@ -130,6 +132,10 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         foreach (var pop in pops)
         {
             _npc.AddNpcControl(player.Owner, pop);
+
+            var beacon = EnsureComp<NavMapBeaconComponent>(pop);
+            beacon.Color = player.Comp.FactionColor;
+            beacon.Text = MetaData(pop).EntityName;
         }
 
         player.Comp.Pops.AddRange(pops);

@@ -1,0 +1,7 @@
+<controls:FancyWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    Title="{Loc 'faction-color-user-interface-title'}"
+    SetWidth="100">
+    <ColorSelectorSliders Name="Selector" Access="Public" SelectorType="Rgb" IsAlphaVisible="False"/>
+</controls:FancyWindow>

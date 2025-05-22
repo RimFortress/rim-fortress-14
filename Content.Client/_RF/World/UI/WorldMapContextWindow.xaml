@@ -1,0 +1,11 @@
+<controls:WorldMapContextWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.World.UI"
+    Resizable="False">
+    <BoxContainer Orientation="Vertical">
+        <Button Name="AddMarkerButton" Access="Public" Text="{Loc 'world-map-user-interface-marker'}"/>
+        <Button Name="ChangeMarkerButton" Access="Public" Text="{Loc 'world-map-user-interface-change-marker'}"/>
+        <Button Name="DeleteMarkerButton" Access="Public"
+                StyleClasses="ButtonColorRed" Text="{Loc 'world-map-user-interface-delete-marker'}"/>
+    </BoxContainer>
+</controls:WorldMapContextWindow>

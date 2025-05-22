@@ -56,3 +56,8 @@
   - type: Tag
     tags:
       - HideContextMenu
+  # RimFortress Start
+  - type: WorldMapStruct
+    mainColor: "#FB661E"
+    drawType: Tile
+  # RimFortress End

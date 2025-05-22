@@ -1543,6 +1543,7 @@
     collection: FootstepAsteroid
   heatCapacity: 10000
   weather: true
+  navMapColor: "#A07C59" # RimFortress
 
 - type: tile
   id: FloorAsteroidSandDug
@@ -1662,6 +1663,7 @@
   footstepSounds:
     collection: FootstepAsteroid
   heatCapacity: 10000
+  navMapColor: "#3B3B3A" # RimFortress
 
 - type: tile
   id: FloorCaveDrought
@@ -1682,6 +1684,7 @@
   footstepSounds:
     collection: FootstepAsteroid
   heatCapacity: 10000
+  navMapColor: "#4C3427" # RimFortress
 
 - type: tile
   id: FloorFlesh

@@ -52,6 +52,11 @@
     resistance: 2
   - type: BlockWeather
   - type: SunShadowCast
+  # RimFortress Start
+  - type: WorldMapStruct
+    mainColor: "#404040"
+    secondaryColor: "#2E2E2E"
+  # RimFortress End
 
 - type: entity
   parent: BaseWall
