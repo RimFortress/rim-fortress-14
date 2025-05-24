@@ -643,6 +643,28 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         comp.CanControl.Add(user);
     }
 
+    /// <summary>
+    /// Allows the player to issue the given task
+    /// </summary>
+    public void AddAllowedTask(Entity<NpcControlComponent?> user, ProtoId<NpcTaskPrototype> proto)
+    {
+        if (!Resolve(user, ref user.Comp))
+            return;
+
+        user.Comp.Tasks.Add(proto);
+    }
+
+    /// <summary>
+    /// Forbids the player from issuing the given task
+    /// </summary>
+    public void RemoveAllowedTask(Entity<NpcControlComponent?> user, ProtoId<NpcTaskPrototype> proto)
+    {
+        if (!Resolve(user, ref user.Comp))
+            return;
+
+        user.Comp.Tasks.Remove(proto);
+    }
+
     private NpcTaskInfoMessage NpcTaskInfo(
         EntityUid entity,
         NpcTaskPrototype task,
