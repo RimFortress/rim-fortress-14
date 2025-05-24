@@ -1,0 +1,30 @@
+[game]
+map = "Empty"
+defaultpreset = "RimFortress"
+role_timers = false
+
+[physics]
+grid_splitting = false
+
+[procgen]
+preload = false
+
+[shuttle]
+grid_fill = false
+auto_call_time = 0
+emergency = false
+arrivals = false
+preload_grids = false
+
+[net]
+pvs = false
+
+[viewport]
+maximum_width = 30
+
+[rimfortress]
+max_roundstart_pops = 5
+roundstart_equipment_points = 250
+
+[events]
+enabled = false
