@@ -18,6 +18,9 @@ public sealed partial class RimFortressPlayerComponent : Component
     public bool GotRoundstartPops;
 
     [ViewVariables]
+    public TimeSpan EventTimeOffset { get; set; } = TimeSpan.FromMinutes(5);
+
+    [ViewVariables]
     public TimeSpan NextEventTime { get; set; }
 
     [ViewVariables, AutoNetworkedField]

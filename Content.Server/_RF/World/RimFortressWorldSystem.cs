@@ -24,7 +24,6 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Robust.Shared.Timing;
 
 namespace Content.Server._RF.World;
 
@@ -39,7 +38,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly MapSystem _map = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IServerPreferencesManager _preferences = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly StationSpawningSystem _station = default!;
@@ -113,7 +111,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         _mind.TransferTo(newMind, mob);
 
         var player = EnsureComp<RimFortressPlayerComponent>(mob);
-        player.NextEventTime = _timing.CurTime + rule.MinimumTimeUntilFirstEvent;
         player.FactionColor = new Color(_random.NextFloat(), _random.NextFloat(), _random.NextFloat());
 
         RoundstartSpawn(new(mob, player), freeTiles);

@@ -1,18 +1,22 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server._RF.World;
+using Content.Server.Administration.Logs;
+using Content.Server.Chat.Managers;
 using Content.Server.GameTicking.Rules;
+using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
+using Content.Shared.Database;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
+using JetBrains.Annotations;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 
 namespace Content.Server._RF.GameTicking.Rules;
 
@@ -26,17 +30,21 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly BiomeSystem _biome = default!;
+    [Dependency] private readonly MapSystem _map = default!;
+    [Dependency] private readonly IAdminLogManager _adminLogger = default!;
+    [Dependency] private readonly IChatManager _chat = default!;
 
-    private readonly Dictionary<EntityUid, Dictionary<EntProtoId, TimeSpan>> _nextEventTime = new ();
-    private readonly List<Entity<RimFortressPlayerComponent>> _eventQueue = new();
+    private ISawmill _sawmill = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
     {
         base.Initialize();
+        _sawmill = LogManager.GetSawmill("rf_rule");
 
         SubscribeLocalEvent<PlayerBeforeSpawnEvent>(OnBeforeSpawn);
-        SubscribeLocalEvent<PlayerAvailableForEvent>(OnPlayerAvailable);
     }
 
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
@@ -61,77 +69,244 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         }
     }
 
-    private void OnPlayerAvailable(PlayerAvailableForEvent ev)
+    private List<(EntityCoordinates Coords, EntProtoId Proto, WorldRuleComponent Comp)> AvailableRules(Entity<RimFortressPlayerComponent> uid)
     {
-        var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
-        while (query.MoveNext(out var ruleUid, out var rf, out var rule))
-        {
-            if (!GameTicker.IsGameRuleActive(ruleUid, rule))
-                continue;
-
-            var addRule = _random.Pick(AvailableRules(ev.Player));
-            ResetTime(rf, ev.Player, addRule);
-            _eventQueue.Add(ev.Player);
-
-            GameTicker.AddGameRule(addRule);
-            GameTicker.StartGameRule(addRule);
-        }
-    }
-
-    private List<EntProtoId> AvailableRules(Entity<RimFortressPlayerComponent> uid)
-    {
-        var available = new List<EntProtoId>();
+        var available = new List<(EntityCoordinates, EntProtoId, WorldRuleComponent)>();
 
         var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
         while (query.MoveNext(out var ruleUid, out var rf, out var rule))
         {
             if (!GameTicker.IsGameRuleActive(ruleUid, rule))
                 continue;
-
-            if (!_nextEventTime.TryGetValue(uid, out var times))
-                return _table.GetSpawns(rf.WorldEvents).ToList();
 
             foreach (var spawn in _table.GetSpawns(rf.WorldEvents))
             {
-                if (times.TryGetValue(spawn, out var time)
-                    && time > _timing.CurTime)
+                var proto = _prototype.Index(spawn);
+
+                if (!proto.TryGetComponent(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
+                    || GameTicker.RoundDuration() < worldRule.StartOffset)
                     continue;
 
-                available.Add(spawn);
+                var coords = _world.GetPlayerSettlements(new(uid, uid.Comp));
+                foreach (var coord in coords)
+                {
+                    if (_transform.GetGrid(coord) is not { } gridUid)
+                        continue;
+
+                    var indicates = _map.TileIndicesFor(gridUid, Comp<MapGridComponent>(gridUid), coord);
+
+                    if (worldRule.RequiredBiomes != null
+                        && (!_biome.TryGetBiome(indicates, gridUid, out var biome)
+                            || !worldRule.RequiredBiomes.Contains(biome)))
+                        continue;
+
+                    available.Add((coord, spawn, worldRule));
+                }
             }
         }
 
         return available;
     }
 
-    private void ResetTime(RimFortressRuleComponent component, EntityUid uid, EntProtoId eventId)
+    private (EntityCoordinates Coords, EntProtoId Proto, WorldRuleComponent Comp)? PickRandomRules(
+        Entity<RimFortressPlayerComponent> uid)
     {
-        if (!_nextEventTime.ContainsKey(uid))
-            _nextEventTime[uid] = new();
+        var threshold = _random.NextFloat(-1, 1);
+        var rules = AvailableRules(uid)
+            .Where(x => x.Comp.Threshold <= threshold)
+            .ToList();
 
-        _nextEventTime[uid][eventId] = _timing.CurTime + TimeSpan.FromSeconds(component.MinMaxEventTiming.Next(_random));
+        if (rules.Count == 0)
+            return null;
+
+        return _random.Pick(rules);
     }
 
-    public bool TryGetEvent(
-        [NotNullWhen(true)] out EntityUid? gridUid,
-        [NotNullWhen(true)] out EntityCoordinates? coords,
-        [NotNullWhen(true)] out Entity<RimFortressPlayerComponent>? player)
+    public override void Update(float frameTime)
     {
-        coords = null;
-        player = null;
-        gridUid = null;
+        base.Update(frameTime);
 
-        if (_eventQueue.Count == 0)
+        var entities = EntityQueryEnumerator<RimFortressPlayerComponent>();
+        while (entities.MoveNext(out var uid, out var comp))
+        {
+            if (_timing.CurTime < comp.NextEventTime || HasDelayedEvent(new(uid, comp)))
+                continue;
+
+            comp.NextEventTime = _timing.CurTime + comp.EventTimeOffset;
+
+            if (PickRandomRules(new(uid, comp)) is not { } rule)
+                continue;
+
+            StartWorldRule(rule.Proto, uid, rule.Coords);
+        }
+
+        var query = EntityQueryEnumerator<DelayedStartRuleComponent, WorldRuleComponent>();
+        while (query.MoveNext(out var uid, out var delay, out var rule))
+        {
+            if (_timing.CurTime < delay.RuleStartTime)
+                continue;
+
+            StartWorldRule(new(uid, rule));
+        }
+    }
+
+    public bool IsGameRuleActive(EntityUid ruleEntity, WorldRuleComponent? component = null)
+    {
+        return Resolve(ruleEntity, ref component) && HasComp<ActiveGameRuleComponent>(ruleEntity);
+    }
+
+    public bool HasDelayedEvent(Entity<RimFortressPlayerComponent?> entity)
+    {
+        if (!Resolve(entity, ref entity.Comp))
             return false;
 
-        player = _eventQueue.Pop();
-        var settlements = _world.GetPlayerSettlements(player.Value.Owner);
+        var query = EntityQueryEnumerator<DelayedStartRuleComponent, WorldRuleComponent>();
+        while (query.MoveNext(out _, out var comp))
+        {
+            if (comp.Target == entity.Owner)
+                return true;
+        }
 
-        if (settlements.Count == 0)
+        return false;
+    }
+
+    /// <summary>
+    /// Adds a world rule to the list, but does not
+    /// start it yet, instead waiting until the rule is actually started by other code
+    /// </summary>
+    /// <returns>The entity for the added worldrule</returns>
+    [PublicAPI]
+    public EntityUid AddWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates)
+    {
+        var ruleEntity = Spawn(ruleId, MapCoordinates.Nullspace);
+        var comp = Comp<WorldRuleComponent>(ruleEntity);
+
+        comp.Target = target;
+        comp.TargetCoordinates = targetCoordinates;
+
+        var str = $"Added world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}";
+        _sawmill.Info(str);
+        _chat.SendAdminAnnouncement(str);
+
+        _adminLogger.Add(LogType.EventStarted, $"Added game rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}");
+
+        var ev = new WorldRuleAddedEvent(ruleEntity, ruleId, target, targetCoordinates);
+        RaiseLocalEvent(ruleEntity, ref ev, true);
+        return ruleEntity;
+    }
+
+    /// <summary>
+    /// World rules can be 'started' separately from being added. 'Starting' them usually
+    /// happens at round start while they can be added and removed before then.
+    /// </summary>
+    public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates)
+    {
+        return StartWorldRule(ruleId, target, targetCoordinates, out _);
+    }
+
+    /// <summary>
+    /// World rules can be 'started' separately from being added. 'Starting' them usually
+    /// happens at round start while they can be added and removed before then.
+    /// </summary>
+    public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates, out EntityUid ruleEntity)
+    {
+        ruleEntity = AddWorldRule(ruleId, target, targetCoordinates);
+        return StartWorldRule(ruleEntity);
+    }
+
+    public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity)
+    {
+        if (!Resolve(ruleEntity, ref ruleEntity.Comp)
+            || !ruleEntity.Comp.Target.IsValid()
+            || !ruleEntity.Comp.TargetCoordinates.IsValid(EntityManager))
             return false;
 
-        coords = _random.Pick(settlements);
-        gridUid = _transform.GetGrid(coords.Value);
-        return gridUid != null;
+        return StartWorldRule(ruleEntity, ruleEntity.Comp.Target, ruleEntity.Comp.TargetCoordinates);
+    }
+
+    /// <summary>
+    /// Game rules can be 'started' separately from being added. 'Starting' them usually
+    /// happens at round start while they can be added and removed before then.
+    /// </summary>
+    [PublicAPI]
+    public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity, EntityUid target, EntityCoordinates targetCoordinates)
+    {
+        if (!Resolve(ruleEntity, ref ruleEntity.Comp)
+            || HasComp<ActiveGameRuleComponent>(ruleEntity)
+            || HasComp<EndedGameRuleComponent>(ruleEntity)
+            || MetaData(ruleEntity).EntityPrototype is not { } proto)
+            return false;
+
+        ruleEntity.Comp.TargetCoordinates = targetCoordinates;
+        ruleEntity.Comp.Target = target;
+
+        // If we already have it, then we just skip the delay as it has already happened.
+        if (!RemComp<DelayedStartRuleComponent>(ruleEntity) && ruleEntity.Comp.Delay is { } delay)
+        {
+            var delayTime = TimeSpan.FromSeconds(delay.Next(_random));
+
+            if (delayTime > TimeSpan.Zero)
+            {
+                var str = $"Queued start for world rule {ToPrettyString(ruleEntity)} " +
+                          $"with delay {delayTime} for {ToPrettyString(ruleEntity)}";
+                _sawmill.Info(str);
+                _chat.SendAdminAnnouncement(str);
+                _adminLogger.Add(LogType.EventStarted,
+                    $"Queued start for world rule {ToPrettyString(ruleEntity)} " +
+                    $"with delay {delayTime} for {ToPrettyString(ruleEntity)}");
+
+                var delayed = EnsureComp<DelayedStartRuleComponent>(ruleEntity);
+                delayed.RuleStartTime = _timing.CurTime + delayTime;
+                return true;
+            }
+        }
+
+        var msg = $"Started world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(ruleEntity)}";
+        _sawmill.Info(msg);
+        _chat.SendAdminAnnouncement(msg);
+        _adminLogger.Add(LogType.EventStarted,
+            $"Started world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(ruleEntity)}");
+
+        EnsureComp<ActiveGameRuleComponent>(ruleEntity);
+
+        var ev = new WorldRuleStartedEvent(ruleEntity, proto, target, targetCoordinates);
+        RaiseLocalEvent(ruleEntity, ref ev, true);
+        return true;
+    }
+
+    /// <summary>
+    /// Ends a world rule.
+    /// </summary>
+    [PublicAPI]
+    public bool EndWorldRule(Entity<WorldRuleComponent?> uid)
+    {
+        if (!Resolve(uid, ref uid.Comp))
+            return false;
+
+        // don't end it multiple times
+        if (HasComp<EndedGameRuleComponent>(uid))
+            return false;
+
+        if (MetaData(uid).EntityPrototype is not { } proto) // you really fucked up
+            return false;
+
+        RemComp<ActiveGameRuleComponent>(uid);
+        EnsureComp<EndedGameRuleComponent>(uid);
+
+        _sawmill.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
+        _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
+
+        var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Target, uid.Comp.TargetCoordinates);
+        RaiseLocalEvent(uid, ref ev, true);
+        return true;
     }
 }
+
+[ByRefEvent]
+public readonly record struct WorldRuleAddedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
+
+[ByRefEvent]
+public readonly record struct WorldRuleStartedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
+
+[ByRefEvent]
+public readonly record struct WorldRuleEndedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);

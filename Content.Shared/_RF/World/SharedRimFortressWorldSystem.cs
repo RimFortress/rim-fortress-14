@@ -435,29 +435,6 @@ public abstract class SharedRimFortressWorldSystem : EntitySystem
             return false;
         }
     }
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (Rule is not { } rule)
-            return;
-
-        var query = EntityQueryEnumerator<RimFortressPlayerComponent>();
-        while (query.MoveNext(out var uid, out var comp))
-        {
-            if (_timing.CurTime < comp.NextEventTime)
-                continue;
-
-            comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(rule.MinMaxEventTiming.Next(_random));
-            RaiseLocalEvent(new PlayerAvailableForEvent { Player = new(uid, comp) });
-        }
-    }
-}
-
-public sealed class PlayerAvailableForEvent : HandledEntityEventArgs
-{
-    public Entity<RimFortressPlayerComponent> Player;
 }
 
 [Serializable, NetSerializable]

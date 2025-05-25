@@ -2,15 +2,12 @@
   id: BasicWorldRulesTable
   table: !type:AllSelector
     children:
-    - id: PopMigration
+      - id: PopMigration
 
-    # Animal migration
-    # Neutral
-    - !type:GroupSelector
-      children:
+      # Animal migration
+      # Neutral
       - id: CatMigration
       - id: PossumMigration
-      - id: PenguinMigration
       - id: FoxMigration
       - id: CrabMigration
       - id: GoatMigration
@@ -26,17 +23,69 @@
       - id: ParrotMigration
       - id: RaccoonMigration
       - id: SnakeMigration
-    # Hostile
-    - !type:GroupSelector
-      children:
+      # Hostile
       - id: SlimeMigration
       - id: SpiderMigration
       - id: OreCrabMigration
 
 - type: entity
-  id: PopMigration
-  parent: BaseGameRule
+  id: BaseMigrationRule
+  abstract: true
   components:
+    - type: WorldRule
+      delay:
+        min: 300 #5 min
+        max: 600 #10 min
+      startOffset: 300 #5 min
+      threshold: -0.7
+    - type: MigrationRule
+
+- type: entity
+  id: RareMigrationRule
+  abstract: true
+  components:
+    - type: WorldRule
+      delay:
+        min: 300 #5 min
+        max: 600 #10 min
+      startOffset: 600 #5 min
+      threshold: 0
+    - type: MigrationRule
+
+- type: entity
+  id: GrasslandMigrationRule
+  abstract: true
+  components:
+    - type: WorldRule
+      delay:
+        min: 300 #5 min
+        max: 600 #10 min
+      startOffset: 300 #5 min
+      requiredBiomes:
+        - RfGrassland
+    - type: MigrationRule
+
+- type: entity
+  id: DesertMigrationRule
+  abstract: true
+  components:
+    - type: WorldRule
+      delay:
+        min: 300 #5 min
+        max: 600 #10 min
+      startOffset: 300 #5 min
+      requiredBiomes:
+        - RfLowDesert
+    - type: MigrationRule
+
+- type: entity
+  id: PopMigration
+  components:
+    - type: WorldRule
+      delay:
+        min: 600 #10 min
+        max: 1800 #30 min
+      startOffset: 600 #10 min
     - type: MigrationRule
       spawn: [ RimFortressMobPop ]
       addToPops: true
@@ -46,7 +95,7 @@
 
 - type: entity
   id: CatMigration
-  parent: BaseGameRule
+  parent: BaseMigrationRule
   components:
     - type: MigrationRule
       spawn:
@@ -60,7 +109,7 @@
 
 - type: entity
   id: PossumMigration
-  parent: BaseGameRule
+  parent: BaseMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobPossumMorty ]
@@ -69,71 +118,48 @@
         max: 5
 
 - type: entity
-  id: PenguinMigration
-  parent: BaseGameRule
-  components:
-    - type: MigrationRule
-      spawn: [ MobPenguin ]
-      requiredBiomes: [ Snow ]
-      amount:
-        min: 4
-        max: 8
-
-- type: entity
   id: FoxMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobFoxRenault ]
-      requiredBiomes:
-        - RfGrassland
-        - RfSnow
-        - RfSnowMountain
       amount:
         min: 2
         max: 4
 
 - type: entity
   id: CrabMigration
-  parent: BaseGameRule
+  parent: DesertMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobCrabAtmos ]
-      requiredBiomes:
-        - RfLowDesert
       amount:
         min: 3
         max: 4
 
 - type: entity
   id: GoatMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobGoat ]
-      requiredBiomes:
-        - RfGrassland
-        - RfSnowMountain
-        - RfGrassMountain
       amount:
         min: 2
         max: 4
 
 - type: entity
   id: CowMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobCow ]
-      requiredBiomes:
-        - RfGrassland
       amount:
         min: 1
         max: 3
 
 - type: entity
   id: FerretMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobFerret ]
@@ -143,20 +169,17 @@
 
 - type: entity
   id: FrogMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobFrog ]
-      requiredBiomes:
-        - RfGrassland
-        - RfJungle
       amount:
         min: 6
         max: 10
 
 - type: entity
   id: GooseMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobGoose ]
@@ -166,7 +189,7 @@
 
 - type: entity
   id: HamsterMigration
-  parent: BaseGameRule
+  parent: BaseMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobHamster ]
@@ -176,32 +199,27 @@
 
 - type: entity
   id: KangarooMigration
-  parent: BaseGameRule
+  parent: DesertMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobKangaroo ]
-      requiredBiomes:
-        - RfLowDesert
       amount:
         min: 2
         max: 3
 
 - type: entity
   id: MonkeyMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobMonkey ]
-      requiredBiomes:
-        - RfGrassland
-        - RfJungle
       amount:
         min: 4
         max: 7
 
 - type: entity
   id: MothroachMigration
-  parent: BaseGameRule
+  parent: RareMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobMothroach ]
@@ -211,19 +229,17 @@
 
 - type: entity
   id: ParrotMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobParrot ]
-      requiredBiomes:
-        - RfJungle
       amount:
         min: 2
         max: 5
 
 - type: entity
   id: RaccoonMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobRaccoon ]
@@ -233,12 +249,10 @@
 
 - type: entity
   id: SnakeMigration
-  parent: BaseGameRule
+  parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobSnake ]
-      requiredBiomes:
-        - RfGrassland
       amount:
         min: 3
         max: 5
@@ -247,7 +261,7 @@
 
 - type: entity
   id: SlimeMigration
-  parent: BaseGameRule
+  parent: RareMigrationRule
   components:
     - type: MigrationRule
       spawn:
@@ -264,7 +278,7 @@
 
 - type: entity
   id: SpiderMigration
-  parent: BaseGameRule
+  parent: RareMigrationRule
   components:
     - type: MigrationRule
       spawn: [ MobGiantSpiderAngry ]
@@ -274,7 +288,7 @@
 
 - type: entity
   id: OreCrabMigration
-  parent: BaseGameRule
+  parent: RareMigrationRule
   components:
     - type: MigrationRule
       spawn:
