@@ -1,6 +1,7 @@
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.EntityTable.EntitySelectors;
 using Content.Shared.Parallax.Biomes;
+using Content.Shared.Random;
 using Content.Shared.Roles;
 using Robust.Shared.Prototypes;
 
@@ -45,6 +46,21 @@ public sealed partial class RimFortressRuleComponent : Component
     /// <summary>
     /// Table with random events that can happen on the world map
     /// </summary>
-    [DataField(required: true)]
-    public EntityTableSelector WorldEvents = default!;
+    [DataField]
+    public EntityTableSelector? WorldEvents;
+
+    /// <summary>
+    /// А list of global world events with chances of starting them
+    /// </summary>
+    [DataField]
+    public ProtoId<WeightedRandomPrototype>? GlobalEvents;
+
+    /// <summary>
+    /// Minimum and maximum amount of time in seconds between global world events
+    /// </summary>
+    [DataField]
+    public MinMax MinMaxEventTiming;
+
+    [ViewVariables]
+    public TimeSpan NextEventTime;
 }

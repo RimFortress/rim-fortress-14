@@ -86,6 +86,7 @@
         min: 600 #10 min
         max: 1800 #30 min
       startOffset: 600 #10 min
+      threshold: 0.4
     - type: MigrationRule
       spawn: [ RimFortressMobPop ]
       addToPops: true

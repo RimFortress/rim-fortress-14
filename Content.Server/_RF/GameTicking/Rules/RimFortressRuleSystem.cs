@@ -10,6 +10,7 @@ using Content.Shared.Database;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
+using Content.Shared.Random.Helpers;
 using JetBrains.Annotations;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
@@ -52,6 +53,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         base.Added(uid, comp, gameRule, args);
 
         _world.InitializeWorld(comp);
+        comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(comp.MinMaxEventTiming.Next(_random));
     }
 
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)
@@ -148,6 +150,16 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
 
             StartWorldRule(new(uid, rule));
         }
+
+        var rules = EntityQueryEnumerator<RimFortressRuleComponent>();
+        while (rules.MoveNext(out var comp))
+        {
+            if (!_prototype.TryIndex(comp.GlobalEvents, out var proto) || comp.NextEventTime < _timing.CurTime)
+                continue;
+
+            comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(comp.MinMaxEventTiming.Next(_random));
+            GameTicker.StartGameRule(proto.Pick(_random));
+        }
     }
 
     public bool IsGameRuleActive(EntityUid ruleEntity, WorldRuleComponent? component = null)
@@ -199,6 +211,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     /// World rules can be 'started' separately from being added. 'Starting' them usually
     /// happens at round start while they can be added and removed before then.
     /// </summary>
+    [PublicAPI]
     public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates)
     {
         return StartWorldRule(ruleId, target, targetCoordinates, out _);
@@ -208,12 +221,14 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     /// World rules can be 'started' separately from being added. 'Starting' them usually
     /// happens at round start while they can be added and removed before then.
     /// </summary>
+    [PublicAPI]
     public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates, out EntityUid ruleEntity)
     {
         ruleEntity = AddWorldRule(ruleId, target, targetCoordinates);
         return StartWorldRule(ruleEntity);
     }
 
+    [PublicAPI]
     public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity)
     {
         if (!Resolve(ruleEntity, ref ruleEntity.Comp)
