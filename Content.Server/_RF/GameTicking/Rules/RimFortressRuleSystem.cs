@@ -13,6 +13,8 @@ using Content.Shared.GameTicking.Components;
 using Content.Shared.Random.Helpers;
 using JetBrains.Annotations;
 using Robust.Server.GameObjects;
+using Robust.Server.Player;
+using Robust.Shared.Console;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
@@ -24,7 +26,7 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manages <see cref="RimFortressRuleComponent"/>
 /// </summary>
-public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
+public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
 {
     [Dependency] private readonly RimFortressWorldSystem _world = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
@@ -36,6 +38,8 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     [Dependency] private readonly MapSystem _map = default!;
     [Dependency] private readonly IAdminLogManager _adminLogger = default!;
     [Dependency] private readonly IChatManager _chat = default!;
+    [Dependency] private readonly IConsoleHost _host = default!;
+    [Dependency] private readonly IPlayerManager _player = default!;
 
     private ISawmill _sawmill = default!;
 
@@ -46,6 +50,8 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         _sawmill = LogManager.GetSawmill("rf_rule");
 
         SubscribeLocalEvent<PlayerBeforeSpawnEvent>(OnBeforeSpawn);
+
+        InitializeCommands();
     }
 
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
@@ -212,9 +218,13 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     /// happens at round start while they can be added and removed before then.
     /// </summary>
     [PublicAPI]
-    public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates)
+    public bool StartWorldRule(
+        EntProtoId ruleId,
+        EntityUid target,
+        EntityCoordinates targetCoordinates,
+        bool ignoreDelay = false)
     {
-        return StartWorldRule(ruleId, target, targetCoordinates, out _);
+        return StartWorldRule(ruleId, target, targetCoordinates, out _, ignoreDelay);
     }
 
     /// <summary>
@@ -222,21 +232,26 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     /// happens at round start while they can be added and removed before then.
     /// </summary>
     [PublicAPI]
-    public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates, out EntityUid ruleEntity)
+    public bool StartWorldRule(
+        EntProtoId ruleId,
+        EntityUid target,
+        EntityCoordinates targetCoordinates,
+        out EntityUid ruleEntity,
+        bool ignoreDelay = false)
     {
         ruleEntity = AddWorldRule(ruleId, target, targetCoordinates);
-        return StartWorldRule(ruleEntity);
+        return StartWorldRule(ruleEntity, ignoreDelay);
     }
 
     [PublicAPI]
-    public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity)
+    public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity, bool ignoreDelay = false)
     {
         if (!Resolve(ruleEntity, ref ruleEntity.Comp)
             || !ruleEntity.Comp.Target.IsValid()
             || !ruleEntity.Comp.TargetCoordinates.IsValid(EntityManager))
             return false;
 
-        return StartWorldRule(ruleEntity, ruleEntity.Comp.Target, ruleEntity.Comp.TargetCoordinates);
+        return StartWorldRule(ruleEntity, ruleEntity.Comp.Target, ruleEntity.Comp.TargetCoordinates, ignoreDelay);
     }
 
     /// <summary>
@@ -244,7 +259,11 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
     /// happens at round start while they can be added and removed before then.
     /// </summary>
     [PublicAPI]
-    public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity, EntityUid target, EntityCoordinates targetCoordinates)
+    public bool StartWorldRule(
+        Entity<WorldRuleComponent?> ruleEntity,
+        EntityUid target,
+        EntityCoordinates targetCoordinates,
+        bool ignoreDelay = false)
     {
         if (!Resolve(ruleEntity, ref ruleEntity.Comp)
             || HasComp<ActiveGameRuleComponent>(ruleEntity)
@@ -256,7 +275,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         ruleEntity.Comp.Target = target;
 
         // If we already have it, then we just skip the delay as it has already happened.
-        if (!RemComp<DelayedStartRuleComponent>(ruleEntity) && ruleEntity.Comp.Delay is { } delay)
+        if (!ignoreDelay && !RemComp<DelayedStartRuleComponent>(ruleEntity) && ruleEntity.Comp.Delay is { } delay)
         {
             var delayTime = TimeSpan.FromSeconds(delay.Next(_random));
 

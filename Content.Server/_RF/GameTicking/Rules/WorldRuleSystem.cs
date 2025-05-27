@@ -1,3 +1,4 @@
+using Content.Server._RF.World;
 using Content.Server.GameTicking;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.GameTicking.Components;
@@ -9,6 +10,7 @@ public abstract class WorldRuleSystem<T> : EntitySystem where T: IComponent
 {
     [Dependency] protected readonly RimFortressRuleSystem Rule = default!;
     [Dependency] protected readonly IRobustRandom Random = default!;
+    [Dependency] protected readonly RimFortressWorldSystem World = default!;
 
     public override void Initialize()
     {

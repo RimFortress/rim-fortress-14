@@ -23,7 +23,7 @@
     - type: BiomeLoader
     - type: NpcFactionMember
       factions:
-      - RimFortress
+        - RimFortress
     - type: ControllableNpc
     - type: RoutineNpcTasks
       tasks:
@@ -37,3 +37,34 @@
         - id: HarvestPlant
         - id: WaterPlant
         - id: RemoveWeed
+
+- type: entity
+  id: Raider
+  parent: BaseMobHuman
+  save: false
+  components:
+    - type: RandomHumanoidAppearance
+      randomizeName: false
+    - type: RandomMetadata
+      nameSegments:
+        - NamesFirst
+        - NamesLast
+    - type: Loadout
+      prototypes:
+        - SafariRaid1Gear
+        - SafariRaid2Gear
+        - SafariRaid3Gear
+        - SafariRaid4Gear
+        - RandomVisualRaid1Gear
+        - RandomVisualRaid2Gear
+        - RandomVisualRaid3Gear
+        - RandomVisualRaid4Gear
+    - type: InputMover
+    - type: MobMover
+    - type: HTN
+      rootTask:
+        task: IdleCompound
+    - type: NpcFactionMember
+      factions:
+        - Raiders
+    - type: ControllableNpc

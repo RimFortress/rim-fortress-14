@@ -140,6 +140,24 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     }
 
     /// <summary>
+    /// Adds entity to the list of entities controlled by the player
+    /// </summary>
+    public void AddPop(Entity<RimFortressPlayerComponent?> player, EntityUid pop)
+    {
+        if (!Resolve(player.Owner, ref player.Comp))
+            return;
+
+        _npc.AddNpcControl(player.Owner, pop);
+
+        var beacon = EnsureComp<NavMapBeaconComponent>(pop);
+        beacon.Color = player.Comp.FactionColor;
+        beacon.Text = MetaData(pop).EntityName;
+
+        player.Comp.Pops.Add(pop);
+        Dirty(player);
+    }
+
+    /// <summary>
     /// Spawns starting pops and expedition equipment for the player
     /// </summary>
     /// <remarks>

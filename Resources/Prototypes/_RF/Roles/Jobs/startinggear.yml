@@ -48,3 +48,111 @@
     back:
       - DrinkWaterBottleFull
       - FoodTinMRE
+
+- type: startingGear
+  id: RandomVisualRaid1Gear
+  equipment:
+    jumpsuit: ClothingUniformRandomStandard
+    back: ClothingBackpack
+    shoes: ClothingShoesColorBlack
+  storage:
+    back:
+      - DrinkWaterBottleFull
+      - FoodTinMRE
+  inhand:
+    - Spear
+
+- type: startingGear
+  id: RandomVisualRaid2Gear
+  equipment:
+    jumpsuit: ClothingUniformRandomStandard
+    back: ClothingBackpack
+    shoes: ClothingShoesColorBlack
+  storage:
+    back:
+      - DrinkWaterBottleFull
+      - FoodTinMRE
+  inhand:
+    - SpearReinforced
+
+- type: startingGear
+  id: RandomVisualRaid3Gear
+  equipment:
+    jumpsuit: ClothingUniformRandomStandard
+    back: ClothingBackpack
+    shoes: ClothingShoesColorBlack
+  storage:
+    back:
+      - DrinkWaterBottleFull
+      - FoodTinMRE
+  inhand:
+    - CombatKnife
+
+- type: startingGear
+  id: RandomVisualRaid4Gear
+  equipment:
+    jumpsuit: ClothingUniformRandomStandard
+    back: ClothingBackpack
+    shoes: ClothingShoesColorBlack
+  storage:
+    back:
+      - DrinkWaterBottleFull
+      - FoodTinMRE
+  inhand:
+    - KukriKnife
+
+- type: startingGear
+  id: SafariRaid1Gear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitSafari
+    back: ClothingBackpackSatchelLeather
+    head: ClothingHeadHatBeretQM
+    shoes: ClothingShoesLeather
+  storage:
+    back:
+      - MedkitFilled
+      - BoxMRE
+  inhand:
+    - Spear
+
+- type: startingGear
+  id: SafariRaid2Gear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitSafari
+    back: ClothingBackpackSatchelLeather
+    head: ClothingHeadHatBeretQM
+    shoes: ClothingShoesLeather
+  storage:
+    back:
+      - MedkitFilled
+      - BoxMRE
+  inhand:
+    - SpearReinforced
+
+- type: startingGear
+  id: SafariRaid3Gear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitSafari
+    back: ClothingBackpackSatchelLeather
+    head: ClothingHeadHatBeretQM
+    shoes: ClothingShoesLeather
+  storage:
+    back:
+      - MedkitFilled
+      - BoxMRE
+  inhand:
+    - CombatKnife
+
+- type: startingGear
+  id: SafariRaid4Gear
+  equipment:
+    jumpsuit: ClothingUniformJumpsuitSafari
+    back: ClothingBackpackSatchelLeather
+    head: ClothingHeadHatBeretQM
+    shoes: ClothingShoesLeather
+  storage:
+    back:
+      - MedkitFilled
+      - BoxMRE
+  inhand:
+    - KukriKnife

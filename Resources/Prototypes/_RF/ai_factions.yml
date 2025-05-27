@@ -4,3 +4,12 @@
     - Xeno
     - Zombie
     - AllHostile
+    - Raiders
+
+- type: npcFaction
+  id: Raiders
+  hostile:
+    - Xeno
+    - Zombie
+    - AllHostile
+    - RimFortress

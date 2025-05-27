@@ -47,6 +47,18 @@
           targetKey: Target
 
 - type: npcTask
+  id: Raid
+  name: Raid
+  overlayColor: "#FF0000"
+  compound: RaidCompound
+  onFinish: IdleCompound
+  finishPreconditions:
+    - !type:MobStatePrecondition
+      targetKey: Owner
+      state: Alive
+      invert: true
+
+- type: npcTask
   id: PickUp
   name: Take it
   maxPerformers: 1
