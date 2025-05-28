@@ -16,6 +16,12 @@ using Robust.Shared.Physics.Events;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
+// RimFortress Start
+using Content.Shared.Parallax.Biomes;
+using Robust.Shared.Prototypes;
+using Content.Server.NPC.HTN;
+// RimFortress End
+
 namespace Content.Server.NPC.Pathfinding;
 
 public sealed partial class PathfindingSystem
@@ -49,8 +55,64 @@ public sealed partial class PathfindingSystem
         SubscribeLocalEvent<CollisionLayerChangeEvent>(OnCollisionLayerChange);
         SubscribeLocalEvent<PhysicsBodyTypeChangedEvent>(OnBodyTypeChange);
         SubscribeLocalEvent<TileChangedEvent>(OnTileChange);
+        SubscribeLocalEvent<HTNComponent, ComponentStartup>(OnHtnStartup); // RimFortress
         _transform.OnGlobalMoveEvent += OnMoveEvent;
     }
+
+    // RimFortress Start
+    private void OnHtnStartup(EntityUid uid, HTNComponent component, ComponentStartup args)
+    {
+        if (_transform.GetGrid(uid) is not { } grid
+            || !TryComp(grid, out BiomeComponent? _)
+            || !TryComp(grid, out GridPathfindingComponent? pathfinding)
+            || pathfinding.Chunks.Count == 0)
+            return;
+
+        var r = 0;
+        var valid = true;
+        var origin = GetOrigin(Transform(uid).Coordinates, grid);
+        var chunks = pathfinding.DirtyChunks;
+        var currentTime = _timing.CurTime;
+
+        if (pathfinding.NextUpdate < currentTime && !MetaData(grid).EntityPaused)
+            pathfinding.NextUpdate = currentTime + UpdateCooldown;
+
+        while (valid)
+        {
+            for (var y = -r; y <= r; y++)
+            {
+                var lb = origin + new Vector2i(-r, y);
+                var rb = origin + new Vector2i(r, y);
+
+                if (pathfinding.Chunks.ContainsKey(lb) || pathfinding.Chunks.ContainsKey(rb))
+                {
+                    valid = false;
+                    break;
+                }
+
+                chunks.Add(lb);
+                chunks.Add(rb);
+            }
+
+            for (var x = -r + 1; x <= r - 1; x++)
+            {
+                var tb = origin + new Vector2i(x, r);
+                var bb = origin + new Vector2i(x, -r);
+
+                if (pathfinding.Chunks.ContainsKey(tb) || pathfinding.Chunks.ContainsKey(bb))
+                {
+                    valid = false;
+                    break;
+                }
+
+                chunks.Add(tb);
+                chunks.Add(bb);
+            }
+
+            r++;
+        }
+    }
+    // RimFortress End
 
     private void OnTileChange(ref TileChangedEvent ev)
     {
@@ -414,6 +476,7 @@ public sealed partial class PathfindingSystem
         }
 
         var tilePolys = new ValueList<Box2i>(SubStep);
+        TryComp(grid, out BiomeComponent? biome); // RimFortress
 
         // Need to get the relevant polygons in each tile.
         // If we wanted to create a larger navmesh we could triangulate these points but in our case we're just going
@@ -432,6 +495,27 @@ public sealed partial class PathfindingSystem
 
                 tileEntities.Clear();
                 var available = _lookup.GetLocalEntitiesIntersecting(tile, flags: LookupFlags.Dynamic | LookupFlags.Static);
+
+                // RimFortress Start
+                if (tile.Tile.IsEmpty
+                    && biome != null
+                    && _biome.TryGetBiomeTile(grid, grid.Comp, tilePos, out var biomeTile)
+                    && !biomeTile.Value.IsEmpty)
+                    flags = PathfindingBreadcrumbFlag.None;
+
+                (EntityCoordinates Pos, FixturesComponent Fix)? biomeEntity = null;
+
+                if (tile.Tile.IsEmpty
+                    && biome != null
+                    && _biome.TryGetEntity(tilePos, biome, grid.Comp, out var protoId)
+                    && _prototype.TryIndex<EntityPrototype>(protoId, out var proto)
+                    && proto.Components.TryGetComponent("Fixtures", out var comp)
+                    && comp is FixturesComponent fix)
+                {
+                    var localPos = _maps.GridTileToLocal(grid, grid.Comp, tilePos);
+                    biomeEntity = (localPos, fix);
+                }
+                // RimFortress End
 
                 foreach (var ent in available)
                 {
@@ -534,6 +618,40 @@ public sealed partial class PathfindingSystem
                                 damage += _destructible.DestroyedAt(ent, damageable).Float();
                             }
                         }
+
+                        // RimFortress Start
+                        if (biomeEntity != null)
+                        {
+                            foreach (var fixture in biomeEntity.Value.Fix.Fixtures.Values)
+                            {
+                                // Don't need to re-do it.
+                                if (!fixture.Hard ||
+                                    (collisionMask & fixture.CollisionMask) == fixture.CollisionMask &&
+                                    (collisionLayer & fixture.CollisionLayer) == fixture.CollisionLayer)
+                                {
+                                    continue;
+                                }
+
+                                // Do an AABB check first as it's probably faster, then do an actual point check.
+                                var intersects = false;
+
+                                foreach (var proxy in fixture.Proxies)
+                                {
+                                    if (!proxy.AABB.Contains(localPos))
+                                        continue;
+
+                                    intersects = true;
+                                }
+
+                                if (!intersects ||
+                                    !_fixtures.TestPoint(fixture.Shape, new Transform(biomeEntity.Value.Pos.Position, Angle.Zero), localPos))
+                                    continue;
+
+                                collisionLayer |= fixture.CollisionLayer;
+                                collisionMask |= fixture.CollisionMask;
+                            }
+                        }
+                        // RimFortress End
 
                         /*This is causing too many issues and I'd rather just ignore it until pathfinder refactor
                           to just get tiles at runtime.

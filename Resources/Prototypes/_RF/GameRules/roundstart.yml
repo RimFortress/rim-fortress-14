@@ -14,7 +14,7 @@
             task: RfIdleCompound
         - type: NpcFactionMember
           factions:
-          - RimFortress
+            - RimFortress
         - type: BiomeLoader
         - type: RoutineNpcTasks
           tasks:

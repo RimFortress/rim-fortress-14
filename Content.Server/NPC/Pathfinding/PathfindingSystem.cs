@@ -23,6 +23,11 @@ using Robust.Shared.Threading;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
+// RimFortress Start
+using Content.Server.Parallax;
+using Robust.Shared.Prototypes;
+// RimFortress End
+
 namespace Content.Server.NPC.Pathfinding
 {
     /// <summary>
@@ -52,6 +57,10 @@ namespace Content.Server.NPC.Pathfinding
         [Dependency] private readonly SharedMapSystem _maps = default!;
         [Dependency] private readonly SharedPhysicsSystem _physics = default!;
         [Dependency] private readonly SharedTransformSystem _transform = default!;
+        // RimFortress Start
+        [Dependency] private readonly BiomeSystem _biome = default!;
+        [Dependency] private readonly IPrototypeManager _prototype = default!;
+        // RimFortress End
 
         private readonly Dictionary<ICommonSession, PathfindingDebugMode> _subscribedSessions = new();
 
