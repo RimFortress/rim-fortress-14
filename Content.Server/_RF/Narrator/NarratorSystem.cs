@@ -122,7 +122,6 @@ public sealed partial class NarratorSystem : EntitySystem
         var narrator = _prototype.Index(proto);
         var waitPoints = WaitPoint(narrator, player.Comp);
         var wealth = SettlementWealth(player, proto, settlement);
-        var randomFactor = _random.NextFloat(narrator.MinRandomFactor, narrator.MaxRandomFactor);
         var narratorMood = 0f;
 
         foreach (var curve in narrator.WealthCurves)
@@ -135,14 +134,13 @@ public sealed partial class NarratorSystem : EntitySystem
             narratorMood = curve.Curve(narratorMood);
         }
 
-        return (int) Math.Floor(wealth + waitPoints * narratorMood * randomFactor);
+        return (int) Math.Floor(wealth + waitPoints * narratorMood);
     }
 
     public int GlobalEventPoints(RimFortressRuleComponent rule, ProtoId<NarratorPrototype> proto)
     {
         var narrator = _prototype.Index(proto);
         var waitPoints = GlobalWaitPoint(narrator, rule);
-        var randomFactor = _random.NextFloat(narrator.MinRandomFactor, narrator.MaxRandomFactor);
         var narratorMood = 0f;
 
         foreach (var curve in narrator.MoodCurves)
@@ -150,7 +148,7 @@ public sealed partial class NarratorSystem : EntitySystem
             narratorMood = curve.Curve(narratorMood);
         }
 
-        return (int) Math.Floor(waitPoints * narratorMood * randomFactor);
+        return (int) Math.Floor(waitPoints * narratorMood);
     }
 
     /// <summary>
@@ -318,8 +316,6 @@ public sealed partial class NarratorSystem : EntitySystem
                     $"Settlement: {coords}\n" +
                     $"Settlement wealth: {wealth}\n" +
                     $"Event wait points: {waitPoints}\n" +
-                    $"Min random factor: {proto.MinRandomFactor}\n" +
-                    $"Max random factor: {proto.MaxRandomFactor}\n" +
                     $"Round time seconds: {_ticker.RoundDuration().TotalSeconds}\n" +
                     $"Narrator mood: {narratorMood}\n" +
                     $"Event points (without random factor): {wealthFactor + waitPoints * narratorMood}\n" +

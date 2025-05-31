@@ -16,7 +16,7 @@ public abstract partial class NarratorMoodCurve
 /// <summary>
 /// Returns a random number
 /// </summary>
-public sealed partial class RandomCurve : NarratorMoodCurve
+public sealed partial class MultiplyRandomCurve : NarratorMoodCurve
 {
     private IRobustRandom _random = default!;
 
@@ -31,7 +31,7 @@ public sealed partial class RandomCurve : NarratorMoodCurve
         _random = IoCManager.Resolve<IRobustRandom>();
     }
 
-    public override float Curve(float value) => _random.NextFloat(Min, Max);
+    public override float Curve(float value) => value * _random.NextFloat(Min, Max);
 }
 
 /// <summary>
@@ -119,17 +119,6 @@ public sealed partial class ConditionCurve : NarratorMoodCurve
 }
 
 /// <summary>
-/// Divides the input number by the specified number
-/// </summary>
-public sealed partial class DivideCurve : NarratorMoodCurve
-{
-    [DataField]
-    public float Divider;
-
-    public override float Curve(float value) => value / Divider;
-}
-
-/// <summary>
 /// Multiplies the input number by the given number
 /// </summary>
 public sealed partial class MultiplyCurve : NarratorMoodCurve
@@ -157,15 +146,4 @@ public sealed partial class IncreaseCurve : NarratorMoodCurve
     public float Value;
 
     public override float Curve(float value) => value + Value;
-}
-
-/// <summary>
-/// Decreases the input number by the specified number
-/// </summary>
-public sealed partial class DecreaseCurve : NarratorMoodCurve
-{
-    [DataField]
-    public float Value;
-
-    public override float Curve(float value) => value - Value;
 }
