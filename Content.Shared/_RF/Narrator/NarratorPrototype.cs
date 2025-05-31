@@ -26,18 +26,6 @@ public sealed class NarratorPrototype : IPrototype
     public float EventWaitFactor;
 
     /// <summary>
-    /// Minimum random factor multiplier for calculating event scores
-    /// </summary>
-    [DataField]
-    public float MinRandomFactor = 1;
-
-    /// <summary>
-    /// Maximum random factor multiplier for calculating event scores
-    /// </summary>
-    [DataField]
-    public float MaxRandomFactor = 1;
-
-    /// <summary>
     /// Curves acting on settlement wealth points when calculating event points
     /// </summary>
     [DataField]

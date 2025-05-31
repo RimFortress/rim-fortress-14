@@ -1,26 +1,61 @@
 - type: narrator
   id: Basic
   constructionCostMod: 0.5
-  wealthFactor: 0.005
-  minRandomFactor: 0.9
-  maxRandomFactor: 1.1
-  # 1 point per minute
+  eventWaitFactor: 0.016 # ~1 point per minute
   wealthCurves:
+    # We don't consider the wealth factor if it's
+    # less than 20k to let the player develop
+    - !type:ConditionCurve
+      lessThan: 20000
+      valueCurve: !type:MultiplyCurve
+        multiplier: 0
     - !type:DivideCurve
-      divider: 60
+      divider: 200 # 20000 => 100
   # +0.24 per 10 minutes
   moodCurves:
     - !type:RoundTimeIncreaseCurve
       timeMod: 0.0004
     - !type:IncreaseCurve
       value: 1
+    # Random factor
+    - !type:MultiplyRandomCurve
+      min: 0.9
+      max: 1.1
   # mood = sqrt(points) / 5
   # 10min = ~63%
   # 20min = ~91%
   eventChanceCurves:
     - !type:SqrtCurve
-    - !type:DivideCurve
-      divider: 5
+    - !type:MultiplyCurve
+      multiplier: 0.2
     - !type:ClampCurve
+      min: 0
+      max: 1
+
+- type: narrator
+  id: Random
+  constructionCostMod: 1
+  eventWaitFactor: 0.016 # ~1 point per minute
+  wealthCurves:
+    - !type:ConditionCurve
+      lessThan: 20000
+      valueCurve: !type:MultiplyCurve
+        multiplier: 0
+    - !type:MultiplyCurve
+      multiplier: 0.005 # 20000 => 100
+    - !type:MultiplyRandomCurve
+      min: 0
+      max: 2
+  moodCurves:
+    - !type:IncreaseCurve
+      value: 1
+    - !type:MultiplyRandomCurve
+      min: 0
+      max: 10
+  # Absolute random
+  eventChanceCurves:
+    - !type:IncreaseCurve
+      value: 1
+    - !type:MultiplyRandomCurve
       min: 0
       max: 1
