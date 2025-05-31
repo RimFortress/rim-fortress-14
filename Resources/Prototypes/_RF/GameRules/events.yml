@@ -86,7 +86,8 @@
       startOffset: 600 #10 min
       cost: 100
     - type: MigrationRule
-      spawn: [ RimFortressMobPop ]
+      spawn:
+        RimFortressMobPop: 100
       addToPops: true
 
 # Animals migration
@@ -98,163 +99,133 @@
   components:
     - type: MigrationRule
       spawn:
-      - MobCatRuntime
-      - MobCatException
-      - MobCatFloppa
-      - MobBingus
-      amount:
-        min: 4
-        max: 6
+        MobCatRuntime: 15
+        MobCatException: 15
+        MobCatFloppa: 15
+        MobBingus: 15
 
 - type: entity
   id: PossumMigration
   parent: BaseMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobPossumMorty ]
-      amount:
-        min: 3
-        max: 5
+      spawn:
+        MobPossumMorty: 20
 
 - type: entity
   id: FoxMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobFoxRenault ]
-      amount:
-        min: 2
-        max: 4
+      spawn:
+        MobFoxRenault: 25
 
 - type: entity
   id: CrabMigration
   parent: DesertMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobCrabAtmos ]
-      amount:
-        min: 3
-        max: 4
+      spawn:
+        MobCrabAtmos: 20
 
 - type: entity
   id: GoatMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobGoat ]
-      amount:
-        min: 2
-        max: 4
+      spawn:
+        MobGoat: 30
 
 - type: entity
   id: CowMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobCow ]
-      amount:
-        min: 1
-        max: 3
+      spawn:
+        MobCow: 30
 
 - type: entity
   id: FerretMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobFerret ]
-      amount:
-        min: 2
-        max: 4
+      spawn:
+        MobFerret: 20
 
 - type: entity
   id: FrogMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobFrog ]
-      amount:
-        min: 6
-        max: 10
+      spawn:
+        MobFrog: 10
+      maxSpawn: 15
 
 - type: entity
   id: GooseMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobGoose ]
-      amount:
-        min: 2
-        max: 4
+      spawn:
+        MobGoose: 20
 
 - type: entity
   id: HamsterMigration
   parent: BaseMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobHamster ]
-      amount:
-        min: 5
-        max: 10
+      spawn:
+        MobHamster: 10
+      maxSpawn: 15
 
 - type: entity
   id: KangarooMigration
   parent: DesertMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobKangaroo ]
-      amount:
-        min: 2
-        max: 3
+      spawn:
+        MobKangaroo: 30
 
 - type: entity
   id: MonkeyMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobMonkey ]
-      amount:
-        min: 4
-        max: 7
+      spawn:
+        MobMonkey: 20
 
 - type: entity
   id: MothroachMigration
   parent: RareMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobMothroach ]
-      amount:
-        min: 4
-        max: 8
+      spawn:
+        MobMothroach: 15
+      maxSpawn: 15
 
 - type: entity
   id: ParrotMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobParrot ]
-      amount:
-        min: 2
-        max: 5
+      spawn:
+        MobParrot: 20
 
 - type: entity
   id: RaccoonMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobRaccoon ]
-      amount:
-        min: 2
-        max: 4
+      spawn:
+        MobRaccoon: 20
 
 - type: entity
   id: SnakeMigration
   parent: GrasslandMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobSnake ]
-      amount:
-        min: 3
-        max: 5
+      spawn:
+        MobSnake: 25
 
 # Hostile
 
@@ -264,26 +235,21 @@
   components:
     - type: MigrationRule
       spawn:
-      - MobSlimesPet
-      - MobAdultSlimesBlue
-      - MobAdultSlimesBlueAngry
-      - MobAdultSlimesGreen
-      - MobAdultSlimesGreenAngry
-      - MobAdultSlimesYellow
-      - MobAdultSlimesYellowAngry
-      amount:
-        min: 3
-        max: 6
+        MobSlimesPet: 35
+        MobAdultSlimesBlue: 20
+        MobAdultSlimesBlueAngry: 25
+        MobAdultSlimesGreen: 20
+        MobAdultSlimesGreenAngry: 25
+        MobAdultSlimesYellow: 20
+        MobAdultSlimesYellowAngry: 25
 
 - type: entity
   id: SpiderMigration
   parent: RareMigrationRule
   components:
     - type: MigrationRule
-      spawn: [ MobGiantSpiderAngry ]
-      amount:
-        min: 1
-        max: 3
+      spawn:
+        MobGiantSpiderAngry: 30
 
 - type: entity
   id: OreCrabMigration
@@ -291,15 +257,12 @@
   components:
     - type: MigrationRule
       spawn:
-        - MobIronCrab
-        - MobQuartzCrab
-        - MobSilverCrab
-        - MobUraniumCrab
-        - MobCoalCrab
-        - MobGoldCrab
-      amount:
-        min: 3
-        max: 6
+        MobIronCrab: 20
+        MobQuartzCrab: 20
+        MobSilverCrab: 25
+        MobUraniumCrab: 30
+        MobCoalCrab: 20
+        MobGoldCrab: 30
 
 # Raids
 - type: entity
@@ -311,8 +274,5 @@
       cost: 75
     - type: MigrationRule
       spawn:
-        - Raider
-      amount:
-        min: 1
-        max: 3
+        Raider: 35
       task: Raid

@@ -9,8 +9,8 @@
       lessThan: 20000
       valueCurve: !type:MultiplyCurve
         multiplier: 0
-    - !type:DivideCurve
-      divider: 200 # 20000 => 100
+    - !type:MultiplyCurve
+      multiplier: 0.005 # 20000 => 100
   # +0.24 per 10 minutes
   moodCurves:
     - !type:RoundTimeIncreaseCurve
