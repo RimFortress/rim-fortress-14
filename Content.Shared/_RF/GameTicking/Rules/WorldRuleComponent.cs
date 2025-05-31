@@ -22,7 +22,7 @@ public sealed partial class WorldRuleComponent : Component
     /// The time that must pass after the player is spawned for the event to be able to happen
     /// </summary>
     [DataField]
-    public TimeSpan StartOffset = TimeSpan.FromMinutes(20);
+    public TimeSpan StartOffset = TimeSpan.FromMinutes(10);
 
     /// <summary>
     /// Biomes in which the event may occur

@@ -34,6 +34,7 @@ public sealed partial class NarratorSystem : EntitySystem
     private EntityQuery<ConstructionComponent> _constructionQuery;
 
     private readonly Dictionary<EntityUid, int> _lastWaitPoint = new();
+    private readonly Dictionary<EntityUid, int> _globalLastWaitPoint = new();
 
     public override void Initialize()
     {
@@ -51,7 +52,7 @@ public sealed partial class NarratorSystem : EntitySystem
         InitializeCommands();
     }
 
-    public void InitPrototypes()
+    private void InitPrototypes()
     {
         foreach (var proto in _prototype.EnumeratePrototypes<NarratorPrototype>())
         {
@@ -72,6 +73,9 @@ public sealed partial class NarratorSystem : EntitySystem
         }
     }
 
+    /// <summary>
+    /// Counts the number of wealth points of the player's settlement
+    /// </summary>
     public float SettlementWealth(Entity<RimFortressPlayerComponent> player, ProtoId<NarratorPrototype> proto, EntityCoordinates settlement)
     {
         double itemCost = 0;
@@ -108,6 +112,9 @@ public sealed partial class NarratorSystem : EntitySystem
         return (float) (itemCost + constructionCost * narrator.ConstructionCostMod + popCost);
     }
 
+    /// <summary>
+    /// Counts the narrator's event points that can be spent on summoning events
+    /// </summary>
     public int EventPoints(Entity<RimFortressPlayerComponent> player,
         ProtoId<NarratorPrototype> proto,
         EntityCoordinates settlement)
@@ -131,9 +138,32 @@ public sealed partial class NarratorSystem : EntitySystem
         return (int) Math.Floor(wealth + waitPoints * narratorMood * randomFactor);
     }
 
+    public int GlobalEventPoints(RimFortressRuleComponent rule, ProtoId<NarratorPrototype> proto)
+    {
+        var narrator = _prototype.Index(proto);
+        var waitPoints = GlobalWaitPoint(narrator, rule);
+        var randomFactor = _random.NextFloat(narrator.MinRandomFactor, narrator.MaxRandomFactor);
+        var narratorMood = 0f;
+
+        foreach (var curve in narrator.MoodCurves)
+        {
+            narratorMood = curve.Curve(narratorMood);
+        }
+
+        return (int) Math.Floor(waitPoints * narratorMood * randomFactor);
+    }
+
+    /// <summary>
+    /// Returns the points that have accumulated during the time without events
+    /// </summary>
     public int WaitPoint(NarratorPrototype narrator, RimFortressPlayerComponent player)
     {
         return (int) Math.Floor((_ticker.RoundDuration() - player.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
+    }
+
+    public int GlobalWaitPoint(NarratorPrototype narrator, RimFortressRuleComponent rule)
+    {
+        return (int) Math.Floor((_ticker.RoundDuration() - rule.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
     }
 
     public override void Update(float frameTime)
@@ -146,6 +176,7 @@ public sealed partial class NarratorSystem : EntitySystem
             if (!_prototype.TryIndex(comp.Narrator, out var proto))
                 continue;
 
+            // Local player events
             var entities = EntityQueryEnumerator<RimFortressPlayerComponent>();
             while (entities.MoveNext(out var uid, out var player))
             {
@@ -153,7 +184,7 @@ public sealed partial class NarratorSystem : EntitySystem
 
                 if (_lastWaitPoint.TryGetValue(uid, out var point) && point != newPoints)
                 {
-                    float chance = point;
+                    float chance = newPoints;
 
                     foreach (var curve in proto.EventChanceCurves)
                     {
@@ -173,9 +204,51 @@ public sealed partial class NarratorSystem : EntitySystem
 
                 _lastWaitPoint[uid] = newPoints;
             }
+
+            if (comp.GlobalEvents == null)
+                continue;
+
+            // Global world events
+            var globalWaitPoints = GlobalWaitPoint(proto, comp);
+            var globalPoints = GlobalEventPoints(comp, proto);
+
+            if (comp.LastWaitPoints != globalWaitPoints)
+            {
+                float globalChance = globalWaitPoints;
+
+                foreach (var curve in proto.EventChanceCurves)
+                {
+                    globalChance = curve.Curve(globalChance);
+                }
+
+                if (_random.NextFloat() < globalChance)
+                {
+                    var available = new List<EntProtoId>();
+
+                    foreach (var (eventId, points) in comp.GlobalEvents)
+                    {
+                        if (points > globalPoints)
+                            continue;
+
+                        available.Add(eventId);
+                    }
+
+                    if (available.Count > 0)
+                    {
+                        _ticker.StartGameRule(_random.Pick(available));
+                        comp.LastEventTime = _ticker.RoundDuration();
+                        comp.LastWaitPoints = 0;
+                    }
+                }
+            }
+
+            comp.LastWaitPoints = globalWaitPoints;
         }
     }
 
+    /// <summary>
+    /// Returns a random event that the narrator can trigger
+    /// </summary>
     public (EntityCoordinates Coords, EntProtoId Proto)? PickRandomEvent(
         Entity<RimFortressPlayerComponent> player,
         ProtoId<NarratorPrototype> narrator)
@@ -235,7 +308,7 @@ public sealed partial class NarratorSystem : EntitySystem
             {
                 var points = EventPoints(ent, protoId, coords);
 
-                if (comp.Cost < points)
+                if (comp.Cost > points)
                     continue;
 
                 events += $"- {eventId}";

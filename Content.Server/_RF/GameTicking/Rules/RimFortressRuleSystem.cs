@@ -9,7 +9,6 @@ using Content.Shared.Database;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
-using Content.Shared.Random.Helpers;
 using JetBrains.Annotations;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
@@ -58,7 +57,6 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         base.Added(uid, comp, gameRule, args);
 
         _world.InitializeWorld(comp);
-        comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(comp.MinMaxEventTiming.Next(_random));
     }
 
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)
@@ -126,16 +124,6 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
                 continue;
 
             StartWorldRule(new(uid, rule));
-        }
-
-        var rules = EntityQueryEnumerator<RimFortressRuleComponent>();
-        while (rules.MoveNext(out var comp))
-        {
-            if (!_prototype.TryIndex(comp.GlobalEvents, out var proto) || comp.NextEventTime < _timing.CurTime)
-                continue;
-
-            comp.NextEventTime = _timing.CurTime + TimeSpan.FromSeconds(comp.MinMaxEventTiming.Next(_random));
-            GameTicker.StartGameRule(proto.Pick(_random));
         }
     }
 

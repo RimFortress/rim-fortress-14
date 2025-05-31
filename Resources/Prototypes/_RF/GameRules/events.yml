@@ -43,9 +43,6 @@
   abstract: true
   components:
     - type: WorldRule
-      delay:
-        min: 300 #5 min
-        max: 600 #10 min
       startOffset: 300 #5 min
       cost: 30
     - type: MigrationRule
@@ -56,9 +53,6 @@
   abstract: true
   components:
     - type: WorldRule
-      delay:
-        min: 300 #5 min
-        max: 600 #10 min
       startOffset: 600 #5 min
       cost: 50
 
@@ -68,9 +62,6 @@
   abstract: true
   components:
     - type: WorldRule
-      delay:
-        min: 300 #5 min
-        max: 600 #10 min
       startOffset: 300 #5 min
       requiredBiomes:
         - RfGrassland
@@ -82,9 +73,6 @@
   abstract: true
   components:
     - type: WorldRule
-      delay:
-        min: 300 #5 min
-        max: 600 #10 min
       startOffset: 300 #5 min
       requiredBiomes:
         - RfLowDesert
@@ -95,9 +83,6 @@
   parent: BaseMigrationRule
   components:
     - type: WorldRule
-      delay:
-        min: 600 #10 min
-        max: 1800 #30 min
       startOffset: 600 #10 min
       cost: 100
     - type: MigrationRule
@@ -322,11 +307,8 @@
   parent: BaseWorldRule
   components:
     - type: WorldRule
-      delay:
-        min: 300 #5 min
-        max: 900 #15 min
       startOffset: 900 #15 min
-      threshold: 0
+      cost: 75
     - type: MigrationRule
       spawn:
         - Raider

@@ -7,7 +7,7 @@ namespace Content.Shared._RF.Narrator;
 /// This is a prototype of a storyteller who is responsible for the chances of occurrence and the scope of events over time
 /// </summary>
 [Prototype]
-public sealed partial class NarratorPrototype : IPrototype
+public sealed class NarratorPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
@@ -37,6 +37,9 @@ public sealed partial class NarratorPrototype : IPrototype
     [DataField]
     public float MaxRandomFactor = 1;
 
+    /// <summary>
+    /// Curves acting on settlement wealth points when calculating event points
+    /// </summary>
     [DataField]
     public List<NarratorMoodCurve> WealthCurves = new();
 
