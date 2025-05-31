@@ -1,0 +1,26 @@
+- type: narrator
+  id: Basic
+  constructionCostMod: 0.5
+  wealthFactor: 0.005
+  minRandomFactor: 0.9
+  maxRandomFactor: 1.1
+  # 1 point per minute
+  wealthCurves:
+    - !type:DivideCurve
+      divider: 60
+  # +0.24 per 10 minutes
+  moodCurves:
+    - !type:RoundTimeIncreaseCurve
+      timeMod: 0.0004
+    - !type:IncreaseCurve
+      value: 1
+  # mood = sqrt(points) / 5
+  # 10min = ~63%
+  # 20min = ~91%
+  eventChanceCurves:
+    - !type:SqrtCurve
+    - !type:DivideCurve
+      divider: 5
+    - !type:ClampCurve
+      min: 0
+      max: 1

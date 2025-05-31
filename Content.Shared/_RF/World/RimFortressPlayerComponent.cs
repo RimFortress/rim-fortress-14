@@ -18,11 +18,8 @@ public sealed partial class RimFortressPlayerComponent : Component
     public bool GotRoundstartPops;
 
     [ViewVariables]
-    public TimeSpan EventTimeOffset { get; set; } = TimeSpan.FromMinutes(5);
-
-    [ViewVariables]
-    public TimeSpan NextEventTime { get; set; }
+    public TimeSpan LastEventTime;
 
     [ViewVariables, AutoNetworkedField]
-    public Color FactionColor { get; set; } = Color.Blue;
+    public Color FactionColor = Color.Blue;
 }

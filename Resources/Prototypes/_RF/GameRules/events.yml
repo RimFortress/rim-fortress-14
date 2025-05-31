@@ -32,7 +32,14 @@
       - id: Raid
 
 - type: entity
+  id: BaseWorldRule
+  abstract: true
+  components:
+    - type: WorldRule
+
+- type: entity
   id: BaseMigrationRule
+  parent: BaseWorldRule
   abstract: true
   components:
     - type: WorldRule
@@ -40,11 +47,12 @@
         min: 300 #5 min
         max: 600 #10 min
       startOffset: 300 #5 min
-      threshold: -0.7
+      cost: 30
     - type: MigrationRule
 
 - type: entity
   id: RareMigrationRule
+  parent: BaseMigrationRule
   abstract: true
   components:
     - type: WorldRule
@@ -52,11 +60,11 @@
         min: 300 #5 min
         max: 600 #10 min
       startOffset: 600 #5 min
-      threshold: 0
-    - type: MigrationRule
+      cost: 50
 
 - type: entity
   id: GrasslandMigrationRule
+  parent: BaseMigrationRule
   abstract: true
   components:
     - type: WorldRule
@@ -66,10 +74,11 @@
       startOffset: 300 #5 min
       requiredBiomes:
         - RfGrassland
-    - type: MigrationRule
+      cost: 30
 
 - type: entity
   id: DesertMigrationRule
+  parent: BaseMigrationRule
   abstract: true
   components:
     - type: WorldRule
@@ -79,17 +88,18 @@
       startOffset: 300 #5 min
       requiredBiomes:
         - RfLowDesert
-    - type: MigrationRule
+      cost: 30
 
 - type: entity
   id: PopMigration
+  parent: BaseMigrationRule
   components:
     - type: WorldRule
       delay:
         min: 600 #10 min
         max: 1800 #30 min
       startOffset: 600 #10 min
-      threshold: 0.4
+      cost: 100
     - type: MigrationRule
       spawn: [ RimFortressMobPop ]
       addToPops: true
@@ -309,6 +319,7 @@
 # Raids
 - type: entity
   id: Raid
+  parent: BaseWorldRule
   components:
     - type: WorldRule
       delay:

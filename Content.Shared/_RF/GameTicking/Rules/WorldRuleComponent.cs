@@ -1,3 +1,4 @@
+using Content.Shared._RF.Narrator;
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Map;
@@ -36,10 +37,10 @@ public sealed partial class WorldRuleComponent : Component
     public int MinPlayers;
 
     /// <summary>
-    /// Event rarity is -1 to 1, where 1 is a 100% chance of triggering the event
+    /// Cost of the event in points. <seealso cref="NarratorPrototype"/>
     /// </summary>
     [DataField]
-    public float Threshold = -1;
+    public int Cost = 10;
 
     [ViewVariables]
     public EntityUid Target;

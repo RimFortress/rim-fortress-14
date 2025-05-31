@@ -1,3 +1,4 @@
+using Content.Shared._RF.Narrator;
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.EntityTable.EntitySelectors;
 using Content.Shared.Parallax.Biomes;
@@ -60,6 +61,12 @@ public sealed partial class RimFortressRuleComponent : Component
     /// </summary>
     [DataField]
     public MinMax MinMaxEventTiming;
+
+    /// <summary>
+    /// A narrator controlling the events of the world
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<NarratorPrototype> Narrator;
 
     [ViewVariables]
     public TimeSpan NextEventTime;
