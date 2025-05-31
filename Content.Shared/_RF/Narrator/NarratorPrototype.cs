@@ -7,7 +7,7 @@ namespace Content.Shared._RF.Narrator;
 /// This is a prototype of a storyteller who is responsible for the chances of occurrence and the scope of events over time
 /// </summary>
 [Prototype]
-public sealed class NarratorPrototype : IPrototype
+public sealed partial class NarratorPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
@@ -26,8 +26,17 @@ public sealed class NarratorPrototype : IPrototype
     public float EventWaitFactor;
 
     /// <summary>
-    /// Curves acting on settlement wealth points when calculating event points
+    /// Minimum random factor multiplier for calculating event scores
     /// </summary>
+    [DataField]
+    public float MinRandomFactor = 1;
+
+    /// <summary>
+    /// Maximum random factor multiplier for calculating event scores
+    /// </summary>
+    [DataField]
+    public float MaxRandomFactor = 1;
+
     [DataField]
     public List<NarratorMoodCurve> WealthCurves = new();
 
