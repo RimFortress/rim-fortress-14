@@ -127,6 +127,16 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         }
     }
 
+    public RimFortressRuleComponent GetRule()
+    {
+        while (EntityQueryEnumerator<RimFortressRuleComponent>().MoveNext(out var comp))
+        {
+            return comp;
+        }
+
+        return EntityManager.ComponentFactory.GetComponent<RimFortressRuleComponent>();
+    }
+
     public bool IsGameRuleActive(EntityUid ruleEntity, WorldRuleComponent? component = null)
     {
         return Resolve(ruleEntity, ref component) && HasComp<ActiveGameRuleComponent>(ruleEntity);
