@@ -37,10 +37,6 @@
       value: 1
     - !type:RoundTimeIncreaseCurve
       timeMod: 0.0004
-    # Random factor
-    - !type:MultiplyRandomCurve
-      min: 0.9
-      max: 1.1
   # |points / 20 * sin(points)|
   eventChanceCurves:
     - !type:SinCurve
