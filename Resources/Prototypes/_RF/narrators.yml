@@ -3,31 +3,58 @@
   constructionCostMod: 0.5
   eventWaitFactor: 0.016 # ~1 point per minute
   wealthCurves:
-    # We don't consider the wealth factor if it's
-    # less than 20k to let the player develop
     - !type:ConditionCurve
-      lessThan: 20000
-      valueCurve: !type:MultiplyCurve
-        multiplier: 0
+      moreThan: 40000
+      value:
+        - !type:IncreaseCurve
+          value:
+            - !type:ValueCurve
+              value: 10000
     - !type:MultiplyCurve
-      multiplier: 0.005 # 20000 => 100
+      multiplier:
+        # 19999 => 0
+        - !type:ValueCurve
+          value: 0
+        # 20000 => 100
+        - !type:ConditionCurve
+          moreThan: 20000
+          lessThan: 40000
+          value:
+            - !type:ValueCurve
+              value: 0.005
+        # 90000 => 400
+        - !type:ConditionCurve
+          moreThan: 40000
+          value:
+            - !type:ValueCurve
+              value: 0.004
+    - !type:ClampCurve
+      min: 0
+      max: 400
   # +0.24 per 10 minutes
   moodCurves:
+    - !type:ValueCurve
+      value: 1
     - !type:RoundTimeIncreaseCurve
       timeMod: 0.0004
-    - !type:IncreaseCurve
-      value: 1
     # Random factor
     - !type:MultiplyRandomCurve
       min: 0.9
       max: 1.1
-  # mood = sqrt(points) / 5
-  # 10min = ~63%
-  # 20min = ~91%
+  # |points / 20 * sin(points)|
   eventChanceCurves:
-    - !type:SqrtCurve
+    - !type:SinCurve
     - !type:MultiplyCurve
-      multiplier: 0.2
+      multiplier:
+        - !type:ValueCurve
+          value: 1
+        - !type:RoundTimeIncreaseCurve
+          timeMod: 0.0004
+        - !type:MultiplyCurve
+          multiplier:
+            - !type:ValueCurve
+              value: 0.05
+    - !type:AbsCurve
     - !type:ClampCurve
       min: 0
       max: 1
@@ -39,23 +66,24 @@
   wealthCurves:
     - !type:ConditionCurve
       lessThan: 20000
-      valueCurve: !type:MultiplyCurve
-        multiplier: 0
+      value:
+        - !type:MultiplyCurve
+          multiplier:
+            - !type:ValueCurve
+              value: 0
     - !type:MultiplyCurve
-      multiplier: 0.005 # 20000 => 100
+      multiplier:
+        - !type:ValueCurve
+          value: 0.005 # 20000 => 100
     - !type:MultiplyRandomCurve
       min: 0
       max: 2
   moodCurves:
-    - !type:IncreaseCurve
-      value: 1
-    - !type:MultiplyRandomCurve
+    - !type:RandomValueCurve
       min: 0
       max: 10
   # Absolute random
   eventChanceCurves:
-    - !type:IncreaseCurve
-      value: 1
-    - !type:MultiplyRandomCurve
+    - !type:RandomValueCurve
       min: 0
       max: 1

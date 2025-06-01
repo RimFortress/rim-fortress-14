@@ -84,7 +84,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             cycle.MinLightLevel = 1f;
         }
 
-        WorldMap = map;
+        rule.WorldMap = map;
         return map;
     }
 
@@ -93,12 +93,12 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     /// </summary>
     public void SpawnPlayer(ICommonSession session)
     {
-        if (Rule is not { } rule || WorldMap is not { } worldMap)
+        if (Rule is not { } rule)
             return ;
 
         var coords = Turf.GetTileCenter(GetSpawnTiles(1).First());
         var spawnBox = Box2.CenteredAround(coords.Position, new Vector2(SpawnAreaRadius));
-        var freeTiles = GetFreeTiles(worldMap, spawnBox, MinSpawnAreaTiles);
+        var freeTiles = GetFreeTiles(rule.WorldMap, spawnBox, MinSpawnAreaTiles);
 
         if (freeTiles.Count == 0)
             return;
@@ -166,7 +166,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     private void RoundstartSpawn(Entity<RimFortressPlayerComponent?> player, HashSet<TileRef> spawnTiles)
     {
         if (Rule is not { } rule
-            || WorldMap is not { } worldMap
             || !Resolve(player.Owner, ref player.Comp)
             || player.Comp.GotRoundstartPops
             || !_player.TryGetSessionByEntity(player, out var session))
@@ -174,17 +173,17 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         var pops = new List<EntityUid>();
         var prefs = _preferences.GetPreferences(session.UserId);
-        var grid = Comp<MapGridComponent>(worldMap);
+        var grid = Comp<MapGridComponent>(rule.WorldMap);
         var playerCoords = Transform(player).Coordinates;
 
         // If we really want to spawn these entities, but we can't,
         // we remove everything that's in our way.
         if (spawnTiles.Count == 0)
         {
-            var tileRef = _map.GetTileRef(worldMap, grid, playerCoords);
+            var tileRef = _map.GetTileRef(rule.WorldMap, grid, playerCoords);
             var box = Box2.CenteredAround(Turf.GetTileCenter(tileRef).Position, Vector2.One);
 
-            foreach (var entity in _lookup.GetEntitiesIntersecting(worldMap, box, LookupFlags.Static))
+            foreach (var entity in _lookup.GetEntitiesIntersecting(rule.WorldMap, box, LookupFlags.Static))
             {
                 EntityManager.DeleteEntity(entity);
             }

@@ -27,7 +27,6 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly INetManager _net = default!;
 
     protected RimFortressRuleComponent? Rule;
-    protected EntityUid? WorldMap;
 
     protected const byte ChunkSize = SharedBiomeSystem.ChunkSize;
 

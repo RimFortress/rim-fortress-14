@@ -7,6 +7,8 @@
       defaultPopsJob: Passenger
       worldEvents: !type:NestedSelector
         tableId: BasicWorldRulesTable
+      globalEvents: !type:NestedSelector
+        tableId: BasicGlobalRulesTable
       narrator: Basic
       dayDuration: 1800 #30 min
       popsComponentsOverride:
@@ -29,3 +31,57 @@
             - id: HarvestPlant
             - id: WaterPlant
             - id: RemoveWeed
+
+- type: entityTable
+  id: BasicWorldRulesTable
+  table: !type:AllSelector
+    children:
+      - id: PopMigration
+
+      # Animal migration
+      # Neutral
+      - id: CatMigration
+      - id: PossumMigration
+      - id: FoxMigration
+      - id: CrabMigration
+      - id: GoatMigration
+      - id: CowMigration
+      - id: FerretMigration
+      - id: FrogMigration
+      - id: FrogMigration
+      - id: GooseMigration
+      - id: HamsterMigration
+      - id: KangarooMigration
+      - id: MonkeyMigration
+      - id: MothroachMigration
+      - id: ParrotMigration
+      - id: RaccoonMigration
+      - id: SnakeMigration
+      # Hostile
+      - id: SlimeMigration
+      - id: SpiderMigration
+      - id: OreCrabMigration
+
+      # Raids
+      - id: Raid
+
+- type: entityTable
+  id: BasicGlobalRulesTable
+  table: !type:AllSelector
+    children:
+      - id: WarmTemperatureEvent
+      - id: HotTemperatureEvent
+      - id: ColdTemperatureEvent
+
+- type: entity
+  id: BaseWorldRule
+  abstract: true
+  components:
+    - type: WorldRule
+
+- type: entity
+  id: BaseGlobalWorldRule
+  parent: BaseGameRule
+  abstract: true
+  components:
+    - type: GlobalWorldRule

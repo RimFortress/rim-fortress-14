@@ -1,0 +1,33 @@
+- type: entity
+  id: BaseTemperatureEvent
+  parent: BaseGlobalWorldRule
+  abstract: true
+  components:
+    - type: TemperatureRule
+
+- type: entity
+  id: WarmTemperatureEvent
+  components:
+    - type: GlobalWorldRule
+      cost: 10
+      timeCost: 2
+    - type: TemperatureRule
+      targetTemperature: 303.15 # 30C
+
+- type: entity
+  id: HotTemperatureEvent
+  components:
+    - type: GlobalWorldRule
+      cost: 15
+      timeCost: 3
+    - type: TemperatureRule
+      targetTemperature: 313.15 # 40C
+
+- type: entity
+  id: ColdTemperatureEvent
+  components:
+    - type: GlobalWorldRule
+      cost: 15
+      timeCost: 3
+    - type: TemperatureRule
+      targetTemperature: 286.15 # 13C

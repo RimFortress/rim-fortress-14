@@ -51,7 +51,7 @@
   name: Raid
   overlayColor: "#FF0000"
   compound: RaidCompound
-  onFinish: IdleCompound
+  onFinish: RaidIdleCompound
   finishPreconditions:
     - !type:MobStatePrecondition
       targetKey: Owner

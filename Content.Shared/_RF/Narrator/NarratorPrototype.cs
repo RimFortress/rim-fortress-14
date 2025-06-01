@@ -1,4 +1,3 @@
-using Content.Shared._RF.World;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Narrator;
@@ -29,18 +28,18 @@ public sealed class NarratorPrototype : IPrototype
     /// Curves acting on settlement wealth points when calculating event points
     /// </summary>
     [DataField]
-    public List<NarratorMoodCurve> WealthCurves = new();
+    public List<MathCurve> WealthCurves = new();
 
     /// <summary>
     /// Curves for calculating the mood factor of the narrator when calculating event scores
     /// </summary>
     [DataField]
-    public List<NarratorMoodCurve> MoodCurves = new();
+    public List<MathCurve> MoodCurves = new();
 
     /// <summary>
     /// Curves to calculate the chance of triggering an event with increasing wait points.
     /// Chance 1 is equal to 100 percent of triggering events
     /// </summary>
     [DataField]
-    public List<NarratorMoodCurve> EventChanceCurves = new();
+    public List<MathCurve> EventChanceCurves = new();
 }

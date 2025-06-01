@@ -15,7 +15,7 @@ public sealed partial class WorldDatetimeWidget : UIWidget
         RobustXamlLoader.Load(this);
     }
 
-    public void UpdateInfo(TimeSpan time, TimeSpan dayDuration, float temp = 293.15f)
+    public void UpdateInfo(TimeSpan time, TimeSpan dayDuration, float temp)
     {
         // We take the length of an in-game day in 24 hours and get the current time
         var gameTimeHours = time.TotalSeconds % dayDuration.TotalSeconds

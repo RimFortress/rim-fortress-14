@@ -25,12 +25,14 @@ public partial class NarratorSystem
             return;
         }
 
-        var player = _player.LocalEntity;
+        if (args.Length == 0)
+        {
+            shell.WriteLine(DebugTextGlobal());
+            return;
+        }
 
-        if (args.Length == 1 && _player.TryGetSessionByUsername(args[0], out var session))
-            player = session.AttachedEntity;
-
-        if (player == null)
+        if (!_player.TryGetSessionByUsername(args[1], out var session)
+            || session.AttachedEntity is not { } player)
             return;
 
         var text = "";
@@ -38,7 +40,7 @@ public partial class NarratorSystem
 
         while (enumerator.MoveNext(out var comp))
         {
-            text += DebugText(player.Value, comp.Narrator);
+            text += DebugText(player, comp.Narrator);
         }
 
         shell.WriteLine(text);

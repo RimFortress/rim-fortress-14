@@ -250,13 +250,11 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
 
             if (delayTime > TimeSpan.Zero)
             {
-                var str = $"Queued start for world rule {ToPrettyString(ruleEntity)} " +
-                          $"with delay {delayTime} for {ToPrettyString(ruleEntity)}";
+                var str = $"Queued start for world rule {ToPrettyString(ruleEntity)} with delay {delayTime}";
                 _sawmill.Info(str);
                 _chat.SendAdminAnnouncement(str);
                 _adminLogger.Add(LogType.EventStarted,
-                    $"Queued start for world rule {ToPrettyString(ruleEntity)} " +
-                    $"with delay {delayTime} for {ToPrettyString(ruleEntity)}");
+                    $"Queued start for world rule {ToPrettyString(ruleEntity)} with delay {delayTime}");
 
                 var delayed = EnsureComp<DelayedStartRuleComponent>(ruleEntity);
                 delayed.RuleStartTime = _timing.CurTime + delayTime;
@@ -264,11 +262,11 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
             }
         }
 
-        var msg = $"Started world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(ruleEntity)}";
+        var msg = $"Started world rule {ToPrettyString(ruleEntity)}";
         _sawmill.Info(msg);
         _chat.SendAdminAnnouncement(msg);
         _adminLogger.Add(LogType.EventStarted,
-            $"Started world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(ruleEntity)}");
+            $"Started world rule {ToPrettyString(ruleEntity)}");
 
         EnsureComp<ActiveGameRuleComponent>(ruleEntity);
 

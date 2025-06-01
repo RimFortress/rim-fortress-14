@@ -18,6 +18,20 @@
           task: IdleMoveCompound
 
 - type: htnCompound
+  id: RaidIdleCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:UtilityOperator
+            proto: NearbyMeleeTargets
+        - !type:HTNCompoundTask
+          task: AttackTargetCompound
+
+    - tasks:
+        - !type:HTNCompoundTask
+          task: IdleMoveCompound
+
+- type: htnCompound
   id: IdleMoveCompound
   branches:
     - tasks:

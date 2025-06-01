@@ -49,10 +49,10 @@ public sealed partial class RimFortressRuleComponent : Component
     public EntityTableSelector? WorldEvents;
 
     /// <summary>
-    /// List of global world events that can happen in a round, with their value in points
+    /// Table with random global events that can happen on the world map
     /// </summary>
     [DataField]
-    public Dictionary<EntProtoId, int>? GlobalEvents;
+    public EntityTableSelector? GlobalEvents;
 
     /// <summary>
     /// A narrator controlling the events of the world
@@ -65,4 +65,7 @@ public sealed partial class RimFortressRuleComponent : Component
 
     [ViewVariables]
     public int LastWaitPoints;
+
+    [ViewVariables]
+    public EntityUid WorldMap;
 }

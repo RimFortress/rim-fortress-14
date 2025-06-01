@@ -89,13 +89,13 @@ public partial class SharedRimFortressWorldSystem
 
     public HashSet<TileRef> GetSpawnTiles(int amount)
     {
-        if (WorldMap is not { } worldMap)
+        if (Rule is not { } rule)
             return new();
 
         var settlements = AllSettlements();
         var coords = settlements.Count > 0
             ? _random.Pick(settlements)
-            : new EntityCoordinates(worldMap, Vector2.Zero);
+            : new EntityCoordinates(rule.WorldMap, Vector2.Zero);
 
         return GetSpawnTiles(coords, amount);
     }
@@ -117,10 +117,10 @@ public partial class SharedRimFortressWorldSystem
 
     public HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates)
     {
-        if (WorldMap is not { } worldMap)
+        if (Rule is not { } rule)
             return new();
 
-        return GetSpawnTiles(worldMap,
+        return GetSpawnTiles(rule.WorldMap,
             targetCoordinates,
             _playerSafeRadius,
             SpawnAreaRadius,
@@ -129,10 +129,10 @@ public partial class SharedRimFortressWorldSystem
 
     public HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates, int amount, int radius)
     {
-        if (WorldMap is not { } worldMap)
+        if (Rule is not { } rule)
             return new();
 
-        var tiles = GetSpawnTiles(worldMap,
+        var tiles = GetSpawnTiles(rule.WorldMap,
             targetCoordinates,
             radius,
             SpawnAreaRadius,
