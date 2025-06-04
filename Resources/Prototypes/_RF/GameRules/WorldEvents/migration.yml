@@ -218,12 +218,12 @@
   components:
     - type: MigrationRule
       spawn:
-        MobIronCrab: 20
-        MobQuartzCrab: 20
-        MobSilverCrab: 25
-        MobUraniumCrab: 30
-        MobCoalCrab: 20
-        MobGoldCrab: 30
+        MobIronCrab: 40
+        MobQuartzCrab: 40
+        MobSilverCrab: 45
+        MobUraniumCrab: 50
+        MobCoalCrab: 40
+        MobGoldCrab: 50
 
 # Raids
 - type: entity
@@ -235,5 +235,5 @@
       cost: 75
     - type: MigrationRule
       spawn:
-        Raider: 35
+        Raider: 45
       task: Raid
