@@ -1,40 +1,23 @@
 using System.Linq;
+using Content.Client._RF.Selection;
 using Content.Client.ContextMenu.UI;
 using Content.Client.NPC.HTN;
 using Content.Shared._RF.NPC;
 using Robust.Client.Graphics;
-using Robust.Client.Input;
+using Robust.Client.Player;
 using Robust.Client.UserInterface;
-using Robust.Shared.Input;
-using Robust.Shared.Input.Binding;
-using Robust.Shared.Map;
 using Robust.Shared.Player;
 
 namespace Content.Client._RF.NPC;
 
 public sealed class NpcControlSystem : SharedNpcControlSystem
 {
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly IEyeManager _eye = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IOverlayManager _overlay = default!;
     [Dependency] private readonly IUserInterfaceManager _ui = default!;
+    [Dependency] private readonly SelectionSystem _selection = default!;
+    [Dependency] private readonly IPlayerManager _player = default!;
 
-    /// <summary>
-    /// Selection frame start point
-    /// </summary>
-    public MapCoordinates? StartPoint { get; private set; }
-
-    /// <summary>
-    /// Selection frame endpoint
-    /// </summary>
-    public MapCoordinates? EndPoint { get; private set; }
-
-    /// <summary>
-    /// Entities within the boundaries of the selection frame
-    /// </summary>
-    public HashSet<EntityUid> Selected { get; private set; } = new();
+    private const string EraseIcon = "/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png";
 
     /// <summary>
     /// Current tasks of entities that are known to the client
@@ -57,7 +40,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     public bool Eraser { get; private set; }
 
     public event Action? OnTaskData;
-    public event Action? OnUpdateSelectMode;
 
     private EntityQuery<NpcControlComponent> _controlQuery;
 
@@ -67,11 +49,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         base.Initialize();
 
         _overlay.AddOverlay(new NpcControlOverlay());
-
-        CommandBinds.Builder
-            .Bind(EngineKeyFunctions.Use, new PointerStateInputCmdHandler(OnSelectEnabled, OnSelectDisabled))
-            .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
-            .Register<SharedNpcControlSystem>();
 
         SubscribeNetworkEvent<NpcTaskInfoMessage>(OnTaskInfo);
         SubscribeNetworkEvent<NpcTaskFinishMessage>(OnTaskFinished);
@@ -83,6 +60,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         SubscribeLocalEvent<NpcControlComponent, PlayerAttachedEvent>(OnAttached);
 
         _controlQuery = GetEntityQuery<NpcControlComponent>();
+
+        DefaultSelection();
     }
 
     public override void Shutdown()
@@ -90,72 +69,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         base.Shutdown();
 
         _overlay.RemoveOverlay<NpcControlOverlay>();
-    }
-
-    private bool OnSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
-    {
-        if (player?.AttachedEntity is not { Valid: true } entity
-            || !_controlQuery.TryComp(entity, out _))
-            return false;
-
-        StartPoint = _transform.ToMapCoordinates(coords);
-        EndPoint = StartPoint;
-        return false;
-    }
-
-    private bool OnSelectDisabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
-    {
-        if (player?.AttachedEntity is not { Valid: true } entity
-            || !_controlQuery.TryComp(entity, out _))
-            return false;
-
-        if (Eraser && Selected.Count != 0)
-        {
-            var msg = new PassiveNpcTaskRemoveRequest(
-                GetNetEntity(entity),
-                Selected.Select(x => GetNetEntity(x)).ToList());
-
-            RaiseNetworkEvent(msg);
-            Selected.Clear();
-        }
-
-        if (SelectedTask != null && Selected.Count != 0)
-        {
-            var msg = new PassiveNpcTaskRequest(
-                GetNetEntity(entity),
-                SelectedTask.TaskId,
-                Selected.Select(x => GetNetEntity(x)).ToList());
-
-            RaiseNetworkEvent(msg);
-            Selected.Clear();
-        }
-
-        StartPoint = null;
-        EndPoint = null;
-        return false;
-    }
-
-    private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
-    {
-        if (SelectedTask != null)
-            SetSelectedTask(null);
-
-        if (Eraser)
-            SetEraser(false);
-
-        if (player is not { AttachedEntity: { Valid: true} requester }
-            || Selected.Count == 0)
-            return false;
-
-        RaiseNetworkEvent(new NpcTaskRequest
-        {
-            Requester = GetNetEntity(requester),
-            Entities = Selected.Select(entity => GetNetEntity(entity)).ToList(),
-            Target = uid.IsValid() ? GetNetEntity(uid) : null,
-            TargetCoordinates = GetNetCoordinates(coords),
-        });
-
-        return true;
     }
 
     private void OnTaskInfo(NpcTaskInfoMessage msg)
@@ -219,10 +132,27 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (taskId == SelectedTask?.TaskId || taskId != null && !TasksData.ContainsKey(taskId))
             return;
 
+        if (_player.LocalEntity is not { Valid: true } entity || !_controlQuery.TryComp(entity, out _))
+            return;
+
         SelectedTask = taskId != null ? TasksData[taskId] : null;
         Eraser = false;
-        Selected.Clear();
-        OnUpdateSelectMode?.Invoke();
+
+        if (SelectedTask != null)
+        {
+            _selection.SetSelection(
+                act: _ => SetSelectedTask(null),
+                onSelected: entities
+                    => RaiseNetworkEvent(new PassiveNpcTaskRequest(
+                        GetNetEntity(entity),
+                        SelectedTask.TaskId,
+                        entities.Select(x => GetNetEntity(x)).ToList())),
+                color: SelectedTask?.Color,
+                iconPath: SelectedTask?.IconPath,
+                iconColor: SelectedTask?.Color);
+        }
+        else
+            DefaultSelection();
     }
 
     public void SetEraser(bool enabled)
@@ -230,52 +160,47 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (Eraser == enabled)
             return;
 
+        if (_player.LocalEntity is not { Valid: true } entity || !_controlQuery.TryComp(entity, out _))
+            return;
+
         Eraser = enabled;
         SelectedTask = null;
-        Selected.Clear();
-        OnUpdateSelectMode?.Invoke();
+
+        if (Eraser)
+        {
+            _selection.SetSelection(
+                act: _ => SetEraser(false),
+                onSelected: entities
+                    => RaiseNetworkEvent(new PassiveNpcTaskRemoveRequest(
+                        GetNetEntity(entity),
+                        entities.Select(x => GetNetEntity(x)).ToList())),
+                iconPath: EraseIcon);
+        }
+        else
+            DefaultSelection();
     }
 
-    public override void Update(float frameTime)
+    private bool NpcFilter(EntityUid uid)
     {
-        base.Update(frameTime);
-
-        if (StartPoint is not { } start
-            || EndPoint is not { } end
-            || start.MapId != end.MapId)
-        {
-            StartPoint = null;
-            EndPoint = null;
-            return;
-        }
-
-        if (_input.MouseScreenPosition is { IsValid: true } mousePos)
-            EndPoint = _eye.PixelToMap(mousePos);
-
-        Selected = SelectedTask == null && !Eraser
-            ? GetNpcInSelect()
-            : _lookup.GetEntitiesIntersecting(start.MapId, new Box2(start.Position, end.Position));
+        return TryComp(uid, out HTNComponent? _);
     }
 
-    /// <summary>
-    /// Gets the list of NPCs in the selection area
-    /// </summary>
-    private HashSet<EntityUid> GetNpcInSelect()
+    private void DefaultSelection()
     {
-        if (StartPoint is not { } start
-            || EndPoint is not { } end
-            || start.MapId != end.MapId)
-            return new HashSet<EntityUid>();
+        _selection.SetSelection(
+            act: args =>
+            {
+                if (_player.LocalEntity is not { Valid: true } entity || !_controlQuery.TryComp(entity, out _))
+                    return;
 
-        var area = new Box2(start.Position, end.Position);
-        var entities = _lookup.GetEntitiesIntersecting(start.MapId, area, LookupFlags.Dynamic);
-
-        foreach (var entity in entities)
-        {
-            if (!TryComp(entity, out HTNComponent? _))
-                entities.Remove(entity);
-        }
-
-        return entities;
+                RaiseNetworkEvent(new NpcTaskRequest
+                {
+                    Requester = GetNetEntity(entity),
+                    Entities = args.Selected.Select(x => GetNetEntity(x)).ToList(),
+                    Target = GetNetEntity(args.ActUid),
+                    TargetCoordinates = GetNetCoordinates(args.ActCoords),
+                });
+            },
+            filter: NpcFilter);
     }
 }
