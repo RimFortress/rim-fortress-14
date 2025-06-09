@@ -1,9 +1,11 @@
 using Content.Shared._RF.NPC;
+using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 
 namespace Content.Client._RF.Selection;
@@ -15,6 +17,7 @@ public sealed class SelectionSystem : EntitySystem
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
     [Dependency] private readonly IOverlayManager _overlay = default!;
+    [Dependency] private readonly MapSystem _map = default!;
 
     /// <summary>
     /// Selection frame start point
@@ -31,6 +34,8 @@ public sealed class SelectionSystem : EntitySystem
     /// </summary>
     public HashSet<EntityUid> Selected { get; private set; } = new();
 
+    public HashSet<TileRef> SelectedTiles { get; private set; } = new();
+
     /// <summary>
     /// Selection drawing color
     /// </summary>
@@ -42,14 +47,24 @@ public sealed class SelectionSystem : EntitySystem
     private Func<EntityUid, bool>? _selectionFilter;
 
     /// <summary>
-    /// Action taken when the selection is completed
+    /// Action taken when the selection is completed, if selection mode in Entity
     /// </summary>
     private Action<HashSet<EntityUid>>? _onSelected;
+
+    /// <summary>
+    /// Action taken when the selection is completed, if selection mode in Tile
+    /// </summary>
+    private Action<HashSet<TileRef>>? _onTileSelected;
 
     /// <summary>
     /// The action performed on selected entities when the right mouse button is pressed
     /// </summary>
     private Action<(HashSet<EntityUid> Selected, EntityUid? ActUid, EntityCoordinates ActCoords)>? _act;
+
+    /// <summary>
+    /// The action performed on selected tiles when the right mouse button is pressed
+    /// </summary>
+    private Action<(HashSet<TileRef> Selected, EntityCoordinates ActCoords)>? _tileAct;
 
     /// <summary>
     /// An icon that will be drawn next to the mouse cursor
@@ -60,6 +75,11 @@ public sealed class SelectionSystem : EntitySystem
     /// Color of the icon that will be drawn next to the mouse cursor
     /// </summary>
     public Color IconColor { get; private set; } = Color.White;
+
+    /// <summary>
+    /// Current selection mode
+    /// </summary>
+    public SelectionMode Mode { get; private set; } = SelectionMode.Entity;
 
     public event Action? OnUpdateSelection;
 
@@ -88,6 +108,7 @@ public sealed class SelectionSystem : EntitySystem
     private bool OnSelectDisabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
         _onSelected?.Invoke(Selected);
+        _onTileSelected?.Invoke(SelectedTiles);
 
         StartPoint = null;
         EndPoint = null;
@@ -100,6 +121,7 @@ public sealed class SelectionSystem : EntitySystem
             return false;
 
         _act?.Invoke((Selected, uid.IsValid() ? uid : null, coords));
+        _tileAct?.Invoke((SelectedTiles, coords));
         return true;
     }
 
@@ -111,7 +133,7 @@ public sealed class SelectionSystem : EntitySystem
         if (StartPoint is not { } start
             || EndPoint is not { } end
             || start.MapId != end.MapId)
-            return new HashSet<EntityUid>();
+            return new();
 
         var area = new Box2(start.Position, end.Position);
         var entities = _lookup.GetEntitiesIntersecting(start.MapId, area);
@@ -126,6 +148,26 @@ public sealed class SelectionSystem : EntitySystem
         }
 
         return entities;
+    }
+
+    private HashSet<TileRef> TilesInSelect()
+    {
+        if (StartPoint is not { } start
+            || EndPoint is not { } end
+            || start.MapId != end.MapId)
+            return new();
+
+        var tiles = new HashSet<TileRef>();
+        var map = _map.GetMap(start.MapId);
+        var area = new Box2(start.Position, end.Position);
+        var enumerator = _map.GetTilesEnumerator(map, Comp<MapGridComponent>(map), area);
+
+        while (enumerator.MoveNext(out var tile))
+        {
+            tiles.Add(tile);
+        }
+
+        return tiles;
     }
 
     public void SetSelection(
@@ -148,15 +190,40 @@ public sealed class SelectionSystem : EntitySystem
         OnUpdateSelection?.Invoke();
     }
 
+    public void SetSelection(
+        Action<(HashSet<TileRef> Selected, EntityCoordinates ActCoords)>? act = null,
+        Color? color = null,
+        Action<HashSet<TileRef>>? onSelected = null,
+        string? iconPath = null,
+        Color? iconColor = null)
+    {
+        SetDefault();
+
+        SelectionColor = color ?? Color.LightGray;
+        _onTileSelected = onSelected;
+        IconPath = iconPath;
+        IconColor = iconColor ?? Color.LightGray;
+        _tileAct = act;
+
+        Mode = SelectionMode.Tile;
+
+        OnUpdateSelection?.Invoke();
+    }
+
     private void SetDefault()
     {
         _selectionFilter = null;
         _onSelected = null;
+        _onTileSelected = null;
         IconPath = null;
         IconColor = Color.LightGray;
         _act = null;
+        _tileAct = null;
+
+        Mode = SelectionMode.Entity;
 
         Selected.Clear();
+        SelectedTiles.Clear();
     }
 
     public void Select(EntityUid uid)
@@ -185,6 +252,20 @@ public sealed class SelectionSystem : EntitySystem
         if (_input.MouseScreenPosition is { IsValid: true } mousePos)
             EndPoint = _eye.PixelToMap(mousePos);
 
-        Selected = EntitiesInSelect();
+        switch (Mode)
+        {
+            case SelectionMode.Entity:
+                Selected = EntitiesInSelect();
+                break;
+            case SelectionMode.Tile:
+                SelectedTiles = TilesInSelect();
+                break;
+        }
     }
+}
+
+public enum SelectionMode : byte
+{
+    Entity = 0,
+    Tile = 1,
 }

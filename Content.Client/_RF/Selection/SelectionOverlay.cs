@@ -1,5 +1,6 @@
 using System.Numerics;
 using Content.Client.Stylesheets;
+using Content.Shared.Maps;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
@@ -26,6 +27,8 @@ public sealed class SelectionOverlay : Overlay
     private const string SelectAreaShader = "DottedSquareOutline";
 
     private readonly SelectionSystem _selection;
+    private readonly TurfSystem _turf;
+    private readonly TransformSystem _transform;
 
     private readonly ShaderInstance _selectAreaShader;
 
@@ -40,6 +43,9 @@ public sealed class SelectionOverlay : Overlay
         IoCManager.InjectDependencies(this);
 
         _selection = _entityManager.System<SelectionSystem>();
+        _turf = _entityManager.System<TurfSystem>();
+        _transform = _entityManager.System<TransformSystem>();
+
         _selectAreaShader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
     }
 
@@ -53,16 +59,25 @@ public sealed class SelectionOverlay : Overlay
 
         _highlightedSprites.Clear();
 
+        foreach (var entity in _selection.Selected)
+        {
+            SetShader(entity, _selection.SelectionColor);
+        }
+
+        foreach (var tileRef in _selection.SelectedTiles)
+        {
+            var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
+            var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
+            var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
+
+            DrawSelectArea(args, start, end);
+        }
+
         if (_selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
             DrawSelectArea(args, startPoint, endPoint);
 
         if (_selection.IconPath != null)
             DrawMouseIcon(args, _selection.IconPath, _selection.IconColor);
-
-        foreach (var entity in _selection.Selected)
-        {
-            SetShader(entity, _selection.SelectionColor);
-        }
     }
 
     private void SetShader(EntityUid entity, Color color)
