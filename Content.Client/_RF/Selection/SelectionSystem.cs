@@ -47,6 +47,11 @@ public sealed class SelectionSystem : EntitySystem
     private Func<EntityUid, bool>? _selectionFilter;
 
     /// <summary>
+    /// A function that filters tiles for selection
+    /// </summary>
+    private Func<TileRef, bool>? _tileSelectionFilter;
+
+    /// <summary>
     /// Action taken when the selection is completed, if selection mode in Entity
     /// </summary>
     private Action<HashSet<EntityUid>>? _onSelected;
@@ -164,6 +169,9 @@ public sealed class SelectionSystem : EntitySystem
 
         while (enumerator.MoveNext(out var tile))
         {
+            if (_tileSelectionFilter != null && !_tileSelectionFilter(tile))
+                continue;
+
             tiles.Add(tile);
         }
 
@@ -190,9 +198,10 @@ public sealed class SelectionSystem : EntitySystem
         OnUpdateSelection?.Invoke();
     }
 
-    public void SetSelection(
+    public void SetTileSelection(
         Action<(HashSet<TileRef> Selected, EntityCoordinates ActCoords)>? act = null,
         Color? color = null,
+        Func<TileRef, bool>? filter = null,
         Action<HashSet<TileRef>>? onSelected = null,
         string? iconPath = null,
         Color? iconColor = null)
@@ -200,6 +209,7 @@ public sealed class SelectionSystem : EntitySystem
         SetDefault();
 
         SelectionColor = color ?? Color.LightGray;
+        _tileSelectionFilter = filter;
         _onTileSelected = onSelected;
         IconPath = iconPath;
         IconColor = iconColor ?? Color.LightGray;

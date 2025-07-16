@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Shared.Maps;
+using Content.Shared.Physics;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
@@ -12,6 +14,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 {
     [Dependency] protected readonly SharedTransformSystem Xform = default!;
     [Dependency] protected readonly SharedMapSystem Map = default!;
+    [Dependency] protected readonly TurfSystem Turf = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly INetManager _net = default!;
@@ -81,7 +84,7 @@ public abstract class SharedStockpileSystem : EntitySystem
             RaiseNetworkEvent(new StockpileCreated(GetNetEntity(gridUid), tiles));
     }
 
-    protected void AddTiles(List<TileRef> tileRefs)
+    protected void AddTiles(HashSet<TileRef> tileRefs)
     {
         if (tileRefs.Count == 0)
             return;
@@ -93,10 +96,10 @@ public abstract class SharedStockpileSystem : EntitySystem
             if (!stock.ConnectedTo(tiles))
                 continue;
 
-            foreach (var tile in tiles)
+            foreach (var tile in tileRefs)
             {
-                if (!ContainsTile(tile))
-                    stock.AddTile(tile);
+                if (Turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable) || !ContainsTile(tile.GridIndices))
+                    stock.AddTile(tile.GridIndices);
             }
 
             return;
@@ -105,13 +108,13 @@ public abstract class SharedStockpileSystem : EntitySystem
         CreateStockpile(tiles, tileRefs.First().GridUid);
     }
 
-    protected void RemoveTiles(List<Vector2i> tiles)
+    protected void RemoveTiles(HashSet<TileRef> tiles)
     {
         foreach (var tile in tiles)
         {
             foreach (var stock in Stockpiles)
             {
-                stock.RemoveTile(tile);
+                stock.RemoveTile(tile.GridIndices);
             }
         }
 
@@ -183,6 +186,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         if (Xform.GetGrid(uid) is not { } gridUid
             || !TryComp(uid, out MapGridComponent? grid)
             || !Map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef)
+            || Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
             || MetaData(uid).EntityPrototype is not { } proto)
             return false;
 
