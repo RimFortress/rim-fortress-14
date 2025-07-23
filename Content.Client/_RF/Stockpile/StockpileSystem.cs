@@ -20,8 +20,12 @@ public sealed class StockpileSystem : SharedStockpileSystem
         base.Initialize();
 
         SubscribeNetworkEvent<StockpileCreated>(OnCreated);
+        SubscribeNetworkEvent<StockpileDeleted>(OnDeleted);
         SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
         SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
+        SubscribeNetworkEvent<StockpileSettingUpdate>(OnSettingUpdate);
+        SubscribeNetworkEvent<StockpileEntityAttached>(OnAttachedEntity);
+        SubscribeNetworkEvent<StockpileEntityDetached>(OnDetachedEntity);
     }
 
     public void CreateSelection()
@@ -45,6 +49,11 @@ public sealed class StockpileSystem : SharedStockpileSystem
     public void RemoveTileSelection()
     {
         _selection.SetTileSelection(onSelected: tiles => RemoveTiles(tiles), filter: TileFilter);
+    }
+
+    public void RemoveTileSelection(Stock stock)
+    {
+        _selection.SetTileSelection(onSelected: tiles => RemoveTiles(tiles, stock), filter: TileFilter);
     }
 
     private bool TileFilter(TileRef tile)

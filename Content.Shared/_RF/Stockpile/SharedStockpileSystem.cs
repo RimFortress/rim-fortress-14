@@ -28,8 +28,6 @@ public abstract class SharedStockpileSystem : EntitySystem
     /// <inheritdoc/>
     public override void Initialize()
     {
-        SubscribeLocalEvent<StockpileCategoryComponent, MoveEvent>(OnMove);
-
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<EntityPrototype>())
@@ -37,19 +35,14 @@ public abstract class SharedStockpileSystem : EntitySystem
         };
     }
 
-    private void OnMove(EntityUid uid, StockpileCategoryComponent component, MoveEvent args)
-    {
-        foreach (var stock in Stockpiles)
-        {
-            stock.RemoveEntity(uid);
-        }
-
-        TryInsert(uid);
-    }
-
     protected void OnCreated(StockpileCreated ev)
     {
         CreateStockpile(ev.Tiles, GetEntity(ev.GridUid), ev.Id, false);
+    }
+
+    protected void OnDeleted(StockpileDeleted ev)
+    {
+        DeleteStockpile(ev.Id, false);
     }
 
     protected void OnTileAdded(StockpileTileAdded ev)
@@ -84,6 +77,30 @@ public abstract class SharedStockpileSystem : EntitySystem
         }
 
         RemoveTiles(tileRefs, stock, false);
+    }
+
+    protected void OnSettingUpdate(StockpileSettingUpdate ev)
+    {
+        if (!TryGetStock(ev.Id, out var stock))
+            return;
+
+        SetSetting(ev.ProtoId, ev.Value, stock, false);
+    }
+
+    protected void OnAttachedEntity(StockpileEntityAttached ev)
+    {
+        if (!TryGetStock(ev.Id, out var stock))
+            return;
+
+        TryInsert(GetEntity(ev.Uid), stock, false);
+    }
+
+    protected void OnDetachedEntity(StockpileEntityDetached ev)
+    {
+        if (!TryGetStock(ev.Id, out var stock))
+            return;
+
+        DetachEntity(GetEntity(ev.Uid), stock, false);
     }
 
     private void ReloadPrototypes()
@@ -130,6 +147,17 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         if (dirty)
             RaiseNetworkEvent(new StockpileCreated(GetNetEntity(gridUid), _nextStockpileId - 1, tiles));
+    }
+
+    protected void DeleteStockpile(int id, bool dirty = true)
+    {
+        if (!TryGetStock(id, out var stock))
+            return;
+
+        Stockpiles.Remove(stock);
+
+        if (dirty)
+            RaiseNetworkEvent(new StockpileDeleted(stock.Id));
     }
 
     /// <summary>
@@ -236,6 +264,21 @@ public abstract class SharedStockpileSystem : EntitySystem
     }
 
     /// <summary>
+    /// Set the maximum number of items of this type in the stockpile
+    /// </summary>
+    /// <param name="protoId">Item prototype</param>
+    /// <param name="value">Maximum number of items that can be in stockpile</param>
+    /// <param name="stock"></param>
+    /// <param name="dirty"></param>
+    public void SetSetting(EntProtoId protoId, int value, Stock stock, bool dirty = true)
+    {
+        stock.SetSetting(protoId, value);
+
+        if (dirty)
+            RaiseNetworkEvent(new StockpileSettingUpdate(stock.Id, protoId, value));
+    }
+
+    /// <summary>
     /// Returns true if any stockpile contains this tile
     /// </summary>
     public bool ContainsTile(EntityUid uid, Vector2i tile)
@@ -305,12 +348,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         return false;
     }
 
-    private bool TryInsert(EntityUid uid)
-    {
-        return TryGetStock(uid, out var stock) && TryInsert(uid, stock);
-    }
-
-    private bool TryInsert(EntityUid uid, Stock stockpile)
+    protected bool TryInsert(EntityUid uid, Stock stockpile, bool dirty = true)
     {
         if (Xform.GetGrid(uid) is not { } gridUid
             || !TryComp(uid, out MapGridComponent? grid)
@@ -329,7 +367,29 @@ public abstract class SharedStockpileSystem : EntitySystem
                 return false;
         }
 
-        return stockpile.TryAddEntity(uid, proto, tileRef.GridIndices);
+        if (!stockpile.TryAddEntity(uid, proto, tileRef.GridIndices))
+            return false;
+
+        foreach (var stock in Stockpiles)
+        {
+            DetachEntity(uid, stock, dirty);
+        }
+
+        if (dirty)
+            RaiseNetworkEvent(new StockpileEntityAttached(stockpile.Id, GetNetEntity(uid)));
+
+        return true;
+    }
+
+    protected void DetachEntity(EntityUid uid, Stock stock, bool dirty = true)
+    {
+        if (!stock.ContainsEntity(uid))
+            return;
+
+        stock.RemoveEntity(uid);
+
+        if (dirty)
+            RaiseNetworkEvent(new StockpileEntityDetached(stock.Id, GetNetEntity(uid)));
     }
 }
 
@@ -339,6 +399,12 @@ public sealed class StockpileCreated(NetEntity gridUid, int id, List<Vector2i> t
     public NetEntity GridUid = gridUid;
     public int Id = id;
     public List<Vector2i> Tiles = tiles;
+}
+
+[Serializable, NetSerializable]
+public sealed class StockpileDeleted(int id) : EntityEventArgs
+{
+    public int Id = id;
 }
 
 [Serializable, NetSerializable]
@@ -355,6 +421,28 @@ public sealed class StockpileTileRemoved(int id, List<Vector2i> tiles) : EntityE
     public List<Vector2i> Tiles = tiles;
 }
 
+[Serializable, NetSerializable]
+public sealed class StockpileSettingUpdate(int id, EntProtoId protoId, int value) : EntityEventArgs
+{
+    public int Id = id;
+    public EntProtoId ProtoId = protoId;
+    public int Value = value;
+}
+
+[Serializable, NetSerializable]
+public sealed class StockpileEntityAttached(int id, NetEntity uid) : EntityEventArgs
+{
+    public int Id = id;
+    public NetEntity Uid = uid;
+}
+
+[Serializable, NetSerializable]
+public sealed class StockpileEntityDetached(int id, NetEntity uid) : EntityEventArgs
+{
+    public int Id = id;
+    public NetEntity Uid = uid;
+}
+
 /// <summary>
 /// Object of stockpile of items
 /// </summary>
@@ -362,6 +450,7 @@ public sealed class StockpileTileRemoved(int id, List<Vector2i> tiles) : EntityE
 /// <param name="gridUid">The grid on which the stockpile is located</param>
 /// <param name="tiles">Tiles on which the stockpile will be created</param>
 /// <param name="settings">Initial stockpile settings</param>
+[Access(typeof(SharedStockpileSystem))]
 public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dictionary<EntProtoId, int> settings)
 {
     /// <summary>
@@ -417,10 +506,6 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
     /// <summary>
     /// Tries to add an entity to a stockpile
     /// </summary>
-    /// <remarks>
-    /// Use <see cref="M:Content.Shared._RF.Stockpile.SharedStockpileSystem.TryInsert(Robust.Shared.GameObjects.EntityUid)"/> instead.
-    /// </remarks>
-    [Access(typeof(SharedStockpileSystem))]
     public bool TryAddEntity(EntityUid uid, EntProtoId protoId, Vector2i tile)
     {
         if (!settings.TryGetValue(protoId, out var value)
@@ -452,6 +537,7 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
     /// <summary>
     /// Returns true if the stockpile contains the given entity
     /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
     public bool ContainsEntity(EntityUid uid)
     {
         return _entities.ContainsKey(uid);
@@ -460,10 +546,6 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
     /// <summary>
     /// Expands the stockpile with the given tiles
     /// </summary>
-    /// <remarks>
-    /// Use <see cref="M:Content.Shared._RF.Stockpile.SharedStockpileSystem.AddTiles(System.Collections.Generic.HashSet{Robust.Shared.Map.TileRef},Content.Shared._RF.Stockpile.Stock)"/> instead.
-    /// </remarks>
-    [Access(typeof(SharedStockpileSystem))]
     public void AddTiles(List<Vector2i> tiles1)
     {
         foreach (var tile in tiles1)
@@ -476,10 +558,6 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
         }
     }
 
-    /// <remarks>
-    /// Use <see cref="M:Content.Shared._RF.Stockpile.SharedStockpileSystem.AddTiles(System.Collections.Generic.HashSet{Robust.Shared.Map.TileRef},Content.Shared._RF.Stockpile.Stock)"/> instead.
-    /// </remarks>
-    [Access(typeof(SharedStockpileSystem))]
     public void AddTile(Vector2i tile)
     {
         if (tiles.Contains(tile))
@@ -524,11 +602,13 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
     /// <summary>
     /// Returns true if the given tile is a part of a stockpile
     /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
     public bool ContainsTile(Vector2i tileInd)
     {
         return tiles.Contains(tileInd);
     }
 
+    [Access(Other = AccessPermissions.Execute)]
     public bool IsValid()
     {
         return tiles.Count > 0;
