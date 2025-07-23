@@ -1,4 +1,3 @@
-using System.Threading;
 using Content.Shared._RF.Stockpile;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -12,12 +11,9 @@ public sealed class StockpileSystem : SharedStockpileSystem
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<StockpileCreated>(OnStockpileCreated);
-    }
-
-    private void OnStockpileCreated(StockpileCreated ev)
-    {
-        CreateStockpile(ev.Tiles, GetEntity(ev.GridUid));
+        SubscribeNetworkEvent<StockpileCreated>(OnCreated);
+        SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
+        SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
     }
 
     /// <summary>
@@ -25,9 +21,8 @@ public sealed class StockpileSystem : SharedStockpileSystem
     /// </summary>
     /// <param name="uid">An entity that attempts to stockpile an object</param>
     /// <param name="protoId">Prototype entity for stockpiling</param>
-    /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public List<TileRef> GetFreeTile(EntityUid uid, EntProtoId protoId, CancellationToken cancellationToken)
+    public List<TileRef> GetFreeTile(EntityUid uid, EntProtoId protoId)
     {
         if (Xform.GetGrid(uid) is not { } gridUid || !TryComp(gridUid, out MapGridComponent? grid))
             return new();

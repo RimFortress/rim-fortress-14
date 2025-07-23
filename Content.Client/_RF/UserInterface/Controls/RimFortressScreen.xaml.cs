@@ -36,6 +36,7 @@ public sealed partial class RimFortressScreen : InGameScreen
         Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
         Hotbar.BuildButton.OnPressed += _ => ToggleExpected(ConstructionMenu);
         Hotbar.PassiveTasksButton.OnPressed += _ => ToggleExpected(PassiveTasksMenu);
+        Hotbar.StockpileButton.OnPressed += _ => ToggleExpected(StockpileMenu);
         Hotbar.WorldMapButton.OnPressed += _ => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
     }
 
@@ -55,6 +56,9 @@ public sealed partial class RimFortressScreen : InGameScreen
 
         if (control != PassiveTasksMenu)
             PassiveTasksMenu.Visible = false;
+
+        if (control != StockpileMenu)
+            StockpileMenu.Visible = false;
     }
 
     public override void SetChatSize(Vector2 size)
