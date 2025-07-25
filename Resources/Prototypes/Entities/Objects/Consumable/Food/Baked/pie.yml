@@ -30,6 +30,10 @@
   - type: Tag
     tags:
     - Pie
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Pie
+  # RimFortress End
 
 - type: entity
   parent: FoodInjectableBase # Not sliceable
@@ -57,6 +61,10 @@
     tags:
     - Pie
     - Slice
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Pie
+  # RimFortress End
 
 # Pie
 

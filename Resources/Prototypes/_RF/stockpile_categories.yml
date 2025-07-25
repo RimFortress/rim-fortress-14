@@ -1,7 +1,9 @@
+# Drinks
+
 - type: stockpileCategory
   id: Drinks
   icon:
-    sprite: /Textures/Objects/Consumable/Drinks/waterbottle.rsi
+    sprite: Objects/Consumable/Drinks/waterbottle.rsi
     state: icon
   subCategories:
     - GlassDrinks
@@ -12,23 +14,184 @@
 - type: stockpileCategory
   id: GlassDrinks
   icon:
-    sprite: /Textures/Objects/Consumable/Drinks/ginfizzglass.rsi
+    sprite: Objects/Consumable/Drinks/ginfizzglass.rsi
     state: icon
 
 - type: stockpileCategory
   id: BottleDrinks
   icon:
-    sprite: /Textures/Objects/Consumable/Drinks/beer.rsi
+    sprite: Objects/Consumable/Drinks/beer.rsi
     state: icon
 
 - type: stockpileCategory
   id: CanDrinks
   icon:
-    sprite: /Textures/Objects/Consumable/Drinks/cola.rsi
+    sprite: Objects/Consumable/Drinks/cola.rsi
     state: icon
 
 - type: stockpileCategory
   id: CartonsDrinks
   icon:
-    sprite: /Textures/Objects/Consumable/Drinks/limejuice.rsi
+    sprite: Objects/Consumable/Drinks/limejuice.rsi
     state: icon
+
+# Food
+
+- type: stockpileCategory
+  id: Food
+  icon:
+    sprite: Objects/Consumable/Food/burger.rsi
+    state: plain
+  subCategories:
+    - RawFood
+    - CookedFood
+    - FrozenFood
+    - Ingredients
+
+- type: stockpileCategory
+  id: RawFood
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: bird
+  subCategories:
+    - RawMeat
+    - RawCutlet
+    - Produce
+
+- type: stockpileCategory
+  id: CookedFood
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: chicken-fried
+  subCategories:
+    - CookedMeat
+    - CookedCutlet
+    - Burgers
+    - Taco
+    - Bowl
+    - Snacks
+    - Noodles
+    - Meals
+    - Bagel
+    - Bread
+    - Cake
+    - Donkpocket
+    - Donut
+    - Pie
+    - Pizza
+
+- type: stockpileCategory
+  id: FrozenFood
+  icon:
+    sprite: Objects/Consumable/Food/frozen.rsi
+    state: sandwich
+
+- type: stockpileCategory
+  id: Ingredients
+  icon:
+    sprite: Objects/Consumable/Food/ingredients.rsi
+    state: flour-big
+
+- type: stockpileCategory
+  id: RawMeat
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: RawCutlet
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: cutlet
+
+- type: stockpileCategory
+  id: Produce
+  iconEntity: FoodBanana
+
+- type: stockpileCategory
+  id: CookedMeat
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: plain-cooked
+
+- type: stockpileCategory
+  id: CookedCutlet
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: cutlet-cooked
+
+- type: stockpileCategory
+  id: Burgers
+  icon:
+    sprite: Objects/Consumable/Food/burger.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: Taco
+  icon:
+    sprite: Objects/Consumable/Food/taco.rsi
+    state: beeftaco
+
+- type: stockpileCategory
+  id: Bowl
+  iconEntity: FoodSaladCaesar
+
+- type: stockpileCategory
+  id: Snacks
+  icon:
+    sprite: Objects/Consumable/Food/snacks.rsi
+    state: boritos
+
+- type: stockpileCategory
+  id: Noodles
+  icon:
+    sprite: Objects/Consumable/Food/noodles.rsi
+    state: boiled
+
+- type: stockpileCategory
+  id: Meals
+  icon:
+    sprite: Objects/Consumable/Food/meals.rsi
+    state: fries
+
+- type: stockpileCategory
+  id: Bagel
+  icon:
+    sprite: Objects/Consumable/Food/Baked/bagel.rsi
+    state: bagel
+
+- type: stockpileCategory
+  id: Bread
+  iconEntity: FoodBreadBanana
+
+- type: stockpileCategory
+  id: Cake
+  iconEntity: FoodCakeBlueberry
+
+- type: stockpileCategory
+  id: Donkpocket
+  icon:
+    sprite: Objects/Consumable/Food/Baked/donkpocket.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: Donut
+  icon:
+    sprite: Objects/Consumable/Food/Baked/donut.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: Pie
+  iconEntity: FoodPieApple
+
+- type: stockpileCategory
+  id: Pizza
+  iconEntity: FoodPizzaMargherita
+
+# Other
+
+- type: stockpileCategory
+  id: Trash
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: rotten

@@ -11,6 +11,7 @@ namespace Content.Client._RF.UserInterface.Controls.Stockpile;
 public sealed partial class StockpileItemButton : Button
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
 
     public event Action<int>? OnSettingsChanged;
 
@@ -51,7 +52,16 @@ public sealed partial class StockpileItemButton : Button
         RobustXamlLoader.Load(this);
 
         Label.Text = proto.Name;
-        Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto.Icon);
+
+        if (proto.Icon != null)
+            Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto.Icon);
+
+        if (proto.IconEntity != null)
+        {
+            Texture.Texture = _entManager
+                .System<SpriteSystem>()
+                .Frame0(_prototype.Index(proto.IconEntity.Value));
+        }
 
         EnsureSetup();
     }

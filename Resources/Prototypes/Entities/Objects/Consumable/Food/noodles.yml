@@ -18,6 +18,10 @@
         reagents:
         - ReagentId: Nutriment
           Quantity: 20
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Noodles
+  # RimFortress End
 
 # Noodles
 
