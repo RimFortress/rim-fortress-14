@@ -188,6 +188,69 @@
   id: Pizza
   iconEntity: FoodPizzaMargherita
 
+# Weapons
+
+- type: stockpileCategory
+  id: Weapon
+  name: Weapons
+  iconEntity: CombatKnife
+  subCategories:
+    - Gun
+    - Melee
+    - Ammo
+
+- type: stockpileCategory
+  id: Gun
+  name: Gun
+  iconEntity: WeaponRevolverInspector
+
+- type: stockpileCategory
+  id: Melee
+  name: Melee
+  iconEntity: CombatKnife
+
+- type: stockpileCategory
+  id: Ammo
+  name: Ammunition
+  iconEntity: MagazineShotgun
+  subCategories:
+    - AmmoBoxes
+    - AmmoCartridge
+    - AmmoMagazine
+    - SpeedLoader
+    - AmmoExplosive
+    - Grenade
+
+- type: stockpileCategory
+  id: Grenade
+  name: Grenades
+  iconEntity: GrenadeShrapnel
+
+- type: stockpileCategory
+  id: AmmoBoxes
+  name: Boxes
+  iconEntity: MagazineBoxLightRifleBig
+
+- type: stockpileCategory
+  id: AmmoCartridge
+  name: Cartridges
+  iconEntity: CartridgePistol
+
+- type: stockpileCategory
+  id: AmmoMagazine
+  name: Magazines
+  iconEntity: MagazineLightRifleBox
+
+- type: stockpileCategory
+  id: SpeedLoader
+  name: Speed loaders
+  iconEntity: SpeedLoaderMagnum
+
+- type: stockpileCategory
+  id: AmmoExplosive
+  name: Explosives
+  iconEntity: GrenadeFrag
+
 # Other
 
 - type: stockpileCategory

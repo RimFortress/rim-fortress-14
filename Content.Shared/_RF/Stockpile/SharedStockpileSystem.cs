@@ -356,7 +356,8 @@ public abstract class SharedStockpileSystem : EntitySystem
     {
         stockpile = null;
 
-        if (Xform.GetGrid(coords) is not { } gridUid
+        if (!coords.EntityId.IsValid() // weh
+            || Xform.GetGrid(coords) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid)
             || !Map.TryGetTileRef(gridUid, grid, coords, out var tileRef))
             return false;

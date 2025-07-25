@@ -49,3 +49,7 @@
     canMoveBreakout: true
     maxEnsnares: 1
   - type: LandAtCursor
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End

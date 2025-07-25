@@ -49,6 +49,10 @@
     stealGroup: FireAxe
   - type: IgniteOnMeleeHit
     fireStacks: -4
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   id: FireAxeFlaming

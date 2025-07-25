@@ -88,6 +88,10 @@
     guides:
     - Security
     - Antagonists
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: truncheon

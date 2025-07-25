@@ -25,6 +25,10 @@
         Blunt: 3
   - type: UseDelay
     delay: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: cane blade
@@ -51,6 +55,10 @@
     tags:
       - CaneBlade
   - type: DisarmMalus
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   parent: Cane
@@ -86,6 +94,10 @@
         whitelist:
           tags:
           - CaneBlade
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   id: CaneSheathFilled

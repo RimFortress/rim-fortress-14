@@ -13,6 +13,10 @@
       tags:
         - CartridgeMagnum
     capacity: 7
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoMagazine
+  # RimFortress End
 
 - type: entity
   id: BaseMagazineMagnumSubMachineGun

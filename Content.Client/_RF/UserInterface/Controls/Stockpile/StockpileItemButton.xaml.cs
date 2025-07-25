@@ -56,12 +56,8 @@ public sealed partial class StockpileItemButton : Button
         if (proto.Icon != null)
             Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto.Icon);
 
-        if (proto.IconEntity != null)
-        {
-            Texture.Texture = _entManager
-                .System<SpriteSystem>()
-                .Frame0(_prototype.Index(proto.IconEntity.Value));
-        }
+        if (_prototype.TryIndex(proto.IconEntity, out var entProto))
+            Texture.Texture = _entManager.System<SpriteSystem>().Frame0(entProto);
 
         EnsureSetup();
     }

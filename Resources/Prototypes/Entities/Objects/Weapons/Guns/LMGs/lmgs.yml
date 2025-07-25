@@ -64,6 +64,10 @@
     price: 500
   - type: UseDelay
     delay: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Gun
+  # RimFortress End
 
 - type: entity
   name: L6 SAW

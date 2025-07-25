@@ -103,7 +103,7 @@
     containers:
       storagebase: !type:Container
         ents: []
-        
+
 - type: entity
   name: syringe gun
   parent: BaseStorageItem
@@ -140,6 +140,10 @@
     containers:
       storagebase: !type:Container
         ents: []
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Gun
+  # RimFortress End
 
 # shoots bullets instead of throwing them, no other changes
 - type: entity

@@ -68,3 +68,7 @@
   - type: Construction
     graph: makeshiftstunprod
     node: msstunprod
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End

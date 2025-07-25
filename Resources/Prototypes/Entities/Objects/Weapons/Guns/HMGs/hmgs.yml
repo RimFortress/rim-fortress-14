@@ -19,6 +19,10 @@
       path: /Audio/Weapons/Guns/Empty/lmg_empty.ogg
   - type: StaticPrice
     price: 500
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Gun
+  # RimFortress End
   # No chamber because HMG may want its own
 
 - type: entity

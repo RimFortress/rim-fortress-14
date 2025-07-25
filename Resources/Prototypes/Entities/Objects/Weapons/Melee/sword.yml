@@ -18,6 +18,10 @@
   - type: Tool
     qualities:
     - Slicing
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: captain's sabre

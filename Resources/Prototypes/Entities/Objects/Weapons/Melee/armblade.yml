@@ -21,3 +21,7 @@
     size: Normal
     sprite: Objects/Weapons/Melee/armblade.rsi
   - type: Prying
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End

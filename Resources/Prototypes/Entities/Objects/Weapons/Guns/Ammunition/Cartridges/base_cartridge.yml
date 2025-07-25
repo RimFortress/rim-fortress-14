@@ -40,3 +40,7 @@
         volume: -1
   - type: StaticPrice
     price: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoCartridge
+  # RimFortress End
