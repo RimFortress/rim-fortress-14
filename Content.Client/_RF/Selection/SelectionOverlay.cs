@@ -30,8 +30,6 @@ public sealed class SelectionOverlay : Overlay
     private readonly TurfSystem _turf;
     private readonly TransformSystem _transform;
 
-    private readonly ShaderInstance _selectAreaShader;
-
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
     public override bool RequestScreenTexture => true;
@@ -45,8 +43,6 @@ public sealed class SelectionOverlay : Overlay
         _selection = _entityManager.System<SelectionSystem>();
         _turf = _entityManager.System<TurfSystem>();
         _transform = _entityManager.System<TransformSystem>();
-
-        _selectAreaShader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -97,6 +93,7 @@ public sealed class SelectionOverlay : Overlay
 
     private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
     {
+        var shader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
         var area = new Box2(start.Position, end.Position);
         var prevShader = args.WorldHandle.GetShader();
 
@@ -110,13 +107,13 @@ public sealed class SelectionOverlay : Overlay
         var topRight = args.Viewport.WorldToLocal(area.TopRight);
         topRight.Y = args.Viewport.Size.Y - topRight.Y;
 
-        _selectAreaShader.SetParameter("color", _selection.SelectionColor);
-        _selectAreaShader.SetParameter("point1", bottomLeft);
-        _selectAreaShader.SetParameter("point2", bottomRight);
-        _selectAreaShader.SetParameter("point3", topLeft);
-        _selectAreaShader.SetParameter("point4", topRight);
+        shader.SetParameter("color", _selection.SelectionColor);
+        shader.SetParameter("point1", bottomLeft);
+        shader.SetParameter("point2", bottomRight);
+        shader.SetParameter("point3", topLeft);
+        shader.SetParameter("point4", topRight);
 
-        args.WorldHandle.UseShader(_selectAreaShader);
+        args.WorldHandle.UseShader(shader);
         args.WorldHandle.DrawRect(area, Color.White);
         args.WorldHandle.UseShader(prevShader);
     }

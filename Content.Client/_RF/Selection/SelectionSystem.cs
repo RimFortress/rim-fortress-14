@@ -112,8 +112,11 @@ public sealed class SelectionSystem : EntitySystem
 
     private bool OnSelectDisabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        _onSelected?.Invoke(Selected);
-        _onTileSelected?.Invoke(SelectedTiles);
+        if (Selected.Count > 0)
+            _onSelected?.Invoke(Selected);
+
+        if (SelectedTiles.Count > 0)
+            _onTileSelected?.Invoke(SelectedTiles);
 
         StartPoint = null;
         EndPoint = null;
@@ -122,9 +125,6 @@ public sealed class SelectionSystem : EntitySystem
 
     private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (Selected.Count == 0)
-            return false;
-
         _act?.Invoke((Selected, uid.IsValid() ? uid : null, coords));
         _tileAct?.Invoke((SelectedTiles, coords));
         return true;

@@ -185,12 +185,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         return TryComp(uid, out HTNComponent? _);
     }
 
-    private void DefaultSelection()
+    public void DefaultSelection()
     {
         _selection.SetSelection(
             act: args =>
             {
-                if (_player.LocalEntity is not { Valid: true } entity || !_controlQuery.TryComp(entity, out _))
+                if (_player.LocalEntity is not { Valid: true } entity
+                    || !_controlQuery.TryComp(entity, out _)
+                    || args.Selected.Count == 0)
                     return;
 
                 RaiseNetworkEvent(new NpcTaskRequest

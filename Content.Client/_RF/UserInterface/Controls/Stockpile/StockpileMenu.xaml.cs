@@ -10,6 +10,11 @@ public sealed partial class StockpileMenu : Control
     public StockpileMenu()
     {
         RobustXamlLoader.Load(this);
+
+        var stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
+
+        CreateStockpileButton.OnPressed += _ => stockpileController.CreateSelection();
+        EditStockpileButton.OnPressed += _ => stockpileController.SelectMode = true;
     }
 }
 

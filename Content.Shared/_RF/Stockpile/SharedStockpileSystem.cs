@@ -4,6 +4,7 @@ using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
@@ -35,20 +36,36 @@ public abstract class SharedStockpileSystem : EntitySystem
         };
     }
 
-    protected void OnCreated(StockpileCreated ev)
-    {
-        CreateStockpile(ev.Tiles, GetEntity(ev.GridUid), ev.Id, false);
-    }
-
-    protected void OnDeleted(StockpileDeleted ev)
-    {
-        DeleteStockpile(ev.Id, false);
-    }
-
-    protected void OnTileAdded(StockpileTileAdded ev)
+    protected void OnCreated(StockpileCreated ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock)
             || !TryComp(stock.GridUid, out MapGridComponent? grid))
+            return;
+
+        var tileRefs = new HashSet<TileRef>();
+
+        foreach (var ind in ev.Tiles)
+        {
+            if (Map.TryGetTileRef(stock.GridUid, grid, ind, out var tileRef))
+                tileRefs.Add(tileRef);
+        }
+
+        CreateStockpile(tileRefs, args.SenderSession, ev.Id, false);
+    }
+
+    protected void OnDeleted(StockpileDeleted ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession)
+            return;
+
+        DeleteStockpile(ev.Id, false);
+    }
+
+    protected void OnTileAdded(StockpileTileAdded ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Id, out var stock)
+            || !TryComp(stock.GridUid, out MapGridComponent? grid)
+            || stock.Owner != args.SenderSession)
             return;
 
         var tileRefs = new HashSet<TileRef>();
@@ -62,10 +79,11 @@ public abstract class SharedStockpileSystem : EntitySystem
         AddTiles(tileRefs, stock, false);
     }
 
-    protected void OnTileRemoved(StockpileTileRemoved ev)
+    protected void OnTileRemoved(StockpileTileRemoved ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock)
-            || !TryComp(stock.GridUid, out MapGridComponent? grid))
+            || !TryComp(stock.GridUid, out MapGridComponent? grid)
+            || stock.Owner != args.SenderSession)
             return;
 
         var tileRefs = new HashSet<TileRef>();
@@ -79,25 +97,33 @@ public abstract class SharedStockpileSystem : EntitySystem
         RemoveTiles(tileRefs, stock, false);
     }
 
-    protected void OnSettingUpdate(StockpileSettingUpdate ev)
+    protected void OnSettingUpdate(StockpileSettingUpdate ev, EntitySessionEventArgs args)
     {
-        if (!TryGetStock(ev.Id, out var stock))
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession)
             return;
 
         SetSetting(ev.ProtoId, ev.Value, stock, false);
     }
 
-    protected void OnAttachedEntity(StockpileEntityAttached ev)
+    protected void OnSettingsUpdate(StockpileSettingsUpdate ev, EntitySessionEventArgs args)
     {
-        if (!TryGetStock(ev.Id, out var stock))
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession)
+            return;
+
+        SetSetting(ev.Settings, stock, false);
+    }
+
+    protected void OnAttachedEntity(StockpileEntityAttached ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession)
             return;
 
         TryInsert(GetEntity(ev.Uid), stock, false);
     }
 
-    protected void OnDetachedEntity(StockpileEntityDetached ev)
+    protected void OnDetachedEntity(StockpileEntityDetached ev, EntitySessionEventArgs args)
     {
-        if (!TryGetStock(ev.Id, out var stock))
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession)
             return;
 
         DetachEntity(GetEntity(ev.Uid), stock, false);
@@ -119,23 +145,27 @@ public abstract class SharedStockpileSystem : EntitySystem
         }
     }
 
+    public List<Stock> AllStockpiles() => Stockpiles;
+
     /// <summary>
     /// Creates a stockpile on specified tiles
     /// </summary>
-    protected void CreateStockpile(List<Vector2i> tiles, EntityUid gridUid, int id = 0, bool dirty = true)
+    public Stock? CreateStockpile(HashSet<TileRef> tiles, ICommonSession owner, int id = 0, bool dirty = true)
     {
         DebugTools.Assert(id == 0 || !TryGetStock(id, out _));
+        DebugTools.Assert(tiles.Count > 0 && tiles.First().GridUid.IsValid());
 
         var tilesList = new List<Vector2i>();
+        var gridUid = tiles.First().GridUid;
 
         foreach (var tile in tiles)
         {
-            if (ContainsTile(gridUid, tile))
-                tilesList.Add(tile);
+            if (!ContainsTile(tile) && !Turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+                tilesList.Add(tile.GridIndices);
         }
 
         if (tilesList.Count == 0)
-            return;
+            return null;
 
         if (id == 0)
         {
@@ -143,13 +173,16 @@ public abstract class SharedStockpileSystem : EntitySystem
             _nextStockpileId++;
         }
 
-        Stockpiles.Add(new Stock(id, gridUid, tilesList, _defaultSettings));
+        var stock = new Stock(id, owner, gridUid, tilesList, _defaultSettings);
+        Stockpiles.Add(stock);
 
         if (dirty)
-            RaiseNetworkEvent(new StockpileCreated(GetNetEntity(gridUid), _nextStockpileId - 1, tiles));
+            RaiseNetworkEvent(new StockpileCreated(GetNetEntity(gridUid), _nextStockpileId - 1, tilesList));
+
+        return stock;
     }
 
-    protected void DeleteStockpile(int id, bool dirty = true)
+    public void DeleteStockpile(int id, bool dirty = true)
     {
         if (!TryGetStock(id, out var stock))
             return;
@@ -161,34 +194,9 @@ public abstract class SharedStockpileSystem : EntitySystem
     }
 
     /// <summary>
-    /// Expands the stockpile with the given tiles. The stockpile is determined automatically by the neighborhood.
-    /// </summary>
-    /// <remarks>
-    /// If the tiles are not connected to any stockpile, a new one will be created.
-    /// </remarks>
-    protected void AddTiles(HashSet<TileRef> tileRefs, bool dirty = true)
-    {
-        if (tileRefs.Count == 0)
-            return;
-
-        var tiles = tileRefs.Select(x => x.GridIndices).ToList();
-
-        foreach (var stock in Stockpiles)
-        {
-            if (!stock.ConnectedTo(tiles))
-                continue;
-
-            AddTiles(tileRefs, stock, dirty);
-            return;
-        }
-
-        CreateStockpile(tiles, tileRefs.First().GridUid, dirty: dirty);
-    }
-
-    /// <summary>
     /// Expands the stockpile with the given tiles
     /// </summary>
-    protected void AddTiles(HashSet<TileRef> tileRefs, Stock stock, bool dirty = true)
+    public void AddTiles(HashSet<TileRef> tileRefs, Stock stock, bool dirty = true)
     {
         var tiles = new List<Vector2i>();
 
@@ -209,7 +217,7 @@ public abstract class SharedStockpileSystem : EntitySystem
     /// <summary>
     /// Removes these tiles from stockpiles
     /// </summary>
-    protected void RemoveTiles(HashSet<TileRef> tiles, bool dirty = true)
+    public void RemoveTiles(HashSet<TileRef> tiles, bool dirty = true)
     {
         var removed = new Dictionary<int, List<Vector2i>>();
 
@@ -240,7 +248,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         }
     }
 
-    protected void RemoveTiles(HashSet<TileRef> tiles, Stock stock, bool dirty = true)
+    public void RemoveTiles(HashSet<TileRef> tiles, Stock stock, bool dirty = true)
     {
         var removed = new List<Vector2i>();
 
@@ -278,14 +286,36 @@ public abstract class SharedStockpileSystem : EntitySystem
             RaiseNetworkEvent(new StockpileSettingUpdate(stock.Id, protoId, value));
     }
 
+    public void SetSetting(Dictionary<EntProtoId, int> settings, Stock stock, bool dirty = true)
+    {
+        foreach (var (protoId, value) in settings)
+        {
+            stock.SetSetting(protoId, value);
+        }
+
+        if (dirty)
+            RaiseNetworkEvent(new StockpileSettingsUpdate(stock.Id, settings));
+    }
+
     /// <summary>
     /// Returns true if any stockpile contains this tile
     /// </summary>
-    public bool ContainsTile(EntityUid uid, Vector2i tile)
+    public bool ContainsTile(EntityUid gridUid, Vector2i tile)
     {
         foreach (var stock in Stockpiles)
         {
-            if (uid == stock.GridUid && stock.ContainsTile(tile))
+            if (gridUid == stock.GridUid && stock.ContainsTile(tile))
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool ContainsTile(TileRef tile)
+    {
+        foreach (var stock in Stockpiles)
+        {
+            if (tile.GridUid == stock.GridUid && stock.ContainsTile(tile.GridIndices))
                 return true;
         }
 
@@ -430,6 +460,13 @@ public sealed class StockpileSettingUpdate(int id, EntProtoId protoId, int value
 }
 
 [Serializable, NetSerializable]
+public sealed class StockpileSettingsUpdate(int id, Dictionary<EntProtoId, int> settings) : EntityEventArgs
+{
+    public int Id = id;
+    public Dictionary<EntProtoId, int> Settings = settings;
+}
+
+[Serializable, NetSerializable]
 public sealed class StockpileEntityAttached(int id, NetEntity uid) : EntityEventArgs
 {
     public int Id = id;
@@ -446,17 +483,15 @@ public sealed class StockpileEntityDetached(int id, NetEntity uid) : EntityEvent
 /// <summary>
 /// Object of stockpile of items
 /// </summary>
-/// <param name="id">Unique stockpile id</param>
-/// <param name="gridUid">The grid on which the stockpile is located</param>
-/// <param name="tiles">Tiles on which the stockpile will be created</param>
-/// <param name="settings">Initial stockpile settings</param>
 [Access(typeof(SharedStockpileSystem))]
-public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dictionary<EntProtoId, int> settings)
+public sealed class Stock(int id, ICommonSession owner, EntityUid gridUid, List<Vector2i> tiles, Dictionary<EntProtoId, int> settings)
 {
     /// <summary>
     /// Unique stockpile id
     /// </summary>
     public int Id { get; } = id;
+
+    public ICommonSession Owner = owner;
 
     /// <summary>
     /// The grid on which the stockpile is located
@@ -471,6 +506,7 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
     /// <summary>
     /// All the tiles owned by the stockpile
     /// </summary>
+    [Access(Other = AccessPermissions.ReadExecute)]
     public List<Vector2i> Tiles => tiles;
 
     private readonly Dictionary<EntityUid, (EntProtoId Proto, Vector2i Tile)> _entities = new();
@@ -653,5 +689,14 @@ public sealed class Stock(int id, EntityUid gridUid, List<Vector2i> tiles, Dicti
             return true;
 
         return protoCount + value <= setting || setting == -1;
+    }
+
+    /// <summary>
+    /// Returns the maximum number of items of this type that can be in stockpile
+    /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
+    public int GetSetting(EntProtoId protoId)
+    {
+        return settings.GetValueOrDefault(protoId, 0);
     }
 }
