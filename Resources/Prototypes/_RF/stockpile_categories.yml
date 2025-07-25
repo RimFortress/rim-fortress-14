@@ -1,0 +1,34 @@
+- type: stockpileCategory
+  id: Drinks
+  icon:
+    sprite: /Textures/Objects/Consumable/Drinks/waterbottle.rsi
+    state: icon
+  subCategories:
+    - GlassDrinks
+    - BottleDrinks
+    - CanDrinks
+    - CartonsDrinks
+
+- type: stockpileCategory
+  id: GlassDrinks
+  icon:
+    sprite: /Textures/Objects/Consumable/Drinks/ginfizzglass.rsi
+    state: icon
+
+- type: stockpileCategory
+  id: BottleDrinks
+  icon:
+    sprite: /Textures/Objects/Consumable/Drinks/beer.rsi
+    state: icon
+
+- type: stockpileCategory
+  id: CanDrinks
+  icon:
+    sprite: /Textures/Objects/Consumable/Drinks/cola.rsi
+    state: icon
+
+- type: stockpileCategory
+  id: CartonsDrinks
+  icon:
+    sprite: /Textures/Objects/Consumable/Drinks/limejuice.rsi
+    state: icon

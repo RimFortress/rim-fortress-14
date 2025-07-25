@@ -118,7 +118,11 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
         _selection.SetTileSelection(
             act: _ => _npc.DefaultSelection(),
-            onSelected: tiles => _stockpile.AddTiles(tiles, _stockpile.SelectedStock),
+            onSelected: tiles =>
+            {
+                _stockpile.AddTiles(tiles, _stockpile.SelectedStock);
+                _npc.DefaultSelection();
+            },
             filter: AddTileFilter,
             iconPath: "/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png");
     }
@@ -130,7 +134,11 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
         _selection.SetTileSelection(
             act: _ => _npc.DefaultSelection(),
-            onSelected: tiles => _stockpile.RemoveTiles(tiles, _stockpile.SelectedStock),
+            onSelected: tiles =>
+            {
+                _stockpile.RemoveTiles(tiles, _stockpile.SelectedStock);
+                _npc.DefaultSelection();
+            },
             filter: RemoveTileFilter,
             iconPath: "/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png");
     }

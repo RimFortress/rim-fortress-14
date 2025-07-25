@@ -22,7 +22,10 @@ public sealed partial class StockpileItemButton : Button
         set
         {
             if (_maxValue == value)
+            {
+                CountLine.Text = _maxValue.ToString();
                 return;
+            }
 
             _maxValue = value;
 
@@ -30,7 +33,7 @@ public sealed partial class StockpileItemButton : Button
                 _maxValue = -1;
 
             ItemCountBox.Visible = _maxValue != -1;
-            UnlimitedCheck.Pressed = _maxValue == 1;
+            UnlimitedCheck.Pressed = _maxValue == -1;
             Minus.Disabled = _maxValue == 0;
             OnSettingsChanged?.Invoke(_maxValue);
             CountLine.Text = _maxValue.ToString();
@@ -48,7 +51,7 @@ public sealed partial class StockpileItemButton : Button
         RobustXamlLoader.Load(this);
 
         Label.Text = proto.Name;
-        Texture.Texture = proto.Icon != null ? _entManager.System<SpriteSystem>().Frame0(proto.Icon) : null;
+        Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto.Icon);
 
         EnsureSetup();
     }

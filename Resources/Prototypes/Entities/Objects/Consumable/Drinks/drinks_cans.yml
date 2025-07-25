@@ -67,6 +67,10 @@
     tags:
     - DrinkCan
   - type: DnaSubstanceTrace
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CanDrinks
+  # RimFortress End
 
 - type: entity
   parent: DrinkCanBaseFull

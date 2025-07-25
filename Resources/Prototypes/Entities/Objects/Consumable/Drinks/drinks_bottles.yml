@@ -43,6 +43,10 @@
   - type: PressurizedSolution
     solution: drink
   - type: Shakeable
+  # RimFortress Start
+  - type: StockpileCategory
+    category: BottleDrinks
+  # RimFortress End
 
 - type: entity
   parent: DrinkBottlePlasticBaseFull

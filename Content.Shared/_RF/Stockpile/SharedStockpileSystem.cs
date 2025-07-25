@@ -34,6 +34,8 @@ public abstract class SharedStockpileSystem : EntitySystem
             if (args.WasModified<EntityPrototype>())
                 ReloadPrototypes();
         };
+
+        ReloadPrototypes();
     }
 
     protected void OnCreated(StockpileCreated ev, EntitySessionEventArgs args)
@@ -141,7 +143,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 
             _categoryEntities.TryAdd(comp.Category, new());
             _categoryEntities[comp.Category].Add(proto);
-            _defaultSettings.Add(proto, -1);
+            _defaultSettings.Add(proto, 0);
         }
     }
 

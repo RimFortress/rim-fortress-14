@@ -55,6 +55,10 @@
         maxVol: 100
   - type: Item
     size: Normal
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CartonsDrinks
+  # RimFortress End
 
 - type: entity
   id: DrinkCartonVisualsOpenable
@@ -194,7 +198,7 @@
           Quantity: 100
   - type: Sprite
     sprite: Objects/Consumable/Drinks/oatmilk.rsi
-    
+
 - type: entity
   parent: [DrinkCartonVisualsOpenable, DrinkCartonBaseFull]
   id: DrinkJuiceLemonCarton

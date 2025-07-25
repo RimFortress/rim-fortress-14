@@ -21,11 +21,8 @@ public sealed class StockpileCategoryPrototype : IPrototype, ISerializationHooks
 
     public string Name => _loc.TryGetString($"stockpile-category-{ID}-name", out var name) ? name : _name ?? ID;
 
-    [DataField("icon")]
-    private string? _iconPath;
-
-    public SpriteSpecifier.Texture? Icon
-        => _iconPath != null ? new SpriteSpecifier.Texture(new(_iconPath)) : null;
+    [DataField("icon", required: true)]
+    public SpriteSpecifier Icon = default!;
 
     [DataField]
     public List<ProtoId<StockpileCategoryPrototype>> SubCategories = new();

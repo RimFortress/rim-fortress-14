@@ -35,6 +35,13 @@
                 </BoxContainer>
             </ui:RfHighlightedContainer>
         </BoxContainer>
+        <BoxContainer Name="AddressBox" HorizontalExpand="True">
+            <ui:RfHighlightedContainer HorizontalExpand="True">
+                <Label Name="Address" Margin="8 0 0 0"
+                       Align="Left" VAlign="Center"
+                       StyleClasses="PlaceholderText"/>
+            </ui:RfHighlightedContainer>
+        </BoxContainer>
         <BoxContainer VerticalExpand="True" HorizontalExpand="True">
             <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
                 <BoxContainer Name="ItemList" Orientation="Vertical"
@@ -46,18 +53,21 @@
                 <BoxContainer Orientation="Horizontal">
                     <Button Name="ExpandStockButton" SetSize="48 48"
                             Margin="0 0 3 0" ToolTip="{Loc 'expand-stockpile-button-tooltip'}">
-                        <TextureRect Stretch="KeepAspectCentered"
+                        <TextureRect Stretch="KeepAspectCentered" SetSize="32 32"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
                                      TexturePath="/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"/>
                     </Button>
                     <Button Name="ShrinkStockButton" SetSize="48 48"
                             Margin="0 0 3 0" ToolTip="{Loc 'shrink-stockpile-button-tooltip'}">
-                        <TextureRect Stretch="KeepAspectCentered"
+                        <TextureRect Stretch="KeepAspectCentered" SetSize="32 32"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
                                      TexturePath="/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"/>
                     </Button>
                     <controls1:ConfirmButton Name="DeleteStockButton" SetSize="48 48"
                                              Margin="0 0 3 0" ConfirmationText=""
                                              ToolTip="{Loc 'delete-stockpile-button-tooltip'}">
-                        <TextureRect Stretch="KeepAspectCentered"
+                        <TextureRect Stretch="KeepAspectCentered" SetSize="32 32"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
                                      TexturePath="/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"/>
                     </controls1:ConfirmButton>
                 </BoxContainer>

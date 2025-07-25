@@ -19,9 +19,6 @@
                             Color="{x:Static style:StyleNano.NanoGold}"/>
             <Label Name="Label" Align="Left" VAlign="Fill"
                    ClipText="True" HorizontalExpand="True"/>
-            <controls:VLine Thickness="2" Margin="2"
-                            Color="{x:Static style:StyleNano.PanelDark}"/>
-            <BoxContainer HorizontalExpand="True"/>
             <BoxContainer Orientation="Horizontal" HorizontalAlignment="Right">
                 <BoxContainer Name="ItemCountBox" Access="Public" Orientation="Horizontal">
                     <Button Name="Plus" Margin="2"
@@ -31,7 +28,7 @@
                             Text="–" StyleClasses="OpenLeft"/>
                 </BoxContainer>
                 <CheckBox Name="UnlimitedCheck" Margin="0 0 3 0"
-                          ToolTip="stockpile-settings-menu-unlimited-checkbox-disabled-tooltip"/>
+                          ToolTip="{Loc 'stockpile-settings-menu-unlimited-checkbox-disabled-tooltip'}"/>
             </BoxContainer>
         </BoxContainer>
     </ui:RfHighlightedContainer>
