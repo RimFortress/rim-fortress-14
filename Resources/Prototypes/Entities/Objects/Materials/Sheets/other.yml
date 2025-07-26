@@ -26,6 +26,10 @@
     solutions:
       paper:
         canReact: false
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   parent: SheetOtherBase

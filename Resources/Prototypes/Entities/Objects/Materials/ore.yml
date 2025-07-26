@@ -23,6 +23,10 @@
           - ItemMask
         restitution: 0.3
         friction: 0.2
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   parent: OreBase

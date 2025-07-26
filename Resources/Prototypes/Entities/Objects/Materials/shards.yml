@@ -78,6 +78,10 @@
   - type: DeleteOnTrigger
   - type: StaticPrice
     price: 0
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   parent: ShardBase

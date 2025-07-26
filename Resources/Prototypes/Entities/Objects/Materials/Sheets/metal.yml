@@ -33,6 +33,10 @@
   - type: GuideHelp
     guides:
     - ExpandingRepairingStation
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   parent: SheetMetalBase

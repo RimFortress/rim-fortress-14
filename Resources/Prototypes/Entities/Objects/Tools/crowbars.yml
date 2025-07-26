@@ -41,6 +41,10 @@
     size: Normal
     shape:
     - 0,0,0,1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Tool
+  # RimFortress End
 
 # Standard (grey) Crowbar
 - type: entity

@@ -197,6 +197,10 @@
   - type: Produce
     seedId: towercap
   - type: Log
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   name: steel-cap log
@@ -218,6 +222,10 @@
   - type: Log
     spawnedPrototype: SheetSteel1
     spawnCount: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   name: nettle

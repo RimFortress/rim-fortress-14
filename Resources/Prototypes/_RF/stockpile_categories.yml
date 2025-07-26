@@ -251,6 +251,20 @@
   name: Explosives
   iconEntity: GrenadeFrag
 
+# Tools
+
+- type: stockpileCategory
+  id: Tool
+  name: Tools
+  iconEntity: Crowbar
+
+# Materials
+
+- type: stockpileCategory
+  id: Material
+  name: Materials
+  iconEntity: MaterialCloth
+
 # Other
 
 - type: stockpileCategory

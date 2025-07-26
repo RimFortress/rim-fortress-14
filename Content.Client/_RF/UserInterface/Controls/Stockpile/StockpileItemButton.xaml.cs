@@ -69,7 +69,7 @@ public sealed partial class StockpileItemButton : Button
 
         Disabled = true;
 
-        Label.Text = proto.Name;
+        Label.Text = string.IsNullOrEmpty(proto.EditorSuffix) ? proto.Name : $"{proto.Name} [{proto.EditorSuffix}]";
         Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto);
 
         EnsureSetup();
@@ -89,10 +89,7 @@ public sealed partial class StockpileItemButton : Button
                 ? "stockpile-settings-menu-unlimited-checkbox-enabled-tooltip"
                 : "stockpile-settings-menu-unlimited-checkbox-disabled-tooltip");
 
-            if (UnlimitedCheck.Pressed)
-                MaxValue = -1;
-            else
-                MaxValue = 0;
+            MaxValue = UnlimitedCheck.Pressed ? -1 : 0;
         };
     }
 }

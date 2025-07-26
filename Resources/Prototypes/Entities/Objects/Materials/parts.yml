@@ -19,6 +19,10 @@
       behaviors:
       - !type:DoActsBehavior
         acts: [ "Destruction" ]
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   parent: PartBase
