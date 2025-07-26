@@ -365,3 +365,15 @@
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+- type: utilityQuery
+  id: StoringTaskTarget
+  query:
+    - !type:OwnedQuery
+    - !type:StorableFilter
+      invert: true
+    - !type:StoredFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance

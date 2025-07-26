@@ -49,7 +49,7 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
     {
         if (!SelectMode
             || !_stockpile.TryGetStock(coords, out var stock)
-            || stock.Owner != _player.LocalSession)
+            || stock.Owner != _player.LocalSession?.AttachedEntity)
             return false;
 
         _stockpile.SelectedStock = stock;
@@ -90,14 +90,14 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
     public void CreateSelection()
     {
-        if (_player.LocalSession is not { } session)
+        if (_player.LocalSession?.AttachedEntity is not { } entity)
             return;
 
         _selection.SetTileSelection(
             act: _ => _npc.DefaultSelection(),
             onSelected: tiles =>
             {
-                var stock = _stockpile.CreateStockpile(tiles, session);
+                var stock = _stockpile.CreateStockpile(tiles, entity);
                 _npc.DefaultSelection();
 
                 if (stock == null)

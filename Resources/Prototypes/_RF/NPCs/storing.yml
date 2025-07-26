@@ -1,0 +1,26 @@
+- type: htnCompound
+  id: StoringCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:FindStoringPlaceOperator
+            targetKey: PickUpTarget
+            rangeKey: MoveToCloseRange
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+        - !type:HTNPrimitiveTask
+          operator: !type:DropAtOperator

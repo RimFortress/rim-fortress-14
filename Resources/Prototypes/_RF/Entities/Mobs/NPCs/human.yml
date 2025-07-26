@@ -37,6 +37,7 @@
         - id: HarvestPlant
         - id: WaterPlant
         - id: RemoveWeed
+        - id: Storing
 
 - type: entity
   id: Raider

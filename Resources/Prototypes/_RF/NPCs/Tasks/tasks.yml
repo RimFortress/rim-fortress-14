@@ -252,6 +252,8 @@
           targetKey: Target
           state: Dead
 
+# Farming
+
 - type: npcTask
   id: Plant
   name: Plant
@@ -375,6 +377,8 @@
       targetKey: Target
       lessThan: 0.1
 
+################
+
 - type: npcTask
   id: Chop
   name: Chop down
@@ -392,3 +396,26 @@
   finishPreconditions:
     - !type:EntityDeletedPrecondition
       key: Target
+
+- type: npcTask
+  id: Storing
+  name: Storing
+  maxPerformers: 1
+  overlayColor: "#A16C2B"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: StoringCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - PickUpTarget
+  targetsQuery: StoringTaskTarget
+  targetWhitelist:
+    components:
+      - Item
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget

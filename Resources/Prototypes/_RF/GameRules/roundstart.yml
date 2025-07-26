@@ -31,6 +31,7 @@
             - id: HarvestPlant
             - id: WaterPlant
             - id: RemoveWeed
+            - id: Storing
 
 - type: entityTable
   id: BasicWorldRulesTable

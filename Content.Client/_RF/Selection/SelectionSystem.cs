@@ -127,7 +127,8 @@ public sealed class SelectionSystem : EntitySystem
     {
         _act?.Invoke((Selected, uid.IsValid() ? uid : null, coords));
         _tileAct?.Invoke((SelectedTiles, coords));
-        return true;
+
+        return Selected.Count > 0 || SelectedTiles.Count > 0;
     }
 
     /// <summary>
