@@ -71,8 +71,6 @@ public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditio
         if (_transform.GetGrid(owner) is not { } gridUid
             || !_entManager.TryGetComponent(gridUid, out MapGridComponent? grid)
             || !blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entManager)
-            || !_entManager.TryGetComponent(uid, out MetaDataComponent? meta)
-            || meta.EntityPrototype is not { } proto
             || !_entManager.TryGetComponent(uid, out OwnedComponent? owned)
             || !_entManager.TryGetComponent(uid, out TransformComponent? xform))
             return (false, null);
@@ -83,7 +81,7 @@ public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditio
         {
             if (!owned.Owners.Contains(stock.Owner)
                 || stock.GridUid != gridUid
-                || !stock.CanInsert(proto))
+                || !_stockpile.CanInsert(stock, uid.Value))
                 continue;
 
             foreach (var tile in stock.FreeTiles)

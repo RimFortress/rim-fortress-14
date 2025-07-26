@@ -30,6 +30,8 @@ public sealed partial class StockpileSettingsMenu : Control
         _stockpileController.OnStockSelected += stock =>
             Label.Text = $"{Loc.GetString(StockLabelPrefix)}#{stock.Id}";
 
+        _stockpileController.OnStockpileUpdated += () => BuildItems(_currentCategory);
+
         ExpandStockButton.OnPressed += _ => _stockpileController.AddTileSelection();
         ShrinkStockButton.OnPressed += _ => _stockpileController.RemoveTileSelection();
         DeleteStockButton.OnPressed += _ =>
@@ -122,7 +124,7 @@ public sealed partial class StockpileSettingsMenu : Control
             if (!cat.Name.Contains(Search.Text))
                 continue;
 
-            var button = new StockpileItemButton(cat);
+            var button = new StockpileItemButton(cat, GetCategoryCount(cat));
 
             if (GetCategorySettings(cat) is { } setting)
                 button.MaxValue = setting;
@@ -150,7 +152,7 @@ public sealed partial class StockpileSettingsMenu : Control
             if (!proto.Name.Contains(Search.Text))
                 continue;
 
-            var button = new StockpileItemButton(proto);
+            var button = new StockpileItemButton(proto, _stockpileController.GetCount(proto));
             button.MaxValue = _stockpileController.GetSetting(proto);
             button.OnSettingsChanged += value => _stockpileController.SetSetting(proto, value);
 
@@ -231,6 +233,29 @@ public sealed partial class StockpileSettingsMenu : Control
         }
 
         return prevSettings;
+    }
+
+    private int GetCategoryCount(StockpileCategoryPrototype category)
+    {
+        var count = 0;
+
+        foreach (var cat in category.SubCategories)
+        {
+            if (!_prototype.TryIndex(cat, out var proto))
+                continue;
+
+            count += GetCategoryCount(proto);
+        }
+
+        if (!_categoryItems.TryGetValue(category, out var items))
+            return count;
+
+        foreach (var item in items)
+        {
+            count += _stockpileController.GetCount(item);
+        }
+
+        return count;
     }
 
     private StockpileCategoryPrototype? GetCategoryParent(StockpileCategoryPrototype category)

@@ -46,12 +46,12 @@ public sealed partial class StockpileItemButton : Button
         RobustXamlLoader.Load(this);
     }
 
-    public StockpileItemButton(StockpileCategoryPrototype proto)
+    public StockpileItemButton(StockpileCategoryPrototype proto, int count)
     {
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
-        Label.Text = proto.Name;
+        Label.Text = count == 0 ? proto.Name : $"{proto.Name} ({count})";
 
         if (proto.Icon != null)
             Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto.Icon);
@@ -62,14 +62,14 @@ public sealed partial class StockpileItemButton : Button
         EnsureSetup();
     }
 
-    public StockpileItemButton(EntityPrototype proto)
+    public StockpileItemButton(EntityPrototype proto, int count)
     {
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
         Disabled = true;
 
-        Label.Text = string.IsNullOrEmpty(proto.EditorSuffix) ? proto.Name : $"{proto.Name} [{proto.EditorSuffix}]";
+        Label.Text = count == 0 ? proto.Name : $"{proto.Name} ({count})";
         Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto);
 
         EnsureSetup();

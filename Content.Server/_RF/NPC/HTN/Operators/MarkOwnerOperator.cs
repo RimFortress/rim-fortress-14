@@ -22,7 +22,12 @@ public sealed partial class MarkOwnerOperator : HTNOperator
             return;
 
         var comp = _entityManager.EnsureComponent<OwnedComponent>(uid.Value);
-        comp.Owners.AddRange(control.CanControl);
+
+        foreach (var ent in control.CanControl)
+        {
+            if (!comp.Owners.Contains(ent))
+                comp.Owners.Add(ent);
+        }
     }
 }
 

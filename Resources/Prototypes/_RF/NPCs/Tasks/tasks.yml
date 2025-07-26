@@ -83,6 +83,30 @@
           targetKey: PickUpTarget
 
 - type: npcTask
+  id: TakeOwnership
+  name: Take ownership
+  maxPerformers: 1
+  overlayColor: "#075967"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  compound: TakeOwnershipCompound
+  onFinish: RfIdleCompound
+  passive: true
+  targetWhitelist:
+    components:
+      - Item
+  startPreconditions:
+    - !type:OwnedPrecondition
+      targetKey: Target
+      invert: true
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: Target
+        - !type:OwnedPrecondition
+          targetKey: Target
+
+- type: npcTask
   id: Pry
   name: Open
   maxPerformers: 1

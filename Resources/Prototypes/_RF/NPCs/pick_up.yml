@@ -55,6 +55,10 @@
           operator: !type:EquipOperator
             target: PickUpTarget
 
+        - !type:HTNPrimitiveTask
+          operator: !type:MarkOwnerOperator
+            targetKey: PickUpTarget
+
 
 - type: htnCompound
   id: PickUpAndInteractCompound

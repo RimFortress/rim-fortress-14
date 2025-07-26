@@ -158,7 +158,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         DebugTools.Assert(id == 0 || !TryGetStock(id, out _));
         DebugTools.Assert(tiles.Count > 0 && tiles.First().GridUid.IsValid());
 
-        var tilesList = new List<Vector2i>();
+        var tilesList = new HashSet<Vector2i>();
         var gridUid = tiles.First().GridUid;
 
         foreach (var tile in tiles)
@@ -176,11 +176,11 @@ public abstract class SharedStockpileSystem : EntitySystem
             _nextStockpileId++;
         }
 
-        var stock = new Stock(id, owner, gridUid, tilesList, _defaultSettings);
+        var stock = new Stock(id, owner, gridUid, tilesList, _defaultSettings.ToDictionary());
         Stockpiles.Add(stock);
 
         if (dirty)
-            RaiseNetworkEvent(new StockpileCreated(GetNetEntity(gridUid), _nextStockpileId - 1, tilesList));
+            RaiseNetworkEvent(new StockpileCreated(GetNetEntity(gridUid), _nextStockpileId - 1, tilesList.ToList()));
 
         return stock;
     }
@@ -387,7 +387,9 @@ public abstract class SharedStockpileSystem : EntitySystem
     /// </summary>
     public bool CanInsert(Stock stock, EntityUid uid)
     {
-        return MetaData(uid).EntityPrototype is { } proto && stock.CanInsert(proto);
+        return MetaData(uid).EntityPrototype is { } proto
+               && stock.CanInsert(proto)
+               && !stock.ContainsEntity(uid);
     }
 
     protected bool TryInsert(EntityUid uid, Stock stockpile, bool dirty = true)
@@ -506,26 +508,26 @@ public sealed class Stock
     /// <summary>
     /// Tiles not occupied by objects
     /// </summary>
-    public List<Vector2i> FreeTiles { get; }
+    public HashSet<Vector2i> FreeTiles { get; }
 
     /// <summary>
     /// All the tiles owned by the stockpile
     /// </summary>
     [Access(Other = AccessPermissions.ReadExecute)]
-    public List<Vector2i> Tiles => _tiles;
+    public HashSet<Vector2i> Tiles => _tiles;
 
     private readonly Dictionary<EntityUid, (EntProtoId Proto, Vector2i Tile)> _entities = new();
     private readonly Dictionary<EntProtoId, int> _prototypes = new();
     private readonly Dictionary<EntProtoId, int> _settings;
-    private readonly List<Vector2i> _tiles;
+    private readonly HashSet<Vector2i> _tiles;
 
-    public Stock(int id, EntityUid owner, EntityUid gridUid, List<Vector2i> tiles, Dictionary<EntProtoId, int> settings)
+    public Stock(int id, EntityUid owner, EntityUid gridUid, HashSet<Vector2i> tiles, Dictionary<EntProtoId, int> settings)
     {
         Id = id;
         Owner = owner;
         GridUid = gridUid;
         _tiles = tiles;
-        FreeTiles = tiles.ToList();
+        FreeTiles = tiles.ToHashSet();
         _settings = settings;
 
         foreach (var (protoId, _) in settings)
@@ -568,11 +570,12 @@ public sealed class Stock
     {
         if (!_settings.TryGetValue(protoId, out var value)
             || !_prototypes.TryGetValue(protoId, out var protoCount)
-            || value != -1 && protoCount >= value)
+            || value != -1 && protoCount >= value
+            || !FreeTiles.Remove(tile))
             return false;
 
+        _prototypes[protoId]++;
         _entities[uid] = (protoId, tile);
-        FreeTiles.Remove(tile);
         return true;
     }
 
@@ -581,8 +584,7 @@ public sealed class Stock
     /// </summary>
     public bool RemoveEntity(EntityUid uid)
     {
-        if (!_entities.ContainsKey(uid)
-            || !_entities.TryGetValue(uid, out var data)
+        if (!_entities.TryGetValue(uid, out var data)
             || !_prototypes.ContainsKey(data.Proto))
             return false;
 
@@ -608,20 +610,18 @@ public sealed class Stock
     {
         foreach (var tile in tiles1)
         {
-            if (_tiles.Contains(tile))
+            if (!_tiles.Add(tile))
                 continue;
 
-            _tiles.Add(tile);
             FreeTiles.Add(tile);
         }
     }
 
     public void AddTile(Vector2i tile)
     {
-        if (_tiles.Contains(tile))
+        if (!_tiles.Add(tile))
             return;
 
-        _tiles.Add(tile);
         FreeTiles.Add(tile);
     }
 
@@ -706,13 +706,11 @@ public sealed class Stock
     [Access(Other = AccessPermissions.Execute)]
     public bool CanInsert(EntProtoId protoId, int value = 1)
     {
-        if (!_settings.TryGetValue(protoId, out var setting))
+        if (!_settings.TryGetValue(protoId, out var setting)
+            || !_prototypes.TryGetValue(protoId, out var protoCount))
             return false;
 
-        if (!_prototypes.TryGetValue(protoId, out var protoCount) && (value <= setting || setting == -1))
-            return true;
-
-        return protoCount + value <= setting || setting == -1;
+        return (protoCount + value <= setting || setting == -1) && FreeTiles.Count >= value;
     }
 
     /// <summary>
@@ -722,5 +720,14 @@ public sealed class Stock
     public int GetSetting(EntProtoId protoId)
     {
         return _settings.GetValueOrDefault(protoId, 0);
+    }
+
+    /// <summary>
+    /// Returns the number of items of this type in the stockpile
+    /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
+    public int GetCount(EntProtoId protoId)
+    {
+        return _prototypes.GetValueOrDefault(protoId, 0);
     }
 }

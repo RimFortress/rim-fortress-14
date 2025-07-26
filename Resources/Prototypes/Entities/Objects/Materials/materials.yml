@@ -24,7 +24,7 @@
         acts: [ "Destruction" ]
   # RimFortress Start
   - type: StockpileCategory
-    category: Tool
+    category: Material
   # RimFortress End
 
 - type: entity

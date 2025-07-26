@@ -32,6 +32,31 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
     public bool SelectMode;
     public event Action<Stock>? OnStockSelected;
+    public event Action? OnStockpileUpdated;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeNetworkEvent<StockpileEntityAttached>(OnEntityAttached);
+        SubscribeNetworkEvent<StockpileEntityDetached>(OnEntityDetached);
+    }
+
+    private void OnEntityAttached(StockpileEntityAttached ev, EntitySessionEventArgs args)
+    {
+        if (ev.Id != _stockpile.SelectedStock?.Id)
+            return;
+
+        OnStockpileUpdated?.Invoke();
+    }
+
+    private void OnEntityDetached(StockpileEntityDetached ev, EntitySessionEventArgs args)
+    {
+        if (ev.Id != _stockpile.SelectedStock?.Id)
+            return;
+
+        OnStockpileUpdated?.Invoke();
+    }
 
     public void OnStateEntered(RimFortressState state)
     {
@@ -86,6 +111,11 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
     public int GetSetting(EntProtoId protoId)
     {
         return _stockpile.SelectedStock?.GetSetting(protoId) ?? 0;
+    }
+
+    public int GetCount(EntProtoId protoId)
+    {
+        return _stockpile.SelectedStock?.GetCount(protoId) ?? 0;
     }
 
     public void CreateSelection()

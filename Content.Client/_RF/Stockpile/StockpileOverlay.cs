@@ -6,7 +6,7 @@ namespace Content.Client._RF.Stockpile;
 
 public sealed class StockpileOverlay(StockpileSystem stockpile) : GridOverlay
 {
-    private const float BorderSize = 0.05f;
+    private const float BorderSize = 0.03f;
 
     private readonly Color _mainColor = Color.LightGray.WithAlpha(0.3f);
     private readonly Color _secondaryColor = Color.DarkGray.WithAlpha(0.3f);
@@ -57,6 +57,30 @@ public sealed class StockpileOverlay(StockpileSystem stockpile) : GridOverlay
                 if (!stock.Tiles.Contains(tile + Vector2i.Right))
                 {
                     var box = Box2.FromDimensions(tile + new Vector2(1f - BorderSize, 0), new Vector2(BorderSize, 1f));
+                    args.WorldHandle.DrawRect(box, _borderColor);
+                }
+
+                if (!stock.Tiles.Contains(tile + Vector2i.UpLeft))
+                {
+                    var box = Box2.FromDimensions(tile + new Vector2(0, 1f - BorderSize), new Vector2(BorderSize));
+                    args.WorldHandle.DrawRect(box, _borderColor);
+                }
+
+                if (!stock.Tiles.Contains(tile + Vector2i.UpRight))
+                {
+                    var box = Box2.FromDimensions(tile + new Vector2(1f - BorderSize), new Vector2(BorderSize));
+                    args.WorldHandle.DrawRect(box, _borderColor);
+                }
+
+                if (!stock.Tiles.Contains(tile + Vector2i.DownLeft))
+                {
+                    var box = Box2.FromDimensions(tile, new Vector2(BorderSize));
+                    args.WorldHandle.DrawRect(box, _borderColor);
+                }
+
+                if (!stock.Tiles.Contains(tile + Vector2i.DownRight))
+                {
+                    var box = Box2.FromDimensions(tile + new Vector2(1f - BorderSize, 0), new Vector2(BorderSize));
                     args.WorldHandle.DrawRect(box, _borderColor);
                 }
             }

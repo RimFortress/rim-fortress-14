@@ -1,0 +1,15 @@
+- type: htnCompound
+  id: TakeOwnershipCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Target
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            rangeKey: InteractRange
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MarkOwnerOperator
+            targetKey: Target

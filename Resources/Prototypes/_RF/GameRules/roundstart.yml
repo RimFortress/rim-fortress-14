@@ -32,6 +32,7 @@
             - id: WaterPlant
             - id: RemoveWeed
             - id: Storing
+            - id: TakeOwnership
 
 - type: entityTable
   id: BasicWorldRulesTable
