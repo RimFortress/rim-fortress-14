@@ -265,6 +265,51 @@
   name: Materials
   iconEntity: MaterialCloth
 
+# Medical
+
+- type: stockpileCategory
+  id: Medical
+  name: Medical
+  iconEntity: Brutepack
+  subCategories:
+    - Syringe
+    - Pill
+    - Medkit
+    - Medipen
+    - Surgery
+
+- type: stockpileCategory
+  id: Syringe
+  name: Syringe
+  iconEntity: Syringe
+
+- type: stockpileCategory
+  id: Pill
+  name: Pills
+  iconEntity: PillCanisterBicaridine
+
+- type: stockpileCategory
+  id: Medipen
+  name: Medipens
+  iconEntity: EmergencyMedipen
+
+- type: stockpileCategory
+  id: Medkit
+  name: Medkits
+  iconEntity: Medkit
+
+- type: stockpileCategory
+  id: Surgery
+  name: Surgery
+  iconEntity: Scalpel
+
+# Seeds
+
+- type: stockpileCategory
+  id: Seed
+  name: Seeds
+  iconEntity: WheatSeeds
+
 # Other
 
 - type: stockpileCategory

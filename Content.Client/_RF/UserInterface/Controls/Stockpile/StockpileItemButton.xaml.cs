@@ -69,7 +69,8 @@ public sealed partial class StockpileItemButton : Button
 
         Disabled = true;
 
-        Label.Text = count == 0 ? proto.Name : $"{proto.Name} ({count})";
+        Label.Text = string.IsNullOrEmpty(proto.EditorSuffix) ? proto.Name : $"{proto.Name} [{proto.EditorSuffix}]";
+        Label.Text = count == 0 ? Label.Text : $"{Label.Text} ({count})";
         Texture.Texture = _entManager.System<SpriteSystem>().Frame0(proto);
 
         EnsureSetup();

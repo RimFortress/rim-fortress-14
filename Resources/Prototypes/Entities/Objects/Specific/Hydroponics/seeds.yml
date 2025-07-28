@@ -37,6 +37,10 @@
         blacklist:
           tags:
           - Book
+    # RimFortress Start
+    - type: StockpileCategory
+      category: Seed
+    # RimFortress End
 
 - type: entity
   parent: SeedBase

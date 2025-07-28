@@ -24,6 +24,7 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye  = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private readonly IEntityManager _entManager = default!;
     [UISystemDependency] private readonly TransformSystem _xform = default!;
     [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
@@ -175,7 +176,8 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
     private bool AddTileFilter(TileRef tile)
     {
-        return !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
+        return !_entManager.IsClientSide(tile.GridUid)
+            && !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
             && !_stockpile.ContainsTile(tile.GridUid, tile.GridIndices);
     }
 

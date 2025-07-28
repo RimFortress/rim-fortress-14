@@ -8,6 +8,6 @@ namespace Content.Shared._RF.Stockpile;
 [RegisterComponent]
 public sealed partial class StockpileCategoryComponent : Component
 {
-    [DataField(required: true)]
-    public ProtoId<StockpileCategoryPrototype> Category;
+    [DataField]
+    public ProtoId<StockpileCategoryPrototype>? Category;
 }

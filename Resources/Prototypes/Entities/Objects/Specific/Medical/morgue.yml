@@ -95,6 +95,10 @@
       paper_label: !type:ContainerSlot
   - type: StaticPrice
     price: 50
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medical
+  # RimFortress End
 
 - type: entity
   id: BodyBagFolded
@@ -138,6 +142,10 @@
     solution: food
   - type: Extractable
     grindableSolutionName: food
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Trash
+  # RimFortress End
 
 - type: entity
   parent: Ash

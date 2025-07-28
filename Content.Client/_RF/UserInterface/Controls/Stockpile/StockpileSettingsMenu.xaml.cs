@@ -144,7 +144,8 @@ public sealed partial class StockpileSettingsMenu : Control
         if (category == null || !_categoryItems.TryGetValue(category, out var list))
             return;
 
-        list.Sort((x, y) => string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase));
+        list.Sort((x, y) =>
+            string.Compare(x.Name + x.EditorSuffix, y.Name + x.EditorSuffix, StringComparison.OrdinalIgnoreCase));
 
         // Add items buttons
         foreach (var proto in list)

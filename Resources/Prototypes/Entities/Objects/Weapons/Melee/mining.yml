@@ -37,7 +37,7 @@
   - type: UseDelay
   # RimFortress Start
   - type: StockpileCategory
-    category: Melee
+    category: Tool
   # RimFortress End
 
 - type: entity
@@ -68,7 +68,7 @@
         Structural: 15
   # RimFortress Start
   - type: StockpileCategory
-    category: Melee
+    category: Tool
   # RimFortress End
 
 - type: entity

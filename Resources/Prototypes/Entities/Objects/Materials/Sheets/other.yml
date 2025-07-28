@@ -124,6 +124,10 @@
     state: plasma
   - type: Stack
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetPlasma
@@ -187,6 +191,10 @@
     state: plastic
   - type: Stack
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetPlastic

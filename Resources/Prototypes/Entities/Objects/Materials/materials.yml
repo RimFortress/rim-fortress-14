@@ -70,6 +70,10 @@
     state: cardboard
   - type: Stack
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: MaterialCardboard
@@ -153,6 +157,10 @@
     state: cloth
   - type: Stack
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: MaterialCloth
@@ -268,6 +276,10 @@
   components:
   - type: Stack
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: MaterialWoodPlank
@@ -614,6 +626,10 @@
   components:
   - type: Stack
     count: 25
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: MaterialWebSilk

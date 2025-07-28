@@ -139,11 +139,12 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         foreach (var proto in _prototype.EnumeratePrototypes<EntityPrototype>())
         {
-            if (!proto.TryGetComponent(out StockpileCategoryComponent? comp, EntityManager.ComponentFactory))
+            if (!proto.TryGetComponent(out StockpileCategoryComponent? comp, EntityManager.ComponentFactory)
+                || comp.Category == null)
                 continue;
 
-            _categoryEntities.TryAdd(comp.Category, new());
-            _categoryEntities[comp.Category].Add(proto);
+            _categoryEntities.TryAdd(comp.Category.Value, new());
+            _categoryEntities[comp.Category.Value].Add(proto);
             _defaultSettings.Add(proto, 0);
         }
     }

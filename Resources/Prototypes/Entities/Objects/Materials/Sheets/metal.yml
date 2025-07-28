@@ -88,6 +88,10 @@
   - type: Stack
     stackType: Steel
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetSteel
@@ -109,6 +113,10 @@
   - type: Stack
     lingering: true
     count: 0
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetMetalBase
@@ -161,6 +169,10 @@
   - type: Stack
     stackType: Brass
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetBrass
@@ -224,6 +236,10 @@
   - type: Stack
     stackType: Plasteel
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetPlasteel
