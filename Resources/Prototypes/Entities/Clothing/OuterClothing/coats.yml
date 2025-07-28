@@ -159,6 +159,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLab]
   id: ClothingOuterCoatLabOpened
   name: lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -179,6 +184,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLabChem]
   id: ClothingOuterCoatLabChemOpened
   name: chemist lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -199,6 +209,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLabViro]
   id: ClothingOuterCoatLabViroOpened
   name: virologist lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -219,6 +234,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLabGene]
   id: ClothingOuterCoatLabGeneOpened
   name: geneticist lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -241,6 +261,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLabCmo]
   id: ClothingOuterCoatLabCmoOpened
   name: chief medical officer's lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -261,6 +286,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatRnd]
   id: ClothingOuterCoatRndOpened
   name: scientist lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -281,6 +311,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatRobo]
   id: ClothingOuterCoatRoboOpened
   name: roboticist lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -302,6 +337,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatRD]
   id: ClothingOuterCoatRDOpened
   name: research director lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageBase
@@ -435,6 +475,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLabSeniorResearcher]
   id: ClothingOuterCoatLabSeniorResearcherOpened
   name: senior researcher lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageFoldableBase
@@ -455,6 +500,11 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatLabSeniorPhysician]
   id: ClothingOuterCoatLabSeniorPhysicianOpened
   name: senior physician lab coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: ClothingOuterStorageBase
@@ -482,3 +532,8 @@
   parent: [ClothingOuterStorageFoldableBaseOpened, ClothingOuterCoatExpensive]
   id: ClothingOuterCoatExpensiveOpened
   name: expensive coat
+  # RimFortress Start
+  components:
+  - type: StockpileCategory
+    category: null
+  # RimFortress End

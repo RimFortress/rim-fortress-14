@@ -373,6 +373,8 @@
     - !type:StorableFilter
       invert: true
     - !type:StoredFilter
+    - !type:InventoryFilter
+    - !type:InHandsFilter
   considerations:
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve

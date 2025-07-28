@@ -26,6 +26,10 @@
   - type: GuideHelp
     guides:
     - Radio
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingEars
+  # RimFortress End
 
 - type: entity
   parent: ClothingHeadset

@@ -15,6 +15,9 @@ public sealed partial class StockpileSettingsMenu : Control
 
     private const string StockLabelPrefix = "stockpile-label-prefix";
 
+    [ValidatePrototypeId<EntityCategoryPrototype>]
+    private readonly ProtoId<EntityCategoryPrototype> _doNotMapCategory = "DoNotMap";
+
     private readonly StockpileUiController _stockpileController;
 
     private StockpileCategoryPrototype? _currentCategory;
@@ -62,10 +65,13 @@ public sealed partial class StockpileSettingsMenu : Control
     {
         _categoryItems.Clear();
 
+        var doNotMap = _prototype.Index(_doNotMapCategory);
+
         foreach (var prototype in _prototype.EnumeratePrototypes<EntityPrototype>())
         {
             if (prototype.Abstract
                 || prototype.HideSpawnMenu
+                || prototype.Categories.Contains(doNotMap)
                 || !prototype.TryGetComponent(out StockpileCategoryComponent? comp, _factory)
                 || !_prototype.TryIndex(comp.Category, out var category))
                 continue;

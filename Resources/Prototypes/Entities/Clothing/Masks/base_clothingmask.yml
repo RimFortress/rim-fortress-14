@@ -11,6 +11,10 @@
     slots: [mask]
   - type: StaticPrice
     price: 25
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingMask
+  # RimFortress End
 
 - type: entity
   abstract: true

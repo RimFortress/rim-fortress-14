@@ -29,6 +29,10 @@
     tags:
     - ClothMade
     - WhitelistChameleon
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingNeck
+  # RimFortress End
 
 - type: entity
   abstract: true

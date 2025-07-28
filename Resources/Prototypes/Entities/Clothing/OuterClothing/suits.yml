@@ -299,3 +299,7 @@
     coolingCoefficient: 0.01
   - type: ToggleableClothing
     clothingPrototype: ClothingHeadHelmetHardsuitCarp
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End

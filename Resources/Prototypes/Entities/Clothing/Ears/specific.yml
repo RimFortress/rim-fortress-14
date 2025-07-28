@@ -18,3 +18,7 @@
       interfaces:
         enum.ChameleonUiKey.Key:
           type: ChameleonBoundUserInterface
+    # RimFortress Start
+    - type: StockpileCategory
+      category: ClothingEars
+    # RimFortress End

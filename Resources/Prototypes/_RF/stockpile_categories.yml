@@ -310,6 +310,80 @@
   name: Seeds
   iconEntity: WheatSeeds
 
+# Clothing
+
+- type: stockpileCategory
+  id: Clothing
+  name: Clothing
+  iconEntity: ClothingUniformJumpsuitColorWhite
+  subCategories:
+    - ClothingBack
+    - ClothingBelt
+    - ClothingEars
+    - ClothingEyes
+    - ClothingHands
+    - ClothingHead
+    - ClothingMask
+    - ClothingNeck
+    - ClothingOuter
+    - ClothingShoes
+    - ClothingUniform
+
+- type: stockpileCategory
+  id: ClothingBack
+  name: Back
+  iconEntity: ClothingBackpack
+
+- type: stockpileCategory
+  id: ClothingBelt
+  name: Belt
+  iconEntity: ClothingBeltUtility
+
+- type: stockpileCategory
+  id: ClothingNeck
+  name: Belt
+  iconEntity: ClothingNeckScarfStripedLightBlue
+
+- type: stockpileCategory
+  id: ClothingEars
+  name: Ears
+  iconEntity: ClothingHeadsetMining
+
+- type: stockpileCategory
+  id: ClothingEyes
+  name: Eyes
+  iconEntity: ClothingEyesGlassesSunglasses
+
+- type: stockpileCategory
+  id: ClothingHands
+  name: Hands
+  iconEntity: ClothingHandsGlovesLeather
+
+- type: stockpileCategory
+  id: ClothingHead
+  name: Head
+  iconEntity: ClothingHeadHatBeretMerc
+
+- type: stockpileCategory
+  id: ClothingMask
+  name: Masks
+  iconEntity: ClothingMaskGas
+
+- type: stockpileCategory
+  id: ClothingOuter
+  name: Outer
+  iconEntity: ClothingOuterHardsuitBasic
+
+- type: stockpileCategory
+  id: ClothingShoes
+  name: Shoes
+  iconEntity: ClothingShoesBootsSalvage
+
+- type: stockpileCategory
+  id: ClothingUniform
+  name: Uniform
+  iconEntity: ClothingUniformJumpskirtColorWhite
+
 # Other
 
 - type: stockpileCategory
