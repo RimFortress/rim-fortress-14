@@ -2,8 +2,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
+using Content.Shared.Prototypes;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
@@ -16,12 +18,11 @@ public abstract class SharedStockpileSystem : EntitySystem
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly INetManager _net = default!;
 
     protected readonly List<Stock> Stockpiles = new();
 
-    private readonly Dictionary<ProtoId<StockpileCategoryPrototype>, List<EntProtoId>> _categoryEntities = new();
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
-
     private int _nextStockpileId = 1;
 
     /// <inheritdoc/>
@@ -135,16 +136,12 @@ public abstract class SharedStockpileSystem : EntitySystem
     private void ReloadPrototypes()
     {
         _defaultSettings.Clear();
-        _categoryEntities.Clear();
 
         foreach (var proto in _prototype.EnumeratePrototypes<EntityPrototype>())
         {
-            if (!proto.TryGetComponent(out StockpileCategoryComponent? comp, EntityManager.ComponentFactory)
-                || comp.Category == null)
+            if (!proto.HasComponent<StockpileCategoryComponent>(EntityManager.ComponentFactory))
                 continue;
 
-            _categoryEntities.TryAdd(comp.Category.Value, new());
-            _categoryEntities[comp.Category.Value].Add(proto);
             _defaultSettings.Add(proto, 0);
         }
     }
@@ -177,7 +174,14 @@ public abstract class SharedStockpileSystem : EntitySystem
             _nextStockpileId++;
         }
 
-        var stock = new Stock(id, owner, gridUid, tilesList, _defaultSettings.ToDictionary());
+        var stock = new Stock(id, owner, gridUid, tilesList, _defaultSettings);
+
+        if (_net.IsServer)
+        {
+            stock.OnEntityRemoved += uid =>
+                RaiseNetworkEvent(new StockpileEntityDetached(stock.Id, GetNetEntity(uid)));
+        }
+
         Stockpiles.Add(stock);
 
         if (dirty)
@@ -517,19 +521,26 @@ public sealed class Stock
     [Access(Other = AccessPermissions.ReadExecute)]
     public HashSet<Vector2i> Tiles => _tiles;
 
+    public event Action<EntityUid>? OnEntityRemoved;
+
     private readonly Dictionary<EntityUid, (EntProtoId Proto, Vector2i Tile)> _entities = new();
     private readonly Dictionary<EntProtoId, int> _prototypes = new();
-    private readonly Dictionary<EntProtoId, int> _settings;
+    private readonly Dictionary<EntProtoId, int> _settings = new();
+    private readonly Dictionary<EntProtoId, int> _defaultSettings;
     private readonly HashSet<Vector2i> _tiles;
 
-    public Stock(int id, EntityUid owner, EntityUid gridUid, HashSet<Vector2i> tiles, Dictionary<EntProtoId, int> settings)
+    public Stock(int id,
+        EntityUid owner,
+        EntityUid gridUid,
+        HashSet<Vector2i> tiles,
+        Dictionary<EntProtoId, int> settings)
     {
         Id = id;
         Owner = owner;
         GridUid = gridUid;
         _tiles = tiles;
         FreeTiles = tiles.ToHashSet();
-        _settings = settings;
+        _defaultSettings = settings;
 
         foreach (var (protoId, _) in settings)
         {
@@ -544,9 +555,13 @@ public sealed class Stock
     /// <param name="value">Maximum number of items that can be in stockpile</param>
     public void SetSetting(EntProtoId protoId, int value)
     {
-        _settings[protoId] = value;
+        if (!_defaultSettings.ContainsKey(protoId))
+            return;
 
-        if (!_prototypes.TryGetValue(protoId, out var count) || count <= value || count == -1)
+        _settings[protoId] = value;
+        var count = GetCount(protoId);
+
+        if (count <= value || value == -1)
             return;
 
         var i = count - value;
@@ -569,9 +584,9 @@ public sealed class Stock
     /// </summary>
     public bool TryAddEntity(EntityUid uid, EntProtoId protoId, Vector2i tile)
     {
-        if (!_settings.TryGetValue(protoId, out var value)
-            || !_prototypes.TryGetValue(protoId, out var protoCount)
-            || value != -1 && protoCount >= value
+        var setting = GetSetting(protoId);
+
+        if (setting != -1 && GetCount(protoId) >= setting
             || !FreeTiles.Remove(tile))
             return false;
 
@@ -592,6 +607,7 @@ public sealed class Stock
         _prototypes[data.Proto]--;
         _entities.Remove(uid);
         FreeTiles.Add(data.Tile);
+        OnEntityRemoved?.Invoke(uid);
         return true;
     }
 
@@ -707,11 +723,9 @@ public sealed class Stock
     [Access(Other = AccessPermissions.Execute)]
     public bool CanInsert(EntProtoId protoId, int value = 1)
     {
-        if (!_settings.TryGetValue(protoId, out var setting)
-            || !_prototypes.TryGetValue(protoId, out var protoCount))
-            return false;
+        var setting = GetSetting(protoId);
 
-        return (protoCount + value <= setting || setting == -1) && FreeTiles.Count >= value;
+        return (GetCount(protoId) + value <= setting || setting == -1) && FreeTiles.Count >= value;
     }
 
     /// <summary>
@@ -720,7 +734,9 @@ public sealed class Stock
     [Access(Other = AccessPermissions.Execute)]
     public int GetSetting(EntProtoId protoId)
     {
-        return _settings.GetValueOrDefault(protoId, 0);
+        return _settings.TryGetValue(protoId, out var value)
+            ? value
+            :_defaultSettings.GetValueOrDefault(protoId, 0);
     }
 
     /// <summary>

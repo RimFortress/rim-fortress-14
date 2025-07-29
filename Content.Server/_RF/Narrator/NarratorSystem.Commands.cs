@@ -31,7 +31,7 @@ public partial class NarratorSystem
             return;
         }
 
-        if (!_player.TryGetSessionByUsername(args[1], out var session)
+        if (!_player.TryGetSessionByUsername(args[0], out var session)
             || session.AttachedEntity is not { } player)
             return;
 

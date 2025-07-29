@@ -134,8 +134,6 @@ public sealed partial class StockpileSettingsMenu : Control
 
             if (GetCategorySettings(cat) is { } setting)
                 button.MaxValue = setting;
-            else
-                button.ItemCountBox.Visible = false;
 
             button.OnPressed += _ =>
             {
@@ -229,13 +227,18 @@ public sealed partial class StockpileSettingsMenu : Control
 
         foreach (var item in items)
         {
+            var setting = _stockpileController.GetSetting(item);
+
+            if (setting != -1 && setting != 0)
+                return null;
+
             if (prevSettings == null)
             {
-                prevSettings = _stockpileController.GetSetting(item);
+                prevSettings = setting;
                 continue;
             }
 
-            if (prevSettings != _stockpileController.GetSetting(item))
+            if (prevSettings != setting)
                 return null;
         }
 

@@ -12,23 +12,17 @@
             <controls:VLine Thickness="2" Margin="2"
                             Color="{x:Static style:StyleNano.PanelDark}"/>
             <ui:RfHighlightedContainer SetSize="50 50">
-                <TextureRect Name="Texture" Access="Public"
-                             SetSize="48 48" Stretch="KeepAspectCentered"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <LayeredTextureRect Name="Texture" Access="Public"
+                                    SetSize="48 48" Stretch="KeepAspectCentered"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </ui:RfHighlightedContainer>
             <controls:VLine Margin="5 2" Thickness="3"
                             Color="{x:Static style:StyleNano.NanoGold}"/>
             <Label Name="Label" Align="Left" VAlign="Fill"
                    ClipText="True" HorizontalExpand="True"/>
             <BoxContainer Orientation="Horizontal" HorizontalAlignment="Right">
-                <BoxContainer Name="ItemCountBox" Access="Public" Orientation="Horizontal">
-                    <Button Name="Plus" Margin="2"
-                            Text="+" StyleClasses="OpenRight"/>
-                    <LineEdit Name="CountLine" Text="0" Margin="0 3" MinWidth="50"/>
-                    <Button Name="Minus" Margin="2"
-                            Text="–" StyleClasses="OpenLeft"/>
-                </BoxContainer>
-                <CheckBox Name="UnlimitedCheck" Margin="0 0 3 0"
+                <controls:IntCounter Name="Counter" Access="Public" MinValue="0"/>
+                <CheckBox Name="UnlimitedCheck" Access="Public" Margin="0 0 3 0" TrackingTooltip="True"
                           ToolTip="{Loc 'stockpile-settings-menu-unlimited-checkbox-disabled-tooltip'}"/>
             </BoxContainer>
         </BoxContainer>
