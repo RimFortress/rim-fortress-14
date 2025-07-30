@@ -182,11 +182,14 @@
           operator: !type:MoveToOperator
             pathfindInPlanning: true
             rangeKey: MoveToCloseRange
-            removeKeyOnFinish: true
+            removeKeyOnFinish: false
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MovePulledOperator
 
         - !type:HTNPrimitiveTask
           operator: !type:BuckleOperator
             targetKey: Target
             buckleKey: BedTarget
         - !type:HTNPrimitiveTask
-          operator: !type:UnPullOperator
+          operator: !type:UnPullPullingOperator
