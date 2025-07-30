@@ -113,6 +113,10 @@
     stateDoorClosed: generic_door
   - type: StaticPrice
     price: 75
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Closet
+  # RimFortress End
 
 # steel closet base (that can be constructed/deconstructed)
 - type: entity

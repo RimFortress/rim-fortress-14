@@ -17,8 +17,8 @@ public sealed class StockpileSystem : SharedStockpileSystem
         SubscribeNetworkEvent<StockpileDeleted>(OnDeleted);
         SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
         SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
-        SubscribeNetworkEvent<StockpileSettingUpdate>(OnSettingUpdate);
-        SubscribeNetworkEvent<StockpileSettingsUpdate>(OnSettingsUpdate);
+        SubscribeNetworkEvent<StockpileSettingUpdated>(OnSettingUpdate);
+        SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
         SubscribeNetworkEvent<StockpileEntityAttached>(OnAttachedEntity);
         SubscribeNetworkEvent<StockpileEntityDetached>(OnDetachedEntity);
 

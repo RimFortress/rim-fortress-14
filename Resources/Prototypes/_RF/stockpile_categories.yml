@@ -384,6 +384,32 @@
   name: Uniform
   iconEntity: ClothingUniformJumpskirtColorWhite
 
+# Structures
+
+- type: stockpileCategory
+  id: Structure
+  name: Structures
+  iconEntity: WeldingFuelTankHighCapacity
+  subCategories:
+    - Closet
+    - Crate
+    - Tank
+
+- type: stockpileCategory
+  id: Closet
+  name: Closets
+  iconEntity: ClosetMaintenance
+
+- type: stockpileCategory
+  id: Crate
+  name: Crates
+  iconEntity: CrateGenericSteel
+
+- type: stockpileCategory
+  id: Tank
+  name: Tanks
+  iconEntity: WaterTankFull
+
 # Other
 
 - type: stockpileCategory

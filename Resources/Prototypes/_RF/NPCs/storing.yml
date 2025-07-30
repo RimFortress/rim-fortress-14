@@ -2,6 +2,32 @@
   id: StoringCompound
   branches:
     - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+      tasks:
+        - !type:HTNCompoundTask
+          task: StoringItemCompound
+
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+          invert: true
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Pullable
+      tasks:
+        - !type:HTNCompoundTask
+          task: StoringObjectCompound
+
+- type: htnCompound
+  id: StoringItemCompound
+  branches:
+    - preconditions:
         - !type:ActiveHandEntityIsPrecondition
           targetKey: PickUpTarget
           invert: true
@@ -11,6 +37,23 @@
       tasks:
         - !type:HTNCompoundTask
           task: PickUpCompound
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:FindStoringContainerOperator
+            targetKey: PickUpTarget
+            resultKey: Container
+            rangeKey: InteractRange
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Container
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+        - !type:HTNCompoundTask
+          task: ContainerStoringCompound
 
     - tasks:
         - !type:HTNPrimitiveTask
@@ -24,3 +67,86 @@
             removeKeyOnFinish: false
         - !type:HTNPrimitiveTask
           operator: !type:DropAtOperator
+
+
+- type: htnCompound
+  id: ContainerStoringCompound
+  branches:
+    - preconditions:
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:StorageClosedPrecondition
+          targetKey: Container
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractActivateOperator
+            targetKey: Container
+
+    - preconditions:
+        - !type:StorageClosedPrecondition
+          targetKey: Container
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DropAtOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractActivateOperator
+            targetKey: Container
+
+
+- type: htnCompound
+  id: StoringObjectCompound
+  branches:
+    - preconditions:
+        - !type:PulledEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: PullCompound
+
+    # Open the container before dragging to avoid hitting others
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: EntityStorage
+        - !type:StorageClosedPrecondition
+          targetKey: PickUpTarget
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractActivateOperator
+            targetKey: PickUpTarget
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:FindStoringPlaceOperator
+            targetKey: PickUpTarget
+            rangeKey: MoveToCloseRange
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+        - !type:HTNPrimitiveTask
+          operator: !type:MovePulledOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullPullingOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:HasComponentPrecondition
+                  targetKey: PickUpTarget
+                  components:
+                    - type: EntityStorage
+                - !type:StorageClosedPrecondition
+                  targetKey: Container
+                  invert: true
+              operator: !type:InteractActivateOperator
+                targetKey: PickUpTarget

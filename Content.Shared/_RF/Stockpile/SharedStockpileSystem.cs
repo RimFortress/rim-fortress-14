@@ -14,9 +14,9 @@ namespace Content.Shared._RF.Stockpile;
 
 public abstract class SharedStockpileSystem : EntitySystem
 {
-    [Dependency] private readonly SharedTransformSystem _xform = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] protected readonly SharedTransformSystem Xform = default!;
+    [Dependency] protected readonly SharedMapSystem Map = default!;
+    [Dependency] protected readonly TurfSystem Turf = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly INetManager _net = default!;
 
@@ -37,6 +37,8 @@ public abstract class SharedStockpileSystem : EntitySystem
         ReloadPrototypes();
     }
 
+    #region Events
+
     protected void OnCreated(StockpileCreated ev, EntitySessionEventArgs args)
     {
         var gridUid = GetEntity(ev.GridUid);
@@ -50,7 +52,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         foreach (var ind in ev.Tiles)
         {
-            if (_map.TryGetTileRef(gridUid, grid, ind, out var tileRef))
+            if (Map.TryGetTileRef(gridUid, grid, ind, out var tileRef))
                 tileRefs.Add(tileRef);
         }
 
@@ -76,7 +78,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         foreach (var ind in ev.Tiles)
         {
-            if (_map.TryGetTileRef(stock.GridUid, grid, ind, out var tileRef))
+            if (Map.TryGetTileRef(stock.GridUid, grid, ind, out var tileRef))
                 tileRefs.Add(tileRef);
         }
 
@@ -94,14 +96,14 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         foreach (var ind in ev.Tiles)
         {
-            if (_map.TryGetTileRef(stock.GridUid, grid, ind, out var tileRef))
+            if (Map.TryGetTileRef(stock.GridUid, grid, ind, out var tileRef))
                 tileRefs.Add(tileRef);
         }
 
         RemoveTiles(tileRefs, stock, false);
     }
 
-    protected void OnSettingUpdate(StockpileSettingUpdate ev, EntitySessionEventArgs args)
+    protected void OnSettingUpdate(StockpileSettingUpdated ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
@@ -109,7 +111,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         SetSetting(ev.ProtoId, ev.Value, stock, false);
     }
 
-    protected void OnSettingsUpdate(StockpileSettingsUpdate ev, EntitySessionEventArgs args)
+    protected void OnSettingsUpdate(StockpileSettingsUpdated ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
@@ -122,7 +124,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
 
-        TryInsert(GetEntity(ev.Uid), stock, false);
+        AttachEntity(GetEntity(ev.Uid), stock, false);
     }
 
     protected void OnDetachedEntity(StockpileEntityDetached ev, EntitySessionEventArgs args)
@@ -132,6 +134,8 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         DetachEntity(GetEntity(ev.Uid), stock, false);
     }
+
+    #endregion
 
     private void ReloadPrototypes()
     {
@@ -161,7 +165,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         foreach (var tile in tiles)
         {
-            if (!ContainsTile(tile) && !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            if (!ContainsTile(tile) && !Turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
                 tilesList.Add(tile.GridIndices);
         }
 
@@ -210,7 +214,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 
         foreach (var tile in tileRefs)
         {
-            if (_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
+            if (Turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
                 || ContainsTile(tile.GridUid, tile.GridIndices))
                 continue;
 
@@ -291,7 +295,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         stock.SetSetting(protoId, value);
 
         if (dirty)
-            RaiseNetworkEvent(new StockpileSettingUpdate(stock.Id, protoId, value));
+            RaiseNetworkEvent(new StockpileSettingUpdated(stock.Id, protoId, value));
     }
 
     public void SetSetting(Dictionary<EntProtoId, int> settings, Stock stock, bool dirty = true)
@@ -302,7 +306,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         }
 
         if (dirty)
-            RaiseNetworkEvent(new StockpileSettingsUpdate(stock.Id, settings));
+            RaiseNetworkEvent(new StockpileSettingsUpdated(stock.Id, settings));
     }
 
     /// <summary>
@@ -350,9 +354,9 @@ public abstract class SharedStockpileSystem : EntitySystem
     {
         stockpile = null;
 
-        if (_xform.GetGrid(uid) is not { } gridUid
+        if (Xform.GetGrid(uid) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid)
-            || !_map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef))
+            || !Map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef))
             return false;
 
         return TryGetStock(tileRef, out stockpile);
@@ -363,9 +367,9 @@ public abstract class SharedStockpileSystem : EntitySystem
         stockpile = null;
 
         if (!coords.EntityId.IsValid() // weh
-            || _xform.GetGrid(coords) is not { } gridUid
+            || Xform.GetGrid(coords) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid)
-            || !_map.TryGetTileRef(gridUid, grid, coords, out var tileRef))
+            || !Map.TryGetTileRef(gridUid, grid, coords, out var tileRef))
             return false;
 
         return TryGetStock(tileRef, out stockpile);
@@ -397,38 +401,31 @@ public abstract class SharedStockpileSystem : EntitySystem
                && !stock.ContainsEntity(uid);
     }
 
-    protected bool TryInsert(EntityUid uid, Stock stockpile, bool dirty = true)
+    protected bool AttachEntity(EntityUid uid, Stock stock, bool dirty = true)
     {
-        if (_xform.GetGrid(uid) is not { } gridUid
+        if (Xform.GetGrid(uid) is not { } gridUid
+            || stock.GridUid != gridUid
             || !TryComp(gridUid, out MapGridComponent? grid)
-            || !_map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef)
-            || _turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
-            || MetaData(uid).EntityPrototype is not { } proto)
-            return false;
-
-        foreach (var stock in Stockpiles)
-        {
-            DetachEntity(uid, stock, dirty);
-        }
-
-        if (!stockpile.TryAddEntity(uid, proto, tileRef.GridIndices))
+            || !Map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef)
+            || MetaData(uid).EntityPrototype is not { } proto
+            || !stock.TryAddEntity(uid, proto, tileRef.GridIndices))
             return false;
 
         if (dirty)
-            RaiseNetworkEvent(new StockpileEntityAttached(stockpile.Id, GetNetEntity(uid)));
+            RaiseNetworkEvent(new StockpileEntityAttached(stock.Id, GetNetEntity(uid)));
 
         return true;
     }
 
-    protected void DetachEntity(EntityUid uid, Stock stock, bool dirty = true)
+    protected bool DetachEntity(EntityUid uid, Stock stock, bool dirty = true)
     {
-        if (!stock.ContainsEntity(uid))
-            return;
-
-        stock.RemoveEntity(uid);
+        if (!stock.RemoveEntity(uid))
+            return false;
 
         if (dirty)
             RaiseNetworkEvent(new StockpileEntityDetached(stock.Id, GetNetEntity(uid)));
+
+        return true;
     }
 }
 
@@ -461,7 +458,7 @@ public sealed class StockpileTileRemoved(int id, List<Vector2i> tiles) : EntityE
 }
 
 [Serializable, NetSerializable]
-public sealed class StockpileSettingUpdate(int id, EntProtoId protoId, int value) : EntityEventArgs
+public sealed class StockpileSettingUpdated(int id, EntProtoId protoId, int value) : EntityEventArgs
 {
     public int Id = id;
     public EntProtoId ProtoId = protoId;
@@ -469,7 +466,7 @@ public sealed class StockpileSettingUpdate(int id, EntProtoId protoId, int value
 }
 
 [Serializable, NetSerializable]
-public sealed class StockpileSettingsUpdate(int id, Dictionary<EntProtoId, int> settings) : EntityEventArgs
+public sealed class StockpileSettingsUpdated(int id, Dictionary<EntProtoId, int> settings) : EntityEventArgs
 {
     public int Id = id;
     public Dictionary<EntProtoId, int> Settings = settings;
@@ -487,264 +484,4 @@ public sealed class StockpileEntityDetached(int id, NetEntity uid) : EntityEvent
 {
     public int Id = id;
     public NetEntity Uid = uid;
-}
-
-/// <summary>
-/// Object of stockpile of items
-/// </summary>
-[Access(typeof(SharedStockpileSystem))]
-public sealed class Stock
-{
-    /// <summary>
-    /// Unique stockpile id
-    /// </summary>
-    public int Id { get; }
-
-    /// <summary>
-    /// The owner of the stockpile, who can change it
-    /// </summary>
-    public readonly EntityUid Owner;
-
-    /// <summary>
-    /// The grid on which the stockpile is located
-    /// </summary>
-    public EntityUid GridUid { get; }
-
-    /// <summary>
-    /// Tiles not occupied by objects
-    /// </summary>
-    public HashSet<Vector2i> FreeTiles { get; }
-
-    /// <summary>
-    /// All the tiles owned by the stockpile
-    /// </summary>
-    [Access(Other = AccessPermissions.ReadExecute)]
-    public HashSet<Vector2i> Tiles => _tiles;
-
-    public event Action<EntityUid>? OnEntityRemoved;
-
-    private readonly Dictionary<EntityUid, (EntProtoId Proto, Vector2i Tile)> _entities = new();
-    private readonly Dictionary<EntProtoId, int> _prototypes = new();
-    private readonly Dictionary<EntProtoId, int> _settings = new();
-    private readonly Dictionary<EntProtoId, int> _defaultSettings;
-    private readonly HashSet<Vector2i> _tiles;
-
-    public Stock(int id,
-        EntityUid owner,
-        EntityUid gridUid,
-        HashSet<Vector2i> tiles,
-        Dictionary<EntProtoId, int> settings)
-    {
-        Id = id;
-        Owner = owner;
-        GridUid = gridUid;
-        _tiles = tiles;
-        FreeTiles = tiles.ToHashSet();
-        _defaultSettings = settings;
-
-        foreach (var (protoId, _) in settings)
-        {
-            _prototypes[protoId] = 0;
-        }
-    }
-
-    /// <summary>
-    /// Set the maximum number of items of this type in the stockpile
-    /// </summary>
-    /// <param name="protoId">Item prototype</param>
-    /// <param name="value">Maximum number of items that can be in stockpile</param>
-    public void SetSetting(EntProtoId protoId, int value)
-    {
-        if (!_defaultSettings.ContainsKey(protoId))
-            return;
-
-        _settings[protoId] = value;
-        var count = GetCount(protoId);
-
-        if (count <= value || value == -1)
-            return;
-
-        var i = count - value;
-
-        foreach (var (uid, (proto, _)) in _entities.ToList())
-        {
-            if (proto != protoId)
-                continue;
-
-            RemoveEntity(uid);
-            i--;
-
-            if (i == 0)
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Tries to add an entity to a stockpile
-    /// </summary>
-    public bool TryAddEntity(EntityUid uid, EntProtoId protoId, Vector2i tile)
-    {
-        var setting = GetSetting(protoId);
-
-        if (setting != -1 && GetCount(protoId) >= setting
-            || !FreeTiles.Remove(tile))
-            return false;
-
-        _prototypes[protoId]++;
-        _entities[uid] = (protoId, tile);
-        return true;
-    }
-
-    /// <summary>
-    /// Deletes an entity from the stockpile
-    /// </summary>
-    public bool RemoveEntity(EntityUid uid)
-    {
-        if (!_entities.TryGetValue(uid, out var data)
-            || !_prototypes.ContainsKey(data.Proto))
-            return false;
-
-        _prototypes[data.Proto]--;
-        _entities.Remove(uid);
-        FreeTiles.Add(data.Tile);
-        OnEntityRemoved?.Invoke(uid);
-        return true;
-    }
-
-    /// <summary>
-    /// Returns true if the stockpile contains the given entity
-    /// </summary>
-    [Access(Other = AccessPermissions.Execute)]
-    public bool ContainsEntity(EntityUid uid)
-    {
-        return _entities.ContainsKey(uid);
-    }
-
-    /// <summary>
-    /// Expands the stockpile with the given tiles
-    /// </summary>
-    public void AddTiles(List<Vector2i> tiles1)
-    {
-        foreach (var tile in tiles1)
-        {
-            if (!_tiles.Add(tile))
-                continue;
-
-            FreeTiles.Add(tile);
-        }
-    }
-
-    public void AddTile(Vector2i tile)
-    {
-        if (!_tiles.Add(tile))
-            return;
-
-        FreeTiles.Add(tile);
-    }
-
-    /// <summary>
-    /// Removes the given tiles from the stockpile
-    /// </summary>
-    public void RemoveTiles(List<Vector2i> removeTiles)
-    {
-        foreach (var tile in removeTiles)
-        {
-            _tiles.Remove(tile);
-            FreeTiles.Remove(tile);
-        }
-
-        foreach (var (uid, (_, tile)) in _entities.ToList())
-        {
-            if (removeTiles.Contains(tile))
-                RemoveEntity(uid);
-        }
-    }
-
-    /// <summary>
-    /// Removes the given tile from the stockpile
-    /// </summary>
-    public void RemoveTile(Vector2i tile)
-    {
-        _tiles.Remove(tile);
-        FreeTiles.Remove(tile);
-
-        foreach (var (uid, (_, ind)) in _entities.ToList())
-        {
-            if (tile == ind)
-                RemoveEntity(uid);
-        }
-    }
-
-    /// <summary>
-    /// Returns true if the given tile is a part of a stockpile
-    /// </summary>
-    [Access(Other = AccessPermissions.Execute)]
-    public bool ContainsTile(Vector2i tileInd)
-    {
-        return _tiles.Contains(tileInd);
-    }
-
-    [Access(Other = AccessPermissions.Execute)]
-    public bool IsValid()
-    {
-        return _tiles.Count > 0;
-    }
-
-    /// <summary>
-    /// Returns true if at least one tile from the list is connected to the stockpile
-    /// </summary>
-    public bool ConnectedTo(List<Vector2i> tiles1)
-    {
-        var directions = new[] { Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down };
-        var queue = new Queue<Vector2i>();
-
-        queue.Enqueue(_tiles.First());
-
-        while (queue.TryDequeue(out var tile))
-        {
-            foreach (var dir in directions)
-            {
-                var newDir = tile + dir;
-
-                if (tiles1.Contains(newDir))
-                    return true;
-
-                if (tiles1.Contains(newDir))
-                    queue.Enqueue(newDir);
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Returns true if there is space in the stockpile for the given number of items
-    /// </summary>
-    [Access(Other = AccessPermissions.Execute)]
-    public bool CanInsert(EntProtoId protoId, int value = 1)
-    {
-        var setting = GetSetting(protoId);
-
-        return (GetCount(protoId) + value <= setting || setting == -1) && FreeTiles.Count >= value;
-    }
-
-    /// <summary>
-    /// Returns the maximum number of items of this type that can be in stockpile
-    /// </summary>
-    [Access(Other = AccessPermissions.Execute)]
-    public int GetSetting(EntProtoId protoId)
-    {
-        return _settings.TryGetValue(protoId, out var value)
-            ? value
-            :_defaultSettings.GetValueOrDefault(protoId, 0);
-    }
-
-    /// <summary>
-    /// Returns the number of items of this type in the stockpile
-    /// </summary>
-    [Access(Other = AccessPermissions.Execute)]
-    public int GetCount(EntProtoId protoId)
-    {
-        return _prototypes.GetValueOrDefault(protoId, 0);
-    }
 }

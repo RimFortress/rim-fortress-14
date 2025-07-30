@@ -431,11 +431,12 @@
   onFinish: RfIdleCompound
   targetKey: PickUpTarget
   tempKeys:
-    - PickUpTarget
+    - Container
   targetsQuery: StoringTaskTarget
   targetWhitelist:
     components:
       - Item
+      - Pullable
   finishPreconditions:
     - !type:OrPrecondition
       preconditions:
@@ -443,3 +444,6 @@
           targetKey: PickUpTarget
         - !type:EntityDeletedPrecondition
           key: PickUpTarget
+    - !type:PulledEntityIsPrecondition
+      targetKey: PickUpTarget
+      invert: true

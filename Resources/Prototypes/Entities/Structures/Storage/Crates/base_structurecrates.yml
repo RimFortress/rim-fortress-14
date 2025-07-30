@@ -94,6 +94,10 @@
     containers:
       - entity_storage
   - type: RequireProjectileTarget
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Crate
+  # RimFortress End
 
 - type: entity
   parent: CrateGeneric
