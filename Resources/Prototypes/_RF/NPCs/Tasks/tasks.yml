@@ -138,6 +138,8 @@
   id: Build
   name: Build
   maxPerformers: 1
+  unionPerformersWith:
+    - Deconstruct
   overlayColor: "#FFFF00"
   verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
   compound: BuildCompound
@@ -157,13 +159,12 @@
     - !type:ConstructionFinishedPrecondition
       key: Target
 
-# In fact, the only thing this task does is set the path in the graph to disassembly.
-# The NPC then automatically switches to the construction task via routine tasks.
-# Otherwise we would get NPC conflict for construction
 - type: npcTask
   id: Deconstruct
   name: Deconstruct
   maxPerformers: 1
+  unionPerformersWith:
+    - Build
   overlayColor: "#945A1C"
   verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
   verbOnly: true
@@ -183,8 +184,12 @@
     - !type:DeconstructionPrecondition
       key: Target
   finishPreconditions:
-    - !type:DeconstructionStartedPrecondition
-      targetKey: Target
+    - !type:OrPrecondition
+      preconditions:
+        - !type:ConstructionFinishedPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
 
 - type: npcTask
   id: Dig
@@ -425,6 +430,9 @@
   id: Storing
   name: Storing
   maxPerformers: 1
+  unionPerformersWith:
+    - MoveStoredInContainer
+    - FixStoredOffset
   overlayColor: "#A16C2B"
   verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
   compound: StoringCompound
@@ -452,6 +460,9 @@
   id: MoveStoredInContainer
   name: Storing
   maxPerformers: 1
+  unionPerformersWith:
+    - Storing
+    - FixStoredOffset
   overlayColor: "#A16C2B"
   verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
   compound: MoveStoredInContainerCompound
@@ -477,3 +488,35 @@
               targetKey: PickUpTarget
             - !type:TargetInContainerPrecondition
               targetKey: PickUpTarget
+
+- type: npcTask
+  id: FixStoredOffset
+  name: Storing
+  maxPerformers: 1
+  unionPerformersWith:
+    - Storing
+    - MoveStoredInContainer
+  overlayColor: "#8d622d"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: FixStoredOffsetCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+  targetsQuery: FixStoredOffsetTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:TileOffsetPrecondition
+              targetKey: PickUpTarget
+              lessThan: 0.06

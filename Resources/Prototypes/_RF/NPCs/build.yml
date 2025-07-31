@@ -86,3 +86,5 @@
         - !type:HTNPrimitiveTask
           operator: !type:StartDeconstructionOperator
             targetKey: Target
+        - !type:HTNCompoundTask
+          task: BuildCompound

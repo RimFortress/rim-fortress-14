@@ -188,3 +188,14 @@
             targetKey: PickUpTarget
         - !type:HTNCompoundTask
           task: StoringItemCompound
+
+
+- type: htnCompound
+  id: FixStoredOffsetCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DetachStoredOperator
+            targetKey: PickUpTarget
+        - !type:HTNCompoundTask
+          task: StoringCompound

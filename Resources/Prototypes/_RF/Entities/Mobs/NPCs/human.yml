@@ -39,6 +39,7 @@
         - id: RemoveWeed
         - id: Storing
         - id: MoveStoredInContainer
+        - id: FixStoredOffset
         - id: TakeOwnership
 
 - type: entity

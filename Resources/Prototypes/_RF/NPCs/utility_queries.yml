@@ -393,3 +393,15 @@
     - !type:InContainerFilter
     - !type:InventoryFilter
     - !type:InHandsFilter
+
+- type: utilityQuery
+  id: FixStoredOffsetTarget
+  query:
+    - !type:OwnedQuery
+    - !type:StoredFilter
+      invert: true
+    - !type:TileOffsetFilter
+      lessThan: 0.06
+    - !type:InContainerFilter
+    - !type:InventoryFilter
+    - !type:InHandsFilter
