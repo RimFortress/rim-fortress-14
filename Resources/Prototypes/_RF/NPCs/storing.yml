@@ -193,9 +193,63 @@
 - type: htnCompound
   id: FixStoredOffsetCompound
   branches:
-    - tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:DetachStoredOperator
-            targetKey: PickUpTarget
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+        - !type:TileOffsetPrecondition
+          targetKey: PickUpTarget
+          moreThan: 0.06
+      tasks:
         - !type:HTNCompoundTask
-          task: StoringCompound
+          task: PickUpCompound
+        - !type:HTNPrimitiveTask
+          operator: !type:TileCenterOperator
+            targetKey: PickUpTarget
+            resultKey: TargetCoordinates
+        - !type:HTNPrimitiveTask
+          operator: !type:DropAtOperator
+
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+          invert: true
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Pullable
+        - !type:PulledEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:TileOffsetPrecondition
+          targetKey: PickUpTarget
+          moreThan: 0.06
+      tasks:
+        - !type:HTNCompoundTask
+          task: PullCompound
+
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+          invert: true
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Pullable
+        - !type:TileOffsetPrecondition
+          targetKey: PickUpTarget
+          moreThan: 0.06
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:TileCenterOperator
+            targetKey: PickUpTarget
+            resultKey: TargetCoordinates
+        - !type:HTNPrimitiveTask
+          operator: !type:MovePulledOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullPullingOperator

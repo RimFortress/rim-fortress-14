@@ -16,9 +16,6 @@
             try: !type:HTNPrimitiveTask
               preconditions:
                 - !type:ActiveHandEntityPrecondition
-                - !type:ActiveHandEntityIsPrecondition
-                  targetKey: PickUpTarget
-                  invert: true
                 - !type:CanInsertPrecondition
               operator: !type:StorageOperator
 
@@ -27,15 +24,8 @@
             try: !type:HTNPrimitiveTask
               preconditions:
                 - !type:ActiveHandEntityPrecondition
-                - !type:ActiveHandEntityIsPrecondition
-                  targetKey: PickUpTarget
-                  invert: true
               operator: !type:DropOperator
 
         - !type:HTNPrimitiveTask
           operator: !type:PullOperator
-            targetKey: PickUpTarget
-
-        - !type:HTNPrimitiveTask
-          operator: !type:MarkOwnerOperator
             targetKey: PickUpTarget
