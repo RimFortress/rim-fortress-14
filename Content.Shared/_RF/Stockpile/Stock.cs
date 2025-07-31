@@ -113,6 +113,7 @@ public sealed class Stock
             return;
 
         setting.Max = value;
+        _tilesSettings[tile] = setting;
 
         if (setting.Current <= setting.Max)
             return;
@@ -148,6 +149,7 @@ public sealed class Stock
             return false;
 
         settings.Current++;
+        _tilesSettings[tile] = settings;
         _prototypes[protoId]++;
         _entities[uid] = (protoId, tile);
 
@@ -157,11 +159,32 @@ public sealed class Stock
         return true;
     }
 
+    /// <summary>
+    /// Returns true if there is a container in the given stockpile tile
+    /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
     public bool ContainerInTile(Vector2i tile)
     {
         foreach (var container in Containers)
         {
             if (_entities.TryGetValue(container, out var data) && data.Tile == tile)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns true if there is an unfilled container in the stockpile
+    /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
+    public bool HasFreeContainer()
+    {
+        foreach (var container in Containers)
+        {
+            if (_entities.TryGetValue(container, out var data)
+                && _tilesSettings.TryGetValue(data.Tile, out var setting)
+                && setting.Current < setting.Max)
                 return true;
         }
 
@@ -183,7 +206,7 @@ public sealed class Stock
             return false;
 
         if (_tilesSettings.TryGetValue(data.Tile, out var setting))
-            setting.Current--;
+            _tilesSettings[data.Tile] = (setting.Current - 1, setting.Max);
 
         FreeTiles.Add(data.Tile);
         data.Tile = tile;
@@ -191,6 +214,7 @@ public sealed class Stock
         if (_tilesSettings.TryGetValue(tile, out var newSetting))
         {
             newSetting.Current++;
+            _tilesSettings[tile] = newSetting;
 
             if (newSetting.Current >= newSetting.Max)
                 FreeTiles.Remove(tile);
@@ -210,6 +234,7 @@ public sealed class Stock
             return false;
 
         settings.Current--;
+        _tilesSettings[data.Tile] = settings;
         _prototypes[data.Proto]--;
         _entities.Remove(uid);
 

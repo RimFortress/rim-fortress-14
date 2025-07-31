@@ -38,6 +38,7 @@
         - id: WaterPlant
         - id: RemoveWeed
         - id: Storing
+        - id: MoveStoredInContainer
         - id: TakeOwnership
 
 - type: entity

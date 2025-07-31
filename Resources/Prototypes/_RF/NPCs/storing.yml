@@ -93,14 +93,24 @@
         - !type:HTNPrimitiveTask
           operator: !type:SetRandomFloatOperator
             targetKey: WaitTime
-            minAmount: 0.20
-            maxAmount: 0.40
+            minAmount: 0.10
+            maxAmount: 0.20
         - !type:HTNPrimitiveTask
           operator: !type:WaitOperator
             key: WaitTime
 
         - !type:HTNPrimitiveTask
           operator: !type:DropAtOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:SetRandomFloatOperator
+            targetKey: WaitTime
+            minAmount: 0.10
+            maxAmount: 0.20
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: WaitTime
+
         - !type:HTNPrimitiveTask
           operator: !type:InteractActivateOperator
             targetKey: Container
@@ -167,3 +177,14 @@
                     - type: EntityStorage
               operator: !type:InteractActivateOperator
                 targetKey: PickUpTarget
+
+
+- type: htnCompound
+  id: MoveStoredInContainerCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DetachStoredOperator
+            targetKey: PickUpTarget
+        - !type:HTNCompoundTask
+          task: StoringItemCompound

@@ -379,3 +379,17 @@
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+- type: utilityQuery
+  id: MoveStoredInContainerTarget
+  query:
+    - !type:OwnedQuery
+    - !type:StoredFilter
+      invert: true
+    - !type:ComponentFilter
+      components:
+        - type: Item
+      invert: true
+    - !type:InContainerFilter
+    - !type:InventoryFilter
+    - !type:InHandsFilter

@@ -447,3 +447,33 @@
     - !type:PulledEntityIsPrecondition
       targetKey: PickUpTarget
       invert: true
+
+- type: npcTask
+  id: MoveStoredInContainer
+  name: Storing
+  maxPerformers: 1
+  overlayColor: "#A16C2B"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: MoveStoredInContainerCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+  targetsQuery: MoveStoredInContainerTarget
+  targetWhitelist:
+    components:
+      - Item
+  startPreconditions:
+    - !type:StockpileFreeContainerPrecondition
+      targetKey: PickUpTarget
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:TargetInContainerPrecondition
+              targetKey: PickUpTarget

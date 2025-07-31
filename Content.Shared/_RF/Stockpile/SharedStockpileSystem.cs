@@ -432,7 +432,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         return true;
     }
 
-    protected bool DetachEntity(EntityUid uid, Stock stock, bool dirty = true)
+    public bool DetachEntity(EntityUid uid, Stock stock, bool dirty = true)
     {
         if (!stock.RemoveEntity(uid))
             return false;
