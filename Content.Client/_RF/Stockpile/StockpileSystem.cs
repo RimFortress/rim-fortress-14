@@ -13,15 +13,25 @@ public sealed class StockpileSystem : SharedStockpileSystem
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<StockpileCreated>(OnCreated);
-        SubscribeNetworkEvent<StockpileDeleted>(OnDeleted);
-        SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
-        SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
-        SubscribeNetworkEvent<StockpileSettingUpdated>(OnSettingUpdate);
-        SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
         SubscribeNetworkEvent<StockpileEntityAttached>(OnAttachedEntity);
         SubscribeNetworkEvent<StockpileEntityDetached>(OnDetachedEntity);
 
         _overlay.AddOverlay(new StockpileOverlay(this));
+    }
+
+    private void OnAttachedEntity(StockpileEntityAttached ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
+            return;
+
+        AttachEntity(GetEntity(ev.Uid), stock, false);
+    }
+
+    private void OnDetachedEntity(StockpileEntityDetached ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
+            return;
+
+        DetachEntity(GetEntity(ev.Uid), stock, false);
     }
 }

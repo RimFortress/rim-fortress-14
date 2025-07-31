@@ -28,6 +28,15 @@ public abstract class SharedStockpileSystem : EntitySystem
     /// <inheritdoc/>
     public override void Initialize()
     {
+        SubscribeLocalEvent<StockpileCategoryComponent, ComponentShutdown>(OnShutdown);
+
+        SubscribeNetworkEvent<StockpileCreated>(OnCreated);
+        SubscribeNetworkEvent<StockpileDeleted>(OnDeleted);
+        SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
+        SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
+        SubscribeNetworkEvent<StockpileSettingUpdated>(OnSettingUpdate);
+        SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
+
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<EntityPrototype>())
@@ -119,20 +128,10 @@ public abstract class SharedStockpileSystem : EntitySystem
         SetSetting(ev.Settings, stock, false);
     }
 
-    protected void OnAttachedEntity(StockpileEntityAttached ev, EntitySessionEventArgs args)
+    private void OnShutdown(EntityUid uid, StockpileCategoryComponent component, ComponentShutdown args)
     {
-        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
-            return;
-
-        AttachEntity(GetEntity(ev.Uid), stock, false);
-    }
-
-    protected void OnDetachedEntity(StockpileEntityDetached ev, EntitySessionEventArgs args)
-    {
-        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
-            return;
-
-        DetachEntity(GetEntity(ev.Uid), stock, false);
+        if (TryGetContainingStock(uid, out var stock))
+            stock.RemoveEntity(uid);
     }
 
     #endregion
@@ -382,6 +381,22 @@ public abstract class SharedStockpileSystem : EntitySystem
         foreach (var stock in Stockpiles)
         {
             if (stock.Id != id)
+                continue;
+
+            stockpile = stock;
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool TryGetContainingStock(EntityUid uid, [NotNullWhen(true)] out Stock? stockpile)
+    {
+        stockpile = null;
+
+        foreach (var stock in Stockpiles)
+        {
+            if (!stock.ContainsEntity(uid))
                 continue;
 
             stockpile = stock;

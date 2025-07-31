@@ -12,73 +12,61 @@ public sealed class StockpileSystem : SharedStockpileSystem
         base.Initialize();
 
         SubscribeLocalEvent<StockpileCategoryComponent, MoveEvent>(OnMove);
-        SubscribeLocalEvent<StockpileCategoryComponent, ComponentShutdown>(OnShutdown);
-
-        SubscribeNetworkEvent<StockpileCreated>(OnCreated);
-        SubscribeNetworkEvent<StockpileDeleted>(OnDeleted);
-        SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
-        SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
-        SubscribeNetworkEvent<StockpileSettingUpdated>(OnSettingUpdate);
-        SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
     }
 
     private void OnMove(EntityUid uid, StockpileCategoryComponent component, MoveEvent args)
-    {
-        // TODO: optimization (spam on client with net events)
-        foreach (var stock in Stockpiles)
-        {
-            if (DetachEntity(uid, stock))
-                break;
-        }
-
-        if (TryGetStock(uid, out var stockpile))
-            TryInsert(uid, stockpile);
-    }
-
-    private void OnShutdown(EntityUid uid, StockpileCategoryComponent component, ComponentShutdown args)
-    {
-        foreach (var stock in Stockpiles)
-        {
-            if (!stock.ContainsEntity(uid))
-                continue;
-
-            DetachEntity(uid, stock);
-            return;
-        }
-    }
-
-    private bool TryInsert(EntityUid uid, Stock stockpile)
     {
         if (Xform.GetGrid(uid) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid)
             || !Map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef)
             || Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
-            return false;
+            return;
 
-        if (TryComp(uid, out EntityStorageComponent? storage))
+        TryGetContainingStock(uid, out var oldStock);
+        TryGetStock(tileRef, out var newStock);
+
+        if (newStock != null
+            && newStock == oldStock
+            && oldStock.TryGetContainingTile(uid, out var oldTile)
+            && oldTile != tileRef.GridIndices)
         {
-            //stockpile.RemoveEntitiesFrom(tileRef.GridIndices);
-            stockpile.SetTileMaxEntities(tileRef.GridIndices, Stock.DefaultMaxTileEntities + storage.Capacity);
-
-            if (!AttachEntity(uid, stockpile))
-                return false;
-
-            stockpile.Containers.Add(uid);
-
-            foreach (var ent in storage.Contents.ContainedEntities)
-            {
-                foreach (var stock in Stockpiles)
-                {
-                    if (DetachEntity(ent, stock))
-                        break;
-                }
-
-                AttachEntity(ent, stockpile);
-            }
+            if (!newStock.TryUpdateEntityTile(uid, tileRef.GridIndices))
+                DetachEntity(uid, newStock);
         }
-        else if (!AttachEntity(uid, stockpile))
-            return false;
 
-        return true;
+        if (oldStock != null && newStock == null)
+            DetachEntity(uid, oldStock);
+
+        if (newStock != null && oldStock != newStock)
+        {
+            if (oldStock != null)
+                DetachEntity(uid, oldStock);
+
+            if (TryComp(uid, out EntityStorageComponent? storage))
+            {
+                if (newStock.ContainerInTile(tileRef.GridIndices))
+                    return;
+
+                newStock.SetTileMaxEntities(tileRef.GridIndices, Stock.DefaultMaxTileEntities + storage.Capacity);
+
+                if (!AttachEntity(uid, newStock))
+                    return;
+
+                newStock.Containers.Add(uid);
+
+                foreach (var ent in storage.Contents.ContainedEntities)
+                {
+                    foreach (var stock in Stockpiles)
+                    {
+                        if (DetachEntity(ent, stock))
+                            break;
+                    }
+
+                    AttachEntity(ent, newStock);
+                }
+            }
+            else
+                AttachEntity(uid, newStock);
+        }
     }
 }

@@ -88,6 +88,17 @@
           targetKey: Container
           invert: true
       tasks:
+        # Make the NPCs do a little delay so that opening
+        # and closing the container is not instantly and looks more human.
+        - !type:HTNPrimitiveTask
+          operator: !type:SetRandomFloatOperator
+            targetKey: WaitTime
+            minAmount: 0.20
+            maxAmount: 0.40
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: WaitTime
+
         - !type:HTNPrimitiveTask
           operator: !type:DropAtOperator
         - !type:HTNPrimitiveTask
@@ -109,34 +120,17 @@
         - !type:HTNCompoundTask
           task: PullCompound
 
-    # Open the container before dragging to avoid hitting others
     - preconditions:
-        - !type:HasComponentPrecondition
+        - !type:StoredPrecondition
           targetKey: PickUpTarget
-          components:
-            - type: EntityStorage
-        - !type:StorageClosedPrecondition
-          targetKey: PickUpTarget
+          invert: true
       tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:InteractActivateOperator
-            targetKey: PickUpTarget
-
-    - tasks:
         - !type:HTNPrimitiveTask
           operator: !type:FindStoringPlaceOperator
             targetKey: PickUpTarget
             rangeKey: MoveToCloseRange
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: false
-            rangeKey: InteractRange
-            removeKeyOnFinish: false
-        - !type:HTNPrimitiveTask
-          operator: !type:MovePulledOperator
-        - !type:HTNPrimitiveTask
-          operator: !type:UnPullPullingOperator
 
+        # Open the container before dragging to avoid hitting others
         - !type:HTNPrimitiveTask
           operator: !type:TryOperator
             try: !type:HTNPrimitiveTask
@@ -146,7 +140,30 @@
                   components:
                     - type: EntityStorage
                 - !type:StorageClosedPrecondition
-                  targetKey: Container
-                  invert: true
+                  targetKey: PickUpTarget
+              operator: !type:InteractActivateOperator
+                targetKey: PickUpTarget
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+
+        # Moves the container to the specified location
+        - !type:HTNPrimitiveTask
+          operator: !type:MovePulledOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullPullingOperator
+
+        # Close container after storing
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:HasComponentPrecondition
+                  targetKey: PickUpTarget
+                  components:
+                    - type: EntityStorage
               operator: !type:InteractActivateOperator
                 targetKey: PickUpTarget

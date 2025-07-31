@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Robust.Shared.Prototypes;
 
@@ -141,7 +142,8 @@ public sealed class Stock
         if (setting != -1 && GetCount(protoId) >= setting)
             return false;
 
-        if (!_tilesSettings.TryGetValue(tile, out var settings)
+        if (!FreeTiles.Contains(tile)
+            || !_tilesSettings.TryGetValue(tile, out var settings)
             || settings.Current + 1 > settings.Max)
             return false;
 
@@ -151,6 +153,48 @@ public sealed class Stock
 
         if (settings.Current == settings.Max)
             FreeTiles.Remove(tile);
+
+        return true;
+    }
+
+    public bool ContainerInTile(Vector2i tile)
+    {
+        foreach (var container in Containers)
+        {
+            if (_entities.TryGetValue(container, out var data) && data.Tile == tile)
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool TryUpdateEntityTile(EntityUid uid, Vector2i tile)
+    {
+        if (!_entities.TryGetValue(uid, out var data))
+            return false;
+
+        if (data.Tile == tile)
+            return true;
+
+        if (!FreeTiles.Contains(tile))
+            return false;
+
+        if (Containers.Contains(uid) || ContainerInTile(tile))
+            return false;
+
+        if (_tilesSettings.TryGetValue(data.Tile, out var setting))
+            setting.Current--;
+
+        FreeTiles.Add(data.Tile);
+        data.Tile = tile;
+
+        if (_tilesSettings.TryGetValue(tile, out var newSetting))
+        {
+            newSetting.Current++;
+
+            if (newSetting.Current >= newSetting.Max)
+                FreeTiles.Remove(tile);
+        }
 
         return true;
     }
@@ -330,5 +374,17 @@ public sealed class Stock
     public int GetCount(EntProtoId protoId)
     {
         return _prototypes.GetValueOrDefault(protoId, 0);
+    }
+
+    [Access(Other = AccessPermissions.Execute)]
+    public bool TryGetContainingTile(EntityUid uid, [NotNullWhen(true)] out Vector2i? tile)
+    {
+        tile = null;
+
+        if (!_entities.TryGetValue(uid, out var data))
+            return false;
+
+        tile = data.Tile;
+        return true;
     }
 }
