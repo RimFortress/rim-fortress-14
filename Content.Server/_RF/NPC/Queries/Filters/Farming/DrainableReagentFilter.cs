@@ -4,7 +4,7 @@ using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Farming;
 
 public sealed partial class DrainableReagentFilter : RfUtilityQueryFilter
 {

@@ -1,9 +1,9 @@
 using Content.Server.Botany.Components;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Farming;
 
-public sealed partial class PlantDeadFilter : RfUtilityQueryFilter
+public sealed partial class HarvestFilter : RfUtilityQueryFilter
 {
     private EntityQuery<PlantHolderComponent> _plantHolderQuery;
 
@@ -15,6 +15,6 @@ public sealed partial class PlantDeadFilter : RfUtilityQueryFilter
 
     public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
     {
-        return _plantHolderQuery.TryComp(uid, out var comp) && comp.Dead;
+        return _plantHolderQuery.TryComp(uid, out var comp) && comp.Harvest;
     }
 }

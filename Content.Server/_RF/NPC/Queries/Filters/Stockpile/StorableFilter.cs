@@ -2,7 +2,7 @@ using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
 using Content.Shared._RF.NPC;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 
 /// <summary>
 /// Filters entities for which there is space in the stockpile

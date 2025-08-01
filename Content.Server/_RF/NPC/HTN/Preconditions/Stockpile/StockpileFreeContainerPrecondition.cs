@@ -1,7 +1,7 @@
 using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 
 /// <summary>
 /// Checks if there is an unfilled container in the stockpile where the target entity is stored

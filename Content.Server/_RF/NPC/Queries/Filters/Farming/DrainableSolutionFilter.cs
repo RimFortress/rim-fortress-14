@@ -1,12 +1,17 @@
 using Content.Server.NPC;
 using Content.Shared.Chemistry.EntitySystems;
-using Content.Shared.FixedPoint;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Farming;
 
-public sealed partial class DrainableEmptyFilter : RfUtilityQueryFilter
+public sealed partial class DrainableSolutionFilter : RfUtilityQueryFilter
 {
     private SharedSolutionContainerSystem _solution;
+
+    [DataField]
+    public float? MaxVolumeMoreThan;
+
+    [DataField]
+    public float? MaxVolumeLessThan;
 
     public override void Initialize(IEntityManager entManager)
     {
@@ -17,6 +22,7 @@ public sealed partial class DrainableEmptyFilter : RfUtilityQueryFilter
     public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
     {
         return _solution.TryGetDrainableSolution(uid, out _, out var solution)
-               && solution.Volume == FixedPoint2.Zero;
+               && (MaxVolumeMoreThan != null && solution.MaxVolume > MaxVolumeMoreThan
+                   || MaxVolumeLessThan != null && solution.MaxVolume < MaxVolumeLessThan);
     }
 }

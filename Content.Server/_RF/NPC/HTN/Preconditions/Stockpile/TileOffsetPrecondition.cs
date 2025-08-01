@@ -3,7 +3,7 @@ using Content.Shared.Maps;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map.Components;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 
 /// <summary>
 /// Checks the offset of the target entity from the center of the tile on which it is located

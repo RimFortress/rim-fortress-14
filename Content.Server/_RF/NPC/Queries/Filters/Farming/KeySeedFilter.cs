@@ -2,7 +2,7 @@ using Content.Server.Botany;
 using Content.Server.Botany.Components;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Farming;
 
 public sealed partial class KeySeedFilter : RfUtilityQueryFilter
 {

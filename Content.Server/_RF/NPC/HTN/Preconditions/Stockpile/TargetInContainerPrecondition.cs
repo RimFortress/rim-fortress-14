@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Robust.Server.Containers;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 
 public sealed partial class TargetInContainerPrecondition : InvertiblePrecondition
 {

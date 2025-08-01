@@ -1,7 +1,7 @@
 using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 
 /// <summary>
 /// Filters entities that can be stockpiled to at least one stockpile,

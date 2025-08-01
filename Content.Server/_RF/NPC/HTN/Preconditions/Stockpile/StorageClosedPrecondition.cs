@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Content.Server.Storage.Components;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 
 /// <summary>
 /// Checks if the storage is closed

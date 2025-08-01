@@ -1,18 +1,12 @@
-using System.Linq;
 using Content.Server.NPC;
 using Content.Shared.Chemistry.EntitySystems;
-using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
-using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Farming;
 
-public sealed partial class DrainableOnlyReagentFilter : RfUtilityQueryFilter
+public sealed partial class DrainableEmptyFilter : RfUtilityQueryFilter
 {
     private SharedSolutionContainerSystem _solution;
-
-    [DataField(required: true)]
-    public ProtoId<ReagentPrototype> Reagent;
 
     public override void Initialize(IEntityManager entManager)
     {
@@ -23,6 +17,6 @@ public sealed partial class DrainableOnlyReagentFilter : RfUtilityQueryFilter
     public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
     {
         return _solution.TryGetDrainableSolution(uid, out _, out var solution)
-            && solution.Contents.All(x => x.Reagent.Prototype == Reagent || x.Quantity == FixedPoint2.Zero);
+               && solution.Volume == FixedPoint2.Zero;
     }
 }

@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Robust.Server.Containers;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 
 public sealed partial class InContainerFilter : RfUtilityQueryFilter
 {

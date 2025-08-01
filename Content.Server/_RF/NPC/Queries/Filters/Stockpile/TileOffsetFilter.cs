@@ -3,7 +3,7 @@ using Content.Shared.Maps;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map.Components;
 
-namespace Content.Server._RF.NPC.Queries.Filters;
+namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 
 /// <summary>
 /// Filters entities that are within a specified distance from the center of the tile

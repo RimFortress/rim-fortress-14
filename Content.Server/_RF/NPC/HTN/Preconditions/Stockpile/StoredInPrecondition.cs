@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Content.Shared._RF.Stockpile;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 
 /// <summary>
 /// Checks the stockpile where the target entity is located

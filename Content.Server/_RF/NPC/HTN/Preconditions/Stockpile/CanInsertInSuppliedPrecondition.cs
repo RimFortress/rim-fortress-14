@@ -1,7 +1,7 @@
 using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 
 /// <summary>
 /// Checks if the target entity can be stocked to at least one
