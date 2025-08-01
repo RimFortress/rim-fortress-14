@@ -26,7 +26,11 @@
           operator: !type:InteractWithOperator
             targetKey: PickUpTarget
 
-    - tasks:
+    - preconditions:
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
         # Find item for construction
         - !type:HTNPrimitiveTask
           operator: !type:UtilityOperator
@@ -50,6 +54,10 @@
               operator: !type:RemoveKeyOperator
                 key: Amount
 
+    - preconditions:
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+      tasks:
         # Go to the construction target
         - !type:HTNPrimitiveTask
           operator: !type:EntityCoordinatesOperator
