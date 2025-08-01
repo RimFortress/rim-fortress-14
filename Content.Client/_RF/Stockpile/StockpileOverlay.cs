@@ -18,6 +18,7 @@ public sealed class StockpileOverlay : GridOverlay
 
     private const float BorderSize = 0.03f;
     private const float SelectedBorderSize = 0.05f;
+    private const float SelectedBorderColorDelta = 0.05f;
 
     [ValidatePrototypeId<ShaderPrototype>]
     private const string LineShader = "AnimatedDottedLine";
@@ -27,9 +28,6 @@ public sealed class StockpileOverlay : GridOverlay
 
     private readonly Color _selectedMainColor = Color.LightGray.WithAlpha(0.5f);
     private readonly Color _selectedSecondaryColor = Color.DarkGray.WithAlpha(0.5f);
-
-    private readonly Color _borderColor = Color.DarkOrange;
-    private readonly Color _selectedBorderColor = Color.Orange;
 
     private readonly Color _supplyingLineColor = Color.BurlyWood;
     private readonly Color _suppliedLineColor = Color.Aquamarine;
@@ -51,7 +49,12 @@ public sealed class StockpileOverlay : GridOverlay
         {
             var selected = _stockpileController.HighlightedStockpiles.Contains(stock.Id);
             var borderSize = selected ? SelectedBorderSize : BorderSize;
-            var borderColor = selected ? _selectedBorderColor : _borderColor;
+            var borderColor = selected
+                ? new(
+                    stock.Color.R + SelectedBorderColorDelta,
+                    stock.Color.G + SelectedBorderColorDelta,
+                    stock.Color.B + SelectedBorderColorDelta)
+                : stock.Color;
 
             foreach (var tile in stock.Tiles)
             {

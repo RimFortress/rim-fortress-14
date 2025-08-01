@@ -24,6 +24,11 @@ public sealed class Stock
     public readonly EntityUid Owner;
 
     /// <summary>
+    /// The color with which the stockpile is rendered in the UI
+    /// </summary>
+    public Color Color;
+
+    /// <summary>
     /// The grid on which the stockpile is located
     /// </summary>
     public EntityUid GridUid { get; }
@@ -35,6 +40,9 @@ public sealed class Stock
 
     public HashSet<EntityUid> Containers { get; } = new();
 
+    /// <summary>
+    /// The IDs of the stockpiles that are supplied from this one.
+    /// </summary>
     public HashSet<int> SuppliedStockpiles { get; } = new();
 
     /// <summary>
@@ -61,12 +69,14 @@ public sealed class Stock
 
     public Stock(int id,
         EntityUid owner,
+        Color color,
         EntityUid gridUid,
         HashSet<Vector2i> tiles,
         Dictionary<EntProtoId, int> settings)
     {
         Id = id;
         Owner = owner;
+        Color = color;
         GridUid = gridUid;
         _tiles = tiles;
         FreeTiles = tiles.ToHashSet();

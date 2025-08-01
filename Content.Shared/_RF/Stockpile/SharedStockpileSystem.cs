@@ -25,6 +25,8 @@ public abstract class SharedStockpileSystem : EntitySystem
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
     private int _nextStockpileId = 1;
 
+    protected readonly Color DefaultStockColor = Color.DarkOrange;
+
     /// <inheritdoc/>
     public override void Initialize()
     {
@@ -38,6 +40,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
         SubscribeNetworkEvent<StockpileSuppliedAdded>(OnSuppliedAdded);
         SubscribeNetworkEvent<StockpileSuppliedRemoved>(OnSuppliedRemoved);
+        SubscribeNetworkEvent<StockpileColorSet>(OnColorSet);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -152,6 +155,14 @@ public abstract class SharedStockpileSystem : EntitySystem
         supplier.SuppliedStockpiles.Remove(supplied.Id);
     }
 
+    private void OnColorSet(StockpileColorSet ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
+            return;
+
+        stock.Color = ev.Color;
+    }
+
     private void OnShutdown(EntityUid uid, StockpileCategoryComponent component, ComponentShutdown args)
     {
         if (TryGetContainingStock(uid, out var stock))
@@ -201,7 +212,7 @@ public abstract class SharedStockpileSystem : EntitySystem
             _nextStockpileId++;
         }
 
-        var stock = new Stock(id, owner, gridUid, tilesList, _defaultSettings);
+        var stock = new Stock(id, owner, DefaultStockColor, gridUid, tilesList, _defaultSettings);
 
         if (_net.IsServer)
         {
@@ -460,6 +471,12 @@ public abstract class SharedStockpileSystem : EntitySystem
         RaiseNetworkEvent(new StockpileSuppliedRemoved(supplier.Id, supplied.Id));
         return true;
     }
+
+    public void SetStockColor(Stock stock, Color color)
+    {
+        stock.Color = color;
+        RaiseNetworkEvent(new StockpileColorSet(stock.Id, color));
+    }
 }
 
 [Serializable, NetSerializable]
@@ -533,4 +550,11 @@ public sealed class StockpileSuppliedRemoved(int supplier, int supplied) : Entit
 {
     public int Supplier = supplier;
     public int Supplied = supplied;
+}
+
+[Serializable, NetSerializable]
+public sealed class StockpileColorSet(int id, Color color) : EntityEventArgs
+{
+    public int Id = id;
+    public Color Color = color;
 }

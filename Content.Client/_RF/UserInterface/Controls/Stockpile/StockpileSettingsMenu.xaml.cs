@@ -35,7 +35,10 @@ public sealed partial class StockpileSettingsMenu : Control
         _stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
 
         _stockpileController.OnStockSelected += stock =>
+        {
             Label.Text = $"{Loc.GetString(StockLabelPrefix)}#{stock.Id}";
+            ColorPicker.Color = stock.Color;
+        };
 
         _stockpileController.OnStockpileUpdated += id =>
         {
@@ -87,6 +90,12 @@ public sealed partial class StockpileSettingsMenu : Control
         };
         CloseButton.OnPressed += _ => Close();
 
+        ColorPicker.OnColorChanged += color =>
+        {
+            if (_stockpileController.SettingStock is { } stock)
+                _entity.System<StockpileSystem>().SetStockColor(stock, color);
+        };
+
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<EntityPrototype>()
@@ -123,6 +132,7 @@ public sealed partial class StockpileSettingsMenu : Control
     {
         Visible = false;
         _stockpileController.Clear();
+        ColorPicker.CloseWindow();
     }
 
     public void BuildItems(StockpileCategoryPrototype? category)
