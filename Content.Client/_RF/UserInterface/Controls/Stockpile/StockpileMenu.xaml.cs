@@ -14,7 +14,7 @@ public sealed partial class StockpileMenu : Control
         var stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
 
         CreateStockpileButton.OnPressed += _ => stockpileController.CreateSelection();
-        EditStockpileButton.OnPressed += _ => stockpileController.SelectMode = true;
+        EditStockpileButton.OnPressed += _ => stockpileController.SelectMode = StockpileSelectionMode.Edit;
     }
 }
 

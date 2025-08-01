@@ -5,7 +5,7 @@ using Content.Server.Stack;
 using Content.Shared.Stacks;
 using Robust.Server.GameObjects;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 /// <summary>
 /// Divides a stack of material, creating a stack of the required quantity

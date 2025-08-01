@@ -5,7 +5,7 @@ using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared.Hands.Components;
 using Robust.Shared.Map;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 /// <summary>
 /// Drops an object from the active hand to a specified location

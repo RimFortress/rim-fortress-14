@@ -5,7 +5,7 @@ using Content.Shared.Hands.Components;
 using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Systems;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 /// <summary>
 /// Pulls the bolt of the gun in his hand, if any

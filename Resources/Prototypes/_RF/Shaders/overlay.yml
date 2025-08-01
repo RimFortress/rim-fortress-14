@@ -20,6 +20,19 @@
     thickness: 0.02
     dashLen: 10
     gapLen: 15
+    scrollSpeed: 0
+
+- type: shader
+  id: AnimatedDottedLine
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_line.swsl"
+  params:
+    startOffset: 0.2
+    endOffset: 0.2
+    thickness: 0.03
+    dashLen: 15
+    gapLen: 15
+    scrollSpeed: 25
 
 - type: shader
   id: DottedOutline

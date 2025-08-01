@@ -563,7 +563,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         foreach (var proto in task.UnionPerformersWith)
         {
-            if (_tasks.TryGetValue((target, proto), out var list))
+            if (proto != task && _tasks.TryGetValue((target, proto), out var list))
                 count += list.Count;
         }
 

@@ -7,7 +7,7 @@ using Content.Shared.Hands.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Storage;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 /// <summary>
 /// Places an entity in the active hand into any available storage in the inventory

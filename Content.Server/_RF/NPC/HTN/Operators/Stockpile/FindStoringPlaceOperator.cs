@@ -5,22 +5,14 @@ using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Server.NPC.Pathfinding;
-using Content.Shared._RF.NPC;
-using Content.Shared.Maps;
-using Content.Shared.Physics;
-using Robust.Server.GameObjects;
-using Robust.Shared.Map;
-using Robust.Shared.Map.Components;
+using Content.Shared._RF.Stockpile;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Stockpile;
 
 public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditionalShutdown
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
     private PathfindingSystem _pathfind = default!;
-    private SharedTransformSystem _transform = default!;
-    private MapSystem _map = default!;
-    private TurfSystem _turf = default!;
     private StockpileSystem _stockpile = default!;
 
     /// <summary>
@@ -53,13 +45,28 @@ public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditio
     [DataField]
     public string RangeKey = "MovementRange";
 
+    /// <summary>
+    /// If true, only stockpiles supplied from the stockpile where the target entity is located will be selected for stockpiling
+    /// </summary>
+    [DataField]
+    public bool SupplyingOnly;
+
+    /// <summary>
+    /// A key from <see cref="NPCBlackboard"/> that can be set to SupplyingOnly
+    /// </summary>
+    [DataField]
+    public string SupplyingOnlyKey = "SupplyingOnly";
+
+    /// <summary>
+    /// A key containing a stockpile that is the start of a supply chain.
+    /// </summary>
+    [DataField]
+    public string SupplyingStartStockKey = "SupplyingStartStock";
+
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
         _pathfind = sysManager.GetEntitySystem<PathfindingSystem>();
-        _transform = sysManager.GetEntitySystem<SharedTransformSystem>();
-        _map = sysManager.GetEntitySystem<MapSystem>();
-        _turf = sysManager.GetEntitySystem<TurfSystem>();
         _stockpile = sysManager.GetEntitySystem<StockpileSystem>();
     }
 
@@ -68,57 +75,37 @@ public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditio
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
         var range = blackboard.GetValueOrDefault<float>(RangeKey, _entManager);
 
-        if (_transform.GetGrid(owner) is not { } gridUid
-            || !_entManager.TryGetComponent(gridUid, out MapGridComponent? grid)
-            || !blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entManager)
-            || !_entManager.TryGetComponent(uid, out OwnedComponent? owned)
-            || !_entManager.TryGetComponent(uid, out TransformComponent? xform))
+        if (!blackboard.TryGetValue(TargetKey, out EntityUid uid, _entManager))
             return (false, null);
 
-        var freePlaces = new List<(EntityCoordinates Coord, float Dist)>();
+        List<Stock> stockpiles;
 
-        foreach (var stock in _stockpile.AllStockpiles())
+        if (blackboard.TryGetValue(SupplyingOnlyKey, out bool only, _entManager) && only || SupplyingOnly)
         {
-            if (!owned.Owners.Contains(stock.Owner)
-                || stock.GridUid != gridUid
-                || !_stockpile.CanInsert(stock, uid.Value))
-                continue;
+            if (!blackboard.TryGetValue(SupplyingStartStockKey, out Stock? stock, _entManager))
+                return (false, null);
 
-            foreach (var tile in stock.FreeTiles)
-            {
-                var tileRef = _map.GetTileRef(new(gridUid, grid), tile);
-
-                if (_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
-                    continue;
-
-                var center = _turf.GetTileCenter(tileRef);
-
-                if (!xform.Coordinates.TryDistance(_entManager, _transform, center, out var distance))
-                    continue;
-
-                freePlaces.Add((center, distance));
-            }
+            stockpiles = _stockpile.FindLastSupplied(uid, stock);
         }
+        else
+            stockpiles = _stockpile.AllStockpiles();
 
-        freePlaces.Sort((x, y) => x.Dist.CompareTo(y.Dist));
-
-        foreach (var (coord, _) in freePlaces)
+        foreach (var stock in stockpiles)
         {
-            var path = await _pathfind.GetPath(
-                blackboard.GetValue<EntityUid>(NPCBlackboard.Owner),
-                xform.Coordinates,
-                coord,
+            var result = await _stockpile.GetStoringTilePath(owner,
+                uid,
+                stock,
                 range,
                 cancelToken,
                 _pathfind.GetFlags(blackboard));
 
-            if (path.Result != PathResult.Path)
+            if (result == null)
                 continue;
 
             return (true, new()
             {
-                { PathfindKey, path },
-                { CoordinatesKey, coord },
+                { PathfindKey, result.Value.Path },
+                { CoordinatesKey, result.Value.Coords },
             });
         }
 

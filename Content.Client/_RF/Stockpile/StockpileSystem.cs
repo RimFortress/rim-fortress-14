@@ -7,8 +7,6 @@ public sealed class StockpileSystem : SharedStockpileSystem
 {
     [Dependency] private readonly IOverlayManager _overlay = default!;
 
-    public Stock? SelectedStock { get; set; }
-
     public override void Initialize()
     {
         base.Initialize();
@@ -24,7 +22,7 @@ public sealed class StockpileSystem : SharedStockpileSystem
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
 
-        AttachEntity(GetEntity(ev.Uid), stock, false);
+        stock.TryAddEntity(GetEntity(ev.Uid), ev.ProtoId, ev.GridIndices);
     }
 
     private void OnDetachedEntity(StockpileEntityDetached ev, EntitySessionEventArgs args)
@@ -32,6 +30,6 @@ public sealed class StockpileSystem : SharedStockpileSystem
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
 
-        DetachEntity(GetEntity(ev.Uid), stock, false);
+        stock.RemoveEntity(GetEntity(ev.Uid));
     }
 }

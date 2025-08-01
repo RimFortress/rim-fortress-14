@@ -5,7 +5,7 @@ using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared.CombatMode;
 using Content.Shared.Timing;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 /// <summary>
 /// Activates an entity as when E is pressed

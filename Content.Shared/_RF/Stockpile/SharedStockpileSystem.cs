@@ -36,6 +36,8 @@ public abstract class SharedStockpileSystem : EntitySystem
         SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
         SubscribeNetworkEvent<StockpileSettingUpdated>(OnSettingUpdate);
         SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
+        SubscribeNetworkEvent<StockpileSuppliedAdded>(OnSuppliedAdded);
+        SubscribeNetworkEvent<StockpileSuppliedRemoved>(OnSuppliedRemoved);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -48,7 +50,7 @@ public abstract class SharedStockpileSystem : EntitySystem
 
     #region Events
 
-    protected void OnCreated(StockpileCreated ev, EntitySessionEventArgs args)
+    private void OnCreated(StockpileCreated ev, EntitySessionEventArgs args)
     {
         var gridUid = GetEntity(ev.GridUid);
 
@@ -68,7 +70,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         CreateStockpile(tileRefs, owner, ev.Id, false);
     }
 
-    protected void OnDeleted(StockpileDeleted ev, EntitySessionEventArgs args)
+    private void OnDeleted(StockpileDeleted ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
@@ -76,7 +78,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         DeleteStockpile(ev.Id, false);
     }
 
-    protected void OnTileAdded(StockpileTileAdded ev, EntitySessionEventArgs args)
+    private void OnTileAdded(StockpileTileAdded ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock)
             || !TryComp(stock.GridUid, out MapGridComponent? grid)
@@ -94,7 +96,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         AddTiles(tileRefs, stock, false);
     }
 
-    protected void OnTileRemoved(StockpileTileRemoved ev, EntitySessionEventArgs args)
+    private void OnTileRemoved(StockpileTileRemoved ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock)
             || !TryComp(stock.GridUid, out MapGridComponent? grid)
@@ -112,7 +114,7 @@ public abstract class SharedStockpileSystem : EntitySystem
         RemoveTiles(tileRefs, stock, false);
     }
 
-    protected void OnSettingUpdate(StockpileSettingUpdated ev, EntitySessionEventArgs args)
+    private void OnSettingUpdate(StockpileSettingUpdated ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
@@ -120,12 +122,34 @@ public abstract class SharedStockpileSystem : EntitySystem
         SetSetting(ev.ProtoId, ev.Value, stock, false);
     }
 
-    protected void OnSettingsUpdate(StockpileSettingsUpdated ev, EntitySessionEventArgs args)
+    private void OnSettingsUpdate(StockpileSettingsUpdated ev, EntitySessionEventArgs args)
     {
         if (!TryGetStock(ev.Id, out var stock) || stock.Owner != args.SenderSession.AttachedEntity)
             return;
 
         SetSetting(ev.Settings, stock, false);
+    }
+
+    private void OnSuppliedAdded(StockpileSuppliedAdded ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Supplied, out var supplied)
+            || !TryGetStock(ev.Supplier, out var supplier)
+            || supplied.Owner != args.SenderSession.AttachedEntity
+            || supplier.Owner != args.SenderSession.AttachedEntity)
+            return;
+
+        supplier.SuppliedStockpiles.Add(supplied.Id);
+    }
+
+    private void OnSuppliedRemoved(StockpileSuppliedRemoved ev, EntitySessionEventArgs args)
+    {
+        if (!TryGetStock(ev.Supplied, out var supplied)
+            || !TryGetStock(ev.Supplier, out var supplier)
+            || supplied.Owner != args.SenderSession.AttachedEntity
+            || supplier.Owner != args.SenderSession.AttachedEntity)
+            return;
+
+        supplier.SuppliedStockpiles.Remove(supplied.Id);
     }
 
     private void OnShutdown(EntityUid uid, StockpileCategoryComponent component, ComponentShutdown args)
@@ -416,30 +440,24 @@ public abstract class SharedStockpileSystem : EntitySystem
                && !stock.ContainsEntity(uid);
     }
 
-    protected bool AttachEntity(EntityUid uid, Stock stock, bool dirty = true)
+    public bool AddSuppliedStock(Stock supplier, Stock supplied)
     {
-        if (Xform.GetGrid(uid) is not { } gridUid
-            || stock.GridUid != gridUid
-            || !TryComp(gridUid, out MapGridComponent? grid)
-            || !Map.TryGetTileRef(gridUid, grid, Transform(uid).Coordinates, out var tileRef)
-            || MetaData(uid).EntityPrototype is not { } proto
-            || !stock.TryAddEntity(uid, proto, tileRef.GridIndices))
+        if (supplier.Id == supplied.Id
+            || supplied.Owner != supplier.Owner
+            || supplied.SuppliedStockpiles.Contains(supplier.Id)
+            || !supplier.SuppliedStockpiles.Add(supplied.Id))
             return false;
 
-        if (dirty)
-            RaiseNetworkEvent(new StockpileEntityAttached(stock.Id, GetNetEntity(uid)));
-
+        RaiseNetworkEvent(new StockpileSuppliedAdded(supplier.Id, supplied.Id));
         return true;
     }
 
-    public bool DetachEntity(EntityUid uid, Stock stock, bool dirty = true)
+    public bool RemoveSuppliedStock(Stock supplier, Stock supplied)
     {
-        if (!stock.RemoveEntity(uid))
+        if (!supplier.SuppliedStockpiles.Remove(supplied.Id))
             return false;
 
-        if (dirty)
-            RaiseNetworkEvent(new StockpileEntityDetached(stock.Id, GetNetEntity(uid)));
-
+        RaiseNetworkEvent(new StockpileSuppliedRemoved(supplier.Id, supplied.Id));
         return true;
     }
 }
@@ -488,10 +506,12 @@ public sealed class StockpileSettingsUpdated(int id, Dictionary<EntProtoId, int>
 }
 
 [Serializable, NetSerializable]
-public sealed class StockpileEntityAttached(int id, NetEntity uid) : EntityEventArgs
+public sealed class StockpileEntityAttached(int id, NetEntity uid, EntProtoId protoId, Vector2i gridIndicates) : EntityEventArgs
 {
     public int Id = id;
     public NetEntity Uid = uid;
+    public EntProtoId ProtoId = protoId;
+    public Vector2i GridIndices = gridIndicates;
 }
 
 [Serializable, NetSerializable]
@@ -499,4 +519,18 @@ public sealed class StockpileEntityDetached(int id, NetEntity uid) : EntityEvent
 {
     public int Id = id;
     public NetEntity Uid = uid;
+}
+
+[Serializable, NetSerializable]
+public sealed class StockpileSuppliedAdded(int supplier, int supplied) : EntityEventArgs
+{
+    public int Supplier = supplier;
+    public int Supplied = supplied;
+}
+
+[Serializable, NetSerializable]
+public sealed class StockpileSuppliedRemoved(int supplier, int supplied) : EntityEventArgs
+{
+    public int Supplier = supplier;
+    public int Supplied = supplied;
 }

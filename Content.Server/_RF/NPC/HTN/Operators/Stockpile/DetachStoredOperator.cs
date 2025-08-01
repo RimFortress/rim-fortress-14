@@ -4,7 +4,7 @@ using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Stockpile;
 
 public sealed partial class DetachStoredOperator : HTNOperator
 {

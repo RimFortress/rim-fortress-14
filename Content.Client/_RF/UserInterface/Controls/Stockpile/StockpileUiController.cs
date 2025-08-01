@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Client._RF.NPC;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
@@ -14,26 +15,61 @@ using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls.Stockpile;
 
-public sealed class StockpileUiController : UIController, IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState>
+public sealed class StockpileUiController : UIController, IOnStateEntered<RimFortressState>,
+    IOnStateExited<RimFortressState>
 {
     [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly IEyeManager _eye  = default!;
+    [Dependency] private readonly IEyeManager _eye = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IEntityManager _entManager = default!;
     [UISystemDependency] private readonly TransformSystem _xform = default!;
     [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
-    [UISystemDependency] private readonly StockpileSystem _stockpile  = default!;
+    [UISystemDependency] private readonly StockpileSystem _stockpile = default!;
     [UISystemDependency] private readonly NpcControlSystem _npc = default!;
 
-    public bool SelectMode;
+    public StockpileSelectionMode SelectMode = StockpileSelectionMode.None;
     public event Action<Stock>? OnStockSelected;
-    public event Action? OnStockpileUpdated;
+    public event Action<int>? OnStockpileUpdated;
+    public event Action<Stock>? OnSupplyRequested;
+
+    public Stock? SettingStock;
+    public Stock? SelectedStock;
+
+    public List<int> HighlightedStockpiles
+    {
+        get
+        {
+            var list = new List<int>();
+
+            if (SelectedStock != null)
+                list.Add(SelectedStock.Id);
+
+            if (SettingStock != null)
+                list.Add(SettingStock.Id);
+
+            return list;
+        }
+    }
+
+    public (EntityCoordinates Start, EntityCoordinates End)? DrawSupplyLine
+    {
+        get
+        {
+            if (SelectMode != StockpileSelectionMode.Supply
+                || SettingStock == null
+                || SelectedStock == null
+                || SettingStock == SelectedStock
+                || SelectedStock.SuppliedStockpiles.ToList().Contains(SettingStock.Id))
+                return null;
+
+            return (SettingStock.CenterCoordinates(), SelectedStock.CenterCoordinates());
+        }
+    }
 
     public override void Initialize()
     {
@@ -45,24 +81,19 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
     private void OnEntityAttached(StockpileEntityAttached ev, EntitySessionEventArgs args)
     {
-        if (ev.Id != _stockpile.SelectedStock?.Id)
-            return;
-
-        OnStockpileUpdated?.Invoke();
+        OnStockpileUpdated?.Invoke(ev.Id);
     }
 
     private void OnEntityDetached(StockpileEntityDetached ev, EntitySessionEventArgs args)
     {
-        if (ev.Id != _stockpile.SelectedStock?.Id)
-            return;
-
-        OnStockpileUpdated?.Invoke();
+        OnStockpileUpdated?.Invoke(ev.Id);
     }
 
     public void OnStateEntered(RimFortressState state)
     {
         CommandBinds.Builder
             .Bind(EngineKeyFunctions.Use, new PointerInputCmdHandler(OnUse))
+            .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
             .Register<StockpileUiController>();
     }
 
@@ -73,50 +104,35 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
     private bool OnUse(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (!SelectMode
-            || !_stockpile.TryGetStock(coords, out var stock)
-            || stock.Owner != _player.LocalSession?.AttachedEntity)
+        if (SelectedStock is not { } stock)
             return false;
 
-        _stockpile.SelectedStock = stock;
-        SelectMode = false;
-        OnStockSelected?.Invoke(stock);
+        switch (SelectMode)
+        {
+            case StockpileSelectionMode.Edit:
+                SelectMode = StockpileSelectionMode.None;
+                SettingStock = stock;
+                SelectedStock = null;
+                OnStockSelected?.Invoke(stock);
+                return true;
+            case StockpileSelectionMode.Supply:
+                SelectMode = StockpileSelectionMode.None;
+                SelectedStock = null;
+                OnSupplyRequested?.Invoke(stock);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    {
+        if (SelectMode == StockpileSelectionMode.None)
+            return false;
+
+        SelectMode = StockpileSelectionMode.None;
+        SettingStock = null;
         return true;
-    }
-
-    public void DeleteStockpile()
-    {
-        if (_stockpile.SelectedStock == null)
-            return;
-
-        _stockpile.DeleteStockpile(_stockpile.SelectedStock.Id);
-        _stockpile.SelectedStock = null;
-    }
-
-    public void SetSetting(EntProtoId protoId, int value)
-    {
-        if (_stockpile.SelectedStock == null)
-            return;
-
-        _stockpile.SetSetting(protoId, value, _stockpile.SelectedStock);
-    }
-
-    public void SetSetting(Dictionary<EntProtoId, int> settings)
-    {
-        if (_stockpile.SelectedStock == null)
-            return;
-
-        _stockpile.SetSetting(settings, _stockpile.SelectedStock);
-    }
-
-    public int GetSetting(EntProtoId protoId)
-    {
-        return _stockpile.SelectedStock?.GetSetting(protoId) ?? 0;
-    }
-
-    public int GetCount(EntProtoId protoId)
-    {
-        return _stockpile.SelectedStock?.GetCount(protoId) ?? 0;
     }
 
     public void CreateSelection()
@@ -134,41 +150,35 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
                 if (stock == null)
                     return;
 
-                _stockpile.SelectedStock = stock;
-                SelectMode = false;
+                SettingStock = stock;
+                SelectMode = StockpileSelectionMode.None;
                 OnStockSelected?.Invoke(stock);
             },
             filter: AddTileFilter,
             iconPath: "/Textures/_RF/Interface/cubes-solid.svg.192dpi.png");
     }
 
-    public void AddTileSelection()
+    public void AddTileSelection(Stock stock)
     {
-        if (_stockpile.SelectedStock == null)
-            return;
-
         _selection.SetTileSelection(
             act: _ => _npc.DefaultSelection(),
             onSelected: tiles =>
             {
-                _stockpile.AddTiles(tiles, _stockpile.SelectedStock);
-                _npc.DefaultSelection();
+                _stockpile.AddTiles(tiles, stock);
+                AddTileSelection(stock);
             },
             filter: AddTileFilter,
             iconPath: "/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png");
     }
 
-    public void RemoveTileSelection()
+    public void RemoveTileSelection(Stock stock)
     {
-        if (_stockpile.SelectedStock == null)
-            return;
-
         _selection.SetTileSelection(
             act: _ => _npc.DefaultSelection(),
             onSelected: tiles =>
             {
-                _stockpile.RemoveTiles(tiles, _stockpile.SelectedStock);
-                _npc.DefaultSelection();
+                _stockpile.RemoveTiles(tiles, stock);
+                RemoveTileSelection(stock);
             },
             filter: RemoveTileFilter,
             iconPath: "/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png");
@@ -183,14 +193,16 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
     private bool RemoveTileFilter(TileRef tile)
     {
-        return _stockpile.SelectedStock != null
-               && _stockpile.SelectedStock.GridUid == tile.GridUid
-               && _stockpile.SelectedStock.ContainsTile(tile.GridIndices);
+        return SettingStock != null
+               && SettingStock.GridUid == tile.GridUid
+               && SettingStock.ContainsTile(tile.GridIndices);
     }
 
     public void Clear()
     {
-        _stockpile.SelectedStock = null;
+        SettingStock = null;
+        SelectedStock = null;
+        SelectMode = StockpileSelectionMode.None;
         _npc.DefaultSelection();
     }
 
@@ -198,13 +210,27 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
     {
         base.FrameUpdate(args);
 
-        if (!SelectMode || _input.MouseScreenPosition is not { IsValid: true } mouseCoords)
+        if (SelectMode == StockpileSelectionMode.None
+            || _input.MouseScreenPosition is not { IsValid: true } mouseCoords)
             return;
 
         var mapCoords = _eye.PixelToMap(mouseCoords);
+
+        if (mapCoords == MapCoordinates.Nullspace)
+            return;
+
         var coords = _xform.ToCoordinates(mapCoords);
 
         _stockpile.TryGetStock(coords, out var stock);
-        _stockpile.SelectedStock = stock;
+
+        if (stock == null || stock.Owner == _player.LocalSession?.AttachedEntity)
+            SelectedStock = stock;
     }
+}
+
+public enum StockpileSelectionMode
+{
+    None,
+    Edit,
+    Supply,
 }

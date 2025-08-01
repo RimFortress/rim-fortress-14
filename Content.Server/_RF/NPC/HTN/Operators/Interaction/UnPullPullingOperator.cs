@@ -4,7 +4,7 @@ using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared.Movement.Pulling.Components;
 using Content.Shared.Movement.Pulling.Systems;
 
-namespace Content.Server._RF.NPC.HTN.Operators;
+namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 public sealed partial class UnPullPullingOperator : HTNOperator
 {

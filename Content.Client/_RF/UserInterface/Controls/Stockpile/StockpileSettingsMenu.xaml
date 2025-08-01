@@ -70,6 +70,13 @@
                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                      TexturePath="/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"/>
                     </controls1:ConfirmButton>
+                    <BoxContainer HorizontalExpand="True"/>
+                    <Button Name="SuppliersButton" SetSize="48 48" HorizontalAlignment="Right"
+                            Margin="0 0 3 0" ToolTip="{Loc 'stockpile-suppliers-button-tooltip'}">
+                        <TextureRect Stretch="KeepAspectCentered" SetSize="32 32"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     TexturePath="/Textures/_RF/Interface/right-to-bracket-solid-full.svg.192dpi.png"/>
+                    </Button>
                 </BoxContainer>
             </ui:RfHighlightedContainer>
         </BoxContainer>

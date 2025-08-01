@@ -253,3 +253,29 @@
           operator: !type:MovePulledOperator
         - !type:HTNPrimitiveTask
           operator: !type:UnPullPullingOperator
+
+- type: htnCompound
+  id: MoveToSuppliedStockCompound
+  branches:
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: SupplyingStartStock
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StockpileOperator
+            targetKey: PickUpTarget
+            resultKey: SupplyingStartStock
+        - !type:HTNPrimitiveTask
+          operator: !type:DetachStoredOperator
+            targetKey: PickUpTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: SupplyingStartStock
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetBoolOperator
+            targetKey: SupplyingOnly
+            value: true
+        - !type:HTNCompoundTask
+          task: StoringCompound

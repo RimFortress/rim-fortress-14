@@ -133,7 +133,7 @@ public sealed class NpcControlOverlay : Overlay
         shader.SetParameter("end", screeStart);
 
         args.WorldHandle.UseShader(shader);
-        args.WorldHandle.DrawRect(new Box2(start.Position, end.Position), Color.White);
+        args.WorldHandle.DrawRect(new Box2(start.Position, end.Position).Enlarged(0.5f), Color.White);
         args.WorldHandle.UseShader(prevShader);
     }
 

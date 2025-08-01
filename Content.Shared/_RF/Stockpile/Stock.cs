@@ -1,6 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
+using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Stockpile;
 
@@ -32,11 +35,18 @@ public sealed class Stock
 
     public HashSet<EntityUid> Containers { get; } = new();
 
+    public HashSet<int> SuppliedStockpiles { get; } = new();
+
     /// <summary>
     /// All the tiles owned by the stockpile
     /// </summary>
     [Access(Other = AccessPermissions.ReadExecute)]
     public HashSet<Vector2i> Tiles => _tiles;
+
+    /// <summary>
+    /// All entities in stockpile
+    /// </summary>
+    public HashSet<EntityUid> Entities => _entities.Keys.ToHashSet();
 
     public const int DefaultMaxTileEntities = 1;
 
@@ -191,6 +201,23 @@ public sealed class Stock
         return false;
     }
 
+    /// <summary>
+    /// Returns all container tiles that are free for storage
+    /// </summary>
+    public HashSet<Vector2i> FreeContainersTiles()
+    {
+        var tiles =  new HashSet<Vector2i>();
+
+        foreach (var container in Containers)
+        {
+            if (_entities.TryGetValue(container, out var data)
+                && FreeTiles.Contains(data.Tile))
+                tiles.Add(data.Tile);
+        }
+
+        return tiles;
+    }
+
     public bool TryUpdateEntityTile(EntityUid uid, Vector2i tile)
     {
         if (!_entities.TryGetValue(uid, out var data))
@@ -246,18 +273,6 @@ public sealed class Stock
 
         OnEntityRemoved?.Invoke(uid);
         return true;
-    }
-
-    /// <summary>
-    /// Removes all entities in the given tile from the stockpile
-    /// </summary>
-    public void RemoveEntitiesFrom(Vector2i tile)
-    {
-        foreach (var (uid, (_, ind)) in _entities)
-        {
-            if (ind == tile)
-                RemoveEntity(uid);
-        }
     }
 
     /// <summary>
@@ -344,33 +359,6 @@ public sealed class Stock
     }
 
     /// <summary>
-    /// Returns true if at least one tile from the list is connected to the stockpile
-    /// </summary>
-    public bool ConnectedTo(List<Vector2i> tiles1)
-    {
-        var directions = new[] { Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down };
-        var queue = new Queue<Vector2i>();
-
-        queue.Enqueue(_tiles.First());
-
-        while (queue.TryDequeue(out var tile))
-        {
-            foreach (var dir in directions)
-            {
-                var newDir = tile + dir;
-
-                if (tiles1.Contains(newDir))
-                    return true;
-
-                if (tiles1.Contains(newDir))
-                    queue.Enqueue(newDir);
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
     /// Returns true if there is space in the stockpile for the given number of items
     /// </summary>
     [Access(Other = AccessPermissions.Execute)]
@@ -401,6 +389,9 @@ public sealed class Stock
         return _prototypes.GetValueOrDefault(protoId, 0);
     }
 
+    /// <summary>
+    /// Returns the tile on which the entity is located, if such a tile exists
+    /// </summary>
     [Access(Other = AccessPermissions.Execute)]
     public bool TryGetContainingTile(EntityUid uid, [NotNullWhen(true)] out Vector2i? tile)
     {
@@ -411,5 +402,23 @@ public sealed class Stock
 
         tile = data.Tile;
         return true;
+    }
+
+    /// <summary>
+    /// Returns the coordinates of the stockpile center
+    /// </summary>
+    [Access(Other = AccessPermissions.Execute)]
+    public EntityCoordinates CenterCoordinates()
+    {
+        DebugTools.Assert(IsValid());
+        var coord = Vector2.Zero;
+
+        foreach (var tile in _tiles)
+        {
+            coord += tile;
+        }
+
+        coord /= _tiles.Count;
+        return new EntityCoordinates(GridUid, coord + new Vector2(0.5f));
     }
 }
