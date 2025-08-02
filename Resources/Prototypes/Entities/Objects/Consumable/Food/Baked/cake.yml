@@ -26,6 +26,10 @@
   - type: Tag
     tags:
     - Cake
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Cake
+  # RimFortress End
 
 - type: entity
   parent: FoodCakeBase

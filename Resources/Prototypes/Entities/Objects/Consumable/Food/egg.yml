@@ -107,6 +107,10 @@
   - type: Construction
     graph: Egg
     node: start
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Produce
+  # RimFortress End
 
 - type: entity
   parent: FoodEggBase
@@ -128,3 +132,7 @@
   - type: Temperature
     # preserve temperature from the boiling step
     currentTemperature: 344
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedFood
+  # RimFortress End

@@ -351,7 +351,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private bool CheckTaskStart(NPCBlackboard blackboard, NpcTaskPrototype task, EntityUid target)
     {
         if (!_whitelist.IsWhitelistPass(task.TargetWhitelist, target)
-            || _tasks.TryGetValue(new(target, task.ID), out var list) && list.Count >= task.MaxPerformers)
+            || TaskPerformersCount(task, target) >= task.MaxPerformers)
             return false;
 
         // Set a temporary variables in NPCBlackboard to check conditions
@@ -547,6 +547,27 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                && TryComp(entity, out MobStateComponent? mobState)
                && mobState.CurrentState == MobState.Alive
                && control.CanControl.Contains(user);
+    }
+
+    /// <summary>
+    /// Counts the number of performers of tasks on the given target, including unified tasks
+    /// </summary>
+    public int TaskPerformersCount(NpcTaskPrototype task, EntityUid? target)
+    {
+        var count = 0;
+
+        if (!_tasks.TryGetValue((target, task), out var performers))
+            return count;
+
+        count += performers.Count;
+
+        foreach (var proto in task.UnionPerformersWith)
+        {
+            if (proto != task && _tasks.TryGetValue((target, proto), out var list))
+                count += list.Count;
+        }
+
+        return count;
     }
 
     private void SetPassiveTaskTargets(Entity<NpcControlComponent?> user, NpcTaskPrototype proto, List<EntityUid> entities)

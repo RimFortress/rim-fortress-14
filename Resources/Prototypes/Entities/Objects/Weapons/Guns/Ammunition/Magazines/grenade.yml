@@ -38,6 +38,10 @@
     steps: 5
     zeroVisible: false
   - type: Appearance
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoMagazine
+  # RimFortress End
 
 - type: entity
   id: MagazineGrenadeEmpty

@@ -21,6 +21,10 @@
     tags:
     - DonkPocket
     - Meat
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Donkpocket
+  # RimFortress End
 
 # Donkpocket
 

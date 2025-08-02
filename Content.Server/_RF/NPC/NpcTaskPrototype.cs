@@ -109,6 +109,12 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     public int MaxPerformers = int.MaxValue;
 
     /// <summary>
+    /// The counter of task performers will also include the performers of the specified tasks on the same target
+    /// </summary>
+    [DataField]
+    public List<ProtoId<NpcTaskPrototype>> UnionPerformersWith = new();
+
+    /// <summary>
     /// Could the target of this task be the entity that performs it
     /// </summary>
     [DataField]

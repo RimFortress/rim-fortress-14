@@ -22,3 +22,7 @@
   - type: ThrowingAngle
     angle: -135
   - type: LandAtCursor
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End

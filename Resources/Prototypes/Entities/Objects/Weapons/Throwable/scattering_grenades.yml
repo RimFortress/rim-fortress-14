@@ -18,6 +18,10 @@
       behaviors:
       - !type:TriggerBehavior
   - type: ScatteringGrenade
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Grenade
+  # RimFortress End
 
 - type: entity
   parent: [ScatteringGrenadeBase, BaseSecurityContraband]

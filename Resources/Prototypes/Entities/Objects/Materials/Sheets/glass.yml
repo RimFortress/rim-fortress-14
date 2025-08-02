@@ -48,6 +48,10 @@
     solutions:
       glass:
         canReact: false
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   parent: SheetGlassBase
@@ -96,6 +100,10 @@
   - type: Stack
     stackType: Glass
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetGlass
@@ -116,6 +124,10 @@
   - type: Stack
     lingering: true
     count: 0
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: SheetGlassBase

@@ -1,0 +1,31 @@
+- type: htnCompound
+  id: PullCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: PickUpTarget
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: true
+            rangeKey: InteractRange
+            removeKeyOnFinish: true
+
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandEntityPrecondition
+                - !type:CanInsertPrecondition
+              operator: !type:StorageOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:ActiveHandEntityPrecondition
+              operator: !type:DropOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:PullOperator
+            targetKey: PickUpTarget

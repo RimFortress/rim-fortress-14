@@ -22,6 +22,10 @@
     steps: 4
     zeroVisible: false
   - type: Appearance
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoBoxes
+  # RimFortress End
 
 # Boxes
 - type: entity

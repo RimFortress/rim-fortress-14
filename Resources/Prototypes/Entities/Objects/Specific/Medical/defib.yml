@@ -49,6 +49,10 @@
   - type: ToggleCellDraw
   - type: PowerCellDraw
     useRate: 100
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medical
+  # RimFortress End
 
 - type: entity
   id: DefibrillatorEmpty
@@ -59,6 +63,7 @@
     slots:
       cell_slot:
         name: power-cell-slot-component-slot-name-default
+  - type: StockpileCategory # RimFortress
 
 - type: entity
   id: DefibrillatorOneHandedUnpowered
@@ -130,3 +135,7 @@
       types:
         Blunt: 8
         Shock: 16
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medical
+  # RimFortress End

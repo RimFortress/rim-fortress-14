@@ -38,6 +38,10 @@
   - type: Tag
     tags:
       - Ingredient
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Ingredients
+  # RimFortress End
 
 - type: entity
   abstract: true
@@ -279,6 +283,10 @@
   - type: Tag
     tags:
       - Ingredient
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Ingredients
+  # RimFortress End
 
 - type: entity
   name: dough

@@ -42,6 +42,10 @@
         ents: []
   - type: StaticPrice
     price: 500
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Gun
+  # RimFortress End
 
 - type: entity
   name: Bulldog

@@ -25,6 +25,10 @@
   - type: Tag
     tags:
     - Recyclable
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Trash
+  # RimFortress End
 
 - type: entity
   parent: BaseStructure

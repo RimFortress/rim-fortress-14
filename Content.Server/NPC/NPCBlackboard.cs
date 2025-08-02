@@ -37,6 +37,8 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {"AggroVisionRadius", 10f},
         // RimFortress Start
         {MoveToCloseRange, 0.3f},
+        {PullerThrowDistance, 2f},
+        {PullingMoveCloseRange, 0.05f},
         // RimFortress End
     };
 
@@ -354,6 +356,16 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
 
     // RimFortress Start
     public const string MoveToCloseRange = "MoveToCloseRange";
+
+    /// <summary>
+    /// The maximum distance to which an item pulled by an NPC can be moved
+    /// </summary>
+    public const string PullerThrowDistance = "PullerThrowDistance";
+
+    /// <summary>
+    /// How close to a given coordinate should an NPC attempt to move an entity that is being pulled
+    /// </summary>
+    public const string PullingMoveCloseRange = "PullingMoveCloseRange";
     // RimFortress End
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()

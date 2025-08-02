@@ -11,6 +11,10 @@
   - type: Tag
     tags:
     - SurgeryTool
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Surgery
+  # RimFortress End
 
 # Cautery
 

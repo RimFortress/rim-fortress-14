@@ -34,7 +34,7 @@
     nameGeneration: food-sequence-taco-gen
     contentSeparator: ", "
   - type: Appearance
-  
+
 # Old tacos
 
 - type: entity
@@ -65,6 +65,10 @@
   - type: Tag
     tags:
       - Meat
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Taco
+  # RimFortress End
 
 - type: entity
   name: beef taco

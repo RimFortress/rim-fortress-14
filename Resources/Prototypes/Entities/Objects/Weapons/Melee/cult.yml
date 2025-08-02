@@ -21,6 +21,10 @@
     slots:
     - back
   - type: DisarmMalus
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: eldritch blade
@@ -45,6 +49,10 @@
     slots:
     - back
   - type: DisarmMalus
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: unholy halberd
@@ -85,3 +93,7 @@
     - back
   - type: UseDelay
     delay: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End

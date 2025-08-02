@@ -24,6 +24,10 @@
     - ClothMade
     - WhitelistChameleon
   - type: ProtectedFromStepTriggers
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingShoes
+  # RimFortress End
 
 - type: entity
   abstract: true

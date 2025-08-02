@@ -37,6 +37,11 @@
         - id: HarvestPlant
         - id: WaterPlant
         - id: RemoveWeed
+        - id: Storing
+        - id: MoveStoredInContainer
+        - id: FixStoredOffset
+        - id: MoveToSuppliedStock
+        - id: TakeOwnership
 
 - type: entity
   id: Raider

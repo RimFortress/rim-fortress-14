@@ -21,6 +21,10 @@
   - type: Tag
     tags:
     - Medkit
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medkit
+  # RimFortress End
 
 - type: entity
   name: burn treatment kit

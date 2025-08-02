@@ -41,6 +41,10 @@
     damage: 45
   - type: StaminaDamageOnEmbed
     damage: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   parent: ThrowingStar

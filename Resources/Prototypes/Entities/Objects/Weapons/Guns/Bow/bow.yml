@@ -45,6 +45,10 @@
       projectiles: !type:ContainerSlot
   - type: ContainerAmmoProvider
     container: projectiles
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Gun
+  # RimFortress End
 
 - type: entity
   id: BowImprovised

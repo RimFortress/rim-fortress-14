@@ -365,3 +365,56 @@
     - !type:NormTargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
+
+- type: utilityQuery
+  id: StoringTaskTarget
+  query:
+    - !type:OwnedQuery
+    - !type:StorableFilter
+      invert: true
+    - !type:StoredFilter
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: MoveStoredInContainerTarget
+  query:
+    - !type:StoredQuery
+    - !type:InContainerFilter
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: FixStoredOffsetTarget
+  query:
+    - !type:StoredQuery
+    - !type:TileOffsetFilter
+      lessThan: 0.06
+    - !type:InContainerFilter
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance
+
+- type: utilityQuery
+  id: MoveToSuppliedStockTarget
+  query:
+    - !type:StoredQuery
+    - !type:CanInsertInSuppliedFilter
+      invert: true
+    - !type:InventoryFilter
+    - !type:InHandsFilter
+  considerations:
+    - !type:NormTargetDistanceCon
+      curve: !type:PresetCurve
+        preset: TargetDistance

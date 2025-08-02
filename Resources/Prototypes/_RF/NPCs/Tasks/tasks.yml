@@ -83,6 +83,30 @@
           targetKey: PickUpTarget
 
 - type: npcTask
+  id: TakeOwnership
+  name: Take ownership
+  maxPerformers: 1
+  overlayColor: "#075967"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  compound: TakeOwnershipCompound
+  onFinish: RfIdleCompound
+  passive: true
+  targetWhitelist:
+    components:
+      - Item
+  startPreconditions:
+    - !type:OwnedPrecondition
+      targetKey: Target
+      invert: true
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: Target
+        - !type:OwnedPrecondition
+          targetKey: Target
+
+- type: npcTask
   id: Pry
   name: Open
   maxPerformers: 1
@@ -114,6 +138,8 @@
   id: Build
   name: Build
   maxPerformers: 1
+  unionPerformersWith:
+    - Deconstruct
   overlayColor: "#FFFF00"
   verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
   compound: BuildCompound
@@ -133,13 +159,12 @@
     - !type:ConstructionFinishedPrecondition
       key: Target
 
-# In fact, the only thing this task does is set the path in the graph to disassembly.
-# The NPC then automatically switches to the construction task via routine tasks.
-# Otherwise we would get NPC conflict for construction
 - type: npcTask
   id: Deconstruct
   name: Deconstruct
   maxPerformers: 1
+  unionPerformersWith:
+    - Build
   overlayColor: "#945A1C"
   verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
   verbOnly: true
@@ -159,8 +184,12 @@
     - !type:DeconstructionPrecondition
       key: Target
   finishPreconditions:
-    - !type:DeconstructionStartedPrecondition
-      targetKey: Target
+    - !type:OrPrecondition
+      preconditions:
+        - !type:ConstructionFinishedPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target
 
 - type: npcTask
   id: Dig
@@ -251,6 +280,8 @@
         - !type:MobStatePrecondition
           targetKey: Target
           state: Dead
+
+# Farming
 
 - type: npcTask
   id: Plant
@@ -375,6 +406,8 @@
       targetKey: Target
       lessThan: 0.1
 
+################
+
 - type: npcTask
   id: Chop
   name: Chop down
@@ -392,3 +425,142 @@
   finishPreconditions:
     - !type:EntityDeletedPrecondition
       key: Target
+
+- type: npcTask
+  id: Storing
+  name: Storing
+  maxPerformers: 1
+  unionPerformersWith:
+    - MoveStoredInContainer
+    - FixStoredOffset
+    - MoveToSuppliedStock
+  overlayColor: "#A16C2B"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: StoringCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+    - SupplyingOnly
+    - SupplyingStartStock
+  targetsQuery: StoringTaskTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+    - !type:PulledEntityIsPrecondition
+      targetKey: PickUpTarget
+      invert: true
+
+- type: npcTask
+  id: MoveStoredInContainer
+  name: Storing
+  maxPerformers: 1
+  unionPerformersWith:
+    - Storing
+    - FixStoredOffset
+    - MoveToSuppliedStock
+  overlayColor: "#A16C2B"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: MoveStoredInContainerCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+    - SupplyingOnly
+    - SupplyingStartStock
+  targetsQuery: MoveStoredInContainerTarget
+  targetWhitelist:
+    components:
+      - Item
+  startPreconditions:
+    - !type:StockpileFreeContainerPrecondition
+      targetKey: PickUpTarget
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:TargetInContainerPrecondition
+              targetKey: PickUpTarget
+
+- type: npcTask
+  id: FixStoredOffset
+  name: Storing
+  maxPerformers: 1
+  unionPerformersWith:
+    - Storing
+    - MoveStoredInContainer
+    - MoveToSuppliedStock
+  overlayColor: "#8d622d"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: FixStoredOffsetCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+    - SupplyingOnly
+    - SupplyingStartStock
+  targetsQuery: FixStoredOffsetTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:TileOffsetPrecondition
+              targetKey: PickUpTarget
+              lessThan: 0.06
+
+- type: npcTask
+  id: MoveToSuppliedStock
+  name: Storing
+  maxPerformers: 1
+  unionPerformersWith:
+    - Storing
+    - MoveStoredInContainer
+    - FixStoredOffset
+  overlayColor: "#8d622d"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  compound: MoveToSuppliedStockCompound
+  onFinish: RfIdleCompound
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+    - SupplyingOnly
+    - SupplyingStartStock
+  targetsQuery: MoveToSuppliedStockTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:CanInsertInSuppliedPrecondition
+              targetKey: PickUpTarget
+              invert: true

@@ -27,6 +27,10 @@
       - Slicing
     useSound:
       path: /Audio/Items/Culinary/chop.ogg
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: kitchen knife

@@ -1,0 +1,419 @@
+# Drinks
+
+- type: stockpileCategory
+  id: Drinks
+  icon:
+    sprite: Objects/Consumable/Drinks/waterbottle.rsi
+    state: icon
+  subCategories:
+    - GlassDrinks
+    - BottleDrinks
+    - CanDrinks
+    - CartonsDrinks
+
+- type: stockpileCategory
+  id: GlassDrinks
+  icon:
+    sprite: Objects/Consumable/Drinks/ginfizzglass.rsi
+    state: icon
+
+- type: stockpileCategory
+  id: BottleDrinks
+  icon:
+    sprite: Objects/Consumable/Drinks/beer.rsi
+    state: icon
+
+- type: stockpileCategory
+  id: CanDrinks
+  icon:
+    sprite: Objects/Consumable/Drinks/cola.rsi
+    state: icon
+
+- type: stockpileCategory
+  id: CartonsDrinks
+  icon:
+    sprite: Objects/Consumable/Drinks/limejuice.rsi
+    state: icon
+
+# Food
+
+- type: stockpileCategory
+  id: Food
+  icon:
+    sprite: Objects/Consumable/Food/burger.rsi
+    state: plain
+  subCategories:
+    - RawFood
+    - CookedFood
+    - FrozenFood
+    - Ingredients
+
+- type: stockpileCategory
+  id: RawFood
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: bird
+  subCategories:
+    - RawMeat
+    - RawCutlet
+    - Produce
+
+- type: stockpileCategory
+  id: CookedFood
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: chicken-fried
+  subCategories:
+    - CookedMeat
+    - CookedCutlet
+    - Burgers
+    - Taco
+    - Bowl
+    - Snacks
+    - Noodles
+    - Meals
+    - Bagel
+    - Bread
+    - Cake
+    - Donkpocket
+    - Donut
+    - Pie
+    - Pizza
+
+- type: stockpileCategory
+  id: FrozenFood
+  icon:
+    sprite: Objects/Consumable/Food/frozen.rsi
+    state: sandwich
+
+- type: stockpileCategory
+  id: Ingredients
+  icon:
+    sprite: Objects/Consumable/Food/ingredients.rsi
+    state: flour-big
+
+- type: stockpileCategory
+  id: RawMeat
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: RawCutlet
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: cutlet
+
+- type: stockpileCategory
+  id: Produce
+  iconEntity: FoodBanana
+
+- type: stockpileCategory
+  id: CookedMeat
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: plain-cooked
+
+- type: stockpileCategory
+  id: CookedCutlet
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: cutlet-cooked
+
+- type: stockpileCategory
+  id: Burgers
+  icon:
+    sprite: Objects/Consumable/Food/burger.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: Taco
+  icon:
+    sprite: Objects/Consumable/Food/taco.rsi
+    state: beeftaco
+
+- type: stockpileCategory
+  id: Bowl
+  iconEntity: FoodSaladCaesar
+
+- type: stockpileCategory
+  id: Snacks
+  icon:
+    sprite: Objects/Consumable/Food/snacks.rsi
+    state: boritos
+
+- type: stockpileCategory
+  id: Noodles
+  icon:
+    sprite: Objects/Consumable/Food/noodles.rsi
+    state: boiled
+
+- type: stockpileCategory
+  id: Meals
+  icon:
+    sprite: Objects/Consumable/Food/meals.rsi
+    state: fries
+
+- type: stockpileCategory
+  id: Bagel
+  icon:
+    sprite: Objects/Consumable/Food/Baked/bagel.rsi
+    state: bagel
+
+- type: stockpileCategory
+  id: Bread
+  iconEntity: FoodBreadBanana
+
+- type: stockpileCategory
+  id: Cake
+  iconEntity: FoodCakeBlueberry
+
+- type: stockpileCategory
+  id: Donkpocket
+  icon:
+    sprite: Objects/Consumable/Food/Baked/donkpocket.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: Donut
+  icon:
+    sprite: Objects/Consumable/Food/Baked/donut.rsi
+    state: plain
+
+- type: stockpileCategory
+  id: Pie
+  iconEntity: FoodPieApple
+
+- type: stockpileCategory
+  id: Pizza
+  iconEntity: FoodPizzaMargherita
+
+# Weapons
+
+- type: stockpileCategory
+  id: Weapon
+  name: Weapons
+  iconEntity: CombatKnife
+  subCategories:
+    - Gun
+    - Melee
+    - Ammo
+
+- type: stockpileCategory
+  id: Gun
+  name: Gun
+  iconEntity: WeaponRevolverInspector
+
+- type: stockpileCategory
+  id: Melee
+  name: Melee
+  iconEntity: CombatKnife
+
+- type: stockpileCategory
+  id: Ammo
+  name: Ammunition
+  iconEntity: MagazineShotgun
+  subCategories:
+    - AmmoBoxes
+    - AmmoCartridge
+    - AmmoMagazine
+    - SpeedLoader
+    - AmmoExplosive
+    - Grenade
+
+- type: stockpileCategory
+  id: Grenade
+  name: Grenades
+  iconEntity: GrenadeShrapnel
+
+- type: stockpileCategory
+  id: AmmoBoxes
+  name: Boxes
+  iconEntity: MagazineBoxLightRifleBig
+
+- type: stockpileCategory
+  id: AmmoCartridge
+  name: Cartridges
+  iconEntity: CartridgePistol
+
+- type: stockpileCategory
+  id: AmmoMagazine
+  name: Magazines
+  iconEntity: MagazineLightRifleBox
+
+- type: stockpileCategory
+  id: SpeedLoader
+  name: Speed loaders
+  iconEntity: SpeedLoaderMagnum
+
+- type: stockpileCategory
+  id: AmmoExplosive
+  name: Explosives
+  iconEntity: GrenadeFrag
+
+# Tools
+
+- type: stockpileCategory
+  id: Tool
+  name: Tools
+  iconEntity: Crowbar
+
+# Materials
+
+- type: stockpileCategory
+  id: Material
+  name: Materials
+  iconEntity: MaterialCloth
+
+# Medical
+
+- type: stockpileCategory
+  id: Medical
+  name: Medical
+  iconEntity: Brutepack
+  subCategories:
+    - Syringe
+    - Pill
+    - Medkit
+    - Medipen
+    - Surgery
+
+- type: stockpileCategory
+  id: Syringe
+  name: Syringe
+  iconEntity: Syringe
+
+- type: stockpileCategory
+  id: Pill
+  name: Pills
+  iconEntity: PillCanisterBicaridine
+
+- type: stockpileCategory
+  id: Medipen
+  name: Medipens
+  iconEntity: EmergencyMedipen
+
+- type: stockpileCategory
+  id: Medkit
+  name: Medkits
+  iconEntity: Medkit
+
+- type: stockpileCategory
+  id: Surgery
+  name: Surgery
+  iconEntity: Scalpel
+
+# Seeds
+
+- type: stockpileCategory
+  id: Seed
+  name: Seeds
+  iconEntity: WheatSeeds
+
+# Clothing
+
+- type: stockpileCategory
+  id: Clothing
+  name: Clothing
+  iconEntity: ClothingUniformJumpsuitColorWhite
+  subCategories:
+    - ClothingBack
+    - ClothingBelt
+    - ClothingEars
+    - ClothingEyes
+    - ClothingHands
+    - ClothingHead
+    - ClothingMask
+    - ClothingNeck
+    - ClothingOuter
+    - ClothingShoes
+    - ClothingUniform
+
+- type: stockpileCategory
+  id: ClothingBack
+  name: Back
+  iconEntity: ClothingBackpack
+
+- type: stockpileCategory
+  id: ClothingBelt
+  name: Belt
+  iconEntity: ClothingBeltUtility
+
+- type: stockpileCategory
+  id: ClothingNeck
+  name: Belt
+  iconEntity: ClothingNeckScarfStripedLightBlue
+
+- type: stockpileCategory
+  id: ClothingEars
+  name: Ears
+  iconEntity: ClothingHeadsetMining
+
+- type: stockpileCategory
+  id: ClothingEyes
+  name: Eyes
+  iconEntity: ClothingEyesGlassesSunglasses
+
+- type: stockpileCategory
+  id: ClothingHands
+  name: Hands
+  iconEntity: ClothingHandsGlovesLeather
+
+- type: stockpileCategory
+  id: ClothingHead
+  name: Head
+  iconEntity: ClothingHeadHatBeretMerc
+
+- type: stockpileCategory
+  id: ClothingMask
+  name: Masks
+  iconEntity: ClothingMaskGas
+
+- type: stockpileCategory
+  id: ClothingOuter
+  name: Outer
+  iconEntity: ClothingOuterHardsuitBasic
+
+- type: stockpileCategory
+  id: ClothingShoes
+  name: Shoes
+  iconEntity: ClothingShoesBootsSalvage
+
+- type: stockpileCategory
+  id: ClothingUniform
+  name: Uniform
+  iconEntity: ClothingUniformJumpskirtColorWhite
+
+# Structures
+
+- type: stockpileCategory
+  id: Structure
+  name: Structures
+  iconEntity: WeldingFuelTankHighCapacity
+  subCategories:
+    - Closet
+    - Crate
+    - Tank
+
+- type: stockpileCategory
+  id: Closet
+  name: Closets
+  iconEntity: ClosetMaintenance
+
+- type: stockpileCategory
+  id: Crate
+  name: Crates
+  iconEntity: CrateGenericSteel
+
+- type: stockpileCategory
+  id: Tank
+  name: Tanks
+  iconEntity: WaterTankFull
+
+# Other
+
+- type: stockpileCategory
+  id: Trash
+  icon:
+    sprite: Objects/Consumable/Food/meat.rsi
+    state: rotten

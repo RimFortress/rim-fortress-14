@@ -35,6 +35,10 @@
     sprite: Objects/Weapons/Melee/pickaxe.rsi
     storedRotation: -45
   - type: UseDelay
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Tool
+  # RimFortress End
 
 - type: entity
   name: mining drill
@@ -62,6 +66,10 @@
         Brute: 3
       types:
         Structural: 15
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Tool
+  # RimFortress End
 
 - type: entity
   name: diamond tipped mining drill
@@ -99,6 +107,10 @@
     color: "#ffeead"
     enabled: false
     radius: 4
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   parent: [BaseWeaponCrusher, BaseSecurityCargoContraband]

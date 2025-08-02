@@ -15,3 +15,7 @@
   - type: Item
     size: Small
     sprite: Objects/Weapons/Melee/gohei.rsi
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End

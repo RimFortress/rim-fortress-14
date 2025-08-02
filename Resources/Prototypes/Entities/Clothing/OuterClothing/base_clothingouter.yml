@@ -8,6 +8,10 @@
     - outerClothing
   - type: Sprite
     state: icon
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingOuter
+  # RimFortress End
 
 - type: entity
   abstract: true

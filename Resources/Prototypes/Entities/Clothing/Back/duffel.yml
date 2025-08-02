@@ -14,6 +14,10 @@
     walkModifier: 1
     sprintModifier: 0.9
   - type: HeldSpeedModifier
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingBack
+  # RimFortress End
 
 - type: entity
   parent: ClothingBackpackDuffel

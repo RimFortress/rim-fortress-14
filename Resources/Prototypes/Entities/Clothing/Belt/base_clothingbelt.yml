@@ -17,6 +17,10 @@
       Cloth: 50
   - type: StaticPrice
     price: 20
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingBelt
+  # RimFortress End
 
 - type: entity
   abstract: true

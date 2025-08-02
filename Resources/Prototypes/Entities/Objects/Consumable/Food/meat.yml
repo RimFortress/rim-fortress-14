@@ -68,6 +68,10 @@
     entity: FoodMeatRotten
     # once it would say bloated, turn into the rotten prototype
     stage: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawMeat
+  # RimFortress End
 
 # bruh
 - type: Tag
@@ -460,6 +464,10 @@
           Quantity: 4
         - ReagentId: Fat
           Quantity: 4
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Trash
+  # RimFortress End
 
 - type: entity
   name: raw spider meat
@@ -805,6 +813,10 @@
     entries:
       Burger: MeatSteak
       Taco: MeatSteak
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: bacon
@@ -840,6 +852,10 @@
     entries:
       Burger: MeatBacon
       Taco: MeatBacon
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: cooked bear
@@ -873,6 +889,10 @@
     entries:
       Burger: MeatBearBurger
       Taco: MeatBear
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: penguin filet
@@ -905,6 +925,10 @@
     entries:
       Burger: MeatPenguinBurger
       Taco: MeatPenguin
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: cooked chicken
@@ -937,6 +961,10 @@
     entries:
       Burger: MeatChicken
       Taco: MeatChicken
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: fried chicken
@@ -969,6 +997,10 @@
     entries:
       Burger: MeatChicken
       Taco: MeatChicken
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: cooked duck
@@ -1001,6 +1033,10 @@
     entries:
       Burger: MeatDuck
       Taco: MeatDuck
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: cooked crab
@@ -1033,6 +1069,10 @@
     entries:
       Burger: MeatCrabBurger
       Taco: MeatCrab
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: goliath steak
@@ -1063,6 +1103,10 @@
     entries:
       Burger: MeatGoliathBurger
       Taco: MeatGoliath
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: rouny steak
@@ -1097,6 +1141,10 @@
     entries:
       Burger: MeatXeno
       Taco: MeatXeno
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: lizard steak
@@ -1130,6 +1178,10 @@
     entries:
       Burger: MeatLizardBurger
       Taco: MeatLizard
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: boiled spider leg
@@ -1156,6 +1208,10 @@
     entries:
       Burger: MeatSpiderBurger
       Taco: MeatSpider
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: meatball
@@ -1184,6 +1240,10 @@
   - type: Construction
     graph: MeatMeatballCooked
     node: meatball cooked
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: boiled snail
@@ -1213,6 +1273,10 @@
     entries:
       Burger: MeatSnail
       Taco: MeatSnail
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 - type: entity
   name: anomalous steak
@@ -1242,6 +1306,10 @@
   - type: Construction
     graph: AnomalyMeatSteak
     node: anomaly steak
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedMeat
+  # RimFortress End
 
 # Cutlets
 
@@ -1272,6 +1340,10 @@
     graph: Cutlet
     node: start
     defaultTarget: cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw bear cutlet
@@ -1301,6 +1373,10 @@
     graph: BearCutlet
     node: start
     defaultTarget: bear cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw penguin cutlet
@@ -1328,6 +1404,10 @@
     graph: PenguinCutlet
     node: start
     defaultTarget: penguin cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw chicken cutlet
@@ -1355,6 +1435,10 @@
     graph: ChickenCutlet
     node: start
     defaultTarget: chicken cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw duck cutlet
@@ -1382,6 +1466,10 @@
     graph: DuckCutlet
     node: start
     defaultTarget: duck cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw lizard cutlet
@@ -1412,6 +1500,10 @@
     graph: LizardCutlet
     node: start
     defaultTarget: lizard cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw spider cutlet
@@ -1438,6 +1530,10 @@
     graph: SpiderCutlet
     node: start
     defaultTarget: spider cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw xeno cutlet
@@ -1466,6 +1562,10 @@
     graph: XenoCutlet
     node: start
     defaultTarget: xeno cutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: raw killer tomato cutlet
@@ -1482,6 +1582,10 @@
     color: red
   - type: StaticPrice
     price: 30
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 - type: entity
   name: salami slice
@@ -1504,6 +1608,10 @@
           Quantity: 1
         - ReagentId: Protein
           Quantity: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: RawCutlet
+  # RimFortress End
 
 # Cooked
 
@@ -1535,6 +1643,10 @@
     entries:
       Burger: MeatCutlet
       Taco: MeatCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: bear cutlet
@@ -1567,6 +1679,10 @@
     entries:
       Burger: BearCutletBurger
       Taco: BearCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: penguin cutlet
@@ -1597,6 +1713,10 @@
     entries:
       Burger: PenguinCutletBurger
       Taco: PenguinCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: chicken cutlet
@@ -1627,6 +1747,10 @@
     entries:
       Burger: ChickenCutlet
       Taco: ChickenCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: duck cutlet
@@ -1657,6 +1781,10 @@
     entries:
       Burger: DuckCutlet
       Taco: DuckCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: lizard cutlet
@@ -1688,6 +1816,10 @@
     entries:
       Burger: LizardCutletBurger
       Taco: LizardCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: spider cutlet
@@ -1717,6 +1849,10 @@
     entries:
       Burger: SpiderCutletBurger
       Taco: SpiderCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End
 
 - type: entity
   name: xeno cutlet
@@ -1746,3 +1882,7 @@
     entries:
       Burger: XenoCutlet
       Taco: XenoCutlet
+  # RimFortress Start
+  - type: StockpileCategory
+    category: CookedCutlet
+  # RimFortress End

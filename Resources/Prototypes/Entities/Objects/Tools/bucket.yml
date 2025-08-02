@@ -68,3 +68,7 @@
     materialComposition:
       Plastic: 50
   - type: DnaSubstanceTrace
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Tool
+  # RimFortress End

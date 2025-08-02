@@ -71,6 +71,10 @@
   - type: Reflect
   - type: IgnitionSource
     temperature: 700
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 
 - type: entity
   name: energy sword

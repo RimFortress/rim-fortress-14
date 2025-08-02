@@ -22,6 +22,10 @@
         reagents:
         - ReagentId: Nutriment
           Quantity: 20
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Bread
+  # RimFortress End
 
 - type: entity
   parent: FoodBreadBase

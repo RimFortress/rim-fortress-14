@@ -28,6 +28,10 @@
     - HighRiskItem
   - type: StealTarget
     stealGroup: Hypospray
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medical
+  # RimFortress End
 
 - type: entity
   name: gorlex hypospray
@@ -143,6 +147,10 @@
     price: 75 # These are limited supply items.
   - type: TrashOnSolutionEmpty
     solution: pen
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medipen
+  # RimFortress End
 
 - type: entity
   name: emergency medipen

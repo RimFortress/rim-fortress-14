@@ -19,6 +19,10 @@
     containers:
       ballistic-ammo: !type:Container
         ents: []
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Gun
+  # RimFortress End
 
 - type: entity
   name: china lake

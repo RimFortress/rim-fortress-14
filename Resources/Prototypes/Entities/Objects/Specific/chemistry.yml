@@ -374,6 +374,10 @@
   - type: Tag
     tags:
     - Syringe
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Syringe
+  # RimFortress End
 
 - type: entity
   parent: BaseSyringe
@@ -566,6 +570,10 @@
   - type: Tag
     tags:
     - Pill
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Pill
+  # RimFortress End
 
 - type: entity
   name: pill canister
@@ -590,7 +598,11 @@
     areaInsertRadius: 1
     storageInsertSound: /Audio/Effects/pill_insert.ogg
     storageRemoveSound: /Audio/Effects/pill_remove.ogg
-    whitelist: 
+    whitelist:
       tags:
       - Pill
   - type: Dumpable
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Pill
+  # RimFortress End

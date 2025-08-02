@@ -24,4 +24,8 @@
         Blunt: 3
   - type: UseDelay
     delay: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Melee
+  # RimFortress End
 

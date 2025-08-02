@@ -18,6 +18,10 @@
           type: StorageBoundUserInterface
         enum.ChameleonUiKey.Key:
           type: ChameleonBoundUserInterface
+    # RimFortress Start
+    - type: StockpileCategory
+      category: ClothingBack
+    # RimFortress End
 
 - type: entity
   parent: [Clothing, ClothingSlotBase]
@@ -75,3 +79,7 @@
     solution: tank
   - type: ExaminableSolution
     solution: tank
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingBack
+  # RimFortress End

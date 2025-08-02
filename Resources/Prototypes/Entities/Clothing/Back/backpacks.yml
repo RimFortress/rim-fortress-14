@@ -30,6 +30,10 @@
     delay: 0.5
   - type: ExplosionResistance
     damageCoefficient: 0.9
+  # RimFortress Start
+  - type: StockpileCategory
+    category: ClothingBack
+  # RimFortress End
 
 - type: entity
   parent: ClothingBackpack

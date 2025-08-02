@@ -34,6 +34,13 @@
 - type: htnCompound
   id: IdleMoveCompound
   branches:
+    - preconditions:
+        - !type:InContainerPrecondition
+          isInContainer: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: EscapeCompound
+
     - tasks:
         - !type:HTNPrimitiveTask
           operator: !type:WaitOperator

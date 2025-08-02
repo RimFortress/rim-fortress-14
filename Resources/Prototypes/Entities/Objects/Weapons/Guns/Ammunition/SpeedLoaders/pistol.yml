@@ -19,6 +19,10 @@
     containers:
       ballistic-ammo: !type:Container
         ents: []
+  # RimFortress Start
+  - type: StockpileCategory
+    category: SpeedLoader
+  # RimFortress End
 
 - type: entity
   id: SpeedLoaderPistol

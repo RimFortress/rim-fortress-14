@@ -17,6 +17,10 @@
   - type: Appearance
   - type: Extractable
     grindableSolutionName: food
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Produce
+  # RimFortress End
 
 # For produce that can be immediately eaten
 
@@ -193,6 +197,10 @@
   - type: Produce
     seedId: towercap
   - type: Log
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   name: steel-cap log
@@ -214,6 +222,10 @@
   - type: Log
     spawnedPrototype: SheetSteel1
     spawnCount: 1
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Material
+  # RimFortress End
 
 - type: entity
   name: nettle
@@ -413,6 +425,10 @@
   - type: Extractable
     grindableSolutionName: food
   - type: SpaceGarbage
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Trash
+  # RimFortress End
 
 - type: entity
   name: baked banana peel
@@ -1190,6 +1206,10 @@
         reagents:
         - ReagentId: Cornmeal
           Quantity: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Trash
+  # RimFortress End
 
 - type: entity
   name: onion
@@ -2643,6 +2663,10 @@
     seedId: cherry
   - type: SpaceGarbage
   - type: BadFood
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Trash
+  # RimFortress End
 
 - type: entity
   name: anomaly berry

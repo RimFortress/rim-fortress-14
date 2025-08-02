@@ -1,0 +1,11 @@
+<controls:IntCounter
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
+    <BoxContainer Name="ItemCountBox" Access="Public" Orientation="Horizontal">
+        <Button Name="Plus" Margin="1 2 1 2"
+                Text="+" StyleClasses="OpenRight"/>
+        <LineEdit Name="CountLine" Margin="0 3" MinWidth="50"/>
+        <Button Name="Minus" Margin="1 2 1 2"
+                Text="–" StyleClasses="OpenLeft"/>
+    </BoxContainer>
+</controls:IntCounter>

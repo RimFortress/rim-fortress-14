@@ -1,0 +1,30 @@
+stockpile-category-Drinks-name = Drinks
+stockpile-category-GlassDrinks-name = Glass
+stockpile-category-BottleDrinks-name = Bottle
+stockpile-category-CanDrinks-name = Cans
+stockpile-category-CartonsDrinks-name = Cartons
+
+stockpile-category-Food-name = Food
+stockpile-category-RawFood-name = Raw
+stockpile-category-CookedFood-name = Cooked
+stockpile-category-FrozenFood-name = Frozen
+stockpile-category-Ingredients-name = Ingredients
+stockpile-category-Snacks-name = Snacks
+stockpile-category-RawMeat-name = Meat
+stockpile-category-RawCutlet-name = Cutlets
+stockpile-category-Produce-name = Produce
+stockpile-category-CookedMeat-name = Meat
+stockpile-category-CookedCutlet-name = Cutlet
+stockpile-category-Burgers-name = Burgers
+stockpile-category-Taco-name = Taco
+stockpile-category-Bowl-name = Bowl
+stockpile-category-Noodles-name = Noodles
+stockpile-category-Meals-name = Meals
+stockpile-category-Bagel-name = Bagels
+stockpile-category-Cake-name = Cakes
+stockpile-category-Donkpocket-name = Donk pocket
+stockpile-category-Donut-name = Donuts
+stockpile-category-Pie-name = Pies
+stockpile-category-Pizza-name = Pizza
+
+stockpile-category-Trash-name = Trash

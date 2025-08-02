@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Client._RF.World;
 using Content.Client.UserInterface.Screens;
 using Content.Client.UserInterface.Systems.Chat.Widgets;
@@ -16,6 +17,7 @@ public sealed partial class RimFortressScreen : InGameScreen
 
     public RimFortressScreen()
     {
+        IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
         AutoscaleMaxResolution = new Vector2i(1080, 770);
@@ -36,7 +38,13 @@ public sealed partial class RimFortressScreen : InGameScreen
         Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
         Hotbar.BuildButton.OnPressed += _ => ToggleExpected(ConstructionMenu);
         Hotbar.PassiveTasksButton.OnPressed += _ => ToggleExpected(PassiveTasksMenu);
+        Hotbar.StockpileButton.OnPressed += _ => ToggleExpected(StockpileMenu);
         Hotbar.WorldMapButton.OnPressed += _ => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
+        UserInterfaceManager.GetUIController<StockpileUiController>().OnStockSelected += _ =>
+        {
+            ToggleExpected(StockpileSettingsMenu);
+            StockpileSettingsMenu.BuildItems(null);
+        };
     }
 
     private void ChatOnResizeFinish(Vector2 _)
@@ -55,6 +63,12 @@ public sealed partial class RimFortressScreen : InGameScreen
 
         if (control != PassiveTasksMenu)
             PassiveTasksMenu.Visible = false;
+
+        if (control != StockpileMenu)
+            StockpileMenu.Visible = false;
+
+        if (control != StockpileSettingsMenu)
+            StockpileSettingsMenu.Close();
     }
 
     public override void SetChatSize(Vector2 size)
@@ -73,6 +87,7 @@ public sealed partial class RimFortressScreen : InGameScreen
     {
         ConstructionMenu.EnsureSetup();
         PassiveTasksMenu.EnsureSetup();
+        StockpileSettingsMenu.EnsureSetup();
     }
 }
 

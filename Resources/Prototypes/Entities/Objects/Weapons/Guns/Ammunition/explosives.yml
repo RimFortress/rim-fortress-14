@@ -19,6 +19,10 @@
     state: rpg
   - type: StaticPrice
     price: 20
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoExplosive
+  # RimFortress End
 
 - type: entity
   id: CartridgeRocketSlow
@@ -39,6 +43,10 @@
       state: frag
     - type: StaticPrice
       price: 20
+    # RimFortress Start
+    - type: StockpileCategory
+      category: AmmoExplosive
+    # RimFortress End
 
 # Grenades
 
@@ -54,6 +62,10 @@
   - type: Item
     size: Small
   - type: Sprite
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoExplosive
+  # RimFortress End
 
 - type: entity
   id: GrenadeBaton
@@ -154,6 +166,10 @@
   - type: Item
     size: Small
   - type: Sprite
+  # RimFortress Start
+  - type: StockpileCategory
+    category: AmmoExplosive
+  # RimFortress End
 
 - type: entity
   id: CannonBall

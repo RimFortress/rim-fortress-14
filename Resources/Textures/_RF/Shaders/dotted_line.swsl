@@ -8,6 +8,7 @@ uniform highp float unit;
 uniform highp float thickness;
 uniform highp float startOffset;
 uniform highp float endOffset;
+uniform highp float scrollSpeed;
 
 void fragment() {
     highp vec2 lineDir = end - start;
@@ -25,13 +26,20 @@ void fragment() {
     highp float dist = abs(dot(AP, perp));
 
     highp float unitThickness = thickness * unit;
+
+    if (unitThickness < 2) {
+        unitThickness = 2;
+    }
+
     highp float inThickness = smoothstep(unitThickness, unitThickness - 1.0, dist);
 
     highp float inSegment = smoothstep(0.0, 1.0, effectiveT)
                           - smoothstep(effectiveLength, effectiveLength+1.0, effectiveT);
 
     highp float totalSegment = dashLen + gapLen;
-    highp float dashPos = mod(effectiveT, totalSegment);
+    highp float animOffset = mod(TIME * scrollSpeed, totalSegment);
+
+    highp float dashPos = mod(effectiveT + animOffset, totalSegment);
     highp float inDash = smoothstep(0.0, 1.0, dashPos)
                        - smoothstep(dashLen, dashLen+1.0, dashPos);
 

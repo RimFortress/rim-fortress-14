@@ -1,0 +1,281 @@
+- type: htnCompound
+  id: StoringCompound
+  branches:
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+      tasks:
+        - !type:HTNCompoundTask
+          task: StoringItemCompound
+
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+          invert: true
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Pullable
+      tasks:
+        - !type:HTNCompoundTask
+          task: StoringObjectCompound
+
+- type: htnCompound
+  id: StoringItemCompound
+  branches:
+    - preconditions:
+        - !type:ActiveHandEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:FindStoringContainerOperator
+            targetKey: PickUpTarget
+            resultKey: Container
+            rangeKey: InteractRange
+        - !type:HTNPrimitiveTask
+          operator: !type:EntityCoordinatesOperator
+            targetKey: Container
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+        - !type:HTNCompoundTask
+          task: ContainerStoringCompound
+
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:FindStoringPlaceOperator
+            targetKey: PickUpTarget
+            rangeKey: MoveToCloseRange
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+        - !type:HTNPrimitiveTask
+          operator: !type:DropAtOperator
+
+
+- type: htnCompound
+  id: ContainerStoringCompound
+  branches:
+    - preconditions:
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:StorageClosedPrecondition
+          targetKey: Container
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractActivateOperator
+            targetKey: Container
+
+    - preconditions:
+        - !type:StorageClosedPrecondition
+          targetKey: Container
+          invert: true
+      tasks:
+        # Make the NPCs do a little delay so that opening
+        # and closing the container is not instantly and looks more human.
+        - !type:HTNPrimitiveTask
+          operator: !type:SetRandomFloatOperator
+            targetKey: WaitTime
+            minAmount: 0.10
+            maxAmount: 0.20
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: WaitTime
+
+        - !type:HTNPrimitiveTask
+          operator: !type:DropAtOperator
+
+        - !type:HTNPrimitiveTask
+          operator: !type:SetRandomFloatOperator
+            targetKey: WaitTime
+            minAmount: 0.10
+            maxAmount: 0.20
+        - !type:HTNPrimitiveTask
+          operator: !type:WaitOperator
+            key: WaitTime
+
+        - !type:HTNPrimitiveTask
+          operator: !type:InteractActivateOperator
+            targetKey: Container
+
+
+- type: htnCompound
+  id: StoringObjectCompound
+  branches:
+    - preconditions:
+        - !type:PulledEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNCompoundTask
+          task: PullCompound
+
+    - preconditions:
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+          invert: true
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:FindStoringPlaceOperator
+            targetKey: PickUpTarget
+            rangeKey: MoveToCloseRange
+
+        # Open the container before dragging to avoid hitting others
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:HasComponentPrecondition
+                  targetKey: PickUpTarget
+                  components:
+                    - type: EntityStorage
+                - !type:StorageClosedPrecondition
+                  targetKey: PickUpTarget
+              operator: !type:InteractActivateOperator
+                targetKey: PickUpTarget
+
+        - !type:HTNPrimitiveTask
+          operator: !type:MoveToOperator
+            pathfindInPlanning: false
+            rangeKey: InteractRange
+            removeKeyOnFinish: false
+
+        # Moves the container to the specified location
+        - !type:HTNPrimitiveTask
+          operator: !type:MovePulledOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullPullingOperator
+
+        # Close container after storing
+        - !type:HTNPrimitiveTask
+          operator: !type:TryOperator
+            try: !type:HTNPrimitiveTask
+              preconditions:
+                - !type:HasComponentPrecondition
+                  targetKey: PickUpTarget
+                  components:
+                    - type: EntityStorage
+              operator: !type:InteractActivateOperator
+                targetKey: PickUpTarget
+
+
+- type: htnCompound
+  id: MoveStoredInContainerCompound
+  branches:
+    - tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:DetachStoredOperator
+            targetKey: PickUpTarget
+        - !type:HTNCompoundTask
+          task: StoringItemCompound
+
+
+- type: htnCompound
+  id: FixStoredOffsetCompound
+  branches:
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+        - !type:TileOffsetPrecondition
+          targetKey: PickUpTarget
+          moreThan: 0.06
+      tasks:
+        - !type:HTNCompoundTask
+          task: PickUpCompound
+        - !type:HTNPrimitiveTask
+          operator: !type:TileCenterOperator
+            targetKey: PickUpTarget
+            resultKey: TargetCoordinates
+        - !type:HTNPrimitiveTask
+          operator: !type:DropAtOperator
+
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+          invert: true
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Pullable
+        - !type:PulledEntityIsPrecondition
+          targetKey: PickUpTarget
+          invert: true
+        - !type:TileOffsetPrecondition
+          targetKey: PickUpTarget
+          moreThan: 0.06
+      tasks:
+        - !type:HTNCompoundTask
+          task: PullCompound
+
+    - preconditions:
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Item
+          invert: true
+        - !type:HasComponentPrecondition
+          targetKey: PickUpTarget
+          components:
+            - type: Pullable
+        - !type:TileOffsetPrecondition
+          targetKey: PickUpTarget
+          moreThan: 0.06
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:TileCenterOperator
+            targetKey: PickUpTarget
+            resultKey: TargetCoordinates
+        - !type:HTNPrimitiveTask
+          operator: !type:MovePulledOperator
+        - !type:HTNPrimitiveTask
+          operator: !type:UnPullPullingOperator
+
+- type: htnCompound
+  id: MoveToSuppliedStockCompound
+  branches:
+    - preconditions:
+        - !type:KeyNotExistsPrecondition
+          key: SupplyingStartStock
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:StockpileOperator
+            targetKey: PickUpTarget
+            resultKey: SupplyingStartStock
+        - !type:HTNPrimitiveTask
+          operator: !type:DetachStoredOperator
+            targetKey: PickUpTarget
+
+    - preconditions:
+        - !type:KeyExistsPrecondition
+          key: SupplyingStartStock
+      tasks:
+        - !type:HTNPrimitiveTask
+          operator: !type:SetBoolOperator
+            targetKey: SupplyingOnly
+            value: true
+        - !type:HTNCompoundTask
+          task: StoringCompound

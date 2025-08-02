@@ -57,7 +57,7 @@ public sealed partial class EscapeOperator : HTNOperator, IHtnConditionalShutdow
             return (false, null);
         }
 
-        if (_entityStorage.TryOpenStorage(owner, target))
+        if (!_entityStorage.TryOpenStorage(owner, target)) // RimFortress: fix wtf
         {
             return (false, null);
         }

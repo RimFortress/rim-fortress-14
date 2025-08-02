@@ -20,6 +20,10 @@
         reagents:
         - ReagentId: Nutriment
           Quantity: 5
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Bagel
+  # RimFortress End
 
 - type: entity
   id: FoodBagel

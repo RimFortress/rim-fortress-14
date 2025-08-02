@@ -66,6 +66,10 @@
   - type: ReagentTank
   - type: Transform
     noRot: true
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Tank
+  # RimFortress End
 
 # For highcap tanks
 - type: entity

@@ -12,6 +12,10 @@
   # Inherited
   - type: StaticPrice
     price: 0
+  # RimFortress Start
+  - type: StockpileCategory
+    category: Medical
+  # RimFortress End
 
 - type: entity
   name: ointment
@@ -63,6 +67,10 @@
   - type: Stack
     lingering: true
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   name: regenerative mesh
@@ -153,6 +161,10 @@
   - type: Stack
     lingering: true
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   name: medicated suture
@@ -242,6 +254,10 @@
   components:
   - type: Stack
     lingering: true
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   parent: BaseHealingItem
@@ -322,6 +338,10 @@
   - type: Stack
     lingering: true
     count: 10
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 - type: entity
   name: aloe cream
@@ -361,6 +381,10 @@
       path: "/Audio/Items/Medical/ointment_begin.ogg"
     healingEndSound:
       path: "/Audio/Items/Medical/ointment_end.ogg"
+  # RimFortress Start
+  - type: StockpileCategory
+    category: null
+  # RimFortress End
 
 # Pills
 - type: entity
