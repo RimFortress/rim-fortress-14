@@ -52,7 +52,8 @@ public sealed partial class NarratorSystem : EntitySystem
     /// </summary>
     public float SettlementWealth(Entity<RimFortressPlayerComponent?> player, ProtoId<NarratorPrototype> proto, EntityCoordinates settlement)
     {
-        if (!Resolve(player, ref player.Comp))
+        if (!Resolve(player, ref player.Comp)
+            || !_prototype.TryIndex(proto, out var narrator))
             return 0;
 
         double itemCost = 0;
@@ -60,7 +61,6 @@ public sealed partial class NarratorSystem : EntitySystem
         double popCost = 0;
 
         var settlementRadius = _cfg.GetCVar(RfVars.MaxSettlementRadius);
-        var narrator = _prototype.Index(proto);
         var entities = EntityQueryEnumerator<OwnedComponent, TransformComponent>();
 
         while (entities.MoveNext(out var uid, out var comp, out var xform))
@@ -96,10 +96,10 @@ public sealed partial class NarratorSystem : EntitySystem
         ProtoId<NarratorPrototype> proto,
         EntityCoordinates settlement)
     {
-        if (!Resolve(player, ref player.Comp))
+        if (!Resolve(player, ref player.Comp)
+            || !_prototype.TryIndex(proto, out var narrator))
             return 0;
 
-        var narrator = _prototype.Index(proto);
         var waitPoints = WaitPoint(narrator, player.Comp);
         var wealth = SettlementWealth(player, proto, settlement);
         var narratorMood = 0f;
@@ -119,7 +119,9 @@ public sealed partial class NarratorSystem : EntitySystem
 
     public int GlobalEventPoints(RimFortressRuleComponent rule)
     {
-        var narrator = _prototype.Index(rule.Narrator);
+        if (!_prototype.TryIndex(rule.Narrator, out var narrator))
+            return 0;
+
         var waitPoints = GlobalWaitPoint(rule);
         var narratorMood = 0f;
 
@@ -141,7 +143,9 @@ public sealed partial class NarratorSystem : EntitySystem
 
     public int GlobalWaitPoint(RimFortressRuleComponent rule)
     {
-        var narrator = _prototype.Index(rule.Narrator);
+        if (!_prototype.TryIndex(rule.Narrator, out var narrator))
+            return 0;
+
         return (int) Math.Floor((_ticker.RoundDuration() - rule.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
     }
 

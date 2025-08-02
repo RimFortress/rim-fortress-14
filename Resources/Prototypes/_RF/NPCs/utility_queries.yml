@@ -384,10 +384,6 @@
   id: MoveStoredInContainerTarget
   query:
     - !type:StoredQuery
-    - !type:ComponentFilter
-      components:
-        - type: Item
-      invert: true
     - !type:InContainerFilter
     - !type:InventoryFilter
     - !type:InHandsFilter
