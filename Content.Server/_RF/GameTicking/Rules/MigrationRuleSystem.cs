@@ -1,5 +1,5 @@
 using Content.Server._RF.Narrator;
-using Content.Server._RF.NPC;
+using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;

@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Prototypes;
 using Content.Server.Construction;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
@@ -17,7 +18,7 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Systems;
 
 /// <summary>
 /// Manages <see cref="NpcControlComponent"/>

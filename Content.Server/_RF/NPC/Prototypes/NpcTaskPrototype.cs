@@ -8,7 +8,7 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Prototypes;
 
 /// <summary>
 /// A prototype of the various complex tasks that <see cref="NpcControlComponent"/> owners can issue for NPCs

@@ -1,4 +1,6 @@
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Prototypes;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration;
 using Content.Shared.Administration;
 using Robust.Shared.Console;

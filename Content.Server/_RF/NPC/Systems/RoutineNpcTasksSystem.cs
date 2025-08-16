@@ -1,9 +1,10 @@
 using System.Linq;
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Prototypes;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Systems;
 
 /// <summary>
 /// Manages <see cref="RoutineNpcTasksComponent"/>

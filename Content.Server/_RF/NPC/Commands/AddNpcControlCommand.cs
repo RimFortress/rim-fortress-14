@@ -1,4 +1,5 @@
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration;
 using Content.Server.NPC.HTN;
 using Content.Shared.Administration;
