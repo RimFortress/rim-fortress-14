@@ -1,0 +1,56 @@
+- type: npcTask
+  id: Build
+  name: Build
+  maxPerformers: 1
+  unionPerformersWith:
+    - Deconstruct
+  overlayColor: "#FFFF00"
+  verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+  compound: BuildCompound
+  onFinish: RfIdleCompound
+  tempKeys:
+    - PickUpTarget
+    - Amount
+  targetsQuery: BuildTaskTarget
+  targetWhitelist:
+    components:
+      - Construction
+  startPreconditions:
+    - !type:ConstructionFinishedPrecondition
+      key: Target
+      invert: true
+  finishPreconditions:
+    - !type:ConstructionFinishedPrecondition
+      key: Target
+
+- type: npcTask
+  id: Deconstruct
+  name: Deconstruct
+  maxPerformers: 1
+  unionPerformersWith:
+    - Build
+  overlayColor: "#945A1C"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
+  verbOnly: true
+  compound: DeconstructionCompound
+  onFinish: RfIdleCompound
+  passive: true
+  targetWhitelist:
+    components:
+      - Construction
+  startPreconditions:
+    # We dont want deconstruct items for now
+    - !type:HasComponentPrecondition
+      targetKey: Target
+      components:
+        - type: Item
+      invert: true
+    - !type:DeconstructionPrecondition
+      key: Target
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:ConstructionFinishedPrecondition
+          key: Target
+        - !type:EntityDeletedPrecondition
+          key: Target

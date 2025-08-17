@@ -27,6 +27,8 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         base.Initialize();
 
         SubscribeLocalEvent<RoutineNpcTasksComponent, NpcTaskFinished>(OnTaskFinished);
+        SubscribeLocalEvent<RoutineNpcTasksComponent, ComponentInit>(OnComponentInit);
+
         SubscribeNetworkEvent<NpcJobsInfoRequest>(OnInfoRequest);
         SubscribeNetworkEvent<NpcJobDeleted>(OnJobDeleted);
         SubscribeNetworkEvent<NpcJobPriority>(OnJobPriority);
@@ -74,6 +76,33 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         }
     }
 
+    private void OnTaskFinished(EntityUid uid, RoutineNpcTasksComponent comp, NpcTaskFinished args)
+    {
+        if (!TryGetCurrentJob(uid, out var job)
+            || job.Tasks.FirstOrNull(x => x == args.Task) == null
+            || !_prototype.TryIndex(args.Task, out var proto))
+            return;
+
+        if (args.Failed && job.CooldownOnFail != null)
+            comp.AvailableOn[job.Id] = _timing.CurTime + job.CooldownOnFail.Value;
+
+        if (job.FinishOnFailed && args.Failed)
+            return;
+
+        _control.TrySetPassiveTask(uid, proto);
+    }
+
+    private void OnComponentInit(EntityUid uid, RoutineNpcTasksComponent comp, ComponentInit args)
+    {
+        foreach (var proto in comp.PresetJobs)
+        {
+            if (!TryGetJob(proto, out var job))
+                continue;
+
+            SetJobPriority(uid, job.Id, comp.MaxPriority);
+        }
+    }
+
     private void OnInfoRequest(NpcJobsInfoRequest msg, EntitySessionEventArgs args)
     {
         var jobs = _jobs.Where(x => x.Owner == null || x.Owner == args.SenderSession);
@@ -102,22 +131,6 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             return;
 
         SetJobPriority(uid, msg.Id, msg.Priority);
-    }
-
-    private void OnTaskFinished(EntityUid uid, RoutineNpcTasksComponent comp, NpcTaskFinished args)
-    {
-        if (!TryGetCurrentJob(uid, out var job)
-            || job.Tasks.FirstOrNull(x => x == args.Task) == null
-            || !_prototype.TryIndex(args.Task, out var proto))
-            return;
-
-        if (args.Failed && job.CooldownOnFail != null)
-            comp.AvailableOn[job.Id] = _timing.CurTime + job.CooldownOnFail.Value;
-
-        if (job.FinishOnFailed && args.Failed)
-            return;
-
-        _control.TrySetPassiveTask(uid, proto);
     }
 
     private void OnJobUpdated(NpcJobUpdated msg, EntitySessionEventArgs args)
@@ -260,6 +273,12 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     public bool TryGetJob(int id, [NotNullWhen(true)] out NpcJob? job)
     {
         job = _jobs.Find(x => x.Id == id);
+        return job != null;
+    }
+
+    public bool TryGetJob(ProtoId<NpcJobPrototype> protoId, [NotNullWhen(true)] out NpcJob? job)
+    {
+        job = _jobs.Find(x => x.Proto == protoId);
         return job != null;
     }
 

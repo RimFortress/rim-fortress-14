@@ -20,22 +20,13 @@
             - RimFortress
         - type: BiomeLoader
         - type: RoutineNpcTasks
-          tasks:
-            - id: Dig
-            - id: Attack
-            - id: Build
-            - id: Deconstruct
-            - id: Chop
-            - id: Plant
-            - id: RemovePlant
-            - id: HarvestPlant
-            - id: WaterPlant
-            - id: RemoveWeed
-            - id: Storing
-            - id: MoveStoredInContainer
-            - id: FixStoredOffset
-            - id: MoveToSuppliedStock
-            - id: TakeOwnership
+          presetJobs:
+          - Construction
+          - Dig
+          - Chop
+          - Medicine
+          - Farming
+          - Storing
 
 - type: entityTable
   id: BasicWorldRulesTable

@@ -1,0 +1,49 @@
+- type: npcJob
+  id: Construction
+  name: Construction
+  icon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+  tasks:
+  - Build
+  - Deconstruct
+
+- type: npcJob
+  id: Dig
+  name: Dig
+  icon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  tasks:
+  - Dig
+
+- type: npcJob
+  id: Chop
+  name: Chop down
+  icon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  tasks:
+  - Chop
+
+- type: npcJob
+  id: Medicine
+  name: Medicine
+  icon: /Textures/_RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png
+  tasks:
+  - Heal
+
+- type: npcJob
+  id: Farming
+  name: Farming
+  icon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  tasks:
+  - Plant
+  - RemovePlant
+  - HarvestPlant
+  - WaterPlant
+  - RemoveWeed
+
+- type: npcJob
+  id: Storing
+  name: Storing
+  icon: /Textures/_RF/Interface/VerbIcons/cubes-solid.svg.192dpi.png
+  tasks:
+  - Storing
+  - MoveStoredInContainer
+  - FixStoredOffset
+  - MoveToSuppliedStock

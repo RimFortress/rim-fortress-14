@@ -1,5 +1,7 @@
+using Content.Server._RF.NPC.Prototypes;
 using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.NPC;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Components;
 
@@ -9,6 +11,12 @@ namespace Content.Server._RF.NPC.Components;
 [RegisterComponent, Access(typeof(RoutineNpcTasksSystem))]
 public sealed partial class RoutineNpcTasksComponent : SharedRoutineNpcTasksComponent
 {
+    /// <summary>
+    /// Preset jobs to be set initially with minimum priority
+    /// </summary>
+    [DataField]
+    public List<ProtoId<NpcJobPrototype>> PresetJobs = new();
+
     [ViewVariables]
     public int CurrentJobId;
 

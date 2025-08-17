@@ -24,7 +24,7 @@ public sealed partial class NpcJobPrototype : IPrototype, ISerializationHooks
     /// <summary>
     /// The icon for this job.
     /// </summary>
-    [DataField("verbIcon")]
+    [DataField("icon")]
     private string? _icon;
 
     public SpriteSpecifier.Texture? Icon
