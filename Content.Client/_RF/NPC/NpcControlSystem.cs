@@ -123,8 +123,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnAttached(EntityUid uid, NpcControlComponent component, PlayerAttachedEvent args)
     {
-        var msg = new AllowedNpcTasksInfoRequest(GetNetEntity(uid));
-        RaiseNetworkEvent(msg);
+        RaiseNetworkEvent(new AllowedNpcTasksInfoRequest());
     }
 
     public void SetSelectedTask(string? taskId)
@@ -144,7 +143,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 act: _ => SetSelectedTask(null),
                 onSelected: entities
                     => RaiseNetworkEvent(new PassiveNpcTaskRequest(
-                        GetNetEntity(entity),
                         SelectedTask.TaskId,
                         entities.Select(x => GetNetEntity(x)).ToList())),
                 color: SelectedTask?.Color,
@@ -172,7 +170,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 act: _ => SetEraser(false),
                 onSelected: entities
                     => RaiseNetworkEvent(new PassiveNpcTaskRemoveRequest(
-                        GetNetEntity(entity),
                         entities.Select(x => GetNetEntity(x)).ToList())),
                 iconPath: EraseIcon);
         }
@@ -197,7 +194,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
                 RaiseNetworkEvent(new NpcTaskRequest
                 {
-                    Requester = GetNetEntity(entity),
                     Entities = args.Selected.Select(x => GetNetEntity(x)).ToList(),
                     Target = GetNetEntity(args.ActUid),
                     TargetCoordinates = GetNetCoordinates(args.ActCoords),

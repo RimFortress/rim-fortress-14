@@ -15,6 +15,7 @@ using Content.Shared.Verbs;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -34,6 +35,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     [Dependency] private readonly NPCUtilitySystem _npcUtility = default!;
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
+    private EntityQuery<NpcControlComponent> _controlQuery;
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
     private EntityQuery<PassiveNpcTaskTargetComponent> _passiveTaskQuery;
     private EntityQuery<HTNComponent> _htnQuery;
@@ -77,6 +79,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 ReloadPrototypes();
         };
 
+        _controlQuery  = GetEntityQuery<NpcControlComponent>();
         _controllableQuery = GetEntityQuery<ControllableNpcComponent>();
         _passiveTaskQuery = GetEntityQuery<PassiveNpcTaskTargetComponent>();
         _htnQuery = GetEntityQuery<HTNComponent>();
@@ -85,12 +88,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         ReloadPrototypes();
     }
 
-    #region Event Handle
+    #region Events Handle
 
-    private void OnTaskRequest(NpcTaskRequest request)
+    private void OnTaskRequest(NpcTaskRequest request, EntitySessionEventArgs args)
     {
+        if (args.SenderSession.AttachedEntity is not { } requester)
+            return;
+
         var entities = request.Entities.Select(GetEntity).ToList();
-        var requester = GetEntity(request.Requester);
         var target = GetEntity(request.Target);
         var targetCoords = GetCoordinates(request.TargetCoordinates);
 
@@ -160,22 +165,23 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
     }
 
-    private void OnPassiveTaskRequest(PassiveNpcTaskRequest request)
+    private void OnPassiveTaskRequest(PassiveNpcTaskRequest request, EntitySessionEventArgs args)
     {
+        if (args.SenderSession.AttachedEntity is not { } requester)
+            return;
+
         var task = _prototype.Index<NpcTaskPrototype>(request.TaskId);
-        var requester = GetEntity(request.Requester);
         var entities = request.Entities.Select(GetEntity).ToList();
 
         SetPassiveTaskTargets(requester, task, entities);
     }
 
-    private void OnPassiveTaskRemoveRequest(PassiveNpcTaskRemoveRequest request)
+    private void OnPassiveTaskRemoveRequest(PassiveNpcTaskRemoveRequest request, EntitySessionEventArgs args)
     {
-        var requester = GetEntity(request.Requester);
-        var removed = new List<EntityUid>();
-
-        if (!TryComp(requester, out NpcControlComponent? _))
+        if (!TryComp(args.SenderSession.AttachedEntity, out NpcControlComponent? _))
             return;
+
+        var removed = new List<EntityUid>();
 
         foreach (var netUid in request.Entities)
         {
@@ -188,14 +194,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         }
 
         var msg = new PassiveNpcTaskRemoveMessage(removed.Select(x => GetNetEntity(x)).ToList());
-        RaiseNetworkEvent(msg, requester);
+        RaiseNetworkEvent(msg, args.SenderSession);
     }
 
-    private void OnAllowedTasksInfoRequest(AllowedNpcTasksInfoRequest request)
+    private void OnAllowedTasksInfoRequest(AllowedNpcTasksInfoRequest request, EntitySessionEventArgs args)
     {
-        var requester = GetEntity(request.Requester);
-
-        if (!TryComp(requester, out NpcControlComponent? control))
+        if (args.SenderSession.AttachedEntity is not { } requester
+            || !TryComp(requester, out NpcControlComponent? control))
             return;
 
         var info = control.Tasks
@@ -550,6 +555,24 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                && control.CanControl.Contains(user);
     }
 
+    public bool CanControl(ICommonSession user, EntityUid entity)
+    {
+        return user.AttachedEntity is { } uid && CanControl(uid, entity);
+    }
+
+    /// <summary>
+    /// Returns true if the entity has access to issue this task
+    /// </summary>
+    public bool AccessibleTask(EntityUid user, ProtoId<NpcTaskPrototype> task)
+    {
+        return _controlQuery.TryComp(user, out var comp) && comp.Tasks.Contains(task);
+    }
+
+    public bool AccessibleTask(ICommonSession user, ProtoId<NpcTaskPrototype> task)
+    {
+        return user.AttachedEntity is { } uid && AccessibleTask(uid, task);
+    }
+
     /// <summary>
     /// Counts the number of performers of tasks on the given target, including unified tasks
     /// </summary>
@@ -571,9 +594,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         return count;
     }
 
-    private void SetPassiveTaskTargets(Entity<NpcControlComponent?> user, NpcTaskPrototype proto, List<EntityUid> entities)
+    private void SetPassiveTaskTargets(EntityUid user, NpcTaskPrototype proto, List<EntityUid> entities)
     {
-        if (!Resolve(user, ref user.Comp) || !user.Comp.Tasks.Contains(proto))
+        if (!AccessibleTask(user, proto))
             return;
 
         var response = new List<NetEntity>();
