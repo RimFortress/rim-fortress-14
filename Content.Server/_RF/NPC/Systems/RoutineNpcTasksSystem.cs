@@ -65,7 +65,8 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
                 _nextJobId++;
                 _jobs.Add(job);
 
-                RaiseNetworkEvent(InfoMessage(job));
+                if (!job.Hidden)
+                    RaiseNetworkEvent(InfoMessage(job));
             }
         }
 
@@ -96,16 +97,17 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     {
         foreach (var proto in comp.PresetJobs)
         {
-            if (!TryGetJob(proto, out var job))
+            if (!TryGetJob(proto, out var job) || !_prototype.TryIndex(proto, out var protoJob))
                 continue;
 
-            SetJobPriority(uid, job.Id, comp.MaxPriority);
+            SetJobPriority(uid, job.Id, protoJob.DefaultPriority);
         }
     }
 
     private void OnInfoRequest(NpcJobsInfoRequest msg, EntitySessionEventArgs args)
     {
-        var jobs = _jobs.Where(x => x.Owner == null || x.Owner == args.SenderSession);
+        var jobs = _jobs
+            .Where(x => (x.Owner == null || x.Owner == args.SenderSession) && !x.Hidden);
 
         foreach (var job in jobs)
         {
@@ -392,6 +394,9 @@ public sealed class NpcJob
     [ViewVariables]
     public ProtoId<NpcJobPrototype>? Proto;
 
+    [ViewVariables]
+    public bool Hidden { get; }
+
     public NpcJob(int id,
         string name,
         ICommonSession owner,
@@ -413,5 +418,6 @@ public sealed class NpcJob
         Tasks = proto.Tasks;
         _icon = proto.Icon;
         Proto = proto;
+        Hidden = proto.Hidden;
     }
 }

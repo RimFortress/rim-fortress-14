@@ -27,6 +27,7 @@
           - Medicine
           - Farming
           - Storing
+          - Other
 
 - type: entityTable
   id: BasicWorldRulesTable

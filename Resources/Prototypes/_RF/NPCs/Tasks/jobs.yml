@@ -8,14 +8,14 @@
 
 - type: npcJob
   id: Dig
-  name: Dig
+  name: Mining
   icon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   tasks:
   - Dig
 
 - type: npcJob
   id: Chop
-  name: Chop down
+  name: Woodcutting
   icon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   tasks:
   - Chop
@@ -47,3 +47,15 @@
   - MoveStoredInContainer
   - FixStoredOffset
   - MoveToSuppliedStock
+
+- type: npcJob
+  id: Other
+  name: Other
+  defaultPriority: 1
+  hidden: true
+  tasks:
+  - PickUp
+  - TakeOwnership
+  - Pry
+  - FreeHandInteract
+  - Attack

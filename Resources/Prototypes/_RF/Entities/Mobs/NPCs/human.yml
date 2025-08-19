@@ -33,6 +33,7 @@
       - Medicine
       - Farming
       - Storing
+      - Other
 
 - type: entity
   id: Raider

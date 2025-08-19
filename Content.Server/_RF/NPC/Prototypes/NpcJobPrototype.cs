@@ -36,6 +36,19 @@ public sealed partial class NpcJobPrototype : IPrototype, ISerializationHooks
     [DataField]
     public List<ProtoId<NpcTaskPrototype>> Tasks = new();
 
+    /// <summary>
+    /// The original priority of this job
+    /// </summary>
+    [DataField]
+    public int DefaultPriority = 10;
+
+    /// <summary>
+    /// Whether the job is hidden from the user.
+    /// The priority of a hidden job cannot be configured by the user
+    /// </summary>
+    [DataField]
+    public bool Hidden;
+
     /// <inheritdoc/>
     void ISerializationHooks.AfterDeserialization()
     {
