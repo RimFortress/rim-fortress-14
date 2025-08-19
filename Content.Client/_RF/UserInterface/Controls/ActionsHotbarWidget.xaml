@@ -20,6 +20,9 @@
             <controls:HotbarActionButton Name="StockpileButton" Access="Public" IconModulate="#A16C2B"
                                          ToolTip="{Loc 'actions-hotbar-widgets-stockpile-tooltip'}"
                                          IconTexturePath="/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"/>
+            <controls:HotbarActionButton Name="NpcJobsButton" Access="Public" IconModulate="#5FE8CE"
+                                         ToolTip="{Loc 'actions-hotbar-widgets-npc-jobs-tooltip'}"
+                                         IconTexturePath="/Textures/_RF/Interface/arrow-down-wide-short-solid-full.192dpi.png"/>
         </BoxContainer>
     </PanelContainer>
 </controls:ActionsHotbarWidget>

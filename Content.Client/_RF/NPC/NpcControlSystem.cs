@@ -124,6 +124,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private void OnAttached(EntityUid uid, NpcControlComponent component, PlayerAttachedEvent args)
     {
         RaiseNetworkEvent(new AllowedNpcTasksInfoRequest());
+        RaiseNetworkEvent(new NpcJobsInfoRequest());
     }
 
     public void SetSelectedTask(string? taskId)

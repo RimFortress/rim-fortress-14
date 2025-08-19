@@ -16,7 +16,7 @@ public sealed partial class NpcJobPrototype : IPrototype, ISerializationHooks
     [IdDataField]
     public string ID { get; } = default!;
 
-    [DataField]
+    [DataField("name")]
     private string _name = string.Empty;
 
     public string Name => _loc.TryGetString(_name, out var value) ? value : _name;

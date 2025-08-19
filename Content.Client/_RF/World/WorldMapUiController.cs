@@ -37,6 +37,6 @@ public sealed class WorldMapUiController : UIController
             _window.WorldMap.CenterToCoordinates(_transform.GetMapCoordinates(player).Position);
         }
 
-        LayoutContainer.SetAnchorPreset(_window, LayoutContainer.LayoutPreset.CenterLeft);
+        LayoutContainer.SetAnchorPreset(_window, LayoutContainer.LayoutPreset.Center);
     }
 }

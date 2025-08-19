@@ -686,6 +686,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         var comp = EnsureComp<ControllableNpcComponent>(uid);
         comp.CanControl.Add(user);
+        RaiseLocalEvent(uid, new NpcControllerAdded(uid, user));
     }
 
     /// <summary>
@@ -784,6 +785,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 /// <summary>
 /// Raised when an NPC has completed its current task
 /// </summary>
+[Serializable]
 public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task, EntityUid? target) : EntityEventArgs
 {
     /// <summary>
@@ -794,4 +796,21 @@ public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task,
     public ProtoId<NpcTaskPrototype> Task = task;
 
     public EntityUid? Target = target;
+}
+
+/// <summary>
+/// Called when a user who can control the entity is added
+/// </summary>
+[Serializable]
+public sealed class NpcControllerAdded(EntityUid uid, EntityUid user) : EntityEventArgs
+{
+    /// <summary>
+    /// Entity of a controlled NPC
+    /// </summary>
+    public EntityUid Uid = uid;
+
+    /// <summary>
+    /// Added user
+    /// </summary>
+    public EntityUid User = user;
 }

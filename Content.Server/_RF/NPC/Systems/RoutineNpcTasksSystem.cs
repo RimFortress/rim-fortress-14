@@ -27,7 +27,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         base.Initialize();
 
         SubscribeLocalEvent<RoutineNpcTasksComponent, NpcTaskFinished>(OnTaskFinished);
-        SubscribeLocalEvent<RoutineNpcTasksComponent, ComponentInit>(OnComponentInit);
+        SubscribeLocalEvent<RoutineNpcTasksComponent, NpcControllerAdded>(OnControllerAdded);
 
         SubscribeNetworkEvent<NpcJobsInfoRequest>(OnInfoRequest);
         SubscribeNetworkEvent<NpcJobDeleted>(OnJobDeleted);
@@ -92,7 +92,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         _control.TrySetPassiveTask(uid, proto);
     }
 
-    private void OnComponentInit(EntityUid uid, RoutineNpcTasksComponent comp, ComponentInit args)
+    private void OnControllerAdded(EntityUid uid, RoutineNpcTasksComponent comp, NpcControllerAdded args)
     {
         foreach (var proto in comp.PresetJobs)
         {
@@ -125,9 +125,10 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     {
         var uid = GetEntity(msg.Entity);
 
-        if (!TryGetJob(msg.Id, out var job)
-            || job.Owner != args.SenderSession
-            || !_control.CanControl(args.SenderSession, uid))
+        if (!_control.CanControl(args.SenderSession, uid) || !TryGetJob(msg.Id, out var job))
+            return;
+
+        if (job.Owner != null && job.Owner != args.SenderSession)
             return;
 
         SetJobPriority(uid, msg.Id, msg.Priority);

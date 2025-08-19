@@ -1,5 +1,4 @@
 using Content.Shared._RF.NPC;
-using Robust.Shared.Player;
 
 namespace Content.Client._RF.NPC;
 
@@ -7,7 +6,6 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 {
     public readonly Dictionary<int, NpcJobData> JobsData = new();
 
-    public event Action<(EntityUid Uid, int JobId, int Priority)>? OnPriorityChanged;
     public event Action<int>? OnJobChanged;
 
     /// <inheritdoc/>
@@ -15,15 +13,9 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<NpcControlComponent, PlayerAttachedEvent>(OnAttached);
         SubscribeNetworkEvent<NpcJobPriority>(OnJobPriority);
         SubscribeNetworkEvent<NpcJobInfoMessage>(OnJobInfo);
         SubscribeNetworkEvent<NpcJobDeleted>(OnJobDeleted);
-    }
-
-    private void OnAttached(EntityUid uid, NpcControlComponent component, PlayerAttachedEvent args)
-    {
-        RaiseNetworkEvent(new NpcJobsInfoRequest());
     }
 
     private void OnJobPriority(NpcJobPriority msg)
@@ -32,7 +24,6 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         var comp = EnsureComp<RoutineNpcTasksComponent>(uid);
 
         comp.Jobs[msg.Id] = msg.Priority;
-        OnPriorityChanged?.Invoke((uid, msg.Id, msg.Priority));
     }
 
     private void OnJobInfo(NpcJobInfoMessage msg)

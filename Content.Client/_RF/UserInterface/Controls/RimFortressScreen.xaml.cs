@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Client._RF.UserInterface.Controls.NpcJobs;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Client._RF.World;
 using Content.Client.UserInterface.Screens;
@@ -36,10 +37,13 @@ public sealed partial class RimFortressScreen : InGameScreen
 
         Chat.OnChatResizeFinish += ChatOnResizeFinish;
         Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
+
         Hotbar.BuildButton.OnPressed += _ => ToggleExpected(ConstructionMenu);
         Hotbar.PassiveTasksButton.OnPressed += _ => ToggleExpected(PassiveTasksMenu);
         Hotbar.StockpileButton.OnPressed += _ => ToggleExpected(StockpileMenu);
         Hotbar.WorldMapButton.OnPressed += _ => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
+        Hotbar.NpcJobsButton.OnPressed += _ => UserInterfaceManager.GetUIController<NpcJobsPriorityUiController>().ToggleWindow();
+
         UserInterfaceManager.GetUIController<StockpileUiController>().OnStockSelected += _ =>
         {
             ToggleExpected(StockpileSettingsMenu);

@@ -6,6 +6,7 @@ public abstract class SharedRoutineNpcTasksSystem : EntitySystem
 {
 }
 
+[Serializable, NetSerializable]
 public sealed class NpcJobData(int id, string name, string? iconPath, List<string> tasks, bool preset)
 {
     public int Id { get; } = id;
