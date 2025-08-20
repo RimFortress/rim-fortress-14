@@ -1,20 +1,26 @@
 - type: npcTask
-  id: Storing
-  name: Storing
+  id: BaseStoringTask
+  parent: BaseSoloPerformTask
+  abstract: true
   maxPerformers: 1
   unionPerformersWith:
+    - Storing
     - MoveStoredInContainer
     - FixStoredOffset
     - MoveToSuppliedStock
   overlayColor: "#A16C2B"
   verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
-  compound: StoringCompound
-  onFinish: RfIdleCompound
   targetKey: PickUpTarget
   tempKeys:
     - Container
     - SupplyingOnly
     - SupplyingStartStock
+
+- type: npcTask
+  id: Storing
+  name: Storing
+  parent: BaseStoringTask
+  compound: StoringCompound
   targetsQuery: StoringTaskTarget
   targetWhitelist:
     components:
@@ -34,20 +40,8 @@
 - type: npcTask
   id: MoveStoredInContainer
   name: Move stored items into crates
-  maxPerformers: 1
-  unionPerformersWith:
-    - Storing
-    - FixStoredOffset
-    - MoveToSuppliedStock
-  overlayColor: "#A16C2B"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  parent: BaseStoringTask
   compound: MoveStoredInContainerCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
   targetsQuery: MoveStoredInContainerTarget
   targetWhitelist:
     components:
@@ -70,20 +64,8 @@
 - type: npcTask
   id: FixStoredOffset
   name: Correct the position of stored
-  maxPerformers: 1
-  unionPerformersWith:
-    - Storing
-    - MoveStoredInContainer
-    - MoveToSuppliedStock
-  overlayColor: "#8d622d"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  parent: BaseStoringTask
   compound: FixStoredOffsetCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
   targetsQuery: FixStoredOffsetTarget
   targetWhitelist:
     components:
@@ -105,20 +87,8 @@
 - type: npcTask
   id: MoveToSuppliedStock
   name: Move stored between stockpiles
-  maxPerformers: 1
-  unionPerformersWith:
-    - Storing
-    - MoveStoredInContainer
-    - FixStoredOffset
-  overlayColor: "#8d622d"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  parent: BaseStoringTask
   compound: MoveToSuppliedStockCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
   targetsQuery: MoveToSuppliedStockTarget
   targetWhitelist:
     components:
