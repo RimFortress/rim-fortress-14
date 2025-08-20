@@ -6,7 +6,7 @@ public abstract partial class SharedRoutineNpcTasksComponent : Component
     /// Maximum possible priority for tasks
     /// </summary>
     [DataField, ViewVariables]
-    public int MaxPriority = 10;
+    public int MaxPriority = 7;
 
     /// <summary>
     /// Dictionary containing job ids and their priorities

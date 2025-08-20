@@ -1,0 +1,9 @@
+<controls:NpcTaskButton
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
+    TrackingTooltip="True" Margin="2 3">
+    <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
+        <RichTextLabel Name="Label" HorizontalExpand="True" StyleClasses="LabelKeyText"/>
+        <CheckBox Name="CheckBox" Access="Public" ReservesSpace="True"/>
+    </BoxContainer>
+</controls:NpcTaskButton>

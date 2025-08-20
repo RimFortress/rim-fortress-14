@@ -41,7 +41,7 @@
 - type: npcJob
   id: Storing
   name: Storing
-  icon: /Textures/_RF/Interface/VerbIcons/cubes-solid.svg.192dpi.png
+  icon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
   tasks:
   - Storing
   - MoveStoredInContainer

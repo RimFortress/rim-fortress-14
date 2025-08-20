@@ -40,7 +40,7 @@ public sealed partial class NpcJobPrototype : IPrototype, ISerializationHooks
     /// The original priority of this job
     /// </summary>
     [DataField]
-    public int DefaultPriority = 10;
+    public int DefaultPriority = 1;
 
     /// <summary>
     /// Whether the job is hidden from the user.

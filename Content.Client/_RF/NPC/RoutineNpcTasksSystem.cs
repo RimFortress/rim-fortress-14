@@ -4,6 +4,7 @@ namespace Content.Client._RF.NPC;
 
 public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 {
+    public readonly Dictionary<string, NpcTaskData> TasksData = new();
     public readonly Dictionary<int, NpcJobData> JobsData = new();
 
     public event Action<int>? OnJobChanged;
@@ -16,6 +17,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         SubscribeNetworkEvent<NpcJobPriority>(OnJobPriority);
         SubscribeNetworkEvent<NpcJobInfoMessage>(OnJobInfo);
         SubscribeNetworkEvent<NpcJobDeleted>(OnJobDeleted);
+        SubscribeNetworkEvent<NpcJobsTasksInfoMessage>(OnJobsTasksInfo);
     }
 
     private void OnJobPriority(NpcJobPriority msg)
@@ -36,6 +38,16 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     {
         JobsData.Remove(msg.Id);
         OnJobChanged?.Invoke(msg.Id);
+    }
+
+    private void OnJobsTasksInfo(NpcJobsTasksInfoMessage msg)
+    {
+        TasksData.Clear();
+
+        foreach (var task in msg.Tasks)
+        {
+            TasksData[task.TaskId] = task;
+        }
     }
 
     public void UpdateJob(int jobId, string? name = null, string? iconPath = null, List<string>? tasks = null)

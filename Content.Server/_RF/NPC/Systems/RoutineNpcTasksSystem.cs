@@ -106,13 +106,25 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 
     private void OnInfoRequest(NpcJobsInfoRequest msg, EntitySessionEventArgs args)
     {
+        var tasks = new HashSet<NpcTaskData>();
         var jobs = _jobs
             .Where(x => (x.Owner == null || x.Owner == args.SenderSession) && !x.Hidden);
 
         foreach (var job in jobs)
         {
             RaiseNetworkEvent(InfoMessage(job), args.SenderSession);
+
+            foreach (var task in job.Tasks)
+            {
+                if (!_prototype.TryIndex(task, out var proto))
+                    continue;
+
+                var data = new NpcTaskData(proto.ID, proto.Name, proto.Description, proto.OverlayColor);
+                tasks.Add(data);
+            }
         }
+
+        RaiseNetworkEvent(new NpcJobsTasksInfoMessage(tasks));
     }
 
     private void OnJobDeleted(NpcJobDeleted msg, EntitySessionEventArgs args)
@@ -154,7 +166,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             foreach (var task in msg.Tasks)
             {
                 if (!_prototype.TryIndex<NpcTaskPrototype>(task, out var proto)
-                    || !_control.AccessibleTask(args.SenderSession, proto))
+                    || !AccessibleTask(args.SenderSession, proto))
                     continue;
 
                 job.Tasks.Add(proto);
@@ -171,7 +183,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         foreach (var task in msg.Job.Tasks)
         {
             if (!_prototype.TryIndex<NpcTaskPrototype>(task, out var proto)
-                || !_control.AccessibleTask(args.SenderSession, proto))
+                || !AccessibleTask(args.SenderSession, proto))
                 continue;
 
             tasks.Add(proto);
@@ -296,6 +308,17 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         return job != null;
     }
 
+    /// <summary>
+    /// Returns true if player has access to issue this task
+    /// </summary>
+    public bool AccessibleTask(ICommonSession user, ProtoId<NpcTaskPrototype> task)
+    {
+        return _jobs.Find(x =>
+            (x.Owner == null || x.Owner == user)
+            && !x.Hidden
+            && x.Tasks.Contains(task)) != null;
+    }
+
     private List<NpcJob> OrderedJobs(Entity<RoutineNpcTasksComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))
@@ -322,7 +345,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         return new NpcJobInfoMessage(new NpcJobData(
             job.Id,
             job.Name,
-            job.Icon.TexturePath.CanonPath,
+            job.Icon?.TexturePath.CanonPath,
             job.Tasks.Select(x => x.Id).ToList(),
             job.Proto != null));
     }
@@ -331,8 +354,6 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 [Access(typeof(RoutineNpcTasksSystem))]
 public sealed class NpcJob
 {
-    public const string DefaultIconPath = ""; // TODO
-
     /// <summary>
     /// The unique id of this job
     /// </summary>
@@ -340,19 +361,13 @@ public sealed class NpcJob
     public int Id { get; }
 
     [ViewVariables]
-    public ICommonSession? Owner;
+    public ICommonSession? Owner { get; }
 
     /// <summary>
     /// The name of this job
     /// </summary>
     [ViewVariables]
     public string Name;
-
-    /// <summary>
-    /// The maximum amount of time this task will take to complete, after which it will be terminated
-    /// </summary>
-    [ViewVariables]
-    public TimeSpan? MaxCompletionTime;
 
     /// <summary>
     /// Stop the execution of a routine task if at least one active target of this task has failed to complete
@@ -370,23 +385,13 @@ public sealed class NpcJob
     /// The icon for this job.
     /// </summary>
     [ViewVariables]
-    public SpriteSpecifier.Texture Icon
-    {
-        get => _icon ?? new SpriteSpecifier.Texture(new(DefaultIconPath));
-        set => _icon = value;
-    }
+    public SpriteSpecifier.Texture? Icon;
 
     /// <summary>
     /// Tasks included in this job
     /// </summary>
     [ViewVariables]
     public List<ProtoId<NpcTaskPrototype>> Tasks;
-
-    /// <summary>
-    /// The icon for this job.
-    /// </summary>
-    [ViewVariables]
-    private SpriteSpecifier.Texture? _icon;
 
     /// <summary>
     /// The id of the prototype of the preset job from which this class is created
@@ -407,7 +412,7 @@ public sealed class NpcJob
         Name = name;
         Owner = owner;
         Tasks = tasks ?? new();
-        _icon = icon;
+        Icon = icon;
     }
 
     public NpcJob(int id, NpcJobPrototype proto)
@@ -416,7 +421,7 @@ public sealed class NpcJob
         Name = proto.Name;
         Owner = null;
         Tasks = proto.Tasks;
-        _icon = proto.Icon;
+        Icon = proto.Icon;
         Proto = proto;
         Hidden = proto.Hidden;
     }

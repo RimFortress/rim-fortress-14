@@ -17,11 +17,31 @@ public sealed partial class NpcJobsPriorityWindow : FancyWindow
     [Dependency] private readonly IPlayerManager _player = default!;
 
     private RoutineNpcTasksSystem _routineNpc = default!;
+    private NpcJobsSettingsWindow _settingsWindow;
 
     public NpcJobsPriorityWindow()
     {
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
+
+        _settingsWindow = UserInterfaceManager.CreateWindow<NpcJobsSettingsWindow>();
+
+        JobSettingsButton.OnPressed += _ =>
+        {
+            if (_settingsWindow.Disposed)
+            {
+                _settingsWindow = UserInterfaceManager.CreateWindow<NpcJobsSettingsWindow>();
+                _settingsWindow.EnsureSetup();
+            }
+
+            if (_settingsWindow.IsOpen)
+                _settingsWindow.Close();
+            else
+            {
+                _settingsWindow.Open(GlobalPosition + SizeBox.Center - _settingsWindow.MinSize / 2);
+                _settingsWindow.Build();
+            }
+        };
     }
 
     public void EnsureSetup()
@@ -34,12 +54,15 @@ public sealed partial class NpcJobsPriorityWindow : FancyWindow
                 BuildTable();
         };
 
+        _settingsWindow.EnsureSetup();
+
         BuildTable();
     }
 
     public override void Close()
     {
         Table.ClearAll();
+        _settingsWindow.Close();
         base.Close();
     }
 

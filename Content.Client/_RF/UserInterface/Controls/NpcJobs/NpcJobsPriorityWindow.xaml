@@ -3,14 +3,14 @@
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls1="clr-namespace:Content.Client.UserInterface.Controls"
-    MinSize="1100 650" Title="{Loc 'npc-jobs-priority-window-title'}">
+    MinSize="940 590" Title="{Loc 'npc-jobs-priority-window-title'}">
     <BoxContainer Orientation="Vertical">
+        <controls:TableControl Name="Table" HorizontalExpand="True" VerticalExpand="True"/>
         <controls1:StripeBack Margin="0 0 0 5">
             <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
                 <Button Name="JobSettingsButton" Margin="3 0"
                         Text="{Loc 'npc-jobs-priority-window-settings-button-text'}"/>
             </BoxContainer>
         </controls1:StripeBack>
-        <controls:TableControl Name="Table" HorizontalExpand="True" VerticalExpand="True"/>
     </BoxContainer>
 </controls:NpcJobsPriorityWindow>

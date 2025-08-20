@@ -561,19 +561,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     /// <summary>
-    /// Returns true if the entity has access to issue this task
-    /// </summary>
-    public bool AccessibleTask(EntityUid user, ProtoId<NpcTaskPrototype> task)
-    {
-        return _controlQuery.TryComp(user, out var comp) && comp.Tasks.Contains(task);
-    }
-
-    public bool AccessibleTask(ICommonSession user, ProtoId<NpcTaskPrototype> task)
-    {
-        return user.AttachedEntity is { } uid && AccessibleTask(uid, task);
-    }
-
-    /// <summary>
     /// Counts the number of performers of tasks on the given target, including unified tasks
     /// </summary>
     public int TaskPerformersCount(NpcTaskPrototype task, EntityUid? target)
@@ -596,7 +583,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void SetPassiveTaskTargets(EntityUid user, NpcTaskPrototype proto, List<EntityUid> entities)
     {
-        if (!AccessibleTask(user, proto))
+        if (!_controlQuery.TryComp(user, out var control) || !control.Tasks.Contains(proto))
             return;
 
         var response = new List<NetEntity>();
