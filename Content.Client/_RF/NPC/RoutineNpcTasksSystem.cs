@@ -90,4 +90,9 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 
         return priority;
     }
+
+    public int GetMaxPriority(EntityUid uid)
+    {
+        return !TryComp(uid, out RoutineNpcTasksComponent? comp) ? 0 : comp.MaxPriority;
+    }
 }

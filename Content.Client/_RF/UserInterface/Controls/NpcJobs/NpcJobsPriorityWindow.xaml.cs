@@ -104,6 +104,7 @@ public sealed partial class NpcJobsPriorityWindow : FancyWindow
                     HorizontalExpand = true,
                     HorizontalAlignment = HAlignment.Center,
                     VerticalAlignment = VAlignment.Center,
+                    MaxValue = _routineNpc.GetMaxPriority(uid),
                 };
 
                 button.Priority = _routineNpc.GetPriority(uid, id);
