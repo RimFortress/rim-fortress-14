@@ -56,7 +56,6 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             {
                 var job = new NpcJob(_jobs[index].Id, proto);
                 _jobs[index] = job;
-                RaiseNetworkEvent(InfoMessage(job));
             }
             else
             {
@@ -64,16 +63,23 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 
                 _nextJobId++;
                 _jobs.Add(job);
-
-                if (!job.Hidden)
-                    RaiseNetworkEvent(InfoMessage(job));
             }
         }
 
-        foreach (var job in _jobs)
+        for (var i = 0; i < _jobs.Count; i++)
         {
-            if (job.Proto != null && !_prototype.HasIndex(job.Proto))
+            var job = _jobs[i];
+
+            if (job.Proto == null)
+                continue;
+
+            if (!_prototype.TryIndex(job.Proto, out var proto))
                 DeleteJob(job.Id);
+            else
+            {
+                _jobs[i] = new NpcJob(job.Id, proto, job.Owner);
+                RaiseNetworkEvent(InfoMessage(_jobs[i]));
+            }
         }
     }
 
@@ -108,7 +114,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     {
         var tasks = new HashSet<NpcTaskData>();
         var jobs = _jobs
-            .Where(x => (x.Owner == null || x.Owner == args.SenderSession) && !x.Hidden);
+            .Where(x => x.Owner == args.SenderSession && !x.Hidden);
 
         foreach (var job in jobs)
         {
@@ -120,6 +126,28 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
                     continue;
 
                 var data = new NpcTaskData(proto.ID, proto.Name, proto.Description, proto.OverlayColor);
+                tasks.Add(data);
+            }
+        }
+
+        foreach (var proto in _prototype.EnumeratePrototypes<NpcJobPrototype>())
+        {
+            if (proto.Hidden || _jobs.Any(x => x.Proto == proto && x.Owner == args.SenderSession))
+                continue;
+
+            var job = new NpcJob(_nextJobId, proto, args.SenderSession);
+
+            _nextJobId++;
+            _jobs.Add(job);
+
+            RaiseNetworkEvent(InfoMessage(job), args.SenderSession);
+
+            foreach (var task in job.Tasks)
+            {
+                if (!_prototype.TryIndex(task, out var taskProto))
+                    continue;
+
+                var data = new NpcTaskData(taskProto.ID, taskProto.Name, taskProto.Description, taskProto.OverlayColor);
                 tasks.Add(data);
             }
         }
@@ -176,7 +204,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         RaiseNetworkEvent(InfoMessage(job), args.SenderSession);
     }
 
-    public void OnJobCreateRequest(NpcJobCreateRequest msg, EntitySessionEventArgs args)
+    private void OnJobCreateRequest(NpcJobCreateRequest msg, EntitySessionEventArgs args)
     {
         var tasks = new List<ProtoId<NpcTaskPrototype>>();
 
@@ -313,10 +341,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     /// </summary>
     public bool AccessibleTask(ICommonSession user, ProtoId<NpcTaskPrototype> task)
     {
-        return _jobs.Find(x =>
-            (x.Owner == null || x.Owner == user)
-            && !x.Hidden
-            && x.Tasks.Contains(task)) != null;
+        return _jobs.Find(x => !x.Hidden && x.Tasks.Contains(task)) != null;
     }
 
     private List<NpcJob> OrderedJobs(Entity<RoutineNpcTasksComponent?> ent)
@@ -347,7 +372,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             job.Name,
             job.Icon?.TexturePath.CanonPath,
             job.Tasks.Select(x => x.Id).ToList(),
-            job.Proto != null));
+            job.Owner == null));
     }
 }
 
@@ -415,11 +440,11 @@ public sealed class NpcJob
         Icon = icon;
     }
 
-    public NpcJob(int id, NpcJobPrototype proto)
+    public NpcJob(int id, NpcJobPrototype proto, ICommonSession? owner = null)
     {
         Id = id;
         Name = proto.Name;
-        Owner = null;
+        Owner = owner;
         Tasks = proto.Tasks;
         Icon = proto.Icon;
         Proto = proto;
