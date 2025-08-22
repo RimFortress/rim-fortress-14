@@ -6,17 +6,26 @@ using Content.Server.NPC.Queries;
 using Content.Shared.Whitelist;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 using Robust.Shared.Utility;
 
-namespace Content.Server._RF.NPC;
+namespace Content.Server._RF.NPC.Prototypes;
 
 /// <summary>
 /// A prototype of the various complex tasks that <see cref="NpcControlComponent"/> owners can issue for NPCs
 /// </summary>
 [Prototype]
-public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
+public sealed class NpcTaskPrototype : IPrototype, IInheritingPrototype, ISerializationHooks
 {
     private ILocalizationManager _loc = default!;
+
+    /// <inheritdoc />
+    [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<NpcTaskPrototype>))]
+    public string[]? Parents { get; private set; }
+
+    /// <inheritdoc />
+    [AbstractDataField, NeverPushInheritance]
+    public bool Abstract { get; private set; }
 
     /// <inheritdoc/>
     [IdDataField, ViewVariables]
@@ -84,7 +93,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     public EntityWhitelist? TargetWhitelist;
 
     /// <summary>
-    /// Utility queue that can be used to automatically find the target of routine tasks.
+    /// Utility query that can be used to automatically find the target of routine tasks.
     /// </summary>
     /// <seealso cref="RoutineNpcTasksComponent"/>
     [DataField]
@@ -111,7 +120,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// <summary>
     /// The counter of task performers will also include the performers of the specified tasks on the same target
     /// </summary>
-    [DataField]
+    [DataField, AlwaysPushInheritance]
     public List<ProtoId<NpcTaskPrototype>> UnionPerformersWith = new();
 
     /// <summary>
@@ -141,7 +150,7 @@ public sealed class NpcTaskPrototype : IPrototype, ISerializationHooks
     /// <summary>
     /// Temporary keys that are used to execute a task and will be deleted when the task is completed
     /// </summary>
-    [DataField]
+    [DataField, AlwaysPushInheritance]
     public List<string> TempKeys = new();
 
     /// <summary>

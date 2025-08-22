@@ -50,7 +50,6 @@ public sealed class NpcTaskFinishMessage(string taskId, NetEntity entity) : Enti
 [Serializable, NetSerializable]
 public sealed class NpcTaskRequest : EntityEventArgs
 {
-    public NetEntity Requester { get; set; }
     public List<NetEntity> Entities { get; set; } = new();
     public NetEntity? Target { get; set; } = new();
     public NetCoordinates TargetCoordinates { get; set; }
@@ -63,12 +62,8 @@ public sealed class NpcTasksContextMenuMessage(NetEntity target) : EntityEventAr
 }
 
 [Serializable, NetSerializable]
-public sealed class PassiveNpcTaskRequest(
-    NetEntity requester,
-    string taskId,
-    List<NetEntity> entities) : EntityEventArgs
+public sealed class PassiveNpcTaskRequest(string taskId, List<NetEntity> entities) : EntityEventArgs
 {
-    public NetEntity Requester { get; set; } = requester;
     public string TaskId { get; set; } = taskId;
     public List<NetEntity> Entities { get; set; } = entities;
 }
@@ -81,9 +76,8 @@ public sealed class PassiveNpcTaskMessage(string taskId, List<NetEntity> entitie
 }
 
 [Serializable, NetSerializable]
-public sealed class PassiveNpcTaskRemoveRequest(NetEntity requester, List<NetEntity> entities) : EntityEventArgs
+public sealed class PassiveNpcTaskRemoveRequest(List<NetEntity> entities) : EntityEventArgs
 {
-    public NetEntity Requester { get; set; } = requester;
     public List<NetEntity> Entities { get; set; } = entities;
 }
 
@@ -94,9 +88,8 @@ public sealed class PassiveNpcTaskRemoveMessage(List<NetEntity> entities) : Enti
 }
 
 [Serializable, NetSerializable]
-public sealed class AllowedNpcTasksInfoRequest(NetEntity requester) : EntityEventArgs
+public sealed class AllowedNpcTasksInfoRequest : EntityEventArgs
 {
-    public NetEntity Requester { get; set; } = requester;
 }
 
 [Serializable, NetSerializable]

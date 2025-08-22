@@ -1,0 +1,95 @@
+- type: npcTask
+  id: BaseFarmingTask
+  parent: BaseNpcTask
+  abstract: true
+  maxPerformers: 1
+  overlayColor: "#1A9927"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  tempKeys:
+    - PickUpTarget
+  targetWhitelist:
+    components:
+      - PlantHolder
+
+- type: npcTask
+  id: Plant
+  name: Plant
+  parent: BaseFarmingTask
+  compound: PlantingCompound
+  targetsQuery: PlantTaskTarget
+  startPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+      invert: true
+  finishPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+
+- type: npcTask
+  id: RemovePlant
+  name: Remove plant
+  parent: BaseFarmingTask
+  compound: PlantInteractCompound
+  targetsQuery: PlantRemoveTaskTarget
+  startPreconditions:
+    - !type:PlantDeadPrecondition
+      targetKey: Target
+  finishPreconditions:
+    - !type:PlantHolderFilledPrecondition
+      targetKey: Target
+      invert: true
+
+- type: npcTask
+  id: HarvestPlant
+  name: Harvest
+  parent: BaseFarmingTask
+  compound: PlantInteractCompound
+  tempKeys:
+    - Seed
+  targetsQuery: PlantHarvestTaskTarget
+  startPreconditions:
+    - !type:PlantDeadPrecondition
+      targetKey: Target
+      invert: true
+    - !type:CanHarvestPrecondition
+      targetKey: Target
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:CanHarvestPrecondition
+          targetKey: Target
+          invert: true
+        - !type:PlantDeadPrecondition
+          targetKey: Target
+
+- type: npcTask
+  id: WaterPlant
+  name: Water the plant
+  parent: BaseFarmingTask
+  compound: PlantWaterCompound
+  targetsQuery: PlantWaterTaskTarget
+  startPreconditions:
+    - !type:RefillableSolutionPrecondition
+      targetKey: Target
+      reagent: Water
+      lessThan: 50.0
+  finishPreconditions:
+    - !type:RefillableSolutionPrecondition
+      targetKey: Target
+      reagent: Water
+      moreThan: 100.0
+
+- type: npcTask
+  id: RemoveWeed
+  name: Remove weeds
+  parent: BaseFarmingTask
+  compound: RemoveWeedCompound
+  targetsQuery: RemoveWeedTaskTarget
+  startPreconditions:
+    - !type:WeedLevelPrecondition
+      targetKey: Target
+      moreThan: 0
+  finishPreconditions:
+    - !type:WeedLevelPrecondition
+      targetKey: Target
+      lessThan: 0.1

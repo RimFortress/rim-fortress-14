@@ -5,6 +5,7 @@
     xmlns:chat="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:stockpile="clr-namespace:Content.Client._RF.UserInterface.Controls.Stockpile"
+    xmlns:npcJobs="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
     VerticalExpand="False"
     VerticalAlignment="Bottom"
     HorizontalAlignment="Center">
@@ -24,6 +25,8 @@
                                          VerticalExpand="True" Visible="False"/>
                 <stockpile:StockpileSettingsMenu Name="StockpileSettingsMenu" Margin="10 0 0 0"
                                                  VerticalExpand="True" Visible="False"/>
+                <npcJobs:NpcJobsPriorityWindow Name="NpcJobsPriorityMenu" Margin="10 0 0 0"
+                                             VerticalExpand="True" Visible="False"/>
             </BoxContainer>
         </BoxContainer>
         <BoxContainer VerticalExpand="True"/>

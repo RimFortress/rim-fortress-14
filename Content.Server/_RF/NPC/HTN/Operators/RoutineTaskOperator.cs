@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 
@@ -22,10 +23,7 @@ public sealed partial class RoutineTaskOperator : HTNOperator
 
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
     {
-        if (!blackboard.TryGetValue(NPCBlackboard.Owner, out EntityUid? owner, _entManager)
-            || !_routineSystem.TrySetRoutineTask(owner.Value))
-            return (false, null);
-
-        return (true, null);
+        var owner = blackboard.GetValueOrDefault<EntityUid>(NPCBlackboard.Owner, _entManager);
+        return (_routineSystem.TrySetRoutineTask(owner), null);
     }
 }

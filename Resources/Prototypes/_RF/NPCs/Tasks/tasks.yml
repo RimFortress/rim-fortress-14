@@ -1,9 +1,20 @@
 - type: npcTask
+  id: BaseNpcTask
+  abstract: true
+  onFinish: RfIdleCompound
+
+- type: npcTask
+  id: BaseSoloPerformTask
+  parent: BaseNpcTask
+  abstract: true
+  maxPerformers: 1
+
+- type: npcTask
   id: MoveTo
   name: Go here
+  parent: BaseNpcTask
   overlayColor: "#D3D3D3"
   compound: MoveToCompound
-  onFinish: RfIdleCompound
   finishPreconditions:
     - !type:CoordinatesInRangePrecondition
       targetKey: TargetCoordinates
@@ -12,11 +23,11 @@
 - type: npcTask
   id: Attack
   name: Attack
+  parent: BaseNpcTask
   overlayColor: "#FF0000"
   verbIcon: /Textures/_RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
   verbOnly: true
   compound: AttackTargetCompound
-  onFinish: RfIdleCompound
   passive: true
   tempKeys:
     - Item
@@ -49,9 +60,9 @@
 - type: npcTask
   id: Raid
   name: Raid
+  parent: BaseNpcTask
   overlayColor: "#FF0000"
   compound: RaidCompound
-  onFinish: RaidIdleCompound
   finishPreconditions:
     - !type:MobStatePrecondition
       targetKey: Owner
@@ -59,146 +70,13 @@
       invert: true
 
 - type: npcTask
-  id: PickUp
-  name: Take it
-  maxPerformers: 1
-  overlayColor: "#00D5FF"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
-  compound: PickUpCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  targetWhitelist:
-    components:
-      - Item
-  startPreconditions:
-    - !type:ActiveHandEntityIsPrecondition
-      targetKey: PickUpTarget
-      invert: true
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
-
-- type: npcTask
-  id: TakeOwnership
-  name: Take ownership
-  maxPerformers: 1
-  overlayColor: "#075967"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
-  compound: TakeOwnershipCompound
-  onFinish: RfIdleCompound
-  passive: true
-  targetWhitelist:
-    components:
-      - Item
-  startPreconditions:
-    - !type:OwnedPrecondition
-      targetKey: Target
-      invert: true
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: Target
-        - !type:OwnedPrecondition
-          targetKey: Target
-
-- type: npcTask
-  id: Pry
-  name: Open
-  maxPerformers: 1
-  overlayColor: "#00D5FF"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
-  compound: PryCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-    - ToolQuality
-  targetWhitelist:
-    components:
-      - Door
-  startPreconditions:
-    - !type:DoorStatePrecondition
-      key: Target
-      state: Closed
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: Target
-        - !type:DoorStatePrecondition
-          key: Target
-          state: Closed
-          invert: true
-
-- type: npcTask
-  id: Build
-  name: Build
-  maxPerformers: 1
-  unionPerformersWith:
-    - Deconstruct
-  overlayColor: "#FFFF00"
-  verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
-  compound: BuildCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-    - Amount
-  targetsQuery: BuildTaskTarget
-  targetWhitelist:
-    components:
-      - Construction
-  startPreconditions:
-    - !type:ConstructionFinishedPrecondition
-      key: Target
-      invert: true
-  finishPreconditions:
-    - !type:ConstructionFinishedPrecondition
-      key: Target
-
-- type: npcTask
-  id: Deconstruct
-  name: Deconstruct
-  maxPerformers: 1
-  unionPerformersWith:
-    - Build
-  overlayColor: "#945A1C"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
-  verbOnly: true
-  compound: DeconstructionCompound
-  onFinish: RfIdleCompound
-  passive: true
-  targetWhitelist:
-    components:
-      - Construction
-  startPreconditions:
-    # We dont want deconstruct items for now
-    - !type:HasComponentPrecondition
-      targetKey: Target
-      components:
-        - type: Item
-      invert: true
-    - !type:DeconstructionPrecondition
-      key: Target
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:ConstructionFinishedPrecondition
-          key: Target
-        - !type:EntityDeletedPrecondition
-          key: Target
-
-- type: npcTask
   id: Dig
   name: Dig
+  parent: BaseNpcTask
   maxPerformers: 1
   overlayColor: "#E36414"
   verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   compound: DigCompound
-  onFinish: RfIdleCompound
   passive: true
   tempKeys:
     - Tags
@@ -212,37 +90,14 @@
       key: Target
 
 - type: npcTask
-  id: FreeHandInteract
-  name: Interact
-  maxPerformers: 1
-  overlayColor: "#00D5FF"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
-  compound: FreeHandInteractCompound
-  onFinish: RfIdleCompound
-  targetWhitelist:
-    requireAll: false
-    components:
-      - Strap
-      - Door
-    tags:
-      - HandGatherable
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:KeyNotExistsPrecondition
-          key: Target
-        - !type:EntityDeletedPrecondition
-          key: Target
-
-- type: npcTask
   id: Heal
   name: Heal
+  parent: BaseNpcTask
   overlayColor: "#16C934"
   verbIcon: /Textures/_RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png
   verbOnly: true
   selfPerform: true
   compound: HealCompound
-  onFinish: RfIdleCompound
   tempKeys:
     - PickUpTarget
     - DamageType
@@ -281,141 +136,14 @@
           targetKey: Target
           state: Dead
 
-# Farming
-
-- type: npcTask
-  id: Plant
-  name: Plant
-  maxPerformers: 1
-  overlayColor: "#1A9927"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
-  compound: PlantingCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-  targetsQuery: PlantTaskTarget
-  targetWhitelist:
-    components:
-      - PlantHolder
-  startPreconditions:
-    - !type:PlantHolderFilledPrecondition
-      targetKey: Target
-      invert: true
-  finishPreconditions:
-    - !type:PlantHolderFilledPrecondition
-      targetKey: Target
-
-- type: npcTask
-  id: RemovePlant
-  name: Remove plant
-  maxPerformers: 1
-  overlayColor: "#1A9927"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
-  compound: PlantInteractCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-  targetsQuery: PlantRemoveTaskTarget
-  targetWhitelist:
-    components:
-      - PlantHolder
-  startPreconditions:
-    - !type:PlantDeadPrecondition
-      targetKey: Target
-  finishPreconditions:
-    - !type:PlantHolderFilledPrecondition
-      targetKey: Target
-      invert: true
-
-- type: npcTask
-  id: HarvestPlant
-  name: Harvet
-  maxPerformers: 1
-  overlayColor: "#1A9927"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
-  compound: PlantInteractCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-    - Seed
-  targetsQuery: PlantHarvestTaskTarget
-  targetWhitelist:
-    components:
-      - PlantHolder
-  startPreconditions:
-    - !type:PlantDeadPrecondition
-      targetKey: Target
-      invert: true
-    - !type:CanHarvestPrecondition
-      targetKey: Target
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:CanHarvestPrecondition
-          targetKey: Target
-          invert: true
-        - !type:PlantDeadPrecondition
-          targetKey: Target
-
-- type: npcTask
-  id: WaterPlant
-  name: Water the plant
-  maxPerformers: 1
-  overlayColor: "#1A9927"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
-  compound: PlantWaterCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-  targetsQuery: PlantWaterTaskTarget
-  targetWhitelist:
-    components:
-      - PlantHolder
-      - RefillableSolution
-  startPreconditions:
-    - !type:RefillableSolutionPrecondition
-      targetKey: Target
-      reagent: Water
-      lessThan: 50.0
-  finishPreconditions:
-    - !type:RefillableSolutionPrecondition
-      targetKey: Target
-      reagent: Water
-      moreThan: 100.0
-
-- type: npcTask
-  id: RemoveWeed
-  name: Remove weeds
-  maxPerformers: 1
-  overlayColor: "#1A9927"
-  verbIcon: /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
-  compound: RemoveWeedCompound
-  onFinish: RfIdleCompound
-  tempKeys:
-    - PickUpTarget
-  targetsQuery: RemoveWeedTaskTarget
-  targetWhitelist:
-    components:
-      - PlantHolder
-  startPreconditions:
-    - !type:WeedLevelPrecondition
-      targetKey: Target
-      moreThan: 0
-  finishPreconditions:
-    - !type:WeedLevelPrecondition
-      targetKey: Target
-      lessThan: 0.1
-
-################
-
 - type: npcTask
   id: Chop
   name: Chop down
+  parent: BaseNpcTask
   maxPerformers: 1
   overlayColor: "#452615"
   verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   compound: ChopCompound
-  onFinish: RfIdleCompound
   passive: true
   tempKeys:
     - PickUpTarget
@@ -425,142 +153,3 @@
   finishPreconditions:
     - !type:EntityDeletedPrecondition
       key: Target
-
-- type: npcTask
-  id: Storing
-  name: Storing
-  maxPerformers: 1
-  unionPerformersWith:
-    - MoveStoredInContainer
-    - FixStoredOffset
-    - MoveToSuppliedStock
-  overlayColor: "#A16C2B"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
-  compound: StoringCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
-  targetsQuery: StoringTaskTarget
-  targetWhitelist:
-    components:
-      - Item
-      - Pullable
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:StoredPrecondition
-          targetKey: PickUpTarget
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-    - !type:PulledEntityIsPrecondition
-      targetKey: PickUpTarget
-      invert: true
-
-- type: npcTask
-  id: MoveStoredInContainer
-  name: Storing
-  maxPerformers: 1
-  unionPerformersWith:
-    - Storing
-    - FixStoredOffset
-    - MoveToSuppliedStock
-  overlayColor: "#A16C2B"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
-  compound: MoveStoredInContainerCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
-  targetsQuery: MoveStoredInContainerTarget
-  targetWhitelist:
-    components:
-      - Item
-  startPreconditions:
-    - !type:StockpileFreeContainerPrecondition
-      targetKey: PickUpTarget
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:AndPrecondition
-          preconditions:
-            - !type:StoredPrecondition
-              targetKey: PickUpTarget
-            - !type:TargetInContainerPrecondition
-              targetKey: PickUpTarget
-
-- type: npcTask
-  id: FixStoredOffset
-  name: Storing
-  maxPerformers: 1
-  unionPerformersWith:
-    - Storing
-    - MoveStoredInContainer
-    - MoveToSuppliedStock
-  overlayColor: "#8d622d"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
-  compound: FixStoredOffsetCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
-  targetsQuery: FixStoredOffsetTarget
-  targetWhitelist:
-    components:
-      - Item
-      - Pullable
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:AndPrecondition
-          preconditions:
-            - !type:StoredPrecondition
-              targetKey: PickUpTarget
-            - !type:TileOffsetPrecondition
-              targetKey: PickUpTarget
-              lessThan: 0.06
-
-- type: npcTask
-  id: MoveToSuppliedStock
-  name: Storing
-  maxPerformers: 1
-  unionPerformersWith:
-    - Storing
-    - MoveStoredInContainer
-    - FixStoredOffset
-  overlayColor: "#8d622d"
-  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
-  compound: MoveToSuppliedStockCompound
-  onFinish: RfIdleCompound
-  targetKey: PickUpTarget
-  tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
-  targetsQuery: MoveToSuppliedStockTarget
-  targetWhitelist:
-    components:
-      - Item
-      - Pullable
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:AndPrecondition
-          preconditions:
-            - !type:StoredPrecondition
-              targetKey: PickUpTarget
-            - !type:CanInsertInSuppliedPrecondition
-              targetKey: PickUpTarget
-              invert: true

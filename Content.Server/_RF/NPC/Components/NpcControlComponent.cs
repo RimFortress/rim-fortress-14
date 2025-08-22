@@ -1,3 +1,5 @@
+using Content.Server._RF.NPC.Prototypes;
+using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.NPC;
 using Robust.Shared.Prototypes;
 

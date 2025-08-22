@@ -1,0 +1,11 @@
+<controls:NpcJobPriorityButton
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
+    SetSize="32 32" MinValue="0" MaxValue="10"
+    MinColor="#228B22" MaxColor="#CD5C5C">
+    <PanelContainer StyleClasses="BorderedWindowPanel"/>
+    <BoxContainer>
+        <Label Name="Label" Align="Center" VAlign="Center"
+               HorizontalExpand="True" VerticalExpand="True"/>
+    </BoxContainer>
+</controls:NpcJobPriorityButton>

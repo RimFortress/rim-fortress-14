@@ -121,7 +121,10 @@ namespace Content.Client.Entry
             _prototypeManager.RegisterIgnore("alertLevels");
             _prototypeManager.RegisterIgnore("nukeopsRole");
             _prototypeManager.RegisterIgnore("ghostRoleRaffleDecider");
-            _prototypeManager.RegisterIgnore("npcTask"); // RimFortress
+            // RimFortress Start
+            _prototypeManager.RegisterIgnore("npcTask");
+            _prototypeManager.RegisterIgnore("npcJob");
+            // RimFortress End
 
             _componentFactory.GenerateNetIds();
             _adminManager.Initialize();

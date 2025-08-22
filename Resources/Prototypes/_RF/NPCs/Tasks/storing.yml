@@ -1,0 +1,108 @@
+- type: npcTask
+  id: BaseStoringTask
+  parent: BaseSoloPerformTask
+  abstract: true
+  maxPerformers: 1
+  unionPerformersWith:
+    - Storing
+    - MoveStoredInContainer
+    - FixStoredOffset
+    - MoveToSuppliedStock
+  overlayColor: "#A16C2B"
+  verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
+  targetKey: PickUpTarget
+  tempKeys:
+    - Container
+    - SupplyingOnly
+    - SupplyingStartStock
+
+- type: npcTask
+  id: Storing
+  name: Storing
+  parent: BaseStoringTask
+  compound: StoringCompound
+  targetsQuery: StoringTaskTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:StoredPrecondition
+          targetKey: PickUpTarget
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+    - !type:PulledEntityIsPrecondition
+      targetKey: PickUpTarget
+      invert: true
+
+- type: npcTask
+  id: MoveStoredInContainer
+  name: Move stored items into crates
+  parent: BaseStoringTask
+  compound: MoveStoredInContainerCompound
+  targetsQuery: MoveStoredInContainerTarget
+  targetWhitelist:
+    components:
+      - Item
+  startPreconditions:
+    - !type:StockpileFreeContainerPrecondition
+      targetKey: PickUpTarget
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:TargetInContainerPrecondition
+              targetKey: PickUpTarget
+
+- type: npcTask
+  id: FixStoredOffset
+  name: Correct the position of stored
+  parent: BaseStoringTask
+  compound: FixStoredOffsetCompound
+  targetsQuery: FixStoredOffsetTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:TileOffsetPrecondition
+              targetKey: PickUpTarget
+              lessThan: 0.06
+
+- type: npcTask
+  id: MoveToSuppliedStock
+  name: Move stored between stockpiles
+  parent: BaseStoringTask
+  compound: MoveToSuppliedStockCompound
+  targetsQuery: MoveToSuppliedStockTarget
+  targetWhitelist:
+    components:
+      - Item
+      - Pullable
+  finishPreconditions:
+    - !type:OrPrecondition
+      preconditions:
+        - !type:EntityDeletedPrecondition
+          key: PickUpTarget
+        - !type:AndPrecondition
+          preconditions:
+            - !type:StoredPrecondition
+              targetKey: PickUpTarget
+            - !type:CanInsertInSuppliedPrecondition
+              targetKey: PickUpTarget
+              invert: true

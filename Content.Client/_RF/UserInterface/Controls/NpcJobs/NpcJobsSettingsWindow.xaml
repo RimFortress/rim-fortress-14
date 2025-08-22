@@ -1,0 +1,49 @@
+<controls:NpcJobsSettingsWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
+    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
+    xmlns:controls1="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:style="clr-namespace:Content.Client.Stylesheets"
+    xmlns:controls2="clr-namespace:Content.Client.UserInterface.Controls"
+    Title="{Loc 'npc-jobs-settings-window-title'}" MinSize="700 600">
+    <BoxContainer Orientation="Horizontal">
+        <ui:RfHighlightedContainer>
+            <BoxContainer Orientation="Vertical" VerticalExpand="True">
+                <ScrollContainer VerticalExpand="True">
+                    <BoxContainer Name="JobsContainer" Orientation="Vertical" VerticalExpand="True">
+
+                    </BoxContainer>
+                </ScrollContainer>
+                <ui:RfHighlightedContainer>
+                    <BoxContainer Orientation="Horizontal">
+                        <Button Name="SaveButton" HorizontalExpand="True" StyleClasses="ButtonAccept"
+                                Text="{Loc 'npc-jobs-settings-window-save-button'}"/>
+                        <Button Name="CreateRoleButton" HorizontalExpand="True"
+                                Text="{Loc 'npc-jobs-settings-window-create-button'}"/>
+                    </BoxContainer>
+                </ui:RfHighlightedContainer>
+            </BoxContainer>
+        </ui:RfHighlightedContainer>
+        <controls1:VLine Thickness="1" Margin="1 2"
+                         Color="{x:Static style:StyleNano.ButtonColorDisabled}"/>
+        <ui:RfHighlightedContainer HorizontalExpand="True">
+            <BoxContainer Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
+                <ui:RfHighlightedContainer HorizontalExpand="True">
+                    <Label HorizontalExpand="True" HorizontalAlignment="Center"
+                           StyleClasses="FancyWindowTitle"
+                           Text="{Loc 'npc-jobs-settings-window-tasks-label'}"/>
+                </ui:RfHighlightedContainer>
+                <controls2:HLine Thickness="1" Margin="2 1"
+                                 Color="{x:Static style:StyleNano.ButtonColorDisabled}"/>
+                <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
+                    <ui:RfHighlightedContainer HorizontalExpand="True" VerticalExpand="True">
+                        <BoxContainer Name="TasksContainer" Orientation="Vertical" VerticalExpand="True">
+
+                        </BoxContainer>
+                    </ui:RfHighlightedContainer>
+                </ScrollContainer>
+            </BoxContainer>
+        </ui:RfHighlightedContainer>
+    </BoxContainer>
+</controls:NpcJobsSettingsWindow>

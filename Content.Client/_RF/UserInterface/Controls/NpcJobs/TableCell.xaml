@@ -1,0 +1,6 @@
+<controls:TableCell
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
+    Orientation="Horizontal" HorizontalExpand="True" VerticalExpand="True">
+
+</controls:TableCell>
