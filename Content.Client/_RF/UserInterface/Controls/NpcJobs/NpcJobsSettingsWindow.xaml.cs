@@ -50,12 +50,10 @@ public sealed partial class NpcJobsSettingsWindow : FancyWindow
         CreateRoleButton.OnPressed += _ =>
         {
             var button = new NpcJobButton();
-            button.JobName = Loc.GetString("new-npc-job-name");
+            var locName = Loc.GetString("new-npc-job-name");
+            var sameCount = JobsContainer.Children.Count(x => x is NpcJobButton b && b.JobName.StartsWith(locName));
 
-            var sameCount = _dirtyButtons.Count(x => x.JobName == button.JobName);
-
-            if (sameCount > 0)
-                button.JobName = $"{button.JobName} {sameCount + 1}";
+            button.JobName = sameCount > 0 ? $"{locName} {sameCount + 1}" : locName;
 
             _dirtyButtons.Add(button);
             SaveButton.Disabled = false;
