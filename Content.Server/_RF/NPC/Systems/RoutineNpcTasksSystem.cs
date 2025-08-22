@@ -2,7 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server._RF.NPC.Components;
 using Content.Server._RF.NPC.Prototypes;
+using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC;
+using Robust.Shared.Configuration;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
@@ -16,11 +18,14 @@ namespace Content.Server._RF.NPC.Systems;
 public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 {
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly NpcControlSystem _control = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     private readonly List<NpcJob> _jobs = new();
     private int _nextJobId = 1;
+    private bool _finishTaskOnFailed;
+    private TimeSpan _taskCooldownOnFail;
 
     public override void Initialize()
     {
@@ -40,6 +45,9 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             if (args.WasModified<NpcJobPrototype>())
                 ReloadPrototypes();
         };
+
+        _cfg.OnValueChanged(RfVars.FinishTaskOnFailed, value => _finishTaskOnFailed = value, true);
+        _cfg.OnValueChanged(RfVars.TaskCooldownOnFail, value => _taskCooldownOnFail = value, true);
 
         ReloadPrototypes();
     }
@@ -90,10 +98,10 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             || !_prototype.TryIndex(args.Task, out var proto))
             return;
 
-        if (args.Failed && job.CooldownOnFail != null)
-            comp.AvailableOn[job.Id] = _timing.CurTime + job.CooldownOnFail.Value;
+        if (args.Failed && _taskCooldownOnFail != TimeSpan.Zero)
+            comp.AvailableOn[job.Id] = _timing.CurTime + _taskCooldownOnFail;
 
-        if (job.FinishOnFailed && args.Failed)
+        if (_finishTaskOnFailed && args.Failed)
             return;
 
         _control.TrySetPassiveTask(uid, proto);
@@ -393,18 +401,6 @@ public sealed class NpcJob
     /// </summary>
     [ViewVariables]
     public string Name;
-
-    /// <summary>
-    /// Stop the execution of a routine task if at least one active target of this task has failed to complete
-    /// </summary>
-    [ViewVariables]
-    public bool FinishOnFailed = true;
-
-    /// <summary>
-    /// The time that this task cannot be called after a failed completion
-    /// </summary>
-    [ViewVariables]
-    public TimeSpan? CooldownOnFail = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// The icon for this job.
