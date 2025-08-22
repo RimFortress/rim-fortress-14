@@ -158,6 +158,11 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
                 var data = new NpcTaskData(taskProto.ID, taskProto.Name, taskProto.Description, taskProto.OverlayColor);
                 tasks.Add(data);
             }
+
+            foreach (var uid in _control.ControllableEntities(args.SenderSession))
+            {
+                SetJobPriority(uid, job.Id, proto.DefaultPriority);
+            }
         }
 
         RaiseNetworkEvent(new NpcJobsTasksInfoMessage(tasks));

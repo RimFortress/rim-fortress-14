@@ -561,6 +561,28 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     /// <summary>
+    /// Returns a list of all entities that can be controlled by this user
+    /// </summary>
+    public List<EntityUid> ControllableEntities(EntityUid user)
+    {
+        var uids = new List<EntityUid>();
+        var query = EntityQueryEnumerator<ControllableNpcComponent>();
+
+        while (query.MoveNext(out var uid, out var comp))
+        {
+            if (comp.CanControl.Contains(user))
+                uids.Add(uid);
+        }
+
+        return uids;
+    }
+
+    public List<EntityUid> ControllableEntities(ICommonSession user)
+    {
+        return user.AttachedEntity is not { } uid ? new() : ControllableEntities(uid);
+    }
+
+    /// <summary>
     /// Counts the number of performers of tasks on the given target, including unified tasks
     /// </summary>
     public int TaskPerformersCount(NpcTaskPrototype task, EntityUid? target)
