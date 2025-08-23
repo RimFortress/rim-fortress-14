@@ -1,5 +1,5 @@
-<div class="header" align="center">  
-<img alt="RimFortress" width="880" height="451" src="https://github.com/user-attachments/assets/1a98bb7e-b07b-4182-a921-a75ce0d8b866">  
+<div class="header" align="center">
+<img alt="RimFortress" width="880" height="451" src="https://github.com/user-attachments/assets/1a98bb7e-b07b-4182-a921-a75ce0d8b866">
 </div>
 
 
@@ -36,7 +36,7 @@ git clone https://github.com/RimFortress/rim-fortress-14.git
 cd space-station-14
 python RUN_THIS.py
 ```
-3. Compile the solution:  
+3. Compile the solution:
 
 Build the server using `dotnet build`.
 
@@ -45,21 +45,25 @@ Build the server using `dotnet build`.
 ## License
 
 #### **1. Source Code**
-All original code in this repository (unless explicitly stated otherwise) is licensed under **[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)** or any later version.
 
-- Code created for **RimFortress** is located in `_RF/` directories or marked with special comments. [Example](https://github.com/RimFortress/rim-fortress-14/blob/master/Content.Server/NPC/Systems/NPCUtilitySystem.cs).
-- Some files may be available under **alternative licenses** (noted in file headers or `.license` files). This enables compatibility with non-AGPL projects. Full license texts are available in `LICENSES/`.
+This repository contains components under different licenses:
+
+* **RimFortress Components** (all code in `_RF/` directories and code marked with `RimFortress` comments) are licensed under
+  **MIT License + [Commons Clause](https://commonsclause.com/)**.
+  This means the code is **source-available** but **not open source** under OSI definition.
+  You may freely use, modify, and share it, but you **cannot sell** products or services whose value derives substantially from the RimFortress code.
+  See the full terms in [`LICENSE.TXT`](./LICENSE.TXT) and [`LICENSE_RIMFORTRESS.TXT`](./LICENSES/LICENSE_RIMFORTRESS.TXT).
+
+* **SS14 Components** (all other code and assets not marked as RimFortress) come from
+  [space-wizards/space-station-14](https://github.com/space-wizards/space-station-14) and are licensed under the **[MIT License](./LICENSES/LICENSE_SS14.TXT)**.
+
+* Other files may carry **alternative licenses**, noted in file headers or `.license` files.
 
 #### **2. Dependencies & Third-Party Code**
-- This repository incorporates code from **[space-wizards/space-station-14](https://github.com/space-wizards/space-station-14)**, licensed under the **[MIT License](https://github.com/RimFortress/rim-fortress-14/blob/master/LICENSES/MIT.txt)**.
-- If using derived code, ensure compliance with **all applicable licenses**.
+
+* This project incorporates code and libraries from **Space Station 14** and its ecosystem.
+* When using or redistributing derived code, you must comply with **all applicable licenses** (MIT and MIT+Commons Clause).
 
 #### **3. Media Assets (Art, Sounds, Textures)**
-- Most media files are licensed under **[CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)** unless otherwise specified. Authorship and licensing details are provided in metadata files.
-- **Important**: Some assets use **non-commercial licenses** (e.g., [CC-BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/)). These **cannot be used in commercial projects**—remove or replace such files before commercial distribution.
 
-#### **4. Commercial Use**
-- AGPL-3.0 **permits commercial use** but requires:
-  - Open-sourcing derivative works.
-  - Preserving license notices and copyright.
-- For commercialization, verify licenses of **all components** (especially NC-licensed media).
+* Most media files are licensed under **[CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)** unless otherwise specified. Authorship and licensing details are provided in metadata files.
