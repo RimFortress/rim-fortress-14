@@ -1,0 +1,71 @@
+SOFTWARE LICENSE AGREEMENT FOR THE RIMFORTRESS PROJECT
+
+This project is a collective work containing software code and assets from
+multiple sources, distributed under different license agreements.
+
+SECTION 1: ORIGINAL SPACE STATION 14 CODE (The "SS14 Components")
+
+All code and assets that are NOT located in directories with name `_RF`
+and are NOT marked by comments with the label `RimFortress` are the
+intellectual property of Space Wizards Federation.
+
+The SS14 Components are provided to you under the terms of the MIT License, as
+found in the separate file `LICENSES/LICENSE_SS14.TXT` in the root of this repository.
+Your use of the SS14 Components is governed solely by the terms of that license.
+
+SECTION 2: RIMFORTRESS CODE AND ASSETS (The "RimFortress Components")
+
+The following elements are the derivative work and intellectual
+property of poeMota (The "Licensor"):
+1. All files located in directories with name `_RF`, including
+all subdirectories thereof.
+2. Any portions of code within files enclosed between the
+comments `RimFortress Start` and `RimFortress End`.
+3. Any lines of code within files marked by the single-line
+comment `RimFortress`.
+
+For avoidance of doubt, the RimFortress Components are identified solely by the
+Licensor using the conventions above. The absence of such markers in a file or
+portion of code indicates that it is not considered part of the RimFortress
+Components.
+
+Notice:
+The RimFortress Components are provided under a source-available license
+(MIT + Commons Clause). They are not Open Source Software as defined by
+the Open Source Initiative (OSI).
+
+The RimFortress Components are provided under the MIT License with the
+Commons Clause condition. See the separate file `LICENSES/LICENSE_RIMFORTRESS.TXT`
+for the full applicable terms.
+
+If a particular RimFortress Component (such as an asset file) includes a
+separate license notice (for example, in a corresponding `meta.json` file or
+license header), then that specific notice governs the use of that component.
+
+SECTION 3: CONTRIBUTIONS
+
+By submitting contributions to the RimFortress Components, contributors
+acknowledge and agree that:
+
+Contributors retain the copyright and authorship of their contributions.
+
+Contributors hereby grant the Licensor a perpetual, worldwide, royalty-free,
+irrevocable, sublicensable, and non-exclusive license to use, reproduce, modify,
+prepare derivative works of, publicly display, publicly perform, distribute,
+and sublicense their contributions, under the same terms that apply to the
+RimFortress Components (MIT + Commons Clause, unless otherwise specified in
+accompanying license files).
+
+Nothing in this Section restricts contributors from using, licensing, or
+distributing their own contributions independently, including contributing them
+to other projects, provided that such use does not revoke or limit the rights
+granted to the Licensor under this Agreement.
+
+SECTION 4: CLARITY OF SEPARATION
+
+This license agreement provides a clear separation of the project's components.
+The user is obligated to identify and comply with the terms of the corresponding
+section for each part of the code or asset they utilize.
+
+Use of any part of this project constitutes unconditional acceptance of the
+terms of this agreement.
