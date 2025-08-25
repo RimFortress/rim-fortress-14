@@ -1,0 +1,9 @@
+- type: skill
+  id: BaseSkill
+  abstract: true
+  maxLevel: 20
+  levelUpExp: 1000
+  levelExpMultiplier: 1.1
+
+- type: skill
+  id: Healing

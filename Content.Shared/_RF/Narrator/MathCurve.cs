@@ -3,6 +3,20 @@ using Robust.Shared.Random;
 
 namespace Content.Shared._RF.Narrator;
 
+[Serializable]
+public sealed class CurveList : List<MathCurve>
+{
+    public float Get(float input)
+    {
+        foreach (var curve in this)
+        {
+            input = curve.Curve(input);
+        }
+
+        return input;
+    }
+}
+
 /// <summary>
 /// Changes the float number
 /// </summary>
@@ -10,18 +24,6 @@ namespace Content.Shared._RF.Narrator;
 public abstract partial class MathCurve
 {
     public abstract float Curve(float value);
-
-    protected float ListValue(List<MathCurve> curves, float value)
-    {
-        var val = value;
-
-        foreach (var curve in curves)
-        {
-            val = curve.Curve(val);
-        }
-
-        return val;
-    }
 }
 
 /// <summary>
@@ -138,15 +140,26 @@ public sealed partial class ConditionCurve : MathCurve
     public float? LessThan;
 
     [DataField(required: true)]
-    public List<MathCurve> Value = default!;
+    public CurveList Value = default!;
 
     public override float Curve(float value)
     {
-        if (MoreThan != null && value > MoreThan.Value || LessThan != null && value < LessThan.Value)
-            return ListValue(Value, value);
+        if (value > MoreThan || value < LessThan)
+            return Value.Get(value);
 
         return value;
     }
+}
+
+/// <summary>
+/// Divides the input number by the given number
+/// </summary>
+public sealed partial class DivideCurve : MathCurve
+{
+    [DataField]
+    public CurveList Divider = new();
+
+    public override float Curve(float value) => value / Divider.Get(0);
 }
 
 /// <summary>
@@ -155,9 +168,9 @@ public sealed partial class ConditionCurve : MathCurve
 public sealed partial class MultiplyCurve : MathCurve
 {
     [DataField]
-    public List<MathCurve> Multiplier = new();
+    public CurveList Multiplier = new();
 
-    public override float Curve(float value) => value * ListValue(Multiplier, 0);
+    public override float Curve(float value) => value * Multiplier.Get(0);
 }
 
 /// <summary>
@@ -184,7 +197,15 @@ public sealed partial class AbsCurve : MathCurve
 public sealed partial class IncreaseCurve : MathCurve
 {
     [DataField]
-    public List<MathCurve> Value = new();
+    public CurveList Value = new();
 
-    public override float Curve(float value) => value + ListValue(Value, 0);
+    public override float Curve(float value) => value + Value.Get(0);
+}
+
+public sealed partial class PowCurve : MathCurve
+{
+    [DataField]
+    public float Exponent;
+
+    public override float Curve(float value) => (float) Math.Pow(value, Exponent);
 }

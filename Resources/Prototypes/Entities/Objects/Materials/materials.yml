@@ -147,6 +147,50 @@
     node: cloth
   - type: Item
     heldPrefix: cloth
+  # RimFortress Start
+  - type: SkillInteraction
+    skill: Healing
+    targetLevel: 3
+    successCurve:
+    # x^2 / 400
+    - !type:PowCurve
+      exponent: 2
+    - !type:DivideCurve
+      divider:
+      - !type:ValueCurve
+        value: 400
+    # x^2 / 45
+    failCurve:
+    - !type:PowCurve
+      exponent: 2
+    - !type:DivideCurve
+      divider:
+      - !type:ValueCurve
+        value: 45
+    experience: 50
+    expFailFactor: 0.5
+    expSuccessFactor: 2
+    resultDecreaseFactor: 0.33
+    resultIncreaseFactor: 0.2
+    doAfterFactor: 0.04
+    failTargetEffects:
+    - !type:ModifyBleedAmount
+      probability: 0.9
+      amount: 4
+    successTargetEffects:
+    - !type:ModifyBleedAmount
+      probability: 0.33
+      amount: -4
+    - !type:HealthChange
+      probability: 0.33
+      damage:
+        types:
+          Slash: -2
+          Piercing: -2
+    - !type:ChangeStack
+      probability: 0.33
+      amount: 1
+  # RimFortress End
 
 - type: entity
   parent: MaterialCloth
