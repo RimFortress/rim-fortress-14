@@ -128,32 +128,6 @@ public sealed class SkillsSystem : SharedSkillsSystem
         var fail = delta < 0 && _random.Prob(interact.FailCurve.Get(delta));
         var success = delta > 0 && _random.Prob(interact.SuccessCurve.Get(delta));
 
-        if (fail)
-        {
-            AddExperience(user, ent.Comp.Skill, (int)(interact.Experience * interact.ExpFailFactor));
-
-            foreach (var effect in interact.FailEffects)
-            {
-                var args = new EntityEffectBaseArgs(ent, EntityManager);
-
-                if (effect.ShouldApply(args, _random))
-                    effect.Effect(args);
-            }
-
-            if (target == null)
-                return SkillCheckResult.Fail;
-
-            foreach (var effect in interact.FailTargetEffects)
-            {
-                var args = new EntityEffectBaseArgs(target.Value, EntityManager);
-
-                if (effect.ShouldApply(args, _random))
-                    effect.Effect(args);
-            }
-
-            return SkillCheckResult.Fail;
-        }
-
         if (success)
         {
             AddExperience(user, ent.Comp.Skill, (int)(interact.Experience * interact.ExpSuccessFactor));
@@ -178,6 +152,32 @@ public sealed class SkillsSystem : SharedSkillsSystem
             }
 
             return SkillCheckResult.AdditionalSuccess;
+        }
+
+        if (fail)
+        {
+            AddExperience(user, ent.Comp.Skill, (int)(interact.Experience * interact.ExpFailFactor));
+
+            foreach (var effect in interact.FailEffects)
+            {
+                var args = new EntityEffectBaseArgs(ent, EntityManager);
+
+                if (effect.ShouldApply(args, _random))
+                    effect.Effect(args);
+            }
+
+            if (target == null)
+                return SkillCheckResult.Fail;
+
+            foreach (var effect in interact.FailTargetEffects)
+            {
+                var args = new EntityEffectBaseArgs(target.Value, EntityManager);
+
+                if (effect.ShouldApply(args, _random))
+                    effect.Effect(args);
+            }
+
+            return SkillCheckResult.Fail;
         }
 
         AddExperience(user, ent.Comp.Skill, interact.Experience);

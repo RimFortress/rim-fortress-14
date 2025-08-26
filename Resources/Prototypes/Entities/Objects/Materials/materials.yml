@@ -167,7 +167,7 @@
       divider:
       - !type:ValueCurve
         value: 45
-    experience: 50
+    experience: 40
     expFailFactor: 0.5
     expSuccessFactor: 2
     resultDecreaseFactor: 0.33
