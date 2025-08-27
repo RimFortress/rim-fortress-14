@@ -7,3 +7,12 @@
 
 - type: skill
   id: Healing
+  name: skill-healing-name
+  icon:
+    sprite: /Textures/Interface/VerbIcons/plus.svg.192dpi.png
+
+- type: skill
+  id: Construction
+  name: skill-construction-name
+  icon:
+    sprite: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png

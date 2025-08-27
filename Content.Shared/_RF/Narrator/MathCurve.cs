@@ -186,6 +186,9 @@ public sealed partial class SinCurve : MathCurve
     public override float Curve(float value) => (float) Math.Sin(value);
 }
 
+/// <summary>
+/// Returns the absolute value of the input number
+/// </summary>
 public sealed partial class AbsCurve : MathCurve
 {
     public override float Curve(float value) => Math.Abs(value);
@@ -202,10 +205,13 @@ public sealed partial class IncreaseCurve : MathCurve
     public override float Curve(float value) => value + Value.Get(0);
 }
 
+/// <summary>
+/// Returns the input number raised to a power
+/// </summary>
 public sealed partial class PowCurve : MathCurve
 {
     [DataField]
-    public float Exponent;
+    public CurveList Exponent;
 
-    public override float Curve(float value) => (float) Math.Pow(value, Exponent);
+    public override float Curve(float value) => (float) Math.Pow(value, Exponent.Get(0));
 }

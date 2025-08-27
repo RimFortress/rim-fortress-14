@@ -151,28 +151,8 @@
   - type: SkillInteraction
     skill: Healing
     targetLevel: 3
-    successCurve:
-    # x^2 / 400
-    - !type:PowCurve
-      exponent: 2
-    - !type:DivideCurve
-      divider:
-      - !type:ValueCurve
-        value: 400
-    # x^2 / 45
-    failCurve:
-    - !type:PowCurve
-      exponent: 2
-    - !type:DivideCurve
-      divider:
-      - !type:ValueCurve
-        value: 45
     experience: 40
-    expFailFactor: 0.5
-    expSuccessFactor: 2
-    resultDecreaseFactor: 0.33
-    resultIncreaseFactor: 0.2
-    doAfterFactor: 0.04
+    resultFactor: 0.2
     failTargetEffects:
     - !type:ModifyBleedAmount
       probability: 0.9

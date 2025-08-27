@@ -1,4 +1,3 @@
-using Content.Shared._RF.Narrator;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 
@@ -27,22 +26,13 @@ public sealed partial class SkillInteractionComponent : Component
     public int TargetLevel;
 
     /// <summary>
-    /// Multiplier by which the difference between the target and current skill
-    /// level will be multiplied when calculating the interaction result,
-    /// if the skill level is *higher* than the target one.
-    /// A formula for calculating the result: (Result + (CurrentLevel - TargetLevel) * ResultIncreaseFactor)
+    /// The modifier by which the interaction result is calculated.
+    /// A formula for calculating the result:
+    /// Result more than 0: Result + (CurrentLevel - TargetLevel) * ResultFactor
+    /// Result less than 0: Result - (CurrentLevel - TargetLevel) * ResultFactor
     /// </summary>
     [DataField]
-    public float ResultIncreaseFactor;
-
-    /// <summary>
-    /// Multiplier by which the difference between the target and current skill
-    /// level will be multiplied when calculating the interaction result,
-    /// if the skill level is *lower* than the target one.
-    /// A formula for calculating the result: (Result + (CurrentLevel - TargetLevel) * ResultDecreaseFactor)
-    /// </summary>
-    [DataField]
-    public float ResultDecreaseFactor;
+    public float ResultFactor = 0.5f;
 
     /// <summary>
     /// Minimum possible value of the interaction result
@@ -57,21 +47,16 @@ public sealed partial class SkillInteractionComponent : Component
     public float MaxResult = int.MaxValue;
 
     /// <summary>
-    /// Mathematical curves by which the chance of interaction failure is calculated
+    /// A modifier for the chance of additional success in an interaction.
+    /// The formula for the chance of success: SuccessFactor * (CurrentLevel - TargetLevel) + 0.2
+    /// The chance of failure is equal to 0.4 - SuccessChance
     /// </summary>
     [DataField]
-    public CurveList FailCurve = new();
+    public float SuccessFactor = 0.03f;
 
     /// <summary>
-    /// Mathematical curves by which the chance of interaction success is calculated.
-    /// The input value is the difference between the current level and the target level
-    /// </summary>
-    [DataField]
-    public CurveList SuccessCurve = new();
-
-    /// <summary>
-    /// Mathematical curves by which the chance of interaction fails is calculated.
-    /// The input value is the difference between the current level and the target level
+    /// The effects that will be applied to the component
+    /// owner when the interaction is failed
     /// </summary>
     [DataField]
     public EntityEffect[] FailEffects;
@@ -106,28 +91,28 @@ public sealed partial class SkillInteractionComponent : Component
     /// will be multiplied when the interaction fails
     /// </summary>
     [DataField]
-    public float ExpFailFactor = 1;
+    public float ExpFailFactor = 0.5f;
 
     /// <summary>
     /// The factor by which the value of the gained experience will be
     /// multiplied when completing an interaction with an additional success
     /// </summary>
     [DataField]
-    public float ExpSuccessFactor = 1;
+    public float ExpSuccessFactor = 2;
 
     /// <summary>
     /// The multiplier by which the interaction execution
     /// time increases or decreases depending on the skill level.
-    /// Final time formula: delay - delay * (CurrentLevel - TargetLevel) * DoAfterFactor
+    /// Final time formula: delay - (CurrentLevel - TargetLevel) * DoAfterFactor
     /// </summary>
     [DataField]
-    public float DoAfterFactor;
+    public float DoAfterFactor = 0.2f;
 
     /// <summary>
     /// Minimum possible interaction execution time
     /// </summary>
     [DataField]
-    public float MinDoAfterTime;
+    public float MinDoAfterTime = 0.333f;
 
     /// <summary>
     /// Maximum possible interaction execution time

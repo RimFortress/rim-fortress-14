@@ -10,3 +10,21 @@
   - type: GuideHelp
     guides:
     - Construction
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+    experience: 20
+    successEffects:
+    # With a small chance we can recover the amount of material,
+    # perhaps even more than was spent.
+    # It definitely can't be abused to clone materials, right?
+    - !type:ChangeStack
+      probability: 0.33
+      amount: 10
+    failEffects:
+    - !type:HealthChange
+      probability: 0.9
+      damage:
+        types:
+          Structural: 20
+
