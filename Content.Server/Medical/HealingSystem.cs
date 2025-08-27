@@ -5,6 +5,7 @@ using Content.Server.Body.Systems;
 using Content.Server.Medical.Components;
 using Content.Server.Popups;
 using Content.Server.Stack;
+using Content.Shared._RF.Skills; // RimFortress
 using Content.Shared._RF.Skills.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Audio;
@@ -232,7 +233,7 @@ public sealed class HealingSystem : EntitySystem
 
         // RimFortress Start
         if (HasComp<SkillsComponent>(user) && HasComp<SkillInteractionComponent>(uid))
-            delay = _skills.GetDoAfterDelay(uid, user, delay);
+            delay = _skills.GetDelay(uid, user, delay);
         // RimFortress End
 
         var doAfterEventArgs =

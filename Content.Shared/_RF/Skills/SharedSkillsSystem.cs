@@ -15,6 +15,15 @@ public abstract class SharedSkillsSystem : EntitySystem
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
 
+    protected ISawmill Sawmill = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        Sawmill = LogManager.GetSawmill("skills");
+    }
+
     public int GetLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
         if (!Resolve(ent, ref ent.Comp)
@@ -140,7 +149,14 @@ public abstract class SharedSkillsSystem : EntitySystem
         return Math.Clamp(result, ent.Comp.MinResult, ent.Comp.MaxResult);
     }
 
-    public float GetDoAfterDelay(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float delay)
+    public TimeSpan GetDelay(Entity<SkillInteractionComponent?> ent,
+        Entity<SkillsComponent?> user,
+        TimeSpan delay)
+    {
+        return TimeSpan.FromSeconds(GetDelay(ent, user, (float) delay.TotalSeconds));
+    }
+
+    public float GetDelay(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float delay)
     {
         if (!Resolve(ent, ref ent.Comp) || !Resolve(user, ref user.Comp))
             return delay;
@@ -170,6 +186,27 @@ public abstract class SharedSkillsSystem : EntitySystem
         Entity<SkillsComponent?> user,
         EntityUid? target)
     {
+        var targets = new List<EntityUid>();
+
+        if (target != null)
+            targets.Add(target.Value);
+
+        return DoInteractionCheck(ent, user, targets);
+    }
+
+    /// <summary>
+    /// Performs skill checks for interaction and, according to the result of the check,
+    /// gives out experience and triggers interaction effects
+    /// </summary>
+    /// <param name="ent">Entity on which the interaction is performed</param>
+    /// <param name="user">The user who performs the interaction</param>
+    /// <param name="targets">Target entities of the interaction</param>
+    /// <returns>Skills check result for interaction</returns>
+    public SkillCheckResult DoInteractionCheck(
+        Entity<SkillInteractionComponent?> ent,
+        Entity<SkillsComponent?> user,
+        List<EntityUid> targets)
+    {
         if (!Resolve(ent, ref ent.Comp, false) || !Resolve(user, ref user.Comp, false))
             return SkillCheckResult.Success;
 
@@ -193,16 +230,23 @@ public abstract class SharedSkillsSystem : EntitySystem
                     effect.Effect(args);
             }
 
-            if (target == null)
-                return SkillCheckResult.Fail;
-
             foreach (var effect in interact.SuccessTargetEffects)
             {
-                var args = new EntityEffectBaseArgs(target.Value, EntityManager);
+                foreach (var target in targets)
+                {
+                    var args = new EntityEffectBaseArgs(target, EntityManager);
 
-                if (effect.ShouldApply(args, _random))
-                    effect.Effect(args);
+                    if (effect.ShouldApply(args, _random))
+                        effect.Effect(args);
+                }
             }
+
+#if DEBUG
+            Sawmill.Debug($"user has passed the entity skill test with success. " +
+                          $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
+                          $"targets: {targets.Select(x => ToPrettyString(x))}" +
+                          $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
+#endif
 
             return SkillCheckResult.AdditionalSuccess;
         }
@@ -219,16 +263,23 @@ public abstract class SharedSkillsSystem : EntitySystem
                     effect.Effect(args);
             }
 
-            if (target == null)
-                return SkillCheckResult.Fail;
-
             foreach (var effect in interact.FailTargetEffects)
             {
-                var args = new EntityEffectBaseArgs(target.Value, EntityManager);
+                foreach (var target in targets)
+                {
+                    var args = new EntityEffectBaseArgs(target, EntityManager);
 
-                if (effect.ShouldApply(args, _random))
-                    effect.Effect(args);
+                    if (effect.ShouldApply(args, _random))
+                        effect.Effect(args);
+                }
             }
+
+#if DEBUG
+            Sawmill.Debug($"user failed the entity skill test. " +
+                          $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
+                          $"targets: {targets.Select(x => ToPrettyString(x))}" +
+                          $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
+#endif
 
             return SkillCheckResult.Fail;
         }

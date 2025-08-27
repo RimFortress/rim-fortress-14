@@ -16,3 +16,9 @@
   name: skill-construction-name
   icon:
     sprite: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+
+- type: skill
+  id: Mining
+  name: skill-mining-name
+  icon:
+    sprite: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png

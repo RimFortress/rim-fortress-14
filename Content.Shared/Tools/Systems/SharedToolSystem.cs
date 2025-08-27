@@ -183,7 +183,7 @@ public abstract partial class SharedToolSystem : EntitySystem
             AttemptFrequency = fuel > 0 ? AttemptFrequency.EveryTick : AttemptFrequency.Never
         };
 
-        doAfterArgs.Delay = TimeSpan.FromSeconds(_skills.GetDoAfterDelay(tool, user, doAfterArgs.Delay.Seconds)); // RimFortress
+        doAfterArgs.Delay = _skills.GetDelay(tool, user, doAfterArgs.Delay); // RimFortress
 
         _doAfterSystem.TryStartDoAfter(doAfterArgs, out id);
         return true;

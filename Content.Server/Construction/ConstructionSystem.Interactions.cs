@@ -298,7 +298,7 @@ namespace Content.Server.Construction
                             NeedHand = true,
                         };
 
-                        doAfterEventArgs.Delay = TimeSpan.FromSeconds(_skills.GetDoAfterDelay(uid, interactUsing.User, doAfterEventArgs.Delay.Seconds)); // RimFortress
+                        doAfterEventArgs.Delay = _skills.GetDelay(uid, interactUsing.User, doAfterEventArgs.Delay); // RimFortress
 
                         var started  = _doAfterSystem.TryStartDoAfter(doAfterEventArgs);
 
@@ -374,7 +374,7 @@ namespace Content.Server.Construction
                         interactUsing.Used,
                         interactUsing.User,
                         uid,
-                        TimeSpan.FromSeconds(_skills.GetDoAfterDelay(uid, interactUsing.User, toolInsertStep.DoAfter)), // RimFortress
+                        TimeSpan.FromSeconds(_skills.GetDelay(uid, interactUsing.User, toolInsertStep.DoAfter)), // RimFortress
                         new [] { toolInsertStep.Tool },
                         new ConstructionInteractDoAfterEvent(EntityManager, interactUsing),
                         out var doAfter,

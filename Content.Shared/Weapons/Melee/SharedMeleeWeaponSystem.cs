@@ -29,6 +29,11 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using ItemToggleMeleeWeaponComponent = Content.Shared.Item.ItemToggle.Components.ItemToggleMeleeWeaponComponent;
 
+// RimFortress Start
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Components;
+// RimFortress End
+
 namespace Content.Shared.Weapons.Melee;
 
 public abstract class SharedMeleeWeaponSystem : EntitySystem
@@ -47,6 +52,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
     [Dependency] private   readonly SharedPhysicsSystem     _physics         = default!;
     [Dependency] private   readonly IPrototypeManager       _protoManager    = default!;
     [Dependency] private   readonly StaminaSystem           _stamina         = default!;
+    [Dependency] private   readonly SharedSkillsSystem      _skills          = default!; // RimFortress
 
     private const int AttackMask = (int) (CollisionGroup.MobMask | CollisionGroup.Opaque);
 
@@ -70,6 +76,11 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         SubscribeLocalEvent<BonusMeleeDamageComponent, GetMeleeDamageEvent>(OnGetBonusMeleeDamage);
         SubscribeLocalEvent<BonusMeleeDamageComponent, GetHeavyDamageModifierEvent>(OnGetBonusHeavyDamageModifier);
         SubscribeLocalEvent<BonusMeleeAttackRateComponent, GetMeleeAttackRateEvent>(OnGetBonusMeleeAttackRate);
+
+        // RimFortress Start
+        SubscribeLocalEvent<SkillInteractionComponent, GetMeleeDamageEvent>(OnGetSkillBonusMeleeDamage);
+        SubscribeLocalEvent<SkillInteractionComponent, GetMeleeAttackRateEvent>(OnGetSkillBonusMeleeAttackRate);
+        // RimFortress End
 
         SubscribeLocalEvent<ItemToggleMeleeWeaponComponent, ItemToggledEvent>(OnItemToggle);
 
@@ -458,6 +469,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         if (Deleted(target) ||
             !HasComp<DamageableComponent>(target) ||
             !TryComp(target, out TransformComponent? targetXform) ||
+            _skills.DoInteractionCheck(meleeUid, user, GetEntity(ev.Target)) == SkillCheckResult.Fail ||
             // Not in LOS.
             !InRange(user, target.Value, component.Range, session))
         {
@@ -564,7 +576,8 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         var damage = GetDamage(meleeUid, user, component);
         var entities = GetEntityList(ev.Entities);
 
-        if (entities.Count == 0)
+        if (entities.Count == 0
+            || _skills.DoInteractionCheck(meleeUid, user, ev.Entities.Select(GetEntity).ToList()) == SkillCheckResult.Fail) // RimFortress
         {
             if (meleeUid == user)
             {
@@ -878,4 +891,20 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
 
         Dirty(uid, meleeWeapon);
     }
+
+    // RimFortress Start
+    #region Skills
+
+    private void OnGetSkillBonusMeleeDamage(EntityUid uid, SkillInteractionComponent component, ref GetMeleeDamageEvent args)
+    {
+        args.Damage *= _skills.GetInteractionResult(uid, args.User, 1);
+    }
+
+    private void OnGetSkillBonusMeleeAttackRate(EntityUid uid, SkillInteractionComponent component, ref GetMeleeAttackRateEvent args)
+    {
+        args.Rate = _skills.GetDelay(uid, args.User, args.Rate);
+    }
+
+    #endregion
+    // RimFortress End
 }
