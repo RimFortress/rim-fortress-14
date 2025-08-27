@@ -112,7 +112,7 @@ public sealed partial class SkillInteractionComponent : Component
     /// Minimum possible interaction execution time
     /// </summary>
     [DataField]
-    public float MinDoAfterTime = 0.333f;
+    public float MinDoAfterTime = 0.15f;
 
     /// <summary>
     /// Maximum possible interaction execution time

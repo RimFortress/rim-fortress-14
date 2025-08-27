@@ -108,6 +108,13 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+    successEffects:
+    - !type:AdjustReagent
+      reagent: WeldingFuel
+      amount: 10
   # RimFortress End
 
 - type: entity
