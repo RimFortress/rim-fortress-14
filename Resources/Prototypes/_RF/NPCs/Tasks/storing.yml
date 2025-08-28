@@ -4,17 +4,17 @@
   abstract: true
   maxPerformers: 1
   unionPerformersWith:
-    - Storing
-    - MoveStoredInContainer
-    - FixStoredOffset
-    - MoveToSuppliedStock
+  - Storing
+  - MoveStoredInContainer
+  - FixStoredOffset
+  - MoveToSuppliedStock
   overlayColor: "#A16C2B"
   verbIcon: /Textures/_RF/Interface/cubes-solid.svg.192dpi.png
   targetKey: PickUpTarget
   tempKeys:
-    - Container
-    - SupplyingOnly
-    - SupplyingStartStock
+  - Container
+  - SupplyingOnly
+  - SupplyingStartStock
 
 - type: npcTask
   id: Storing
@@ -24,18 +24,18 @@
   targetsQuery: StoringTaskTarget
   targetWhitelist:
     components:
-      - Item
-      - Pullable
+    - Item
+    - Pullable
   finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:StoredPrecondition
-          targetKey: PickUpTarget
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-    - !type:PulledEntityIsPrecondition
+  - !type:OrPrecondition
+    preconditions:
+    - !type:StoredPrecondition
       targetKey: PickUpTarget
-      invert: true
+    - !type:EntityDeletedPrecondition
+      key: PickUpTarget
+  - !type:PulledEntityIsPrecondition
+    targetKey: PickUpTarget
+    invert: true
 
 - type: npcTask
   id: MoveStoredInContainer
@@ -45,21 +45,21 @@
   targetsQuery: MoveStoredInContainerTarget
   targetWhitelist:
     components:
-      - Item
+    - Item
   startPreconditions:
-    - !type:StockpileFreeContainerPrecondition
-      targetKey: PickUpTarget
+  - !type:StockpileFreeContainerPrecondition
+    targetKey: PickUpTarget
   finishPreconditions:
-    - !type:OrPrecondition
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: PickUpTarget
+    - !type:AndPrecondition
       preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:AndPrecondition
-          preconditions:
-            - !type:StoredPrecondition
-              targetKey: PickUpTarget
-            - !type:TargetInContainerPrecondition
-              targetKey: PickUpTarget
+      - !type:StoredPrecondition
+        targetKey: PickUpTarget
+      - !type:TargetInContainerPrecondition
+        targetKey: PickUpTarget
 
 - type: npcTask
   id: FixStoredOffset
@@ -69,20 +69,20 @@
   targetsQuery: FixStoredOffsetTarget
   targetWhitelist:
     components:
-      - Item
-      - Pullable
+    - Item
+    - Pullable
   finishPreconditions:
-    - !type:OrPrecondition
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: PickUpTarget
+    - !type:AndPrecondition
       preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:AndPrecondition
-          preconditions:
-            - !type:StoredPrecondition
-              targetKey: PickUpTarget
-            - !type:TileOffsetPrecondition
-              targetKey: PickUpTarget
-              lessThan: 0.06
+      - !type:StoredPrecondition
+        targetKey: PickUpTarget
+      - !type:TileOffsetPrecondition
+        targetKey: PickUpTarget
+        lessThan: 0.06
 
 - type: npcTask
   id: MoveToSuppliedStock
@@ -92,17 +92,17 @@
   targetsQuery: MoveToSuppliedStockTarget
   targetWhitelist:
     components:
-      - Item
-      - Pullable
+    - Item
+    - Pullable
   finishPreconditions:
-    - !type:OrPrecondition
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: PickUpTarget
+    - !type:AndPrecondition
       preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:AndPrecondition
-          preconditions:
-            - !type:StoredPrecondition
-              targetKey: PickUpTarget
-            - !type:CanInsertInSuppliedPrecondition
-              targetKey: PickUpTarget
-              invert: true
+      - !type:StoredPrecondition
+        targetKey: PickUpTarget
+      - !type:CanInsertInSuppliedPrecondition
+        targetKey: PickUpTarget
+        invert: true
