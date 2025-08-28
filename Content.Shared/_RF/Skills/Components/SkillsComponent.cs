@@ -1,3 +1,4 @@
+using Content.Shared.Destructible.Thresholds;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -19,9 +20,28 @@ public sealed partial class SkillsComponent : Component
 
     [DataField, AutoNetworkedField]
     public List<SkillData> Skills = new();
+
+    /// <summary>
+    /// Which skill levels should be randomized when adding a component
+    /// </summary>
+    [DataField]
+    public List<ProtoId<SkillPrototype>> RandomizeSkills = new();
+
+    /// <summary>
+    /// Range of the number of levels that will be randomly distributed
+    /// among the skills specified in <see cref="RandomizeSkills"/>
+    /// </summary>
+    [DataField]
+    public MinMax RandomLevels;
+
+    /// <summary>
+    /// Maximum possible level of randomly distributed skill
+    /// </summary>
+    [DataField]
+    public int MaxRandomLevel;
 }
 
-[DataDefinition, NetSerializable]
+[DataDefinition, Serializable, NetSerializable]
 public sealed partial class SkillData
 {
     /// <summary>

@@ -213,6 +213,18 @@
     - FootstepSound
     - DoorBumpOpener
     - AnomalyHost
+  # RimFortress Start
+  - type: Skills
+    randomizeSkills:
+    - Healing
+    - Construction
+    - Mining
+    - Melee
+    randomLevels:
+      min: 5
+      max: 20
+    maxRandomLevel: 10
+  # RimFortress End
 
 - type: entity
   save: false

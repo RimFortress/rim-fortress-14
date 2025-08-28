@@ -1,4 +1,5 @@
 using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Components;
 using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests._RF.Tests.Skills;

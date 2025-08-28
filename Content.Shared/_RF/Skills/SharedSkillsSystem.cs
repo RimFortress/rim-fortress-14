@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.Skills.Components;
 using Content.Shared.DoAfter;
@@ -13,7 +14,7 @@ namespace Content.Shared._RF.Skills;
 public abstract class SharedSkillsSystem : EntitySystem
 {
     [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] protected readonly IRobustRandom Random = default!;
 
     protected ISawmill Sawmill = default!;
 
@@ -43,6 +44,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         if (Math.Abs(proto.LevelExpMultiplier - 1.0) < 1e-10)
             return experience / proto.LevelUpExp;
 
+        // Sₙ = a₁ * (qⁿ - 1) / (q - 1) <- geometric progression sum formula
+        // n - skill level
+        // here we solve the equation with respect to n
         var level = Math.Log(
             experience * (proto.LevelExpMultiplier - 1) / proto.LevelUpExp + 1,
             proto.LevelExpMultiplier);
@@ -60,6 +64,7 @@ public abstract class SharedSkillsSystem : EntitySystem
 
         // If I hadn't skipped school I wouldn't have had
         // to search for the sum of geometric progression formula
+        // Sₙ = a₁ * (qⁿ - 1) / (q - 1)
         return (int) (proto.LevelUpExp
                       * (Math.Pow(proto.LevelExpMultiplier, level) - 1)
                       / (proto.LevelExpMultiplier - 1));
@@ -70,10 +75,24 @@ public abstract class SharedSkillsSystem : EntitySystem
         return level <= 0 ? 0 : GetLevelMaxPoints(skill, level - 1);
     }
 
+    public bool TryGetSkillData(
+        Entity<SkillsComponent?> ent,
+        ProtoId<SkillPrototype> skill,
+        [NotNullWhen(true)] out SkillData? data)
+    {
+        data = null;
+
+        if (!Resolve(ent, ref ent.Comp) || ent.Comp.Skills.FirstOrDefault(x => x.Id == skill) is not { } skillData)
+            return false;
+
+        data = skillData;
+        return true;
+    }
+
     /// <summary>
     /// Adds experience points for the skill of the given entity
     /// </summary>
-    public void AddExperience(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int amount)
+    public void AddExperience(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int amount, bool dirty = true)
     {
         if (!Resolve(ent, ref ent.Comp, false)
             || !Proto.TryIndex(skill, out var proto)
@@ -89,14 +108,18 @@ public abstract class SharedSkillsSystem : EntitySystem
 
         if (data.CurrentExp >= data.MinLevelExp && data.CurrentExp <= data.LevelUpExp)
         {
-            Dirty(ent);
+            if (dirty)
+                Dirty(ent);
+
             return;
         }
 
         data.CurrentLevel = GetLevel(data.Id, data.CurrentExp);
         data.LevelUpExp = GetLevelMaxPoints(data.Id, data.CurrentLevel);
         data.MinLevelExp = GetLevelMinPoints(data.Id, data.CurrentLevel);
-        Dirty(ent);
+
+        if (dirty)
+            Dirty(ent);
 
         var args = new EntityEffectBaseArgs(ent, EntityManager);
 
@@ -104,7 +127,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         {
             foreach (var effect in zeroEffects)
             {
-                if (effect.ShouldApply(args, _random))
+                if (effect.ShouldApply(args, Random))
                     effect.Effect(args);
             }
         }
@@ -113,7 +136,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         {
             foreach (var effect in effects)
             {
-                if (effect.ShouldApply(args, _random))
+                if (effect.ShouldApply(args, Random))
                     effect.Effect(args);
             }
         }
@@ -215,8 +238,8 @@ public abstract class SharedSkillsSystem : EntitySystem
         var successChance = interact.SuccessFactor * delta + 0.2f;
         var failChance = 0.4f - successChance;
 
-        var fail = _random.Prob(failChance);
-        var success = _random.Prob(successChance);
+        var fail = Random.Prob(failChance);
+        var success = Random.Prob(successChance);
 
         if (success)
         {
@@ -226,7 +249,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             {
                 var args = new EntityEffectBaseArgs(ent, EntityManager);
 
-                if (effect.ShouldApply(args, _random))
+                if (effect.ShouldApply(args, Random))
                     effect.Effect(args);
             }
 
@@ -234,7 +257,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             {
                 var args = new EntityEffectBaseArgs(ent, EntityManager);
 
-                if (effect.ShouldApply(args, _random))
+                if (effect.ShouldApply(args, Random))
                     effect.Effect(args);
             }
 
@@ -244,7 +267,7 @@ public abstract class SharedSkillsSystem : EntitySystem
                 {
                     var args = new EntityEffectBaseArgs(target, EntityManager);
 
-                    if (effect.ShouldApply(args, _random))
+                    if (effect.ShouldApply(args, Random))
                         effect.Effect(args);
                 }
             }
@@ -252,7 +275,7 @@ public abstract class SharedSkillsSystem : EntitySystem
 #if DEBUG
             Sawmill.Debug($"user has passed the entity skill test with success. " +
                           $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
-                          $"targets: {targets.Select(x => ToPrettyString(x))}" +
+                          $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
                           $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
 #endif
 
@@ -267,7 +290,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             {
                 var args = new EntityEffectBaseArgs(ent, EntityManager);
 
-                if (effect.ShouldApply(args, _random))
+                if (effect.ShouldApply(args, Random))
                     effect.Effect(args);
             }
 
@@ -275,7 +298,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             {
                 var args = new EntityEffectBaseArgs(ent, EntityManager);
 
-                if (effect.ShouldApply(args, _random))
+                if (effect.ShouldApply(args, Random))
                     effect.Effect(args);
             }
 
@@ -285,7 +308,7 @@ public abstract class SharedSkillsSystem : EntitySystem
                 {
                     var args = new EntityEffectBaseArgs(target, EntityManager);
 
-                    if (effect.ShouldApply(args, _random))
+                    if (effect.ShouldApply(args, Random))
                         effect.Effect(args);
                 }
             }
@@ -293,7 +316,7 @@ public abstract class SharedSkillsSystem : EntitySystem
 #if DEBUG
             Sawmill.Debug($"user failed the entity skill test. " +
                           $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
-                          $"targets: {targets.Select(x => ToPrettyString(x))}" +
+                          $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
                           $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
 #endif
 

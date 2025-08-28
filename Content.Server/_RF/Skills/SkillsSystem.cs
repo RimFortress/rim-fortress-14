@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server.Construction;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
 using Robust.Shared.Serialization.Manager;
 
 namespace Content.Server._RF.Skills;
@@ -28,7 +30,11 @@ public sealed class SkillsSystem : SharedSkillsSystem
             data.MinLevelExp = GetLevelMinPoints(data.Id, data.CurrentLevel);
         }
 
-        Dirty(uid, component);
+        RandomizeSkills(
+            new(uid, component),
+            component.RandomizeSkills,
+            component.RandomLevels.Next(Random),
+            component.MaxRandomLevel);
     }
 
     private void OnConstructionChange(EntityUid uid,
@@ -42,14 +48,20 @@ public sealed class SkillsSystem : SharedSkillsSystem
     /// <summary>
     /// Adds a skill for an entity
     /// </summary>
-    public bool AddSkill(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
+    public bool AddSkill(
+        Entity<SkillsComponent?> ent,
+        ProtoId<SkillPrototype> skill,
+        [NotNullWhen(true)] out SkillData? data,
+        bool dirty = true)
     {
+        data = null;
+
         if (!Resolve(ent, ref ent.Comp)
             || ent.Comp.Skills.Any(x => x.Id == skill.Id)
             || !Proto.TryIndex(skill, out var proto))
             return false;
 
-        var data = new SkillData
+        data = new SkillData
         {
             Id = skill,
             CurrentLevel = 0,
@@ -59,7 +71,49 @@ public sealed class SkillsSystem : SharedSkillsSystem
         };
 
         ent.Comp.Skills.Add(data);
-        Dirty(ent);
+
+        if (dirty)
+            Dirty(ent);
+
         return true;
+    }
+
+    public void SetSkillLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int level, bool dirty = true)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data, false))
+            return;
+
+        var exp = GetLevelMinPoints(skill, level) - data.CurrentExp;
+
+        AddExperience(ent, skill, exp, dirty);
+    }
+
+    public void RandomizeSkills(Entity<SkillsComponent?> ent, List<ProtoId<SkillPrototype>> skills, int levels, int maxLevel)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        while (levels > 0 && skills.Count != 0)
+        {
+            var skill = Random.Pick(skills);
+
+            if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data, false))
+                continue;
+
+            var level = Math.Min(Random.Next(0, maxLevel - data.CurrentLevel), levels);
+
+            levels -= level;
+            level += data.CurrentLevel;
+
+            if (level >= maxLevel)
+                skills.Remove(skill);
+
+            SetSkillLevel(ent, skill, level);
+        }
+
+        Dirty(ent);
     }
 }

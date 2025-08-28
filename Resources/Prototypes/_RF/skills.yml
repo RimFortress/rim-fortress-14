@@ -7,20 +7,24 @@
 
 - type: skill
   id: Healing
+  parent: BaseSkill
   name: skill-healing-name
   icon: Interface/VerbIcons/plus.svg.192dpi.png
 
 - type: skill
   id: Construction
+  parent: BaseSkill
   name: skill-construction-name
   icon: _RF/Interface/hammer-solid.svg.192dpi.png
 
 - type: skill
   id: Mining
+  parent: BaseSkill
   name: skill-mining-name
   icon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
 
 - type: skill
   id: Melee
+  parent: BaseSkill
   name: skill-melee-name
   icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png

@@ -58,39 +58,39 @@ public sealed partial class SkillInteractionComponent : Component
     /// The effects that will be applied to the component
     /// owner when the interaction is failed
     /// </summary>
-    [DataField]
-    public EntityEffect[] FailEffects;
+    [DataField(serverOnly: true)]
+    public EntityEffect[] FailEffects = [];
 
     /// <summary>
     /// The effects that will be applied to the target when the interaction fails
     /// </summary>
-    [DataField]
-    public EntityEffect[] FailTargetEffects;
+    [DataField(serverOnly: true)]
+    public EntityEffect[] FailTargetEffects = [];
 
     /// <summary>
     /// Effects that will be applied to the user taking the skill check when the interaction fails
     /// </summary>
-    [DataField]
-    public EntityEffect[] FailUserEffects;
+    [DataField(serverOnly: true)]
+    public EntityEffect[] FailUserEffects = [];
 
     /// <summary>
     /// The effects that will be applied to the component
     /// owner with the additional success of the interaction
     /// </summary>
-    [DataField]
-    public EntityEffect[] SuccessEffects;
+    [DataField(serverOnly: true)]
+    public EntityEffect[] SuccessEffects = [];
 
     /// <summary>
     /// The effects that will be applied to the target with the additional success of the interaction
     /// </summary>
-    [DataField]
-    public EntityEffect[] SuccessTargetEffects;
+    [DataField(serverOnly: true)]
+    public EntityEffect[] SuccessTargetEffects = [];
 
     /// <summary>
     /// Effects that will be applied to the user taking the skill check with the additional success of the interaction
     /// </summary>
-    [DataField]
-    public EntityEffect[] SuccessUserEffects;
+    [DataField(serverOnly: true)]
+    public EntityEffect[] SuccessUserEffects = [];
 
     /// <summary>
     /// The experience of the skill that the user will gain at the end of the interaction
