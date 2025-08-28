@@ -5,6 +5,9 @@ using Robust.Shared.Timing;
 
 namespace Content.Server._RF.EntityEffects.Effects;
 
+/// <summary>
+/// Resets the cooldown of melee weapon use
+/// </summary>
 public sealed partial class ResetMeleeCooldown : EntityEffect
 {
     protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) =>

@@ -47,6 +47,9 @@
     successEffects:
     - !type:ResetMeleeCooldown
       probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End
 
 - type: entity
@@ -87,6 +90,9 @@
     successEffects:
     - !type:ResetMeleeCooldown
       probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End
 
 - type: entity
@@ -192,6 +198,9 @@
     successEffects:
     - !type:ResetMeleeCooldown
       probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End
 
 - type: entity
@@ -249,10 +258,13 @@
   - type: SkillInteraction
     skill: Mining
     targetLevel: 7
-    experience: 15
+    experience: 20
     doAfterFactor: 0.01
     resultFactor: 0.1
     successEffects:
     - !type:ResetMeleeCooldown
       probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End

@@ -230,6 +230,14 @@ public abstract class SharedSkillsSystem : EntitySystem
                     effect.Effect(args);
             }
 
+            foreach (var effect in interact.SuccessUserEffects)
+            {
+                var args = new EntityEffectBaseArgs(ent, EntityManager);
+
+                if (effect.ShouldApply(args, _random))
+                    effect.Effect(args);
+            }
+
             foreach (var effect in interact.SuccessTargetEffects)
             {
                 foreach (var target in targets)
@@ -256,6 +264,14 @@ public abstract class SharedSkillsSystem : EntitySystem
             AddExperience(user, ent.Comp.Skill, (int)(interact.Experience * interact.ExpFailFactor));
 
             foreach (var effect in interact.FailEffects)
+            {
+                var args = new EntityEffectBaseArgs(ent, EntityManager);
+
+                if (effect.ShouldApply(args, _random))
+                    effect.Effect(args);
+            }
+
+            foreach (var effect in interact.FailUserEffects)
             {
                 var args = new EntityEffectBaseArgs(ent, EntityManager);
 

@@ -68,6 +68,12 @@ public sealed partial class SkillInteractionComponent : Component
     public EntityEffect[] FailTargetEffects;
 
     /// <summary>
+    /// Effects that will be applied to the user taking the skill check when the interaction fails
+    /// </summary>
+    [DataField]
+    public EntityEffect[] FailUserEffects;
+
+    /// <summary>
     /// The effects that will be applied to the component
     /// owner with the additional success of the interaction
     /// </summary>
@@ -79,6 +85,12 @@ public sealed partial class SkillInteractionComponent : Component
     /// </summary>
     [DataField]
     public EntityEffect[] SuccessTargetEffects;
+
+    /// <summary>
+    /// Effects that will be applied to the user taking the skill check with the additional success of the interaction
+    /// </summary>
+    [DataField]
+    public EntityEffect[] SuccessUserEffects;
 
     /// <summary>
     /// The experience of the skill that the user will gain at the end of the interaction
