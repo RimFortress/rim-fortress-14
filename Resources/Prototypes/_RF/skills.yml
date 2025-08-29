@@ -28,3 +28,9 @@
   parent: BaseSkill
   name: skill-melee-name
   icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png
+
+- type: skill
+  id: Farming
+  parent: BaseSkill
+  name: skill-farming-name
+  icon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png

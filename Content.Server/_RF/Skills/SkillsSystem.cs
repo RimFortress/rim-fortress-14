@@ -49,39 +49,6 @@ public sealed partial class SkillsSystem : SharedSkillsSystem
         _serialization.CopyTo(component, ref newComp, notNullableOverride: true);
     }
 
-    /// <summary>
-    /// Adds a skill for an entity
-    /// </summary>
-    private bool AddSkill(
-        Entity<SkillsComponent?> ent,
-        ProtoId<SkillPrototype> skill,
-        [NotNullWhen(true)] out SkillData? data,
-        bool dirty = true)
-    {
-        data = null;
-
-        if (!Resolve(ent, ref ent.Comp)
-            || ent.Comp.Skills.Any(x => x.Id == skill.Id)
-            || !Proto.TryIndex(skill, out var proto))
-            return false;
-
-        data = new SkillData
-        {
-            Id = skill,
-            CurrentLevel = 0,
-            CurrentExp = 0,
-            LevelUpExp = proto.LevelUpExp,
-            MinLevelExp = 0,
-        };
-
-        ent.Comp.Skills.Add(data);
-
-        if (dirty)
-            Dirty(ent);
-
-        return true;
-    }
-
     public void SetSkillLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int level, bool dirty = true)
     {
         if (!Resolve(ent, ref ent.Comp))

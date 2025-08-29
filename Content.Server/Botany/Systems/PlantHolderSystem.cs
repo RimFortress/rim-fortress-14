@@ -27,6 +27,11 @@ using Content.Shared.Administration.Logs;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Database;
 
+// RimFortress Start
+using Content.Server._RF.Skills;
+using Content.Shared._RF.Skills;
+// RimFortress Start
+
 namespace Content.Server.Botany.Systems;
 
 public sealed class PlantHolderSystem : EntitySystem
@@ -45,6 +50,7 @@ public sealed class PlantHolderSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly ItemSlotsSystem _itemSlots = default!;
     [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;
+    [Dependency] private readonly SkillsSystem _skills = default!; // RimFortress
 
 
     public const float HydroponicsSpeedMultiplier = 1f;
@@ -687,6 +693,10 @@ public sealed class PlantHolderSystem : EntitySystem
         if (component.Seed == null || Deleted(user))
             return false;
 
+        // RimFortress Start
+        if (_skills.DoInteractionCheck(plantholder, user, plantholder) == SkillCheckResult.Fail)
+            return false;
+        // RimFortress End
 
         if (component.Harvest && !component.Dead)
         {
@@ -703,7 +713,7 @@ public sealed class PlantHolderSystem : EntitySystem
                 return false;
             }
 
-            _botany.Harvest(component.Seed, user, component.YieldMod);
+            _botany.Harvest(component.Seed, user, _skills.GetInteractionResult(plantholder, user, component.YieldMod));
             AfterHarvest(plantholder, component);
             return true;
         }

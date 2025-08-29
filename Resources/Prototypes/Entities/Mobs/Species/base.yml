@@ -220,6 +220,7 @@
     - Construction
     - Mining
     - Melee
+    - Farming
     randomLevels:
       min: 5
       max: 20

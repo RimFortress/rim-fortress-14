@@ -60,10 +60,6 @@ public sealed partial class SkillsSystem
         }
 
         EnsureComp<SkillsComponent>(targetUid.Value);
-
-        if (!TryGetSkillData(targetUid.Value, skill, out _))
-            AddSkill(targetUid.Value, skill, out _);
-
         AddExperience(targetUid.Value, skill, exp);
     }
 
