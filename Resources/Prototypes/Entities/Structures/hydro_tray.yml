@@ -105,11 +105,11 @@
     successEffects:
     - !type:GenerateProduct
       probability: 0.5
-    - !type:ChangePlanHolder
+    - !type:ChangePlantHolder
       probability: 0.5
       health: 10
     failEffects:
-    - !type:ChangePlanHolder
+    - !type:ChangePlantHolder
       probability: 0.75
       health: -10
   # RimFortress End

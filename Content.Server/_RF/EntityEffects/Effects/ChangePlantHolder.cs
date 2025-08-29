@@ -8,7 +8,7 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// <summary>
 /// Changes the parameters of the plant holder
 /// </summary>
-public sealed partial class ChangePlanHolder : EntityEffect
+public sealed partial class ChangePlantHolder : EntityEffect
 {
     /// <summary>
     /// How much should the health of the plant be changed by
