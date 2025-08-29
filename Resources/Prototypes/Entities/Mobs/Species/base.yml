@@ -221,6 +221,7 @@
     - Mining
     - Melee
     - Farming
+    - Woodcutting
     randomLevels:
       min: 5
       max: 20

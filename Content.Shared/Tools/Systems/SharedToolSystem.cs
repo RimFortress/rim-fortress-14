@@ -50,7 +50,7 @@ public abstract partial class SharedToolSystem : EntitySystem
     private void OnDoAfter(EntityUid uid, ToolComponent tool, ToolDoAfterEvent args)
     {
         // RimFortress Start
-        if (_skills.DoInteractionCheck(uid, args) == SkillCheckResult.Fail)
+        if (_skills.DoInteractionCheck(uid, args.User, args.Target) == SkillCheckResult.Fail)
             return;
         // RimFortress End
 

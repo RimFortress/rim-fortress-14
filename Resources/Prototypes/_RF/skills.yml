@@ -34,3 +34,9 @@
   parent: BaseSkill
   name: skill-farming-name
   icon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+
+- type: skill
+  id: Woodcutting
+  parent: BaseSkill
+  name: skill-woodcutting-name
+  icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png

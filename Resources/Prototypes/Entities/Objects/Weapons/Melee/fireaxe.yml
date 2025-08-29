@@ -53,7 +53,7 @@
   - type: StockpileCategory
     category: Melee
   - type: SkillInteraction
-    skill: Melee
+    skill: Woodcutting
     targetLevel: 10
     experience: 25
     doAfterFactor: 0.02

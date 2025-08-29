@@ -25,6 +25,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         Sawmill = LogManager.GetSawmill("skills");
     }
 
+    /// <summary>
+    /// Returns the current skill level of the entity
+    /// </summary>
     public int GetLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
         if (!Resolve(ent, ref ent.Comp)
@@ -34,6 +37,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         return data.CurrentLevel;
     }
 
+    /// <summary>
+    /// Calculates the skill level for a given amount of experience
+    /// </summary>
     public int GetLevel(ProtoId<SkillPrototype> skill, int experience)
     {
         if (!Proto.TryIndex(skill, out var proto)
@@ -54,6 +60,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         return Math.Min((int) Math.Floor(level), proto.MaxLevel);
     }
 
+    /// <summary>
+    /// Returns the maximum amount of experience for the given skill level
+    /// </summary>
     public int GetLevelMaxPoints(ProtoId<SkillPrototype> skill, int level)
     {
         if (!Proto.TryIndex(skill, out var proto))
@@ -70,12 +79,15 @@ public abstract class SharedSkillsSystem : EntitySystem
                       / (proto.LevelExpMultiplier - 1));
     }
 
+    /// <summary>
+    /// Returns the minimum amount of experience for the given skill level
+    /// </summary>
     public int GetLevelMinPoints(ProtoId<SkillPrototype> skill, int level)
     {
         return level <= 0 ? 0 : GetLevelMaxPoints(skill, level - 1);
     }
 
-    protected bool TryGetSkillData(
+    public bool TryGetSkillData(
         Entity<SkillsComponent?> ent,
         ProtoId<SkillPrototype> skill,
         [NotNullWhen(true)] out SkillData? data)
@@ -190,6 +202,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         return (int) Math.Floor(GetInteractionResult(ent, user, (float) value));
     }
 
+    /// <summary>
+    /// Changes some input number depending on the result of the skill check for the interaction
+    /// </summary>
     public float GetInteractionResult(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float value)
     {
         if (!Resolve(ent, ref ent.Comp, false)
@@ -208,6 +223,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         return Math.Clamp(result, ent.Comp.MinResult, ent.Comp.MaxResult);
     }
 
+    /// <summary>
+    /// Returns the duration of interaction execution depending on the current skill level
+    /// </summary>
     public TimeSpan GetDelay(Entity<SkillInteractionComponent?> ent,
         Entity<SkillsComponent?> user,
         TimeSpan delay)
@@ -215,6 +233,9 @@ public abstract class SharedSkillsSystem : EntitySystem
         return TimeSpan.FromSeconds(GetDelay(ent, user, (float) delay.TotalSeconds));
     }
 
+    /// <summary>
+    /// Returns the duration of interaction execution depending on the current skill level
+    /// </summary>
     public float GetDelay(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float delay)
     {
         if (!Resolve(ent, ref ent.Comp) || !Resolve(user, ref user.Comp))
@@ -225,11 +246,6 @@ public abstract class SharedSkillsSystem : EntitySystem
         return Math.Clamp(delay - delta * ent.Comp.DoAfterFactor,
             ent.Comp.MinDoAfterTime,
             ent.Comp.MaxDoAfterTime);
-    }
-
-    public SkillCheckResult DoInteractionCheck(Entity<SkillInteractionComponent?> ent, DoAfterEvent args)
-    {
-        return DoInteractionCheck(ent, args.User, args.Target);
     }
 
     /// <summary>
