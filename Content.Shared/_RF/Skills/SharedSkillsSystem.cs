@@ -75,7 +75,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         return level <= 0 ? 0 : GetLevelMaxPoints(skill, level - 1);
     }
 
-    public bool TryGetSkillData(
+    protected bool TryGetSkillData(
         Entity<SkillsComponent?> ent,
         ProtoId<SkillPrototype> skill,
         [NotNullWhen(true)] out SkillData? data)
@@ -238,8 +238,8 @@ public abstract class SharedSkillsSystem : EntitySystem
         var successChance = interact.SuccessFactor * delta + 0.2f;
         var failChance = 0.4f - successChance;
 
-        var fail = Random.Prob(failChance);
-        var success = Random.Prob(successChance);
+        var fail = Random.Prob(Math.Clamp(failChance, 0, 1));
+        var success = Random.Prob(Math.Clamp(successChance, 0, 1));
 
         if (success)
         {

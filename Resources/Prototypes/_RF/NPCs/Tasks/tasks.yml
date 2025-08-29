@@ -79,6 +79,7 @@
   verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   compound: DigCompound
   passive: true
+  failAwaitTime: 3
   tempKeys:
   - Tags
   - AllTags

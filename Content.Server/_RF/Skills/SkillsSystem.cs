@@ -3,15 +3,17 @@ using System.Linq;
 using Content.Server.Construction;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
+using Robust.Shared.Console;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization.Manager;
 
 namespace Content.Server._RF.Skills;
 
-public sealed class SkillsSystem : SharedSkillsSystem
+public sealed partial class SkillsSystem : SharedSkillsSystem
 {
     [Dependency] private readonly ISerializationManager _serialization = default!;
+    [Dependency] private readonly IConsoleHost _host = default!;
 
     public override void Initialize()
     {
@@ -19,6 +21,8 @@ public sealed class SkillsSystem : SharedSkillsSystem
 
         SubscribeLocalEvent<SkillsComponent, ComponentInit>(OnInit);
         SubscribeLocalEvent<SkillInteractionComponent, ConstructionChangeEntityEvent>(OnConstructionChange);
+
+        InitializeCommands();
     }
 
     private void OnInit(EntityUid uid, SkillsComponent component, ComponentInit args)
@@ -48,7 +52,7 @@ public sealed class SkillsSystem : SharedSkillsSystem
     /// <summary>
     /// Adds a skill for an entity
     /// </summary>
-    public bool AddSkill(
+    private bool AddSkill(
         Entity<SkillsComponent?> ent,
         ProtoId<SkillPrototype> skill,
         [NotNullWhen(true)] out SkillData? data,
@@ -86,7 +90,7 @@ public sealed class SkillsSystem : SharedSkillsSystem
         if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data, false))
             return;
 
-        var exp = GetLevelMinPoints(skill, level) - data.CurrentExp;
+        var exp = GetLevelMinPoints(skill, level) - data.CurrentExp + 1;
 
         AddExperience(ent, skill, exp, dirty);
     }
