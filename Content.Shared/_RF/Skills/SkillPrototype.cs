@@ -23,14 +23,33 @@ public sealed class SkillPrototype : IPrototype, IInheritingPrototype
     /// <summary>
     /// Human-readable skill name
     /// </summary>
-    [DataField("name")]
+    [DataField]
     public LocId Name;
+
+    /// <summary>
+    /// What is the name of the profession for the skill.
+    /// For example, if the skill is called “mining”, then the profession is called “miner”
+    /// </summary>
+    [DataField]
+    public LocId? Profession;
+
+    /// <summary>
+    /// Prefixes to be applied to a profession name depending on skill level
+    /// </summary>
+    [DataField]
+    public Dictionary<int, LocId> LevelPrefixes = new();
 
     /// <summary>
     /// Path to the skill icon that will be displayed in the interface
     /// </summary>
     [DataField]
     public SpriteSpecifier? Icon;
+
+    /// <summary>
+    /// Color of the skill, used for display in the interface (text and icon)
+    /// </summary>
+    [DataField]
+    public Color Color = Color.White;
 
     /// <summary>
     /// Maximum skill level

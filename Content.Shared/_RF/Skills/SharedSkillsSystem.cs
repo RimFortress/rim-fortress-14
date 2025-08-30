@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.Skills.Components;
-using Content.Shared.DoAfter;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
@@ -16,6 +15,8 @@ public abstract class SharedSkillsSystem : EntitySystem
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly IRobustRandom Random = default!;
 
+    public const string DefaultSkillProfession = "skill-profession-default";
+
     protected ISawmill Sawmill = default!;
 
     public override void Initialize()
@@ -23,6 +24,64 @@ public abstract class SharedSkillsSystem : EntitySystem
         base.Initialize();
 
         Sawmill = LogManager.GetSawmill("skills");
+    }
+
+    /// <summary>
+    /// Returns the profession name of the entity with the highest skill level
+    /// </summary>
+    /// <remarks>
+    /// Returns the default profession name if no matching one is found
+    /// </remarks>
+    public string SkillProfession(Entity<SkillsComponent?> ent)
+    {
+        var defaultProf = Loc.GetString(DefaultSkillProfession);
+
+        if (!Resolve(ent, ref ent.Comp))
+            return defaultProf;
+
+        (ProtoId<SkillPrototype> Skill, int Level)? bestSkill = null;
+
+        foreach (var data in ent.Comp.Skills)
+        {
+            if (data.CurrentLevel == 0
+                || !Proto.TryIndex(data.Id, out var proto)
+                || proto.Profession == null)
+                continue;
+
+            if (bestSkill != null && bestSkill.Value.Level >= data.CurrentLevel)
+                continue;
+
+            bestSkill = (proto, data.CurrentLevel);
+        }
+
+        if (bestSkill == null)
+            return defaultProf;
+
+        return SkillProfession(ent, bestSkill.Value.Skill) ?? defaultProf;
+    }
+
+    /// <summary>
+    /// Returns the profession name for the given skill according to the current level
+    /// </summary>
+    public string? SkillProfession(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
+    {
+        if (!Proto.TryIndex(skill, out var proto) || proto.Profession == null)
+            return null;
+
+        var level = GetLevel(ent, skill);
+        var prefixes = proto.LevelPrefixes
+            .Where(x => x.Key <= level)
+            .Select(x => x.Key)
+            .ToList();
+
+        var profession = $"[color={proto.Color.ToHex()}]{Loc.GetString(proto.Profession)}[/color]";
+
+        if (prefixes.Count == 0)
+            return profession;
+
+        var prefix = proto.LevelPrefixes[prefixes.Max()];
+
+        return $"{Loc.GetString(prefix)} {profession}";
     }
 
     /// <summary>
@@ -43,10 +102,11 @@ public abstract class SharedSkillsSystem : EntitySystem
     public int GetLevel(ProtoId<SkillPrototype> skill, int experience)
     {
         if (!Proto.TryIndex(skill, out var proto)
-            || proto.LevelExpMultiplier <= 0)
+            || proto.LevelExpMultiplier <= 0
+            || experience < 0)
             return 0;
 
-        // When LevelExpMultiplier == 1
+        // When LevelExpMultiplier == 1 (linear progression)
         if (Math.Abs(proto.LevelExpMultiplier - 1.0) < 1e-10)
             return experience / proto.LevelUpExp;
 
@@ -68,8 +128,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         if (!Proto.TryIndex(skill, out var proto))
             return 0;
 
-        if (level <= 0)
-            return proto.LevelUpExp;
+        level = Math.Clamp(level, 0, proto.MaxLevel) + 1;
 
         // If I hadn't skipped school I wouldn't have had
         // to search for the sum of geometric progression formula
@@ -107,7 +166,8 @@ public abstract class SharedSkillsSystem : EntitySystem
     public void AddExperience(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int amount, bool dirty = true)
     {
         if (!Resolve(ent, ref ent.Comp, false)
-            || !Proto.TryIndex(skill, out var proto))
+            || !Proto.TryIndex(skill, out var proto)
+            || amount == 0)
             return;
 
         if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data))
@@ -120,20 +180,15 @@ public abstract class SharedSkillsSystem : EntitySystem
         if (data.CurrentExp > data.LevelUpExp && data.CurrentLevel == proto.MaxLevel)
             data.CurrentExp = data.LevelUpExp;
 
-        if (data.CurrentExp >= data.MinLevelExp && data.CurrentExp <= data.LevelUpExp)
-        {
-            if (dirty)
-                Dirty(ent);
-
-            return;
-        }
-
         data.CurrentLevel = GetLevel(data.Id, data.CurrentExp);
         data.LevelUpExp = GetLevelMaxPoints(data.Id, data.CurrentLevel);
         data.MinLevelExp = GetLevelMinPoints(data.Id, data.CurrentLevel);
 
         if (dirty)
             Dirty(ent);
+
+        if (oldLevel == data.CurrentLevel)
+            return;
 
         var args = new EntityEffectBaseArgs(ent, EntityManager);
 

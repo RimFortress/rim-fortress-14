@@ -1,8 +1,10 @@
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using Content.Client._RF.Info.Controls;
 using Content.Client.Verbs;
 using Content.Shared.Examine;
+using Content.Shared.Humanoid;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Input;
 using Content.Shared.Interaction.Events;
@@ -118,6 +120,14 @@ namespace Content.Client.Examine
             {
                 return false;
             }
+
+            // RimFortress Start
+            if (HasComp<HumanoidAppearanceComponent>(entity))
+            {
+                _userInterfaceManager.GetUIController<PopInfoUIController>().OpenWindow(entity);
+                return false;
+            }
+            // RimFortress End
 
             DoExamine(entity);
             return true;

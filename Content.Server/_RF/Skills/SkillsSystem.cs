@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Content.Server.Construction;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
@@ -61,7 +59,10 @@ public sealed partial class SkillsSystem : SharedSkillsSystem
         if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data, false))
             return;
 
-        var exp = GetLevelMinPoints(skill, level) - data.CurrentExp + 1;
+        var exp = GetLevelMinPoints(skill, level) - data.CurrentExp;
+
+        if (level != 0)
+            exp++;
 
         AddExperience(ent, skill, exp, dirty);
     }

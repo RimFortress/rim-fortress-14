@@ -63,11 +63,7 @@ public sealed partial class PopIcon : Control
             // THIS IS HORRIBLE,
             // but we can't work properly with the FollowerSystem on the client
             // and have to send the message to the server
-            _net.SendSystemNetworkMessage(new FollowEntityRequest
-            {
-                Follower = _entityManager.GetNetEntity(entity),
-                Entity = _entityManager.GetNetEntity(uid),
-            });
+            _net.SendSystemNetworkMessage(new FollowEntityRequest(_entityManager.GetNetEntity(uid)));
         }
 
         _lastClicked = time;
