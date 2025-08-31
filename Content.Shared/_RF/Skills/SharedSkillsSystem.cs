@@ -24,6 +24,17 @@ public abstract class SharedSkillsSystem : EntitySystem
         base.Initialize();
 
         Sawmill = LogManager.GetSawmill("skills");
+
+        SubscribeLocalEvent<SkillExpModificatorComponent, GetSkillExpModificatorsEvent>(OnGetExpModificators);
+    }
+
+    private static void OnGetExpModificators(Entity<SkillExpModificatorComponent> ent, ref GetSkillExpModificatorsEvent ev)
+    {
+        if (ent.Comp.FlatModificators.TryGetValue(ev.Skill, out var modificator))
+            ev.Modificator += modificator;
+
+        if (ent.Comp.Multipliers.TryGetValue(ev.Skill, out var multiplier))
+            ev.Multiplier *= multiplier;
     }
 
     /// <summary>
@@ -175,7 +186,7 @@ public abstract class SharedSkillsSystem : EntitySystem
 
         var oldLevel = data.CurrentLevel;
 
-        data.CurrentExp += (int) (amount * data.ExpFactor * ent.Comp.ExpFactor);
+        data.CurrentExp += amount;
 
         if (data.CurrentExp > data.LevelUpExp && data.CurrentLevel == proto.MaxLevel)
             data.CurrentExp = data.LevelUpExp;
@@ -246,7 +257,6 @@ public abstract class SharedSkillsSystem : EntitySystem
         return true;
     }
 
-
     #region Interactions
 
     /// <summary>
@@ -307,7 +317,7 @@ public abstract class SharedSkillsSystem : EntitySystem
     /// Performs skill checks for interaction and, according to the result of the check,
     /// gives out experience and triggers interaction effects
     /// </summary>
-    /// <param name="ent">Entity on which the interaction is performed</param>
+    /// <param name="ent">An entity that will perform a skill check</param>
     /// <param name="user">The user who performs the interaction</param>
     /// <param name="target">Target entity of the interaction</param>
     /// <returns>Skills check result for interaction</returns>
@@ -328,7 +338,7 @@ public abstract class SharedSkillsSystem : EntitySystem
     /// Performs skill checks for interaction and, according to the result of the check,
     /// gives out experience and triggers interaction effects
     /// </summary>
-    /// <param name="ent">Entity on which the interaction is performed</param>
+    /// <param name="ent">An entity that will perform a skill check</param>
     /// <param name="user">The user who performs the interaction</param>
     /// <param name="targets">Target entities of the interaction</param>
     /// <returns>Skills check result for interaction</returns>
@@ -348,9 +358,21 @@ public abstract class SharedSkillsSystem : EntitySystem
         var fail = Random.Prob(Math.Clamp(failChance, 0, 1));
         var success = Random.Prob(Math.Clamp(successChance, 0, 1));
 
+        // Query all participants in the interaction to get the final experience modifiers
+        var ev = new GetSkillExpModificatorsEvent(ent, ent.Comp.Skill, interact.Experience, 1f);
+        RaiseLocalEvent(ent, ref ev);
+        RaiseLocalEvent(user, ref ev);
+
+        foreach (var target in targets)
+        {
+            RaiseLocalEvent(target, ref ev);
+        }
+
+        var experience = ev.Modificator * ev.Multiplier;
+
         if (success)
         {
-            AddExperience(user, ent.Comp.Skill, (int)(interact.Experience * interact.ExpSuccessFactor));
+            AddExperience(user, ent.Comp.Skill, (int)(experience * interact.ExpSuccessFactor));
 
             foreach (var effect in interact.SuccessEffects)
             {
@@ -391,7 +413,7 @@ public abstract class SharedSkillsSystem : EntitySystem
 
         if (fail)
         {
-            AddExperience(user, ent.Comp.Skill, (int)(interact.Experience * interact.ExpFailFactor));
+            AddExperience(user, ent.Comp.Skill, (int)(experience * interact.ExpFailFactor));
 
             foreach (var effect in interact.FailEffects)
             {
@@ -430,7 +452,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             return SkillCheckResult.Fail;
         }
 
-        AddExperience(user, ent.Comp.Skill, interact.Experience);
+        AddExperience(user, ent.Comp.Skill, (int)experience);
         return SkillCheckResult.Success;
     }
 
@@ -470,7 +492,18 @@ public sealed class SkillLevelChanged(int level, int oldLevel) : EntityEventArgs
     /// Previous skill level
     /// </summary>
     /// <remarks>
-    /// It is not always equal to level - 1!
+    /// It is not always equal to Level - 1!
     /// </remarks>
     public int OldLevel { get; } = oldLevel;
 }
+
+/// <summary>
+/// Event called to get information about experience modifiers for a particular skill
+/// </summary>
+/// <param name="Uid">Entity for which an experience modifier should be given</param>
+[ByRefEvent]
+public record struct GetSkillExpModificatorsEvent(
+    EntityUid Uid,
+    ProtoId<SkillPrototype> Skill,
+    int Modificator,
+    float Multiplier);

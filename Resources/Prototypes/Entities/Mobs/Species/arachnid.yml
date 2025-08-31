@@ -118,6 +118,12 @@
   - type: Inventory
     templateId: arachnid
     speciesId: arachnid
+  # RimFortress Start
+  - type: SkillExpModificator
+    multipliers:
+      Melee: 1.25
+      Farming: 0.75
+  # RimFortress End
 
 
 - type: entity
@@ -128,7 +134,7 @@
   - type: HumanoidAppearance
     species: Arachnid
   - type: Inventory
-    speciesId: arachnid 
+    speciesId: arachnid
 
 
 #>88w88<

@@ -157,6 +157,15 @@
         32:
           sprite: Mobs/Species/Vox/displacement.rsi
           state: hand_r
+  # RimFortress Start
+  - type: SkillExpModificator
+    multipliers:
+      Woodcutting: 1.15
+      Mining: 1.15
+      Construction: 1.25
+      Healing: 0.75
+      Farming: 0.75
+  # RimFortress End
 
 - type: entity
   parent: BaseSpeciesDummy

@@ -109,6 +109,13 @@
           32:
             sprite: Mobs/Species/Human/displacement.rsi
             state: jumpsuit-female
+  # RimFortress Start
+  - type: SkillExpModificator
+    multipliers:
+      Healing: 0.15
+      Farming: 0.15
+      Melee: 1.5
+  # RimFortress End
 
 - type: entity
   parent: BaseSpeciesDummy
