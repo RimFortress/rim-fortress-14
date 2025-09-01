@@ -145,11 +145,7 @@ public sealed partial class RfCharacterSetupGui : Control
             || _preferencesManager.Preferences == null)
             return;
 
-        if (Profiles == null)
-        {
-            Profiles = _preferencesManager.Preferences.Characters.ToDictionary();
-            SelectedProfileIndex = _preferencesManager.Preferences.SelectedCharacterIndex;
-        }
+        Profiles ??= _preferencesManager.Preferences.Characters.ToDictionary();
 
         _createNewCharacterButton.ToolTip =
             Loc.GetString("character-setup-gui-create-new-character-button-tooltip",

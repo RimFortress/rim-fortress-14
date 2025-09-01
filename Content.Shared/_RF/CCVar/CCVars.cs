@@ -50,6 +50,12 @@ public sealed class RfVars : CVars
         CVarDef.Create("rimfortress.min_spawn_area_tiles", 100, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
+    /// The maximum total number of skill levels that can be selected in a single character's preferences
+    /// </summary>
+    public static readonly CVarDef<int> MaxPrefSkillsLevel =
+        CVarDef.Create("rimfortress.max_pref_skills_level", 10, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
     /// Whether to finish a routine NPC task if at least one active target of that task has failed
     /// </summary>
     public static readonly CVarDef<bool> FinishTaskOnFailed =

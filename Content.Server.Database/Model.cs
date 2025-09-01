@@ -379,6 +379,10 @@ namespace Content.Server.Database
                 .HasForeignKey(e => e.PlayerUserId)
                 .HasPrincipalKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Skill>()
+                .HasIndex(p => new {HumanoidProfileId = p.ProfileId, p.SkillName})
+                .IsUnique();
             // RimFortress End
         }
 
@@ -425,6 +429,7 @@ namespace Content.Server.Database
         public List<Job> Jobs { get; } = new();
         public List<Antag> Antags { get; } = new();
         public List<Trait> Traits { get; } = new();
+        public List<Skill> Skills { get; } = new(); // RimFortress
 
         public List<ProfileRoleLoadout> Loadouts { get; } = new();
 
@@ -1363,6 +1368,20 @@ namespace Content.Server.Database
         /// Equipment amount setting
         /// </summary>
         public int Amount { get; set; }
+    }
+
+    #endregion
+
+    #region Skills
+
+    public class Skill
+    {
+        public int Id { get; set; }
+        public Profile Profile { get; set; } = null!;
+        public int ProfileId { get; set; }
+
+        public string SkillName { get; set; } = null!;
+        public int Level { get; set; }
     }
 
     #endregion

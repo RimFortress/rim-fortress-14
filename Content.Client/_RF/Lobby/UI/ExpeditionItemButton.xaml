@@ -4,18 +4,16 @@
     xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:style="clr-namespace:Content.Client.Stylesheets"
-    Margin="0 0 0 3"
-    HorizontalExpand="True">
+    Margin="0 0 0 3" HorizontalExpand="True">
     <controls:RfHighlightedContainer>
         <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
             <controls:RfHighlightedContainer>
-                <TextureRect Name="Texture"
-                             Stretch="KeepAspectCentered"
-                             Margin="2" SetSize="48 48"/>
+                <EntityPrototypeView Name="View" Scale="2 2" Margin="2" SetSize="48 48"/>
             </controls:RfHighlightedContainer>
             <rf:VLine Color="{x:Static style:StyleNano.NanoGold}"
                       Thickness="2" Margin="10 2"/>
-            <TextureButton Name="Button" HorizontalExpand="True" VerticalExpand="True">
+            <TextureButton Name="Button" TrackingTooltip="True"
+                           HorizontalExpand="True" VerticalExpand="True">
                 <Label Name="NameLabel" Access="Public"
                        Align="Left" ClipText="True" VAlign="Bottom"
                        StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"/>

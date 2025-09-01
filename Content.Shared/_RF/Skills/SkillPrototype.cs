@@ -58,6 +58,18 @@ public sealed class SkillPrototype : IPrototype, IInheritingPrototype
     public int MaxLevel;
 
     /// <summary>
+    /// Maximum skill level a player can set in the lobby
+    /// </summary>
+    [DataField]
+    public int MaxPreferencesLevel;
+
+    /// <summary>
+    /// How many points does one level of this skill cost when customizing a character
+    /// </summary>
+    [DataField]
+    public int LevelPreferencesPoints;
+
+    /// <summary>
     /// Basic amount of experience points required to increase the skill level
     /// </summary>
     [DataField]

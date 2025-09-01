@@ -1,11 +1,9 @@
 using System.Linq;
 using Content.Client._RF.Lobby;
 using Content.Client._RF.Lobby.UI;
-using Content.Client.Guidebook;
 using Content.Client.Humanoid;
 using Content.Client.Inventory;
 using Content.Client.Lobby;
-using Content.Client.Players.PlayTimeTracking;
 using Content.Client.Station;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.Preferences;
@@ -13,14 +11,12 @@ using Content.Shared.CCVar;
 using Content.Shared.Clothing;
 using Content.Shared.GameTicking;
 using Content.Shared.Humanoid;
-using Content.Shared.Humanoid.Markings;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.Preferences;
 using Content.Shared.Preferences.Loadouts;
 using Content.Shared.Roles;
 using Content.Shared.Traits;
 using Robust.Client.Player;
-using Robust.Client.ResourceManagement;
 using Robust.Client.State;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
@@ -35,18 +31,12 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
 {
     [Dependency] private readonly IClientPreferencesManager _preferencesManager = default!;
     [Dependency] private readonly IConfigurationManager _configurationManager = default!;
-    [Dependency] private readonly IFileDialogManager _dialogManager = default!;
-    [Dependency] private readonly ILogManager _logManager = default!;
     [Dependency] private readonly IPlayerManager _playerManager = default!;
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-    [Dependency] private readonly IResourceCache _resourceCache = default!;
     [Dependency] private readonly IStateManager _stateManager = default!;
-    [Dependency] private readonly JobRequirementsManager _requirements = default!;
-    [Dependency] private readonly MarkingManager _markings = default!;
     [UISystemDependency] private readonly HumanoidAppearanceSystem _humanoid = default!;
     [UISystemDependency] private readonly ClientInventorySystem _inventory = default!;
     [UISystemDependency] private readonly StationSpawningSystem _spawn = default!;
-    [UISystemDependency] private readonly GuidebookSystem _guide = default!;
 
     private RfCharacterSetupGui? _characterSetup;
     private RfHumanoidProfileEditor? _profileEditor;
@@ -64,11 +54,8 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         base.Initialize();
         _prototypeManager.PrototypesReloaded += OnProtoReload;
         _preferencesManager.OnServerDataLoaded += PreferencesDataLoaded;
-        _requirements.Updated += OnRequirementsUpdated;
 
         _configurationManager.OnValueChanged(CCVars.FlavorText, _ => _profileEditor?.RefreshFlavorText());
-        _configurationManager.OnValueChanged(CCVars.GameRoleTimers, _ => RefreshProfileEditor());
-        _configurationManager.OnValueChanged(CCVars.GameRoleWhitelist, _ => RefreshProfileEditor());
     }
 
     private RfLobbyCharacterPreviewPanel? GetLobbyPreview()
@@ -79,38 +66,13 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         return null;
     }
 
-    private void OnRequirementsUpdated()
-    {
-        _profileEditor?.RefreshJobs();
-    }
-
     private void OnProtoReload(PrototypesReloadedEventArgs obj)
     {
-        if (_profileEditor != null)
-        {
-            if (obj.WasModified<JobPrototype>() ||
-                obj.WasModified<DepartmentPrototype>())
-            {
-                _profileEditor.RefreshJobs();
-            }
+        if (obj.WasModified<SpeciesPrototype>())
+            _profileEditor?.RefreshSpecies();
 
-            if (obj.WasModified<LoadoutPrototype>() ||
-                obj.WasModified<LoadoutGroupPrototype>() ||
-                obj.WasModified<RoleLoadoutPrototype>())
-            {
-                _profileEditor.RefreshLoadouts();
-            }
-
-            if (obj.WasModified<SpeciesPrototype>())
-            {
-                _profileEditor.RefreshSpecies();
-            }
-
-            if (obj.WasModified<TraitPrototype>())
-            {
-                _profileEditor.RefreshTraits();
-            }
-        }
+        if (obj.WasModified<TraitPrototype>())
+            _profileEditor?.RefreshTraits();
 
         if (obj.WasModified<ExpeditionEquipmentPrototype>())
             _equipmentEditor?.BuildList();
@@ -161,6 +123,25 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         profileEditor.IsDirty = false;
     }
 
+    public int LeftPoints()
+    {
+        var maxPoints = _configurationManager.GetCVar(RfVars.RoundstartEquipmentPoints);
+        var point = 0;
+
+        foreach (var (slot, profile) in _characterSetup?.Profiles ?? new())
+        {
+            if (profile is not HumanoidCharacterProfile character)
+                continue;
+
+            if (_profileEditor?.CharacterSlot == slot)
+                point += _profileEditor.Profile?.GetSkillPoints() ?? 0;
+            else
+                point += character.GetSkillPoints();
+        }
+
+        return maxPoints - (_equipmentEditor?.UsedPoints() ?? 0) - point;
+    }
+
     /// <summary>
     /// Refreshes the character preview in the lobby chat.
     /// </summary>
@@ -185,12 +166,6 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         }
 
         PreviewPanel.SetProfiles(profiles);
-    }
-
-    private void RefreshProfileEditor()
-    {
-        _profileEditor?.RefreshJobs();
-        _profileEditor?.RefreshLoadouts();
     }
 
     private void CloseProfileEditor()
@@ -272,18 +247,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
             return (_characterSetup, _profileEditor, _equipmentEditor);
         }
 
-        _profileEditor = new RfHumanoidProfileEditor(
-            _configurationManager,
-            EntityManager,
-            _dialogManager,
-            _logManager,
-            _playerManager,
-            _prototypeManager,
-            _resourceCache,
-            _requirements,
-            _markings);
-
-        _profileEditor.OnOpenGuidebook += _guide.OpenHelp;
+        _profileEditor = new RfHumanoidProfileEditor();
         _profileEditor.OnDirty += UpdateSaveButton;
 
         _characterSetup = new RfCharacterSetupGui(_profileEditor);
@@ -311,8 +275,13 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         _characterSetup.OnDirty += UpdateSaveButton;
         _characterSetup.OnSelected += args =>
         {
-            if (_profileEditor is { Profile: not null, CharacterSlot: not null } && _characterSetup?.Profiles != null)
-                _characterSetup.Profiles[args] = _profileEditor.Profile;
+            if (_profileEditor is { Profile: not null, CharacterSlot: not null }
+                && _characterSetup?.Profiles != null
+                && !_characterSetup.Profiles[args].MemberwiseEquals(_profileEditor.Profile))
+            {
+                _characterSetup.Profiles[args] = _profileEditor.Profile.Clone();
+                _characterSetup.IsDirty = true;
+            }
 
             _profileEditor?.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
                 _characterSetup?.SelectedProfileIndex);
@@ -351,21 +320,6 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
     }
 
     #region Helpers
-
-    /// <summary>
-    /// Applies the highest priority job's clothes to the dummy.
-    /// </summary>
-    public void GiveDummyJobClothesLoadout(EntityUid dummy, JobPrototype? jobProto, HumanoidCharacterProfile profile)
-    {
-        var job = jobProto ?? GetPreferredJob(profile);
-        GiveDummyJobClothes(dummy, profile, job);
-
-        if (_prototypeManager.HasIndex<RoleLoadoutPrototype>(LoadoutSystem.GetJobPrototype(job.ID)))
-        {
-            var loadout = profile.GetLoadoutOrDefault(LoadoutSystem.GetJobPrototype(job.ID), _playerManager.LocalSession, profile.Species, EntityManager, _prototypeManager);
-            GiveDummyLoadout(dummy, loadout);
-        }
-    }
 
     /// <summary>
     /// Gets the highest priority job for the profile.

@@ -13,6 +13,8 @@
     13: skill-level-prefix-master
     16: skill-level-prefix-grandmaster
     19: skill-level-prefix-legendary
+  maxPreferencesLevel: 5
+  levelPreferencesPoints: 10
 
 - type: skill
   id: Healing

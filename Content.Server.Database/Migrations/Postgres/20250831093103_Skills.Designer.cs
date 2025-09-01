@@ -5,6 +5,7 @@ using System.Text.Json;
 using Content.Server.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -14,9 +15,11 @@ using NpgsqlTypes;
 namespace Content.Server.Database.Migrations.Postgres
 {
     [DbContext(typeof(PostgresServerDbContext))]
-    partial class PostgresServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250831093103_Skills")]
+    partial class Skills
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -284,7 +287,6 @@ namespace Content.Server.Database.Migrations.Postgres
                         .HasColumnName("expiration_time");
 
                     b.Property<DateTime>("LastEditedAt")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_edited_at");
 
@@ -419,7 +421,6 @@ namespace Content.Server.Database.Migrations.Postgres
                         .HasColumnName("expiration_time");
 
                     b.Property<DateTime>("LastEditedAt")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_edited_at");
 
@@ -635,7 +636,6 @@ namespace Content.Server.Database.Migrations.Postgres
                         });
                 });
 
-            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Equipment", b =>
                 {
                     b.Property<Guid>("PlayerUserId")
@@ -655,7 +655,6 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.ToTable("equipment", (string)null);
                 });
-            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.IPIntelCache", b =>
                 {
@@ -1367,7 +1366,6 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.ToTable("server_unban", (string)null);
                 });
 
-            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Skill", b =>
                 {
                     b.Property<int>("Id")
@@ -1398,7 +1396,6 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.ToTable("skill", (string)null);
                 });
-            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.Trait", b =>
                 {
@@ -1751,7 +1748,6 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Server");
                 });
 
-            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Equipment", b =>
                 {
                     b.HasOne("Content.Server.Database.Player", "Player")
@@ -1764,7 +1760,6 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.Navigation("Player");
                 });
-            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.Job", b =>
                 {
@@ -2039,7 +2034,6 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Ban");
                 });
 
-            // RimFortress Start
             modelBuilder.Entity("Content.Server.Database.Skill", b =>
                 {
                     b.HasOne("Content.Server.Database.Profile", "Profile")
@@ -2051,7 +2045,6 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.Navigation("Profile");
                 });
-            // RimFortress End
 
             modelBuilder.Entity("Content.Server.Database.Trait", b =>
                 {
@@ -2142,7 +2135,7 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.Navigation("JobWhitelists");
 
-                    b.Navigation("RoundstartEquipments"); // RimFortress
+                    b.Navigation("RoundstartEquipments");
                 });
 
             modelBuilder.Entity("Content.Server.Database.Preference", b =>
@@ -2158,7 +2151,7 @@ namespace Content.Server.Database.Migrations.Postgres
 
                     b.Navigation("Loadouts");
 
-                    b.Navigation("Skills"); // RimFortress
+                    b.Navigation("Skills");
 
                     b.Navigation("Traits");
                 });

@@ -76,10 +76,17 @@ public abstract class SharedSkillsSystem : EntitySystem
     /// </summary>
     public string? SkillProfession(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
+        return SkillProfession(skill, GetLevel(ent, skill));
+    }
+
+    /// <summary>
+    /// Returns the profession name for the given skill according to the current level
+    /// </summary>
+    public string? SkillProfession(ProtoId<SkillPrototype> skill, int level)
+    {
         if (!Proto.TryIndex(skill, out var proto) || proto.Profession == null)
             return null;
 
-        var level = GetLevel(ent, skill);
         var prefixes = proto.LevelPrefixes
             .Where(x => x.Key <= level)
             .Select(x => x.Key)
