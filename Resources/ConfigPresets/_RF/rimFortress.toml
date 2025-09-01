@@ -24,7 +24,7 @@ maximum_width = 30
 
 [rimfortress]
 max_roundstart_pops = 5
-roundstart_equipment_points = 250
+roundstart_equipment_points = 400
 
 [events]
 enabled = false
