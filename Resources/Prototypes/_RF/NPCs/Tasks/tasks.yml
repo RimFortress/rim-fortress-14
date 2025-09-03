@@ -11,7 +11,7 @@
 
 - type: npcTask
   id: MoveTo
-  name: Go here
+  name: Go to the target place
   parent: BaseNpcTask
   overlayColor: "#D3D3D3"
   compound: MoveToCompound
@@ -143,7 +143,7 @@
   name: Chop down
   parent: BaseNpcTask
   maxPerformers: 1
-  overlayColor: "#452615"
+  overlayColor: "#A0522D"
   verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   compound: ChopCompound
   passive: true

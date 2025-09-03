@@ -41,6 +41,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     public event Action? OnTaskData;
 
+    /// <summary>
+    /// Called when the current entity task is changed
+    /// </summary>
+    public event Action<EntityUid>? OnTaskUpdated;
+
     private EntityQuery<NpcControlComponent> _controlQuery;
 
     /// <inheritdoc/>
@@ -73,7 +78,10 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private void OnTaskInfo(NpcTaskInfoMessage msg)
     {
-        Tasks[GetEntity(msg.Entity)] = new NpcTask(msg, EntityManager);
+        var uid = GetEntity(msg.Entity);
+
+        Tasks[uid] = new NpcTask(msg, EntityManager);
+        OnTaskUpdated?.Invoke(uid);
     }
 
     private void OnTaskFinished(NpcTaskFinishMessage msg)
@@ -84,6 +92,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (TasksData.TryGetValue(msg.TaskId, out var task)
             && PassiveTasks.TryGetValue(task, out var targets))
             targets.Remove(uid);
+
+        OnTaskUpdated?.Invoke(uid);
     }
 
     private void OnAllowedTasksInfo(AllowedNpcTasksInfoMessage msg)

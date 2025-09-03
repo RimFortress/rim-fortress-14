@@ -1,5 +1,5 @@
 <Control xmlns="https://spacestation14.io">
     <ScrollContainer>
-        <BoxContainer Name="Container" Orientation="Vertical" VerticalExpand="True"/>
+        <BoxContainer Name="Container" Orientation="Vertical"/>
     </ScrollContainer>
 </Control>

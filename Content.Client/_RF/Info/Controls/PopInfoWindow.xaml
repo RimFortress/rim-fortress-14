@@ -23,8 +23,9 @@
         </BoxContainer>
         <controls:HLine Thickness="2" Margin="1 2"
                         Color="{x:Static style:StyleNano.PanelDark}"/>
-        <TabContainer Name="TabContainer" Margin="0 0 0 5" VerticalExpand="True">
+        <TabContainer Name="TabContainer" Margin="0 0 0 6" VerticalExpand="True">
             <controls1:SkillsInfoTab Name="Skills"/>
+            <controls1:JobsInfoTab Name="Jobs"/>
         </TabContainer>
     </BoxContainer>
 </controls:FancyWindow>

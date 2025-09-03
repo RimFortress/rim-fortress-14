@@ -21,6 +21,7 @@ public sealed partial class PopInfoWindow : FancyWindow
         RobustXamlLoader.Load(this);
 
         TabContainer.SetTabTitle(Skills.GetPositionInParent(), Loc.GetString("pop-info-skills-tab-title"));
+        TabContainer.SetTabTitle(Jobs.GetPositionInParent(), Loc.GetString("pop-info-jobs-tab-title"));
         TabContainer.OnTabChanged += OnTabChanged;
 
         FollowButton.OnPressed += _ =>
@@ -55,6 +56,8 @@ public sealed partial class PopInfoWindow : FancyWindow
 
         if (index == Skills.GetPositionInParent())
             Skills.UpdateInfo(_uid.Value);
+        else if (index == Jobs.GetPositionInParent())
+            Jobs.UpdateInfo(_uid.Value);
     }
 }
 

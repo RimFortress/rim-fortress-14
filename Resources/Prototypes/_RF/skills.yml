@@ -22,7 +22,7 @@
   name: skill-healing-name
   profession: skill-healing-profession
   icon: Interface/VerbIcons/plus.svg.192dpi.png
-  color: "#00fa68"
+  color: "#00FA68"
 
 - type: skill
   id: Construction
@@ -30,7 +30,7 @@
   name: skill-construction-name
   profession: skill-construction-profession
   icon: _RF/Interface/hammer-solid.svg.192dpi.png
-  color: "#c5ac3e"
+  color: "#C5AC3E"
 
 - type: skill
   id: Mining
@@ -46,7 +46,7 @@
   name: skill-melee-name
   profession: skill-melee-profession
   icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png
-  color: "#c74848"
+  color: "#C74848"
 
 - type: skill
   id: Farming

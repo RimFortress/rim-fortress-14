@@ -74,7 +74,7 @@ public sealed partial class SkillInfo : Control
         // and when receiving it on the client also call the update event on the client,
         // to which you can subscribe in the UI and blah blah blah....
         // But I'm lazy, so what will update the information once every some time, it's not that costly anyway
-        if (_nexUpdate > _timing.CurTime || _uid == null || _skill == null)
+        if (!VisibleInTree || _nexUpdate > _timing.CurTime || _uid == null || _skill == null)
             return;
 
         UpdateInfo(_uid.Value, _skill.Value);

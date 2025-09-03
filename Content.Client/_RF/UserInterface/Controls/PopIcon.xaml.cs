@@ -75,10 +75,5 @@ public sealed partial class PopIcon : Control
         else
             selection.DeSelect(uid);
     }
-
-    public void SetMarkerColor(Color color)
-    {
-        Marker.Color = color;
-    }
 }
 

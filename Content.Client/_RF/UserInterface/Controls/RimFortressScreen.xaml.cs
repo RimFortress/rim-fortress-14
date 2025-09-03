@@ -42,7 +42,7 @@ public sealed partial class RimFortressScreen : InGameScreen
         Hotbar.PassiveTasksButton.OnPressed += _ => ToggleExpected(PassiveTasksMenu);
         Hotbar.StockpileButton.OnPressed += _ => ToggleExpected(StockpileMenu);
         Hotbar.WorldMapButton.OnPressed += _ => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
-        Hotbar.NpcJobsButton.OnPressed += _ => UserInterfaceManager.GetUIController<NpcJobsPriorityUiController>().ToggleWindow();
+        Hotbar.NpcJobsButton.OnPressed += _ => UserInterfaceManager.GetUIController<NpcJobsUiController>().TogglePriorityWindow();
 
         UserInterfaceManager.GetUIController<StockpileUiController>().OnStockSelected += _ =>
         {
