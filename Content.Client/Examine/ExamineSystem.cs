@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Threading;
 using Content.Client.Verbs;
 using Content.Shared.Examine;
-using Content.Shared.Humanoid;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Input;
 using Content.Shared.Interaction.Events;
@@ -22,7 +21,10 @@ using static Content.Shared.Interaction.SharedInteractionSystem;
 using static Robust.Client.UserInterface.Controls.BoxContainer;
 using Direction = Robust.Shared.Maths.Direction;
 
-using Content.Client._RF.Info; // RimFortress
+// RimFortress Start
+using Content.Client._RF.Info;
+using Content.Shared.Humanoid;
+// RimFortress End
 
 namespace Content.Client.Examine
 {

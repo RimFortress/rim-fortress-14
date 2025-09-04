@@ -310,7 +310,7 @@ public abstract class SharedSkillsSystem : EntitySystem
     /// </summary>
     public float GetDelay(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float delay)
     {
-        if (!Resolve(ent, ref ent.Comp) || !Resolve(user, ref user.Comp))
+        if (!Resolve(ent, ref ent.Comp, false) || !Resolve(user, ref user.Comp, false))
             return delay;
 
         var delta = GetLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
