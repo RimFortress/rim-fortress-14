@@ -140,7 +140,7 @@
 
 - type: npcTask
   id: Chop
-  name: Chop down
+  name: Chop down a tree
   parent: BaseNpcTask
   maxPerformers: 1
   overlayColor: "#A0522D"
