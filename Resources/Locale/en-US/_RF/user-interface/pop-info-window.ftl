@@ -13,6 +13,7 @@ pop-info-summary = {$name}, {$species}
 pop-info-skills-tab-title = Skills
 pop-info-jobs-tab-title = Jobs
 pop-info-health-tab-title = Health
+pop-info-inventory-tab-title = Inventory
 
 job-info-tab-current-task = [bold]Current task[/bold]
 job-info-tab-task-none = [color=#808080][bold]None[/bold][/color]

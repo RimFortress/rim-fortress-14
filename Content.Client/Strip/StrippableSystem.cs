@@ -13,6 +13,8 @@ namespace Content.Client.Strip;
 /// </summary>
 public sealed class StrippableSystem : SharedStrippableSystem
 {
+    public event Action? OnUiNeedsUpdate; // RimFortress
+
     public override void Initialize()
     {
         base.Initialize();
@@ -32,6 +34,8 @@ public sealed class StrippableSystem : SharedStrippableSystem
 
     public void UpdateUi(EntityUid uid, StrippableComponent? component = null, EntityEventArgs? args = null)
     {
+        OnUiNeedsUpdate?.Invoke(); // RimFortress
+
         if (!TryComp(uid, out UserInterfaceComponent? uiComp))
             return;
 

@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Numerics;
 using System.Threading;
-using Content.Client._RF.Info.Controls;
 using Content.Client.Verbs;
 using Content.Shared.Examine;
 using Content.Shared.Humanoid;
@@ -22,6 +21,8 @@ using Robust.Shared.Utility;
 using static Content.Shared.Interaction.SharedInteractionSystem;
 using static Robust.Client.UserInterface.Controls.BoxContainer;
 using Direction = Robust.Shared.Maths.Direction;
+
+using Content.Client._RF.Info; // RimFortress
 
 namespace Content.Client.Examine
 {

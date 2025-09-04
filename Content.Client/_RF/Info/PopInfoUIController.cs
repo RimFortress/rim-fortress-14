@@ -1,8 +1,9 @@
+using Content.Client._RF.Info.Controls;
 using Content.Shared._RF.Info;
 using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
 
-namespace Content.Client._RF.Info.Controls;
+namespace Content.Client._RF.Info;
 
 public sealed class PopInfoUIController : UIController
 {

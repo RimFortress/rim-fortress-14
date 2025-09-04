@@ -5,7 +5,7 @@
     xmlns:controls1="clr-namespace:Content.Client._RF.Info.Controls"
     Title="{Loc 'pop-info-window-title'}" SetSize="500 600" Resizable="False">
     <BoxContainer Orientation="Vertical">
-        <BoxContainer Orientation="Horizontal">
+        <BoxContainer Orientation="Horizontal" SetHeight="135">
             <ui:RfHighlightedContainer>
                 <SpriteView Name="Sprite" SetSize="100 100"
                             Scale="3, 3" OverrideDirection="South"/>
@@ -26,6 +26,7 @@
             <controls1:SkillsInfoTab Name="Skills"/>
             <controls1:JobsInfoTab Name="Jobs"/>
             <controls1:HealthInfoTab Name="Health"/>
+            <controls1:InventoryInfoTab Name="Inventory"/>
         </TabContainer>
     </BoxContainer>
 </controls:FancyWindow>
