@@ -21,6 +21,17 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Melee
+  - type: SkillInteraction
+    skill: Melee
+    targetLevel: 8
+    experience: 20
+    doAfterFactor: 0.01
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.6
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End
 
 - type: entity

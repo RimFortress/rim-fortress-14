@@ -1,3 +1,4 @@
+using Content.Shared._RF.Skills; // RimFortress
 using Content.Shared.Administration.Logs;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.DoAfter;
@@ -32,6 +33,7 @@ public abstract partial class SharedToolSystem : EntitySystem
     [Dependency] private   readonly SharedTransformSystem _transformSystem = default!;
     [Dependency] private   readonly TileSystem _tiles = default!;
     [Dependency] private   readonly TurfSystem _turfs = default!;
+    [Dependency] private   readonly SharedSkillsSystem _skills = default!; // RimFortress
 
     public const string CutQuality = "Cutting";
     public const string PulseQuality = "Pulsing";
@@ -47,6 +49,11 @@ public abstract partial class SharedToolSystem : EntitySystem
 
     private void OnDoAfter(EntityUid uid, ToolComponent tool, ToolDoAfterEvent args)
     {
+        // RimFortress Start
+        if (_skills.DoInteractionCheck(uid, args.User, args.Target) == SkillCheckResult.Fail)
+            return;
+        // RimFortress End
+
         if (!args.Cancelled)
             PlayToolSound(uid, tool, args.User);
 
@@ -175,6 +182,8 @@ public abstract partial class SharedToolSystem : EntitySystem
             NeedHand = tool != user,
             AttemptFrequency = fuel > 0 ? AttemptFrequency.EveryTick : AttemptFrequency.Never
         };
+
+        doAfterArgs.Delay = _skills.GetDelay(tool, user, doAfterArgs.Delay); // RimFortress
 
         _doAfterSystem.TryStartDoAfter(doAfterArgs, out id);
         return true;

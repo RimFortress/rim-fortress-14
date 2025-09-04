@@ -20,7 +20,7 @@ namespace Content.Server.Database.Migrations.Postgres
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1367,6 +1367,39 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.ToTable("server_unban", (string)null);
                 });
 
+            // RimFortress Start
+            modelBuilder.Entity("Content.Server.Database.Skill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("skill_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("integer")
+                        .HasColumnName("profile_id");
+
+                    b.Property<string>("SkillName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("skill_name");
+
+                    b.HasKey("Id")
+                        .HasName("PK_skill");
+
+                    b.HasIndex("ProfileId", "SkillName")
+                        .IsUnique();
+
+                    b.ToTable("skill", (string)null);
+                });
+            // RimFortress End
+
             modelBuilder.Entity("Content.Server.Database.Trait", b =>
                 {
                     b.Property<int>("Id")
@@ -2006,6 +2039,20 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Ban");
                 });
 
+            // RimFortress Start
+            modelBuilder.Entity("Content.Server.Database.Skill", b =>
+                {
+                    b.HasOne("Content.Server.Database.Profile", "Profile")
+                        .WithMany("Skills")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_skill_profile_profile_id");
+
+                    b.Navigation("Profile");
+                });
+            // RimFortress End
+
             modelBuilder.Entity("Content.Server.Database.Trait", b =>
                 {
                     b.HasOne("Content.Server.Database.Profile", "Profile")
@@ -2110,6 +2157,8 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.Navigation("Jobs");
 
                     b.Navigation("Loadouts");
+
+                    b.Navigation("Skills"); // RimFortress
 
                     b.Navigation("Traits");
                 });

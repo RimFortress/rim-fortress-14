@@ -142,11 +142,22 @@ public sealed partial class ConditionCurve : MathCurve
 
     public override float Curve(float value)
     {
-        if (MoreThan != null && value > MoreThan.Value || LessThan != null && value < LessThan.Value)
+        if (value > MoreThan || value < LessThan)
             return ListValue(Value, value);
 
         return value;
     }
+}
+
+/// <summary>
+/// Divides the input number by the given number
+/// </summary>
+public sealed partial class DivideCurve : MathCurve
+{
+    [DataField]
+    public List<MathCurve> Divider = new();
+
+    public override float Curve(float value) => value / ListValue(Divider, 0);
 }
 
 /// <summary>
@@ -173,6 +184,9 @@ public sealed partial class SinCurve : MathCurve
     public override float Curve(float value) => (float) Math.Sin(value);
 }
 
+/// <summary>
+/// Returns the absolute value of the input number
+/// </summary>
 public sealed partial class AbsCurve : MathCurve
 {
     public override float Curve(float value) => Math.Abs(value);
@@ -187,4 +201,15 @@ public sealed partial class IncreaseCurve : MathCurve
     public List<MathCurve> Value = new();
 
     public override float Curve(float value) => value + ListValue(Value, 0);
+}
+
+/// <summary>
+/// Returns the input number raised to a power
+/// </summary>
+public sealed partial class PowCurve : MathCurve
+{
+    [DataField]
+    public List<MathCurve> Exponent;
+
+    public override float Curve(float value) => (float) Math.Pow(value, ListValue(Exponent, 0));
 }

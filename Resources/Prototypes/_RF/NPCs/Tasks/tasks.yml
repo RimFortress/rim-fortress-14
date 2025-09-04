@@ -11,14 +11,14 @@
 
 - type: npcTask
   id: MoveTo
-  name: Go here
+  name: Go to the target place
   parent: BaseNpcTask
   overlayColor: "#D3D3D3"
   compound: MoveToCompound
   finishPreconditions:
-    - !type:CoordinatesInRangePrecondition
-      targetKey: TargetCoordinates
-      rangeKey: MoveToCloseRange
+  - !type:CoordinatesInRangePrecondition
+    targetKey: TargetCoordinates
+    rangeKey: MoveToCloseRange
 
 - type: npcTask
   id: Attack
@@ -29,33 +29,34 @@
   verbOnly: true
   compound: AttackTargetCompound
   passive: true
+  failAwaitTime: 100
   tempKeys:
-    - Item
+  - Item
   targetWhitelist:
     components:
-      - HTN
+    - HTN
   startPreconditions:
+  - !type:MobStatePrecondition
+    targetKey: Target
+    state: Alive
+  - !type:IsFriendlyPrecondition
+    targetKey: Target
+    invert: true
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
     - !type:MobStatePrecondition
       targetKey: Target
       state: Alive
+      invert: true
+    - !type:MobStatePrecondition
+      targetKey: Owner
+      state: Alive
+      invert: true
     - !type:IsFriendlyPrecondition
       targetKey: Target
-      invert: true
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: Target
-        - !type:MobStatePrecondition
-          targetKey: Target
-          state: Alive
-          invert: true
-        - !type:MobStatePrecondition
-          targetKey: Owner
-          state: Alive
-          invert: true
-        - !type:IsFriendlyPrecondition
-          targetKey: Target
 
 - type: npcTask
   id: Raid
@@ -64,10 +65,10 @@
   overlayColor: "#FF0000"
   compound: RaidCompound
   finishPreconditions:
-    - !type:MobStatePrecondition
-      targetKey: Owner
-      state: Alive
-      invert: true
+  - !type:MobStatePrecondition
+    targetKey: Owner
+    state: Alive
+    invert: true
 
 - type: npcTask
   id: Dig
@@ -78,16 +79,17 @@
   verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   compound: DigCompound
   passive: true
+  failAwaitTime: 3
   tempKeys:
-    - Tags
-    - AllTags
-    - PickUpTarget
+  - Tags
+  - AllTags
+  - PickUpTarget
   targetWhitelist:
     tags:
-      - Diggable
+    - Diggable
   finishPreconditions:
-    - !type:EntityDeletedPrecondition
-      key: Target
+  - !type:EntityDeletedPrecondition
+    key: Target
 
 - type: npcTask
   id: Heal
@@ -99,57 +101,57 @@
   selfPerform: true
   compound: HealCompound
   tempKeys:
-    - PickUpTarget
-    - DamageType
-    - DamageContainer
+  - PickUpTarget
+  - DamageType
+  - DamageContainer
   targetWhitelist:
     components:
-      - Damageable
-      - HTN
+    - Damageable
+    - HTN
   startPreconditions:
+  - !type:MobStatePrecondition
+    targetKey: Target
+    state: Dead
+    invert: true
+  - !type:OrPrecondition
+    preconditions:
+    - !type:BleedingPrecondition
+      targetKey: Target
+    - !type:TotalDamagePrecondition
+      targetKey: Target
+      moreThan: 5.0
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
+    - !type:AndPrecondition
+      preconditions:
+      - !type:BleedingPrecondition
+        targetKey: Target
+        invert: true
+      - !type:TotalDamagePrecondition
+        targetKey: Target
+        lessThan: 5.0
+    # Doctor, we've lost him
     - !type:MobStatePrecondition
       targetKey: Target
       state: Dead
-      invert: true
-    - !type:OrPrecondition
-      preconditions:
-        - !type:BleedingPrecondition
-          targetKey: Target
-        - !type:TotalDamagePrecondition
-          targetKey: Target
-          moreThan: 5.0
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: Target
-        - !type:AndPrecondition
-          preconditions:
-            - !type:BleedingPrecondition
-              targetKey: Target
-              invert: true
-            - !type:TotalDamagePrecondition
-              targetKey: Target
-              lessThan: 5.0
-        # Doctor, we've lost him
-        - !type:MobStatePrecondition
-          targetKey: Target
-          state: Dead
 
 - type: npcTask
   id: Chop
-  name: Chop down
+  name: Chop down a tree
   parent: BaseNpcTask
   maxPerformers: 1
-  overlayColor: "#452615"
+  overlayColor: "#A0522D"
   verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   compound: ChopCompound
   passive: true
   tempKeys:
-    - PickUpTarget
+  - PickUpTarget
   targetWhitelist:
     tags:
-      - Tree
+    - Tree
   finishPreconditions:
-    - !type:EntityDeletedPrecondition
-      key: Target
+  - !type:EntityDeletedPrecondition
+    key: Target

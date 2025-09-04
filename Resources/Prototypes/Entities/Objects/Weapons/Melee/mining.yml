@@ -38,6 +38,18 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 5
+    experience: 10
+    doAfterFactor: 0.01
+    resultFactor: 0.1 # I don't want skilled miners destroying everything and everyone with their pickaxes.
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End
 
 - type: entity
@@ -69,6 +81,18 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 7
+    experience: 15
+    doAfterFactor: 0.01
+    resultFactor: 0.1
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
   # RimFortress End
 
 - type: entity
@@ -164,6 +188,20 @@
     sprite: Objects/Weapons/Melee/crusher-inhands.rsi
   - type: DisarmMalus
   - type: Prying
+  # RimFortress Start
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 7
+    experience: 15
+    doAfterFactor: 0.01
+    resultFactor: 0.1
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
+  # RimFortress End
 
 - type: entity
   parent: [ BaseKnife, BaseWeaponCrusher, BaseSecurityCargoContraband]
@@ -216,3 +254,17 @@
   - type: Item
     size: Ginormous
     sprite: Objects/Weapons/Melee/crusher_glaive-inhands.rsi
+  # RimFortress Start
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 7
+    experience: 20
+    doAfterFactor: 0.01
+    resultFactor: 0.1
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
+  # RimFortress End

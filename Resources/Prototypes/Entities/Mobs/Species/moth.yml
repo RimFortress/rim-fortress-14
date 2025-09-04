@@ -118,13 +118,22 @@
         state: "creampie_moth"
         visible: false
   - type: Inventory
-    speciesId: moth 
+    speciesId: moth
     femaleDisplacements:
       jumpsuit:
         sizeMaps:
           32:
             sprite: Mobs/Species/Human/displacement.rsi
             state: jumpsuit-female
+  # RimFortress Start
+  - type: SkillExpModificator
+    multipliers:
+      Woodcutting: 0.85
+      Mining: 0.75
+      Healing: 1.25
+      Farming: 1.10
+      Melee: 0.90
+  # RimFortress End
 
 
 - type: entity
@@ -135,7 +144,7 @@
   - type: HumanoidAppearance
     species: Moth
   - type: Inventory
-    speciesId: moth 
+    speciesId: moth
     femaleDisplacements:
       jumpsuit:
         sizeMaps:

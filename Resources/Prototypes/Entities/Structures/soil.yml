@@ -55,3 +55,19 @@
         solution: soil
   - type: Appearance
   - type: PlantHolderVisuals
+  # RimFortress Start
+  - type: SkillInteraction
+    skill: Farming
+    targetLevel: 5
+    resultFactor: 0.25
+    successEffects:
+    - !type:GenerateProduct
+      probability: 0.5
+    - !type:ChangePlantHolder
+      probability: 0.5
+      health: 10
+    failEffects:
+    - !type:ChangePlantHolder
+      probability: 0.75
+      health: -10
+  # RimFortress End

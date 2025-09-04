@@ -26,7 +26,7 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {"InteractRange", SharedInteractionSystem.InteractionRange - 0.15f }, // RimFortress: closer interact range
         {"MaximumIdleTime", 7f},
         {MedibotInjectRange, 4f},
-        {MeleeMissChance, 0.3f},
+        {MeleeMissChance, 0f}, // RimFortress: Set to 0, as the skills system is now responsible for the miss chance
         {"MeleeRange", 1f},
         {"MinimumIdleTime", 2f},
         {"MovementRangeClose", 0.2f},

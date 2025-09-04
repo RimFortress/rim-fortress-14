@@ -1,6 +1,5 @@
 <Control
     xmlns="https://spacestation14.io"
-    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:graphics="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
     SetSize="120 120"
@@ -22,6 +21,4 @@
                HorizontalExpand="True" VerticalAlignment="Bottom"
                Align="Center" VAlign="Bottom" ClipText="True"/>
     </TextureButton>
-    <rf:VLine Name="Marker" Access="Protected" Thickness="5" Margin="0 25 5 25"
-              HorizontalAlignment="Right" VerticalExpand="True"/>
 </Control>

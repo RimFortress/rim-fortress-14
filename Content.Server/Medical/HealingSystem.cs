@@ -1,9 +1,12 @@
+using Content.Server._RF.Skills; // RimFortress
 using Content.Server.Administration.Logs;
 using Content.Server.Body.Components;
 using Content.Server.Body.Systems;
 using Content.Server.Medical.Components;
 using Content.Server.Popups;
 using Content.Server.Stack;
+using Content.Shared._RF.Skills; // RimFortress
+using Content.Shared._RF.Skills.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Audio;
 using Content.Shared.Damage;
@@ -37,6 +40,7 @@ public sealed class HealingSystem : EntitySystem
     [Dependency] private readonly MobThresholdSystem _mobThresholdSystem = default!;
     [Dependency] private readonly PopupSystem _popupSystem = default!;
     [Dependency] private readonly SharedSolutionContainerSystem _solutionContainerSystem = default!;
+    [Dependency] private readonly SkillsSystem _skills = default!; // RimFortress
 
     public override void Initialize()
     {
@@ -63,13 +67,25 @@ public sealed class HealingSystem : EntitySystem
             return;
         }
 
+        // RimFortress Start
+        if (_skills.DoInteractionCheck(args.User, entity.Owner, args.Target) == SkillCheckResult.Fail)
+        {
+            args.Handled = true;
+            return;
+        }
+
+        var bloodlossModifier = _skills.GetInteractionResult(args.User, entity.Owner, healing.BloodlossModifier);
+        var modifyBloodLevel = _skills.GetInteractionResult(args.User, entity.Owner, healing.ModifyBloodLevel);
+        var damage = healing.Damage * _skills.GetInteractionResult(args.User, entity.Owner, _damageable.UniversalTopicalsHealModifier);
+        // RimFortress End
+
         // Heal some bloodloss damage.
-        if (healing.BloodlossModifier != 0)
+        if (bloodlossModifier != 0) // RimFortress
         {
             if (!TryComp<BloodstreamComponent>(entity, out var bloodstream))
                 return;
             var isBleeding = bloodstream.BleedAmount > 0;
-            _bloodstreamSystem.TryModifyBleedAmount(entity.Owner, healing.BloodlossModifier);
+            _bloodstreamSystem.TryModifyBleedAmount(entity.Owner, bloodlossModifier); // RimFortress
             if (isBleeding != bloodstream.BleedAmount > 0)
             {
                 var popup = (args.User == entity.Owner)
@@ -80,10 +96,12 @@ public sealed class HealingSystem : EntitySystem
         }
 
         // Restores missing blood
-        if (healing.ModifyBloodLevel != 0)
-            _bloodstreamSystem.TryModifyBloodLevel(entity.Owner, healing.ModifyBloodLevel);
+        // RimFortress Start
+        if (modifyBloodLevel != 0)
+            _bloodstreamSystem.TryModifyBloodLevel(entity.Owner, modifyBloodLevel);
 
-        var healed = _damageable.TryChangeDamage(entity.Owner, healing.Damage * _damageable.UniversalTopicalsHealModifier, true, origin: args.Args.User);
+        var healed = _damageable.TryChangeDamage(entity.Owner, damage, true, origin: args.Args.User);
+        // RimFortress End
 
         if (healed == null && healing.BloodlossModifier != 0)
             return;
@@ -212,6 +230,11 @@ public sealed class HealingSystem : EntitySystem
         var delay = isNotSelf
             ? component.Delay
             : component.Delay * GetScaledHealingPenalty(user, component);
+
+        // RimFortress Start
+        if (HasComp<SkillsComponent>(user) && HasComp<SkillInteractionComponent>(uid))
+            delay = _skills.GetDelay(uid, user, delay);
+        // RimFortress End
 
         var doAfterEventArgs =
             new DoAfterArgs(EntityManager, user, delay, new HealingDoAfterEvent(), target, target: target, used: uid)

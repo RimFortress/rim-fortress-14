@@ -1,0 +1,65 @@
+- type: skill
+  id: BaseSkill
+  abstract: true
+  maxLevel: 20
+  levelUpExp: 1000
+  levelExpMultiplier: 1.1
+  levelPrefixes:
+    0: skill-level-prefix-incompetent
+    1: skill-level-prefix-novice
+    4: skill-level-prefix-apprentice
+    7: skill-level-prefix-experienced
+    10: skill-level-prefix-expert
+    13: skill-level-prefix-master
+    16: skill-level-prefix-grandmaster
+    19: skill-level-prefix-legendary
+  maxPreferencesLevel: 5
+  levelPreferencesPoints: 5
+
+- type: skill
+  id: Healing
+  parent: BaseSkill
+  name: skill-healing-name
+  profession: skill-healing-profession
+  icon: Interface/VerbIcons/plus.svg.192dpi.png
+  color: "#00FA68"
+
+- type: skill
+  id: Construction
+  parent: BaseSkill
+  name: skill-construction-name
+  profession: skill-construction-profession
+  icon: _RF/Interface/hammer-solid.svg.192dpi.png
+  color: "#C5AC3E"
+
+- type: skill
+  id: Mining
+  parent: BaseSkill
+  name: skill-mining-name
+  profession: skill-mining-profession
+  icon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  color: "#FF8C00"
+
+- type: skill
+  id: Melee
+  parent: BaseSkill
+  name: skill-melee-name
+  profession: skill-melee-profession
+  icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png
+  color: "#C74848"
+
+- type: skill
+  id: Farming
+  parent: BaseSkill
+  name: skill-farming-name
+  profession: skill-farming-profession
+  icon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  color: "#228B22"
+
+- type: skill
+  id: Woodcutting
+  parent: BaseSkill
+  name: skill-woodcutting-name
+  profession: skill-woodcutting-profession
+  icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  color: "#A0522D"

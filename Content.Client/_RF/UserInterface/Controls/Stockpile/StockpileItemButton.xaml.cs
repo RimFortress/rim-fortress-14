@@ -84,7 +84,7 @@ public sealed partial class StockpileItemButton : Button
             .GetPrototypeTextures(proto, _resources)
             .Select(x => x.Default));
 
-        Counter.OnValueChanged += value => MaxValue = value;
+        Counter.OnValueChanged += value => MaxValue = value.New;
 
         EnsureSetup();
     }

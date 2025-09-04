@@ -16,6 +16,11 @@ using Robust.Shared.Random;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
 
+// RimFortress Start
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.CCVar;
+// RimFortress End
+
 namespace Content.Shared.Preferences
 {
     /// <summary>
@@ -54,6 +59,14 @@ namespace Content.Shared.Preferences
         /// </summary>
         [DataField]
         private HashSet<ProtoId<TraitPrototype>> _traitPreferences = new();
+
+        // RimFortress Start
+        /// <summary>
+        /// Skill level settings
+        /// </summary>
+        [DataField]
+        private Dictionary<ProtoId<SkillPrototype>, int> _skillsPreferences = new();
+        // RimFortress End
 
         /// <summary>
         /// <see cref="_loadouts"/>
@@ -119,6 +132,13 @@ namespace Content.Shared.Preferences
         /// </summary>
         public IReadOnlySet<ProtoId<TraitPrototype>> TraitPreferences => _traitPreferences;
 
+        // RimFortress Start
+        /// <summary>
+        /// <see cref="_skillsPreferences"/>
+        /// </summary>
+        public IReadOnlyDictionary<ProtoId<SkillPrototype>, int> SkillsPreferences => _skillsPreferences;
+        // RimFortress End
+
         /// <summary>
         /// If we're unable to get one of our preferred jobs do we spawn as a fallback job or do we stay in lobby.
         /// </summary>
@@ -139,6 +159,7 @@ namespace Content.Shared.Preferences
             PreferenceUnavailableMode preferenceUnavailable,
             HashSet<ProtoId<AntagPrototype>> antagPreferences,
             HashSet<ProtoId<TraitPrototype>> traitPreferences,
+            Dictionary<ProtoId<SkillPrototype>, int> skillsPreferences, // RimFortress
             Dictionary<string, RoleLoadout> loadouts)
         {
             Name = name;
@@ -153,6 +174,7 @@ namespace Content.Shared.Preferences
             PreferenceUnavailable = preferenceUnavailable;
             _antagPreferences = antagPreferences;
             _traitPreferences = traitPreferences;
+            _skillsPreferences = skillsPreferences; // RimFortress
             _loadouts = loadouts;
 
             var hasHighPrority = false;
@@ -184,6 +206,7 @@ namespace Content.Shared.Preferences
                 other.PreferenceUnavailable,
                 new HashSet<ProtoId<AntagPrototype>>(other.AntagPreferences),
                 new HashSet<ProtoId<TraitPrototype>>(other.TraitPreferences),
+                new Dictionary<ProtoId<SkillPrototype>, int>(other.SkillsPreferences), // RimFortress
                 new Dictionary<string, RoleLoadout>(other.Loadouts))
         {
         }
@@ -447,6 +470,30 @@ namespace Content.Shared.Preferences
             };
         }
 
+        // RimFortress Start
+        public HumanoidCharacterProfile WithSkillPreference(ProtoId<SkillPrototype> skill,
+            int skillLevel,
+            int availablePoints,
+            IPrototypeManager protoManager)
+        {
+            if (!protoManager.TryIndex(skill, out var proto))
+                return this;
+
+            var dictionary = new Dictionary<ProtoId<SkillPrototype>, int>(_skillsPreferences);
+            var oldLevel = _skillsPreferences.GetValueOrDefault(skill, 0);
+
+            if (availablePoints - (skillLevel - oldLevel) * proto.LevelPreferencesPoints >= 0)
+                dictionary[skill] = skillLevel;
+            else
+                dictionary[skill] = (availablePoints + oldLevel * proto.LevelPreferencesPoints) / proto.LevelPreferencesPoints;
+
+            return new(this)
+            {
+                _skillsPreferences = dictionary,
+            };
+        }
+        // RimFortress End
+
         public string Summary =>
             Loc.GetString(
                 "humanoid-character-profile-summary",
@@ -468,6 +515,7 @@ namespace Content.Shared.Preferences
             if (!_jobPriorities.SequenceEqual(other._jobPriorities)) return false;
             if (!_antagPreferences.SequenceEqual(other._antagPreferences)) return false;
             if (!_traitPreferences.SequenceEqual(other._traitPreferences)) return false;
+            if (!_skillsPreferences.SequenceEqual(other._skillsPreferences)) return false;
             if (!Loadouts.SequenceEqual(other.Loadouts)) return false;
             if (FlavorText != other.FlavorText) return false;
             return Appearance.MemberwiseEquals(other.Appearance);
@@ -618,6 +666,31 @@ namespace Content.Shared.Preferences
             _traitPreferences.Clear();
             _traitPreferences.UnionWith(GetValidTraits(traits, prototypeManager));
 
+            // RimFortress Start
+            var removeSkills = new ValueList<ProtoId<SkillPrototype>>();
+            var maxLevel = configManager.GetCVar(RfVars.MaxPrefSkillsLevel);
+
+            foreach (var (skill, level) in _skillsPreferences)
+            {
+                if (!prototypeManager.TryIndex(skill, out var proto))
+                {
+                    removeSkills.Add(skill);
+                    continue;
+                }
+
+                var newLevel = Math.Clamp(level, 0, proto.MaxPreferencesLevel);
+                newLevel = Math.Min(newLevel, maxLevel);
+
+                maxLevel -= newLevel;
+                _skillsPreferences[skill] = newLevel;
+            }
+
+            foreach (var skill in removeSkills)
+            {
+                _skillsPreferences.Remove(skill);
+            }
+            // RimFortress End
+
             // Checks prototypes exist for all loadouts and dump / set to default if not.
             var toRemove = new ValueList<string>();
 
@@ -692,6 +765,34 @@ namespace Content.Shared.Preferences
             return namingSystem.GetName(species, gender);
         }
 
+        // RimFortress Start
+        public int GetSkillPoints()
+        {
+            var protoMan = IoCManager.Resolve<IPrototypeManager>();
+            var total = 0;
+
+            foreach (var (skill, level) in _skillsPreferences)
+            {
+                if (protoMan.TryIndex(skill, out var proto))
+                    total += proto.LevelPreferencesPoints * level;
+            }
+
+            return total;
+        }
+
+        public int GetSkillLevels()
+        {
+            var levels = 0;
+
+            foreach (var (_, level) in _skillsPreferences)
+            {
+                levels += level;
+            }
+
+            return levels;
+        }
+        // RimFortress End
+
         public override bool Equals(object? obj)
         {
             return ReferenceEquals(this, obj) || obj is HumanoidCharacterProfile other && Equals(other);
@@ -703,6 +804,7 @@ namespace Content.Shared.Preferences
             hashCode.Add(_jobPriorities);
             hashCode.Add(_antagPreferences);
             hashCode.Add(_traitPreferences);
+            hashCode.Add(_skillsPreferences); // RimFortress
             hashCode.Add(_loadouts);
             hashCode.Add(Name);
             hashCode.Add(FlavorText);

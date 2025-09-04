@@ -21,6 +21,11 @@ using static Content.Shared.Interaction.SharedInteractionSystem;
 using static Robust.Client.UserInterface.Controls.BoxContainer;
 using Direction = Robust.Shared.Maths.Direction;
 
+// RimFortress Start
+using Content.Client._RF.Info;
+using Content.Shared.Humanoid;
+// RimFortress End
+
 namespace Content.Client.Examine
 {
     [UsedImplicitly]
@@ -118,6 +123,14 @@ namespace Content.Client.Examine
             {
                 return false;
             }
+
+            // RimFortress Start
+            if (HasComp<HumanoidAppearanceComponent>(entity))
+            {
+                _userInterfaceManager.GetUIController<PopInfoUIController>().OpenWindow(entity);
+                return false;
+            }
+            // RimFortress End
 
             DoExamine(entity);
             return true;

@@ -1,0 +1,11 @@
+<Control
+    xmlns="https://spacestation14.io"
+    xmlns:npcJobs="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
+    SetWidth="200" Margin="2">
+    <BoxContainer>
+        <TextureRect Name="Icon" SetSize="14 14"
+                     Stretch="KeepAspectCentered" Margin="3 2 1 0"/>
+        <RichTextLabel Name="Label" Margin="1" HorizontalExpand="True"/>
+        <npcJobs:NpcJobPriorityButton Name="Priority" Access="Public"/>
+    </BoxContainer>
+</Control>

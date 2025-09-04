@@ -71,4 +71,8 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Melee
+  - type: SkillInteraction
+    skill: Melee
+    targetLevel: 10
+    experience: 25
   # RimFortress End

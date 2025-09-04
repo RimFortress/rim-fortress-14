@@ -2,9 +2,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Content.Server.Database;
+using Content.Server.Preferences.Managers;
 using Content.Shared._RF.Equipment;
 using Content.Shared._RF.Preferences;
 using Content.Shared._RF.CCVar;
+using Content.Shared.Preferences;
 using Robust.Shared.Configuration;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
@@ -21,6 +23,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
     [Dependency] private readonly ILogManager _log = default!;
     [Dependency] private readonly UserDbDataManager _userDb = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IServerPreferencesManager _preferences = default!;
 
     private Dictionary<string, int>? _costs;
     private readonly Dictionary<NetUserId, PlayerEquipData> _cachedPlayerPrefs = new();
@@ -59,9 +62,10 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
             return;
         }
 
-        var equip = SanitizeEquipment(message.Equipment
-            .Select(x => (x.Key, x.Value))
-            .ToDictionary());
+        var equip = SanitizeEquipment(userId,
+            message.Equipment
+                .Select(x => (x.Key, x.Value))
+                .ToDictionary());
         data.Equip = equip;
 
         await _db.SaveEquipmentsAsync(userId, equip);
@@ -71,7 +75,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
     {
         var equip = await _db.GetPlayerEquipment(session.UserId, cancel);
         cancel.ThrowIfCancellationRequested();
-        _cachedPlayerPrefs[session.UserId] = new PlayerEquipData(SanitizeEquipment(equip ?? new()));
+        _cachedPlayerPrefs[session.UserId] = new PlayerEquipData(SanitizeEquipment(session.UserId, equip ?? new()));
     }
 
     public void FinishLoad(ICommonSession session)
@@ -93,8 +97,7 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
     {
         _costs = new();
 
-        var prototypes = _prototype.EnumeratePrototypes<ExpeditionEquipmentPrototype>();
-        foreach (var prototype in prototypes)
+        foreach (var prototype in _prototype.EnumeratePrototypes<ExpeditionEquipmentPrototype>())
         {
             foreach (var (proto, cost) in prototype.Items)
             {
@@ -108,10 +111,21 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
         return _cachedPlayerPrefs.GetValueOrDefault(userId)?.Equip;
     }
 
-    private Dictionary<string, int> SanitizeEquipment(Dictionary<string, int> equip)
+    private Dictionary<string, int> SanitizeEquipment(NetUserId userId, Dictionary<string, int> equip)
     {
         var maxPoints = _cfg.GetCVar(RfVars.RoundstartEquipmentPoints);
         var sanitized = new Dictionary<string, int>();
+
+        if (_preferences.TryGetCachedPreferences(userId, out var preferences))
+        {
+            foreach (var (_, profile) in preferences.Characters)
+            {
+                if (profile is not HumanoidCharacterProfile character)
+                    continue;
+
+                maxPoints -= character.GetSkillPoints();
+            }
+        }
 
         if (_costs == null)
             UpdateCosts();
@@ -122,10 +136,21 @@ public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjec
             if (!_costs!.TryGetValue(proto, out var cost))
                 continue;
 
-            total += cost;
-            if (total > maxPoints)
-                break;
+            if (total + cost * count > maxPoints)
+            {
+                for (var i = count - 1; i > 0; i--)
+                {
+                    if (total + cost * i > maxPoints)
+                        continue;
 
+                    total += cost * i;
+                    sanitized.Add(proto, i);
+                }
+
+                break;
+            }
+
+            total += cost * count;
             sanitized.Add(proto, count);
         }
 

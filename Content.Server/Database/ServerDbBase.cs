@@ -22,6 +22,8 @@ using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
+using Content.Shared._RF.Skills; // RimFortress
+
 namespace Content.Server.Database
 {
     public abstract class ServerDbBase
@@ -48,6 +50,7 @@ namespace Content.Server.Database
                 .Include(p => p.Profiles).ThenInclude(h => h.Jobs)
                 .Include(p => p.Profiles).ThenInclude(h => h.Antags)
                 .Include(p => p.Profiles).ThenInclude(h => h.Traits)
+                .Include(p => p.Profiles).ThenInclude(h => h.Skills) // RimFortress
                 .Include(p => p.Profiles)
                     .ThenInclude(h => h.Loadouts)
                     .ThenInclude(l => l.Groups)
@@ -100,6 +103,7 @@ namespace Content.Server.Database
                 .Include(p => p.Jobs)
                 .Include(p => p.Antags)
                 .Include(p => p.Traits)
+                .Include(p => p.Skills) // RimFortress
                 .Include(p => p.Loadouts)
                     .ThenInclude(l => l.Groups)
                     .ThenInclude(group => group.Loadouts)
@@ -189,6 +193,7 @@ namespace Content.Server.Database
             var jobs = profile.Jobs.ToDictionary(j => new ProtoId<JobPrototype>(j.JobName), j => (JobPriority) j.Priority);
             var antags = profile.Antags.Select(a => new ProtoId<AntagPrototype>(a.AntagName));
             var traits = profile.Traits.Select(t => new ProtoId<TraitPrototype>(t.TraitName));
+            var skills = profile.Skills.ToDictionary(s => new ProtoId<SkillPrototype>(s.SkillName), s => s.Level);
 
             var sex = Sex.Male;
             if (Enum.TryParse<Sex>(profile.Sex, true, out var sexVal))
@@ -262,6 +267,7 @@ namespace Content.Server.Database
                 (PreferenceUnavailableMode) profile.PreferenceUnavailable,
                 antags.ToHashSet(),
                 traits.ToHashSet(),
+                skills, // RimFortress
                 loadouts
             );
         }
@@ -312,6 +318,14 @@ namespace Content.Server.Database
                 humanoid.TraitPreferences
                         .Select(t => new Trait {TraitName = t})
             );
+
+            // RimFortress Start
+            profile.Skills.Clear();
+            profile.Skills.AddRange(
+                humanoid.SkillsPreferences
+                    .Select(s => new Skill {SkillName = s.Key, Level = s.Value})
+            );
+            // RimFortress End
 
             profile.Loadouts.Clear();
 

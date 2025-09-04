@@ -27,6 +27,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -54,6 +57,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -81,6 +87,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -110,6 +119,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -132,6 +144,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -150,6 +165,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -171,6 +189,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity
@@ -191,6 +212,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
   # RimFortress End
 
 - type: entity

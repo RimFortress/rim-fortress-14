@@ -26,6 +26,17 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Melee
+  - type: SkillInteraction
+    skill: Melee
+    targetLevel: 10
+    experience: 25
+    doAfterFactor: 0.03
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.5
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.1
   # RimFortress End
 
 - type: entity
@@ -73,6 +84,20 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Melee
+  - type: SkillInteraction
+    skill: Melee
+    targetLevel: 10
+    experience: 25
+    doAfterFactor: 0.03
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.25
+    successTargetEffects:
+    - !type:Electrocute # Making the enemy feel the power of Thor
+      probability: 0.5
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.1
   # RimFortress End
 
 - type: entity
@@ -118,4 +143,15 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Melee
+  - type: SkillInteraction
+    skill: Melee
+    targetLevel: 10
+    experience: 25
+    doAfterFactor: 0.02
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.5
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.1
   # RimFortress End

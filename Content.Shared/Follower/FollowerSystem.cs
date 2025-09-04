@@ -331,13 +331,13 @@ public sealed class FollowerSystem : EntitySystem
     }
 
     // RimFortress Start
-    private void OnFollowEntityRequest(FollowEntityRequest request)
+    private void OnFollowEntityRequest(FollowEntityRequest request, EntitySessionEventArgs args)
     {
-        var follower = GetEntity(request.Follower);
         var entity = GetEntity(request.Entity);
 
-        if (!TryComp(follower, out TransformComponent? _)
-            || !TryComp(entity, out TransformComponent? _))
+        if (args.SenderSession.AttachedEntity is not { } follower
+            || !HasComp<GhostComponent>(follower)
+            || !Exists(entity))
             return;
 
         StartFollowingEntity(follower, entity);
@@ -399,9 +399,8 @@ public sealed class EntityStoppedFollowingEvent : FollowEvent
 
 // RimFortress Start
 [Serializable, NetSerializable]
-public sealed class FollowEntityRequest : EntityEventArgs
+public sealed class FollowEntityRequest(NetEntity entity) : EntityEventArgs
 {
-    public NetEntity Follower;
-    public NetEntity Entity;
+    public NetEntity Entity = entity;
 }
 // RimFortress End

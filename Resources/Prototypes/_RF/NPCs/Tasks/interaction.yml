@@ -8,18 +8,18 @@
   targetKey: PickUpTarget
   targetWhitelist:
     components:
-      - Item
+    - Item
   startPreconditions:
-    - !type:ActiveHandEntityIsPrecondition
-      targetKey: PickUpTarget
-      invert: true
+  - !type:ActiveHandEntityIsPrecondition
+    targetKey: PickUpTarget
+    invert: true
   finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: PickUpTarget
-        - !type:ActiveHandEntityIsPrecondition
-          targetKey: PickUpTarget
+  - !type:OrPrecondition
+    preconditions:
+      - !type:EntityDeletedPrecondition
+        key: PickUpTarget
+      - !type:ActiveHandEntityIsPrecondition
+        targetKey: PickUpTarget
 
 - type: npcTask
   id: TakeOwnership
@@ -31,18 +31,18 @@
   passive: true
   targetWhitelist:
     components:
-      - Item
+    - Item
   startPreconditions:
+  - !type:OwnedPrecondition
+    targetKey: Target
+    invert: true
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
     - !type:OwnedPrecondition
       targetKey: Target
-      invert: true
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: Target
-        - !type:OwnedPrecondition
-          targetKey: Target
 
 - type: npcTask
   id: Pry
@@ -52,24 +52,24 @@
   verbIcon: /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
   compound: PryCompound
   tempKeys:
-    - PickUpTarget
-    - ToolQuality
+  - PickUpTarget
+  - ToolQuality
   targetWhitelist:
     components:
-      - Door
+    - Door
   startPreconditions:
+  - !type:DoorStatePrecondition
+    key: Target
+    state: Closed
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
     - !type:DoorStatePrecondition
       key: Target
       state: Closed
-  finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:EntityDeletedPrecondition
-          key: Target
-        - !type:DoorStatePrecondition
-          key: Target
-          state: Closed
-          invert: true
+      invert: true
 
 - type: npcTask
   id: FreeHandInteract
@@ -81,14 +81,14 @@
   targetWhitelist:
     requireAll: false
     components:
-      - Strap
-      - Door
+    - Strap
+    - Door
     tags:
-      - HandGatherable
+    - HandGatherable
   finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:KeyNotExistsPrecondition
-          key: Target
-        - !type:EntityDeletedPrecondition
-          key: Target
+  - !type:OrPrecondition
+    preconditions:
+    - !type:KeyNotExistsPrecondition
+      key: Target
+    - !type:EntityDeletedPrecondition
+      key: Target

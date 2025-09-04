@@ -15,6 +15,37 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Medical
+  - type: SkillInteraction
+    skill: Healing
+    targetLevel: 5
+    experience: 50
+    failTargetEffects:
+    - !type:ModifyBleedAmount
+      probability: 0.6
+      amount: 4
+    - !type:HealthChange
+      probability: 0.9
+      damage:
+        types:
+          Heat: 3
+          Cold: 3
+          Shock: 3
+          Caustic: 1
+    successTargetEffects:
+    - !type:ModifyBleedAmount
+      probability: 0.33
+      amount: -2
+    - !type:HealthChange
+      probability: 0.33
+      damage:
+        types:
+          Heat: -3
+          Cold: -3
+          Shock: -3
+          Caustic: -2
+    - !type:ChangeStack
+      probability: 0.33
+      amount: 1
   # RimFortress End
 
 - type: entity

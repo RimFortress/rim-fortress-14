@@ -35,7 +35,7 @@ public sealed partial class IntCounter : Control
             if (val == _value)
                 return;
 
-            OnValueChanged?.Invoke(_value);
+            OnValueChanged?.Invoke((val, _value));
         }
     }
 
@@ -65,10 +65,22 @@ public sealed partial class IntCounter : Control
         }
     }
 
+    public bool DisableIncrease
+    {
+        get => Plus.Disabled;
+        set => Plus.Disabled = value;
+    }
+
+    public bool DisableDecrease
+    {
+        get => Minus.Disabled;
+        set => Minus.Disabled = value;
+    }
+
     /// <summary>
     /// Called whenever the counter value changes
     /// </summary>
-    public event Action<int>? OnValueChanged;
+    public event Action<(int Old, int New)>? OnValueChanged;
 
     public IntCounter()
     {
@@ -80,7 +92,23 @@ public sealed partial class IntCounter : Control
         Minus.OnPressed += _ => Value--;
 
         CountLine.OnTextChanged += args =>
-            MaxValue = int.TryParse(args.Text, out var value) ? value : 0;
+            Value = int.TryParse(args.Text, out var value) ? value : 0;
+    }
+
+    /// <summary>
+    /// Set counter value without invoking event
+    /// </summary>
+    public void SetValue(int value)
+    {
+        if (value > MaxValue)
+            value = MaxValue.Value;
+
+        if (value < MinValue)
+            value = MinValue.Value;
+
+        Minus.Disabled = value == MinValue;
+        Plus.Disabled = value == MaxValue;
+        CountLine.Text = value.ToString();
     }
 }
 

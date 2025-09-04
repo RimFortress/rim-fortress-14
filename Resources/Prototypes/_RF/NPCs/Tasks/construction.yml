@@ -3,14 +3,14 @@
   parent: BaseSoloPerformTask
   abstract: true
   unionPerformersWith:
-    - Deconstruct
-    - Build
+  - Deconstruct
+  - Build
   tempKeys:
-    - PickUpTarget
-    - Amount
+  - PickUpTarget
+  - Amount
   targetWhitelist:
     components:
-      - Construction
+    - Construction
 
 - type: npcTask
   id: Build
@@ -21,12 +21,12 @@
   compound: BuildCompound
   targetsQuery: BuildTaskTarget
   startPreconditions:
-    - !type:ConstructionFinishedPrecondition
-      key: Target
-      invert: true
+  - !type:ConstructionFinishedPrecondition
+    key: Target
+    invert: true
   finishPreconditions:
-    - !type:ConstructionFinishedPrecondition
-      key: Target
+  - !type:ConstructionFinishedPrecondition
+    key: Target
 
 - type: npcTask
   id: Deconstruct
@@ -38,18 +38,18 @@
   compound: DeconstructionCompound
   passive: true
   startPreconditions:
-    # We dont want deconstruct items for now
-    - !type:HasComponentPrecondition
-      targetKey: Target
-      components:
-        - type: Item
-      invert: true
-    - !type:DeconstructionPrecondition
-      key: Target
+  # We dont want deconstruct items for now
+  - !type:HasComponentPrecondition
+    targetKey: Target
+    components:
+    - type: Item
+    invert: true
+  - !type:DeconstructionPrecondition
+    key: Target
   finishPreconditions:
-    - !type:OrPrecondition
-      preconditions:
-        - !type:ConstructionFinishedPrecondition
-          key: Target
-        - !type:EntityDeletedPrecondition
-          key: Target
+  - !type:OrPrecondition
+    preconditions:
+    - !type:ConstructionFinishedPrecondition
+      key: Target
+    - !type:EntityDeletedPrecondition
+      key: Target
