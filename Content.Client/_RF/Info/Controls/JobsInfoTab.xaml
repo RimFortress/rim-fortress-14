@@ -15,7 +15,8 @@
                              Color="{x:Static style:StyleNano.ButtonColorDisabled}"/>
             <ui:RfHighlightedContainer HorizontalExpand="True">
                 <BoxContainer Orientation="Vertical">
-                    <RichTextLabel Name="CurrentTask" Margin="2"/>
+                    <RichTextLabel Name="CurrentTask" MaxWidth="200"
+                                   HorizontalAlignment="Left" Margin="2"/>
                     <BoxContainer VerticalExpand="True"/>
                     <Button Name="JobsSettingsButton" Margin="2"
                             Text="{Loc 'job-info-tab-jobs-settings'}"/>

@@ -1,7 +1,5 @@
 <controls:FancyWindow
     xmlns="https://spacestation14.io"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:style="clr-namespace:Content.Client.Stylesheets"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     xmlns:controls1="clr-namespace:Content.Client._RF.Info.Controls"
@@ -21,11 +19,13 @@
                 <RichTextLabel Name="NameLabel" VerticalAlignment="Top"/>
             </ui:RfHighlightedContainer>
         </BoxContainer>
-        <controls:HLine Thickness="2" Margin="1 2"
-                        Color="{x:Static style:StyleNano.PanelDark}"/>
+
+        <PanelContainer StyleClasses="LowDivider" />
+
         <TabContainer Name="TabContainer" Margin="0 0 0 6" VerticalExpand="True">
             <controls1:SkillsInfoTab Name="Skills"/>
             <controls1:JobsInfoTab Name="Jobs"/>
+            <controls1:HealthInfoTab Name="Health"/>
         </TabContainer>
     </BoxContainer>
 </controls:FancyWindow>

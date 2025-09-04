@@ -1,0 +1,33 @@
+<Control
+    xmlns="https://spacestation14.io"
+    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI">
+    <ScrollContainer>
+        <BoxContainer Orientation="Vertical">
+            <BoxContainer>
+                <ui:RfHighlightedContainer Margin="3" HorizontalExpand="True">
+                    <GridContainer Columns="2">
+                        <RichTextLabel Text="{Loc 'health-info-tab-status-label'}"/>
+                        <RichTextLabel Name="StatusLabel"/>
+
+                        <RichTextLabel Text="{Loc 'health-info-tab-temperature-label'}"/>
+                        <RichTextLabel Name="TemperatureLabel"/>
+
+                        <RichTextLabel Text="{Loc 'health-info-tab-blood-level-label'}"/>
+                        <RichTextLabel Name="BloodLabel"/>
+
+                        <RichTextLabel Text="{Loc 'health-info-tab-damage-total-label'}"/>
+                        <RichTextLabel Name="DamageLabel"/>
+                    </GridContainer>
+                </ui:RfHighlightedContainer>
+                <ui:RfHighlightedContainer Name="AlertContainer" HorizontalExpand="True"
+                                           Margin="3" Visible="False">
+                    <BoxContainer Margin="3 2" Orientation="Vertical">
+                        <RichTextLabel Name="BleedingAlert"/>
+                    </BoxContainer>
+                </ui:RfHighlightedContainer>
+            </BoxContainer>
+
+            <GridContainer Name="GroupContainer" Margin="3 3 2 3" Columns="2"/>
+        </BoxContainer>
+    </ScrollContainer>
+</Control>
