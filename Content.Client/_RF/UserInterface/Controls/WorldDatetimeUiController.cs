@@ -9,18 +9,15 @@ using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
-public sealed class WorldDatetimeController : UIController
+public sealed class WorldDatetimeUiController : UIController
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IUserInterfaceManager _ui = default!;
     [UISystemDependency] private readonly MapSystem _map = default!;
     [UISystemDependency] private readonly ClientGameTicker _ticker = default!;
 
     private float _worldTemp = 293.15f;
-
-    private RimFortressScreen Screen => (RimFortressScreen) _ui.ActiveScreen!;
 
     public override void Initialize()
     {
@@ -43,16 +40,16 @@ public sealed class WorldDatetimeController : UIController
         base.FrameUpdate(args);
 
         if (!_entityManager.TryGetComponent(_player.LocalEntity, out TransformComponent? xform)
-            || !_map.TryGetMap(xform.MapID, out var map))
+            || !_map.TryGetMap(xform.MapID, out var map)
+            || !_entityManager.TryGetComponent(map, out LightCycleComponent? cycle))
             return;
 
-        if (_entityManager.TryGetComponent(map, out LightCycleComponent? cycle))
-        {
-            var time = _timing.CurTime
-                .Add(cycle.Offset)
-                .Subtract(_ticker.RoundStartTimeSpan);
+        var time = _timing.CurTime
+            .Add(cycle.Offset)
+            .Subtract(_ticker.RoundStartTimeSpan);
 
-            Screen.Datetime.UpdateInfo(time, cycle.Duration, _worldTemp);
-        }
+        UIManager
+            .GetActiveUIWidgetOrNull<WorldDatetimeWidget>()
+            ?.UpdateInfo(time, cycle.Duration, _worldTemp);
     }
 }

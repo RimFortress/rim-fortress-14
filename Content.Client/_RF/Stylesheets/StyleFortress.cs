@@ -74,7 +74,6 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassInventorySlotBackground = "InventorySlotBackground";
     public const string StyleClassHandSlotHighlight = "HandSlotHighlight";
     public const string StyleClassChatPanel = "ChatPanel";
-    public const string StyleClassChatSubPanel = "ChatSubPanel";
     public const string StyleClassTransparentBorderedWindowPanel = "TransparentBorderedWindowPanel";
     public const string StyleClassHotbarPanel = "HotbarPanel";
     public const string StyleClassTooltipPanel = "tooltipBox";
@@ -88,7 +87,6 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassTooltipActionCharges = "tooltipActionCharges";
     public const string StyleClassHotbarSlotNumber = "hotbarSlotNumber";
     public const string StyleClassActionSearchBox = "actionSearchBox";
-    public const string StyleClassActionMenuItemRevoked = "actionMenuItemRevoked";
     public const string StyleClassChatLineEdit = "chatLineEdit";
     public const string StyleClassChatChannelSelectorButton = "chatSelectorOptionButton";
     public const string StyleClassChatFilterOptionButton = "chatFilterOptionButton";
@@ -125,11 +123,20 @@ public sealed class StyleFortress : StyleBase
 
     //Background
     public const string StyleClassBackgroundBaseDark = "PanelBackgroundBaseDark";
+    public const string StyleClassPanelLight = "PanelLight";
+    public const string StyleClassPanelDark = "PanelDark";
+    public const string StyleClassPanelLightBordered = "PanelLightBordered";
+    public const string StyleClassPanelDarkBordered = "PanelDarkBordered";
+
+    // Dividers
+    public const string StyleClassHighDividerDark = "HighDividerDark";
+    public const string StyleClassLowDividerDark = "LowDividerDark";
 
     //Buttons
     public const string StyleClassCrossButtonRed = "CrossButtonRed";
     public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
+    public const string StyleClassButtonColorGold = "ButtonColorGold";
 
     //Bwoink
     public const string StyleClassPinButtonPinned = "pinButtonPinned";
@@ -142,6 +149,13 @@ public sealed class StyleFortress : StyleBase
         Texture GetTex(string path)
         {
             return resCache.GetTexture($"/Textures/_RF/Interface/Style/{path}");
+        }
+
+        StyleBoxTexture StyleBoxTex(string path, StyleBoxTexture? other = null)
+        {
+            return other == null
+                ? new StyleBoxTexture { Texture = GetTex(path) }
+                : new StyleBoxTexture(other) { Texture = GetTex(path) };
         }
 
         #region Fonts
@@ -213,32 +227,29 @@ public sealed class StyleFortress : StyleBase
 
         #region Buttons
 
-        var button = new StyleBoxTexture { Texture = GetTex("button.png") };
+        var button = StyleBoxTex("button.png");
         button.SetPatchMargin(StyleBox.Margin.All, 5);
         button.SetPadding(StyleBox.Margin.All, 1);
         button.SetContentMarginOverride(StyleBox.Margin.Vertical, 6);
         button.SetContentMarginOverride(StyleBox.Margin.Horizontal, 8);
 
-        var buttonOpenRight = new StyleBoxTexture(button) { Texture = GetTex("button_open_right.png") };
-        buttonOpenRight.SetPatchMargin(StyleBox.Margin.Left, 11);
+        var buttonOpenRight = StyleBoxTex("button_open_right.png", button);
+        buttonOpenRight.SetPatchMargin(StyleBox.Margin.All, 11);
+        buttonOpenRight.SetPatchMargin(StyleBox.Margin.Right, 5);
         buttonOpenRight.SetContentMarginOverride(StyleBox.Margin.Left, 11);
         buttonOpenRight.SetPadding(StyleBox.Margin.Right, 2);
 
-        var buttonOpenLeft = new StyleBoxTexture(button) { Texture = GetTex("button_open_left.png") };
-        buttonOpenLeft.SetPatchMargin(StyleBox.Margin.Right, 11);
+        var buttonOpenLeft = StyleBoxTex("button_open_left.png", button);
+        buttonOpenLeft.SetPatchMargin(StyleBox.Margin.All, 11);
+        buttonOpenLeft.SetPatchMargin(StyleBox.Margin.Left, 5);
         buttonOpenLeft.SetContentMarginOverride(StyleBox.Margin.Right, 11);
 
-        var buttonOpenBoth = new StyleBoxTexture(button) { Texture = GetTex("button_open_both.png") };
-        buttonOpenBoth.SetPatchMargin(StyleBox.Margin.Horizontal, 11);
+        var buttonOpenBoth = StyleBoxTex("button_open_both.png", button);
+        buttonOpenBoth.SetPatchMargin(StyleBox.Margin.All, 11);
         buttonOpenBoth.SetContentMarginOverride(StyleBox.Margin.Horizontal, 8);
 
-        var buttonSquare = new StyleBoxTexture(button)
-        {
-            Texture = GetTex("button_square.png"),
-            PaddingLeft = 1,
-            PaddingRight = 2,
-        };
-        buttonSquare.SetPatchMargin(StyleBox.Margin.All, 0);
+        var buttonSquare = StyleBoxTex("button_square.png", button);
+        buttonSquare.SetPatchMargin(StyleBox.Margin.All, 2);
         buttonSquare.SetContentMarginOverride(StyleBox.Margin.All, 5);
 
         var buttonStorage = new StyleBoxTexture(button);
@@ -249,11 +260,11 @@ public sealed class StyleFortress : StyleBase
 
         var buttonContext = new StyleBoxTexture { Texture = Texture.White };
 
-        var chatChannelButton = new StyleBoxTexture { Texture = GetTex("rounded_button.png") };
+        var chatChannelButton = StyleBoxTex("rounded_button.png");
         chatChannelButton.SetPatchMargin(StyleBox.Margin.All, 5);
         chatChannelButton.SetPadding(StyleBox.Margin.All, 2);
 
-        var chatFilterButton = new StyleBoxTexture { Texture = GetTex("rounded_button_bordered.png") };
+        var chatFilterButton = StyleBoxTex("rounded_button_bordered.png");
         chatFilterButton.SetPatchMargin(StyleBox.Margin.All, 5);
         chatFilterButton.SetPadding(StyleBox.Margin.All, 2);
 
@@ -286,13 +297,11 @@ public sealed class StyleFortress : StyleBase
 
         var textureInvertedTriangle = GetTex("inverted_triangle.png");
 
-        var lineEdit = new StyleBoxTexture { Texture = GetTex("lineedit.png") };
+        var lineEdit = StyleBoxTex("lineedit.png");
         lineEdit.SetPatchMargin(StyleBox.Margin.All, 3);
         lineEdit.SetContentMarginOverride(StyleBox.Margin.Horizontal, 5);
 
-        var chatBg = new StyleBoxFlat { BackgroundColor = ChatBackgroundColor };
-
-        var actionSearchBox = new StyleBoxTexture { Texture = GetTex("dark_panel_dark_thin_border.png") };
+        var actionSearchBox = StyleBoxTex("dark_panel_dark_thin_border.png");
         actionSearchBox.SetPatchMargin(StyleBox.Margin.All, 3);
         actionSearchBox.SetContentMarginOverride(StyleBox.Margin.Horizontal, 5);
 
@@ -311,25 +320,15 @@ public sealed class StyleFortress : StyleBase
 
         #region Progress bar
 
-        var progressBarBackground = new StyleBoxTexture
-            { Texture = GetTex("dark_panel_light_thin_border.png") };
+        var progressBarBackground = StyleBoxTex("dark_panel_light_thin_border.png");
         progressBarBackground.SetPatchMargin(StyleBox.Margin.All, 1f);
         progressBarBackground.SetExpandMargin(StyleBox.Margin.All, 1f);
         progressBarBackground.SetContentMarginOverride(StyleBox.Margin.Vertical, 14.5f);
 
-        var progressBarForeground = new StyleBoxTexture
-        {
-            Texture = GetTex("progress_bar_foreground.png"),
-            Mode = StyleBoxTexture.StretchMode.Tile,
-            Modulate = DarkGood,
-        };
+        var progressBarForeground = new StyleBoxFlat { BackgroundColor = DarkGood };
         progressBarForeground.SetContentMarginOverride(StyleBox.Margin.Vertical, 14.5f);
 
         #endregion
-
-        // CheckBox
-        var checkBoxTextureChecked = GetTex("checkbox_checked.png");
-        var checkBoxTextureUnchecked = GetTex("checkbox_unchecked.png");
 
         // Tooltip box
         var tooltipBox = new StyleBoxTexture { Texture = GetTex("tooltip.png") };
@@ -350,7 +349,7 @@ public sealed class StyleFortress : StyleBase
         placeholder.SetPatchMargin(StyleBox.Margin.All, 19);
         placeholder.SetExpandMargin(StyleBox.Margin.All, -5);
 
-        #region Item lst
+        #region Item list
 
         var itemListItemBackground = new StyleBoxFlat { BackgroundColor = DarkForest };
         itemListItemBackground.SetContentMarginOverride(StyleBox.Margin.Vertical, 2);
@@ -452,6 +451,20 @@ public sealed class StyleFortress : StyleBase
 
         var angleRect = new StyleBoxTexture { Texture = GetTex("angle_rect_panel.png") };
         angleRect.SetPatchMargin(StyleBox.Margin.All, 11);
+        angleRect.SetContentMarginOverride(StyleBox.Margin.All, 3);
+
+        #region PanelContainer
+
+        var lightBorderedPanel = StyleBoxTex("light_panel_background_bordered.png");
+        lightBorderedPanel.SetPatchMargin(StyleBox.Margin.All, 2);
+
+        var darkBorderedPanel = StyleBoxTex("dark_panel_background_bordered.png");
+        darkBorderedPanel.SetPatchMargin(StyleBox.Margin.All, 2);
+
+        var lightPanel = new StyleBoxFlat { BackgroundColor = DarkForest };
+        var darkPanel = new StyleBoxFlat { BackgroundColor = GraphiteBlack };
+
+        #endregion
 
         #endregion
 
@@ -464,7 +477,7 @@ public sealed class StyleFortress : StyleBase
 
             Element()
                 .Class(StyleClassItalic)
-                .Prop("font", sourceCode12),
+                .Prop("font", sourceCodeItalic12),
 
             #region Scroll bars
 
@@ -711,6 +724,50 @@ public sealed class StyleFortress : StyleBase
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
 
+            #region Gold Button
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassNormal)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDefault),
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassHover)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorHovered),
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassPressed)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorPressed),
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassDisabled)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
+
+            Element<TextureButton>()
+                .Class(StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassNormal)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDefault),
+
+            Element<TextureButton>()
+                .Class(StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassHover)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorHovered),
+
+            Element<TextureButton>()
+                .Class(StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassPressed)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorPressed),
+
+            Element<TextureButton>()
+                .Class(StyleClassButtonColorGold)
+                .Pseudo(ContainerButton.StylePseudoClassDisabled)
+                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
+
+            #endregion
+
             #endregion
 
             // ItemStatus for hands
@@ -908,7 +965,7 @@ public sealed class StyleFortress : StyleBase
             // chat subpanels (chat LineEdit backing, popup backings)
             Element<PanelContainer>()
                 .Class(StyleClassChatPanel)
-                .Prop(PanelContainer.StylePropertyPanel, chatBg),
+                .Prop(PanelContainer.StylePropertyPanel, new StyleBoxFlat { BackgroundColor = ChatBackgroundColor }),
 
             // Chat LineEdit - we don't actually draw a StyleBox around the LineEdit itself, we put it around the
             // input + other buttons, so we must clear the default StyleBox
@@ -936,11 +993,11 @@ public sealed class StyleFortress : StyleBase
 
             Element<TextureRect>()
                 .Class(CheckBox.StyleClassCheckBox)
-                .Prop(TextureRect.StylePropertyTexture, checkBoxTextureUnchecked),
+                .Prop(TextureRect.StylePropertyTexture, GetTex("checkbox_unchecked.png")),
 
             Element<TextureRect>()
                 .Class(CheckBox.StyleClassCheckBox, CheckBox.StyleClassCheckBoxChecked)
-                .Prop(TextureRect.StylePropertyTexture, checkBoxTextureChecked),
+                .Prop(TextureRect.StylePropertyTexture, GetTex("checkbox_checked.png")),
 
             Element<BoxContainer>()
                 .Class(CheckBox.StyleClassCheckBox)
@@ -1086,7 +1143,7 @@ public sealed class StyleFortress : StyleBase
             Element<Label>()
                 .Class(StyleClassLabelSubText)
                 .Prop(Label.StylePropertyFont, sourceCode10)
-                .Prop(Label.StylePropertyFontColor, Color.DarkGray),
+                .Prop(Label.StylePropertyFontColor, GraySilver),
 
             // Label Key
             Element<Label>()
@@ -1097,7 +1154,7 @@ public sealed class StyleFortress : StyleBase
             Element<Label>()
                 .Class(StyleClassLabelSecondaryColor)
                 .Prop(Label.StylePropertyFont, sourceCode12)
-                .Prop(Label.StylePropertyFontColor, Color.DarkGray),
+                .Prop(Label.StylePropertyFontColor, GraySilver),
 
             Element<Label>()
                 .Class(StyleClassLabelBig)
@@ -1174,7 +1231,7 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
-            // NanoHeading
+            // RimHeading
             new StyleRule(
                 new SelectorChild(
                     SelectorElement.Type(typeof(NanoHeading)),
@@ -1183,6 +1240,7 @@ public sealed class StyleFortress : StyleBase
 
             // StripeBack
             Element<StripeBack>()
+                .Prop(StripeBack.StylePropertyEdgeColor, GoldFortress)
                 .Prop(StripeBack.StylePropertyBackground, stripeBack),
 
             // StyleClassItemStatus
@@ -1299,16 +1357,6 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
-            Element<PanelContainer>()
-                .Class(ClassHighDivider)
-                .Prop(PanelContainer.StylePropertyPanel,
-                    new StyleBoxFlat
-                    {
-                        BackgroundColor = GoldFortress,
-                        ContentMarginBottomOverride = 2,
-                        ContentMarginLeftOverride = 2,
-                    }),
-
             Element<TextureButton>()
                 .Class(StyleClassButtonHelp)
                 .Prop(TextureButton.StylePropertyTexture,
@@ -1330,7 +1378,8 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
             // ---
 
-            // Dividers
+            #region Dividers
+
             Element<PanelContainer>()
                 .Class(ClassLowDivider)
                 .Prop(PanelContainer.StylePropertyPanel,
@@ -1341,16 +1390,57 @@ public sealed class StyleFortress : StyleBase
                         ContentMarginBottomOverride = 2,
                     }),
 
-            //The lengths you have to go through to change a background color smh
             Element<PanelContainer>()
-                .Class("PanelBackgroundBaseDark")
-                .Prop(PanelContainer.StylePropertyPanel, new StyleBoxTexture(buttonOpenBoth) { Padding = default })
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
+                .Class(ClassHighDivider)
+                .Prop(PanelContainer.StylePropertyPanel,
+                    new StyleBoxFlat
+                    {
+                        BackgroundColor = GoldFortress,
+                        ContentMarginLeftOverride = 3,
+                        ContentMarginBottomOverride = 3,
+                    }),
 
             Element<PanelContainer>()
-                .Class("PanelBackgroundLight")
-                .Prop(PanelContainer.StylePropertyPanel, new StyleBoxTexture(buttonOpenBoth) { Padding = default })
-                .Prop(Control.StylePropertyModulateSelf, DarkForest),
+                .Class(StyleClassLowDividerDark)
+                .Prop(PanelContainer.StylePropertyPanel,
+                    new StyleBoxFlat
+                    {
+                        BackgroundColor = GraphiteBlack,
+                        ContentMarginLeftOverride = 2,
+                        ContentMarginBottomOverride = 2,
+                    }),
+
+            Element<PanelContainer>()
+                .Class(StyleClassHighDividerDark)
+                .Prop(PanelContainer.StylePropertyPanel,
+                    new StyleBoxFlat
+                    {
+                        BackgroundColor = GraphiteBlack,
+                        ContentMarginLeftOverride = 3,
+                        ContentMarginBottomOverride = 3,
+                    }),
+
+            #endregion
+
+            #region PanelContainer
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelDark)
+                .Prop(PanelContainer.StylePropertyPanel, darkPanel),
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelLight)
+                .Prop(PanelContainer.StylePropertyPanel, lightPanel),
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelDarkBordered)
+                .Prop(PanelContainer.StylePropertyPanel, darkBorderedPanel),
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelLightBordered)
+                .Prop(PanelContainer.StylePropertyPanel, lightBorderedPanel),
+
+            #endregion
 
             // Window Footer
             Element<TextureRect>()
@@ -1366,17 +1456,17 @@ public sealed class StyleFortress : StyleBase
 
             // X Texture button ---
             Element<TextureButton>()
-                .Class("CrossButtonRed")
+                .Class(StyleClassCrossButtonRed)
                 .Prop(TextureButton.StylePropertyTexture, GetTex("cross.png"))
                 .Prop(Control.StylePropertyModulateSelf, Bad),
 
             Element<TextureButton>()
-                .Class("CrossButtonRed")
+                .Class(StyleClassCrossButtonRed)
                 .Pseudo(TextureButton.StylePseudoClassHover)
                 .Prop(Control.StylePropertyModulateSelf, LightBad),
 
             Element<TextureButton>()
-                .Class("CrossButtonRed")
+                .Class(StyleClassCrossButtonRed)
                 .Pseudo(TextureButton.StylePseudoClassPressed)
                 .Prop(Control.StylePropertyModulateSelf, DarkestBad),
             // ---
@@ -1413,32 +1503,32 @@ public sealed class StyleFortress : StyleBase
 
             // Red Button ---
             Element<Button>()
-                .Class("ButtonColorRed")
+                .Class(StyleClassButtonColorRed)
                 .Prop(Control.StylePropertyModulateSelf, Bad),
 
             Element<Button>()
-                .Class("ButtonColorRed")
+                .Class(StyleClassButtonColorRed)
                 .Pseudo(ContainerButton.StylePseudoClassNormal)
                 .Prop(Control.StylePropertyModulateSelf, Bad),
 
             Element<Button>()
-                .Class("ButtonColorRed")
+                .Class(StyleClassButtonColorRed)
                 .Pseudo(ContainerButton.StylePseudoClassHover)
                 .Prop(Control.StylePropertyModulateSelf, LightBad),
             // ---
 
             // Green Button ---
             Element<Button>()
-                .Class("ButtonColorGreen")
+                .Class(StyleClassButtonColorGreen)
                 .Prop(Control.StylePropertyModulateSelf, Good),
 
             Element<Button>()
-                .Class("ButtonColorGreen")
+                .Class(StyleClassButtonColorGreen)
                 .Pseudo(ContainerButton.StylePseudoClassNormal)
                 .Prop(Control.StylePropertyModulateSelf, Good),
 
             Element<Button>()
-                .Class("ButtonColorGreen")
+                .Class(StyleClassButtonColorGreen)
                 .Pseudo(ContainerButton.StylePseudoClassHover)
                 .Prop(Control.StylePropertyModulateSelf, LightGood),
 
@@ -1496,6 +1586,8 @@ public sealed class StyleFortress : StyleBase
                 .Class("Disabled")
                 .Prop("font-color", DisabledButtonFontColor),
 
+            #region Radial menu
+
             // Radial menu buttons
             Element<TextureButton>()
                 .Class("RadialMenuButton")
@@ -1529,6 +1621,10 @@ public sealed class StyleFortress : StyleBase
                 .Pseudo(TextureButton.StylePseudoClassHover)
                 .Prop(TextureButton.StylePropertyTexture,
                     resCache.GetTexture("/Textures/Interface/Radial/back_hover.png")),
+
+            #endregion
+
+            #region PDA
 
             //PDA - Backgrounds
             Element<PanelContainer>()
@@ -1598,12 +1694,14 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Label.StylePropertyFont, sourceCode10)
                 .Prop(Label.StylePropertyFontColor, Color.FromHex("#333d3b")),
 
-            // Silicon law edit ui
-            Element<Label>()
-                .Class(SiliconLawContainer.StyleClassSiliconLawPositionLabel)
-                .Prop(Label.StylePropertyFontColor, GoldFortress),
+            #endregion
 
-            // Fancy Tree
+            #region Fancy Tree
+
+            Element<FancyTree>()
+                .Prop(FancyTree.StylePropertyIconColor, GoldFortress)
+                .Prop(FancyTree.StylePropertyLineColor, GoldFortress),
+
             Element<ContainerButton>()
                 .Identifier(TreeItem.StyleIdentifierTreeButton)
                 .Class(TreeItem.StyleClassEvenRow)
@@ -1614,19 +1712,26 @@ public sealed class StyleFortress : StyleBase
                 .Identifier(TreeItem.StyleIdentifierTreeButton)
                 .Class(TreeItem.StyleClassOddRow)
                 .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = RimSilver }),
+                    new StyleBoxFlat { BackgroundColor = DarkForest }),
 
             Element<ContainerButton>()
                 .Identifier(TreeItem.StyleIdentifierTreeButton)
                 .Class(TreeItem.StyleClassSelected)
                 .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = DarkForest }),
+                    new StyleBoxFlat { BackgroundColor = BrightGreen }),
 
             Element<ContainerButton>()
                 .Identifier(TreeItem.StyleIdentifierTreeButton)
                 .Pseudo(ContainerButton.StylePseudoClassHover)
                 .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = DarkForest }),
+                    new StyleBoxFlat { BackgroundColor = BrightGreen }),
+
+            #endregion
+
+            // Silicon law edit ui
+            Element<Label>()
+                .Class(SiliconLawContainer.StyleClassSiliconLawPositionLabel)
+                .Prop(Label.StylePropertyFontColor, GoldFortress),
 
             // Pinned button style
             Element<TextureButton>()

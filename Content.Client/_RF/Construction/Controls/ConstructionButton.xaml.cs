@@ -9,7 +9,7 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Enums;
 
-namespace Content.Client._RF.UserInterface.Controls;
+namespace Content.Client._RF.Construction.Controls;
 
 [GenerateTypedNameReferences]
 public sealed partial class ConstructionButton : Button
@@ -37,18 +37,6 @@ public sealed partial class ConstructionButton : Button
                 new PlacementInformation { IsTile = false, PlacementOption = prototype.PlacementMode },
                 new CommonConstructionPlacementHijack(_entityManager.System<CommonConstructionSystem>(), prototype));
         };
-
-        OnMouseEntered += _ =>
-        {
-            TopLine.Visible = true;
-            BottomLine.Visible = true;
-        };
-
-        OnMouseExited += _ =>
-        {
-            TopLine.Visible = false;
-            BottomLine.Visible = false;
-        };
     }
 
     public ConstructionButton(string name, List<Texture> textures)
@@ -58,18 +46,6 @@ public sealed partial class ConstructionButton : Button
 
         Label.Text = _locale.TryGetString(name, out var locName) ? locName : name;
         Texture.Textures = textures;
-
-        OnMouseEntered += _ =>
-        {
-            TopLine.Visible = true;
-            BottomLine.Visible = true;
-        };
-
-        OnMouseExited += _ =>
-        {
-            TopLine.Visible = false;
-            BottomLine.Visible = false;
-        };
     }
 }
 

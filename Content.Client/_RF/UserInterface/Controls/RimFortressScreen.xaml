@@ -6,6 +6,7 @@
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:stockpile="clr-namespace:Content.Client._RF.UserInterface.Controls.Stockpile"
     xmlns:npcJobs="clr-namespace:Content.Client._RF.UserInterface.Controls.NpcJobs"
+    xmlns:controls1="clr-namespace:Content.Client._RF.Construction.Controls"
     VerticalExpand="False"
     VerticalAlignment="Bottom"
     HorizontalAlignment="Center">
@@ -17,8 +18,8 @@
         <BoxContainer Orientation="Horizontal" VerticalExpand="True" SizeFlagsStretchRatio="2.5">
             <screens:ActionsHotbarWidget Name="Hotbar"/>
             <BoxContainer Margin="10 0 0 0" Orientation="Vertical">
-                <screens:RfConstructionMenu Name="ConstructionMenu" Margin="10 0 0 0"
-                                            VerticalExpand="True" Visible="False"/>
+                <controls1:RfConstructionMenu Name="ConstructionMenu" Margin="10 0 0 0"
+                                              VerticalExpand="True" Visible="False"/>
                 <screens:PassiveTasksMenu Name="PassiveTasksMenu" Margin="10 0 0 0"
                                           VerticalExpand="True" Visible="False"/>
                 <stockpile:StockpileMenu Name="StockpileMenu" Margin="10 0 0 0"

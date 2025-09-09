@@ -240,7 +240,7 @@ namespace Content.Server.Construction
                     return HandleResult.False;
 
                 // RimFortress Start
-                if (_skills.DoInteractionCheck(uid, interactDoAfter.User, interactDoAfter.Target) == SkillCheckResult.Fail)
+                if (!validation || _skills.DoInteractionCheck(uid, interactDoAfter.User, interactDoAfter.Target) == SkillCheckResult.Fail)
                     return HandleResult.False;
                 // RimFortress End
 

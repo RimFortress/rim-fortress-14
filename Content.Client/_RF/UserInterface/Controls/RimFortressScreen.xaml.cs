@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Client._RF.Construction;
 using Content.Client._RF.UserInterface.Controls.NpcJobs;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Client._RF.World;
@@ -38,11 +39,20 @@ public sealed partial class RimFortressScreen : InGameScreen
         Chat.OnChatResizeFinish += ChatOnResizeFinish;
         Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
 
-        Hotbar.BuildButton.OnPressed += _ => ToggleExpected(ConstructionMenu);
+        Hotbar.BuildButton.OnPressed += _ => UserInterfaceManager
+            .GetUIController<ConstructionMenuUiController>()
+            .ToggleWindow();
+
         Hotbar.PassiveTasksButton.OnPressed += _ => ToggleExpected(PassiveTasksMenu);
         Hotbar.StockpileButton.OnPressed += _ => ToggleExpected(StockpileMenu);
-        Hotbar.WorldMapButton.OnPressed += _ => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
-        Hotbar.NpcJobsButton.OnPressed += _ => UserInterfaceManager.GetUIController<NpcJobsUiController>().TogglePriorityWindow();
+
+        Hotbar.WorldMapButton.OnPressed += _ => UserInterfaceManager
+            .GetUIController<WorldMapUiController>()
+            .ToggleWindow();
+
+        Hotbar.NpcJobsButton.OnPressed += _ => UserInterfaceManager
+            .GetUIController<NpcJobsUiController>()
+            .TogglePriorityWindow();
 
         UserInterfaceManager.GetUIController<StockpileUiController>().OnStockSelected += _ =>
         {
@@ -63,7 +73,7 @@ public sealed partial class RimFortressScreen : InGameScreen
         control.Visible = !control.Visible;
 
         if (control != ConstructionMenu)
-            ConstructionMenu.Visible = false;
+            ConstructionMenu.Close();
 
         if (control != PassiveTasksMenu)
             PassiveTasksMenu.Visible = false;
@@ -89,7 +99,6 @@ public sealed partial class RimFortressScreen : InGameScreen
 
     public void EnsureSetup()
     {
-        ConstructionMenu.EnsureSetup();
         PassiveTasksMenu.EnsureSetup();
         StockpileSettingsMenu.EnsureSetup();
     }
