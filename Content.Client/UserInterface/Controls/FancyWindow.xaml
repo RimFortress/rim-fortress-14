@@ -5,10 +5,10 @@
                       MinWidth="200" MinHeight="150">
     <PanelContainer StyleClasses="AngleRect" />
 
-    <BoxContainer Orientation="Vertical">
+    <BoxContainer Orientation="Vertical" Margin="3 0"> <!-- RimFortress: Margin -->
         <Control>
             <PanelContainer StyleClasses="WindowHeadingBackground" />
-            <BoxContainer Margin="4 2 8 0" Orientation="Horizontal">
+            <BoxContainer Margin="4 5 8 0" Orientation="Horizontal"> <!-- RimFortress: Margin -->
                 <Label Name="WindowTitle"
                        HorizontalExpand="True" VAlign="Center" StyleClasses="FancyWindowTitle" />
                 <TextureButton Name="HelpButton" StyleClasses="windowHelpButton" VerticalAlignment="Center" Disabled="True" Visible="False" Access="Public" />

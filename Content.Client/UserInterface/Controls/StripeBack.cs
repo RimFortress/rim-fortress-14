@@ -8,14 +8,13 @@ namespace Content.Client.UserInterface.Controls
     {
         private const float PadSize = 4;
         private const float EdgeSize = 2;
-        public Color EdgeColor = Color.FromHex("#525252ff"); // RimFortress
+        private static readonly Color EdgeColor = Color.FromHex("#525252ff");
 
         private bool _hasTopEdge = true;
         private bool _hasBottomEdge = true;
         private bool _hasMargins = true;
 
         public const string StylePropertyBackground = "background";
-        public const string StylePropertyEdgeColor = "edge-color"; // RimFortress
 
         public bool HasTopEdge
         {
@@ -45,12 +44,6 @@ namespace Content.Client.UserInterface.Controls
                 _hasMargins = value;
                 InvalidateMeasure();
             }
-        }
-
-        protected override void StylePropertiesChanged()
-        {
-            EdgeColor = TryGetStyleProperty(StylePropertyEdgeColor, out Color color) ? color: EdgeColor;
-            base.StylePropertiesChanged();
         }
 
         protected override Vector2 MeasureOverride(Vector2 availableSize)

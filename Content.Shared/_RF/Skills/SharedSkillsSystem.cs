@@ -71,6 +71,31 @@ public abstract class SharedSkillsSystem : EntitySystem
         return SkillProfession(ent, bestSkill.Value.Skill) ?? defaultProf;
     }
 
+    public string SkillProfession(IReadOnlyDictionary<ProtoId<SkillPrototype>, int> skills)
+    {
+        var defaultProf = Loc.GetString(DefaultSkillProfession);
+
+        (ProtoId<SkillPrototype> Skill, int Level)? bestSkill = null;
+
+        foreach (var (protoId, level) in skills)
+        {
+            if (level == 0
+                || !Proto.TryIndex(protoId, out var proto)
+                || proto.Profession == null)
+                continue;
+
+            if (bestSkill != null && bestSkill.Value.Level >= level)
+                continue;
+
+            bestSkill = (proto, level);
+        }
+
+        if (bestSkill == null)
+            return defaultProf;
+
+        return SkillProfession(bestSkill.Value.Skill, bestSkill.Value.Level) ?? defaultProf;
+    }
+
     /// <summary>
     /// Returns the profession name for the given skill according to the current level
     /// </summary>

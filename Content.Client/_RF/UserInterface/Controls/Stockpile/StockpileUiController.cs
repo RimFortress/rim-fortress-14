@@ -11,6 +11,7 @@ using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
+using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
@@ -19,7 +20,9 @@ using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls.Stockpile;
 
-public sealed class StockpileUiController : UIController, IOnStateEntered<RimFortressState>,
+public sealed class StockpileUiController :
+    WindowUiController<StockpileSettingsWindow>,
+    IOnStateEntered<RimFortressState>,
     IOnStateExited<RimFortressState>
 {
     [Dependency] private readonly IInputManager _input = default!;
@@ -77,6 +80,8 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
 
         SubscribeNetworkEvent<StockpileEntityAttached>(OnEntityAttached);
         SubscribeNetworkEvent<StockpileEntityDetached>(OnEntityDetached);
+
+        OnStockSelected += _ => OpenWindow();
     }
 
     private void OnEntityAttached(StockpileEntityAttached ev, EntitySessionEventArgs args)
@@ -87,6 +92,23 @@ public sealed class StockpileUiController : UIController, IOnStateEntered<RimFor
     private void OnEntityDetached(StockpileEntityDetached ev, EntitySessionEventArgs args)
     {
         OnStockpileUpdated?.Invoke(ev.Id);
+    }
+
+    protected override StockpileSettingsWindow EnsureWindow()
+    {
+        var window = base.EnsureWindow();
+
+        if (SettingStock != null)
+            window.SetStock(SettingStock);
+
+        LayoutContainer.SetAnchorPreset(window, LayoutContainer.LayoutPreset.Center);
+        return window;
+    }
+
+    public override void OpenWindow()
+    {
+        base.OpenWindow();
+        Window!.BuildItems(null);
     }
 
     public void OnStateEntered(RimFortressState state)

@@ -109,8 +109,6 @@ public sealed partial class HealthInfoTab : Control
 
             BleedingAlert.Visible = args.Bleeding;
         };
-
-        BleedingAlert.OnVisibilityChanged += _ => UpdateAlertContainer();
     }
 
     public void UpdateInfo(EntityUid uid)
@@ -153,11 +151,6 @@ public sealed partial class HealthInfoTab : Control
 
             GroupContainer.AddChild(new DamageGroupInfo(groupId, groupDamage, damageable.Damage.DamageDict));
         }
-    }
-
-    private void UpdateAlertContainer()
-    {
-        AlertContainer.Visible = BleedingAlert.Visible;
     }
 
     protected override void FrameUpdate(FrameEventArgs args)

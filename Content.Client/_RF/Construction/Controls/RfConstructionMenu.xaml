@@ -2,9 +2,8 @@
     xmlns="https://spacestation14.io"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
-    SetSize="500 700" Margin="3 0"
-    Title="{Loc 'rf-construction-menu-label'}">
-    <BoxContainer Orientation="Vertical" Margin="3 0">
+    SetSize="500 700" Title="{Loc 'rf-construction-menu-label'}">
+    <BoxContainer Orientation="Vertical">
         <PanelContainer StyleClasses="PanelDarkBordered" Name="SearchBar" Visible="False">
             <BoxContainer Orientation="Horizontal">
                 <PanelContainer StyleClasses="PanelLight" SetSize="32 32">

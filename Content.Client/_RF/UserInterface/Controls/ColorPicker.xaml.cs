@@ -51,7 +51,6 @@ public sealed partial class ColorPicker : Control
             var size = new Vector2(Height);
             ColorPanel.SetSize = size - new Vector2(ColorPanel.Margin.Left, ColorPanel.Margin.Top);
             PickColorButton.SetSize = size;
-            ButtonTexture.SetSize = size / 3 * 2;
         };
     }
 

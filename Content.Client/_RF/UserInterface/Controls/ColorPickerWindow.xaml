@@ -2,6 +2,6 @@
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     Title="{Loc 'color-picker-window-title'}"
-    SetWidth="100">
+    SetWidth="100" Resizable="False">
     <ColorSelectorSliders Name="Selector" Access="Public" SelectorType="Rgb" IsAlphaVisible="False"/>
 </controls:FancyWindow>

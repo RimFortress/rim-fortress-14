@@ -1,0 +1,4 @@
+- type: shader
+  id: TiledTexture
+  kind: source
+  path: /Textures/_RF/Shaders/tiled_texture.swsl

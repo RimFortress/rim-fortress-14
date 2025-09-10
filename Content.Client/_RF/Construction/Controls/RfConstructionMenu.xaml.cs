@@ -9,7 +9,6 @@ using Robust.Client.Graphics;
 using Robust.Client.Placement;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Construction.Controls;
 

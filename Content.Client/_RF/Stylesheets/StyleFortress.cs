@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Client._RF.UserInterface.Controls;
 using Content.Client.ContextMenu.UI;
 using Content.Client.Examine;
 using Content.Client.PDA;
@@ -14,14 +15,13 @@ using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.CustomControls;
+using Robust.Shared.Prototypes;
 using static Robust.Client.UserInterface.StylesheetHelpers;
 
 namespace Content.Client._RF.Stylesheets;
 
 public sealed class StyleFortress : StyleBase
 {
-    public override Stylesheet Stylesheet { get; }
-
     #region Colors
 
     public static readonly Color GoldFortress = Color.FromHex("#B07D2B");
@@ -49,12 +49,11 @@ public sealed class StyleFortress : StyleBase
     // Button colors
     public static readonly Color ButtonColorDefault = WoodenFortress;
     public static readonly Color ButtonColorHovered = Color.FromHex("#7A614B");
-    public static readonly Color ButtonColorPressed = Color.FromHex("#44362A");
+    public static readonly Color ButtonColorPressed = Color.FromHex("#737A52");
     public static readonly Color ButtonColorDisabled = Color.FromHex("#352A21");
 
-    // Examine button colors
     public static readonly Color GoldButtonColorDefault = GoldFortress;
-    public static readonly Color GoldButtonColorHovered = Color.FromHex("#AD8140");
+    public static readonly Color GoldButtonColorHovered = Color.FromHex("#B28A52");
     public static readonly Color GoldButtonColorPressed = Color.FromHex("#CE9033");
     public static readonly Color GoldButtonColorDisabled = Color.FromHex("#997746");
 
@@ -62,7 +61,7 @@ public sealed class StyleFortress : StyleBase
     public static readonly Color DefaultPaperBackgroundColor = Color.FromHex("#eaedde");
 
     public static readonly Color DisabledButtonFontColor = RimSilver.WithAlpha(0.51f);
-    public static readonly Color PlaceholderFontColor = Color.FromHex("#514D3E");
+    public static readonly Color PlaceholderFontColor = Color.FromHex("#7C7763");
 
     public static readonly Color GoodGreenFore = Color.FromHex("#31843E");
 
@@ -113,7 +112,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassPopupMessageLarge = "PopupMessageLarge";
     public const string StyleClassPopupMessageLargeCaution = "PopupMessageLargeCaution";
 
-    //Used by the APC and SMES menus
+    // Used by the APC and SMES menus
     public const string StyleClassPowerStateNone = "PowerStateNone";
     public const string StyleClassPowerStateLow = "PowerStateLow";
     public const string StyleClassPowerStateGood = "PowerStateGood";
@@ -121,28 +120,45 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassItemStatus = "ItemStatus";
     public const string StyleClassItemStatusNotHeld = "ItemStatusNotHeld";
 
-    //Background
-    public const string StyleClassBackgroundBaseDark = "PanelBackgroundBaseDark";
+    // Background
     public const string StyleClassPanelLight = "PanelLight";
-    public const string StyleClassPanelDark = "PanelDark";
+    public const string StyleClassPanelLightTransparent = "PanelLightTransparent";
+
     public const string StyleClassPanelLightBordered = "PanelLightBordered";
+    public const string StyleClassPanelLightBorderedTransparent = "PanelLightBorderedTransparent";
+
+    public const string StyleClassPanelDark = "PanelDark";
+    public const string StyleClassPanelDarkTransparent = "PanelDarkTransparent";
+
     public const string StyleClassPanelDarkBordered = "PanelDarkBordered";
+    public const string StyleClassPanelDarkBorderedTransparent = "PanelDarkBorderedTransparent";
+
+    public const string StyleClassPanelHighlighted = "PanelHighlighted";
+    public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
+
+    // FancyBack
+    public const string StyleClassFancyBackNone = "NoneBack";
+    public const string StyleClassFancyBackWooden = "WoodenBack";
 
     // Dividers
     public const string StyleClassHighDividerDark = "HighDividerDark";
     public const string StyleClassLowDividerDark = "LowDividerDark";
 
-    //Buttons
+    // Buttons
     public const string StyleClassCrossButtonRed = "CrossButtonRed";
     public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
     public const string StyleClassButtonColorGold = "ButtonColorGold";
 
-    //Bwoink
+    // Bwoink
     public const string StyleClassPinButtonPinned = "pinButtonPinned";
     public const string StyleClassPinButtonUnpinned = "pinButtonUnpinned";
 
     #endregion
+
+    public static readonly ProtoId<ShaderPrototype> TileShader = "TiledTexture";
+
+    public override Stylesheet Stylesheet { get; }
 
     public StyleFortress(IResourceCache resCache) : base(resCache)
     {
@@ -197,31 +213,27 @@ public sealed class StyleFortress : StyleBase
             ContentMarginBottomOverride = 0,
         };
 
-        var windowBackground = new StyleBoxTexture { Texture = GetTex("window_background.png") };
+        var windowBackground = StyleBoxTex("window_background.png");
         windowBackground.SetPatchMargin(StyleBox.Margin.Horizontal | StyleBox.Margin.Bottom, 2);
         windowBackground.SetExpandMargin(StyleBox.Margin.Horizontal | StyleBox.Margin.Bottom, 2);
 
-        var borderedWindowBackground = new StyleBoxTexture { Texture = GetTex("window_background_bordered.png") };
+        var borderedWindowBackground = StyleBoxTex("window_background_bordered.png");
         borderedWindowBackground.SetPatchMargin(StyleBox.Margin.All, 2);
 
-        var borderedTransparentWindowBackground = new StyleBoxTexture
-            { Texture = GetTex("transparent_window_background_bordered.png") };
+        var borderedTransparentWindowBackground = StyleBoxTex("transparent_window_background_bordered.png");
         borderedTransparentWindowBackground.SetPatchMargin(StyleBox.Margin.All, 2);
 
         var hotbarBackground = new StyleBoxTexture(borderedTransparentWindowBackground);
         hotbarBackground.SetExpandMargin(StyleBox.Margin.All, 4);
 
-        var contextMenuBackground = new StyleBoxTexture { Texture = GetTex("window_background_bordered.png") };
+        var contextMenuBackground = StyleBoxTex("window_background_bordered.png");
         contextMenuBackground.SetPatchMargin(StyleBox.Margin.All, ContextMenuElement.ElementMargin);
 
-        var fancyWindowHeader = new StyleBoxTexture { Texture = GetTex("fancy_window_header.png") };
-        fancyWindowHeader.SetPatchMargin(StyleBox.Margin.All, 3);
+        var fancyWindowHeader = StyleBoxTex("fancy_window_header.png");
+        fancyWindowHeader.SetPatchMargin(StyleBox.Margin.Top, 3);
         fancyWindowHeader.SetPatchMargin(StyleBox.Margin.Bottom, 1);
-        fancyWindowHeader.SetContentMarginOverride(StyleBox.Margin.All, 4);
-        fancyWindowHeader.SetContentMarginOverride(StyleBox.Margin.Bottom, 0);
 
-        var lightFancyWindowHeader = new StyleBoxTexture(fancyWindowHeader)
-            { Texture = GetTex("light_fancy_window_header.png") };
+        var lightFancyWindowHeader = StyleBoxTex("light_fancy_window_header.png", fancyWindowHeader);
 
         #endregion
 
@@ -309,6 +321,7 @@ public sealed class StyleFortress : StyleBase
 
         var tabContainerPanel = new StyleBoxTexture { Texture = GetTex("tabcontainer_panel.png") };
         tabContainerPanel.SetPatchMargin(StyleBox.Margin.All, 2);
+        tabContainerPanel.SetContentMarginOverride(StyleBox.Margin.Top, 2);
 
         var tabContainerBoxActive = new StyleBoxFlat { BackgroundColor = DarkForest };
         tabContainerBoxActive.SetContentMarginOverride(StyleBox.Margin.Horizontal, 5);
@@ -381,13 +394,6 @@ public sealed class StyleFortress : StyleBase
         rimHeadingBox.SetPatchMargin(StyleBox.Margin.Top, 10);
         rimHeadingBox.SetContentMarginOverride(StyleBox.Margin.Horizontal, 4);
 
-        // Stripe background
-        var stripeBack = new StyleBoxTexture
-        {
-            Texture = GetTex("stripeback.png"),
-            Mode = StyleBoxTexture.StretchMode.Tile,
-        };
-
         #region Slider
 
         var sliderFillBox = new StyleBoxTexture
@@ -449,20 +455,41 @@ public sealed class StyleFortress : StyleBase
         var handSlotHighlight = new StyleBoxTexture { Texture = handSlotHighlightTex };
         handSlotHighlight.SetPatchMargin(StyleBox.Margin.All, 2);
 
-        var angleRect = new StyleBoxTexture { Texture = GetTex("angle_rect_panel.png") };
+        #region PanelContainer
+
+        var lightBorderedPanel = new StyleBoxFlat
+        {
+            BackgroundColor = DarkForest,
+            BorderColor = WoodenFortress,
+            BorderThickness = new Thickness(1),
+        };
+        var lightBorderedPanelTransparent = new StyleBoxFlat(lightBorderedPanel)
+            { BackgroundColor = DarkForest.WithAlpha(0.8f) };
+
+        var darkBorderedPanel = new StyleBoxFlat(lightBorderedPanel)
+            { BackgroundColor = GraphiteBlack};
+        var darkBorderedPanelTransparent = new StyleBoxFlat(lightBorderedPanel)
+            { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
+
+        var lightPanel = new StyleBoxFlat { BackgroundColor = DarkForest };
+        var lightPanelTransparent = new StyleBoxFlat { BackgroundColor = DarkForest.WithAlpha(0.8f) };
+
+        var darkPanel = new StyleBoxFlat { BackgroundColor = GraphiteBlack };
+        var darkPanelTransparent = new StyleBoxFlat { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
+
+        var highlightedPanel = new StyleBoxFlat
+        {
+            BackgroundColor = GraphiteBlack,
+            BorderThickness = new Thickness(1),
+            BorderColor = BlackAmber,
+        };
+        highlightedPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
+
+        var angleRect = StyleBoxTex("angle_rect_panel.png");
         angleRect.SetPatchMargin(StyleBox.Margin.All, 11);
         angleRect.SetContentMarginOverride(StyleBox.Margin.All, 3);
 
-        #region PanelContainer
-
-        var lightBorderedPanel = StyleBoxTex("light_panel_background_bordered.png");
-        lightBorderedPanel.SetPatchMargin(StyleBox.Margin.All, 2);
-
-        var darkBorderedPanel = StyleBoxTex("dark_panel_background_bordered.png");
-        darkBorderedPanel.SetPatchMargin(StyleBox.Margin.All, 2);
-
-        var lightPanel = new StyleBoxFlat { BackgroundColor = DarkForest };
-        var darkPanel = new StyleBoxFlat { BackgroundColor = GraphiteBlack };
+        var angleRectTransparent = StyleBoxTex("angle_rect_panel_transparent.png", angleRect);
 
         #endregion
 
@@ -1204,6 +1231,10 @@ public sealed class StyleFortress : StyleBase
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenRight),
 
             Element<MenuButton>()
+                .Class(ButtonOpenBoth)
+                .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenBoth),
+
+            Element<MenuButton>()
                 .Pseudo(ContainerButton.StylePseudoClassNormal)
                 .Prop(Control.StylePropertyModulateSelf, ButtonColorDefault),
 
@@ -1238,10 +1269,22 @@ public sealed class StyleFortress : StyleBase
                     SelectorElement.Type(typeof(PanelContainer))),
                 new[] { new StyleProperty(PanelContainer.StylePropertyPanel, rimHeadingBox), }),
 
-            // StripeBack
-            Element<StripeBack>()
-                .Prop(StripeBack.StylePropertyEdgeColor, GoldFortress)
-                .Prop(StripeBack.StylePropertyBackground, stripeBack),
+            #region FancyBack
+
+            Element<FancyBack>()
+                .Prop(FancyBack.StylePropertyEdgeColor, GoldFortress)
+                .Prop(ShaderPanelContainer.StylePropertyTexture, GetTex("stripeback.png"))
+                .Prop(ShaderPanelContainer.StylePropertyShader, TileShader),
+
+            Element<FancyBack>()
+                .Class(StyleClassFancyBackNone)
+                .Prop(StripeBack.StylePropertyBackground, Texture.Transparent),
+
+            Element<FancyBack>()
+                .Class(StyleClassFancyBackWooden)
+                .Prop(ShaderPanelContainer.StylePropertyTexture, GetTex("wooden_back.png")),
+
+            #endregion
 
             // StyleClassItemStatus
             Element()
@@ -1362,22 +1405,6 @@ public sealed class StyleFortress : StyleBase
                 .Prop(TextureButton.StylePropertyTexture,
                     resCache.GetTexture("/Textures/Interface/VerbIcons/information.svg.192dpi.png")),
 
-            // Different Background shapes ---
-            Element<PanelContainer>()
-                .Class(ClassAngleRect)
-                .Prop(PanelContainer.StylePropertyPanel, angleRect),
-
-            Element<PanelContainer>()
-                .Class("BackgroundOpenRight")
-                .Prop(PanelContainer.StylePropertyPanel, buttonOpenRight)
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
-
-            Element<PanelContainer>()
-                .Class("BackgroundOpenLeft")
-                .Prop(PanelContainer.StylePropertyPanel, buttonOpenLeft)
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
-            // ---
-
             #region Dividers
 
             Element<PanelContainer>()
@@ -1405,7 +1432,7 @@ public sealed class StyleFortress : StyleBase
                 .Prop(PanelContainer.StylePropertyPanel,
                     new StyleBoxFlat
                     {
-                        BackgroundColor = GraphiteBlack,
+                        BackgroundColor = BlackAmber,
                         ContentMarginLeftOverride = 2,
                         ContentMarginBottomOverride = 2,
                     }),
@@ -1415,7 +1442,7 @@ public sealed class StyleFortress : StyleBase
                 .Prop(PanelContainer.StylePropertyPanel,
                     new StyleBoxFlat
                     {
-                        BackgroundColor = GraphiteBlack,
+                        BackgroundColor = BlackAmber,
                         ContentMarginLeftOverride = 3,
                         ContentMarginBottomOverride = 3,
                     }),
@@ -1427,18 +1454,52 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(StyleClassPanelDark)
                 .Prop(PanelContainer.StylePropertyPanel, darkPanel),
+            Element<PanelContainer>()
+                .Class(StyleClassPanelDarkTransparent)
+                .Prop(PanelContainer.StylePropertyPanel, darkPanelTransparent),
 
             Element<PanelContainer>()
                 .Class(StyleClassPanelLight)
                 .Prop(PanelContainer.StylePropertyPanel, lightPanel),
+            Element<PanelContainer>()
+                .Class(StyleClassPanelLightTransparent)
+                .Prop(PanelContainer.StylePropertyPanel, lightPanelTransparent),
 
             Element<PanelContainer>()
                 .Class(StyleClassPanelDarkBordered)
                 .Prop(PanelContainer.StylePropertyPanel, darkBorderedPanel),
+            Element<PanelContainer>()
+                .Class(StyleClassPanelDarkBorderedTransparent)
+                .Prop(PanelContainer.StylePropertyPanel, darkBorderedPanelTransparent),
 
             Element<PanelContainer>()
                 .Class(StyleClassPanelLightBordered)
                 .Prop(PanelContainer.StylePropertyPanel, lightBorderedPanel),
+            Element<PanelContainer>()
+                .Class(StyleClassPanelLightBorderedTransparent)
+                .Prop(PanelContainer.StylePropertyPanel, lightBorderedPanelTransparent),
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelHighlighted)
+                .Prop(PanelContainer.StylePropertyPanel, highlightedPanel),
+
+            Element<PanelContainer>()
+                .Class(ClassAngleRect)
+                .Prop(PanelContainer.StylePropertyPanel, angleRect),
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelAngleRectTransparent)
+                .Prop(PanelContainer.StylePropertyPanel, angleRectTransparent),
+
+            Element<PanelContainer>()
+                .Class("BackgroundOpenRight")
+                .Prop(PanelContainer.StylePropertyPanel, buttonOpenRight)
+                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
+
+            Element<PanelContainer>()
+                .Class("BackgroundOpenLeft")
+                .Prop(PanelContainer.StylePropertyPanel, buttonOpenLeft)
+                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
 
             #endregion
 
