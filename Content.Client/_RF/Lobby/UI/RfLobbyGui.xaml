@@ -90,9 +90,7 @@
                         <PanelContainer StyleClasses="PanelHighlighted"
                                         HorizontalExpand="True" Margin="10 0">
                             <BoxContainer Orientation="Vertical">
-                                <PanelContainer StyleClasses="PanelLightTransparent">
-                                    <controls:NanoHeading Text="{Loc 'ui-lobby-server-info-block'}"/>
-                                </PanelContainer>
+                                <controls:NanoHeading Text="{Loc 'ui-lobby-server-info-block'}"/>
 
                                 <info:ServerInfo Name="ServerInfo" Access="Public" MaxWidth="400"
                                                  Margin="3 3 3 3" HorizontalAlignment="Left"/>

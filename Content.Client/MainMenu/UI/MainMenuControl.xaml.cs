@@ -22,8 +22,10 @@ public sealed partial class MainMenuControl : Control
         LayoutContainer.SetMarginTop(VBox, 30);
         LayoutContainer.SetGrowHorizontal(VBox, LayoutContainer.GrowDirection.Begin);
 
+        /* RimFortress
         var logoTexture = resCache.GetResource<TextureResource>("/Textures/Logo/logo.png");
         Logo.Texture = logoTexture;
+        RimFortress */
 
         var currentUserName = configMan.GetCVar(CVars.PlayerName);
         UsernameBox.Text = currentUserName;

@@ -10,7 +10,10 @@
                   VerticalExpand="True"
                   StyleIdentifier="mainMenuVBox"
                   SeparationOverride="3">
+        <!-- RimFortress: Logo -->
         <TextureRect Name="Logo"
+                     TexturePath="/Textures/_RF/Logo/logo.png"
+                     TextureScale="3 3"
                      Stretch="KeepCentered"/>
         <GridContainer Columns="2">
             <Label Text="{Loc 'main-menu-username-label'}" />
@@ -40,8 +43,10 @@
                 Text="{Loc 'main-menu-quit-button'}"
                 TextAlign="Center"
                 StyleIdentifier="mainMenu"/>
+        <!-- RimFortress: Style -->
         <clog:ChangelogButton
             Name="ChangelogButton"
+            StyleClasses="OpenBoth"
             Access="Public"/>
     </BoxContainer>
 </Control>

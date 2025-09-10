@@ -963,16 +963,24 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
-            // Main menu: Make those buttons bigger.
+            #region Main menu
+
+            // Make those buttons bigger.
             new StyleRule(new SelectorChild(
                     new SelectorElement(typeof(Button), null, "mainMenu", null),
                     new SelectorElement(typeof(Label), null, null, null)),
                 new[] { new StyleProperty("font", sourceCodeBold16) }),
 
-            // Main menu: also make those buttons slightly more separated.
+            Element<Button>()
+                .Identifier("mainMenu")
+                .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenBoth),
+
+            //  also make those buttons slightly more separated.
             Element<BoxContainer>()
                 .Class("mainMenuVBox")
                 .Prop(BoxContainer.StylePropertySeparation, 2),
+
+            #endregion
 
             // Fancy LineEdit
             Element<LineEdit>()
