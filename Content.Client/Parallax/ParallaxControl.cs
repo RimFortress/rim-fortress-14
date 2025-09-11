@@ -17,6 +17,20 @@ public sealed class ParallaxControl : Control
     [Dependency] private readonly IParallaxManager _parallaxManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
 
+    // RimFortress Start
+    public string Parallax
+    {
+        get => _parallax;
+        set
+        {
+            _parallax = value;
+            _parallaxManager.LoadParallaxByName(Parallax);
+        }
+    }
+
+    private string _parallax = "FastSpace";
+    // RimFortress End
+
     [ViewVariables(VVAccess.ReadWrite)] public Vector2 Offset { get; set; }
 
     public ParallaxControl()
@@ -25,12 +39,14 @@ public sealed class ParallaxControl : Control
 
         Offset = new Vector2(_random.Next(0, 1000), _random.Next(0, 1000));
         RectClipContent = true;
-        _parallaxManager.LoadParallaxByName("FastSpace");
+        //_parallaxManager.LoadParallaxByName("FastSpace"); RimFortress
+        _parallaxManager.LoadParallaxByName(Parallax); // RimFortress
     }
 
     protected override void Draw(DrawingHandleScreen handle)
     {
-        foreach (var layer in _parallaxManager.GetParallaxLayers("FastSpace"))
+        //foreach (var layer in _parallaxManager.GetParallaxLayers("FastSpace")) RimFortress
+        foreach (var layer in _parallaxManager.GetParallaxLayers(Parallax)) // RimFortress
         {
             var tex = layer.Texture;
             var texSize = (tex.Size.X * (int) Size.X, tex.Size.Y * (int) Size.X) * layer.Config.Scale.Floored() / 1920;
