@@ -8,7 +8,7 @@
                 </BoxContainer>
             </PanelContainer>
 
-            <PanelContainer Margin="2" StyleClasses="LowDivider"/>
+            <PanelContainer Margin="5" StyleClasses="LowDivider"/>
 
             <PanelContainer StyleClasses="PanelLightBordered" HorizontalExpand="True">
                 <BoxContainer Orientation="Vertical">

@@ -33,9 +33,11 @@
         </PanelContainer>
         <LineEdit Name="NameEdit" HorizontalExpand="True" Visible="False"/>
 
-        <controls2:IconButton Name="EditNameButton" StyleClasses="ButtonSquare" ReservesSpace="True"
+        <controls2:IconButton Name="EditNameButton"
+                              StyleClasses="ButtonSquare" SetSize="35 35" ReservesSpace="True"
                               TexturePath="/Textures/_RF/Interface/eye-dropper-solid.svg.192dpi.png"/>
-        <controls1:ConfirmButton Name="DeleteButton" ConfirmationText="" StyleClasses="ButtonSquare">
+        <controls1:ConfirmButton Name="DeleteButton" SetSize="35 35"
+                                 ConfirmationText="" StyleClasses="ButtonSquare">
             <TextureRect Stretch="KeepAspectCentered" SetSize="24 24"
                          HorizontalAlignment="Center" VerticalAlignment="Center"
                          TexturePath="/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"

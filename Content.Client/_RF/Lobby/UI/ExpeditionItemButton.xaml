@@ -4,7 +4,7 @@
     <PanelContainer StyleClasses="PanelDarkBordered">
         <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
             <PanelContainer StyleClasses="PanelLightBordered">
-                <EntityPrototypeView Name="View" Scale="2 2" Margin="3" SetSize="48 48"/>
+                <EntityPrototypeView Name="View" Scale="2 2" SetSize="36 36"/>
             </PanelContainer>
 
             <PanelContainer Margin="10 5" StyleClasses="LowDivider"/>

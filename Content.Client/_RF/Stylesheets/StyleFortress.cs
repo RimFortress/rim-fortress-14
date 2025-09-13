@@ -481,6 +481,8 @@ public sealed class StyleFortress : StyleBase
             BorderColor = WoodenFortress,
             BorderThickness = new Thickness(1),
         };
+        lightBorderedPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
+
         var lightBorderedPanelTransparent = new StyleBoxFlat(lightBorderedPanel)
             { BackgroundColor = DarkForest.WithAlpha(0.8f) };
 
@@ -490,10 +492,12 @@ public sealed class StyleFortress : StyleBase
             { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
 
         var lightPanel = new StyleBoxFlat { BackgroundColor = DarkForest };
-        var lightPanelTransparent = new StyleBoxFlat { BackgroundColor = DarkForest.WithAlpha(0.8f) };
+        lightPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
 
-        var darkPanel = new StyleBoxFlat { BackgroundColor = GraphiteBlack };
-        var darkPanelTransparent = new StyleBoxFlat { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
+        var lightPanelTransparent = new StyleBoxFlat(lightPanel) { BackgroundColor = DarkForest.WithAlpha(0.8f) };
+
+        var darkPanel = new StyleBoxFlat(lightPanel) { BackgroundColor = GraphiteBlack };
+        var darkPanelTransparent = new StyleBoxFlat(lightPanel) { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
 
         var highlightedPanel = new StyleBoxFlat
         {

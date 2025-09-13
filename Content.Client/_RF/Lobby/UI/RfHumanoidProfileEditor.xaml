@@ -28,7 +28,7 @@
                 <PanelContainer StyleClasses="PanelDarkBordered">
                     <BoxContainer Orientation="Vertical" MinSize="60 0"
                                   VerticalExpand="True" HorizontalExpand="True"
-                                  HorizontalAlignment="Right" Margin="3">
+                                  HorizontalAlignment="Right">
                         <Button Name="ImportButton" Text="{Loc 'humanoid-profile-editor-import-button'}"/>
                         <Button Name="ExportButton" Text="{Loc 'humanoid-profile-editor-export-button'}"/>
                         <Button Name="ExportImageButton" Text="{Loc 'humanoid-profile-editor-export-image-button'}"/>
