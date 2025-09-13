@@ -1,0 +1,4 @@
+slider_fill.svg.96dpi.png is redrawn for RimFortress because of the shitty code in the engine, may the author of that code be cursed in ages.
+If we ever make our own version of ColorableSlider, we'll need to return the texture to its original appearance.
+
+See Robust.Client.UserInterface.Controls.ColorSelectorStyleBox.cs, line 16.

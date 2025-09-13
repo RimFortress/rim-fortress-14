@@ -43,7 +43,7 @@ public sealed partial class ColorPicker : Control
             if (_window.IsOpen)
                 _window.Close();
             else
-                _window.Open(PickColorButton.GlobalPosition + new Vector2(0, 50f));
+                _window.Open(PickColorButton.GlobalPosition + new Vector2(0, PickColorButton.Height));
         };
 
         OnResized += () =>
@@ -51,6 +51,12 @@ public sealed partial class ColorPicker : Control
             var size = new Vector2(Height);
             ColorPanel.SetSize = size - new Vector2(ColorPanel.Margin.Left, ColorPanel.Margin.Top);
             PickColorButton.SetSize = size;
+        };
+
+        OnVisibilityChanged += _ =>
+        {
+            if (!VisibleInTree)
+                _window.Close();
         };
     }
 

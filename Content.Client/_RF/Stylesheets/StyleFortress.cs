@@ -427,7 +427,10 @@ public sealed class StyleFortress : StyleBase
         };
 
         var sliderGrabBox = new StyleBoxTexture
-            { Texture = GetTex("slider_grabber.png") };
+        {
+            Texture = GetTex("slider_grabber.png"),
+            Modulate = ButtonColorDefault,
+        };
 
         sliderFillBox.SetPatchMargin(StyleBox.Margin.All, 12);
         sliderBackBox.SetPatchMargin(StyleBox.Margin.All, 12);
@@ -777,7 +780,7 @@ public sealed class StyleFortress : StyleBase
                 .Class(TreeMenuButton.StyleClassTreeMenuButton)
                 .Pseudo(ContainerButton.StylePseudoClassNormal)
                 .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxTexture(treeMenuButton) { Modulate = Color.Transparent }),
+                    new StyleBoxTexture(treeMenuButton) { Modulate = TreeMenuButtonColorDefault }),
 
             Element<TreeMenuButton>()
                 .Class(TreeMenuButton.StyleClassTreeMenuButton)
