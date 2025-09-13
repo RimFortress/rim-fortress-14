@@ -1865,12 +1865,12 @@ public sealed class StyleFortress : StyleBase
 
 public static class ResCacheExtension
 {
-    public static Font SourceCodeStack(
+    public static VectorFont SourceCodeStack(
         this IResourceCache resCache,
         SourceCodeVariant variation = SourceCodeVariant.Regular,
         int size = 10)
     {
-        return resCache.GetFont($"/Fonts/SourceCodePro/SourceCodePro-{variation.ToString()}.ttf", size);
+        return new VectorFont(resCache.GetResource<FontResource>($"/Fonts/SourceCodePro/SourceCodePro-{variation.ToString()}.ttf"), size);
     }
 }
 

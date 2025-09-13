@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Numerics;
+using Content.Client._RF.Stylesheets;
 using Content.Client.Light.EntitySystems;
 using Content.Client.UserInterface.Controls;
 using Content.Shared._RF.Parallax.Fog;
@@ -62,7 +63,7 @@ public sealed class WorldMapControl : MapGridControl
 
     public WorldMapControl() : base(MinDisplayedRange, MaxDisplayedRange, DefaultDisplayedRange)
     {
-        _font = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSans/NotoSans-Regular.ttf"), 10);
+        _font = _cache.SourceCodeStack();
         _contextWindow = UserInterfaceManager.CreateWindow<WorldMapContextWindow>();
         _markedWindow = UserInterfaceManager.CreateWindow<WorldMarkerWindow>();
 
