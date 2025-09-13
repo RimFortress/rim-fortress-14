@@ -22,27 +22,29 @@ public sealed partial class RimFortressScreen : InGameScreen
 
         SetAnchorPreset(MainViewport, LayoutPreset.Wide);
         SetAnchorPreset(ViewportContainer, LayoutPreset.Wide);
+
         SetAnchorAndMarginPreset(Hotbar, LayoutPreset.CenterLeft, margin: 10);
         SetAnchorAndMarginPreset(InfoPanel, LayoutPreset.TopLeft, margin: 10);
         SetAnchorAndMarginPreset(Chat, LayoutPreset.TopRight, margin: 10);
+        SetAnchorAndMarginPreset(MenuBar, LayoutPreset.BottomRight, margin: 10);
+
         SetAnchorAndMarginPreset(Right, LayoutPreset.RightWide, margin: 10);
 
         // We dont need it
-        TopBar.CharacterButton.Visible = false;
-        TopBar.ActionButton.Visible = false;
-        TopBar.EmotesButton.Visible = false;
-        TopBar.CraftingButton.Visible = false;
+        MenuBar.CharacterButton.Visible = false;
+        MenuBar.ActionButton.Visible = false;
+        MenuBar.EmotesButton.Visible = false;
+        MenuBar.CraftingButton.Visible = false;
 
-        TopBar.GuidebookButton.RemoveStyleClass(StyleBase.ButtonSquare);
-        TopBar.AdminButton.RemoveStyleClass(StyleBase.ButtonSquare);
-        TopBar.SandboxButton.RemoveStyleClass(StyleBase.ButtonSquare);
+        MenuBar.GuidebookButton.RemoveStyleClass(StyleBase.ButtonSquare);
+        MenuBar.AdminButton.RemoveStyleClass(StyleBase.ButtonSquare);
+        MenuBar.SandboxButton.RemoveStyleClass(StyleBase.ButtonSquare);
 
-        TopBar.GuidebookButton.AddStyleClass(StyleBase.ButtonOpenBoth);
-        TopBar.AdminButton.AddStyleClass(StyleBase.ButtonOpenBoth);
-        TopBar.SandboxButton.AddStyleClass(StyleBase.ButtonOpenBoth);
+        MenuBar.GuidebookButton.AddStyleClass(StyleBase.ButtonOpenBoth);
+        MenuBar.AdminButton.AddStyleClass(StyleBase.ButtonOpenBoth);
+        MenuBar.SandboxButton.AddStyleClass(StyleBase.ButtonOpenBoth);
 
         Chat.OnChatResizeFinish += ChatOnResizeFinish;
-        Datetime.ChatToggle.OnToggled += args => Chat.Visible = args.Pressed;
     }
 
     private void ChatOnResizeFinish(Vector2 _)

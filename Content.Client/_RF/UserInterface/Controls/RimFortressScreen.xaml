@@ -20,10 +20,9 @@
 
     <chat:ResizableChatBox Name="Chat" Access="Protected"
                            Margin="0 55 0 0" Visible="False"/>
+
     <BoxContainer Name="Right" Access="Protected"
                   Orientation="Vertical" VerticalExpand="True">
-        <screens:WorldDatetimeWidget Name="Datetime" Access="Public"
-                                     HorizontalExpand="True"/>
         <screens:PopList Name="PopList" Access="Public"
                          HorizontalAlignment="Right"
                          VerticalAlignment="Bottom" Margin="0 0 0 100"/>
@@ -32,9 +31,9 @@
                       HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
         <BoxContainer Orientation="Horizontal"
                       HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <menuBar:GameTopMenuBar Name="TopBar" Access="Protected" />
-            <!-- Buffer so big votes don't skew it -->
-            <Control/>
         </BoxContainer>
     </BoxContainer>
+
+    <!-- Bottom right -->
+    <menuBar:GameTopMenuBar Name="MenuBar" Access="Protected"/>
 </screens:RimFortressScreen>
