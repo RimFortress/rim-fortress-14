@@ -23,6 +23,7 @@ public sealed partial class RimFortressScreen : InGameScreen
         SetAnchorPreset(MainViewport, LayoutPreset.Wide);
         SetAnchorPreset(ViewportContainer, LayoutPreset.Wide);
         SetAnchorAndMarginPreset(Hotbar, LayoutPreset.CenterLeft, margin: 10);
+        SetAnchorAndMarginPreset(InfoPanel, LayoutPreset.TopLeft, margin: 10);
         SetAnchorAndMarginPreset(Chat, LayoutPreset.TopRight, margin: 10);
         SetAnchorAndMarginPreset(Right, LayoutPreset.RightWide, margin: 10);
 

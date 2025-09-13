@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Client._RF.NPC;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
+using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Shared._RF.Stockpile;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
@@ -18,7 +19,7 @@ using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
 
-namespace Content.Client._RF.UserInterface.Controls.Stockpile;
+namespace Content.Client._RF.UserInterface.Controllers;
 
 public sealed class StockpileUiController :
     WindowUiController<StockpileSettingsWindow>,

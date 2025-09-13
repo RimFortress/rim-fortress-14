@@ -1,7 +1,8 @@
+using Content.Client._RF.UserInterface.Controls.NpcJobs;
 using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
 
-namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
+namespace Content.Client._RF.UserInterface.Controllers;
 
 public sealed class NpcJobsUiController : UIController
 {

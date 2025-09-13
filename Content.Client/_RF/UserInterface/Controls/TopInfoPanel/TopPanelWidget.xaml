@@ -1,0 +1,24 @@
+<controls:TopPanelWidget
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.TopInfoPanel"
+    MinWidth="500">
+    <PanelContainer StyleClasses="TopInfoPanel" HorizontalExpand="True">
+        <BoxContainer>
+            <controls:InfoPanelCell Name="Population"
+                ToolTip="{Loc 'top-info-panel-pops-tooltip'}"
+                TexturePath="/Textures/_RF/Interface/VerbIcons/user-group-solid.svg.192dpi.png"/>
+
+            <PanelContainer StyleClasses="LowDivider"/>
+            <BoxContainer HorizontalExpand="True"/>
+            <PanelContainer StyleClasses="LowDivider"/>
+
+            <controls:InfoPanelCell Name="Date" TexturePath="/Textures/_RF/Interface/calendar-solid-full.svg.192dpi.png"/>
+            <controls:InfoPanelCell Name="Time" TexturePath="/Textures/_RF/Interface/sun-solid.svg.192dpi.png"/>
+
+            <PanelContainer StyleClasses="LowDivider"/>
+
+            <controls:InfoPanelCell Name="Temperature"
+                                    TexturePath="/Textures/_RF/Interface/temperature-half-solid.svg.192dpi.png"/>
+        </BoxContainer>
+    </PanelContainer>
+</controls:TopPanelWidget>

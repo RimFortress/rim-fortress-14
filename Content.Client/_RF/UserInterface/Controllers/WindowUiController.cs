@@ -1,7 +1,7 @@
 using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.CustomControls;
 
-namespace Content.Client._RF.UserInterface;
+namespace Content.Client._RF.UserInterface.Controllers;
 
 public abstract class WindowUiController<T> : UIController where T : BaseWindow, new()
 {

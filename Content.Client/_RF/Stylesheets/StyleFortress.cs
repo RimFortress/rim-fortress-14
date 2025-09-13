@@ -141,6 +141,9 @@ public sealed class StyleFortress : StyleBase
 
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
+    public const string StyleClassTopInfoPanel = "TopInfoPanel";
+    public const string StyleClassTopInfoCellPanel = "TopInfoCellPanel";
+
     // FancyBack
     public const string StyleClassFancyBackNone = "NoneBack";
     public const string StyleClassFancyBackWooden = "WoodenBack";
@@ -509,6 +512,24 @@ public sealed class StyleFortress : StyleBase
 
         var angleRectTransparent = StyleBoxTex("angle_rect_panel_transparent.png", angleRect);
 
+        var topInfoPanel = new StyleBoxTexture
+        {
+            Texture = GetTex("top_info_panel.png"),
+            PatchMarginLeft = 4,
+            PatchMarginTop = 4,
+            PatchMarginRight = 8,
+            PatchMarginBottom = 9,
+        };
+        topInfoPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
+        topInfoPanel.SetContentMarginOverride(StyleBox.Margin.Bottom, 9);
+
+        var topInfoPanelCell = new StyleBoxFlat
+        {
+            BackgroundColor = GraphiteBlack,
+            BorderColor = BlackAmber,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+        };
+
         #endregion
 
         #endregion
@@ -634,21 +655,6 @@ public sealed class StyleFortress : StyleBase
                 .Prop(PanelContainer.StylePropertyPanel, lightFancyWindowHeader),
 
             #endregion
-
-            // inventory slot background
-            Element()
-                .Class(StyleClassInventorySlotBackground)
-                .Prop(PanelContainer.StylePropertyPanel, invSlotBg),
-
-            // hand slot highlight
-            Element()
-                .Class(StyleClassHandSlotHighlight)
-                .Prop(PanelContainer.StylePropertyPanel, handSlotHighlight),
-
-            // Hotbar background
-            Element<PanelContainer>()
-                .Class(StyleClassHotbarPanel)
-                .Prop(PanelContainer.StylePropertyPanel, hotbarBackground),
 
             #region Button
 
@@ -840,18 +846,6 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
-            // ItemStatus for hands
-            Element()
-                .Class(StyleClassItemStatusNotHeld)
-                .Prop("font", sourceCodeItalic10)
-                .Prop("font-color", GraySilver)
-                .Prop(nameof(Control.Margin), new Thickness(4, 0, 0, 2)),
-
-            Element()
-                .Class(StyleClassItemStatus)
-                .Prop(nameof(RichTextLabel.LineHeightScale), 0.7f)
-                .Prop(nameof(Control.Margin), new Thickness(4, 0, 0, 2)),
-
             #region Context Menu
 
             // Context Menu window
@@ -1025,6 +1019,8 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
+            #region LineEdit
+
             // Fancy LineEdit
             Element<LineEdit>()
                 .Prop(LineEdit.StylePropertyStyleBox, lineEdit),
@@ -1039,6 +1035,8 @@ public sealed class StyleFortress : StyleBase
             Element<TextEdit>()
                 .Pseudo(TextEdit.StylePseudoClassPlaceholder)
                 .Prop("font-color", PlaceholderFontColor),
+
+            #endregion
 
             // chat subpanels (chat LineEdit backing, popup backings)
             Element<PanelContainer>()
@@ -1094,12 +1092,12 @@ public sealed class StyleFortress : StyleBase
             new StyleRule(new SelectorChild(
                     new SelectorElement(typeof(PanelContainer), new[] { "speechBox", "whisperBox" }, null, null),
                     new SelectorElement(typeof(RichTextLabel), new[] { "bubbleContent" }, null, null)),
-                new[] { new StyleProperty("font", sourceCodeItalic12) }),
+                new[] { new StyleProperty(Label.StylePropertyFont, sourceCodeItalic12) }),
 
             new StyleRule(new SelectorChild(
                     new SelectorElement(typeof(PanelContainer), new[] { "speechBox", "emoteBox" }, null, null),
                     new SelectorElement(typeof(RichTextLabel), null, null, null)),
-                new[] { new StyleProperty("font", sourceCodeItalic12) }),
+                new[] { new StyleProperty(Label.StylePropertyFont, sourceCodeItalic12) }),
 
             Element<RichTextLabel>()
                 .Class(StyleClassLabelKeyText)
@@ -1152,13 +1150,8 @@ public sealed class StyleFortress : StyleBase
             // small number for the entity counter in the entity menu
             Element<Label>()
                 .Class(ContextMenuElement.StyleClassEntityMenuIconLabel)
-                .Prop("font", sourceCode10)
+                .Prop(Label.StylePropertyFont, sourceCode10)
                 .Prop(Label.StylePropertyAlignMode, Label.AlignMode.Right),
-
-            // hotbar slot
-            Element<RichTextLabel>()
-                .Class(StyleClassHotbarSlotNumber)
-                .Prop("font", sourceCodeBold16),
 
             #region ItemList
 
@@ -1242,13 +1235,33 @@ public sealed class StyleFortress : StyleBase
                 .Class(StyleClassLabelSmall)
                 .Prop(Label.StylePropertyFont, sourceCode10),
 
+            Element<Label>()
+                .Class("StatusFieldTitle")
+                .Prop(Label.StylePropertyFontColor, GoldFortress),
+
+            Element<Label>()
+                .Class("Good")
+                .Prop(Label.StylePropertyFontColor, GoodGreenFore),
+
+            Element<Label>()
+                .Class("Caution")
+                .Prop(Label.StylePropertyFontColor, GoldFortress),
+
+            Element<Label>()
+                .Class("Danger")
+                .Prop(Label.StylePropertyFontColor, LightBad),
+
+            Element<Label>()
+                .Class("Disabled")
+                .Prop(Label.StylePropertyFontColor, DisabledButtonFontColor),
+
             #endregion
 
             // Big Button
             new StyleRule(new SelectorChild(
                     new SelectorElement(typeof(Button), new[] { StyleClassButtonBig }, null, null),
                     new SelectorElement(typeof(Label), null, null, null)),
-                new[] { new StyleProperty("font", sourceCode16) }),
+                new[] { new StyleProperty(Label.StylePropertyFont, sourceCode16) }),
 
             // APC and SMES power state label colors
             Element<Label>()
@@ -1546,10 +1559,18 @@ public sealed class StyleFortress : StyleBase
                 .Prop(PanelContainer.StylePropertyPanel, angleRectTransparent),
 
             Element<PanelContainer>()
+                .Class(StyleClassTopInfoPanel)
+                .Prop(PanelContainer.StylePropertyPanel, topInfoPanel),
+
+            Element<PanelContainer>()
+                .Class(StyleClassTopInfoCellPanel)
+                .Prop(PanelContainer.StylePropertyPanel, topInfoPanelCell),
+
+            // StyleNano legacy stuff
+            Element<PanelContainer>()
                 .Class("BackgroundOpenRight")
                 .Prop(PanelContainer.StylePropertyPanel, buttonOpenRight)
                 .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
-
             Element<PanelContainer>()
                 .Class("BackgroundOpenLeft")
                 .Prop(PanelContainer.StylePropertyPanel, buttonOpenLeft)
@@ -1558,12 +1579,6 @@ public sealed class StyleFortress : StyleBase
             #endregion
 
             // Window Footer
-            Element<TextureRect>()
-                .Class("NTLogoDark")
-                .Prop(TextureRect.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Nano/ntlogo.svg.png"))
-                .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#757575")),
-
             Element<Label>()
                 .Class("WindowFooterText")
                 .Prop(Label.StylePropertyFont, sourceCode8)
@@ -1681,26 +1696,6 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Label.StylePropertyFont, sourceCode8),
             // ---
 
-            Element<Label>()
-                .Class("StatusFieldTitle")
-                .Prop("font-color", GoldFortress),
-
-            Element<Label>()
-                .Class("Good")
-                .Prop("font-color", GoodGreenFore),
-
-            Element<Label>()
-                .Class("Caution")
-                .Prop("font-color", GoldFortress),
-
-            Element<Label>()
-                .Class("Danger")
-                .Prop("font-color", LightBad),
-
-            Element<Label>()
-                .Class("Disabled")
-                .Prop("font-color", DisabledButtonFontColor),
-
             #region Radial menu
 
             // Radial menu buttons
@@ -1738,6 +1733,95 @@ public sealed class StyleFortress : StyleBase
                     resCache.GetTexture("/Textures/Interface/Radial/back_hover.png")),
 
             #endregion
+
+            #region Fancy Tree
+
+            Element<FancyTree>()
+                .Prop(FancyTree.StylePropertyIconColor, GoldFortress)
+                .Prop(FancyTree.StylePropertyLineColor, GoldFortress),
+
+            Element<ContainerButton>()
+                .Identifier(TreeItem.StyleIdentifierTreeButton)
+                .Class(TreeItem.StyleClassEvenRow)
+                .Prop(ContainerButton.StylePropertyStyleBox,
+                    new StyleBoxFlat { BackgroundColor = GraphiteBlack }),
+
+            Element<ContainerButton>()
+                .Identifier(TreeItem.StyleIdentifierTreeButton)
+                .Class(TreeItem.StyleClassOddRow)
+                .Prop(ContainerButton.StylePropertyStyleBox,
+                    new StyleBoxFlat { BackgroundColor = DarkForest }),
+
+            Element<ContainerButton>()
+                .Identifier(TreeItem.StyleIdentifierTreeButton)
+                .Class(TreeItem.StyleClassSelected)
+                .Prop(ContainerButton.StylePropertyStyleBox,
+                    new StyleBoxFlat { BackgroundColor = BrightGreen }),
+
+            Element<ContainerButton>()
+                .Identifier(TreeItem.StyleIdentifierTreeButton)
+                .Pseudo(ContainerButton.StylePseudoClassHover)
+                .Prop(ContainerButton.StylePropertyStyleBox,
+                    new StyleBoxFlat { BackgroundColor = BrightGreen }),
+
+            #endregion
+
+            // Pinned button style
+            Element<TextureButton>()
+                .Class(StyleClassPinButtonPinned)
+                .Prop(TextureButton.StylePropertyTexture,
+                    resCache.GetTexture("/Textures/Interface/Bwoink/pinned.png")),
+
+            // Unpinned button style
+            Element<TextureButton>()
+                .Class(StyleClassPinButtonUnpinned)
+                .Prop(TextureButton.StylePropertyTexture,
+                    resCache.GetTexture("/Textures/Interface/Bwoink/un_pinned.png")),
+
+            #region StyleNano legacy stuff
+
+            Element<TextureRect>()
+                .Class("NTLogoDark")
+                .Prop(TextureRect.StylePropertyTexture,
+                    resCache.GetTexture("/Textures/Interface/Nano/ntlogo.svg.png"))
+                .Prop(Control.StylePropertyModulateSelf, Color.FromHex("#757575")),
+
+            // Silicon law edit ui
+            Element<Label>()
+                .Class(SiliconLawContainer.StyleClassSiliconLawPositionLabel)
+                .Prop(Label.StylePropertyFontColor, GoldFortress),
+
+            // hotbar slot
+            Element<RichTextLabel>()
+                .Class(StyleClassHotbarSlotNumber)
+                .Prop(Label.StylePropertyFont, sourceCodeBold16),
+
+            // inventory slot background
+            Element()
+                .Class(StyleClassInventorySlotBackground)
+                .Prop(PanelContainer.StylePropertyPanel, invSlotBg),
+
+            // hand slot highlight
+            Element()
+                .Class(StyleClassHandSlotHighlight)
+                .Prop(PanelContainer.StylePropertyPanel, handSlotHighlight),
+
+            // Hotbar background
+            Element<PanelContainer>()
+                .Class(StyleClassHotbarPanel)
+                .Prop(PanelContainer.StylePropertyPanel, hotbarBackground),
+
+            // ItemStatus for hands
+            Element()
+                .Class(StyleClassItemStatusNotHeld)
+                .Prop("font", sourceCodeItalic10)
+                .Prop("font-color", GraySilver)
+                .Prop(nameof(Control.Margin), new Thickness(4, 0, 0, 2)),
+
+            Element()
+                .Class(StyleClassItemStatus)
+                .Prop(nameof(RichTextLabel.LineHeightScale), 0.7f)
+                .Prop(nameof(Control.Margin), new Thickness(4, 0, 0, 2)),
 
             #region PDA
 
@@ -1811,54 +1895,7 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
-            #region Fancy Tree
-
-            Element<FancyTree>()
-                .Prop(FancyTree.StylePropertyIconColor, GoldFortress)
-                .Prop(FancyTree.StylePropertyLineColor, GoldFortress),
-
-            Element<ContainerButton>()
-                .Identifier(TreeItem.StyleIdentifierTreeButton)
-                .Class(TreeItem.StyleClassEvenRow)
-                .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = GraphiteBlack }),
-
-            Element<ContainerButton>()
-                .Identifier(TreeItem.StyleIdentifierTreeButton)
-                .Class(TreeItem.StyleClassOddRow)
-                .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = DarkForest }),
-
-            Element<ContainerButton>()
-                .Identifier(TreeItem.StyleIdentifierTreeButton)
-                .Class(TreeItem.StyleClassSelected)
-                .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = BrightGreen }),
-
-            Element<ContainerButton>()
-                .Identifier(TreeItem.StyleIdentifierTreeButton)
-                .Pseudo(ContainerButton.StylePseudoClassHover)
-                .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxFlat { BackgroundColor = BrightGreen }),
-
             #endregion
-
-            // Silicon law edit ui
-            Element<Label>()
-                .Class(SiliconLawContainer.StyleClassSiliconLawPositionLabel)
-                .Prop(Label.StylePropertyFontColor, GoldFortress),
-
-            // Pinned button style
-            Element<TextureButton>()
-                .Class(StyleClassPinButtonPinned)
-                .Prop(TextureButton.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Bwoink/pinned.png")),
-
-            // Unpinned button style
-            Element<TextureButton>()
-                .Class(StyleClassPinButtonUnpinned)
-                .Prop(TextureButton.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Bwoink/un_pinned.png")),
         })
         .ToList());
 

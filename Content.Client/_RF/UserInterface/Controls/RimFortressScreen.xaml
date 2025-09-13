@@ -4,6 +4,7 @@
     xmlns:menuBar="clr-namespace:Content.Client.UserInterface.Systems.MenuBar.Widgets"
     xmlns:chat="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    xmlns:topInfoPanel="clr-namespace:Content.Client._RF.UserInterface.Controls.TopInfoPanel"
     VerticalExpand="False"
     VerticalAlignment="Bottom"
     HorizontalAlignment="Center">
@@ -11,6 +12,10 @@
         <controls:MainViewport Name="MainViewport"/>
     </LayoutContainer>
 
+    <!-- Top left -->
+    <topInfoPanel:TopPanelWidget Name="InfoPanel"/>
+
+    <!-- Left -->
     <screens:ActionsHotbarWidget Name="Hotbar"/>
 
     <chat:ResizableChatBox Name="Chat" Access="Protected"

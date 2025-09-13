@@ -27,7 +27,7 @@ public sealed partial class WorldDatetimeWidget : UIWidget
         var timeText = $"{hours:00}:{minutes:00}";
         var days = (int) Math.Floor(time / dayDuration) + 1;
 
-        Text.Text = $"{timeText}, {_locale.GetString("world-datetime-widget-days")} {days}";
+        Text.Text = $"{timeText}, {_locale.GetString("top-info-panel-datetime-day")} {days}";
 
         switch (gameTimeHours)
         {
