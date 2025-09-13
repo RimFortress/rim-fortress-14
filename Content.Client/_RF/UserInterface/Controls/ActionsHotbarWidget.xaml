@@ -1,28 +1,34 @@
 <controls:ActionsHotbarWidget
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
-    xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client">
-    <PanelContainer HorizontalExpand="True">
-        <PanelContainer.PanelOverride>
-            <gfx:StyleBoxFlat BackgroundColor="#1E1E22AA"
-                              BorderColor="#1E1E22DD" BorderThickness="2"/>
-        </PanelContainer.PanelOverride>
-        <BoxContainer Orientation="Vertical">
-            <controls:HotbarActionButton Name="BuildButton" Access="Public" IconModulate="#F77F00"
-                                         ToolTip="{Loc 'actions-hotbar-widgets-build-tooltip'}"
-                                         IconTexturePath="/Textures/_RF/Interface/hammer-solid.svg.192dpi.png"/>
-            <controls:HotbarActionButton Name="PassiveTasksButton" Access="Public" IconModulate="#FFFFFF"
-                                         ToolTip="{Loc 'actions-hotbar-widgets-passive-tasks-tooltip'}"
-                                         IconTexturePath="/Textures/_RF/Interface/vector-square-solid.svg.192dpi.png"/>
-            <controls:HotbarActionButton Name="WorldMapButton" Access="Public" IconModulate="#2F821D"
-                                         ToolTip="{Loc 'actions-hotbar-widgets-world-map-tooltip'}"
-                                         IconTexturePath="/Textures/_RF/Interface/map-location-dot-solid.svg.192dpi.png"/>
-            <controls:HotbarActionButton Name="StockpileButton" Access="Public" IconModulate="#A16C2B"
-                                         ToolTip="{Loc 'actions-hotbar-widgets-stockpile-tooltip'}"
-                                         IconTexturePath="/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"/>
-            <controls:HotbarActionButton Name="NpcJobsButton" Access="Public" IconModulate="#5FE8CE"
-                                         ToolTip="{Loc 'actions-hotbar-widgets-npc-jobs-tooltip'}"
-                                         IconTexturePath="/Textures/_RF/Interface/arrow-down-wide-short-solid-full.192dpi.png"/>
-        </BoxContainer>
-    </PanelContainer>
+    xmlns:tree="clr-namespace:Content.Client._RF.UserInterface.Controls.TreeMenu">
+    <tree:TreeMenu Name="Tree" Orientation="Horizontal">
+        <tree:TreeMenuButton Name="BuildButton" Access="Public"
+                             ToolTip="{Loc 'actions-hotbar-widgets-build-tooltip'}"
+                             TexturePath="/Textures/_RF/Interface/hammer-solid.svg.192dpi.png"/>
+        <tree:TreeMenuButton Name="PassiveTasksButton" Access="Public"
+                             ToolTip="{Loc 'actions-hotbar-widgets-passive-tasks-tooltip'}"
+                             TexturePath="/Textures/_RF/Interface/vector-square-solid.svg.192dpi.png"/>
+        <tree:TreeMenuButton Name="NpcJobsButton" Access="Public"
+                             ToolTip="{Loc 'actions-hotbar-widgets-npc-jobs-tooltip'}"
+                             TexturePath="/Textures/_RF/Interface/arrow-down-wide-short-solid-full.192dpi.png"/>
+
+        <PanelContainer StyleClasses="LowDivider" Margin="5 10"/>
+
+        <tree:TreeMenuButton ToolTip="{Loc 'actions-hotbar-widgets-stockpile-tooltip'}"
+                             TexturePath="/Textures/_RF/Interface/cubes-solid.svg.192dpi.png">
+            <tree:TreeMenuButton Name="CreateStockpileButton" Access="Public"
+                                 ToolTip="{Loc 'stockpile-menu-create-tooltip'}"
+                                 TexturePath="/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"/>
+            <tree:TreeMenuButton Name="EditStockpileButton" Access="Public"
+                                 ToolTip="{Loc 'stockpile-menu-edit-tooltip'}"
+                                 TexturePath="/Textures/_RF/Interface/pencil-solid.svg.192dpi.png"/>
+        </tree:TreeMenuButton>
+
+        <PanelContainer StyleClasses="LowDivider" Margin="5 10"/>
+
+        <tree:TreeMenuButton Name="WorldMapButton" Access="Public"
+                             ToolTip="{Loc 'actions-hotbar-widgets-world-map-tooltip'}"
+                             TexturePath="/Textures/_RF/Interface/map-location-dot-solid.svg.192dpi.png"/>
+    </tree:TreeMenu>
 </controls:ActionsHotbarWidget>

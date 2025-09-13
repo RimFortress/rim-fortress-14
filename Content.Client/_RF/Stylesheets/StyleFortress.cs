@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Client._RF.UserInterface.Controls;
+using Content.Client._RF.UserInterface.Controls.TreeMenu;
 using Content.Client.ContextMenu.UI;
 using Content.Client.Examine;
 using Content.Client.PDA;
@@ -57,6 +58,11 @@ public sealed class StyleFortress : StyleBase
     public static readonly Color GoldButtonColorPressed = Color.FromHex("#CE9033");
     public static readonly Color GoldButtonColorDisabled = Color.FromHex("#997746");
 
+    public static readonly Color TreeMenuButtonColorDefault = Color.Transparent;
+    public static readonly Color TreeMenuButtonColorHovered = SignalBlack;
+    public static readonly Color TreeMenuButtonColorPressed = GraphiteBlack;
+    //
+
     public static readonly Color ChatBackgroundColor = DarkForest.WithAlpha(0.8f);
     public static readonly Color DefaultPaperBackgroundColor = Color.FromHex("#eaedde");
 
@@ -87,9 +93,6 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassHotbarSlotNumber = "hotbarSlotNumber";
     public const string StyleClassActionSearchBox = "actionSearchBox";
     public const string StyleClassChatLineEdit = "chatLineEdit";
-    public const string StyleClassChatChannelSelectorButton = "chatSelectorOptionButton";
-    public const string StyleClassChatFilterOptionButton = "chatFilterOptionButton";
-    public const string StyleClassStorageButton = "storageButton";
 
     public const string StyleClassSliderRed = "Red";
     public const string StyleClassSliderGreen = "Green";
@@ -134,6 +137,8 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassPanelDarkBorderedTransparent = "PanelDarkBorderedTransparent";
 
     public const string StyleClassPanelHighlighted = "PanelHighlighted";
+    public const string StyleClassPanelHighlightedTransparent = "PanelHighlightedTransparent";
+
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
     // FancyBack
@@ -145,6 +150,10 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassLowDividerDark = "LowDividerDark";
 
     // Buttons
+    public const string StyleClassChatChannelSelectorButton = "chatSelectorOptionButton";
+    public const string StyleClassChatFilterOptionButton = "chatFilterOptionButton";
+    public const string StyleClassStorageButton = "storageButton";
+
     public const string StyleClassCrossButtonRed = "CrossButtonRed";
     public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
@@ -279,6 +288,9 @@ public sealed class StyleFortress : StyleBase
         var chatFilterButton = StyleBoxTex("rounded_button_bordered.png");
         chatFilterButton.SetPatchMargin(StyleBox.Margin.All, 5);
         chatFilterButton.SetPadding(StyleBox.Margin.All, 2);
+
+        var treeMenuButton = StyleBoxTex("rounded_button_bordered.png");
+        treeMenuButton.SetPatchMargin(StyleBox.Margin.All, 5);
 
         #endregion
 
@@ -484,6 +496,9 @@ public sealed class StyleFortress : StyleBase
             BorderColor = BlackAmber,
         };
         highlightedPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
+
+        var highlightedPanelTransparent = new StyleBoxFlat(highlightedPanel)
+            { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
 
         var angleRect = StyleBoxTex("angle_rect_panel.png");
         angleRect.SetPatchMargin(StyleBox.Margin.All, 11);
@@ -750,6 +765,31 @@ public sealed class StyleFortress : StyleBase
                 .Class(ExamineButton.StyleClassExamineButton)
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
+
+            // Tree menu
+            Element<TreeMenuButton>()
+                .Class(TreeMenuButton.StyleClassTreeMenuButton)
+                .Prop(ContainerButton.StylePropertyStyleBox, treeMenuButton)
+                .Prop(TreeMenuButton.StylePropertyMarkerTexture, GetTex("tree_menu_button_marker.png"))
+                .Prop(TreeMenuButton.StylePropertyMarkerColor, GoldButtonColorDefault),
+
+            Element<TreeMenuButton>()
+                .Class(TreeMenuButton.StyleClassTreeMenuButton)
+                .Pseudo(ContainerButton.StylePseudoClassNormal)
+                .Prop(ContainerButton.StylePropertyStyleBox,
+                    new StyleBoxTexture(treeMenuButton) { Modulate = Color.Transparent }),
+
+            Element<TreeMenuButton>()
+                .Class(TreeMenuButton.StyleClassTreeMenuButton)
+                .Pseudo(ContainerButton.StylePseudoClassHover)
+                .Prop(Control.StylePropertyModulateSelf, TreeMenuButtonColorHovered)
+                .Prop(TreeMenuButton.StylePropertyMarkerTexture, GetTex("tree_menu_button_marker_hovered.png"))
+                .Prop(TreeMenuButton.StylePropertyMarkerColor, GoldButtonColorDefault),
+
+            Element<TreeMenuButton>()
+                .Class(TreeMenuButton.StyleClassTreeMenuButton)
+                .Pseudo(ContainerButton.StylePseudoClassPressed)
+                .Prop(Control.StylePropertyModulateSelf, TreeMenuButtonColorPressed),
 
             #region Gold Button
 
@@ -1490,6 +1530,9 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(StyleClassPanelHighlighted)
                 .Prop(PanelContainer.StylePropertyPanel, highlightedPanel),
+            Element<PanelContainer>()
+                .Class(StyleClassPanelHighlightedTransparent)
+                .Prop(PanelContainer.StylePropertyPanel, highlightedPanelTransparent),
 
             Element<PanelContainer>()
                 .Class(ClassAngleRect)

@@ -8,7 +8,8 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <summary>
 /// Button with icon instead of text
 /// </summary>
-public sealed class IconButton : Button
+[Virtual]
+public class IconButton : Button
 {
     /// <summary>
     /// Path to icon texture
