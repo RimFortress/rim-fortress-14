@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Client._RF.UserInterface.Controls;
+using Content.Client._RF.UserInterface.Controls.Chat;
 using Content.Client._RF.UserInterface.Controls.TreeMenu;
 using Content.Client.ContextMenu.UI;
 using Content.Client.Examine;
@@ -104,7 +105,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassLabelSecondaryColor = "LabelSecondaryColor";
     public const string StyleClassLabelBig = "LabelBig";
     public const string StyleClassLabelSmall = "LabelSmall";
-    public const string StyleClassButtonBig = "ButtonBig";
+    public const string StyleClassLabelSmallest = "LabelSmallest";
 
     public const string StyleClassButtonHelp = "HelpButton";
 
@@ -144,6 +145,8 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassTopInfoPanel = "TopInfoPanel";
     public const string StyleClassTopInfoCellPanel = "TopInfoCellPanel";
 
+    public const string StyleClassFoldableChatPanel = "FoldableChatPanel";
+
     // FancyBack
     public const string StyleClassFancyBackNone = "NoneBack";
     public const string StyleClassFancyBackWooden = "WoodenBack";
@@ -161,6 +164,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
     public const string StyleClassButtonColorGold = "ButtonColorGold";
+    public const string StyleClassButtonBig = "ButtonBig";
 
     // Bwoink
     public const string StyleClassPinButtonPinned = "pinButtonPinned";
@@ -533,6 +537,17 @@ public sealed class StyleFortress : StyleBase
             BorderColor = BlackAmber,
             BorderThickness = new Thickness(0, 0, 0, 1),
         };
+
+        var chatBubble = new StyleBoxTexture
+        {
+            Texture = GetTex("chat_messages_bubble.png"),
+            Modulate = LightBad,
+        };
+        chatBubble.SetPatchMargin(StyleBox.Margin.All, 3);
+        chatBubble.SetContentMarginOverride(StyleBox.Margin.Horizontal, 3);
+
+        var foldableChatPanel = new StyleBoxFlat(highlightedPanel);
+        foldableChatPanel.SetContentMarginOverride(StyleBox.Margin.All, 3);
 
         #endregion
 
@@ -1240,6 +1255,10 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Label.StylePropertyFont, sourceCode10),
 
             Element<Label>()
+                .Class(StyleClassLabelSmallest)
+                .Prop(Label.StylePropertyFont, sourceCode8),
+
+            Element<Label>()
                 .Class("StatusFieldTitle")
                 .Prop(Label.StylePropertyFontColor, GoldFortress),
 
@@ -1266,19 +1285,6 @@ public sealed class StyleFortress : StyleBase
                     new SelectorElement(typeof(Button), new[] { StyleClassButtonBig }, null, null),
                     new SelectorElement(typeof(Label), null, null, null)),
                 new[] { new StyleProperty(Label.StylePropertyFont, sourceCode16) }),
-
-            // APC and SMES power state label colors
-            Element<Label>()
-                .Class(StyleClassPowerStateNone)
-                .Prop(Label.StylePropertyFontColor, new Color(0.8f, 0.0f, 0.0f)),
-
-            Element<Label>()
-                .Class(StyleClassPowerStateLow)
-                .Prop(Label.StylePropertyFontColor, new Color(0.9f, 0.36f, 0.0f)),
-
-            Element<Label>()
-                .Class(StyleClassPowerStateGood)
-                .Prop(Label.StylePropertyFontColor, new Color(0.024f, 0.8f, 0.0f)),
 
             #region Top Menu
 
@@ -1570,15 +1576,13 @@ public sealed class StyleFortress : StyleBase
                 .Class(StyleClassTopInfoCellPanel)
                 .Prop(PanelContainer.StylePropertyPanel, topInfoPanelCell),
 
-            // StyleNano legacy stuff
+            Element<ChatMessagesBubble>()
+                .Class(ChatMessagesBubble.StyleClassChatMessagesBubble)
+                .Prop(PanelContainer.StylePropertyPanel, chatBubble),
+
             Element<PanelContainer>()
-                .Class("BackgroundOpenRight")
-                .Prop(PanelContainer.StylePropertyPanel, buttonOpenRight)
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
-            Element<PanelContainer>()
-                .Class("BackgroundOpenLeft")
-                .Prop(PanelContainer.StylePropertyPanel, buttonOpenLeft)
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
+                .Class(StyleClassFoldableChatPanel)
+                .Prop(PanelContainer.StylePropertyPanel, foldableChatPanel),
 
             #endregion
 
@@ -1826,6 +1830,28 @@ public sealed class StyleFortress : StyleBase
                 .Class(StyleClassItemStatus)
                 .Prop(nameof(RichTextLabel.LineHeightScale), 0.7f)
                 .Prop(nameof(Control.Margin), new Thickness(4, 0, 0, 2)),
+
+            // APC and SMES power state label colors
+            Element<Label>()
+                .Class(StyleClassPowerStateNone)
+                .Prop(Label.StylePropertyFontColor, new Color(0.8f, 0.0f, 0.0f)),
+
+            Element<Label>()
+                .Class(StyleClassPowerStateLow)
+                .Prop(Label.StylePropertyFontColor, new Color(0.9f, 0.36f, 0.0f)),
+
+            Element<Label>()
+                .Class(StyleClassPowerStateGood)
+                .Prop(Label.StylePropertyFontColor, new Color(0.024f, 0.8f, 0.0f)),
+
+            Element<PanelContainer>()
+                .Class("BackgroundOpenRight")
+                .Prop(PanelContainer.StylePropertyPanel, buttonOpenRight)
+                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
+            Element<PanelContainer>()
+                .Class("BackgroundOpenLeft")
+                .Prop(PanelContainer.StylePropertyPanel, buttonOpenLeft)
+                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
 
             #region PDA
 

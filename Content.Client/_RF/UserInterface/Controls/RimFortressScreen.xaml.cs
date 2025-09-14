@@ -25,7 +25,7 @@ public sealed partial class RimFortressScreen : InGameScreen
 
         SetAnchorAndMarginPreset(Hotbar, LayoutPreset.CenterLeft, margin: 10);
         SetAnchorAndMarginPreset(InfoPanel, LayoutPreset.TopLeft, margin: 10);
-        SetAnchorAndMarginPreset(Chat, LayoutPreset.TopRight, margin: 10);
+        SetAnchorAndMarginPreset(Chat, LayoutPreset.RightWide, margin: 10);
         SetAnchorAndMarginPreset(MenuBar, LayoutPreset.BottomRight, margin: 10);
 
         SetAnchorAndMarginPreset(Right, LayoutPreset.RightWide, margin: 10);
@@ -43,15 +43,6 @@ public sealed partial class RimFortressScreen : InGameScreen
         MenuBar.GuidebookButton.AddStyleClass(StyleBase.ButtonOpenBoth);
         MenuBar.AdminButton.AddStyleClass(StyleBase.ButtonOpenBoth);
         MenuBar.SandboxButton.AddStyleClass(StyleBase.ButtonOpenBoth);
-
-        Chat.OnChatResizeFinish += ChatOnResizeFinish;
-    }
-
-    private void ChatOnResizeFinish(Vector2 _)
-    {
-        var marginBottom = Chat.GetValue<float>(MarginBottomProperty);
-        var marginLeft = Chat.GetValue<float>(MarginLeftProperty);
-        OnChatResized?.Invoke(new Vector2(marginBottom, marginLeft));
     }
 
     public override void SetChatSize(Vector2 size)
