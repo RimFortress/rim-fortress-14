@@ -51,7 +51,6 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         SetSprite(ghost.Value, prototype);
 
         var msg = new ConstructionGhostSpawnRequest(
-            GetNetEntity(entity),
             GetNetCoordinates(loc),
             prototype.ID,
             dir);

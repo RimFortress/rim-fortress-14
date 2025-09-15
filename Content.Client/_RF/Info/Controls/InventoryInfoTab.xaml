@@ -1,14 +1,13 @@
 <Control
-    xmlns="https://spacestation14.io"
-    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI">
+    xmlns="https://spacestation14.io">
     <ScrollContainer>
         <BoxContainer>
-            <ui:RfHighlightedContainer>
+            <PanelContainer StyleClasses="PanelHighlighted">
                 <BoxContainer Orientation="Vertical" Margin="0 8">
                     <BoxContainer Name="HandsContainer"/>
                     <LayoutContainer Name="InventoryContainer"/>
                 </BoxContainer>
-            </ui:RfHighlightedContainer>
+            </PanelContainer>
             <BoxContainer HorizontalExpand="True"/>
         </BoxContainer>
     </ScrollContainer>

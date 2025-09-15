@@ -7,6 +7,8 @@ using Robust.Shared.Graphics;
 using Robust.Shared.Input;
 using Robust.Shared.Utility;
 
+using Content.Client._RF.Stylesheets; // RimFortress
+
 namespace Content.Client.UserInterface.Controls;
 
 public sealed class MenuButton : ContainerButton
@@ -15,11 +17,13 @@ public sealed class MenuButton : ContainerButton
     public const string StyleClassLabelTopButton = "topButtonLabel";
     public const string StyleClassRedTopButton = "topButtonLabel";
 
-    private static readonly Color ColorNormal = Color.FromHex("#7b7e9e");
-    private static readonly Color ColorRedNormal = Color.FromHex("#FEFEFE");
-    private static readonly Color ColorHovered = Color.FromHex("#9699bb");
-    private static readonly Color ColorRedHovered = Color.FromHex("#FFFFFF");
-    private static readonly Color ColorPressed = Color.FromHex("#789B8C");
+    // RimFortress Start
+    private static readonly Color ColorNormal = StyleFortress.GoldButtonColorDefault;
+    private static readonly Color ColorRedNormal = StyleFortress.Bad;
+    private static readonly Color ColorHovered = StyleFortress.GoldButtonColorHovered;
+    private static readonly Color ColorRedHovered = StyleFortress.LightBad;
+    private static readonly Color ColorPressed = StyleFortress.GoldButtonColorPressed;
+    // RimFortress Start
 
     private const float VertPad = 8f;
     private Color NormalColor => HasStyleClass(StyleClassRedTopButton) ? ColorRedNormal : ColorNormal;

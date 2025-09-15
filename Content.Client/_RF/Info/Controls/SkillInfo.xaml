@@ -1,9 +1,7 @@
 <Control
     xmlns="https://spacestation14.io"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     Margin="2">
-    <ui:RfHighlightedContainer>
+    <PanelContainer StyleClasses="PanelHighlighted">
         <BoxContainer Orientation="Vertical">
             <BoxContainer>
                 <TextureRect Name="Icon" SetSize="14 14"
@@ -12,15 +10,13 @@
                 <BoxContainer HorizontalExpand="True"/>
                 <Label Name="CurrentLevel" Margin="2 1"/>
             </BoxContainer>
-            <ui:RfHighlightedContainer>
-                <ProgressBar Name="ProgressBar" SetHeight="30" HorizontalExpand="True">
-                    <BoxContainer Margin="2 3">
-                        <Label Name="CurrentExp"/>
-                        <BoxContainer HorizontalExpand="True"/>
-                        <Label Name="MaxExp" Margin="3 0"/>
-                    </BoxContainer>
-                </ProgressBar>
-            </ui:RfHighlightedContainer>
+            <ProgressBar Name="ProgressBar" SetHeight="30" HorizontalExpand="True">
+                <BoxContainer Margin="2 3">
+                    <Label Name="CurrentExp"/>
+                    <BoxContainer HorizontalExpand="True"/>
+                    <Label Name="MaxExp" Margin="3 0"/>
+                </BoxContainer>
+            </ProgressBar>
         </BoxContainer>
-    </ui:RfHighlightedContainer>
+    </PanelContainer>
 </Control>

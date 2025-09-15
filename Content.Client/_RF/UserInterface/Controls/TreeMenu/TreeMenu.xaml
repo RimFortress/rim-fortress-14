@@ -1,0 +1,8 @@
+<Control
+    xmlns="https://spacestation14.io"
+    xmlns:treeMenu="clr-namespace:Content.Client._RF.UserInterface.Controls.TreeMenu"
+    MouseFilter="Pass">
+    <BoxContainer Name="PanelContainer">
+        <treeMenu:TreeMenuPanel Name="RootPanel" Closable="False"/>
+    </BoxContainer>
+</Control>

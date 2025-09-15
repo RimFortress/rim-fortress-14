@@ -1,0 +1,9 @@
+<Control
+    xmlns="https://spacestation14.io">
+    <BoxContainer Name="Container">
+        <PanelContainer StyleClasses="PanelHighlighted">
+            <BoxContainer Name="Content" Access="Public" SeparationOverride="5"/>
+        </PanelContainer>
+        <BoxContainer MinHeight="3" MinWidth="3"/>
+    </BoxContainer>
+</Control>

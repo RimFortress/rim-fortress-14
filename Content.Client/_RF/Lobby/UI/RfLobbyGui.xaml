@@ -4,12 +4,13 @@
     xmlns:maths="clr-namespace:Robust.Shared.Maths;assembly=Robust.Shared.Maths"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:vote="clr-namespace:Content.Client.Voting.UI"
-    xmlns:style="clr-namespace:Content.Client.Stylesheets"
+    xmlns:style="clr-namespace:Content.Client._RF.Stylesheets"
     xmlns:lobbyUi="clr-namespace:Content.Client._RF.Lobby.UI"
     xmlns:info="clr-namespace:Content.Client.Info"
     xmlns:widgets="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
     xmlns:ui="clr-namespace:Content.Client.Lobby.UI"
-    xmlns:customControls="clr-namespace:Content.Client.Administration.UI.CustomControls">
+    xmlns:customControls="clr-namespace:Content.Client.Administration.UI.CustomControls"
+    xmlns:controls1="clr-namespace:Content.Client._RF.UserInterface.Controls">
     <!-- Background -->
     <TextureRect Access="Public" VerticalExpand="True" HorizontalExpand="True" Name="Background"
                  Stretch="KeepAspectCovered" />
@@ -26,7 +27,7 @@
                             <BoxContainer Orientation="Vertical" HorizontalAlignment="Center" MaxWidth="800">
                                 <info:LinkBanner Name="LinkBanner" VerticalExpand="false" HorizontalAlignment="Center"
                                                  Margin="3 3 3 3" />
-                                <controls:StripeBack>
+                                <controls1:FancyBack>
                                     <BoxContainer Orientation="Horizontal" SeparationOverride="6" Margin="3 3 3 3">
                                         <customControls:UICommandButton Command="observe" Name="ObserveButton" Access="Public"
                                                             Text="{Loc 'ui-lobby-observe-button'}"
@@ -35,13 +36,13 @@
                                         <Label Name="StartTime"
                                                Access="Public"
                                                Align="Left"
-                                               FontColorOverride="{x:Static maths:Color.DarkGray}"
+                                               FontColorOverride="{x:Static style:StyleFortress.GraySilver}"
                                                StyleClasses="LabelBig" HorizontalExpand="True" />
                                         <Button Name="ReadyButton" Access="Public" ToggleMode="True"
                                                 Text="{Loc 'ui-lobby-ready-up-button'}"
                                                 StyleClasses="ButtonBig" MinWidth="137" />
                                     </BoxContainer>
-                                </controls:StripeBack>
+                                </controls1:FancyBack>
                             </BoxContainer>
                         </PanelContainer>
                         <!-- Voting Popups -->
@@ -64,45 +65,65 @@
                 <!-- Equipment editor state -->
                 <Control Access="Public" Visible="False" Name="EquipmentEditorState" VerticalExpand="True"/>
             </BoxContainer>
+
             <!-- Right Panel -->
-            <PanelContainer Name="RightSide" Access="Public" StyleClasses="AngleRect" HorizontalAlignment="Right" VerticalExpand="True"
+            <PanelContainer Name="RightSide" Access="Public"
+                            StyleClasses="AngleRectTransparent"
+                            HorizontalAlignment="Right" VerticalExpand="True"
                             VerticalAlignment="Stretch">
                 <BoxContainer Orientation="Vertical" HorizontalExpand="True">
                     <!-- Top row -->
-                    <controls:StripeBack>
+                    <controls1:FancyBack>
                         <BoxContainer Orientation="Horizontal" MinSize="0 40" Name="HeaderContainer" Access="Public"
                                       SeparationOverride="4">
                             <Label Name="ServerName" Access="Public" StyleClasses="LabelHeadingBigger" VAlign="Center"
                                    HorizontalExpand="True" HorizontalAlignment="Center" />
                         </BoxContainer>
-                    </controls:StripeBack>
-                    <!-- Gold line -->
-                    <controls:HLine Color="{x:Static style:StyleNano.NanoGold}" Thickness="2" />
+                    </controls1:FancyBack>
+
+                    <PanelContainer Margin="0 10" StyleClasses="LowDivider"/>
+
                     <controls:HSpacer Spacing="10" />
-                    <!-- Voting & misc button bar -->
-                    <BoxContainer Orientation="Horizontal" MinSize="0 40" HorizontalAlignment="Right">
-                        <Button Name="AHelpButton" Access="Public" Text="{Loc 'ui-lobby-ahelp-button'}"
-                                StyleClasses="ButtonBig" />
-                        <vote:VoteCallMenuButton Name="CallVoteButton" StyleClasses="ButtonBig" />
-                        <Button Name="OptionsButton" Access="Public" StyleClasses="ButtonBig"
-                                Text="{Loc 'ui-lobby-options-button'}" />
-                        <Button Name="LeaveButton" Access="Public" StyleClasses="ButtonBig"
-                                Text="{Loc 'ui-lobby-leave-button'}" />
+
+                    <BoxContainer>
+                        <!-- Server info -->
+                        <PanelContainer StyleClasses="PanelHighlighted"
+                                        HorizontalExpand="True" Margin="10 0">
+                            <BoxContainer Orientation="Vertical">
+                                <controls:NanoHeading Text="{Loc 'ui-lobby-server-info-block'}"/>
+
+                                <info:ServerInfo Name="ServerInfo" Access="Public" MaxWidth="400"
+                                                 Margin="3" HorizontalAlignment="Left"/>
+
+                                <Label Name="StationTime" Access="Public" FontColorOverride="{x:Static maths:Color.LightGray}"
+                                       Margin="3" HorizontalAlignment="Left"/>
+                            </BoxContainer>
+                        </PanelContainer>
+
+                        <PanelContainer StyleClasses="HighDivider"/>
+
+                        <!-- Voting & misc buttons -->
+                        <PanelContainer StyleClasses="PanelHighlighted"
+                                        Margin="10 0" VerticalExpand="True">
+                            <BoxContainer Orientation="Vertical">
+                                <Button Name="AHelpButton" Access="Public" Text="{Loc 'ui-lobby-ahelp-button'}"
+                                        StyleClasses="ButtonBig"/>
+                                <vote:VoteCallMenuButton Name="CallVoteButton" StyleClasses="ButtonBig"/>
+
+                                <BoxContainer VerticalExpand="True"/>
+
+                                <Button Name="OptionsButton" Access="Public" StyleClasses="ButtonBig"
+                                        Text="{Loc 'ui-lobby-options-button'}"/>
+                                <Button Name="LeaveButton" Access="Public" StyleClasses="ButtonBig"
+                                        Text="{Loc 'ui-lobby-leave-button'}"/>
+                            </BoxContainer>
+                        </PanelContainer>
                     </BoxContainer>
-                    <controls:HSpacer Spacing="10" />
-                    <!-- Server info -->
-                    <controls:NanoHeading Text="{Loc 'ui-lobby-server-info-block'}" />
-                    <info:ServerInfo Name="ServerInfo" Access="Public" MinSize="0 30" VerticalExpand="false"
-                                     Margin="3 3 3 3" MaxWidth="400" HorizontalAlignment="Left" />
-                    <Label Name="StationTime" Access="Public" FontColorOverride="{x:Static maths:Color.LightGray}"
-                           Margin="3 3 3 3" HorizontalAlignment="Left" />
-                    <controls:HSpacer Spacing="5" />
-                    <lobbyUi:RfLobbyCharacterPreviewPanel Name="CharacterPreview" Access="Public"/>
-                    <controls:HSpacer Spacing="5" />
-                    <BoxContainer MinHeight="10" />
-                    <!-- Gold line -->
-                    <controls:HLine Color="{x:Static style:StyleNano.NanoGold}" Thickness="2" Access="Public" />
-                    <controls:HSpacer Spacing="10" />
+
+                    <lobbyUi:RfLobbyCharacterPreviewPanel Name="CharacterPreview" Access="Public" Margin="10"/>
+
+                    <PanelContainer Margin="0 10" StyleClasses="LowDivider"/>
+
                     <widgets:ChatBox Name="Chat" Access="Public" VerticalExpand="True" Margin="3 3 3 3" MinHeight="50" />
                 </BoxContainer>
             </PanelContainer>

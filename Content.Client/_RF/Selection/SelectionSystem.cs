@@ -86,7 +86,15 @@ public sealed class SelectionSystem : EntitySystem
     /// </summary>
     public SelectionMode Mode { get; private set; } = SelectionMode.Entity;
 
+    /// <summary>
+    /// Invoked each time the selection mode settings are changed
+    /// </summary>
     public event Action? OnUpdateSelection;
+
+    /// <summary>
+    /// Called every time entities/tiles in the selection are changed
+    /// </summary>
+    public event Action? OnSelectedChanged;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -240,11 +248,13 @@ public sealed class SelectionSystem : EntitySystem
     public void Select(EntityUid uid)
     {
         Selected.Add(uid);
+        OnSelectedChanged?.Invoke();
     }
 
     public void DeSelect(EntityUid uid)
     {
         Selected.Remove(uid);
+        OnSelectedChanged?.Invoke();
     }
 
     public override void Update(float frameTime)
@@ -266,10 +276,22 @@ public sealed class SelectionSystem : EntitySystem
         switch (Mode)
         {
             case SelectionMode.Entity:
-                Selected = EntitiesInSelect();
+                var selected = EntitiesInSelect();
+
+                if (selected == Selected)
+                    break;
+
+                Selected = selected;
+                OnSelectedChanged?.Invoke();
                 break;
             case SelectionMode.Tile:
-                SelectedTiles = TilesInSelect();
+                var tiles = TilesInSelect();
+
+                if (tiles == SelectedTiles)
+                    break;
+
+                SelectedTiles = tiles;
+                OnSelectedChanged?.Invoke();
                 break;
         }
     }

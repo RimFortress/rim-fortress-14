@@ -48,11 +48,11 @@ public sealed partial class RfLobbyCharacterPreviewPanel : Control
                 VerticalExpand = true,
             };
 
-            var label = new Label
+            var label = new RichTextLabel
             {
                 Text = name,
-                ClipText = true,
-                Align = Label.AlignMode.Center,
+                MaxWidth = 112,
+                VerticalAlignment = VAlignment.Bottom,
             };
 
             var spriteView = new SpriteView
@@ -61,6 +61,7 @@ public sealed partial class RfLobbyCharacterPreviewPanel : Control
                 Scale = new Vector2(4f, 4f),
                 MaxSize = new Vector2(112, 112),
                 Stretch = SpriteView.StretchMode.Fill,
+                VerticalAlignment = VAlignment.Top,
                 VerticalExpand = true,
             };
 

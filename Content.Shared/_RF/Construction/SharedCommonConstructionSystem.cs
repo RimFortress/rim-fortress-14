@@ -88,12 +88,10 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
 
 [Serializable, NetSerializable]
 public sealed class ConstructionGhostSpawnRequest(
-    NetEntity user,
     NetCoordinates coordinates,
     ProtoId<ConstructionPrototype> protoId,
     Direction direction) : EntityEventArgs
 {
-    public NetEntity User = user;
     public NetCoordinates Coordinates = coordinates;
     public ProtoId<ConstructionPrototype> ProtoId = protoId;
     public Direction Direction = direction;

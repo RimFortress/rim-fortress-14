@@ -44,6 +44,9 @@ public sealed partial class SkillsSystem : SharedSkillsSystem
         SkillInteractionComponent component,
         ConstructionChangeEntityEvent args)
     {
+        if (!HasComp<SkillInteractionComponent>(args.New))
+            return;
+
         var newComp = AddComp<SkillInteractionComponent>(args.New);
         _serialization.CopyTo(component, ref newComp, notNullableOverride: true);
     }

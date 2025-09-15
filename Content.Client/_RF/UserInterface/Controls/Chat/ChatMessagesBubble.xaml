@@ -1,0 +1,8 @@
+<controls:ChatMessagesBubble
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls.Chat"
+    StyleClasses="ChatMessagesBubble" MouseFilter="Pass"
+    ToolTip="{Loc 'chat-messages-bubble-tooltip'}"
+    TooltipDelay="0" TrackingTooltip="True">
+    <Label Name="Label" StyleClasses="LabelSmallest"/>
+</controls:ChatMessagesBubble>

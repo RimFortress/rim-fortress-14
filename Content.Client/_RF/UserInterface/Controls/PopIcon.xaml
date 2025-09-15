@@ -1,24 +1,7 @@
-<Control
+<Button
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
-    xmlns:graphics="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
-    SetSize="120 120"
-    Margin="0 0 0 15">
-    <controls:Placeholder Name="Border"/>
-    <PanelContainer Name="Background" Margin="14 14 11 11"
-                    HorizontalExpand="True" VerticalExpand="True">
-        <PanelContainer.PanelOverride>
-            <graphics:StyleBoxFlat BackgroundColor="#1E1E22AA" />
-        </PanelContainer.PanelOverride>
-    </PanelContainer>
-    <TextureButton Name="Button" Access="Protected"
-                   MouseFilter="Pass" ToggleMode="True"
-                   HorizontalExpand="True" VerticalExpand="True">
-        <SpriteView Name="Icon" Access="Public"
-                    SetSize="80 80" Stretch="Fill" Margin="0 10 0 0"
-                    VerticalAlignment="Top" HorizontalAlignment="Center"/>
-        <Label Name="Name" Access="Protected" SetWidth="80"
-               HorizontalExpand="True" VerticalAlignment="Bottom"
-               Align="Center" VAlign="Bottom" ClipText="True"/>
-    </TextureButton>
-</Control>
+    StyleClasses="ButtonSquare" ToggleMode="True"
+    TooltipDelay="0" TrackingTooltip="True"
+    Margin="5 0" SetSize="80 80">
+    <SpriteView Name="Icon" Stretch="Fill"/>
+</Button>

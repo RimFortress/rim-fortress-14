@@ -1,5 +1,5 @@
-using System.Linq;
 using Content.Client._Rf.Lobby;
+using Content.Client._RF.Skills;
 using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.Preferences;
@@ -17,7 +17,8 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class RfCharacterPickerButton : ContainerButton
 {
-    private IEntityManager _entManager;
+    [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
 
     private EntityUid _previewDummy;
 
@@ -26,15 +27,11 @@ public sealed partial class RfCharacterPickerButton : ContainerButton
     /// </summary>
     public event Action? OnDeletePressed;
 
-    public RfCharacterPickerButton(
-        IEntityManager entityManager,
-        IPrototypeManager prototypeManager,
-        ButtonGroup group,
-        ICharacterProfile profile,
-        bool isSelected)
+    public RfCharacterPickerButton(ButtonGroup group, ICharacterProfile profile, bool isSelected)
     {
+        IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
-        _entManager = entityManager;
+
         AddStyleClass(StyleClassButton);
         ToggleMode = true;
         Group = group;
@@ -42,19 +39,17 @@ public sealed partial class RfCharacterPickerButton : ContainerButton
 
         if (profile is not HumanoidCharacterProfile humanoid)
         {
-            _previewDummy = entityManager.SpawnEntity(prototypeManager.Index<SpeciesPrototype>(SharedHumanoidAppearanceSystem.DefaultSpecies).DollPrototype, MapCoordinates.Nullspace);
+            _previewDummy = _entManager.SpawnEntity(
+                _prototype.Index<SpeciesPrototype>(SharedHumanoidAppearanceSystem.DefaultSpecies).DollPrototype,
+                MapCoordinates.Nullspace);
         }
         else
         {
-            _previewDummy = UserInterfaceManager.GetUIController<RfLobbyUIController>()
+            _previewDummy = UserInterfaceManager
+                .GetUIController<RfLobbyUIController>()
                 .LoadProfileEntity(humanoid, null, true);
 
-            var highPriorityJob = humanoid.JobPriorities.SingleOrDefault(p => p.Value == JobPriority.High).Key;
-            if (highPriorityJob != default)
-            {
-                var jobName = prototypeManager.Index(highPriorityJob).LocalizedName;
-                description = $"{description}\n{jobName}";
-            }
+            description = $"{description}, \n{_entManager.System<SkillsSystem>().SkillProfession(humanoid.SkillsPreferences)}";
         }
 
         Pressed = isSelected;
@@ -63,17 +58,10 @@ public sealed partial class RfCharacterPickerButton : ContainerButton
         View.SetEntity(_previewDummy);
         DescriptionLabel.Text = description;
 
-        ConfirmDeleteButton.OnPressed += _ =>
-        {
-            Parent?.RemoveChild(this);
-            Parent?.RemoveChild(ConfirmDeleteButton);
-            OnDeletePressed?.Invoke();
-        };
-
         DeleteButton.OnPressed += _ =>
         {
-            DeleteButton.Visible = false;
-            ConfirmDeleteButton.Visible = true;
+            Parent?.RemoveChild(this);
+            OnDeletePressed?.Invoke();
         };
     }
 

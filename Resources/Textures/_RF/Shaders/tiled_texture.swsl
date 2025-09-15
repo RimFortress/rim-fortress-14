@@ -1,0 +1,8 @@
+uniform highp vec2 area_size;
+
+void fragment() {
+    highp vec2 pixel_uv = UV * (TEXTURE_PIXEL_SIZE * area_size);
+    highp vec2 tiled_uv = mod(pixel_uv, 1.0);
+
+    COLOR = texture2D(TEXTURE, tiled_uv);
+}
