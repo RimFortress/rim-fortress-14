@@ -29,13 +29,14 @@ public sealed class RimFortressState : GameplayStateBase
         _loadController.LoadScreen();
 
         Screen.GetWidget<ActionsHotbarWidget>()?.EnsureSetup();
+        Screen.GetWidget<PopList>()?.EnsureSetup();
     }
 
     protected override void Shutdown()
     {
         CommandBinds.Unregister<RimFortressState>();
 
-        Screen.PopList.Clear();
+        Screen.GetWidget<PopList>()?.Clear();
 
         UserInterfaceManager.ClearWindows();
         _loadController.UnloadScreen();

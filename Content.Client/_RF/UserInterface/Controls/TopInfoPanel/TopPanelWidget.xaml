@@ -17,7 +17,7 @@
 
             <PanelContainer StyleClasses="LowDivider"/>
 
-            <controls:InfoPanelCell Name="Temperature"
+            <controls:InfoPanelCell Name="Temperature" ToolTip="{Loc 'top-info-panel-temperature-tooltip'}"
                                     TexturePath="/Textures/_RF/Interface/temperature-half-solid.svg.192dpi.png"/>
         </BoxContainer>
     </PanelContainer>

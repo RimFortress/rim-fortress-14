@@ -1,13 +1,5 @@
 <rf:PopList
     xmlns="https://spacestation14.io"
-    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
-    VerticalExpand="True" HorizontalExpand="True"
-    MinWidth="150" MinHeight="700">
-    <BoxContainer VerticalExpand="True" HorizontalExpand="True" Orientation="Vertical">
-        <ScrollContainer Margin="8" VerticalExpand="True" HorizontalExpand="True"
-                         HScrollEnabled="False" ReserveScrollbarSpace="True">
-            <BoxContainer Name="Icons" Access="Protected" Orientation="Vertical"
-                          VerticalExpand="True" HorizontalExpand="True"/>
-        </ScrollContainer>
-    </BoxContainer>
+    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls">
+    <GridContainer Name="Icons" Access="Protected" Columns="8"/>
 </rf:PopList>

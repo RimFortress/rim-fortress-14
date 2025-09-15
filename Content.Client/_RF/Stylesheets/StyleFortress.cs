@@ -164,6 +164,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
     public const string StyleClassButtonColorGold = "ButtonColorGold";
+    public const string StyleClassButtonTransparent = "ButtonTransparent";
     public const string StyleClassButtonBig = "ButtonBig";
 
     // Bwoink
@@ -722,6 +723,27 @@ public sealed class StyleFortress : StyleBase
                 .Class(ContainerButton.StyleClassButton)
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, ButtonColorDisabled),
+
+            // Colors for the transparent buttons.
+            Element<ContainerButton>()
+                .Class(StyleClassButtonTransparent)
+                .Pseudo(ContainerButton.StylePseudoClassNormal)
+                .Prop(Control.StylePropertyModulateSelf, ButtonColorDefault.WithAlpha(200)),
+
+            Element<ContainerButton>()
+                .Class(StyleClassButtonTransparent)
+                .Pseudo(ContainerButton.StylePseudoClassHover)
+                .Prop(Control.StylePropertyModulateSelf, ButtonColorHovered.WithAlpha(200)),
+
+            Element<ContainerButton>()
+                .Class(StyleClassButtonTransparent)
+                .Pseudo(ContainerButton.StylePseudoClassPressed)
+                .Prop(Control.StylePropertyModulateSelf, ButtonColorPressed.WithAlpha(200)),
+
+            Element<ContainerButton>()
+                .Class(StyleClassButtonTransparent)
+                .Pseudo(ContainerButton.StylePseudoClassDisabled)
+                .Prop(Control.StylePropertyModulateSelf, ButtonColorDisabled.WithAlpha(200)),
 
             // Colors for the caution buttons.
             Element<ContainerButton>()
