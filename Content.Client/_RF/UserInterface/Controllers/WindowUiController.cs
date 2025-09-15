@@ -1,4 +1,7 @@
+using System.Numerics;
+using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
+using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.CustomControls;
 
 namespace Content.Client._RF.UserInterface.Controllers;

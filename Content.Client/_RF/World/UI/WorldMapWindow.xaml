@@ -14,7 +14,6 @@
                                        SetHeight="32" HorizontalAlignment="Right"/>
             </BoxContainer>
         </controls2:FancyBack>
-        <controls:WorldMapControl Name="WorldMap" Access="Public" SetSize="1210 700"
-                                  VerticalExpand="True" HorizontalExpand="True"/>
+        <controls:WorldMapControl Name="WorldMap" Access="Public"/>
     </BoxContainer>
 </controls1:FancyWindow>

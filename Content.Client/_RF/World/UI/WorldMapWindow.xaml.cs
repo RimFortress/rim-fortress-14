@@ -27,7 +27,8 @@ public sealed partial class WorldMapWindow : FancyWindow
                 world.SetPlayerFactionColor(uid, color);
         };
 
-        OnResized += () => WorldMap.SetSize = Size - new Vector2(0, Header.Height + 30);
+        OnResized += Resize;
+        Resize();
     }
 
     public void Set(EntityUid? mapUid)
@@ -43,6 +44,17 @@ public sealed partial class WorldMapWindow : FancyWindow
     {
         base.FrameUpdate(args);
         Coordinates.Text = $"{(Vector2i) WorldMap.MousePos()}";
+    }
+
+    protected override void ExitedTree()
+    {
+        OnResized -= Resize;
+        base.ExitedTree();
+    }
+
+    private void Resize()
+    {
+        WorldMap.SetSize = Size - new Vector2(0, 74);
     }
 }
 
