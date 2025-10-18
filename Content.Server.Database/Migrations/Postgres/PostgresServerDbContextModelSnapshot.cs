@@ -284,7 +284,6 @@ namespace Content.Server.Database.Migrations.Postgres
                         .HasColumnName("expiration_time");
 
                     b.Property<DateTime>("LastEditedAt")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_edited_at");
 
@@ -419,7 +418,6 @@ namespace Content.Server.Database.Migrations.Postgres
                         .HasColumnName("expiration_time");
 
                     b.Property<DateTime>("LastEditedAt")
-                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_edited_at");
 
@@ -818,6 +816,11 @@ namespace Content.Server.Database.Migrations.Postgres
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("admin_ooc_color");
+
+                    b.PrimitiveCollection<string[]>("ConstructionFavorites")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("construction_favorites");
 
                     b.Property<int>("SelectedCharacterSlot")
                         .HasColumnType("integer")

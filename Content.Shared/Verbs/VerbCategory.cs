@@ -86,6 +86,9 @@ namespace Content.Shared.Verbs
 
         public static readonly VerbCategory PowerLevel = new("verb-categories-power-level", null);
 
+        public static readonly VerbCategory Adjust =
+            new("verb-categories-adjust", "/Textures/Interface/VerbIcons/screwdriver.png");
+
         // RimFortress Start
         public static readonly VerbCategory NpcTask =
             new("verb-categories-npc-task", "/Textures/_RF/Interface/VerbIcons/list-check-solid.svg.192dpi.png");
