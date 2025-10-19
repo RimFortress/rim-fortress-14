@@ -536,7 +536,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 if (TryComp(tile.GridUid, out MapGridComponent? grid)
                     && _map.TryGetTileRef(tile.GridUid, grid, offsetCoords, out var tileRef)
                     && !_turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
-                    && !tileRef.IsSpace())
+                    && !_turf.IsSpace(tileRef))
                     return tileRef;
             }
         }

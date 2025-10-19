@@ -19,6 +19,9 @@
         Slash: 6
   - type: Item
     sprite: Objects/Tools/Hydroponics/hoe.rsi
+  - type: PhysicalComposition
+    materialComposition:
+      Steel: 100
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
@@ -44,6 +47,9 @@
   - type: Item
     sprite: Objects/Tools/Hydroponics/clippers.rsi
     storedRotation: -90
+  - type: PhysicalComposition
+    materialComposition:
+      Steel: 100
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
@@ -72,6 +78,10 @@
     - back
   - type: StaticPrice
     price: 40
+  - type: PhysicalComposition
+    materialComposition:
+      Steel: 100
+      Plastic: 100
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
@@ -99,6 +109,9 @@
         Piercing: 2
   - type: Item
     sprite: Objects/Tools/Hydroponics/hatchet.rsi
+  - type: PhysicalComposition
+    materialComposition:
+      Steel: 100
   # RimFortress Start
   - type: StockpileCategory
     category: Tool
@@ -128,6 +141,9 @@
     sprite: Objects/Tools/Hydroponics/spade.rsi
   - type: Shovel
     speedModifier: 0.75 # slower at digging than a full-sized shovel
+  - type: PhysicalComposition
+    materialComposition:
+      Steel: 100
   # RimFortress Start
   - type: StockpileCategory
     category: Tool

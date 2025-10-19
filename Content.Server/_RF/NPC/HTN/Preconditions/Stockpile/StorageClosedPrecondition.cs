@@ -1,5 +1,5 @@
 using Content.Server.NPC;
-using Content.Server.Storage.Components;
+using Content.Shared.Storage.Components;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Stockpile;
 

@@ -1,6 +1,5 @@
 using Content.Server.NPC;
 using Content.Server.Storage.EntitySystems;
-using Content.Shared.Hands.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Storage;
 
@@ -24,8 +23,7 @@ public sealed partial class CanInsertPrecondition : InvertiblePrecondition
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
         if (!blackboard.TryGetValue<EntityUid>(NPCBlackboard.Owner, out var owner, EntityManager)
-            || !blackboard.TryGetValue<Hand>(NPCBlackboard.ActiveHand, out var hand, EntityManager)
-            || hand.HeldEntity is not { } heldEntity)
+            || !blackboard.TryGetValue<EntityUid>(NPCBlackboard.ActiveHandEntity, out var heldEntity, EntityManager))
             return false;
 
         foreach (var entity in _inventory.GetHandOrInventoryEntities(owner))

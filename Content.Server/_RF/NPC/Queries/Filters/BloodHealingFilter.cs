@@ -1,5 +1,5 @@
-using Content.Server.Medical.Components;
 using Content.Server.NPC;
+using Content.Shared.Medical.Healing;
 
 namespace Content.Server._RF.NPC.Queries.Filters;
 

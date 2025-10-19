@@ -1,5 +1,4 @@
 using Content.Server.NPC;
-using Content.Shared.Hands.Components;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
@@ -13,8 +12,8 @@ public sealed partial class ActiveHandEntityIsPrecondition : InvertiblePrecondit
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue(NPCBlackboard.ActiveHand, out Hand? activeHand, EntityManager)
-               && blackboard.TryGetValue(TargetKey, out EntityUid? entity, EntityManager)
-               && activeHand.HeldEntity == entity;
+        return blackboard.TryGetValue(TargetKey, out EntityUid? entity, EntityManager)
+               && blackboard.TryGetValue<EntityUid>(NPCBlackboard.ActiveHandEntity, out var heldEntity, EntityManager)
+               && heldEntity == entity;
     }
 }

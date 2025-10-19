@@ -1,9 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Content.Client.Construction;
 using Content.Shared._RF.Construction;
 using Content.Shared.Construction.Prototypes;
 using Robust.Client.GameObjects;
 using Robust.Client.Player;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Construction;
 
@@ -11,6 +15,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 {
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly SpriteSystem _sprite = default!;
 
     private readonly Dictionary<EntityCoordinates, EntityUid> _predictGhosts = new();
 
@@ -60,15 +65,41 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 
     private void SetSprite(EntityUid uid, ConstructionPrototype prototype)
     {
-        if (!TryComp(uid, out SpriteComponent? sprite))
+        if (!TryComp(uid, out SpriteComponent? sprite)
+            || !TryGetRecipePrototype(prototype, out var targetProtoId)
+            || !_prototype.TryIndex(targetProtoId, out var targetProto))
             return;
 
-        for (var i = 0; i < prototype.Layers.Count; i++)
+        if (targetProto.TryGetComponent(out IconComponent? icon, EntityManager.ComponentFactory))
         {
-            sprite.AddBlankLayer(i); // There is no way to actually check if this already exists, so we blindly insert a new one
-            sprite.LayerSetSprite(i, prototype.Layers[i]);
-            sprite.LayerSetShader(i, "unshaded");
-            sprite.LayerSetVisible(i, true);
+            _sprite.AddBlankLayer(new(uid, sprite), 0);
+            _sprite.LayerSetSprite(new(uid, sprite), 0, icon.Icon);
+            sprite.LayerSetShader(0, "unshaded");
+            _sprite.LayerSetVisible(new(uid, sprite), 0, true);
+        }
+        else if (targetProto.Components.TryGetValue("Sprite", out _))
+        {
+            var dummy = EntityManager.SpawnEntity(targetProtoId, MapCoordinates.Nullspace);
+            var targetSprite = EnsureComp<SpriteComponent>(dummy);
+            EntityManager.System<AppearanceSystem>().OnChangeData(dummy, targetSprite);
+
+            for (var i = 0; i < targetSprite.AllLayers.Count(); i++)
+            {
+                if (!targetSprite[i].Visible || !targetSprite[i].RsiState.IsValid)
+                    continue;
+
+                var rsi = targetSprite[i].Rsi ?? targetSprite.BaseRSI;
+                if (rsi is null || !rsi.TryGetState(targetSprite[i].RsiState, out var state) ||
+                    state.StateId.Name is null)
+                    continue;
+
+                _sprite.AddBlankLayer(new(uid, sprite), i);
+                _sprite.LayerSetSprite(new(uid, sprite), i, new SpriteSpecifier.Rsi(rsi.Path, state.StateId.Name));
+                sprite.LayerSetShader(i, "unshaded");
+                _sprite.LayerSetVisible(new(uid, sprite), i, true);
+            }
+
+            Del(dummy);
         }
     }
 
@@ -77,5 +108,12 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         var msg = new ConstructionGhostClearRequest(GetNetEntity(uid));
         Deleted(uid);
         RaiseNetworkEvent(msg);
+    }
+
+    public bool TryGetRecipePrototype(ProtoId<ConstructionPrototype> constructionProtoId, [NotNullWhen(true)] out EntProtoId? targetProtoId)
+    {
+        EntityManager.System<ConstructionSystem>().TryGetRecipePrototype(constructionProtoId, out var id);
+        targetProtoId = id;
+        return targetProtoId != null;
     }
 }

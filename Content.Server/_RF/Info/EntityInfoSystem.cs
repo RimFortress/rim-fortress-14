@@ -1,6 +1,6 @@
-using Content.Server.Body.Components;
 using Content.Server.Temperature.Components;
 using Content.Shared._RF.Info;
+using Content.Shared.Body.Components;
 using Content.Shared.Chemistry.EntitySystems;
 
 namespace Content.Server._RF.Info;

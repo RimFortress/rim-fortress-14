@@ -1,5 +1,4 @@
 using Content.Server.NPC;
-using Content.Shared.Hands.Components;
 using Content.Shared.Wieldable.Components;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
@@ -11,8 +10,7 @@ public sealed partial class WieldedPrecondition : InvertiblePrecondition
 {
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue<Hand>(NPCBlackboard.ActiveHand, out var hand, EntityManager)
-               && hand.HeldEntity is { } entity
+        return blackboard.TryGetValue<EntityUid>(NPCBlackboard.ActiveHandEntity, out var entity, EntityManager)
                && EntityManager.TryGetComponent(entity, out WieldableComponent? wield)
                && wield.Wielded;
     }

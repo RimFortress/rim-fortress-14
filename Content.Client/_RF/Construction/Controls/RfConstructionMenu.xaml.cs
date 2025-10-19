@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using Content.Client.Construction;
@@ -129,8 +130,10 @@ public sealed partial class RfConstructionMenu : FancyWindow
 
         foreach (var (name, prototypes) in sortedCategories)
         {
-            var textures = prototypes.First().Layers.Select(x => _sprite.Frame0(x)).ToList();
-            var button = new ConstructionButton(name, textures);
+            if (!TryGetTarget(prototypes.First(), out var target))
+                continue;
+
+            var button = new ConstructionButton(name, target);
 
             button.OnPressed += _ =>
             {
@@ -159,7 +162,8 @@ public sealed partial class RfConstructionMenu : FancyWindow
         foreach (var prototype in prototypes)
         {
             if (!string.IsNullOrEmpty(Search.Text)
-                && !prototype.Name.Contains(Search.Text))
+                && (prototype.SetName != null && !Loc.GetString(prototype.SetName).Contains(Search.Text)
+                    || prototype.Name != null && !prototype.Name.Contains(Search.Text)))
                 continue;
 
             var button = new ConstructionButton(prototype);
@@ -182,10 +186,10 @@ public sealed partial class RfConstructionMenu : FancyWindow
 
     private void BuildMetadata()
     {
-        if (_selectedPrototype == null)
+        if (_selectedPrototype == null || !TryGetTarget(_selectedPrototype, out var target))
             return;
 
-        MetaTexture.Textures = _selectedPrototype.Layers.Select(x => _sprite.Frame0(x)).ToList();
+        MetaTexture.SetPrototype(target);
         MetaName.Text = _selectedPrototype.Name;
         MetaDescription.Text = _selectedPrototype.Description;
         StepList.Clear();
@@ -212,5 +216,13 @@ public sealed partial class RfConstructionMenu : FancyWindow
             var icon = entry.Icon != null ? _sprite.Frame0(entry.Icon) : Texture.Transparent;
             StepList.AddItem(text, icon, false);
         }
+    }
+
+    private bool TryGetTarget(ConstructionPrototype proto, [NotNullWhen(true)] out EntityPrototype? target)
+    {
+        target = null;
+
+        return _construction.TryGetRecipePrototype(proto.ID, out var recipe)
+               && _prototype.TryIndex(recipe, out target);
     }
 }

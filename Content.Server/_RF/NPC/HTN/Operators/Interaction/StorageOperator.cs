@@ -1,9 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Server.Hands.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Server.Storage.EntitySystems;
-using Content.Shared.Hands.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Storage;
 
@@ -17,19 +17,20 @@ public sealed partial class StorageOperator : HTNOperator
     [Dependency] private readonly IEntityManager _entManager = default!;
     private InventorySystem _inventory = default!;
     private StorageSystem _storage = default!;
+    private HandsSystem _hands = default!;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
         _inventory = sysManager.GetEntitySystem<InventorySystem>();
         _storage = sysManager.GetEntitySystem<StorageSystem>();
+        _hands = sysManager.GetEntitySystem<HandsSystem>();
     }
 
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
     {
         if (!blackboard.TryGetValue<EntityUid>(NPCBlackboard.Owner, out var owner, _entManager)
-            || !blackboard.TryGetValue<Hand>(NPCBlackboard.ActiveHand, out var hand, _entManager)
-            || hand.HeldEntity is not { } heldEntity)
+            || !_hands.TryGetActiveItem(owner, out var heldEntity))
             return (false, null);
 
         foreach (var entity in _inventory.GetHandOrInventoryEntities(owner))
@@ -37,7 +38,7 @@ public sealed partial class StorageOperator : HTNOperator
             if (!_entManager.TryGetComponent(entity, out StorageComponent? storage))
                 continue;
 
-            if (_storage.Insert(entity, heldEntity, out _, storageComp: storage))
+            if (_storage.Insert(entity, heldEntity.Value, out _, storageComp: storage))
                 return (true, new() { {NPCBlackboard.ActiveHandFree, true} });
         }
 

@@ -28,6 +28,7 @@ public sealed class WorldMapControl : MapGridControl
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IResourceCache _cache = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private readonly TurfSystem _turf = default!;
 
     private const byte ChunkSize = SharedBiomeSystem.ChunkSize;
     private const float UpdateTime = 2.0f;
@@ -182,7 +183,7 @@ public sealed class WorldMapControl : MapGridControl
                 for (var y = 0; y < ChunkSize; y++)
                 {
                     var indices = new Vector2i(x + chunk.X, y + chunk.Y);
-                    var color = map.GetTileRef(ent, indices).GetContentTileDefinition().NavMapColor;
+                    var color = _turf.GetContentTileDefinition(map.GetTileRef(ent, indices)).NavMapColor;
 
                     _tiles[indices] = color;
 
@@ -199,7 +200,7 @@ public sealed class WorldMapControl : MapGridControl
                 for (var y = 0; y < ChunkSize; y++)
                 {
                     var indices = new Vector2i(x + chunk.X, y + chunk.Y);
-                    var color = map.GetTileRef(fawEnt, indices).GetContentTileDefinition().NavMapColor;
+                    var color = _turf.GetContentTileDefinition(map.GetTileRef(fawEnt, indices)).NavMapColor;
 
                     _tiles[indices] = color;
 

@@ -9,6 +9,10 @@
   - Revolutionary
   - AllHostile
   - Wizard
+  # RimFortress Start
+  - RimFortress
+  - Raiders
+  # RimFortress End
 
 - type: npcFaction
   id: NanoTrasen
@@ -21,6 +25,7 @@
   - Dragon
   - AllHostile
   - Wizard
+  - Xenoborg
 
 - type: npcFaction
   id: Mouse
@@ -52,9 +57,15 @@
   - PetsNT
   - Zombie
   - Revolutionary
+  - Dragon
+  - Xeno
   - AllHostile
   - Wizard
-  - Dragon
+  - Xenoborg
+  # RimFortress Start
+  - RimFortress
+  - Raiders
+  # RimFortress End
 
 - type: npcFaction
   id: SimpleNeutral
@@ -70,6 +81,11 @@
   - Dragon
   - AllHostile
   - Wizard
+  - Xenoborg
+  # RimFortress Start
+  - RimFortress
+  - Raiders
+  # RimFortress End
 
 - type: npcFaction
   id: Xeno
@@ -83,6 +99,11 @@
   - AllHostile
   - Wizard
   - Dragon
+  - Xenoborg
+  # RimFortress Start
+  - RimFortress
+  - Raiders
+  # RimFortress End
 
 - type: npcFaction
   id: Zombie
@@ -97,6 +118,11 @@
   - AllHostile
   - Wizard
   - Dragon
+  - Xenoborg
+  # RimFortress Start
+  - RimFortress
+  - Raiders
+  # RimFortress End
 
 - type: npcFaction
   id: Revolutionary
@@ -107,6 +133,7 @@
   - Dragon
   - AllHostile
   - Wizard
+  - Xenoborg
 
 - type: npcFaction
   id: AllHostile
@@ -123,6 +150,7 @@
   - Zombie
   - Revolutionary
   - Wizard
+  - Xenoborg
   # RimFortress Start
   - RimFortress
   - Raiders
@@ -142,4 +170,21 @@
   - Xeno
   - Zombie
   - Revolutionary
+  - AllHostile
+  - Xenoborg
+
+- type: npcFaction
+  id: Xenoborg
+  hostile:
+  # they have brains
+  - NanoTrasen
+  - Syndicate
+  - Zombie
+  - Revolutionary
+  - Wizard
+
+  - Xeno # rivalry
+
+  # cause they are hostile to them
+  - SimpleHostile
   - AllHostile

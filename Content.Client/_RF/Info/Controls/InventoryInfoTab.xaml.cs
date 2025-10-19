@@ -2,6 +2,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Client.Cuffs;
 using Content.Client.Examine;
+using Content.Client.Hands.Systems;
 using Content.Client.Inventory;
 using Content.Client.Strip;
 using Content.Client.UserInterface.Controls;
@@ -34,6 +35,7 @@ public sealed partial class InventoryInfoTab : Control
     private SharedCuffableSystem _cuffable = default!;
     private StrippableSystem _strippable = default!;
     private ExamineSystem _examine = default!;
+    private HandsSystem _hands = default!;
 
     private readonly EntityUid _virtualHiddenEntity;
 
@@ -81,30 +83,32 @@ public sealed partial class InventoryInfoTab : Control
 
         if (_entity.TryGetComponent<HandsComponent>(uid, out var handsComp) && handsComp.CanBeStripped)
         {
+            var ent = new Entity<HandsComponent>(uid, handsComp);
+
             // good ol hands shit code. there is a GuiHands comparer that does the same thing... but these are hands
             // and not gui hands... which are different...
-            foreach (var hand in handsComp.Hands.Values)
+            foreach (var (id, hand) in handsComp.Hands)
             {
                 if (hand.Location != HandLocation.Right)
                     continue;
 
-                AddHandButton(hand);
+                AddHandButton(ent, id, hand);
             }
 
-            foreach (var hand in handsComp.Hands.Values)
+            foreach (var (id, hand) in handsComp.Hands)
             {
                 if (hand.Location != HandLocation.Middle)
                     continue;
 
-                AddHandButton(hand);
+                AddHandButton(ent, id, hand);
             }
 
-            foreach (var hand in handsComp.Hands.Values)
+            foreach (var (id, hand) in handsComp.Hands)
             {
                 if (hand.Location != HandLocation.Left)
                     continue;
 
-                AddHandButton(hand);
+                AddHandButton(ent, id, hand);
             }
         }
     }
@@ -118,6 +122,7 @@ public sealed partial class InventoryInfoTab : Control
         _strippable = _entity.System<StrippableSystem>();
         _cuffable = _entity.System<CuffableSystem>();
         _examine = _entity.System<ExamineSystem>();
+        _hands = _entity.System<HandsSystem>();
 
         _strippable.OnUiNeedsUpdate += UpdateInfo;
 
@@ -159,20 +164,21 @@ public sealed partial class InventoryInfoTab : Control
         UpdateLayoutSize();
     }
 
-    private void AddHandButton(Hand hand)
+    private void AddHandButton(Entity<HandsComponent> ent, string handId, Hand hand)
     {
-        var button = new HandButton(hand.Name, hand.Location);
+        var button = new HandButton(handId, hand.Location);
 
         button.Pressed += SlotPressed;
 
-        if (_entity.TryGetComponent<VirtualItemComponent>(hand.HeldEntity, out var virt))
+        var heldEntity = _hands.GetHeldItem(ent.AsNullable(), handId);
+        if (_entity.TryGetComponent<VirtualItemComponent>(heldEntity, out var virt))
         {
             button.Blocked = true;
             if (_entity.TryGetComponent<CuffableComponent>(_uid, out var cuff) && _cuffable.GetAllCuffs(cuff).Contains(virt.BlockingEntity))
                 button.BlockedRect.MouseFilter = MouseFilterMode.Ignore;
         }
 
-        UpdateEntityIcon(button, hand.HeldEntity);
+        UpdateEntityIcon(button, heldEntity);
         HandsContainer.AddChild(button);
     }
 

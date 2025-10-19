@@ -1,9 +1,12 @@
 using System.Linq;
 using Content.Client.Construction;
 using Content.Shared.Construction.Prototypes;
+using Robust.Client.GameObjects;
 using Robust.Client.Placement;
+using Robust.Client.ResourceManagement;
 using Robust.Client.Utility;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Construction;
 
@@ -28,7 +31,14 @@ public sealed class CommonConstructionPlacementHijack(
     public override void StartHijack(PlacementManager manager)
     {
         base.StartHijack(manager);
-        manager.CurrentTextures = prototype?.Layers.Select(sprite => sprite.DirFrame0()).ToList();
+
+        if (prototype is null || !system.TryGetRecipePrototype(prototype.ID, out var targetProtoId))
+            return;
+
+        if (!IoCManager.Resolve<IPrototypeManager>().TryIndex(targetProtoId, out var proto))
+            return;
+
+        manager.CurrentTextures = SpriteComponent.GetPrototypeTextures(proto, IoCManager.Resolve<IResourceCache>()).ToList();
     }
 
     public override bool HijackDeletion(EntityUid entity)

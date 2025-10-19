@@ -40,7 +40,7 @@ public sealed partial class InHandsFilter : RfUtilityQueryFilter
     {
         return _container.TryGetContainingContainer(new(uid, null, null), out var container)
             && _handsQuery.TryComp(container.Owner, out var hands)
-            && hands.Hands.Any(x => x.Value.Container == container)
+            && hands.Hands.Any(x => x.Key == container.ID)
             && (!ExcludeSelf || container.Owner != _owner);
     }
 }
