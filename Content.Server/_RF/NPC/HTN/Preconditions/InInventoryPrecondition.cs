@@ -41,7 +41,7 @@ public sealed partial class InInventoryPrecondition : InvertiblePrecondition
 
         if (_container.TryGetContainingContainer(new(target.Value, null, null), out var container)
             && EntityManager.TryGetComponent(container.Owner, out HandsComponent? hands)
-            && hands.Hands.Any(x => x.Value.Container == container)
+            && hands.Hands.Any(x => x.Key == container.ID)
             && (!ExcludeSelf || container.Owner != owner))
             return true;
 

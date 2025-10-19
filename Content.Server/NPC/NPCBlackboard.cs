@@ -264,6 +264,17 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
 
                 return false;
             }
+            // RimFortress Start
+            case ActiveHandEntity:
+            {
+                if (!TryGetValue(Owner, out owner, entManager)
+                    || !handSys.TryGetActiveItem(owner, out var uid))
+                    return false;
+
+                value = uid;
+                return true;
+            }
+            // RimFortress End
             default:
                 return false;
         }
@@ -366,6 +377,11 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
     /// How close to a given coordinate should an NPC attempt to move an entity that is being pulled
     /// </summary>
     public const string PullingMoveCloseRange = "PullingMoveCloseRange";
+
+    /// <summary>
+    /// Stores the entity In the active hand
+    /// </summary>
+    public const string ActiveHandEntity = "ActiveHandEntity";
     // RimFortress End
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()

@@ -372,7 +372,7 @@
 - type: stockpileCategory
   id: ClothingOuter
   name: Outer
-  iconEntity: ClothingOuterHardsuitBasic
+  iconEntity: ClothingOuterHardsuitEVA
 
 - type: stockpileCategory
   id: ClothingShoes

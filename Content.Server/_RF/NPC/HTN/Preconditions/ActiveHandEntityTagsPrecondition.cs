@@ -1,5 +1,4 @@
 using Content.Server.NPC;
-using Content.Shared.Hands.Components;
 using Content.Shared.Tag;
 using Robust.Shared.Prototypes;
 
@@ -32,9 +31,8 @@ public sealed partial class ActiveHandEntityTagsPrecondition : InvertiblePrecond
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue(NPCBlackboard.ActiveHand, out Hand? activeHand, EntityManager)
-               && activeHand.HeldEntity != null
-               && (!RequireAll || _tag.HasAllTags(activeHand.HeldEntity.Value, Tags))
-               && (RequireAll || _tag.HasAnyTag(activeHand.HeldEntity.Value, Tags));
+        return blackboard.TryGetValue<EntityUid>(NPCBlackboard.ActiveHandEntity, out var heldEntity, EntityManager)
+               && (!RequireAll || _tag.HasAllTags(heldEntity, Tags))
+               && (RequireAll || _tag.HasAnyTag(heldEntity, Tags));
     }
 }

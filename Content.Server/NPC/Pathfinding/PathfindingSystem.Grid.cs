@@ -51,12 +51,12 @@ public sealed partial class PathfindingSystem
         SubscribeLocalEvent<CollisionLayerChangeEvent>(OnCollisionLayerChange);
         SubscribeLocalEvent<PhysicsBodyTypeChangedEvent>(OnBodyTypeChange);
         SubscribeLocalEvent<TileChangedEvent>(OnTileChange);
-        SubscribeLocalEvent<HTNComponent, ComponentStartup>(OnHtnStartup); // RimFortress
+        SubscribeLocalEvent<HTNComponent, ComponentInit>(OnHtnInit); // RimFortress
         _transform.OnGlobalMoveEvent += OnMoveEvent;
     }
 
     // RimFortress Start
-    private void OnHtnStartup(EntityUid uid, HTNComponent component, ComponentStartup args)
+    private void OnHtnInit(EntityUid uid, HTNComponent component, ComponentInit args)
     {
         if (_transform.GetGrid(uid) is not { } grid
             || !TryComp(grid, out BiomeComponent? _)

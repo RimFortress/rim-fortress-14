@@ -2,7 +2,6 @@ using System.Linq;
 using Content.Server.NPC;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
-using Content.Shared.Hands.Components;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
@@ -28,9 +27,8 @@ public sealed partial class ActiveHandDrainableSolutionPrecondition : Invertible
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
-        return blackboard.TryGetValue(NPCBlackboard.ActiveHand, out Hand? activeHand, EntityManager)
-               && activeHand.HeldEntity != null
-               && _solution.TryGetDrainableSolution(activeHand.HeldEntity.Value, out _, out var solution)
+        return blackboard.TryGetValue<EntityUid>(NPCBlackboard.ActiveHandEntity, out var heldEntity, EntityManager)
+               && _solution.TryGetDrainableSolution(heldEntity, out _, out var solution)
                && solution.Contents.FirstOrDefault(x => x.Reagent.Prototype == Reagent) is { } reagent
                &&  (MoreThan != null && reagent.Quantity > MoreThan || LessThan != null && reagent.Quantity < LessThan);
     }

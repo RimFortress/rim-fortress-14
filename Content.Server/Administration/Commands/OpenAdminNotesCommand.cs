@@ -58,14 +58,4 @@ public sealed class OpenAdminNotesCommand : LocalizedCommands
         var options = playerMgr.Sessions.Select(c => c.Name).OrderBy(c => c).ToArray();
         return CompletionResult.FromHintOptions(options, Loc.GetString("cmd-adminnotes-hint"));
     }
-
-    public override CompletionResult GetCompletion(IConsoleShell shell, string[] args)
-    {
-        if (args.Length != 1)
-            return CompletionResult.Empty;
-
-        var playerMgr = IoCManager.Resolve<IPlayerManager>();
-        var options = playerMgr.Sessions.Select(c => c.Name).OrderBy(c => c).ToArray();
-        return CompletionResult.FromHintOptions(options, Loc.GetString("cmd-adminnotes-hint"));
-    }
 }

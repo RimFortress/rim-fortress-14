@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Numerics;
-using Content.Shared.Maps;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Physics;
 using Robust.Shared.Map;
@@ -214,9 +213,9 @@ public partial class SharedRimFortressWorldSystem
         // Find all free tiles in the specified area
         while (tileEnumerator.MoveNext(out var tileRef))
         {
-            if (tileRef.IsSpace())
+            if (Turf.IsSpace(tileRef))
             {
-                if (_biome.TryGetEntity(tileRef.GridIndices, grid.Comp2, grid.Comp1, out _))
+                if (_biome.TryGetEntity(tileRef.GridIndices, grid.Comp2, new(grid, grid.Comp1), out _))
                     continue;
             }
             else if (Turf.IsTileBlocked(tileRef, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))

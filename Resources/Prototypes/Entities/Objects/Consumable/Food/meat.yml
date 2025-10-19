@@ -1580,9 +1580,6 @@
     - 0,0,0,0
     storedOffset: -1,2
     heldPrefix: meatball
-  - type: Construction
-    graph: MeatMeatballCooked
-    node: meatball cooked
   # RimFortress Start
   - type: StockpileCategory
     category: CookedMeat

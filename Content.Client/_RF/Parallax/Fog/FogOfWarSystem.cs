@@ -37,10 +37,10 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
         SubscribeNetworkEvent<FogOfWarChunkRemoved>(OnChunkRemoved);
         SubscribeNetworkEvent<FogOfWarFullStateMessage>(OnFullStateRequest);
 
-        SubscribeLocalEvent<FogOfWarComponent, ComponentStartup>(OnFogStartup);
+        SubscribeLocalEvent<FogOfWarComponent, ComponentInit>(OnFogInit);
     }
 
-    private void OnFogStartup(EntityUid uid, FogOfWarComponent component, ComponentStartup args)
+    private void OnFogInit(EntityUid uid, FogOfWarComponent component, ComponentInit args)
     {
         var xform = Transform(uid);
         var fowGrid = _mapMan.CreateGridEntity(xform.MapID);
