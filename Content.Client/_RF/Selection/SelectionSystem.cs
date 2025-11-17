@@ -261,10 +261,14 @@ public sealed class SelectionSystem : EntitySystem
     {
         base.Update(frameTime);
 
-        if (StartPoint is not { } start
-            || EndPoint is not { } end
-            || start.MapId != end.MapId)
+        if (!_input.IsKeyDown(Keyboard.Key.MouseLeft) || StartPoint == null)
         {
+            if (Selected.Count > 0)
+                _onSelected?.Invoke(Selected);
+
+            if (SelectedTiles.Count > 0)
+                _onTileSelected?.Invoke(SelectedTiles);
+
             StartPoint = null;
             EndPoint = null;
             return;
