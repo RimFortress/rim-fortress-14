@@ -4,7 +4,6 @@ uniform highp vec2 end;
 uniform lowp vec4 color;
 uniform highp float dashLen;
 uniform highp float gapLen;
-uniform highp float unit;
 uniform highp float thickness;
 uniform highp float startOffset;
 uniform highp float endOffset;
@@ -20,12 +19,12 @@ void fragment() {
     highp vec2 AP = FRAGCOORD.xy - start;
     highp float t = dot(AP, lineDir);
 
-    highp float effectiveLength = fullLength - startOffset * unit - endOffset * unit;
-    highp float effectiveT = t - endOffset * unit;
+    highp float effectiveLength = fullLength - startOffset * SCREEN_PIXEL_SIZE.x - endOffset * SCREEN_PIXEL_SIZE.x;
+    highp float effectiveT = t - endOffset * SCREEN_PIXEL_SIZE.x;
 
     highp float dist = abs(dot(AP, perp));
 
-    highp float unitThickness = thickness * unit;
+    highp float unitThickness = thickness * SCREEN_PIXEL_SIZE.x;
 
     if (unitThickness < 2) {
         unitThickness = 2;
