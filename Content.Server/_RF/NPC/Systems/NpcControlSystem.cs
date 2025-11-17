@@ -2,9 +2,11 @@ using System.Linq;
 using Content.Server._RF.NPC.Components;
 using Content.Server._RF.NPC.Prototypes;
 using Content.Server.Construction;
+using Content.Server.Construction.Components;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.Systems;
+using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC;
 using Content.Shared.Database;
 using Content.Shared.Maps;
@@ -69,7 +71,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         SubscribeNetworkEvent<PassiveNpcTaskRemoveRequest>(OnPassiveTaskRemoveRequest);
         SubscribeNetworkEvent<AllowedNpcTasksInfoRequest>(OnAllowedTasksInfoRequest);
 
-        SubscribeLocalEvent<ConstructionChangeEntityEvent>(OnEntityChange);
+        SubscribeLocalEvent<ConstructionComponent, ConstructionChangeEntityEvent>(OnEntityChange);
+        SubscribeLocalEvent<CommonConstructionGhostComponent, ConstructionChangeEntityEvent>(OnEntityChange);
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeLocalEvent<HtnPlanningFailed>(OnPlanningFailed);
 
@@ -214,7 +217,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     // Help construction NPCs keep up-to-date information on the entity to be built
-    private void OnEntityChange(ConstructionChangeEntityEvent ev)
+    private void OnEntityChange(EntityUid uid, IComponent comp, ConstructionChangeEntityEvent ev)
     {
         foreach (var (task, entities) in _tasks.ToList())
         {
@@ -240,9 +243,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                 }
             }
         }
-
-        if (TryComp(ev.Old, out OwnedComponent? comp))
-            EnsureComp<OwnedComponent>(ev.New).Owners = comp.Owners;
     }
 
     private void OnGetVerbs(GetVerbsEvent<Verb> ev)

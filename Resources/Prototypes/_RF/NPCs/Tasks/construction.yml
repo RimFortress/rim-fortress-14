@@ -11,6 +11,8 @@
   targetWhitelist:
     components:
     - Construction
+    - CommonConstructionGhost
+    requireAll: false
 
 - type: npcTask
   id: Build

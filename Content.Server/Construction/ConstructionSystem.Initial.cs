@@ -93,7 +93,7 @@ namespace Content.Server.Construction
         }
 
         // LEGACY CODE. See warning at the top of the file!
-        private async Task<EntityUid?> Construct(
+        public async Task<EntityUid?> Construct( // RimFortress: access for CommonConstructionSystem.cs
             EntityUid user,
             string materialContainer,
             ConstructionGraphPrototype graph,

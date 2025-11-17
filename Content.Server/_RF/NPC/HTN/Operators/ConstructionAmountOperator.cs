@@ -6,8 +6,10 @@ using Content.Server.Construction.Components;
 using Content.Server.Construction.Conditions;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
+using Content.Shared._RF.Construction;
 using Content.Shared.Construction;
 using Content.Shared.Construction.Steps;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 
@@ -17,6 +19,7 @@ namespace Content.Server._RF.NPC.HTN.Operators;
 public sealed partial class ConstructionAmountOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
+    [Dependency] private readonly IPrototypeManager _proto  = default!;
 
     private ConstructionSystem _construction;
 
@@ -46,17 +49,36 @@ public sealed partial class ConstructionAmountOperator : HTNOperator
 
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
     {
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entityManager)
-            || !_entityManager.TryGetComponent(uid, out ConstructionComponent? comp))
+        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entityManager))
             return (false, null);
 
-        var (node, edge) = _construction.GetCurrentNodeAndEdge(uid.Value, comp);
+        ConstructionGraphEdge? edge = null;
+        ConstructionGraphNode? node;
 
-        if (node == null || edge == null
-            && (comp.NodePathfinding == null || comp.NodePathfinding.Count == 0))
-            return (false, null);
+        if (_entityManager.TryGetComponent(uid, out ConstructionComponent? comp))
+        {
+            (node, edge) = _construction.GetCurrentNodeAndEdge(uid.Value, comp);
 
-        edge ??= node.GetEdge(comp.NodePathfinding!.ToList().First());
+            if (node == null || edge == null
+                && (comp.NodePathfinding == null || comp.NodePathfinding.Count == 0))
+                return (false, null);
+
+            edge ??= node.GetEdge(comp.NodePathfinding!.ToList().First());
+        }
+        else if (_entityManager.TryGetComponent(uid, out CommonConstructionGhostComponent? ghost))
+        {
+            if (!_proto.TryIndex(ghost.ConstructionProto, out var proto)
+                || !_proto.TryIndex(proto.Graph, out var graph))
+                return (false, null);
+
+            node = _construction.GetNodeFromGraph(graph, proto.StartNode);
+            var path = graph.PathId(proto.StartNode, proto.TargetNode);
+
+            if (path == null || path.Length == 0)
+                return (false, null);
+
+            edge ??= node?.GetEdge(path[0]);
+        }
 
         if (edge == null)
             return (false, null);
@@ -111,7 +133,7 @@ public sealed partial class ConstructionAmountOperator : HTNOperator
             }
         }
 
-        if (edge.Steps[comp.StepIndex] is MaterialConstructionGraphStep step)
+        if (edge.Steps[comp?.StepIndex ?? 0] is MaterialConstructionGraphStep step)
             return (true, new() { { AmountKey, step.Amount } });
 
         return (!FailIfNoFound, null);
