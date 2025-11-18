@@ -6,6 +6,7 @@ using Content.Client.UserInterface.Controls;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared._RF.Pinpointer;
 using Content.Shared._RF.World;
+using Content.Shared.Follower;
 using Content.Shared.Light.Components;
 using Content.Shared.Maps;
 using Content.Shared.Parallax.Biomes;
@@ -28,7 +29,7 @@ public sealed class WorldMapControl : MapGridControl
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IResourceCache _cache = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] private readonly IEntityNetworkManager _net = default!;
 
     private const byte ChunkSize = SharedBiomeSystem.ChunkSize;
     private const float UpdateTime = 2.0f;
@@ -45,6 +46,10 @@ public sealed class WorldMapControl : MapGridControl
     private float _updateTimer = 1.0f;
     private Vector2i _markerCoords;
     private EntityUid? _marker;
+
+    private readonly TurfSystem _turf;
+    private readonly MapSystem _map;
+    private readonly RoofSystem _roof;
 
     private readonly Font _font;
     private readonly WorldMapContextWindow _contextWindow;
@@ -68,8 +73,18 @@ public sealed class WorldMapControl : MapGridControl
         _contextWindow = UserInterfaceManager.CreateWindow<WorldMapContextWindow>();
         _markedWindow = UserInterfaceManager.CreateWindow<WorldMarkerWindow>();
 
+        _turf = EntManager.System<TurfSystem>();
+        _map = EntManager.System<MapSystem>();
+        _roof = EntManager.System<RoofSystem>();
+
         _contextWindow.AddMarkerButton.OnPressed += _ => OpenMarkerWindow();
         _contextWindow.ChangeMarkerButton.OnPressed += _ => OpenMarkerWindow();
+
+        _contextWindow.TpHereButton.OnPressed += _ =>
+        {
+            if (_marker != null)
+                _net.SendSystemNetworkMessage(new FollowEntityRequest(EntManager.GetNetEntity(_marker.Value)));
+        };
 
         _contextWindow.DeleteMarkerButton.OnPressed += _ =>
         {
@@ -110,7 +125,7 @@ public sealed class WorldMapControl : MapGridControl
             _marker = uid;
             _contextWindow.SetState(EntManager.IsClientSide(uid)
                 ? WorldMapContextWindowState.Marker
-                : WorldMapContextWindowState.NoDeleteMarker);
+                : WorldMapContextWindowState.NoChangeMarker);
         }
         else
         {
@@ -169,9 +184,6 @@ public sealed class WorldMapControl : MapGridControl
             || !EntManager.TryGetComponent(fog.FowGrid, out RoofComponent? fawRoof))
             return;
 
-        var map = EntManager.System<MapSystem>();
-        var roofSys = EntManager.System<RoofSystem>();
-
         var ent = new Entity<MapGridComponent>(MapUid.Value, grid);
         var roofEnt = new Entity<MapGridComponent, RoofComponent>(MapUid.Value, grid, roof);
 
@@ -185,15 +197,18 @@ public sealed class WorldMapControl : MapGridControl
                 for (var y = 0; y < ChunkSize; y++)
                 {
                     var indices = new Vector2i(x + chunk.X, y + chunk.Y);
-                    var color = _turf.GetContentTileDefinition(map.GetTileRef(ent, indices)).NavMapColor;
+                    var color = _turf.GetContentTileDefinition(_map.GetTileRef(ent, indices)).NavMapColor;
 
                     _tiles[indices] = color;
 
-                    if (roofSys.IsRooved(roofEnt, indices))
+                    if (_roof.IsRooved(roofEnt, indices))
                         _roofs.Add(indices);
                 }
             }
         }
+
+        if (!fog.Enabled)
+            return;
 
         foreach (var chunk in fog.FogChunks)
         {
@@ -202,11 +217,11 @@ public sealed class WorldMapControl : MapGridControl
                 for (var y = 0; y < ChunkSize; y++)
                 {
                     var indices = new Vector2i(x + chunk.X, y + chunk.Y);
-                    var color = _turf.GetContentTileDefinition(map.GetTileRef(fawEnt, indices)).NavMapColor;
+                    var color = _turf.GetContentTileDefinition(_map.GetTileRef(fawEnt, indices)).NavMapColor;
 
                     _tiles[indices] = color;
 
-                    if (roofSys.IsRooved(fawRoofEnt, indices) || roofSys.IsRooved(roofEnt, indices))
+                    if (_roof.IsRooved(fawRoofEnt, indices) || _roof.IsRooved(roofEnt, indices))
                         _roofs.Add(indices);
                 }
             }
