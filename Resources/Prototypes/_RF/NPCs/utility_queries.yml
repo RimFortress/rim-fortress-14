@@ -293,6 +293,7 @@
   - !type:RfComponentFilter
     components:
       - type: CommonConstructionGhost
+        constructionProto: BananiumHorn
       - type: Construction
         graph: FloorBananium
         node: BananiumFloor
