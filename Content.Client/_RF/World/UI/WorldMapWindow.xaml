@@ -8,7 +8,10 @@
     <BoxContainer Orientation="Vertical">
         <controls2:FancyBack Name="Header">
             <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
-                <Label Name="Coordinates" Align="Left" VAlign="Center"/>
+                <controls2:IconButton Name="ResetCoordsButton" StyleClasses="ButtonSquare" SetSize="28 28"
+                                      ToolTip="{Loc 'world-map-user-interface-reset-coords-tooltip'}"
+                                      TexturePath="/Textures/Interface/VerbIcons/refresh.svg.192dpi.png"/>
+                <Label Name="Coordinates" Align="Left" VAlign="Center" Margin="3 0"/>
                 <BoxContainer HorizontalExpand="True"/>
                 <controls2:ColorPicker Name="FactionColor"
                                        SetHeight="32" HorizontalAlignment="Right"/>

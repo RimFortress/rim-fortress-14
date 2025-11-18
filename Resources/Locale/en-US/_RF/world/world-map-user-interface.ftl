@@ -1,4 +1,5 @@
 world-map-user-interface-title = World Map
+world-map-user-interface-reset-coords-tooltip = Center on the player
 world-map-user-interface-marker = Add Marker
 world-map-user-interface-change-marker = Change Marker
 world-map-user-interface-tp-to-marker = Teleport Here
