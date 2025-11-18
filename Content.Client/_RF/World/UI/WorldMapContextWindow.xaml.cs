@@ -27,6 +27,11 @@ public sealed partial class WorldMapContextWindow : BaseWindow
                 ChangeMarkerButton.Visible = true;
                 DeleteMarkerButton.Visible = true;
                 break;
+            case WorldMapContextWindowState.NoDeleteMarker:
+                AddMarkerButton.Visible = false;
+                ChangeMarkerButton.Visible = true;
+                DeleteMarkerButton.Visible = false;
+                break;
         }
     }
 }
@@ -35,4 +40,5 @@ public enum WorldMapContextWindowState : byte
 {
     World = 0,
     Marker = 1,
+    NoDeleteMarker = 2,
 }

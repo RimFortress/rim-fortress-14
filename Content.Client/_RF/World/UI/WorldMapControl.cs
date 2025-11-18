@@ -99,24 +99,26 @@ public sealed class WorldMapControl : MapGridControl
         var mousePos = GetLocalPosition(_input.MouseScreenPosition);
         _contextWindow.Close();
 
-        if (args.Function == EngineKeyFunctions.UseSecondary)
+        if (args.Function != EngineKeyFunctions.UseSecondary)
+            return;
+
+        _marker = null;
+
+        if (GetIntersectPoint(mousePos) is { } point
+            && _beacons.TryGetValue(point, out var uid))
         {
-            _marker = null;
-
-            if (GetIntersectPoint(mousePos) is { } point
-                && _beacons.TryGetValue(point, out var uid))
-            {
-                _marker = uid;
-                _contextWindow.SetState(WorldMapContextWindowState.Marker);
-            }
-            else
-            {
-                _markerCoords = (Vector2i) MousePos();
-                _contextWindow.SetState(WorldMapContextWindowState.World);
-            }
-
-            _contextWindow.Open(UserInterfaceManager.MousePositionScaled.Position);
+            _marker = uid;
+            _contextWindow.SetState(EntManager.IsClientSide(uid)
+                ? WorldMapContextWindowState.Marker
+                : WorldMapContextWindowState.NoDeleteMarker);
         }
+        else
+        {
+            _markerCoords = (Vector2i) MousePos();
+            _contextWindow.SetState(WorldMapContextWindowState.World);
+        }
+
+        _contextWindow.Open(UserInterfaceManager.MousePositionScaled.Position);
     }
 
     private void OpenMarkerWindow()
