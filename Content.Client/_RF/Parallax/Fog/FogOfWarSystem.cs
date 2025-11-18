@@ -62,10 +62,15 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
     {
         var grid = GetEntity(msg.Grid);
 
-        if(!_fogOfWarQuery.TryComp(grid, out var comp) || !comp.FogChunks.Add(msg.Chunk))
+        if(!_fogOfWarQuery.TryComp(grid, out var comp)
+           || !comp.FogChunks.Add(msg.Chunk))
             return;
 
         comp.ActiveChunks.Remove(msg.Chunk);
+
+        if (!comp.Enabled)
+            return;
+
         LoadChunk(comp.FowGrid, grid, msg.ModifiedTiles, msg.Chunk);
     }
 
@@ -73,10 +78,15 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
     {
         var grid = GetEntity(msg.Grid);
 
-        if (!_fogOfWarQuery.TryComp(grid, out var comp) || !comp.ActiveChunks.Add(msg.Chunk))
+        if (!_fogOfWarQuery.TryComp(grid, out var comp)
+            || !comp.ActiveChunks.Add(msg.Chunk))
             return;
 
         comp.FogChunks.Remove(msg.Chunk);
+
+        if (!comp.Enabled)
+            return;
+
         var chunkSize = SharedBiomeSystem.ChunkSize;
         var tiles = new List<(Vector2i, Tile)>();
 

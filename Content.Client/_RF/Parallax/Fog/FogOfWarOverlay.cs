@@ -41,7 +41,8 @@ public sealed class FogOfWarOverlay : Overlay
         if (args.MapId == MapId.Nullspace
             || args.Viewport.Eye is not { } eye
             || !_entityManager.TryGetComponent(args.MapUid, out FogOfWarComponent? comp)
-            || !_entityManager.TryGetComponent(args.MapUid, out MapGridComponent? grid))
+            || !_entityManager.TryGetComponent(args.MapUid, out MapGridComponent? grid)
+            || !comp.Enabled)
             return;
 
         var chunkSize = SharedBiomeSystem.ChunkSize;

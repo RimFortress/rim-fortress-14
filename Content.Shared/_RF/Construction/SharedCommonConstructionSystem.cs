@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared.Construction.Prototypes;
+using Content.Shared.DoAfter;
 using Content.Shared.Popups;
 using Content.Shared.Wall;
 using Robust.Shared.Map;
@@ -13,10 +14,11 @@ namespace Content.Shared._RF.Construction;
 /// </summary>
 public abstract class SharedCommonConstructionSystem : EntitySystem // Shared common, great naming
 {
+    [Dependency] protected readonly EntityLookupSystem Lookup = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly MetaDataSystem _meta = default!;
 
-    protected readonly EntProtoId ConstructionGhostId = "CommonConstructionGhost";
+    protected static readonly EntProtoId ConstructionGhostId = "CommonConstructionGhost";
 
     protected void SpawnGhost(EntityUid user, ConstructionPrototype prototype, EntityCoordinates loc, Direction dir)
     {
@@ -44,6 +46,17 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
 
         if (prototype.CanBuildInImpassable)
             EnsureComp<WallMountComponent>(ghost.Value).Arc = new(Math.Tau);
+
+        var comp = EnsureComp<CommonConstructionGhostComponent>(ghost.Value);
+        comp.ConstructionProto = prototype;
+
+        var name = prototype.SetName != null ? Loc.GetString(prototype.SetName) : prototype.Name;
+
+        if (name != null)
+            _meta.SetEntityName(ghost.Value, name);
+
+        if (prototype.Description != null)
+            _meta.SetEntityDescription(ghost.Value, prototype.Description);
 
         return true;
     }
@@ -74,7 +87,7 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
 
     protected bool GhostPresent(EntityCoordinates loc)
     {
-        var entities = _lookup.GetEntitiesIntersecting(loc);
+        var entities = Lookup.GetEntitiesIntersecting(loc);
 
         foreach (var entity in entities)
         {
@@ -112,4 +125,30 @@ public sealed class ConstructionGhostSpawnMessage(
 public sealed class ConstructionGhostClearRequest(NetEntity entity) : EntityEventArgs
 {
     public NetEntity Entity = entity;
+}
+
+[Serializable, NetSerializable]
+public sealed partial class ConstructionDoAfter : DoAfterEvent
+{
+    public readonly string MaterialContainer;
+    public readonly ProtoId<ConstructionPrototype> Proto;
+    public readonly List<int> Steps;
+    public readonly List<string> Containers;
+
+    public ConstructionDoAfter(
+        string materialContainer,
+        ProtoId<ConstructionPrototype> proto,
+        List<int> steps,
+        List<string> containers)
+    {
+        MaterialContainer = materialContainer;
+        Proto = proto;
+        Steps = steps;
+        Containers = containers;
+    }
+
+    public override DoAfterEvent Clone()
+    {
+        return this;
+    }
 }

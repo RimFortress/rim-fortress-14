@@ -73,11 +73,10 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         Rule = rule;
         var map = _map.CreateMap();
         _biome.EnsurePlanet(map, _prototype.Index(rule.Biome));
-        /*
-        TODO: fix this, after updating the engine, Fog of War may crash the client
+
         var fog = EnsureComp<FogOfWarComponent>(map);
+        fog.Enabled = false; // TODO: fix this, after updating the engine, Fog of War may crash the client
         Dirty(map, fog);
-        */
 
         if (TryComp(map, out LightCycleComponent? cycle))
         {

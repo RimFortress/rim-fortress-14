@@ -3,6 +3,7 @@ using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Construction.Conditions;
 using Content.Server.NPC;
+using Content.Shared._RF.Construction;
 using Content.Shared.Construction;
 using Content.Shared.Construction.Steps;
 using Content.Shared.Stacks;
@@ -20,19 +21,16 @@ namespace Content.Server._RF.NPC.Queries.Queries;
 /// </summary>
 public sealed partial class ConstructionQuery : RfUtilityQuery
 {
+    [Dependency] private readonly IPrototypeManager _proto = default!;
+
     private ConstructionSystem _construction;
     private TagSystem _tag;
 
     private EntityQuery<TransformComponent> _xformQuery;
 
-    [ValidatePrototypeId<ToolQualityPrototype>]
-    private readonly ProtoId<ToolQualityPrototype> _anchoringQuality = "Anchoring";
-
-    [ValidatePrototypeId<ToolQualityPrototype>]
-    private readonly ProtoId<ToolQualityPrototype> _weldingQuality = "Welding";
-
-    [ValidatePrototypeId<ToolQualityPrototype>]
-    private readonly ProtoId<ToolQualityPrototype> _screwingQuality = "Screwing";
+    private static readonly ProtoId<ToolQualityPrototype> AnchoringQuality = "Anchoring";
+    private static readonly ProtoId<ToolQualityPrototype> WeldingQuality = "Welding";
+    private static readonly ProtoId<ToolQualityPrototype> ScrewingQuality = "Screwing";
 
     /// <summary>
     /// The key that contains the entity to be constructed
@@ -55,18 +53,39 @@ public sealed partial class ConstructionQuery : RfUtilityQuery
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
         var mapId = EntityManager.GetComponent<TransformComponent>(owner).MapID;
 
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager)
-            || !EntityManager.TryGetComponent(uid, out ConstructionComponent? comp))
+        if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager))
             return query;
 
-        var (node, edge) = _construction.GetCurrentNodeAndEdge(uid.Value, comp);
+        ConstructionGraphEdge? edge = null;
+        ConstructionGraphStep? step = null;
+        ConstructionGraphNode? node;
 
-        if (node == null || edge == null
-            && (comp.NodePathfinding == null || comp.NodePathfinding.Count == 0))
-            return query;
+        if (EntityManager.TryGetComponent(uid, out ConstructionComponent? comp))
+        {
+            (node, edge) = _construction.GetCurrentNodeAndEdge(uid.Value, comp);
 
-        edge ??= node.GetEdge(comp.NodePathfinding!.ToList().First());
-        var step = edge?.Steps[comp.StepIndex];
+            if (node == null || edge == null
+                && (comp.NodePathfinding == null || comp.NodePathfinding.Count == 0))
+                return query;
+
+            edge ??= node.GetEdge(comp.NodePathfinding!.ToList().First());
+            step = edge?.Steps[comp.StepIndex];
+        }
+        else if (EntityManager.TryGetComponent(uid, out CommonConstructionGhostComponent? ghost))
+        {
+            if (!_proto.TryIndex(ghost.ConstructionProto, out var proto)
+                || !_proto.TryIndex(proto.Graph, out var graph))
+                return query;
+
+            node = _construction.GetNodeFromGraph(graph, proto.StartNode);
+            var path = graph.PathId(proto.StartNode, proto.TargetNode);
+
+            if (path == null || path.Length == 0)
+                return query;
+
+            edge ??= node?.GetEdge(path[0]);
+            step = edge?.Steps[0];
+        }
 
         if (edge != null && ConditionQuery(mapId, uid.Value, edge.Conditions) is { } conQuery)
             return conQuery;
@@ -115,12 +134,12 @@ public sealed partial class ConstructionQuery : RfUtilityQuery
                     }
                     break;
                 case EntityAnchored:
-                    return ToolQuery(mapId, _anchoringQuality);
+                    return ToolQuery(mapId, AnchoringQuality);
                 case DoorWelded:
                 case StorageWelded:
-                    return ToolQuery(mapId, _weldingQuality);
+                    return ToolQuery(mapId, WeldingQuality);
                 case WirePanel:
-                    return ToolQuery(mapId, _screwingQuality);
+                    return ToolQuery(mapId, ScrewingQuality);
                 case HasTag tag:
                     return TagQuery(mapId, new() { tag.Tag }, true);
                 case MachineFrameComplete:

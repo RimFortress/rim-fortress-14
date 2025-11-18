@@ -14,7 +14,7 @@ public sealed class WorldMapUiController : WindowUiController<WorldMapWindow>
 
     protected override WorldMapWindow EnsureWindow()
     {
-        Window = base.EnsureWindow();
+        Window = UIManager.CreateWindow<WorldMapWindow>();
 
         if (_player.LocalEntity is { Valid: true } player)
         {

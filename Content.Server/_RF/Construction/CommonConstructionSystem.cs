@@ -1,17 +1,34 @@
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
+using Content.Server.Popups;
 using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC;
-using Content.Shared.Construction.Prototypes;
+using Content.Shared.ActionBlocker;
+using Content.Shared.Construction.EntitySystems;
+using Content.Shared.Construction.Steps;
+using Content.Shared.Hands.Components;
+using Content.Shared.Hands.EntitySystems;
+using Content.Shared.Interaction;
+using Content.Shared.Prying.Systems;
+using Content.Shared.Radio.EntitySystems;
+using Content.Shared.Tools.Systems;
+using Content.Shared.Whitelist;
+using Robust.Server.Containers;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.Manager;
 
 namespace Content.Server._RF.Construction;
 
 public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 {
     [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly ISerializationManager _serialization = default!;
+    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
+    [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
+    [Dependency] private readonly SharedHandsSystem _hands = default!;
+    [Dependency] private readonly SharedTransformSystem _xform = default!;
+    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private readonly ContainerSystem _container = default!;
+    [Dependency] private readonly ConstructionSystem _construction = default!;
+    [Dependency] private readonly PopupSystem _popup = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -22,6 +39,9 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         SubscribeNetworkEvent<ConstructionGhostClearRequest>(OnClearRequest);
 
         SubscribeLocalEvent<OwnedComponent, ConstructionChangeEntityEvent>(OnConstructionChange);
+        SubscribeLocalEvent<CommonConstructionGhostComponent, InteractUsingEvent>(OnAfterInteract,
+            new []{typeof(AnchorableSystem), typeof(PryingSystem), typeof(WeldableSystem)},
+            new []{typeof(EncryptionKeySystem)});
     }
 
     private void OnSpawnRequest(ConstructionGhostSpawnRequest request, EntitySessionEventArgs args)
@@ -39,23 +59,6 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
 
         if (ghost == null)
             return;
-
-        var comp = EntityManager.ComponentFactory.GetComponent<ConstructionComponent>();
-        comp.Graph = proto.Graph;
-        comp.TargetNode = proto.TargetNode;
-        comp.Node = proto.StartNode;
-        comp.EdgeIndex = 0;
-
-        AddComp(ghost.Value, comp);
-
-
-        if (!Exists(ghost.Value))
-        {
-            Log.Error("construction ghost was deleted immediately after creation, " +
-                      "check if there is no DestroyEntity action at the beginning of the graph, " +
-                      $"proto: {request.ProtoId}");
-            return;
-        }
 
         var owned = EntityManager.ComponentFactory.GetComponent<OwnedComponent>();
         owned.Owners.Add(user);
@@ -75,7 +78,105 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (!HasComp<ConstructionComponent>(args.New))
             return;
 
-        var newComp = AddComp<OwnedComponent>(args.New);
-        _serialization.CopyTo(component, ref newComp, notNullableOverride: true);
+        EnsureComp<OwnedComponent>(args.New).Owners = component.Owners;
+    }
+
+    // Code taken from ConstructionSystem.Initial.cs
+    private async void OnAfterInteract(EntityUid uid, CommonConstructionGhostComponent component, InteractUsingEvent args)
+    {
+        if (!_prototype.TryIndex(component.ConstructionProto, out var proto)
+            || !_prototype.TryIndex(proto.Graph, out var constructionGraph))
+            return;
+
+        if (_whitelist.IsWhitelistFail(proto.EntityWhitelist, args.User))
+        {
+            _popup.PopupEntity(Loc.GetString("construction-system-cannot-start"), args.User, args.User);
+            return;
+        }
+
+        if (_container.IsEntityInContainer(args.User))
+        {
+            _popup.PopupEntity(Loc.GetString("construction-system-inside-container"), args.User, args.User);
+            return;
+        }
+
+        var startNode = constructionGraph.Nodes[proto.StartNode];
+        var targetNode = constructionGraph.Nodes[proto.TargetNode];
+        var pathFind = constructionGraph.Path(startNode.Name, targetNode.Name);
+        var location = Transform(uid).Coordinates;
+        var angle = Transform(uid).LocalRotation;
+
+        foreach (var condition in proto.Conditions)
+        {
+            if (condition.Condition(args.User, Transform(args.User).Coordinates, angle.GetCardinalDir()))
+                continue;
+
+            return;
+        }
+
+        if (!_actionBlocker.CanInteract(args.User, null)
+            || !TryComp(args.User, out HandsComponent? hands)
+            || _hands.GetActiveItem(new(args.User, hands)) == null)
+            return;
+
+        var mapPos = _xform.ToMapCoordinates(location);
+        var predicate = _construction.GetPredicate(proto.CanBuildInImpassable, mapPos);
+
+        if (!_interaction.InRangeUnobstructed(args.User, mapPos, predicate: predicate))
+            return;
+
+        if (pathFind == null)
+        {
+            Log.Error($"Can't find path from starting node to target node in construction! Recipe: {proto.ID}");
+            return;
+        }
+
+        var edge = startNode.GetEdge(pathFind[0].Name);
+
+        if (edge == null)
+        {
+            Log.Error($"Can't find edge from starting node to the next node in pathfinding! Recipe: {proto.ID}");
+            return;
+        }
+
+        var valid = false;
+
+        if (_hands.GetActiveItem(new(args.User, hands)) is not {Valid: true} holding)
+            return;
+
+        // No support for conditions here!
+
+        foreach (var step in edge.Steps)
+        {
+            switch (step)
+            {
+                case EntityInsertConstructionGraphStep entityInsert:
+                    if (entityInsert.EntityValid(holding, EntityManager, Factory))
+                        valid = true;
+                    break;
+                case ToolConstructionGraphStep:
+                    Log.Error("Invalid first step for item recipe!");
+                    return;
+            }
+
+            if (valid)
+                break;
+        }
+
+        if (!valid)
+            return;
+
+        args.Handled = true;
+
+        if (await _construction.Construct(args.User,
+            (uid.GetHashCode() + proto.GetHashCode()).ToString(),
+            constructionGraph,
+            edge,
+            targetNode,
+            Transform(uid).Coordinates,
+            proto.CanRotate ? Transform(uid).LocalRotation : Angle.Zero) is { } newUid)
+            RaiseLocalEvent(uid, new ConstructionChangeEntityEvent(newUid, uid));
+
+        QueueDel(uid);
     }
 }

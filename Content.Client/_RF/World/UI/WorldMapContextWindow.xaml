@@ -5,6 +5,7 @@
     <BoxContainer Orientation="Vertical">
         <Button Name="AddMarkerButton" Access="Public" Text="{Loc 'world-map-user-interface-marker'}"/>
         <Button Name="ChangeMarkerButton" Access="Public" Text="{Loc 'world-map-user-interface-change-marker'}"/>
+        <Button Name="TpHereButton" Access="Public" Text="{Loc 'world-map-user-interface-tp-to-marker'}"/>
         <Button Name="DeleteMarkerButton" Access="Public"
                 StyleClasses="ButtonColorRed" Text="{Loc 'world-map-user-interface-delete-marker'}"/>
     </BoxContainer>

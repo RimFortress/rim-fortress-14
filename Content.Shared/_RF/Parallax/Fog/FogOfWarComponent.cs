@@ -8,6 +8,10 @@ namespace Content.Shared._RF.Parallax.Fog;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState, Access(typeof(SharedFogOfWarSystem))]
 public sealed partial class FogOfWarComponent : Component
 {
+    [DataField, ViewVariables, AutoNetworkedField]
+    [Access(Other = AccessPermissions.ReadWriteExecute)]
+    public bool Enabled { get; set; } = true;
+
     /// <summary>
     /// The entity of the fog of war grid
     /// </summary>
