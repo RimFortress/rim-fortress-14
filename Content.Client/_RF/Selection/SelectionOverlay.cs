@@ -21,8 +21,10 @@ public sealed class SelectionOverlay : Overlay
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
 
-    private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
-    private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string SelectShader = "DottedOutline";
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string SelectAreaShader = "DottedSquareOutline";
 
     private readonly SelectionSystem _selection;
     private readonly TurfSystem _turf;
@@ -81,7 +83,7 @@ public sealed class SelectionOverlay : Overlay
             || !sprite.Visible)
             return;
 
-        var shader = _prototype.Index(SelectShader).InstanceUnique();
+        var shader = _prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
         _highlightedSprites.Add(sprite);
         shader.SetParameter("color", color);
 
@@ -91,7 +93,7 @@ public sealed class SelectionOverlay : Overlay
 
     private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
     {
-        var shader = _prototype.Index(SelectAreaShader).InstanceUnique();
+        var shader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
         var area = new Box2(start.Position, end.Position);
         var prevShader = args.WorldHandle.GetShader();
 

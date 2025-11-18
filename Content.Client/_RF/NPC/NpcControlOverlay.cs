@@ -18,9 +18,12 @@ public sealed class NpcControlOverlay : Overlay
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly IResourceCache _resourceCache = default!;
 
-    private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
-    private static readonly ProtoId<ShaderPrototype> PointCircleShader = "DottedCircle";
-    private static readonly ProtoId<ShaderPrototype> PointLineShader = "DottedLine";
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string SelectShader = "DottedOutline";
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string PointCircleShader = "DottedCircle";
+    [ValidatePrototypeId<ShaderPrototype>]
+    private const string PointLineShader = "DottedLine";
 
     private readonly NpcControlSystem _npcControl;
     private readonly SelectionSystem _selection;
@@ -93,7 +96,7 @@ public sealed class NpcControlOverlay : Overlay
             || !sprite.Visible)
             return;
 
-        var shader = _prototype.Index(SelectShader).InstanceUnique();
+        var shader = _prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
         _highlightedSprites.Add(sprite);
         shader.SetParameter("color", color);
 
@@ -111,7 +114,7 @@ public sealed class NpcControlOverlay : Overlay
             || end.Position == Vector2.Zero)
             return;
 
-        var shader = _prototype.Index(PointLineShader).InstanceUnique();
+        var shader = _prototype.Index<ShaderPrototype>(PointLineShader).InstanceUnique();
         var prevShader = args.WorldHandle.GetShader();
 
         var screenEnd = args.Viewport.WorldToLocal(end.Position);
@@ -119,6 +122,11 @@ public sealed class NpcControlOverlay : Overlay
 
         var screeStart = args.Viewport.WorldToLocal(start.Position);
         screeStart.Y = args.Viewport.Size.Y - screeStart.Y;
+
+        // Find the number of pixels in the coordinate unit to scale the size correctly.
+        // It can probably be done in a better way, but my head is about to explode
+        var unit = (args.Viewport.WorldToLocal(start.Position + Vector2.UnitX) - args.Viewport.WorldToLocal(start.Position)).X;
+        shader.SetParameter("unit", unit);
 
         shader.SetParameter("color", color);
         shader.SetParameter("start", screenEnd);
@@ -131,10 +139,12 @@ public sealed class NpcControlOverlay : Overlay
 
     private void DrawPointCircle(in OverlayDrawArgs args, MapCoordinates worldCoords, Color color)
     {
-        var shader = _prototype.Index(PointCircleShader).InstanceUnique();
+        var shader = _prototype.Index<ShaderPrototype>(PointCircleShader).InstanceUnique();
         var prevShader = args.WorldHandle.GetShader();
 
         var position = args.Viewport.WorldToLocal(worldCoords.Position);
+        var unit = (args.Viewport.WorldToLocal(worldCoords.Position + Vector2.UnitX) - position).X;
+        shader.SetParameter("unit", unit);
 
         position.Y = args.Viewport.Size.Y - position.Y;
         shader.SetParameter("position", position);

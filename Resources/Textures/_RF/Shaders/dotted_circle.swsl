@@ -1,6 +1,7 @@
 uniform sampler2D SCREEN_TEXTURE;
 uniform highp vec2 position;
 uniform lowp vec4 color;
+uniform highp float unit;
 uniform highp float radius;
 uniform highp float thickness;
 uniform highp float frequency;
@@ -21,9 +22,9 @@ void fragment() {
    highp float angle = mod(baseAngle + rotation + pi, twopi);
 
    highp float pulse = sin(TIME * pulseSpeed) * pulseAmplitude;
-   highp float currentRadius = radius * SCREEN_PIXEL_SIZE.x * (1.0 + pulse);
+   highp float currentRadius = radius * unit * (1.0 + pulse);
 
-   highp float t = thickness * SCREEN_PIXEL_SIZE.x;
+   highp float t = thickness * unit;
    float outline = smoothstep(currentRadius - t, currentRadius, dist)
                  - smoothstep(currentRadius, currentRadius + t, dist);
 
