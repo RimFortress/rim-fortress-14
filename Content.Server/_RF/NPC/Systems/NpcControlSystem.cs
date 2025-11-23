@@ -41,7 +41,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
     private EntityQuery<PassiveNpcTaskTargetComponent> _passiveTaskQuery;
     private EntityQuery<HTNComponent> _htnQuery;
-    private EntityQuery<TransformComponent> _xformQuery;
 
     /// <summary>
     /// A temporary list of user-selected entities, for the needs of verb tasks.
@@ -86,7 +85,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         _controllableQuery = GetEntityQuery<ControllableNpcComponent>();
         _passiveTaskQuery = GetEntityQuery<PassiveNpcTaskTargetComponent>();
         _htnQuery = GetEntityQuery<HTNComponent>();
-        _xformQuery = GetEntityQuery<TransformComponent>();
 
         ReloadPrototypes();
     }
@@ -396,7 +394,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     /// <summary>
-    /// Tries to set a new task for an NPC, checking all the required conditions
+    /// Tries to set a new task for an NPC
     /// </summary>
     /// <returns>True, if the task is successfully set</returns>
     public bool TrySetTask(
@@ -408,6 +406,19 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             return false;
 
         SetTask(new(npc.Owner, npc.Comp, control), proto, null, targetCoords);
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to set a new task for an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, NpcTaskPrototype proto)
+    {
+        if (!Resolve(npc, ref npc.Comp) || !_controllableQuery.TryComp(npc, out var control))
+            return false;
+
+        SetTask(new(npc.Owner, npc.Comp, control), proto);
         return true;
     }
 
@@ -498,8 +509,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         // Remove temporary keys from HTNBlackboard
         if (proto.DeleteKeysOnFinish)
         {
-            blackboard.Remove<EntityUid>(proto.TargetKey);
-            blackboard.Remove<EntityCoordinates>(proto.TargetCoordinatesKey);
+            if (blackboard.ContainsKey(proto.TargetKey))
+                blackboard.Remove<EntityUid>(proto.TargetKey);
+
+            if (blackboard.ContainsKey(proto.TargetCoordinatesKey))
+                blackboard.Remove<EntityCoordinates>(proto.TargetCoordinatesKey);
         }
 
         foreach (var key in proto.TempKeys)
@@ -645,6 +659,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         EntityUid? target = null;
         var minDist = (float) int.MaxValue;
         var canControlCache = new Dictionary<EntityUid, bool>();
+        var coords = Transform(npc).Coordinates;
 
         var query = EntityQueryEnumerator<TransformComponent, PassiveNpcTaskTargetComponent>();
         while (query.MoveNext(out var uid, out var targetXform, out var comp))
@@ -655,8 +670,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (!canControlCache[comp.User]
                 || comp.Task != task
                 || !CheckTaskStart(npc.Comp.Blackboard, task, uid)
-                || !_xformQuery.TryComp(npc, out var xform)
-                || !xform.Coordinates.TryDistance(EntityManager, targetXform.Coordinates, out var distance)
+                || !coords.TryDistance(EntityManager, targetXform.Coordinates, out var distance)
                 || distance >= minDist)
                 continue;
 

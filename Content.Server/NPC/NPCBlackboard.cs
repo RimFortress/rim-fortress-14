@@ -38,6 +38,7 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {MoveToCloseRange, 0.3f},
         {PullerThrowDistance, 2f},
         {PullingMoveCloseRange, 0.05f},
+        {DialogStartOffset, 1.5f},
         // RimFortress End
     };
 
@@ -382,6 +383,11 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
     /// Stores the entity In the active hand
     /// </summary>
     public const string ActiveHandEntity = "ActiveHandEntity";
+
+    /// <summary>
+    /// Offset from the starting point of the conversation where the participants will meet
+    /// </summary>
+    public const string DialogStartOffset = "DialogStartOffset";
     // RimFortress End
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()

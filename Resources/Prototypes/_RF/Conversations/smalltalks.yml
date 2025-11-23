@@ -1,0 +1,80 @@
+- type: conversationScript
+  id: MedievalSmalltalk01
+  actors:
+    - id: speakerA
+    - id: speakerB
+  dialog:
+    - speakerA: medieval-smalltalk01-line1-a
+      speakerB: medieval-smalltalk01-line1-b
+    - speakerA: medieval-smalltalk01-line2-a
+      speakerB: medieval-smalltalk01-line2-b
+
+- type: conversationScript
+  id: MedievalSmalltalk02
+  actors:
+    - id: traveler
+    - id: villager
+  dialog:
+    - traveler: medieval-smalltalk02-line1-a
+      villager: medieval-smalltalk02-line1-b
+    - traveler: medieval-smalltalk02-line2-a
+      villager: medieval-smalltalk02-line2-b
+    - traveler: medieval-smalltalk02-line3-a
+      villager: medieval-smalltalk02-line3-b
+
+- type: conversationScript
+  id: MedievalSmalltalk03
+  actors:
+    - id: peasant
+    - id: knight
+  dialog:
+    - peasant: medieval-smalltalk03-line1-a
+      knight: medieval-smalltalk03-line1-b
+    - peasant: medieval-smalltalk03-line2-a
+      knight: medieval-smalltalk03-line2-b
+
+- type: conversationScript
+  id: MedievalSmalltalk04
+  actors:
+    - id: merchant
+    - id: customer
+  dialog:
+    - merchant: medieval-smalltalk04-line1-a
+      customer: medieval-smalltalk04-line1-b
+    - merchant: medieval-smalltalk04-line2-a
+      customer: medieval-smalltalk04-line2-b
+
+- type: conversationScript
+  id: MedievalSmalltalk05
+  actors:
+    - id: wanderer
+    - id: guard
+  dialog:
+    - wanderer: medieval-smalltalk05-line1-a
+      guard: medieval-smalltalk05-line1-b
+    - wanderer: medieval-smalltalk05-line2-a
+      guard: medieval-smalltalk05-line2-b
+
+- type: conversationScript
+  id: MedievalSmalltalk06
+  actors:
+    - id: elder
+    - id: youth
+  dialog:
+    - elder: medieval-smalltalk06-line1-a
+      youth: medieval-smalltalk06-line1-b
+    - elder: medieval-smalltalk06-line2-a
+      youth: medieval-smalltalk06-line2-b
+
+- type: conversationScript
+  id: MedievalSmalltalk07
+  actors:
+    - id: innkeeper
+    - id: visitor
+  dialog:
+    - innkeeper: medieval-smalltalk07-line1-a
+      visitor: medieval-smalltalk07-line1-b
+    - innkeeper: medieval-smalltalk07-line2-a
+      visitor: medieval-smalltalk07-line2-b
+    - innkeeper: medieval-smalltalk07-line3-a
+      visitor: medieval-smalltalk07-line3-b

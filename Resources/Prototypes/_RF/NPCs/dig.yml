@@ -38,9 +38,7 @@
             targetKey: Target
         - !type:HTNPrimitiveTask
           operator: !type:MoveToOperator
-            pathfindInPlanning: true
             rangeKey: InteractRange
-            removeKeyOnFinish: true
 
         # And finally, digging
         - !type:HTNPrimitiveTask

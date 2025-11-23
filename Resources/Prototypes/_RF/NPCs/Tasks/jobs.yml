@@ -59,3 +59,11 @@
   - Pry
   - FreeHandInteract
   - Attack
+
+- type: npcJob
+  id: Socialization
+  name: Socialization
+  defaultPriority: 1
+  hidden: true
+  tasks:
+  - Conversation

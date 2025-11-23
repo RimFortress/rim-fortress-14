@@ -1,3 +1,8 @@
+- type: utilityQuery
+  id: Self
+  query:
+  - !type:SelfQuery
+
 # Build task
 
 - type: utilityQuery

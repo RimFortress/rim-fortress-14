@@ -1,0 +1,17 @@
+- type: npcTask
+  id: Conversation
+  name: Conversation
+  parent: BaseNpcTask
+  overlayColor: "#D3D3D3"
+  compound: ConversationCompound
+  targetsQuery: Self # Stub for the ability to use this task as a passive
+
+- type: npcTask
+  id: ConversationOrder
+  name: Conversation
+  parent: BaseNpcTask
+  overlayColor: "#D3D3D3"
+  compound: ConverationOrderCompound
+  tempKeys:
+  - Wait
+  - Message

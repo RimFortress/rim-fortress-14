@@ -5,6 +5,9 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Components;
 
+/// <summary>
+/// Allows you to issue tasks to NPCs
+/// </summary>
 [RegisterComponent, Access(typeof(NpcControlSystem))]
 public sealed partial class NpcControlComponent : SharedNpcControlComponent
 {
