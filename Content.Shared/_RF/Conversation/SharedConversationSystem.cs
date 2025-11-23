@@ -6,6 +6,9 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Conversation;
 
+/// <summary>
+/// A helper system for easily implementing advanced random conversations between NPCs
+/// </summary>
 public abstract class SharedConversationSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _prototype = default!;
@@ -24,7 +27,6 @@ public abstract class SharedConversationSystem : EntitySystem
     /// <returns>True, if the conversation has been successfully initiated</returns>
     public bool TryStartConversation(ProtoId<ConversationScriptPrototype> protoId, List<EntityUid> uids)
         => TryStartConversation(protoId, uids, out _);
-
 
     /// <summary>
     /// Starts a conversation between entities
@@ -206,7 +208,7 @@ public abstract class SharedConversationSystem : EntitySystem
                 continue;
 
             if (!_prototype.TryIndex(protoId, out var script)
-                || script.Dialog.TryGetValue(act, out var lines))
+                || !script.Dialog.TryGetValue(act, out var lines))
                 return false;
 
             var i = 0;
@@ -218,7 +220,7 @@ public abstract class SharedConversationSystem : EntitySystem
                 i++;
             }
 
-            return true;
+            return false;
         }
 
         return false;
@@ -255,6 +257,22 @@ public abstract class SharedConversationSystem : EntitySystem
                 continue;
 
             script = protoId;
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool TryGetActors(EntityUid uid, [NotNullWhen(true)] out List<EntityUid>? actors)
+    {
+        actors = null;
+
+        foreach (var (_, roles, _, _) in _conversations)
+        {
+            if (!roles.ContainsValue(uid))
+                continue;
+
+            actors = roles.Values.ToList();
             return true;
         }
 

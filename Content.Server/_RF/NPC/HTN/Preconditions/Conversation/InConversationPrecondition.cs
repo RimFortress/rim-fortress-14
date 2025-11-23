@@ -1,7 +1,7 @@
 using Content.Server._RF.Dialog;
 using Content.Server.NPC;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions.Dialog;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Conversation;
 
 /// <summary>
 /// Checks whether the entity is a participant in the conversation

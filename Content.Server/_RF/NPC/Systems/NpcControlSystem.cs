@@ -354,7 +354,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private bool CheckTaskStart(NPCBlackboard blackboard, NpcTaskPrototype task, EntityUid target)
     {
-        if (!_whitelist.IsWhitelistPass(task.TargetWhitelist, target)
+        if (!_whitelist.IsWhitelistPassOrNull(task.TargetWhitelist, target)
             || TaskPerformersCount(task, target) >= task.MaxPerformers)
             return false;
 

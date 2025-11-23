@@ -3,10 +3,10 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Content.Server._RF.Dialog;
+using Content.Server._RF.NPC.Components;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared._RF.Conversation;
-using Content.Shared._RF.NPC;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -58,17 +58,18 @@ public sealed partial class StartConversationOperator : HTNOperator
     {
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
 
-        if (!_entity.TryGetComponent(owner, out OwnedComponent? owned))
+        if (!_entity.TryGetComponent(owner, out ControllableNpcComponent? controllable))
             return (false, null);
 
         var radius = blackboard.GetValueOrDefault<float>(blackboard.GetVisionRadiusKey(_entity), _entity);
         var ownerCoords = _xform.GetMapCoordinates(owner);
         var entities = new List<EntityUid>();
+        var canControl = controllable.CanControl.ToList();
         Dictionary<string, EntityUid>? roles = null;
 
-        foreach (var ent in _lookup.GetEntitiesInRange<OwnedComponent>(ownerCoords, radius))
+        foreach (var ent in _lookup.GetEntitiesInRange<ControllableNpcComponent>(ownerCoords, radius))
         {
-            if (ent.Comp.Owners.Any(x => owned.Owners.Contains(x))
+            if (ent.Comp.CanControl.Any(x => canControl.Contains(x))
                 && !_conversation.TryGetScript(ent, out _))
                 entities.Add(ent);
         }
@@ -109,7 +110,7 @@ public sealed partial class StartConversationOperator : HTNOperator
         return (true, new()
         {
             { ConvCoordsKey, coords },
-            { ActorsKey, roles.Keys.ToList() },
+            { ActorsKey, roles.Values.ToList() },
         });
     }
 }

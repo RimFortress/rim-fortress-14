@@ -28,6 +28,7 @@
           - Farming
           - Storing
           - Other
+          - Socialization
 
 - type: entityTable
   id: BasicWorldRulesTable

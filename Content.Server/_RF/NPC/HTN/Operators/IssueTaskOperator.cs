@@ -78,31 +78,35 @@ public sealed partial class IssueTaskOperator : HTNOperator
 
         if (TaskTarget != null)
         {
+            if (!blackboard.TryGetValue(TaskTarget, out EntityUid? taskTarget, _entity))
+                return (false, null);
+
             foreach (var uid in uids)
             {
-                if (blackboard.TryGetValue(TaskTarget, out EntityUid? taskTarget, _entity)
-                    && _control.TrySetTask(uid, proto, taskTarget.Value))
-                    return (true, null);
+                if (!_control.TrySetTask(uid, proto, taskTarget.Value))
+                    return (false, null);
             }
         }
         else if (TaskCoordinates != null)
         {
+            if (!blackboard.TryGetValue(TaskCoordinates, out EntityCoordinates? taskTarget, _entity))
+                return (false, null);
+
             foreach (var uid in uids)
             {
-                if (blackboard.TryGetValue(TaskCoordinates, out EntityCoordinates? taskTarget, _entity)
-                    && _control.TrySetTask(uid, proto, taskTarget.Value))
-                    return (true, null);
+                if (!_control.TrySetTask(uid, proto, taskTarget.Value))
+                    return (false, null);
             }
         }
         else
         {
             foreach (var uid in uids)
             {
-                if (_control.TrySetTask(uid, proto))
-                    return (true, null);
+                if (!_control.TrySetTask(uid, proto))
+                    return (false, null);
             }
         }
 
-        return (false, null);
+        return (true, null);
     }
 }

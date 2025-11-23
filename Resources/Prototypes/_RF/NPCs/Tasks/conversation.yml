@@ -11,7 +11,10 @@
   name: Conversation
   parent: BaseNpcTask
   overlayColor: "#D3D3D3"
-  compound: ConverationOrderCompound
+  compound: ConversationOrderCompound
   tempKeys:
   - Wait
   - Message
+  finishPreconditions:
+  - !type:InConversationPrecondition
+    invert: true

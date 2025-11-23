@@ -1,49 +1,62 @@
 - type: htnCompound
-  id: ConverationCompound
+  id: ConversationCompound
   branches:
   - preconditions:
     - !type:InConversationPrecondition
       invert: true
-    task:
+    tasks:
     - !type:HTNPrimitiveTask
       operator: !type:StartConversationOperator
     - !type:HTNPrimitiveTask
       operator: !type:IssueTaskOperator
-        task: ConverationOrder
+        task: ConversationOrder
         targetsKey: ConversationActors
         taskCoordinates: ConversationCoordinates
 
 - type: htnCompound
-  id: ConverationOrderCompound
+  id: ConversationOrderCompound
   branches:
-  # Waiting until it's our turn in the dialogue.
+  - preconditions:
+    - !type:ActorsInRangePrecondition
+      rangeKey: DialogStartOffset
+      invert: true
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        rangeKey: InteractRange
+        removeKeyOnFinish: false
+    - !type:HTNPrimitiveTask
+      operator: !type:FaceToCoordinates
+
+  # Waiting until it is our turn to speak
   - preconditions:
     - !type:InConversationPrecondition
     - !type:NextInConversationPrecondition
       invert: true
     tasks:
     - !type:HTNPrimitiveTask
-      operator: !type:SetRandomFloatOperator
+      operator: !type:SetFloatOperator
         targetKey: Wait
-        minAmount: 0.25
-        maxAmount: 1
+        amount: 0.5
     - !type:HTNPrimitiveTask
       operator: !type:WaitOperator
         key: Wait
 
   - tasks:
+    # Random waiting time to make the dialogue look more natural
+    # and give the player time to read the lines
     - !type:HTNPrimitiveTask
-      operator: !type:MoveToOperator
-        rangeKey: InteractRange
-        removeKeyOnFinish: false
+      operator: !type:SetRandomFloatOperator
+        targetKey: Wait
+        minAmount: 2.5
+        maxAmount: 4
     - !type:HTNPrimitiveTask
-      operator: !type:RotateToTargetOperator
-        targetKey: TargetCoordinates
+      operator: !type:WaitOperator
+        key: Wait
 
     - !type:HTNPrimitiveTask
       operator: !type:GetConversationLineOperator
         key: Message
-
     - !type:HTNPrimitiveTask
       operator: !type:SayKeyOperator
         key: Message
