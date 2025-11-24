@@ -167,7 +167,7 @@ public abstract class SharedConversationSystem : EntitySystem
     /// <summary>
     /// Ends the conversation in which the entity participates
     /// </summary>
-    public void EndConversation(EntityUid uid)
+    public void EndConversation(EntityUid uid, bool applyEffects = false)
     {
         if (!TryGetScript(uid, out var script)
             || !_prototype.TryIndex(script, out var proto))
@@ -178,15 +178,24 @@ public abstract class SharedConversationSystem : EntitySystem
             if (_conversations[i].Script != script || !_conversations[i].Actors.ContainsValue(uid))
                 continue;
 
+            if (!applyEffects)
+            {
+                _conversations.RemoveAt(i);
+                return;
+            }
+
             // apply conversation completion effects
             foreach (var (id, effects) in proto.Effects)
             {
                 if (!_conversations[i].Actors.TryGetValue(id, out var actor))
                     continue;
 
+                var args = new EntityEffectConversationArgs(actor, _conversations[i].Actors, EntityManager);
+
                 foreach (var effect in effects)
                 {
-                    effect.Effect(new EntityEffectBaseArgs(actor, EntityManager));
+                    if (effect.ShouldApply(args))
+                        effect.Effect(args);
                 }
             }
 

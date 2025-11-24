@@ -74,3 +74,8 @@ public abstract partial class ConversationActorRequirement
     /// <param name="entMan">EntityManager</param>
     public abstract bool Check(EntityUid author, EntityUid? actor, EntityManager entMan);
 }
+
+public record EntityEffectConversationArgs(
+    EntityUid TargetEntity,
+    Dictionary<string, EntityUid> Actors,
+    IEntityManager EntityManager) : EntityEffectBaseArgs(TargetEntity, EntityManager);

@@ -33,6 +33,6 @@ public sealed class ConversationSystem : SharedConversationSystem
     // Helps to complete the dialogue for all participants if it was interrupted for any reason
     private void OnTaskFinished(EntityUid uid, HTNComponent component, NpcTaskFinished ev)
     {
-        EndConversation(uid);
+        EndConversation(uid, !ev.Failed);
     }
 }

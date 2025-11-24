@@ -21,6 +21,7 @@
       rootTask:
         task: RfIdleCompound
     - type: BiomeLoader
+    - type: Socialization
     - type: NpcFactionMember
       factions:
         - RimFortress
