@@ -14,48 +14,63 @@ public sealed class ConversationScriptPrototype : IPrototype
     public string ID { get; } = default!;
 
     /// <summary>
-    /// The actors in this dialogue
+    /// The actors in this conversation
     /// </summary>
     [DataField]
     public List<ConversationActorData> Actors = new();
 
     /// <summary>
-    /// Effects that will be applied to dialogue actors upon completion
+    /// Effects that will be applied to conversation actors upon completion
     /// </summary>
     [DataField]
     public Dictionary<string, List<EntityEffect>> Effects = new();
 
     /// <summary>
-    /// List of dialogue lines for each actor
+    /// List of conversation lines for each actor
     /// </summary>
     [DataField]
-    public List<Dictionary<string, LocId>> Dialog = new();
+    public List<Dictionary<string, LocId>> Lines = new();
 }
 
 [DataDefinition]
 public sealed partial class ConversationActorData
 {
     /// <summary>
-    /// Dialogue actor identifier
+    /// Conversation actor identifier
     /// </summary>
     [DataField]
     public string Id = default!;
 
     /// <summary>
-    /// Requirements for other participants in the dialogue to take up this role
+    /// Common requirements for the entity to take on this role
     /// </summary>
-    [DataField]
-    public Dictionary<string, List<ConversationActorRequirement>> Requirements = new();
+    /// <remarks>
+    /// The null value will be passed to the actor parameter in these requirements
+    /// </remarks>
+    [DataField("reqs")]
+    public List<ConversationActorRequirement> Requirements = new();
+
+    /// <summary>
+    /// Requirements for other participants in the conversation to take up this role
+    /// </summary>
+    [DataField("reqsFor")]
+    public Dictionary<string, List<ConversationActorRequirement>> RequirementsFor = new();
 }
 
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class ConversationActorRequirement
 {
     /// <summary>
+    /// Should the check result be inverted
+    /// </summary>
+    [DataField]
+    public bool Invert;
+
+    /// <summary>
     /// Checks a potential participant in the conversation
     /// </summary>
     /// <param name="author">Entity on whose behalf the verification takes place</param>
     /// <param name="actor">Potential participant in the conversation</param>
     /// <param name="entMan">EntityManager</param>
-    public abstract bool Check(EntityUid author, EntityUid actor, EntityManager entMan);
+    public abstract bool Check(EntityUid author, EntityUid? actor, EntityManager entMan);
 }

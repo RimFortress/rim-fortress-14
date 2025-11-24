@@ -85,7 +85,7 @@ public abstract class SharedConversationSystem : EntitySystem
 
         foreach (var (proto, actors, act, lineInd) in _conversations.ToList())
         {
-            if (protoId != proto || !script.Dialog.TryGetValue(act, out var lines))
+            if (protoId != proto || !script.Lines.TryGetValue(act, out var lines))
                 continue;
 
             // find the ID of the actor in the conversation for the entity
@@ -127,7 +127,7 @@ public abstract class SharedConversationSystem : EntitySystem
         {
             if (protoId != proto
                 || !actors.ContainsValue(uid)
-                || !script.Dialog.TryGetValue(act, out var lines))
+                || !script.Lines.TryGetValue(act, out var lines))
                 continue;
 
             var newAct = act;
@@ -142,7 +142,7 @@ public abstract class SharedConversationSystem : EntitySystem
             _conversations.Remove((protoId, actors, act, lineInd));
 
             // check if the dialog is complete
-            if (newAct < script.Dialog.Count)
+            if (newAct < script.Lines.Count)
             {
                 _conversations.Add((protoId, actors, newAct, newLine));
                 return;
@@ -208,7 +208,7 @@ public abstract class SharedConversationSystem : EntitySystem
                 continue;
 
             if (!_prototype.TryIndex(protoId, out var script)
-                || !script.Dialog.TryGetValue(act, out var lines))
+                || !script.Lines.TryGetValue(act, out var lines))
                 return false;
 
             var i = 0;
@@ -302,6 +302,24 @@ public abstract class SharedConversationSystem : EntitySystem
         roles = actors;
         return true;
 
+        bool CheckCommonRequirements(string role, EntityUid uid)
+        {
+            var data = script.Actors.FirstOrDefault(a => a.Id == role);
+
+            if (data == null)
+                return false;
+
+            foreach (var req in data.Requirements)
+            {
+                var result = req.Check(uid, null, EntityManager);
+
+                if (!req.Invert && result || req.Invert && !result)
+                    return false;
+            }
+
+            return true;
+        }
+
         // Checks the requirements defined by 'role' toward other already assigned roles.
         // For example: RoleA.Requirements[RoleB] must hold for (uid -> RoleA, assigned[RoleB]).
         bool CheckRoleRequirements(
@@ -314,14 +332,16 @@ public abstract class SharedConversationSystem : EntitySystem
             if (roleData == null)
                 return false;
 
-            foreach (var (otherRole, reqList) in roleData.Requirements)
+            foreach (var (otherRole, reqList) in roleData.RequirementsFor)
             {
                 if (!assigned.TryGetValue(otherRole, out var otherUid))
                     continue;
 
                 foreach (var req in reqList)
                 {
-                    if (!req.Check(uid, otherUid, EntityManager))
+                    var result = req.Check(uid, otherUid, EntityManager);
+
+                    if (!req.Invert && result || req.Invert && !result)
                         return false;
                 }
             }
@@ -341,12 +361,14 @@ public abstract class SharedConversationSystem : EntitySystem
             {
                 var otherData = script.Actors.FirstOrDefault(a => a.Id == otherRole);
 
-                if (otherData == null || !otherData.Requirements.TryGetValue(role, out var reqList))
+                if (otherData == null || !otherData.RequirementsFor.TryGetValue(role, out var reqList))
                     continue;
 
                 foreach (var req in reqList)
                 {
-                    if (!req.Check(otherUid, uid, EntityManager))
+                    var result = req.Check(otherUid, uid, EntityManager);
+
+                    if (!req.Invert && result || req.Invert && !result)
                         return false;
                 }
             }
@@ -366,6 +388,7 @@ public abstract class SharedConversationSystem : EntitySystem
             foreach (var uid in uids)
             {
                 if (used.Contains(uid)
+                    || !CheckCommonRequirements(role, uid)
                     || !CheckRoleRequirements(role, uid, actors)
                     || !CheckReverseRequirements(role, uid, actors))
                     continue;
