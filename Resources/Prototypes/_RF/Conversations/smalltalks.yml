@@ -4,10 +4,10 @@
   - id: speakerA
   - id: speakerB
   lines:
-  - speakerA: smalltalk01-line1-a
-    speakerB: smalltalk01-line1-b
-  - speakerA: smalltalk01-line2-a
-    speakerB: smalltalk01-line2-b
+  - speakerA: conversation-smalltalk01-line1-a
+    speakerB: conversation-smalltalk01-line1-b
+  - speakerA: conversation-smalltalk01-line2-a
+    speakerB: conversation-smalltalk01-line2-b
 
 - type: conversationScript
   id: Smalltalk02
@@ -15,9 +15,33 @@
   - id: traveler
   - id: villager
   lines:
-  - traveler: smalltalk02-line1-a
-    villager: smalltalk02-line1-b
-  - traveler: smalltalk02-line2-a
-    villager: smalltalk02-line2-b
-  - traveler: smalltalk02-line3-a
-    villager: smalltalk02-line3-b
+  - traveler: conversation-smalltalk02-line1-a
+    villager: conversation-smalltalk02-line1-b
+  - traveler: conversation-smalltalk02-line2-a
+    villager: conversation-smalltalk02-line2-b
+  - traveler: conversation-smalltalk02-line3-a
+    villager: conversation-smalltalk02-line3-b
+
+- type: ConversationScript
+  id: GreetingCasual
+  actors:
+  - id: speaker
+  - id: listener
+  lines:
+  - speaker: greeting-casual-hello
+    listener: greeting-casual-response
+  - speaker: greeting-casual-how-are-you
+    listener: greeting-casual-im-fine
+
+- type: ConversationScript
+  id: MorningGreeting
+  actors:
+  - id: initiator
+    reqs:
+    - type: DayHour
+      moreThan: 5
+      lessThan: 10
+  - id: responder
+  lines:
+  - initiator: conversation-morning-greeting-initiator
+    responder: conversation-morning-greeting-responder

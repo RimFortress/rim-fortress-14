@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared.GameTicking;
+using Content.Shared.Light.Components;
 using Content.Shared.Maps;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Pinpointer;
@@ -13,6 +15,7 @@ using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization;
+using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.World;
 
@@ -25,6 +28,8 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly SharedBiomeSystem _biome = default!;
     [Dependency] private readonly INetManager _net = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly SharedGameTicker _ticker = default!;
 
     protected RimFortressRuleComponent? Rule;
 
@@ -130,6 +135,33 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
             jobId = null;
             return false;
         }
+    }
+
+    public TimeSpan WorldDateTime()
+    {
+        var query = EntityQueryEnumerator<RimFortressRuleComponent>();
+        while (query.MoveNext(out var comp))
+        {
+            if (!TryComp(comp.WorldMap, out LightCycleComponent? cycle))
+                return TimeSpan.Zero;
+
+            var time = _timing.CurTime
+                .Add(cycle.Offset)
+                .Subtract(_ticker.RoundStartTimeSpan);
+
+            // We take the length of an in-game day in 24 hours and get the current time
+            var gameTimeHours = time.TotalSeconds % cycle.Duration.TotalSeconds
+                / cycle.Duration.TotalSeconds * 24;
+
+            var hours = (int) gameTimeHours;
+            var minutes = (int) ((gameTimeHours - hours) * 60);
+
+            var days = (int) Math.Floor(time / cycle.Duration) + 1;
+
+            return TimeSpan.FromDays(days, hours, minutes);
+        }
+
+        return TimeSpan.Zero;
     }
 }
 

@@ -27,6 +27,24 @@ public sealed class SocializationSystem : EntitySystem
         DirtyField(ent, nameof(SocializationComponent.MoodEffects));
     }
 
+    public bool RemoveMoodEffect(Entity<SocializationComponent?> ent, ProtoId<MoodEffectPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return false;
+
+        for (var i = 0; i < ent.Comp.MoodEffects.Count; i++)
+        {
+            if (ent.Comp.MoodEffects[i].Proto != protoId)
+                continue;
+
+            ent.Comp.MoodEffects.RemoveAt(i);
+            DirtyField(ent, nameof(SocializationComponent.MoodEffects));
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Returns the entity's mood level
     /// </summary>
@@ -65,9 +83,6 @@ public sealed class SocializationSystem : EntitySystem
         DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
     }
 
-    /// <summary>
-    ///
-    /// </summary>
     public void AddBothOpinionEffect(
         Entity<SocializationComponent?> ent1,
         Entity<SocializationComponent?> ent2,
@@ -75,6 +90,37 @@ public sealed class SocializationSystem : EntitySystem
     {
         AddOpinionEffect(ent1, ent2, protoId);
         AddOpinionEffect(ent1, ent2, protoId);
+    }
+
+    public bool RemoveOpinionEffect(
+        Entity<SocializationComponent?> ent,
+        EntityUid other,
+        ProtoId<OpinionEffectsPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp)
+            || !ent.Comp.OpinionEffects.TryGetValue(other, out var effect))
+            return false;
+
+        for (var i = 0; i < effect.Count; i++)
+        {
+            if (effect[i].Proto != protoId)
+                continue;
+
+            ent.Comp.OpinionEffects[other].RemoveAt(i);
+            DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
+            return true;
+        }
+
+        return false;
+    }
+
+    public void RemoveBothOpinionEffect(
+        Entity<SocializationComponent?> ent1,
+        Entity<SocializationComponent?> ent2,
+        ProtoId<OpinionEffectsPrototype> protoId)
+    {
+        RemoveOpinionEffect(ent1, ent2, protoId);
+        RemoveOpinionEffect(ent1, ent2, protoId);
     }
 
     /// <summary>
