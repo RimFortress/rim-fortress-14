@@ -217,8 +217,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
             var pop = _station.SpawnPlayerMob(coords, job, character, null);
 
-            if (rule.PopsComponentsOverride != null)
-                EntityManager.AddComponents(pop, rule.PopsComponentsOverride);
+            if (_prototype.Resolve(rule.PopsComponentsOverride, out var overrides))
+                EntityManager.AddComponents(pop, overrides.Components);
 
             pops.Add(pop);
         }

@@ -40,7 +40,7 @@ public sealed partial class RimFortressRuleComponent : Component
     /// Components that will be added to the pops when spawned
     /// </summary>
     [DataField]
-    public ComponentRegistry? PopsComponentsOverride = new();
+    public EntProtoId? PopsComponentsOverride = new();
 
     /// <summary>
     /// Table with random events that can happen on the world map

@@ -1,4 +1,27 @@
 - type: entity
+  id: PopsComponentsOverride
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: HTN
+    rootTask:
+      task: RfIdleCompound
+  - type: NpcFactionMember
+    factions:
+    - RimFortress
+  - type: BiomeLoader
+  - type: Socialization
+  - type: RoutineNpcTasks
+    presetJobs:
+    - Construction
+    - Dig
+    - Chop
+    - Medicine
+    - Farming
+    - Storing
+    - Other
+    - Socialization
+
+- type: entity
   id: RimFortress
   parent: BaseGameRule
   components:
@@ -11,25 +34,7 @@
       tableId: BasicGlobalRulesTable
     narrator: Basic
     dayDuration: 1800 #30 min
-    popsComponentsOverride:
-    - type: HTN
-      rootTask:
-        task: RfIdleCompound
-    - type: NpcFactionMember
-      factions:
-      - RimFortress
-    - type: BiomeLoader
-    - type: Socialization
-    - type: RoutineNpcTasks
-      presetJobs:
-      - Construction
-      - Dig
-      - Chop
-      - Medicine
-      - Farming
-      - Storing
-      - Other
-      - Socialization
+    popsComponentsOverride: PopsComponentsOverride
 
 - type: entityTable
   id: BasicWorldRulesTable
