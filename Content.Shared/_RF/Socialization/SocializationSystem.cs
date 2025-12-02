@@ -1,4 +1,6 @@
+using Content.Shared._RF.CCVar;
 using Content.Shared.Tag;
+using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -7,8 +9,22 @@ namespace Content.Shared._RF.Socialization;
 
 public sealed class SocializationSystem : EntitySystem
 {
+    [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+
+    private int _minMood;
+    private int _maxMood;
+    private int _minOpinion;
+    private int _maxOpinion;
+
+    public override void Initialize()
+    {
+        _cfg.OnValueChanged(RfVars.MinMoodValue, value => _minMood = value, true);
+        _cfg.OnValueChanged(RfVars.MaxMoodValue, value => _maxMood = value, true);
+        _cfg.OnValueChanged(RfVars.MinOpinionValue, value => _minOpinion = value, true);
+        _cfg.OnValueChanged(RfVars.MaxOpinionValue, value => _maxOpinion = value, true);
+    }
 
     /// <summary>
     /// Adds an effect on the entity's mood
@@ -61,7 +77,7 @@ public sealed class SocializationSystem : EntitySystem
                 mood += proto.Effect;
         }
 
-        return Math.Clamp(mood, ent.Comp.MinMood, ent.Comp.MaxMood);
+        return Math.Clamp(mood, _minMood, _maxMood);
     }
 
     /// <summary>
@@ -140,7 +156,7 @@ public sealed class SocializationSystem : EntitySystem
                 level += effect.Effect;
         }
 
-        return Math.Clamp(level, ent.Comp.MinOpinion, ent.Comp.MaxOpinion);
+        return Math.Clamp(level, _minOpinion, _maxOpinion);
     }
 
     /// <summary>

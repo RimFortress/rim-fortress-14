@@ -10,18 +10,6 @@ namespace Content.Shared._RF.Socialization;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
 public sealed partial class SocializationComponent : Component
 {
-    [DataField]
-    public int MaxMood = 50;
-
-    [DataField]
-    public int MinMood = -50;
-
-    [DataField]
-    public int MaxOpinion = 100;
-
-    [DataField]
-    public int MinOpinion = -100;
-
     /// <summary>
     /// Effects on mood
     /// </summary>

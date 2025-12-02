@@ -55,6 +55,8 @@ public sealed class RfVars : CVars
     public static readonly CVarDef<int> MaxPrefSkillsLevel =
         CVarDef.Create("rimfortress.max_pref_skills_level", 10, CVar.SERVER | CVar.REPLICATED);
 
+    #region Npc
+
     /// <summary>
     /// Whether to finish a routine NPC task if at least one active target of that task has failed
     /// </summary>
@@ -66,4 +68,34 @@ public sealed class RfVars : CVars
     /// </summary>
     public static readonly CVarDef<TimeSpan> TaskCooldownOnFail =
         CVarDef.Create("npc.task_cooldown_on_failed", TimeSpan.FromSeconds(10), CVar.SERVER | CVar.SERVERONLY);
+
+    #endregion
+
+    #region Socialization
+
+    /// <summary>
+    /// Minimum entity mood level
+    /// </summary>
+    public static readonly CVarDef<int> MinMoodValue =
+        CVarDef.Create("social.min_mood_value", -50, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
+    /// Maximum entity mood level
+    /// </summary>
+    public static readonly CVarDef<int> MaxMoodValue =
+        CVarDef.Create("social.max_mood_value", 50, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
+    /// Minimum level of opinion about another entity
+    /// </summary>
+    public static readonly CVarDef<int> MinOpinionValue =
+        CVarDef.Create("social.min_opinion_value", -100, CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
+    /// Maximum level of opinion about another entity
+    /// </summary>
+    public static readonly CVarDef<int> MaxOpinionValue =
+        CVarDef.Create("social.max_opinion_value", 100, CVar.SERVER | CVar.REPLICATED);
+
+    #endregion
 }
