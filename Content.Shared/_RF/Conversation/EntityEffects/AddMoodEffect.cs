@@ -13,7 +13,7 @@ public sealed partial class AddMoodEffect : EntityEffect
     /// Prototype of the effect
     /// </summary>
     [DataField]
-    public ProtoId<MoodEffectPrototype> Proto;
+    public ProtoId<SocializationEffectPrototype> Proto;
 
     public override void Effect(EntityEffectBaseArgs args)
     {

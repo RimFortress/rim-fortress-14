@@ -15,13 +15,13 @@ public sealed partial class ChangeOpinionOnTriggerComponent : BaseXOnTriggerComp
     /// Prototype of the effect that will be issued for the relationship between two entities
     /// </summary>
     [DataField]
-    public ProtoId<OpinionEffectsPrototype>? Effect;
+    public ProtoId<SocializationEffectPrototype>? Effect;
 
     /// <summary>
     /// A prototype of an effect that should be removed in the relationship between two entities
     /// </summary>
     [DataField]
-    public ProtoId<OpinionEffectsPrototype>? RemovedEffect;
+    public ProtoId<SocializationEffectPrototype>? RemovedEffect;
 
     /// <summary>
     /// If true, the effect will be added/removed for two entities in relation to each other

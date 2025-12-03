@@ -4,10 +4,10 @@ using Robust.Shared.Prototypes;
 namespace Content.Shared._RF.Socialization;
 
 /// <summary>
-/// A prototype of the effect that changes an entity's opinion of another entity
+/// Prototype of the effect that influences the social interactions of entities
 /// </summary>
 [Prototype]
-public sealed partial class OpinionEffectsPrototype : IPrototype
+public sealed partial class SocializationEffectPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
@@ -29,7 +29,7 @@ public sealed partial class OpinionEffectsPrototype : IPrototype
     public TimeSpan? Duration;
 
     /// <summary>
-    /// How much this effect changes opinion level
+    /// How much does the effect change any value
     /// </summary>
     [DataField]
     public int Effect;
@@ -39,4 +39,16 @@ public sealed partial class OpinionEffectsPrototype : IPrototype
     /// </summary>
     [DataField]
     public List<ProtoId<TagPrototype>> Tags = new();
+
+    /// <summary>
+    /// Can this effect be issued multiple times
+    /// </summary>
+    [DataField]
+    public bool Multiply;
+
+    /// <summary>
+    /// Maximum value of the effect that can be achieved by multiplying the effect
+    /// </summary>
+    [DataField]
+    public int MaxMultiplier = int.MaxValue;
 }

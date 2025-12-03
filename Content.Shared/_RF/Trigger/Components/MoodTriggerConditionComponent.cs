@@ -1,5 +1,7 @@
+using Content.Shared.Tag;
 using Content.Shared.Trigger.Components.Conditions;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Trigger.Components;
 
@@ -20,4 +22,10 @@ public sealed partial class MoodTriggerConditionComponent : BaseTriggerCondition
     /// </summary>
     [DataField]
     public int? Max;
+
+    /// <summary>
+    /// Opinion tags
+    /// </summary>
+    [DataField]
+    public List<ProtoId<TagPrototype>> Tags = new();
 }

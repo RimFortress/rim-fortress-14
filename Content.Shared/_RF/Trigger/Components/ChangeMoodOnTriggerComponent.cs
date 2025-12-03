@@ -15,11 +15,11 @@ public sealed partial class ChangeMoodOnTriggerComponent : BaseXOnTriggerCompone
     /// Prototype of the effect that will be added to the entity's mood
     /// </summary>
     [DataField]
-    public ProtoId<MoodEffectPrototype>? Effect;
+    public ProtoId<SocializationEffectPrototype>? Effect;
 
     /// <summary>
     /// Prototype of the effect that will be removed from the entity's mood
     /// </summary>
     [DataField]
-    public ProtoId<MoodEffectPrototype>? RemovedEffect;
+    public ProtoId<SocializationEffectPrototype>? RemovedEffect;
 }

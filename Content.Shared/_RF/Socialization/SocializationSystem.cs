@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Shared._RF.CCVar;
 using Content.Shared.Tag;
 using Robust.Shared.Configuration;
@@ -29,32 +30,106 @@ public sealed class SocializationSystem : EntitySystem
     /// <summary>
     /// Adds an effect on the entity's mood
     /// </summary>
-    public void AddMoodEffect(Entity<SocializationComponent?> ent, ProtoId<MoodEffectPrototype> protoId)
+    public void AddMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_prototype.TryIndex(protoId, out var effect))
+        if (!Resolve(ent, ref ent.Comp))
             return;
 
-        var endTime = effect.Duration != null
-            ? _timing.CurTime + effect.Duration
-            : null;
-
-        ent.Comp.MoodEffects.Add((protoId, endTime));
-
+        AddEffect(ent.Comp.MoodEffects, protoId);
         DirtyField(ent, nameof(SocializationComponent.MoodEffects));
     }
 
-    public bool RemoveMoodEffect(Entity<SocializationComponent?> ent, ProtoId<MoodEffectPrototype> protoId)
+    /// <summary>
+    /// Adds an effect on the opinion of one entity to another
+    /// </summary>
+    public void AddOpinionEffect(
+        Entity<SocializationComponent?> ent,
+        EntityUid other,
+        ProtoId<SocializationEffectPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        AddEffect(ent.Comp.OpinionEffects.GetOrNew(other), protoId);
+        DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
+    }
+
+    public void AddBothOpinionEffect(
+        Entity<SocializationComponent?> ent1,
+        Entity<SocializationComponent?> ent2,
+        ProtoId<SocializationEffectPrototype> protoId)
+    {
+        AddOpinionEffect(ent1, ent2, protoId);
+        AddOpinionEffect(ent1, ent2, protoId);
+    }
+
+    private void AddEffect(List<SocializationEffect> effects, ProtoId<SocializationEffectPrototype> protoId)
+    {
+        if (!_prototype.TryIndex(protoId, out var proto))
+            return;
+
+        if (!proto.Multiply)
+        {
+            var endTime = proto.Duration != null
+                ? _timing.CurTime + proto.Duration
+                : null;
+
+            effects.Add(new(protoId, 1, endTime));
+        }
+        else
+        {
+            foreach (var effect in effects)
+            {
+                if (effect.Id != protoId)
+                    continue;
+
+                if (effect.Multiplier >= proto.MaxMultiplier)
+                    return;
+
+                effect.Multiplier++;
+                effect.EndAt += proto.Duration;
+                return;
+            }
+        }
+    }
+
+    public bool RemoveMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp) || !RemoveEffect(ent.Comp.MoodEffects, protoId))
             return false;
 
-        for (var i = 0; i < ent.Comp.MoodEffects.Count; i++)
+        DirtyField(ent, nameof(SocializationComponent.MoodEffects));
+        return false;
+    }
+
+    public bool RemoveOpinionEffect(
+        Entity<SocializationComponent?> ent,
+        EntityUid other,
+        ProtoId<SocializationEffectPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp)
+            || !ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
+            || !RemoveEffect(effect, protoId))
+            return false;
+
+        DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
+        return false;
+    }
+
+    public bool RemoveBothOpinionEffect(
+        Entity<SocializationComponent?> ent1,
+        Entity<SocializationComponent?> ent2,
+        ProtoId<SocializationEffectPrototype> protoId)
+        => RemoveOpinionEffect(ent1, ent2, protoId) && RemoveOpinionEffect(ent1, ent2, protoId);
+
+    private bool RemoveEffect(List<SocializationEffect> effects, ProtoId<SocializationEffectPrototype> protoId)
+    {
+        for (var i = 0; i < effects.Count; i++)
         {
-            if (ent.Comp.MoodEffects[i].Proto != protoId)
+            if (effects[i].Id != protoId)
                 continue;
 
-            ent.Comp.MoodEffects.RemoveAt(i);
-            DirtyField(ent, nameof(SocializationComponent.MoodEffects));
+            effects.RemoveAt(i);
             return true;
         }
 
@@ -65,117 +140,62 @@ public sealed class SocializationSystem : EntitySystem
     /// Returns the entity's mood level
     /// </summary>
     public int GetMood(Entity<SocializationComponent?> ent)
-    {
-        if (!Resolve(ent, ref ent.Comp))
-            return 0;
-
-        var mood = 0;
-
-        foreach (var (protoId, _) in ent.Comp.MoodEffects)
-        {
-            if (_prototype.TryIndex(protoId, out var proto))
-                mood += proto.Effect;
-        }
-
-        return Math.Clamp(mood, _minMood, _maxMood);
-    }
-
-    /// <summary>
-    /// Adds an effect on the opinion of one entity to another
-    /// </summary>
-    public void AddOpinionEffect(
-        Entity<SocializationComponent?> ent,
-        EntityUid other,
-        ProtoId<OpinionEffectsPrototype> protoId)
-    {
-        if (!Resolve(ent, ref ent.Comp) || !_prototype.TryIndex(protoId, out var effect))
-            return;
-
-        var endTime = effect.Duration != null
-            ? _timing.CurTime + effect.Duration
-            : null;
-
-        ent.Comp.OpinionEffects.GetOrNew(other).Add((protoId, endTime));
-        DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
-    }
-
-    public void AddBothOpinionEffect(
-        Entity<SocializationComponent?> ent1,
-        Entity<SocializationComponent?> ent2,
-        ProtoId<OpinionEffectsPrototype> protoId)
-    {
-        AddOpinionEffect(ent1, ent2, protoId);
-        AddOpinionEffect(ent1, ent2, protoId);
-    }
-
-    public bool RemoveOpinionEffect(
-        Entity<SocializationComponent?> ent,
-        EntityUid other,
-        ProtoId<OpinionEffectsPrototype> protoId)
-    {
-        if (!Resolve(ent, ref ent.Comp)
-            || !ent.Comp.OpinionEffects.TryGetValue(other, out var effect))
-            return false;
-
-        for (var i = 0; i < effect.Count; i++)
-        {
-            if (effect[i].Proto != protoId)
-                continue;
-
-            ent.Comp.OpinionEffects[other].RemoveAt(i);
-            DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
-            return true;
-        }
-
-        return false;
-    }
-
-    public void RemoveBothOpinionEffect(
-        Entity<SocializationComponent?> ent1,
-        Entity<SocializationComponent?> ent2,
-        ProtoId<OpinionEffectsPrototype> protoId)
-    {
-        RemoveOpinionEffect(ent1, ent2, protoId);
-        RemoveOpinionEffect(ent1, ent2, protoId);
-    }
+        => Resolve(ent, ref ent.Comp) ? Math.Clamp(GetEffect(ent.Comp.MoodEffects), _minMood, _maxMood) : 0;
 
     /// <summary>
     /// Returns the opinion level of one entity to another
     /// </summary>
     public int GetOpinion(Entity<SocializationComponent?> ent, EntityUid other)
+        => Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
+            ? Math.Clamp(GetEffect(effects), _minOpinion, _maxOpinion)
+            : 0;
+
+    private int GetEffect(List<SocializationEffect> effects)
     {
-        if (!Resolve(ent, ref ent.Comp)
-            || !ent.Comp.OpinionEffects.TryGetValue(other, out var effects))
-            return 0;
+        var value = 0;
 
-        var level = 0;
-
-        foreach (var (protoId, _) in effects)
+        foreach (var effect in effects)
         {
-            if (_prototype.TryIndex(protoId, out var effect))
-                level += effect.Effect;
+            if (_prototype.TryIndex(effect.Id, out var proto))
+                value += proto.Effect * Math.Clamp(effect.Multiplier, 1, proto.MaxMultiplier);
         }
 
-        return Math.Clamp(level, _minOpinion, _maxOpinion);
+        return Math.Clamp(value, _minMood, _maxMood);
     }
+
+    public bool HasMoodTag(Entity<SocializationComponent?> ent, ProtoId<TagPrototype> tag)
+        => Resolve(ent, ref ent.Comp) && HasTag(ent.Comp.MoodEffects, tag);
 
     /// <summary>
     /// Checks the opinion of one entity towards another for the presence of the specified tag
     /// </summary>
     public bool HasOpinionTag(Entity<SocializationComponent?> ent, EntityUid other, ProtoId<TagPrototype> tag)
-    {
-        if (!Resolve(ent, ref ent.Comp)
-            || !ent.Comp.OpinionEffects.TryGetValue(other, out var effects))
-            return false;
+        => Resolve(ent, ref ent.Comp)
+           && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
+           && HasTag(effects, tag);
 
-        foreach (var (protoId, _) in effects)
+    private bool HasTag(List<SocializationEffect> effects, ProtoId<TagPrototype> tag)
+    {
+        foreach (var effect in effects)
         {
-            if (_prototype.TryIndex(protoId, out var effect) && effect.Tags.Contains(tag))
+            if (_prototype.TryIndex(effect.Id, out var proto)
+                && proto.Tags.Contains(tag))
                 return true;
         }
 
         return false;
     }
+
+    public bool HasMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
+        => Resolve(ent, ref ent.Comp) && ent.Comp.MoodEffects.Any(e => e.Id == protoId);
+
+    public bool HasOpinionEffect(
+        Entity<SocializationComponent?> ent,
+        EntityUid other,
+        ProtoId<SocializationEffectPrototype> protoId)
+        => Resolve(ent, ref ent.Comp)
+           && ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
+           && effect.Any(x => x.Id == protoId);
 
     public override void Update(float frameTime)
     {

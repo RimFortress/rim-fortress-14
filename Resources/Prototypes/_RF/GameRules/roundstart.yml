@@ -9,7 +9,6 @@
     factions:
     - RimFortress
   - type: BiomeLoader
-  - type: Socialization
   - type: RoutineNpcTasks
     presetJobs:
     - Construction

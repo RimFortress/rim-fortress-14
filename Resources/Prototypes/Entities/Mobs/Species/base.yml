@@ -220,6 +220,7 @@
       min: 5
       max: 20
     maxRandomLevel: 10
+  - type: Socialization
   # RimFortress End
 
 - type: entity

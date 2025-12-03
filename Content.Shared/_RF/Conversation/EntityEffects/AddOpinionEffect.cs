@@ -19,7 +19,7 @@ public sealed partial class AddOpinionEffect : EntityEffect
     /// Prototype of the effect
     /// </summary>
     [DataField]
-    public ProtoId<OpinionEffectsPrototype> Proto;
+    public ProtoId<SocializationEffectPrototype> Proto;
 
     public override void Effect(EntityEffectBaseArgs args)
     {

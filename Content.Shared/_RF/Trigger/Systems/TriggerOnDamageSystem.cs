@@ -2,7 +2,7 @@ using Content.Shared._RF.Trigger.Components;
 using Content.Shared.Damage;
 using Content.Shared.Trigger.Systems;
 
-namespace Content.Shared._RF.Trigger.System;
+namespace Content.Shared._RF.Trigger.Systems;
 
 public sealed class TriggerOnDamageSystem : EntitySystem
 {
