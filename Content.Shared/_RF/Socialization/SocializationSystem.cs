@@ -47,7 +47,7 @@ public sealed class SocializationSystem : EntitySystem
         EntityUid other,
         ProtoId<SocializationEffectPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp))
+        if (!Resolve(ent, ref ent.Comp) || ent.Owner == other)
             return;
 
         AddEffect(ent.Comp.OpinionEffects.GetOrNew(other), protoId);
@@ -63,39 +63,27 @@ public sealed class SocializationSystem : EntitySystem
         AddOpinionEffect(ent1, ent2, protoId);
     }
 
-    private void AddEffect(List<SocializationEffect> effects, ProtoId<SocializationEffectPrototype> protoId)
+    private void AddEffect(
+        Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects,
+        ProtoId<SocializationEffectPrototype> protoId)
     {
         if (!_prototype.TryIndex(protoId, out var proto))
             return;
 
-        if (!proto.Multiply)
+        if (effects.ContainsKey(protoId))
         {
-            var endTime = proto.Duration != null
-                ? _timing.CurTime + proto.Duration
-                : null;
-
-            effects.Add(new(protoId, 1, endTime));
+            effects[protoId] += proto.Duration;
+            return;
         }
-        else
-        {
-            foreach (var effect in effects)
-            {
-                if (effect.Id != protoId)
-                    continue;
 
-                if (effect.Multiplier >= proto.MaxMultiplier)
-                    return;
-
-                effect.Multiplier++;
-                effect.EndAt += proto.Duration;
-                return;
-            }
-        }
+        effects[protoId] = proto.Duration != null
+            ? _timing.CurTime + proto.Duration
+            : null;
     }
 
     public bool RemoveMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp) || !RemoveEffect(ent.Comp.MoodEffects, protoId))
+        if (!Resolve(ent, ref ent.Comp) || !ent.Comp.MoodEffects.Remove(protoId))
             return false;
 
         DirtyField(ent, nameof(SocializationComponent.MoodEffects));
@@ -109,7 +97,7 @@ public sealed class SocializationSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp)
             || !ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
-            || !RemoveEffect(effect, protoId))
+            || !effect.Remove(protoId))
             return false;
 
         DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
@@ -121,20 +109,6 @@ public sealed class SocializationSystem : EntitySystem
         Entity<SocializationComponent?> ent2,
         ProtoId<SocializationEffectPrototype> protoId)
         => RemoveOpinionEffect(ent1, ent2, protoId) && RemoveOpinionEffect(ent1, ent2, protoId);
-
-    private bool RemoveEffect(List<SocializationEffect> effects, ProtoId<SocializationEffectPrototype> protoId)
-    {
-        for (var i = 0; i < effects.Count; i++)
-        {
-            if (effects[i].Id != protoId)
-                continue;
-
-            effects.RemoveAt(i);
-            return true;
-        }
-
-        return false;
-    }
 
     /// <summary>
     /// Returns the entity's mood level
@@ -150,21 +124,31 @@ public sealed class SocializationSystem : EntitySystem
             ? Math.Clamp(GetEffect(effects), _minOpinion, _maxOpinion)
             : 0;
 
-    private int GetEffect(List<SocializationEffect> effects)
+    private int GetEffect(Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects)
     {
         var value = 0;
 
-        foreach (var effect in effects)
+        foreach (var (protoId, endAt) in effects)
         {
-            if (_prototype.TryIndex(effect.Id, out var proto))
-                value += proto.Effect * Math.Clamp(effect.Multiplier, 1, proto.MaxMultiplier);
+            if (!_prototype.TryIndex(protoId, out var proto))
+                continue;
+
+            DebugTools.Assert(proto.MaxEffect >= proto.Effect);
+            DebugTools.Assert(Math.Abs(proto.MaxEffect) == Math.Abs(proto.Effect));
+
+            // The strength of the effect is multiplied by the number of times the effect was extended
+            // Therefore, the strength of the effect will gradually decrease as it ends,
+            // ensuring a smooth change of value
+            var multiplier = (int)((endAt - _timing.CurTime) / proto.Duration ?? 1);
+            multiplier = Math.Clamp(Math.Abs(multiplier), 0, Math.Abs(proto.MaxEffect)) * Math.Sign(multiplier);
+            value += proto.Effect * multiplier;
         }
 
-        return Math.Clamp(value, _minMood, _maxMood);
+        return value;
     }
 
     public bool HasMoodTag(Entity<SocializationComponent?> ent, ProtoId<TagPrototype> tag)
-        => Resolve(ent, ref ent.Comp) && HasTag(ent.Comp.MoodEffects, tag);
+        => Resolve(ent, ref ent.Comp) && HasTag(ent.Comp.MoodEffects.Keys, tag);
 
     /// <summary>
     /// Checks the opinion of one entity towards another for the presence of the specified tag
@@ -172,13 +156,13 @@ public sealed class SocializationSystem : EntitySystem
     public bool HasOpinionTag(Entity<SocializationComponent?> ent, EntityUid other, ProtoId<TagPrototype> tag)
         => Resolve(ent, ref ent.Comp)
            && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
-           && HasTag(effects, tag);
+           && HasTag(effects.Keys, tag);
 
-    private bool HasTag(List<SocializationEffect> effects, ProtoId<TagPrototype> tag)
+    private bool HasTag(IEnumerable<ProtoId<SocializationEffectPrototype>> effects, ProtoId<TagPrototype> tag)
     {
         foreach (var effect in effects)
         {
-            if (_prototype.TryIndex(effect.Id, out var proto)
+            if (_prototype.TryIndex(effect, out var proto)
                 && proto.Tags.Contains(tag))
                 return true;
         }
@@ -187,7 +171,7 @@ public sealed class SocializationSystem : EntitySystem
     }
 
     public bool HasMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
-        => Resolve(ent, ref ent.Comp) && ent.Comp.MoodEffects.Any(e => e.Id == protoId);
+        => Resolve(ent, ref ent.Comp) && ent.Comp.MoodEffects.Any(e => e.Key == protoId);
 
     public bool HasOpinionEffect(
         Entity<SocializationComponent?> ent,
@@ -195,11 +179,13 @@ public sealed class SocializationSystem : EntitySystem
         ProtoId<SocializationEffectPrototype> protoId)
         => Resolve(ent, ref ent.Comp)
            && ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
-           && effect.Any(x => x.Id == protoId);
+           && effect.Any(x => x.Key == protoId);
 
     public override void Update(float frameTime)
     {
         var query = EntityQueryEnumerator<SocializationComponent>();
+        var remove = new HashSet<ProtoId<SocializationEffectPrototype>>();
+
         while (query.MoveNext(out var comp))
         {
             if (comp.NexUpdate >= _timing.CurTime)
@@ -208,28 +194,38 @@ public sealed class SocializationSystem : EntitySystem
             comp.NexUpdate = _timing.CurTime + SocializationComponent.UpdateRate;
 
             // Check mood effects
-            for (var i = 0; i < comp.MoodEffects.Count - 1; i++)
+            foreach (var (protoId, endAt) in comp.MoodEffects)
             {
-                var endAt = comp.MoodEffects[i].EndAt;
-
                 if (endAt == null || endAt > _timing.CurTime)
                     continue;
 
-                comp.MoodEffects.RemoveAt(i);
+                remove.Add(protoId);
             }
 
-            // Check relation effects
-            foreach (var (uid, relationEffects) in comp.OpinionEffects)
+            foreach (var protoId in remove)
             {
-                for (var i = 0; i < relationEffects.Count - 1; i++)
-                {
-                    var endAt = relationEffects[i].EndAt;
+                comp.MoodEffects.Remove(protoId);
+            }
 
+            remove.Clear();
+
+            // Check relation effects
+            foreach (var (_, effects) in comp.OpinionEffects)
+            {
+                foreach (var (protoId, endAt) in effects)
+                {
                     if (endAt == null || endAt > _timing.CurTime)
                         continue;
 
-                    comp.OpinionEffects[uid].RemoveAt(i);
+                    remove.Add(protoId);
                 }
+
+                foreach (var protoId in remove)
+                {
+                    effects.Remove(protoId);
+                }
+
+                remove.Clear();
             }
         }
     }

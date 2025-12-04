@@ -221,6 +221,17 @@
       max: 20
     maxRandomLevel: 10
   - type: Socialization
+  - type: TriggerOnDamage
+    keyOut: onDamage
+  - type: TriggerOnHeal
+    keyOut: onHeal
+  - type: TriggerMappings
+    onDamage:
+    - type: ChangeOpinionOnTrigger
+      effect: OpinionAttacked
+    onHeal:
+    - type: ChangeOpinionOnTrigger
+      effect: OpinionHealed
   # RimFortress End
 
 - type: entity

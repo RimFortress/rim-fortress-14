@@ -14,40 +14,17 @@ public sealed partial class SocializationComponent : Component
     /// Effects on mood
     /// </summary>
     [ViewVariables, AutoNetworkedField]
-    public List<SocializationEffect> MoodEffects = new();
+    public Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> MoodEffects = new();
 
     /// <summary>
     /// Effects acting on the opinion of an entity to other entities
     /// </summary>
     [ViewVariables, AutoNetworkedField]
-    public Dictionary<EntityUid, List<SocializationEffect>> OpinionEffects = new();
+    public Dictionary<EntityUid, Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?>> OpinionEffects = new();
 
     [ViewVariables]
     public TimeSpan NexUpdate = TimeSpan.Zero;
 
     // There is no point in checking everything too often
     public static readonly TimeSpan UpdateRate = TimeSpan.FromSeconds(1);
-}
-
-[DataDefinition]
-public sealed partial class SocializationEffect
-{
-    [DataField]
-    public ProtoId<SocializationEffectPrototype> Id;
-
-    [DataField]
-    public int Multiplier = 1;
-
-    [DataField]
-    public TimeSpan? EndAt;
-
-    public SocializationEffect(
-        ProtoId<SocializationEffectPrototype> id,
-        int multiplier = 1,
-        TimeSpan? endAt = null)
-    {
-        Id = id;
-        Multiplier = multiplier;
-        EndAt = endAt;
-    }
 }

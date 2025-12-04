@@ -104,7 +104,7 @@ public sealed class SocializationTriggerSystem : EntitySystem
             args.Cancelled = true;
             return;
         }
-        
+
         foreach (var tag in ent.Comp.Tags)
         {
             if (_socialization.HasOpinionTag(ent.Owner, args.User.Value, tag))

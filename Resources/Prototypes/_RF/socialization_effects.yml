@@ -1,0 +1,17 @@
+# Opinion Effects
+
+- type: SocializationEffect
+  id: OpinionAttacked
+  name: opinion-effect-attacked-name
+  description: opinion-effect-attacked-desc
+  effect: -5
+  maxEffect: -100
+  duration: 10m
+
+- type: SocializationEffect
+  id: OpinionHealed
+  name: opinion-effect-healed-name
+  description: opinion-effect-healed-desc
+  effect: 10
+  maxEffect: 50
+  duration: 10m

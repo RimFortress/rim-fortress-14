@@ -41,14 +41,8 @@ public sealed partial class SocializationEffectPrototype : IPrototype
     public List<ProtoId<TagPrototype>> Tags = new();
 
     /// <summary>
-    /// Can this effect be issued multiple times
+    /// Maximum effect value when issued several times
     /// </summary>
     [DataField]
-    public bool Multiply;
-
-    /// <summary>
-    /// Maximum value of the effect that can be achieved by multiplying the effect
-    /// </summary>
-    [DataField]
-    public int MaxMultiplier = int.MaxValue;
+    public int MaxEffect = int.MaxValue;
 }
