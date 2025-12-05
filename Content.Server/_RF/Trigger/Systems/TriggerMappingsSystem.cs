@@ -1,7 +1,7 @@
 using Content.Shared._RF.Trigger.Components;
 using Content.Shared.Trigger;
 
-namespace Content.Shared._RF.Trigger.Systems;
+namespace Content.Server._RF.Trigger.Systems;
 
 public sealed class TriggerMappingsSystem : EntitySystem
 {

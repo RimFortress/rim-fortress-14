@@ -226,12 +226,17 @@
   - type: TriggerOnHeal
     keyOut: onHeal
   - type: TriggerMappings
-    onDamage:
-    - type: ChangeOpinionOnTrigger
-      effect: OpinionAttacked
-    onHeal:
-    - type: ChangeOpinionOnTrigger
-      effect: OpinionHealed
+    mappings:
+      onDamage:
+      - type: ChangeOpinionOnTrigger
+        effect: OpinionAttacked
+        keysIn:
+        - onDamage
+      onHeal:
+      - type: ChangeOpinionOnTrigger
+        effect: OpinionHealed
+        keysIn:
+        - onHeal
   # RimFortress End
 
 - type: entity

@@ -22,7 +22,7 @@
   - traveler: conversation-smalltalk02-line3-a
     villager: conversation-smalltalk02-line3-b
 
-- type: ConversationScript
+- type: conversationScript
   id: GreetingCasual
   actors:
   - id: speaker
@@ -33,12 +33,12 @@
   - speaker: greeting-casual-how-are-you
     listener: greeting-casual-im-fine
 
-- type: ConversationScript
+- type: conversationScript
   id: MorningGreeting
   actors:
   - id: initiator
     reqs:
-    - type: DayHour
+    - !type:DayHour
       moreThan: 5
       lessThan: 10
   - id: responder

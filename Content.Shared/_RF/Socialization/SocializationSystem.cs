@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Shared._RF.CCVar;
 using Content.Shared.Tag;
 using Robust.Shared.Configuration;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -21,10 +22,41 @@ public sealed class SocializationSystem : EntitySystem
 
     public override void Initialize()
     {
+        SubscribeLocalEvent<SocializationComponent, ComponentHandleState>(OnHandleState);
+        SubscribeLocalEvent<SocializationComponent, ComponentGetState>(OnGetState);
+
         _cfg.OnValueChanged(RfVars.MinMoodValue, value => _minMood = value, true);
         _cfg.OnValueChanged(RfVars.MaxMoodValue, value => _maxMood = value, true);
         _cfg.OnValueChanged(RfVars.MinOpinionValue, value => _minOpinion = value, true);
         _cfg.OnValueChanged(RfVars.MaxOpinionValue, value => _maxOpinion = value, true);
+    }
+
+    private void OnHandleState(Entity<SocializationComponent> ent, ref ComponentHandleState args)
+    {
+        if (args.Current is not SocializationComponentState state)
+            return;
+
+        ent.Comp.MoodEffects = state.MoodEffects;
+        var opinions = new Dictionary<EntityUid, Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?>>();
+
+        foreach (var (uid, value) in state.OpinionEffects)
+        {
+            opinions[GetEntity(uid)] = value;
+        }
+
+        ent.Comp.OpinionEffects = opinions;
+    }
+
+    private void OnGetState(Entity<SocializationComponent> ent, ref ComponentGetState args)
+    {
+        var opinions = new Dictionary<NetEntity, Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?>>();
+
+        foreach (var (uid, value) in ent.Comp.OpinionEffects)
+        {
+            opinions[GetNetEntity(uid)] = value;
+        }
+
+        args.State = new SocializationComponentState(ent.Comp.MoodEffects, opinions);
     }
 
     /// <summary>
@@ -36,7 +68,7 @@ public sealed class SocializationSystem : EntitySystem
             return;
 
         AddEffect(ent.Comp.MoodEffects, protoId);
-        DirtyField(ent, nameof(SocializationComponent.MoodEffects));
+        Dirty(ent);
     }
 
     /// <summary>
@@ -51,7 +83,7 @@ public sealed class SocializationSystem : EntitySystem
             return;
 
         AddEffect(ent.Comp.OpinionEffects.GetOrNew(other), protoId);
-        DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
+        Dirty(ent);
     }
 
     public void AddBothOpinionEffect(
@@ -86,7 +118,7 @@ public sealed class SocializationSystem : EntitySystem
         if (!Resolve(ent, ref ent.Comp) || !ent.Comp.MoodEffects.Remove(protoId))
             return false;
 
-        DirtyField(ent, nameof(SocializationComponent.MoodEffects));
+        Dirty(ent);
         return false;
     }
 
@@ -100,7 +132,7 @@ public sealed class SocializationSystem : EntitySystem
             || !effect.Remove(protoId))
             return false;
 
-        DirtyField(ent, nameof(SocializationComponent.OpinionEffects));
+        Dirty(ent);
         return false;
     }
 
