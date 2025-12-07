@@ -2,6 +2,7 @@ using Content.Shared._RF.Narrator;
 using Content.Shared.EntityTable.EntitySelectors;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Roles;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.GameTicking.Rules;
@@ -9,7 +10,7 @@ namespace Content.Shared._RF.GameTicking.Rules;
 /// <summary>
 /// Basic game rule of RimFortress
 /// </summary>
-[RegisterComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class RimFortressRuleComponent : Component
 {
     /// <summary>
@@ -66,6 +67,6 @@ public sealed partial class RimFortressRuleComponent : Component
     [ViewVariables]
     public int LastWaitPoints;
 
-    [ViewVariables]
+    [ViewVariables, AutoNetworkedField]
     public EntityUid WorldMap;
 }

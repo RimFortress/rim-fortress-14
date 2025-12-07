@@ -14,7 +14,7 @@ using Robust.Shared.Utility;
 namespace Content.Client._RF.Info.Controls;
 
 [GenerateTypedNameReferences]
-public sealed partial class HealthInfoTab : Control
+public sealed partial class HealthInfoTab : Control, IInfoTab
 {
     [Dependency] private readonly IEntityManager _entity = default!;
     [Dependency] private readonly IGameTiming _timing = default!;

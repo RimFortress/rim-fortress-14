@@ -56,7 +56,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     {
         base.Added(uid, comp, gameRule, args);
 
-        _world.InitializeWorld(comp);
+        _world.InitializeWorld(uid, comp);
     }
 
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)

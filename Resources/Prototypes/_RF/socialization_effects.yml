@@ -4,14 +4,88 @@
   id: OpinionAttacked
   name: opinion-effect-attacked-name
   description: opinion-effect-attacked-desc
+  duration: 168h # 7d
   effect: -5
   maxEffect: -100
-  duration: 10m
 
 - type: socializationEffect
   id: OpinionHealed
   name: opinion-effect-healed-name
   description: opinion-effect-healed-desc
+  duration: 168h # 7d
   effect: 10
   maxEffect: 50
-  duration: 10m
+
+# Mood Effects
+
+- type: socializationEffect
+  id: AteFineMeal
+  name: mood-effect-ate-fine-meal-name
+  description: mood-effect-ate-fine-meal-desc
+  duration: 4h
+  effect: 10
+  maxEffect: 10
+
+- type: socializationEffect
+  id: AteDisgustingFood
+  name: mood-effect-ate-disgusting-food-name
+  description: mood-effect-ate-disgusting-food-desc
+  duration: 4h
+  effect: -12
+  maxEffect: -12
+
+- type: socializationEffect
+  id: SleptWell
+  name: mood-effect-slept-well-name
+  description: mood-effect-slept-well-desc
+  duration: 12h
+  effect: 10
+  maxEffect: 10
+
+- type: socializationEffect
+  id: SleepDeprived
+  name: mood-effect-sleep-deprived-name
+  description: mood-effect-sleep-deprived-desc
+  duration: 24h
+  effect: -18
+  maxEffect: -18
+
+- type: socializationEffect
+  id: InPain
+  name: mood-effect-in-pain-name
+  description: mood-effect-in-pain-desc
+  duration: 4h
+  effect: -10
+  maxEffect: -20
+
+- type: socializationEffect
+  id: Wounded
+  name: mood-effect-wounded-name
+  description: mood-effect-wounded-desc
+  duration: 10h
+  effect: -5
+  maxEffect: -25
+
+- type: socializationEffect
+  id: ComfortableEnvironment
+  name: mood-effect-comfortable-environment-name
+  description: mood-effect-comfortable-environment-desc
+  duration: 12h
+  effect: 5
+  maxEffect: 15
+
+- type: socializationEffect
+  id: UncomfortableEnvironment
+  name: mood-effect-uncomfortable-environment-name
+  description: mood-effect-uncomfortable-environment-desc
+  duration: 12h
+  effect: -5
+  maxEffect: -15
+
+- type: socializationEffect
+  id: SocialInteraction
+  name: mood-effect-social-interaction-name
+  description: mood-effect-social-interaction-desc
+  duration: 2h
+  effect: 4
+  maxEffect: 12

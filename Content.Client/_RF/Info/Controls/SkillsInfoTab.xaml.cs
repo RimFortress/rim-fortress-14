@@ -6,7 +6,7 @@ using Robust.Client.UserInterface.XAML;
 namespace Content.Client._RF.Info.Controls;
 
 [GenerateTypedNameReferences]
-public sealed partial class SkillsInfoTab : Control
+public sealed partial class SkillsInfoTab : Control, IInfoTab
 {
     [Dependency] private readonly IEntityManager _entity = default!;
 

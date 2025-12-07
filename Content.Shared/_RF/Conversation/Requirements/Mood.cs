@@ -1,4 +1,4 @@
-using Content.Shared._RF.Socialization;
+using Content.Shared._RF.Socialization.Systems;
 
 namespace Content.Shared._RF.Conversation.Requirements;
 

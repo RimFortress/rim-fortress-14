@@ -1,4 +1,4 @@
-using Content.Shared._RF.Socialization;
+using Content.Shared._RF.Socialization.Systems;
 using Content.Shared._RF.Trigger.Components;
 using Content.Shared.Trigger;
 
@@ -79,15 +79,6 @@ public sealed class SocializationTriggerSystem : EntitySystem
         if (args.Key == null || !ent.Comp.Keys.Contains(args.Key))
             return;
 
-        foreach (var tag in ent.Comp.Tags)
-        {
-            if (_socialization.HasMoodTag(ent.Owner, tag))
-                continue;
-
-            args.Cancelled = true;
-            return;
-        }
-
         var mood = _socialization.GetMood(ent.Owner);
 
         args.Cancelled |= (ent.Comp.Min == null || ent.Comp.Min > mood)
@@ -101,15 +92,6 @@ public sealed class SocializationTriggerSystem : EntitySystem
 
         if (args.User == null)
         {
-            args.Cancelled = true;
-            return;
-        }
-
-        foreach (var tag in ent.Comp.Tags)
-        {
-            if (_socialization.HasOpinionTag(ent.Owner, args.User.Value, tag))
-                continue;
-
             args.Cancelled = true;
             return;
         }

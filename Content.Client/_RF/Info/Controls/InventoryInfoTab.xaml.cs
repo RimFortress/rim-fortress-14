@@ -26,7 +26,7 @@ using Robust.Shared.Map;
 namespace Content.Client._RF.Info.Controls;
 
 [GenerateTypedNameReferences]
-public sealed partial class InventoryInfoTab : Control
+public sealed partial class InventoryInfoTab : Control, IInfoTab
 {
     [Dependency] private readonly IEntityManager _entity = default!;
     [Dependency] private readonly IPlayerManager _player = default!;

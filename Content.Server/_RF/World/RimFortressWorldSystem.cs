@@ -68,7 +68,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         _debugSubscribers.Remove(args.SenderSession);
     }
 
-    public EntityUid InitializeWorld(RimFortressRuleComponent rule)
+    public EntityUid InitializeWorld(EntityUid uid, RimFortressRuleComponent rule)
     {
         Rule = rule;
         var map = _map.CreateMap();
@@ -87,6 +87,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         }
 
         rule.WorldMap = map;
+        Dirty(uid, rule);
         return map;
     }
 

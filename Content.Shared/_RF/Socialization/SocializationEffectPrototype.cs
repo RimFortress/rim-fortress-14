@@ -1,4 +1,3 @@
-using Content.Shared.Tag;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Socialization;
@@ -23,7 +22,7 @@ public sealed partial class SocializationEffectPrototype : IPrototype
     public LocId? Description;
 
     /// <summary>
-    /// Duration of effect
+    /// Duration of effect in world time
     /// </summary>
     [DataField]
     public TimeSpan? Duration;
@@ -33,12 +32,6 @@ public sealed partial class SocializationEffectPrototype : IPrototype
     /// </summary>
     [DataField]
     public int Effect;
-
-    /// <summary>
-    /// Tags that will be added to the opinion of an entity to another
-    /// </summary>
-    [DataField]
-    public List<ProtoId<TagPrototype>> Tags = new();
 
     /// <summary>
     /// Maximum effect value when issued several times

@@ -13,6 +13,7 @@ pop-info-summary = {$name}, {$species}
 pop-info-skills-tab-title = Skills
 pop-info-jobs-tab-title = Jobs
 pop-info-health-tab-title = Health
+pop-info-mood-tab-title = Mood
 pop-info-inventory-tab-title = Inventory
 
 job-info-tab-current-task = [bold]Current task[/bold]
@@ -35,3 +36,13 @@ health-info-tab-bleeding-alert = [color=#C51D34]{$name} is bleeding![/color]
 
 health-info-tab-unknown-value = N/A
 health-info-tab-damage-type = [bold]·[/bold] {$type}: {$amount}
+
+mood-info-total = [bold]Total: [color={$color}]{$mood}[/color][/bold]
+
+effect-never-end = Never
+effect-end-format-days = {$time} {$time ->
+   [1] day
+   *[other] days
+}
+effect-end-format-hours = {$time}h
+effect-end-format-minutes = {$time}min

@@ -1,3 +1,4 @@
+using Content.Shared._RF.Socialization.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;

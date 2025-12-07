@@ -1,4 +1,5 @@
 using Content.Shared._RF.Socialization;
+using Content.Shared._RF.Socialization.Systems;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 

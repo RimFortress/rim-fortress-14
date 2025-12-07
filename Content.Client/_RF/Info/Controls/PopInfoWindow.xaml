@@ -1,7 +1,6 @@
-<controls:FancyWindow
+<controls:PopInfoWindow
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
-    xmlns:controls1="clr-namespace:Content.Client._RF.Info.Controls"
+    xmlns:controls="clr-namespace:Content.Client._RF.Info.Controls"
     Title="{Loc 'pop-info-window-title'}" SetSize="500 600" Resizable="False">
     <BoxContainer Orientation="Vertical">
         <BoxContainer Orientation="Horizontal" SetHeight="135">
@@ -25,10 +24,11 @@
         <PanelContainer StyleClasses="LowDivider" />
 
         <TabContainer Name="TabContainer" Margin="0 0 0 6" VerticalExpand="True">
-            <controls1:SkillsInfoTab Name="Skills"/>
-            <controls1:JobsInfoTab Name="Jobs"/>
-            <controls1:HealthInfoTab Name="Health"/>
-            <controls1:InventoryInfoTab Name="Inventory"/>
+            <controls:SkillsInfoTab Name="Skills"/>
+            <controls:JobsInfoTab Name="Jobs"/>
+            <controls:HealthInfoTab Name="Health"/>
+            <controls:MoodInfoTab Name="Mood"/>
+            <controls:InventoryInfoTab Name="Inventory"/>
         </TabContainer>
     </BoxContainer>
-</controls:FancyWindow>
+</controls:PopInfoWindow>

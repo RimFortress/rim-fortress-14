@@ -1,7 +1,5 @@
 using Content.Server.NPC;
-using Content.Shared._RF.Socialization;
-using Content.Shared.Tag;
-using Robust.Shared.Prototypes;
+using Content.Shared._RF.Socialization.Systems;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Socialization;
 
@@ -30,12 +28,6 @@ public sealed partial class MoodPrecondition : InvertiblePrecondition
     [DataField]
     public int? LessThan;
 
-    /// <summary>
-    /// Tags that need to be checked for the mood of the entity
-    /// </summary>
-    [DataField]
-    public List<ProtoId<TagPrototype>> Tags = new();
-
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
@@ -46,12 +38,6 @@ public sealed partial class MoodPrecondition : InvertiblePrecondition
     {
         if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var uid, EntityManager))
             return false;
-
-        foreach (var tag in Tags)
-        {
-            if (!_socialization.HasMoodTag(uid, tag))
-                return false;
-        }
 
         var mood = _socialization.GetMood(uid);
         return (MoreThan == null || mood > MoreThan)

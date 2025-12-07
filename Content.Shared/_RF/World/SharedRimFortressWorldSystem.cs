@@ -137,31 +137,96 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
         }
     }
 
+    /// <summary>
+    /// Returns current world time
+    /// </summary>
     public TimeSpan WorldDateTime()
     {
-        var query = EntityQueryEnumerator<RimFortressRuleComponent>();
-        while (query.MoveNext(out var comp))
+        if (TryGetWorld(out var uid) && TryComp(uid, out LightCycleComponent? cycle))
         {
-            if (!TryComp(comp.WorldMap, out LightCycleComponent? cycle))
-                return TimeSpan.Zero;
-
-            var time = _timing.CurTime
-                .Add(cycle.Offset)
-                .Subtract(_ticker.RoundStartTimeSpan);
-
-            // We take the length of an in-game day in 24 hours and get the current time
-            var gameTimeHours = time.TotalSeconds % cycle.Duration.TotalSeconds
-                / cycle.Duration.TotalSeconds * 24;
-
-            var hours = (int) gameTimeHours;
-            var minutes = (int) ((gameTimeHours - hours) * 60);
-
-            var days = (int) Math.Floor(time / cycle.Duration) + 1;
-
-            return TimeSpan.FromDays(days, hours, minutes);
+            return ToWorldTime(new(uid.Value, cycle),
+                _timing.CurTime.Add(cycle.Offset).Subtract(_ticker.RoundStartTimeSpan));
         }
 
         return TimeSpan.Zero;
+    }
+
+    /// <summary>
+    /// Converts the in-game simulation time to world time
+    /// </summary>
+    public TimeSpan ToWorldTime(TimeSpan time)
+        => TryGetWorld(out var uid) ? ToWorldTime(uid.Value, time) : time;
+
+    /// <summary>
+    /// Converts the in-game simulation time to world time
+    /// </summary>
+    public TimeSpan ToWorldTime(Entity<LightCycleComponent?> ent, TimeSpan time)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return time;
+
+        if (time < TimeSpan.Zero)
+            return TimeSpan.Zero;
+
+        // Calculate days (starting from 1)
+        var totalDays = time.TotalSeconds / ent.Comp.Duration.TotalSeconds;
+        var days = (int)Math.Floor(totalDays);
+
+        // Calculate time within current day (0.0 to 1.0)
+        var dayFraction = totalDays - Math.Floor(totalDays);
+
+        // Combine days and time of day
+        return TimeSpan.FromDays(days) + TimeSpan.FromHours(dayFraction * 24);
+    }
+
+    /// <summary>
+    /// Converts the world time to in-game simulation time
+    /// </summary>
+    public TimeSpan? FromWorldTime(TimeSpan? worldTime)
+        => worldTime != null ? FromWorldTime(worldTime.Value) : null;
+
+    /// <summary>
+    /// Converts the world time to in-game simulation time
+    /// </summary>
+    public TimeSpan FromWorldTime(TimeSpan worldTime)
+        => TryGetWorld(out var uid) ? FromWorldTime(uid.Value, worldTime) : worldTime;
+
+    /// <summary>
+    /// Converts the world time to in-game simulation time
+    /// </summary>
+    public TimeSpan FromWorldTime(Entity<LightCycleComponent?> ent, TimeSpan worldTime)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return worldTime;
+
+        if (worldTime <= TimeSpan.Zero)
+            return _ticker.RoundStartTimeSpan - ent.Comp.Offset;
+
+        var timeOfDay = worldTime - TimeSpan.FromDays(worldTime.Days);
+        var dayFraction = timeOfDay.TotalHours / 24.0;
+        var totalGameDays = worldTime.Days + dayFraction;
+
+        return TimeSpan.FromTicks((long)(totalGameDays * ent.Comp.Duration.Ticks));
+    }
+
+    /// <summary>
+    /// Returns the world map entity
+    /// </summary>
+    public bool TryGetWorld([NotNullWhen(true)] out EntityUid? ent)
+    {
+        var query = EntityQueryEnumerator<RimFortressRuleComponent>();
+
+        while (query.MoveNext(out var comp))
+        {
+            if (!Exists(comp.WorldMap))
+                continue;
+
+            ent = comp.WorldMap;
+            return true;
+        }
+
+        ent = null;
+        return false;
     }
 }
 
@@ -172,6 +237,4 @@ public sealed class SettlementCoordinatesMessage(Dictionary<NetEntity, List<NetC
 }
 
 [Serializable, NetSerializable]
-public sealed class WorldDebugInfoRequest : EntityEventArgs
-{
-}
+public sealed class WorldDebugInfoRequest : EntityEventArgs;

@@ -1,34 +1,35 @@
 using System.Linq;
 using Content.Shared._RF.CCVar;
-using Content.Shared.Tag;
+using Content.Shared._RF.World;
 using Robust.Shared.Configuration;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.Socialization;
+namespace Content.Shared._RF.Socialization.Systems;
 
 public sealed class SocializationSystem : EntitySystem
 {
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly SharedRimFortressWorldSystem _world = default!;
 
-    private int _minMood;
-    private int _maxMood;
-    private int _minOpinion;
-    private int _maxOpinion;
+    public int MinMood { get; private set; }
+    public int MaxMood { get; private set; }
+    public int MinOpinion { get; private set; }
+    public int MaxOpinion { get; private set; }
 
     public override void Initialize()
     {
         SubscribeLocalEvent<SocializationComponent, ComponentHandleState>(OnHandleState);
         SubscribeLocalEvent<SocializationComponent, ComponentGetState>(OnGetState);
 
-        _cfg.OnValueChanged(RfVars.MinMoodValue, value => _minMood = value, true);
-        _cfg.OnValueChanged(RfVars.MaxMoodValue, value => _maxMood = value, true);
-        _cfg.OnValueChanged(RfVars.MinOpinionValue, value => _minOpinion = value, true);
-        _cfg.OnValueChanged(RfVars.MaxOpinionValue, value => _maxOpinion = value, true);
+        _cfg.OnValueChanged(RfVars.MinMoodValue, value => MinMood = value, true);
+        _cfg.OnValueChanged(RfVars.MaxMoodValue, value => MaxMood = value, true);
+        _cfg.OnValueChanged(RfVars.MinOpinionValue, value => MinOpinion = value, true);
+        _cfg.OnValueChanged(RfVars.MaxOpinionValue, value => MaxOpinion = value, true);
     }
 
     private void OnHandleState(Entity<SocializationComponent> ent, ref ComponentHandleState args)
@@ -104,13 +105,11 @@ public sealed class SocializationSystem : EntitySystem
 
         if (effects.ContainsKey(protoId))
         {
-            effects[protoId] += proto.Duration;
+            effects[protoId] += _world.FromWorldTime(proto.Duration);
             return;
         }
 
-        effects[protoId] = proto.Duration != null
-            ? _timing.CurTime + proto.Duration
-            : null;
+        effects[protoId] = _timing.CurTime + _world.FromWorldTime(proto.Duration);
     }
 
     public bool RemoveMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
@@ -146,14 +145,14 @@ public sealed class SocializationSystem : EntitySystem
     /// Returns the entity's mood level
     /// </summary>
     public int GetMood(Entity<SocializationComponent?> ent)
-        => Resolve(ent, ref ent.Comp) ? Math.Clamp(GetEffect(ent.Comp.MoodEffects), _minMood, _maxMood) : 0;
+        => Resolve(ent, ref ent.Comp) ? Math.Clamp(GetEffect(ent.Comp.MoodEffects), MinMood, MaxMood) : 0;
 
     /// <summary>
     /// Returns the opinion level of one entity to another
     /// </summary>
     public int GetOpinion(Entity<SocializationComponent?> ent, EntityUid other)
         => Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
-            ? Math.Clamp(GetEffect(effects), _minOpinion, _maxOpinion)
+            ? Math.Clamp(GetEffect(effects), MinOpinion, MaxOpinion)
             : 0;
 
     private int GetEffect(Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects)
@@ -162,44 +161,32 @@ public sealed class SocializationSystem : EntitySystem
 
         foreach (var (protoId, endAt) in effects)
         {
-            if (!_prototype.TryIndex(protoId, out var proto))
-                continue;
-
-            DebugTools.Assert(proto.MaxEffect >= proto.Effect);
-            DebugTools.Assert(Math.Abs(proto.MaxEffect) == Math.Abs(proto.Effect));
-
-            // The strength of the effect is multiplied by the number of times the effect was extended
-            // Therefore, the strength of the effect will gradually decrease as it ends,
-            // ensuring a smooth change of value
-            var multiplier = (int)((endAt - _timing.CurTime) / proto.Duration ?? 1);
-            multiplier = Math.Clamp(Math.Abs(multiplier), 0, Math.Abs(proto.MaxEffect)) * Math.Sign(multiplier);
-            value += proto.Effect * multiplier;
+            value += GetEffect(protoId, endAt);
         }
 
         return value;
     }
 
-    public bool HasMoodTag(Entity<SocializationComponent?> ent, ProtoId<TagPrototype> tag)
-        => Resolve(ent, ref ent.Comp) && HasTag(ent.Comp.MoodEffects.Keys, tag);
-
     /// <summary>
-    /// Checks the opinion of one entity towards another for the presence of the specified tag
+    /// Calculates the effect value depending on the end time.
     /// </summary>
-    public bool HasOpinionTag(Entity<SocializationComponent?> ent, EntityUid other, ProtoId<TagPrototype> tag)
-        => Resolve(ent, ref ent.Comp)
-           && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
-           && HasTag(effects.Keys, tag);
-
-    private bool HasTag(IEnumerable<ProtoId<SocializationEffectPrototype>> effects, ProtoId<TagPrototype> tag)
+    public int GetEffect(ProtoId<SocializationEffectPrototype> protoId, TimeSpan? endAt = null)
     {
-        foreach (var effect in effects)
-        {
-            if (_prototype.TryIndex(effect, out var proto)
-                && proto.Tags.Contains(tag))
-                return true;
-        }
+        if (!_prototype.TryIndex(protoId, out var proto))
+            return 0;
 
-        return false;
+        // The strength of the effect is multiplied by the number of times the effect was extended
+        // Therefore, the strength of the effect will gradually decrease as it ends,
+        // ensuring a smooth change of value
+        var multiplier = (int)((endAt - _timing.CurTime) / _world.FromWorldTime(proto.Duration) ?? 1);
+        var value = proto.Effect * Math.Clamp(multiplier, 1, int.MaxValue);
+
+        return proto.MaxEffect switch
+        {
+            > 0 => Math.Clamp(value, 0, proto.MaxEffect),
+            < 0 => Math.Clamp(value, proto.MaxEffect, 0),
+            _ => value,
+        };
     }
 
     public bool HasMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
