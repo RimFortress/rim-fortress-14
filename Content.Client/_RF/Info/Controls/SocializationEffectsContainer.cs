@@ -30,7 +30,7 @@ public sealed class SocializationEffectsContainer : BoxContainer
         _socialization = _entity.System<SocializationSystem>();
     }
 
-    public void UpdateInfo(EntityUid uid, Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects)
+    public void UpdateInfo(Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects)
     {
         EnsureSetup();
 

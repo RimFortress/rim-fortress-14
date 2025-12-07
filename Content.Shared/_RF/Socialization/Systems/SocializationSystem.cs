@@ -178,8 +178,8 @@ public sealed class SocializationSystem : EntitySystem
         // The strength of the effect is multiplied by the number of times the effect was extended
         // Therefore, the strength of the effect will gradually decrease as it ends,
         // ensuring a smooth change of value
-        var multiplier = (int)((endAt - _timing.CurTime) / _world.FromWorldTime(proto.Duration) ?? 1);
-        var value = proto.Effect * Math.Clamp(multiplier, 1, int.MaxValue);
+        var multiplier = (int)((endAt - _timing.CurTime) / _world.FromWorldTime(proto.Duration) ?? 1) + 1;
+        var value = proto.Effect * multiplier;
 
         return proto.MaxEffect switch
         {
@@ -187,6 +187,16 @@ public sealed class SocializationSystem : EntitySystem
             < 0 => Math.Clamp(value, proto.MaxEffect, 0),
             _ => value,
         };
+    }
+
+    public Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> GetOpinionEffects(
+        Entity<SocializationComponent?> ent,
+        EntityUid other)
+    {
+        if (Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects))
+            return effects;
+
+        return new();
     }
 
     public bool HasMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)

@@ -43,13 +43,14 @@ public sealed partial class SocializationEffectInfo : ContainerButton
             _ => StyleFortress.GraySilver,
         };
 
-        var sign = value switch
+        var sign = Value switch
         {
             > 0 => "+",
+            < 0 => "–",
             _ => "",
         };
 
-        ValueLabel.Text = $"[bold][color={color.ToHex()}]{sign}{value}[/color][/bold]";
+        ValueLabel.Text = $"[bold][color={color.ToHex()}]{sign}{Math.Abs(value)}[/color][/bold]";
         Label.Text = Loc.GetString(proto.Name);
     }
 

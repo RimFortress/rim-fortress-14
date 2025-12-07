@@ -28,6 +28,7 @@
             <controls:JobsInfoTab Name="Jobs"/>
             <controls:HealthInfoTab Name="Health"/>
             <controls:MoodInfoTab Name="Mood"/>
+            <controls:OpinionInfoTab Name="Opinion"/>
             <controls:InventoryInfoTab Name="Inventory"/>
         </TabContainer>
     </BoxContainer>

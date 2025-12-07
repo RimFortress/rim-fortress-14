@@ -56,7 +56,7 @@ public sealed partial class MoodInfoTab : Control, IInfoTab
         Total.Text = Loc.GetString("mood-info-total", ("color", color), ("mood", mood));
 
         if (_entity.TryGetComponent(uid, out SocializationComponent? comp))
-            Container.UpdateInfo(uid, comp.MoodEffects);
+            Container.UpdateInfo(comp.MoodEffects);
     }
 
     protected override void FrameUpdate(FrameEventArgs args)

@@ -14,6 +14,7 @@ pop-info-skills-tab-title = Skills
 pop-info-jobs-tab-title = Jobs
 pop-info-health-tab-title = Health
 pop-info-mood-tab-title = Mood
+pop-info-opinion-tab-title = Opinion
 pop-info-inventory-tab-title = Inventory
 
 job-info-tab-current-task = [bold]Current task[/bold]

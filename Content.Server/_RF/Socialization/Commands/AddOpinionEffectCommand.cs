@@ -27,7 +27,7 @@ public sealed class AddOpinionEffectCommand : LocalizedCommands
         }
 
         if (!int.TryParse(args[0], out var uidInt)
-            || !int.TryParse(args[0], out var targetInt))
+            || !int.TryParse(args[1], out var targetInt))
         {
             shell.WriteLine(Loc.GetString("shell-entity-uid-must-be-number"));
             return;
@@ -40,11 +40,11 @@ public sealed class AddOpinionEffectCommand : LocalizedCommands
             return;
         }
 
-        if (!_prototype.TryIndex<SocializationEffectPrototype>(args[1], out var proto))
+        if (!_prototype.TryIndex<SocializationEffectPrototype>(args[2], out var proto))
         {
             shell.WriteLine(Loc.GetString(
                 "shell-argument-must-be-prototype",
-                ("index", 2),
+                ("index", 3),
                 ("prototypeName", $"cmd-{Command}-prototype")));
             return;
         }
@@ -62,7 +62,7 @@ public sealed class AddOpinionEffectCommand : LocalizedCommands
                 CompletionHelper.Components<SocializationComponent>(args[0]),
                 "<uid1>"),
             2 => CompletionResult.FromHintOptions(
-                CompletionHelper.Components<SocializationComponent>(args[0]),
+                CompletionHelper.Components<SocializationComponent>(args[1]),
                 "<uid2>"),
             3 => CompletionResult.FromHintOptions(
                 CompletionHelper.PrototypeIDs<SocializationEffectPrototype>(),
