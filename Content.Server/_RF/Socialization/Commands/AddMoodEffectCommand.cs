@@ -1,5 +1,6 @@
 using Content.Server.Administration;
 using Content.Shared._RF.Socialization;
+using Content.Shared._RF.Socialization.Components;
 using Content.Shared._RF.Socialization.Systems;
 using Content.Shared.Administration;
 using Robust.Shared.Console;

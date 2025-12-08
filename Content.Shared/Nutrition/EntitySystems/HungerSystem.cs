@@ -164,6 +164,8 @@ public sealed class HungerSystem : EntitySystem
             SetAuthoritativeHungerValue((uid, component), GetHunger(component));
         }
 
+        RaiseLocalEvent(EntityUid.FirstUid, new HungerThresholdChangedEvent(component.CurrentThreshold, component.LastThreshold)); // RimFortress
+
         component.LastThreshold = component.CurrentThreshold;
         DirtyField(uid, component, nameof(HungerComponent.LastThreshold));
     }
@@ -276,3 +278,5 @@ public sealed class HungerSystem : EntitySystem
         }
     }
 }
+
+public record struct HungerThresholdChangedEvent(HungerThreshold Current, HungerThreshold Previous); // RimFortress

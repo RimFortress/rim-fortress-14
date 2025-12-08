@@ -3,7 +3,7 @@ using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
-namespace Content.Shared._RF.Socialization;
+namespace Content.Shared._RF.Socialization.Components;
 
 /// <summary>
 /// Stores information about the social interactions of an entity

@@ -3,7 +3,7 @@ using Content.Shared.Trigger.Components.Effects;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Trigger.Components;
+namespace Content.Shared._RF.Trigger.Components.Effects;
 
 /// <summary>
 /// Changes the entity's opinion about the entity that triggered it

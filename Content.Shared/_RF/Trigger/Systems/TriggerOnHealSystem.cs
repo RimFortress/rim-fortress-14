@@ -1,4 +1,4 @@
-using Content.Shared._RF.Trigger.Components;
+using Content.Shared._RF.Trigger.Components.Triggers;
 using Content.Shared.Medical;
 using Content.Shared.Medical.Healing;
 using Content.Shared.Trigger.Systems;

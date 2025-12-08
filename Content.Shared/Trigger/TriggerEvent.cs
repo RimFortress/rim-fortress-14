@@ -31,3 +31,5 @@ public record struct AttemptTriggerEvent(EntityUid? User, string? Key = null, bo
 /// <param name="User">The entity that activated the trigger.</param>
 [ByRefEvent]
 public readonly record struct ActiveTimerTriggerEvent(EntityUid? User);
+
+public record struct BeforeTriggerEvent(EntityUid? User = null, string? Key = null); // RimFortress

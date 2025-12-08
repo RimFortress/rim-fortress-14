@@ -1,7 +1,7 @@
 using Content.Shared.Trigger.Components.Triggers;
 using Robust.Shared.GameStates;
 
-namespace Content.Shared._RF.Trigger.Components;
+namespace Content.Shared._RF.Trigger.Components.Triggers;
 
 /// <summary>
 /// Triggered when the entity is healed.

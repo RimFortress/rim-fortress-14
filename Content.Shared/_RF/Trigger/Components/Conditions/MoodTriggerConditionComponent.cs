@@ -1,13 +1,13 @@
 using Content.Shared.Trigger.Components.Conditions;
 using Robust.Shared.GameStates;
 
-namespace Content.Shared._RF.Trigger.Components;
+namespace Content.Shared._RF.Trigger.Components.Conditions;
 
 /// <summary>
-/// Checks the entity's opinion about the one that caused the trigger
+/// Checks the mood of the entity
 /// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
-public sealed partial class OpinionTriggerConditionComponent : BaseTriggerConditionComponent
+public sealed partial class MoodTriggerConditionComponent : BaseTriggerConditionComponent
 {
     /// <summary>
     /// Minimum opinion

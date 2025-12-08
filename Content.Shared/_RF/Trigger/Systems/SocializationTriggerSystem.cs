@@ -1,5 +1,6 @@
 using Content.Shared._RF.Socialization.Systems;
-using Content.Shared._RF.Trigger.Components;
+using Content.Shared._RF.Trigger.Components.Conditions;
+using Content.Shared._RF.Trigger.Components.Effects;
 using Content.Shared.Trigger;
 
 namespace Content.Shared._RF.Trigger.Systems;

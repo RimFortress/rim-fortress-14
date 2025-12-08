@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Shared._RF.CCVar;
+using Content.Shared._RF.Socialization.Components;
 using Content.Shared._RF.World;
 using Robust.Shared.Configuration;
 using Robust.Shared.GameStates;

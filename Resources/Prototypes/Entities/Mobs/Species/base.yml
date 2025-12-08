@@ -226,7 +226,7 @@
   - type: TriggerOnHeal
     keyOut: onHeal
   - type: TriggerMappings
-    mappings:
+    effects:
       onDamage:
       - type: ChangeOpinionOnTrigger
         effect: OpinionAttacked

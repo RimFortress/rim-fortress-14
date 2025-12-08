@@ -1,5 +1,7 @@
 using Content.Shared._RF.Trigger.Components;
+using Content.Shared._RF.Trigger.Systems;
 using Content.Shared.Trigger;
+using Content.Shared.Trigger.Systems;
 
 namespace Content.Server._RF.Trigger.Systems;
 
@@ -8,12 +10,22 @@ public sealed class TriggerMappingsSystem : EntitySystem
     /// <inheritdoc/>
     public override void Initialize()
     {
-        SubscribeLocalEvent<TriggerMappingsComponent, AttemptTriggerEvent>(OnAttemptTrigger);
+        SubscribeLocalEvent<TriggerMappingsComponent, BeforeTriggerEvent>(OnBeforeTrigger);
+        SubscribeLocalEvent<TriggerMappingsComponent, AttemptTriggerEvent>(OnAttemptTrigger,
+            after: new[] { typeof(TriggerSystem), typeof(SocializationTriggerSystem), typeof(TriggerConditionsSystem) });
+    }
+
+    private void OnBeforeTrigger(EntityUid uid, TriggerMappingsComponent component, BeforeTriggerEvent args)
+    {
+        if (args.Key == null || !component.Conditions.TryGetValue(args.Key, out var components))
+            return;
+
+        EntityManager.AddComponents(uid, components, component.Override);
     }
 
     private void OnAttemptTrigger(Entity<TriggerMappingsComponent> ent, ref AttemptTriggerEvent args)
     {
-        if (args.Key == null || !ent.Comp.Mappings.TryGetValue(args.Key, out var components))
+        if (args.Cancelled || args.Key == null || !ent.Comp.Effects.TryGetValue(args.Key, out var components))
             return;
 
         EntityManager.AddComponents(ent, components, ent.Comp.Override);

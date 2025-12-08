@@ -166,6 +166,8 @@ public sealed class ThirstSystem : EntitySystem
         DirtyField(uid, component, nameof(ThirstComponent.LastThirstThreshold));
         DirtyField(uid, component, nameof(ThirstComponent.ActualDecayRate));
 
+        RaiseLocalEvent(EntityUid.FirstUid, new ThirstThresholdChangedEvent(component.CurrentThirstThreshold, component.LastThirstThreshold)); // RimFortress
+
         switch (component.CurrentThirstThreshold)
         {
             case ThirstThreshold.OverHydrated:
@@ -221,3 +223,5 @@ public sealed class ThirstSystem : EntitySystem
         }
     }
 }
+
+public record struct ThirstThresholdChangedEvent(ThirstThreshold Current, ThirstThreshold Previous); // RimFortress
