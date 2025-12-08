@@ -1,7 +1,7 @@
 using Content.Server.Administration;
-using Content.Shared._RF.Socialization;
-using Content.Shared._RF.Socialization.Components;
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social;
+using Content.Shared._RF.Social.Components;
+using Content.Shared._RF.Social.Systems;
 using Content.Shared.Administration;
 using Robust.Shared.Console;
 using Robust.Shared.Prototypes;
@@ -41,7 +41,7 @@ public sealed class AddOpinionEffectCommand : LocalizedCommands
             return;
         }
 
-        if (!_prototype.TryIndex<SocializationEffectPrototype>(args[2], out var proto))
+        if (!_prototype.TryIndex<SocialEffectPrototype>(args[2], out var proto))
         {
             shell.WriteLine(Loc.GetString(
                 "shell-argument-must-be-prototype",
@@ -51,7 +51,7 @@ public sealed class AddOpinionEffectCommand : LocalizedCommands
         }
 
         _entity
-            .System<SocializationSystem>()
+            .System<SocialSystem>()
             .AddOpinionEffect(uid.Value, targetUid.Value, proto);
     }
 
@@ -60,13 +60,13 @@ public sealed class AddOpinionEffectCommand : LocalizedCommands
         return args.Length switch
         {
             1 => CompletionResult.FromHintOptions(
-                CompletionHelper.Components<SocializationComponent>(args[0]),
+                CompletionHelper.Components<SocialComponent>(args[0]),
                 "<uid1>"),
             2 => CompletionResult.FromHintOptions(
-                CompletionHelper.Components<SocializationComponent>(args[1]),
+                CompletionHelper.Components<SocialComponent>(args[1]),
                 "<uid2>"),
             3 => CompletionResult.FromHintOptions(
-                CompletionHelper.PrototypeIDs<SocializationEffectPrototype>(),
+                CompletionHelper.PrototypeIDs<SocialEffectPrototype>(),
                 "<protoId>"),
             _ => CompletionResult.Empty,
         };

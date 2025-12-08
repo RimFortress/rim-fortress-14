@@ -1,5 +1,5 @@
 using Content.Server.NPC;
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social.Systems;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Socialization;
 
@@ -8,7 +8,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions.Socialization;
 /// </summary>
 public sealed partial class OpinionPrecondition : InvertiblePrecondition
 {
-    private SocializationSystem _socialization;
+    private SocialSystem _social;
 
     /// <summary>
     /// Key with target entity
@@ -31,7 +31,7 @@ public sealed partial class OpinionPrecondition : InvertiblePrecondition
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
-        _socialization = sysManager.GetEntitySystem<SocializationSystem>();
+        _social = sysManager.GetEntitySystem<SocialSystem>();
     }
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
@@ -40,7 +40,7 @@ public sealed partial class OpinionPrecondition : InvertiblePrecondition
             return false;
 
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
-        var opinion = _socialization.GetOpinion(owner, uid);
+        var opinion = _social.GetOpinion(owner, uid);
 
         return (MoreThan == null || opinion > MoreThan)
             && (LessThan == null || opinion < LessThan);

@@ -1,11 +1,11 @@
-using Content.Shared._RF.Socialization.Components;
+using Content.Shared._RF.Social.Components;
 using Content.Shared.Nutrition.EntitySystems;
 
-namespace Content.Shared._RF.Socialization.Systems;
+namespace Content.Shared._RF.Social.Systems;
 
 public sealed class ChangeMoodOnHungerSystem : EntitySystem
 {
-    [Dependency] private readonly SocializationSystem _socialization = default!;
+    [Dependency] private readonly SocialSystem _social = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -20,7 +20,7 @@ public sealed class ChangeMoodOnHungerSystem : EntitySystem
 
         foreach (var effect in effects)
         {
-            _socialization.AddMoodEffect(uid, effect);
+            _social.AddMoodEffect(uid, effect);
         }
     }
 }

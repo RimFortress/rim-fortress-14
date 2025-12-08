@@ -1,5 +1,5 @@
 using Content.Server.NPC;
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social.Systems;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Socialization;
 
@@ -8,7 +8,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions.Socialization;
 /// </summary>
 public sealed partial class MoodPrecondition : InvertiblePrecondition
 {
-    private SocializationSystem _socialization;
+    private SocialSystem _social;
 
     /// <summary>
     /// Key stores entity whose mood needs to be checked
@@ -31,7 +31,7 @@ public sealed partial class MoodPrecondition : InvertiblePrecondition
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
-        _socialization = sysManager.GetEntitySystem<SocializationSystem>();
+        _social = sysManager.GetEntitySystem<SocialSystem>();
     }
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
@@ -39,7 +39,7 @@ public sealed partial class MoodPrecondition : InvertiblePrecondition
         if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var uid, EntityManager))
             return false;
 
-        var mood = _socialization.GetMood(uid);
+        var mood = _social.GetMood(uid);
         return (MoreThan == null || mood > MoreThan)
                && (LessThan == null || mood < LessThan);
     }

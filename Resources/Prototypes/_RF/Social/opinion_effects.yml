@@ -1,0 +1,15 @@
+- type: socialEffect
+  id: OpinionAttacked
+  name: opinion-effect-attacked-name
+  description: opinion-effect-attacked-desc
+  duration: 168h # 7d
+  effect: -5
+  maxEffect: -100
+
+- type: socialEffect
+  id: OpinionHealed
+  name: opinion-effect-healed-name
+  description: opinion-effect-healed-desc
+  duration: 168h # 7d
+  effect: 10
+  maxEffect: 50

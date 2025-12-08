@@ -1,5 +1,5 @@
-using Content.Shared._RF.Socialization;
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social;
+using Content.Shared._RF.Social.Systems;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 
@@ -14,11 +14,11 @@ public sealed partial class AddMoodEffect : EntityEffect
     /// Prototype of the effect
     /// </summary>
     [DataField]
-    public ProtoId<SocializationEffectPrototype> Proto;
+    public ProtoId<SocialEffectPrototype> Proto;
 
     public override void Effect(EntityEffectBaseArgs args)
     {
-        args.EntityManager.System<SocializationSystem>().AddMoodEffect(args.TargetEntity, Proto);
+        args.EntityManager.System<SocialSystem>().AddMoodEffect(args.TargetEntity, Proto);
     }
 
     protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) => null;

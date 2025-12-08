@@ -1,4 +1,4 @@
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social.Systems;
 
 namespace Content.Shared._RF.Conversation.Requirements;
 
@@ -21,7 +21,7 @@ public sealed partial class Mood : ConversationActorRequirement
 
     public override bool Check(EntityUid author, EntityUid? actor, EntityManager entMan)
     {
-        var mood = entMan.System<SocializationSystem>().GetMood(author);
+        var mood = entMan.System<SocialSystem>().GetMood(author);
         return (MoreThan == null || mood > MoreThan)
                && (LessThan == null || mood < LessThan);
     }

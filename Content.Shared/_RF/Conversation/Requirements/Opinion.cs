@@ -1,4 +1,4 @@
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social.Systems;
 
 namespace Content.Shared._RF.Conversation.Requirements;
 
@@ -24,7 +24,7 @@ public sealed partial class Opinion : ConversationActorRequirement
         if (actor == null)
             return false;
 
-        var sys = entMan.System<SocializationSystem>();
+        var sys = entMan.System<SocialSystem>();
         var opinion = sys.GetOpinion(author, actor.Value);
 
         return (MoreThan == null || opinion > MoreThan) && (LessThan == null || opinion < LessThan);

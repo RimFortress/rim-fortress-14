@@ -1,7 +1,7 @@
 using Content.Shared.Nutrition.Components;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Socialization.Components;
+namespace Content.Shared._RF.Social.Components;
 
 /// <summary>
 /// This is used for issuing mood effects when the thirst level of an entity changes
@@ -13,5 +13,5 @@ public sealed partial class ChangeMoodOnThirstComponent : Component
     /// Effects that will be given for each thirst level
     /// </summary>
     [DataField]
-    public Dictionary<ThirstThreshold, List<ProtoId<SocializationEffectPrototype>>> Effects = new();
+    public Dictionary<ThirstThreshold, List<ProtoId<SocialEffectPrototype>>> Effects = new();
 }

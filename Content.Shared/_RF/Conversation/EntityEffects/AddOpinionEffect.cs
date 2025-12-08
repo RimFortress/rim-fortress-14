@@ -1,5 +1,5 @@
-using Content.Shared._RF.Socialization;
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social;
+using Content.Shared._RF.Social.Systems;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 
@@ -20,14 +20,14 @@ public sealed partial class AddOpinionEffect : EntityEffect
     /// Prototype of the effect
     /// </summary>
     [DataField]
-    public ProtoId<SocializationEffectPrototype> Proto;
+    public ProtoId<SocialEffectPrototype> Proto;
 
     public override void Effect(EntityEffectBaseArgs args)
     {
         if (args is not EntityEffectConversationArgs convArgs)
             throw new NotImplementedException();
 
-        var sys = args.EntityManager.System<SocializationSystem>();
+        var sys = args.EntityManager.System<SocialSystem>();
 
         foreach (var actor in Actors)
         {

@@ -1,13 +1,13 @@
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social.Systems;
 using Content.Shared._RF.Trigger.Components.Conditions;
 using Content.Shared._RF.Trigger.Components.Effects;
 using Content.Shared.Trigger;
 
 namespace Content.Shared._RF.Trigger.Systems;
 
-public sealed class SocializationTriggerSystem : EntitySystem
+public sealed class SocialTriggerSystem : EntitySystem
 {
-    [Dependency] private readonly SocializationSystem _socialization  = default!;
+    [Dependency] private readonly SocialSystem _social  = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -26,10 +26,10 @@ public sealed class SocializationTriggerSystem : EntitySystem
             return;
 
         if (component.Effect != null)
-            _socialization.AddMoodEffect(uid, component.Effect.Value);
+            _social.AddMoodEffect(uid, component.Effect.Value);
 
         if (component.RemovedEffect != null)
-            _socialization.RemoveMoodEffect(uid, component.RemovedEffect.Value);
+            _social.RemoveMoodEffect(uid, component.RemovedEffect.Value);
 
         ev.Handled = true;
     }
@@ -42,9 +42,9 @@ public sealed class SocializationTriggerSystem : EntitySystem
         if (ent.Comp.Effect != null)
         {
             if (ent.Comp.BothSide)
-                _socialization.AddBothOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.Effect.Value);
+                _social.AddBothOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.Effect.Value);
             else
-                _socialization.AddOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.Effect.Value);
+                _social.AddOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.Effect.Value);
 
             ev.Handled = true;
         }
@@ -52,9 +52,9 @@ public sealed class SocializationTriggerSystem : EntitySystem
         if (ent.Comp.RemovedEffect != null)
         {
             if (ent.Comp.BothSide)
-                _socialization.RemoveBothOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.RemovedEffect.Value);
+                _social.RemoveBothOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.RemovedEffect.Value);
             else
-                _socialization.RemoveOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.RemovedEffect.Value);
+                _social.RemoveOpinionEffect(ent.Owner, ev.User.Value, ent.Comp.RemovedEffect.Value);
 
             ev.Handled = true;
         }
@@ -71,7 +71,7 @@ public sealed class SocializationTriggerSystem : EntitySystem
             return;
         }
 
-        var has = _socialization.HasOpinionEffect(ent.Owner, args.User.Value, ent.Comp.Effect);
+        var has = _social.HasOpinionEffect(ent.Owner, args.User.Value, ent.Comp.Effect);
         args.Cancelled |= !ent.Comp.Invert && !has || ent.Comp.Invert && has;
     }
 
@@ -80,7 +80,7 @@ public sealed class SocializationTriggerSystem : EntitySystem
         if (args.Key == null || !ent.Comp.Keys.Contains(args.Key))
             return;
 
-        var mood = _socialization.GetMood(ent.Owner);
+        var mood = _social.GetMood(ent.Owner);
 
         args.Cancelled |= (ent.Comp.Min == null || ent.Comp.Min > mood)
                           && (ent.Comp.Max == null || ent.Comp.Max < mood);
@@ -97,7 +97,7 @@ public sealed class SocializationTriggerSystem : EntitySystem
             return;
         }
 
-        var opinion = _socialization.GetOpinion(ent.Owner, args.User.Value);
+        var opinion = _social.GetOpinion(ent.Owner, args.User.Value);
 
         if ((ent.Comp.Min == null || ent.Comp.Min > opinion)
             && (ent.Comp.Max == null || ent.Comp.Max < opinion))

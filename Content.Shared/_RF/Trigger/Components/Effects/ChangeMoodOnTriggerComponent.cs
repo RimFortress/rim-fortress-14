@@ -1,4 +1,4 @@
-using Content.Shared._RF.Socialization;
+using Content.Shared._RF.Social;
 using Content.Shared.Trigger.Components.Effects;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
@@ -15,11 +15,11 @@ public sealed partial class ChangeMoodOnTriggerComponent : BaseXOnTriggerCompone
     /// Prototype of the effect that will be added to the entity's mood
     /// </summary>
     [DataField]
-    public ProtoId<SocializationEffectPrototype>? Effect;
+    public ProtoId<SocialEffectPrototype>? Effect;
 
     /// <summary>
     /// Prototype of the effect that will be removed from the entity's mood
     /// </summary>
     [DataField]
-    public ProtoId<SocializationEffectPrototype>? RemovedEffect;
+    public ProtoId<SocialEffectPrototype>? RemovedEffect;
 }

@@ -1,7 +1,7 @@
 using Content.Shared.Nutrition.Components;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Socialization.Components;
+namespace Content.Shared._RF.Social.Components;
 
 /// <summary>
 /// This is used for issuing mood effects when the hunger level of an entity changes
@@ -13,5 +13,5 @@ public sealed partial class ChangeMoodOnHungerComponent : Component
     /// Effects that will be given for each hunger level
     /// </summary>
     [DataField]
-    public Dictionary<HungerThreshold, List<ProtoId<SocializationEffectPrototype>>> Effects = new();
+    public Dictionary<HungerThreshold, List<ProtoId<SocialEffectPrototype>>> Effects = new();
 }

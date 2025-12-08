@@ -71,7 +71,7 @@ public sealed class RfVars : CVars
 
     #endregion
 
-    #region Socialization
+    #region Social
 
     /// <summary>
     /// Minimum entity mood level

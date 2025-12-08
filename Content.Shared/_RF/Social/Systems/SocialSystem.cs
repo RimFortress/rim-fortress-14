@@ -1,6 +1,6 @@
 using System.Linq;
 using Content.Shared._RF.CCVar;
-using Content.Shared._RF.Socialization.Components;
+using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.World;
 using Robust.Shared.Configuration;
 using Robust.Shared.GameStates;
@@ -8,9 +8,9 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.Socialization.Systems;
+namespace Content.Shared._RF.Social.Systems;
 
-public sealed class SocializationSystem : EntitySystem
+public sealed class SocialSystem : EntitySystem
 {
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
@@ -24,8 +24,8 @@ public sealed class SocializationSystem : EntitySystem
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<SocializationComponent, ComponentHandleState>(OnHandleState);
-        SubscribeLocalEvent<SocializationComponent, ComponentGetState>(OnGetState);
+        SubscribeLocalEvent<SocialComponent, ComponentHandleState>(OnHandleState);
+        SubscribeLocalEvent<SocialComponent, ComponentGetState>(OnGetState);
 
         _cfg.OnValueChanged(RfVars.MinMoodValue, value => MinMood = value, true);
         _cfg.OnValueChanged(RfVars.MaxMoodValue, value => MaxMood = value, true);
@@ -33,13 +33,13 @@ public sealed class SocializationSystem : EntitySystem
         _cfg.OnValueChanged(RfVars.MaxOpinionValue, value => MaxOpinion = value, true);
     }
 
-    private void OnHandleState(Entity<SocializationComponent> ent, ref ComponentHandleState args)
+    private void OnHandleState(Entity<SocialComponent> ent, ref ComponentHandleState args)
     {
-        if (args.Current is not SocializationComponentState state)
+        if (args.Current is not SocialComponentState state)
             return;
 
         ent.Comp.MoodEffects = state.MoodEffects;
-        var opinions = new Dictionary<EntityUid, Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?>>();
+        var opinions = new Dictionary<EntityUid, Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?>>();
 
         foreach (var (uid, value) in state.OpinionEffects)
         {
@@ -49,22 +49,22 @@ public sealed class SocializationSystem : EntitySystem
         ent.Comp.OpinionEffects = opinions;
     }
 
-    private void OnGetState(Entity<SocializationComponent> ent, ref ComponentGetState args)
+    private void OnGetState(Entity<SocialComponent> ent, ref ComponentGetState args)
     {
-        var opinions = new Dictionary<NetEntity, Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?>>();
+        var opinions = new Dictionary<NetEntity, Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?>>();
 
         foreach (var (uid, value) in ent.Comp.OpinionEffects)
         {
             opinions[GetNetEntity(uid)] = value;
         }
 
-        args.State = new SocializationComponentState(ent.Comp.MoodEffects, opinions);
+        args.State = new SocialComponentState(ent.Comp.MoodEffects, opinions);
     }
 
     /// <summary>
     /// Adds an effect on the entity's mood
     /// </summary>
-    public void AddMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
+    public void AddMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -77,9 +77,9 @@ public sealed class SocializationSystem : EntitySystem
     /// Adds an effect on the opinion of one entity to another
     /// </summary>
     public void AddOpinionEffect(
-        Entity<SocializationComponent?> ent,
+        Entity<SocialComponent?> ent,
         EntityUid other,
-        ProtoId<SocializationEffectPrototype> protoId)
+        ProtoId<SocialEffectPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp) || ent.Owner == other)
             return;
@@ -89,17 +89,17 @@ public sealed class SocializationSystem : EntitySystem
     }
 
     public void AddBothOpinionEffect(
-        Entity<SocializationComponent?> ent1,
-        Entity<SocializationComponent?> ent2,
-        ProtoId<SocializationEffectPrototype> protoId)
+        Entity<SocialComponent?> ent1,
+        Entity<SocialComponent?> ent2,
+        ProtoId<SocialEffectPrototype> protoId)
     {
         AddOpinionEffect(ent1, ent2, protoId);
         AddOpinionEffect(ent1, ent2, protoId);
     }
 
     private void AddEffect(
-        Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects,
-        ProtoId<SocializationEffectPrototype> protoId)
+        Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> effects,
+        ProtoId<SocialEffectPrototype> protoId)
     {
         if (!_prototype.TryIndex(protoId, out var proto))
             return;
@@ -113,7 +113,7 @@ public sealed class SocializationSystem : EntitySystem
         effects[protoId] = _timing.CurTime + _world.FromWorldTime(proto.Duration);
     }
 
-    public bool RemoveMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
+    public bool RemoveMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp) || !ent.Comp.MoodEffects.Remove(protoId))
             return false;
@@ -123,9 +123,9 @@ public sealed class SocializationSystem : EntitySystem
     }
 
     public bool RemoveOpinionEffect(
-        Entity<SocializationComponent?> ent,
+        Entity<SocialComponent?> ent,
         EntityUid other,
-        ProtoId<SocializationEffectPrototype> protoId)
+        ProtoId<SocialEffectPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp)
             || !ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
@@ -137,26 +137,26 @@ public sealed class SocializationSystem : EntitySystem
     }
 
     public bool RemoveBothOpinionEffect(
-        Entity<SocializationComponent?> ent1,
-        Entity<SocializationComponent?> ent2,
-        ProtoId<SocializationEffectPrototype> protoId)
+        Entity<SocialComponent?> ent1,
+        Entity<SocialComponent?> ent2,
+        ProtoId<SocialEffectPrototype> protoId)
         => RemoveOpinionEffect(ent1, ent2, protoId) && RemoveOpinionEffect(ent1, ent2, protoId);
 
     /// <summary>
     /// Returns the entity's mood level
     /// </summary>
-    public int GetMood(Entity<SocializationComponent?> ent)
+    public int GetMood(Entity<SocialComponent?> ent)
         => Resolve(ent, ref ent.Comp) ? Math.Clamp(GetEffect(ent.Comp.MoodEffects), MinMood, MaxMood) : 0;
 
     /// <summary>
     /// Returns the opinion level of one entity to another
     /// </summary>
-    public int GetOpinion(Entity<SocializationComponent?> ent, EntityUid other)
+    public int GetOpinion(Entity<SocialComponent?> ent, EntityUid other)
         => Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
             ? Math.Clamp(GetEffect(effects), MinOpinion, MaxOpinion)
             : 0;
 
-    private int GetEffect(Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects)
+    private int GetEffect(Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> effects)
     {
         var value = 0;
 
@@ -171,7 +171,7 @@ public sealed class SocializationSystem : EntitySystem
     /// <summary>
     /// Calculates the effect value depending on the end time.
     /// </summary>
-    public int GetEffect(ProtoId<SocializationEffectPrototype> protoId, TimeSpan? endAt = null)
+    public int GetEffect(ProtoId<SocialEffectPrototype> protoId, TimeSpan? endAt = null)
     {
         if (!_prototype.TryIndex(protoId, out var proto))
             return 0;
@@ -190,8 +190,8 @@ public sealed class SocializationSystem : EntitySystem
         };
     }
 
-    public Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> GetOpinionEffects(
-        Entity<SocializationComponent?> ent,
+    public Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> GetOpinionEffects(
+        Entity<SocialComponent?> ent,
         EntityUid other)
     {
         if (Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects))
@@ -200,28 +200,28 @@ public sealed class SocializationSystem : EntitySystem
         return new();
     }
 
-    public bool HasMoodEffect(Entity<SocializationComponent?> ent, ProtoId<SocializationEffectPrototype> protoId)
+    public bool HasMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
         => Resolve(ent, ref ent.Comp) && ent.Comp.MoodEffects.Any(e => e.Key == protoId);
 
     public bool HasOpinionEffect(
-        Entity<SocializationComponent?> ent,
+        Entity<SocialComponent?> ent,
         EntityUid other,
-        ProtoId<SocializationEffectPrototype> protoId)
+        ProtoId<SocialEffectPrototype> protoId)
         => Resolve(ent, ref ent.Comp)
            && ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
            && effect.Any(x => x.Key == protoId);
 
     public override void Update(float frameTime)
     {
-        var query = EntityQueryEnumerator<SocializationComponent>();
-        var remove = new HashSet<ProtoId<SocializationEffectPrototype>>();
+        var query = EntityQueryEnumerator<SocialComponent>();
+        var remove = new HashSet<ProtoId<SocialEffectPrototype>>();
 
         while (query.MoveNext(out var comp))
         {
             if (comp.NexUpdate >= _timing.CurTime)
                 continue;
 
-            comp.NexUpdate = _timing.CurTime + SocializationComponent.UpdateRate;
+            comp.NexUpdate = _timing.CurTime + SocialComponent.UpdateRate;
 
             // Check mood effects
             foreach (var (protoId, endAt) in comp.MoodEffects)

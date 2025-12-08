@@ -1,6 +1,6 @@
 using System.Linq;
-using Content.Shared._RF.Socialization;
-using Content.Shared._RF.Socialization.Systems;
+using Content.Shared._RF.Social;
+using Content.Shared._RF.Social.Systems;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Prototypes;
@@ -12,7 +12,7 @@ public sealed class SocializationEffectsContainer : BoxContainer
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly IEntityManager _entity = default!;
 
-    private SocializationSystem _socialization = default!;
+    private SocialSystem _social = default!;
 
     private bool _setup;
 
@@ -27,17 +27,17 @@ public sealed class SocializationEffectsContainer : BoxContainer
             return;
 
         _setup = true;
-        _socialization = _entity.System<SocializationSystem>();
+        _social = _entity.System<SocialSystem>();
     }
 
-    public void UpdateInfo(Dictionary<ProtoId<SocializationEffectPrototype>, TimeSpan?> effects)
+    public void UpdateInfo(Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> effects)
     {
         EnsureSetup();
 
-        var activeEffects = new Dictionary<ProtoId<SocializationEffectPrototype>, (int Value, TimeSpan? EndAt)>();
+        var activeEffects = new Dictionary<ProtoId<SocialEffectPrototype>, (int Value, TimeSpan? EndAt)>();
         foreach (var (protoId, endAt) in effects)
         {
-            activeEffects[protoId] = (_socialization.GetEffect(protoId, endAt), endAt);
+            activeEffects[protoId] = (_social.GetEffect(protoId, endAt), endAt);
         }
 
         RemoveMissingEffects(activeEffects.Keys);
@@ -51,7 +51,7 @@ public sealed class SocializationEffectsContainer : BoxContainer
         RefreshStyles();
     }
 
-    private void RemoveMissingEffects(ICollection<ProtoId<SocializationEffectPrototype>> activeProtoIds)
+    private void RemoveMissingEffects(ICollection<ProtoId<SocialEffectPrototype>> activeProtoIds)
     {
         var toRemove = new List<Control>();
 
@@ -67,7 +67,7 @@ public sealed class SocializationEffectsContainer : BoxContainer
         }
     }
 
-    private void UpdateOrAddEffect(ProtoId<SocializationEffectPrototype> protoId, int value, TimeSpan? endAt)
+    private void UpdateOrAddEffect(ProtoId<SocialEffectPrototype> protoId, int value, TimeSpan? endAt)
     {
         if (Children.FirstOrDefault(x => x is SocializationEffectInfo info && info.Proto == protoId) is { } existing)
         {

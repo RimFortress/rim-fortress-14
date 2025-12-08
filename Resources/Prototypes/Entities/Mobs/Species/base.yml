@@ -220,7 +220,7 @@
       min: 5
       max: 20
     maxRandomLevel: 10
-  - type: Socialization
+  - type: Social
   - type: TriggerOnDamage
     keyOut: onDamage
   - type: TriggerOnHeal

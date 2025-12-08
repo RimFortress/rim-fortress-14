@@ -1,12 +1,12 @@
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Socialization;
+namespace Content.Shared._RF.Social;
 
 /// <summary>
 /// Prototype of the effect that influences the social interactions of entities
 /// </summary>
 [Prototype]
-public sealed partial class SocializationEffectPrototype : IPrototype
+public sealed partial class SocialEffectPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]

@@ -1,4 +1,4 @@
-using Content.Shared._RF.Socialization;
+using Content.Shared._RF.Social;
 using Content.Shared.Trigger.Components.Effects;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
@@ -15,13 +15,13 @@ public sealed partial class ChangeOpinionOnTriggerComponent : BaseXOnTriggerComp
     /// Prototype of the effect that will be issued for the relationship between two entities
     /// </summary>
     [DataField]
-    public ProtoId<SocializationEffectPrototype>? Effect;
+    public ProtoId<SocialEffectPrototype>? Effect;
 
     /// <summary>
     /// A prototype of an effect that should be removed in the relationship between two entities
     /// </summary>
     [DataField]
-    public ProtoId<SocializationEffectPrototype>? RemovedEffect;
+    public ProtoId<SocialEffectPrototype>? RemovedEffect;
 
     /// <summary>
     /// If true, the effect will be added/removed for two entities in relation to each other

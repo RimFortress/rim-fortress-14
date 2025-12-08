@@ -12,7 +12,7 @@ public sealed class TriggerMappingsSystem : EntitySystem
     {
         SubscribeLocalEvent<TriggerMappingsComponent, BeforeTriggerEvent>(OnBeforeTrigger);
         SubscribeLocalEvent<TriggerMappingsComponent, AttemptTriggerEvent>(OnAttemptTrigger,
-            after: new[] { typeof(TriggerSystem), typeof(SocializationTriggerSystem), typeof(TriggerConditionsSystem) });
+            after: new[] { typeof(TriggerSystem), typeof(SocialTriggerSystem), typeof(TriggerConditionsSystem) });
     }
 
     private void OnBeforeTrigger(EntityUid uid, TriggerMappingsComponent component, BeforeTriggerEvent args)
