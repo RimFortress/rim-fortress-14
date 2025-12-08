@@ -37,5 +37,5 @@ public sealed partial class SocialEffectPrototype : IPrototype
     /// Maximum effect value when issued several times
     /// </summary>
     [DataField]
-    public int MaxEffect = int.MaxValue;
+    public int? MaxEffect;
 }

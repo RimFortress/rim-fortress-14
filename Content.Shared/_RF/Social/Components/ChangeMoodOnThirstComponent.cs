@@ -14,4 +14,10 @@ public sealed partial class ChangeMoodOnThirstComponent : Component
     /// </summary>
     [DataField]
     public Dictionary<ThirstThreshold, List<ProtoId<SocialEffectPrototype>>> Effects = new();
+
+    /// <summary>
+    /// Effects that will be removed for each thirst level
+    /// </summary>
+    [DataField]
+    public Dictionary<ThirstThreshold, List<ProtoId<SocialEffectPrototype>>> RemoveEffects = new();
 }

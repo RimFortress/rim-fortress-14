@@ -66,7 +66,6 @@ public sealed partial class TriggerSystem : EntitySystem
     /// <returns>Whether or not the trigger has sucessfully activated an effect.</returns>
     public bool Trigger(EntityUid trigger, EntityUid? user = null, string? key = null)
     {
-        RaiseLocalEvent(trigger, new BeforeTriggerEvent(user, key)); // RimFortress
         var attemptTriggerEvent = new AttemptTriggerEvent(user, key);
         RaiseLocalEvent(trigger, ref attemptTriggerEvent);
         if (attemptTriggerEvent.Cancelled)

@@ -10,22 +10,13 @@ public sealed class TriggerMappingsSystem : EntitySystem
     /// <inheritdoc/>
     public override void Initialize()
     {
-        SubscribeLocalEvent<TriggerMappingsComponent, BeforeTriggerEvent>(OnBeforeTrigger);
         SubscribeLocalEvent<TriggerMappingsComponent, AttemptTriggerEvent>(OnAttemptTrigger,
-            after: new[] { typeof(TriggerSystem), typeof(SocialTriggerSystem), typeof(TriggerConditionsSystem) });
-    }
-
-    private void OnBeforeTrigger(EntityUid uid, TriggerMappingsComponent component, BeforeTriggerEvent args)
-    {
-        if (args.Key == null || !component.Conditions.TryGetValue(args.Key, out var components))
-            return;
-
-        EntityManager.AddComponents(uid, components, component.Override);
+            before: new[] { typeof(TriggerSystem), typeof(SocialTriggerSystem), typeof(TriggerConditionsSystem) });
     }
 
     private void OnAttemptTrigger(Entity<TriggerMappingsComponent> ent, ref AttemptTriggerEvent args)
     {
-        if (args.Cancelled || args.Key == null || !ent.Comp.Effects.TryGetValue(args.Key, out var components))
+        if (args.Cancelled || args.Key == null || !ent.Comp.AddComponents.TryGetValue(args.Key, out var components))
             return;
 
         EntityManager.AddComponents(ent, components, ent.Comp.Override);

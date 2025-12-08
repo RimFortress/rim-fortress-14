@@ -119,7 +119,7 @@ public sealed class SocialSystem : EntitySystem
             return false;
 
         Dirty(ent);
-        return false;
+        return true;
     }
 
     public bool RemoveOpinionEffect(
@@ -184,8 +184,8 @@ public sealed class SocialSystem : EntitySystem
 
         return proto.MaxEffect switch
         {
-            > 0 => Math.Clamp(value, 0, proto.MaxEffect),
-            < 0 => Math.Clamp(value, proto.MaxEffect, 0),
+            > 0 => Math.Clamp(value, 0, proto.MaxEffect.Value),
+            < 0 => Math.Clamp(value, proto.MaxEffect.Value, 0),
             _ => value,
         };
     }

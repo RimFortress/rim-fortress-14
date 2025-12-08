@@ -6,12 +6,6 @@ opinion-effect-healed-name = Healed wounds
 opinion-effect-healed-desc = Grateful for the medical care provided.
 
 # Mood Effects
-mood-effect-ate-fine-meal-name = Ate Fine Meal
-mood-effect-ate-fine-meal-desc = That was an excellent meal. My belly is full and content.
-
-mood-effect-ate-disgusting-food-name = Ate Disgusting Food
-mood-effect-ate-disgusting-food-desc = That food was barely edible. My stomach is unsettled.
-
 mood-effect-slept-well-name = Slept Well
 mood-effect-slept-well-desc = I had a good night's sleep. I feel rested and alert.
 
@@ -32,3 +26,36 @@ mood-effect-uncomfortable-environment-desc = This environment is unpleasant. It'
 
 mood-effect-social-interaction-name = Social Interaction
 mood-effect-social-interaction-desc = I had a pleasant conversation. Human connection feels good.
+
+# Mood Effects - Food
+mood-effect-ate-rubbish-meal-name = Ate Rubbish Meal
+mood-effect-ate-rubbish-meal-desc = That was barely edible slop. I feel queasy just thinking about it.
+
+mood-effect-ate-awful-meal-name = Ate Awful Meal
+mood-effect-ate-awful-meal-desc = The food was terrible. My stomach is protesting this meal.
+
+mood-effect-ate-fine-meal-name = Ate Fine Meal
+mood-effect-ate-fine-meal-desc = That was a proper meal. The cook knows what they're doing.
+
+mood-effect-ate-lavish-meal-name = Ate Lavish Meal
+mood-effect-ate-lavish-meal-desc = An exquisite dining experience. I feel pampered and content.
+
+# Mood Effects - Hunger
+mood-effect-peckish-name = Peckish
+mood-effect-peckish-desc = I'm starting to feel a bit hungry. Could use a snack soon.
+
+mood-effect-starving-name = Starving
+mood-effect-starving-desc = I'm weak from hunger. This is becoming dangerous.
+
+mood-effect-overfed-name = Overfed
+mood-effect-overfed-desc = I ate too much. My stomach feels uncomfortably full.
+
+# Mood Effects - Thirst
+mood-effect-thirsty-name = Thirsty
+mood-effect-thirsty-desc = My mouth is dry. I should get a drink.
+
+mood-effect-parched-name = Parched
+mood-effect-parched-desc = I'm desperately thirsty. Dehydration is setting in.
+
+mood-effect-overhydrated-name = Overhydrated
+mood-effect-overhydrated-desc = I drank too much water. I feel bloated and uncomfortable.

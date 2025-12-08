@@ -25,6 +25,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Bagel
+  - type: Tag
+    tags:
+    - FineMeal
   # RimFortress End
 
 - type: entity
@@ -71,6 +74,7 @@
   - type: Tag
     tags:
     - ClothMade
+    - LavishMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -80,4 +84,3 @@
           Quantity: 2.5
         - ReagentId: Fiber
           Quantity: 2.5
-

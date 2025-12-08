@@ -18,6 +18,10 @@
   # RimFortress Start
   - type: StockpileCategory
     category: FrozenFood
+  - type: Tag
+    tags:
+    - FineMeal
+    - AwfulMealReptile
   # RimFortress End
 
 # Ice-cream
@@ -83,6 +87,13 @@
           Quantity: 10
         - ReagentId: Theobromine
           Quantity: 1
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+    - AwfulMealVox
+  # RimFortress End
 
 # Popsicle
 
@@ -148,6 +159,13 @@
           Quantity: 10
         - ReagentId: Theobromine
           Quantity: 1
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+    - AwfulMealVox
+  # RimFortress End
 
 # Snowcone
 

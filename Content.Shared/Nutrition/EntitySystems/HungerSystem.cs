@@ -130,6 +130,7 @@ public sealed class HungerSystem : EntitySystem
         if (calculatedHungerThreshold == component.CurrentThreshold)
             return;
 
+        RaiseLocalEvent(uid, new HungerThresholdChangedEvent(calculatedHungerThreshold, component.CurrentThreshold)); // RimFortress
         component.CurrentThreshold = calculatedHungerThreshold;
         DirtyField(uid, component, nameof(HungerComponent.CurrentThreshold));
         DoHungerThresholdEffects(uid, component);
@@ -163,8 +164,6 @@ public sealed class HungerSystem : EntitySystem
             DirtyField(uid, component, nameof(HungerComponent.ActualDecayRate));
             SetAuthoritativeHungerValue((uid, component), GetHunger(component));
         }
-
-        RaiseLocalEvent(EntityUid.FirstUid, new HungerThresholdChangedEvent(component.CurrentThreshold, component.LastThreshold)); // RimFortress
 
         component.LastThreshold = component.CurrentThreshold;
         DirtyField(uid, component, nameof(HungerComponent.LastThreshold));

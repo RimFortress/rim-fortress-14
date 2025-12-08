@@ -9,18 +9,10 @@ namespace Content.Shared._RF.Trigger.Components;
 public sealed partial class TriggerMappingsComponent : Component
 {
     /// <summary>
-    /// Components that will be given when certain keys are triggered,
-    /// before conditions check
+    /// Components that will be given when certain keys are triggered
     /// </summary>
     [DataField]
-    public Dictionary<string, ComponentRegistry> Conditions = new();
-
-    /// <summary>
-    /// Components that will be given when certain keys are triggered,
-    /// after conditions check
-    /// </summary>
-    [DataField]
-    public Dictionary<string, ComponentRegistry> Effects = new();
+    public Dictionary<string, ComponentRegistry> AddComponents = new();
 
     /// <summary>
     /// Will the components be overwritten by the given ones

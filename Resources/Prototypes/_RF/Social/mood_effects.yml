@@ -1,26 +1,9 @@
 - type: socialEffect
-  id: MoodAteFineMeal
-  name: mood-effect-ate-fine-meal-name
-  description: mood-effect-ate-fine-meal-desc
-  duration: 4h
-  effect: 10
-  maxEffect: 10
-
-- type: socialEffect
-  id: MoodAteDisgustingFood
-  name: mood-effect-ate-disgusting-food-name
-  description: mood-effect-ate-disgusting-food-desc
-  duration: 4h
-  effect: -12
-  maxEffect: -12
-
-- type: socialEffect
   id: MoodSleptWell
   name: mood-effect-slept-well-name
   description: mood-effect-slept-well-desc
   duration: 12h
   effect: 10
-  maxEffect: 10
 
 - type: socialEffect
   id: MoodSleepDeprived
@@ -28,7 +11,6 @@
   description: mood-effect-sleep-deprived-desc
   duration: 24h
   effect: -18
-  maxEffect: -18
 
 - type: socialEffect
   id: MoodInPain
@@ -69,3 +51,74 @@
   duration: 2h
   effect: 4
   maxEffect: 12
+
+# Food effects
+- type: socialEffect
+  id: MoodAteRubbishMeal
+  name: mood-effect-ate-rubbish-meal-name
+  description: mood-effect-ate-rubbish-meal-desc
+  duration: 3h
+  effect: -10
+  maxEffect: -20
+
+- type: socialEffect
+  id: MoodAteAwfulMeal
+  name: mood-effect-ate-awful-meal-name
+  description: mood-effect-ate-awful-meal-desc
+  duration: 3h
+  effect: -6
+  maxEffect: -18
+
+- type: socialEffect
+  id: MoodAteFineMeal
+  name: mood-effect-ate-fine-meal-name
+  description: mood-effect-ate-fine-meal-desc
+  duration: 3h
+  effect: 6
+  maxEffect: 18
+
+- type: socialEffect
+  id: MoodAteLavishMeal
+  name: mood-effect-ate-lavish-meal-name
+  description: mood-effect-ate-lavish-meal-desc
+  duration: 3h
+  effect: 12
+  maxEffect: 24
+
+# Hunger
+- type: socialEffect
+  id: MoodPeckish
+  name: mood-effect-peckish-name
+  description: mood-effect-peckish-desc
+  effect: -5
+
+- type: socialEffect
+  id: MoodStarving
+  name: mood-effect-starving-name
+  description: mood-effect-starving-desc
+  effect: -20
+
+- type: socialEffect
+  id: MoodOverfed
+  name: mood-effect-overfed-name
+  description: mood-effect-overfed-desc
+  effect: -10
+
+# Thirsty
+- type: socialEffect
+  id: MoodThirsty
+  name: mood-effect-thirsty-name
+  description: mood-effect-thirsty-desc
+  effect: -8
+
+- type: socialEffect
+  id: MoodParched
+  name: mood-effect-parched-name
+  description: mood-effect-parched-desc
+  effect: -20
+
+- type: socialEffect
+  id: MoodOverhydrated
+  name: mood-effect-overhydrated-name
+  description: mood-effect-overhydrated-desc
+  effect: -12

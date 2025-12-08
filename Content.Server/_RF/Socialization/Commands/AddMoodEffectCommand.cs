@@ -39,7 +39,7 @@ public sealed class AddMoodEffectCommand : LocalizedCommands
             return;
         }
 
-        if (!_prototype.TryIndex<SocializationEffectPrototype>(args[1], out var proto))
+        if (!_prototype.TryIndex<SocialEffectPrototype>(args[1], out var proto))
         {
             shell.WriteLine(Loc.GetString(
                 "shell-argument-must-be-prototype",
@@ -61,7 +61,7 @@ public sealed class AddMoodEffectCommand : LocalizedCommands
                 CompletionHelper.Components<SocialComponent>(args[0]),
                 "<uid>"),
             2 => CompletionResult.FromHintOptions(
-                CompletionHelper.PrototypeIDs<SocializationEffectPrototype>(),
+                CompletionHelper.PrototypeIDs<SocialEffectPrototype>(),
                 "<protoId>"),
             _ => CompletionResult.Empty,
         };

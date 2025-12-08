@@ -80,6 +80,12 @@
   components:
   - type: Sprite
     state: beeftaco
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - AwfulMeal
+  # RimFortress End
 
 - type: entity
   name: chicken taco
@@ -89,6 +95,12 @@
   components:
   - type: Sprite
     state: chickentaco
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - AwfulMeal
+  # RimFortress End
 
 - type: entity
   name: fish taco
@@ -111,6 +123,12 @@
           Quantity: 10
         - ReagentId: Vitamin
           Quantity: 6
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - AwfulMeal
+  # RimFortress End
 
 - type: entity
   name: rat taco
@@ -129,6 +147,14 @@
           Quantity: 6
         - ReagentId: Vitamin
           Quantity: 4
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - RubbishMeal
+    - FineMealVox
+    - FineMealReptile
+  # RimFortress End
 
 - type: entity
   name: beef taco supreme
@@ -147,6 +173,12 @@
           Quantity: 22
         - ReagentId: Vitamin
           Quantity: 6
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - FineMeal
+  # RimFortress End
 
 - type: entity
   name: chicken taco supreme
@@ -165,6 +197,12 @@
           Quantity: 22
         - ReagentId: Vitamin
           Quantity: 6
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - FineMeal
+  # RimFortress End
 
 - type: entity
   parent: FoodTacoBase
@@ -193,6 +231,12 @@
           Quantity: 4
         - ReagentId: CapsaicinOil
           Quantity: 6
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Meat
+    - LavishMeal
+  # RimFortress End
 
 - type: entity
   name: soft taco
@@ -220,3 +264,4 @@
   - type: Tag
     tags:
       - Meat
+      - AwfulMeal # RimFortress

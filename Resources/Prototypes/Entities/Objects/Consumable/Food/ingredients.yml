@@ -478,6 +478,7 @@
     tags:
     - Ingredient
     - ClothMade
+    - FineMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -506,6 +507,7 @@
     tags:
     - Slice
     - ClothMade
+    - FineMealMoth # RimFortress
   - type: Construction
     graph: DoughRopeCotton
     node: start
@@ -549,6 +551,7 @@
     tags:
      - ClothMade
      - Ingredient
+     - FineMealMoth # RimFortress
 
 - type: entity
   name: raw pastry base

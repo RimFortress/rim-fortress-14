@@ -556,6 +556,7 @@
     - Meat
     - Trash
     - Recyclable
+    - RubbishMeal # RimFortress
   - type: Sprite
     state: rotten
   - type: SolutionContainerManager
@@ -703,6 +704,7 @@
     tags:
     - Raw
     - Meat
+    - RubbishMeal # RimFortress
   - type: Sprite
     state: xeno
   - type: SolutionContainerManager
@@ -962,6 +964,7 @@
   - type: Tag
     tags:
     - Meat
+    - RubbishMeal # RimFortress
   - type: Item
     size: Normal
     shape:
@@ -1007,6 +1010,7 @@
   - type: Tag
     tags:
     - Meat
+    - RubbishMeal # RimFortress
 
 - type: entity
   parent: FoodMeatBase
@@ -1349,6 +1353,7 @@
     tags:
     - Cooked
     - Meat
+    - LavishMeal # RimFortress
   - type: Sprite
     layers:
     - state: crab-cooked
@@ -1390,6 +1395,7 @@
     - Cooked
     - Meat
     - Steak
+    - LavishMeal # RimFortress
   - type: Sprite
     layers:
     - state: goliath-cooked
@@ -1710,6 +1716,7 @@
     - Cooked
     - Meat
     - Steak
+    - LavishMeal # RimFortress
   - type: Sprite
     layers:
     - state: dragon-cooked
@@ -2098,6 +2105,7 @@
     tags:
     - Cutlet
     - Meat
+    - AwfulMeal # RimFortress
   - type: Sprite
     state: salami-slice
     color: red

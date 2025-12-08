@@ -226,7 +226,7 @@
   - type: TriggerOnHeal
     keyOut: onHeal
   - type: TriggerMappings
-    effects:
+    addComponents:
       onDamage:
       - type: ChangeOpinionOnTrigger
         effect: OpinionAttacked
@@ -237,6 +237,70 @@
         effect: OpinionHealed
         keysIn:
         - onHeal
+  - type: ChangeMoodOnHunger
+    effects:
+      Overfed: [MoodOverfed]
+      Peckish: [MoodPeckish]
+      Starving: [MoodStarving]
+    removeEffects:
+      Overfed:
+      - MoodPeckish
+      - MoodStarving
+      Okay:
+      - MoodOverfed
+      - MoodPeckish
+      - MoodStarving
+      Peckish:
+      - MoodOverfed
+      - MoodStarving
+      Starving:
+      - MoodPeckish
+      - MoodOverfed
+  - type: ChangeMoodOnThirst
+    effects:
+      Parched: [MoodParched]
+      Thirsty: [MoodThirsty]
+      Overhydrated: [MoodOverhydrated]
+    removeEffects:
+      Parched:
+      - MoodThirsty
+      - MoodOverhydrated
+      Thirsty:
+      - MoodParched
+      - MoodOverhydrated
+      Okay:
+      - MoodThirsty
+      - MoodParched
+      - MoodOverhydrated
+      Overhydrated:
+      - MoodThirsty
+      - MoodParched
+  - type: ChangeMoodOnAte
+    effects:
+      MoodAteRubbishMeal:
+        tags:
+        - RubbishMeal
+        - Trash
+        requireAll: false
+      MoodAteAwfulMeal:
+        tags:
+        - AwfulMeal
+        - Raw
+        - Ingridient
+        - DonkPocket
+        requireAll: false
+      MoodAteFineMeal:
+        tags:
+        - FineMeal
+        - Pancake
+        requireAll: false
+      MoodAteLavishMeal:
+        tags:
+        - LavishMeal
+        - Cake
+        - Pie
+        - Pizza
+        requireAll: false
   # RimFortress End
 
 - type: entity

@@ -14,4 +14,10 @@ public sealed partial class ChangeMoodOnHungerComponent : Component
     /// </summary>
     [DataField]
     public Dictionary<HungerThreshold, List<ProtoId<SocialEffectPrototype>>> Effects = new();
+
+    /// <summary>
+    /// Effects that will be removed for each hunger level
+    /// </summary>
+    [DataField]
+    public Dictionary<HungerThreshold, List<ProtoId<SocialEffectPrototype>>> RemoveEffects = new();
 }

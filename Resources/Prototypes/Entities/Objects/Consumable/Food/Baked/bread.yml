@@ -143,6 +143,7 @@
     tags:
     - ClothMade
     - Bread
+    - LavishMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -173,6 +174,7 @@
     - ClothMade
     - Bread
     - Slice
+    - LavishMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -704,6 +706,7 @@
     tags:
     - Bread
     - ClothMade
+    - LavishMealMoth # RimFortress
   - type: Clothing
     equippedPrefix: baguette-cotton
   - type: Item
@@ -768,6 +771,7 @@
     - Bread
     - Slice
     - ClothMade
+    - LavishMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -1048,6 +1052,7 @@
   - type: Tag
     tags:
     - ClothMade
+    - LavishMealMoth # RimFortress
   - type: Item
     size: Small
     storedOffset: -1,0
