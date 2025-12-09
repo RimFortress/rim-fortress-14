@@ -62,6 +62,20 @@ public sealed class SocialSystem : EntitySystem
     }
 
     /// <summary>
+    /// Adds an effects on the entity's mood
+    /// </summary>
+    public void AddMoodEffect(Entity<SocialComponent?> ent, List<ProtoId<SocialEffectPrototype>> effects)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        foreach (var effect in effects)
+        {
+            AddMoodEffect(ent, effect);
+        }
+    }
+
+    /// <summary>
     /// Adds an effect on the entity's mood
     /// </summary>
     public void AddMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
@@ -111,6 +125,17 @@ public sealed class SocialSystem : EntitySystem
         }
 
         effects[protoId] = _timing.CurTime + _world.FromWorldTime(proto.Duration);
+    }
+
+    public void RemoveMoodEffect(Entity<SocialComponent?> ent, List<ProtoId<SocialEffectPrototype>> effects)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        foreach (var effect in effects)
+        {
+            RemoveMoodEffect(ent, effect);
+        }
     }
 
     public bool RemoveMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)

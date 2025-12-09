@@ -68,6 +68,10 @@
     # Raids
     - id: Raid
 
+    # Mood events
+    - id: SettlementInspirationEvent
+    - id: SettlementDespairEvent
+
 - type: entityTable
   id: BasicGlobalRulesTable
   table: !type:AllSelector
@@ -79,6 +83,7 @@
 - type: entity
   id: BaseWorldRule
   abstract: true
+  categories: [ HideSpawnMenu ]
   components:
   - type: WorldRule
 
@@ -86,5 +91,6 @@
   id: BaseGlobalWorldRule
   parent: BaseGameRule
   abstract: true
+  categories: [ HideSpawnMenu ]
   components:
   - type: GlobalWorldRule

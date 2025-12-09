@@ -303,11 +303,32 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     }
 }
 
+/// <summary>
+/// Raised when adding a world event
+/// </summary>
+/// <param name="RuleEntity">Entity of the world event</param>
+/// <param name="RuleId">Prototype of the world event</param>
+/// <param name="Target">The target entity of the event</param>
+/// <param name="TargetCoordinates">Target coordinates of the event</param>
 [ByRefEvent]
 public readonly record struct WorldRuleAddedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
 
+/// <summary>
+/// Raised when the world event starts
+/// </summary>
+/// <param name="RuleEntity">Entity of the world event</param>
+/// <param name="RuleId">Prototype of the world event</param>
+/// <param name="Target">The target entity of the event</param>
+/// <param name="TargetCoordinates">Target coordinates of the event</param>
 [ByRefEvent]
 public readonly record struct WorldRuleStartedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
 
+/// <summary>
+/// Raised when the world event is ended
+/// </summary>
+/// <param name="RuleEntity">Entity of the world event</param>
+/// <param name="RuleId">Prototype of the world event</param>
+/// <param name="Target">The target entity of the event</param>
+/// <param name="TargetCoordinates">Target coordinates of the event</param>
 [ByRefEvent]
 public readonly record struct WorldRuleEndedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);

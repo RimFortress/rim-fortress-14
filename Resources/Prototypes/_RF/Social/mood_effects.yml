@@ -122,3 +122,18 @@
   name: mood-effect-overhydrated-name
   description: mood-effect-overhydrated-desc
   effect: -12
+
+# World events effects
+- type: socialEffect
+  id: MoodSettlementInspiration
+  name: mood-effect-settlement-inspiration-name
+  description: mood-effect-settlement-inspiration-desc
+  duration: 72h
+  effect: 20
+
+- type: socialEffect
+  id: MoodSettlementDespair
+  name: mood-effect-settlement-despair-name
+  description: mood-effect-settlement-despair-desc
+  duration: 72h
+  effect: -20

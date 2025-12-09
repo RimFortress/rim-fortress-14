@@ -16,19 +16,9 @@ public sealed class ChangeMoodOnHungerSystem : EntitySystem
     private void OnHungerThresholdChanged(EntityUid uid, ChangeMoodOnHungerComponent component, HungerThresholdChangedEvent args)
     {
         if (component.Effects.TryGetValue(args.Current, out var effects))
-        {
-            foreach (var effect in effects)
-            {
-                _social.AddMoodEffect(uid, effect);
-            }
-        }
+            _social.AddMoodEffect(uid, effects);
 
         if (component.RemoveEffects.TryGetValue(args.Current, out var removeEffects))
-        {
-            foreach (var effect in removeEffects)
-            {
-                _social.RemoveMoodEffect(uid, effect);
-            }
-        }
+            _social.RemoveMoodEffect(uid, removeEffects);
     }
 }

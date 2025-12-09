@@ -59,3 +59,10 @@ mood-effect-parched-desc = I'm desperately thirsty. Dehydration is setting in.
 
 mood-effect-overhydrated-name = Overhydrated
 mood-effect-overhydrated-desc = I drank too much water. I feel bloated and uncomfortable.
+
+# Mood Effects - World events
+mood-effect-settlement-inspiration-name = Divine Inspiration
+mood-effect-settlement-inspiration-desc = The air feels charged with possibility. A sense of purpose fills our hearts.
+
+mood-effect-settlement-despair-name = Collective Despair
+mood-effect-settlement-despair-desc = Hope seems distant. The weight of our struggles feels heavier today.

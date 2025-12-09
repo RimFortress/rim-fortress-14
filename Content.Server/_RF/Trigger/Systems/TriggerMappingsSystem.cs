@@ -11,7 +11,7 @@ public sealed class TriggerMappingsSystem : EntitySystem
     public override void Initialize()
     {
         SubscribeLocalEvent<TriggerMappingsComponent, AttemptTriggerEvent>(OnAttemptTrigger,
-            before: new[] { typeof(TriggerSystem), typeof(SocialTriggerSystem), typeof(TriggerConditionsSystem) });
+            before: new[] { typeof(TriggerSystem), typeof(SocialTriggerSystem) });
     }
 
     private void OnAttemptTrigger(Entity<TriggerMappingsComponent> ent, ref AttemptTriggerEvent args)

@@ -1,0 +1,29 @@
+- type: entity
+  id: BaseMoodRule
+  parent: BaseWorldRule
+  abstract: true
+  components:
+  - type: WorldRule
+    startOffset: 5m
+    cost: 50
+  - type: ChangeMoodRule
+
+- type: entity
+  id: SettlementInspirationEvent
+  parent: BaseMoodRule
+  components:
+  - type: ChangeMoodRule
+    effects:
+    - MoodSettlementInspiration
+    removeEffects:
+    - MoodSettlementDespair
+
+- type: entity
+  id: SettlementDespairEvent
+  parent: BaseMoodRule
+  components:
+  - type: ChangeMoodRule
+    effects:
+    - MoodSettlementDespair
+    removeEffects:
+    - MoodSettlementInspiration
