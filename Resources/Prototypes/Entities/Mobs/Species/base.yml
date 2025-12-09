@@ -220,6 +220,11 @@
       min: 5
       max: 20
     maxRandomLevel: 10
+  - type: ModifySkillLevelOnMood
+    modifiers:
+      Healing: 0.04
+      Melee: 0.08
+      Mining: 0.08 # Sad miner is a bad miner
   - type: Social
   - type: TriggerOnDamage
     keyOut: onDamage

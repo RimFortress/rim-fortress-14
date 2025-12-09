@@ -6,7 +6,7 @@
             <BoxContainer>
                 <TextureRect Name="Icon" SetSize="14 14"
                              Stretch="KeepAspectCentered" Margin="3 2 1 0"/>
-                <Label Name="Label" Margin="1"/>
+                <RichTextLabel Name="Label" Margin="1"/>
                 <BoxContainer HorizontalExpand="True"/>
                 <Label Name="CurrentLevel" Margin="2 1"/>
             </BoxContainer>
