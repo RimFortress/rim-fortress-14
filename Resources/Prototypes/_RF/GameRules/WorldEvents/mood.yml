@@ -11,6 +11,7 @@
 - type: entity
   id: SettlementInspirationEvent
   parent: BaseMoodRule
+  categories: [ HideSpawnMenu ]
   components:
   - type: ChangeMoodRule
     effects:
@@ -21,6 +22,7 @@
 - type: entity
   id: SettlementDespairEvent
   parent: BaseMoodRule
+  categories: [ HideSpawnMenu ]
   components:
   - type: ChangeMoodRule
     effects:
