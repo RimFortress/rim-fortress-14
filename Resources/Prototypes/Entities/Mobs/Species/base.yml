@@ -306,6 +306,8 @@
         - Pie
         - Pizza
         requireAll: false
+  - type: ModifySpeedOnMood
+    moodFactor: 0.0015 # +15% for +100 mood
   # RimFortress End
 
 - type: entity

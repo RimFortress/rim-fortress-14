@@ -77,13 +77,13 @@ public sealed class RfVars : CVars
     /// Minimum entity mood level
     /// </summary>
     public static readonly CVarDef<int> MinMoodValue =
-        CVarDef.Create("social.min_mood_value", -50, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("social.min_mood_value", -100, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
     /// Maximum entity mood level
     /// </summary>
     public static readonly CVarDef<int> MaxMoodValue =
-        CVarDef.Create("social.max_mood_value", 50, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("social.max_mood_value", 100, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
     /// Minimum level of opinion about another entity

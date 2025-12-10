@@ -7,6 +7,7 @@ using Content.Shared._RF.NPC;
 using Robust.Shared.Configuration;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -21,6 +22,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly NpcControlSystem _control = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
 
     private readonly List<NpcJob> _jobs = new();
     private int _nextJobId = 1;
@@ -270,8 +272,12 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 
         foreach (var job in OrderedJobs(entity))
         {
-            foreach (var protoId in job.Tasks)
+            var tasks = job.Tasks.ToList();
+
+            while (tasks.Count > 0)
             {
+                var protoId = _random.PickAndTake(tasks);
+
                 if (!_prototype.TryIndex(protoId, out var task)
                     || !_control.TrySetPassiveTask(entity.Owner, task))
                     continue;
@@ -354,13 +360,13 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
     /// </summary>
     public bool AccessibleTask(ICommonSession user, ProtoId<NpcTaskPrototype> task)
     {
-        return _jobs.Find(x => !x.Hidden && x.Tasks.Contains(task)) != null;
+        return _jobs.Find(x => !x.Hidden && x.Owner == user && x.Tasks.Contains(task)) != null;
     }
 
-    private List<NpcJob> OrderedJobs(Entity<RoutineNpcTasksComponent?> ent)
+    private IEnumerable<NpcJob> OrderedJobs(Entity<RoutineNpcTasksComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))
-            return new();
+            return new List<NpcJob>();
 
         var jobs = new Dictionary<NpcJob, int>();
 
@@ -375,7 +381,9 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
             jobs[job] = priority;
         }
 
-        return jobs.OrderBy(x => x.Value).Select(x => x.Key).ToList();
+        return jobs.OrderBy(x => x.Value)
+            .ThenBy(_ => _random.Next())
+            .Select(x => x.Key);
     }
 
     private static NpcJobInfoMessage InfoMessage(NpcJob job)

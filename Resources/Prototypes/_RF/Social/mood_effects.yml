@@ -137,3 +137,11 @@
   description: mood-effect-settlement-despair-desc
   duration: 72h
   effect: -20
+
+# Mental breakdown
+- type: socialEffect
+  id: MoodMentalBreakdown
+  name: mood-effect-mental-break-name
+  description: mood-effect-mental-break-desc
+  duration: 2h
+  effect: -80

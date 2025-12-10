@@ -2,7 +2,6 @@
   id: BaseStoringTask
   parent: BaseSoloPerformTask
   abstract: true
-  maxPerformers: 1
   unionPerformersWith:
   - Storing
   - MoveStoredInContainer

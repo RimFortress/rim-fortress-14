@@ -289,6 +289,61 @@
     curve: !type:PresetCurve
       preset: TargetDistance
 
+# MentalBreakdown task
+- type: utilityQuery
+  id: NearbyFriendlyMeleeTargets
+  query:
+  - !type:RangeComponentQuery
+    components:
+    - type: NpcFactionMember
+    range: 10
+  - !type:IsFriendlyFilter
+    invert: true
+  considerations:
+  - !type:TargetIsAliveCon
+    curve: !type:BoolCurve
+  - !type:TargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve
+  - !type:TargetInLOSOrCurrentCon
+    curve: !type:BoolCurve
+
+- type: utilityQuery
+  id: NearbyDestructible
+  query:
+  - !type:RangeComponentQuery
+    components:
+    - type: Destructible
+    range: 10
+  considerations:
+  - !type:TargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve
+  - !type:TargetInLOSOrCurrentCon
+    curve: !type:BoolCurve
+
+- type: utilityQuery
+  id: NearbyItem
+  query:
+  - !type:RangeComponentQuery
+    components:
+    - type: Item
+    range: 10
+  - !type:InventoryFilter
+  - !type:InHandsFilter
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve
+  - !type:TargetInLOSOrCurrentCon
+    curve: !type:BoolCurve
+
 # Tasks targets query
 
 - type: utilityQuery

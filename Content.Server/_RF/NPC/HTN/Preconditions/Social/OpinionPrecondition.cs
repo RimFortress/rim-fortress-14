@@ -1,7 +1,7 @@
 using Content.Server.NPC;
 using Content.Shared._RF.Social.Systems;
 
-namespace Content.Server._RF.NPC.HTN.Preconditions.Socialization;
+namespace Content.Server._RF.NPC.HTN.Preconditions.Social;
 
 /// <summary>
 /// Checks the level of the entity's opinion of another

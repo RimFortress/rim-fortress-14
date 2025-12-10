@@ -67,3 +67,4 @@
   hidden: true
   tasks:
   - Conversation
+  - MentalBreakdown

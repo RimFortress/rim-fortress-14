@@ -1,0 +1,36 @@
+- type: npcTask
+  id: MentalBreakdown
+  name: Mental breakdown
+  parent: BaseSoloPerformTask
+  compound: MentalBreakdownCompound
+  targetsQuery: Self # Stub for the ability to use this task as a passive
+  startPreconditions:
+  - !type:MoodPrecondition
+    lessThan: -60
+  - !type:RandomPrecondition
+    chance: 0.1 # Adding randomness to the triggering of this task
+  finishPreconditions:
+  - !type:HasMoodEffectPrecondition
+    effect: MoodMentalBreakdown
+    invert: true
+
+- type: npcTask
+  id: Conversation
+  name: Conversation
+  parent: BaseNpcTask
+  overlayColor: "#D3D3D3"
+  compound: ConversationCompound
+  targetsQuery: Self # Stub for the ability to use this task as a passive
+
+- type: npcTask
+  id: ConversationOrder
+  name: Conversation
+  parent: BaseNpcTask
+  overlayColor: "#D3D3D3"
+  compound: ConversationOrderCompound
+  tempKeys:
+  - Wait
+  - Message
+  finishPreconditions:
+  - !type:InConversationPrecondition
+    invert: true

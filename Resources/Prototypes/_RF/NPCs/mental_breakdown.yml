@@ -1,0 +1,97 @@
+- type: htnCompound
+  id: MentalBreakdownCompound
+  branches:
+  - preconditions:
+    - !type:HasMoodEffectPrecondition
+      effect: MoodMentalBreakdown
+      invert: true
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:AddMoodEffectOperator
+        effect: MoodMentalBreakdown
+
+  # With a small chance, the entity will shout out a random phrase
+  - preconditions:
+    - !type:RandomPrecondition
+      chance: 0.1
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:SpeakDatasetOperator
+        dataset: MentalBreakdownPhrases
+
+  # Entity will pick up a nearby object and throw it away
+  - preconditions:
+    - !type:RandomPrecondition
+      chance: 0.33
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: NearbyItem
+        key: PickUpTarget
+    - !type:HTNCompoundTask
+      task: MentalBreakdownThrowItemCompound
+
+  # With some chance, we will attack the nearest friendly entity
+  - preconditions:
+    - !type:RandomPrecondition
+      chance: 0.33
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: NearbyFriendlyMeleeTargets
+    - !type:HTNCompoundTask
+      task: MentalBreakdownAttackCompound
+
+  # With some chance, we will attack the nearest object
+  - preconditions:
+    - !type:RandomPrecondition
+      chance: 0.33
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: NearbyDestructible
+    - !type:HTNCompoundTask
+      task: MentalBreakdownAttackCompound
+
+  # We go to a random point nearby
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:PickAccessibleOperator
+        rangeKey: IdleRange
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        pathfindInPlanning: false
+
+- type: htnCompound
+  id: MentalBreakdownAttackCompound
+  branches:
+  - preconditions:
+    - !type:ActiveHandEntityPrecondition
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:DropOperator
+
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:EntityCoordinatesOperator
+        targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        pathfindInPlanning: true
+        rangeKey: MeleeRange
+    - !type:HTNPrimitiveTask
+      operator: !type:MeleeOperator
+        targetKey: Target
+
+
+- type: htnCompound
+  id: MentalBreakdownThrowItemCompound
+  branches:
+  - tasks:
+    - !type:HTNCompoundTask
+      task: PickUpCompound
+    - !type:HTNPrimitiveTask
+      operator: !type:PickAccessibleOperator
+        rangeKey: VisionRadius
+    - !type:HTNPrimitiveTask
+      operator: !type:ThrowAtOperator

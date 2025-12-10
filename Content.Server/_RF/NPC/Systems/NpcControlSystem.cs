@@ -379,6 +379,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// Tries to set a new task for an NPC, checking all the required conditions
     /// </summary>
     /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId, EntityUid target)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetTask(npc, proto, target);
+
+    /// <summary>
+    /// Tries to set a new task for an NPC, checking all the required conditions
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
     public bool TrySetTask(
         Entity<HTNComponent?> npc,
         NpcTaskPrototype proto,
@@ -397,6 +404,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// Tries to set a new task for an NPC
     /// </summary>
     /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId, EntityCoordinates? targetCoords)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetTask(npc, proto, targetCoords);
+
+    /// <summary>
+    /// Tries to set a new task for an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
     public bool TrySetTask(
         Entity<HTNComponent?> npc,
         NpcTaskPrototype proto,
@@ -408,6 +422,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         SetTask(new(npc.Owner, npc.Comp, control), proto, null, targetCoords);
         return true;
     }
+
+    /// <summary>
+    /// Tries to set a new task for an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetTask(npc, proto);
 
     /// <summary>
     /// Tries to set a new task for an NPC
@@ -698,6 +719,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         return GetPassiveTaskTarget(npc, task) is { } target
                && TrySetTask(npc, task, target);
     }
+
+    /// <summary>
+    /// Tries to find a task target and issue a task with that target to an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully issued</returns>
+    public bool TrySetPassiveTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetPassiveTask(npc, proto);
 
     /// <summary>
     /// Give the user access to control this NPC
