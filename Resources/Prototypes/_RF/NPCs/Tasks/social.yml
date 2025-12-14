@@ -34,3 +34,19 @@
   finishPreconditions:
   - !type:InConversationPrecondition
     invert: true
+
+- type: npcTask
+  id: LeaveSettlement
+  name: Leave Settlement
+  parent: BaseSoloPerformTask
+  compound: LeaveSettlementCompound
+  targetsQuery: Self # Stub for the ability to use this task as a passive
+  startPreconditions:
+  - !type:MoodPrecondition
+    lessThan: -80
+  - !type:RandomPrecondition
+    chance: 0.1 # Adding randomness to the triggering of this task
+  finishPreconditions:
+  - !type:InRangeFromSettlementsPrecondition
+    range: 100
+    invert: true

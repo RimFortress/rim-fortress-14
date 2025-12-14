@@ -161,6 +161,30 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     }
 
     /// <summary>
+    /// Removes an entity from the list of pops under the player's controller
+    /// </summary>
+    /// <param name="player">Player</param>
+    /// <param name="pop">Entity to remove</param>
+    /// <param name="removeLast">If true, the last pop can be removed</param>
+    public bool RemovePop(Entity<RimFortressPlayerComponent?> player, EntityUid pop, bool removeLast = false)
+    {
+        if (!Resolve(player.Owner, ref player.Comp))
+            return false;
+
+        if (!removeLast && player.Comp.Pops.Count <= 1)
+            return false;
+
+        if (!player.Comp.Pops.Remove(pop))
+            return false;
+
+        _npc.RemoveNpcControl(player.Owner, pop);
+        RemComp<NavMapBeaconComponent>(pop);
+
+        Dirty(player);
+        return true;
+    }
+
+    /// <summary>
     /// Spawns starting pops and expedition equipment for the player
     /// </summary>
     /// <remarks>

@@ -69,8 +69,8 @@ public sealed partial class SocializationEffectInfo : ContainerButton
             return;
         }
 
-        var days = (int) Math.Ceiling(duration.Value.TotalDays);
-        var hours = (int) Math.Ceiling(duration.Value.TotalHours);
+        var days = (int) Math.Floor(duration.Value.TotalDays);
+        var hours = (int) Math.Floor(duration.Value.TotalHours);
         var minutes = (int) duration.Value.TotalMinutes;
 
         if (days > 0)

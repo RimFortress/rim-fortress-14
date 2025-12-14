@@ -730,14 +730,24 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <summary>
     /// Give the user access to control this NPC
     /// </summary>
-    public void AddNpcControl(Entity<NpcControlComponent?> user, EntityUid uid)
+    public void AddNpcControl(EntityUid user, EntityUid uid)
     {
-        if (!Resolve(user, ref user.Comp))
-            return;
-
+        EnsureComp<NpcControlComponent>(user);
         var comp = EnsureComp<ControllableNpcComponent>(uid);
         comp.CanControl.Add(user);
-        RaiseLocalEvent(uid, new NpcControllerAdded(uid, user));
+        RaiseLocalEvent(uid, new NpcControllerAdded(user));
+    }
+
+    /// <summary>
+    /// Remove the user access to control this NPC
+    /// </summary>
+    public bool RemoveNpcControl(EntityUid user, Entity<ControllableNpcComponent?> uid)
+    {
+        if (!Resolve(uid, ref uid.Comp) || !uid.Comp.CanControl.Remove(user))
+            return false;
+
+        RaiseLocalEvent(uid, new NpcControllerRemoved(user));
+        return true;
     }
 
     /// <summary>
@@ -852,16 +862,11 @@ public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task,
 /// <summary>
 /// Called when a user who can control the entity is added
 /// </summary>
-[Serializable]
-public sealed class NpcControllerAdded(EntityUid uid, EntityUid user) : EntityEventArgs
-{
-    /// <summary>
-    /// Entity of a controlled NPC
-    /// </summary>
-    public EntityUid Uid = uid;
+/// <param name="User">The user who can now control this entity</param>
+public readonly struct NpcControllerAdded(EntityUid User);
 
-    /// <summary>
-    /// Added user
-    /// </summary>
-    public EntityUid User = user;
-}
+/// <summary>
+/// Called when the user who can control this entity is removed
+/// </summary>
+/// <param name="User">User who can no longer control this entity</param>
+public readonly struct NpcControllerRemoved(EntityUid User);
