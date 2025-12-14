@@ -144,8 +144,13 @@ public abstract class SharedSkillsSystem : EntitySystem
     /// </summary>
     public int GetModifiedLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
-        var (mod, mult) = GetSkillLevelModifier(ent, skill);
-        return (int)((GetLevel(ent, skill) + mod) * mult);
+        if (!Proto.TryIndex(skill, out var proto))
+            return 0;
+
+        var ev = new GetSkillLevelModifierEvent(skill, 0, 1f);
+        RaiseLocalEvent(ent, ref ev);
+
+        return Math.Clamp((int) ((GetLevel(ent, skill) + ev.Modificator) * ev.Multiplier), 0, proto.MaxLevel);
     }
 
     /// <summary>
@@ -170,13 +175,6 @@ public abstract class SharedSkillsSystem : EntitySystem
             proto.LevelExpMultiplier);
 
         return Math.Min((int) Math.Floor(level), proto.MaxLevel);
-    }
-
-    public (int Modifier, float Multiplier) GetSkillLevelModifier(EntityUid uid, ProtoId<SkillPrototype> skill)
-    {
-        var ev = new GetSkillLevelModifierEvent(skill, 0, 1f);
-        RaiseLocalEvent(uid, ref ev);
-        return (ev.Modificator, ev.Multiplier);
     }
 
     /// <summary>

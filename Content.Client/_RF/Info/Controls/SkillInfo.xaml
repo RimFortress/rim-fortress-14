@@ -8,7 +8,7 @@
                              Stretch="KeepAspectCentered" Margin="3 2 1 0"/>
                 <RichTextLabel Name="Label" Margin="1"/>
                 <BoxContainer HorizontalExpand="True"/>
-                <Label Name="CurrentLevel" Margin="2 1"/>
+                <RichTextLabel Name="CurrentLevel" Margin="2 1"/>
             </BoxContainer>
             <ProgressBar Name="ProgressBar" SetHeight="30" HorizontalExpand="True">
                 <BoxContainer Margin="2 3">

@@ -47,17 +47,6 @@ public sealed partial class SkillInfo : Control
 
         Label.Text = $"[bold][color={proto.Color.ToHex()}]{Loc.GetString(proto.Name)}[/color][/bold]";
 
-        var modifiedLevel = skillSys.GetModifiedLevel(uid, skill);
-        var delta = modifiedLevel - data.CurrentLevel;
-
-        if (delta != 0)
-        {
-            var color = delta < 0 ? StyleFortress.LightBad : StyleFortress.Good;
-            var sign = delta < 0 ? "–" : "+";
-
-            Label.Text = $"{Label.Text} ([color={color.ToHex()}]{sign}{Math.Abs(delta)}[/color])";
-        }
-
         if (_entity.TryGetComponent(uid, out SkillExpModificatorComponent? comp)
             && comp.Multipliers.TryGetValue(proto, out var multiplier))
         {
@@ -74,7 +63,19 @@ public sealed partial class SkillInfo : Control
             : null;
         Icon.ModulateSelfOverride = proto.Color;
 
-        CurrentLevel.Text = data.CurrentLevel.ToString();
+        CurrentLevel.Text = $"[bold]{data.CurrentLevel}[/bold]";
+
+        var modifiedLevel = skillSys.GetModifiedLevel(uid, skill);
+        var delta = modifiedLevel - data.CurrentLevel;
+
+        if (delta != 0)
+        {
+            var color = delta < 0 ? StyleFortress.LightBad : StyleFortress.Good;
+            var sign = delta < 0 ? "–" : "+";
+
+            CurrentLevel.Text = $"{CurrentLevel.Text} ([color={color.ToHex()}]{sign}{Math.Abs(delta)}[/color])";
+        }
+
         MaxExp.Text = (data.LevelUpExp - data.MinLevelExp).ToString();
         CurrentExp.Text = (data.CurrentExp - data.MinLevelExp).ToString();
 
