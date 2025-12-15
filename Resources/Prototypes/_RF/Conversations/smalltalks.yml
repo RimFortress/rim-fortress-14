@@ -1,79 +1,52 @@
 - type: conversationScript
-  id: Smalltalk01
+  id: BaseDialog
+  abstract: true
   actors:
-  - id: speakerA
+  - id: initiator
     reqs:
     - !type:Mood
       moreThan: -5
     reqsFor:
-      speakerB:
+      responder:
       - !type:Opinion
         moreThan: -5
-  - id: speakerB
+  - id: responder
     reqs:
     - !type:Mood
       moreThan: -5
     reqsFor:
-      speakerA:
+      initiator:
       - !type:Opinion
         moreThan: -5
+
+- type: conversationScript
+  id: Smalltalk01
+  parent: BaseDialog
   lines:
-  - speakerA: conversation-smalltalk01-line1-a
-    speakerB: conversation-smalltalk01-line1-b
-  - speakerA: conversation-smalltalk01-line2-a
-    speakerB: conversation-smalltalk01-line2-b
+  - initiator: conversation-smalltalk01-line1-a
+    responder: conversation-smalltalk01-line1-b
+  - initiator: conversation-smalltalk01-line2-a
+    responder: conversation-smalltalk01-line2-b
 
 - type: conversationScript
   id: Smalltalk02
-  actors:
-  - id: traveler
-    reqs:
-    - !type:Mood
-      moreThan: -5
-    reqsFor:
-      villager:
-      - !type:Opinion
-        moreThan: -5
-  - id: villager
-    reqs:
-    - !type:Mood
-      moreThan: -5
-    reqsFor:
-      traveler:
-      - !type:Opinion
-        moreThan: -5
+  parent: BaseDialog
   lines:
-  - traveler: conversation-smalltalk02-line1-a
-    villager: conversation-smalltalk02-line1-b
-  - traveler: conversation-smalltalk02-line2-a
-    villager: conversation-smalltalk02-line2-b
-  - traveler: conversation-smalltalk02-line3-a
-    villager: conversation-smalltalk02-line3-b
+  - initiator: conversation-smalltalk02-line1-a
+    responder: conversation-smalltalk02-line1-b
+  - initiator: conversation-smalltalk02-line2-a
+    responder: conversation-smalltalk02-line2-b
+  - initiator: conversation-smalltalk02-line3-a
+    responder: conversation-smalltalk02-line3-b
 
 - type: conversationScript
   id: GreetingCasual
-  actors:
-  - id: speaker
-    reqs:
-    - !type:Mood
-      moreThan: -5
-    reqsFor:
-      listener:
-      - !type:Opinion
-        moreThan: -5
-  - id: listener
-    reqs:
-    - !type:Mood
-      moreThan: -5
-    reqsFor:
-      speaker:
-      - !type:Opinion
-        moreThan: -5
+  parent: BaseDialog
   lines:
-  - speaker: conversation-greeting-casual-hello
-    listener: conversation-greeting-casual-response
-  - speaker: conversation-greeting-casual-how-are-you
-    listener: conversation-greeting-casual-im-fine
+  - initiator: conversation-greeting-casual-hello
+    responder: conversation-greeting-casual-response
+  - initiator: conversation-greeting-casual-how-are-you
+    responder: conversation-greeting-casual-im-fine
 
 - type: conversationScript
   id: MorningGreeting

@@ -1,5 +1,6 @@
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
 namespace Content.Shared._RF.Conversation;
 
@@ -7,11 +8,19 @@ namespace Content.Shared._RF.Conversation;
 /// Prototype conversation script between NPCs
 /// </summary>
 [Prototype]
-public sealed class ConversationScriptPrototype : IPrototype
+public sealed class ConversationScriptPrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
     public string ID { get; } = default!;
+
+    /// <inheritdoc />
+    [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<ConversationScriptPrototype>))]
+    public string[]? Parents { get; private set; }
+
+    /// <inheritdoc />
+    [AbstractDataField, NeverPushInheritance]
+    public bool Abstract { get; private set; }
 
     /// <summary>
     /// The actors in this conversation
