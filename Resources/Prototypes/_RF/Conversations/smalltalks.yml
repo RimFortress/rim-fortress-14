@@ -18,6 +18,21 @@
       initiator:
       - !type:Opinion
         moreThan: -5
+  effects:
+    initiator:
+    - !type:AddMood
+      proto: MoodPleasantConversation
+    - !type:AddOpinion
+      actors:
+      - respondent
+      proto: OpinionPoliteDialogue
+    respondent:
+    - !type:AddMood
+      proto: MoodPleasantConversation
+    - !type:AddOpinion
+      actors:
+      - initiator
+      proto: OpinionPoliteDialogue
 
 - type: conversationScript
   id: Smalltalk01
