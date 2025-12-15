@@ -1,0 +1,33 @@
+- type: conversationScript
+  id: ThankForHealing
+  actors:
+  - id: patient
+    reqsFor:
+      healer:
+      - !type:Opinion
+        moreThan: 0
+        hasEffects:
+        - OpinionHealed
+  - id: healer
+  lines:
+  - patient: conversation-thankforhealing-patient-1
+    healer: conversation-thankforhealing-healer-1
+  - patient: conversation-thankforhealing-patient-2
+    healer: conversation-thankforhealing-healer-2
+
+- type: ConversationScript
+  id: CheckOnPatient
+  actors:
+  - id: healer
+  - id: patient
+    reqsFor:
+      healer:
+      - !type:Opinion
+        moreThan: 0
+        hasEffects:
+        - OpinionHealed
+  lines:
+  - healer: conversation-checkonpatient-healer-1
+    patient: conversation-checkonpatient-patient-1
+  - healer: conversation-checkonpatient-healer-2
+    patient: conversation-checkonpatient-patient-2

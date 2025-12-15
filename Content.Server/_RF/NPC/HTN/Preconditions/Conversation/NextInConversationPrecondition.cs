@@ -1,4 +1,4 @@
-using Content.Server._RF.Dialog;
+using Content.Server._RF.Conversation;
 using Content.Server.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Conversation;

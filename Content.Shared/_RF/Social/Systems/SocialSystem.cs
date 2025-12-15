@@ -97,6 +97,9 @@ public sealed class SocialSystem : EntitySystem
         if (!_prototype.TryIndex(protoId, out var proto))
             return 0;
 
+        if (proto.MaxEffect == null)
+            return proto.Effect;
+
         // The strength of the effect is multiplied by the number of times the effect was extended
         // Therefore, the strength of the effect will gradually decrease as it ends,
         // ensuring a smooth change of value

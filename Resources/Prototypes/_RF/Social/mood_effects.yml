@@ -145,3 +145,60 @@
   description: mood-effect-mental-break-desc
   duration: 2h
   effect: -80
+
+# Conversation
+- type: socialEffect
+  id: MoodPleasantConversation
+  name: mood-effect-pleasant-conversation-name
+  description: mood-effect-pleasant-conversation-desc
+  duration: 1h
+  effect: 8
+  maxEffect: 16
+
+- type: socialEffect
+  id: MoodUnpleasantConversation
+  name: mood-effect-unpleasant-conversation-name
+  description: mood-effect-unpleasant-conversation-desc
+  duration: 1h
+  effect: -8
+  maxEffect: -16
+
+- type: socialEffect
+  id: MoodRudeConversation
+  name: mood-effect-rude-conversation-name
+  description: mood-effect-rude-conversation-desc
+  duration: 2h
+  effect: -12
+  maxEffect: -24
+
+- type: socialEffect
+  id: MoodInspirationalConversation
+  name: mood-effect-inspirational-conversation-name
+  description: mood-effect-inspirational-conversation-desc
+  duration: 2h
+  effect: 10
+  maxEffect: 20
+
+- type: socialEffect
+  id: MoodDepressingConversation
+  name: mood-effect-depressing-conversation-name
+  description: mood-effect-depressing-conversation-desc
+  duration: 2h
+  effect: -10
+  maxEffect: -20
+
+- type: socialEffect
+  id: MoodFunnyConversation
+  name: mood-effect-funny-conversation-name
+  description: mood-effect-funny-conversation-desc
+  duration: 1h
+  effect: 8
+  maxEffect: 16
+
+- type: socialEffect
+  id: MoodConversationIrritated
+  name: mood-effect-conversation-irritated-name
+  description: mood-effect-conversation-irritated-desc
+  duration: 1h
+  effect: -7
+  maxEffect: -21

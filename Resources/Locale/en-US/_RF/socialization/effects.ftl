@@ -62,3 +62,25 @@ mood-effect-settlement-despair-desc = Hope seems distant. The weight of our stru
 # Mental breakdown
 mood-effect-mental-break-name = Mental Breakdown
 mood-effect-mental-break-desc = I'm losing control... the walls are closing in. Nothing makes sense anymore.
+
+# Conversation
+mood-effect-pleasant-conversation-name = Pleasant Conversation
+mood-effect-pleasant-conversation-desc = That was a nice chat. I feel better after talking to them.
+
+mood-effect-unpleasant-conversation-name = Unpleasant Conversation
+mood-effect-unpleasant-conversation-desc = That conversation left a bad taste in my mouth. I wish we hadn't talked.
+
+mood-effect-rude-conversation-name = Rude Conversation
+mood-effect-rude-conversation-desc = How disrespectful! That conversation put me in a foul mood.
+
+mood-effect-inspirational-conversation-name = Inspirational Conversation
+mood-effect-inspirational-conversation-desc = Their words were truly inspiring. I feel motivated and uplifted.
+
+mood-effect-depressing-conversation-name = Depressing Conversation
+mood-effect-depressing-conversation-desc = That conversation was so bleak. I feel my spirits sinking.
+
+mood-effect-funny-conversation-name = Funny Conversation
+mood-effect-funny-conversation-desc = That was hilarious! I'm still chuckling from our chat.
+
+mood-effect-conversation-irritated-name = Irritated by Conversation
+mood-effect-conversation-irritated-desc = I wish they'd just leave me alone. I don't have patience for this chatter.

@@ -2,7 +2,21 @@
   id: Smalltalk01
   actors:
   - id: speakerA
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      speakerB:
+      - !type:Opinion
+        moreThan: -5
   - id: speakerB
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      speakerA:
+      - !type:Opinion
+        moreThan: -5
   lines:
   - speakerA: conversation-smalltalk01-line1-a
     speakerB: conversation-smalltalk01-line1-b
@@ -13,7 +27,21 @@
   id: Smalltalk02
   actors:
   - id: traveler
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      villager:
+      - !type:Opinion
+        moreThan: -5
   - id: villager
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      traveler:
+      - !type:Opinion
+        moreThan: -5
   lines:
   - traveler: conversation-smalltalk02-line1-a
     villager: conversation-smalltalk02-line1-b
@@ -26,12 +54,26 @@
   id: GreetingCasual
   actors:
   - id: speaker
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      listener:
+      - !type:Opinion
+        moreThan: -5
   - id: listener
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      speaker:
+      - !type:Opinion
+        moreThan: -5
   lines:
-  - speaker: greeting-casual-hello
-    listener: greeting-casual-response
-  - speaker: greeting-casual-how-are-you
-    listener: greeting-casual-im-fine
+  - speaker: conversation-greeting-casual-hello
+    listener: conversation-greeting-casual-response
+  - speaker: conversation-greeting-casual-how-are-you
+    listener: conversation-greeting-casual-im-fine
 
 - type: conversationScript
   id: MorningGreeting
@@ -41,7 +83,107 @@
     - !type:DayHour
       moreThan: 5
       lessThan: 10
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      responder:
+      - !type:Opinion
+        moreThan: -5
   - id: responder
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      initiator:
+      - !type:Opinion
+        moreThan: -5
   lines:
   - initiator: conversation-morning-greeting-initiator
     responder: conversation-morning-greeting-responder
+
+# Bad mood
+- type: conversationScript
+  id: SmalltalkRejected
+  actors:
+  - id: initiator
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      respondent:
+      - !type:Opinion
+        moreThan: -5
+  - id: respondent
+    reqs:
+    - !type:Mood
+      lessThan: -15
+  effects:
+    initiator:
+    - !type:AddMood
+      proto: MoodUnpleasantConversation
+    respondent:
+    - !type:AddMood
+      proto: MoodConversationIrritated
+  lines:
+  - initiator: conversation-smalltalkrejected-initiator-1
+    respondent: conversation-smalltalkrejected-respondent-1
+
+- type: conversationScript
+  id: SmalltalkIgnored
+  actors:
+  - id: initiator
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      respondent:
+      - !type:Opinion
+        moreThan: -5
+  - id: respondent
+    reqs:
+    - !type:Mood
+      lessThan: -25
+  effects:
+    initiator:
+    - !type:AddMood
+      proto: MoodUnpleasantConversation
+    respondent:
+    - !type:AddMood
+      proto: MoodConversationIrritated
+  lines:
+  - initiator: conversation-smalltalkignored-initiator-1
+    respondent: conversation-smalltalkignored-respondent-1
+  - initiator: conversation-smalltalkignored-initiator-2
+    respondent: conversation-smalltalkignored-respondent-2
+
+- type: conversationScript
+  id: SmalltalkRude
+  actors:
+  - id: initiator
+    reqs:
+    - !type:Mood
+      moreThan: -5
+    reqsFor:
+      respondent:
+      - !type:Opinion
+        moreThan: -5
+  - id: respondent
+    reqs:
+    - !type:Mood
+      lessThan: -30
+  effects:
+    initiator:
+    - !type:AddMood
+      proto: MoodRudeConversation
+    - !type:AddOpinion
+      actors:
+      - respondent
+      proto: OpinionRudeDialogue
+    respondent:
+    - !type:AddMood
+      proto: MoodConversationIrritated
+  lines:
+  - initiator: conversation-smalltalkrude-initiator-1
+    respondent: conversation-smalltalkrude-respondent-1
+  - initiator: conversation-smalltalkrude-initiator-2
+    respondent: conversation-smalltalkrude-respondent-2

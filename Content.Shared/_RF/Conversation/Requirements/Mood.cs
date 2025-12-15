@@ -1,4 +1,6 @@
+using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Conversation.Requirements;
 
@@ -19,9 +21,23 @@ public sealed partial class Mood : ConversationActorRequirement
     [DataField]
     public int? LessThan;
 
+    /// <summary>
+    /// Mood effects that need to be checked for
+    /// </summary>
+    [DataField]
+    public List<ProtoId<SocialEffectPrototype>> HasEffects = new();
+
     public override bool Check(EntityUid author, EntityUid? actor, EntityManager entMan)
     {
-        var mood = entMan.System<SocialSystem>().GetMood(author);
+        var sys = entMan.System<SocialSystem>();
+        var mood = sys.GetMood(author);
+
+        foreach (var effect in HasEffects)
+        {
+            if (!sys.HasMoodEffect(author, effect))
+                return false;
+        }
+
         return (MoreThan == null || mood > MoreThan)
                && (LessThan == null || mood < LessThan);
     }

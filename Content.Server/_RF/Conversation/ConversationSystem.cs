@@ -3,7 +3,7 @@ using Content.Server.Chat.Systems;
 using Content.Server.NPC.HTN;
 using Content.Shared._RF.Conversation;
 
-namespace Content.Server._RF.Dialog;
+namespace Content.Server._RF.Conversation;
 
 public sealed class ConversationSystem : SharedConversationSystem
 {

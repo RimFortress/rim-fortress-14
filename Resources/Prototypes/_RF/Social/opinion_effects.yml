@@ -13,3 +13,76 @@
   duration: 168h # 7d
   effect: 10
   maxEffect: 50
+
+# Conversation
+- type: socialEffect
+  id: OpinionPoliteDialogue
+  name: opinion-effect-polite-dialogue-name
+  description: opinion-effect-polite-dialogue-desc
+  duration: 1h
+  effect: 8
+  maxEffect: 16
+
+- type: socialEffect
+  id: OpinionRudeDialogue
+  name: opinion-effect-rude-dialogue-name
+  description: opinion-effect-rude-dialogue-desc
+  duration: 2h
+  effect: -12
+  maxEffect: -24
+
+- type: socialEffect
+  id: OpinionInsultingDialogue
+  name: opinion-effect-insulting-dialogue-name
+  description: opinion-effect-insulting-dialogue-desc
+  duration: 2h
+  effect: -20
+  maxEffect: -40
+
+- type: socialEffect
+  id: OpinionSupportiveDialogue
+  name: opinion-effect-supportive-dialogue-name
+  description: opinion-effect-supportive-dialogue-desc
+  duration: 2h
+  effect: 15
+  maxEffect: 30
+
+- type: socialEffect
+  id: OpinionManipulativeDialogue
+  name: opinion-effect-manipulative-dialogue-name
+  description: opinion-effect-manipulative-dialogue-desc
+  duration: 3h
+  effect: -14
+  maxEffect: -28
+
+- type: socialEffect
+  id: OpinionHonestDialogue
+  name: opinion-effect-honest-dialogue-name
+  description: opinion-effect-honest-dialogue-desc
+  duration: 1h
+  effect: 10
+  maxEffect: 20
+
+- type: socialEffect
+  id: OpinionLyingDialogue
+  name: opinion-effect-lying-dialogue-name
+  description: opinion-effect-lying-dialogue-desc
+  duration: 2h
+  effect: -20
+  maxEffect: -40
+
+- type: socialEffect
+  id: OpinionEncouragingDialogue
+  name: opinion-effect-encouraging-dialogue-name
+  description: opinion-effect-encouraging-dialogue-desc
+  duration: 1h
+  effect: 14
+  maxEffect: 24
+
+- type: socialEffect
+  id: OpinionCondescendingDialogue
+  name: opinion-effect-condescending-dialogue-name
+  description: opinion-effect-condescending-dialogue-desc
+  duration: 1h
+  effect: -15
+  maxEffect: -30
