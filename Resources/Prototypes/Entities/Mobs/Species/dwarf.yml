@@ -6,7 +6,9 @@
   abstract: true
   components:
   - type: Hunger
+    baseDecayRate: 0.33333 # RimFortress
   - type: Thirst
+    baseDecayRate: 0.5 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Human/parts.rsi
     state: full

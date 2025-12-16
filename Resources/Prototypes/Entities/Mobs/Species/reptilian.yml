@@ -14,9 +14,11 @@
     - Tail
     undergarmentBottom: UndergarmentBottomBoxersReptilian
   - type: Hunger
+    baseDecayRate: 0.33333 # RimFortress
   - type: Puller
     needsHands: false
   - type: Thirst
+    baseDecayRate: 0.5 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Reptilian/parts.rsi
     state: full
