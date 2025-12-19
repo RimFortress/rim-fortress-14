@@ -230,6 +230,9 @@
     keyOut: onDamage
   - type: TriggerOnHeal
     keyOut: onHeal
+  - type: TriggerOnNeedChanged
+    need: Sleep
+    threshold: Dead
   - type: TriggerMappings
     addComponents:
       onDamage:
@@ -242,6 +245,11 @@
         effect: OpinionHealed
         keysIn:
         - onHeal
+      onSleepDead:
+      - type: SetNpcTaskOnTrigger
+        task: SleepOnFloor
+        keysIn:
+        - onSleepDead
   - type: ChangeMoodOnHunger
     effects:
       Overfed: [MoodOverfed]
@@ -291,7 +299,7 @@
         tags:
         - AwfulMeal
         - Raw
-        - Ingridient
+        - Ingredient
         - DonkPocket
         requireAll: false
       MoodAteFineMeal:
@@ -308,6 +316,40 @@
         requireAll: false
   - type: ModifySpeedOnMood
     moodFactor: 0.0015 # +15% for +100 mood
+  - type: Needs
+    needs:
+    - id: Sleep
+  - type: ChangeMoodOnNeed
+    effects:
+      Sleep:
+        Overslept: [MoodOverslept]
+        Rested: [MoodRested]
+        Tired: [MoodTired]
+        Exhausted: [MoodExhausted]
+    removeEffects:
+      Sleep:
+        Overslept:
+        - MoodTired
+        - MoodExhausted
+        Tired:
+        - MoodOverslept
+        - MoodExhausted
+        Exhausted:
+        - MoodOverslept
+        - MoodTired
+  - type: ModifySpeedOnNeed
+    modifiers:
+      Sleep:
+        Overslept: 0.95
+        Tired: 0.8
+        Exhausted: 0.6
+  - type: ModifyNeedOnSleep
+    decayRateModifiers:
+      Sleep:
+        Overslept: -0.5
+        Rested: -1
+        Tired: -2
+        Exhausted: -2.5
   # RimFortress End
 
 - type: entity

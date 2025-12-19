@@ -129,6 +129,7 @@
   - !type:ComponentFilter
     components:
     - type: Edible
+    invert: true
   - !type:InHandsFilter
   considerations:
   - !type:TargetIsAliveCon
@@ -150,6 +151,7 @@
   - !type:ComponentFilter
     components:
     - type: Edible
+    invert: true
   - !type:InHandsFilter
   considerations:
   - !type:TargetIsAliveCon

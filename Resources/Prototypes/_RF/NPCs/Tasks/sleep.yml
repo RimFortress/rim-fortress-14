@@ -1,0 +1,59 @@
+- type: npcTask
+  id: Sleep
+  name: Sleep
+  parent: BaseSoloPerformTask
+  compound: SleepCompound
+  targetsQuery: HealingBed
+  startPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Tired
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Exhausted
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Rested
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Overslept
+  - !type:BuckledPrecondition
+    isBuckled: false
+  - !type:HasComponentPrecondition
+    components:
+    - type: Sleeping
+    invert: true
+
+- type: npcTask
+  id: SleepOnFloor
+  name: Sleep
+  parent: BaseSoloPerformTask
+  compound: SleepOnFloorCompound
+  targetsQuery: Self
+  startPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Dead
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Exhausted
+  finishPreconditions:
+  - !type:NeedLevelPrecondition
+    need: Sleep
+    thresholdId: Dead
+    invert: true
+  - !type:NeedLevelPrecondition
+    need: Sleep
+    thresholdId: Exhausted
+    invert: true
+  - !type:HasComponentPrecondition
+    components:
+    - type: Sleeping
+    invert: true

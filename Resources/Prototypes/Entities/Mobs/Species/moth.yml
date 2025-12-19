@@ -12,7 +12,7 @@
   - type: Hunger
     baseDecayRate: 0.22222 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.5 # RimFortress
+    baseDecayRate: 0.9 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Moth/parts.rsi
     state: full

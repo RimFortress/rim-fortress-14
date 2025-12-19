@@ -1,0 +1,97 @@
+- type: htnCompound
+  id: SleepCompound
+  branches:
+  - preconditions:
+    - !type:RandomPrecondition
+      chance: 0.1
+    - !type:OrPrecondition
+      preconditions:
+      - !type:NeedLevelPrecondition
+        need: Sleep
+        thresholdId: Rested
+      - !type:NeedLevelPrecondition
+        need: Sleep
+        thresholdId: Overslept
+    - !type:HasComponentPrecondition
+      components:
+      - type: Sleeping
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:WakeUpOperator
+    - !type:HTNPrimitiveTask
+      operator: !type:UnbuckleOperator
+
+  # If we sleep, we wait until we get enough sleep
+  - preconditions:
+    - !type:HasComponentPrecondition
+      components:
+      - type: Sleeping
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:SetFloatOperator
+        targetKey: Time
+        amount: 1
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitOperator
+        key: Time
+
+  # We look for a bed and sleep on it
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:EntityCoordinatesOperator
+        targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        rangeKey: InteractRange
+    - !type:HTNPrimitiveTask
+      operator: !type:BuckleOperator
+        buckleKey: TargetKey
+    - !type:HTNPrimitiveTask
+      operator: !type:SleepOperator
+
+- type: htnCompound
+  id: SleepOnFloorCompound
+  branches:
+  - preconditions:
+    - !type:RandomPrecondition
+      chance: 0.1
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Dead
+      invert: true
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Exhausted
+      invert: true
+    - !type:HasComponentPrecondition
+      components:
+      - type: Sleeping
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:WakeUpOperator
+    - !type:HTNPrimitiveTask
+      operator: !type:UnbuckleOperator
+
+  # If we sleep, we wait until we get enough sleep
+  - preconditions:
+    - !type:HasComponentPrecondition
+      components:
+      - type: Sleeping
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:SetFloatOperator
+        targetKey: Time
+        amount: 1
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitOperator
+        key: Time
+
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:PickAccessibleOperator
+        rangeKey: IdleRange
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        rangeKey: InteractRange
+    - !type:HTNPrimitiveTask
+      operator: !type:SleepOperator

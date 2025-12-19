@@ -15,7 +15,7 @@
   - patient: conversation-thankforhealing-patient-2
     healer: conversation-thankforhealing-healer-2
 
-- type: ConversationScript
+- type: conversationScript
   id: CheckOnPatient
   actors:
   - id: healer
