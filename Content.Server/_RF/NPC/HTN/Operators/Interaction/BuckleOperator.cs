@@ -7,8 +7,6 @@ namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
 
 public sealed partial class BuckleOperator : HTNOperator
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-
     private BuckleSystem _buckle = default!;
 
     /// <summary>
@@ -45,14 +43,6 @@ public sealed partial class BuckleOperator : HTNOperator
 
     public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
     {
-        if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var uid, _entity)
-            || !blackboard.TryGetValue<EntityUid>(BuckleKey, out var buckle, _entity))
-            return HTNOperatorStatus.Failed;
-
-        var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
-
-        return _buckle.TryBuckle(uid, owner, buckle)
-            ? HTNOperatorStatus.Finished
-            : HTNOperatorStatus.Failed;
+        return HTNOperatorStatus.Finished;
     }
 }

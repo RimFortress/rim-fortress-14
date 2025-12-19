@@ -61,18 +61,10 @@
   - Attack
 
 - type: npcJob
-  id: Social
-  name: Social
+  id: Socialization
+  name: Socialization
   defaultPriority: 1
   hidden: true
   tasks:
   - Conversation
   - MentalBreakdown
-
-- type: npcJob
-  id: Needs
-  name: Needs
-  defaultPriority: 1
-  hidden: true
-  tasks:
-  - Sleep

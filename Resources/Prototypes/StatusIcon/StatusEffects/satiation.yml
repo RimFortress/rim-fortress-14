@@ -32,7 +32,7 @@
   id: ThirstIcon
   abstract: true
   priority: 5
-  locationPreference: Right # RimFortress
+  locationPreference: Left
   isShaded: true
 
 - type: satiationIcon

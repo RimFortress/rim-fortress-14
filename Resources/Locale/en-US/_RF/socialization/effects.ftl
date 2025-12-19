@@ -84,15 +84,3 @@ mood-effect-funny-conversation-desc = That was hilarious! I'm still chuckling fr
 
 mood-effect-conversation-irritated-name = Irritated by Conversation
 mood-effect-conversation-irritated-desc = I wish they'd just leave me alone. I don't have patience for this chatter.
-
-mood-effect-overslept-name = Overslept
-mood-effect-overslept-desc = I slept too long. My head feels foggy and I'm moving sluggishly.
-
-mood-effect-rested-name = Well Rested
-mood-effect-rested-desc = I'm properly rested and ready for the shift ahead. My mind is clear and focused.
-
-mood-effect-tired-name = Tired
-mood-effect-tired-desc = I haven't had enough rest. Everything requires extra effort today.
-
-mood-effect-exhausted-name = Exhausted
-mood-effect-exhausted-desc = I'm running on fumes. Even simple tasks feel overwhelming right now.

@@ -5,6 +5,26 @@ opinion-effect-healed-name = Healed wounds
 opinion-effect-healed-desc = Grateful for the medical care provided.
 
 # Conversation
+# Эффекты настроения от диалогов
+mood-effect-pleasant-conversation-name = Pleasant Conversation
+mood-effect-pleasant-conversation-desc = That was a nice chat. I feel better after talking to them.
+
+mood-effect-unpleasant-conversation-name = Unpleasant Conversation
+mood-effect-unpleasant-conversation-desc = That conversation left a bad taste in my mouth. I wish we hadn't talked.
+
+mood-effect-rude-conversation-name = Rude Conversation
+mood-effect-rude-conversation-desc = How disrespectful! That conversation put me in a foul mood.
+
+mood-effect-inspirational-conversation-name = Inspirational Conversation
+mood-effect-inspirational-conversation-desc = Their words were truly inspiring. I feel motivated and uplifted.
+
+mood-effect-depressing-conversation-name = Depressing Conversation
+mood-effect-depressing-conversation-desc = That conversation was so bleak. I feel my spirits sinking.
+
+mood-effect-funny-conversation-name = Funny Conversation
+mood-effect-funny-conversation-desc = That was hilarious! I'm still chuckling from our chat.
+
+# Эффекты мнения от диалогов
 opinion-effect-polite-dialogue-name = Polite Dialogue
 opinion-effect-polite-dialogue-desc = They spoke to me with courtesy and respect. I appreciate their manners.
 

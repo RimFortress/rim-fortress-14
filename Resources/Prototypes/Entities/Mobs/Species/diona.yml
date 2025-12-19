@@ -10,7 +10,7 @@
   - type: Hunger
     baseDecayRate: 0.11111 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.75 # RimFortress
+    baseDecayRate: 0.11111 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Diona/parts.rsi
     state: full

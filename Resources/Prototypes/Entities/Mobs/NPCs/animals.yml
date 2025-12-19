@@ -397,7 +397,7 @@
     - terrible
     - chewy
   - type: Hunger
-    baseDecayRate: 0.5 # RimFortress
+    baseDecayRate: 0.25
   - type: Extractable
     grindableSolutionName: food
   - type: SolutionContainerManager

@@ -20,16 +20,16 @@
         moreThan: -5
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodPleasantConversation
-    - !type:AddOpinionEffect
+    - !type:AddOpinion
       actors:
       - respondent
       proto: OpinionPoliteDialogue
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodPleasantConversation
-    - !type:AddOpinionEffect
+    - !type:AddOpinion
       actors:
       - initiator
       proto: OpinionPoliteDialogue
@@ -107,10 +107,10 @@
       lessThan: -15
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodUnpleasantConversation
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodConversationIrritated
   lines:
   - initiator: conversation-smalltalkrejected-initiator-1
@@ -133,10 +133,10 @@
       lessThan: -25
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodUnpleasantConversation
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodConversationIrritated
   lines:
   - initiator: conversation-smalltalkignored-initiator-1
@@ -161,14 +161,14 @@
       lessThan: -30
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodRudeConversation
-    - !type:AddOpinionEffect
+    - !type:AddOpinion
       actors:
       - respondent
       proto: OpinionRudeDialogue
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodConversationIrritated
   lines:
   - initiator: conversation-smalltalkrude-initiator-1

@@ -59,48 +59,18 @@
   id: EatCompound
   branches:
   - preconditions:
-    - !type:HasComponentPrecondition
-      components:
-      - type: ActiveDoAfter
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:SetFloatOperator
-        targetKey: Time
-        amount: 0.5
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitOperator
-        key: Time
-
-  - preconditions:
     - !type:HungryPrecondition
       minHungerState: Starving
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator
         proto: Food
-        key: PickUpTarget
     - !type:HTNCompoundTask
-        task: PickUpCompound
-    - !type:HTNPrimitiveTask
-      operator: !type:InteractWithOperator
-        targetKey: PickUpTarget
+      task: MoveToEntityCompound
 
 - type: htnCompound
   id: DrinkCompound
   branches:
-  - preconditions:
-    - !type:HasComponentPrecondition
-      components:
-      - type: ActiveDoAfter
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:SetFloatOperator
-        targetKey: Time
-        amount: 0.5
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitOperator
-        key: Time
-
   - preconditions:
     - !type:ThirstyPrecondition
       minThirstState: Parched
@@ -108,9 +78,5 @@
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator
         proto: Drink
-        key: PickUpTarget
     - !type:HTNCompoundTask
-        task: PickUpCompound
-    - !type:HTNPrimitiveTask
-      operator: !type:InteractWithOperator
-        targetKey: PickUpTarget
+        task: MoveToEntityCompound
