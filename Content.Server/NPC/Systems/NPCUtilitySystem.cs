@@ -104,6 +104,12 @@ public sealed class NPCUtilitySystem : EntitySystem
                         break;
                 }
             }
+
+            foreach (var con in proto.Considerations)
+            {
+                if (con is RfUtilityConsideration rfConsideration)
+                    rfConsideration.Initialize();
+            }
         }
     }
     // RimFortress End
@@ -323,17 +329,8 @@ public sealed class NPCUtilitySystem : EntitySystem
                 return Math.Clamp(distance / radius, 0f, 1f);
             }
             // RimFortress Start
-            case NormTargetDistanceCon:
-            {
-                if (!TryComp(targetUid, out TransformComponent? targetXform) ||
-                    !TryComp(owner, out TransformComponent? xform))
-                    return 0f;
-
-                if (!targetXform.Coordinates.TryDistance(EntityManager, _transform, xform.Coordinates, out var distance))
-                    return 0f;
-
-                return 1f - 1f / distance;
-            }
+            case RfUtilityConsideration rf:
+                return rf.GetScore(blackboard, targetUid);
             // RimFortress End
             case TargetAmmoCon:
             {
