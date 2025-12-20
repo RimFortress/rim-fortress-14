@@ -291,7 +291,7 @@
         tags:
         - AwfulMeal
         - Raw
-        - Ingridient
+        - Ingredient
         - DonkPocket
         requireAll: false
       MoodAteFineMeal:
@@ -308,6 +308,40 @@
         requireAll: false
   - type: ModifySpeedOnMood
     moodFactor: 0.0015 # +15% for +100 mood
+  - type: Needs
+    needs:
+    - id: Sleep
+  - type: ChangeMoodOnNeed
+    effects:
+      Sleep:
+        Overslept: [MoodOverslept]
+        Rested: [MoodRested]
+        Tired: [MoodTired]
+        Exhausted: [MoodExhausted]
+    removeEffects:
+      Sleep:
+        Overslept:
+        - MoodTired
+        - MoodExhausted
+        Tired:
+        - MoodOverslept
+        - MoodExhausted
+        Exhausted:
+        - MoodOverslept
+        - MoodTired
+  - type: ModifySpeedOnNeed
+    modifiers:
+      Sleep:
+        Overslept: 0.95
+        Tired: 0.8
+        Exhausted: 0.6
+  - type: ModifyNeedOnSleep
+    modifiers:
+      Sleep:
+        Overslept: 0.72
+        Rested: 0.8
+        Tired: 0.8
+        Exhausted: 1
   # RimFortress End
 
 - type: entity

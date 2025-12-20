@@ -68,3 +68,5 @@
   tasks:
   - Conversation
   - MentalBreakdown
+  - Sleep
+  - SleepOnFloor

@@ -1,0 +1,20 @@
+- type: need
+  id: Sleep
+  fullDecayTime: 12h
+  thresholds:
+    Overslept: 100
+    Rested: 80
+    Tired: 40
+    Exhausted: 20
+  thresholdDecayModifiers:
+    Overslept: 1.2
+    Rested: 1
+    Tired: 0.8
+    Exhausted: 0.6
+  thresholdStatusIcons:
+    Overslept: SleepIconOverslept
+    Tired: SleepIconTired
+    Exhausted: SleepIconExhausted
+  roundstartRandomize:
+    min: 70
+    max: 85
