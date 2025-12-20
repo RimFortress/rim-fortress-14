@@ -14,11 +14,9 @@
     - Tail
     undergarmentBottom: UndergarmentBottomBoxersReptilian
   - type: Hunger
-    baseDecayRate: 0.33333 # RimFortress
   - type: Puller
     needsHands: false
   - type: Thirst
-    baseDecayRate: 0.9 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Reptilian/parts.rsi
     state: full
@@ -108,6 +106,16 @@
       Farming: 0.75
       Healing: 0.75
       Construction: 1.25
+  - type: HungerOverride
+    fullDecayTime: 8h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 6h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 

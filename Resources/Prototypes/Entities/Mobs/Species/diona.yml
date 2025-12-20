@@ -8,9 +8,9 @@
   - type: HumanoidAppearance
     species: Diona
   - type: Hunger
-    baseDecayRate: 0.11111 # RimFortress
+    baseDecayRate: 0.0083
   - type: Thirst
-    baseDecayRate: 0.75 # RimFortress
+    baseDecayRate: 0.0083
   - type: Icon
     sprite: Mobs/Species/Diona/parts.rsi
     state: full
@@ -120,6 +120,16 @@
       Farming: 1.25
       Healing: 1.10
       Woodcutting: 0.85
+  - type: HungerOverride
+    fullDecayTime: 10h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 7h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 - type: entity

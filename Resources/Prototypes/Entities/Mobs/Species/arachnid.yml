@@ -11,9 +11,7 @@
   - type: HumanoidAppearance
     species: Arachnid
   - type: Hunger
-    baseDecayRate: 0.33333 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.9 # RimFortress
   - type: Sericulture
     productionLength: 2
     entityProduced: MaterialWebSilk1
@@ -125,6 +123,16 @@
     multipliers:
       Melee: 1.25
       Farming: 0.75
+  - type: HungerOverride
+    fullDecayTime: 8h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 5h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 

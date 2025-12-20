@@ -6,9 +6,7 @@
   name: Urist McBark
   components:
   - type: Hunger
-    baseDecayRate: 0.33333 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.9 # RimFortress
   - type: MessyDrinker
     spillChance: 0.33
   - type: Icon
@@ -170,6 +168,18 @@
           32:
             sprite: Mobs/Species/Vulpkanin/displacement.rsi
             state: belt
+  # RimFortress Start
+  - type: HungerOverride
+    fullDecayTime: 7h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 5h
+    randomizeValue:
+      min: 310
+      max: 460
+  # RimFortress End
 
 - type: entity
   parent: [BaseSpeciesDummy]

@@ -10,9 +10,7 @@
     hideLayersOnEquip:
     - HeadTop
   - type: Hunger
-    baseDecayRate: 0.22222 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.9 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Moth/parts.rsi
     state: full
@@ -182,6 +180,16 @@
       Healing: 1.25
       Farming: 1.10
       Melee: 0.90
+  - type: HungerOverride
+    fullDecayTime: 9h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 6h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 

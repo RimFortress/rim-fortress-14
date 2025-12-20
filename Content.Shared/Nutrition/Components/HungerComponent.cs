@@ -1,3 +1,4 @@
+using Content.Shared._RF.Nutrition.Systems; // RimFortress
 using Content.Shared.Alert;
 using Content.Shared.Damage;
 using Content.Shared.Nutrition.EntitySystems;
@@ -9,7 +10,7 @@ using Robust.Shared.Serialization.TypeSerializers.Implementations.Generic;
 
 namespace Content.Shared.Nutrition.Components;
 
-[RegisterComponent, NetworkedComponent, Access(typeof(HungerSystem))]
+[RegisterComponent, NetworkedComponent, Access(typeof(HungerSystem), typeof(HungerOverrideSystem))] // RimFortress: access
 [AutoGenerateComponentState(fieldDeltas: true), AutoGenerateComponentPause]
 public sealed partial class HungerComponent : Component
 {

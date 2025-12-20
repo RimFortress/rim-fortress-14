@@ -1,3 +1,4 @@
+using Content.Shared._RF.Nutrition.Systems;
 using Content.Shared.Alert;
 using Content.Shared.Nutrition.EntitySystems;
 using Robust.Shared.GameStates;
@@ -6,7 +7,7 @@ using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom;
 
 namespace Content.Shared.Nutrition.Components;
 
-[RegisterComponent, NetworkedComponent, Access(typeof(ThirstSystem))]
+[RegisterComponent, NetworkedComponent, Access(typeof(ThirstSystem), typeof(ThirstOverrideSystem))] // RimFortress: access
 [AutoGenerateComponentState(fieldDeltas: true), AutoGenerateComponentPause]
 public sealed partial class ThirstComponent : Component
 {

@@ -104,3 +104,9 @@
   - type: MobPrice
     price: 150
   - type: FloatingVisuals
+  # RimFortress Start
+  - type: HungerOverride
+    fullDecayTime: 14h
+  - type: ThirstOverride
+    fullDecayTime: 10h
+  # RimFortress End

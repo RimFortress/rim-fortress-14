@@ -73,47 +73,14 @@ public sealed class NeedsSystem : EntitySystem
     [Pure]
     private float GetBaseDecayRate(NeedPrototype proto)
     {
-        if (proto.FullDecayTime <= TimeSpan.Zero || proto.ThresholdUpdateRate <= TimeSpan.Zero)
-            return 0f;
+        var thresholds = new List<(float, float)>();
 
-        var decayTime = _world.FromWorldTime(proto.FullDecayTime);
-
-        // Get sorted thresholds from max to min
-        var sortedThresholds = proto.Thresholds
-            .OrderByDescending(kv => kv.Value)
-            .ToList();
-
-        // Total number of updates for full decay
-        var totalUpdates = decayTime.TotalSeconds / proto.ThresholdUpdateRate.TotalSeconds;
-
-        if (totalUpdates <= 0)
-            return 0f;
-
-        // Calculate the sum of weighted threshold ranges
-        double weightedRangeSum = 0f;
-
-        for (var i = 0; i < sortedThresholds.Count; i++)
+        foreach (var (id, threshold) in proto.Thresholds)
         {
-            var currentThreshold = sortedThresholds[i];
-            var nextThresholdValue = i != sortedThresholds.Count - 1 ? sortedThresholds[i + 1].Value : 0;
-            var thresholdRange = currentThreshold.Value - nextThresholdValue;
-
-            var modifier = proto.ThresholdDecayModifiers.GetValueOrDefault(currentThreshold.Key, 1f);
-
-            if (modifier <= 0)
-                modifier = 1f; // Prevent division by zero
-
-            // Weighted range for this segment
-            weightedRangeSum += thresholdRange / modifier;
+            thresholds.Add((threshold, proto.ThresholdDecayModifiers.GetValueOrDefault(id, 1f)));
         }
 
-        if (weightedRangeSum <= 0)
-            return 0f;
-
-        // Solve for BaseDecayRate using the formula:
-        // totalUpdates = Σ( (Tn - Tn+1) / (BaseDecayRate * Mn) )
-        // BaseDecayRate = weightedRangeSum / totalUpdates
-        return (float)(weightedRangeSum / totalUpdates);
+        return CalculateBaseDecayRate(_world.FromWorldTime(proto.FullDecayTime), proto.ThresholdUpdateRate, thresholds);
     }
 
     /// <summary>
@@ -312,6 +279,60 @@ public sealed class NeedsSystem : EntitySystem
                 UpdateCurrentThreshold(new(uid, comp), proto);
             }
         }
+    }
+
+    /// <summary>
+    /// Calculates the base decay rate of value from maximum to 0 for a certain time,
+    /// considering the modifiers for different thresholds
+    /// </summary>
+    /// <param name="fullDecayTime">The time it takes for the maximum value to drop to 0</param>
+    /// <param name="updateRate">How often will the value be updated</param>
+    /// <param name="thresholds">List of thresholds and modifiers for them</param>
+    /// <returns>
+    /// The base decay rate, which, when multiplied by threshold modifiers,
+    /// gives a value that, when subtracted,
+    /// reduces the maximum threshold to zero for the specified time with each update.
+    /// </returns>
+    [Pure]
+    public static float CalculateBaseDecayRate(
+        TimeSpan fullDecayTime,
+        TimeSpan updateRate,
+        List<(float Threshold, float Modifier)> thresholds)
+    {
+        if (fullDecayTime <= TimeSpan.Zero || updateRate <= TimeSpan.Zero)
+            return 0f;
+
+        // Get sorted thresholds from max to min
+        var sortedThresholds = thresholds
+            .OrderByDescending(kv => kv.Threshold)
+            .ToList();
+
+        // Total number of updates for full decay
+        var totalUpdates = fullDecayTime.TotalSeconds / updateRate.TotalSeconds;
+
+        if (totalUpdates <= 0)
+            return 0f;
+
+        // Calculate the sum of weighted threshold ranges
+        double weightedRangeSum = 0f;
+
+        for (var i = 0; i < sortedThresholds.Count; i++)
+        {
+            var currentThreshold = sortedThresholds[i];
+            var nextThresholdValue = i != sortedThresholds.Count - 1 ? sortedThresholds[i + 1].Threshold : 0;
+            var thresholdRange = currentThreshold.Threshold - nextThresholdValue;
+
+            // Weighted range for this segment
+            weightedRangeSum += thresholdRange / currentThreshold.Modifier;
+        }
+
+        if (weightedRangeSum <= 0)
+            return 0f;
+
+        // Solve for BaseDecayRate using the formula:
+        // totalUpdates = Σ( (Tn - Tn+1) / (BaseDecayRate * Mn) )
+        // BaseDecayRate = weightedRangeSum / totalUpdates
+        return (float)(weightedRangeSum / totalUpdates);
     }
 }
 

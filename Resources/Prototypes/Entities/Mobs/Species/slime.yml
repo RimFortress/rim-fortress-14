@@ -5,9 +5,7 @@
   abstract: true
   components:
   - type: Hunger
-    baseDecayRate: 0.33333 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.9 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Slime/parts.rsi
     state: full
@@ -125,6 +123,16 @@
       Melee: 0.85
       Healing: 1.15
       Farming: 1.15
+  - type: HungerOverride
+    fullDecayTime: 8h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 6h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 - type: entity

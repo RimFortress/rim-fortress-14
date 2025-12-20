@@ -4,9 +4,7 @@
   abstract: true
   components:
   - type: Hunger
-    baseDecayRate: 0.33333 # RimFortress
   - type: Thirst
-    baseDecayRate: 0.9 # RimFortress
   - type: Icon
     sprite: Mobs/Species/Vox/parts.rsi
     state: vox_m
@@ -217,6 +215,16 @@
       Construction: 1.25
       Healing: 0.75
       Farming: 0.75
+  - type: HungerOverride
+    fullDecayTime: 9h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 6h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 - type: entity

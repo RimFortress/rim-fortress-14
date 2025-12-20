@@ -1883,6 +1883,10 @@
       behaviors:
       - !type:GibBehavior
         recursive: false
+  # RimFortress Start
+  - type: HungerOverride
+    fullDecayTime: 5h
+  # RimFortress End
 
 - type: entity
   parent: MobMouse
