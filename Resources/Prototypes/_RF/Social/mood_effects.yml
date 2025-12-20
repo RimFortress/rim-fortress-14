@@ -202,29 +202,3 @@
   duration: 1h
   effect: -7
   maxEffect: -21
-
-# Sleep
-- type: socialEffect
-  id: MoodOverslept
-  name: mood-effect-overslept-name
-  description: mood-effect-overslept-desc
-  effect: -10
-
-- type: socialEffect
-  id: MoodRested
-  name: mood-effect-rested-name
-  description: mood-effect-rested-desc
-  duration: 1h
-  effect: 10
-
-- type: socialEffect
-  id: MoodTired
-  name: mood-effect-tired-name
-  description: mood-effect-tired-desc
-  effect: -15
-
-- type: socialEffect
-  id: MoodExhausted
-  name: mood-effect-exhausted-name
-  description: mood-effect-exhausted-desc
-  effect: -20
