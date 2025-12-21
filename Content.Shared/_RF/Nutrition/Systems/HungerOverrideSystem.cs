@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Shared._RF.Needs.Systems;
 using Content.Shared._RF.Nutrition.Components;
 using Content.Shared._RF.World;
@@ -24,17 +25,14 @@ public sealed class HungerOverrideSystem : EntitySystem
         if (!TryComp(uid, out HungerComponent? hunger))
             return;
 
-        var thresholds = new List<(float, float)>();
+        hunger.BaseDecayRate = 1;
+        hunger.HungerThresholdDecayModifiers = NeedsSystem.CalculateDecayRates(
+            hunger.Thresholds,
+            component.ThresholdDecayTime.ToDictionary(kv => kv.Key, kv => _world.FromWorldTime(kv.Value)),
+            hunger.ThresholdUpdateRate);
 
-        foreach (var (id, threshold) in hunger.Thresholds)
-        {
-            thresholds.Add((threshold, hunger.HungerThresholdDecayModifiers.GetValueOrDefault(id, 1f)));
-        }
-
-        hunger.BaseDecayRate = NeedsSystem.CalculateBaseDecayRate(
-            _world.FromWorldTime(component.FullDecayTime),
-            hunger.ThresholdUpdateRate,
-            thresholds);
+        DirtyField(uid, hunger, nameof(hunger.BaseDecayRate));
+        DirtyField(uid, hunger, nameof(hunger.HungerThresholdDecayModifiers));
 
         _hunger.SetHunger(uid, component.RandomizeValue?.Next(_random) ?? _hunger.GetHunger(hunger));
     }

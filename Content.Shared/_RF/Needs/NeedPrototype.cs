@@ -16,14 +16,14 @@ public sealed partial class NeedPrototype : IPrototype
     public string ID { get; } = default!;
 
     /// <summary>
-    /// The time it takes for the need level to drop from the maximum to 0, considering all threshold modifiers.
+    /// Decay time to the next threshold for each threshold
     /// </summary>
     /// <remarks>
     /// It is calculated in world time, which is then converted to simulation time.
     /// </remarks>
     /// <seealso cref="Content.Shared._RF.World.SharedRimFortressWorldSystem.FromWorldTime(TimeSpan)"/>
     [DataField]
-    public TimeSpan FullDecayTime;
+    public Dictionary<string, TimeSpan> ThresholdDecayTime = new();
 
     /// <summary>
     /// A dictionary with threshold values of satisfaction of a need and their IDs
@@ -48,12 +48,6 @@ public sealed partial class NeedPrototype : IPrototype
     /// </summary>
     [DataField]
     public ProtoId<AlertCategoryPrototype>? AlertCategory;
-
-    /// <summary>
-    /// Multipliers of the decline of the satisfaction value for each threshold
-    /// </summary>
-    [DataField]
-    public Dictionary<string, float> ThresholdDecayModifiers = new();
 
     /// <summary>
     /// Entity status icons for each threshold of need satisfaction

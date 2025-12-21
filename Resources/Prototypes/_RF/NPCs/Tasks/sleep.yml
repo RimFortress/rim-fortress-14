@@ -5,14 +5,9 @@
   compound: SleepCompound
   targetsQuery: Bed
   startPreconditions:
-  - !type:OrPrecondition
-    preconditions:
-    - !type:NeedLevelPrecondition
-      need: Sleep
-      thresholdId: Tired
-    - !type:NeedLevelPrecondition
-      need: Sleep
-      thresholdId: Exhausted
+  - !type:NeedLevelPrecondition
+    need: Sleep
+    thresholdId: Exhausted
   finishPreconditions:
   - !type:OrPrecondition
     preconditions:
@@ -43,10 +38,14 @@
     query: HealingBed
     lessThan: 1
   finishPreconditions:
-  - !type:NeedLevelPrecondition
-    need: Sleep
-    thresholdId: Exhausted
-    invert: true
+  - !type:OrPrecondition
+    preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Rested
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Overslept
   - !type:HasComponentPrecondition
     components:
     - type: Sleeping

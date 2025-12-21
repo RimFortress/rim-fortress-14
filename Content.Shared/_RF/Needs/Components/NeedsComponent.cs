@@ -64,4 +64,11 @@ public sealed partial class NeedData
     /// </summary>
     [DataField, ViewVariables]
     public string CurrentThreshold = string.Empty;
+
+    /// <summary>
+    /// Multipliers of the decline of the satisfaction value for each threshold.
+    /// Calculated based on <see cref="NeedPrototype.ThresholdDecayTime"/>
+    /// </summary>
+    [DataField]
+    public Dictionary<string, float> ThresholdDecayModifiers = new();
 }

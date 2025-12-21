@@ -41,6 +41,11 @@ public sealed class NeedsSystem : EntitySystem
                 || proto.RoundstartRandomize == null)
                 continue;
 
+            need.ThresholdDecayModifiers = CalculateDecayRates(
+                proto.Thresholds,
+                proto.ThresholdDecayTime.ToDictionary(kv => kv.Key, kv => _world.FromWorldTime(kv.Value)),
+                proto.ThresholdUpdateRate);
+
             var amount = proto.RoundstartRandomize.Value.Next(_random);
             SetValue(new(uid, component), need.Id, amount);
         }
@@ -69,19 +74,6 @@ public sealed class NeedsSystem : EntitySystem
     }
 
     #endregion
-
-    [Pure]
-    private float GetBaseDecayRate(NeedPrototype proto)
-    {
-        var thresholds = new List<(float, float)>();
-
-        foreach (var (id, threshold) in proto.Thresholds)
-        {
-            thresholds.Add((threshold, proto.ThresholdDecayModifiers.GetValueOrDefault(id, 1f)));
-        }
-
-        return CalculateBaseDecayRate(_world.FromWorldTime(proto.FullDecayTime), proto.ThresholdUpdateRate, thresholds);
-    }
 
     /// <summary>
     /// Returns the satisfaction level of a given entity's need
@@ -224,9 +216,7 @@ public sealed class NeedsSystem : EntitySystem
         else if (proto.AlertCategory != null)
             _alerts.ClearAlertCategory(ent.Owner, proto.AlertCategory.Value);
 
-        var modifier = proto.ThresholdDecayModifiers.GetValueOrDefault(need.CurrentThreshold, 1);
-
-        need.ActualDecayRate = GetBaseDecayRate(proto) * modifier;
+        need.ActualDecayRate = need.ThresholdDecayModifiers.GetValueOrDefault(need.CurrentThreshold, 1);
         SetAuthoritativeValue(ent, protoId, GetValue(ent, protoId));
 
         need.LastThreshold = need.CurrentThreshold;
@@ -282,57 +272,43 @@ public sealed class NeedsSystem : EntitySystem
     }
 
     /// <summary>
-    /// Calculates the base decay rate of value from maximum to 0 for a certain time,
-    /// considering the modifiers for different thresholds
+    /// Calculates threshold decay rate modifiers based on the time it takes them to pass
     /// </summary>
-    /// <param name="fullDecayTime">The time it takes for the maximum value to drop to 0</param>
-    /// <param name="updateRate">How often will the value be updated</param>
-    /// <param name="thresholds">List of thresholds and modifiers for them</param>
-    /// <returns>
-    /// The base decay rate, which, when multiplied by threshold modifiers,
-    /// gives a value that, when subtracted,
-    /// reduces the maximum threshold to zero for the specified time with each update.
-    /// </returns>
+    /// <param name="thresholds">Thresholds and their values</param>
+    /// <param name="thresholdsDecayTime">Thresholds and the time it takes for them to pass</param>
+    /// <param name="updateRate">How often is the threshold updated</param>
+    /// <typeparam name="T">Threshold ID type</typeparam>
+    /// <returns>Decay rate modifiers for each threshold</returns>
     [Pure]
-    public static float CalculateBaseDecayRate(
-        TimeSpan fullDecayTime,
-        TimeSpan updateRate,
-        List<(float Threshold, float Modifier)> thresholds)
+    public static Dictionary<T, float> CalculateDecayRates<T>(
+        Dictionary<T, float> thresholds,
+        Dictionary<T, TimeSpan> thresholdsDecayTime,
+        TimeSpan updateRate) where T : notnull
     {
-        if (fullDecayTime <= TimeSpan.Zero || updateRate <= TimeSpan.Zero)
-            return 0f;
+        var rates = new Dictionary<T, float>();
 
         // Get sorted thresholds from max to min
         var sortedThresholds = thresholds
-            .OrderByDescending(kv => kv.Threshold)
+            .OrderByDescending(kv => kv.Value)
             .ToList();
-
-        // Total number of updates for full decay
-        var totalUpdates = fullDecayTime.TotalSeconds / updateRate.TotalSeconds;
-
-        if (totalUpdates <= 0)
-            return 0f;
-
-        // Calculate the sum of weighted threshold ranges
-        double weightedRangeSum = 0f;
 
         for (var i = 0; i < sortedThresholds.Count; i++)
         {
             var currentThreshold = sortedThresholds[i];
-            var nextThresholdValue = i != sortedThresholds.Count - 1 ? sortedThresholds[i + 1].Threshold : 0;
-            var thresholdRange = currentThreshold.Threshold - nextThresholdValue;
 
-            // Weighted range for this segment
-            weightedRangeSum += thresholdRange / currentThreshold.Modifier;
+            if (!thresholdsDecayTime.TryGetValue(currentThreshold.Key, out var decayTime))
+            {
+                rates[currentThreshold.Key] = 1;
+                continue;
+            }
+
+            var nextThresholdValue = i != sortedThresholds.Count - 1 ? sortedThresholds[i + 1].Value : 0;
+            var thresholdRange = currentThreshold.Value - nextThresholdValue;
+
+            rates[currentThreshold.Key] = thresholdRange / (float)(decayTime / updateRate);
         }
 
-        if (weightedRangeSum <= 0)
-            return 0f;
-
-        // Solve for BaseDecayRate using the formula:
-        // totalUpdates = Σ( (Tn - Tn+1) / (BaseDecayRate * Mn) )
-        // BaseDecayRate = weightedRangeSum / totalUpdates
-        return (float)(weightedRangeSum / totalUpdates);
+        return rates;
     }
 }
 

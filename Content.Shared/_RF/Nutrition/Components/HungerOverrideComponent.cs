@@ -1,4 +1,5 @@
 using Content.Shared.Destructible.Thresholds;
+using Content.Shared.Nutrition.Components;
 
 namespace Content.Shared._RF.Nutrition.Components;
 
@@ -9,14 +10,14 @@ namespace Content.Shared._RF.Nutrition.Components;
 public sealed partial class HungerOverrideComponent : Component
 {
     /// <summary>
-    /// The time it takes for the hunger level to drop from the maximum to 0, considering all threshold modifiers.
+    /// Decay time to the next threshold for each threshold
     /// </summary>
     /// <remarks>
     /// It is calculated in world time, which is then converted to simulation time.
     /// </remarks>
     /// <seealso cref="Content.Shared._RF.World.SharedRimFortressWorldSystem.FromWorldTime(TimeSpan)"/>
     [DataField]
-    public TimeSpan FullDecayTime;
+    public Dictionary<HungerThreshold, TimeSpan> ThresholdDecayTime = new();
 
     /// <summary>
     /// Minimum and maximum values for randomizing the initial value of the hunger

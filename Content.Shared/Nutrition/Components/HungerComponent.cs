@@ -35,6 +35,7 @@ public sealed partial class HungerComponent : Component
     /// </summary>
     /// <remarks>Any time this is modified, <see cref="HungerSystem.SetAuthoritativeHungerValue"/> should be called.</remarks>
     [DataField("baseDecayRate"), ViewVariables(VVAccess.ReadWrite)]
+    [AutoNetworkedField] // RimFortress
     public float BaseDecayRate = 0.01666666666f;
 
     /// <summary>
