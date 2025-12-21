@@ -1,41 +1,6 @@
 - type: htnCompound
   id: SleepCompound
   branches:
-  - preconditions:
-    - !type:RandomPrecondition
-      chance: 0.1
-    - !type:OrPrecondition
-      preconditions:
-      - !type:NeedLevelPrecondition
-        need: Sleep
-        thresholdId: Rested
-      - !type:NeedLevelPrecondition
-        need: Sleep
-        thresholdId: Overslept
-    - !type:HasComponentPrecondition
-      components:
-      - type: Sleeping
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:WakeUpOperator
-    - !type:HTNPrimitiveTask
-      operator: !type:UnbuckleOperator
-
-  # If we sleep, we wait until we get enough sleep
-  - preconditions:
-    - !type:HasComponentPrecondition
-      components:
-      - type: Sleeping
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:SetFloatOperator
-        targetKey: Time
-        amount: 1
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitOperator
-        key: Time
-
-  # We look for a bed and sleep on it
   - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:EntityCoordinatesOperator
@@ -49,45 +14,53 @@
     - !type:HTNPrimitiveTask
       operator: !type:SleepOperator
 
-- type: htnCompound
-  id: SleepOnFloorCompound
-  branches:
-  - preconditions:
-    - !type:RandomPrecondition
-      chance: 0.1
-    - !type:NeedLevelPrecondition
-      need: Sleep
-      thresholdId: Exhausted
-      invert: true
-    - !type:HasComponentPrecondition
-      components:
-      - type: Sleeping
-    tasks:
+    # Wait until we get enough sleep
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitWhileOperator
+        preconditions:
+        - !type:NeedLevelPrecondition
+          need: Sleep
+          thresholdId: Rested
+          invert: true
+        - !type:NeedLevelPrecondition
+          need: Sleep
+          thresholdId: Overslept
+          invert: true
+
+    # Wake up samurai
     - !type:HTNPrimitiveTask
       operator: !type:WakeUpOperator
     - !type:HTNPrimitiveTask
       operator: !type:UnbuckleOperator
 
-  # If we sleep, we wait until we get enough sleep
-  - preconditions:
-    - !type:HasComponentPrecondition
-      components:
-      - type: Sleeping
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:SetFloatOperator
-        targetKey: Time
-        amount: 1
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitOperator
-        key: Time
-
+- type: htnCompound
+  id: SleepOnFloorCompound
+  branches:
   - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:PickAccessibleOperator
         rangeKey: IdleRange
     - !type:HTNPrimitiveTask
       operator: !type:MoveToOperator
-        rangeKey: InteractRange
+        rangeKey: MoveToCloseRange
+        pathfindInPlanning: false
     - !type:HTNPrimitiveTask
       operator: !type:SleepOperator
+
+    # Wait until we get enough sleep
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitWhileOperator
+        preconditions:
+        - !type:NeedLevelPrecondition
+          need: Sleep
+          thresholdId: Rested
+          invert: true
+        - !type:NeedLevelPrecondition
+          need: Sleep
+          thresholdId: Overslept
+          invert: true
+
+    - !type:HTNPrimitiveTask
+      operator: !type:WakeUpOperator
+    - !type:HTNPrimitiveTask
+      operator: !type:UnbuckleOperator
