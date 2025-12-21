@@ -15,25 +15,14 @@
     invert: true
 
 - type: npcTask
-  id: Conversation
+  id: StartConversation
   name: Conversation
   parent: BaseNpcTask
   overlayColor: "#D3D3D3"
-  compound: ConversationCompound
+  compound: StartConversationCompound
   targetsQuery: Self # Stub for the ability to use this task as a passive
-
-- type: npcTask
-  id: ConversationOrder
-  name: Conversation
-  parent: BaseNpcTask
-  overlayColor: "#D3D3D3"
-  compound: ConversationOrderCompound
-  tempKeys:
-  - Wait
-  - Message
   finishPreconditions:
   - !type:InConversationPrecondition
-    invert: true
 
 - type: npcTask
   id: LeaveSettlement

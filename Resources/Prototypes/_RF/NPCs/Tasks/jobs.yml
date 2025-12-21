@@ -66,7 +66,7 @@
   defaultPriority: 1
   hidden: true
   tasks:
-  - Conversation
+  - StartConversation
   - MentalBreakdown
 
 - type: npcJob

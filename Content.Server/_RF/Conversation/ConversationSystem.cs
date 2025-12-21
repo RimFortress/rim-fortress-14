@@ -1,6 +1,4 @@
-using Content.Server._RF.NPC.Systems;
 using Content.Server.Chat.Systems;
-using Content.Server.NPC.HTN;
 using Content.Shared._RF.Conversation;
 
 namespace Content.Server._RF.Conversation;
@@ -15,7 +13,6 @@ public sealed class ConversationSystem : SharedConversationSystem
         base.Initialize();
 
         SubscribeLocalEvent<EntitySpokeEvent>(OnSpeak);
-        SubscribeLocalEvent<HTNComponent, NpcTaskFinished>(OnTaskFinished);
     }
 
     private void OnSpeak(EntitySpokeEvent ev)
@@ -28,11 +25,5 @@ public sealed class ConversationSystem : SharedConversationSystem
             ContinueConversation(script.Value, ev.Source);
         else
             EndConversation(ev.Source);
-    }
-
-    // Helps to complete the dialogue for all participants if it was interrupted for any reason
-    private void OnTaskFinished(EntityUid uid, HTNComponent component, NpcTaskFinished ev)
-    {
-        EndConversation(uid, !ev.Failed);
     }
 }

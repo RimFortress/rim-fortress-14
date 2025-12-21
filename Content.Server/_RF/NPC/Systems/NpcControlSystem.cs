@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server._RF.NPC.Components;
 using Content.Server._RF.NPC.Prototypes;
@@ -726,6 +727,21 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <returns>True, if the task is successfully issued</returns>
     public bool TrySetPassiveTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId)
         => _prototype.TryIndex(protoId, out var proto) && TrySetPassiveTask(npc, proto);
+
+    /// <summary>
+    /// Return current NPC task
+    /// </summary>
+    public bool TryGetCurrentTask(Entity<ControllableNpcComponent?> npc,
+        [NotNullWhen(true)] out ProtoId<NpcTaskPrototype>? task)
+    {
+        task = null;
+
+        if (!Resolve(npc, ref npc.Comp))
+            return false;
+
+        task = npc.Comp.CurrentTask;
+        return task != null;
+    }
 
     /// <summary>
     /// Give the user access to control this NPC

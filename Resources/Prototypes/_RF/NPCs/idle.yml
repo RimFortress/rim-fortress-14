@@ -1,6 +1,14 @@
 - type: htnCompound
   id: RfIdleCompound
   branches:
+  - preconditions:
+    - !type:InConversationPrecondition
+    - !type:ActorsHasTaskPrecondition
+      invert: true
+    tasks:
+    - !type:HTNCompoundTask
+      task: ConversationCompound
+
   - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:RoutineTaskOperator

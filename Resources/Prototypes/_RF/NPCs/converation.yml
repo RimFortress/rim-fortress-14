@@ -1,34 +1,13 @@
 - type: htnCompound
-  id: ConversationCompound
+  id: StartConversationCompound
   branches:
-  - preconditions:
-    - !type:InConversationPrecondition
-      invert: true
-    tasks:
+  - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:StartConversationOperator
-    - !type:HTNPrimitiveTask
-      operator: !type:IssueTaskOperator
-        task: ConversationOrder
-        targetsKey: ConversationActors
-        taskCoordinates: ConversationCoordinates
 
 - type: htnCompound
-  id: ConversationOrderCompound
+  id: ConversationCompound
   branches:
-  - preconditions:
-    - !type:ActorsInRangePrecondition
-      rangeKey: DialogStartOffset
-      invert: true
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:MoveToOperator
-        rangeKey: InteractRange
-        removeKeyOnFinish: false
-    - !type:HTNPrimitiveTask
-      operator: !type:FaceToCoordinates
-
-  # Waiting until it is our turn to speak
   - preconditions:
     - !type:InConversationPrecondition
     - !type:NextInConversationPrecondition
@@ -36,13 +15,29 @@
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:SetFloatOperator
-        targetKey: Wait
-        amount: 0.5
+        targetKey: Time
+        amount: 1
     - !type:HTNPrimitiveTask
       operator: !type:WaitOperator
-        key: Wait
+        key: Time
 
   - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:ConversationCoordinatesOperator
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        rangeKey: InteractRange
+        removeKeyOnFinish: false
+    - !type:HTNPrimitiveTask
+      operator: !type:FaceToCoordinates
+
+    # Waiting until it is our turn to speak
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitWhileOperator
+        preconditions:
+        - !type:NextInConversationPrecondition
+          invert: true
+
     # Random waiting time to make the dialogue look more natural
     # and give the player time to read the lines
     - !type:HTNPrimitiveTask

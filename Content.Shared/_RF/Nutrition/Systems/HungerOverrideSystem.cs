@@ -37,6 +37,5 @@ public sealed class HungerOverrideSystem : EntitySystem
             thresholds);
 
         _hunger.SetHunger(uid, component.RandomizeValue?.Next(_random) ?? _hunger.GetHunger(hunger));
-        DirtyField(uid, hunger, nameof(HungerComponent.BaseDecayRate));
     }
 }

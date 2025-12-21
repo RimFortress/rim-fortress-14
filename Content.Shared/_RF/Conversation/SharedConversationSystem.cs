@@ -42,20 +42,13 @@ public abstract class SharedConversationSystem : EntitySystem
     {
         actors = null;
 
-        if (!_prototype.TryIndex(protoId, out var script)
-            || uids.Count != script.Actors.Count
-            || uids.Count == 0)
+        if (!_prototype.TryIndex(protoId, out var script))
             return false;
 
-        // check whether entities are involved in other dialogues
-        foreach (var (_, acts, _, _) in _conversations)
-        {
-            foreach (var uid in uids)
-            {
-                if (acts.ContainsValue(uid))
-                    return false;
-            }
-        }
+        uids = uids.Where(uid => !TryGetScript(uid, out _)).ToList();
+
+        if (uids.Count < script.Actors.Count)
+            return false;
 
         if (!TryFindRoles(script, uids, out actors))
             return false;
@@ -123,15 +116,17 @@ public abstract class SharedConversationSystem : EntitySystem
         if (!_prototype.TryIndex(protoId, out var script))
             return;
 
-        foreach (var (proto, actors, act, lineInd) in _conversations.ToList())
+        for (var i = 0; i < _conversations.Count; i++)
         {
-            if (protoId != proto
-                || !actors.ContainsValue(uid)
-                || !script.Lines.TryGetValue(act, out var lines))
+            var conv = _conversations[i];
+
+            if (protoId != conv.Script
+                || !conv.Actors.ContainsValue(uid)
+                || !script.Lines.TryGetValue(conv.Act, out var lines))
                 continue;
 
-            var newAct = act;
-            var newLine = lineInd + 1;
+            var newAct = conv.Act;
+            var newLine = conv.Line + 1;
 
             if (newLine >= lines.Count)
             {
@@ -139,24 +134,24 @@ public abstract class SharedConversationSystem : EntitySystem
                 newAct++;
             }
 
-            _conversations.Remove((protoId, actors, act, lineInd));
+            _conversations.RemoveAt(i);
 
             // check if the dialog is complete
             if (newAct < script.Lines.Count)
             {
-                _conversations.Add((protoId, actors, newAct, newLine));
+                _conversations.Add((protoId, conv.Actors, newAct, newLine));
                 return;
             }
 
             // apply conversation completion effects
             foreach (var (id, effects) in script.Effects)
             {
-                if (!actors.TryGetValue(id, out var actor))
+                if (!conv.Actors.TryGetValue(id, out var actor))
                     continue;
 
                 foreach (var effect in effects)
                 {
-                    effect.Effect(new EntityEffectBaseArgs(actor, EntityManager));
+                    effect.Effect(new EntityEffectConversationArgs(actor, conv.Actors, EntityManager));
                 }
             }
 
@@ -173,7 +168,7 @@ public abstract class SharedConversationSystem : EntitySystem
             || !_prototype.TryIndex(script, out var proto))
             return;
 
-        for (var i = 0; i < _conversations.Count - 1; i++)
+        for (var i = 0; i < _conversations.Count; i++)
         {
             if (_conversations[i].Script != script || !_conversations[i].Actors.ContainsValue(uid))
                 continue;
@@ -350,7 +345,7 @@ public abstract class SharedConversationSystem : EntitySystem
                 {
                     var result = req.Check(uid, otherUid, EntityManager);
 
-                    if (!req.Invert && result || req.Invert && !result)
+                    if (!req.Invert && !result || req.Invert && result)
                         return false;
                 }
             }
@@ -377,7 +372,7 @@ public abstract class SharedConversationSystem : EntitySystem
                 {
                     var result = req.Check(otherUid, uid, EntityManager);
 
-                    if (!req.Invert && result || req.Invert && !result)
+                    if (!req.Invert && !result || req.Invert && result)
                         return false;
                 }
             }

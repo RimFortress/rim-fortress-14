@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Content.Server._RF.Conversation;
@@ -8,7 +7,6 @@ using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared._RF.Conversation;
 using Robust.Server.GameObjects;
-using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -26,18 +24,6 @@ public sealed partial class StartConversationOperator : HTNOperator
     private ConversationSystem _conversation = default!;
     private TransformSystem _xform = default!;
     private EntityLookupSystem _lookup = default!;
-
-    /// <summary>
-    /// The key in which the coordinates of the conversation location will be saved
-    /// </summary>
-    [DataField]
-    public string ConvCoordsKey = "ConversationCoordinates";
-
-    /// <summary>
-    /// The key in which the list of dialog participants will be saved
-    /// </summary>
-    [DataField]
-    public string ActorsKey = "ConversationActors";
 
     /// <summary>
     /// A prototype of the conversation script that will be started.
@@ -65,7 +51,6 @@ public sealed partial class StartConversationOperator : HTNOperator
         var ownerCoords = _xform.GetMapCoordinates(owner);
         var entities = new List<EntityUid>();
         var canControl = controllable.CanControl.ToList();
-        Dictionary<string, EntityUid>? roles = null;
 
         foreach (var ent in _lookup.GetEntitiesInRange<ControllableNpcComponent>(ownerCoords, radius))
         {
@@ -86,31 +71,13 @@ public sealed partial class StartConversationOperator : HTNOperator
             {
                 var proto = _random.PickAndTake(prototype);
 
-                if (_conversation.TryStartConversation(proto, entities, out roles))
-                    break;
+                if (_conversation.TryStartConversation(proto, entities, out _))
+                    return (true, null);
             }
         }
-        else if (!_conversation.TryStartConversation(script, entities, out roles))
+        else if (!_conversation.TryStartConversation(script, entities, out _))
             return (false, null);
 
-        if (roles == null)
-            return (false, null);
-
-        var map = MapId.Nullspace;
-        var pos = Vector2.Zero;
-
-        foreach (var (_, uid) in roles)
-        {
-            map = _xform.GetMapId(uid);
-            pos += _xform.GetMapCoordinates(uid).Position;
-        }
-
-        var coords = _xform.ToCoordinates(new MapCoordinates(pos / roles.Count, map));
-
-        return (true, new()
-        {
-            { ConvCoordsKey, coords },
-            { ActorsKey, roles.Values.ToList() },
-        });
+        return (false, null);
     }
 }
