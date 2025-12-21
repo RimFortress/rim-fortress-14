@@ -2,37 +2,36 @@
 - type: htnCompound
   id: InteractCompound
   branches:
-    - tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:EntityCoordinatesOperator
-            targetKey: Target
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: true
-            rangeKey: InteractRange
-            removeKeyOnFinish: true
-
-        - !type:HTNPrimitiveTask
-          operator: !type:InteractWithOperator
-            targetKey: Target
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:EntityCoordinatesOperator
+        targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        pathfindInPlanning: true
+        rangeKey: InteractRange
+        removeKeyOnFinish: true
+    - !type:HTNPrimitiveTask
+      operator: !type:InteractWithOperator
+        targetKey: Target
 
 # Interact with the Target with the free hand
 - type: htnCompound
   id: FreeHandInteractCompound
   branches:
-    # Drop the item in hand
-    - preconditions:
-        - !type:ActiveHandEntityPrecondition
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:DropOperator
+  # Drop the item in hand
+  - preconditions:
+    - !type:ActiveHandEntityPrecondition
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:DropOperator
 
-    - tasks:
-        - !type:HTNCompoundTask
-          task: InteractCompound
+  - tasks:
+    - !type:HTNCompoundTask
+      task: InteractCompound
 
-        # Remove the key to signify the completion of the task.
-        # I guess that's the normal solution?
-        - !type:HTNPrimitiveTask
-          operator: !type:RemoveKeyOperator
-            key: Target
+    # Remove the key to signify the completion of the task.
+    # I guess that's the normal solution?
+    - !type:HTNPrimitiveTask
+      operator: !type:RemoveKeyOperator
+        key: Target

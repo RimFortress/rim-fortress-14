@@ -1,5 +1,4 @@
 - type: utilityQuery
-
   id: Self
   query:
   - !type:SelfQuery
@@ -77,13 +76,22 @@
   id: HealingBed
   query:
   - !type:OwnedQuery
-  - !type:ComponentFilter
-    components:
-    - type: HealOnBuckle
-      damage:
-        types:
-          Poison: 0
   considerations:
+  - !type:BedHealingCon
+    curve: !type:QuadraticCurve
+      slope: 1.0
+      exponent: 0.4
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+
+- type: utilityQuery
+  id: Bed
+  query:
+  - !type:OwnedQuery
+  considerations:
+  - !type:BedHealingCon
+    curve: !type:NormCurve
   - !type:NormTargetDistanceCon
     curve: !type:PresetCurve
       preset: TargetDistance

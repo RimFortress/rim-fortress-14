@@ -3,7 +3,7 @@
   name: Sleep
   parent: BaseSoloPerformTask
   compound: SleepCompound
-  targetsQuery: HealingBed
+  targetsQuery: Bed
   startPreconditions:
   - !type:OrPrecondition
     preconditions:

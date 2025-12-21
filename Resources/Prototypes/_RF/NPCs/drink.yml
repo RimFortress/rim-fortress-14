@@ -1,0 +1,19 @@
+- type: htnCompound
+  id: DrinkCompound
+  branches:
+  - tasks:
+    - !type:HTNCompoundTask
+      task: PickUpCompound
+    # Trying to open drink
+    - !type:HTNPrimitiveTask
+      operator: !type:TryOperator
+        try: !type:HTNPrimitiveTask
+          preconditions:
+          - !type:ClosedPrecondition
+            targetKey: PickUpTarget
+          operator: !type:InteractWithOperator
+            targetKey: PickUpTarget
+    # Drinking
+    - !type:HTNPrimitiveTask
+      operator: !type:InteractWithOperator
+        targetKey: PickUpTarget

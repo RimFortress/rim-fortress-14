@@ -203,6 +203,10 @@ public sealed class NPCUtilitySystem : EntitySystem
                 return GetScore(_proto.Index<UtilityCurvePresetPrototype>(presetCurve.Preset).Curve, conScore);
             case QuadraticCurve quadraticCurve:
                 return Math.Clamp(quadraticCurve.Slope * MathF.Pow(conScore - quadraticCurve.XOffset, quadraticCurve.Exponent) + quadraticCurve.YOffset, 0f, 1f);
+            // RimFortress Start
+            case RfUtilityCurve rf:
+                return Math.Clamp(rf.Curve(conScore), 0f, 1f);
+            // RimFortress End
             default:
                 throw new NotImplementedException();
         }
@@ -215,9 +219,16 @@ public sealed class NPCUtilitySystem : EntitySystem
         {
             case FoodValueCon:
             {
+                // RimFortress Start
+                if (!_ingestion.HasMouthAvailable(owner, targetUid))
+                    return 0f;
+                // RimFortress End
+
+                /* RimFortress
                 // do we have a mouth available? Is the food item opened?
                 if (!_ingestion.CanConsume(owner, targetUid))
                     return 0f;
+                RimFortress */
 
                 var avoidBadFood = !HasComp<IgnoreBadFoodComponent>(owner);
 
@@ -237,9 +248,16 @@ public sealed class NPCUtilitySystem : EntitySystem
             }
             case DrinkValueCon:
             {
+                // RimFortress Start
+                if (!_ingestion.HasMouthAvailable(owner, targetUid))
+                    return 0f;
+                // RimFortress End
+
+                /* RimFortress
                 // can't drink closed drinks and can't drink with a mask on...
                 if (!_ingestion.CanConsume(owner, targetUid))
                     return 0f;
+                RimFortress */
 
                 // only drink when thirsty
                 if (TryComp<ThirstComponent>(owner, out var thirst) && thirst.CurrentThirstThreshold > ThirstThreshold.Okay)
@@ -330,7 +348,7 @@ public sealed class NPCUtilitySystem : EntitySystem
             }
             // RimFortress Start
             case RfUtilityConsideration rf:
-                return rf.GetScore(blackboard, targetUid);
+                return Math.Clamp(rf.GetScore(blackboard, targetUid), 0f, 1f);
             // RimFortress End
             case TargetAmmoCon:
             {
