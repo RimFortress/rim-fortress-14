@@ -809,11 +809,11 @@
       state: rock_north
     - map: [ "enum.EdgeLayer.West" ]
       state: rock_west
-    # RimFortress Start
-    - type: Tag
-      tags:
-      - Diggable
-    # RimFortress End
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Diggable
+  # RimFortress End
 
 # Ore veins
 - type: entity
@@ -1162,11 +1162,11 @@
       state: rock_wall_north
     - map: [ "enum.EdgeLayer.West" ]
       state: rock_wall_west
-    # RimFortress Start
-    - type: Tag
-      tags:
-      - Diggable
-    # RimFortress End
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - Diggable
+  # RimFortress End
 
 - type: entity
   id: WallRockBasaltCoal
