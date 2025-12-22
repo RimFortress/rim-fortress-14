@@ -30,6 +30,7 @@
     - !type:HTNCompoundTask
       task: SleepOnFloor
 
+  # Looking for food if we are hungry
   - preconditions:
     - !type:HungryPrecondition
       minHungerState: Starving
@@ -41,6 +42,7 @@
     - !type:HTNCompoundTask
       task: EatCompound
 
+  # Looking for a drink if we're thirsty
   - preconditions:
     - !type:ThirstyPrecondition
       minThirstState: Parched
