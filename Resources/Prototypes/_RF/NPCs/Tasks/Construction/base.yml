@@ -1,0 +1,15 @@
+- type: npcTask
+  id: BaseConstructionTask
+  parent: BaseSoloPerformTask
+  abstract: true
+  unionPerformersWith:
+  - Deconstruct
+  - Build
+  tempKeys:
+  - PickUpTarget
+  - Amount
+  targetWhitelist:
+    components:
+    - Construction
+    - CommonConstructionGhost
+    requireAll: false

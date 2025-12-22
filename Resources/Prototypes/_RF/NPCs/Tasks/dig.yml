@@ -1,0 +1,82 @@
+- type: npcTask
+  id: Dig
+  name: Dig
+  parent: BaseNpcTask
+  maxPerformers: 1
+  overlayColor: "#E36414"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  compound: DigCompound
+  passive: true
+  failAwaitTime: 3
+  tempKeys:
+  - Tags
+  - AllTags
+  - PickUpTarget
+  targetWhitelist:
+    tags:
+    - Diggable
+  finishPreconditions:
+  - !type:EntityDeletedPrecondition
+    key: Target
+
+- type: htnCompound
+  id: DigCompound
+  branches:
+  # If NPC don't have a pickaxe in hands, look for it.
+  - preconditions:
+    - !type:ActiveHandEntityTagsPrecondition
+      tags:
+      - Pickaxe
+      invert: true
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Pickaxe
+        key: PickUpTarget
+    # Go to the pickaxe we found
+    - !type:HTNCompoundTask
+      task: PickUpCompound
+
+  - preconditions:
+    - !type:ActiveHandEntityTagsPrecondition
+      tags:
+      - Pickaxe
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:TryOperator
+        try: !type:HTNPrimitiveTask
+          preconditions:
+          - !type:ActiveHandComponentPrecondition
+            components:
+            - type: Wieldable
+          - !type:WieldedPrecondition
+            invert: true
+          operator: !type:WieldOperator
+    # Goes to the target
+    - !type:HTNPrimitiveTask
+      operator: !type:EntityCoordinatesOperator
+        targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        rangeKey: InteractRange
+    # And finally, digging
+    - !type:HTNPrimitiveTask
+      operator: !type:MeleeOperator
+        targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:MarkOwnerInRangeOperator
+
+- type: utilityQuery
+  id: Pickaxe
+  query:
+  - !type:OwnedQuery
+  - !type:TagFilter
+    tags:
+    - Pickaxe
+    invert: true
+  - !type:InventoryFilter
+  - !type:InHandsFilter
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance

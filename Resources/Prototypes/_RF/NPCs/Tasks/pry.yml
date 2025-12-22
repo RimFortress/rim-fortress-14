@@ -1,0 +1,60 @@
+- type: npcTask
+  id: Pry
+  name: Open
+  parent: BaseSoloPerformTask
+  overlayColor: "#00D5FF"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
+  compound: PryCompound
+  tempKeys:
+  - PickUpTarget
+  - ToolQuality
+  targetWhitelist:
+    components:
+    - Door
+  startPreconditions:
+  - !type:DoorStatePrecondition
+    key: Target
+    state: Closed
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: Target
+    - !type:DoorStatePrecondition
+      key: Target
+      state: Closed
+      invert: true
+
+- type: htnCompound
+  id: PryCompound
+  branches:
+  - preconditions:
+    - !type:ActiveHandEntityTagsPrecondition
+      tags:
+      - Crowbar
+      invert: true
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Crowbar
+        key: PickUpTarget
+    - !type:HTNCompoundTask
+      task: PickUpCompound
+
+  - tasks:
+    - !type:HTNCompoundTask
+      task: InteractCompound
+
+- type: utilityQuery
+  id: Crowbar
+  query:
+  - !type:OwnedQuery
+  - !type:ToolQualityFilter
+    quality: Prying
+    invert: true
+  - !type:InventoryFilter
+  - !type:InHandsFilter
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance

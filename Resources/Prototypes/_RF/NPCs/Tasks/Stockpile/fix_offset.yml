@@ -1,0 +1,100 @@
+- type: npcTask
+  id: FixStoredOffset
+  name: Correct the position of stored
+  parent: BaseStoringTask
+  compound: FixStoredOffsetCompound
+  targetsQuery: FixStoredOffsetTarget
+  targetWhitelist:
+    components:
+    - Item
+    - Pullable
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+    - !type:EntityDeletedPrecondition
+      key: PickUpTarget
+    - !type:AndPrecondition
+      preconditions:
+      - !type:StoredPrecondition
+        targetKey: PickUpTarget
+      - !type:TileOffsetPrecondition
+        targetKey: PickUpTarget
+        lessThan: 0.06
+
+- type: htnCompound
+  id: FixStoredOffsetCompound
+  branches:
+  - preconditions:
+    - !type:HasComponentPrecondition
+      targetKey: PickUpTarget
+      components:
+      - type: Item
+    - !type:TileOffsetPrecondition
+      targetKey: PickUpTarget
+      moreThan: 0.06
+    tasks:
+    - !type:HTNCompoundTask
+      task: PickUpCompound
+    - !type:HTNPrimitiveTask
+      operator: !type:TileCenterOperator
+        targetKey: PickUpTarget
+        resultKey: TargetCoordinates
+    - !type:HTNPrimitiveTask
+      operator: !type:DropAtOperator
+
+  - preconditions:
+    - !type:HasComponentPrecondition
+      targetKey: PickUpTarget
+      components:
+      - type: Item
+      invert: true
+    - !type:HasComponentPrecondition
+      targetKey: PickUpTarget
+      components:
+      - type: Pullable
+    - !type:PulledEntityIsPrecondition
+      targetKey: PickUpTarget
+      invert: true
+    - !type:TileOffsetPrecondition
+      targetKey: PickUpTarget
+      moreThan: 0.06
+    tasks:
+    - !type:HTNCompoundTask
+      task: PullCompound
+
+  - preconditions:
+    - !type:HasComponentPrecondition
+      targetKey: PickUpTarget
+      components:
+      - type: Item
+      invert: true
+    - !type:HasComponentPrecondition
+      targetKey: PickUpTarget
+      components:
+      - type: Pullable
+    - !type:TileOffsetPrecondition
+      targetKey: PickUpTarget
+      moreThan: 0.06
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:TileCenterOperator
+        targetKey: PickUpTarget
+        resultKey: TargetCoordinates
+    - !type:HTNPrimitiveTask
+      operator: !type:MovePulledOperator
+    - !type:HTNPrimitiveTask
+      operator: !type:UnPullPullingOperator
+
+- type: utilityQuery
+  id: FixStoredOffsetTarget
+  query:
+  - !type:StoredQuery
+  - !type:TileOffsetFilter
+    lessThan: 0.06
+  - !type:InContainerFilter
+  - !type:InventoryFilter
+  - !type:InHandsFilter
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance

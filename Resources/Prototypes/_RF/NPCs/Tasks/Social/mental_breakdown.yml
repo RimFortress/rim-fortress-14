@@ -1,3 +1,20 @@
+- type: npcTask
+  id: MentalBreakdown
+  name: Mental breakdown
+  parent: BaseSoloPerformTask
+  compound: MentalBreakdownCompound
+  targetsQuery: Self # Stub for the ability to use this task as a passive
+  startPreconditions:
+  - !type:MoodPrecondition
+    lessThan: -60
+  - !type:RandomPrecondition
+    chance: 0.1 # Adding randomness to the triggering of this task
+  finishPreconditions:
+  - !type:HasMoodEffectPrecondition
+    effect: MoodMentalBreakdown
+    invert: true
+
+# Compounds
 - type: htnCompound
   id: MentalBreakdownCompound
   branches:
@@ -83,7 +100,6 @@
       operator: !type:MeleeOperator
         targetKey: Target
 
-
 - type: htnCompound
   id: MentalBreakdownThrowItemCompound
   branches:
@@ -95,3 +111,58 @@
         rangeKey: VisionRadius
     - !type:HTNPrimitiveTask
       operator: !type:ThrowAtOperator
+
+# Queries
+- type: utilityQuery
+  id: NearbyFriendlyMeleeTargets
+  query:
+  - !type:RangeComponentQuery
+    components:
+    - type: NpcFactionMember
+    range: 10
+  - !type:IsFriendlyFilter
+    invert: true
+  considerations:
+  - !type:TargetIsAliveCon
+    curve: !type:BoolCurve
+  - !type:TargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve
+  - !type:TargetInLOSOrCurrentCon
+    curve: !type:BoolCurve
+
+- type: utilityQuery
+  id: NearbyDestructible
+  query:
+  - !type:RangeComponentQuery
+    components:
+    - type: Destructible
+    range: 10
+  considerations:
+  - !type:TargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve
+  - !type:TargetInLOSOrCurrentCon
+    curve: !type:BoolCurve
+
+- type: utilityQuery
+  id: NearbyItem
+  query:
+  - !type:RangeComponentQuery
+    components:
+    - type: Item
+    range: 10
+  - !type:InventoryFilter
+  - !type:InHandsFilter
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+  - !type:TargetAccessibleCon
+    curve: !type:BoolCurve
+  - !type:TargetInLOSOrCurrentCon
+    curve: !type:BoolCurve

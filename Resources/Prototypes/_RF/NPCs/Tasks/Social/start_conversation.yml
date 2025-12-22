@@ -1,0 +1,16 @@
+- type: npcTask
+  id: StartConversation
+  name: Conversation
+  parent: BaseNpcTask
+  overlayColor: "#D3D3D3"
+  compound: StartConversationCompound
+  targetsQuery: Self # Stub for the ability to use this task as a passive
+  finishPreconditions:
+  - !type:InConversationPrecondition
+
+- type: htnCompound
+  id: StartConversationCompound
+  branches:
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:StartConversationOperator

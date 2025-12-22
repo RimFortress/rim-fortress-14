@@ -66,5 +66,5 @@
       operator: !type:UnbuckleOperator
 
     - !type:HTNPrimitiveTask
-      operator: !type:AddMoodEffect
+      operator: !type:AddMoodEffectOperator
         effect: MoodSleptOnFloor

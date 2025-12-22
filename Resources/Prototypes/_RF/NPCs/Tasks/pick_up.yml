@@ -1,0 +1,22 @@
+- type: npcTask
+  id: PickUp
+  name: Take it
+  parent: BaseSoloPerformTask
+  overlayColor: "#00D5FF"
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  compound: PickUpCompound
+  targetKey: PickUpTarget
+  targetWhitelist:
+    components:
+    - Item
+  startPreconditions:
+  - !type:ActiveHandEntityIsPrecondition
+    targetKey: PickUpTarget
+    invert: true
+  finishPreconditions:
+  - !type:OrPrecondition
+    preconditions:
+      - !type:EntityDeletedPrecondition
+        key: PickUpTarget
+      - !type:ActiveHandEntityIsPrecondition
+        targetKey: PickUpTarget

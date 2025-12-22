@@ -1,11 +1,4 @@
 - type: htnCompound
-  id: StartConversationCompound
-  branches:
-  - tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:StartConversationOperator
-
-- type: htnCompound
   id: ConversationCompound
   branches:
   - preconditions:
