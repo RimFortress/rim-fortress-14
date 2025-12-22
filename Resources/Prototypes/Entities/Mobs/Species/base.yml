@@ -311,6 +311,7 @@
   - type: Needs
     needs:
     - id: Sleep
+    - id: Socialization
   - type: ChangeMoodOnNeed
     effects:
       Sleep:
@@ -318,6 +319,11 @@
         Rested: [MoodRested]
         Tired: [MoodTired]
         Exhausted: [MoodExhausted]
+      Socialization:
+        Overstimulated: [MoodOverstimulated]
+        Socialized: [MoodSocialized]
+        Lonely: [MoodLonely]
+        Isolated: [MoodIsolated]
     removeEffects:
       Sleep:
         Overslept:
@@ -329,6 +335,16 @@
         Exhausted:
         - MoodOverslept
         - MoodTired
+      Socialization:
+        Overstimulated:
+        - MoodLonely
+        - MoodIsolated
+        Lonely:
+        - MoodOverstimulated
+        - MoodIsolated
+        Isolated:
+        - MoodOverstimulated
+        - MoodLonely
   - type: ModifySpeedOnNeed
     modifiers:
       Sleep:

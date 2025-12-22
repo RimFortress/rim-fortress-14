@@ -17,3 +17,19 @@
   roundstartRandomize:
     min: 70
     max: 85
+
+- type: need
+  id: Socialization
+  thresholds:
+    Overstimulated: 100
+    Socialized: 80
+    Lonely: 40
+    Isolated: 20
+  thresholdDecayTime:
+    Overstimulated: 2h
+    Socialized: 3h
+    Lonely: 2h
+    Isolated: 4h
+  roundstartRandomize:
+    min: 70
+    max: 80

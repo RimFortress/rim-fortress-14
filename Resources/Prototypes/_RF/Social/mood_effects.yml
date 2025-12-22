@@ -195,5 +195,31 @@
   id: MoodSleptOnFloor
   name: mood-effect-slept-on-floor-name
   description: mood-effect-slept-on-floor-desc
+  duration: 4h
+  effect: -10
+
+# Socialization
+- type: socialEffect
+  id: MoodOverstimulated
+  name: mood-overstimulated-name
+  description: mood-overstimulated-desc
+  effect: -6
+
+- type: socialEffect
+  id: MoodSocialized
+  name: mood-socialized-name
+  description: mood-socialized-desc
   duration: 2h
+  effect: 6
+
+- type: socialEffect
+  id: MoodLonely
+  name: mood-lonely-name
+  description: mood-lonely-desc
+  effect: -8
+
+- type: socialEffect
+  id: MoodIsolated
+  name: mood-isolated-name
+  description: mood-isolated-desc
   effect: -10

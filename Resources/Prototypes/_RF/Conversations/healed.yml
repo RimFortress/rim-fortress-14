@@ -1,5 +1,6 @@
 - type: conversationScript
   id: ThankForHealing
+  parent: BaseDialog
   actors:
   - id: patient
     reqsFor:
@@ -17,6 +18,7 @@
 
 - type: conversationScript
   id: CheckOnPatient
+  parent: BaseDialog
   actors:
   - id: healer
   - id: patient

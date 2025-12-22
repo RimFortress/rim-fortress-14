@@ -5,6 +5,15 @@
   overlayColor: "#D3D3D3"
   compound: StartConversationCompound
   targetsQuery: Self # Stub for the ability to use this task as a passive
+  startPreconditions:
+  - !type:NeedLevelPrecondition
+    need: Socialization
+    thresholdId: Socialized
+    invert: true
+  - !type:NeedLevelPrecondition
+    need: Socialization
+    thresholdId: Overstimulated
+    invert: true
   finishPreconditions:
   - !type:InConversationPrecondition
 

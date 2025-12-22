@@ -26,6 +26,9 @@
       actors:
       - respondent
       proto: OpinionPoliteDialogue
+    - !type:ChangeNeedEffect
+      need: Socialization
+      amount: 10
     respondent:
     - !type:AddMoodEffect
       proto: MoodPleasantConversation
@@ -33,6 +36,9 @@
       actors:
       - initiator
       proto: OpinionPoliteDialogue
+    - !type:ChangeNeedEffect
+      need: Socialization
+      amount: 10
 
 - type: conversationScript
   id: Smalltalk01
@@ -109,6 +115,9 @@
     initiator:
     - !type:AddMoodEffect
       proto: MoodUnpleasantConversation
+    - !type:ChangeNeedEffect
+      need: Socialization
+      amount: 3
     respondent:
     - !type:AddMoodEffect
       proto: MoodConversationIrritated

@@ -85,3 +85,16 @@ mood-effect-exhausted-desc = I'm running on fumes. Even simple tasks feel overwh
 
 mood-effect-slept-on-floor-name = Slept On Floor
 mood-effect-slept-on-floor-desc = I had to sleep on the hard floor. My back aches from it.
+
+# Socialization
+mood-overstimulated-name = Overstimulated
+mood-overstimulated-desc = Too many people, too much noise. I need some space to clear my head.
+
+mood-socialized-name = Well-Socialized
+mood-socialized-desc = I've had plenty of good interactions with peoples. It feels nice to be part of a community.
+
+mood-lonely-name = Lonely
+mood-lonely-desc = I haven't talked to anyone in a while. The settlement feels empty and quiet.
+
+mood-isolated-name = Isolated
+mood-isolated-desc = Complete social isolation. The silence is starting to get to me.
