@@ -9,6 +9,49 @@
     - !type:HTNCompoundTask
       task: ConversationCompound
 
+  # Going to sleep on the bed if we are very tired
+  - preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Exhausted
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Bed
+    - !type:HTNCompoundTask
+      task: SleepCompound
+
+  # Or we sleep on the floor if there is no free bed
+  - preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      thresholdId: Exhausted
+    tasks:
+    - !type:HTNCompoundTask
+      task: SleepOnFloor
+
+  - preconditions:
+    - !type:HungryPrecondition
+      minHungerState: Starving
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Food
+        key: PickUpTarget
+    - !type:HTNCompoundTask
+      task: EatCompound
+
+  - preconditions:
+    - !type:ThirstyPrecondition
+      minThirstState: Parched
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Drink
+        key: PickUpTarget
+    - !type:HTNCompoundTask
+      task: DrinkCompound
+
   - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:RoutineTaskOperator

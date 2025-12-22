@@ -68,14 +68,3 @@
   tasks:
   - StartConversation
   - MentalBreakdown
-
-- type: npcJob
-  id: Needs
-  name: Needs
-  defaultPriority: 1
-  hidden: true
-  tasks:
-  - Sleep
-  - SleepOnFloor
-  - Eat
-  - Drink
