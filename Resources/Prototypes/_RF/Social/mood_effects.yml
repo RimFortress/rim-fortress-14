@@ -1,34 +1,4 @@
 - type: socialEffect
-  id: MoodSleptWell
-  name: mood-effect-slept-well-name
-  description: mood-effect-slept-well-desc
-  duration: 12h
-  effect: 10
-
-- type: socialEffect
-  id: MoodSleepDeprived
-  name: mood-effect-sleep-deprived-name
-  description: mood-effect-sleep-deprived-desc
-  duration: 24h
-  effect: -18
-
-- type: socialEffect
-  id: MoodInPain
-  name: mood-effect-in-pain-name
-  description: mood-effect-in-pain-desc
-  duration: 4h
-  effect: -10
-  maxEffect: -20
-
-- type: socialEffect
-  id: MoodWounded
-  name: mood-effect-wounded-name
-  description: mood-effect-wounded-desc
-  duration: 10h
-  effect: -5
-  maxEffect: -25
-
-- type: socialEffect
   id: MoodComfortableEnvironment
   name: mood-effect-comfortable-environment-name
   description: mood-effect-comfortable-environment-desc
@@ -43,14 +13,6 @@
   duration: 12h
   effect: -5
   maxEffect: -15
-
-- type: socialEffect
-  id: MoodSocialInteraction
-  name: mood-effect-social-interaction-name
-  description: mood-effect-social-interaction-desc
-  duration: 2h
-  effect: 4
-  maxEffect: 12
 
 # Food effects
 - type: socialEffect
@@ -228,3 +190,10 @@
   name: mood-effect-exhausted-name
   description: mood-effect-exhausted-desc
   effect: -20
+
+- type: socialEffect
+  id: MoodSleptOnFloor
+  name: mood-effect-slept-on-floor-name
+  description: mood-effect-slept-on-floor-desc
+  duration: 2h
+  effect: -10

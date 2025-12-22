@@ -1,23 +1,8 @@
-mood-effect-slept-well-name = Slept Well
-mood-effect-slept-well-desc = I had a good night's sleep. I feel rested and alert.
-
-mood-effect-sleep-deprived-name = Sleep Deprived
-mood-effect-sleep-deprived-desc = I haven't slept properly. Everything feels more difficult.
-
-mood-effect-in-pain-name = Pain
-mood-effect-in-pain-desc = I'm hurting. The pain is distracting and exhausting.
-
-mood-effect-wounded-name = Wounded
-mood-effect-wounded-desc = These injuries are serious. I feel weak and vulnerable.
-
 mood-effect-comfortable-environment-name = Comfortable Environment
 mood-effect-comfortable-environment-desc = This place feels safe and comfortable. I can relax here.
 
 mood-effect-uncomfortable-environment-name = Uncomfortable Environment
 mood-effect-uncomfortable-environment-desc = This environment is unpleasant. It's wearing on my nerves.
-
-mood-effect-social-interaction-name = Social Interaction
-mood-effect-social-interaction-desc = I had a pleasant conversation. Human connection feels good.
 
 # Food
 mood-effect-ate-rubbish-meal-name = Ate Rubbish Meal
@@ -85,6 +70,7 @@ mood-effect-funny-conversation-desc = That was hilarious! I'm still chuckling fr
 mood-effect-conversation-irritated-name = Irritated by Conversation
 mood-effect-conversation-irritated-desc = I wish they'd just leave me alone. I don't have patience for this chatter.
 
+# Sleep
 mood-effect-overslept-name = Overslept
 mood-effect-overslept-desc = I slept too long. My head feels foggy and I'm moving sluggishly.
 
@@ -96,3 +82,6 @@ mood-effect-tired-desc = I haven't had enough rest. Everything requires extra ef
 
 mood-effect-exhausted-name = Exhausted
 mood-effect-exhausted-desc = I'm running on fumes. Even simple tasks feel overwhelming right now.
+
+mood-effect-slept-on-floor-name = Slept On Floor
+mood-effect-slept-on-floor-desc = I had to sleep on the hard floor. My back aches from it.

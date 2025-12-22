@@ -64,3 +64,7 @@
       operator: !type:WakeUpOperator
     - !type:HTNPrimitiveTask
       operator: !type:UnbuckleOperator
+
+    - !type:HTNPrimitiveTask
+      operator: !type:AddMoodEffect
+        effect: MoodSleptOnFloor
