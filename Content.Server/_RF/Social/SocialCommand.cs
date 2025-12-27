@@ -10,7 +10,7 @@ using Robust.Shared.Toolshed;
 namespace Content.Server._RF.Social;
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class SocialCommands : ToolshedCommand
+public sealed class SocialCommand : ToolshedCommand
 {
     private SocialSystem? _social;
 

@@ -10,7 +10,7 @@ using Robust.Shared.Toolshed;
 namespace Content.Server._RF.GameTicking.Commands;
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class RfRuleCommands : ToolshedCommand
+public sealed class RfRuleCommand : ToolshedCommand
 {
     [Dependency] private readonly IRobustRandom _random = default!;
 

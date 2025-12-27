@@ -9,7 +9,7 @@ using Robust.Shared.Toolshed;
 namespace Content.Server._RF.Skills;
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class SkillsCommands : ToolshedCommand
+public sealed class SkillsCommand : ToolshedCommand
 {
     private SkillsSystem? _skills;
 
