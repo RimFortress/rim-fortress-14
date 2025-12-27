@@ -1,8 +1,14 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
+using Content.Shared._RF.Conversation.Components;
+using Content.Shared.Bed.Sleep;
 using Content.Shared.EntityEffects;
+using Content.Shared.Mobs;
+using Content.Shared.Mobs.Components;
+using Content.Shared.Weapons.Melee.Events;
+using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Conversation;
 
@@ -12,12 +18,36 @@ namespace Content.Shared._RF.Conversation;
 public abstract class SharedConversationSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly SharedTransformSystem _xform = default!;
 
-    private readonly List<(
-        ProtoId<ConversationScriptPrototype> Script,
-        Dictionary<string, EntityUid> Actors,
-        int Act,
-        int Line)> _conversations = new();
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<ConversationActorComponent, ComponentRemove>(OnRemove);
+        SubscribeLocalEvent<ConversationActorComponent, MobStateChangedEvent>(OnMobStateChanged);
+        SubscribeLocalEvent<ConversationActorComponent, AttackedEvent>(OnAttacked);
+    }
+
+    private void OnRemove(EntityUid uid, ConversationActorComponent component, ComponentRemove args)
+    {
+        foreach (var (_, actor) in component.Actors)
+        {
+            if (actor != uid)
+                RemComp<ConversationActorComponent>(actor);
+        }
+    }
+
+    private void OnMobStateChanged(EntityUid uid, ConversationActorComponent component, MobStateChangedEvent args)
+    {
+        if (args.NewMobState != MobState.Alive)
+            EndConversation(new(uid, component));
+    }
+
+    private void OnAttacked(EntityUid uid, ConversationActorComponent component, AttackedEvent args)
+    {
+        EndConversation(new(uid, component));
+    }
 
     /// <summary>
     /// Starts a conversation between entities
@@ -45,7 +75,7 @@ public abstract class SharedConversationSystem : EntitySystem
         if (!_prototype.TryIndex(protoId, out var script))
             return false;
 
-        uids = uids.Where(uid => !TryGetScript(uid, out _)).ToList();
+        uids = uids.Where(ValidateActor).ToList();
 
         if (uids.Count < script.Actors.Count)
             return false;
@@ -53,235 +83,138 @@ public abstract class SharedConversationSystem : EntitySystem
         if (!TryFindRoles(script, uids, out actors))
             return false;
 
-        _conversations.Add((protoId, actors, 0, 0));
+        var firstActor = actors.GetValueOrDefault(script.Actors.FirstOrDefault()?.Id ?? string.Empty);
+        var coords = FindConversationCoords(actors.Values.ToList());
+
+        if (!firstActor.IsValid())
+            return false;
+
+        foreach (var (id, uid) in actors)
+        {
+            var comp = EnsureComp<ConversationActorComponent>(uid);
+            comp.Script = protoId;
+            comp.Actors = actors;
+            comp.ActorId = id;
+            comp.NextActor = firstActor;
+            comp.NextMessage = script.Lines.First(x => x.ActorId == id).Message;
+            comp.ConversationCoords = coords;
+        }
+
         return true;
     }
 
-    /// <summary>
-    /// Returns the line of conversation that the entity should say.
-    /// </summary>
-    public bool TryGetLine(EntityUid uid, [NotNullWhen(true)] out string? line)
+    private bool ValidateActor(EntityUid uid)
     {
-        line = null;
-        return TryGetScript(uid, out var script) && TryGetLine(script.Value, uid, out line);
+        if (HasComp<ConversationActorComponent>(uid) || HasComp<SleepingComponent>(uid))
+            return false;
+
+        if (TryComp(uid, out MobStateComponent? mobState) && mobState.CurrentState != MobState.Alive)
+            return false;
+
+        return true;
+    }
+
+    private EntityCoordinates FindConversationCoords(List<EntityUid> uids)
+    {
+        var map = MapId.Nullspace;
+        var pos = Vector2.Zero;
+
+        foreach (var uid in uids)
+        {
+            map = _xform.GetMapId(uid);
+            pos += _xform.GetMapCoordinates(uid).Position;
+        }
+
+        var coords = _xform.ToCoordinates(new MapCoordinates(pos / uids.Count, map));
+        return coords;
     }
 
     /// <summary>
     /// Returns the line of conversation that the entity should say.
     /// </summary>
-    public bool TryGetLine(ProtoId<ConversationScriptPrototype> protoId, EntityUid uid, [NotNullWhen(true)] out string? line)
+    public bool TryGetLine(Entity<ConversationActorComponent?> ent, [NotNullWhen(true)] out string? line)
     {
         line = null;
-
-        if (!_prototype.TryIndex(protoId, out var script))
-            return false;
-
-        foreach (var (proto, actors, act, lineInd) in _conversations.ToList())
-        {
-            if (protoId != proto || !script.Lines.TryGetValue(act, out var lines))
-                continue;
-
-            // find the ID of the actor in the conversation for the entity
-            var actorId = actors.FirstOrNull(x => x.Value == uid)?.Key;
-
-            if (actorId == null)
-                return false;
-
-            var i = 0;
-            foreach (var (actor, locId) in lines)
-            {
-                if (i == lineInd)
-                {
-                    if (actor != actorId)
-                        return false;
-
-                    line = Loc.GetString(locId);
-                    return true;
-                }
-
-                i++;
-            }
-
-            return false;
-        }
-
-        return false;
+        return Resolve(ent, ref ent.Comp) && Loc.TryGetString(ent.Comp.NextMessage ?? string.Empty, out line);
     }
 
     /// <summary>
     /// Moves to the next line of conversation in which the entity participates.
     /// </summary>
-    protected void ContinueConversation(ProtoId<ConversationScriptPrototype> protoId, EntityUid uid)
+    protected void ContinueConversation(Entity<ConversationActorComponent?> ent)
     {
-        if (!_prototype.TryIndex(protoId, out var script))
+        if (!Resolve(ent, ref ent.Comp)
+            || ent.Comp.NextActor != ent.Owner
+            || !_prototype.Resolve(ent.Comp.Script, out var script))
             return;
 
-        for (var i = 0; i < _conversations.Count; i++)
-        {
-            var conv = _conversations[i];
+        // Find current conversation line
+        var index = script.Lines.FindIndex(x =>
+            x.ActorId == ent.Comp.ActorId && x.Message == ent.Comp.NextMessage);
 
-            if (protoId != conv.Script
-                || !conv.Actors.ContainsValue(uid)
-                || !script.Lines.TryGetValue(conv.Act, out var lines))
+        if (index == -1 || index + 1 >= script.Lines.Count)
+        {
+            EndConversation(ent, true);
+            return;
+        }
+
+        // Find next message
+        ent.Comp.NextMessage = null;
+
+        for (var i = index + 1; i < script.Lines.Count; i++)
+        {
+            if (script.Lines[i].ActorId != ent.Comp.ActorId)
                 continue;
 
-            var newAct = conv.Act;
-            var newLine = conv.Line + 1;
+            ent.Comp.NextMessage = script.Lines[i].Message;
+            break;
+        }
 
-            if (newLine >= lines.Count)
-            {
-                newLine = 0;
-                newAct++;
-            }
+        var nextLine = script.Lines[index + 1];
+        var nextActor = ent.Comp.Actors[nextLine.ActorId];
 
-            _conversations.RemoveAt(i);
-
-            // check if the dialog is complete
-            if (newAct < script.Lines.Count)
-            {
-                _conversations.Add((protoId, conv.Actors, newAct, newLine));
-                return;
-            }
-
-            // apply conversation completion effects
-            foreach (var (id, effects) in script.Effects)
-            {
-                if (!conv.Actors.TryGetValue(id, out var actor))
-                    continue;
-
-                foreach (var effect in effects)
-                {
-                    effect.Effect(new EntityEffectConversationArgs(actor, conv.Actors, EntityManager));
-                }
-            }
-
-            return;
+        // Update next line
+        foreach (var (_, uid) in ent.Comp.Actors)
+        {
+            if (TryComp(uid, out ConversationActorComponent? comp))
+                comp.NextActor = nextActor;
         }
     }
 
     /// <summary>
     /// Ends the conversation in which the entity participates
     /// </summary>
-    public void EndConversation(EntityUid uid, bool applyEffects = false)
+    public void EndConversation(Entity<ConversationActorComponent?> ent, bool applyEffects = false)
     {
-        if (!TryGetScript(uid, out var script)
-            || !_prototype.TryIndex(script, out var proto))
+        if (!Resolve(ent, ref ent.Comp) || !_prototype.TryIndex(ent.Comp.Script, out var proto))
             return;
 
-        for (var i = 0; i < _conversations.Count; i++)
+        RemCompDeferred<ConversationActorComponent>(ent);
+
+        if (!applyEffects)
+            return;
+
+        foreach (var (id, uid) in ent.Comp.Actors)
         {
-            if (_conversations[i].Script != script || !_conversations[i].Actors.ContainsValue(uid))
+            if (!proto.Effects.TryGetValue(id, out var effects))
                 continue;
 
-            if (!applyEffects)
-            {
-                _conversations.RemoveAt(i);
-                return;
-            }
-
             // apply conversation completion effects
-            foreach (var (id, effects) in proto.Effects)
+            var args = new EntityEffectConversationArgs(uid, ent.Comp.Actors, EntityManager);
+
+            foreach (var effect in effects)
             {
-                if (!_conversations[i].Actors.TryGetValue(id, out var actor))
-                    continue;
-
-                var args = new EntityEffectConversationArgs(actor, _conversations[i].Actors, EntityManager);
-
-                foreach (var effect in effects)
-                {
-                    if (effect.ShouldApply(args))
-                        effect.Effect(args);
-                }
+                if (effect.ShouldApply(args))
+                    effect.Effect(args);
             }
-
-            _conversations.RemoveAt(i);
-            return;
         }
     }
 
     /// <summary>
     /// Checks whether the entity is next in line in the conversation
     /// </summary>
-    public bool IsNextInConversation(EntityUid uid)
-    {
-        foreach (var (protoId, actors, act, lineInd) in _conversations)
-        {
-            var roleId = actors.FirstOrNull(x => x.Value == uid)?.Key;
-
-            if (roleId == null)
-                continue;
-
-            if (!_prototype.TryIndex(protoId, out var script)
-                || !script.Lines.TryGetValue(act, out var lines))
-                return false;
-
-            var i = 0;
-            foreach (var (actor, _) in lines)
-            {
-                if (i == lineInd)
-                    return actor == roleId;
-
-                i++;
-            }
-
-            return false;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Returns the role ID of the entity in the conversation in which it participates
-    /// </summary>
-    public bool TryGetRole(EntityUid uid, [NotNullWhen(true)] out string? roleId)
-    {
-        roleId = null;
-
-        foreach (var (_, actors, _, _) in _conversations)
-        {
-            roleId = actors.FirstOrNull(x => x.Value == uid)?.Key;
-
-            if (roleId != null)
-                return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Returns the conversation script in which the entity participates.
-    /// </summary>
-    public bool TryGetScript(EntityUid uid, [NotNullWhen(true)] out ProtoId<ConversationScriptPrototype>? script)
-    {
-        script = null;
-
-        foreach (var (protoId, actors, _, _) in _conversations)
-        {
-            if (!actors.ContainsValue(uid))
-                continue;
-
-            script = protoId;
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool TryGetActors(EntityUid uid, [NotNullWhen(true)] out List<EntityUid>? actors)
-    {
-        actors = null;
-
-        foreach (var (_, roles, _, _) in _conversations)
-        {
-            if (!roles.ContainsValue(uid))
-                continue;
-
-            actors = roles.Values.ToList();
-            return true;
-        }
-
-        return false;
-    }
+    public bool IsNextInConversation(Entity<ConversationActorComponent?> ent)
+        => Resolve(ent, ref ent.Comp) && ent.Comp.NextActor == ent.Owner;
 
     /// <summary>
     /// Attempts to assign conversation roles to entities according to all actor requirements

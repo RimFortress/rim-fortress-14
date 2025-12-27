@@ -1,8 +1,8 @@
 - type: htnCompound
   id: ConversationCompound
   branches:
+  # Waiting until it is our turn to speak
   - preconditions:
-    - !type:InConversationPrecondition
     - !type:NextInConversationPrecondition
       invert: true
     tasks:
@@ -24,13 +24,6 @@
     - !type:HTNPrimitiveTask
       operator: !type:FaceToCoordinates
 
-    # Waiting until it is our turn to speak
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitWhileOperator
-        preconditions:
-        - !type:NextInConversationPrecondition
-          invert: true
-
     # Random waiting time to make the dialogue look more natural
     # and give the player time to read the lines
     - !type:HTNPrimitiveTask
@@ -43,8 +36,4 @@
         key: Wait
 
     - !type:HTNPrimitiveTask
-      operator: !type:GetConversationLineOperator
-        key: Message
-    - !type:HTNPrimitiveTask
-      operator: !type:SayKeyOperator
-        key: Message
+      operator: !type:SayConversationLineOperator

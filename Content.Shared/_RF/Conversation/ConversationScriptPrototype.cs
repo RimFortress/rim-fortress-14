@@ -38,7 +38,17 @@ public sealed class ConversationScriptPrototype : IPrototype, IInheritingPrototy
     /// List of conversation lines for each actor
     /// </summary>
     [DataField]
-    public List<Dictionary<string, LocId>> Lines = new();
+    public List<ConversationLine> Lines = new();
+}
+
+[DataDefinition]
+public sealed partial class ConversationLine
+{
+    [DataField("id", required: true)]
+    public string ActorId;
+
+    [DataField("msg", required: true)]
+    public LocId Message;
 }
 
 [DataDefinition]

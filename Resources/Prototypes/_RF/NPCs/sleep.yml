@@ -1,7 +1,11 @@
 - type: htnCompound
   id: SleepCompound
   branches:
+  # Going to sleep on the bed
   - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Bed
     - !type:HTNPrimitiveTask
       operator: !type:EntityCoordinatesOperator
         targetKey: Target
@@ -14,23 +18,7 @@
     - !type:HTNPrimitiveTask
       operator: !type:SleepOperator
 
-    # Wait until we get enough sleep
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitWhileOperator
-        preconditions:
-        - !type:NeedLevelPrecondition
-          need: Sleep
-          lessThan: 70
-
-    # Wake up samurai
-    - !type:HTNPrimitiveTask
-      operator: !type:WakeUpOperator
-    - !type:HTNPrimitiveTask
-      operator: !type:UnbuckleOperator
-
-- type: htnCompound
-  id: SleepOnFloorCompound
-  branches:
+  # Or we sleep on the floor if there is no free bed
   - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:PickAccessibleOperator
@@ -42,24 +30,21 @@
     - !type:HTNPrimitiveTask
       operator: !type:SleepOperator
 
-    # Wait until we get enough sleep
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitWhileOperator
-        preconditions:
-        - !type:NeedLevelPrecondition
-          need: Sleep
-          thresholdId: Rested
-          invert: true
-        - !type:NeedLevelPrecondition
-          need: Sleep
-          thresholdId: Overslept
-          invert: true
-
+- type: htnCompound
+  id: WakeUpCompound
+  branches:
+  - preconditions:
+    - !type:BuckledPrecondition
+      isBuckled: true
+    tasks:
     - !type:HTNPrimitiveTask
       operator: !type:WakeUpOperator
     - !type:HTNPrimitiveTask
       operator: !type:UnbuckleOperator
 
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:WakeUpOperator
     - !type:HTNPrimitiveTask
       operator: !type:AddMoodEffectOperator
         effect: MoodSleptOnFloor

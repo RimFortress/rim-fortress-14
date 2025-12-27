@@ -484,6 +484,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         htn.RootTask = new HTNCompoundTask { Task = proto.Compound };
         _htn.Replan(htn);
 
+        RaiseLocalEvent(entity, new NpcTaskGiven(proto, target, coords));
+
         // We notify only users who can control NPCs of the change,
         // so that players cannot know about tasks of other players
         foreach (var uid in control.CanControl)
@@ -549,7 +551,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             RaiseNetworkEvent(new NpcTaskFinishMessage(proto.ID, GetNetEntity(npc)), uid);
         }
 
-        RaiseLocalEvent(npc, new NpcTaskFinished(failed, proto, target));
+        RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, failed));
     }
 
     /// <summary>
@@ -862,27 +864,24 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 /// <summary>
 /// Raised when an NPC has completed its current task
 /// </summary>
-[Serializable]
-public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task, EntityUid? target) : EntityEventArgs
-{
-    /// <summary>
-    /// Task failed or completed successfully
-    /// </summary>
-    public bool Failed = failed;
-
-    public ProtoId<NpcTaskPrototype> Task = task;
-
-    public EntityUid? Target = target;
-}
+public record struct NpcTaskFinished(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, bool Failed);
 
 /// <summary>
-/// Called when a user who can control the entity is added
+/// Raised when an NPC receives a task
+/// </summary>
+/// <param name="Task">Task prototype</param>
+/// <param name="Target">The target entity of the task</param>
+/// <param name="TargetCoordinates">Target coordinates of the task</param>
+public record struct NpcTaskGiven(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, EntityCoordinates? TargetCoordinates);
+
+/// <summary>
+/// Raised when a user who can control the entity is added
 /// </summary>
 /// <param name="User">The user who can now control this entity</param>
-public readonly struct NpcControllerAdded(EntityUid User);
+public record struct NpcControllerAdded(EntityUid User);
 
 /// <summary>
-/// Called when the user who can control this entity is removed
+/// Raised when the user who can control this entity is removed
 /// </summary>
 /// <param name="User">User who can no longer control this entity</param>
-public readonly struct NpcControllerRemoved(EntityUid User);
+public record struct NpcControllerRemoved(EntityUid User);

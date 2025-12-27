@@ -6,7 +6,6 @@ using Content.Server._RF.NPC.Components;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared._RF.Conversation;
-using Content.Shared.Bed.Sleep;
 using Robust.Server.GameObjects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
@@ -55,8 +54,7 @@ public sealed partial class StartConversationOperator : HTNOperator
 
         foreach (var ent in _lookup.GetEntitiesInRange<ControllableNpcComponent>(ownerCoords, radius))
         {
-            if (ent.Comp.CanControl.Any(x => canControl.Contains(x))
-                && !_conversation.TryGetScript(ent, out _))
+            if (ent.Comp.CanControl.Any(x => canControl.Contains(x)))
                 entities.Add(ent);
         }
 
@@ -72,11 +70,11 @@ public sealed partial class StartConversationOperator : HTNOperator
             {
                 var proto = _random.PickAndTake(prototype);
 
-                if (_conversation.TryStartConversation(proto, entities, out _))
+                if (_conversation.TryStartConversation(proto, entities))
                     return (true, null);
             }
         }
-        else if (!_conversation.TryStartConversation(script, entities, out _))
+        else if (!_conversation.TryStartConversation(script, entities))
             return (false, null);
 
         return (false, null);

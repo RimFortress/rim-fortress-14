@@ -2,56 +2,38 @@
   id: RfIdleCompound
   branches:
   - preconditions:
-    - !type:InConversationPrecondition
-    - !type:ActorsHasTaskPrecondition
-      invert: true
+    - !type:HasComponentPrecondition
+      components:
+      - type: ConversationActor
     tasks:
     - !type:HTNCompoundTask
       task: ConversationCompound
 
-  - preconditions:
-    - !type:InConversationPrecondition
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:EndConversationOperator
-
-  # Going to sleep on the bed if we are very tired
+  # Sleep if tired
   - preconditions:
     - !type:NeedLevelPrecondition
       need: Sleep
       lessThan: 30
-    - !type:RandomPrecondition
-      chance: 0.1
     tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:UtilityOperator
-        proto: Bed
     - !type:HTNCompoundTask
       task: SleepCompound
 
-  # Or we sleep on the floor if there is no free bed
+  # Wake up samurai
   - preconditions:
+    - !type:HasComponentPrecondition
+      components:
+      - type: Sleeping
     - !type:NeedLevelPrecondition
       need: Sleep
-      lessThan: 30
-    - !type:RandomPrecondition
-      chance: 0.1
+      moreThan: 70
     tasks:
     - !type:HTNCompoundTask
-      task: SleepOnFloorCompound
+      task: WakeUpCompound
 
   # Looking for food if we are hungry
   - preconditions:
-    - !type:OrPrecondition
-      preconditions:
-      - !type:HungryPrecondition
-        minHungerState: Starving
-      - !type:AndPrecondition
-        preconditions:
-        - !type:HungryPrecondition
-          minHungerState: Peckish
-        - !type:RandomPrecondition
-          chance: 0.1
+    - !type:HungryPrecondition
+      minHungerState: Starving
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator
@@ -62,16 +44,8 @@
 
   # Looking for a drink if we're thirsty
   - preconditions:
-    - !type:OrPrecondition
-      preconditions:
-      - !type:ThirstyPrecondition
-        minThirstState: Parched
-      - !type:AndPrecondition
-        preconditions:
-        - !type:ThirstyPrecondition
-          minThirstState: Thirsty
-        - !type:RandomPrecondition
-          chance: 0.1
+    - !type:ThirstyPrecondition
+      minThirstState: Parched
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator

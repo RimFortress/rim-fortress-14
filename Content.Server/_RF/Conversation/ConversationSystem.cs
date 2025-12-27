@@ -1,5 +1,7 @@
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Chat.Systems;
 using Content.Shared._RF.Conversation;
+using Content.Shared._RF.Conversation.Components;
 
 namespace Content.Server._RF.Conversation;
 
@@ -12,18 +14,21 @@ public sealed class ConversationSystem : SharedConversationSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<EntitySpokeEvent>(OnSpeak);
+        SubscribeLocalEvent<ConversationActorComponent, NpcTaskGiven>(OnTaskGiven);
     }
 
-    private void OnSpeak(EntitySpokeEvent ev)
+    private void OnTaskGiven(EntityUid uid, ConversationActorComponent component, NpcTaskGiven args)
     {
-        if (!TryGetScript(ev.Source, out var script)
-            || !TryGetLine(script.Value, ev.Source, out var line))
-            return;
+        EndConversation(new(uid, component));
+    }
 
-        if (ev.Message == _chat.TransformSpeech(ev.Source, line.Trim()))
-            ContinueConversation(script.Value, ev.Source);
-        else
-            EndConversation(ev.Source);
+    public bool SayLine(Entity<ConversationActorComponent?> ent, bool hidden = false)
+    {
+        if (!TryGetLine(ent, out var line))
+            return false;
+
+        _chat.TrySendInGameICMessage(ent, line, InGameICChatType.Speak, hideChat: hidden, hideLog: hidden);
+        ContinueConversation(ent);
+        return true;
     }
 }

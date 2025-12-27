@@ -45,29 +45,29 @@
   parent: BaseDialog
   lines:
   - initiator: conversation-smalltalk01-line1-a
-    responder: conversation-smalltalk01-line1-b
+  - responder: conversation-smalltalk01-line1-b
   - initiator: conversation-smalltalk01-line2-a
-    responder: conversation-smalltalk01-line2-b
+  - responder: conversation-smalltalk01-line2-b
 
 - type: conversationScript
   id: Smalltalk02
   parent: BaseDialog
   lines:
   - initiator: conversation-smalltalk02-line1-a
-    responder: conversation-smalltalk02-line1-b
+  - responder: conversation-smalltalk02-line1-b
   - initiator: conversation-smalltalk02-line2-a
-    responder: conversation-smalltalk02-line2-b
+  - responder: conversation-smalltalk02-line2-b
   - initiator: conversation-smalltalk02-line3-a
-    responder: conversation-smalltalk02-line3-b
+  - responder: conversation-smalltalk02-line3-b
 
 - type: conversationScript
   id: GreetingCasual
   parent: BaseDialog
   lines:
   - initiator: conversation-greeting-casual-hello
-    responder: conversation-greeting-casual-response
+  - responder: conversation-greeting-casual-response
   - initiator: conversation-greeting-casual-how-are-you
-    responder: conversation-greeting-casual-im-fine
+  - responder: conversation-greeting-casual-im-fine
 
 - type: conversationScript
   id: MorningGreeting
@@ -93,7 +93,7 @@
         moreThan: -5
   lines:
   - initiator: conversation-morning-greeting-initiator
-    responder: conversation-morning-greeting-responder
+  - responder: conversation-morning-greeting-responder
 
 # Bad mood
 - type: conversationScript
@@ -123,7 +123,7 @@
       proto: MoodConversationIrritated
   lines:
   - initiator: conversation-smalltalkrejected-initiator-1
-    respondent: conversation-smalltalkrejected-respondent-1
+  - respondent: conversation-smalltalkrejected-respondent-1
 
 - type: conversationScript
   id: SmalltalkIgnored
@@ -149,9 +149,9 @@
       proto: MoodConversationIrritated
   lines:
   - initiator: conversation-smalltalkignored-initiator-1
-    respondent: conversation-smalltalkignored-respondent-1
+  - respondent: conversation-smalltalkignored-respondent-1
   - initiator: conversation-smalltalkignored-initiator-2
-    respondent: conversation-smalltalkignored-respondent-2
+  - respondent: conversation-smalltalkignored-respondent-2
 
 - type: conversationScript
   id: SmalltalkRude
@@ -181,6 +181,6 @@
       proto: MoodConversationIrritated
   lines:
   - initiator: conversation-smalltalkrude-initiator-1
-    respondent: conversation-smalltalkrude-respondent-1
+  - respondent: conversation-smalltalkrude-respondent-1
   - initiator: conversation-smalltalkrude-initiator-2
-    respondent: conversation-smalltalkrude-respondent-2
+  - respondent: conversation-smalltalkrude-respondent-2

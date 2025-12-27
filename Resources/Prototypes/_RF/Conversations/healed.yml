@@ -12,9 +12,9 @@
   - id: healer
   lines:
   - patient: conversation-thankforhealing-patient-1
-    healer: conversation-thankforhealing-healer-1
+  - healer: conversation-thankforhealing-healer-1
   - patient: conversation-thankforhealing-patient-2
-    healer: conversation-thankforhealing-healer-2
+  - healer: conversation-thankforhealing-healer-2
 
 - type: conversationScript
   id: CheckOnPatient
@@ -30,6 +30,6 @@
         - OpinionHealed
   lines:
   - healer: conversation-checkonpatient-healer-1
-    patient: conversation-checkonpatient-patient-1
+  - patient: conversation-checkonpatient-patient-1
   - healer: conversation-checkonpatient-healer-2
-    patient: conversation-checkonpatient-patient-2
+  - patient: conversation-checkonpatient-patient-2

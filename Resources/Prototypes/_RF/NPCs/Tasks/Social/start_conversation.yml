@@ -15,7 +15,9 @@
     thresholdId: Overstimulated
     invert: true
   finishPreconditions:
-  - !type:InConversationPrecondition
+  - !type:HasComponentPrecondition
+    components:
+    - type: ConversationActor
 
 - type: htnCompound
   id: StartConversationCompound
