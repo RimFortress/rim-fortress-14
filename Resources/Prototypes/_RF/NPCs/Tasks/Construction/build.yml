@@ -110,7 +110,7 @@
   - !type:RfComponentFilter
     components:
       - type: CommonConstructionGhost
-        constructionProto: BananiumHorn
+        constructionProto: MeatSpike
       - type: Construction
         graph: FloorBananium
         node: BananiumFloor

@@ -20,7 +20,7 @@
   id: Food
   query:
   - !type:OwnedQuery
-  - !type:ComponentFilter
+  - !type:RfComponentFilter
     components:
     - type: Edible
     invert: true
@@ -42,7 +42,7 @@
   id: Drink
   query:
   - !type:OwnedQuery
-  - !type:ComponentFilter
+  - !type:RfComponentFilter
     components:
     - type: Edible
     invert: true

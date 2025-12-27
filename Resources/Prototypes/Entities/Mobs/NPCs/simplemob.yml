@@ -106,7 +106,11 @@
   - type: FloatingVisuals
   # RimFortress Start
   - type: HungerOverride
-    fullDecayTime: 14h
+    thresholdDecayTime:
+      Overfed: 3h
+      Okay: 6h
+      Peckish: 4h
+      Starving: 5h
   - type: ThirstOverride
     fullDecayTime: 10h
   # RimFortress End

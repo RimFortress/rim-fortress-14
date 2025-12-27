@@ -45,11 +45,6 @@
   - id: Isolated
     value: 20
     decayTime: 4h
-  thresholdDecayTime:
-    Overstimulated: 2h
-    Socialized: 4h
-    Lonely: 2h
-    Isolated: 4h
   roundstartRandomize:
     min: 70
     max: 80
