@@ -1,7 +1,7 @@
 using Content.Shared.Alert;
 using Content.Shared.Destructible.Thresholds;
-using Content.Shared.StatusIcon;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Needs;
 
@@ -53,7 +53,7 @@ public sealed partial class NeedPrototype : IPrototype
     /// Entity status icons for each threshold of need satisfaction
     /// </summary>
     [DataField]
-    public Dictionary<string, ProtoId<SatiationIconPrototype>> ThresholdStatusIcons = new();
+    public Dictionary<string, SpriteSpecifier> ThresholdIcons = new();
 
     /// <summary>
     /// The time between each threshold update

@@ -21,8 +21,14 @@ public sealed partial class NeedLevelPrecondition : InvertiblePrecondition
     /// <summary>
     /// ID of the threshold to pass the check
     /// </summary>
-    [DataField(required: true)]
-    public string ThresholdId;
+    [DataField]
+    public string? ThresholdId;
+
+    [DataField]
+    public float? MoreThan;
+
+    [DataField]
+    public float? LessThan;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
@@ -33,6 +39,11 @@ public sealed partial class NeedLevelPrecondition : InvertiblePrecondition
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
-        return _needs.TryGetThreshold(owner, Need, out var threshold) && threshold == ThresholdId;
+        var level = _needs.GetValue(owner, Need);
+
+        if (ThresholdId != null && (!_needs.TryGetThreshold(owner, Need, out var threshold) || threshold != ThresholdId))
+            return false;
+
+        return (MoreThan == null || level > MoreThan) && (LessThan == null || level < LessThan);
     }
 }

@@ -20,12 +20,7 @@
         preconditions:
         - !type:NeedLevelPrecondition
           need: Sleep
-          thresholdId: Rested
-          invert: true
-        - !type:NeedLevelPrecondition
-          need: Sleep
-          thresholdId: Overslept
-          invert: true
+          lessThan: 70
 
     # Wake up samurai
     - !type:HTNPrimitiveTask

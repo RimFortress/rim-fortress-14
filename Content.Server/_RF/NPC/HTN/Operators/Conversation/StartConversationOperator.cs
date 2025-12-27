@@ -6,6 +6,7 @@ using Content.Server._RF.NPC.Components;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
 using Content.Shared._RF.Conversation;
+using Content.Shared.Bed.Sleep;
 using Robust.Server.GameObjects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;

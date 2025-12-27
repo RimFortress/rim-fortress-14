@@ -10,10 +10,16 @@
     Rested: 6h
     Tired: 3h
     Exhausted: 2h
-  thresholdStatusIcons:
-    Overslept: SleepIconOverslept
-    Tired: SleepIconTired
-    Exhausted: SleepIconExhausted
+  thresholdIcons:
+    Overslept:
+      sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
+      state: overslept
+    Tired:
+      sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
+      state: tired
+    Exhausted:
+      sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
+      state: exhausted
   roundstartRandomize:
     min: 70
     max: 85

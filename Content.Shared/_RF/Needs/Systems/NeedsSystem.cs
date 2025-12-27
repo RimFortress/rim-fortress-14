@@ -3,11 +3,11 @@ using System.Linq;
 using Content.Shared._RF.Needs.Components;
 using Content.Shared._RF.World;
 using Content.Shared.Alert;
-using Content.Shared.StatusIcon.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Needs.Systems;
 
@@ -28,7 +28,6 @@ public sealed class NeedsSystem : EntitySystem
     {
         SubscribeLocalEvent<NeedsComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<NeedsComponent, ComponentShutdown>(OnShutdown);
-        SubscribeLocalEvent<NeedsComponent, GetStatusIconsEvent>(OnGetStatusIcons);
     }
 
     #region Events
@@ -57,19 +56,6 @@ public sealed class NeedsSystem : EntitySystem
         {
             if (_prototype.Index(need.Id).AlertCategory is { } category)
                 _alerts.ClearAlertCategory(uid, category);
-        }
-    }
-
-    private void OnGetStatusIcons(Entity<NeedsComponent> ent, ref GetStatusIconsEvent args)
-    {
-        foreach (var data in ent.Comp.Needs)
-        {
-            if (!_prototype.Resolve(data.Id, out var proto)
-                || !TryGetThreshold(ent.Owner, data.Id, out var threshold)
-                || !proto.ThresholdStatusIcons.TryGetValue(threshold, out var statusIcon))
-                continue;
-
-            args.StatusIcons.Add(_prototype.Index(statusIcon));
         }
     }
 
@@ -153,6 +139,20 @@ public sealed class NeedsSystem : EntitySystem
 
         locale = null;
         return false;
+    }
+
+    [PublicAPI]
+    public bool TryGetNeedIcon(
+        Entity<NeedsComponent?> ent,
+        ProtoId<NeedPrototype> protoId,
+        [NotNullWhen(true)] out SpriteSpecifier? icon)
+    {
+        icon = null;
+
+        return Resolve(ent, ref ent.Comp)
+               && _prototype.Resolve(protoId, out var proto)
+               && TryGetThreshold(ent, protoId, out var threshold)
+               && proto.ThresholdIcons.TryGetValue(threshold, out icon);
     }
 
     /// <summary>

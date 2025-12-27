@@ -24,6 +24,9 @@ mood-effect-peckish-desc = I'm starting to feel a bit hungry. Could use a snack 
 mood-effect-starving-name = Starving
 mood-effect-starving-desc = I'm weak from hunger. This is becoming dangerous.
 
+mood-effect-hunger-okay-name = Not Hungry
+mood-effect-hunger-okay-desc = I'm not hungry. My energy levels feel stable.
+
 mood-effect-overfed-name = Overfed
 mood-effect-overfed-desc = I ate too much. My stomach feels uncomfortably full.
 
@@ -33,6 +36,9 @@ mood-effect-thirsty-desc = My mouth is dry. I should get a drink.
 
 mood-effect-parched-name = Parched
 mood-effect-parched-desc = I'm desperately thirsty. Dehydration is setting in.
+
+mood-effect-thirst-okay-name = Not Thirsty
+mood-effect-thirst-okay-desc = I'm properly hydrated. No need for a drink right now.
 
 mood-effect-overhydrated-name = Overhydrated
 mood-effect-overhydrated-desc = I drank too much water. I feel bloated and uncomfortable.

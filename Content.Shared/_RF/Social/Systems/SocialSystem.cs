@@ -61,20 +61,32 @@ public sealed class SocialSystem : EntitySystem
         args.State = new SocialComponentState(ent.Comp.MoodEffects, opinions);
     }
 
-    private void AddEffect(
+    private bool AddEffect(
         Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> effects,
         ProtoId<SocialEffectPrototype> protoId)
     {
         if (!_prototype.TryIndex(protoId, out var proto))
-            return;
+            return false;
 
         if (effects.ContainsKey(protoId))
         {
             effects[protoId] += _world.FromWorldTime(proto.Duration);
-            return;
+            return true;
+        }
+
+        foreach (var effect in proto.ConflictWith)
+        {
+            if (effect == protoId || !effects.ContainsKey(effect))
+                continue;
+
+            if (!proto.RemoveWhenConflict)
+                return false;
+
+            effects.Remove(effect);
         }
 
         effects[protoId] = _timing.CurTime + _world.FromWorldTime(proto.Duration);
+        return true;
     }
 
     private int GetEffect(Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> effects)
@@ -182,13 +194,13 @@ public sealed class SocialSystem : EntitySystem
     /// <summary>
     /// Adds an effect on the entity's mood
     /// </summary>
-    public void AddMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
+    public bool AddMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp))
-            return;
+        if (!Resolve(ent, ref ent.Comp) || !AddEffect(ent.Comp.MoodEffects, protoId))
+            return false;
 
-        AddEffect(ent.Comp.MoodEffects, protoId);
         Dirty(ent);
+        return true;
     }
 
     public void RemoveMoodEffect(Entity<SocialComponent?> ent, List<ProtoId<SocialEffectPrototype>> effects)
@@ -227,16 +239,16 @@ public sealed class SocialSystem : EntitySystem
     /// <summary>
     /// Adds an effect on the opinion of one entity to another
     /// </summary>
-    public void AddOpinionEffect(
+    public bool AddOpinionEffect(
         Entity<SocialComponent?> ent,
         EntityUid other,
         ProtoId<SocialEffectPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp) || ent.Owner == other)
-            return;
+        if (!Resolve(ent, ref ent.Comp) || !AddEffect(ent.Comp.OpinionEffects.GetOrNew(other), protoId))
+            return false;
 
-        AddEffect(ent.Comp.OpinionEffects.GetOrNew(other), protoId);
         Dirty(ent);
+        return true;
     }
 
     /// <summary>

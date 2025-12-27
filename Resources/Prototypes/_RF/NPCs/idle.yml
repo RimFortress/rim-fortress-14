@@ -9,11 +9,19 @@
     - !type:HTNCompoundTask
       task: ConversationCompound
 
+  - preconditions:
+    - !type:InConversationPrecondition
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:EndConversationOperator
+
   # Going to sleep on the bed if we are very tired
   - preconditions:
     - !type:NeedLevelPrecondition
       need: Sleep
-      thresholdId: Exhausted
+      lessThan: 30
+    - !type:RandomPrecondition
+      chance: 0.1
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator
@@ -25,15 +33,25 @@
   - preconditions:
     - !type:NeedLevelPrecondition
       need: Sleep
-      thresholdId: Exhausted
+      lessThan: 30
+    - !type:RandomPrecondition
+      chance: 0.1
     tasks:
     - !type:HTNCompoundTask
-      task: SleepOnFloor
+      task: SleepOnFloorCompound
 
   # Looking for food if we are hungry
   - preconditions:
-    - !type:HungryPrecondition
-      minHungerState: Starving
+    - !type:OrPrecondition
+      preconditions:
+      - !type:HungryPrecondition
+        minHungerState: Starving
+      - !type:AndPrecondition
+        preconditions:
+        - !type:HungryPrecondition
+          minHungerState: Peckish
+        - !type:RandomPrecondition
+          chance: 0.1
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator
@@ -44,8 +62,16 @@
 
   # Looking for a drink if we're thirsty
   - preconditions:
-    - !type:ThirstyPrecondition
-      minThirstState: Parched
+    - !type:OrPrecondition
+      preconditions:
+      - !type:ThirstyPrecondition
+        minThirstState: Parched
+      - !type:AndPrecondition
+        preconditions:
+        - !type:ThirstyPrecondition
+          minThirstState: Thirsty
+        - !type:RandomPrecondition
+          chance: 0.1
     tasks:
     - !type:HTNPrimitiveTask
       operator: !type:UtilityOperator

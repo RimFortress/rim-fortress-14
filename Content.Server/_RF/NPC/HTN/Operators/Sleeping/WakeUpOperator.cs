@@ -31,9 +31,6 @@ public sealed partial class WakeUpOperator : HTNOperator
         if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var uid, _entity))
             return HTNOperatorStatus.Failed;
 
-        if (!_entity.HasComponent<SleepingComponent>(uid))
-            return HTNOperatorStatus.Finished;
-
         var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
         return !_entity.HasComponent<SleepingComponent>(uid)
                || _sleeping.TryWaking(uid, user: uid != owner ? owner : null)

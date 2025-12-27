@@ -245,41 +245,15 @@
   - type: ChangeMoodOnHunger
     effects:
       Overfed: [MoodOverfed]
+      Okay: [MoodHungerOkay]
       Peckish: [MoodPeckish]
       Starving: [MoodStarving]
-    removeEffects:
-      Overfed:
-      - MoodPeckish
-      - MoodStarving
-      Okay:
-      - MoodOverfed
-      - MoodPeckish
-      - MoodStarving
-      Peckish:
-      - MoodOverfed
-      - MoodStarving
-      Starving:
-      - MoodPeckish
-      - MoodOverfed
   - type: ChangeMoodOnThirst
     effects:
       Parched: [MoodParched]
+      Okay: [MoodThirstOkay]
       Thirsty: [MoodThirsty]
       Overhydrated: [MoodOverhydrated]
-    removeEffects:
-      Parched:
-      - MoodThirsty
-      - MoodOverhydrated
-      Thirsty:
-      - MoodParched
-      - MoodOverhydrated
-      Okay:
-      - MoodThirsty
-      - MoodParched
-      - MoodOverhydrated
-      Overhydrated:
-      - MoodThirsty
-      - MoodParched
   - type: ChangeMoodOnAte
     effects:
       MoodAteRubbishMeal:
@@ -324,27 +298,6 @@
         Socialized: [MoodSocialized]
         Lonely: [MoodLonely]
         Isolated: [MoodIsolated]
-    removeEffects:
-      Sleep:
-        Overslept:
-        - MoodTired
-        - MoodExhausted
-        Tired:
-        - MoodOverslept
-        - MoodExhausted
-        Exhausted:
-        - MoodOverslept
-        - MoodTired
-      Socialization:
-        Overstimulated:
-        - MoodLonely
-        - MoodIsolated
-        Lonely:
-        - MoodOverstimulated
-        - MoodIsolated
-        Isolated:
-        - MoodOverstimulated
-        - MoodLonely
   - type: ModifySpeedOnNeed
     modifiers:
       Sleep:

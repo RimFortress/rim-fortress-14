@@ -50,5 +50,3 @@
   - type: NpcFactionMember
     factions:
     - RimFortress
-  - type: ShowThirstIcons
-  - type: ShowHungerIcons

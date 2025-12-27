@@ -32,7 +32,7 @@ conversation-smalltalkrejected-initiator-1 = Good day! How are you this morning?
 conversation-smalltalkrejected-respondent-1 = Not now.
 
 conversation-smalltalkignored-initiator-1 = The weather's turned, hasn't it? Colder today
-conversation-smalltalkignored-respondent-1 = ...
+conversation-smalltalkignored-respondent-1 = .
 conversation-smalltalkignored-initiator-2 = Are you well? You seem troubled
 conversation-smalltalkignored-respondent-2 = Leave me be
 
