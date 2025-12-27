@@ -1,25 +1,31 @@
 - type: need
   id: Sleep
   thresholds:
-    Overslept: 100
-    Rested: 80
-    Tired: 40
-    Exhausted: 20
-  thresholdDecayTime:
-    Overslept: 2h
-    Rested: 6h
-    Tired: 3h
-    Exhausted: 2h
-  thresholdIcons:
-    Overslept:
+  - id: Overslept
+    value: 100
+    decayTime: 2h
+    icon:
       sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
       state: overslept
-    Tired:
+    description: sleep-threshold-overslept
+  - id: Rested
+    value: 80
+    decayTime: 11h
+    description: sleep-threshold-rested
+  - id: Tired
+    value: 40
+    decayTime: 5h
+    icon:
       sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
       state: tired
-    Exhausted:
+    description: sleep-threshold-tired
+  - id: Exhausted
+    value: 20
+    decayTime: 4h
+    icon:
       sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
       state: exhausted
+    description: sleep-threshold-exhausted
   roundstartRandomize:
     min: 70
     max: 85
@@ -27,13 +33,21 @@
 - type: need
   id: Socialization
   thresholds:
-    Overstimulated: 100
-    Socialized: 80
-    Lonely: 40
-    Isolated: 20
+  - id: Overstimulated
+    value: 100
+    decayTime: 2h
+  - id: Socialized
+    value: 80
+    decayTime: 4h
+  - id: Lonely
+    value: 40
+    decayTime: 2h
+  - id: Isolated
+    value: 20
+    decayTime: 4h
   thresholdDecayTime:
     Overstimulated: 2h
-    Socialized: 3h
+    Socialized: 4h
     Lonely: 2h
     Isolated: 4h
   roundstartRandomize:

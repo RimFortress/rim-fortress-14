@@ -124,29 +124,44 @@ public sealed partial class PopIcon : Button
 
         if (_entityManager.TryGetComponent(uid, out HungerComponent? hunger)
             && _hunger.TryGetStatusIconPrototype(hunger, out var hungerIcon))
-            StatusContainer.AddChild(StatusIcon(hungerIcon.Icon));
+        {
+            StatusContainer.AddChild(StatusIcon(
+                hungerIcon.Icon,
+                Loc.GetString($"hunger-threshold-{hunger.CurrentThreshold}".ToLower())));
+        }
 
         if (_entityManager.TryGetComponent(uid, out ThirstComponent? thirst)
             && _thirst.TryGetStatusIconPrototype(thirst, out var thirstIcon))
-            StatusContainer.AddChild(StatusIcon(thirstIcon.Icon));
+        {
+            StatusContainer.AddChild(StatusIcon(
+                thirstIcon.Icon,
+                Loc.GetString($"thirst-threshold-{thirst.CurrentThirstThreshold}".ToLower())));
+        }
 
         if (!_entityManager.TryGetComponent(uid, out NeedsComponent? needs))
             return;
 
         foreach (var data in needs.Needs)
         {
-            if (_needs.TryGetNeedIcon(new(uid, needs), data.Id, out var needIcon))
-                StatusContainer.AddChild(StatusIcon(needIcon));
+            if (!_needs.TryGetNeedIcon(new(uid, needs), data.Id, out var needIcon))
+                continue;
+
+            _needs.TryGetThresholdLocalization(data.Id, data.CurrentThreshold, out var locale);
+            StatusContainer.AddChild(StatusIcon(needIcon, locale));
         }
     }
 
-    private TextureRect StatusIcon(SpriteSpecifier sprite)
+    private TextureRect StatusIcon(SpriteSpecifier sprite, string? desc = null)
     {
         return new TextureRect
         {
             Texture = _sprite.GetFrame(sprite, _timing.RealTime),
             Stretch = TextureRect.StretchMode.KeepAspectCentered,
             SetSize = StatusIconSize,
+            MouseFilter = desc == null ? MouseFilterMode.Ignore : MouseFilterMode.Pass,
+            ToolTip = desc,
+            TooltipDelay = 0,
+            TrackingTooltip = true,
         };
     }
 

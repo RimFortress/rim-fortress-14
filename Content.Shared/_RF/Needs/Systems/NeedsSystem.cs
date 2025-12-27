@@ -41,8 +41,8 @@ public sealed class NeedsSystem : EntitySystem
                 continue;
 
             need.ThresholdDecayModifiers = CalculateDecayRates(
-                proto.Thresholds,
-                proto.ThresholdDecayTime.ToDictionary(kv => kv.Key, kv => _world.FromWorldTime(kv.Value)),
+                proto.Thresholds.ToDictionary(x => x.Id, x => x.Value),
+                proto.Thresholds.ToDictionary(x => x.Id, x => _world.FromWorldTime(x.DecayTime)),
                 proto.ThresholdUpdateRate);
 
             var amount = proto.RoundstartRandomize.Value.Next(_random);
@@ -106,14 +106,14 @@ public sealed class NeedsSystem : EntitySystem
             return false;
 
         needValue ??= GetValue(ent, protoId);
-        thresholdId = proto.Thresholds.OrderBy(kv => kv.Value).First().Key;
+        thresholdId = proto.Thresholds.OrderBy(kv => kv.Value).First().Id;
         var value = proto.Thresholds.Max(x => x.Value);
 
         foreach (var threshold in proto.Thresholds)
         {
             if (threshold.Value <= value && threshold.Value >= needValue)
             {
-                thresholdId = threshold.Key;
+                thresholdId = threshold.Id;
                 value = threshold.Value;
             }
         }
@@ -131,9 +131,9 @@ public sealed class NeedsSystem : EntitySystem
         [NotNullWhen(true)] out string? locale)
     {
         if (_prototype.Resolve(protoId, out var proto)
-            && proto.ThresholdLocalization.TryGetValue(thresholdId, out var msg))
+            && proto.Thresholds.FirstOrDefault(x => x.Id == thresholdId) is { Description: not null } threshold)
         {
-            locale = msg;
+            locale = Loc.GetString(threshold.Description);
             return true;
         }
 
@@ -149,10 +149,14 @@ public sealed class NeedsSystem : EntitySystem
     {
         icon = null;
 
-        return Resolve(ent, ref ent.Comp)
-               && _prototype.Resolve(protoId, out var proto)
-               && TryGetThreshold(ent, protoId, out var threshold)
-               && proto.ThresholdIcons.TryGetValue(threshold, out icon);
+        if (!Resolve(ent, ref ent.Comp)
+            || !_prototype.Resolve(protoId, out var proto)
+            || !TryGetThreshold(ent, protoId, out var id)
+            || proto.Thresholds.FirstOrDefault(x => x.Id == id) is not { } threshold)
+            return false;
+
+        icon = threshold.Icon;
+        return icon != null;
     }
 
     /// <summary>
@@ -211,8 +215,8 @@ public sealed class NeedsSystem : EntitySystem
         if (need.CurrentThreshold == need.LastThreshold && !force)
             return;
 
-        if (proto.ThresholdAlerts.TryGetValue(need.CurrentThreshold, out var alertId))
-            _alerts.ShowAlert(ent.Owner, alertId);
+        if (proto.Thresholds.FirstOrDefault(x => x.Id == need.CurrentThreshold) is { Alert: not null } threshold)
+            _alerts.ShowAlert(ent.Owner, threshold.Alert.Value);
         else if (proto.AlertCategory != null)
             _alerts.ClearAlertCategory(ent.Owner, proto.AlertCategory.Value);
 
@@ -230,10 +234,10 @@ public sealed class NeedsSystem : EntitySystem
 
         float max = int.MinValue;
 
-        foreach (var (_, threshold) in proto.Thresholds)
+        foreach (var threshold in proto.Thresholds)
         {
-            if (threshold > max)
-                max = threshold;
+            if (threshold.Value > max)
+                max = threshold.Value;
         }
 
         return Math.Clamp(value, 0, max);

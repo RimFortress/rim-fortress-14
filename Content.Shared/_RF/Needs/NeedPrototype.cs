@@ -16,44 +16,16 @@ public sealed partial class NeedPrototype : IPrototype
     public string ID { get; } = default!;
 
     /// <summary>
-    /// Decay time to the next threshold for each threshold
-    /// </summary>
-    /// <remarks>
-    /// It is calculated in world time, which is then converted to simulation time.
-    /// </remarks>
-    /// <seealso cref="Content.Shared._RF.World.SharedRimFortressWorldSystem.FromWorldTime(TimeSpan)"/>
-    [DataField]
-    public Dictionary<string, TimeSpan> ThresholdDecayTime = new();
-
-    /// <summary>
     /// A dictionary with threshold values of satisfaction of a need and their IDs
     /// </summary>
     [DataField]
-    public Dictionary<string, float> Thresholds = new();
-
-    /// <summary>
-    /// A dictionary with alerts for different thresholds
-    /// </summary>
-    [DataField]
-    public Dictionary<string, ProtoId<AlertPrototype>> ThresholdAlerts = new();
-
-    /// <summary>
-    /// Localization ID for each threshold to display in the UI
-    /// </summary>
-    [DataField]
-    public Dictionary<string, LocId> ThresholdLocalization = new();
+    public List<NeedThreshold> Thresholds = new();
 
     /// <summary>
     /// Alert category prototype
     /// </summary>
     [DataField]
     public ProtoId<AlertCategoryPrototype>? AlertCategory;
-
-    /// <summary>
-    /// Entity status icons for each threshold of need satisfaction
-    /// </summary>
-    [DataField]
-    public Dictionary<string, SpriteSpecifier> ThresholdIcons = new();
 
     /// <summary>
     /// The time between each threshold update
@@ -66,4 +38,39 @@ public sealed partial class NeedPrototype : IPrototype
     /// </summary>
     [DataField]
     public MinMax? RoundstartRandomize;
+}
+
+[DataDefinition]
+public sealed partial class NeedThreshold
+{
+    [DataField(required: true)]
+    public string Id;
+
+    [DataField(required: true)]
+    public float Value;
+
+    /// <summary>
+    /// Decay time to the next threshold
+    /// </summary>
+    /// <remarks>
+    /// It is calculated in world time, which is then converted to simulation time.
+    /// </remarks>
+    /// <seealso cref="Content.Shared._RF.World.SharedRimFortressWorldSystem.FromWorldTime(TimeSpan)"/>
+    [DataField(required: true)]
+    public TimeSpan DecayTime;
+
+    [DataField]
+    public SpriteSpecifier? Icon;
+
+    /// <summary>
+    /// Threshold alert category prototype
+    /// </summary>
+    [DataField]
+    public ProtoId<AlertPrototype>? Alert;
+
+    /// <summary>
+    /// Localization ID for the threshold to display in the UI
+    /// </summary>
+    [DataField]
+    public LocId? Description;
 }
