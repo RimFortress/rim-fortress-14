@@ -220,6 +220,97 @@
       min: 5
       max: 20
     maxRandomLevel: 10
+  - type: ModifySkillLevelOnMood
+    modifiers:
+      Healing: 0.0025
+      Melee: 0.0020
+      Mining: 0.0033 # Sad miner is a bad miner
+  - type: Social
+  - type: TriggerOnDamage
+    keyOut: onDamage
+  - type: TriggerOnHeal
+    keyOut: onHeal
+  - type: TriggerMappings
+    addComponents:
+      onDamage:
+      - type: ChangeOpinionOnTrigger
+        effect: OpinionAttacked
+        keysIn:
+        - onDamage
+      onHeal:
+      - type: ChangeOpinionOnTrigger
+        effect: OpinionHealed
+        keysIn:
+        - onHeal
+  - type: ChangeMoodOnHunger
+    effects:
+      Overfed: [MoodOverfed]
+      Okay: [MoodHungerOkay]
+      Peckish: [MoodPeckish]
+      Starving: [MoodStarving]
+  - type: ChangeMoodOnThirst
+    effects:
+      Parched: [MoodParched]
+      Okay: [MoodThirstOkay]
+      Thirsty: [MoodThirsty]
+      Overhydrated: [MoodOverhydrated]
+  - type: ChangeMoodOnAte
+    effects:
+      MoodAteRubbishMeal:
+        tags:
+        - RubbishMeal
+        - Trash
+        requireAll: false
+      MoodAteAwfulMeal:
+        tags:
+        - AwfulMeal
+        - Raw
+        - Ingredient
+        - DonkPocket
+        requireAll: false
+      MoodAteFineMeal:
+        tags:
+        - FineMeal
+        - Pancake
+        requireAll: false
+      MoodAteLavishMeal:
+        tags:
+        - LavishMeal
+        - Cake
+        - Pie
+        - Pizza
+        requireAll: false
+  - type: ModifySpeedOnMood
+    moodFactor: 0.0015 # +15% for +100 mood
+  - type: Needs
+    needs:
+    - id: Sleep
+    - id: Socialization
+  - type: ChangeMoodOnNeed
+    effects:
+      Sleep:
+        Overslept: [MoodOverslept]
+        Rested: [MoodRested]
+        Tired: [MoodTired]
+        Exhausted: [MoodExhausted]
+      Socialization:
+        Overstimulated: [MoodOverstimulated]
+        Socialized: [MoodSocialized]
+        Lonely: [MoodLonely]
+        Isolated: [MoodIsolated]
+  - type: ModifySpeedOnNeed
+    modifiers:
+      Sleep:
+        Overslept: 0.95
+        Tired: 0.8
+        Exhausted: 0.6
+  - type: ModifyNeedOnSleep
+    modifiers:
+      Sleep:
+        Overslept: 0.72
+        Rested: 0.8
+        Tired: 0.8
+        Exhausted: 1
   # RimFortress End
 
 - type: entity

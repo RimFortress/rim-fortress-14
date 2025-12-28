@@ -42,14 +42,15 @@
 - type: entity
   id: PopMigration
   parent: BaseMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: WorldRule
-      startOffset: 600 #10 min
-      cost: 100
-    - type: MigrationRule
-      spawn:
-        RimFortressMobPop: 100
-      addToPops: true
+  - type: WorldRule
+    startOffset: 600 #10 min
+    cost: 100
+  - type: MigrationRule
+    spawn:
+      RimFortressMobPop: 100
+    addToPops: true
 
 # Animals migration
 # Neutral
@@ -57,183 +58,203 @@
 - type: entity
   id: CatMigration
   parent: BaseMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobCatRuntime: 15
-        MobCatException: 15
-        MobCatFloppa: 15
-        MobBingus: 15
+  - type: MigrationRule
+    spawn:
+      MobCatRuntime: 15
+      MobCatException: 15
+      MobCatFloppa: 15
+      MobBingus: 15
 
 - type: entity
   id: PossumMigration
   parent: BaseMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobPossumMorty: 20
+  - type: MigrationRule
+    spawn:
+      MobPossumMorty: 20
 
 - type: entity
   id: FoxMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobFoxRenault: 25
+  - type: MigrationRule
+    spawn:
+      MobFoxRenault: 25
 
 - type: entity
   id: CrabMigration
   parent: DesertMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobCrabAtmos: 20
+  - type: MigrationRule
+    spawn:
+      MobCrabAtmos: 20
 
 - type: entity
   id: GoatMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobGoat: 30
+  - type: MigrationRule
+    spawn:
+      MobGoat: 30
 
 - type: entity
   id: CowMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobCow: 30
+  - type: MigrationRule
+    spawn:
+      MobCow: 30
 
 - type: entity
   id: FerretMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobFerret: 20
+  - type: MigrationRule
+    spawn:
+      MobFerret: 20
 
 - type: entity
   id: FrogMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobFrog: 10
-      maxSpawn: 15
+  - type: MigrationRule
+    spawn:
+      MobFrog: 10
+    maxSpawn: 15
 
 - type: entity
   id: GooseMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobGoose: 20
+  - type: MigrationRule
+    spawn:
+      MobGoose: 20
 
 - type: entity
   id: HamsterMigration
   parent: BaseMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobHamster: 10
-      maxSpawn: 15
+  - type: MigrationRule
+    spawn:
+      MobHamster: 10
+    maxSpawn: 15
 
 - type: entity
   id: KangarooMigration
   parent: DesertMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobKangaroo: 30
+  - type: MigrationRule
+    spawn:
+      MobKangaroo: 30
 
 - type: entity
   id: MonkeyMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobMonkey: 20
+  - type: MigrationRule
+    spawn:
+      MobMonkey: 20
 
 - type: entity
   id: MothroachMigration
   parent: RareMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobMothroach: 15
-      maxSpawn: 15
+  - type: MigrationRule
+    spawn:
+      MobMothroach: 15
+    maxSpawn: 15
 
 - type: entity
   id: ParrotMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobParrot: 20
+  - type: MigrationRule
+    spawn:
+      MobParrot: 20
 
 - type: entity
   id: RaccoonMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobRaccoon: 20
+  - type: MigrationRule
+    spawn:
+      MobRaccoon: 20
 
 - type: entity
   id: SnakeMigration
   parent: GrasslandMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobSnake: 25
+  - type: MigrationRule
+    spawn:
+      MobSnake: 25
 
 # Hostile
 
 - type: entity
   id: SlimeMigration
   parent: RareMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobSlimesPet: 35
-        MobAdultSlimesBlue: 20
-        MobAdultSlimesBlueAngry: 25
-        MobAdultSlimesGreen: 20
-        MobAdultSlimesGreenAngry: 25
-        MobAdultSlimesYellow: 20
-        MobAdultSlimesYellowAngry: 25
+  - type: MigrationRule
+    spawn:
+      MobSlimesPet: 35
+      MobAdultSlimesBlue: 20
+      MobAdultSlimesBlueAngry: 25
+      MobAdultSlimesGreen: 20
+      MobAdultSlimesGreenAngry: 25
+      MobAdultSlimesYellow: 20
+      MobAdultSlimesYellowAngry: 25
 
 - type: entity
   id: SpiderMigration
   parent: RareMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobGiantSpiderAngry: 30
+  - type: MigrationRule
+    spawn:
+      MobGiantSpiderAngry: 30
 
 - type: entity
   id: OreCrabMigration
   parent: RareMigrationRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: MigrationRule
-      spawn:
-        MobIronCrab: 40
-        MobQuartzCrab: 40
-        MobSilverCrab: 45
-        MobUraniumCrab: 50
-        MobCoalCrab: 40
-        MobGoldCrab: 50
+  - type: MigrationRule
+    spawn:
+      MobIronCrab: 40
+      MobQuartzCrab: 40
+      MobSilverCrab: 45
+      MobUraniumCrab: 50
+      MobCoalCrab: 40
+      MobGoldCrab: 50
 
 # Raids
 - type: entity
   id: Raid
   parent: BaseWorldRule
+  categories: [ HideSpawnMenu ]
   components:
-    - type: WorldRule
-      startOffset: 900 #15 min
-      cost: 75
-    - type: MigrationRule
-      spawn:
-        Raider: 45
-      task: Raid
+  - type: WorldRule
+    startOffset: 900 #15 min
+    cost: 75
+  - type: MigrationRule
+    spawn:
+      Raider: 45
+    task: Raid

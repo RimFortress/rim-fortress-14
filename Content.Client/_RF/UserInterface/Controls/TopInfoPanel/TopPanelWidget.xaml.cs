@@ -49,22 +49,14 @@ public sealed partial class TopPanelWidget : UIWidget
 
     private void UpdateDateTime()
     {
-        var (time, dayDuration) = _controller.GetTime();
+        var time = _controller.GetWorldTime();
 
-        // We take the length of an in-game day in 24 hours and get the current time
-        var gameTimeHours = time.TotalSeconds % dayDuration.TotalSeconds
-            / dayDuration.TotalSeconds * 24;
-
-        var hours = (int) gameTimeHours;
-        var minutes = (int) ((gameTimeHours - hours) * 60);
-
-        var timeText = $"{hours:00}:{minutes:00}";
-        var days = (int) Math.Floor(time / dayDuration) + 1;
+        var timeText = $"{time.Hours:00}:{time.Minutes:00}";
 
         Time.Text = $"{timeText}";
-        Date.Text = $"{Loc.GetString("top-info-panel-datetime-day")} {days}";
+        Date.Text = $"{Loc.GetString("top-info-panel-datetime-day")} {time.Days}";
 
-        Time.TexturePath = gameTimeHours switch
+        Time.TexturePath = time.Hours switch
         {
             < 6 => "/Textures/_RF/Interface/moon-solid.svg.192dpi.png",
             < 19 => "/Textures/_RF/Interface/sun-solid.svg.192dpi.png",

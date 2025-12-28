@@ -43,6 +43,11 @@
       - potatoes
   - type: Sprite
     state: loadedbakedpotato
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 # Tastes like potato.
 
 - type: entity
@@ -59,6 +64,11 @@
       - salty
   - type: Sprite
     state: fries
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMealVox
+  # RimFortress End
 # Tastes like fries, salt.
 
 - type: entity
@@ -76,6 +86,11 @@
       - cheesy
   - type: Sprite
     state: fries-cheesy
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMealReptile
+  # RimFortress End
 # Tastes like fries, cheese.
 
 - type: entity
@@ -157,6 +172,11 @@
           Quantity: 20
         - ReagentId: TableSalt
           Quantity: 2
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMealDwarf
+  # RimFortress End
 # Tastes like nachos, cheese.
 
 - type: entity
@@ -188,6 +208,11 @@
           Quantity: 7
         - ReagentId: Vitamin
           Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMealDwarf
+  # RimFortress End
 # Tastes like nachos, hot pepper.
 
 - type: entity
@@ -211,6 +236,11 @@
         reagents:
         - ReagentId: Nutriment
           Quantity: 1
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+  # RimFortress End
 # Tastes like parsnips, salt.
 
 - type: entity
@@ -239,6 +269,7 @@
   - type: Tag
     tags:
     - Fruit
+    - FineMeal # RimFortress
 # Tastes like eggplant, cheese.
 
 - type: entity
@@ -255,6 +286,11 @@
       - potatoes
   - type: Sprite
     state: yakiimo
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 # Tastes like sweet potato.
 
 - type: entity
@@ -289,6 +325,7 @@
     tags:
     - CubanCarp
     - Meat
+    - LavishMeal # RimFortress
 # Tastes like fish, batter, hot peppers.
 
 - type: entity
@@ -317,6 +354,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like meat, cabbage.
 
 - type: entity
@@ -348,6 +386,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like meat, salmon.
 
 - type: entity
@@ -378,6 +417,7 @@
   - type: Tag
     tags:
     - Meat
+    - LavishMeal # RimFortress
 # Tastes like meat, butter.
 
 - type: entity
@@ -411,6 +451,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like meat, smokey sauce.
 
 - type: entity
@@ -438,6 +479,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like eggs, bacon, bun.
 
 - type: entity
@@ -513,6 +555,12 @@
       - chocolate
   - type: Sprite
     state: milkape
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+  # RimFortress End
 # Tastes like milk, chocolate, the jungle.
 
 - type: entity
@@ -538,6 +586,11 @@
           Quantity: 10
         - ReagentId: Allicin
           Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - RubbishMeal
+  # RimFortress End
 # Tastes like pain.
 
 - type: entity
@@ -564,6 +617,12 @@
           Quantity: 10
         - ReagentId: Blackpepper
           Quantity: 3
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - LavishMealVox
+  # RimFortress End
 # Tastes awesome.
 
 - type: entity

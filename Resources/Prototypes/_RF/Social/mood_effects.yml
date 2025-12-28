@@ -1,0 +1,307 @@
+- type: socialEffect
+  id: MoodComfortableEnvironment
+  name: mood-effect-comfortable-environment-name
+  description: mood-effect-comfortable-environment-desc
+  duration: 12h
+  effect: 5
+  maxEffect: 15
+
+- type: socialEffect
+  id: MoodUncomfortableEnvironment
+  name: mood-effect-uncomfortable-environment-name
+  description: mood-effect-uncomfortable-environment-desc
+  duration: 12h
+  effect: -5
+  maxEffect: -15
+
+# Food effects
+- type: socialEffect
+  id: MoodAteRubbishMeal
+  name: mood-effect-ate-rubbish-meal-name
+  description: mood-effect-ate-rubbish-meal-desc
+  duration: 3h
+  effect: -10
+  maxEffect: -20
+
+- type: socialEffect
+  id: MoodAteAwfulMeal
+  name: mood-effect-ate-awful-meal-name
+  description: mood-effect-ate-awful-meal-desc
+  duration: 3h
+  effect: -6
+  maxEffect: -18
+
+- type: socialEffect
+  id: MoodAteFineMeal
+  name: mood-effect-ate-fine-meal-name
+  description: mood-effect-ate-fine-meal-desc
+  duration: 3h
+  effect: 6
+  maxEffect: 18
+
+- type: socialEffect
+  id: MoodAteLavishMeal
+  name: mood-effect-ate-lavish-meal-name
+  description: mood-effect-ate-lavish-meal-desc
+  duration: 3h
+  effect: 12
+  maxEffect: 24
+
+# Hunger
+- type: socialEffect
+  id: MoodPeckish
+  name: mood-effect-peckish-name
+  description: mood-effect-peckish-desc
+  effect: -3
+  conflictWith:
+  - MoodStarving
+  - MoodHungerOkay
+  - MoodOverfed
+
+- type: socialEffect
+  id: MoodStarving
+  name: mood-effect-starving-name
+  description: mood-effect-starving-desc
+  effect: -8
+  conflictWith:
+  - MoodPeckish
+  - MoodHungerOkay
+  - MoodOverfed
+
+- type: socialEffect
+  id: MoodHungerOkay
+  name: mood-effect-hunger-okay-name
+  description: mood-effect-hunger-okay-desc
+  duration: 2h
+  effect: 5
+  conflictWith:
+  - MoodPeckish
+  - MoodStarving
+  - MoodOverfed
+
+- type: socialEffect
+  id: MoodOverfed
+  name: mood-effect-overfed-name
+  description: mood-effect-overfed-desc
+  effect: -5
+  conflictWith:
+  - MoodPeckish
+  - MoodStarving
+  - MoodHungerOkay
+
+# Thirsty
+- type: socialEffect
+  id: MoodThirsty
+  name: mood-effect-thirsty-name
+  description: mood-effect-thirsty-desc
+  effect: -3
+  conflictWith:
+  - MoodParched
+  - MoodThirstOkay
+  - MoodOverhydrated
+
+- type: socialEffect
+  id: MoodParched
+  name: mood-effect-parched-name
+  description: mood-effect-parched-desc
+  effect: -8
+  conflictWith:
+  - MoodThirsty
+  - MoodThirstOkay
+  - MoodOverhydrated
+
+- type: socialEffect
+  id: MoodThirstOkay
+  name: mood-effect-thirst-okay-name
+  description: mood-effect-thirst-okay-desc
+  duration: 1h
+  effect: 5
+  conflictWith:
+  - MoodThirsty
+  - MoodParched
+  - MoodOverhydrated
+
+- type: socialEffect
+  id: MoodOverhydrated
+  name: mood-effect-overhydrated-name
+  description: mood-effect-overhydrated-desc
+  effect: -5
+  conflictWith:
+  - MoodThirsty
+  - MoodParched
+  - MoodThirstOkay
+
+# World events effects
+- type: socialEffect
+  id: MoodSettlementInspiration
+  name: mood-effect-settlement-inspiration-name
+  description: mood-effect-settlement-inspiration-desc
+  duration: 72h
+  effect: 20
+  conflictWith:
+  - MoodSettlementDespair
+
+- type: socialEffect
+  id: MoodSettlementDespair
+  name: mood-effect-settlement-despair-name
+  description: mood-effect-settlement-despair-desc
+  duration: 72h
+  effect: -20
+  conflictWith:
+  - MoodSettlementInspiration
+
+# Mental breakdown
+- type: socialEffect
+  id: MoodMentalBreakdown
+  name: mood-effect-mental-break-name
+  description: mood-effect-mental-break-desc
+  duration: 2h
+  effect: -80
+
+# Conversation
+- type: socialEffect
+  id: MoodPleasantConversation
+  name: mood-effect-pleasant-conversation-name
+  description: mood-effect-pleasant-conversation-desc
+  duration: 1h
+  effect: 8
+  maxEffect: 16
+
+- type: socialEffect
+  id: MoodUnpleasantConversation
+  name: mood-effect-unpleasant-conversation-name
+  description: mood-effect-unpleasant-conversation-desc
+  duration: 1h
+  effect: -8
+  maxEffect: -16
+
+- type: socialEffect
+  id: MoodRudeConversation
+  name: mood-effect-rude-conversation-name
+  description: mood-effect-rude-conversation-desc
+  duration: 2h
+  effect: -12
+  maxEffect: -24
+
+- type: socialEffect
+  id: MoodInspirationalConversation
+  name: mood-effect-inspirational-conversation-name
+  description: mood-effect-inspirational-conversation-desc
+  duration: 2h
+  effect: 10
+  maxEffect: 20
+
+- type: socialEffect
+  id: MoodDepressingConversation
+  name: mood-effect-depressing-conversation-name
+  description: mood-effect-depressing-conversation-desc
+  duration: 2h
+  effect: -10
+  maxEffect: -20
+
+- type: socialEffect
+  id: MoodFunnyConversation
+  name: mood-effect-funny-conversation-name
+  description: mood-effect-funny-conversation-desc
+  duration: 1h
+  effect: 8
+  maxEffect: 16
+
+- type: socialEffect
+  id: MoodConversationIrritated
+  name: mood-effect-conversation-irritated-name
+  description: mood-effect-conversation-irritated-desc
+  duration: 1h
+  effect: -7
+  maxEffect: -21
+
+# Sleep
+- type: socialEffect
+  id: MoodOverslept
+  name: mood-effect-overslept-name
+  description: mood-effect-overslept-desc
+  effect: -5
+  conflictWith:
+  - MoodRested
+  - MoodTired
+  - MoodExhausted
+
+- type: socialEffect
+  id: MoodRested
+  name: mood-effect-rested-name
+  description: mood-effect-rested-desc
+  duration: 1h
+  effect: 10
+  conflictWith:
+  - MoodOverslept
+  - MoodTired
+  - MoodExhausted
+
+- type: socialEffect
+  id: MoodTired
+  name: mood-effect-tired-name
+  description: mood-effect-tired-desc
+  effect: -4
+  conflictWith:
+  - MoodOverslept
+  - MoodRested
+  - MoodExhausted
+
+- type: socialEffect
+  id: MoodExhausted
+  name: mood-effect-exhausted-name
+  description: mood-effect-exhausted-desc
+  effect: -10
+  conflictWith:
+  - MoodOverslept
+  - MoodRested
+  - MoodTired
+
+- type: socialEffect
+  id: MoodSleptOnFloor
+  name: mood-effect-slept-on-floor-name
+  description: mood-effect-slept-on-floor-desc
+  duration: 4h
+  effect: -10
+
+# Socialization
+- type: socialEffect
+  id: MoodOverstimulated
+  name: mood-overstimulated-name
+  description: mood-overstimulated-desc
+  effect: -3
+  conflictWith:
+  - MoodSocialized
+  - MoodLonely
+  - MoodIsolated
+
+- type: socialEffect
+  id: MoodSocialized
+  name: mood-socialized-name
+  description: mood-socialized-desc
+  duration: 2h
+  effect: 6
+  conflictWith:
+  - MoodOverstimulated
+  - MoodLonely
+  - MoodIsolated
+
+- type: socialEffect
+  id: MoodLonely
+  name: mood-lonely-name
+  description: mood-lonely-desc
+  effect: -4
+  conflictWith:
+  - MoodOverstimulated
+  - MoodSocialized
+  - MoodIsolated
+
+- type: socialEffect
+  id: MoodIsolated
+  name: mood-isolated-name
+  description: mood-isolated-desc
+  effect: -8
+  conflictWith:
+  - MoodOverstimulated
+  - MoodSocialized
+  - MoodLonely

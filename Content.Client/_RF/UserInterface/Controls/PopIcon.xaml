@@ -4,4 +4,6 @@
     TooltipDelay="0" TrackingTooltip="True"
     Margin="5 0" SetSize="80 80">
     <SpriteView Name="Icon" Stretch="Fill"/>
+    <GridContainer Name="StatusContainer" Columns="4" HorizontalExpand="True"/>
+    <RichTextLabel Name="MoodLabel" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
 </Button>

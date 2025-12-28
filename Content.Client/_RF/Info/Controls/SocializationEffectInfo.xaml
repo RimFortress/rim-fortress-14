@@ -1,0 +1,15 @@
+<controls:SocializationEffectInfo
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Info.Controls"
+    TooltipDelay="0" TrackingTooltip="True">
+    <BoxContainer Margin="3 0" Orientation="Vertical">
+        <BoxContainer>
+            <RichTextLabel Name="ValueLabel" SetWidth="50"/>
+            <RichTextLabel Name="Label"/>
+
+            <Control HorizontalExpand="True"/>
+
+            <RichTextLabel Name="EndAtLabel" TooltipDelay="0" TrackingTooltip="True"/>
+        </BoxContainer>
+    </BoxContainer>
+</controls:SocializationEffectInfo>

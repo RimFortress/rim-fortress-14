@@ -56,6 +56,11 @@
                   max: 1
             - !type:DoActsBehavior
               acts: [ "Destruction" ]
+    # RimFortress Start
+    - type: Tag
+      tags:
+      - Diggable
+    # RimFortress End
 
 - type: entity
   id: CrystalPink

@@ -1,0 +1,13 @@
+<controls:MoodInfoTab
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Info.Controls">
+    <BoxContainer Orientation="Vertical" Margin="3">
+        <RichTextLabel Name="Total"/>
+
+        <PanelContainer StyleClasses="HighDivider" Margin="0 10"/>
+
+        <ScrollContainer VerticalExpand="True">
+            <controls:SocializationEffectsContainer Name="Container" Orientation="Vertical"/>
+        </ScrollContainer>
+    </BoxContainer>
+</controls:MoodInfoTab>

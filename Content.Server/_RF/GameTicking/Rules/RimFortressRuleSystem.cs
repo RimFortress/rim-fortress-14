@@ -11,8 +11,6 @@ using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
 using JetBrains.Annotations;
 using Robust.Server.GameObjects;
-using Robust.Server.Player;
-using Robust.Shared.Console;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
@@ -24,7 +22,7 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manages <see cref="RimFortressRuleComponent"/>
 /// </summary>
-public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
+public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
 {
     [Dependency] private readonly RimFortressWorldSystem _world = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
@@ -36,8 +34,6 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     [Dependency] private readonly MapSystem _map = default!;
     [Dependency] private readonly IAdminLogManager _adminLogger = default!;
     [Dependency] private readonly IChatManager _chat = default!;
-    [Dependency] private readonly IConsoleHost _host = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
 
     private ISawmill _sawmill = default!;
 
@@ -48,15 +44,13 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         _sawmill = LogManager.GetSawmill("rf_rule");
 
         SubscribeLocalEvent<PlayerBeforeSpawnEvent>(OnBeforeSpawn);
-
-        InitializeCommands();
     }
 
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
     {
         base.Added(uid, comp, gameRule, args);
 
-        _world.InitializeWorld(comp);
+        _world.InitializeWorld(uid, comp);
     }
 
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)
@@ -303,11 +297,32 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     }
 }
 
+/// <summary>
+/// Raised when adding a world event
+/// </summary>
+/// <param name="RuleEntity">Entity of the world event</param>
+/// <param name="RuleId">Prototype of the world event</param>
+/// <param name="Target">The target entity of the event</param>
+/// <param name="TargetCoordinates">Target coordinates of the event</param>
 [ByRefEvent]
 public readonly record struct WorldRuleAddedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
 
+/// <summary>
+/// Raised when the world event starts
+/// </summary>
+/// <param name="RuleEntity">Entity of the world event</param>
+/// <param name="RuleId">Prototype of the world event</param>
+/// <param name="Target">The target entity of the event</param>
+/// <param name="TargetCoordinates">Target coordinates of the event</param>
 [ByRefEvent]
 public readonly record struct WorldRuleStartedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
 
+/// <summary>
+/// Raised when the world event is ended
+/// </summary>
+/// <param name="RuleEntity">Entity of the world event</param>
+/// <param name="RuleId">Prototype of the world event</param>
+/// <param name="Target">The target entity of the event</param>
+/// <param name="TargetCoordinates">Target coordinates of the event</param>
 [ByRefEvent]
 public readonly record struct WorldRuleEndedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);

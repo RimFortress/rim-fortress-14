@@ -106,6 +106,20 @@
       Farming: 0.75
       Healing: 0.75
       Construction: 1.25
+  - type: HungerOverride
+    thresholdDecayTime:
+      Overfed: 90m
+      Okay: 4h
+      Peckish: 4h
+      Starving: 4h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 7h
+    randomizeValue:
+      min: 310
+      max: 460
   # RimFortress End
 
 

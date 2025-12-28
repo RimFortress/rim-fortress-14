@@ -59,3 +59,12 @@
   - Pry
   - FreeHandInteract
   - Attack
+
+- type: npcJob
+  id: Social
+  name: Social
+  defaultPriority: 1
+  hidden: true
+  tasks:
+  - StartConversation
+  - MentalBreakdown

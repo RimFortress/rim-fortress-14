@@ -10,10 +10,6 @@ public static class ColorHelper
         var t = (currentValue - minValue) / (maxValue - minValue);
         t = Math.Clamp(t, 0f, 1f);
 
-        var r = start.R + (end.R - start.R) * t;
-        var g = start.G + (end.G - start.G) * t;
-        var b = start.B + (end.B - start.B) * t;
-
-        return new Color(r, g, b);
+        return Color.InterpolateBetween(start, end, t);
     }
 }

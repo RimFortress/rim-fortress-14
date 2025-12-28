@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Client._RF.Info.Controls;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client._RF.UserInterface.Controls.Chat;
 using Content.Client._RF.UserInterface.Controls.TreeMenu;
@@ -840,6 +841,15 @@ public sealed class StyleFortress : StyleBase
                 .Class(TreeMenuButton.StyleClassTreeMenuButton)
                 .Pseudo(ContainerButton.StylePseudoClassPressed)
                 .Prop(Control.StylePropertyModulateSelf, TreeMenuButtonColorPressed),
+
+            // Mood info button
+            Element<SocializationEffectInfo>()
+                .Class(SocializationEffectInfo.EvenRowStyleClass)
+                .Prop(ContainerButton.StylePropertyStyleBox, new StyleBoxFlat(GraphiteBlack)),
+
+            Element<SocializationEffectInfo>()
+                .Class(SocializationEffectInfo.OddRowStyleClass)
+                .Prop(ContainerButton.StylePropertyStyleBox, new StyleBoxFlat(DarkForest)),
 
             #region Gold Button
 

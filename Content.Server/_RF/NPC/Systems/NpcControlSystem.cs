@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server._RF.NPC.Components;
 using Content.Server._RF.NPC.Prototypes;
@@ -41,7 +42,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
     private EntityQuery<PassiveNpcTaskTargetComponent> _passiveTaskQuery;
     private EntityQuery<HTNComponent> _htnQuery;
-    private EntityQuery<TransformComponent> _xformQuery;
 
     /// <summary>
     /// A temporary list of user-selected entities, for the needs of verb tasks.
@@ -86,7 +86,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         _controllableQuery = GetEntityQuery<ControllableNpcComponent>();
         _passiveTaskQuery = GetEntityQuery<PassiveNpcTaskTargetComponent>();
         _htnQuery = GetEntityQuery<HTNComponent>();
-        _xformQuery = GetEntityQuery<TransformComponent>();
 
         ReloadPrototypes();
     }
@@ -356,7 +355,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private bool CheckTaskStart(NPCBlackboard blackboard, NpcTaskPrototype task, EntityUid target)
     {
-        if (!_whitelist.IsWhitelistPass(task.TargetWhitelist, target)
+        if (!_whitelist.IsWhitelistPassOrNull(task.TargetWhitelist, target)
             || TaskPerformersCount(task, target) >= task.MaxPerformers)
             return false;
 
@@ -381,6 +380,13 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// Tries to set a new task for an NPC, checking all the required conditions
     /// </summary>
     /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId, EntityUid target)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetTask(npc, proto, target);
+
+    /// <summary>
+    /// Tries to set a new task for an NPC, checking all the required conditions
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
     public bool TrySetTask(
         Entity<HTNComponent?> npc,
         NpcTaskPrototype proto,
@@ -396,7 +402,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     /// <summary>
-    /// Tries to set a new task for an NPC, checking all the required conditions
+    /// Tries to set a new task for an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId, EntityCoordinates? targetCoords)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetTask(npc, proto, targetCoords);
+
+    /// <summary>
+    /// Tries to set a new task for an NPC
     /// </summary>
     /// <returns>True, if the task is successfully set</returns>
     public bool TrySetTask(
@@ -408,6 +421,26 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             return false;
 
         SetTask(new(npc.Owner, npc.Comp, control), proto, null, targetCoords);
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to set a new task for an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetTask(npc, proto);
+
+    /// <summary>
+    /// Tries to set a new task for an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully set</returns>
+    public bool TrySetTask(Entity<HTNComponent?> npc, NpcTaskPrototype proto)
+    {
+        if (!Resolve(npc, ref npc.Comp) || !_controllableQuery.TryComp(npc, out var control))
+            return false;
+
+        SetTask(new(npc.Owner, npc.Comp, control), proto);
         return true;
     }
 
@@ -450,6 +483,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         htn.RootTask = new HTNCompoundTask { Task = proto.Compound };
         _htn.Replan(htn);
+
+        RaiseLocalEvent(entity, new NpcTaskGiven(proto, target, coords));
 
         // We notify only users who can control NPCs of the change,
         // so that players cannot know about tasks of other players
@@ -498,8 +533,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         // Remove temporary keys from HTNBlackboard
         if (proto.DeleteKeysOnFinish)
         {
-            blackboard.Remove<EntityUid>(proto.TargetKey);
-            blackboard.Remove<EntityCoordinates>(proto.TargetCoordinatesKey);
+            if (blackboard.ContainsKey(proto.TargetKey))
+                blackboard.Remove<EntityUid>(proto.TargetKey);
+
+            if (blackboard.ContainsKey(proto.TargetCoordinatesKey))
+                blackboard.Remove<EntityCoordinates>(proto.TargetCoordinatesKey);
         }
 
         foreach (var key in proto.TempKeys)
@@ -513,7 +551,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             RaiseNetworkEvent(new NpcTaskFinishMessage(proto.ID, GetNetEntity(npc)), uid);
         }
 
-        RaiseLocalEvent(npc, new NpcTaskFinished(failed, proto, target));
+        RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, failed));
     }
 
     /// <summary>
@@ -645,6 +683,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         EntityUid? target = null;
         var minDist = (float) int.MaxValue;
         var canControlCache = new Dictionary<EntityUid, bool>();
+        var coords = Transform(npc).Coordinates;
 
         var query = EntityQueryEnumerator<TransformComponent, PassiveNpcTaskTargetComponent>();
         while (query.MoveNext(out var uid, out var targetXform, out var comp))
@@ -655,8 +694,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (!canControlCache[comp.User]
                 || comp.Task != task
                 || !CheckTaskStart(npc.Comp.Blackboard, task, uid)
-                || !_xformQuery.TryComp(npc, out var xform)
-                || !xform.Coordinates.TryDistance(EntityManager, targetXform.Coordinates, out var distance)
+                || !coords.TryDistance(EntityManager, targetXform.Coordinates, out var distance)
                 || distance >= minDist)
                 continue;
 
@@ -686,16 +724,48 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     }
 
     /// <summary>
+    /// Tries to find a task target and issue a task with that target to an NPC
+    /// </summary>
+    /// <returns>True, if the task is successfully issued</returns>
+    public bool TrySetPassiveTask(Entity<HTNComponent?> npc, ProtoId<NpcTaskPrototype> protoId)
+        => _prototype.TryIndex(protoId, out var proto) && TrySetPassiveTask(npc, proto);
+
+    /// <summary>
+    /// Return current NPC task
+    /// </summary>
+    public bool TryGetCurrentTask(Entity<ControllableNpcComponent?> npc,
+        [NotNullWhen(true)] out ProtoId<NpcTaskPrototype>? task)
+    {
+        task = null;
+
+        if (!Resolve(npc, ref npc.Comp))
+            return false;
+
+        task = npc.Comp.CurrentTask;
+        return task != null;
+    }
+
+    /// <summary>
     /// Give the user access to control this NPC
     /// </summary>
-    public void AddNpcControl(Entity<NpcControlComponent?> user, EntityUid uid)
+    public void AddNpcControl(EntityUid user, EntityUid uid)
     {
-        if (!Resolve(user, ref user.Comp))
-            return;
-
+        EnsureComp<NpcControlComponent>(user);
         var comp = EnsureComp<ControllableNpcComponent>(uid);
         comp.CanControl.Add(user);
-        RaiseLocalEvent(uid, new NpcControllerAdded(uid, user));
+        RaiseLocalEvent(uid, new NpcControllerAdded(user));
+    }
+
+    /// <summary>
+    /// Remove the user access to control this NPC
+    /// </summary>
+    public bool RemoveNpcControl(EntityUid user, Entity<ControllableNpcComponent?> uid)
+    {
+        if (!Resolve(uid, ref uid.Comp) || !uid.Comp.CanControl.Remove(user))
+            return false;
+
+        RaiseLocalEvent(uid, new NpcControllerRemoved(user));
+        return true;
     }
 
     /// <summary>
@@ -794,32 +864,24 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 /// <summary>
 /// Raised when an NPC has completed its current task
 /// </summary>
-[Serializable]
-public sealed class NpcTaskFinished(bool failed, ProtoId<NpcTaskPrototype> task, EntityUid? target) : EntityEventArgs
-{
-    /// <summary>
-    /// Task failed or completed successfully
-    /// </summary>
-    public bool Failed = failed;
-
-    public ProtoId<NpcTaskPrototype> Task = task;
-
-    public EntityUid? Target = target;
-}
+public record struct NpcTaskFinished(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, bool Failed);
 
 /// <summary>
-/// Called when a user who can control the entity is added
+/// Raised when an NPC receives a task
 /// </summary>
-[Serializable]
-public sealed class NpcControllerAdded(EntityUid uid, EntityUid user) : EntityEventArgs
-{
-    /// <summary>
-    /// Entity of a controlled NPC
-    /// </summary>
-    public EntityUid Uid = uid;
+/// <param name="Task">Task prototype</param>
+/// <param name="Target">The target entity of the task</param>
+/// <param name="TargetCoordinates">Target coordinates of the task</param>
+public record struct NpcTaskGiven(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, EntityCoordinates? TargetCoordinates);
 
-    /// <summary>
-    /// Added user
-    /// </summary>
-    public EntityUid User = user;
-}
+/// <summary>
+/// Raised when a user who can control the entity is added
+/// </summary>
+/// <param name="User">The user who can now control this entity</param>
+public record struct NpcControllerAdded(EntityUid User);
+
+/// <summary>
+/// Raised when the user who can control this entity is removed
+/// </summary>
+/// <param name="User">User who can no longer control this entity</param>
+public record struct NpcControllerRemoved(EntityUid User);

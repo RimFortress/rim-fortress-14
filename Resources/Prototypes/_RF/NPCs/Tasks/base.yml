@@ -1,0 +1,10 @@
+- type: npcTask
+  id: BaseNpcTask
+  abstract: true
+  onFinish: RfIdleCompound
+
+- type: npcTask
+  id: BaseSoloPerformTask
+  parent: BaseNpcTask
+  abstract: true
+  maxPerformers: 1

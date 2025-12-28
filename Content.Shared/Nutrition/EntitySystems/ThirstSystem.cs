@@ -216,8 +216,11 @@ public sealed class ThirstSystem : EntitySystem
             if (calculatedThirstThreshold == thirst.CurrentThirstThreshold)
                 continue;
 
+            RaiseLocalEvent(EntityUid.FirstUid, new ThirstThresholdChangedEvent(calculatedThirstThreshold, thirst.CurrentThirstThreshold)); // RimFortress
             thirst.CurrentThirstThreshold = calculatedThirstThreshold;
             UpdateEffects(uid, thirst);
         }
     }
 }
+
+public record struct ThirstThresholdChangedEvent(ThirstThreshold Current, ThirstThreshold Previous); // RimFortress

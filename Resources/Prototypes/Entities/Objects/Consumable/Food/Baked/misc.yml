@@ -629,6 +629,7 @@
   - type: Tag
     tags:
     - ClothMade
+    - LavishMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -839,6 +840,7 @@
   - type: Tag
     tags:
     - ClothMade
+    - LavishMealMoth # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:

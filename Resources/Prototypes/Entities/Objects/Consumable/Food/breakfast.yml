@@ -21,6 +21,11 @@
           Quantity: 40
         - ReagentId: Vitamin
           Quantity: 10
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 
 # Breakfasts
 

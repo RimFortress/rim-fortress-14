@@ -1,0 +1,46 @@
+- type: npcTask
+  id: Raid
+  name: Raid
+  parent: BaseNpcTask
+  overlayColor: "#FF0000"
+  compound: RaidCompound
+  onFinish: RaidIdleCompound
+  finishPreconditions:
+  - !type:MobStatePrecondition
+    targetKey: Owner
+    state: Alive
+    invert: true
+
+# Compounds
+- type: htnCompound
+  id: RaidCompound
+  branches:
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: NearbyMeleeTargets
+    - !type:HTNCompoundTask
+      task: AttackTargetCompound
+
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:PickNearestFreeOperator
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        pathfindInPlanning: true
+        stopOnLineOfSight: true
+        rangeKey: MeleeRange
+
+- type: htnCompound
+  id: RaidIdleCompound
+  branches:
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: NearbyMeleeTargets
+    - !type:HTNCompoundTask
+      task: AttackTargetCompound
+
+  - tasks:
+    - !type:HTNCompoundTask
+      task: IdleMoveCompound

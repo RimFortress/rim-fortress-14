@@ -68,7 +68,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         _debugSubscribers.Remove(args.SenderSession);
     }
 
-    public EntityUid InitializeWorld(RimFortressRuleComponent rule)
+    public EntityUid InitializeWorld(EntityUid uid, RimFortressRuleComponent rule)
     {
         Rule = rule;
         var map = _map.CreateMap();
@@ -87,6 +87,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         }
 
         rule.WorldMap = map;
+        Dirty(uid, rule);
         return map;
     }
 
@@ -160,6 +161,30 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     }
 
     /// <summary>
+    /// Removes an entity from the list of pops under the player's controller
+    /// </summary>
+    /// <param name="player">Player</param>
+    /// <param name="pop">Entity to remove</param>
+    /// <param name="removeLast">If true, the last pop can be removed</param>
+    public bool RemovePop(Entity<RimFortressPlayerComponent?> player, EntityUid pop, bool removeLast = false)
+    {
+        if (!Resolve(player.Owner, ref player.Comp))
+            return false;
+
+        if (!removeLast && player.Comp.Pops.Count <= 1)
+            return false;
+
+        if (!player.Comp.Pops.Remove(pop))
+            return false;
+
+        _npc.RemoveNpcControl(player.Owner, pop);
+        RemComp<NavMapBeaconComponent>(pop);
+
+        Dirty(player);
+        return true;
+    }
+
+    /// <summary>
     /// Spawns starting pops and expedition equipment for the player
     /// </summary>
     /// <remarks>
@@ -217,8 +242,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
             var pop = _station.SpawnPlayerMob(coords, job, character, null);
 
-            if (rule.PopsComponentsOverride != null)
-                EntityManager.AddComponents(pop, rule.PopsComponentsOverride);
+            if (_prototype.Resolve(rule.PopsComponentsOverride, out var overrides))
+                EntityManager.AddComponents(pop, overrides.Components);
 
             pops.Add(pop);
         }

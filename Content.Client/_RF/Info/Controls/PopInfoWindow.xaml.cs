@@ -22,10 +22,16 @@ public sealed partial class PopInfoWindow : FancyWindow
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
-        TabContainer.SetTabTitle(Skills.GetPositionInParent(), Loc.GetString("pop-info-skills-tab-title"));
-        TabContainer.SetTabTitle(Jobs.GetPositionInParent(), Loc.GetString("pop-info-jobs-tab-title"));
-        TabContainer.SetTabTitle(Health.GetPositionInParent(), Loc.GetString("pop-info-health-tab-title"));
-        TabContainer.SetTabTitle(Inventory.GetPositionInParent(), Loc.GetString("pop-info-inventory-tab-title"));
+        foreach (var child in TabContainer.Children)
+        {
+            if (child.Name == null)
+                continue;
+
+            TabContainer.SetTabTitle(
+                child.GetPositionInParent(),
+                Loc.GetString($"pop-info-{child.Name.ToLower()}-tab-title"));
+        }
+
         TabContainer.OnTabChanged += OnTabChanged;
 
         FollowButton.OnPressed += _ =>
@@ -56,16 +62,12 @@ public sealed partial class PopInfoWindow : FancyWindow
 
     private void OnTabChanged(int index)
     {
-        if (_uid == null)
-            return;
-
-        if (index == Skills.GetPositionInParent())
-            Skills.UpdateInfo(_uid.Value);
-        else if (index == Jobs.GetPositionInParent())
-            Jobs.UpdateInfo(_uid.Value);
-        else if (index == Health.GetPositionInParent())
-            Health.UpdateInfo(_uid.Value);
-        else if (index == Inventory.GetPositionInParent())
-            Inventory.UpdateInfo(_uid.Value);
+        if (_uid != null && TabContainer.GetChild(index) is IInfoTab tab)
+            tab.UpdateInfo(_uid.Value);
     }
+}
+
+public interface IInfoTab
+{
+    public void UpdateInfo(EntityUid uid);
 }

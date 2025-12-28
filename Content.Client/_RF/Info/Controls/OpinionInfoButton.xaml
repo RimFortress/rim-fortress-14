@@ -1,0 +1,21 @@
+<Control
+    xmlns="https://spacestation14.io"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Content.Client._RF.Info.Controls">
+    <BoxContainer Orientation="Vertical" Margin="2">
+        <Button Name="Button" ToggleMode="True" StyleClasses="ButtonSquare">
+            <BoxContainer>
+                <SpriteView Name="Sprite" SetSize="32 32" OverrideDirection="South"/>
+                <PanelContainer StyleClasses="LowDivider"/>
+                <RichTextLabel Name="Label" Margin="3 0"/>
+                <Control HorizontalExpand="True"/>
+                <RichTextLabel Name="ValueLabel" Margin="3 0"/>
+            </BoxContainer>
+        </Button>
+
+        <PanelContainer Name="EffectsPanel" Margin="0 3 0 0"
+                        StyleClasses="PanelHighlighted" Visible="False">
+            <controls:SocializationEffectsContainer Name="EffectsContainer" Orientation="Vertical"/>
+        </PanelContainer>
+    </BoxContainer>
+</Control>

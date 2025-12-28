@@ -104,3 +104,13 @@
   - type: MobPrice
     price: 150
   - type: FloatingVisuals
+  # RimFortress Start
+  - type: HungerOverride
+    thresholdDecayTime:
+      Overfed: 3h
+      Okay: 6h
+      Peckish: 4h
+      Starving: 5h
+  - type: ThirstOverride
+    fullDecayTime: 10h
+  # RimFortress End

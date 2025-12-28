@@ -110,6 +110,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Burgers
+  - type: Tag
+    tags:
+    - FineMeal
   # RimFortress End
 
 # Custom Burger Example
@@ -144,6 +147,12 @@
         color: "#f70000"
       - state: alpha-filling-inhand-right
         color: "#f70000"
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+  # RimFortress End
 
 # Burger
 
@@ -173,6 +182,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - RubbishMeal
+    - FineMealVox
+    # RimFortress End
   - type: Item
     inhandVisuals:
       left:
@@ -213,6 +226,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -255,6 +269,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - RubbishMeal
+    - FineMealVox
+    # RimFortress End
   - type: Item
     inhandVisuals:
       left:
@@ -299,6 +317,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - FineMeal
+    - LavishMealReptile
+    # RimFortress End
 
 - type: entity
   parent: FoodBurgerBase
@@ -337,6 +359,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like bun, silver, magic.
 
 - type: entity
@@ -372,6 +395,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - AwfulMeal
+    - FineMealReptile
+    # RimFortress Start
 # Tastes like bun, brains.
 
 - type: entity
@@ -410,6 +437,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - AwfulMeal
+    - FineMealReptile
+    # RimFortress Start
 
 - type: entity
   name: cheese burger
@@ -438,6 +469,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -482,6 +514,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -531,6 +564,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - AwfulMeal
+    - FineMealVox
+    # RimFortress Start
 
 - type: entity
   name: corger #not curger
@@ -556,6 +593,7 @@
   - type: Tag
     tags:
     - Meat
+    - LavishMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -589,6 +627,7 @@
   - type: Tag
     tags:
     - Meat
+    - LavishMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -646,6 +685,7 @@
   - type: Tag
     tags:
     - Meat
+    - AwfulMeal # RimFortress
 
 - type: entity
   parent: FoodBurgerBase
@@ -686,6 +726,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like bun, duck.
 
 - type: entity
@@ -716,6 +757,12 @@
           Quantity: 8
         - ReagentId: Licoxide
           Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+  # RimFortress End
 # Tastes like bun, pure electricity.
 
 - type: entity
@@ -748,6 +795,7 @@
   - type: Tag
     tags:
     - Meat
+    - RubbishMeal # RimFortress
 # Tastes like bun, fish.
 
 - type: entity
@@ -790,6 +838,7 @@
   - type: Tag
     tags:
     - Meat
+    - LavishMeal # RimFortress
 
 # Tastes like bun, HEAT.
 
@@ -866,6 +915,11 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - RubbishMeal
+    - FineMealVox
+    - FineMealReptile
+    # RimFortress End
   - type: Item
     inhandVisuals:
       left:
@@ -914,6 +968,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 
 - type: entity
   parent: FoodBurgerBase
@@ -946,6 +1001,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -1021,6 +1077,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -1054,6 +1111,11 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - RubbishMeal
+    - LavishMealReptile
+    - FineMealVox
+    # RimFortress End
   - type: Item
     inhandVisuals:
       left:
@@ -1090,6 +1152,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -1220,6 +1283,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
 # Tastes like bun, diabetes.
 
 - type: entity
@@ -1286,6 +1350,7 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress
   - type: Item
     inhandVisuals:
       left:
@@ -1340,3 +1405,4 @@
   - type: Tag
     tags:
     - Meat
+    - FineMeal # RimFortress

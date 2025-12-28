@@ -95,6 +95,11 @@
           Quantity: 10
         - ReagentId: Vitamin
           Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+  # RimFortress End
 
 # Salad
 
@@ -126,6 +131,10 @@
     tags:
     - Soup
     - Fruit # I don't know what this is but its' a salad so sure
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDiona
+    # RimFortress End
 
 - type: entity
   name: herb salad
@@ -158,6 +167,11 @@
     tags:
     - Fruit
     - Soup
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDiona
+    - AwfulMealReptile
+    # RimFortress End
 
 - type: entity
   name: valid salad
@@ -191,6 +205,7 @@
     - Meat
     - Fruit
     - Soup
+    - FineMeal # RimFortress
 
 - type: entity
   name: coleslaw
@@ -244,6 +259,11 @@
           Quantity: 15
         - ReagentId: Vitamin
           Quantity: 30
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 
 - type: entity
   name: kimchi salad
@@ -271,6 +291,11 @@
           Quantity: 15
         - ReagentId: Allicin
           Quantity: 2
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 
 - type: entity
   name: fruit salad
@@ -298,6 +323,10 @@
     tags:
     - Fruit
     - Soup
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDiona
+    # RimFortress End
 
 - type: entity
   name: jungle salad
@@ -326,6 +355,10 @@
     tags:
     - Fruit
     - Soup
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDiona
+    # RimFortress End
 
 - type: entity
   name: citrus salad
@@ -354,6 +387,7 @@
     tags:
     - Fruit
     - Soup
+    - FineMeal # RimFortress
 
 - type: entity
   name: salad of eden
@@ -380,6 +414,11 @@
           Quantity: 5
         - ReagentId: Omnizine
           Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 
 # Rice
 
@@ -486,6 +525,11 @@
           Quantity: 5
         - ReagentId: Sugar
           Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 
 - type: entity
   name: black-eyed gumbo
@@ -518,6 +562,7 @@
     tags:
     - Meat
     - Soup
+    - LavishMeal # RimFortress
 
 # Misc
 
@@ -546,6 +591,11 @@
           Quantity: 2
         - ReagentId: Milk
           Quantity: 10
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMealDwarf
+  # RimFortress End
 
 - type: entity
   name: space liberty duff
@@ -561,6 +611,12 @@
     layers:
     - state: bowl
     - state: spacelibertyduff
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+  # RimFortress End
 
 - type: entity
   parent: FoodInjectableBase
@@ -587,6 +643,12 @@
           Quantity: 6
         - ReagentId: Amatoxin
           Quantity: 6
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealVox
+  # RimFortress End
 
 # Soup
 
@@ -618,6 +680,10 @@
     tags:
     - Meat
     - Soup
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDwarf
+    # RimFortress End
 
 - type: entity
   name: slime soup
@@ -643,6 +709,12 @@
           Quantity: 5
         - ReagentId: Water
           Quantity: 10
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealVox
+  # RimFortress End
 
 - type: entity
   name: tomato soup
@@ -673,6 +745,10 @@
     tags:
     - Fruit
     - Soup
+    # RimFortress Start
+    - AwfulMeal
+    - FineMealVox
+    # RimFortress End
 
 - type: entity
   name: wing fang chu
@@ -699,6 +775,12 @@
           Quantity: 10
         - ReagentId: Vitamin
           Quantity: 10
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealReptile
+  # RimFortress End
 
 - type: entity
   name: clown's tears
@@ -726,6 +808,12 @@
           Quantity: 10
         - ReagentId: Razorium
           Quantity: 1 # silly
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealVox
+  # RimFortress End
 
 - type: entity
   name: vegetable soup
@@ -754,6 +842,12 @@
           Quantity: 10
         - ReagentId: Oculine
           Quantity: 4
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealDiona
+  # RimFortress End
 
 - type: entity
   name: nettle soup
@@ -783,6 +877,12 @@
           Quantity: 5
         - ReagentId: Histamine
           Quantity: 4
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealDiona
+  # RimFortress End
 
 - type: entity
   name: mystery soup
@@ -797,6 +897,11 @@
     layers:
     - state: bowl
     - state: mystery
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - RubbishMeal
+  # RimFortress End
 
 - type: entity
   name: bowl of hot chili
@@ -827,6 +932,7 @@
   - type: Tag
     tags:
     - ChiliBowl
+    - AwfulMeal # RimFortress
 
 
 - type: entity
@@ -920,6 +1026,7 @@
     tags:
     - Meat
     - Soup
+    - FineMeal # RimFortress
 
 - type: entity
   name: tomato soup
@@ -949,6 +1056,10 @@
     tags:
     - Fruit
     - Soup
+    # RimFortress Start
+    - FineMealDiona
+    - RubbishMealVox
+    # RimFortress End
 
 - type: entity
   name: eyeball soup
@@ -977,6 +1088,11 @@
     tags:
     - Meat
     - Soup
+    # RimFortress Start
+    - AwfulMeal
+    - LavishMealReptile
+    - FineMealVox
+    # RimFortress End
 
 - type: entity
   name: miso soup
@@ -1010,6 +1126,7 @@
     tags:
     - Meat
     - Soup
+    - FineMeal # RimFortress
 
 - type: entity
   name: mushroom soup
@@ -1037,6 +1154,12 @@
             Quantity: 5
           - ReagentId: Milk
             Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+    - AwfulMealVox
+  # RimFortress End
 
 - type: entity
   name: beet soup
@@ -1059,6 +1182,12 @@
             Quantity: 7
           - ReagentId: Water
             Quantity: 10
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMealDiona
+    - AwfulMealVox
+  # RimFortress End
 # Tastes like borsch, bortsch, borstch, borsh, borshch, borscht.
 
 - type: entity
@@ -1080,6 +1209,11 @@
             Quantity: 15
           - ReagentId: Vitamin
             Quantity: 15
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - FineMeal
+  # RimFortress End
 # Tastes like beet.
 
 - type: entity
@@ -1113,6 +1247,10 @@
     - Meat
     - Fruit
     - Soup
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDwarf
+    # RimFortress End
 
 - type: entity
   name: sweet potato soup
@@ -1189,6 +1327,11 @@
             Quantity: 5
           - ReagentId: Water
             Quantity: 5
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - LavishMeal
+  # RimFortress End
 # Tastes like crab.
 
 - type: entity
@@ -1219,6 +1362,12 @@
             Quantity: 15
           - ReagentId: Licoxide
             Quantity: 6
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+  # RimFortress End
 
 - type: entity
   name: bungo curry
@@ -1248,6 +1397,11 @@
     tags:
     - Fruit
     - Soup
+    # RimFortress Start
+    - FineMeal
+    - LavishMealDiona
+    - LavishMealReptile
+    # RimFortress End
 # Tastes like bungo, hot curry.
 
 - type: entity
@@ -1279,3 +1433,4 @@
     tags:
     - Meat
     - Soup
+    - FineMeal # RimFortress

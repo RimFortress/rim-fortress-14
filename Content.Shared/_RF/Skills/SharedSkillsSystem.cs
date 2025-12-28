@@ -25,10 +25,10 @@ public abstract class SharedSkillsSystem : EntitySystem
 
         Sawmill = LogManager.GetSawmill("skills");
 
-        SubscribeLocalEvent<SkillExpModificatorComponent, GetSkillExpModificatorsEvent>(OnGetExpModificators);
+        SubscribeLocalEvent<SkillExpModificatorComponent, GetSkillExpModifierEvent>(OnGetExpModifier);
     }
 
-    private static void OnGetExpModificators(Entity<SkillExpModificatorComponent> ent, ref GetSkillExpModificatorsEvent ev)
+    private static void OnGetExpModifier(Entity<SkillExpModificatorComponent> ent, ref GetSkillExpModifierEvent ev)
     {
         if (ent.Comp.FlatModificators.TryGetValue(ev.Skill, out var modificator))
             ev.Modificator += modificator;
@@ -137,6 +137,20 @@ public abstract class SharedSkillsSystem : EntitySystem
             return 0;
 
         return data.CurrentLevel;
+    }
+
+    /// <summary>
+    /// Returns the skill level of the entity using all valid modifiers
+    /// </summary>
+    public int GetModifiedLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
+    {
+        if (!Proto.TryIndex(skill, out var proto))
+            return 0;
+
+        var ev = new GetSkillLevelModifierEvent(skill, 0, 1f);
+        RaiseLocalEvent(ent, ref ev);
+
+        return Math.Clamp((int) ((GetLevel(ent, skill) + ev.Modificator) * ev.Multiplier), 0, proto.MaxLevel);
     }
 
     /// <summary>
@@ -308,7 +322,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             || !Resolve(user, ref user.Comp, false))
             return value;
 
-        var delta = GetLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
+        var delta = GetModifiedLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
 
         var result = delta switch
         {
@@ -338,7 +352,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         if (!Resolve(ent, ref ent.Comp, false) || !Resolve(user, ref user.Comp, false))
             return delay;
 
-        var delta = GetLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
+        var delta = GetModifiedLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
 
         return Math.Clamp(delay - delta * ent.Comp.DoAfterFactor,
             ent.Comp.MinDoAfterTime,
@@ -383,7 +397,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             return SkillCheckResult.Success;
 
         var interact = ent.Comp;
-        var delta = GetLevel(user, interact.Skill) - interact.TargetLevel;
+        var delta = GetModifiedLevel(user, interact.Skill) - interact.TargetLevel;
         var successChance = interact.SuccessFactor * delta + 0.2f;
         var failChance = 0.4f - successChance;
 
@@ -391,7 +405,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         var success = Random.Prob(Math.Clamp(successChance, 0, 1));
 
         // Query all participants in the interaction to get the final experience modifiers
-        var ev = new GetSkillExpModificatorsEvent(ent, ent.Comp.Skill, interact.Experience, 1f);
+        var ev = new GetSkillExpModifierEvent(ent, ent.Comp.Skill, interact.Experience, 1f);
         RaiseLocalEvent(ent, ref ev);
         RaiseLocalEvent(user, ref ev);
 
@@ -534,8 +548,13 @@ public sealed class SkillLevelChanged(int level, int oldLevel) : EntityEventArgs
 /// </summary>
 /// <param name="Uid">Entity for which an experience modifier should be given</param>
 [ByRefEvent]
-public record struct GetSkillExpModificatorsEvent(
-    EntityUid Uid,
-    ProtoId<SkillPrototype> Skill,
-    int Modificator,
-    float Multiplier);
+public record struct GetSkillExpModifierEvent(EntityUid Uid, ProtoId<SkillPrototype> Skill, int Modificator, float Multiplier);
+
+/// <summary>
+/// Event called to get a modifier for an entity's skill level
+/// </summary>
+/// <param name="Skill">Modifiers for which skill to get</param>
+/// <param name="Modificator">Flat modifier that will be added to the skill level</param>
+/// <param name="Multiplier">Modifier that the skill level will be multiplied by after adding the flat modifier</param>
+[ByRefEvent]
+public record struct GetSkillLevelModifierEvent(ProtoId<SkillPrototype> Skill, int Modificator, float Multiplier);

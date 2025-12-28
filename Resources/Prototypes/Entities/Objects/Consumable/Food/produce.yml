@@ -17,6 +17,9 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Produce
+  - type: Tag
+    tags:
+    - AwfulMeal
   # RimFortress End
 
 - type: entity
@@ -30,6 +33,7 @@
   - type: Tag
     tags:
     - Ruminant
+    - AwfulMeal # RimFortress
 
 # For produce that can be immediately eaten
 
@@ -71,6 +75,7 @@
     tags:
     - Wheat
     - Ruminant
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: meatwheat bushel
@@ -191,6 +196,7 @@
     tags:
     - Vegetable
     - Ruminant
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: tower-cap log
@@ -416,6 +422,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Mimana
@@ -464,6 +471,10 @@
 
     - WhitelistChameleon
     - HamsterWearable
+    # RimFortress Start
+    - RubbishMeal
+    - FineMealVox
+    # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -561,6 +572,7 @@
     tags:
     - Carrot
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: SolutionContainerManager
     solutions:
       food:
@@ -617,6 +629,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: CabbageBurger
@@ -649,6 +662,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: GarlicBurger
@@ -687,6 +701,7 @@
     tags:
     - Lemon
     - Fruit
+    - RubbishMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Lemon
@@ -724,6 +739,7 @@
   - type: Tag
     tags:
     - Fruit
+    - RubbishMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Lemoon
@@ -753,6 +769,7 @@
     tags:
     - Lime
     - Fruit
+    - RubbishMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Lime
@@ -781,6 +798,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Orange
@@ -824,6 +842,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: ExtradimensionalOrangeBurger
@@ -866,6 +885,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: potato
@@ -900,6 +920,7 @@
     tags:
     - Potato
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Potato
@@ -962,6 +983,7 @@
     tags:
     - Fruit
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Skewer: TomatoSkewer
@@ -1014,6 +1036,7 @@
     tags:
     - Fruit
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: BlueTomato
@@ -1063,6 +1086,7 @@
     tags:
     - Fruit # Fuck you they're a fruit
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Skewer: TomatoSkewer
@@ -1097,6 +1121,7 @@
     tags:
     - Fruit
     - Vegetable
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: apple
@@ -1130,6 +1155,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: Apple
@@ -1172,6 +1198,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: GoldenApple
@@ -1209,6 +1236,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: ear of corn
@@ -1235,6 +1263,7 @@
     tags:
     - Corn
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: Sprite
     sprite: Objects/Specific/Hydroponics/corn.rsi
   - type: Produce
@@ -1311,6 +1340,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: red onion
@@ -1344,6 +1374,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: chanterelle cluster
@@ -1367,6 +1398,7 @@
     tags:
     - Vegetable
     - Mushroom
+    - AwfulMeal # RimFortress
 
 # Slices
 
@@ -1389,6 +1421,7 @@
   - type: Tag
     tags:
     - Slice
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: pineapple slice
@@ -1410,6 +1443,7 @@
     tags:
     - Fruit
     - Slice
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: PineappleSliceBurger
@@ -1441,6 +1475,7 @@
     tags:
     - Vegetable
     - Slice
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: OnionSliceBurger
@@ -1472,6 +1507,7 @@
     tags:
     - Vegetable
     - Slice
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: OnionRedSliceBurger
@@ -1506,6 +1542,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: ChiliPepper
@@ -1574,6 +1611,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Aloe
@@ -1610,6 +1648,7 @@
   - type: Tag
     tags:
     - Flower # TODO add "RedFlower" or "Poppy" tag, when other color flowers will be
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Poppy
@@ -1642,6 +1681,7 @@
   - type: Tag
     tags:
     - Flower
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Lily
@@ -1681,6 +1721,7 @@
   - type: Tag
     tags:
     - Mushroom
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: ambrosia vulgaris
@@ -1720,6 +1761,7 @@
   - type: Tag
     tags:
     - Ambrosia
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: AmbrosiaVulgaris
@@ -1761,6 +1803,7 @@
   - type: Tag
     tags:
     - Ambrosia
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: AmbrosiaDeus
@@ -1794,6 +1837,7 @@
     tags:
     - Galaxythistle
     - Fruit # Probably?
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Galaxythistle
@@ -1864,6 +1908,7 @@
   - type: Tag
     tags:
     - Galaxythistle
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Glasstle
@@ -1903,6 +1948,7 @@
   - type: Tag
     tags:
     - Mushroom
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: gatfruit
@@ -1932,6 +1978,7 @@
   - type: Tag
     tags:
     - Fruit # It's in the name
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Gatfruit
@@ -1967,6 +2014,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Capfruit
@@ -2028,6 +2076,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Soybeans
@@ -2060,6 +2109,7 @@
   - type: Tag
     tags:
     - Flower
+    - AwfulMeal # RimFortress
   - type: Instrument #hehe trumpet
     program: 56
   - type: FoodSequenceElement
@@ -2094,6 +2144,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Koibean
@@ -2161,6 +2212,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: watermelon slice
@@ -2195,6 +2247,7 @@
     tags:
     - Fruit
     - Slice
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: WatermelonSliceBurger
@@ -2264,6 +2317,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: holymelon slice
@@ -2299,6 +2353,7 @@
     tags:
     - Fruit
     - Slice
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Burger: HolymelonSliceBurger
@@ -2337,6 +2392,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: berries
@@ -2370,6 +2426,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Berries
@@ -2408,6 +2465,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Bungo
@@ -2468,6 +2526,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Pea
@@ -2502,6 +2561,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: WorldPea
@@ -2556,6 +2616,7 @@
     tags:
     - Fruit
     - Vegetable
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: blue pumpkin
@@ -2607,6 +2668,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
 
 - type: entity
   name: cotton boll
@@ -2636,6 +2698,7 @@
     tags:
     - ClothMade
     - CottonBoll
+    - LavishMealMoth # RimFortress
   - type: FoodSequenceElement
     entries:
       CottonBurger: CottonBol
@@ -2670,6 +2733,7 @@
     tags:
     - ClothMade
     - CottonBoll
+    - LavishMealMoth # RimFortress
   - type: Extractable
     grindableSolutionName: food
   - type: FoodSequenceElement
@@ -2709,6 +2773,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: Cherry
@@ -2781,6 +2846,7 @@
   - type: Tag
     tags:
     - Fruit
+    - AwfulMeal # RimFortress
   - type: FoodSequenceElement
     entries:
       Taco: AnomalyBerry
@@ -2807,6 +2873,7 @@
   - type: Tag
     tags:
     - Vegetable
+    - AwfulMeal # RimFortress
   - type: PotencyVisuals
   - type: FlavorProfile
     flavors:

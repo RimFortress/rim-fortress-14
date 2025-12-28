@@ -1,16 +1,66 @@
 # ALPHABETICALLY
 
 - type: Tag
+  id: AwfulMeal
+
+- type: Tag
+  id: AwfulMealReptile
+
+- type: Tag
+  id: AwfulMealVox
+
+- type: Tag # Entity that can be mined with a pickaxe or a drill
   id: Diggable
 
 - type: Tag
+  id: FineMeal
+
+- type: Tag
+  id: FineMealDiona
+
+- type: Tag
+  id: FineMealDwarf
+
+- type: Tag
+  id: FineMealMoth
+
+- type: Tag
+  id: FineMealReptile
+
+- type: Tag
+  id: FineMealVox
+
+- type: Tag # Plant that can be hand-picked
   id: HandGatherable
 
-# Entities with this tag will never be saved when unloading biome chunks
 - type: Tag
+  id: LavishMeal
+
+- type: Tag
+  id: LavishMealDiona
+
+- type: Tag
+  id: LavishMealDwarf
+
+- type: Tag
+  id: LavishMealMoth
+
+- type: Tag
+  id: LavishMealReptile
+
+- type: Tag
+  id: LavishMealVox
+
+- type: Tag # Entities with this tag will never be saved when unloading biome chunks
   id: NoSaveOnModify
 
 - type: Tag
+  id: RubbishMeal
+
+- type: Tag
+  id: RubbishMealVox
+
+- type: Tag # Tree?
   id: Tree
 
 # ALPHABETICALLY

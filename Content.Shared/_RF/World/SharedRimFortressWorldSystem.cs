@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared.GameTicking;
+using Content.Shared.Light.Components;
 using Content.Shared.Maps;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Pinpointer;
@@ -13,6 +15,7 @@ using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization;
+using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.World;
 
@@ -25,6 +28,8 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly SharedBiomeSystem _biome = default!;
     [Dependency] private readonly INetManager _net = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly SharedGameTicker _ticker = default!;
 
     protected RimFortressRuleComponent? Rule;
 
@@ -131,6 +136,98 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
             return false;
         }
     }
+
+    /// <summary>
+    /// Returns current world time
+    /// </summary>
+    public TimeSpan WorldDateTime()
+    {
+        if (TryGetWorld(out var uid) && TryComp(uid, out LightCycleComponent? cycle))
+        {
+            return ToWorldTime(new(uid.Value, cycle),
+                _timing.CurTime.Add(cycle.Offset).Subtract(_ticker.RoundStartTimeSpan));
+        }
+
+        return TimeSpan.Zero;
+    }
+
+    /// <summary>
+    /// Converts the in-game simulation time to world time
+    /// </summary>
+    public TimeSpan ToWorldTime(TimeSpan time)
+        => TryGetWorld(out var uid) ? ToWorldTime(uid.Value, time) : time;
+
+    /// <summary>
+    /// Converts the in-game simulation time to world time
+    /// </summary>
+    public TimeSpan ToWorldTime(Entity<LightCycleComponent?> ent, TimeSpan time)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return time;
+
+        if (time < TimeSpan.Zero)
+            return TimeSpan.Zero;
+
+        // Calculate days (starting from 1)
+        var totalDays = time.TotalSeconds / ent.Comp.Duration.TotalSeconds;
+        var days = (int)Math.Floor(totalDays);
+
+        // Calculate time within current day (0.0 to 1.0)
+        var dayFraction = totalDays - Math.Floor(totalDays);
+
+        // Combine days and time of day
+        return TimeSpan.FromDays(days) + TimeSpan.FromHours(dayFraction * 24);
+    }
+
+    /// <summary>
+    /// Converts the world time to in-game simulation time
+    /// </summary>
+    public TimeSpan? FromWorldTime(TimeSpan? worldTime)
+        => worldTime != null ? FromWorldTime(worldTime.Value) : null;
+
+    /// <summary>
+    /// Converts the world time to in-game simulation time
+    /// </summary>
+    public TimeSpan FromWorldTime(TimeSpan worldTime)
+        => TryGetWorld(out var uid) ? FromWorldTime(uid.Value, worldTime) : worldTime;
+
+    /// <summary>
+    /// Converts the world time to in-game simulation time
+    /// </summary>
+    public TimeSpan FromWorldTime(Entity<LightCycleComponent?> ent, TimeSpan worldTime)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return worldTime;
+
+        if (worldTime <= TimeSpan.Zero)
+            return _ticker.RoundStartTimeSpan - ent.Comp.Offset;
+
+        var timeOfDay = worldTime - TimeSpan.FromDays(worldTime.Days);
+        var dayFraction = timeOfDay.TotalHours / 24.0;
+        var totalGameDays = worldTime.Days + dayFraction;
+
+        return TimeSpan.FromTicks((long)(totalGameDays * ent.Comp.Duration.Ticks));
+    }
+
+    /// <summary>
+    /// Returns the world map entity
+    /// </summary>
+    public bool TryGetWorld([NotNullWhen(true)] out EntityUid? ent)
+    {
+        var query = EntityQueryEnumerator<RimFortressRuleComponent>();
+
+        while (query.MoveNext(out var comp))
+        {
+            if (!Exists(comp.WorldMap))
+                continue;
+
+            ent = comp.WorldMap;
+            return true;
+        }
+
+        ent = null;
+        return false;
+    }
 }
 
 [Serializable, NetSerializable]
@@ -140,6 +237,4 @@ public sealed class SettlementCoordinatesMessage(Dictionary<NetEntity, List<NetC
 }
 
 [Serializable, NetSerializable]
-public sealed class WorldDebugInfoRequest : EntityEventArgs
-{
-}
+public sealed class WorldDebugInfoRequest : EntityEventArgs;

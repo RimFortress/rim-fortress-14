@@ -1,99 +1,90 @@
 - type: htnCompound
   id: RfIdleCompound
   branches:
-    - tasks:
-        - !type:HTNCompoundTask
-          task: DrinkCompound
+  - preconditions:
+    - !type:HasComponentPrecondition
+      components:
+      - type: ConversationActor
+    tasks:
+    - !type:HTNCompoundTask
+      task: ConversationCompound
 
-    - tasks:
-        - !type:HTNCompoundTask
-          task: EatCompound
+  # Sleep if tired
+  - preconditions:
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      lessThan: 30
+    tasks:
+    - !type:HTNCompoundTask
+      task: SleepCompound
 
-    - tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:RoutineTaskOperator
+  # Wake up samurai
+  - preconditions:
+    - !type:HasComponentPrecondition
+      components:
+      - type: Sleeping
+    - !type:NeedLevelPrecondition
+      need: Sleep
+      moreThan: 70
+    tasks:
+    - !type:HTNCompoundTask
+      task: WakeUpCompound
 
-    - tasks:
-        - !type:HTNCompoundTask
-          task: IdleMoveCompound
+  # Looking for food if we are hungry
+  - preconditions:
+    - !type:HungryPrecondition
+      minHungerState: Starving
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Food
+        key: PickUpTarget
+    - !type:HTNCompoundTask
+      task: EatCompound
 
-- type: htnCompound
-  id: RaidIdleCompound
-  branches:
-    - tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UtilityOperator
-            proto: NearbyMeleeTargets
-        - !type:HTNCompoundTask
-          task: AttackTargetCompound
+  # Looking for a drink if we're thirsty
+  - preconditions:
+    - !type:ThirstyPrecondition
+      minThirstState: Parched
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:UtilityOperator
+        proto: Drink
+        key: PickUpTarget
+    - !type:HTNCompoundTask
+      task: DrinkCompound
 
-    - tasks:
-        - !type:HTNCompoundTask
-          task: IdleMoveCompound
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:RoutineTaskOperator
+
+  - tasks:
+    - !type:HTNCompoundTask
+      task: IdleMoveCompound
 
 - type: htnCompound
   id: IdleMoveCompound
   branches:
-    - preconditions:
-        - !type:InContainerPrecondition
-          isInContainer: true
-      tasks:
-        - !type:HTNCompoundTask
-          task: EscapeCompound
+  - preconditions:
+    - !type:InContainerPrecondition
+      isInContainer: true
+    tasks:
+    - !type:HTNCompoundTask
+      task: EscapeCompound
 
-    - tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:WaitOperator
-            key: IdleTime
-          preconditions:
-            - !type:KeyExistsPrecondition
-              key: IdleTime
-
-    # Pick a new spot and wait there.
-    - tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:PickAccessibleOperator
-            rangeKey: IdleRange
-
-        - !type:HTNPrimitiveTask
-          operator: !type:MoveToOperator
-            pathfindInPlanning: false
-
-        - !type:HTNPrimitiveTask
-          operator: !type:RandomOperator
-            targetKey: IdleTime
-            minKey: MinimumIdleTime
-            maxKey: MaximumIdleTime
-
-        - !type:HTNPrimitiveTask
-          preconditions:
-            - !type:KeyExistsPrecondition
-              key: IdleTime
-          operator: !type:WaitOperator
-            key: IdleTime
-
-- type: htnCompound
-  id: EatCompound
-  branches:
-    - preconditions:
-        - !type:HungryPrecondition
-          minHungerState: Starving
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UtilityOperator
-            proto: Food
-        - !type:HTNCompoundTask
-          task: MoveToEntityCompound
-
-- type: htnCompound
-  id: DrinkCompound
-  branches:
-    - preconditions:
-        - !type:ThirstyPrecondition
-          minThirstState: Parched
-      tasks:
-        - !type:HTNPrimitiveTask
-          operator: !type:UtilityOperator
-            proto: Drink
-        - !type:HTNCompoundTask
-          task: MoveToEntityCompound
+  # Pick a new spot and wait there.
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:PickAccessibleOperator
+        rangeKey: IdleRange
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        pathfindInPlanning: false
+    - !type:HTNPrimitiveTask
+      operator: !type:RandomOperator
+        targetKey: IdleTime
+        minKey: MinimumIdleTime
+        maxKey: MaximumIdleTime
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitOperator
+        key: IdleTime

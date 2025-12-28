@@ -39,6 +39,12 @@
       - pasta
   - type: Sprite
     state: boiled
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+  # RimFortress End
 # Tastes like pasta.
 
 - type: entity
@@ -65,6 +71,10 @@
   - type: Tag
     tags:
     - Fruit
+    # RimFortress Start
+    - FineMeal
+    - AwfulMealVox
+    # RimFortress End
 # Tastes like pasta, tomato.
 
 - type: entity
@@ -121,6 +131,10 @@
   - type: Tag
     tags:
     - Meat
+    # RimFortress Start
+    - LavishMeal
+    - AwfulMealVox
+    # RimFortress End
 # Tastes like pasta, meat.
 
 - type: entity
@@ -173,6 +187,12 @@
           Quantity: 6
         - ReagentId: Vitamin
           Quantity: 20
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealVox
+  # RimFortress End
 # Tastes like pasta, tomato.
 
 - type: entity
@@ -196,4 +216,9 @@
         reagents:
         - ReagentId: Nutriment
           Quantity: 23
+  # RimFortress Start
+  - type: Tag
+    tags:
+    - AwfulMealReptile
+  # RimFortress End
 # Tastes like pasta, butter.

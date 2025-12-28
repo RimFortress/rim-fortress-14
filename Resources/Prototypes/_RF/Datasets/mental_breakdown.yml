@@ -1,0 +1,5 @@
+- type: localizedDataset
+  id: MentalBreakdownPhrases
+  values:
+    prefix: mental-breakdown-phrases-dataset-
+    count: 69
