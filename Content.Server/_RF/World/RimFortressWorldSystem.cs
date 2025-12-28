@@ -2,6 +2,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
 using Content.Server._RF.NPC.Systems;
+using Content.Server._RF.Parallax.Fog;
 using Content.Server.Administration.Managers;
 using Content.Server.Mind;
 using Content.Server.Parallax;
@@ -11,7 +12,6 @@ using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC;
-using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
@@ -45,6 +45,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
     [Dependency] private readonly NpcControlSystem _npc = default!;
+    [Dependency] private readonly FogOfWarSystem _faw = default!;
 
     private readonly HashSet<ICommonSession> _debugSubscribers = new();
 
@@ -73,10 +74,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         Rule = rule;
         var map = _map.CreateMap();
         _biome.EnsurePlanet(map, _prototype.Index(rule.Biome));
-
-        var fog = EnsureComp<FogOfWarComponent>(map);
-        fog.Enabled = false; // TODO: fix this, after updating the engine, Fog of War may crash the client
-        Dirty(map, fog);
 
         if (TryComp(map, out LightCycleComponent? cycle))
         {
@@ -242,9 +239,10 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
             var pop = _station.SpawnPlayerMob(coords, job, character, null);
 
-            if (_prototype.Resolve(rule.PopsComponentsOverride, out var overrides))
+            if (_prototype.TryIndex(rule.PopsComponentsOverride, out var overrides))
                 EntityManager.AddComponents(pop, overrides.Components);
 
+            _faw.SetFogClearer(pop, player);
             pops.Add(pop);
         }
 

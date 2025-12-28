@@ -18,12 +18,21 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         SubscribeNetworkEvent<NpcJobInfoMessage>(OnJobInfo);
         SubscribeNetworkEvent<NpcJobDeleted>(OnJobDeleted);
         SubscribeNetworkEvent<NpcJobsTasksInfoMessage>(OnJobsTasksInfo);
+
+        SubscribeLocalEvent<RoutineNpcTasksComponent, ComponentInit>(OnComponentInit);
+    }
+
+    private void OnComponentInit(EntityUid uid, RoutineNpcTasksComponent component, ComponentInit args)
+    {
+        RaiseNetworkEvent(new NpcJobPrioritiesRequest(GetNetEntity(uid)));
     }
 
     private void OnJobPriority(NpcJobPriority msg)
     {
-        var uid = GetEntity(msg.Entity);
-        var comp = EnsureComp<RoutineNpcTasksComponent>(uid);
+        if (!TryGetEntity(msg.Entity, out var uid))
+            return;
+
+        var comp = EnsureComp<RoutineNpcTasksComponent>(uid.Value);
 
         comp.Jobs[msg.Id] = msg.Priority;
     }

@@ -28,102 +28,12 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
     /// <inheritdoc/>
     public override void Initialize()
     {
+        base.Initialize();
+
         _xformQuery = GetEntityQuery<TransformComponent>();
         _fogOfWarQuery = GetEntityQuery<FogOfWarComponent>();
 
         _overlay.AddOverlay(new FogOfWarOverlay());
-
-        SubscribeNetworkEvent<FogOfWarChunkAdded>(OnChunkAdded);
-        SubscribeNetworkEvent<FogOfWarChunkRemoved>(OnChunkRemoved);
-        SubscribeNetworkEvent<FogOfWarFullStateMessage>(OnFullStateRequest);
-
-        SubscribeLocalEvent<FogOfWarComponent, ComponentInit>(OnFogInit);
-    }
-
-    private void OnFogInit(EntityUid uid, FogOfWarComponent component, ComponentInit args)
-    {
-        var xform = Transform(uid);
-        var fowGrid = _mapMan.CreateGridEntity(xform.MapID);
-
-        EnsureComp<RoofComponent>(fowGrid);
-        EnsureComp<DecalGridComponent>(fowGrid);
-
-        _transform.SetCoordinates(fowGrid, xform.Coordinates);
-        component.FowGrid = fowGrid;
-
-        if (_player.LocalEntity is not { Valid: true } player)
-            return;
-
-        var msg = new FogOfWarFullStateRequest(GetNetEntity(player), GetNetEntity(uid));
-        RaiseNetworkEvent(msg);
-    }
-
-    private void OnChunkAdded(FogOfWarChunkAdded msg)
-    {
-        var grid = GetEntity(msg.Grid);
-
-        if(!_fogOfWarQuery.TryComp(grid, out var comp)
-           || !comp.FogChunks.Add(msg.Chunk))
-            return;
-
-        comp.ActiveChunks.Remove(msg.Chunk);
-
-        if (!comp.Enabled)
-            return;
-
-        LoadChunk(comp.FowGrid, grid, msg.ModifiedTiles, msg.Chunk);
-    }
-
-    private void OnChunkRemoved(FogOfWarChunkRemoved msg)
-    {
-        var grid = GetEntity(msg.Grid);
-
-        if (!_fogOfWarQuery.TryComp(grid, out var comp)
-            || !comp.ActiveChunks.Add(msg.Chunk))
-            return;
-
-        comp.FogChunks.Remove(msg.Chunk);
-
-        if (!comp.Enabled)
-            return;
-
-        var chunkSize = SharedBiomeSystem.ChunkSize;
-        var tiles = new List<(Vector2i, Tile)>();
-
-        for (var x = 0; x < chunkSize; x++)
-        {
-            for (var y = 0; y < chunkSize; y++)
-            {
-                var indices = new Vector2i(x + msg.Chunk.X, y + msg.Chunk.Y);
-                tiles.Add((indices, Tile.Empty));
-            }
-        }
-
-        _map.SetTiles(comp.FowGrid, Comp<MapGridComponent>(comp.FowGrid), tiles);
-
-        if (comp.LoadedEntities.TryGetValue(msg.Chunk, out var entities))
-        {
-            foreach (var uid in entities)
-            {
-                Del(uid);
-            }
-        }
-
-        if (!comp.LoadedDecal.TryGetValue(msg.Chunk, out var decals))
-            return;
-
-        foreach (var decal in decals)
-        {
-            _decals.RemoveDecal(grid, decal);
-        }
-    }
-
-    private void OnFullStateRequest(FogOfWarFullStateMessage msg)
-    {
-        if (!TryComp(GetEntity(msg.Grid), out FogOfWarComponent? comp))
-            return;
-
-        comp.FogChunks = msg.VisitedChunks;
     }
 
     // Just copy-paste from BiomeSystem

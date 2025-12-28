@@ -41,6 +41,7 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
         SubscribeNetworkEvent<NpcJobPriority>(OnJobPriority);
         SubscribeNetworkEvent<NpcJobUpdated>(OnJobUpdated);
         SubscribeNetworkEvent<NpcJobCreateRequest>(OnJobCreateRequest);
+        SubscribeNetworkEvent<NpcJobPrioritiesRequest>(OnJobPrioritiesRequest);
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -234,6 +235,17 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 
         var icon = msg.Job.IconPath is { } path ? new SpriteSpecifier.Texture(new(path)) : null;
         CreateJob(msg.Job.Name, args.SenderSession, icon, tasks);
+    }
+
+    private void OnJobPrioritiesRequest(NpcJobPrioritiesRequest msg, EntitySessionEventArgs args)
+    {
+        if (!TryComp(GetEntity(msg.Entity), out RoutineNpcTasksComponent? comp))
+            return;
+
+        foreach (var (jobId, priority) in comp.Jobs)
+        {
+            RaiseNetworkEvent(new NpcJobPriority(jobId, msg.Entity, priority), args.SenderSession);
+        }
     }
 
     #endregion
