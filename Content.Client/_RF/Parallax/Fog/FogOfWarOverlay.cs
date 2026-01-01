@@ -1,15 +1,12 @@
 using System.Numerics;
-using Content.Client.Resources;
+using Content.Client.Graphics;
 using Content.Shared._RF.Parallax.Fog;
-using Content.Shared.Parallax.Biomes;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
-using Robust.Client.ResourceManagement;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Map.Enumerators;
-using Robust.Shared.Utility;
+using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Parallax.Fog;
 
@@ -17,11 +14,15 @@ namespace Content.Client._RF.Parallax.Fog;
 public sealed class FogOfWarOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IResourceCache _resource = default!;
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IClyde _clyde = default!;
+
+    private static readonly ProtoId<ShaderPrototype> FogShader = "Fog";
 
     private readonly TransformSystem _transform;
-    private readonly Texture _fogTexture;
-    private readonly FogOfWarSystem _fog;
+
+    private readonly ShaderInstance _fogShader;
+    private readonly OverlayResourceCache<CachedResources> _resources = new();
 
     public override OverlaySpace Space => OverlaySpace.WorldSpace;
 
@@ -30,8 +31,7 @@ public sealed class FogOfWarOverlay : Overlay
         IoCManager.InjectDependencies(this);
 
         _transform = _entityManager.System<TransformSystem>();
-        _fog = _entityManager.System<FogOfWarSystem>();
-        _fogTexture = _resource.GetTexture(new ResPath("/Textures/Parallaxes/noise.png"));
+        _fogShader = _prototype.Index(FogShader).InstanceUnique();
 
         ZIndex = int.MaxValue;
     }
@@ -39,42 +39,89 @@ public sealed class FogOfWarOverlay : Overlay
     protected override void Draw(in OverlayDrawArgs args)
     {
         if (args.MapId == MapId.Nullspace
-            || args.Viewport.Eye is not { } eye
-            || !_entityManager.TryGetComponent(args.MapUid, out FogOfWarComponent? comp)
-            || !_entityManager.TryGetComponent(args.MapUid, out MapGridComponent? grid)
-            || !comp.Enabled)
+            || !_entityManager.TryGetComponent(args.MapUid, out MapGridComponent? grid))
             return;
 
-        var chunkSize = SharedBiomeSystem.ChunkSize;
-        var tileSize = grid.TileSize;
-        var tileDimensions = new Vector2(tileSize, tileSize);
-        var (_, _, worldMatrix, _) = _transform.GetWorldPositionRotationMatrixWithInv(comp.FowGrid);
+        var worldHandle = args.WorldHandle;
+        var viewport = args.Viewport;
 
-        args.WorldHandle.SetTransform(worldMatrix);
+        if (viewport.Eye == null)
+            return;
 
-        foreach (var chunk in comp.FogChunks)
+        // Create or get render targets
+        var res = _resources.GetForViewport(viewport, static _ => new CachedResources());
+        if (res.Target?.Size != viewport.Size)
         {
-            var chunkCenter = chunk * tileDimensions + new Vector2((float) chunkSize / 2);
-            var box = Box2.CenteredAround(chunkCenter, tileDimensions * chunkSize);
-            args.WorldHandle.DrawTextureRect(_fogTexture, box, comp.FogColor);
+            res.Target = _clyde.CreateRenderTarget(viewport.Size,
+                new RenderTargetFormatParameters(RenderTargetColorFormat.Rgba8Srgb),
+                name: "fog-of-war-target");
+
+            if (res.BlurTarget?.Size != viewport.Size)
+            {
+                res.BlurTarget = _clyde
+                    .CreateRenderTarget(viewport.Size,
+                        new RenderTargetFormatParameters(RenderTargetColorFormat.Rgba8Srgb),
+                        name: "fog-of-war-blur");
+            }
         }
 
-        // TODO: It's absolutely horrible and must be destroyed.
-        // We on the client side just paint active chunks uploaded by other players black,
-        // because the main grid is on the server side and how else it can be realized I can not imagine
-        var viewBox = Box2.CenteredAround(eye.Position.Position, new Vector2(200f));
-        var chunks = new ChunkIndicesEnumerator(viewBox, chunkSize);
-        while (chunks.MoveNext(out var chunk))
+        // Fog cleaners and their radius
+        var clears = new Dictionary<Vector2, float>();
+        var enumerator = _entityManager.EntityQueryEnumerator<TransformComponent, FogOfWarClearerComponent>();
+
+        while (enumerator.MoveNext(out var xform, out var comp))
         {
-            var ind = chunk.Value * chunkSize;
+            var pos = _transform.ToWorldPosition(xform.Coordinates);
+            clears[pos] = comp.Range;
+        }
 
-            if (_fog.ChunkInFog(new(args.MapUid, comp), ind)
-                || _fog.ChunkActive(new(args.MapUid, comp), ind))
-                continue;
+        var (worldCoords, _, worldMatrix, _) = _transform.GetWorldPositionRotationMatrixWithInv(args.MapUid);
+        var unit = (viewport.WorldToLocal(new Vector2(2f, 1f)) - viewport.WorldToLocal(Vector2.One)).X;
+        var offset = viewport.WorldToLocal(worldCoords);
+        offset.Y = args.Viewport.Size.Y - offset.Y;
 
-            var chunkCenter = ind * tileDimensions + new Vector2((float) chunkSize / 2);
-            var box = Box2.CenteredAround(chunkCenter, tileDimensions * chunkSize);
-            args.WorldHandle.DrawRect(box, Color.Black);
+        // Draw fog clear areas
+        args.WorldHandle.RenderInRenderTarget(res.Target,
+            () =>
+            {
+                var renderMatrix = res.Target.GetWorldToLocalMatrix(viewport.Eye, viewport.RenderScale);
+                worldHandle.SetTransform(renderMatrix);
+
+                foreach (var (point, range) in clears)
+                {
+                    worldHandle.DrawCircle(point, range * grid.TileSize, Color.White);
+                }
+            },
+            Color.Transparent);
+
+        // Blur areas
+        _clyde.BlurRenderTarget(viewport, res.Target, res.BlurTarget!, viewport.Eye, 14f * 20f);
+
+        _fogShader.SetParameter("offset", offset);
+        _fogShader.SetParameter("unit", unit);
+
+        // Draw render target with shader
+        args.WorldHandle.UseShader(_fogShader);
+        args.WorldHandle.SetTransform(worldMatrix);
+        args.WorldHandle.DrawTextureRect(res.Target.Texture, args.WorldBounds);
+        args.WorldHandle.UseShader(null);
+    }
+
+    protected override void DisposeBehavior()
+    {
+        _resources.Dispose();
+        base.DisposeBehavior();
+    }
+
+    private sealed class CachedResources : IDisposable
+    {
+        public IRenderTexture? Target;
+        public IRenderTexture? BlurTarget;
+
+        public void Dispose()
+        {
+            Target?.Dispose();
+            BlurTarget?.Dispose();
         }
     }
 }

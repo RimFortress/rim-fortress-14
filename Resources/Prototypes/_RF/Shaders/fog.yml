@@ -1,0 +1,9 @@
+- type: shader
+  id: Fog
+  kind: source
+  path: "/Textures/_RF/Shaders/fog.swsl"
+  params:
+    fogColor: "#878787"
+    zoom: 0.33
+    pixelationAmount: 20.0
+    fogDirection: 0.13,0.43

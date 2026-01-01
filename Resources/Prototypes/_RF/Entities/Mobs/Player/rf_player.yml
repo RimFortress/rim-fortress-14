@@ -15,6 +15,7 @@
     maxZoom: 6,6
   - type: Eye
     drawFov: false
+    pvsScale: 0.1
   - type: Input
     context: "ghost"
   - type: Examiner

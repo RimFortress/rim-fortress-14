@@ -133,6 +133,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             var beacon = EnsureComp<NavMapBeaconComponent>(pop);
             beacon.Color = player.Comp.FactionColor;
             beacon.Text = MetaData(pop).EntityName;
+
+            _faw.AddFogClearer(pop, player);
         }
 
         player.Comp.Pops.AddRange(pops);
@@ -152,6 +154,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         var beacon = EnsureComp<NavMapBeaconComponent>(pop);
         beacon.Color = player.Comp.FactionColor;
         beacon.Text = MetaData(pop).EntityName;
+
+        _faw.AddFogClearer(pop, player);
 
         player.Comp.Pops.Add(pop);
         Dirty(player);
@@ -176,6 +180,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         _npc.RemoveNpcControl(player.Owner, pop);
         RemComp<NavMapBeaconComponent>(pop);
+
+        _faw.RemoveFogClearer(pop, player);
 
         Dirty(player);
         return true;
@@ -242,7 +248,6 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             if (_prototype.TryIndex(rule.PopsComponentsOverride, out var overrides))
                 EntityManager.AddComponents(pop, overrides.Components);
 
-            _faw.SetFogClearer(pop, player);
             pops.Add(pop);
         }
 

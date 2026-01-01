@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Content.Server._RF.Parallax.Fog; // RimFortress
 using Content.Server.Administration.Logs;
 using Content.Server.Administration.Managers;
 using Content.Shared.Administration;
@@ -38,7 +37,6 @@ namespace Content.Server.Decals
         [Dependency] private readonly SharedMapSystem _mapSystem = default!;
         [Dependency] private readonly SharedTransformSystem _transform = default!;
         [Dependency] private readonly TurfSystem _turf = default!;
-        [Dependency] private readonly FogOfWarSystem _faw = default!; // RimFortress
 
         private readonly Dictionary<NetEntity, HashSet<Vector2i>> _dirtyChunks = new();
         private readonly Dictionary<ICommonSession, Dictionary<NetEntity, HashSet<Vector2i>>> _previousSentChunks = new();
@@ -467,7 +465,7 @@ namespace Content.Server.Decals
 
         public void UpdatePlayer(ICommonSession player)
         {
-            var chunksInRange = _faw.GetChunksForSession(player, ChunkSize, _chunkIndexPool, _chunkViewerPool); // RimFortress
+            var chunksInRange = _chunking.GetChunksForSession(player, ChunkSize, _chunkIndexPool, _chunkViewerPool);
             var staleChunks = _chunkViewerPool.Get();
             var previouslySent = _previousSentChunks[player];
 

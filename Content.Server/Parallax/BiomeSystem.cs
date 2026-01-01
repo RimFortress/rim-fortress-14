@@ -34,7 +34,7 @@ using Robust.Shared.Threading;
 using Robust.Shared.Utility;
 using ChunkIndicesEnumerator = Robust.Shared.Map.Enumerators.ChunkIndicesEnumerator;
 
-using Content.Shared._RF.Parallax.Biomes; // RimFortress
+using Content.Shared._RF.Parallax.Fog; // RimFortress
 
 namespace Content.Server.Parallax;
 
@@ -386,13 +386,13 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         }
 
         // RimFortress Start
-        var entities = EntityQueryEnumerator<TransformComponent, BiomeLoaderComponent>();
+        var entities = EntityQueryEnumerator<TransformComponent, FogOfWarClearerComponent>();
         while (entities.MoveNext(out var uid, out var xform, out var comp))
         {
             if (!_biomeQuery.TryComp(_transform.GetGrid(uid), out var biome))
                 continue;
 
-            var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(comp.Radius));
+            var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(comp.Range + ChunkSize));
             var enumerator = new ChunkIndicesEnumerator(box, ChunkSize);
 
             while (enumerator.MoveNext(out var chunkOrigin))

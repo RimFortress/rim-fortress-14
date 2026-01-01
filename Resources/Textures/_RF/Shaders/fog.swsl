@@ -1,0 +1,72 @@
+uniform sampler2D SCREEN_TEXTURE;
+uniform highp vec4 fogColor;
+uniform highp int octaves = 4;
+uniform highp float pixelationAmount = 150.0;
+uniform highp vec2 fogDirection = vec2(1.0, 1.0); // Use -1 and 1 values to change direction. Increase the speed in that direction with values higher/lower than 1
+uniform highp float zoom = 1;
+
+uniform highp float edgeNoiseScale = 5.0; // Масштаб шума для краёв
+uniform highp float edgeNoiseAmount = 0.33; // Сила неровностей (0-1)
+
+uniform highp vec2 offset;
+uniform highp float unit;
+
+highp float rand(highp vec2 coord){
+    return fract(sin(dot(coord, vec2(12, 79)) * 3636.0) * 1000.0);
+}
+
+highp float noise(highp vec2 coord){
+    highp vec2 i = floor(coord);
+    highp vec2 f = fract(coord);
+
+    highp float a = rand(i);
+    highp float b = rand(i + vec2(1.0, 0.0));
+    highp float c = rand(i + vec2(0.0, 1.0));
+    highp float d = rand(i + vec2(1.0, 1.0));
+
+    highp vec2 cubic = f * f * (3.0 - 2.0 * f);
+
+    return mix(a, b, cubic.x) + (c - a) * cubic.y * (1.0 - cubic.x) + (d - b) * cubic.x * cubic.y;
+}
+
+highp float fbm(highp vec2 coord, highp int octavesCount){
+    highp float value = 0.0;
+    highp float scale = 0.5;
+    highp float frequency = 1.0;
+
+    for(highp int i = 0; i < octavesCount; i++){
+        value += noise(coord * frequency) * scale;
+        scale *= 0.5;
+        frequency *= 2.0;
+    }
+    return value;
+}
+
+void fragment() {
+    highp vec2 coord = (FRAGCOORD.xy - offset) / unit * 0.33;
+    coord = round(coord * pixelationAmount) / pixelationAmount;
+
+    // Scroll the noise texture
+    coord += TIME * fogDirection;
+
+    highp vec2 motion = vec2(fbm(coord + fogDirection * TIME, octaves));
+
+    highp float final = fbm(coord + motion, octaves);
+    highp float maskValue = texture(SCREEN_TEXTURE, UV).a;
+
+    highp vec2 edgeNoiseCoord = coord * edgeNoiseScale + TIME * 0.2;
+    highp float edgeNoise = fbm(edgeNoiseCoord, 4);
+    highp float distanceToEdge = abs(maskValue - 0.5) * 2.0;
+    highp float noiseInfluence = (1.0 - distanceToEdge) * edgeNoiseAmount;
+
+    highp float noisyMask = maskValue + (edgeNoise - 0.5) * noiseInfluence;
+
+    // Инвертируем: где clearance = 1 (очищено) - туман не виден
+    highp float fogVisibility = 1.0 - noisyMask;
+
+    // Комбинируем с основным шумом тумана
+    final *= fogVisibility;
+
+    // Use the alpha value of the color to control the overall fog opacity
+    COLOR = vec4(fogColor.rgb, fogColor.a * final);
+}
