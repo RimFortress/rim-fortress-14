@@ -900,8 +900,6 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         {
             component.ModifiedTiles[chunk] = modified;
         }
-
-        RaiseLocalEvent(new BiomeChunkLoaded(new(gridUid, component, grid), chunk)); // RimFortress
     }
 
     #endregion
@@ -1034,8 +1032,6 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
         {
             component.ModifiedTiles[chunk] = modified;
         }
-
-        RaiseLocalEvent(new BiomeChunkUnloaded(new(gridUid, component, grid), chunk)); // RimFortress
     }
 
     #endregion

@@ -60,7 +60,6 @@ public sealed class WorldMapControl : MapGridControl
     private readonly Dictionary<Color, List<(Vector2, Vector2)>> _lines = new();
     private readonly Dictionary<Color, List<Vector2>> _circles = new();
     private readonly Dictionary<Color, List<Vector2>> _noScaleCircles = new();
-    private readonly Dictionary<Color, HashSet<UIBox2>> _chunks = new();
     private readonly Dictionary<Color, HashSet<UIBox2>> _regions = new();
     private readonly Dictionary<Color, List<(Vector2, string)>> _noScaleStrings = new();
     private readonly Dictionary<Vector2, EntityUid> _beacons = new();
@@ -178,56 +177,31 @@ public sealed class WorldMapControl : MapGridControl
     {
         if (MapUid == null
             || !EntManager.TryGetComponent(MapUid.Value, out MapGridComponent? grid)
-            || !EntManager.TryGetComponent(MapUid.Value, out FogOfWarComponent? fog)
-            || !EntManager.TryGetComponent(MapUid.Value, out RoofComponent? roof)
-            || !EntManager.TryGetComponent(fog.FowGrid, out MapGridComponent? fawGrid)
-            || !EntManager.TryGetComponent(fog.FowGrid, out RoofComponent? fawRoof))
+            || !EntManager.TryGetComponent(MapUid.Value, out RoofComponent? roof))
             return;
 
         var ent = new Entity<MapGridComponent>(MapUid.Value, grid);
         var roofEnt = new Entity<MapGridComponent, RoofComponent>(MapUid.Value, grid, roof);
 
-        var fawEnt = new Entity<MapGridComponent>(fog.FowGrid, fawGrid);
-        var fawRoofEnt = new Entity<MapGridComponent, RoofComponent>(fog.FowGrid, fawGrid, fawRoof);
-
-        foreach (var chunk in fog.ActiveChunks)
+        var enumerator = EntManager.EntityQueryEnumerator<FogOfWarClearerComponent>();
+        while (enumerator.MoveNext(out var comp))
         {
-            for (var x = 0; x < ChunkSize; x++)
+            foreach (var chunk in comp.LoadedChunks)
             {
-                for (var y = 0; y < ChunkSize; y++)
+                for (var x = 0; x < ChunkSize; x++)
                 {
-                    var indices = new Vector2i(x + chunk.X, y + chunk.Y);
-                    var color = _turf.GetContentTileDefinition(_map.GetTileRef(ent, indices)).NavMapColor;
+                    for (var y = 0; y < ChunkSize; y++)
+                    {
+                        var indices = new Vector2i(x + chunk.X, y + chunk.Y);
+                        var color = _turf.GetContentTileDefinition(_map.GetTileRef(ent, indices)).NavMapColor;
 
-                    _tiles[indices] = color;
+                        _tiles[indices] = color;
 
-                    if (_roof.IsRooved(roofEnt, indices))
-                        _roofs.Add(indices);
+                        if (_roof.IsRooved(roofEnt, indices))
+                            _roofs.Add(indices);
+                    }
                 }
             }
-        }
-
-        if (!fog.Enabled)
-            return;
-
-        foreach (var chunk in fog.FogChunks)
-        {
-            for (var x = 0; x < ChunkSize; x++)
-            {
-                for (var y = 0; y < ChunkSize; y++)
-                {
-                    var indices = new Vector2i(x + chunk.X, y + chunk.Y);
-                    var color = _turf.GetContentTileDefinition(_map.GetTileRef(fawEnt, indices)).NavMapColor;
-
-                    _tiles[indices] = color;
-
-                    if (_roof.IsRooved(fawRoofEnt, indices) || _roof.IsRooved(roofEnt, indices))
-                        _roofs.Add(indices);
-                }
-            }
-
-            _chunks.TryAdd(FogColor, new());
-            _chunks[FogColor].Add(new UIBox2(chunk.X, chunk.Y + ChunkSize, chunk.X + ChunkSize, chunk.Y));
         }
     }
 
@@ -354,7 +328,6 @@ public sealed class WorldMapControl : MapGridControl
     {
         _tiles.Clear();
         _lines.Clear();
-        _chunks.Clear();
         _regions.Clear();
         _roofs.Clear();
         _circles.Clear();
@@ -429,19 +402,6 @@ public sealed class WorldMapControl : MapGridControl
                     continue;
 
                 handle.DrawCircle(pos, 0.4f * MinimapScale, color);
-            }
-        }
-
-        foreach (var (color, chunks) in _chunks)
-        {
-            foreach (var chunk in chunks)
-            {
-                var box = ScaleOffsetBox(chunk);
-
-                if (!viewBox.Intersects(box))
-                    continue;
-
-                handle.DrawRect(box, color);
             }
         }
 

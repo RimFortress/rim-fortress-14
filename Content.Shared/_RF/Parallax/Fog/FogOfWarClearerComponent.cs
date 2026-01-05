@@ -14,4 +14,18 @@ public sealed partial class FogOfWarClearerComponent : Component
     /// </summary>
     [DataField, AutoNetworkedField]
     public float Range = 14f;
+
+    // Client-side cache
+
+    /// <summary>
+    /// The chunk on which the entity is located
+    /// </summary>
+    [ViewVariables]
+    public Vector2i CurrentChunk;
+
+    /// <summary>
+    /// Chunks loaded by this entity
+    /// </summary>
+    [ViewVariables]
+    public List<Vector2i> LoadedChunks = new();
 }

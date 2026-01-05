@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Robust.Shared;
 using Robust.Shared.Configuration;
 using Robust.Shared.Player;
@@ -30,6 +31,7 @@ public abstract class SharedFogOfWarSystem : EntitySystem
     /// <param name="ent">Entity</param>
     /// <param name="player">A player for whom the entity will dispel the fog</param>
     /// <param name="range">The radius at which the fog will dissipate</param>
+    [PublicAPI]
     public void AddFogClearer(
         Entity<FogOfWarClearerComponent?, EyeComponent?> ent,
         EntityUid player,
@@ -45,6 +47,7 @@ public abstract class SharedFogOfWarSystem : EntitySystem
     /// <param name="ent">Entity</param>
     /// <param name="session">A player for whom the entity will dispel the fog</param>
     /// <param name="range">The radius at which the fog will dissipate</param>
+    [PublicAPI]
     public void AddFogClearer(Entity<FogOfWarClearerComponent?, EyeComponent?> ent, ICommonSession session, float? range = null)
     {
         ent.Comp1 = EnsureComp<FogOfWarClearerComponent>(ent);
@@ -52,12 +55,14 @@ public abstract class SharedFogOfWarSystem : EntitySystem
         SetClearerRange(ent, range ?? ent.Comp1.Range);
     }
 
+    [PublicAPI]
     public void RemoveFogClearer(Entity<FogOfWarClearerComponent?> ent, EntityUid player)
     {
         if (_player.TryGetSessionByEntity(player, out var session))
             RemoveFogClearer(ent, session);
     }
 
+    [PublicAPI]
     public void RemoveFogClearer(Entity<FogOfWarClearerComponent?> ent, ICommonSession session)
     {
         if (!Resolve(ent, ref ent.Comp))
@@ -69,6 +74,7 @@ public abstract class SharedFogOfWarSystem : EntitySystem
     /// <summary>
     /// Sets the fog dissipation radius for this entity
     /// </summary>
+    [PublicAPI]
     public void SetClearerRange(Entity<FogOfWarClearerComponent?, EyeComponent?> ent, float range)
     {
         if (!Resolve(ent, ref ent.Comp1) || !Resolve(ent, ref ent.Comp2))
@@ -79,4 +85,18 @@ public abstract class SharedFogOfWarSystem : EntitySystem
         ent.Comp1.Range = range;
         Dirty(ent, ent.Comp1);
     }
+
+    [PublicAPI]
+    public void SetEnabled(Entity<FogOfWarComponent?> ent, bool enabled)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        ent.Comp.Enabled = enabled;
+        Dirty(ent);
+    }
+
+    [PublicAPI, Pure]
+    public bool ChunkLoaded(Entity<FogOfWarComponent?> ent, Vector2i chunk)
+        => Resolve(ent, ref ent.Comp) && ent.Comp.LoadedChunks.Contains(chunk);
 }

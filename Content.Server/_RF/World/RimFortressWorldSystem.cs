@@ -12,6 +12,7 @@ using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
@@ -82,6 +83,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             cycle.InitialOffset = false;
             cycle.MinLightLevel = 1f;
         }
+
+        EnsureComp<FogOfWarComponent>(map);
 
         rule.WorldMap = map;
         Dirty(uid, rule);

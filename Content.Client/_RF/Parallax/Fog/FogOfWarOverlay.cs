@@ -31,6 +31,7 @@ public sealed class FogOfWarOverlay : Overlay
         IoCManager.InjectDependencies(this);
 
         _transform = _entityManager.System<TransformSystem>();
+
         _fogShader = _prototype.Index(FogShader).InstanceUnique();
 
         ZIndex = int.MaxValue;
@@ -39,7 +40,9 @@ public sealed class FogOfWarOverlay : Overlay
     protected override void Draw(in OverlayDrawArgs args)
     {
         if (args.MapId == MapId.Nullspace
-            || !_entityManager.TryGetComponent(args.MapUid, out MapGridComponent? grid))
+            || !_entityManager.TryGetComponent(args.MapUid, out MapGridComponent? grid)
+            || !_entityManager.TryGetComponent(args.MapUid, out FogOfWarComponent? fog)
+            || !fog.Enabled)
             return;
 
         var worldHandle = args.WorldHandle;
