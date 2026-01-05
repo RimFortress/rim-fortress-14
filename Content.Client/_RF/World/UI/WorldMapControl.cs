@@ -32,7 +32,7 @@ public sealed class WorldMapControl : MapGridControl
     [Dependency] private readonly IEntityNetworkManager _net = default!;
 
     private const byte ChunkSize = SharedBiomeSystem.ChunkSize;
-    private const float UpdateTime = 2.0f;
+    private const float UpdateTime = 1.0f;
     private const float MinDisplayedRange = 8f;
     private const float MaxDisplayedRange = 128f;
     private const float DefaultDisplayedRange = 48f;
@@ -40,7 +40,6 @@ public sealed class WorldMapControl : MapGridControl
 
     public EntityUid? MapUid;
 
-    public Color FogColor = Color.Black.WithAlpha(0.5f);
     public Color RoofColor = Color.Black;
 
     private float _updateTimer = 1.0f;
@@ -192,7 +191,7 @@ public sealed class WorldMapControl : MapGridControl
                 {
                     for (var y = 0; y < ChunkSize; y++)
                     {
-                        var indices = new Vector2i(x + chunk.X, y + chunk.Y);
+                        var indices = new Vector2i(x, y) + chunk * ChunkSize;
                         var color = _turf.GetContentTileDefinition(_map.GetTileRef(ent, indices)).NavMapColor;
 
                         _tiles[indices] = color;
