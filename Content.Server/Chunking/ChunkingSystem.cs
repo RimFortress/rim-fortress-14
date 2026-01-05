@@ -61,26 +61,6 @@ public sealed class ChunkingSystem : EntitySystem
         return chunks;
     }
 
-    // RimFortress Start
-    public Dictionary<NetEntity, HashSet<Vector2i>> GetChunksForEntities(
-        HashSet<EntityUid> entities,
-        int chunkSize,
-        ObjectPool<HashSet<Vector2i>> indexPool,
-        ObjectPool<Dictionary<NetEntity, HashSet<Vector2i>>> viewerPool,
-        Dictionary<EntityUid, float> viewEnlargements)
-    {
-        var chunks = viewerPool.Get();
-        DebugTools.Assert(chunks.Count == 0);
-
-        foreach (var uid in entities)
-        {
-            AddViewerChunks(uid, chunks, indexPool, chunkSize, viewEnlargements.GetValueOrDefault(uid, chunkSize));
-        }
-
-        return chunks;
-    }
-    // RimFortress End
-
     private void AddViewerChunks(EntityUid viewer,
         Dictionary<NetEntity, HashSet<Vector2i>> chunks,
         ObjectPool<HashSet<Vector2i>> indexPool,
