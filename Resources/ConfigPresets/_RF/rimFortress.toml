@@ -17,7 +17,8 @@ arrivals = false
 preload_grids = false
 
 [net]
-pvs = false
+pvs_range = 1
+pvs_priority_range = 1
 
 [viewport]
 maximum_width = 30

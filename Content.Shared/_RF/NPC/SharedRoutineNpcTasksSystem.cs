@@ -55,6 +55,12 @@ public sealed class NpcJobDeleted(int id) : EntityEventArgs
 }
 
 [Serializable, NetSerializable]
+public sealed class NpcJobPrioritiesRequest(NetEntity entity) : EntityEventArgs
+{
+    public NetEntity Entity { get; } = entity;
+}
+
+[Serializable, NetSerializable]
 public sealed class NpcJobPriority(int id, NetEntity entity, int priority) : EntityEventArgs
 {
     public int Id { get; } = id;

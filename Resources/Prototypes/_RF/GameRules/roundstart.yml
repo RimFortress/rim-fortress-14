@@ -8,7 +8,7 @@
   - type: NpcFactionMember
     factions:
     - RimFortress
-  - type: BiomeLoader
+  - type: FogOfWarClearer
   - type: RoutineNpcTasks
     presetJobs:
     - Construction
