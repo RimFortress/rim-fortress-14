@@ -70,8 +70,6 @@
   - type: WorldMapStruct
     mainColor: "#4184B4"
     drawType: Tile
-  # TODO: If we ever need to create an entity that is not afraid of fire,
-  # it is worth developing more advanced logic for calculating the path cost
   - type: PathfindingCost
-    modifier: 100 # We should never walk on lava
+    modifier: 5
   # RimFortress End
