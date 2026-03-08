@@ -60,4 +60,6 @@
   - type: WorldMapStruct
     mainColor: "#FB661E"
     drawType: Tile
+  - type: PathfindingCost
+    modifier: 5
   # RimFortress End

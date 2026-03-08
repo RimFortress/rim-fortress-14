@@ -26,6 +26,7 @@ using Robust.Shared.Utility;
 // RimFortress Start
 using Content.Server.Parallax;
 using Robust.Shared.Prototypes;
+using Content.Server._RF.NPC.Components;
 // RimFortress End
 
 namespace Content.Server.NPC.Pathfinding
@@ -60,6 +61,7 @@ namespace Content.Server.NPC.Pathfinding
         // RimFortress Start
         [Dependency] private readonly BiomeSystem _biome = default!;
         [Dependency] private readonly IPrototypeManager _prototype = default!;
+        [Dependency] private readonly ITileDefinitionManager _tileDef = default!;
         // RimFortress End
 
         private readonly Dictionary<ICommonSession, PathfindingDebugMode> _subscribedSessions = new();
@@ -84,6 +86,7 @@ namespace Content.Server.NPC.Pathfinding
         private EntityQuery<FixturesComponent> _fixturesQuery;
         private EntityQuery<MapGridComponent> _gridQuery;
         private EntityQuery<TransformComponent> _xformQuery;
+        private EntityQuery<PathfindingCostComponent> _pathfindingCostQuery; // RimFortress
 
         public override void Initialize()
         {
@@ -96,6 +99,7 @@ namespace Content.Server.NPC.Pathfinding
             _fixturesQuery = GetEntityQuery<FixturesComponent>();
             _gridQuery = GetEntityQuery<MapGridComponent>();
             _xformQuery = GetEntityQuery<TransformComponent>();
+            _pathfindingCostQuery = GetEntityQuery<PathfindingCostComponent>(); // RimFortress
 
             _playerManager.PlayerStatusChanged += OnPlayerChange;
             InitializeGrid();

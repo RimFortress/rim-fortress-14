@@ -2033,6 +2033,7 @@
   mobFriction: 0.05
   mobAcceleration: 0.1
   itemDrop: FloorTileItemAstroIce
+  pathfindingCost: 10 # RimFortress: NPCs still have difficulty walking on ice
 
 - type: tile
   id: FloorAstroSnow

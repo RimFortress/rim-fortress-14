@@ -15,13 +15,13 @@ public struct PathfindingBreadcrumb : IEquatable<PathfindingBreadcrumb>
 
     public static readonly PathfindingBreadcrumb Invalid = new()
     {
-        Data = new PathfindingData(PathfindingBreadcrumbFlag.None, -1, -1, 0f),
+        Data = new PathfindingData(PathfindingBreadcrumbFlag.None, -1, -1, 0f, 0f), // RimFortress
     };
 
-    public PathfindingBreadcrumb(Vector2i coordinates, int layer, int mask, float damage, PathfindingBreadcrumbFlag flags = PathfindingBreadcrumbFlag.None)
+    public PathfindingBreadcrumb(Vector2i coordinates, int layer, int mask, float damage, float baseCost, PathfindingBreadcrumbFlag flags = PathfindingBreadcrumbFlag.None)
     {
         Coordinates = coordinates;
-        Data = new PathfindingData(flags, layer, mask, damage);
+        Data = new PathfindingData(flags, layer, mask, damage, baseCost); // RimFortress
     }
 
     /// <summary>
@@ -58,15 +58,17 @@ public struct PathfindingData : IEquatable<PathfindingData>
     public int CollisionLayer;
     public int CollisionMask;
     public float Damage;
+    public float BaseCost; // RimFortress
 
     public bool IsFreeSpace => (Flags == PathfindingBreadcrumbFlag.None && Damage.Equals(0f));
 
-    public PathfindingData(PathfindingBreadcrumbFlag flag, int layer, int mask, float damage)
+    public PathfindingData(PathfindingBreadcrumbFlag flag, int layer, int mask, float damage, float baseCost) // RimFortress
     {
         Flags = flag;
         CollisionLayer = layer;
         CollisionMask = mask;
         Damage = damage;
+        BaseCost = baseCost; // RimFortress
     }
 
     public bool IsEquivalent(PathfindingData other)
@@ -81,7 +83,8 @@ public struct PathfindingData : IEquatable<PathfindingData>
         return CollisionLayer.Equals(other.CollisionLayer) &&
                CollisionMask.Equals(other.CollisionMask) &&
                Flags.Equals(other.Flags) &&
-               Damage.Equals(other.Damage);
+               Damage.Equals(other.Damage)
+               && BaseCost.Equals(other.BaseCost);
     }
 
     public override bool Equals(object? obj)
