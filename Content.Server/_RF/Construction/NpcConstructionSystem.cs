@@ -1,0 +1,441 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Content.Server._RF.NPC.Systems;
+using Content.Server.Construction;
+using Content.Server.Construction.Components;
+using Content.Server.Construction.Conditions;
+using Content.Server.Stack;
+using Content.Server.Tools;
+using Content.Shared._RF.Construction;
+using Content.Shared._RF.NPC;
+using Content.Shared.Construction;
+using Content.Shared.Construction.Prototypes;
+using Content.Shared.Construction.Steps;
+using Content.Shared.Hands.Components;
+using Content.Shared.Inventory;
+using Content.Shared.Stacks;
+using Content.Shared.Storage;
+using Content.Shared.Tag;
+using Content.Shared.Tools;
+using Robust.Server.Containers;
+using Robust.Shared.Prototypes;
+
+namespace Content.Server._RF.Construction;
+
+/// <summary>
+/// Helper system for the NPCs construction
+/// </summary>
+public sealed class NpcConstructionSystem : EntitySystem
+{
+    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly TagSystem _tag = default!;
+    [Dependency] private readonly ToolSystem _tool = default!;
+    [Dependency] private readonly ContainerSystem _container = default!;
+    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly StackSystem _stack = default!;
+    [Dependency] private readonly ConstructionSystem _construction = default!;
+
+    private static readonly ProtoId<ToolQualityPrototype> AnchoringQuality = "Anchoring";
+    private static readonly ProtoId<ToolQualityPrototype> WeldingQuality = "Welding";
+    private static readonly ProtoId<ToolQualityPrototype> ScrewingQuality = "Screwing";
+
+    /// <summary>
+    /// Returns all items necessary for the user to advance in the construction of the entity.
+    /// </summary>
+    /// <param name="uid">Entity for construction</param>
+    /// <param name="user">User entity</param>
+    public List<EntityUid>? GetConstructionItems(EntityUid uid, EntityUid user)
+    {
+        var entities = new List<EntityUid>();
+        var mapId = Transform(uid).MapID;
+        var commonQuery = CommonQuery();
+
+        foreach (var edge in GetEdges(uid))
+        {
+            foreach (var condition in edge.Conditions)
+            {
+                if (ConditionQuery(commonQuery, condition, uid) is { } query)
+                    entities.AddRange(query);
+                else
+                    return null;
+            }
+
+            // Looking for the most suitable item for each step of construction
+            foreach (var step in edge.Steps)
+            {
+                if (StepQuery(commonQuery, step) is { } ent)
+                    entities.Add(ent);
+                else
+                    return null;
+            }
+        }
+
+        return entities.Count == 0 ? null : entities;
+
+        // Returns all items available to the user, sorted by distance
+        List<EntityUid> CommonQuery()
+        {
+            var query = new List<(EntityUid Uid, float Dist)>();
+            var invEntities = InventoryEntities(user);
+            var pos = Transform(user).Coordinates;
+            var enumerator = EntityQueryEnumerator<OwnedComponent, TransformComponent>();
+
+            while (enumerator.MoveNext(out var ent, out var owned, out var xform))
+            {
+                if (invEntities.Contains(ent))
+                {
+                    query.Add((ent, 0f));
+                    continue;
+                }
+
+                if (xform.MapID != mapId
+                    || !_owned.HasSameOwner(user, new(ent, owned))
+                    || !pos.TryDistance(EntityManager, xform.Coordinates, out var distance)
+                    || _inventory.TryGetContainingSlot(ent, out _))
+                    continue;
+
+                if (_container.TryGetContainingContainer(new(ent, null, null), out var container)
+                    && HasComp<HandsComponent>(container.Owner))
+                    continue;
+
+                query.Add((ent, distance));
+            }
+
+            return query.OrderBy(x => x.Dist).Select(x => x.Uid).ToList();
+        }
+    }
+
+    /// <summary>
+    /// Returns the next item from the user's inventory that is required to construct the entity
+    /// </summary>
+    /// <param name="uid">Target entity for construction</param>
+    /// <param name="user">User entity</param>
+    /// <param name="item">Entity of the item needed for construction</param>
+    /// <returns>True, if the item for construction is found in the user's inventory</returns>
+    public bool TryGetNextItem(EntityUid uid, EntityUid user, [NotNullWhen(true)] out EntityUid? item)
+    {
+        item = null;
+
+        var invEntities = InventoryEntities(user);
+        var edges = GetEdges(uid);
+        var edge = _construction.GetCurrentEdge(uid) ?? edges[0];
+        var step = _construction.GetCurrentStep(uid) ?? edges[0].Steps[0];
+
+        foreach (var condition in edge.Conditions)
+        {
+            if (condition.Condition(uid, EntityManager))
+                continue;
+
+            var entities = ConditionQuery(invEntities, condition, uid);
+
+            if (entities == null)
+                return false;
+
+            item = entities[0];
+            return true;
+        }
+
+        // Looking for the most suitable item for each step of construction
+        item = StepQuery(invEntities, step);
+
+        return item != null;
+    }
+
+    private List<EntityUid>? ConditionQuery(List<EntityUid> query, IGraphCondition condition, EntityUid uid)
+    {
+        var entities = new List<EntityUid>();
+        var conditions = new Queue<IGraphCondition>();
+        conditions.Enqueue(condition);
+
+        if (HasComp<CommonConstructionGhostComponent>(uid))
+            return entities;
+
+        // Check the conditions; if they are not met, look for an item that can be used to fulfill them.
+        while (conditions.TryDequeue(out var con))
+        {
+            if (con.Condition(uid, EntityManager))
+                continue;
+
+            switch (con)
+            {
+                case AllConditions all:
+                    conditions.Clear();
+                    foreach (var cond in all.Conditions)
+                    {
+                        conditions.Enqueue(cond);
+                    }
+                    break;
+                case AnyConditions any:
+                    conditions.Clear();
+                    foreach (var cond in any.Conditions)
+                    {
+                        // Take the first supported condition
+                        if (cond is not (AllConditions
+                            or AnyConditions
+                            or EntityAnchored
+                            or DoorWelded
+                            or StorageWelded
+                            or WirePanel
+                            or HasTag
+                            or MachineFrameComplete))
+                            continue;
+
+                        conditions.Enqueue(cond);
+                        break;
+                    }
+                    break;
+                case EntityAnchored:
+                    if (ToolQuery(query, AnchoringQuality) is { } anchoring)
+                        entities.Add(anchoring);
+                    else
+                        return null;
+                    break;
+                case DoorWelded:
+                case StorageWelded:
+                    if (ToolQuery(query, WeldingQuality) is { } welding)
+                        entities.Add(welding);
+                    else
+                        return null;
+                    break;
+                case WirePanel:
+                    if (ToolQuery(query, ScrewingQuality) is { } screwing)
+                        entities.Add(screwing);
+                    else
+                        return null;
+                    break;
+                case HasTag tag:
+                    if (TagQuery(query, new() { tag.Tag }, true) is { } tagUid)
+                        entities.Add(tagUid);
+                    else
+                        return null;
+                    break;
+                case MachineFrameComplete:
+                    if (!TryComp(uid, out MachineFrameComponent? frame))
+                        return null;
+
+                    foreach (var (type, amount) in frame.MaterialRequirements)
+                    {
+                        if (MaterialQuery(query, type, amount) is { } material)
+                            entities.Add(material);
+                        else
+                            return null;
+                    }
+
+                    foreach (var (compName, _) in frame.ComponentRequirements)
+                    {
+                        if (ComponentQuery(query, compName) is { } component)
+                            entities.Add(component);
+                        else
+                            return null;
+                    }
+
+                    foreach (var (tagName, _) in frame.TagRequirements)
+                    {
+                        if (TagQuery(query, new() { tagName }, true) is { } machineTagUid)
+                            entities.Add(machineTagUid);
+                        else
+                            return null;
+                    }
+
+                    break;
+            }
+        }
+
+        return entities;
+    }
+
+    private EntityUid? StepQuery(List<EntityUid> query, ConstructionGraphStep step)
+    {
+        switch (step)
+        {
+            case MaterialConstructionGraphStep insertMaterial:
+                return MaterialQuery(query, insertMaterial.MaterialPrototypeId, insertMaterial.Amount);
+            case TagConstructionGraphStep insertTag:
+                if (insertTag.Tag != null)
+                    return TagQuery(query, new() { insertTag.Tag }, true);
+
+                break;
+            case MultipleTagsConstructionGraphStep insertMultipleTags:
+                if (insertMultipleTags.AnyTag != null)
+                    return TagQuery(query, insertMultipleTags.AnyTag, false);
+
+                if (insertMultipleTags.AllTag != null)
+                    return TagQuery(query, insertMultipleTags.AllTag, true);
+
+                break;
+            case ToolConstructionGraphStep insertTool:
+                return ToolQuery(query, insertTool.Tool);
+            case ComponentConstructionGraphStep insertComponent:
+                return ComponentQuery(query, insertComponent.Component);
+            default:
+                Log.Error($"NPC attempts to perform an unsupported construction step: {step}");
+                return null;
+        }
+
+        return null;
+    }
+
+    private EntityUid? TagQuery(List<EntityUid> query, List<ProtoId<TagPrototype>> tags, bool requireAll)
+    {
+        for (var i = 0; i < query.Count; i++)
+        {
+            var ent = query[i];
+
+            if (requireAll && !_tag.HasAllTags(ent, tags)
+                || !requireAll && !_tag.HasAnyTag(ent, tags))
+                continue;
+
+            query.RemoveAt(i);
+            return ent;
+        }
+
+        return null;
+    }
+
+    private EntityUid? ToolQuery(List<EntityUid> query, ProtoId<ToolQualityPrototype> quality)
+    {
+        for (var i = 0; i < query.Count; i++)
+        {
+            var ent = query[i];
+
+            if (!_tool.HasQuality(ent, quality))
+                continue;
+
+            query.RemoveAt(i);
+            return ent;
+        }
+
+        return null;
+    }
+
+    private EntityUid? ComponentQuery(List<EntityUid> query, string component)
+    {
+        var type = Factory.GetComponent(component).GetType();
+
+        for (var i = 0; i < query.Count; i++)
+        {
+            var ent = query[i];
+
+            if (!HasComp(ent, type))
+                continue;
+
+            query.RemoveAt(i);
+            return ent;
+        }
+
+        return null;
+    }
+
+    private EntityUid? MaterialQuery(List<EntityUid> query, ProtoId<StackPrototype> stack, int amount)
+    {
+        for (var i = 0; i < query.Count; i++)
+        {
+            var ent = query[i];
+
+            if (!TryComp(ent, out StackComponent? comp)
+                || comp.StackTypeId != stack
+                || comp.Count < amount)
+                continue;
+
+            if (comp.Count == amount)
+            {
+                query.RemoveAt(i);
+                return ent;
+            }
+
+            // When searching for material, we create a new material entity
+            // of the required quantity so as not to complicate the search logic
+            if (_stack.Split(ent, amount, Transform(ent).Coordinates) is not { } split)
+                continue;
+
+            return split;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Returns all edges to complete the construction of the target entity
+    /// </summary>
+    private List<ConstructionGraphEdge> GetEdges(EntityUid uid)
+    {
+        var edges = new List<ConstructionGraphEdge>();
+        var path = new List<string>();
+        string? start = null;
+        ConstructionGraphPrototype? graph = null;
+
+        // Searching for a path of nodes for an existing structure
+        if (TryComp(uid, out ConstructionComponent? comp))
+        {
+            if (!_proto.TryIndex(comp.Graph, out graph))
+                return edges;
+
+            if (comp.NodePathfinding == null || comp.NodePathfinding.Count == 0)
+                return edges;
+
+            start = graph.Start;
+            path = comp.NodePathfinding.ToList();
+
+            // If there is one node left to execute,
+            // add the current node to the path for correct edge search
+            if (path.Count == 1)
+                path.Insert(0, comp.Node);
+        }
+        // Searching for a path of nodes for a construction ghost
+        else if (TryComp(uid, out CommonConstructionGhostComponent? ghost))
+        {
+            if (!_proto.TryIndex(ghost.ConstructionProto, out var proto)
+                || !_proto.TryIndex(proto.Graph, out graph))
+                return edges;
+
+            start = proto.StartNode;
+            path = graph.PathId(proto.StartNode, proto.TargetNode)?.ToList();
+        }
+
+        if (path == null || graph == null || start == null)
+            return edges;
+
+        path.Insert(0, start);
+
+        for (var i = 0; i < path.Count - 1; i++)
+        {
+            if (graph.Edge(path[i], path[i + 1]) is not { } edge)
+                continue;
+
+            edges.Add(edge);
+        }
+
+        return edges;
+    }
+
+    private List<EntityUid> InventoryEntities(EntityUid uid)
+    {
+        var invEntities = new List<EntityUid>();
+
+        foreach (var ent in _inventory.GetHandOrInventoryEntities(uid))
+        {
+            invEntities.Add(ent);
+
+            if (TryComp(ent, out StorageComponent? storage))
+                invEntities.AddRange(StorageEntities(new(ent, storage)));
+        }
+
+        return invEntities;
+
+        List<EntityUid> StorageEntities(Entity<StorageComponent> storageEnt)
+        {
+            var result = new List<EntityUid>();
+
+            foreach (var ent in storageEnt.Comp.Container.ContainedEntities)
+            {
+                result.Add(ent);
+
+                if (TryComp<StorageComponent>(ent, out var storage))
+                    result.AddRange(StorageEntities(new(ent, storage)));
+            }
+
+            return result;
+        }
+    }
+}
