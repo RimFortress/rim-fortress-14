@@ -13,6 +13,7 @@ using Content.Shared.Database;
 using Content.Shared.Maps;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
+using Content.Shared.NPC;
 using Content.Shared.Physics;
 using Content.Shared.Verbs;
 using Content.Shared.Whitelist;
@@ -73,6 +74,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         SubscribeLocalEvent<ConstructionComponent, ConstructionChangeEntityEvent>(OnEntityChange);
         SubscribeLocalEvent<CommonConstructionGhostComponent, ConstructionChangeEntityEvent>(OnEntityChange);
+        SubscribeLocalEvent<ControllableNpcComponent, ComponentRemove>(OnComponentRemove);
+        SubscribeLocalEvent<ActiveNPCComponent, ComponentRemove>(OnComponentRemove);
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeLocalEvent<HtnPlanningFailed>(OnPlanningFailed);
 
@@ -302,6 +305,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         // If the task planning fails, we start the countdown,
         // at the end of which we check again whether the task planning succeeded or not
         _fails[ev.Entity] = _timing.CurTime + proto.FailAwaitTime;
+    }
+
+    private void OnComponentRemove(EntityUid uid, IComponent component, ComponentRemove args)
+    {
+        FinishTask(uid);
     }
 
     #endregion
