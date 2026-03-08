@@ -507,8 +507,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// </summary>
     public void FinishTask(Entity<ControllableNpcComponent?, HTNComponent?> npc, bool failed = false)
     {
-        if (!Resolve(npc, ref npc.Comp1)
-            || !Resolve(npc, ref npc.Comp2)
+        if (!Resolve(npc, ref npc.Comp1, false)
+            || !Resolve(npc, ref npc.Comp2, false)
             || !_prototype.TryIndex(npc.Comp1.CurrentTask, out var proto))
             return;
 
