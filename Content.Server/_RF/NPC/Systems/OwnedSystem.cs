@@ -18,4 +18,22 @@ public sealed class OwnedSystem : SharedOwnedSystem
 
         return false;
     }
+
+    public bool HasOwner(Entity<OwnedComponent?> ent, EntityUid uid)
+        => Resolve(ent, ref ent.Comp) && ent.Comp.Owners.Contains(uid);
+
+    public void AddOwner(EntityUid target, EntityUid uid)
+    {
+        EnsureComp<OwnedComponent>(target).Owners.Add(uid);
+    }
+
+    public void AddOwners(EntityUid target, List<EntityUid> uids)
+    {
+        EnsureComp<OwnedComponent>(target).Owners.AddRange(uids);
+    }
+
+    public void SetOwners(EntityUid uid, List<EntityUid> uids)
+    {
+        EnsureComp<OwnedComponent>(uid).Owners = uids;
+    }
 }

@@ -1,6 +1,6 @@
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
-using Content.Shared._RF.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
@@ -9,7 +9,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class OwnedPrecondition : InvertiblePrecondition
 {
-    private EntityQuery<OwnedComponent> _ownedQuery;
+    private OwnedSystem _owned;
     private EntityQuery<ControllableNpcComponent> _controlledQuery;
 
     [DataField(required: true)]
@@ -18,7 +18,7 @@ public sealed partial class OwnedPrecondition : InvertiblePrecondition
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
-        _ownedQuery = EntityManager.GetEntityQuery<OwnedComponent>();
+        _owned = sysManager.GetEntitySystem<OwnedSystem>();
         _controlledQuery = EntityManager.GetEntityQuery<ControllableNpcComponent>();
     }
 
@@ -27,13 +27,12 @@ public sealed partial class OwnedPrecondition : InvertiblePrecondition
         var owner = blackboard.GetValueOrDefault<EntityUid>(NPCBlackboard.Owner, EntityManager);
 
         if (!blackboard.TryGetValue(TargetKey, out EntityUid? target, EntityManager)
-            || !_ownedQuery.TryGetComponent(target, out var targetOwned)
             || !_controlledQuery.TryGetComponent(owner, out var control))
             return false;
 
         foreach (var uid in control.CanControl)
         {
-            if (targetOwned.Owners.Contains(uid))
+            if (_owned.HasOwner(target.Value, uid))
                 return true;
         }
 

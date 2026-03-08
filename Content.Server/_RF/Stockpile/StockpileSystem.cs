@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC.Pathfinding;
-using Content.Shared._RF.NPC;
 using Content.Shared._RF.Stockpile;
 using Content.Shared.Physics;
 using Content.Shared.Storage.Components;
@@ -14,6 +14,7 @@ namespace Content.Server._RF.Stockpile;
 public sealed class StockpileSystem : SharedStockpileSystem
 {
     [Dependency] private readonly PathfindingSystem _pathfinding = default!;
+    [Dependency] private readonly OwnedSystem _owned = default!;
 
     public override void Initialize()
     {
@@ -133,15 +134,14 @@ public sealed class StockpileSystem : SharedStockpileSystem
     /// <returns>Found path and coordinates of the center of the stockpile tile</returns>
     public async Task<(PathResultEvent Path, EntityCoordinates Coords)?> GetStoringTilePath(
         EntityUid user,
-        Entity<OwnedComponent?> uid,
+        EntityUid uid,
         Stock stock,
         float range,
         CancellationToken cancelToken,
         PathFlags pathFlags = PathFlags.None,
         bool containerOnly = false)
     {
-        if (!Resolve(uid, ref uid.Comp)
-            || !uid.Comp.Owners.Contains(stock.Owner)
+        if (!_owned.HasOwner(uid, stock.Owner)
             || !CanInsert(stock, uid)
             || Xform.GetGrid(user) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid))

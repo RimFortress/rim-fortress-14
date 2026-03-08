@@ -1,4 +1,5 @@
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
 using Content.Shared._RF.NPC;
 
@@ -6,6 +7,14 @@ namespace Content.Server._RF.NPC.Queries.Queries;
 
 public sealed partial class OwnedQuery : RfUtilityQuery
 {
+    private OwnedSystem _owned;
+
+    public override void Initialize(IEntityManager entManager)
+    {
+        base.Initialize(entManager);
+        _owned = entManager.System<OwnedSystem>();
+    }
+
     public override HashSet<EntityUid> Query(NPCBlackboard blackboard)
     {
         var query = new HashSet<EntityUid>();
@@ -22,7 +31,7 @@ public sealed partial class OwnedQuery : RfUtilityQuery
 
             foreach (var canControl in control.CanControl)
             {
-                if (comp.Owners.Contains(canControl))
+                if (_owned.HasOwner(new(uid, comp), canControl))
                     valid = true;
             }
 

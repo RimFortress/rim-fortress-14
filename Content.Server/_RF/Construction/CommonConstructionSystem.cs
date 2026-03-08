@@ -1,3 +1,4 @@
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Popups;
@@ -29,6 +30,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
     [Dependency] private readonly ContainerSystem _container = default!;
     [Dependency] private readonly ConstructionSystem _construction = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
+    [Dependency] private readonly OwnedSystem _owned = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -60,10 +62,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (ghost == null)
             return;
 
-        var owned = EntityManager.ComponentFactory.GetComponent<OwnedComponent>();
-        owned.Owners.Add(user);
-
-        AddComp(ghost.Value, owned);
+        _owned.AddOwner(ghost.Value, user);
     }
 
     private void OnClearRequest(ConstructionGhostClearRequest request)
@@ -78,7 +77,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (!HasComp<ConstructionComponent>(args.New))
             return;
 
-        EnsureComp<OwnedComponent>(args.New).Owners = component.Owners;
+        _owned.SetOwners(args.New, component.Owners);
     }
 
     // Code taken from ConstructionSystem.Initial.cs
