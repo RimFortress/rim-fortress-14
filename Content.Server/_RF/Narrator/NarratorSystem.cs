@@ -1,4 +1,5 @@
 using Content.Server._RF.GameTicking.Rules;
+using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.World;
 using Content.Server.Cargo.Systems;
 using Content.Server.Construction.Components;
@@ -31,6 +32,7 @@ public sealed partial class NarratorSystem : EntitySystem
     [Dependency] private readonly IConsoleHost _host  = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
+    [Dependency] private readonly OwnedSystem _owned = default!;
 
     private EntityQuery<ItemComponent> _itemQuery;
     private EntityQuery<ConstructionComponent> _constructionQuery;
@@ -65,7 +67,7 @@ public sealed partial class NarratorSystem : EntitySystem
 
         while (entities.MoveNext(out var uid, out var comp, out var xform))
         {
-            if (!comp.Owners.Contains(player)
+            if (!_owned.HasOwner(new(uid, comp), player)
                 || !settlement.TryDistance(EntityManager, xform.Coordinates, out var dist)
                 || dist > settlementRadius)
                 continue;

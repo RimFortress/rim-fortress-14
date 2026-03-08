@@ -1,6 +1,6 @@
+using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
-using Content.Shared._RF.NPC;
 
 namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 
@@ -10,24 +10,20 @@ namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 public sealed partial class StorableFilter : RfUtilityQueryFilter
 {
     private StockpileSystem _stockpile = default!;
-
-    private EntityQuery<OwnedComponent> _ownerQuery;
+    private OwnedSystem _owned = default!;
 
     public override void Initialize(IEntityManager entManager)
     {
         base.Initialize(entManager);
         _stockpile = entManager.System<StockpileSystem>();
-        _ownerQuery = entManager.GetEntityQuery<OwnedComponent>();
+        _owned = entManager.System<OwnedSystem>();
     }
 
     public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
     {
-        if (!_ownerQuery.TryComp(uid, out var comp))
-            return false;
-
         foreach (var stock in _stockpile.AllStockpiles())
         {
-            if (comp.Owners.Contains(stock.Owner) && _stockpile.CanInsert(stock, uid))
+            if (_owned.HasOwner(uid, stock.Owner) && _stockpile.CanInsert(stock, uid))
                 return true;
         }
 

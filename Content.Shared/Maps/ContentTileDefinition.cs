@@ -128,6 +128,12 @@ namespace Content.Shared.Maps
         /// </summary>
         [DataField]
         public Color NavMapColor = Color.Gray;
+
+        /// <summary>
+        /// Modifier for the base cost of searching for a path through a given tile
+        /// </summary>
+        [DataField]
+        public float PathfindingCost;
         // RimFortress End
 
         public void AssignTileId(ushort id)

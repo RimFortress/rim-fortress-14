@@ -1,7 +1,7 @@
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
-using Content.Shared._RF.NPC;
 using Content.Shared.Item;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
@@ -11,6 +11,7 @@ public sealed partial class MarkOwnerInRangeOperator : HTNOperator
     [Dependency] private readonly IEntityManager _entityManager = default!;
 
     private EntityLookupSystem _lookup;
+    private OwnedSystem _owned;
 
     [DataField]
     public float Range = 1f;
@@ -19,6 +20,7 @@ public sealed partial class MarkOwnerInRangeOperator : HTNOperator
     {
         base.Initialize(sysManager);
         _lookup = sysManager.GetEntitySystem<EntityLookupSystem>();
+        _owned = sysManager.GetEntitySystem<OwnedSystem>();
     }
 
     public override void Startup(NPCBlackboard blackboard)
@@ -34,8 +36,7 @@ public sealed partial class MarkOwnerInRangeOperator : HTNOperator
 
         foreach (var entity in entities)
         {
-            var comp = _entityManager.EnsureComponent<OwnedComponent>(entity);
-            comp.Owners.AddRange(control.CanControl);
+            _owned.AddOwners(entity, control.CanControl);
         }
     }
 }

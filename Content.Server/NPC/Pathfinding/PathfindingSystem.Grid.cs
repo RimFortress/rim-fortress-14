@@ -16,6 +16,7 @@ using Robust.Shared.Utility;
 using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Prototypes;
 using Content.Server.NPC.HTN;
+using Content.Shared.Maps;
 // RimFortress End
 
 namespace Content.Server.NPC.Pathfinding;
@@ -493,7 +494,7 @@ public sealed partial class PathfindingSystem
                 // var isBorder = x < 0 || y < 0 || x == ChunkSize - 1 || y == ChunkSize - 1;
 
                 tileEntities.Clear();
-                var available = _lookup.GetLocalEntitiesIntersecting(tile, flags: LookupFlags.Dynamic | LookupFlags.Static);
+                var available = _lookup.GetLocalEntitiesIntersecting(tile); // RimFortress
 
                 // RimFortress Start
                 if (tile.Tile.IsEmpty
@@ -514,10 +515,22 @@ public sealed partial class PathfindingSystem
                     var localPos = _maps.GridTileToLocal(grid, grid.Comp, tilePos);
                     biomeEntity = (localPos, fix);
                 }
+
+                var baseCost = 0f;
+
+                if (_tileDef.TryGetDefinition(tile.Tile.TypeId, out var def))
+                    baseCost = ((ContentTileDefinition)def).PathfindingCost;
                 // RimFortress End
 
                 foreach (var ent in available)
                 {
+                    // RimFortress Start
+                    if (_pathfindingCostQuery.TryGetComponent(ent, out var cost))
+                    {
+                        baseCost += cost.Modifier;
+                    }
+                    // RimFortress End
+
                     // Irrelevant for pathfinding
                     if (!_fixturesQuery.TryGetComponent(ent, out var fixtures) ||
                         !IsBodyRelevant(fixtures))
@@ -663,7 +676,7 @@ public sealed partial class PathfindingSystem
                         var crumb = new PathfindingBreadcrumb()
                         {
                             Coordinates = new Vector2i(xOffset, yOffset),
-                            Data = new PathfindingData(flags, collisionLayer, collisionMask, damage),
+                            Data = new PathfindingData(flags, collisionLayer, collisionMask, damage, baseCost), // RimFortress
                         };
 
                         points[xOffset, yOffset] = crumb;
@@ -810,6 +823,7 @@ public sealed partial class PathfindingSystem
                         }
 
                         ePoly.Data.Damage = poly.Data.Damage;
+                        ePoly.Data.BaseCost = poly.Data.BaseCost; // RimFortress
                     }
 
                     if (isEquivalent)

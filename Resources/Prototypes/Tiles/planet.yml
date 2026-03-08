@@ -146,7 +146,10 @@
   weather: true
   mobAcceleration: 0.1
   indestructible: true
-  navMapColor: "#B0E8F8" # RimFortress
+  # RimFortress Start
+  navMapColor: "#B0E8F8"
+  pathfindingCost: 10 # NPCs still have difficulty walking on ice
+  # RimFortress End
 
 # Dug snow
 - type: tile

@@ -17,63 +17,18 @@
 - type: htnCompound
   id: BuildCompound
   branches:
-  - preconditions:
-    - !type:HasComponentPrecondition
-      components:
-      - type: ActiveDoAfter
-    tasks:
+  - tasks:
     - !type:HTNPrimitiveTask
-      operator: !type:SetFloatOperator
-        targetKey: Time
-        amount: 0.5
-    - !type:HTNPrimitiveTask
-      operator: !type:WaitOperator
-        key: Time
-
-  # Turn off welder
-  - preconditions:
-    - !type:ActiveHandComponentPrecondition
-      components:
-      - type: Welder
-    - !type:ItemTogglePrecondition
-      targetKey: PickUpTarget
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:InteractWithOperator
-        targetKey: PickUpTarget
-
-  - preconditions:
-    - !type:ActiveHandEntityIsPrecondition
-      targetKey: PickUpTarget
-      invert: true
-    tasks:
-    # Find item for construction
-    - !type:HTNPrimitiveTask
-      operator: !type:UtilityOperator
-        proto: Construction
-        key: PickUpTarget
-    - !type:HTNPrimitiveTask
-      operator: !type:ConstructionAmountOperator
+      operator: !type:ConstructionItemsOperator
         targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:IterateEntitiesOperator
+        targetKey: ConstructionItems
+        resultKey: PickUpTarget
     - !type:HTNCompoundTask
       task: PickUpCompound
 
-    # Cleanup
-    - !type:HTNPrimitiveTask
-      operator: !type:TryOperator
-        try: !type:HTNPrimitiveTask
-          preconditions:
-          - !type:KeyExistsPrecondition
-            key: Amount
-          - !type:ActiveHandEntityIsPrecondition
-            targetKey: PickUpTarget
-          operator: !type:RemoveKeyOperator
-            key: Amount
-
-  - preconditions:
-    - !type:ActiveHandEntityIsPrecondition
-      targetKey: PickUpTarget
-    tasks:
+  - tasks:
     # Go to the construction target
     - !type:HTNPrimitiveTask
       operator: !type:EntityCoordinatesOperator
@@ -83,23 +38,12 @@
         pathfindInPlanning: true
         rangeKey: InteractRange
         removeKeyOnFinish: true
-
-    # Turn on Welder
     - !type:HTNPrimitiveTask
-      operator: !type:TryOperator
-        try: !type:HTNPrimitiveTask
-          preconditions:
-          - !type:ActiveHandComponentPrecondition
-            components:
-              - type: Welder
-          - !type:ItemTogglePrecondition
-            targetKey: PickUpTarget
-            invert: true
-          operator: !type:InteractWithOperator
-            targetKey: PickUpTarget
-
+      operator: !type:IterateEntitiesOperator
+        targetKey: ConstructionItems
+        resultKey: ConstructionItem
     - !type:HTNPrimitiveTask
-      operator: !type:InteractWithOperator
+      operator: !type:ConstructionInteractOperator
         targetKey: Target
 
 # Queries
@@ -117,18 +61,6 @@
     requireAll: false
     invert: true
   - !type:ConstructionFinishedFilter
-  considerations:
-  - !type:NormTargetDistanceCon
-    curve: !type:PresetCurve
-      preset: TargetDistance
-
-- type: utilityQuery
-  id: Construction
-  query:
-  - !type:ConstructionQuery
-    targetKey: Target
-  - !type:InventoryFilter
-  - !type:InHandsFilter
   considerations:
   - !type:NormTargetDistanceCon
     curve: !type:PresetCurve

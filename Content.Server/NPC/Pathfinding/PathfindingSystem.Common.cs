@@ -52,6 +52,8 @@ public sealed partial class PathfindingSystem
             return 0f;
         }
 
+        modifier += end.Data.BaseCost; // RimFortress
+
         if ((request.CollisionLayer & end.Data.CollisionMask) != 0x0 ||
             (request.CollisionMask & end.Data.CollisionLayer) != 0x0)
         {

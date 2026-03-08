@@ -1,13 +1,21 @@
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
-using Content.Shared._RF.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 
 public sealed partial class MarkOwnerOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
+
+    private OwnedSystem _owned;
+
+    public override void Initialize(IEntitySystemManager sysManager)
+    {
+        base.Initialize(sysManager);
+        _owned = sysManager.GetEntitySystem<OwnedSystem>();
+    }
 
     [DataField(required: true)]
     public string TargetKey;
@@ -21,13 +29,7 @@ public sealed partial class MarkOwnerOperator : HTNOperator
             || !blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entityManager))
             return;
 
-        var comp = _entityManager.EnsureComponent<OwnedComponent>(uid.Value);
-
-        foreach (var ent in control.CanControl)
-        {
-            if (!comp.Owners.Contains(ent))
-                comp.Owners.Add(ent);
-        }
+        _owned.AddOwners(uid.Value, control.CanControl);
     }
 }
 
