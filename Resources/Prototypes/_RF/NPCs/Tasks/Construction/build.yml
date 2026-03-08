@@ -45,7 +45,6 @@
     - !type:HTNPrimitiveTask
       operator: !type:ConstructionInteractOperator
         targetKey: Target
-        itemKey: ConstructionItem
 
 # Queries
 - type: utilityQuery
