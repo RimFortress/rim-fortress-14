@@ -1,5 +1,4 @@
 using Content.Server._RF.NPC.Components;
-using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
 using Content.Shared._RF.NPC;
 

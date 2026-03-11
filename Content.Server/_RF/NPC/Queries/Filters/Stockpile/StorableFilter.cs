@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
+using Content.Shared._RF.NPC;
 
 namespace Content.Server._RF.NPC.Queries.Filters.Stockpile;
 

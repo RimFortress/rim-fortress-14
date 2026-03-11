@@ -1,6 +1,4 @@
 using Robust.Shared.GameStates;
-using Robust.Shared.Map;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Notifications.Components;

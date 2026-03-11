@@ -1,11 +1,14 @@
+using Robust.Shared.GameStates;
+
 namespace Content.Shared._RF.NPC;
 
 /// <summary>
 /// This is used to refer to an entity that is owned by another entity
 /// </summary>
-[RegisterComponent, Access(typeof(SharedOwnedSystem))]
+[Access(typeof(OwnedSystem))]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class OwnedComponent : Component
 {
-    [ViewVariables]
+    [ViewVariables, AutoNetworkedField]
     public List<EntityUid> Owners = new();
 }
