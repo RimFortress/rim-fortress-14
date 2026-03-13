@@ -22,8 +22,13 @@ public sealed class NotifyOnStateChangedSystem : EntitySystem
 
         foreach (var uid in _owned.GetOwners(ent))
         {
-            if (TryComp(uid, out NotificationComponent? comp))
-                _notifications.SendNotification(new(uid, comp), proto, ent);
+            if (!TryComp(uid, out NotificationComponent? comp))
+                continue;
+
+            _notifications.SendNotification(new(uid, comp), proto, ent);
+
+            if (ent.Comp.RemoveOthers && ent.Comp.Notifications.TryGetValue(ev.OldMobState, out proto))
+                _notifications.RemoveNotification(new(uid, comp), proto);
         }
     }
 }

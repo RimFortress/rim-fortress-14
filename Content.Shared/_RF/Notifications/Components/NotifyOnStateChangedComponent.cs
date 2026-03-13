@@ -11,4 +11,10 @@ public sealed partial class NotifyOnStateChangedComponent : Component
 {
     [DataField]
     public Dictionary<MobState, ProtoId<NotificationPrototype>> Notifications = new();
+
+    /// <summary>
+    /// Should notifications for other states be removed
+    /// </summary>
+    [DataField]
+    public bool RemoveOthers = true;
 }

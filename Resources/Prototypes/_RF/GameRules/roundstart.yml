@@ -19,6 +19,10 @@
     - Storing
     - Other
     - Social
+  - type: NotifyOnStateChanged
+    notifications:
+      Critical: ColonistCriticalEvent
+      Death: ColonistDeathEvent
 
 - type: entity
   id: RimFortress
