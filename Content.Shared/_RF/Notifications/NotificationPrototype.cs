@@ -60,6 +60,12 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
     /// </summary>
     [DataField]
     public NotificationDuplicationPolicy DuplicationPolicy = NotificationDuplicationPolicy.Replace;
+
+    /// <summary>
+    /// The color in which the notification will be displayed in the interface.
+    /// </summary>
+    [DataField]
+    public Color Color;
 }
 
 [DataDefinition, NetSerializable]
