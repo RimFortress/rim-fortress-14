@@ -1,5 +1,5 @@
-using Content.Shared._RF.Notifications;
 using Content.Shared._RF.Notifications.Components;
+using Content.Shared._RF.Notifications.Systems;
 
 namespace Content.Client._RF.Notifications;
 

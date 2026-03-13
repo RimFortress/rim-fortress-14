@@ -6,8 +6,9 @@ using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.Notifications;
+namespace Content.Shared._RF.Notifications.Systems;
 
 /// <summary>
 /// A system that provides an API for creating notifications for players about various events.
@@ -16,11 +17,6 @@ public abstract class SharedNotificationsSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
-
-    /// <summary>
-    /// Wrapper through which entity names are localized to description for notifications
-    /// </summary>
-    public static readonly LocId EntityNameLocaleWrapper = "notification-entity-name-wrapper";
 
     /// <summary>
     /// Called every time a new notification is created. Use only on the client.
@@ -91,18 +87,12 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// <param name="ent">Entity of the player for whom the notification should be created.</param>
     /// <param name="protoId">Notification prototype.</param>
     [PublicAPI]
-    public bool AddNotification(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+    public bool SendNotification(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out _))
             return false;
 
-        var notification = new Notification(protoId);
-        _lastNotificationId++;
-        ent.Comp.Notifications[_lastNotificationId] = notification;
-
-        Dirty(ent);
-
-        return true;
+        return SendNotification(ent, new Notification(protoId));
     }
 
     /// <summary>
@@ -112,10 +102,10 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// <param name="protoId">Notification prototype.</param>
     /// <param name="target">The entity that triggered this notification.</param>
     [PublicAPI]
-    public bool AddNotification(
+    public bool SendNotification(
         Entity<NotificationComponent?> ent,
         ProtoId<NotificationPrototype> protoId,
-        EntityUid? target)
+        EntityUid target)
     {
         if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
             return false;
@@ -125,12 +115,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
             target: GetNetEntity(target),
             expireAt: _timing.CurTime + proto.Duration);
 
-        _lastNotificationId++;
-        ent.Comp.Notifications[_lastNotificationId] = notification;
-
-        Dirty(ent);
-
-        return true;
+        return SendNotification(ent, notification);
     }
 
     /// <summary>
@@ -140,10 +125,10 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// <param name="protoId">Notification prototype.</param>
     /// <param name="coords">Coordinates of the location that triggered this notification.</param>
     [PublicAPI]
-    public bool AddNotification(
+    public bool SendNotification(
         Entity<NotificationComponent?> ent,
         ProtoId<NotificationPrototype> protoId,
-        EntityCoordinates? coords)
+        EntityCoordinates coords)
     {
         if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
             return false;
@@ -152,6 +137,33 @@ public abstract class SharedNotificationsSystem : EntitySystem
             protoId,
             targetCoords: GetNetCoordinates(coords),
             expireAt: _timing.CurTime + proto.Duration);
+
+        return SendNotification(ent, notification);
+    }
+
+    private bool SendNotification(Entity<NotificationComponent?> ent, Notification notification)
+    {
+        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(notification.ProtoId, out var proto))
+            return false;
+
+        var same = ent.Comp.Notifications
+            .FirstOrNull(x => x.Value.Equivalent(notification));
+
+        if (same != null)
+        {
+            switch (proto.DuplicationPolicy)
+            {
+                case NotificationDuplicationPolicy.None:
+                    return false;
+                case NotificationDuplicationPolicy.Replace:
+                    RemoveNotification(ent, same.Value.Key);
+                    break;
+                case NotificationDuplicationPolicy.Stack:
+                    notification.Duplications = same.Value.Value.Duplications + 1;
+                    RemoveNotification(ent, same.Value.Key);
+                    break;
+            }
+        }
 
         _lastNotificationId++;
         ent.Comp.Notifications[_lastNotificationId] = notification;

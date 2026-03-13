@@ -63,6 +63,6 @@ public sealed class OwnedSystem : EntitySystem
     /// Returns all owners of this entity
     /// </summary>
     [Pure]
-    public List<EntityUid> GetOwners(EntityUid uid)
+    public IReadOnlyList<EntityUid> GetOwners(EntityUid uid)
         => TryComp(uid, out OwnedComponent? comp) ? comp.Owners : new();
 }

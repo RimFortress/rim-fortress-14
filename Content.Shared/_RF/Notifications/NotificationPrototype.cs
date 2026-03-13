@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -35,7 +36,7 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
     public LocId DescId => $"notification-{ID.ToLowerInvariant()}-desc";
 
     /// <summary>
-    /// Wrapper through which entity names are localized to description
+    /// Wrapper through which entity names are localized to description.
     /// </summary>
     [DataField]
     public LocId EntityNameWrapper = "notification-entity-name-wrapper";
@@ -49,10 +50,16 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
     public LocId? TargetLocId;
 
     /// <summary>
-    /// The time when the notification will be automatically closed
+    /// The time when the notification will be automatically closed.
     /// </summary>
     [DataField]
     public TimeSpan? Duration;
+
+    /// <summary>
+    /// Behavior when attempting to issue the same notification multiple times.
+    /// </summary>
+    [DataField]
+    public NotificationDuplicationPolicy DuplicationPolicy = NotificationDuplicationPolicy.Replace;
 }
 
 [DataDefinition, NetSerializable]
@@ -81,8 +88,39 @@ public sealed partial class Notification(
     public NetCoordinates? TargetCoords = targetCoords;
 
     /// <summary>
-    /// The time when the notification will be automatically closed
+    /// The time when the notification will be automatically closed.
     /// </summary>
     [DataField]
     public TimeSpan? ExpireAt = expireAt;
+
+    /// <summary>
+    /// How many duplicates of this notification were sent.
+    /// </summary>
+    [DataField]
+    public int Duplications;
+
+    [Pure]
+    public bool Equivalent(Notification other)
+        => ProtoId.Equals(other.ProtoId)
+           && Target.Equals(other.Target)
+           && TargetCoords.Equals(other.TargetCoords);
+}
+
+[Serializable]
+public enum NotificationDuplicationPolicy : byte
+{
+    /// <summary>
+    /// Replaces the duplicated notification with a new one.
+    /// </summary>
+    Replace = 0,
+
+    /// <summary>
+    /// Duplicate notifications are combined into one.
+    /// </summary>
+    Stack = 1,
+
+    /// <summary>
+    /// Prohibition on issuing duplicate notifications.
+    /// </summary>
+    None = 2,
 }
