@@ -18,6 +18,8 @@
     - MoodSettlementInspiration
     removeEffects:
     - MoodSettlementDespair
+  - type: NotificationRule
+    proto: SettlementInspirationEvent
 
 - type: entity
   id: SettlementDespairEvent
@@ -29,3 +31,5 @@
     - MoodSettlementDespair
     removeEffects:
     - MoodSettlementInspiration
+  - type: NotificationRule
+    proto: SettlementDespairEvent

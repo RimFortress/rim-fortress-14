@@ -15,6 +15,11 @@ public sealed class NotificationRuleSystem : WorldRuleSystem<NotificationRuleCom
         WorldRuleComponent worldRule,
         WorldRuleStartedEvent args)
     {
-        _notifications.SendNotification(args.Target, component.Proto);
+        _notifications.SendNotification(args.Target, component.Proto, args.TargetCoordinates);
+    }
+
+    protected override void Ended(EntityUid uid, NotificationRuleComponent component, WorldRuleComponent worldRule, WorldRuleEndedEvent args)
+    {
+        _notifications.RemoveNotification(args.Target, component.Proto);
     }
 }

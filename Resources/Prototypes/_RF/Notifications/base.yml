@@ -1,0 +1,16 @@
+- type: Notification
+  id: BaseNotification
+  abstract: true
+  color: "#8B9394"
+
+- type: Notification
+  id: BaseGoodNotification
+  parent: BaseNotification
+  abstract: true
+  color: "#376BA6"
+
+- type: Notification
+  id: BaseDangerNotification
+  parent: BaseNotification
+  abstract: true
+  color: "#A32B1D"

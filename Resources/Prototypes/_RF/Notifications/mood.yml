@@ -1,0 +1,7 @@
+- type: Notification
+  id: SettlementInspirationEvent
+  parent: BaseGoodNotification
+
+- type: Notification
+  id: SettlementDespairEvent
+  parent: BaseDangerNotification

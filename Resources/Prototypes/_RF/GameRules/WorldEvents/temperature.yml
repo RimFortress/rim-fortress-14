@@ -8,6 +8,9 @@
     timeCost: 2
   - type: TemperatureRule
     targetTemperature: 303.15 # 30C
+  - type: NotificationRule
+    proto: WarmTemperatureEvent
+    removeOnFinished: true
 
 - type: entity
   id: HotTemperatureEvent
@@ -19,6 +22,9 @@
     timeCost: 3
   - type: TemperatureRule
     targetTemperature: 313.15 # 40C
+  - type: NotificationRule
+    proto: HotTemperatureEvent
+    removeOnFinished: true
 
 - type: entity
   id: ColdTemperatureEvent
@@ -30,3 +36,6 @@
     timeCost: 3
   - type: TemperatureRule
     targetTemperature: 286.15 # 13C
+  - type: NotificationRule
+    proto: ColdTemperatureEvent
+    removeOnFinished: true

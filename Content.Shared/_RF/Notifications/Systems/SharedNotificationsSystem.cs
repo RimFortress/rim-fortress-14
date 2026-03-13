@@ -211,6 +211,27 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// Removes notification.
     /// </summary>
     /// <param name="ent">Player entity.</param>
+    /// <param name="protoId">Prototype of the notification that needs to be deleted.</param>
+    /// <returns>True, if the notification has been successfully deleted.</returns>
+    [PublicAPI]
+    public bool RemoveNotification(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return false;
+
+        foreach (var (id, notification) in ent.Comp.Notifications)
+        {
+            if (notification.ProtoId == protoId)
+                return RemoveNotification(ent, id);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Removes notification.
+    /// </summary>
+    /// <param name="ent">Player entity.</param>
     /// <param name="id">ID of the notification that needs to be deleted.</param>
     /// <returns>True, if the notification has been successfully deleted.</returns>
     [PublicAPI]

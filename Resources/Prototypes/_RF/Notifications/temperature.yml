@@ -1,0 +1,11 @@
+- type: Notification
+  id: WarmTemperatureEvent
+  parent: BaseNotification
+
+- type: Notification
+  id: HotTemperatureEvent
+  parent: BaseNotification
+
+- type: Notification
+  id: ColdTemperatureEvent
+  parent: BaseNotification

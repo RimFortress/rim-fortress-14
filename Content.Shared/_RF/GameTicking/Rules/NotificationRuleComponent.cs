@@ -14,4 +14,10 @@ public sealed partial class NotificationRuleComponent : Component
     /// </summary>
     [DataField(required: true)]
     public ProtoId<NotificationPrototype> Proto;
+
+    /// <summary>
+    /// Will the notification be removed once the event is over
+    /// </summary>
+    [DataField]
+    public bool RemoveOnFinished;
 }

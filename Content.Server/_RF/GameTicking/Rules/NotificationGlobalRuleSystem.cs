@@ -26,4 +26,17 @@ public sealed class NotificationGlobalRuleSystem : GameRuleSystem<NotificationRu
             _notifications.SendNotification(player, component.Proto);
         }
     }
+
+    protected override void Ended(EntityUid uid, NotificationRuleComponent component, GameRuleComponent gameRule, GameRuleEndedEvent args)
+    {
+        if (!component.RemoveOnFinished)
+            return;
+
+        var enumerator = EntityQueryEnumerator<RimFortressPlayerComponent>();
+
+        while (enumerator.MoveNext(out var player, out _))
+        {
+            _notifications.RemoveNotification(player, component.Proto);
+        }
+    }
 }
