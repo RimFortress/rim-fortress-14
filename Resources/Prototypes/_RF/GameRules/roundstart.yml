@@ -22,7 +22,7 @@
   - type: NotifyOnStateChanged
     notifications:
       Critical: ColonistCriticalEvent
-      Death: ColonistDeathEvent
+      Dead: ColonistDeathEvent
 
 - type: entity
   id: RimFortress

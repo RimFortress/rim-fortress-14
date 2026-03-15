@@ -1,83 +1,83 @@
-- type: Notification
+- type: notification
   id: PopMigration
   parent: BaseGoodNotification
 
-- type: Notification
+- type: notification
   id: CatMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: PossumMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: FoxMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: CrabMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: GoatMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: CowMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: FerretMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: FrogMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: GooseMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: HamsterMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: KangarooMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: MonkeyMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: MothroachMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: ParrotMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: RaccoonMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: SnakeMigration
-  parent: BaseGoodNotification
+  parent: BaseInfoNotification
 
-- type: Notification
+- type: notification
   id: SlimeMigration
   parent: BaseDangerNotification
 
-- type: Notification
+- type: notification
   id: SpiderMigration
   parent: BaseDangerNotification
 
-- type: Notification
+- type: notification
   id: OreCrabMigration
   parent: BaseDangerNotification
 
-- type: Notification
+- type: notification
   id: Raid
   parent: BaseDangerNotification

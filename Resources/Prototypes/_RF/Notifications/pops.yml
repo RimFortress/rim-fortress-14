@@ -1,10 +1,9 @@
-- type: Notification
+- type: notification
   id: ColonistCriticalEvent
   parent: BaseDangerNotification
   targetLocId: target
 
-- type: Notification
+- type: notification
   id: ColonistDeathEvent
-  parent: BaseNotification
+  parent: BaseDangerNotification
   targetLocId: target
-  color: "#4D1D8C"

@@ -21,12 +21,12 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// <summary>
     /// Called every time a new notification is created. Use only on the client.
     /// </summary>
-    public event Action<int>? OnNotificationAdded;
+    public event Action<Notification>? OnNotificationAdded;
 
     /// <summary>
     /// Called every time a notification is deleted. Use only on the client.
     /// </summary>
-    public event Action<int>? OnNotificationRemoved;
+    public event Action<Notification>? OnNotificationRemoved;
 
     private int _lastNotificationId;
 
@@ -45,16 +45,16 @@ public abstract class SharedNotificationsSystem : EntitySystem
         if (args.Current is not NotificationComponentState state)
             return;
 
-        foreach (var (id, _) in state.Notifications)
+        foreach (var (id, notification) in state.Notifications)
         {
             if (!ent.Comp.Notifications.ContainsKey(id))
-                OnNotificationAdded?.Invoke(id);
+                OnNotificationAdded?.Invoke(notification);
         }
 
-        foreach (var (id, _) in ent.Comp.Notifications)
+        foreach (var (id, notification) in ent.Comp.Notifications)
         {
             if (!state.Notifications.ContainsKey(id))
-                OnNotificationRemoved?.Invoke(id);
+                OnNotificationRemoved?.Invoke(notification);
         }
 
         ent.Comp.Notifications = state.Notifications;
@@ -89,10 +89,15 @@ public abstract class SharedNotificationsSystem : EntitySystem
     [PublicAPI]
     public bool SendNotification(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out _))
+        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
             return false;
 
-        return SendNotification(ent, new Notification(protoId));
+        var notification = new Notification(
+            protoId,
+            _timing.CurTime,
+            expireAt: _timing.CurTime + proto.Duration);
+
+        return SendNotification(ent, notification);
     }
 
     /// <summary>
@@ -112,6 +117,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
         var notification = new Notification(
             protoId,
+            _timing.CurTime,
             target: GetNetEntity(target),
             expireAt: _timing.CurTime + proto.Duration);
 
@@ -135,6 +141,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
         var notification = new Notification(
             protoId,
+            _timing.CurTime,
             targetCoords: GetNetCoordinates(coords),
             expireAt: _timing.CurTime + proto.Duration);
 
@@ -159,7 +166,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
                     RemoveNotification(ent, same.Value.Key);
                     break;
                 case NotificationDuplicationPolicy.Stack:
-                    notification.Duplications = same.Value.Value.Duplications + 1;
+                    notification.Duplicate(same.Value.Value);
                     RemoveNotification(ent, same.Value.Key);
                     break;
             }
@@ -245,6 +252,22 @@ public abstract class SharedNotificationsSystem : EntitySystem
     [PublicAPI]
     public abstract void RemoveNotifications(Entity<NotificationComponent?> ent, List<int> ids);
 
+    /// <summary>
+    /// Teleports the entity to the coordinates that triggered the notification.
+    /// </summary>
+    [PublicAPI]
+    public void FocusToNotification(Entity<NotificationComponent?> ent, int id)
+    {
+        if (Resolve(ent, ref ent.Comp) && ent.Comp.Notifications.TryGetValue(id, out var notification))
+            FocusToNotification(ent, notification);
+    }
+
+    /// <summary>
+    /// Teleports the entity to the coordinates that triggered the notification.
+    /// </summary>
+    [PublicAPI]
+    public abstract void FocusToNotification(Entity<NotificationComponent?> ent, Notification notification);
+
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
@@ -256,7 +279,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
             foreach (var (id, notification) in comp.Notifications)
             {
-                if (notification.ExpireAt >= _timing.CurTime)
+                if (notification.ExpireAt < _timing.CurTime)
                     toRemove.Add(id);
             }
 
@@ -277,4 +300,11 @@ public sealed class RemoveNotificationsRequest(List<int> ids) : EntityEventArgs
 {
     [DataField]
     public List<int> Ids = ids;
+}
+
+[Serializable, NetSerializable]
+public sealed class FocusToNotificationRequest(int id) : EntityEventArgs
+{
+    [DataField]
+    public int Id = id;
 }

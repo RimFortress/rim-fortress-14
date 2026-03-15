@@ -60,6 +60,11 @@ public sealed class StyleFortress : StyleBase
     public static readonly Color GoldButtonColorPressed = Color.FromHex("#CE9033");
     public static readonly Color GoldButtonColorDisabled = Color.FromHex("#997746");
 
+    public static readonly Color BlueButtonColorDefault = Color.FromHex("#226794");
+    public static readonly Color BlueButtonColorHovered = Color.FromHex("#4299D2");
+    public static readonly Color BlueButtonColorPressed = Color.FromHex("#3896A3");
+    public static readonly Color BlueButtonColorDisabled = Color.FromHex("#1E5158");
+
     public static readonly Color TreeMenuButtonColorDefault = Color.Transparent;
     public static readonly Color TreeMenuButtonColorHovered = SignalBlack;
     public static readonly Color TreeMenuButtonColorPressed = GraphiteBlack;
@@ -165,8 +170,10 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
     public const string StyleClassButtonColorGold = "ButtonColorGold";
+    public const string StyleClassButtonColorBlue = "ButtonColorBlue";
     public const string StyleClassButtonTransparent = "ButtonTransparent";
     public const string StyleClassButtonBig = "ButtonBig";
+    public const string StyleClassButtonEmpty = "ButtonEmpty";
 
     // Bwoink
     public const string StyleClassPinButtonPinned = "pinButtonPinned";
@@ -300,6 +307,8 @@ public sealed class StyleFortress : StyleBase
 
         var treeMenuButton = StyleBoxTex("rounded_button_bordered.png");
         treeMenuButton.SetPatchMargin(StyleBox.Margin.All, 5);
+
+        var empty = new StyleBoxEmpty();
 
         #endregion
 
@@ -700,6 +709,10 @@ public sealed class StyleFortress : StyleBase
                 .Class(ContainerButton.StyleClassButton, ButtonSquare)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonSquare),
 
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonEmpty)
+                .Prop(ContainerButton.StylePropertyStyleBox, empty),
+
             Element<Label>()
                 .Class(ContainerButton.StyleClassButton)
                 .Prop(Label.StylePropertyAlignMode, Label.AlignMode.Center),
@@ -850,6 +863,30 @@ public sealed class StyleFortress : StyleBase
             Element<SocializationEffectInfo>()
                 .Class(SocializationEffectInfo.OddRowStyleClass)
                 .Prop(ContainerButton.StylePropertyStyleBox, new StyleBoxFlat(DarkForest)),
+
+            #region Blue Button
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorBlue)
+                .Pseudo(ContainerButton.StylePseudoClassNormal)
+                .Prop(Control.StylePropertyModulateSelf, BlueButtonColorDefault),
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorBlue)
+                .Pseudo(ContainerButton.StylePseudoClassHover)
+                .Prop(Control.StylePropertyModulateSelf, BlueButtonColorHovered),
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorBlue)
+                .Pseudo(ContainerButton.StylePseudoClassPressed)
+                .Prop(Control.StylePropertyModulateSelf, BlueButtonColorPressed),
+
+            Element<ContainerButton>()
+                .Class(ContainerButton.StyleClassButton, StyleClassButtonColorBlue)
+                .Pseudo(ContainerButton.StylePseudoClassDisabled)
+                .Prop(Control.StylePropertyModulateSelf, BlueButtonColorDisabled),
+
+            #endregion
 
             #region Gold Button
 

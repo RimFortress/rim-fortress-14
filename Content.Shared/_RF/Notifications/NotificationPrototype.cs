@@ -62,15 +62,16 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
     public NotificationDuplicationPolicy DuplicationPolicy = NotificationDuplicationPolicy.Replace;
 
     /// <summary>
-    /// The color in which the notification will be displayed in the interface.
+    /// XAML style for the notification button in the UI.
     /// </summary>
     [DataField]
-    public Color Color;
+    public string? Style;
 }
 
-[DataDefinition, NetSerializable]
-public sealed partial class Notification(
+[Serializable, NetSerializable]
+public sealed class Notification(
     ProtoId<NotificationPrototype> protoId,
+    TimeSpan startedAt,
     NetEntity? target = null,
     NetCoordinates? targetCoords = null,
     TimeSpan? expireAt = null)
@@ -100,6 +101,12 @@ public sealed partial class Notification(
     public TimeSpan? ExpireAt = expireAt;
 
     /// <summary>
+    /// When the notification was sent
+    /// </summary>
+    [DataField]
+    public TimeSpan StartedAt = startedAt;
+
+    /// <summary>
     /// How many duplicates of this notification were sent.
     /// </summary>
     [DataField]
@@ -110,6 +117,12 @@ public sealed partial class Notification(
         => ProtoId.Equals(other.ProtoId)
            && Target.Equals(other.Target)
            && TargetCoords.Equals(other.TargetCoords);
+
+    public void Duplicate(Notification other)
+    {
+        Duplications = other.Duplications + 1;
+        StartedAt = other.StartedAt;
+    }
 }
 
 [Serializable]

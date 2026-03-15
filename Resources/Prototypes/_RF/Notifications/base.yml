@@ -1,16 +1,21 @@
-- type: Notification
+- type: notification
   id: BaseNotification
   abstract: true
-  color: "#8B9394"
 
-- type: Notification
+- type: notification
+  id: BaseInfoNotification
+  parent: BaseNotification
+  abstract: true
+  style: ButtonColorBlue
+
+- type: notification
   id: BaseGoodNotification
   parent: BaseNotification
   abstract: true
-  color: "#376BA6"
+  style: ButtonColorGreen
 
-- type: Notification
+- type: notification
   id: BaseDangerNotification
   parent: BaseNotification
   abstract: true
-  color: "#A32B1D"
+  style: Caution
