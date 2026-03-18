@@ -1,0 +1,13 @@
+<controls:FancyWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    Title="{Loc 'notifications-settings-window-title'}"
+    SetSize="250 300" Resizable="False">
+    <BoxContainer Orientation="Vertical">
+        <Label Text="{Loc 'notifications-settings-window-ignore'}"/>
+        <PanelContainer StyleClasses="LowDividerDark" Margin="3 1"/>
+        <ScrollContainer VerticalExpand="True">
+            <BoxContainer Name="Container" Orientation="Vertical"/>
+        </ScrollContainer>
+    </BoxContainer>
+</controls:FancyWindow>

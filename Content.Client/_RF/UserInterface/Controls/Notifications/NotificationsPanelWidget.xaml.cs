@@ -10,7 +10,7 @@ namespace Content.Client._RF.UserInterface.Controls.Notifications;
 [GenerateTypedNameReferences]
 public sealed partial class NotificationsPanelWidget : UIWidget
 {
-    private readonly NotificationsPanelUiController _controller;
+    private readonly NotificationsPanelUiController _panelController;
     private readonly Dictionary<Notification, NotificationButton> _notifications = new();
     private NotificationButton? _pressed;
 
@@ -18,23 +18,27 @@ public sealed partial class NotificationsPanelWidget : UIWidget
     {
         RobustXamlLoader.Load(this);
 
-        _controller = UserInterfaceManager.GetUIController<NotificationsPanelUiController>();
+        _panelController = UserInterfaceManager.GetUIController<NotificationsPanelUiController>();
+
+        Settings.OnPressed += _ => UserInterfaceManager
+            .GetUIController<NotificationsSettingsUiController>()
+            .ToggleWindow();
     }
 
     protected override void EnteredTree()
     {
         base.EnteredTree();
 
-        _controller.OnNotificationAdded += AddNotification;
-        _controller.OnNotificationRemoved += RemoveNotification;
+        _panelController.OnNotificationAdded += AddNotification;
+        _panelController.OnNotificationRemoved += RemoveNotification;
     }
 
     protected override void ExitedTree()
     {
         base.ExitedTree();
 
-        _controller.OnNotificationAdded -= AddNotification;
-        _controller.OnNotificationRemoved -= RemoveNotification;
+        _panelController.OnNotificationAdded -= AddNotification;
+        _panelController.OnNotificationRemoved -= RemoveNotification;
     }
 
     private void AddNotification(Notification notification)

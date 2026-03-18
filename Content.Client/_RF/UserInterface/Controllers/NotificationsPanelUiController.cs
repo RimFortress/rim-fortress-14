@@ -1,12 +1,13 @@
 using Content.Client._RF.Notifications;
 using Content.Shared._RF.Notifications;
+using Robust.Client.Player;
 using Robust.Client.UserInterface.Controllers;
 
 namespace Content.Client._RF.UserInterface.Controllers;
 
 public sealed class NotificationsPanelUiController : UIController, IOnSystemLoaded<NotificationsSystem>
 {
-    // WTF
+    [Dependency] private readonly IPlayerManager _player = default!;
 
     /// <summary>
     /// Called every time a new notification is created.
@@ -20,7 +21,16 @@ public sealed class NotificationsPanelUiController : UIController, IOnSystemLoad
 
     public void OnSystemLoaded(NotificationsSystem system)
     {
-        system.OnNotificationAdded += args => OnNotificationAdded?.Invoke(args);
-        system.OnNotificationRemoved += args => OnNotificationRemoved?.Invoke(args);
+        system.OnNotificationAdded += args =>
+        {
+            if (_player.LocalEntity is { } uid && !system.Ignored(uid, args.ProtoId))
+                OnNotificationAdded?.Invoke(args);
+        };
+
+        system.OnNotificationRemoved += args =>
+        {
+            if (_player.LocalEntity is { } uid && !system.Ignored(uid, args.ProtoId))
+                OnNotificationRemoved?.Invoke(args);
+        };
     }
 }

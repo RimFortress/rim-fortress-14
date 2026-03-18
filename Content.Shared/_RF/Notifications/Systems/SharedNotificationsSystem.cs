@@ -163,7 +163,9 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
     private bool SendNotification(Entity<NotificationComponent?> ent, Notification notification)
     {
-        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(notification.ProtoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp)
+            || ent.Comp.IgnoredNotifications.Contains(notification.ProtoId)
+            || !Proto.Resolve(notification.ProtoId, out var proto))
             return false;
 
         var same = ent.Comp.Notifications
@@ -256,6 +258,36 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// </summary>
     [PublicAPI]
     public abstract void FocusToNotification(Entity<NotificationComponent?> ent, Notification notification);
+
+    /// <summary>
+    /// Adds the notification to the ignore list.
+    /// </summary>
+    public void AddIgnored(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        ent.Comp.IgnoredNotifications.Add(protoId);
+        Dirty(ent);
+    }
+
+    /// <summary>
+    /// Removes the notification from the ignore list.
+    /// </summary>
+    public void RemoveIgnored(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        ent.Comp.IgnoredNotifications.Remove(protoId);
+        Dirty(ent);
+    }
+
+    /// <summary>
+    /// Is the notification on the player's ignore list
+    /// </summary>
+    public bool Ignored(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+        => Resolve(ent, ref ent.Comp) && ent.Comp.IgnoredNotifications.Contains(protoId);
 
     public override void Update(float frameTime)
     {
