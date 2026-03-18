@@ -28,6 +28,12 @@ public sealed partial class ControllableNpcComponent : Component
     [ViewVariables]
     public EntityUid? TaskTarget;
 
+    /// <summary>
+    /// The reason why the current task failed
+    /// </summary>
+    [ViewVariables]
+    public HashSet<string> TaskFailReason = new();
+
     [ViewVariables]
     public TimeSpan TaskFinishCheckTime = TimeSpan.Zero;
 }

@@ -7,3 +7,8 @@
   id: ColonistDeathEvent
   parent: BaseDangerNotification
   targetLocId: target
+
+- type: notification
+  id: TaskSuspended
+  parent: BaseNotification
+  duration: 1m

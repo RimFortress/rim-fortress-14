@@ -36,30 +36,17 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
     public LocId DescId => $"notification-{ID.ToLowerInvariant()}-desc";
 
     /// <summary>
-    /// Wrapper through which entity names are localized to description.
-    /// </summary>
-    [DataField]
-    public LocId EntityNameWrapper = "notification-entity-name-wrapper";
-
-    /// <summary>
-    /// The name of the parameter in the localization description into which the name
-    /// of the entity that triggered the notification will be inserted.
-    /// If null, the description will be localized without parameters.
-    /// </summary>
-    [DataField]
-    public LocId? TargetLocId;
-
-    /// <summary>
     /// The time when the notification will be automatically closed.
     /// </summary>
     [DataField]
     public TimeSpan? Duration;
 
     /// <summary>
-    /// Behavior when attempting to issue the same notification multiple times.
+    /// f true, when attempting to issue a duplicate notification,
+    /// it will replace the existing one; else, the notification will not be issued
     /// </summary>
     [DataField]
-    public NotificationDuplicationPolicy DuplicationPolicy = NotificationDuplicationPolicy.Replace;
+    public bool ReplaceDuplicate;
 
     /// <summary>
     /// XAML style for the notification button in the UI.
@@ -71,16 +58,23 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
 [Serializable, NetSerializable]
 public sealed class Notification(
     ProtoId<NotificationPrototype> protoId,
+    string description,
     TimeSpan startedAt,
     NetEntity? target = null,
     NetCoordinates? targetCoords = null,
     TimeSpan? expireAt = null)
 {
     /// <summary>
-    /// ID for localization of notification name.
+    /// Notification prototype.
     /// </summary>
     [DataField]
     public ProtoId<NotificationPrototype> ProtoId = protoId;
+
+    /// <summary>
+    /// Notification description.
+    /// </summary>
+    [DataField]
+    public string Description = description;
 
     /// <summary>
     /// The entity that triggered this notification.
@@ -123,23 +117,4 @@ public sealed class Notification(
         Duplications = other.Duplications + 1;
         StartedAt = other.StartedAt;
     }
-}
-
-[Serializable]
-public enum NotificationDuplicationPolicy : byte
-{
-    /// <summary>
-    /// Replaces the duplicated notification with a new one.
-    /// </summary>
-    Replace = 0,
-
-    /// <summary>
-    /// Duplicate notifications are combined into one.
-    /// </summary>
-    Stack = 1,
-
-    /// <summary>
-    /// Prohibition on issuing duplicate notifications.
-    /// </summary>
-    None = 2,
 }

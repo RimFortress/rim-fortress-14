@@ -15,8 +15,10 @@ namespace Content.Shared._RF.Notifications.Systems;
 /// </summary>
 public abstract class SharedNotificationsSystem : EntitySystem
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+
+    private static readonly LocId EntityNameWrapper = "notification-entity-name-wrapper";
 
     /// <summary>
     /// Called every time a new notification is created. Use only on the client.
@@ -45,16 +47,16 @@ public abstract class SharedNotificationsSystem : EntitySystem
         if (args.Current is not NotificationComponentState state)
             return;
 
-        foreach (var (id, notification) in state.Notifications)
-        {
-            if (!ent.Comp.Notifications.ContainsKey(id))
-                OnNotificationAdded?.Invoke(notification);
-        }
-
         foreach (var (id, notification) in ent.Comp.Notifications)
         {
             if (!state.Notifications.ContainsKey(id))
                 OnNotificationRemoved?.Invoke(notification);
+        }
+
+        foreach (var (id, notification) in state.Notifications)
+        {
+            if (!ent.Comp.Notifications.ContainsKey(id))
+                OnNotificationAdded?.Invoke(notification);
         }
 
         ent.Comp.Notifications = state.Notifications;
@@ -86,14 +88,19 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// </summary>
     /// <param name="ent">Entity of the player for whom the notification should be created.</param>
     /// <param name="protoId">Notification prototype.</param>
+    /// <param name="desc">Description override for notification.</param>
     [PublicAPI]
-    public bool SendNotification(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+    public bool SendNotification(
+        Entity<NotificationComponent?> ent,
+        ProtoId<NotificationPrototype> protoId,
+        string? desc = null)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(protoId, out var proto))
             return false;
 
         var notification = new Notification(
             protoId,
+            desc ?? Loc.GetString(proto.DescId),
             _timing.CurTime,
             expireAt: _timing.CurTime + proto.Duration);
 
@@ -106,17 +113,20 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// <param name="ent">Entity of the player for whom the notification should be created.</param>
     /// <param name="protoId">Notification prototype.</param>
     /// <param name="target">The entity that triggered this notification.</param>
+    /// <param name="desc">Description override for notification.</param>
     [PublicAPI]
     public bool SendNotification(
         Entity<NotificationComponent?> ent,
         ProtoId<NotificationPrototype> protoId,
-        EntityUid target)
+        EntityUid target,
+        string? desc = null)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(protoId, out var proto))
             return false;
 
         var notification = new Notification(
             protoId,
+            desc ?? Loc.GetString(proto.DescId),
             _timing.CurTime,
             target: GetNetEntity(target),
             expireAt: _timing.CurTime + proto.Duration);
@@ -130,17 +140,20 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// <param name="ent">Entity of the player for whom the notification should be created.</param>
     /// <param name="protoId">Notification prototype.</param>
     /// <param name="coords">Coordinates of the location that triggered this notification.</param>
+    /// <param name="desc">Description override for notification.</param>
     [PublicAPI]
     public bool SendNotification(
         Entity<NotificationComponent?> ent,
         ProtoId<NotificationPrototype> protoId,
-        EntityCoordinates coords)
+        EntityCoordinates coords,
+        string? desc = null)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(protoId, out var proto))
             return false;
 
         var notification = new Notification(
             protoId,
+            desc ?? Loc.GetString(proto.DescId),
             _timing.CurTime,
             targetCoords: GetNetCoordinates(coords),
             expireAt: _timing.CurTime + proto.Duration);
@@ -150,7 +163,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
     private bool SendNotification(Entity<NotificationComponent?> ent, Notification notification)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(notification.ProtoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(notification.ProtoId, out var proto))
             return false;
 
         var same = ent.Comp.Notifications
@@ -158,18 +171,10 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
         if (same != null)
         {
-            switch (proto.DuplicationPolicy)
-            {
-                case NotificationDuplicationPolicy.None:
-                    return false;
-                case NotificationDuplicationPolicy.Replace:
-                    RemoveNotification(ent, same.Value.Key);
-                    break;
-                case NotificationDuplicationPolicy.Stack:
-                    notification.Duplicate(same.Value.Value);
-                    RemoveNotification(ent, same.Value.Key);
-                    break;
-            }
+            if (proto.ReplaceDuplicate)
+                RemoveNotification(ent, same.Value.Key, false);
+            else
+                return false;
         }
 
         _lastNotificationId++;
@@ -180,38 +185,17 @@ public abstract class SharedNotificationsSystem : EntitySystem
         return true;
     }
 
-    /// <summary>
-    /// Returns the localized description of the notification.
-    /// </summary>
     [PublicAPI, Pure]
-    public string GetDescString(Entity<NotificationComponent?> ent, int id)
+    public string GetEntityString(EntityUid uid)
     {
-        if (!Resolve(ent, ref ent.Comp) || !ent.Comp.Notifications.TryGetValue(id, out var notification))
-            return string.Empty;
+        var name = MetaData(uid).EntityName;
 
-        return GetDescString(notification);
-    }
+        if (!TryComp(uid, out HumanoidAppearanceComponent? appearance))
+            return name;
 
-    /// <summary>
-    /// Returns the localized description of the notification.
-    /// </summary>
-    [PublicAPI, Pure]
-    public string GetDescString(Notification notification)
-    {
-        if (!_proto.Resolve(notification.ProtoId, out var proto))
-            return string.Empty;
-
-        if (proto.TargetLocId != null
-            && TryGetEntity(notification.Target, out var uid)
-            && TryComp(uid, out HumanoidAppearanceComponent? appearance))
-        {
-            var entLoc = Loc.GetString(proto.EntityNameWrapper,
-                ("name", MetaData(uid.Value).EntityName),
-                ("sex", appearance.Sex.ToString().ToLowerInvariant()));
-            return Loc.GetString(proto.DescId, (proto.TargetLocId, entLoc));
-        }
-
-        return Loc.GetString(proto.DescId);
+        return Loc.GetString(EntityNameWrapper,
+            ("name", name),
+            ("sex", appearance.Sex.ToString().ToLowerInvariant()));
     }
 
     /// <summary>
@@ -219,9 +203,13 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// </summary>
     /// <param name="ent">Player entity.</param>
     /// <param name="protoId">Prototype of the notification that needs to be deleted.</param>
+    /// <param name="dirty"></param>
     /// <returns>True, if the notification has been successfully deleted.</returns>
     [PublicAPI]
-    public bool RemoveNotification(Entity<NotificationComponent?> ent, ProtoId<NotificationPrototype> protoId)
+    public bool RemoveNotification(
+        Entity<NotificationComponent?> ent,
+        ProtoId<NotificationPrototype> protoId,
+        bool dirty = true)
     {
         if (!Resolve(ent, ref ent.Comp))
             return false;
@@ -229,7 +217,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
         foreach (var (id, notification) in ent.Comp.Notifications)
         {
             if (notification.ProtoId == protoId)
-                return RemoveNotification(ent, id);
+                return RemoveNotification(ent, id, dirty);
         }
 
         return false;
@@ -240,9 +228,10 @@ public abstract class SharedNotificationsSystem : EntitySystem
     /// </summary>
     /// <param name="ent">Player entity.</param>
     /// <param name="id">ID of the notification that needs to be deleted.</param>
+    /// <param name="dirty"></param>
     /// <returns>True, if the notification has been successfully deleted.</returns>
     [PublicAPI]
-    public abstract bool RemoveNotification(Entity<NotificationComponent?> ent, int id);
+    public abstract bool RemoveNotification(Entity<NotificationComponent?> ent, int id, bool dirty = true);
 
     /// <summary>
     /// Removes multiple notifications.

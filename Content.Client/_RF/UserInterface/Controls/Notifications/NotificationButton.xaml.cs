@@ -92,7 +92,7 @@ public sealed partial class NotificationButton : Control
         var proto = _proto.Index(_notification.ProtoId);
 
         NameLabel.Text = Loc.GetString(proto.NameId);
-        Desc.Text = _notifications.GetDescString(_notification);
+        Desc.Text = _notification.Description;
 
         if (_notification.Duplications > 0)
             NameLabel.Text = $"{NameLabel.Text} x{_notification.Duplications + 1}";

@@ -65,7 +65,7 @@ public sealed partial class NotificationsPanelWidget : UIWidget
             return;
 
         button.OnRemove -= RemoveNotification;
-        Notifications.RemoveChild(button);
+        button.Parent?.RemoveChild(button);
 
         Header.Visible = Notifications.ChildCount > 0;
     }

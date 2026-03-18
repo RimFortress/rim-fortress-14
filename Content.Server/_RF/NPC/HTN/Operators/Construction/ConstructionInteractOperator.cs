@@ -1,4 +1,5 @@
 using Content.Server._RF.Construction;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
 using Content.Server.Interaction;
 using Content.Server.NPC;
@@ -26,6 +27,7 @@ public sealed partial class ConstructionInteractOperator : HTNOperator
     private HandsSystem _hands = default!;
     private StorageSystem _storage = default!;
     private NpcConstructionSystem _construction = default!;
+    private NpcControlSystem _control = default!;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
@@ -38,6 +40,7 @@ public sealed partial class ConstructionInteractOperator : HTNOperator
         _hands = sysManager.GetEntitySystem<HandsSystem>();
         _storage = sysManager.GetEntitySystem<StorageSystem>();
         _construction = sysManager.GetEntitySystem<NpcConstructionSystem>();
+        _control = sysManager.GetEntitySystem<NpcControlSystem>();
     }
 
     /// <summary>
@@ -95,8 +98,11 @@ public sealed partial class ConstructionInteractOperator : HTNOperator
         if (_entity.TryGetComponent<CombatModeComponent>(owner, out var combatMode))
             _combatMode.SetInCombatMode(owner, false, combatMode);
 
-        if (!_construction.TryGetNextItem(target, owner, out var item))
+        if (!_construction.TryGetNextItem(target, owner, out var item, out var reason))
+        {
+            _control.AddFailReason(owner, reason);
             return HTNOperatorStatus.Failed;
+        }
 
         // If we have an item in hands, we put it away in inventory
         if (_hands.TryGetActiveItem(owner, out var handItem) && handItem != item)

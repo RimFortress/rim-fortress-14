@@ -7,7 +7,7 @@ namespace Content.Client._RF.Notifications;
 
 public sealed class NotificationsSystem : SharedNotificationsSystem
 {
-    public override bool RemoveNotification(Entity<NotificationComponent?> ent, int id)
+    public override bool RemoveNotification(Entity<NotificationComponent?> ent, int id, bool dirty = true)
     {
         if (!Resolve(ent, ref ent.Comp) || !ent.Comp.Notifications.ContainsKey(id))
             return false;
