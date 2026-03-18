@@ -1,0 +1,83 @@
+- type: notification
+  id: PopMigration
+  parent: BaseGoodNotification
+
+- type: notification
+  id: CatMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: PossumMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: FoxMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: CrabMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: GoatMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: CowMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: FerretMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: FrogMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: GooseMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: HamsterMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: KangarooMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: MonkeyMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: MothroachMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: ParrotMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: RaccoonMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: SnakeMigration
+  parent: BaseInfoNotification
+
+- type: notification
+  id: SlimeMigration
+  parent: BaseDangerNotification
+
+- type: notification
+  id: SpiderMigration
+  parent: BaseDangerNotification
+
+- type: notification
+  id: OreCrabMigration
+  parent: BaseDangerNotification
+
+- type: notification
+  id: Raid
+  parent: BaseDangerNotification

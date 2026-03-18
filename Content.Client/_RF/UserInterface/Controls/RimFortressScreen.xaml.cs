@@ -26,6 +26,7 @@ public sealed partial class RimFortressScreen : InGameScreen
         SetAnchorAndMarginPreset(TopLeft, LayoutPreset.TopLeft, margin: 10);
         SetAnchorAndMarginPreset(TopRight, LayoutPreset.TopRight, margin: 10);
         SetAnchorAndMarginPreset(MenuBar, LayoutPreset.BottomRight, margin: 10);
+        SetAnchorAndMarginPreset(Notifications, LayoutPreset.CenterRight, margin: 10);
 
         SetAnchorAndMarginPreset(PopList, LayoutPreset.Wide, margin: 10);
 

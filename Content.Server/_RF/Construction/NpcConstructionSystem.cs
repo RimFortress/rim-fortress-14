@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Server._RF.NPC.Systems;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Construction.Conditions;
@@ -45,8 +44,10 @@ public sealed class NpcConstructionSystem : EntitySystem
     /// </summary>
     /// <param name="uid">Entity for construction</param>
     /// <param name="user">User entity</param>
-    public List<EntityUid>? GetConstructionItems(EntityUid uid, EntityUid user)
+    /// <param name="reason">The reason why the construction item could not be found</param>
+    public List<EntityUid>? GetConstructionItems(EntityUid uid, EntityUid user, out string reason)
     {
+        reason = string.Empty;
         var entities = new List<EntityUid>();
         var mapId = Transform(uid).MapID;
         var commonQuery = CommonQuery();
@@ -55,7 +56,7 @@ public sealed class NpcConstructionSystem : EntitySystem
         {
             foreach (var condition in edge.Conditions)
             {
-                if (ConditionQuery(commonQuery, condition, uid) is { } query)
+                if (ConditionQuery(commonQuery, condition, uid, out reason) is { } query)
                     entities.AddRange(query);
                 else
                     return null;
@@ -64,7 +65,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             // Looking for the most suitable item for each step of construction
             foreach (var step in edge.Steps)
             {
-                if (StepQuery(commonQuery, step) is { } ent)
+                if (StepQuery(commonQuery, step, out reason) is { } ent)
                     entities.Add(ent);
                 else
                     return null;
@@ -112,10 +113,16 @@ public sealed class NpcConstructionSystem : EntitySystem
     /// <param name="uid">Target entity for construction</param>
     /// <param name="user">User entity</param>
     /// <param name="item">Entity of the item needed for construction</param>
+    /// <param name="reason">The reason why the construction item could not be found</param>
     /// <returns>True, if the item for construction is found in the user's inventory</returns>
-    public bool TryGetNextItem(EntityUid uid, EntityUid user, [NotNullWhen(true)] out EntityUid? item)
+    public bool TryGetNextItem(
+        EntityUid uid,
+        EntityUid user,
+        [NotNullWhen(true)] out EntityUid? item,
+        [NotNullWhen(false)] out string? reason)
     {
         item = null;
+        reason = null;
 
         var invEntities = InventoryEntities(user);
         var edges = GetEdges(uid);
@@ -127,7 +134,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             if (condition.Condition(uid, EntityManager))
                 continue;
 
-            var entities = ConditionQuery(invEntities, condition, uid);
+            var entities = ConditionQuery(invEntities, condition, uid, out reason);
 
             if (entities == null)
                 return false;
@@ -137,13 +144,14 @@ public sealed class NpcConstructionSystem : EntitySystem
         }
 
         // Looking for the most suitable item for each step of construction
-        item = StepQuery(invEntities, step);
+        item = StepQuery(invEntities, step, out reason);
 
         return item != null;
     }
 
-    private List<EntityUid>? ConditionQuery(List<EntityUid> query, IGraphCondition condition, EntityUid uid)
+    private List<EntityUid>? ConditionQuery(List<EntityUid> query, IGraphCondition condition, EntityUid uid, out string reason)
     {
+        reason = string.Empty;
         var entities = new List<EntityUid>();
         var conditions = new Queue<IGraphCondition>();
         conditions.Enqueue(condition);
@@ -186,26 +194,26 @@ public sealed class NpcConstructionSystem : EntitySystem
                     }
                     break;
                 case EntityAnchored:
-                    if (ToolQuery(query, AnchoringQuality) is { } anchoring)
+                    if (ToolQuery(query, AnchoringQuality, out reason) is { } anchoring)
                         entities.Add(anchoring);
                     else
                         return null;
                     break;
                 case DoorWelded:
                 case StorageWelded:
-                    if (ToolQuery(query, WeldingQuality) is { } welding)
+                    if (ToolQuery(query, WeldingQuality, out reason) is { } welding)
                         entities.Add(welding);
                     else
                         return null;
                     break;
                 case WirePanel:
-                    if (ToolQuery(query, ScrewingQuality) is { } screwing)
+                    if (ToolQuery(query, ScrewingQuality, out reason) is { } screwing)
                         entities.Add(screwing);
                     else
                         return null;
                     break;
                 case HasTag tag:
-                    if (TagQuery(query, new() { tag.Tag }, true) is { } tagUid)
+                    if (TagQuery(query, new() { tag.Tag }, true, out reason) is { } tagUid)
                         entities.Add(tagUid);
                     else
                         return null;
@@ -216,7 +224,7 @@ public sealed class NpcConstructionSystem : EntitySystem
 
                     foreach (var (type, amount) in frame.MaterialRequirements)
                     {
-                        if (MaterialQuery(query, type, amount) is { } material)
+                        if (MaterialQuery(query, type, amount, out reason) is { } material)
                             entities.Add(material);
                         else
                             return null;
@@ -224,7 +232,7 @@ public sealed class NpcConstructionSystem : EntitySystem
 
                     foreach (var (compName, _) in frame.ComponentRequirements)
                     {
-                        if (ComponentQuery(query, compName) is { } component)
+                        if (ComponentQuery(query, compName, out reason) is { } component)
                             entities.Add(component);
                         else
                             return null;
@@ -232,7 +240,7 @@ public sealed class NpcConstructionSystem : EntitySystem
 
                     foreach (var (tagName, _) in frame.TagRequirements)
                     {
-                        if (TagQuery(query, new() { tagName }, true) is { } machineTagUid)
+                        if (TagQuery(query, new() { tagName }, true, out reason) is { } machineTagUid)
                             entities.Add(machineTagUid);
                         else
                             return null;
@@ -245,29 +253,31 @@ public sealed class NpcConstructionSystem : EntitySystem
         return entities;
     }
 
-    private EntityUid? StepQuery(List<EntityUid> query, ConstructionGraphStep step)
+    private EntityUid? StepQuery(List<EntityUid> query, ConstructionGraphStep step, out string reason)
     {
+        reason = string.Empty;
+
         switch (step)
         {
             case MaterialConstructionGraphStep insertMaterial:
-                return MaterialQuery(query, insertMaterial.MaterialPrototypeId, insertMaterial.Amount);
+                return MaterialQuery(query, insertMaterial.MaterialPrototypeId, insertMaterial.Amount, out reason);
             case TagConstructionGraphStep insertTag:
                 if (insertTag.Tag != null)
-                    return TagQuery(query, new() { insertTag.Tag }, true);
+                    return TagQuery(query, new() { insertTag.Tag }, true, out reason);
 
                 break;
             case MultipleTagsConstructionGraphStep insertMultipleTags:
                 if (insertMultipleTags.AnyTag != null)
-                    return TagQuery(query, insertMultipleTags.AnyTag, false);
+                    return TagQuery(query, insertMultipleTags.AnyTag, false, out reason);
 
                 if (insertMultipleTags.AllTag != null)
-                    return TagQuery(query, insertMultipleTags.AllTag, true);
+                    return TagQuery(query, insertMultipleTags.AllTag, true, out reason);
 
                 break;
             case ToolConstructionGraphStep insertTool:
-                return ToolQuery(query, insertTool.Tool);
+                return ToolQuery(query, insertTool.Tool, out reason);
             case ComponentConstructionGraphStep insertComponent:
-                return ComponentQuery(query, insertComponent.Component);
+                return ComponentQuery(query, insertComponent.Component, out reason);
             default:
                 Log.Error($"NPC attempts to perform an unsupported construction step: {step}");
                 return null;
@@ -276,8 +286,10 @@ public sealed class NpcConstructionSystem : EntitySystem
         return null;
     }
 
-    private EntityUid? TagQuery(List<EntityUid> query, List<ProtoId<TagPrototype>> tags, bool requireAll)
+    private EntityUid? TagQuery(List<EntityUid> query, List<ProtoId<TagPrototype>> tags, bool requireAll, out string reason)
     {
+        reason = string.Empty;
+
         for (var i = 0; i < query.Count; i++)
         {
             var ent = query[i];
@@ -290,11 +302,14 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
+        reason = Loc.GetString("construction-items-operator-tag-not-found", ("tags", string.Join(", ", tags)));
         return null;
     }
 
-    private EntityUid? ToolQuery(List<EntityUid> query, ProtoId<ToolQualityPrototype> quality)
+    private EntityUid? ToolQuery(List<EntityUid> query, ProtoId<ToolQualityPrototype> quality, out string reason)
     {
+        reason = string.Empty;
+
         for (var i = 0; i < query.Count; i++)
         {
             var ent = query[i];
@@ -306,11 +321,15 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
+        reason = Loc.GetString("construction-items-operator-tool-not-found",
+            ("tool", Loc.GetString(_proto.Index(quality).Name)));
         return null;
     }
 
-    private EntityUid? ComponentQuery(List<EntityUid> query, string component)
+    private EntityUid? ComponentQuery(List<EntityUid> query, string component, out string reason)
     {
+        reason = string.Empty;
+
         var type = Factory.GetComponent(component).GetType();
 
         for (var i = 0; i < query.Count; i++)
@@ -324,11 +343,14 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
+        reason = Loc.GetString("construction-items-operator-component-not-found", ("component", component));
         return null;
     }
 
-    private EntityUid? MaterialQuery(List<EntityUid> query, ProtoId<StackPrototype> stack, int amount)
+    private EntityUid? MaterialQuery(List<EntityUid> query, ProtoId<StackPrototype> stack, int amount, out string reason)
     {
+        reason = string.Empty;
+
         for (var i = 0; i < query.Count; i++)
         {
             var ent = query[i];
@@ -352,6 +374,9 @@ public sealed class NpcConstructionSystem : EntitySystem
             return split;
         }
 
+        reason = Loc.GetString("construction-items-operator-material-not-found",
+            ("material", Loc.GetString(_proto.Index(stack).Name)),
+            ("amount", amount.ToString()));
         return null;
     }
 

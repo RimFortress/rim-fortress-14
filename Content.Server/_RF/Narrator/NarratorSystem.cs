@@ -1,5 +1,4 @@
 using Content.Server._RF.GameTicking.Rules;
-using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.World;
 using Content.Server.Cargo.Systems;
 using Content.Server.Construction.Components;

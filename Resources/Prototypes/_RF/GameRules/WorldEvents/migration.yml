@@ -51,6 +51,8 @@
     spawn:
       RimFortressMobPop: 100
     addToPops: true
+  - type: NotificationRule
+    proto: PopMigration
 
 # Animals migration
 # Neutral
@@ -66,6 +68,8 @@
       MobCatException: 15
       MobCatFloppa: 15
       MobBingus: 15
+  - type: NotificationRule
+    proto: CatMigration
 
 - type: entity
   id: PossumMigration
@@ -75,6 +79,8 @@
   - type: MigrationRule
     spawn:
       MobPossumMorty: 20
+  - type: NotificationRule
+    proto: PossumMigration
 
 - type: entity
   id: FoxMigration
@@ -84,6 +90,8 @@
   - type: MigrationRule
     spawn:
       MobFoxRenault: 25
+  - type: NotificationRule
+    proto: FoxMigration
 
 - type: entity
   id: CrabMigration
@@ -93,6 +101,8 @@
   - type: MigrationRule
     spawn:
       MobCrabAtmos: 20
+  - type: NotificationRule
+    proto: CrabMigration
 
 - type: entity
   id: GoatMigration
@@ -102,6 +112,8 @@
   - type: MigrationRule
     spawn:
       MobGoat: 30
+  - type: NotificationRule
+    proto: GoatMigration
 
 - type: entity
   id: CowMigration
@@ -111,6 +123,8 @@
   - type: MigrationRule
     spawn:
       MobCow: 30
+  - type: NotificationRule
+    proto: CowMigration
 
 - type: entity
   id: FerretMigration
@@ -120,6 +134,8 @@
   - type: MigrationRule
     spawn:
       MobFerret: 20
+  - type: NotificationRule
+    proto: FerretMigration
 
 - type: entity
   id: FrogMigration
@@ -130,6 +146,8 @@
     spawn:
       MobFrog: 10
     maxSpawn: 15
+  - type: NotificationRule
+    proto: FrogMigration
 
 - type: entity
   id: GooseMigration
@@ -139,6 +157,8 @@
   - type: MigrationRule
     spawn:
       MobGoose: 20
+  - type: NotificationRule
+    proto: GooseMigration
 
 - type: entity
   id: HamsterMigration
@@ -149,6 +169,8 @@
     spawn:
       MobHamster: 10
     maxSpawn: 15
+  - type: NotificationRule
+    proto: HamsterMigration
 
 - type: entity
   id: KangarooMigration
@@ -158,6 +180,8 @@
   - type: MigrationRule
     spawn:
       MobKangaroo: 30
+  - type: NotificationRule
+    proto: KangarooMigration
 
 - type: entity
   id: MonkeyMigration
@@ -167,6 +191,8 @@
   - type: MigrationRule
     spawn:
       MobMonkey: 20
+  - type: NotificationRule
+    proto: MonkeyMigration
 
 - type: entity
   id: MothroachMigration
@@ -177,6 +203,8 @@
     spawn:
       MobMothroach: 15
     maxSpawn: 15
+  - type: NotificationRule
+    proto: MothroachMigration
 
 - type: entity
   id: ParrotMigration
@@ -186,6 +214,8 @@
   - type: MigrationRule
     spawn:
       MobParrot: 20
+  - type: NotificationRule
+    proto: ParrotMigration
 
 - type: entity
   id: RaccoonMigration
@@ -195,6 +225,8 @@
   - type: MigrationRule
     spawn:
       MobRaccoon: 20
+  - type: NotificationRule
+    proto: RaccoonMigration
 
 - type: entity
   id: SnakeMigration
@@ -204,6 +236,8 @@
   - type: MigrationRule
     spawn:
       MobSnake: 25
+  - type: NotificationRule
+    proto: SnakeMigration
 
 # Hostile
 
@@ -221,6 +255,8 @@
       MobAdultSlimesGreenAngry: 25
       MobAdultSlimesYellow: 20
       MobAdultSlimesYellowAngry: 25
+  - type: NotificationRule
+    proto: SlimeMigration
 
 - type: entity
   id: SpiderMigration
@@ -230,6 +266,8 @@
   - type: MigrationRule
     spawn:
       MobGiantSpiderAngry: 30
+  - type: NotificationRule
+    proto: SpiderMigration
 
 - type: entity
   id: OreCrabMigration
@@ -244,6 +282,8 @@
       MobUraniumCrab: 50
       MobCoalCrab: 40
       MobGoldCrab: 50
+  - type: NotificationRule
+    proto: OreCrabMigration
 
 # Raids
 - type: entity
@@ -258,3 +298,5 @@
     spawn:
       Raider: 45
     task: Raid
+  - type: NotificationRule
+    proto: Raid

@@ -1,0 +1,33 @@
+<Control
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
+    <BoxContainer Orientation="Vertical" SeparationOverride="0">
+        <Button Name="Button" StyleClasses="ButtonSquare" ToggleMode="True">
+            <BoxContainer>
+                <RichTextLabel Name="NameLabel" Margin="3 0" RectClipContent="True"/>
+
+                <Control HorizontalExpand="True"/>
+
+                <RichTextLabel Name="TimeLabel" Margin="3 0"/>
+            </BoxContainer>
+            <TextureRect Name="ProgressBar" Visible="False"
+                         Stretch="Scale" CanShrink="True" SetHeight="3"
+                         HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+        </Button>
+
+        <PanelContainer Name="DescContainer" Visible="False"
+                        VerticalExpand="True"
+                        StyleClasses="PanelDarkBorderedTransparent">
+            <BoxContainer Orientation="Vertical" VerticalExpand="True">
+                <RichTextLabel Name="Desc" MaxWidth="280"/>
+
+                <PanelContainer StyleClasses="LowDividerDark" Margin="3 1"/>
+
+                <controls:IconButton Name="FocusButton" HorizontalAlignment="Right"
+                                     SetSize="24 24" StyleClasses="ButtonEmpty"
+                                     ToolTip="{Loc 'notification-focus-tooltip'}"
+                                     TexturePath="/Textures/_RF/Interface/location-dot-solid-full.svg.192dpi.png"/>
+            </BoxContainer>
+        </PanelContainer>
+    </BoxContainer>
+</Control>

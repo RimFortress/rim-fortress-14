@@ -41,9 +41,3 @@ health-info-tab-damage-type = [bold]·[/bold] {$type}: {$amount}
 mood-info-total = [bold]Total: [color={$color}]{$mood}[/color][/bold]
 
 effect-never-end = –
-effect-end-format-days = {$time} {$time ->
-   [1] day
-   *[other] days
-}
-effect-end-format-hours = {$time}h
-effect-end-format-minutes = {$time}min

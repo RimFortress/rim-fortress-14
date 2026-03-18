@@ -11,6 +11,7 @@ using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
+using Content.Shared._RF.NPC;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
@@ -138,6 +139,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             beacon.Text = MetaData(pop).EntityName;
 
             _faw.AddFogClearer(pop, player);
+            _owned.AddOwner(pop, player);
         }
 
         player.Comp.Pops.AddRange(pops);
@@ -159,6 +161,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         beacon.Text = MetaData(pop).EntityName;
 
         _faw.AddFogClearer(pop, player);
+        _owned.AddOwner(pop, player);
 
         player.Comp.Pops.Add(pop);
         Dirty(player);

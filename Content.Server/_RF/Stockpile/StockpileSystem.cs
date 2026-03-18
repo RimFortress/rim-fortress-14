@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC.Pathfinding;
+using Content.Shared._RF.NPC;
 using Content.Shared._RF.Stockpile;
 using Content.Shared.Physics;
 using Content.Shared.Storage.Components;

@@ -39,6 +39,7 @@ namespace Content.Shared.Localizations
             _loc.AddFunction(culture, "NATURALFIXED", FormatNaturalFixed);
             _loc.AddFunction(culture, "NATURALPERCENT", FormatNaturalPercent);
             _loc.AddFunction(culture, "PLAYTIME", FormatPlaytime);
+            _loc.AddFunction(culture, "TIMESHORT", FormatTimeShort); // RimFortress
 
 
             /*
@@ -154,6 +155,40 @@ namespace Content.Shared.Localizations
             var minutes = time.Minutes;
             return Loc.GetString($"zzzz-fmt-playtime", ("hours", hours), ("minutes", minutes));
         }
+
+        // RimFortress Start
+        private static ILocValue FormatTimeShort(LocArgs args)
+        {
+            var time = TimeSpan.Zero;
+
+            if (args.Args is { Count: > 0 } && args.Args[0].Value is TimeSpan timeArg)
+                time = timeArg;
+
+            return new LocValueString(FormatTimeShort(time));
+        }
+
+        /// <summary>
+        /// Formats the time into the shortest possible format, displaying only the largest unit (day, hour, or minutes)
+        /// </summary>
+        public static string FormatTimeShort(TimeSpan time)
+        {
+            var days = (int) Math.Floor(time.TotalDays);
+            var hours = (int) Math.Floor(time.TotalHours);
+            var minutes = (int) Math.Floor(time.TotalMinutes);
+            var seconds = (int) time.TotalSeconds;
+
+            if (days > 0)
+                return Loc.GetString("zzzz-fmt-time-short-days", ("time", days));
+
+            if (hours > 0)
+                return Loc.GetString("zzzz-fmt-time-short-hours", ("time", hours));
+
+            if (minutes > 0)
+                return Loc.GetString("zzzz-fmt-time-short-minutes", ("time", minutes));
+
+            return Loc.GetString("zzzz-fmt-time-short-seconds", ("time", seconds));
+        }
+        // RimFortress End
 
         private static ILocValue FormatLoc(LocArgs args)
         {

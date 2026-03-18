@@ -1,7 +1,7 @@
 using Content.Server._RF.NPC.Components;
-using Content.Server._RF.NPC.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
+using Content.Shared._RF.NPC;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 

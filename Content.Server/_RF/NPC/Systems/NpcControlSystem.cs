@@ -465,7 +465,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var control = entity.Comp2;
 
         if (control.CurrentTask != null)
-            FinishTask((entity, control, htn), true);
+            FinishTask(new(entity, control, htn));
 
         var task = (target, proto.ID);
 
@@ -537,6 +537,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         control.CurrentTask = null;
         control.TaskTarget = null;
         var blackboard = htn.Blackboard;
+        var reason = string.Join("\n", npc.Comp1.TaskFailReason);
+
+        if (string.IsNullOrEmpty(reason))
+            reason = null;
+
+        npc.Comp1.TaskFailReason.Clear();
 
         // Remove temporary keys from HTNBlackboard
         if (proto.DeleteKeysOnFinish)
@@ -559,7 +565,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             RaiseNetworkEvent(new NpcTaskFinishMessage(proto.ID, GetNetEntity(npc)), uid);
         }
 
-        RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, failed));
+        RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, failed, reason));
     }
 
     /// <summary>
@@ -798,6 +804,17 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         user.Comp.Tasks.Remove(proto);
     }
 
+    /// <summary>
+    /// Adds the reason for the task failure
+    /// </summary>
+    public bool AddFailReason(Entity<ControllableNpcComponent?> ent, string reason)
+    {
+        if (!Resolve(ent, ref ent.Comp) || ent.Comp.CurrentTask == null)
+            return false;
+
+        return ent.Comp.TaskFailReason.Add(reason);
+    }
+
     private NpcTaskInfoMessage NpcTaskInfo(
         EntityUid entity,
         NpcTaskPrototype task,
@@ -872,7 +889,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 /// <summary>
 /// Raised when an NPC has completed its current task
 /// </summary>
-public record struct NpcTaskFinished(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, bool Failed);
+public record struct NpcTaskFinished(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, bool Failed, string? Reason);
 
 /// <summary>
 /// Raised when an NPC receives a task

@@ -1,0 +1,21 @@
+- type: notification
+  id: BaseNotification
+  abstract: true
+
+- type: notification
+  id: BaseInfoNotification
+  parent: BaseNotification
+  abstract: true
+  style: ButtonColorBlue
+
+- type: notification
+  id: BaseGoodNotification
+  parent: BaseNotification
+  abstract: true
+  style: ButtonColorGreen
+
+- type: notification
+  id: BaseDangerNotification
+  parent: BaseNotification
+  abstract: true
+  style: Caution

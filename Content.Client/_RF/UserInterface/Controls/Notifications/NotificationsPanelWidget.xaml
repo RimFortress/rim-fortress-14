@@ -1,0 +1,22 @@
+<notifications:NotificationsPanelWidget
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:notifications="clr-namespace:Content.Client._RF.UserInterface.Controls.Notifications"
+    SetSize="300 500">
+    <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+        <PanelContainer Name="Header" Visible="False"
+                        StyleClasses="PanelDarkBordered" Margin="2">
+            <BoxContainer>
+                <Label Text="{Loc 'notifications-panel-label'}"
+                       StyleClasses="LabelKeyText" Margin="3 0"/>
+                <Control HorizontalExpand="True"/>
+                <controls:IconButton Name="Settings" SetSize="24 24"
+                                     StyleClasses="ButtonEmpty" ToolTip="{Loc 'notification-settings-tooltip'}"
+                                     TexturePath="/Textures/_RF/Interface/gear-solid-full.svg.192dpi.png"/>
+            </BoxContainer>
+        </PanelContainer>
+        <ScrollContainer HorizontalExpand="True" VerticalExpand="True" HScrollEnabled="False">
+            <BoxContainer Orientation="Vertical" Name="Notifications" SeparationOverride="3"/>
+        </ScrollContainer>
+    </BoxContainer>
+</notifications:NotificationsPanelWidget>
