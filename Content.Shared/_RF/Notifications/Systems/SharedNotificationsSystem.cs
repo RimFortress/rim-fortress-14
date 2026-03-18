@@ -99,6 +99,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
             return false;
 
         var notification = new Notification(
+            _lastNotificationId + 1,
             protoId,
             desc ?? Loc.GetString(proto.DescId),
             _timing.CurTime,
@@ -125,6 +126,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
             return false;
 
         var notification = new Notification(
+            _lastNotificationId + 1,
             protoId,
             desc ?? Loc.GetString(proto.DescId),
             _timing.CurTime,
@@ -152,6 +154,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
             return false;
 
         var notification = new Notification(
+            _lastNotificationId + 1,
             protoId,
             desc ?? Loc.GetString(proto.DescId),
             _timing.CurTime,

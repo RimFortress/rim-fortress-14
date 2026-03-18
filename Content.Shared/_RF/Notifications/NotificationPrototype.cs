@@ -57,6 +57,7 @@ public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
 
 [Serializable, NetSerializable]
 public sealed class Notification(
+    int id,
     ProtoId<NotificationPrototype> protoId,
     string description,
     TimeSpan startedAt,
@@ -64,6 +65,9 @@ public sealed class Notification(
     NetCoordinates? targetCoords = null,
     TimeSpan? expireAt = null)
 {
+    [DataField]
+    public int Id = id;
+
     /// <summary>
     /// Notification prototype.
     /// </summary>

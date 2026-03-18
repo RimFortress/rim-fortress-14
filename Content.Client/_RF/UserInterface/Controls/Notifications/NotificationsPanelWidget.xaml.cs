@@ -53,8 +53,6 @@ public sealed partial class NotificationsPanelWidget : UIWidget
             _pressed = button.Pressed ? button : null;
         };
 
-        button.OnRemove += RemoveNotification;
-
         button.EnsureSetup();
 
         _notifications[notification] = button;
@@ -65,11 +63,10 @@ public sealed partial class NotificationsPanelWidget : UIWidget
 
     private void RemoveNotification(Notification notification)
     {
-        if (_notifications.FirstOrNull(x => x.Key.Equivalent(notification))?.Value is not { } button)
+        if (_notifications.FirstOrNull(x => x.Key.Id == notification.Id)?.Value is not { } button)
             return;
 
-        button.OnRemove -= RemoveNotification;
-        button.Parent?.RemoveChild(button);
+        Notifications.RemoveChild(button);
 
         Header.Visible = Notifications.ChildCount > 0;
     }

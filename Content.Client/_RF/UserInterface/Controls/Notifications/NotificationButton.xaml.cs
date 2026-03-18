@@ -42,8 +42,6 @@ public sealed partial class NotificationButton : Control
 
     public event Action<BaseButton.ButtonEventArgs>? OnPressed;
 
-    public event Action<Notification>? OnRemove;
-
     public NotificationButton(Notification notification)
     {
         IoCManager.InjectDependencies(this);
@@ -66,7 +64,6 @@ public sealed partial class NotificationButton : Control
                 || !_proto.TryIndex(_notification?.ProtoId, out var proto))
                 return;
 
-            OnRemove?.Invoke(_notification!);
             _notifications?.RemoveNotification(uid, proto);
         };
 

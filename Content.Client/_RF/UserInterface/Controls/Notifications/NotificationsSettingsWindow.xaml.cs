@@ -60,7 +60,7 @@ public sealed partial class NotificationsSettingsWindow : FancyWindow
 
     private BoxContainer Button(NotificationPrototype proto)
     {
-        var box = new BoxContainer();
+        var box = new BoxContainer { Margin = new Thickness(3, 2) };
         var checkbox = new CheckBox
         {
             Pressed = !_notifications.Ignored(_player.LocalEntity ?? EntityUid.Invalid, proto),
