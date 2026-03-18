@@ -4,8 +4,8 @@ notification-popmigration-desc = Migrants have arrived from distant lands with t
 notification-catmigration-name = Cat Migration
 notification-catmigration-desc = A group of cats has wandered into the area, looking for food and shelter.
 
-notification-possumigration-name = Possum Migration
-notification-possumigration-desc = A family of possums is passing through, rummaging for scraps.
+notification-possummigration-name = Possum Migration
+notification-possummigration-desc = A family of possums is passing through, rummaging for scraps.
 
 notification-foxmigration-name = Fox Migration
 notification-foxmigration-desc = A curious fox has been spotted near the settlement.
