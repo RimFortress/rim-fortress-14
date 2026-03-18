@@ -7,7 +7,7 @@ using Content.Shared.Follower;
 using Robust.Server.GameObjects;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.Notifications;
+namespace Content.Server._RF.Notifications.Systems;
 
 public sealed class NotificationsSystem : SharedNotificationsSystem
 {

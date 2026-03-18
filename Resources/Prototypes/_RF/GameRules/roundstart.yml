@@ -23,6 +23,10 @@
     notifications:
       Critical: ColonistCriticalEvent
       Dead: ColonistDeathEvent
+  - type: NotifyOnTaskGiven
+    notifications:
+      MentalBreakdown: MentalBreakdown
+      LeaveSettlement: LeaveSettlement
 
 - type: entity
   id: RimFortress

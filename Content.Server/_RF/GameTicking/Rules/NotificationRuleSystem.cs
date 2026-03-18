@@ -1,4 +1,4 @@
-using Content.Server._RF.Notifications;
+using Content.Server._RF.Notifications.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 
 namespace Content.Server._RF.GameTicking.Rules;
