@@ -76,7 +76,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (!HasComp<ConstructionComponent>(args.New))
             return;
 
-        _ownership.SetOwners(args.New, component.Owners);
+        _ownership.AddOwners(args.New, component.Owners);
     }
 
     // Code taken from ConstructionSystem.Initial.cs
