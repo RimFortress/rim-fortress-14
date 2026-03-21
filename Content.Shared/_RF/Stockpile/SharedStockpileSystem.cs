@@ -1,8 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Shared.FixedPoint;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Content.Shared.Prototypes;
+using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
@@ -476,6 +478,26 @@ public abstract class SharedStockpileSystem : EntitySystem
     {
         stock.Color = color;
         RaiseNetworkEvent(new StockpileColorSet(stock.Id, color));
+    }
+
+    [PublicAPI]
+    public Dictionary<EntProtoId, FixedPoint2> GetAllPrototypes(EntityUid owner)
+    {
+        var prototypes = new Dictionary<EntProtoId, FixedPoint2>();
+
+        foreach (var stock in Stockpiles)
+        {
+            if (stock.Owner != owner)
+                continue;
+
+            foreach (var (protoId, count) in stock.PrototypesCount)
+            {
+                if (!prototypes.TryAdd(protoId, count))
+                    prototypes[protoId] += count;
+            }
+        }
+
+        return prototypes;
     }
 }
 
