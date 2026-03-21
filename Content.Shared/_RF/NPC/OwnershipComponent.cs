@@ -5,9 +5,9 @@ namespace Content.Shared._RF.NPC;
 /// <summary>
 /// This is used to indicate ownership relationships between entities.
 /// </summary>
-[Access(typeof(OwnedSystem))]
+[Access(typeof(OwnershipSystem))]
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
-public sealed partial class OwnedComponent : Component
+public sealed partial class OwnershipComponent : Component
 {
     /// <summary>
     /// Entities that own this.

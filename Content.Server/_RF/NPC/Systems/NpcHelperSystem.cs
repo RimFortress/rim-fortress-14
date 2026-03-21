@@ -12,7 +12,7 @@ public sealed class NpcHelperSystem : EntitySystem
 {
     [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     /// <summary>
     /// Returns all items from the entity's inventory, including those in containers
@@ -57,10 +57,10 @@ public sealed class NpcHelperSystem : EntitySystem
         var query = new List<(EntityUid Uid, float Dist)>();
         var invEntities = InventoryEntities(uid);
         var pos = Transform(uid).Coordinates;
-        var enumerator = EntityQueryEnumerator<OwnedComponent, TransformComponent>();
+        var enumerator = _ownership.GetEntitiesEnumerator<TransformComponent>(uid);
         var mapId = Transform(uid).MapID;
 
-        while (enumerator.MoveNext(out var ent, out var owned, out var xform))
+        while (enumerator.MoveNext(out var ent, out var xform))
         {
             if (invEntities.Contains(ent))
             {
@@ -69,7 +69,6 @@ public sealed class NpcHelperSystem : EntitySystem
             }
 
             if (xform.MapID != mapId
-                || !_owned.HasSameOwner(uid, new(ent, owned))
                 || !pos.TryDistance(EntityManager, xform.Coordinates, out var distance)
                 || _inventory.TryGetContainingSlot(ent, out _))
                 continue;

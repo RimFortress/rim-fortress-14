@@ -9,12 +9,12 @@ public sealed partial class MarkOwnerOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
 
-    private OwnedSystem _owned;
+    private OwnershipSystem _ownership;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
-        _owned = sysManager.GetEntitySystem<OwnedSystem>();
+        _ownership = sysManager.GetEntitySystem<OwnershipSystem>();
     }
 
     [DataField(required: true)]
@@ -29,7 +29,7 @@ public sealed partial class MarkOwnerOperator : HTNOperator
             || !blackboard.TryGetValue(TargetKey, out EntityUid? uid, _entityManager))
             return;
 
-        _owned.AddOwners(uid.Value, control.CanControl);
+        _ownership.AddOwners(uid.Value, control.CanControl);
     }
 }
 

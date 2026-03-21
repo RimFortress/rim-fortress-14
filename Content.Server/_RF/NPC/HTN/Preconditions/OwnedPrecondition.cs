@@ -9,7 +9,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class OwnedPrecondition : InvertiblePrecondition
 {
-    private OwnedSystem _owned;
+    private OwnershipSystem _ownership;
     private EntityQuery<ControllableNpcComponent> _controlledQuery;
 
     [DataField(required: true)]
@@ -18,7 +18,7 @@ public sealed partial class OwnedPrecondition : InvertiblePrecondition
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
-        _owned = sysManager.GetEntitySystem<OwnedSystem>();
+        _ownership = sysManager.GetEntitySystem<OwnershipSystem>();
         _controlledQuery = EntityManager.GetEntityQuery<ControllableNpcComponent>();
     }
 
@@ -32,7 +32,7 @@ public sealed partial class OwnedPrecondition : InvertiblePrecondition
 
         foreach (var uid in control.CanControl)
         {
-            if (_owned.HasOwner(target.Value, uid))
+            if (_ownership.HasOwner(target.Value, uid))
                 return true;
         }
 

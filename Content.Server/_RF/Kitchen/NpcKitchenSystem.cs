@@ -15,7 +15,7 @@ public sealed class NpcKitchenSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly StockpileSystem _stockpile = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     private readonly Dictionary<EntProtoId, List<FoodRecipePrototype>> _recipes = new();
 
@@ -63,7 +63,7 @@ public sealed class NpcKitchenSystem : EntitySystem
     {
         path = null;
 
-        foreach (var uid in _owned.GetOwners(user))
+        foreach (var uid in _ownership.GetOwners(user))
         {
             if (TryGetRecipesPath(target, _stockpile.GetAllPrototypes(uid), out path))
                 return true;

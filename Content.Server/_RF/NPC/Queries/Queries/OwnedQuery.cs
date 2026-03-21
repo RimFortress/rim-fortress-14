@@ -6,12 +6,12 @@ namespace Content.Server._RF.NPC.Queries.Queries;
 
 public sealed partial class OwnedQuery : RfUtilityQuery
 {
-    private OwnedSystem _owned;
+    private OwnershipSystem _ownership;
 
     public override void Initialize(IEntityManager entManager)
     {
         base.Initialize(entManager);
-        _owned = entManager.System<OwnedSystem>();
+        _ownership = entManager.System<OwnershipSystem>();
     }
 
     public override HashSet<EntityUid> Query(NPCBlackboard blackboard)
@@ -23,14 +23,14 @@ public sealed partial class OwnedQuery : RfUtilityQuery
             || control.CanControl.Count == 0)
             return query;
 
-        var entities = EntityManager.EntityQueryEnumerator<OwnedComponent>();
+        var entities = EntityManager.EntityQueryEnumerator<OwnershipComponent>();
         while (entities.MoveNext(out var uid, out var comp))
         {
             var valid = false;
 
             foreach (var canControl in control.CanControl)
             {
-                if (_owned.HasOwner(new(uid, comp), canControl))
+                if (_ownership.HasOwner(new(uid, comp), canControl))
                     valid = true;
             }
 

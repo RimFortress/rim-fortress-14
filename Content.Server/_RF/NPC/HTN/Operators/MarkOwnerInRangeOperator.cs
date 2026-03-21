@@ -11,7 +11,7 @@ public sealed partial class MarkOwnerInRangeOperator : HTNOperator
     [Dependency] private readonly IEntityManager _entityManager = default!;
 
     private EntityLookupSystem _lookup;
-    private OwnedSystem _owned;
+    private OwnershipSystem _ownership;
 
     [DataField]
     public float Range = 1f;
@@ -20,7 +20,7 @@ public sealed partial class MarkOwnerInRangeOperator : HTNOperator
     {
         base.Initialize(sysManager);
         _lookup = sysManager.GetEntitySystem<EntityLookupSystem>();
-        _owned = sysManager.GetEntitySystem<OwnedSystem>();
+        _ownership = sysManager.GetEntitySystem<OwnershipSystem>();
     }
 
     public override void Startup(NPCBlackboard blackboard)
@@ -36,7 +36,7 @@ public sealed partial class MarkOwnerInRangeOperator : HTNOperator
 
         foreach (var entity in entities)
         {
-            _owned.AddOwners(entity, control.CanControl);
+            _ownership.AddOwners(entity, control.CanControl);
         }
     }
 }

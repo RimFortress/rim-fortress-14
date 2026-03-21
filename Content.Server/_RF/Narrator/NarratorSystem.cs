@@ -31,7 +31,7 @@ public sealed partial class NarratorSystem : EntitySystem
     [Dependency] private readonly IConsoleHost _host  = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     private EntityQuery<ItemComponent> _itemQuery;
     private EntityQuery<ConstructionComponent> _constructionQuery;
@@ -62,11 +62,11 @@ public sealed partial class NarratorSystem : EntitySystem
         double popCost = 0;
 
         var settlementRadius = _cfg.GetCVar(RfVars.MaxSettlementRadius);
-        var entities = EntityQueryEnumerator<OwnedComponent, TransformComponent>();
+        var entities = EntityQueryEnumerator<OwnershipComponent, TransformComponent>();
 
         while (entities.MoveNext(out var uid, out var comp, out var xform))
         {
-            if (!_owned.HasOwner(new(uid, comp), player)
+            if (!_ownership.HasOwner(new(uid, comp), player)
                 || !settlement.TryDistance(EntityManager, xform.Coordinates, out var dist)
                 || dist > settlementRadius)
                 continue;

@@ -14,7 +14,7 @@ namespace Content.Server._RF.Stockpile;
 public sealed class StockpileSystem : SharedStockpileSystem
 {
     [Dependency] private readonly PathfindingSystem _pathfinding = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     public override void Initialize()
     {
@@ -141,7 +141,7 @@ public sealed class StockpileSystem : SharedStockpileSystem
         PathFlags pathFlags = PathFlags.None,
         bool containerOnly = false)
     {
-        if (!_owned.HasOwner(uid, stock.Owner)
+        if (!_ownership.HasOwner(uid, stock.Owner)
             || !CanInsert(stock, uid)
             || Xform.GetGrid(user) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid))
