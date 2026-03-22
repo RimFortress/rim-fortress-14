@@ -36,14 +36,14 @@ public sealed class NpcConstructionSystem : EntitySystem
     /// <summary>
     /// Returns all items necessary for the user to advance in the construction of the entity.
     /// </summary>
-    /// <param name="uid">Entity for construction</param>
-    /// <param name="user">User entity</param>
-    /// <param name="reason">The reason why the construction item could not be found</param>
+    /// <param name="uid">Entity for construction.</param>
+    /// <param name="user">User entity.</param>
+    /// <param name="reason">The reason why the construction item could not be found.</param>
     public List<EntityUid>? GetConstructionItems(EntityUid uid, EntityUid user, out string reason)
     {
         reason = string.Empty;
         var entities = new List<EntityUid>();
-        var commonQuery = _npcHelper.FreeOwnedEntities(uid);
+        var commonQuery = _npcHelper.FreeOwnedEntities(user);
 
         foreach (var edge in GetEdges(uid))
         {

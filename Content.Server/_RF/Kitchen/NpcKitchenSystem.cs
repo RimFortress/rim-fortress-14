@@ -1,9 +1,18 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Server._RF.Stockpile;
+using Content.Server._RF.NPC.Systems;
+using Content.Server.Kitchen.Components;
 using Content.Shared._RF.NPC;
+using Content.Shared.Chemistry.Components.SolutionManager;
+using Content.Shared.Chemistry.EntitySystems;
+using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
+using Content.Shared.Hands.Components;
+using Content.Shared.Inventory;
+using Content.Shared.Item;
 using Content.Shared.Kitchen;
+using JetBrains.Annotations;
+using Robust.Server.Containers;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Kitchen;
@@ -14,8 +23,11 @@ namespace Content.Server._RF.Kitchen;
 public sealed class NpcKitchenSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
+    [Dependency] private readonly ContainerSystem _container = default!;
     [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
+    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
 
     private readonly Dictionary<EntProtoId, List<FoodRecipePrototype>> _recipes = new();
 
@@ -49,6 +61,208 @@ public sealed class NpcKitchenSystem : EntitySystem
         }
     }
 
+    private void GetAllCollectedItems(
+        EntityUid user,
+        Entity<MicrowaveComponent?> kitchen,
+        out Dictionary<EntProtoId, FixedPoint2> items)
+    {
+        items = new();
+
+        var inventory = _npcHelper.InventoryEntities(user);
+
+        foreach (var uid in inventory)
+        {
+            if (Prototype(uid) is { } proto && !items.TryAdd(proto, 1))
+                 items[proto] += 1;
+        }
+
+        if (!Resolve(kitchen, ref kitchen.Comp)
+            || !_container.TryGetContainer(kitchen, kitchen.Comp.ContainerId, out var container))
+            return;
+
+        foreach (var uid in container.ContainedEntities)
+        {
+            if (Prototype(uid) is { } proto && !items.TryAdd(proto, 1))
+                items[proto] += 1;
+        }
+    }
+
+    private void GetAllCollectedReagent(
+        EntityUid user,
+        Entity<MicrowaveComponent?> kitchen,
+        out Dictionary<ProtoId<ReagentPrototype>, FixedPoint2> reagents)
+    {
+        reagents = new();
+
+        var inventory = _npcHelper.InventoryEntities(user);
+
+        foreach (var uid in inventory)
+        {
+            foreach (var (_, sol) in _solution.EnumerateSolutions(uid))
+            {
+                foreach (var quantity in sol.Comp.Solution)
+                {
+                    if (!reagents.TryAdd(quantity.Reagent.Prototype, quantity.Quantity))
+                        reagents[quantity.Reagent.Prototype] += quantity.Quantity;
+                }
+            }
+        }
+
+        if (!Resolve(kitchen, ref kitchen.Comp)
+            || !_container.TryGetContainer(kitchen, kitchen.Comp.ContainerId, out var container))
+            return;
+
+        foreach (var uid in container.ContainedEntities)
+        {
+            foreach (var (_, sol) in _solution.EnumerateSolutions(uid))
+            {
+                foreach (var quantity in sol.Comp.Solution)
+                {
+                    if (!reagents.TryAdd(quantity.Reagent.Prototype, quantity.Quantity))
+                        reagents[quantity.Reagent.Prototype] += quantity.Quantity;
+                }
+            }
+        }
+    }
+
+    [PublicAPI]
+    public bool TryGetNextCookingIngredient(
+        EntityUid user,
+        Entity<MicrowaveComponent?> kitchen,
+        ProtoId<FoodRecipePrototype> protoId,
+        [NotNullWhen(true)] out EntityUid? ingredient)
+    {
+        ingredient = null;
+        (EntityUid Uid, float Dist)? nearest = null;
+        EntProtoId? next = null;
+
+        if (!_proto.Resolve(protoId, out var recipe))
+            return false;
+
+        GetAllCollectedItems(user, kitchen, out var query);
+
+        // Looking for the first ingredient that hasn't been collected yet
+        foreach (var (id, count) in recipe.IngredientsSolids)
+        {
+            if (!query.TryGetValue(id, out var quantity) || count > quantity)
+            {
+                next = id;
+                break;
+            }
+
+            query[id] -= count;
+        }
+
+        if (next == null)
+            return false;
+
+        var coords = Transform(user).Coordinates;
+        var mapId = Transform(user).MapID;
+        var enumerator = _ownership.GetEntitiesEnumerator<TransformComponent, ItemComponent>(user);
+
+        // Search for the entity closest to the user that can be used as an ingredient
+        while (enumerator.MoveNext(out var uid, out var xform, out _))
+        {
+            if (Prototype(uid) is not { } proto || proto != next)
+                continue;
+
+            if (xform.MapID != mapId
+                || !coords.TryDistance(EntityManager, xform.Coordinates, out var distance)
+                || nearest?.Dist < distance)
+                continue;
+
+            if(_inventory.TryGetContainingSlot(uid, out _))
+                continue;
+
+            if (_container.TryGetContainingContainer(new(uid, xform, null), out var container)
+                && HasComp<HandsComponent>(container.Owner))
+                continue;
+
+            nearest = (uid, distance);
+        }
+
+        if (nearest == null)
+            return false;
+
+        ingredient = nearest.Value.Uid;
+        return true;
+    }
+
+    [PublicAPI]
+    public bool TryGetNextCookingReagent(
+        EntityUid user,
+        Entity<MicrowaveComponent?> kitchen,
+        ProtoId<FoodRecipePrototype> protoId,
+        [NotNullWhen(true)] out EntityUid? entity,
+        [NotNullWhen(true)] out ReagentQuantity? reagent)
+    {
+        entity = null;
+        reagent = null;
+
+        if (!_proto.Resolve(protoId, out var recipe))
+            return false;
+
+        (EntityUid Uid, float Dist, FixedPoint2 Quan)? nearest = null;
+        (ProtoId<ReagentPrototype> Id, FixedPoint2 Quantity)? next = null;
+
+        GetAllCollectedReagent(user, kitchen, out var query);
+
+        // Looking for the first reagent that hasn't been collected yet
+        foreach (var (id, count) in recipe.IngredientsReagents)
+        {
+            if (!query.TryGetValue(id, out var quantity) || count > quantity)
+            {
+                next = (id, count);
+                break;
+            }
+
+            query[id] -= count;
+        }
+
+        if (next == null)
+            return false;
+
+        var coords = Transform(user).Coordinates;
+        var mapId = Transform(user).MapID;
+        var enumerator = _ownership.GetEntitiesEnumerator<TransformComponent, SolutionContainerManagerComponent>(user);
+
+        // Search for the entity closest to the user that can be used as an ingredient
+        while (enumerator.MoveNext(out var uid, out var xform, out _))
+        {
+            var quantity = _solution.GetTotalPrototypeQuantity(uid, next.Value.Id);
+
+            if (quantity == 0)
+                continue;
+
+            if (quantity > next.Value.Quantity)
+                quantity = next.Value.Quantity;
+
+            if (nearest?.Quan > quantity && quantity < next.Value.Quantity)
+                continue;
+
+            if (xform.MapID != mapId
+                || !coords.TryDistance(EntityManager, xform.Coordinates, out var distance)
+                || nearest?.Dist < distance)
+                continue;
+
+            if(_inventory.TryGetContainingSlot(uid, out _))
+                continue;
+
+            if (_container.TryGetContainingContainer(new(uid, xform, null), out var container)
+                && HasComp<HandsComponent>(container.Owner))
+                continue;
+
+            nearest = (uid, distance, quantity);
+        }
+
+        if (nearest == null)
+            return false;
+
+        entity = nearest.Value.Uid;
+        reagent = new ReagentQuantity(next.Value.Id, nearest.Value.Quan);
+        return true;
+    }
+
     /// <summary>
     /// Builds a path from recipes to create the target recipe.
     /// </summary>
@@ -56,20 +270,26 @@ public sealed class NpcKitchenSystem : EntitySystem
     /// <param name="target">Target recipe.</param>
     /// <param name="path">A recipe path whose last element is the target.</param>
     /// <returns>True, if the path is found.</returns>
-    private bool TryGetRecipesPath(
+    public bool TryGetRecipesPath(
         EntityUid user,
-        FoodRecipePrototype target,
-        [NotNullWhen(true)] out List<(FoodRecipePrototype Proto, FixedPoint2 Quantity)>? path)
+        ProtoId<FoodRecipePrototype> target,
+        [NotNullWhen(true)] out List<FoodRecipePrototype>? path)
     {
         path = null;
 
-        foreach (var uid in _ownership.GetOwners(user))
+        var available = new Dictionary<EntProtoId, FixedPoint2>();
+        var enumerator = _ownership.GetEntitiesEnumerator<MetaDataComponent, ItemComponent>(user);
+
+        while (enumerator.MoveNext(out var meta, out _))
         {
-            if (TryGetRecipesPath(target, _stockpile.GetAllPrototypes(uid), out path))
-                return true;
+            if (meta.EntityPrototype is not { } proto)
+                continue;
+
+            if (!available.TryAdd(proto, 1))
+                available[proto] += 1;
         }
 
-        return false;
+        return TryGetRecipesPath(target, available, out path);
     }
 
     /// <summary>
@@ -80,17 +300,20 @@ public sealed class NpcKitchenSystem : EntitySystem
     /// <param name="path">A recipe path whose last element is the target.</param>
     /// <returns>True, if the path is found.</returns>
     private bool TryGetRecipesPath(
-        FoodRecipePrototype target,
+        ProtoId<FoodRecipePrototype> target,
         Dictionary<EntProtoId, FixedPoint2> available,
-        [NotNullWhen(true)] out List<(FoodRecipePrototype Proto, FixedPoint2 Quantity)>? path)
+        [NotNullWhen(true)] out List<FoodRecipePrototype>? path)
     {
         path = new();
+
+        if (!_proto.Resolve(target, out var targetProto))
+            return false;
 
         var query = new Dictionary<EntProtoId, FixedPoint2>(available);
         var recipes = new List<Dictionary<FoodRecipePrototype, FixedPoint2>>();
         var queue = new Queue<(int Depth, FoodRecipePrototype Proto, FixedPoint2 Quantity)>();
 
-        queue.Enqueue((0, target, 1));
+        queue.Enqueue((0, targetProto, 1));
 
         while (queue.TryDequeue(out var recipe))
         {
@@ -157,7 +380,10 @@ public sealed class NpcKitchenSystem : EntitySystem
         {
             foreach (var (proto, quan) in depth)
             {
-                path.Add((proto, quan));
+                for (var i = 0; i < quan; i++)
+                {
+                    path.Add(proto);
+                }
             }
         }
 

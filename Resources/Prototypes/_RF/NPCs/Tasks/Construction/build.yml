@@ -39,10 +39,6 @@
         rangeKey: InteractRange
         removeKeyOnFinish: true
     - !type:HTNPrimitiveTask
-      operator: !type:IterateEntitiesOperator
-        targetKey: ConstructionItems
-        resultKey: ConstructionItem
-    - !type:HTNPrimitiveTask
       operator: !type:ConstructionInteractOperator
         targetKey: Target
 
