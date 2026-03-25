@@ -294,6 +294,8 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         DebugTools.Assert(_blackboard.ContainsKey(key));
         return _blackboard.Remove(key);
     }
+
+    public EntityUid GetOwner() => GetValue<EntityUid>(Owner);
     // RimFortress End
 
     public string GetVisionRadiusKey(IEntityManager entMan)

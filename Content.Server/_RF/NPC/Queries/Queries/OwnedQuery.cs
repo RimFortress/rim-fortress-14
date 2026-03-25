@@ -1,4 +1,3 @@
-using Content.Server._RF.NPC.Components;
 using Content.Server.NPC;
 using Content.Shared._RF.NPC;
 
@@ -17,27 +16,10 @@ public sealed partial class OwnedQuery : RfUtilityQuery
     public override HashSet<EntityUid> Query(NPCBlackboard blackboard)
     {
         var query = new HashSet<EntityUid>();
-        var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
 
-        if (!EntityManager.TryGetComponent(owner, out ControllableNpcComponent? control)
-            || control.CanControl.Count == 0)
-            return query;
-
-        var entities = EntityManager.EntityQueryEnumerator<OwnershipComponent>();
-        while (entities.MoveNext(out var uid, out var comp))
+        foreach (var uid in _ownership.GetOwners(blackboard.GetOwner()))
         {
-            var valid = false;
-
-            foreach (var canControl in control.CanControl)
-            {
-                if (_ownership.HasOwner(new(uid, comp), canControl))
-                    valid = true;
-            }
-
-            if (!valid)
-                continue;
-
-            query.Add(uid);
+            query.UnionWith(_ownership.GetOwned(uid));
         }
 
         return query;

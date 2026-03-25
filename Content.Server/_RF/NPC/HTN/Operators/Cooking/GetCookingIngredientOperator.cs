@@ -26,7 +26,7 @@ public sealed partial class GetCookingIngredientOperator : HTNOperator
     /// The key that stores the food recipe.
     /// </summary>
     [DataField]
-    public string TargetRecipeKey = "TargetRecipe";
+    public string TargetRecipeKey = "Recipe";
 
     /// <summary>
     /// The key in which the found ingredient will be stored.
@@ -42,13 +42,16 @@ public sealed partial class GetCookingIngredientOperator : HTNOperator
 
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
     {
-        var owner = blackboard.GetValue<EntityUid>(NPCBlackboard.Owner);
-
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? target, _entity)
-            || !blackboard.TryGetValue(TargetRecipeKey, out ProtoId<FoodRecipePrototype>? protoId, _entity)
-            || !_npcKitchen.TryGetNextCookingIngredient(owner, target.Value, protoId.Value, out var uid))
+        if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var target, _entity)
+            || !blackboard.TryGetValue<ProtoId<FoodRecipePrototype>>(TargetRecipeKey, out var protoId, _entity))
             return (false, null);
 
-        return (true, new() { {ResultKey, uid} });
+        var owner = blackboard.GetOwner();
+
+        if (_npcKitchen.TryGetNextCookingIngredient(owner, target, protoId, out var uid)
+            || _npcKitchen.TryGetNextCookingReagent(owner, target, protoId, out uid, out _))
+            return (true, new() { {ResultKey, uid} });
+
+        return (false, null);
     }
 }

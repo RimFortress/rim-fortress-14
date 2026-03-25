@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Kitchen.Components;
+using Content.Server.Kitchen.EntitySystems;
 using Content.Shared._RF.NPC;
 using Content.Shared.Chemistry.Components.SolutionManager;
 using Content.Shared.Chemistry.EntitySystems;
@@ -11,6 +12,7 @@ using Content.Shared.Hands.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Item;
 using Content.Shared.Kitchen;
+using Content.Shared.Stacks;
 using JetBrains.Annotations;
 using Robust.Server.Containers;
 using Robust.Shared.Prototypes;
@@ -76,11 +78,10 @@ public sealed class NpcKitchenSystem : EntitySystem
                  items[proto] += 1;
         }
 
-        if (!Resolve(kitchen, ref kitchen.Comp)
-            || !_container.TryGetContainer(kitchen, kitchen.Comp.ContainerId, out var container))
+        if (!Resolve(kitchen, ref kitchen.Comp))
             return;
 
-        foreach (var uid in container.ContainedEntities)
+        foreach (var uid in kitchen.Comp.Storage.ContainedEntities)
         {
             if (Prototype(uid) is { } proto && !items.TryAdd(proto, 1))
                 items[proto] += 1;
@@ -98,29 +99,28 @@ public sealed class NpcKitchenSystem : EntitySystem
 
         foreach (var uid in inventory)
         {
-            foreach (var (_, sol) in _solution.EnumerateSolutions(uid))
+            if (!_solution.TryGetDrainableSolution(uid, out _, out var sol))
+                continue;
+
+            foreach (var quantity in sol)
             {
-                foreach (var quantity in sol.Comp.Solution)
-                {
-                    if (!reagents.TryAdd(quantity.Reagent.Prototype, quantity.Quantity))
-                        reagents[quantity.Reagent.Prototype] += quantity.Quantity;
-                }
+                if (!reagents.TryAdd(quantity.Reagent.Prototype, quantity.Quantity))
+                    reagents[quantity.Reagent.Prototype] += quantity.Quantity;
             }
         }
 
-        if (!Resolve(kitchen, ref kitchen.Comp)
-            || !_container.TryGetContainer(kitchen, kitchen.Comp.ContainerId, out var container))
+        if (!Resolve(kitchen, ref kitchen.Comp))
             return;
 
-        foreach (var uid in container.ContainedEntities)
+        foreach (var uid in kitchen.Comp.Storage.ContainedEntities)
         {
-            foreach (var (_, sol) in _solution.EnumerateSolutions(uid))
+            if (!_solution.TryGetDrainableSolution(uid, out _, out var sol))
+                continue;
+
+            foreach (var quantity in sol)
             {
-                foreach (var quantity in sol.Comp.Solution)
-                {
-                    if (!reagents.TryAdd(quantity.Reagent.Prototype, quantity.Quantity))
-                        reagents[quantity.Reagent.Prototype] += quantity.Quantity;
-                }
+                if (!reagents.TryAdd(quantity.Reagent.Prototype, quantity.Quantity))
+                    reagents[quantity.Reagent.Prototype] += quantity.Quantity;
             }
         }
     }
@@ -273,7 +273,7 @@ public sealed class NpcKitchenSystem : EntitySystem
     public bool TryGetRecipesPath(
         EntityUid user,
         ProtoId<FoodRecipePrototype> target,
-        [NotNullWhen(true)] out List<FoodRecipePrototype>? path)
+        [NotNullWhen(true)] out List<ProtoId<FoodRecipePrototype>>? path)
     {
         path = null;
 
@@ -302,7 +302,7 @@ public sealed class NpcKitchenSystem : EntitySystem
     private bool TryGetRecipesPath(
         ProtoId<FoodRecipePrototype> target,
         Dictionary<EntProtoId, FixedPoint2> available,
-        [NotNullWhen(true)] out List<FoodRecipePrototype>? path)
+        [NotNullWhen(true)] out List<ProtoId<FoodRecipePrototype>>? path)
     {
         path = new();
 
@@ -409,4 +409,50 @@ public sealed class NpcKitchenSystem : EntitySystem
             return true;
         }
     }
+
+    [PublicAPI]
+    public bool CanStartCooking(Entity<MicrowaveComponent?> kitchen, ProtoId<FoodRecipePrototype> protoId)
+    {
+        if (!Resolve(kitchen, ref kitchen.Comp) || !_proto.Resolve(protoId, out var proto))
+            return false;
+
+        var solidsDict = new Dictionary<string, int>();
+        var reagentDict = new Dictionary<string, FixedPoint2>();
+
+        foreach (var uid in kitchen.Comp.Storage.ContainedEntities)
+        {
+            (EntProtoId? Id, int Amount) solid = TryComp<StackComponent>(uid, out var stack)
+                ? (_proto.Index<StackPrototype>(stack.StackTypeId).Spawn, stack.Count)
+                : (Prototype(uid)?.ID, 1);
+
+            if (solid.Id == null)
+                continue;
+
+            if (!solidsDict.TryAdd(solid.Id.Value, solid.Amount))
+                solidsDict[solid.Id.Value] += solid.Amount;
+
+            // only use reagents we have access to
+            // you have to break the eggs before we can use them!
+            if (!_solution.TryGetDrainableSolution(uid, out _, out var solution))
+                continue;
+
+            foreach (var (reagent, quantity) in solution.Contents)
+            {
+                if (!reagentDict.TryAdd(reagent.Prototype, quantity))
+                    reagentDict[reagent.Prototype] += quantity;
+            }
+        }
+
+        return MicrowaveSystem.CanSatisfyRecipe(kitchen.Comp, proto, solidsDict, reagentDict).Item2 > 0;
+    }
+
+    /// <summary>
+    /// Checks whether the entity is the result of preparing a given recipe.
+    /// </summary>
+    [PublicAPI]
+    public bool IsResult(EntityUid uid, ProtoId<FoodRecipePrototype> protoId)
+        => Prototype(uid) is { } entProto
+           && _recipes.TryGetValue(entProto, out var recipes)
+           && _proto.Resolve(protoId, out var proto)
+           && recipes.Contains(proto);
 }

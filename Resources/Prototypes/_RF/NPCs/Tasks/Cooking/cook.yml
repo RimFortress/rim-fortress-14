@@ -1,0 +1,87 @@
+- type: npcTask
+  id: Cook
+  name: Cook
+  parent: BaseNpcTask
+  overlayColor: "#C2428E"
+  verbIcon: /Textures/_RF/Interface/utensils-solid-full.svg.192dpi.png
+  compound: CookCompound
+  tempKeys:
+  - TargetRecipe
+  - Recipe
+  - TargetRecipePathfinding
+  - PickUpTarget
+  targetsQuery: CookTaskTarget
+  finishPreconditions:
+  - !type:UtilityCountPrecondition
+    proto: CookedTargetFood
+    moreThan: 0
+
+- type: htnCompound
+  id: CookCompound
+  branches:
+  - preconditions:
+    - !type:CanStartCookingPrecondition
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        targetKey: KitchenCoordinates
+        rangeKey: InteractRange
+        removeKeyOnFinish: false
+    - !type:HTNPrimitiveTask
+      operator: !type:StartCookingOperator
+        remainingTimeKey: WaitTime
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitOperator
+        key: WaitTime
+
+  - tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:EntityCoordinatesOperator
+        targetKey: Target
+        coordinatesKey: KitchenCoordinates
+    - !type:HTNPrimitiveTask
+      operator: !type:GetCookingRecipePathOperator
+        resultKey: Recipe
+    - !type:HTNPrimitiveTask
+      operator: !type:GetCookingIngredientOperator
+        resultKey: PickUpTarget
+    - !type:HTNCompoundTask
+      task: PickUpCompound
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        targetKey: KitchenCoordinates
+        rangeKey: InteractRange
+        removeKeyOnFinish: false
+    - !type:HTNPrimitiveTask
+      operator: !type:InteractWithOperator
+        targetKey: Target
+
+# Queries
+- type: utilityQuery
+  id: CookTaskTarget
+  query:
+  - !type:OwnedQuery
+  - !type:RfComponentFilter
+    components:
+    - type: Microwave
+    invert: true
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
+
+- type: utilityQuery
+  id: CookedTargetFood
+  query:
+  - !type:RangeComponentQuery
+    startCoordinatesKey: KitchenCoordinates
+    range: 0.5
+    components:
+    - type: Item
+  - !type:RecipeResultFilter
+    recipeKey: TargetRecipe
+    invert: true
+  considerations:
+  - !type:NormTargetDistanceCon
+    curve: !type:PresetCurve
+      preset: TargetDistance
