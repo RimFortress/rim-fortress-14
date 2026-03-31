@@ -1,0 +1,47 @@
+- type: workshopRecipe
+  id: BaseKitchenRecipe
+  abstract: true
+  craftingTime: 50
+  skillsUp:
+  - skill: Cooking
+    exp: 20
+
+- type: workshopRecipe
+  id: BaseLoafCakesRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: LoafCakes
+
+- type: workshopRecipe
+  id: BaseMothRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Moth
+
+- type: workshopRecipe
+  id: BaseSecretRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Secret
+
+# Tables
+- type: workshopRecipeTable
+  id: AllKitchenRecipesTable
+  recipes:
+  - RecipeDriedTeaLeaves
+  - RecipeDriedTobacco
+  - RecipeDriedCannabis
+  - RecipeDriedCannabisRainbow
+  - RecipeTrashBakedBananaPeel
+  - RecipeCannabisButter
+  tables:
+  - KitchenBreadRecipesTable
+  - KitchenCakeRecipesTable
+  - KitchenDessertRecipesTable
+  - KitchenDessertRecipesTable
+  - KitchenPastaRecipesTable
+  - KitchenPieRecipesTable
+  - KitchenPizzaRecipesTable
+  - KitchenSaladRecipesTable
+  - KitchenSavoryRecipesTable
+  - KitchenSoupRecipesTable

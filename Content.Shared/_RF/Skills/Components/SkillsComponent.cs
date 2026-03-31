@@ -66,3 +66,19 @@ public sealed partial class SkillData
     /// </summary>
     public int MinLevelExp;
 }
+
+[DataDefinition]
+public partial struct SkillExperience
+{
+    /// <summary>
+    /// Skill prototype.
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<SkillPrototype> Skill;
+
+    /// <summary>
+    /// Skill experience.
+    /// </summary>
+    [DataField]
+    public int Exp;
+}

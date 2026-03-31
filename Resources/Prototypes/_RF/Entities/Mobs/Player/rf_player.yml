@@ -48,6 +48,7 @@
     - FreeHandInteract
     - Heal
     - Chop
+    - Cook
   - type: NpcFactionMember
     factions:
     - RimFortress

@@ -1,0 +1,134 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenPizzaRecipesTable
+  recipes:
+  - RecipeMargheritaPizza
+  - RecipeMushroomPizza
+  - RecipeMeatPizza
+  - RecipeVegetablePizza
+  - RecipeHawaiianPizza
+  - RecipeDankPizza
+  - RecipeDonkpocketPizza
+  - RecipeUraniumPizza
+  - RecipeCottonPizza
+  - RecipeWorldpeasPizza
+
+# Recipes
+- type: workshopRecipe
+  id: BasePizzaRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Pizza
+
+- type: workshopRecipe
+  id: RecipeMargheritaPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaMargherita
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodCheeseSlice: 1
+      FoodTomato: 4
+
+- type: workshopRecipe
+  id: RecipeMushroomPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaMushroom
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodMushroom: 5
+
+- type: workshopRecipe
+  id: RecipeMeatPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaMeat
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodMeat: 3
+      FoodCheeseSlice: 1
+      FoodTomato: 1
+
+- type: workshopRecipe
+  id: RecipeVegetablePizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaVegetable
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodEggplant: 1
+      FoodCarrot: 1
+      FoodCorn: 1
+      FoodTomato: 1
+
+- type: workshopRecipe
+  id: RecipeHawaiianPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaPineapple
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodMeatChickenCutlet: 3
+      FoodPineappleSlice: 5
+
+- type: workshopRecipe
+  id: RecipeDankPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaDank
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      LeavesCannabis: 2
+      FoodCheeseSlice: 1
+      FoodTomato: 1
+
+- type: workshopRecipe
+  id: RecipeDonkpocketPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaDonkpocket
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodDonkpocketWarm: 3
+      FoodCheeseSlice: 1
+      FoodTomato: 1
+
+- type: workshopRecipe
+  id: RecipeUraniumPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaUranium
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodChiliPepper: 2
+      FoodTomato: 2
+      SheetUranium1: 2
+
+- type: workshopRecipe
+  id: RecipeCottonPizza
+  parent: BaseMothRecipe
+  result: FoodPizzaCotton
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughCottonFlat: 1
+      CottonBol: 4
+
+- type: workshopRecipe
+  id: RecipeWorldpeasPizza
+  parent: BasePizzaRecipe
+  result: FoodPizzaWorldpeas
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodDoughFlat: 1
+      FoodWorldPeas: 3

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.Skills.Components;
 using Content.Shared.EntityEffects;
+using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -218,7 +219,14 @@ public abstract class SharedSkillsSystem : EntitySystem
     }
 
     /// <summary>
-    /// Adds experience points for the skill of the given entity
+    /// Adds experience points for the skill of the given entity.
+    /// </summary>
+    [PublicAPI]
+    public void AddExperience(Entity<SkillsComponent?> ent, SkillExperience skill)
+        => AddExperience(ent, skill.Skill, skill.Exp);
+
+    /// <summary>
+    /// Adds experience points for the skill of the given entity.
     /// </summary>
     public void AddExperience(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int amount, bool dirty = true)
     {

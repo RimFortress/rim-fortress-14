@@ -1,0 +1,54 @@
+# Kitchen
+- type: workshopRecipeGroup
+  id: LoafCakes
+  iconEntity: FoodBreadBanana
+
+- type: workshopRecipeGroup
+  id: Breads
+  iconEntity: FoodBreadPlain
+
+- type: workshopRecipeGroup
+  id: Moth
+  iconEntity: FoodBreadCotton
+
+- type: workshopRecipeGroup
+  id: Savory
+  iconEntity: FoodBurgerPlain
+
+- type: workshopRecipeGroup
+  id: Pizza
+  iconEntity: FoodPizzaMargherita
+
+- type: workshopRecipeGroup
+  id: Pasta
+  iconEntity: FoodNoodlesBoiled
+
+- type: workshopRecipeGroup
+  id: Dessert
+  iconEntity: FoodRicePudding
+  subGroups:
+  - Muffin
+
+- type: workshopRecipeGroup
+  id: Muffin
+  iconEntity: FoodBakedMuffin
+
+- type: workshopRecipeGroup
+  id: Secret
+  iconEntity: FoodBreadBaguette
+
+- type: workshopRecipeGroup
+  id: Soup
+  iconEntity: FoodBowlBig
+
+- type: workshopRecipeGroup
+  id: Pie
+  iconEntity: FoodDoughPie
+
+- type: workshopRecipeGroup
+  id: Cake
+  iconEntity: FoodCakePlain
+
+- type: workshopRecipeGroup
+  id: Salad
+  iconEntity: FoodSaladHerb

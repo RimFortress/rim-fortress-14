@@ -3,6 +3,7 @@ using Content.Server.Administration;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
+using Content.Shared._RF.Toolshed;
 using Content.Shared.Administration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Toolshed;
@@ -10,38 +11,26 @@ using Robust.Shared.Toolshed;
 namespace Content.Server._RF.Social;
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class SocialCommand : ToolshedCommand
+public sealed class SocialCommand : SystemCommand<SocialSystem>
 {
-    private SocialSystem? _social;
-
     [CommandImplementation("add_mood")]
     public IEnumerable<EntityUid> AddMoodEffect(
         [PipedArgument] IEnumerable<EntityUid> uids,
         ProtoId<SocialEffectPrototype> effect)
-    {
-        _social ??= GetSys<SocialSystem>();
-
-        return uids.Where(uid =>
+        => uids.Where(uid =>
         {
-            var comp = EnsureComp<SocialComponent>(uid);
-            _social.AddMoodEffect(new(uid, comp), effect);
+            System.AddMoodEffect(EnsureEnt<SocialComponent>(uid).AsNullable(), effect);
             return true;
         });
-    }
 
     [CommandImplementation("add_opinion")]
     public IEnumerable<EntityUid> AddOpinionEffect(
         [PipedArgument] IEnumerable<EntityUid> uids,
         ProtoId<SocialEffectPrototype> effect,
         EntityUid targetUid)
-    {
-        _social ??= GetSys<SocialSystem>();
-
-        return uids.Where(uid =>
+        => uids.Where(uid =>
         {
-            var comp = EnsureComp<SocialComponent>(uid);
-            _social.AddOpinionEffect(new(uid, comp), targetUid, effect);
+            System.AddOpinionEffect(EnsureEnt<SocialComponent>(uid).AsNullable(), targetUid, effect);
             return true;
         });
-    }
 }

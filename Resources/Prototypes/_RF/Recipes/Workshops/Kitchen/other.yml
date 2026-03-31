@@ -1,0 +1,50 @@
+- type: workshopRecipe
+  id: RecipeDriedTeaLeaves
+  parent: BaseKitchenRecipe
+  result: LeavesTeaDried
+  ingredients:
+    items:
+      LeavesTea: 1
+
+- type: workshopRecipe
+  id: RecipeDriedTobacco
+  parent: BaseKitchenRecipe
+  result: LeavesTobaccoDried
+  ingredients:
+    items:
+      LeavesTobacco: 1
+
+- type: workshopRecipe
+  id: RecipeDriedCannabis
+  parent: BaseKitchenRecipe
+  result: LeavesCannabisDried
+  ingredients:
+    items:
+      LeavesCannabis: 1
+
+- type: workshopRecipe
+  id: RecipeDriedCannabisRainbow
+  parent: BaseKitchenRecipe
+  result: LeavesCannabisRainbowDried
+  ingredients:
+    items:
+      LeavesCannabisRainbow: 1
+
+- type: workshopRecipe
+  id: RecipeTrashBakedBananaPeel
+  parent: BaseKitchenRecipe
+  result: TrashBakedBananaPeel
+  craftingTime: 10
+  ingredients:
+    items:
+      TrashBananaPeel: 1
+
+- type: workshopRecipe
+  id: RecipeCannabisButter
+  parent: BaseKitchenRecipe
+  result: FoodCannabisButter
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodButter: 1
+      LeavesCannabis: 6

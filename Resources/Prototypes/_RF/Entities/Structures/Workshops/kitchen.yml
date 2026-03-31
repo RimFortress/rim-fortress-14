@@ -1,0 +1,25 @@
+- type: entity
+  id: KitchenWorkshop
+  parent: [ BaseMachine, BaseWorkshop4States ]
+  name: kitchen
+  description: It's magic.
+  components:
+  - type: Sprite
+    sprite: _RF/Structures/Workshops/kitchen.rsi
+    offset: "-0.5,0.1"
+    layers:
+    - state: base
+      map: ["enum.WorkshopLayers.Base"]
+    - map: ["enum.WorkshopLayers.Crafting"]
+      visible: false
+    - map: ["enum.WorkshopLayers.Items"]
+      visible: false
+  - type: Workshop
+    task: Cook
+    recipes: AllKitchenRecipesTable
+    startCraftingSound:
+      path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
+    craftingDoneSound:
+      path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
+    loopingSound:
+      path: /Audio/_RF/Machines/Workshops/cooking_with_cover_01.ogg

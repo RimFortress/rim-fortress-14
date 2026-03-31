@@ -11,6 +11,7 @@ namespace Content.Server._RF.NPC.HTN.Operators;
 /// </summary>
 public sealed partial class WaitWhileOperator : HTNOperator
 {
+    [Dependency] private readonly IEntityManager _entity = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     [DataField]
@@ -19,7 +20,8 @@ public sealed partial class WaitWhileOperator : HTNOperator
     [DataField]
     public TimeSpan UpdateRate = TimeSpan.FromSeconds(1);
 
-    private TimeSpan _nextUpdate;
+    [DataField]
+    public string TimeKey = "WaitWhileOperatorTime";
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
@@ -31,12 +33,19 @@ public sealed partial class WaitWhileOperator : HTNOperator
         }
     }
 
+    public override void PlanShutdown(NPCBlackboard blackboard)
+    {
+        if (blackboard.ContainsKey(TimeKey))
+            blackboard.Remove<TimeSpan>(TimeKey);
+    }
+
     public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
     {
-        if (_nextUpdate > _timing.CurTime)
+        if (blackboard.TryGetValue(TimeKey, out TimeSpan time, _entity) && time > _timing.CurTime)
             return HTNOperatorStatus.Continuing;
 
-        _nextUpdate = _timing.CurTime + UpdateRate;
+        if (Preconditions.Count == 0)
+            return HTNOperatorStatus.Finished;
 
         foreach (var precondition in Preconditions)
         {
@@ -44,6 +53,7 @@ public sealed partial class WaitWhileOperator : HTNOperator
                 return HTNOperatorStatus.Finished;
         }
 
+        blackboard.SetValue(TimeKey, _timing.CurTime + UpdateRate);
         return HTNOperatorStatus.Continuing;
     }
 }

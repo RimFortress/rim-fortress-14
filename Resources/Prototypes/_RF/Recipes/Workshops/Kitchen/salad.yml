@@ -1,0 +1,128 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenSaladRecipesTable
+  recipes:
+  - RecipeHerbSalad
+  - RecipeValidSalad
+  - RecipeColeslaw
+  - RecipeCaesarSalad
+  - RecipeCitrusSalad
+  - RecipeKimchiSalad
+  - RecipeFruitSalad
+  - RecipeJungleSalad
+  - RecipeWatermelonFruitBowlSalad
+
+# Recipes
+- type: workshopRecipe
+  id: BaseSaladRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Salad
+
+- type: workshopRecipe
+  id: RecipeHerbSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladHerb
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodAmbrosiaVulgaris: 3
+      FoodApple: 1
+
+- type: workshopRecipe
+  id: RecipeValidSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladValid
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodAmbrosiaVulgaris: 3
+      FoodPotato: 1
+      FoodMeatMeatball: 1
+
+- type: workshopRecipe
+  id: RecipeColeslaw
+  parent: BaseSaladRecipe
+  result: FoodSaladColeslaw
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOnionRed: 1
+      FoodCabbage: 1
+    reagents:
+      Vinaigrette: 5
+
+- type: workshopRecipe
+  id: RecipeCaesarSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladCaesar
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOnionRedSlice: 1
+      FoodBreadPlainSlice: 1
+      FoodCheeseSlice: 1
+      FoodCabbage: 1
+    reagents:
+      OilOlive: 5
+
+- type: workshopRecipe
+  id: RecipeCitrusSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladCitrus
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOrange: 1
+      FoodLemon: 1
+      FoodLime: 1
+
+- type: workshopRecipe
+  id: RecipeKimchiSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladKimchi
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodCarrot: 1
+      FoodCabbage: 1
+      FoodGarlic: 1
+    reagents:
+      Vinegar: 5
+
+- type: workshopRecipe
+  id: RecipeFruitSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladFruit
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOrange: 1
+      FoodApple: 1
+      FoodGrape: 1
+      FoodWatermelonSlice: 2
+
+- type: workshopRecipe
+  id: RecipeJungleSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladJungle
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodBanana: 1
+      FoodApple: 1
+      FoodGrape: 1
+      FoodWatermelonSlice: 2
+
+- type: workshopRecipe
+  id: RecipeWatermelonFruitBowlSalad
+  parent: BaseSaladRecipe
+  result: FoodSaladWatermelonFruitBowl
+  ingredients:
+    items:
+      FoodWatermelon: 1
+      FoodApple: 1
+      FoodBanana: 1
+      FoodLemon: 1
+      FoodOrange: 1
+      FoodAmbrosiaVulgaris: 1
