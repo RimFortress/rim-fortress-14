@@ -378,7 +378,7 @@ public abstract class SharedSkillsSystem : EntitySystem
     public SkillCheckResult DoInteractionCheck(
         Entity<SkillInteractionComponent?> ent,
         Entity<SkillsComponent?> user,
-        EntityUid? target)
+        EntityUid? target = null)
     {
         var targets = new List<EntityUid>();
 

@@ -26,3 +26,6 @@ skill-farming-profession = Farmer
 
 skill-woodcutting-name = Woodcutting
 skill-woodcutting-profession = Lumberjack
+
+skill-cooking-name = Cooking
+skill-cooking-profession = Chef

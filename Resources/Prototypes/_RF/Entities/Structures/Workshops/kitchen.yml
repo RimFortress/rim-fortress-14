@@ -17,9 +17,16 @@
   - type: Workshop
     task: Cook
     recipes: AllKitchenRecipesTable
+    craftingFailResult: FoodBadRecipe
     startCraftingSound:
       path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
     craftingDoneSound:
       path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
     loopingSound:
       path: /Audio/_RF/Machines/Workshops/cooking_with_cover_01.ogg
+  - type: SkillInteraction
+    skill: Cooking
+    targetLevel: 7
+    experience: 10
+    expFailFactor: 0
+    doAfterFactor: 2

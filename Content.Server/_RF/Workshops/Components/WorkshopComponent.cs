@@ -24,6 +24,12 @@ public sealed partial class WorkshopComponent : Component
     public string TargetRecipeKey = "TargetRecipe";
 
     /// <summary>
+    /// Entity that will be spawned when crafting fails.
+    /// </summary>
+    [DataField]
+    public EntProtoId? CraftingFailResult;
+
+    /// <summary>
     /// Table of all recipes available in this workshop.
     /// </summary>
     [DataField(required: true)]
@@ -88,6 +94,12 @@ public sealed partial class WorkshopComponent : Component
     /// </summary>
     [DataField]
     public SoundSpecifier? CraftingDoneSound;
+
+    /// <summary>
+    /// A sound that plays when the workshop crafting fails.
+    /// </summary>
+    [DataField]
+    public SoundSpecifier? CraftingFailSound;
 
     /// <summary>
     /// A looping sound that plays while crafting in the workshop.

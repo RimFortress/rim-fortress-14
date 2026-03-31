@@ -68,6 +68,7 @@
       Mining: 1.25
       Healing: 0.85
       Farming: 0.75
+      Cooking: 1.10
   - type: HungerOverride
     thresholdDecayTime:
       Overfed: 90m

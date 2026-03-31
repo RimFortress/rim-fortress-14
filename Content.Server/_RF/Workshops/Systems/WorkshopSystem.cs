@@ -8,6 +8,7 @@ using Content.Server.Item;
 using Content.Server.NPC.HTN;
 using Content.Server.Popups;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.Skills;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared.Chemistry.EntitySystems;
@@ -432,7 +433,7 @@ public sealed partial class WorkshopSystem : EntitySystem
             if (TryComp(ent.Comp.User, out HTNComponent? htn))
                 htn.Blackboard.SetValue(ent.Comp.TargetRecipeKey, proto);
 
-            ent.Comp.CraftEndTime = _timing.CurTime + proto.CraftingTime;
+            ent.Comp.CraftEndTime = GetCraftingEndTime(ent, proto);
         }
         else
         {
@@ -447,6 +448,19 @@ public sealed partial class WorkshopSystem : EntitySystem
 
         UpdateAppearance(ent.Owner);
         UpdateUi(ent);
+    }
+
+    private TimeSpan GetCraftingEndTime(
+        Entity<WorkshopComponent?> ent,
+        ProtoId<WorkshopRecipePrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
+            return TimeSpan.Zero;
+
+        if (ent.Comp.User == null)
+            return _timing.CurTime + proto.CraftingTime;
+
+        return _timing.CurTime + _skills.GetDelay(ent.Owner, ent.Comp.User.Value, proto.CraftingTime);
     }
 
     public override void Update(float frameTime)
@@ -475,10 +489,22 @@ public sealed partial class WorkshopSystem : EntitySystem
                 _skills.AddExperience(uid, exp);
             }
 
-            _audio.PlayPvs(comp.CraftingDoneSound, uid);
             DeleteIngredients(comp, proto);
-            Spawn(proto.Result, xform.Coordinates);
-            ContinueCrafting(new(uid, comp));
+
+            if (comp.User != null && _skills.DoInteractionCheck(uid, comp.User.Value) == SkillCheckResult.Fail)
+            {
+                if (comp.CraftingFailResult != null)
+                    Spawn(comp.CraftingFailResult, xform.Coordinates);
+
+                _audio.PlayPvs(comp.CraftingFailSound ?? comp.CraftingDoneSound, uid);
+            }
+            else
+            {
+                _audio.PlayPvs(comp.CraftingDoneSound, uid);
+                Spawn(proto.Result, xform.Coordinates);
+                ContinueCrafting(new(uid, comp));
+            }
+
             UpdateAppearance(uid);
         }
     }
@@ -576,14 +602,13 @@ public sealed partial class WorkshopSystem : EntitySystem
         if (!Resolve(ent, ref ent.Comp)
             || ent.Comp.CraftEndTime != null
             || GetQueueRecipe(ent.Comp, 0) is not { } protoId
-            || !CanCraft(ent, protoId)
-            || !_proto.Resolve(protoId, out var proto))
+            || !CanCraft(ent, protoId))
             return false;
 
         _audio.PlayPvs(ent.Comp.StartCraftingSound, ent);
         ent.Comp.PlayingStream =
             _audio.PlayPvs(ent.Comp.LoopingSound, ent, AudioParams.Default.WithLoop(true).WithMaxDistance(5))?.Entity;
-        ent.Comp.CraftEndTime = _timing.CurTime + proto.CraftingTime;
+        ent.Comp.CraftEndTime = GetCraftingEndTime(ent, protoId);
         UpdateAppearance(ent);
         UpdateUi(ent);
         return true;
@@ -662,7 +687,7 @@ public sealed partial class WorkshopSystem : EntitySystem
                 if (TryComp(ent.Comp.User, out HTNComponent? htn))
                     htn.Blackboard.SetValue(ent.Comp.TargetRecipeKey, ent.Comp.Queue[0]);
 
-                ent.Comp.CraftEndTime = _timing.CurTime + proto.CraftingTime;
+                ent.Comp.CraftEndTime = GetCraftingEndTime(ent, proto);
             }
             else
             {

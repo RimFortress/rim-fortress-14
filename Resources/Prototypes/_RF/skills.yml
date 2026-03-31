@@ -63,3 +63,11 @@
   profession: skill-woodcutting-profession
   icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   color: "#A0522D"
+
+- type: skill
+  id: Cooking
+  parent: BaseSkill
+  name: skill-cooking-name
+  profession: skill-cooking-profession
+  icon: _RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
+  color: "#9D6280"
