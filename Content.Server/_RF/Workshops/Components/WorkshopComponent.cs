@@ -57,19 +57,37 @@ public sealed partial class WorkshopComponent : Component
     /// A container that holds the entities used to craft recipes.
     /// </summary>
     [ViewVariables]
-    public Container Storage = default!;
+    public Container ContentStorage = default!;
 
     /// <summary>
     /// Workshop container ID.
     /// </summary>
     [DataField]
-    public string ContainerId = "workshop_entity_container";
+    public string ContentContainerId = "workshop_entity_container";
 
     /// <summary>
-    /// The maximum number of items that can be stored in the workshop
+    /// The maximum number of items that can be stored in the workshop.
     /// </summary>
     [DataField, ViewVariables]
-    public int Capacity = 12;
+    public int ContentCapacity = 12;
+
+    /// <summary>
+    /// A container that stores the crafting results.
+    /// </summary>
+    [ViewVariables]
+    public Container ResultStorage = default!;
+
+    /// <summary>
+    /// Workshop crafting results container ID.
+    /// </summary>
+    [DataField]
+    public string ResultContainerId = "workshop_result_container";
+
+    /// <summary>
+    /// The maximum number of items that can be stored in the crafting results container.
+    /// </summary>
+    [DataField, ViewVariables]
+    public int ResultCapacity = 10;
 
     /// <summary>
     /// The maximum size of an item that can be stored in the workshop.

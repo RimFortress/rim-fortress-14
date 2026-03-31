@@ -6,7 +6,6 @@ using Content.Server._RF.Workshops.Components;
 using Content.Server.Hands.Systems;
 using Content.Server.Item;
 using Content.Server.NPC.HTN;
-using Content.Server.Popups;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Workshops.Components;
@@ -48,7 +47,6 @@ public sealed partial class WorkshopSystem : EntitySystem
     [Dependency] private readonly SkillsSystem _skills = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly PopupSystem _popup = default!;
     [Dependency] private readonly AudioSystem _audio = default!;
     [Dependency] private readonly ItemSystem _item = default!;
 
@@ -102,13 +100,20 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private void OnInit(Entity<WorkshopComponent> ent, ref ComponentInit args)
     {
-        ent.Comp.Storage = _container.EnsureContainer<Container>(ent, ent.Comp.ContainerId);
+        ent.Comp.ContentStorage = _container.EnsureContainer<Container>(ent, ent.Comp.ContentContainerId);
+        ent.Comp.ResultStorage = _container.EnsureContainer<Container>(ent, ent.Comp.ResultContainerId);
         UpdateAppearance(ent.Owner);
     }
 
     private void OnInsertAttempt(Entity<WorkshopComponent> ent, ref ContainerIsInsertingAttemptEvent args)
     {
-        if (args.Container.ID != ent.Comp.ContainerId)
+        if (args.Container.ID == ent.Comp.ResultContainerId && ent.Comp.ResultStorage.Count >= ent.Comp.ResultCapacity)
+        {
+            args.Cancel();
+            return;
+        }
+
+        if (args.Container.ID != ent.Comp.ContentContainerId)
             return;
 
         if (TryComp<ItemComponent>(args.EntityUid, out var item))
@@ -125,25 +130,30 @@ public sealed partial class WorkshopSystem : EntitySystem
             return;
         }
 
-        if (ent.Comp.Storage.Count >= ent.Comp.Capacity)
+        if (ent.Comp.ContentStorage.Count >= ent.Comp.ContentCapacity)
             args.Cancel();
     }
 
     private void OnInserted(Entity<WorkshopComponent> ent, ref EntInsertedIntoContainerMessage args)
     {
-        if (!TryStartCrafting(ent.AsNullable()))
+        if (args.Container.ID == ent.Comp.ContentContainerId && !TryStartCrafting(ent.AsNullable()))
             UpdateAppearance(ent.AsNullable());
+
+        UpdateUi(ent.AsNullable());
     }
 
     private void OnRemoved(Entity<WorkshopComponent> ent, ref EntRemovedFromContainerMessage args)
     {
-        UpdateAppearance(ent.AsNullable());
+        if (args.Container.ID == ent.Comp.ContentContainerId)
+            UpdateAppearance(ent.AsNullable());
+
+        UpdateUi(ent.AsNullable());
     }
 
     private void OnAnchorChanged(Entity<WorkshopComponent> ent, ref AnchorStateChangedEvent args)
     {
         if (!args.Anchored)
-            _container.EmptyContainer(ent.Comp.Storage);
+            _container.EmptyContainer(ent.Comp.ContentStorage);
     }
 
     private void OnTaskGiven(EntityUid uid, WorkshopComponent component, NpcTaskGivenTarget args)
@@ -167,39 +177,22 @@ public sealed partial class WorkshopSystem : EntitySystem
         {
             // check if size of an item you're trying to put in is too big
             if (_item.GetSizePrototype(item.Size) > _item.GetSizePrototype(ent.Comp.MaxItemSize))
-            {
-                _popup.PopupEntity(
-                    Loc.GetString("workshop-component-interact-item-too-big", ("item", args.Used)),
-                    ent,
-                    args.User);
                 return;
-            }
         }
         else
-        {
-            // check if thing you're trying to put in isn't an item
-            _popup.PopupEntity(Loc.GetString("workshop-component-interact-using-transfer-fail"),
-                ent,
-                args.User);
             return;
-        }
 
-        if (ent.Comp.Storage.Count >= ent.Comp.Capacity)
-        {
-            _popup.PopupEntity(Loc.GetString("workshop-component-interact-full"),
-                ent,
-                args.User);
+        if (ent.Comp.ContentStorage.Count >= ent.Comp.ContentCapacity)
             return;
-        }
 
         args.Handled = true;
-        _hands.TryDropIntoContainer(args.User, args.Used, ent.Comp.Storage);
+        _hands.TryDropIntoContainer(args.User, args.Used, ent.Comp.ContentStorage);
         UpdateUi(ent.Owner);
     }
 
     private void OnBreak(Entity<WorkshopComponent> ent, ref BreakageEventArgs args)
     {
-        _container.EmptyContainer(ent.Comp.Storage);
+        _container.EmptyContainer(ent.Comp.ContentStorage);
     }
 
     private void OnAddToQueue(Entity<WorkshopComponent> ent, ref WorkshopAddToQueueMessage args)
@@ -218,7 +211,7 @@ public sealed partial class WorkshopSystem : EntitySystem
     {
         var ingredients = new WorkshopRecipeIngredients(proto.Ingredients);
 
-        foreach (var uid in comp.Storage.ContainedEntities)
+        foreach (var uid in comp.ContentStorage.ContainedEntities)
         {
             if (_stackQuery.TryComp(uid, out var stack)
                 && ingredients.Materials.TryGetValue(stack.StackTypeId, out var stackCount))
@@ -302,7 +295,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         items = new();
         reagents = new();
 
-        foreach (var uid in comp.Storage.ContainedEntities)
+        foreach (var uid in comp.ContentStorage.ContainedEntities)
         {
             if (Prototype(uid) is { } proto && !items.TryAdd(proto, 1))
                 items[proto]++;
@@ -330,7 +323,7 @@ public sealed partial class WorkshopSystem : EntitySystem
 
         var ingredients = new WorkshopRecipeIngredients(proto.Ingredients);
 
-        foreach (var uid in comp.Storage.ContainedEntities)
+        foreach (var uid in comp.ContentStorage.ContainedEntities)
         {
             if (_stackQuery.TryComp(uid, out var stack)
                 && ingredients.Materials.TryGetValue(stack.StackTypeId, out var stackCount))
@@ -386,7 +379,7 @@ public sealed partial class WorkshopSystem : EntitySystem
             return;
 
         var state = ent.Comp2.ItemsVisualStates
-            .Where(x => x.Value <= ent.Comp1.Storage.Count)
+            .Where(x => x.Value <= ent.Comp1.ContentStorage.Count)
             .OrderBy(x => x.Value)
             .LastOrDefault()
             .Key ?? ent.Comp2.ItemsVisualStates.First().Key;
@@ -407,7 +400,9 @@ public sealed partial class WorkshopSystem : EntitySystem
         _ui.SetUiState(ent.Owner,
             WorkshopUiKey.Key,
             new WorkshopUiState(
-                GetNetEntityArray(ent.Comp.Storage.ContainedEntities.ToArray()),
+                GetNetEntityArray(ent.Comp.ContentStorage.ContainedEntities.ToArray()),
+                GetNetEntityArray(ent.Comp.ResultStorage.ContainedEntities.ToArray()),
+                ent.Comp.ResultCapacity,
                 ent.Comp.Queue,
                 ent.Comp.CraftEndTime,
                 ent.Comp.MaxQueue,
@@ -428,7 +423,8 @@ public sealed partial class WorkshopSystem : EntitySystem
 
         current.Pathfinding.RemoveAt(0);
 
-        if (_proto.Resolve(GetQueueRecipe(ent.Comp, 0), out var proto))
+        if (_proto.Resolve(GetQueueRecipe(ent.Comp, 0), out var proto)
+            && ent.Comp.ResultStorage.Count < ent.Comp.ResultCapacity)
         {
             if (TryComp(ent.Comp.User, out HTNComponent? htn))
                 htn.Blackboard.SetValue(ent.Comp.TargetRecipeKey, proto);
@@ -463,12 +459,26 @@ public sealed partial class WorkshopSystem : EntitySystem
         return _timing.CurTime + _skills.GetDelay(ent.Owner, ent.Comp.User.Value, proto.CraftingTime);
     }
 
+    private void SpawnResult(Entity<WorkshopComponent?> ent, EntProtoId protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        var spawned = Spawn(protoId, Transform(ent).Coordinates);
+        _container.Insert(spawned, ent.Comp.ResultStorage, force: true);
+
+        foreach (var owner in _ownership.GetOwners(ent))
+        {
+            _ownership.AddOwner(spawned, owner);
+        }
+    }
+
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
 
-        var enumerator = EntityQueryEnumerator<WorkshopComponent, TransformComponent>();
-        while (enumerator.MoveNext(out var uid, out var comp, out var xform))
+        var enumerator = EntityQueryEnumerator<WorkshopComponent>();
+        while (enumerator.MoveNext(out var uid, out var comp))
         {
             if (comp.CraftEndTime == null || comp.CraftEndTime > _timing.CurTime)
                 continue;
@@ -494,14 +504,14 @@ public sealed partial class WorkshopSystem : EntitySystem
             if (comp.User != null && _skills.DoInteractionCheck(uid, comp.User.Value) == SkillCheckResult.Fail)
             {
                 if (comp.CraftingFailResult != null)
-                    Spawn(comp.CraftingFailResult, xform.Coordinates);
+                    SpawnResult(uid, comp.CraftingFailResult.Value);
 
                 _audio.PlayPvs(comp.CraftingFailSound ?? comp.CraftingDoneSound, uid);
             }
             else
             {
                 _audio.PlayPvs(comp.CraftingDoneSound, uid);
-                Spawn(proto.Result, xform.Coordinates);
+                SpawnResult(uid, proto.Result);
                 ContinueCrafting(new(uid, comp));
             }
 
@@ -601,6 +611,7 @@ public sealed partial class WorkshopSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp)
             || ent.Comp.CraftEndTime != null
+            || ent.Comp.ResultStorage.Count >= ent.Comp.ResultCapacity
             || GetQueueRecipe(ent.Comp, 0) is not { } protoId
             || !CanCraft(ent, protoId))
             return false;
