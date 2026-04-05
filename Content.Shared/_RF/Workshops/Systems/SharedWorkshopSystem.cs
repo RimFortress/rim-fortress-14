@@ -429,14 +429,10 @@ public abstract class SharedWorkshopSystem : EntitySystem
 
         ent.Comp.CraftEndTime = null;
         ent.Comp.CraftStartTime = null;
-        ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
 
         if (ent.Comp.Queue.Count == 0)
         {
-            FinishTask(ent);
-            UpdateAppearance(ent);
-            UpdateUi(ent);
-            Dirty(ent);
+            StopCrafting(ent);
             return;
         }
 
@@ -453,8 +449,12 @@ public abstract class SharedWorkshopSystem : EntitySystem
         Dirty(ent);
 
         if (!TryStartCrafting(ent))
-            FinishTask(ent);
+        {
+            StopCrafting(ent);
+            return;
+        }
 
+        UpdateNpcRecipe(ent);
         UpdateAppearance(ent);
         UpdateUi(ent);
     }
@@ -466,9 +466,9 @@ public abstract class SharedWorkshopSystem : EntitySystem
             return;
 
         var state = ent.Comp2.ItemsVisualStates
-            .Where(x => x.Value <= ent.Comp1.ContentStorage.Count)
+            .Where(x => x.Value >= ent.Comp1.ContentStorage.Count)
             .OrderBy(x => x.Value)
-            .LastOrDefault()
+            .FirstOrDefault()
             .Key ?? ent.Comp2.ItemsVisualStates.First().Key;
 
         _appearance.SetData(ent, WorkshopVisuals.Items, state, ent.Comp3);
@@ -542,7 +542,7 @@ public abstract class SharedWorkshopSystem : EntitySystem
 
     #region NPC
 
-    protected virtual void UpdateNpcRecipe(EntityUid uid, ProtoId<WorkshopRecipePrototype> protoId) { }
+    protected virtual void UpdateNpcRecipe(EntityUid uid) { }
 
     protected virtual void AddPassiveTask(Entity<WorkshopComponent?> ent) { }
 
@@ -693,10 +693,6 @@ public abstract class SharedWorkshopSystem : EntitySystem
         Dirty(ent);
 
         AddPassiveTask(ent);
-
-        if (ent.Comp.CraftEndTime == null)
-            TryStartCrafting(ent);
-
         UpdateAppearance(ent);
         UpdateUi(ent);
         return true;
@@ -723,7 +719,6 @@ public abstract class SharedWorkshopSystem : EntitySystem
         {
             StopCrafting(ent);
             RemovePassiveTask(ent);
-            UpdateUi(ent);
             return true;
         }
 
@@ -733,7 +728,12 @@ public abstract class SharedWorkshopSystem : EntitySystem
             ent.Comp.CraftEndTime = null;
             ent.Comp.CraftStartTime = null;
             ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
-            TryStartCrafting(ent);
+
+            if (!TryStartCrafting(ent))
+                StopCrafting(ent);
+
+            UpdateNpcRecipe(ent);
+            return true;
         }
 
         UpdateAppearance(ent);

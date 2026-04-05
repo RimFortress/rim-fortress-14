@@ -5,10 +5,8 @@ using Content.Server._RF.Workshops.Components;
 using Content.Server.NPC.HTN;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Workshops.Components;
-using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared._RF.Workshops.Systems;
 using Content.Shared.Inventory;
-using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Workshops.Systems;
 
@@ -49,10 +47,12 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
         StopCrafting(ent.AsNullable());
     }
 
-    protected override void UpdateNpcRecipe(EntityUid uid, ProtoId<WorkshopRecipePrototype> protoId)
+    protected override void UpdateNpcRecipe(EntityUid uid)
     {
         if (!_query.TryComp(uid, out var comp)
-            || !TryComp(uid, out HTNComponent? htn))
+            || !_npcControl.TryGetUser(comp.Task, uid, out var npc)
+            || !TryComp(npc, out HTNComponent? htn)
+            || GetCurrentRecipe(uid) is not { } protoId)
             return;
 
         htn.Blackboard.SetValue(comp.TargetRecipeKey, protoId);
@@ -143,15 +143,16 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
                 if (comp.CraftingFailResult != null)
                     SpawnResult(uid, comp.CraftingFailResult.Value);
 
-                Audio.PlayPvs(comp.CraftingFailSound ?? comp.CraftingDoneSound, uid);
+                Audio.PlayPvs(comp.CraftingFailSound, uid);
+
+                if (!TryStartCrafting(ent))
+                    StopCrafting(ent);
             }
             else
             {
-                Audio.PlayPvs(comp.CraftingDoneSound, uid);
                 SpawnResult(uid, proto.Result);
+                AdvanceQueue(ent);
             }
-
-            AdvanceQueue(ent);
         }
     }
 }

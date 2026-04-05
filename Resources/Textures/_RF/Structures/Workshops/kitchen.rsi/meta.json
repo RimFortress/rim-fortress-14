@@ -2,37 +2,44 @@
     "version": 1,
     "size": {
         "x": 64,
-        "y": 38
+        "y": 35
     },
     "license": "CC-BY-SA-3.0",
-    "copyright": "Created by __papuga__ (Discord) for RimFortress",
+    "copyright": "Created by __papuga__ (Discord) for RimFortress, edited by poeMota (GitHub)",
     "states": [
         {
             "name": "base"
         },
         {
-            "name": "base_crafting"
+            "name": "base_crafting",
+            "delays": [
+                [
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15
+                ]
+            ]
         },
         {
-            "name": "items_25"
+            "name": "items_33"
         },
         {
-            "name": "items_50"
-        },
-        {
-            "name": "items_75"
+            "name": "items_66"
         },
         {
             "name": "items_100"
         },
         {
-            "name": "crafting_25"
+            "name": "crafting_33"
         },
         {
-            "name": "crafting_50"
-        },
-        {
-            "name": "crafting_75"
+            "name": "crafting_66"
         },
         {
             "name": "crafting_100"

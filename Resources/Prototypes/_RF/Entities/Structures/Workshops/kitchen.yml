@@ -1,6 +1,6 @@
 - type: entity
   id: KitchenWorkshop
-  parent: [ BaseWorkshop4States, BaseMachine ]
+  parent: [ BaseWorkshop3States, BaseMachine ]
   name: kitchen
   description: It's magic.
   components:
@@ -22,7 +22,7 @@
     startCraftingSound:
       path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
     craftingDoneSound:
-      path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
+      path: /Audio/_RF/Machines/Workshops/switch_strength_stove_01.ogg
     loopingSound:
       path: /Audio/_RF/Machines/Workshops/cooking_with_cover_01.ogg
   - type: SkillInteraction
