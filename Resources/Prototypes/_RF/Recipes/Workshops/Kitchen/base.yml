@@ -7,22 +7,10 @@
     exp: 20
 
 - type: workshopRecipe
-  id: BaseLoafCakesRecipe
-  abstract: true
-  parent: BaseKitchenRecipe
-  group: LoafCakes
-
-- type: workshopRecipe
   id: BaseMothRecipe
   abstract: true
   parent: BaseKitchenRecipe
   group: Moth
-
-- type: workshopRecipe
-  id: BaseSecretRecipe
-  abstract: true
-  parent: BaseKitchenRecipe
-  group: Secret
 
 # Tables
 - type: workshopRecipeTable

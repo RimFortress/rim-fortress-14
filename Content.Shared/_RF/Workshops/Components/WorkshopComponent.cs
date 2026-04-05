@@ -1,28 +1,18 @@
-using Content.Server._RF.NPC.Prototypes;
-using Content.Server._RF.Workshops.Systems;
 using Content.Shared._RF.Workshops.Prototypes;
+using Content.Shared._RF.Workshops.Systems;
 using Content.Shared.Item;
 using Robust.Shared.Audio;
 using Robust.Shared.Containers;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
-namespace Content.Server._RF.Workshops.Components;
+namespace Content.Shared._RF.Workshops.Components;
 
-[RegisterComponent, Access(typeof(WorkshopSystem))]
+[Access(typeof(SharedWorkshopSystem))]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
 public sealed partial class WorkshopComponent : Component
 {
-    /// <summary>
-    /// The task that will be given for crafting the recipe.
-    /// </summary>
-    [DataField(required: true)]
-    public ProtoId<NpcTaskPrototype> Task;
-
-    /// <summary>
-    /// The key to which the target recipe will be saved in Blackboard when production begins.
-    /// </summary>
-    [DataField]
-    public string TargetRecipeKey = "TargetRecipe";
-
     /// <summary>
     /// Entity that will be spawned when crafting fails.
     /// </summary>
@@ -38,8 +28,8 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// Current production queue.
     /// </summary>
-    [ViewVariables]
-    public readonly List<(ProtoId<WorkshopRecipePrototype> Recipe, List<ProtoId<WorkshopRecipePrototype>> Pathfinding)> Queue = new();
+    [AutoNetworkedField, ViewVariables]
+    public List<WorkshopQueueEntry> Queue = new();
 
     /// <summary>
     /// The maximum number of recipes that can be in the queue.
@@ -50,7 +40,7 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// A user who is currently crafting.
     /// </summary>
-    [DataField, ViewVariables]
+    [AutoNetworkedField, ViewVariables]
     public EntityUid? User;
 
     /// <summary>
@@ -98,8 +88,14 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// When the current recipe is finished.
     /// </summary>
-    [DataField]
+    [AutoNetworkedField, ViewVariables]
     public TimeSpan? CraftEndTime;
+
+    /// <summary>
+    /// When the crafting started.
+    /// </summary>
+    [AutoNetworkedField, ViewVariables]
+    public TimeSpan? CraftStartTime;
 
     /// <summary>
     /// A sound that plays when crafting begins in the workshop.
@@ -129,4 +125,57 @@ public sealed partial class WorkshopComponent : Component
     /// Looping sound stream.
     /// </summary>
     public EntityUid? PlayingStream;
+}
+
+[Serializable, NetSerializable]
+public readonly record struct WorkshopQueueEntry(
+    ProtoId<WorkshopRecipePrototype> Recipe,
+    ProtoId<WorkshopRecipePrototype>[] Pathfinding)
+{
+    public ProtoId<WorkshopRecipePrototype> Current
+        => Pathfinding.Length > 0 ? Pathfinding[0] : Recipe;
+
+    public WorkshopQueueEntry Advance()
+        => Pathfinding.Length == 0 ? this : this with { Pathfinding = Pathfinding[1..] };
+}
+
+[Serializable, NetSerializable]
+public sealed class WorkshopAddToQueueMessage(ProtoId<WorkshopRecipePrototype> protoId) : BoundUserInterfaceMessage
+{
+    public ProtoId<WorkshopRecipePrototype> ProtoId = protoId;
+}
+
+[Serializable, NetSerializable]
+public sealed class WorkshopRemoveFromQueueMessage(int index) : BoundUserInterfaceMessage
+{
+    public int Index = index;
+}
+
+[Serializable, NetSerializable]
+public sealed class WorkshopUiState(
+    NetEntity[] contained,
+    NetEntity[] containedResults,
+    int resultsCapacity,
+    List<WorkshopQueueEntry> queue,
+    TimeSpan? craftEndTime,
+    TimeSpan? craftStartTime,
+    int maxQueue,
+    NetEntity? user,
+    ProtoId<WorkshopRecipeTablePrototype> recipesTable) : BoundUserInterfaceState
+{
+    public NetEntity[] Contained = contained;
+    public NetEntity[] ContainedResults = containedResults;
+    public int ResultsCapacity = resultsCapacity;
+    public List<WorkshopQueueEntry> Queue = queue;
+    public TimeSpan? CraftEndTime = craftEndTime;
+    public TimeSpan? CraftStartTime = craftStartTime;
+    public int MaxQueue = maxQueue;
+    public NetEntity? User = user;
+    public ProtoId<WorkshopRecipeTablePrototype> RecipesTable = recipesTable;
+}
+
+[Serializable, NetSerializable]
+public enum WorkshopUiKey : byte
+{
+    Key,
 }

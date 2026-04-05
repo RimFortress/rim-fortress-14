@@ -103,6 +103,35 @@ public partial struct WorkshopRecipeIngredients
         return true;
     }
 
+    /// <summary>
+    /// Returns a new list of ingredients created by merging two other lists.
+    /// </summary>
+    [Pure, PublicAPI]
+    public WorkshopRecipeIngredients UnionWith(WorkshopRecipeIngredients other)
+    {
+        var ingredients = new WorkshopRecipeIngredients(this);
+
+        foreach (var (stack, count) in other.Materials)
+        {
+            if (!ingredients.Materials.TryAdd(stack, count))
+                ingredients.Materials[stack] += count;
+        }
+
+        foreach (var (item, count) in other.Items)
+        {
+            if (!ingredients.Items.TryAdd(item, count))
+                ingredients.Items[item] += count;
+        }
+
+        foreach (var (reagent, count) in other.Reagents)
+        {
+            if (!ingredients.Reagents.TryAdd(reagent, count))
+                ingredients.Reagents[reagent] += count;
+        }
+
+        return ingredients;
+    }
+
     [PublicAPI, Pure]
     public int IngredientCount()
     {

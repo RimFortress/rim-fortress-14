@@ -1,0 +1,81 @@
+<controls:FancyWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+    xmlns:controls1="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    MinSize="850 600">
+    <BoxContainer>
+        <BoxContainer Orientation="Vertical" HorizontalExpand="True" SizeFlagsStretchRatio="1.2">
+            <BoxContainer>
+                <controls1:IconButton Name="BackButton" Margin="2" TextureScale="2 2"
+                                      SetSize="36 36" StyleClasses="ButtonSquare"
+                                      TexturePath="/Textures/_RF/Interface/chevron-left-solid-full.svg.192dpi.png"/>
+                <LineEdit Name="Search" Margin="4 3" HorizontalExpand="True"
+                          PlaceHolder="{Loc 'workshop-menu-search'}"/>
+                <controls1:IconButton Name="ClearSearch" Margin="2 2 7 2" TextureScale="2 2"
+                                      SetSize="36 36" StyleClasses="ButtonSquare"
+                                      TexturePath="/Textures/_RF/Interface/Style/cross.png"/>
+            </BoxContainer>
+            <ScrollContainer Name="RecipesScroll" VerticalExpand="True" ReserveScrollbarSpace="True">
+                <BoxContainer Name="RecipesBox" Orientation="Vertical"/>
+            </ScrollContainer>
+            <controls1:FancyBack>
+                <BoxContainer>
+                    <Label Name="UserLabel" StyleClasses="LabelSecondaryColor" Margin="10 0"/>
+                    <Control HorizontalExpand="True"/>
+                    <Label Name="GroupLabel" StyleClasses="LabelSecondaryColor" Margin="10 0"/>
+                </BoxContainer>
+            </controls1:FancyBack>
+        </BoxContainer>
+
+        <PanelContainer StyleClasses="LowDivider"/>
+
+        <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+            <PanelContainer StyleClasses="PanelHighlighted">
+                <BoxContainer>
+                    <BoxContainer HorizontalExpand="True">
+                        <Label Text="{Loc 'workshop-menu-contents'}"/>
+                    </BoxContainer>
+                    <PanelContainer Margin="3 2" StyleClasses="LowDivider"/>
+                    <BoxContainer HorizontalExpand="True">
+                        <Label Text="{Loc 'workshop-menu-results'}" Margin="3 0"/>
+                        <Control HorizontalExpand="True"/>
+                        <Label Name="ResultsLabel"/>
+                    </BoxContainer>
+                </BoxContainer>
+            </PanelContainer>
+
+            <BoxContainer VerticalExpand="True">
+                <PanelContainer StyleClasses="PanelLight" HorizontalExpand="True">
+                    <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+                        <ScrollContainer VerticalExpand="True" ReserveScrollbarSpace="True">
+                            <BoxContainer Name="ContentsBox" Orientation="Vertical"/>
+                        </ScrollContainer>
+                    </BoxContainer>
+                </PanelContainer>
+                <PanelContainer Margin="3 2" StyleClasses="LowDivider"/>
+                <PanelContainer StyleClasses="PanelLight" HorizontalExpand="True">
+                    <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+                        <ScrollContainer VerticalExpand="True" ReserveScrollbarSpace="True">
+                            <BoxContainer Name="ResultsBox" Orientation="Vertical"/>
+                        </ScrollContainer>
+                    </BoxContainer>
+                </PanelContainer>
+            </BoxContainer>
+
+            <BoxContainer Orientation="Vertical" VerticalExpand="True" SizeFlagsStretchRatio="1.5">
+                <PanelContainer StyleClasses="PanelHighlighted">
+                    <BoxContainer>
+                        <Label Text="{Loc 'workshop-menu-queue'}"/>
+                        <Control HorizontalExpand="True"/>
+                        <Label Name="QueueLabel"/>
+                    </BoxContainer>
+                </PanelContainer>
+                <PanelContainer StyleClasses="PanelLight" VerticalExpand="True">
+                    <ScrollContainer VerticalExpand="True" ReserveScrollbarSpace="True">
+                        <BoxContainer Name="QueueBox" Orientation="Vertical"/>
+                    </ScrollContainer>
+                </PanelContainer>
+            </BoxContainer>
+        </BoxContainer>
+    </BoxContainer>
+</controls:FancyWindow>

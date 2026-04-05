@@ -1,0 +1,35 @@
+<controls:WorkshopRecipeButton
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Workshops.UI"
+    Margin="2 1">
+    <BoxContainer Orientation="Vertical">
+        <Button Name="Button" Access="Public" StyleClasses="ButtonSquare">
+            <BoxContainer>
+                <PanelContainer StyleClasses="PanelDarkBorderedTransparent">
+                    <EntityPrototypeView Name="Icon" Stretch="Fill" SetSize="32 32" Scale="2.5 2.5"/>
+                </PanelContainer>
+                <Label Name="NameLabel" Margin="10 0" Access="Public"/>
+                <Control HorizontalExpand="True"/>
+                <Label Name="TimeLabel" StyleClasses="LabelSecondaryColor"
+                       Margin="3 0" HorizontalAlignment="Right"/>
+                <PanelContainer Name="GroupMarker" ReservesSpace="True"
+                                Margin="3 2" StyleClasses="HighDivider"/>
+            </BoxContainer>
+        </Button>
+        <PanelContainer Name="InfoBox" StyleClasses="PanelLightBordered" Visible="False" Margin="2 2 2 0">
+            <BoxContainer Orientation="Vertical">
+                <RichTextLabel Text="{Loc 'workshop-menu-recipe-ingredients'}"
+                               MaxWidth="350" HorizontalAlignment="Left"/>
+                <BoxContainer Name="ItemsBox" Orientation="Vertical">
+                    <RichTextLabel Margin="0 1" Text="{Loc 'workshop-menu-recipe-items'}"/>
+                </BoxContainer>
+                <BoxContainer Name="ReagentsBox" Orientation="Vertical">
+                    <RichTextLabel Margin="0 1" Text="{Loc 'workshop-menu-recipe-reagents'}"/>
+                </BoxContainer>
+                <BoxContainer Name="MaterialsBox" Orientation="Vertical">
+                    <RichTextLabel Margin="0 1" Text="{Loc 'workshop-menu-recipe-materials'}"/>
+                </BoxContainer>
+            </BoxContainer>
+        </PanelContainer>
+    </BoxContainer>
+</controls:WorkshopRecipeButton>

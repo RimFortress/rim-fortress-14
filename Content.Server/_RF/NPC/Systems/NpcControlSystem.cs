@@ -23,6 +23,7 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Server._RF.NPC.Systems;
 
@@ -381,6 +382,41 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         blackboard.Remove<EntityUid>(task.TargetKey);
         return true;
+    }
+
+    /// <summary>
+    /// Finds user who are currently performing a given NPC task.
+    /// </summary>
+    /// <param name="protoId">Target task prototype.</param>
+    /// <param name="target">Entity, which is the target of a given task.</param>
+    /// <param name="user">The first user found who is currently performing the task.</param>
+    /// <returns>True, if user is found.</returns>
+    public bool TryGetUser(
+        ProtoId<NpcTaskPrototype> protoId,
+        EntityUid? target,
+        [NotNullWhen(true)] out EntityUid? user)
+    {
+        user = _tasks
+            .FirstOrNull(x => x.Key == (target, protoId))
+            ?.Value
+            .FirstOrNull();
+        return user != null;
+    }
+
+    /// <summary>
+    /// Finds users who are currently performing a given NPC task.
+    /// </summary>
+    /// <param name="protoId">Target task prototype.</param>
+    /// <param name="target">Entity, which is the target of a given task.</param>
+    /// <param name="users">All users currently performing the task.</param>
+    /// <returns>True, if users are found.</returns>
+    public bool TryGetUsers(
+        ProtoId<NpcTaskPrototype> protoId,
+        EntityUid? target,
+        [NotNullWhen(true)] out List<EntityUid>? users)
+    {
+        users = _tasks.FirstOrNull(x => x.Key == (target, protoId))?.Value;
+        return users != null;
     }
 
     /// <summary>

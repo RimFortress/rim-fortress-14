@@ -1,5 +1,5 @@
-using Content.Server._RF.Workshops.Components;
 using Content.Server.NPC;
+using Content.Shared._RF.Workshops.Components;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions.Workshop;
 

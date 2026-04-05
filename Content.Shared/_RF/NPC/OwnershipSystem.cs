@@ -1,17 +1,23 @@
 using System.Diagnostics.CodeAnalysis;
+using Content.Shared.Administration.Managers;
 using Content.Shared.Polymorph;
+using Content.Shared.Verbs;
 using JetBrains.Annotations;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC;
 
 public sealed class OwnershipSystem : EntitySystem
 {
+    [Dependency] private readonly ISharedAdminManager _admin = default!;
+
     private EntityQuery<OwnershipComponent> _ownedQuery;
 
     public override void Initialize()
     {
         SubscribeLocalEvent<OwnershipComponent, ComponentRemove>(OnComponentRemove);
         SubscribeLocalEvent<OwnershipComponent, PolymorphedEvent>(OnPolymorphed);
+        SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
 
         _ownedQuery = GetEntityQuery<OwnershipComponent>();
     }
@@ -30,6 +36,20 @@ public sealed class OwnershipSystem : EntitySystem
         AddOwned(args.NewEntity, ent.Comp.Owned);
         RemoveOwners(ent.Owner, ent.Comp.Owners);
         RemoveOwned(ent.Owner, ent.Comp.Owned);
+    }
+
+    private void OnGetVerbs(GetVerbsEvent<Verb> args)
+    {
+        if (!_admin.IsAdmin(args.User))
+            return;
+
+        args.Verbs.Add(new Verb
+        {
+            Category = VerbCategory.Admin,
+            Act = () => AddOwner(args.Target, args.User),
+            Text = Loc.GetString("ownership-verb-add-owner"),
+            Icon = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png")),
+        });
     }
 
     /// <summary>

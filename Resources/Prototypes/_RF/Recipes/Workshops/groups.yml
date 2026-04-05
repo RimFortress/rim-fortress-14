@@ -1,9 +1,5 @@
 # Kitchen
 - type: workshopRecipeGroup
-  id: LoafCakes
-  iconEntity: FoodBreadBanana
-
-- type: workshopRecipeGroup
   id: Breads
   iconEntity: FoodBreadPlain
 
@@ -32,10 +28,6 @@
 - type: workshopRecipeGroup
   id: Muffin
   iconEntity: FoodBakedMuffin
-
-- type: workshopRecipeGroup
-  id: Secret
-  iconEntity: FoodBreadBaguette
 
 - type: workshopRecipeGroup
   id: Soup

@@ -1,11 +1,11 @@
-workshop-recipe-group-loafcakes-name = Loaf Cakes
 workshop-recipe-group-breads-name = Breads
 workshop-recipe-group-moth-name = Moth
 workshop-recipe-group-savory-name = Savory
 workshop-recipe-group-pizza-name = Pizza
 workshop-recipe-group-pasta-name = Pasta
 workshop-recipe-group-dessert-name = Desserts
-workshop-recipe-group-secret-name = Secret
 workshop-recipe-group-soup-name = Soups
 workshop-recipe-group-pie-name = Pies
 workshop-recipe-group-salad-name = Salad
+workshop-recipe-group-cake-name = Cakes
+workshop-recipe-group-muffin-name = Muffins

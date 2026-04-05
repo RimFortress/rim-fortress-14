@@ -20,7 +20,6 @@
   - RecipeXenoMeatBread
   - RecipeBaguette
   - RecipeBaguetteCotton
-  - RecipeBaguetteSword
   - RecipeButteredToast
   - RecipeFrenchToast
   - RecipeGarlicBread
@@ -85,7 +84,7 @@
 
 - type: workshopRecipe
   id: RecipeBananaBread
-  parent: BaseLoafCakesRecipe
+  parent: BaseBreadRecipe
   result: FoodBreadBanana
   craftingTime: 75
   ingredients:
@@ -216,19 +215,6 @@
   ingredients:
     items:
       FoodDoughCotton: 1
-    reagents:
-      TableSalt: 5
-      Blackpepper: 5
-
-- type: workshopRecipe
-  id: RecipeBaguetteSword
-  parent: BaseSecretRecipe
-  result: WeaponBaguette
-  craftingTime: 75
-  ingredients:
-    items:
-      FoodDough: 1
-      PartRodMetal1: 1
     reagents:
       TableSalt: 5
       Blackpepper: 5

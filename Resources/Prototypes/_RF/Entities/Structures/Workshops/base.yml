@@ -47,6 +47,7 @@
         - WallLayer
   - type: ActivatableUI
     key: enum.WorkshopUiKey.Key
+    requiresComplex: false
   - type: UserInterface
     interfaces:
       enum.WorkshopUiKey.Key:

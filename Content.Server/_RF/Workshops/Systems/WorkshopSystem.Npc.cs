@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Server._RF.Workshops.Components;
+using Content.Shared._RF.Workshops.Components;
 using Content.Shared.Chemistry.Components.SolutionManager;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
@@ -21,8 +21,7 @@ public partial class WorkshopSystem
     {
         entity = null;
 
-        if (!Resolve(workshop, ref workshop.Comp)
-            || GetQueueRecipe(workshop.Comp, 0) is not { } protoId)
+        if (!Resolve(workshop, ref workshop.Comp) || GetCurrentRecipe(workshop) is not { } protoId)
             return false;
 
         var ingredients = GetRemainingIngredients(workshop.Comp, protoId);
@@ -56,7 +55,7 @@ public partial class WorkshopSystem
 
         var coords = Transform(user).Coordinates;
         var mapId = Transform(user).MapID;
-        var enumerator = _ownership.GetEntitiesEnumerator<StackComponent, TransformComponent>(user);
+        var enumerator = Ownership.GetEntitiesEnumerator<StackComponent, TransformComponent>(user);
 
         // Search for the entity closest to the user that can be used as an ingredient
         while (enumerator.MoveNext(out var uid, out var comp, out var xform))
@@ -75,7 +74,7 @@ public partial class WorkshopSystem
             if(_inventory.TryGetContainingSlot(uid, out _))
                 continue;
 
-            if (_container.TryGetContainingContainer(new(uid, xform, null), out var container)
+            if (Container.TryGetContainingContainer(new(uid, xform, null), out var container)
                 && HasComp<HandsComponent>(container.Owner))
                 continue;
 
@@ -99,7 +98,7 @@ public partial class WorkshopSystem
 
         var coords = Transform(user).Coordinates;
         var mapId = Transform(user).MapID;
-        var enumerator = _ownership.GetEntitiesEnumerator<TransformComponent, ItemComponent>(user);
+        var enumerator = Ownership.GetEntitiesEnumerator<TransformComponent, ItemComponent>(user);
 
         // Search for the entity closest to the user that can be used as an ingredient
         while (enumerator.MoveNext(out var uid, out var xform, out _))
@@ -115,7 +114,7 @@ public partial class WorkshopSystem
             if(_inventory.TryGetContainingSlot(uid, out _))
                 continue;
 
-            if (_container.TryGetContainingContainer(new(uid, xform, null), out var container)
+            if (Container.TryGetContainingContainer(new(uid, xform, null), out var container)
                 && HasComp<HandsComponent>(container.Owner))
                 continue;
 
@@ -141,12 +140,12 @@ public partial class WorkshopSystem
 
         var coords = Transform(user).Coordinates;
         var mapId = Transform(user).MapID;
-        var enumerator = _ownership.GetEntitiesEnumerator<TransformComponent, SolutionContainerManagerComponent>(user);
+        var enumerator = Ownership.GetEntitiesEnumerator<TransformComponent, SolutionContainerManagerComponent>(user);
 
         // Search for the entity closest to the user that can be used as an ingredient
         while (enumerator.MoveNext(out var uid, out var xform, out var sol))
         {
-            if (!_solution.TryGetDrainableSolution(new(uid, null, sol), out _, out var solution))
+            if (!Solution.TryGetDrainableSolution(new(uid, null, sol), out _, out var solution))
                 continue;
 
             var quan = solution.GetTotalPrototypeQuantity(reagent);
@@ -168,7 +167,7 @@ public partial class WorkshopSystem
             if(_inventory.TryGetContainingSlot(uid, out _))
                 continue;
 
-            if (_container.TryGetContainingContainer(new(uid, xform, null), out var container)
+            if (Container.TryGetContainingContainer(new(uid, xform, null), out var container)
                 && HasComp<HandsComponent>(container.Owner))
                 continue;
 
