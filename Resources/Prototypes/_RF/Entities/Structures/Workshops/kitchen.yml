@@ -10,8 +10,6 @@
     layers:
     - state: base
       map: ["enum.WorkshopLayers.Base"]
-    - map: ["enum.WorkshopLayers.Crafting"]
-      visible: false
     - map: ["enum.WorkshopLayers.Items"]
       visible: false
   - type: WorkshopTaskSource

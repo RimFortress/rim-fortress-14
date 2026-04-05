@@ -465,18 +465,16 @@ public abstract class SharedWorkshopSystem : EntitySystem
             || ent.Comp2.ItemsVisualStates.Count == 0)
             return;
 
+        var visuals = ent.Comp1.CraftEndTime == null
+            ? WorkshopVisuals.Idle
+            : WorkshopVisuals.Crafting;
         var state = ent.Comp2.ItemsVisualStates
             .Where(x => x.Value >= ent.Comp1.ContentStorage.Count)
             .OrderBy(x => x.Value)
             .FirstOrDefault()
             .Key ?? ent.Comp2.ItemsVisualStates.First().Key;
 
-        _appearance.SetData(ent, WorkshopVisuals.Items, state, ent.Comp3);
-        _appearance.SetData(
-            ent,
-            WorkshopVisuals.Crafting,
-            ent.Comp1.CraftEndTime == null ? ent.Comp2.IdleState : state,
-            ent.Comp3);
+        _appearance.SetData(ent, visuals, state, ent.Comp3);
     }
 
     private TimeSpan GetCraftingEndTime(

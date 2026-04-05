@@ -36,13 +36,13 @@
             "name": "items_100"
         },
         {
-            "name": "crafting_33"
+            "name": "items_crafting_33"
         },
         {
-            "name": "crafting_66"
+            "name": "items_crafting_66"
         },
         {
-            "name": "crafting_100"
+            "name": "items_crafting_100"
         }
     ]
 }

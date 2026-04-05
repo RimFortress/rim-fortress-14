@@ -10,18 +10,12 @@ public sealed partial class WorkshopVisualsComponent : Component
     /// </summary>
     [DataField]
     public Dictionary<string, int> ItemsVisualStates = new();
-
-    /// <summary>
-    /// State that will be used for crafting visuals when the workshop is idle.
-    /// </summary>
-    [DataField]
-    public string IdleState = "Idle";
 }
 
 [Serializable, NetSerializable]
 public enum WorkshopVisuals : byte
 {
-    Items,
+    Idle,
     Crafting,
 }
 
@@ -30,5 +24,4 @@ public enum WorkshopLayers : byte
 {
     Base,
     Items,
-    Crafting,
 }

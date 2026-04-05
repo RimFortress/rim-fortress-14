@@ -15,22 +15,20 @@
     - state: items
       map: ["enum.WorkshopLayers.Items"]
       visible: false
-    - state: crafting
-      map: ["enum.WorkshopLayers.Crafting"]
-      visible: false
   - type: GenericVisualizer
     visuals:
-      enum.WorkshopVisuals.Items:
+      enum.WorkshopVisuals.Idle:
+        enum.WorkshopLayers.Base:
+          Empty: { state: base }
+          NotEmpty: { state: base }
         enum.WorkshopLayers.Items:
           Empty: { visible: false }
           NotEmpty: { visible: true }
       enum.WorkshopVisuals.Crafting:
         enum.WorkshopLayers.Base:
-          Idle: { state: base }
           Empty: { state: base_crafting }
           NotEmpty: { state: base_crafting }
-        enum.WorkshopLayers.Crafting:
-          Idle: { visible: false }
+        enum.WorkshopLayers.Items:
           Empty: { visible: false }
           NotEmpty: { visible: true }
   - type: Physics
@@ -89,26 +87,26 @@
       map: ["enum.WorkshopLayers.Base"]
     - map: ["enum.WorkshopLayers.Items"]
       visible: false
-    - map: ["enum.WorkshopLayers.Crafting"]
-      visible: false
   - type: GenericVisualizer
     visuals:
-      enum.WorkshopVisuals.Items:
+      enum.WorkshopVisuals.Idle:
+        enum.WorkshopLayers.Base:
+          Empty: { state: base }
+          Half: { state: base }
+          Full: { state: base }
         enum.WorkshopLayers.Items:
           Empty: { visible: false }
           Half: { visible: true, state: items_half }
           Full: { visible: true, state: items_full }
       enum.WorkshopVisuals.Crafting:
         enum.WorkshopLayers.Base:
-          Idle: { state: base }
           Empty: { state: base_crafting }
           Half: { state: base_crafting }
           Full: { state: base_crafting }
-        enum.WorkshopLayers.Crafting:
-          Idle: { visible: false }
+        enum.WorkshopLayers.Items:
           Empty: { visible: false }
-          Half: { visible: true, state: crafting_half }
-          Full: { visible: true, state: crafting_full }
+          Half: { visible: true, state: items_crafting_half }
+          Full: { visible: true, state: items_crafting_full }
 
 - type: entity
   id: BaseWorkshop3States
@@ -127,11 +125,14 @@
       map: ["enum.WorkshopLayers.Base"]
     - map: ["enum.WorkshopLayers.Items"]
       visible: false
-    - map: ["enum.WorkshopLayers.Crafting"]
-      visible: false
   - type: GenericVisualizer
     visuals:
-      enum.WorkshopVisuals.Items:
+      enum.WorkshopVisuals.Idle:
+        enum.WorkshopLayers.Base:
+          0: { state: base }
+          33: { state: base }
+          66: { state: base }
+          100: { state: base }
         enum.WorkshopLayers.Items:
           0: { visible: false }
           33: { visible: true, state: items_33 }
@@ -139,17 +140,15 @@
           100: { visible: true, state: items_100 }
       enum.WorkshopVisuals.Crafting:
         enum.WorkshopLayers.Base:
-          Idle: { state: base }
           0: { state: base_crafting }
           33: { state: base_crafting }
           66: { state: base_crafting }
           100: { state: base_crafting }
-        enum.WorkshopLayers.Crafting:
-          Idle: { visible: false }
+        enum.WorkshopLayers.Items:
           0: { visible: false }
-          33: { visible: true, state: crafting_33 }
-          66: { visible: true, state: crafting_66 }
-          100: { visible: true, state: crafting_100 }
+          33: { visible: true, state: items_crafting_33 }
+          66: { visible: true, state: items_crafting_66 }
+          100: { visible: true, state: items_crafting_100 }
 
 - type: entity
   id: BaseWorkshop4States
@@ -169,11 +168,14 @@
       map: ["enum.WorkshopLayers.Base"]
     - map: ["enum.WorkshopLayers.Items"]
       visible: false
-    - map: ["enum.WorkshopLayers.Crafting"]
-      visible: false
   - type: GenericVisualizer
     visuals:
-      enum.WorkshopVisuals.Items:
+      enum.WorkshopVisuals.Idle:
+        enum.WorkshopLayers.Base:
+          0: { state: base }
+          33: { state: base }
+          66: { state: base }
+          100: { state: base }
         enum.WorkshopLayers.Items:
           0: { visible: false }
           25: { visible: true, state: items_25 }
@@ -182,16 +184,13 @@
           100: { visible: true, state: items_100 }
       enum.WorkshopVisuals.Crafting:
         enum.WorkshopLayers.Base:
-          Idle: { state: base }
           0: { state: base_crafting }
-          25: { state: base_crafting }
-          50: { state: base_crafting }
-          75: { state: base_crafting }
+          33: { state: base_crafting }
+          66: { state: base_crafting }
           100: { state: base_crafting }
-        enum.WorkshopLayers.Crafting:
-          Idle: { visible: false }
+        enum.WorkshopLayers.Items:
           0: { visible: false }
-          25: { visible: true, state: crafting_25 }
-          50: { visible: true, state: crafting_50 }
-          75: { visible: true, state: crafting_75 }
-          100: { visible: true, state: crafting_100 }
+          25: { visible: true, state: items_crafting_25 }
+          50: { visible: true, state: items_crafting_50 }
+          75: { visible: true, state: items_crafting_75 }
+          100: { visible: true, state: items_crafting_100 }
