@@ -24,10 +24,17 @@ public sealed class OwnershipSystem : EntitySystem
 
     private void OnComponentRemove(EntityUid uid, OwnershipComponent component, ComponentRemove args)
     {
-        var ent = new Entity<OwnershipComponent?>(uid, component);
+        foreach (var owned in component.Owned)
+        {
+            if (_ownedQuery.TryComp(owned, out var comp) && comp.Owners.Remove(owned))
+                Dirty(owned, comp);
+        }
 
-        RemoveOwned(ent, component.Owned);
-        RemoveOwners(ent, component.Owners);
+        foreach (var owner in component.Owners)
+        {
+            if (_ownedQuery.TryComp(owner, out var comp) && comp.Owned.Remove(owner))
+                Dirty(owner, comp);
+        }
     }
 
     private void OnPolymorphed(Entity<OwnershipComponent> ent, ref PolymorphedEvent args)
