@@ -719,20 +719,18 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <summary>
     /// Counts the number of performers of tasks on the given target, including unified tasks
     /// </summary>
-    public int TaskPerformersCount(NpcTaskPrototype task, EntityUid? target)
+    public int TaskPerformersCount(NpcTaskPrototype task, EntityUid target)
     {
+        if (!_targetsQuery.TryComp(target, out var active))
+            return 0;
+
         var count = 0;
-
         var tasks = new List<ProtoId<NpcTaskPrototype>>(task.UnionPerformersWith) { task };
-        var enumerator = EntityQueryEnumerator<ActiveNpcTaskTargetComponent>();
 
-        while (enumerator.MoveNext(out var comp))
+        foreach (var (protoId, users) in active.Tasks)
         {
-            foreach (var (protoId, users) in comp.Tasks)
-            {
-                if (tasks.Contains(protoId))
-                    count += users.Count;
-            }
+            if (tasks.Contains(protoId))
+                count += users.Count;
         }
 
         return count;
