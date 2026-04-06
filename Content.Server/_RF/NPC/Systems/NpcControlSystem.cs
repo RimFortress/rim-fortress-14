@@ -43,6 +43,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
     private EntityQuery<ControllableNpcComponent> _controllableQuery;
     private EntityQuery<PassiveNpcTaskTargetComponent> _passiveTaskQuery;
+    private EntityQuery<ActiveNpcTaskTargetComponent> _targetsQuery;
     private EntityQuery<HTNComponent> _htnQuery;
 
     /// <summary>
@@ -50,13 +51,6 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// </summary>
     // This should be implemented via NetworkComponent, but I'm too lazy to do that
     private readonly Dictionary<EntityUid, List<EntityUid>> _selected = new();
-
-    /// <summary>
-    /// A list of all specific tasks with a list of all entities that execute it,
-    /// is needed to check the maximum number of task performers
-    /// </summary>
-    // Ideally this should also be stored in some component like NpcTaskTargetComponent, but I'm too lazy to do that
-    private readonly Dictionary<(EntityUid? Entity, ProtoId<NpcTaskPrototype> Proto), List<EntityUid>> _tasks = new();
 
     /// <summary>
     /// Temporarily stores a list of all task planning failures for the task failure timer
@@ -88,6 +82,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 
         _controllableQuery = GetEntityQuery<ControllableNpcComponent>();
         _passiveTaskQuery = GetEntityQuery<PassiveNpcTaskTargetComponent>();
+        _targetsQuery = GetEntityQuery<ActiveNpcTaskTargetComponent>();
         _htnQuery = GetEntityQuery<HTNComponent>();
 
         ReloadPrototypes();
@@ -221,13 +216,14 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     // Help construction NPCs keep up-to-date information on the entity to be built
     private void OnEntityChange(EntityUid uid, IComponent comp, ConstructionChangeEntityEvent ev)
     {
-        foreach (var (task, entities) in _tasks.ToList())
-        {
-            if (task.Entity != ev.Old)
-                continue;
+        if (!_targetsQuery.TryComp(ev.Old, out var target))
+            return;
 
-            _tasks.Add((ev.New, task.Proto), entities);
-            _tasks.Remove(task);
+        var newTarget = EnsureComp<ActiveNpcTaskTargetComponent>(ev.New);
+
+        foreach (var (task, entities) in target.Tasks)
+        {
+            newTarget.Tasks[task] = entities;
 
             foreach (var entity in entities)
             {
@@ -235,7 +231,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
                     || !_controllableQuery.TryComp(entity, out var control))
                     continue;
 
-                var proto = _prototype.Index(task.Proto);
+                var proto = _prototype.Index(task);
                 htn.Blackboard.SetValue(proto.TargetKey, ev.New);
                 control.TaskTarget = ev.New;
 
@@ -393,13 +389,12 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <returns>True, if user is found.</returns>
     public bool TryGetUser(
         ProtoId<NpcTaskPrototype> protoId,
-        EntityUid? target,
+        EntityUid target,
         [NotNullWhen(true)] out EntityUid? user)
     {
-        user = _tasks
-            .FirstOrNull(x => x.Key == (target, protoId))
-            ?.Value
-            .FirstOrNull();
+        user = null;
+        TryGetUsers(protoId, target, out var users);
+        user = users?.FirstOrDefault();
         return user != null;
     }
 
@@ -412,11 +407,11 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <returns>True, if users are found.</returns>
     public bool TryGetUsers(
         ProtoId<NpcTaskPrototype> protoId,
-        EntityUid? target,
-        [NotNullWhen(true)] out List<EntityUid>? users)
+        EntityUid target,
+        [NotNullWhen(true)] out HashSet<EntityUid>? users)
     {
-        users = _tasks.FirstOrNull(x => x.Key == (target, protoId))?.Value;
-        return users != null;
+        users = null;
+        return _targetsQuery.TryComp(target, out var comp) && comp.Tasks.TryGetValue(protoId, out users);
     }
 
     /// <summary>
@@ -528,12 +523,8 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (control.CurrentTask != null)
             FinishTask(new(entity, control, htn));
 
-        var task = (target, proto.ID);
-
-        if (!_tasks.ContainsKey(task))
-            _tasks[task] = new();
-
-        _tasks[task].Add(entity);
+        if (target != null)
+            EnsureComp<ActiveNpcTaskTargetComponent>(target.Value).Tasks.GetOrNew(proto).Add(entity);
 
         if (htn.Plan != null)
         {
@@ -587,8 +578,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var control = npc.Comp1;
         var htn = npc.Comp2;
 
-        if (_tasks.TryGetValue((control.TaskTarget, control.CurrentTask!.Value), out var list))
-            list.Remove(npc);
+        RemoveActiveTarget(control.TaskTarget, control.CurrentTask!.Value, npc);
 
         if (control.TaskTarget != null
             && !failed
@@ -672,6 +662,22 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         return null;
     }
 
+    private void RemoveActiveTarget(EntityUid? target, ProtoId<NpcTaskPrototype> task, EntityUid user)
+    {
+        if (target == null
+            || !_targetsQuery.TryComp(target.Value, out var active)
+            || !active.Tasks.TryGetValue(task, out var users))
+            return;
+
+        users.Remove(user);
+
+        if (users.Count == 0)
+            active.Tasks.Remove(task);
+
+        if (active.Tasks.Count == 0)
+            RemComp(target.Value, active);
+    }
+
     /// <summary>
     /// Checks if the user can control this NPC
     /// </summary>
@@ -717,15 +723,16 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     {
         var count = 0;
 
-        if (!_tasks.TryGetValue((target, task), out var performers))
-            return count;
+        var tasks = new List<ProtoId<NpcTaskPrototype>>(task.UnionPerformersWith) { task };
+        var enumerator = EntityQueryEnumerator<ActiveNpcTaskTargetComponent>();
 
-        count += performers.Count;
-
-        foreach (var proto in task.UnionPerformersWith)
+        while (enumerator.MoveNext(out var comp))
         {
-            if (proto != task && _tasks.TryGetValue((target, proto), out var list))
-                count += list.Count;
+            foreach (var (protoId, users) in comp.Tasks)
+            {
+                if (tasks.Contains(protoId))
+                    count += users.Count;
+            }
         }
 
         return count;
