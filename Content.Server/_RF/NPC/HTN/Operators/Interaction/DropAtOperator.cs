@@ -2,7 +2,6 @@ using Content.Server.Hands.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.PrimitiveTasks;
-using Content.Shared.Hands.Components;
 using Robust.Shared.Map;
 
 namespace Content.Server._RF.NPC.HTN.Operators.Interaction;
@@ -26,13 +25,8 @@ public sealed partial class DropAtOperator : HTNOperator
 
     public override HTNOperatorStatus Update(NPCBlackboard blackboard, float frameTime)
     {
-        if (!blackboard.TryGetValue(NPCBlackboard.ActiveHand, out Hand? _, _entManager))
-            return HTNOperatorStatus.Finished;
-
-        var owner = blackboard.GetValueOrDefault<EntityUid>(NPCBlackboard.Owner, _entManager);
-
         if (!blackboard.TryGetValue(CoordinatesKey, out EntityCoordinates? coordinates, _entManager)
-            || !_handsSystem.TryDrop(owner, coordinates))
+            || !_handsSystem.TryDrop(blackboard.GetOwner(), coordinates))
             return HTNOperatorStatus.Failed;
 
         return HTNOperatorStatus.Finished;

@@ -10,7 +10,7 @@
     components:
     - Item
   startPreconditions:
-  - !type:OwnedPrecondition
+  - !type:HasOwnerPrecondition
     targetKey: Target
     invert: true
   finishPreconditions:

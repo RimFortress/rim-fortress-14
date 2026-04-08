@@ -7,6 +7,7 @@ using Content.Shared._RF.Skills;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Systems;
 using Content.Shared.Inventory;
+using Robust.Shared.Utility;
 
 namespace Content.Server._RF.Workshops.Systems;
 
@@ -43,7 +44,13 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
             || !ent.Comp.Crafting)
             return;
 
-        StopCrafting(ent.AsNullable());
+        ent.Comp.Queue.SetEndTime(null);
+        DirtyField(ent.AsNullable(), nameof(WorkshopComponent.Queue));
+
+        ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
+        Audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
+        UpdateAppearance(ent.AsNullable());
+        UpdateUi(ent.AsNullable());
     }
 
     protected override void UpdateNpcRecipe(EntityUid uid)
@@ -103,11 +110,12 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
         user = null;
         if (!Resolve(ent, ref ent.Comp)
             || !_query.TryComp(ent, out var source)
-            || !_npcControl.TryGetUser(source.Task, ent, out user))
+            || !TryComp(ent, out ActiveNpcTaskTargetComponent? target)
+            || !target.Tasks.TryGetValue(source.Task, out var users))
             return false;
 
-        ent.Comp.User = user;
-        return true;
+        user = users.FirstOrNull();
+        return user != null;
     }
 
     public override EntityUid? GetUser(Entity<WorkshopComponent?> ent) => TryGetUser(ent, out var uid) ? uid : null;

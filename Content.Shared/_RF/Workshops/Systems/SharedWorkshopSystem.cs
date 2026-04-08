@@ -276,7 +276,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
                 ent.Comp.ResultCapacity,
                 ent.Comp.Queue,
                 ent.Comp.MaxQueue,
-                GetNetEntity(ent.Comp.User),
+                GetNetEntity(GetUser(ent)),
                 ent.Comp.Recipes));
     }
 

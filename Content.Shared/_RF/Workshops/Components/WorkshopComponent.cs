@@ -44,12 +44,6 @@ public sealed partial class WorkshopComponent : Component
     public float CraftingTimeModifier = 1.0f;
 
     /// <summary>
-    /// A user who is currently crafting.
-    /// </summary>
-    [AutoNetworkedField, ViewVariables]
-    public EntityUid? User;
-
-    /// <summary>
     /// A container that holds the entities used to craft recipes.
     /// </summary>
     [ViewVariables]

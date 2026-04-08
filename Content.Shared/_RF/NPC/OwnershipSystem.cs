@@ -1,8 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Content.Shared.Administration.Managers;
 using Content.Shared.Polymorph;
 using Content.Shared.Verbs;
 using JetBrains.Annotations;
+using Robust.Shared.GameStates;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC;
@@ -15,6 +17,9 @@ public sealed class OwnershipSystem : EntitySystem
 
     public override void Initialize()
     {
+        SubscribeLocalEvent<OwnershipComponent, ComponentHandleState>(OnHandleState);
+        SubscribeLocalEvent<OwnershipComponent, ComponentGetState>(OnGetState);
+
         SubscribeLocalEvent<OwnershipComponent, ComponentRemove>(OnComponentRemove);
         SubscribeLocalEvent<OwnershipComponent, PolymorphedEvent>(OnPolymorphed);
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
@@ -22,10 +27,51 @@ public sealed class OwnershipSystem : EntitySystem
         _ownedQuery = GetEntityQuery<OwnershipComponent>();
     }
 
+    private void OnHandleState(Entity<OwnershipComponent> ent, ref ComponentHandleState args)
+    {
+        if (args.Current is not OwnershipComponentState state)
+            return;
+
+        ent.Comp.Owners.Clear();
+        ent.Comp.Owned.Clear();
+
+        foreach (var netUid in state.Owners)
+        {
+            if (TryGetEntity(netUid, out var uid))
+                ent.Comp.Owners.Add(uid.Value);
+        }
+
+        foreach (var netUid in state.Owned)
+        {
+            if (TryGetEntity(netUid, out var uid))
+                ent.Comp.Owned.Add(uid.Value);
+        }
+    }
+
+    private void OnGetState(Entity<OwnershipComponent> ent, ref ComponentGetState args)
+    {
+        var owners = new HashSet<NetEntity>();
+        var owned = new HashSet<NetEntity>();
+
+        foreach (var netUid in ent.Comp.Owners)
+        {
+            if (TryGetNetEntity(netUid, out var uid))
+                owners.Add(uid.Value);
+        }
+
+        foreach (var netUid in ent.Comp.Owned)
+        {
+            if (TryGetNetEntity(netUid, out var uid))
+                owned.Add(uid.Value);
+        }
+
+        args.State = new OwnershipComponentState(owners, owned);
+    }
+
     private void OnComponentRemove(EntityUid uid, OwnershipComponent component, ComponentRemove args)
     {
-        RemoveOwners(uid, component.Owners);
-        RemoveOwned(uid, component.Owned);
+        RemoveOwners(new(uid, component), component.Owners.ToArray());
+        RemoveOwned(new(uid, component), component.Owned.ToArray());
     }
 
     private void OnPolymorphed(Entity<OwnershipComponent> ent, ref PolymorphedEvent args)
@@ -189,8 +235,7 @@ public sealed class OwnershipSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp, false)
             || !Resolve(owner, ref owner.Comp, false)
-            || !ent.Comp.Owners.Remove(owner)
-            || !owner.Comp.Owned.Remove(ent))
+            || !ent.Comp.Owners.Remove(owner) && !owner.Comp.Owned.Remove(ent))
             return false;
 
         var ev = new OwnershipRemovedEvent(owner, ent);
@@ -215,17 +260,17 @@ public sealed class OwnershipSystem : EntitySystem
 
         foreach (var owner in owners)
         {
-            if (!_ownedQuery.TryComp(owner, out var comp))
-                continue;
-
             ent.Comp.Owners.Remove(owner);
-            comp.Owned.Remove(ent);
+
+            if (_ownedQuery.TryComp(owner, out var comp))
+            {
+                comp.Owned.Remove(ent);
+                Dirty(owner, comp);
+            }
 
             var ev = new OwnershipRemovedEvent(owner, ent);
             RaiseLocalEvent(ent, ev);
             RaiseLocalEvent(owner, ev);
-
-            Dirty(owner, comp);
         }
 
         Dirty(ent);
@@ -242,8 +287,7 @@ public sealed class OwnershipSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp, false)
             || !Resolve(owned, ref owned.Comp, false)
-            || !ent.Comp.Owned.Remove(owned)
-            || !owned.Comp.Owners.Remove(ent))
+            || !ent.Comp.Owned.Remove(owned) && !owned.Comp.Owners.Remove(ent))
             return false;
 
         var ev = new OwnershipRemovedEvent(ent, owned);
@@ -268,17 +312,17 @@ public sealed class OwnershipSystem : EntitySystem
 
         foreach (var uid in owned)
         {
-            if (!_ownedQuery.TryComp(uid, out var comp))
-                continue;
-
             ent.Comp.Owned.Remove(uid);
-            comp.Owners.Remove(ent);
+
+            if (_ownedQuery.TryComp(uid, out var comp))
+            {
+                comp.Owners.Remove(ent);
+                Dirty(uid, comp);
+            }
 
             var ev = new OwnershipRemovedEvent(ent, uid);
             RaiseLocalEvent(ent, ev);
             RaiseLocalEvent(uid, ev);
-
-            Dirty(uid, comp);
         }
 
         Dirty(ent);
@@ -535,6 +579,7 @@ public sealed class OwnershipSystem : EntitySystem
 /// </summary>
 /// <param name="Owner">Entity that owns another.</param>
 /// <param name="Owned">Entity owned by another.</param>
+[PublicAPI]
 public record struct OwnershipAddedEvent(EntityUid Owner, EntityUid Owned);
 
 /// <summary>
@@ -542,4 +587,5 @@ public record struct OwnershipAddedEvent(EntityUid Owner, EntityUid Owned);
 /// </summary>
 /// <param name="Owner">Entity that owned another.</param>
 /// <param name="Owned">Entity owned by another.</param>
+[PublicAPI]
 public record struct OwnershipRemovedEvent(EntityUid Owner, EntityUid Owned);
