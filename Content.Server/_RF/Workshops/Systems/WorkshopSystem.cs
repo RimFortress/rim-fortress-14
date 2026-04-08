@@ -32,8 +32,8 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
         if (!_query.TryComp(ent, out var source) || source.Task != args.Task)
             return;
 
-        UpdateUi(ent.AsNullable());
-        TryStartCrafting(ent.AsNullable());
+        if (!TryStartCrafting(ent.AsNullable()))
+            UpdateUi(ent.AsNullable());
     }
 
     private void OnTaskFinished(Entity<WorkshopComponent> ent, ref NpcTaskFinishedTarget args)
@@ -43,7 +43,6 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
             || !ent.Comp.Crafting)
             return;
 
-        UpdateUi(ent.AsNullable());
         StopCrafting(ent.AsNullable());
     }
 
