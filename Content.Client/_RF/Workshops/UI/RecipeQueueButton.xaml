@@ -3,13 +3,13 @@
     xmlns:controls="clr-namespace:Content.Client._RF.Workshops.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:style="clr-namespace:Content.Client._RF.Stylesheets"
-    Margin="2 0 2 3">
+    Margin="2 0 2 3" MouseFilter="Stop">
     <PanelContainer StyleClasses="AngleRect">
         <BoxContainer Margin="5 0 0 0">
             <EntityPrototypeView Name="Icon" SetSize="24 24" Stretch="Fill"/>
             <Label Name="RecipeName" Margin="3 0"/>
-            <Control HorizontalExpand="True"/>
             <RichTextLabel Name="Status" Margin="5 0"/>
+            <Control HorizontalExpand="True"/>
             <Label Name="RemainingTime"
                    FontColorOverride="{x:Static style:StyleFortress.GraySilver}"/>
             <TextureButton Name="CloseButton" SetSize="16 16"

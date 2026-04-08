@@ -40,7 +40,7 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
     {
         if (!_query.TryComp(ent, out var source)
             || source.Task != args.Task
-            || ent.Comp.CraftEndTime == null)
+            || !ent.Comp.Crafting)
             return;
 
         UpdateUi(ent.AsNullable());
@@ -120,7 +120,7 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
         var enumerator = EntityQueryEnumerator<WorkshopComponent>();
         while (enumerator.MoveNext(out var uid, out var comp))
         {
-            if (comp.CraftEndTime == null || comp.CraftEndTime > Timing.CurTime)
+            if (!comp.Crafting || comp.Queue.Entry?.CraftingEndTime > Timing.CurTime)
                 continue;
 
             var ent = new Entity<WorkshopComponent?>(uid, comp);

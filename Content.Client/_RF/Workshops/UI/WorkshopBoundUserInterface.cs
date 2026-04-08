@@ -16,6 +16,8 @@ public sealed class WorkshopBoundUserInterface(EntityUid owner, Enum uiKey) : Bo
         _menu = this.CreateWindow<WorkshopMenu>();
         _menu.OnRemoved += index => SendPredictedMessage(new WorkshopRemoveFromQueueMessage(index));
         _menu.OnAdded += proto => SendPredictedMessage(new WorkshopAddToQueueMessage(proto));
+        _menu.OnToggleRepeat += index => SendPredictedMessage(new WorkshopRepeatMessage(index));
+        _menu.OnToggleSuspend += index => SendPredictedMessage(new WorkshopSuspendMessage(index));
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -29,7 +31,7 @@ public sealed class WorkshopBoundUserInterface(EntityUid owner, Enum uiKey) : Bo
         _menu.UpdateUser(wState.User);
         _menu.UpdateContents(wState.Contained);
         _menu.UpdateResults(wState.ContainedResults, wState.ResultsCapacity);
-        _menu.UpdateQueue(wState.Queue, wState.MaxQueue, wState.CraftStartTime, wState.CraftEndTime);
+        _menu.UpdateQueue(wState.Queue, wState.MaxQueue);
         _menu.UpdateRecipes(wState.RecipesTable);
     }
 }

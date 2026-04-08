@@ -17,5 +17,5 @@ public sealed partial class WorkshopCraftingPrecondition : InvertiblePreconditio
     public override bool IsMetInvertible(NPCBlackboard blackboard)
         => blackboard.TryGetValue<EntityUid>(TargetKey, out var uid, EntityManager)
            && EntityManager.TryGetComponent(uid, out WorkshopComponent? comp)
-           && comp.CraftEndTime != null;
+           && comp.Crafting;
 }

@@ -28,14 +28,20 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// Current production queue.
     /// </summary>
-    [AutoNetworkedField, ViewVariables]
-    public List<WorkshopQueueEntry> Queue = new();
+    [DataField, AutoNetworkedField]
+    public WorkshopQueue Queue = new();
 
     /// <summary>
     /// The maximum number of recipes that can be in the queue.
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public int MaxQueue = 10;
+
+    /// <summary>
+    /// A modifier for the recipe crafting speed in the workshop.
+    /// </summary>
+    [DataField]
+    public float CraftingTimeModifier = 1.0f;
 
     /// <summary>
     /// A user who is currently crafting.
@@ -58,7 +64,7 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// The maximum number of items that can be stored in the workshop.
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public int ContentCapacity = 12;
 
     /// <summary>
@@ -82,20 +88,8 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// The maximum size of an item that can be stored in the workshop.
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public ProtoId<ItemSizePrototype> MaxItemSize = "Normal";
-
-    /// <summary>
-    /// When the current recipe is finished.
-    /// </summary>
-    [AutoNetworkedField, ViewVariables]
-    public TimeSpan? CraftEndTime;
-
-    /// <summary>
-    /// When the crafting started.
-    /// </summary>
-    [AutoNetworkedField, ViewVariables]
-    public TimeSpan? CraftStartTime;
 
     /// <summary>
     /// A sound that plays when crafting begins in the workshop.
@@ -124,19 +118,10 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// Looping sound stream.
     /// </summary>
+    [ViewVariables]
     public EntityUid? PlayingStream;
-}
 
-[Serializable, NetSerializable]
-public readonly record struct WorkshopQueueEntry(
-    ProtoId<WorkshopRecipePrototype> Recipe,
-    ProtoId<WorkshopRecipePrototype>[] Pathfinding)
-{
-    public ProtoId<WorkshopRecipePrototype> Current
-        => Pathfinding.Length > 0 ? Pathfinding[0] : Recipe;
-
-    public WorkshopQueueEntry Advance()
-        => Pathfinding.Length == 0 ? this : this with { Pathfinding = Pathfinding[1..] };
+    public bool Crafting => Queue.Crafting;
 }
 
 [Serializable, NetSerializable]
@@ -152,13 +137,23 @@ public sealed class WorkshopRemoveFromQueueMessage(int index) : BoundUserInterfa
 }
 
 [Serializable, NetSerializable]
+public sealed class WorkshopRepeatMessage(int index) : BoundUserInterfaceMessage
+{
+    public int Index = index;
+}
+
+[Serializable, NetSerializable]
+public sealed class WorkshopSuspendMessage(int index) : BoundUserInterfaceMessage
+{
+    public int Index = index;
+}
+
+[Serializable, NetSerializable]
 public sealed class WorkshopUiState(
     NetEntity[] contained,
     NetEntity[] containedResults,
     int resultsCapacity,
-    List<WorkshopQueueEntry> queue,
-    TimeSpan? craftEndTime,
-    TimeSpan? craftStartTime,
+    WorkshopQueue queue,
     int maxQueue,
     NetEntity? user,
     ProtoId<WorkshopRecipeTablePrototype> recipesTable) : BoundUserInterfaceState
@@ -166,9 +161,7 @@ public sealed class WorkshopUiState(
     public NetEntity[] Contained = contained;
     public NetEntity[] ContainedResults = containedResults;
     public int ResultsCapacity = resultsCapacity;
-    public List<WorkshopQueueEntry> Queue = queue;
-    public TimeSpan? CraftEndTime = craftEndTime;
-    public TimeSpan? CraftStartTime = craftStartTime;
+    public WorkshopQueue Queue = queue;
     public int MaxQueue = maxQueue;
     public NetEntity? User = user;
     public ProtoId<WorkshopRecipeTablePrototype> RecipesTable = recipesTable;

@@ -10,4 +10,8 @@ workshop-menu-recipe-items = Items:
 workshop-menu-recipe-reagents = Reagents:
 workshop-menu-recipe-materials = Materials:
 workshop-menu-reagent-quantity = {$quantity}u
-workshop-menu-recipe-queue-status-active = [color=#BF2233][Active][/color]
+workshop-menu-recipe-queue-status-active = [color=#BF2233]\[A\][/color]
+workshop-menu-recipe-queue-status-repeat = [color=#B07D2B]\[R\][/color]
+workshop-menu-recipe-queue-status-suspended = [color=orange]\[S\][/color]
+workshop-menu-recipe-queue-tooltip = Press [color=orange][keybind="Use"] to suspend the recipe creation[/color]
+                                     Press [color=#B07D2B][keybind="UseSecondary"] to toggle recipe repeating[/color]
