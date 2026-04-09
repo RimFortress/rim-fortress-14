@@ -17,8 +17,10 @@ public partial class WorkshopSystem
     public bool TryGetNextCraftingItem(
         EntityUid user,
         Entity<WorkshopComponent?> workshop,
-        [NotNullWhen(true)] out EntityUid? entity)
+        [NotNullWhen(true)] out EntityUid? entity,
+        [NotNullWhen(false)] out string? reason)
     {
+        reason = string.Empty;
         entity = null;
 
         if (!Resolve(workshop, ref workshop.Comp) || GetCurrentRecipe(workshop) is not { } protoId)
@@ -28,17 +30,17 @@ public partial class WorkshopSystem
 
         foreach (var (material, count) in ingredients.Materials)
         {
-            return TryGetMaterial(user, material, count, out entity);
+            return TryGetMaterial(user, material, count, out entity, out reason);
         }
 
         foreach (var (ent, _) in ingredients.Items)
         {
-            return TryGetIngredient(user, ent, out entity);
+            return TryGetIngredient(user, ent, out entity, out reason);
         }
 
         foreach (var (reagent, quantity) in ingredients.Reagents)
         {
-            return TryGetReagent(user, reagent, quantity, out entity);
+            return TryGetReagent(user, reagent, quantity, out entity, out reason);
         }
 
         return false;
@@ -48,8 +50,10 @@ public partial class WorkshopSystem
         EntityUid user,
         ProtoId<StackPrototype> stack,
         int count,
-        [NotNullWhen(true)] out EntityUid? entity)
+        [NotNullWhen(true)] out EntityUid? entity,
+        [NotNullWhen(false)] out string? reason)
     {
+        reason = string.Empty;
         entity = null;
         (EntityUid Uid, int Count, float Dist)? nearest = null;
 
@@ -82,7 +86,10 @@ public partial class WorkshopSystem
         }
 
         if (nearest == null)
+        {
+            reason = _npcHelper.MaterialNotFoundReason(stack, count);
             return false;
+        }
 
         entity = nearest.Value.Uid;
         return true;
@@ -91,8 +98,10 @@ public partial class WorkshopSystem
     private bool TryGetIngredient(
         EntityUid user,
         EntProtoId protoId,
-        [NotNullWhen(true)] out EntityUid? entity)
+        [NotNullWhen(true)] out EntityUid? entity,
+        [NotNullWhen(false)] out string? reason)
     {
+        reason = string.Empty;
         entity = null;
         (EntityUid Uid, float Dist)? nearest = null;
 
@@ -122,7 +131,10 @@ public partial class WorkshopSystem
         }
 
         if (nearest == null)
+        {
+            reason = _npcHelper.EntProtoNotFoundReason(protoId);
             return false;
+        }
 
         entity = nearest.Value.Uid;
         return true;
@@ -132,8 +144,10 @@ public partial class WorkshopSystem
         EntityUid user,
         ProtoId<ReagentPrototype> reagent,
         FixedPoint2 quantity,
-        [NotNullWhen(true)] out EntityUid? entity)
+        [NotNullWhen(true)] out EntityUid? entity,
+        [NotNullWhen(false)] out string? reason)
     {
+        reason = string.Empty;
         entity = null;
 
         (EntityUid Uid, float Dist, FixedPoint2 Quan)? nearest = null;
@@ -175,7 +189,10 @@ public partial class WorkshopSystem
         }
 
         if (nearest == null)
+        {
+            reason = _npcHelper.ReagentNotFoundReason(reagent, quantity);
             return false;
+        }
 
         entity = nearest.Value.Uid;
         return true;

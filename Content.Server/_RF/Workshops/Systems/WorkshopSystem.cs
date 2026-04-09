@@ -14,6 +14,7 @@ namespace Content.Server._RF.Workshops.Systems;
 public sealed partial class WorkshopSystem : SharedWorkshopSystem
 {
     [Dependency] private readonly NpcControlSystem _npcControl = default!;
+    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
 
     private EntityQuery<WorkshopTaskSourceComponent> _query;
@@ -40,17 +41,13 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
     private void OnTaskFinished(Entity<WorkshopComponent> ent, ref NpcTaskFinishedTarget args)
     {
         if (!_query.TryComp(ent, out var source)
-            || source.Task != args.Task
-            || !ent.Comp.Crafting)
+            || source.Task != args.Task)
             return;
 
-        ent.Comp.Queue.SetEndTime(null);
-        DirtyField(ent.AsNullable(), nameof(WorkshopComponent.Queue));
-
-        ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
-        Audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
-        UpdateAppearance(ent.AsNullable());
-        UpdateUi(ent.AsNullable());
+        if (source.SuspendOnFail)
+            ToggleSuspend(ent.AsNullable(), ent.Comp.Queue.Index);
+        else if (ent.Comp.Crafting)
+            StopCrafting(ent.AsNullable());
     }
 
     protected override void UpdateNpcRecipe(EntityUid uid)

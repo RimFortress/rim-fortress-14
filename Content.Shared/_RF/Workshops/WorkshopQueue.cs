@@ -63,7 +63,7 @@ public sealed partial class WorkshopQueue
             return;
         }
 
-        if (!entry.Repeat)
+        if (entry is { Repeat: false, Suspended: false })
         {
             Queue.RemoveAt(Index);
             Index = ValidateIndex(Index);

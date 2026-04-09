@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.Workshops.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
@@ -13,6 +14,7 @@ public sealed partial class GetWorkshopIngredientOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entity = default!;
     private WorkshopSystem _workshop;
+    private NpcControlSystem _control;
 
     /// <summary>
     /// The key stores the workshop entity.
@@ -30,14 +32,18 @@ public sealed partial class GetWorkshopIngredientOperator : HTNOperator
     {
         base.Initialize(sysManager);
         _workshop = sysManager.GetEntitySystem<WorkshopSystem>();
+        _control = sysManager.GetEntitySystem<NpcControlSystem>();
     }
 
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
     {
-        if (blackboard.TryGetValue<EntityUid>(TargetKey, out var target, _entity)
-            && _workshop.TryGetNextCraftingItem(blackboard.GetOwner(), target, out var uid))
+        if (!blackboard.TryGetValue<EntityUid>(TargetKey, out var target, _entity))
+            return (false, null);
+
+        if (_workshop.TryGetNextCraftingItem(blackboard.GetOwner(), target, out var uid, out var reason))
             return (true, new() { {ResultKey, uid.Value} });
 
+        _control.AddFailReason(blackboard.GetOwner(), reason);
         return (false, null);
     }
 }

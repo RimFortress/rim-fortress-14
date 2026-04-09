@@ -21,4 +21,10 @@ public sealed partial class WorkshopTaskSourceComponent : Component
     /// </summary>
     [DataField]
     public string TargetRecipeKey = "TargetRecipe";
+
+    /// <summary>
+    /// Will the recipe crafting be suspended if the task fails.
+    /// </summary>
+    [DataField]
+    public bool SuspendOnFail = true;
 }

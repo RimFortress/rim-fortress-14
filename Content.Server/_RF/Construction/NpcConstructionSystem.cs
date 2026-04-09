@@ -263,7 +263,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
-        reason = Loc.GetString("construction-items-operator-tag-not-found", ("tags", string.Join(", ", tags)));
+        reason = _npcHelper.TagNotFoundReason(tags);
         return null;
     }
 
@@ -282,8 +282,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
-        reason = Loc.GetString("construction-items-operator-tool-not-found",
-            ("tool", Loc.GetString(_proto.Index(quality).Name)));
+        reason = _npcHelper.ToolNotFoundReason(quality);
         return null;
     }
 
@@ -304,7 +303,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
-        reason = Loc.GetString("construction-items-operator-component-not-found", ("component", component));
+        reason = _npcHelper.ComponentNotFoundReason(component);
         return null;
     }
 
@@ -335,9 +334,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return split;
         }
 
-        reason = Loc.GetString("construction-items-operator-material-not-found",
-            ("material", Loc.GetString(_proto.Index(stack).Name)),
-            ("amount", amount.ToString()));
+        reason = _npcHelper.MaterialNotFoundReason(stack, amount);
         return null;
     }
 
