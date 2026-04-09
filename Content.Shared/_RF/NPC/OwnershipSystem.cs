@@ -84,7 +84,7 @@ public sealed class OwnershipSystem : EntitySystem
 
     private void OnGetVerbs(GetVerbsEvent<Verb> args)
     {
-        if (!_admin.IsAdmin(args.User))
+        if (!_admin.IsAdmin(args.User) || HasOwner(args.Target, args.User))
             return;
 
         args.Verbs.Add(new Verb

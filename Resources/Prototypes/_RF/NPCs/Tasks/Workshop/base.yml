@@ -13,6 +13,20 @@
 - type: htnCompound
   id: WorkshopCompound
   branches:
+  - preconditions:
+    - !type:WorkshopCraftingPrecondition
+    tasks:
+    - !type:HTNPrimitiveTask
+      operator: !type:EntityCoordinatesOperator
+        targetKey: Target
+    - !type:HTNPrimitiveTask
+      operator: !type:MoveToOperator
+        rangeKey: InteractLongRange
+    - !type:HTNPrimitiveTask
+      operator: !type:WaitWhileOperator
+        preconditions:
+        - !type:WorkshopCraftingPrecondition
+
   - tasks:
     - !type:HTNPrimitiveTask
       operator: !type:GetWorkshopIngredientOperator

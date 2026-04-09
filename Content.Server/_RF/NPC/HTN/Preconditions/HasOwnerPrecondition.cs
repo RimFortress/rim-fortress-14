@@ -8,7 +8,7 @@ public sealed partial class HasOwnerPrecondition : InvertiblePrecondition
     private OwnershipSystem _ownership;
 
     [DataField]
-    public string Target = NPCBlackboard.Owner;
+    public string TargetKey = NPCBlackboard.Owner;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
@@ -17,6 +17,6 @@ public sealed partial class HasOwnerPrecondition : InvertiblePrecondition
     }
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
-        => blackboard.TryGetValue(Target, out EntityUid target, EntityManager)
+        => blackboard.TryGetValue(TargetKey, out EntityUid target, EntityManager)
            && _ownership.GetOwners(target).Count > 0;
 }

@@ -521,7 +521,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         var control = entity.Comp2;
 
         if (control.CurrentTask != null)
-            FinishTask(new(entity, control, htn));
+            FinishTask(new(entity, control, htn), TaskFinishStatus.Replaced);
 
         if (target != null)
             EnsureComp<ActiveNpcTaskTargetComponent>(target.Value).Tasks.GetOrNew(proto).Add(entity);
@@ -568,7 +568,9 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// <summary>
     /// Ends the current entity task and deletes all temporary keys and notifies the users
     /// </summary>
-    public void FinishTask(Entity<ControllableNpcComponent?, HTNComponent?> npc, bool failed = false)
+    public void FinishTask(
+        Entity<ControllableNpcComponent?, HTNComponent?> npc,
+        TaskFinishStatus status = TaskFinishStatus.Finished)
     {
         if (!Resolve(npc, ref npc.Comp1, false)
             || !Resolve(npc, ref npc.Comp2, false)
@@ -581,7 +583,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         RemoveActiveTarget(control.TaskTarget, control.CurrentTask!.Value, npc);
 
         if (control.TaskTarget != null
-            && !failed
+            && status == TaskFinishStatus.Finished
             && _passiveTaskQuery.TryComp(control.TaskTarget, out var comp)
             && comp.RemoveWhenFailed
             && comp.Task == control.CurrentTask)
@@ -628,7 +630,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             RaiseNetworkEvent(new NpcTaskFinishMessage(proto.ID, GetNetEntity(npc)), uid);
         }
 
-        RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, failed, reason));
+        RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, status, reason));
 
         if (target != null)
             RaiseLocalEvent(target.Value, new NpcTaskFinishedTarget(proto, npc));
@@ -1006,7 +1008,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (_htnQuery.TryComp(uid, out var htn)
                 && _controllableQuery.TryComp(uid, out var comp)
                 && htn.Plan == null)
-                FinishTask(new(uid, comp, htn), true);
+                FinishTask(new(uid, comp, htn), TaskFinishStatus.Failed);
 
             _fails.Remove(uid);
         }
@@ -1016,13 +1018,19 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
 /// <summary>
 /// Raised when an NPC has completed its current task.
 /// </summary>
-public record struct NpcTaskFinished(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, bool Failed, string? Reason);
+[PublicAPI]
+public record struct NpcTaskFinished(
+    ProtoId<NpcTaskPrototype> Task,
+    EntityUid? Target,
+    TaskFinishStatus Status,
+    string? Reason);
 
 /// <summary>
 /// Raised when an NPC task targeting the entity is completed.
 /// </summary>
 /// <param name="Task">Task prototype.</param>
 /// <param name="User">The NPC who started performing the task.</param>
+[PublicAPI]
 public record struct NpcTaskFinishedTarget(ProtoId<NpcTaskPrototype> Task, EntityUid User);
 
 /// <summary>
@@ -1031,6 +1039,7 @@ public record struct NpcTaskFinishedTarget(ProtoId<NpcTaskPrototype> Task, Entit
 /// <param name="Task">Task prototype.</param>
 /// <param name="Target">The target entity of the task.</param>
 /// <param name="TargetCoordinates">Target coordinates of the task.</param>
+[PublicAPI]
 public record struct NpcTaskGiven(ProtoId<NpcTaskPrototype> Task, EntityUid? Target, EntityCoordinates? TargetCoordinates);
 
 /// <summary>
@@ -1038,16 +1047,38 @@ public record struct NpcTaskGiven(ProtoId<NpcTaskPrototype> Task, EntityUid? Tar
 /// </summary>
 /// <param name="Task">Task prototype.</param>
 /// <param name="User">The NPC who started performing the task.</param>
+[PublicAPI]
 public record struct NpcTaskGivenTarget(ProtoId<NpcTaskPrototype> Task, EntityUid User);
 
 /// <summary>
 /// Raised when a user who can control the entity is added.
 /// </summary>
 /// <param name="User">The user who can now control this entity.</param>
+[PublicAPI]
 public record struct NpcControllerAdded(EntityUid User);
 
 /// <summary>
 /// Raised when the user who can control this entity is removed.
 /// </summary>
 /// <param name="User">User who can no longer control this entity.</param>
+[PublicAPI]
 public record struct NpcControllerRemoved(EntityUid User);
+
+[PublicAPI]
+public enum TaskFinishStatus : byte
+{
+    /// <summary>
+    /// The task has been successfully completed.
+    /// </summary>
+    Finished,
+
+    /// <summary>
+    /// The task was replaced with another one ahead of schedule.
+    /// </summary>
+    Replaced,
+
+    /// <summary>
+    /// The task ended in failure.
+    /// </summary>
+    Failed,
+}
