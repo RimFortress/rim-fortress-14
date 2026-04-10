@@ -183,37 +183,4 @@ public sealed class StockpileSystem : SharedStockpileSystem
 
         return null;
     }
-
-    /// <summary>
-    /// Searches for the last stockpiles in the supply chain to which the given entity can be stocked
-    /// </summary>
-    public List<Stock> FindLastSupplied(EntityUid uid, Stock startStock)
-    {
-        var stockpiles = new List<Stock>();
-        var queue = new Queue<Stock>();
-
-        if (!CanInsert(startStock, uid))
-            return stockpiles;
-
-        queue.Enqueue(startStock);
-
-        while (queue.TryDequeue(out var stock))
-        {
-            var valid = true;
-
-            foreach (var id in stock.SuppliedStockpiles)
-            {
-                if (!TryGetStock(id, out var supplied) || !CanInsert(supplied, uid))
-                    continue;
-
-                valid = false;
-                queue.Enqueue(supplied);
-            }
-
-            if (valid)
-                stockpiles.Add(stock);
-        }
-
-        return stockpiles;
-    }
 }

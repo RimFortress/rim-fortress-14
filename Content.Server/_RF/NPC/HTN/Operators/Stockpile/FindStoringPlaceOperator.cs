@@ -12,6 +12,7 @@ namespace Content.Server._RF.NPC.HTN.Operators.Stockpile;
 public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditionalShutdown
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
+    private ContainerStockSupplierSystem _containerSupplier = default!;
     private PathfindingSystem _pathfind = default!;
     private StockpileSystem _stockpile = default!;
 
@@ -68,6 +69,7 @@ public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditio
         base.Initialize(sysManager);
         _pathfind = sysManager.GetEntitySystem<PathfindingSystem>();
         _stockpile = sysManager.GetEntitySystem<StockpileSystem>();
+        _containerSupplier = sysManager.GetEntitySystem<ContainerStockSupplierSystem>();
     }
 
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
@@ -80,7 +82,9 @@ public sealed partial class FindStoringPlaceOperator : HTNOperator, IHtnConditio
 
         List<Stock> stockpiles;
 
-        if (blackboard.TryGetValue(SupplyingOnlyKey, out bool only, _entManager) && only || SupplyingOnly)
+        if (_containerSupplier.TryGetSupplier(uid, out var supplier))
+            stockpiles = _containerSupplier.FindLastSupplied(supplier.Value.AsNullable(), uid);
+        else if (blackboard.TryGetValue(SupplyingOnlyKey, out bool only, _entManager) && only || SupplyingOnly)
         {
             if (!blackboard.TryGetValue(SupplyingStartStockKey, out Stock? stock, _entManager))
                 return (false, null);

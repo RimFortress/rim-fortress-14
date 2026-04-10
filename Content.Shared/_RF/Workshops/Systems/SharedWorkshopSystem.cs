@@ -1,6 +1,7 @@
 using System.Linq;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.Skills;
+using Content.Shared._RF.Stockpile;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared.Chemistry.EntitySystems;
@@ -26,7 +27,9 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
     [Dependency] protected readonly SharedAudioSystem Audio = default!;
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly IGameTiming Timing = default!;
+    [Dependency] private readonly ContainerStockSupplierSystem _containerSupplier = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+    [Dependency] private readonly SharedStockpileSystem _stockpile = default!;
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedStackSystem _stack = default!;
@@ -55,6 +58,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
             subs.Event<WorkshopRemoveFromQueueMessage>(OnRemoveFromQueue);
             subs.Event<WorkshopRepeatMessage>(OnRepeat);
             subs.Event<WorkshopSuspendMessage>(OnSuspend);
+            subs.Event<WorkshopSuppliedStockMessage>(OnSuppliedStock);
         });
 
         _stackQuery = GetEntityQuery<StackComponent>();
@@ -177,6 +181,19 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
     {
         if (Ownership.HasOwner(ent.Owner, args.Actor))
             ToggleSuspend(ent.AsNullable(), args.Index);
+    }
+
+    private void OnSuppliedStock(Entity<WorkshopComponent> ent, ref WorkshopSuppliedStockMessage args)
+    {
+        if (!Ownership.HasOwner(ent.Owner, args.Actor)
+            || !TryComp(ent, out ContainerStockSupplierComponent? comp))
+            return;
+
+        if (_stockpile.TryGetStock(args.StockId, out var stock)
+            && stock.Owner == args.Actor)
+            _containerSupplier.SetOnlySupplied(new(ent, comp), args.StockId);
+        else
+            _containerSupplier.ClearSupplied(new(ent, comp));
     }
 
     private void UpdateUserInterface(Entity<WorkshopComponent> ent, ref BoundUIOpenedEvent args)

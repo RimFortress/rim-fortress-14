@@ -58,6 +58,9 @@
     containers:
     - workshop_entity_container
     - workshop_result_container
+  - type: ContainerStockSupplier
+    containers:
+    - workshop_result_container
 
 - type: entity
   id: BaseWorkshop2States

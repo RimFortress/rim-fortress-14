@@ -143,6 +143,12 @@ public sealed class WorkshopSuspendMessage(int index) : BoundUserInterfaceMessag
 }
 
 [Serializable, NetSerializable]
+public sealed class WorkshopSuppliedStockMessage(int stockId) : BoundUserInterfaceMessage
+{
+    public int StockId = stockId;
+}
+
+[Serializable, NetSerializable]
 public sealed class WorkshopUiState(
     NetEntity[] contained,
     NetEntity[] containedResults,
