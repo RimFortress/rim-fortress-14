@@ -39,7 +39,6 @@ public sealed partial class NPCBlackboard : IEnumerable<KeyValuePair<string, obj
         {PullerThrowDistance, 2f},
         {PullingMoveCloseRange, 0.05f},
         {DialogStartOffset, 1.5f},
-        {"InteractLongRange", 2f },
         // RimFortress End
     };
 

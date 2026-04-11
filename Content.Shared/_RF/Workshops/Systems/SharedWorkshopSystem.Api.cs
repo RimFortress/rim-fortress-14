@@ -3,6 +3,7 @@ using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Audio;
+using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
@@ -242,6 +243,20 @@ public abstract partial class SharedWorkshopSystem
 
         DirtyField(ent, nameof(WorkshopComponent.Queue));
         UpdateUi(ent);
+    }
+
+    /// <summary>
+    /// Returns the coordinates of the workspace.
+    /// </summary>
+    public EntityCoordinates GetCraftingPlace(Entity<WorkshopComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return EntityCoordinates.Invalid;
+
+        var xform = Transform(ent);
+        var coord = xform.Coordinates;
+        var offset = xform.LocalRotation.RotateVec(ent.Comp.CraftingPlace);
+        return new EntityCoordinates(coord.EntityId, coord.Position + offset);
     }
 
     /// <summary>

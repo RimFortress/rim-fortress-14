@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared._RF.Workshops.Systems;
 using Content.Shared.Item;
@@ -42,6 +43,12 @@ public sealed partial class WorkshopComponent : Component
     /// </summary>
     [DataField]
     public float CraftingTimeModifier = 1.0f;
+
+    /// <summary>
+    /// The coordinates of the location relative to the workshop where the NPCs will be working.
+    /// </summary>
+    [DataField]
+    public Vector2 CraftingPlace = Vector2.Zero;
 
     /// <summary>
     /// A container that holds the entities used to craft recipes.
