@@ -40,14 +40,13 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
 
     private void OnTaskFinished(Entity<WorkshopComponent> ent, ref NpcTaskFinishedTarget args)
     {
-        if (!_query.TryComp(ent, out var source)
-            || source.Task != args.Task)
+        if (!_query.TryComp(ent, out var source) || source.Task != args.Task)
             return;
 
-        if (source.SuspendOnFail)
+        if (source.SuspendOnFail && args.Status == TaskFinishStatus.Failed)
             SetSuspend(ent.AsNullable(), ent.Comp.Queue.Index, true);
         else if (ent.Comp.Crafting)
-            StopCrafting(ent.AsNullable());
+            StopCrafting(ent.AsNullable(), false);
     }
 
     protected override void UpdateNpcRecipe(EntityUid uid)
@@ -81,7 +80,7 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
                 comp.Task,
                 ent,
                 removeWhenFailed: false,
-                additionalKeys: new() { {comp.TargetRecipeKey, protoId} });
+                additionalKeys: new() { { comp.TargetRecipeKey, protoId } });
             break;
         }
     }

@@ -159,7 +159,7 @@
       types:
         Blunt: 5
   - type: SleepEmitSound
-  - type: SSDIndicator
+  #- type: SSDIndicator # RimFortress
   - type: StandingState
   - type: Crawler
   - type: Dna

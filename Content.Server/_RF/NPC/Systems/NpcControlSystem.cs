@@ -633,7 +633,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         RaiseLocalEvent(npc, new NpcTaskFinished(proto, target, status, reason));
 
         if (target != null)
-            RaiseLocalEvent(target.Value, new NpcTaskFinishedTarget(proto, npc));
+            RaiseLocalEvent(target.Value, new NpcTaskFinishedTarget(proto, npc, status));
     }
 
     /// <summary>
@@ -1030,8 +1030,9 @@ public record struct NpcTaskFinished(
 /// </summary>
 /// <param name="Task">Task prototype.</param>
 /// <param name="User">The NPC who started performing the task.</param>
+/// <param name="Status">Task finish status.</param>
 [PublicAPI]
-public record struct NpcTaskFinishedTarget(ProtoId<NpcTaskPrototype> Task, EntityUid User);
+public record struct NpcTaskFinishedTarget(ProtoId<NpcTaskPrototype> Task, EntityUid User, TaskFinishStatus Status);
 
 /// <summary>
 /// Raised when an NPC receives a task.

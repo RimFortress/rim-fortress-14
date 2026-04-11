@@ -219,8 +219,13 @@ public sealed partial class WorkshopQueueEntry
     /// The recipe currently being processed by this entry.
     /// If the path is exhausted, this returns <see cref="Recipe"/>.
     /// </summary>
-    public ProtoId<WorkshopRecipePrototype> Current
-        => HasPath && PathIndex < Pathfinding.Length ? Pathfinding[PathIndex] : Recipe;
+    public ProtoId<WorkshopRecipePrototype> Current => CurrentPath ?? Recipe;
+
+    public ProtoId<WorkshopRecipePrototype>? CurrentPath
+        => HasPath && PathIndex < Pathfinding.Length
+            ? Pathfinding[PathIndex]
+            : (ProtoId<WorkshopRecipePrototype>?)null;
+
 
     /// <summary>
     /// Returns <c>true</c> when a path exists.
@@ -230,14 +235,14 @@ public sealed partial class WorkshopQueueEntry
     /// <summary>
     /// Returns <c>true</c> when the path has been fully consumed.
     /// </summary>
-    public bool PathFinished => !HasPath || PathIndex >= Pathfinding.Length - 1;
+    public bool PathFinished => !HasPath || PathIndex >= Pathfinding.Length;
 
     /// <summary>
     /// Advances the path position by one step, clamped to the last valid step.
     /// </summary>
     public void AdvancePath()
     {
-        if (HasPath && PathIndex < Pathfinding.Length - 1)
+        if (HasPath && PathIndex < Pathfinding.Length)
             PathIndex++;
     }
 

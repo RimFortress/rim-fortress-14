@@ -161,30 +161,45 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
     private void OnAddToQueue(Entity<WorkshopComponent> ent, ref WorkshopAddToQueueMessage args)
     {
+        if (!Timing.IsFirstTimePredicted)
+            return;
+
         if (Ownership.HasOwner(ent.Owner, args.Actor))
             AddToQueue(ent.AsNullable(), args.ProtoId);
     }
 
     private void OnRemoveFromQueue(Entity<WorkshopComponent> ent, ref WorkshopRemoveFromQueueMessage args)
     {
+        if (!Timing.IsFirstTimePredicted)
+            return;
+
         if (Ownership.HasOwner(ent.Owner, args.Actor))
             RemoveFromQueue(ent.AsNullable(), args.Index);
     }
 
     private void OnRepeat(Entity<WorkshopComponent> ent, ref WorkshopRepeatMessage args)
     {
+        if (!Timing.IsFirstTimePredicted)
+            return;
+
         if (Ownership.HasOwner(ent.Owner, args.Actor))
             ToggleRepeat(ent.AsNullable(), args.Index);
     }
 
     private void OnSuspend(Entity<WorkshopComponent> ent, ref WorkshopSuspendMessage args)
     {
+        if (!Timing.IsFirstTimePredicted)
+            return;
+
         if (Ownership.HasOwner(ent.Owner, args.Actor))
             ToggleSuspend(ent.AsNullable(), args.Index);
     }
 
     private void OnSuppliedStock(Entity<WorkshopComponent> ent, ref WorkshopSuppliedStockMessage args)
     {
+        if (!Timing.IsFirstTimePredicted)
+            return;
+
         if (!Ownership.HasOwner(ent.Owner, args.Actor)
             || !TryComp(ent, out ContainerStockSupplierComponent? comp))
             return;
@@ -257,7 +272,13 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
             return;
 
         var spawned = Spawn(protoId, Transform(ent).Coordinates);
-        Container.Insert(spawned, ent.Comp.ResultStorage, force: true);
+
+        if (ent.Comp.Queue.Entry?.CurrentPath is { } recipe
+            && _recipes.TryGetValue(protoId, out var recipes)
+            && recipes.Contains(recipe))
+            Container.Insert(spawned, ent.Comp.ContentStorage, force: true);
+        else
+            Container.Insert(spawned, ent.Comp.ResultStorage, force: true);
 
         foreach (var owner in Ownership.GetOwners(ent))
         {
@@ -265,7 +286,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         }
     }
 
-    protected void StopCrafting(Entity<WorkshopComponent?> ent)
+    protected void StopCrafting(Entity<WorkshopComponent?> ent, bool finishTask = true)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -273,9 +294,14 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         ent.Comp.Queue.SetEndTime(null);
         DirtyField(ent, nameof(WorkshopComponent.Queue));
 
+        if (ent.Comp.PlayingStream?.IsValid() == true)
+            Audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
+
         ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
-        Audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
-        FinishTask(ent);
+
+        if (finishTask)
+            FinishTask(ent);
+
         UpdateAppearance(ent);
         UpdateUi(ent);
     }

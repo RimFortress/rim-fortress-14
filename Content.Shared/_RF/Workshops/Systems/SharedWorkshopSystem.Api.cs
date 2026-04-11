@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Prototypes;
 using JetBrains.Annotations;
@@ -256,9 +257,12 @@ public abstract partial class SharedWorkshopSystem
         if (entry.Suspended == suspend)
             return;
 
+        if (!suspend && ent.Comp.Queue.Queue.All(x => x.Suspended))
+            AddPassiveTask(ent);
+
         entry.Suspended = suspend;
 
-        if (entry.Suspended && index == ent.Comp.Queue.Index)
+        if (suspend && index == ent.Comp.Queue.Index)
         {
             AdvanceQueue(ent);
             return;

@@ -3,7 +3,7 @@
   abstract: true
   components:
   - type: Workshop
-    craftingPlace: -1,-1
+    craftingPlace: -0.5,-1
   - type: WorkshopVisuals
     stages:
     - threshold: 0
