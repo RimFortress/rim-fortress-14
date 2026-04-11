@@ -212,7 +212,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         ent.Comp.Queue.Advance();
         DirtyField(ent, nameof(WorkshopComponent.Queue));
 
-        if (ent.Comp.Queue.Count == 0)
+        if (ent.Comp.Queue.Count == 0 || ent.Comp.Queue.Queue.All(x => x.Suspended))
         {
             RemovePassiveTask(ent.Owner);
             StopCrafting(ent);

@@ -206,6 +206,7 @@ public abstract partial class SharedWorkshopSystem
     /// </summary>
     /// <param name="ent">Workshop entity.</param>
     /// <param name="index">Recipe Index.</param>
+    [PublicAPI]
     public void ToggleRepeat(Entity<WorkshopComponent?> ent, int index)
     {
         if (!Resolve(ent, ref ent.Comp)
@@ -224,7 +225,26 @@ public abstract partial class SharedWorkshopSystem
     /// </summary>
     /// <param name="ent">Workshop entity.</param>
     /// <param name="index">Recipe Index.</param>
+    [PublicAPI]
     public void ToggleSuspend(Entity<WorkshopComponent?> ent, int index)
+    {
+        if (!Resolve(ent, ref ent.Comp)
+            || index < 0
+            || index >= ent.Comp.Queue.Count)
+            return;
+
+        SetSuspend(ent, index, !ent.Comp.Queue.Queue[index].Suspended);
+    }
+
+    /// <summary>
+    /// Suspends or resumes recipe crafting in the workshop.
+    /// Suspended recipes are skipped in the recipe queue.
+    /// </summary>
+    /// <param name="ent">Workshop entity.</param>
+    /// <param name="index">Recipe Index.</param>
+    /// <param name="suspend"></param>
+    [PublicAPI]
+    public void SetSuspend(Entity<WorkshopComponent?> ent, int index, bool suspend)
     {
         if (!Resolve(ent, ref ent.Comp)
             || index < 0
@@ -233,7 +253,10 @@ public abstract partial class SharedWorkshopSystem
 
         var entry = ent.Comp.Queue.Queue[index];
 
-        entry.Suspended = !entry.Suspended;
+        if (entry.Suspended == suspend)
+            return;
+
+        entry.Suspended = suspend;
 
         if (entry.Suspended && index == ent.Comp.Queue.Index)
         {
@@ -248,6 +271,7 @@ public abstract partial class SharedWorkshopSystem
     /// <summary>
     /// Returns the coordinates of the workspace.
     /// </summary>
+    [PublicAPI]
     public EntityCoordinates GetCraftingPlace(Entity<WorkshopComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))

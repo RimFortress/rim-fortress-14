@@ -45,7 +45,7 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
             return;
 
         if (source.SuspendOnFail)
-            ToggleSuspend(ent.AsNullable(), ent.Comp.Queue.Index);
+            SetSuspend(ent.AsNullable(), ent.Comp.Queue.Index, true);
         else if (ent.Comp.Crafting)
             StopCrafting(ent.AsNullable());
     }
