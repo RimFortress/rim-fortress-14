@@ -42,6 +42,7 @@
   - type: AtmosExposed
   - type: Temperature
     currentTemperature: 290
+  - type: TemperatureDamage
   # required for cooking to work
   - type: InternalTemperature
     thickness: 0.02
@@ -73,16 +74,6 @@
   - type: StockpileCategory
     category: RawMeat
   # RimFortress End
-
-# bruh
-- type: Tag
-  id: Raw
-
-- type: Tag
-  id: Cooked
-
-- type: Tag
-  id: Cutlet
 
 # Raw
 

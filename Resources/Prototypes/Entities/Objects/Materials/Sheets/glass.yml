@@ -508,7 +508,7 @@
       - !type:DoActsBehavior
         acts: [ "Destruction" ]
   - type: Extractable
-    grindableSolutionName: brassglass
+    grindableSolutionName: cglass
   - type: SolutionContainerManager
     solutions:
       cglass:

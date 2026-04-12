@@ -15,19 +15,16 @@ public sealed class MenuButton : ContainerButton
 {
     [Dependency] private readonly IInputManager _inputManager = default!;
     public const string StyleClassLabelTopButton = "topButtonLabel";
-    public const string StyleClassRedTopButton = "topButtonLabel";
+    // public const string StyleClassRedTopButton = "topButtonLabel";
 
+    // TODO: KIIIIIILLLLLLLLLLLLLLLLLLLLLLLLLLL --kaylie.
     // RimFortress Start
     private static readonly Color ColorNormal = StyleFortress.GoldButtonColorDefault;
-    private static readonly Color ColorRedNormal = StyleFortress.Bad;
     private static readonly Color ColorHovered = StyleFortress.GoldButtonColorHovered;
-    private static readonly Color ColorRedHovered = StyleFortress.LightBad;
     private static readonly Color ColorPressed = StyleFortress.GoldButtonColorPressed;
     // RimFortress Start
 
-    private const float VertPad = 8f;
-    private Color NormalColor => HasStyleClass(StyleClassRedTopButton) ? ColorRedNormal : ColorNormal;
-    private Color HoveredColor => HasStyleClass(StyleClassRedTopButton) ? ColorRedHovered : ColorHovered;
+    private const float VertPad = 4f;
 
     private BoundKeyFunction? _function;
     private readonly BoxContainer _root;
@@ -59,14 +56,14 @@ public sealed class MenuButton : ContainerButton
             VerticalAlignment = VAlignment.Center,
             VerticalExpand = true,
             Margin = new Thickness(0, VertPad),
-            ModulateSelfOverride = NormalColor,
+            ModulateSelfOverride = ColorNormal,
             Stretch = TextureRect.StretchMode.KeepCentered
         };
         _buttonLabel = new Label
         {
             Text = "",
             HorizontalAlignment = HAlignment.Center,
-            ModulateSelfOverride = NormalColor,
+            ModulateSelfOverride = ColorNormal,
             StyleClasses = {StyleClassLabelTopButton}
         };
         _root = new BoxContainer
@@ -120,8 +117,8 @@ public sealed class MenuButton : ContainerButton
         switch (DrawMode)
         {
             case DrawModeEnum.Normal:
-                _buttonIcon.ModulateSelfOverride = NormalColor;
-                _buttonLabel.ModulateSelfOverride = NormalColor;
+                _buttonIcon.ModulateSelfOverride = ColorNormal;
+                _buttonLabel.ModulateSelfOverride = ColorNormal;
                 break;
 
             case DrawModeEnum.Pressed:
@@ -130,8 +127,8 @@ public sealed class MenuButton : ContainerButton
                 break;
 
             case DrawModeEnum.Hover:
-                _buttonIcon.ModulateSelfOverride = HoveredColor;
-                _buttonLabel.ModulateSelfOverride = HoveredColor;
+                _buttonIcon.ModulateSelfOverride = ColorHovered;
+                _buttonLabel.ModulateSelfOverride = ColorHovered;
                 break;
 
             case DrawModeEnum.Disabled:
