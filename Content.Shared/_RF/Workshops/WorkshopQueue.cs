@@ -221,6 +221,9 @@ public sealed partial class WorkshopQueueEntry
     /// </summary>
     public ProtoId<WorkshopRecipePrototype> Current => CurrentPath ?? Recipe;
 
+    /// <summary>
+    /// The recipe from path currently being processed by this entry.
+    /// </summary>
     public ProtoId<WorkshopRecipePrototype>? CurrentPath
         => HasPath && PathIndex < Pathfinding.Length
             ? Pathfinding[PathIndex]

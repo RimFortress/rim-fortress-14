@@ -121,10 +121,9 @@ public abstract partial class SharedWorkshopSystem
             return false;
 
         Audio.PlayPvs(ent.Comp.StartCraftingSound, ent);
-        ent.Comp.PlayingStream =
-            Audio.PlayPvs(ent.Comp.LoopingSound, ent, AudioParams.Default.WithLoop(true).WithMaxDistance(5))?.Entity;
         ent.Comp.Queue.SetEndTime(GetCraftingEndTime(ent, protoId));
         DirtyField(ent, nameof(WorkshopComponent.Queue));
+        UpdateAudioLoop(ent);
         UpdateAppearance(ent);
         UpdateUi(ent);
         return true;

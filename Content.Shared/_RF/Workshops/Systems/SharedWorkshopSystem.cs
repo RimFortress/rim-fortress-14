@@ -11,6 +11,7 @@ using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
 using Content.Shared.Item;
 using Content.Shared.Stacks;
+using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
@@ -252,6 +253,20 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         _appearance.SetData(ent, WorkshopVisualsState.Items, ent.Comp1.ContentStorage.Count, ent.Comp3);
     }
 
+    protected void UpdateAudioLoop(Entity<WorkshopComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        if (ent.Comp.Crafting && ent.Comp.PlayingStream == null)
+        {
+            var param = ent.Comp.LoopingSound?.Params.WithLoop(true) ?? AudioParams.Default.WithLoop(true);
+            ent.Comp.PlayingStream = Audio.PlayPvs(ent.Comp.LoopingSound, ent, param)?.Entity;
+        }
+        else if (!ent.Comp.Crafting)
+            ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
+    }
+
     private TimeSpan GetCraftingEndTime(
         Entity<WorkshopComponent?> ent,
         ProtoId<WorkshopRecipePrototype> protoId)
@@ -297,11 +312,10 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         if (ent.Comp.PlayingStream?.IsValid() == true)
             Audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
 
-        ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
-
         if (finishTask)
             FinishTask(ent);
 
+        UpdateAudioLoop(ent);
         UpdateAppearance(ent);
         UpdateUi(ent);
     }
