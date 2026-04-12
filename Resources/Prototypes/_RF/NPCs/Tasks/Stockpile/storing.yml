@@ -205,8 +205,17 @@
   - !type:StorableFilter
     invert: true
   - !type:StoredFilter
-  - !type:InventoryFilter
-  - !type:InHandsFilter
+  - !type:OrFilter
+    filters:
+    - !type:InContainerFilter
+      invert: true
+    - !type:ContainerOwnerFilter
+      whitelist:
+        components:
+        - EntityStorage
+        - Storage
+    - !type:InContainerStockSupplierFilter
+    invert: true
   considerations:
   - !type:NormTargetDistanceCon
     curve: !type:PresetCurve

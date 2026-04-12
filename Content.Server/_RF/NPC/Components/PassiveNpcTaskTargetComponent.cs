@@ -6,17 +6,32 @@ namespace Content.Server._RF.NPC.Components;
 
 /// <summary>
 /// An entity that is the passive target of a certain task.
-/// Entities for active task targets can be selected from the list of such entities
+/// Entities for active task targets can be selected from the list of such entities.
 /// </summary>
 [RegisterComponent, Access(typeof(NpcControlSystem))]
 public sealed partial class PassiveNpcTaskTargetComponent : Component
 {
     /// <summary>
-    /// The user who issued this task
+    /// The user who issued this task.
     /// </summary>
     [ViewVariables]
     public EntityUid User;
 
+    /// <summary>
+    /// Npc task prototype.
+    /// </summary>
     [ViewVariables]
     public ProtoId<NpcTaskPrototype> Task;
+
+    /// <summary>
+    ///
+    /// </summary>
+    [ViewVariables]
+    public Dictionary<string, object> AdditionalKeys = new();
+
+    /// <summary>
+    ///
+    /// </summary>
+    [ViewVariables]
+    public bool RemoveWhenFailed;
 }

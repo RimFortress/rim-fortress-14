@@ -1,0 +1,10 @@
+<controls:RecipeResultButton
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Workshops.UI"
+    Margin="3 2">
+    <BoxContainer>
+        <EntityPrototypeView Name="Icon" SetSize="24 24"
+                             Stretch="Fill" Margin="2 0"/>
+        <Label Name="Label"/>
+    </BoxContainer>
+</controls:RecipeResultButton>

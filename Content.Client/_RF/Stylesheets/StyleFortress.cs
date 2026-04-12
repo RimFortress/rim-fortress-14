@@ -864,6 +864,11 @@ public sealed class StyleFortress : StyleBase
                 .Class(SocializationEffectInfo.OddRowStyleClass)
                 .Prop(ContainerButton.StylePropertyStyleBox, new StyleBoxFlat(DarkForest)),
 
+            // ProgressButton
+            Element<ProgressButton>()
+                .Prop(ProgressButton.StylePropertyForeground,
+                    new StyleBoxFlat { BackgroundColor = Color.Black.WithAlpha(0.2f) }),
+
             #region Blue Button
 
             Element<ContainerButton>()

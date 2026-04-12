@@ -119,7 +119,8 @@
       Melee: 0.75
       Farming: 1.25
       Healing: 1.10
-      Woodcutting: 0.85
+      Woodcutting: 0.50
+      Cooking: 1.25
   - type: HungerOverride
     thresholdDecayTime:
       Overfed: 90m

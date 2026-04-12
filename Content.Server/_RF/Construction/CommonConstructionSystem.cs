@@ -29,7 +29,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
     [Dependency] private readonly ContainerSystem _container = default!;
     [Dependency] private readonly ConstructionSystem _construction = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -39,7 +39,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         SubscribeNetworkEvent<ConstructionGhostSpawnRequest>(OnSpawnRequest);
         SubscribeNetworkEvent<ConstructionGhostClearRequest>(OnClearRequest);
 
-        SubscribeLocalEvent<OwnedComponent, ConstructionChangeEntityEvent>(OnConstructionChange);
+        SubscribeLocalEvent<OwnershipComponent, ConstructionChangeEntityEvent>(OnConstructionChange);
         SubscribeLocalEvent<CommonConstructionGhostComponent, InteractUsingEvent>(OnAfterInteract,
             new []{typeof(AnchorableSystem), typeof(PryingSystem), typeof(WeldableSystem)},
             new []{typeof(EncryptionKeySystem)});
@@ -61,7 +61,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (ghost == null)
             return;
 
-        _owned.AddOwner(ghost.Value, user);
+        _ownership.AddOwner(ghost.Value, user);
     }
 
     private void OnClearRequest(ConstructionGhostClearRequest request)
@@ -70,13 +70,13 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
     }
 
     private void OnConstructionChange(EntityUid uid,
-        OwnedComponent component,
+        OwnershipComponent component,
         ConstructionChangeEntityEvent args)
     {
         if (!HasComp<ConstructionComponent>(args.New))
             return;
 
-        _owned.SetOwners(args.New, component.Owners);
+        _ownership.AddOwners(args.New, component.Owners);
     }
 
     // Code taken from ConstructionSystem.Initial.cs

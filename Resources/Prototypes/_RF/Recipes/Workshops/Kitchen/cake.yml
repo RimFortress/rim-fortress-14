@@ -1,0 +1,227 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenCakeRecipesTable
+  recipes:
+  - RecipeAppleCake
+  - RecipeCarrotCake
+  - RecipeLemonCake
+  - RecipeLemoonCake
+  - RecipeOrangeCake
+  - RecipeBlueberryCake
+  - RecipeLimeCake
+  - RecipeCheeseCake
+  - RecipePumpkinCake
+  - RecipeClownCake
+  - RecipeCake
+  - RecipeBirthdayCake
+  - RecipeChocolateCake
+  - RecipeBrainCake
+  - RecipeSlimeCake
+  - RecipeCatCake
+  - RecipeBerryDelight
+  - RecipeSuppermatter
+  - RecipeCottonCake
+
+# Recipes
+- type: workshopRecipe
+  id: BaseCakeRecipe
+  parent: BaseKitchenRecipe
+  abstract: true
+  group: Cake
+  craftingTime: 25
+  skillsUp:
+  - skill: Cooking
+    exp: 10
+
+- type: workshopRecipe
+  id: RecipeAppleCake
+  parent: BaseCakeRecipe
+  result: FoodCakeApple
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodApple: 3
+
+- type: workshopRecipe
+  id: RecipeCarrotCake
+  parent: BaseCakeRecipe
+  result: FoodCakeCarrot
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodCarrot: 3
+
+- type: workshopRecipe
+  id: RecipeLemonCake
+  parent: BaseCakeRecipe
+  result: FoodCakeLemon
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodLemon: 3
+
+- type: workshopRecipe
+  id: RecipeLemoonCake
+  parent: BaseCakeRecipe
+  result: FoodCakeLemoon
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodLemoon: 2
+      FoodBerries: 1
+
+- type: workshopRecipe
+  id: RecipeOrangeCake
+  parent: BaseCakeRecipe
+  result: FoodCakeOrange
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodOrange: 3
+
+- type: workshopRecipe
+  id: RecipeBlueberryCake
+  parent: BaseCakeRecipe
+  result: FoodCakeBlueberry
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodBerries: 3
+
+- type: workshopRecipe
+  id: RecipeLimeCake
+  parent: BaseCakeRecipe
+  result: FoodCakeLime
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodLime: 3
+
+- type: workshopRecipe
+  id: RecipeCheeseCake
+  parent: BaseCakeRecipe
+  result: FoodCakeCheese
+  ingredients:
+    reagents:
+      Cream: 10
+    items:
+      FoodCakePlain: 1
+      FoodCheeseSlice: 3
+
+- type: workshopRecipe
+  id: RecipePumpkinCake
+  parent: BaseCakeRecipe
+  result: FoodCakePumpkin
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodPumpkin: 1
+
+- type: workshopRecipe
+  id: RecipeClownCake
+  parent: BaseCakeRecipe
+  result: FoodCakeClown
+  ingredients:
+    items:
+      ClothingMaskClown: 1
+      FoodCakePlain: 1
+
+- type: workshopRecipe
+  id: RecipeCake
+  parent: BaseCakeRecipe
+  result: FoodCakePlain
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodCakeBatter: 1
+
+- type: workshopRecipe
+  id: RecipeBirthdayCake
+  parent: BaseCakeRecipe
+  result: FoodCakeBirthday
+  ingredients:
+    reagents:
+      Cream: 5
+    items:
+      FoodCakePlain: 1
+
+- type: workshopRecipe
+  id: RecipeChocolateCake
+  parent: BaseCakeRecipe
+  result: FoodCakeChocolate
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      FoodSnackChocolateBar: 2
+
+- type: workshopRecipe
+  id: RecipeBrainCake
+  parent: BaseCakeRecipe
+  result: FoodCakeBrain
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodCakePlain: 1
+      OrganHumanBrain: 1
+
+- type: workshopRecipe
+  id: RecipeSlimeCake
+  parent: BaseCakeRecipe
+  result: FoodCakeSlime
+  ingredients:
+    reagents:
+      Slime: 15
+    items:
+      FoodCakePlain: 1
+
+- type: workshopRecipe
+  id: RecipeCatCake
+  parent: BaseCakeRecipe
+  result: MobCatCake
+  craftingTime: 75
+  ingredients:
+    reagents:
+      Milk: 15
+      Cognizine: 5
+    items:
+      FoodCakePlain: 1
+      FoodSnackRaisins: 1
+      OrganAnimalHeart: 1
+
+- type: workshopRecipe
+  id: RecipeBerryDelight
+  parent: BaseCakeRecipe
+  result: FoodCakeBerryDelight
+  ingredients:
+    reagents:
+      Milk: 10
+    items:
+      FoodCakeBlueberry: 1
+      FoodBerries: 2
+
+- type: workshopRecipe
+  id: RecipeSuppermatter
+  parent: BaseCakeRecipe
+  result: FoodCakeSuppermatter
+  craftingTime: 150
+  group: Cake
+  ingredients:
+    items:
+      FoodCakeBatter: 2
+    reagents:
+      Sugar: 30
+      Nitrogen: 10
+      Plasma: 10
+  skillsUp:
+  - skill: Cooking
+    exp: 60
+
+- type: workshopRecipe
+  id: RecipeCottonCake
+  parent: BaseMothRecipe
+  result: FoodCakeCotton
+  ingredients:
+    items:
+      FoodCakePlain: 1
+    reagents:
+      Fiber: 10

@@ -1,0 +1,305 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenBreadRecipesTable
+  recipes:
+  - RecipeBun
+  - RecipeCottonBun
+  - RecipeBagel
+  - RecipeBagelPoppy
+  - RecipeBagelCotton
+  - RecipeBananaBread
+  - RecipeCornbread
+  - RecipeCreamCheeseBread
+  - RecipeMeatBread
+  - RecipeMimanaBread
+  - RecipeBread
+  - RecipeBreadCotton
+  - RecipeSausageBread
+  - RecipeSpiderMeatBread
+  - RecipeTofuBread
+  - RecipeXenoMeatBread
+  - RecipeBaguette
+  - RecipeBaguetteCotton
+  - RecipeButteredToast
+  - RecipeFrenchToast
+  - RecipeGarlicBread
+  - RecipeJellyToast
+  - RecipeMoldyBreadSlice
+  - RecipeTwoBreadSlice
+  - RecipeBreadDog
+  - RecipeTacoShell
+
+# Recipes
+- type: workshopRecipe
+  id: BaseBreadRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Breads
+
+- type: workshopRecipe
+  id: RecipeBun
+  parent: BaseBreadRecipe
+  result: FoodBreadBun
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDoughSlice: 1
+
+- type: workshopRecipe
+  id: RecipeCottonBun
+  parent: BaseBreadRecipe
+  result: FoodCottonBun
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDoughCottonSlice: 1
+
+- type: workshopRecipe
+  id: RecipeBagel
+  parent: BaseBreadRecipe
+  result: FoodBagel
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDoughRope: 1
+
+- type: workshopRecipe
+  id: RecipeBagelPoppy
+  parent: BaseBreadRecipe
+  result: FoodBagelPoppy
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDoughRope: 1
+      PoppySeeds: 1
+
+- type: workshopRecipe
+  id: RecipeBagelCotton
+  parent: BaseMothRecipe
+  result: FoodBagelCotton
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDoughCottonRope: 1
+
+- type: workshopRecipe
+  id: RecipeBananaBread
+  parent: BaseBreadRecipe
+  result: FoodBreadBanana
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodBanana: 1
+
+- type: workshopRecipe
+  id: RecipeCornbread
+  parent: BaseBreadRecipe
+  result: FoodBreadCorn
+  ingredients:
+    items:
+      FoodDoughCornmeal: 1
+
+- type: workshopRecipe
+  id: RecipeCreamCheeseBread
+  parent: BaseBreadRecipe
+  result: FoodBreadCreamcheese
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodCheeseSlice: 2
+    reagents:
+      Milk: 5
+
+- type: workshopRecipe
+  id: RecipeMeatBread
+  parent: BaseBreadRecipe
+  result: FoodBreadMeat
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodMeatCutlet: 2
+      FoodCheeseSlice: 2
+
+- type: workshopRecipe
+  id: RecipeMimanaBread
+  parent: BaseBreadRecipe
+  result: FoodBreadMimana
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodMimana: 1
+    reagents:
+      Nothing: 5
+
+- type: workshopRecipe
+  id: RecipeBread
+  parent: BaseBreadRecipe
+  result: FoodBreadPlain
+  ingredients:
+    items:
+      FoodDough: 1
+
+- type: workshopRecipe
+  id: RecipeBreadCotton
+  parent: BaseMothRecipe
+  result: FoodBreadCotton
+  ingredients:
+    items:
+      FoodDoughCotton: 1
+
+- type: workshopRecipe
+  id: RecipeSausageBread
+  parent: BaseBreadRecipe
+  result: FoodBreadSausage
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodMeat: 1
+
+- type: workshopRecipe
+  id: RecipeSpiderMeatBread
+  parent: BaseBreadRecipe
+  result: FoodBreadMeatSpider
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodMeatSpiderCutlet: 2
+      FoodCheeseSlice: 2
+
+- type: workshopRecipe
+  id: RecipeTofuBread
+  parent: BaseBreadRecipe
+  result: FoodBreadTofu
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodTofu: 1
+
+- type: workshopRecipe
+  id: RecipeXenoMeatBread
+  parent: BaseBreadRecipe
+  result: FoodBreadMeatXeno
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodMeatXenoCutlet: 2
+      FoodCheeseSlice: 2
+
+# Slices Only
+
+- type: workshopRecipe
+  id: RecipeBaguette
+  parent: BaseBreadRecipe
+  result: FoodBreadBaguette
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+    reagents:
+      TableSalt: 5
+      Blackpepper: 5
+
+- type: workshopRecipe
+  id: RecipeBaguetteCotton
+  parent: BaseMothRecipe
+  result: FoodBreadBaguetteCotton
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDoughCotton: 1
+    reagents:
+      TableSalt: 5
+      Blackpepper: 5
+
+- type: workshopRecipe
+  id: RecipeButteredToast
+  parent: BaseBreadRecipe
+  result: FoodBreadButteredToast
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodBreadPlainSlice: 1
+      FoodButterSlice: 1
+
+- type: workshopRecipe
+  id: RecipeFrenchToast
+  parent: BaseBreadRecipe
+  result: FoodBreadFrenchToast
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodBreadPlainSlice: 1
+    reagents:
+      Milk: 5
+      Egg: 12
+
+- type: workshopRecipe
+  id: RecipeGarlicBread
+  parent: BaseBreadRecipe
+  result: FoodBreadGarlicSlice
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodBreadPlainSlice: 1
+      FoodGarlic: 1
+      FoodButterSlice: 1
+
+- type: workshopRecipe
+  id: RecipeJellyToast
+  parent: BaseBreadRecipe
+  result: FoodBreadJellySlice
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodBreadPlainSlice: 1
+      FoodJellyAmanita: 1
+
+- type: workshopRecipe
+  id: RecipeMoldyBreadSlice
+  parent: BaseBreadRecipe
+  result: FoodBreadMoldySlice
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodBreadPlainSlice: 1
+      FoodFlyAmanita: 1
+
+- type: workshopRecipe
+  id: RecipeTwoBreadSlice
+  parent: BaseBreadRecipe
+  result: FoodBreadTwoSlice
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodBreadPlainSlice: 2
+    reagents:
+      Wine: 5
+
+- type: workshopRecipe
+  id: RecipeBreadDog
+  parent: BaseBreadRecipe
+  result: MobBreadDog
+  craftingTime: 75
+  ingredients:
+    reagents:
+      Cognizine: 5
+    items:
+      FoodBreadSausage: 1
+      OrganAnimalHeart: 1
+      FoodSpaceshroomCooked: 1
+
+- type: workshopRecipe
+  id: RecipeTacoShell
+  parent: BaseBreadRecipe
+  result: FoodTacoShell
+  ingredients:
+    items:
+      FoodDoughTortillaFlat: 1

@@ -123,6 +123,7 @@
     multipliers:
       Melee: 1.25
       Farming: 0.75
+      Cooking: 0.9
   - type: HungerOverride
     thresholdDecayTime:
       Overfed: 90m

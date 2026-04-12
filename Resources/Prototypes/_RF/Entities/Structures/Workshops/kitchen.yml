@@ -1,0 +1,38 @@
+- type: entity
+  id: KitchenWorkshop
+  parent: [ BaseWorkshop3States, BaseMachine ]
+  name: kitchen
+  description: It's magic.
+  components:
+  - type: Sprite
+    sprite: _RF/Structures/Workshops/kitchen.rsi
+    offset: "-0.5,0.1"
+    noRot: true
+    layers:
+    - state: base
+      map: ["enum.WorkshopLayers.Base"]
+    - map: ["enum.WorkshopLayers.Items"]
+      visible: false
+  - type: WorkshopTaskSource
+    task: Cook
+  - type: Workshop
+    recipes: AllKitchenRecipesTable
+    craftingFailResult: FoodBadRecipe
+    startCraftingSound:
+      path: /Audio/_RF/Machines/Workshops/turn_stove_on_01.ogg
+    craftingDoneSound:
+      path: /Audio/_RF/Machines/Workshops/switch_strength_stove_01.ogg
+    loopingSound:
+      path: /Audio/_RF/Machines/Workshops/cooking_with_cover_01.ogg
+  - type: SkillInteraction
+    skill: Cooking
+    targetLevel: 4
+    experience: 10
+    expFailFactor: 0
+    doAfterFactor: 2
+  - type: PointLight
+    color: "#FC5F29"
+    offset: "-0.5,0"
+    radius: 1.5
+    energy: 50
+    enabled: false

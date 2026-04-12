@@ -1,0 +1,261 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenDessertRecipesTable
+  recipes:
+  - RecipeRicePudding
+  - RecipePancake
+  - RecipeBlueberryPancake
+  - RecipeWaffles
+  - RecipeWaffleSoy
+  - RecipeCookie
+  - RecipeSugarCookie
+  - RecipeRaisinCookie
+  - RecipeCookieOatmeal
+  - RecipeChocolateChipPancake
+  - RecipeBrownies
+  - RecipeCannabisBrownies
+  - RecipeCroissant
+  - RecipeCroissantCotton
+  - RecipeMuffin
+  - RecipeMuffinChocolate
+  - RecipeMuffinBerry
+  - RecipeMuffinBanana
+  - RecipeMuffinCherry
+
+# Recipes
+- type: workshopRecipe
+  id: BaseDessertRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Dessert
+
+- type: workshopRecipe
+  id: BaseMuffinRecipe
+  parent: BaseKitchenRecipe
+  abstract: true
+  craftingTime: 75
+  group: Muffin
+
+- type: workshopRecipe
+  id: RecipeRicePudding
+  parent: BaseDessertRecipe
+  result: FoodRicePudding
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodBowlBig: 1
+    reagents:
+      Rice: 15
+      Milk: 10
+      Sugar: 5
+
+- type: workshopRecipe
+  id: RecipePancake
+  parent: BaseDessertRecipe
+  result: FoodBakedPancake
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Flour: 5
+      Milk: 5
+      Egg: 6
+
+- type: workshopRecipe
+  id: RecipeBlueberryPancake
+  parent: BaseDessertRecipe
+  result: FoodBakedPancakeBb
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Flour: 5
+      Milk: 5
+      Egg: 6
+    items:
+      FoodBerries: 2
+
+- type: workshopRecipe
+  id: RecipeWaffles
+  parent: BaseDessertRecipe
+  result: FoodBakedWaffle
+  ingredients:
+    reagents:
+      Flour: 5
+      Milk: 5
+      Egg: 6
+      SodaWater: 5
+
+- type: workshopRecipe
+  id: RecipeWaffleSoy
+  parent: BaseDessertRecipe
+  result: FoodBakedWaffleSoy
+  ingredients:
+    reagents:
+      Flour: 5
+      MilkSoy: 5
+      Egg: 6
+      SodaWater: 5
+
+- type: workshopRecipe
+  id: RecipeCookie
+  parent: BaseDessertRecipe
+  result: FoodBakedCookie
+  ingredients:
+    reagents:
+      Flour: 5
+      Sugar: 5
+    items:
+      FoodButterSlice: 1
+      FoodSnackChocolateBar: 1
+
+- type: workshopRecipe
+  id: RecipeSugarCookie
+  parent: BaseDessertRecipe
+  result: FoodBakedCookieSugar
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Flour: 5
+      Sugar: 10
+    items:
+      FoodButterSlice: 1
+
+- type: workshopRecipe
+  id: RecipeRaisinCookie
+  parent: BaseDessertRecipe
+  result: FoodBakedCookieRaisin
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Flour: 5
+      Sugar: 5
+    items:
+      FoodSnackRaisins: 1
+
+- type: workshopRecipe
+  id: RecipeCookieOatmeal
+  parent: BaseDessertRecipe
+  result: FoodBakedCookieOatmeal
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Oats: 5
+      Sugar: 5
+    items:
+      FoodButterSlice: 1
+
+- type: workshopRecipe
+  id: RecipeChocolateChipPancake
+  parent: BaseDessertRecipe
+  result: FoodBakedPancakeCc
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Flour: 5
+      Milk: 5
+      Egg: 6
+    items:
+      FoodSnackChocolateBar: 1
+
+- type: workshopRecipe
+  id: RecipeBrownies
+  parent: BaseDessertRecipe
+  result: FoodBakedBrownieBatch
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Flour: 15
+      Sugar: 30
+      Egg: 18
+    items:
+      FoodButter: 2
+      FoodSnackChocolateBar: 2
+
+- type: workshopRecipe
+  id: RecipeMuffin
+  parent: BaseMuffinRecipe
+  result: FoodBakedMuffin
+  ingredients:
+    items:
+      FoodPlateMuffinTin: 1
+      FoodDoughSlice: 1
+    reagents:
+      Sugar: 10
+
+- type: workshopRecipe
+  id: RecipeMuffinChocolate
+  parent: BaseMuffinRecipe
+  result: FoodBakedMuffinChocolate
+  ingredients:
+    items:
+      FoodPlateMuffinTin: 1
+      FoodDoughSlice: 1
+      FoodSnackChocolateBar: 1
+    reagents:
+      Sugar: 10
+
+- type: workshopRecipe
+  id: RecipeMuffinBerry
+  parent: BaseMuffinRecipe
+  result: FoodBakedMuffinBerry
+  ingredients:
+    items:
+      FoodPlateMuffinTin: 1
+      FoodDoughSlice: 1
+      FoodBerries: 1
+    reagents:
+      Sugar: 10
+
+- type: workshopRecipe
+  id: RecipeMuffinBanana
+  parent: BaseMuffinRecipe
+  result: FoodBakedMuffinBanana
+  ingredients:
+    items:
+      FoodPlateMuffinTin: 1
+      FoodDoughSlice: 1
+      FoodBanana: 1
+    reagents:
+      Sugar: 10
+
+- type: workshopRecipe
+  id: RecipeMuffinCherry
+  parent: BaseMuffinRecipe
+  result: FoodBakedMuffinCherry
+  ingredients:
+    items:
+      FoodPlateMuffinTin: 1
+      FoodDoughSlice: 1
+      FoodCherry: 3
+    reagents:
+      Sugar: 10
+
+- type: workshopRecipe
+  id: RecipeCannabisBrownies
+  parent: BaseDessertRecipe
+  result: FoodBakedCannabisBrownieBatch
+  ingredients:
+    items:
+      FoodCannabisButter: 2
+      FoodSnackChocolateBar: 2
+    reagents:
+      Flour: 15
+      Sugar: 30
+      Egg: 18
+
+- type: workshopRecipe
+  id: RecipeCroissant
+  parent: BaseDessertRecipe
+  result: FoodBakedCroissant
+  ingredients:
+    items:
+      FoodCroissantRaw: 1
+      FoodButterSlice: 1
+
+- type: workshopRecipe
+  id: RecipeCroissantCotton
+  parent: BaseMothRecipe
+  result: FoodBakedCroissantCotton
+  ingredients:
+    items:
+      FoodCroissantRawCotton: 1
+      FoodButterSlice: 1

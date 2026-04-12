@@ -8,7 +8,7 @@ namespace Content.Shared._RF.Notifications.Systems;
 public sealed class NotifyOnStateChangedSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
     [Dependency] private readonly SharedNotificationsSystem _notifications = default!;
 
     /// <inheritdoc/>
@@ -25,7 +25,7 @@ public sealed class NotifyOnStateChangedSystem : EntitySystem
 
         var desc = Loc.GetString(proto.DescId, ("target", _notifications.GetEntityString(ent)));
 
-        foreach (var uid in _owned.GetOwners(ent))
+        foreach (var uid in _ownership.GetOwners(ent))
         {
             if (!TryComp(uid, out NotificationComponent? comp))
                 continue;

@@ -1,0 +1,182 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenPieRecipesTable
+  recipes:
+  - RecipeAmanitaPie
+  - RecipeApplePie
+  - RecipeBaklava
+  - RecipeBananaCreamPie
+  - RecipeBerryClafoutis
+  - RecipeCherryPie
+  - RecipeFrostyPie
+  - RecipeMeatPie
+  - RecipePumpkinPie
+  - RecipeXenoPie
+  - RecipeCocoTart
+  - RecipeGappleTart
+  - RecipeGrapeTart
+  - RecipeMimeTart
+
+# Recipes
+- type: workshopRecipe
+  id: BasePieRecipe
+  parent: BaseKitchenRecipe
+  abstract: true
+  group: Pie
+  craftingTime: 75
+  skillsUp:
+  - skill: Cooking
+    exp: 30
+
+- type: workshopRecipe
+  id: RecipeAmanitaPie
+  parent: BasePieRecipe
+  result: FoodPieAmanita
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodFlyAmanita: 1
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeApplePie
+  parent: BasePieRecipe
+  result: FoodPieApple
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodApple: 3
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeBaklava
+  parent: BasePieRecipe
+  result: FoodPieBaklava
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodSnackPistachios: 1
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeBananaCreamPie
+  parent: BasePieRecipe
+  result: FoodPieBananaCream
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodBanana: 3
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeBerryClafoutis
+  parent: BasePieRecipe
+  result: FoodPieClafoutis
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodBerries: 3
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeCherryPie
+  parent: BasePieRecipe
+  result: FoodPieCherry
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodCherry: 5
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeFrostyPie
+  parent: BasePieRecipe
+  result: FoodPieFrosty
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodChillyPepper: 3
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeMeatPie
+  parent: BasePieRecipe
+  result: FoodPieMeat
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodMeat: 3
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipePumpkinPie
+  parent: BasePieRecipe
+  result: FoodPiePumpkin
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodPumpkin: 1
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeXenoPie
+  parent: BasePieRecipe
+  result: FoodPieXeno
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodMeatXeno: 3
+      FoodPlateTin: 1
+
+- type: workshopRecipe
+  id: RecipeCocoTart
+  parent: BasePieRecipe
+  result: FoodTartCoco
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodSnackChocolateBar: 3
+      FoodPlateTin: 1
+    reagents:
+      Sugar: 5
+      Milk: 5
+
+- type: workshopRecipe
+  id: RecipeGappleTart
+  parent: BasePieRecipe
+  result: FoodTartGapple
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodApple: 2
+      FoodPlateTin: 1
+    reagents:
+      Gold: 10
+      Sugar: 5
+      Milk: 5
+
+- type: workshopRecipe
+  id: RecipeGrapeTart
+  parent: BasePieRecipe
+  result: FoodTartGrape
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodGrape: 3
+      FoodPlateTin: 1
+    reagents:
+      Sugar: 5
+      Milk: 5
+
+- type: workshopRecipe
+  id: RecipeMimeTart
+  parent: BasePieRecipe
+  result: FoodTartMime
+  ingredients:
+    items:
+      FoodDoughPie: 1
+      FoodMimana: 3
+      FoodPlateTin: 1
+    reagents:
+      Sugar: 5
+      Milk: 5

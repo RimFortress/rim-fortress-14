@@ -32,7 +32,9 @@ public sealed partial class OrFilter : RfUtilityQueryFilter
     {
         foreach (var filter in Filters)
         {
-            if (filter.Filter(uid, blackboard))
+            var valid = filter.Filter(uid, blackboard);
+
+            if (!filter.Invert && valid || filter.Invert && !valid)
                 return true;
         }
 

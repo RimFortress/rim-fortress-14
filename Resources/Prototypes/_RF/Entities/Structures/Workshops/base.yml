@@ -1,0 +1,125 @@
+- type: entity
+  id: BaseWorkshop
+  abstract: true
+  components:
+  - type: Workshop
+    craftingPlace: -0.5,-1
+  - type: WorkshopVisuals
+    stages:
+    - threshold: 0
+      visible: false
+    - threshold: 1
+      idleState: items
+      craftingState: items_crafting
+  - type: Appearance
+  - type: Sprite
+    noRot: true
+    layers:
+    - state: base
+      map: ["enum.WorkshopLayers.Base"]
+    - state: items
+      map: ["enum.WorkshopLayers.Items"]
+      visible: false
+  - type: Transform
+    noRot: true
+    anchored: true
+  - type: Physics
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-1.5,-0.5,0.5,0.5"
+        density: 50
+        mask:
+        - LargeMobMask
+        layer:
+        - WallLayer
+  - type: ActivatableUI
+    key: enum.WorkshopUiKey.Key
+    requiresComplex: false
+  - type: UserInterface
+    interfaces:
+      enum.WorkshopUiKey.Key:
+        type: WorkshopBoundUserInterface
+  - type: Destructible
+    thresholds:
+    - trigger: # Excess damage, don't spawn entities
+        !type:DamageTrigger
+        damage: 200
+      behaviors:
+      - !type:DoActsBehavior
+        acts: ["Destruction"]
+    - trigger:
+        !type:DamageTrigger
+        damage: 100
+      behaviors:
+      - !type:DoActsBehavior
+        acts: ["Breakage"]
+      - !type:PlaySoundBehavior
+        sound:
+          collection: MetalBreak
+  - type: EmptyOnMachineDeconstruct
+    containers:
+    - workshop_entity_container
+    - workshop_result_container
+  - type: ContainerStockSupplier
+    containers:
+    - workshop_result_container
+
+- type: entity
+  id: BaseWorkshop2States
+  parent: BaseWorkshop
+  abstract: true
+  components:
+  - type: WorkshopVisuals
+    stages:
+    - threshold: 0
+      visible: false
+    - threshold: 6
+      idleState: items_half
+      craftingState: items_crafting_half
+    - threshold: 12
+      idleState: items_full
+      craftingState: items_crafting_full
+
+- type: entity
+  id: BaseWorkshop3States
+  parent: BaseWorkshop
+  abstract: true
+  components:
+  - type: WorkshopVisuals
+    stages:
+    - threshold: 0
+      visible: false
+    - threshold: 4
+      idleState: items_33
+      craftingState: items_crafting_33
+    - threshold: 8
+      idleState: items_66
+      craftingState: items_crafting_66
+    - threshold: 12
+      idleState: items_100
+      craftingState: items_crafting_100
+
+- type: entity
+  id: BaseWorkshop4States
+  parent: BaseWorkshop
+  abstract: true
+  components:
+  - type: WorkshopVisuals
+    stages:
+    - threshold: 0
+      visible: false
+    - threshold: 3
+      idleState: items_25
+      craftingState: items_crafting_25
+    - threshold: 6
+      idleState: items_50
+      craftingState: items_crafting_50
+    - threshold: 9
+      idleState: items_75
+      craftingState: items_crafting_75
+    - threshold: 12
+      idleState: items_100
+      craftingState: items_crafting_100

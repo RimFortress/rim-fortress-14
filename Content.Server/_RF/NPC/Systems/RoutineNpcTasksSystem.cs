@@ -96,15 +96,16 @@ public sealed class RoutineNpcTasksSystem : SharedRoutineNpcTasksSystem
 
     private void OnTaskFinished(EntityUid uid, RoutineNpcTasksComponent comp, NpcTaskFinished args)
     {
-        if (!TryGetCurrentJob(uid, out var job)
+        if (args.Status == TaskFinishStatus.Replaced
+            || !TryGetCurrentJob(uid, out var job)
             || job.Tasks.FirstOrNull(x => x == args.Task) == null
             || !_prototype.TryIndex(args.Task, out var proto))
             return;
 
-        if (args.Failed && _taskCooldownOnFail != TimeSpan.Zero)
+        if (args.Status == TaskFinishStatus.Failed && _taskCooldownOnFail != TimeSpan.Zero)
             comp.AvailableOn[job.Id] = _timing.CurTime + _taskCooldownOnFail;
 
-        if (_finishTaskOnFailed && args.Failed)
+        if (_finishTaskOnFailed && args.Status == TaskFinishStatus.Failed)
             return;
 
         _control.TrySetPassiveTask(uid, proto);

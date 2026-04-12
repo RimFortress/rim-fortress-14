@@ -1,0 +1,554 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenSavoryRecipesTable
+  recipes:
+  - RecipeAppendixBurger
+  - RecipeBaconBurger
+  - RecipeBigBiteBurger
+  - RecipeChickenSandwich
+  - RecipeCrazyHamburger
+  - RecipeSuperBiteBurger
+  - RecipeOnionRings
+  - RecipeOatmeal
+  - RecipeBoiledRice
+  - RecipeRicePork
+  - RecipeRiceGumbo
+  - RecipeEggRice
+  - RecipeAmanitaJelly
+  - RecipeBoiledSnail
+  - RecipeCubanCarp
+  - RecipeSashimi
+  - RecipeMisoColaSoup
+  - RecipeLoadedBakedPotato
+  - RecipeFries
+  - RecipeCheesyFries
+  - RecipeCarrotFries
+  - RecipeNachos
+  - RecipeNachosCheesy
+  - RecipeNachosCuban
+  - RecipePopcorn
+  - RecipeDumplings
+  - RecipeWarmDonkpocket
+  - RecipeWarmDankpocket
+  - RecipeWarmDonkpocketSpicy
+  - RecipeWarmDonkpocketTeriyaki
+  - RecipeWarmDonkpocketPizza
+  - RecipeDonkpocketHonk
+  - RecipeDonkpocketBerry
+  - RecipeDonkpocketStonk
+  - RecipeDonkpocketCarp
+  - RecipeDonkpocketMoth
+  - RecipeRibs
+  - RecipeEnchiladas
+  - RecipeTacoBeef
+  - RecipeTacoChicken
+  - RecipeTacoFish
+  - RecipeTacoRat
+  - RecipeTacoBeefSupreme
+  - RecipeTacoChickenSupreme
+  - RecipeTacoDragon
+
+# Recipes
+- type: workshopRecipe
+  id: BaseSavoryRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Savory
+
+- type: workshopRecipe
+  id: RecipeAppendixBurger
+  parent: BaseSavoryRecipe
+  result: FoodBurgerAppendix
+  craftingTime: 50
+  ingredients:
+    items:
+      FoodBreadBun: 1
+      OrganHumanAppendix: 1
+
+- type: workshopRecipe
+  id: RecipeBaconBurger
+  parent: BaseSavoryRecipe
+  result: FoodBurgerBacon
+  craftingTime: 50
+  ingredients:
+    items:
+      FoodBreadBun: 1
+      FoodMeatBacon: 1
+      FoodCheeseSlice: 2
+
+- type: workshopRecipe
+  id: RecipeBigBiteBurger
+  parent: BaseSavoryRecipe
+  result: FoodBurgerBig
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodBreadBun: 1
+      FoodMeat: 2
+      FoodCheeseSlice: 1
+      FoodTomato: 1
+      FoodOnionSlice: 2
+
+- type: workshopRecipe
+  id: RecipeChickenSandwich
+  parent: BaseSavoryRecipe
+  result: FoodBurgerChicken
+  craftingTime: 50
+  ingredients:
+    items:
+      FoodBreadBun: 1
+      FoodMeatChicken: 1
+    reagents:
+      Mayo: 5
+
+- type: workshopRecipe
+  id: RecipeCrazyHamburger
+  parent: BaseSavoryRecipe
+  result: FoodBurgerCrazy
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodBreadBun: 1
+      FoodMeat: 2
+      FoodCheeseSlice: 2
+      FoodChiliPepper: 1
+      FoodCabbage: 1
+      CrayonGreen: 1
+      Flare: 1
+    reagents:
+      OilOlive: 15
+
+- type: workshopRecipe
+  id: RecipeSuperBiteBurger
+  parent: BaseSavoryRecipe
+  result: FoodBurgerSuper
+  craftingTime: 125
+  ingredients:
+    items:
+      FoodBreadBun: 1
+      FoodMeat: 2
+      FoodCheeseSlice: 2
+      FoodTomato: 2
+    reagents:
+      TableSalt: 5
+      Egg: 12
+
+- type: workshopRecipe
+  id: RecipeOnionRings
+  parent: BaseSavoryRecipe
+  result: FoodOnionRings
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodOnionSlice: 1
+
+- type: workshopRecipe
+  id: RecipeOatmeal
+  parent: BaseSavoryRecipe
+  result: FoodOatmeal
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodBowlBig: 1
+    reagents:
+      Oats: 15
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeBoiledRice
+  parent: BaseSavoryRecipe
+  result: FoodRiceBoiled
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodBowlBig: 1
+    reagents:
+      Rice: 15
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeRicePork
+  parent: BaseSavoryRecipe
+  result: FoodRicePork
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodRiceBoiled: 1
+      FoodMeatCutlet: 3
+
+- type: workshopRecipe
+  id: RecipeRiceGumbo
+  parent: BaseSavoryRecipe
+  result: FoodRiceGumbo
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodRiceBoiled: 1
+      FoodMeatCutlet: 3
+      FoodChiliPepper: 2
+
+- type: workshopRecipe
+  id: RecipeEggRice
+  parent: BaseSavoryRecipe
+  result: FoodRiceEgg
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodRiceBoiled: 1
+      FoodCarrot: 1
+    reagents:
+      Egg: 6
+
+- type: workshopRecipe
+  id: RecipeAmanitaJelly
+  parent: BaseSavoryRecipe
+  result: FoodJellyAmanita
+  craftingTime: 50
+  skillsUp:
+  - skill: Cooking
+    exp: 20
+  ingredients:
+    items:
+      FoodFlyAmanita: 3
+    reagents:
+      Water: 5
+      Vodka: 5
+
+- type: workshopRecipe
+  id: RecipeBoiledSnail
+  parent: BaseSavoryRecipe
+  result: FoodMeatSnailCooked
+  craftingTime: 25
+  skillsUp:
+  - skill: Cooking
+    exp: 10
+  ingredients:
+    items:
+      FoodMeatSnail: 1
+    reagents:
+      Water: 10
+
+# Other
+- type: workshopRecipe
+  id: RecipeCubanCarp
+  parent: BaseSavoryRecipe
+  result: FoodMealCubancarp
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodDough: 1
+      FoodCheeseSlice: 2
+      FoodChiliPepper: 1
+      FoodMeatFish: 2
+
+- type: workshopRecipe
+  id: RecipeSashimi
+  parent: BaseSavoryRecipe
+  result: FoodMealSashimi
+  craftingTime: 75
+  ingredients:
+    reagents:
+      TableSalt: 1
+    items:
+      FoodMeatFish: 2
+
+- type: workshopRecipe
+  id: RecipeMisoColaSoup
+  parent: BaseSoupRecipe
+  result: DisgustingSweptSoup
+  craftingTime: 75
+  ingredients:
+    reagents:
+      Cola: 5
+    items:
+      FoodSoupMiso: 1
+
+- type: workshopRecipe
+  id: RecipeLoadedBakedPotato
+  parent: BaseSavoryRecipe
+  result: FoodMealPotatoLoaded
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodPotato: 1
+      FoodCheeseSlice: 1
+
+- type: workshopRecipe
+  id: RecipeFries
+  parent: BaseSavoryRecipe
+  result: FoodMealFries
+  craftingTime: 75
+  ingredients:
+    reagents:
+      TableSalt: 5
+    items:
+      FoodPotato: 1
+
+- type: workshopRecipe
+  id: RecipeCheesyFries
+  parent: BaseSavoryRecipe
+  result: FoodMealFriesCheesy
+  craftingTime: 75
+  ingredients:
+    reagents:
+      TableSalt: 5
+    items:
+      FoodPotato: 1
+      FoodCheeseSlice: 1
+
+- type: workshopRecipe
+  id: RecipeCarrotFries
+  parent: BaseSavoryRecipe
+  result: FoodMealFriesCarrot
+  craftingTime: 75
+  ingredients:
+    reagents:
+      TableSalt: 5
+    items:
+      FoodCarrot: 1
+
+- type: workshopRecipe
+  id: RecipeNachos
+  parent: BaseSavoryRecipe
+  result: FoodMealNachos
+  ingredients:
+    reagents:
+      TableSalt: 1
+    items:
+      FoodDoughTortillaFlat: 1
+      FoodPlateSmall: 1
+
+- type: workshopRecipe
+  id: RecipeNachosCheesy
+  parent: BaseSavoryRecipe
+  result: FoodMealNachosCheesy
+  ingredients:
+    reagents:
+      TableSalt: 1
+    items:
+      FoodCheeseSlice: 1
+      FoodDoughTortillaFlat: 1
+      FoodPlateSmall: 1
+
+- type: workshopRecipe
+  id: RecipeNachosCuban
+  parent: BaseSavoryRecipe
+  result: FoodMealNachosCuban
+  ingredients:
+    reagents:
+      Ketchup: 5
+    items:
+      FoodChiliPepper: 1
+      FoodDoughTortillaFlat: 1
+      FoodPlateSmall: 1
+
+- type: workshopRecipe
+  id: RecipePopcorn
+  parent: BaseSavoryRecipe
+  result: FoodSnackPopcorn
+  craftingTime: 100
+  ingredients:
+    items:
+      FoodCorn: 1
+
+- type: workshopRecipe
+  id: RecipeDumplings
+  parent: BaseSavoryRecipe
+  result: FoodBakedDumplings
+  craftingTime: 75
+  ingredients:
+    reagents:
+      Water: 10
+      UncookedAnimalProteins: 6
+    items:
+      FoodDoughSlice: 3
+
+- type: workshopRecipe
+  id: RecipeWarmDonkpocket
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocket: 1
+
+- type: workshopRecipe
+  id: RecipeWarmDankpocket
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketDankWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketDank: 1
+
+- type: workshopRecipe
+  id: RecipeWarmDonkpocketSpicy
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketSpicyWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketSpicy: 1
+
+- type: workshopRecipe
+  id: RecipeWarmDonkpocketTeriyaki
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketTeriyakiWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketTeriyaki: 1
+
+- type: workshopRecipe
+  id: RecipeWarmDonkpocketPizza
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketPizzaWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketPizza: 1
+
+- type: workshopRecipe
+  id: RecipeDonkpocketHonk
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketHonkWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketHonk: 1
+
+- type: workshopRecipe
+  id: RecipeDonkpocketBerry
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketBerryWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketBerry: 1
+
+- type: workshopRecipe
+  id: RecipeDonkpocketStonk
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketStonkWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketStonk: 1
+
+- type: workshopRecipe
+  id: RecipeDonkpocketCarp
+  parent: BaseSavoryRecipe
+  result: FoodDonkpocketCarpWarm
+  craftingTime: 25
+  ingredients:
+    items:
+      FoodDonkpocketCarp: 1
+
+- type: workshopRecipe
+  id: RecipeDonkpocketMoth
+  parent: BaseMothRecipe
+  result: FoodDonkpocketMothWarm
+  ingredients:
+    items:
+      FoodDonkpocketMoth: 1
+
+- type: workshopRecipe
+  id: RecipeRibs
+  parent: BaseSavoryRecipe
+  result: FoodMealRibs
+  craftingTime: 75
+  ingredients:
+    reagents:
+      BbqSauce: 5
+    items:
+      FoodMeat: 2
+      FoodKebabSkewer: 1
+
+- type: workshopRecipe
+  id: RecipeEnchiladas
+  parent: BaseSavoryRecipe
+  result: FoodMealEnchiladas
+  craftingTime: 100
+  ingredients:
+    items:
+      FoodChiliPepper: 2
+      FoodMeatCutlet: 1
+      FoodCorn: 1
+
+- type: workshopRecipe
+  id: RecipeTacoBeef
+  parent: BaseSavoryRecipe
+  result: FoodTacoBeef
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodMeatCutlet: 1
+      FoodCheeseSlice: 1
+
+- type: workshopRecipe
+  id: RecipeTacoChicken
+  parent: BaseSavoryRecipe
+  result: FoodTacoChicken
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodMeatChickenCutlet: 1
+      FoodCheeseSlice: 1
+
+- type: workshopRecipe
+  id: RecipeTacoFish
+  parent: BaseSavoryRecipe
+  result: FoodTacoFish
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodMeatFish: 1
+      FoodOnionSlice: 2
+      FoodTomato: 1
+      FoodCabbage: 1
+
+- type: workshopRecipe
+  id: RecipeTacoRat
+  parent: BaseSavoryRecipe
+  result: FoodTacoRat
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodCheeseSlice: 1
+      FoodMeatRat: 1
+
+- type: workshopRecipe
+  id: RecipeTacoBeefSupreme
+  parent: BaseSavoryRecipe
+  result: FoodTacoBeefSupreme
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodCheeseSlice: 1
+      FoodMeatCutlet: 1
+      FoodTomato: 1
+      FoodCabbage: 1
+      FoodOnionSlice: 2
+
+- type: workshopRecipe
+  id: RecipeTacoChickenSupreme
+  parent: BaseSavoryRecipe
+  result: FoodTacoChickenSupreme
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodCheeseSlice: 1
+      FoodMeatChickenCutlet: 1
+      FoodTomato: 1
+      FoodCabbage: 1
+      FoodOnionSlice: 2
+
+- type: workshopRecipe
+  id: RecipeTacoDragon
+  parent: BaseSavoryRecipe
+  result: FoodTacoDragon
+  ingredients:
+    items:
+      FoodTacoShell: 1
+      FoodMeatDragonCutlet: 2
+      FoodChiliPepper: 1

@@ -52,6 +52,12 @@ public sealed class Stock
     public HashSet<Vector2i> Tiles => _tiles;
 
     /// <summary>
+    /// List of all prototypes in stock, including quantities
+    /// </summary>
+    [Access(Other = AccessPermissions.ReadExecute)]
+    public IReadOnlyDictionary<EntProtoId, int> PrototypesCount => _prototypes;
+
+    /// <summary>
     /// All entities in stockpile
     /// </summary>
     public HashSet<EntityUid> Entities => _entities.Keys.ToHashSet();

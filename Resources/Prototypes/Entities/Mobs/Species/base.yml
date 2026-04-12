@@ -159,7 +159,7 @@
       types:
         Blunt: 5
   - type: SleepEmitSound
-  - type: SSDIndicator
+  #- type: SSDIndicator # RimFortress
   - type: StandingState
   - type: Crawler
   - type: Dna
@@ -216,6 +216,7 @@
     - Melee
     - Farming
     - Woodcutting
+    - Cooking
     randomLevels:
       min: 5
       max: 20
@@ -225,6 +226,7 @@
       Healing: 0.0025
       Melee: 0.0020
       Mining: 0.0033 # Sad miner is a bad miner
+      Cooking: 0.03
   - type: Social
   - type: TriggerOnDamage
     keyOut: onDamage

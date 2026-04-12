@@ -1,22 +1,18 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Construction.Conditions;
 using Content.Server.Stack;
 using Content.Server.Tools;
 using Content.Shared._RF.Construction;
-using Content.Shared._RF.NPC;
 using Content.Shared.Construction;
 using Content.Shared.Construction.Prototypes;
 using Content.Shared.Construction.Steps;
-using Content.Shared.Hands.Components;
-using Content.Shared.Inventory;
 using Content.Shared.Stacks;
-using Content.Shared.Storage;
 using Content.Shared.Tag;
 using Content.Shared.Tools;
-using Robust.Server.Containers;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Construction;
@@ -27,11 +23,9 @@ namespace Content.Server._RF.Construction;
 public sealed class NpcConstructionSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly TagSystem _tag = default!;
     [Dependency] private readonly ToolSystem _tool = default!;
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
     [Dependency] private readonly StackSystem _stack = default!;
     [Dependency] private readonly ConstructionSystem _construction = default!;
 
@@ -42,15 +36,14 @@ public sealed class NpcConstructionSystem : EntitySystem
     /// <summary>
     /// Returns all items necessary for the user to advance in the construction of the entity.
     /// </summary>
-    /// <param name="uid">Entity for construction</param>
-    /// <param name="user">User entity</param>
-    /// <param name="reason">The reason why the construction item could not be found</param>
+    /// <param name="uid">Entity for construction.</param>
+    /// <param name="user">User entity.</param>
+    /// <param name="reason">The reason why the construction item could not be found.</param>
     public List<EntityUid>? GetConstructionItems(EntityUid uid, EntityUid user, out string reason)
     {
         reason = string.Empty;
         var entities = new List<EntityUid>();
-        var mapId = Transform(uid).MapID;
-        var commonQuery = CommonQuery();
+        var commonQuery = _npcHelper.FreeOwnedEntities(user);
 
         foreach (var edge in GetEdges(uid))
         {
@@ -73,38 +66,6 @@ public sealed class NpcConstructionSystem : EntitySystem
         }
 
         return entities.Count == 0 ? null : entities;
-
-        // Returns all items available to the user, sorted by distance
-        List<EntityUid> CommonQuery()
-        {
-            var query = new List<(EntityUid Uid, float Dist)>();
-            var invEntities = InventoryEntities(user);
-            var pos = Transform(user).Coordinates;
-            var enumerator = EntityQueryEnumerator<OwnedComponent, TransformComponent>();
-
-            while (enumerator.MoveNext(out var ent, out var owned, out var xform))
-            {
-                if (invEntities.Contains(ent))
-                {
-                    query.Add((ent, 0f));
-                    continue;
-                }
-
-                if (xform.MapID != mapId
-                    || !_owned.HasSameOwner(user, new(ent, owned))
-                    || !pos.TryDistance(EntityManager, xform.Coordinates, out var distance)
-                    || _inventory.TryGetContainingSlot(ent, out _))
-                    continue;
-
-                if (_container.TryGetContainingContainer(new(ent, null, null), out var container)
-                    && HasComp<HandsComponent>(container.Owner))
-                    continue;
-
-                query.Add((ent, distance));
-            }
-
-            return query.OrderBy(x => x.Dist).Select(x => x.Uid).ToList();
-        }
     }
 
     /// <summary>
@@ -124,7 +85,7 @@ public sealed class NpcConstructionSystem : EntitySystem
         item = null;
         reason = null;
 
-        var invEntities = InventoryEntities(user);
+        var invEntities = _npcHelper.InventoryEntities(user);
         var edges = GetEdges(uid);
         var edge = _construction.GetCurrentEdge(uid) ?? edges[0];
         var step = _construction.GetCurrentStep(uid) ?? edges[0].Steps[0];
@@ -302,7 +263,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
-        reason = Loc.GetString("construction-items-operator-tag-not-found", ("tags", string.Join(", ", tags)));
+        reason = _npcHelper.TagNotFoundReason(tags);
         return null;
     }
 
@@ -321,8 +282,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
-        reason = Loc.GetString("construction-items-operator-tool-not-found",
-            ("tool", Loc.GetString(_proto.Index(quality).Name)));
+        reason = _npcHelper.ToolNotFoundReason(quality);
         return null;
     }
 
@@ -343,7 +303,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return ent;
         }
 
-        reason = Loc.GetString("construction-items-operator-component-not-found", ("component", component));
+        reason = _npcHelper.ComponentNotFoundReason(component);
         return null;
     }
 
@@ -374,9 +334,7 @@ public sealed class NpcConstructionSystem : EntitySystem
             return split;
         }
 
-        reason = Loc.GetString("construction-items-operator-material-not-found",
-            ("material", Loc.GetString(_proto.Index(stack).Name)),
-            ("amount", amount.ToString()));
+        reason = _npcHelper.MaterialNotFoundReason(stack, amount);
         return null;
     }
 
@@ -432,35 +390,5 @@ public sealed class NpcConstructionSystem : EntitySystem
         }
 
         return edges;
-    }
-
-    private List<EntityUid> InventoryEntities(EntityUid uid)
-    {
-        var invEntities = new List<EntityUid>();
-
-        foreach (var ent in _inventory.GetHandOrInventoryEntities(uid))
-        {
-            invEntities.Add(ent);
-
-            if (TryComp(ent, out StorageComponent? storage))
-                invEntities.AddRange(StorageEntities(new(ent, storage)));
-        }
-
-        return invEntities;
-
-        List<EntityUid> StorageEntities(Entity<StorageComponent> storageEnt)
-        {
-            var result = new List<EntityUid>();
-
-            foreach (var ent in storageEnt.Comp.Container.ContainedEntities)
-            {
-                result.Add(ent);
-
-                if (TryComp<StorageComponent>(ent, out var storage))
-                    result.AddRange(StorageEntities(new(ent, storage)));
-            }
-
-            return result;
-        }
     }
 }

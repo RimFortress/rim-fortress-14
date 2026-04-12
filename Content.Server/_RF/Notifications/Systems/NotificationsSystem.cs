@@ -26,7 +26,9 @@ public sealed class NotificationsSystem : SharedNotificationsSystem
 
     private void OnTaskFinished(Entity<ControllableNpcComponent> ent, ref NpcTaskFinished args)
     {
-        if (!args.Failed || !Proto.Resolve(args.Task, out var proto))
+        if (args.Status != TaskFinishStatus.Failed
+            || !Proto.Resolve(args.Task, out var proto)
+            || args.Reason == null)
             return;
 
         var desc = Loc.GetString(Proto.Index(TaskSuspendedNotify).DescId,

@@ -14,7 +14,7 @@ namespace Content.Server._RF.Stockpile;
 public sealed class StockpileSystem : SharedStockpileSystem
 {
     [Dependency] private readonly PathfindingSystem _pathfinding = default!;
-    [Dependency] private readonly OwnedSystem _owned = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     public override void Initialize()
     {
@@ -141,7 +141,7 @@ public sealed class StockpileSystem : SharedStockpileSystem
         PathFlags pathFlags = PathFlags.None,
         bool containerOnly = false)
     {
-        if (!_owned.HasOwner(uid, stock.Owner)
+        if (!_ownership.HasOwner(uid, stock.Owner)
             || !CanInsert(stock, uid)
             || Xform.GetGrid(user) is not { } gridUid
             || !TryComp(gridUid, out MapGridComponent? grid))
@@ -182,38 +182,5 @@ public sealed class StockpileSystem : SharedStockpileSystem
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Searches for the last stockpiles in the supply chain to which the given entity can be stocked
-    /// </summary>
-    public List<Stock> FindLastSupplied(EntityUid uid, Stock startStock)
-    {
-        var stockpiles = new List<Stock>();
-        var queue = new Queue<Stock>();
-
-        if (!CanInsert(startStock, uid))
-            return stockpiles;
-
-        queue.Enqueue(startStock);
-
-        while (queue.TryDequeue(out var stock))
-        {
-            var valid = true;
-
-            foreach (var id in stock.SuppliedStockpiles)
-            {
-                if (!TryGetStock(id, out var supplied) || !CanInsert(supplied, uid))
-                    continue;
-
-                valid = false;
-                queue.Enqueue(supplied);
-            }
-
-            if (valid)
-                stockpiles.Add(stock);
-        }
-
-        return stockpiles;
     }
 }

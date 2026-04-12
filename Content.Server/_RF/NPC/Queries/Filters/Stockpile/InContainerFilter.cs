@@ -14,7 +14,5 @@ public sealed partial class InContainerFilter : RfUtilityQueryFilter
     }
 
     public override bool Filter(EntityUid uid, NPCBlackboard blackboard)
-    {
-        return _container.IsEntityOrParentInContainer(uid);
-    }
+        => _container.IsEntityOrParentInContainer(uid);
 }

@@ -21,6 +21,7 @@
   - type: Examiner
     skipChecks: true
   - type: Ghost
+    canInteract: true
   - type: GhostHearing
   - type: IntrinsicRadioReceiver
   - type: ActiveRadio
@@ -48,6 +49,7 @@
     - FreeHandInteract
     - Heal
     - Chop
+    - Cook
   - type: NpcFactionMember
     factions:
     - RimFortress

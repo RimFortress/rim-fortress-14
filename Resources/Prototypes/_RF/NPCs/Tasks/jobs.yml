@@ -49,6 +49,13 @@
   - MoveToSuppliedStock
 
 - type: npcJob
+  id: Cooking
+  name: Cooking
+  icon: /Textures/_RF/Interface/utensils-solid-full.svg.192dpi.png
+  tasks:
+  - Cook
+
+- type: npcJob
   id: Other
   name: Other
   defaultPriority: 1

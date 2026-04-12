@@ -1,0 +1,77 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenPastaRecipesTable
+  recipes:
+  - RecipeBoiledSpaghetti
+  - RecipePastaTomato
+  - RecipeMeatballSpaghetti
+  - RecipeButterNoodles
+  - RecipeChowMein
+  - RecipeCopypasta
+
+# Recipes
+- type: workshopRecipe
+  id: BasePastaRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Pasta
+
+- type: workshopRecipe
+  id: RecipeBoiledSpaghetti
+  parent: BasePastaRecipe
+  result: FoodNoodlesBoiled
+  craftingTime: 75
+  ingredients:
+    reagents:
+      Flour: 15
+      Egg: 6
+      OilOlive: 5
+
+- type: workshopRecipe
+  id: RecipePastaTomato
+  parent: BasePastaRecipe
+  result: FoodNoodles
+  ingredients:
+    items:
+      FoodNoodlesBoiled: 1
+      FoodTomato: 2
+
+- type: workshopRecipe
+  id: RecipeMeatballSpaghetti
+  parent: BasePastaRecipe
+  result: FoodNoodlesMeatball
+  ingredients:
+    items:
+      FoodNoodlesBoiled: 1
+      FoodMeatMeatball: 2
+
+- type: workshopRecipe
+  id: RecipeButterNoodles
+  parent: BasePastaRecipe
+  result: FoodNoodlesButter
+  ingredients:
+    items:
+      FoodNoodlesBoiled: 1
+      FoodButter: 1
+
+- type: workshopRecipe
+  id: RecipeChowMein
+  parent: BasePastaRecipe
+  result: FoodNoodlesChowmein
+  ingredients:
+    items:
+      FoodNoodlesBoiled: 1
+      FoodEggplant: 1
+      FoodCarrot: 1
+      FoodCorn: 1
+    reagents:
+      Egg: 6
+
+- type: workshopRecipe
+  id: RecipeCopypasta
+  parent: BasePastaRecipe
+  result: FoodNoodlesCopy
+  ingredients:
+    items:
+      FoodNoodles: 2
+      FoodPlateSmall: 2

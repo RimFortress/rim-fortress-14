@@ -1,4 +1,3 @@
-using Content.Server._RF.NPC.Components;
 using Content.Server.NPC;
 using Content.Shared._RF.NPC;
 
@@ -9,8 +8,7 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class OwnedPrecondition : InvertiblePrecondition
 {
-    private OwnedSystem _owned;
-    private EntityQuery<ControllableNpcComponent> _controlledQuery;
+    private OwnershipSystem _ownership;
 
     [DataField(required: true)]
     public string TargetKey;
@@ -18,24 +16,11 @@ public sealed partial class OwnedPrecondition : InvertiblePrecondition
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
-        _owned = sysManager.GetEntitySystem<OwnedSystem>();
-        _controlledQuery = EntityManager.GetEntityQuery<ControllableNpcComponent>();
+        _ownership = sysManager.GetEntitySystem<OwnershipSystem>();
     }
 
     public override bool IsMetInvertible(NPCBlackboard blackboard)
-    {
-        var owner = blackboard.GetValueOrDefault<EntityUid>(NPCBlackboard.Owner, EntityManager);
-
-        if (!blackboard.TryGetValue(TargetKey, out EntityUid? target, EntityManager)
-            || !_controlledQuery.TryGetComponent(owner, out var control))
-            return false;
-
-        foreach (var uid in control.CanControl)
-        {
-            if (_owned.HasOwner(target.Value, uid))
-                return true;
-        }
-
-        return false;
-    }
+        => blackboard.TryGetValue(NPCBlackboard.Owner, out EntityUid owner, EntityManager)
+           && blackboard.TryGetValue(TargetKey, out EntityUid target, EntityManager)
+           && _ownership.HasSameOwner(owner, target);
 }

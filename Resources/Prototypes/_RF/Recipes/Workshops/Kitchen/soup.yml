@@ -1,0 +1,305 @@
+# Table
+- type: workshopRecipeTable
+  id: KitchenSoupRecipesTable
+  recipes:
+  - RecipeBisque
+  - RecipeMeatballSoup
+  - RecipeNettleSoup
+  - RecipeEyeballSoup
+  - RecipeOnionSoup
+  - RecipeMushroomSoup
+  - RecipeStewSoup
+  - RecipeTomatoSoup
+  - RecipeTomatoBloodSoup
+  - RecipeWingFangChuSoup
+  - RecipeWingFangChuSoupSpider
+  - RecipeVegetableSoup
+  - RecipeClownTearsSoup
+  - RecipeMonkeysDelightSoup
+  - RecipeBungoSoup
+  - RecipeEscargotSoup
+  - RecipeHotChili
+  - RecipeColdChili
+  - RecipeClownTears
+  - RecipeChiliClown
+  - RecipeQueso
+  - RecipePeaSoup
+
+# Recipes
+- type: workshopRecipe
+  id: BaseSoupRecipe
+  abstract: true
+  parent: BaseKitchenRecipe
+  group: Soup
+
+- type: workshopRecipe
+  id: RecipeBisque
+  parent: BaseSoupRecipe
+  result: FoodSoupBisque
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodTomato: 1
+      FoodMushroom: 1
+      FoodMeatFish: 1
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeMeatballSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupMeatball
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodMeatMeatball: 1
+      FoodCarrot: 1
+      FoodPotato: 1
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeNettleSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupNettle
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      Nettle: 1
+      FoodPotato: 1
+    reagents:
+      Water: 10
+      Egg: 6
+
+- type: workshopRecipe
+  id: RecipeEyeballSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupEyeball
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      OrganHumanEyes: 1
+      FoodCarrot: 1
+      FoodPotato: 1
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeOnionSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupOnion
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOnionSlice: 5
+      FoodCheeseSlice: 1
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeMushroomSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupMushroom
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodMushroom: 2
+    reagents:
+      Water: 5
+      Milk: 5
+
+- type: workshopRecipe
+  id: RecipeStewSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupStew
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodMeatCutlet: 3
+      FoodTomato: 1
+      FoodPotato: 1
+      FoodCarrot: 1
+      FoodEggplant: 1
+      FoodMushroom: 1
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeTomatoSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupTomato
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodTomato: 2
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeTomatoBloodSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupTomatoBlood
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodBloodTomato: 2
+    reagents:
+      Blood: 10
+
+- type: workshopRecipe
+  id: RecipeWingFangChuSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupWingFangChu
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodMeatXenoCutlet: 2
+    reagents:
+      Soysauce: 5
+
+- type: workshopRecipe
+  id: RecipeWingFangChuSoupSpider
+  parent: BaseSoupRecipe
+  result: FoodSoupWingFangChu
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodMeatSpider: 2
+    reagents:
+      Soysauce: 5
+
+- type: workshopRecipe
+  id: RecipeVegetableSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupVegetable
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodCorn: 1
+      FoodCarrot: 1
+      FoodPotato: 1
+      FoodEggplant: 1
+    reagents:
+      Water: 5
+
+- type: workshopRecipe
+  id: RecipeClownTearsSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupClown
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodBanana: 1
+      ShardGlass: 1
+    reagents:
+      Water: 10
+
+- type: workshopRecipe
+  id: RecipeMonkeysDelightSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupMonkey
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodBanana: 1
+      MonkeyCube: 1
+    reagents:
+      Flour: 5
+      TableSalt: 1
+      Blackpepper: 1
+
+- type: workshopRecipe
+  id: RecipeBungoSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupBungo
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodBungo: 2
+      FoodChiliPepper: 1
+    reagents:
+      Water: 5
+
+- type: workshopRecipe
+  id: RecipeEscargotSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupEscargot
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOnionSlice: 1
+      FoodButter: 1
+      FoodMeatSnailCooked: 1
+    reagents:
+      Water: 5
+
+- type: workshopRecipe
+  id: RecipeHotChili
+  parent: BaseSoupRecipe
+  result: FoodSoupChiliHot
+  craftingTime: 100
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodChiliPepper: 1
+      FoodMeatCutlet: 1
+      FoodOnionSlice: 1
+      FoodTomato: 1
+
+- type: workshopRecipe
+  id: RecipeColdChili
+  parent: BaseSoupRecipe
+  result: FoodSoupChiliCold
+  craftingTime: 25
+  ingredients:
+    reagents:
+      Nitrogen: 5
+    items:
+      FoodSoupChiliHot: 1
+
+- type: workshopRecipe
+  id: RecipeClownTears
+  parent: BaseSoupRecipe
+  result: FoodSoupClown
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodOnionSlice: 1
+      FoodTomato: 1
+      BikeHorn: 1
+
+- type: workshopRecipe
+  id: RecipeChiliClown
+  parent: BaseSoupRecipe
+  result: FoodSoupChiliClown
+  craftingTime: 150
+  ingredients:
+    items:
+      FoodBowlBig: 1
+      FoodChiliPepper: 1
+      FoodMeatCutlet: 1
+      FoodOnionSlice: 1
+      FoodTomato: 1
+      ClothingShoesClown: 1
+
+- type: workshopRecipe
+  id: RecipeQueso
+  parent: BaseSoupRecipe
+  result: FoodMealQueso
+  craftingTime: 75
+  ingredients:
+    items:
+      FoodChiliPepper: 1
+      FoodCheeseSlice: 2
+
+- type: workshopRecipe
+  id: RecipePeaSoup
+  parent: BaseSoupRecipe
+  result: FoodSoupPea
+  ingredients:
+    items:
+      FoodPeaPod: 2
+      FoodBowlBig: 1
+    reagents:
+      Water: 10
