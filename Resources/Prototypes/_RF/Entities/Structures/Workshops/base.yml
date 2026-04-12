@@ -13,12 +13,16 @@
       craftingState: items_crafting
   - type: Appearance
   - type: Sprite
+    noRot: true
     layers:
     - state: base
       map: ["enum.WorkshopLayers.Base"]
     - state: items
       map: ["enum.WorkshopLayers.Items"]
       visible: false
+  - type: Transform
+    noRot: true
+    anchored: true
   - type: Physics
   - type: Fixtures
     fixtures:

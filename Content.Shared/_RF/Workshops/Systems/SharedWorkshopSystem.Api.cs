@@ -124,6 +124,7 @@ public abstract partial class SharedWorkshopSystem
         ent.Comp.Queue.SetEndTime(GetCraftingEndTime(ent, protoId));
         DirtyField(ent, nameof(WorkshopComponent.Queue));
         UpdateAudioLoop(ent);
+        UpdateLight(ent);
         UpdateAppearance(ent);
         UpdateUi(ent);
         return true;

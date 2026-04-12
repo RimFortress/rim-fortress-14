@@ -229,7 +229,6 @@ public sealed partial class WorkshopQueueEntry
             ? Pathfinding[PathIndex]
             : (ProtoId<WorkshopRecipePrototype>?)null;
 
-
     /// <summary>
     /// Returns <c>true</c> when a path exists.
     /// </summary>

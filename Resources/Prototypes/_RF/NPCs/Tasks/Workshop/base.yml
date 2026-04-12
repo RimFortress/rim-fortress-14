@@ -60,6 +60,15 @@
   - !type:WorkshopHasRecipeFilter
     recipeKey: TargetRecipe
     invert: true
+  - !type:OrFilter
+    filters:
+    - !type:InContainerFilter
+      invert: true
+    - !type:ContainerOwnerFilter
+      whitelist:
+        components:
+        - EntityStorage
+        - Storage
   considerations:
   - !type:NormTargetDistanceCon
     curve: !type:PresetCurve

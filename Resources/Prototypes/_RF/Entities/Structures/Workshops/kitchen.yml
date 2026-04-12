@@ -7,6 +7,7 @@
   - type: Sprite
     sprite: _RF/Structures/Workshops/kitchen.rsi
     offset: "-0.5,0.1"
+    noRot: true
     layers:
     - state: base
       map: ["enum.WorkshopLayers.Base"]
@@ -25,7 +26,13 @@
       path: /Audio/_RF/Machines/Workshops/cooking_with_cover_01.ogg
   - type: SkillInteraction
     skill: Cooking
-    targetLevel: 7
+    targetLevel: 4
     experience: 10
     expFailFactor: 0
     doAfterFactor: 2
+  - type: PointLight
+    color: "#FC5F29"
+    offset: "-0.5,0"
+    radius: 1.5
+    energy: 50
+    enabled: false

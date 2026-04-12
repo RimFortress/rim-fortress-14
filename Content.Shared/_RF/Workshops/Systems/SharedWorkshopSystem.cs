@@ -30,6 +30,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly ContainerStockSupplierSystem _containerSupplier = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+    [Dependency] private readonly SharedPointLightSystem _pointLight = default!;
     [Dependency] private readonly SharedStockpileSystem _stockpile = default!;
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
@@ -130,7 +131,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
     private void OnAnchorChanged(Entity<WorkshopComponent> ent, ref AnchorStateChangedEvent args)
     {
-        if (!args.Anchored)
+        if (!TerminatingOrDeleted(ent) && !args.Anchored)
             Container.EmptyContainer(ent.Comp.ContentStorage);
     }
 
@@ -139,13 +140,11 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         if (args.Handled)
             return;
 
-        if (TryComp<ItemComponent>(args.Used, out var item))
-        {
-            // check if size of an item you're trying to put in is too big
-            if (_item.GetSizePrototype(item.Size) > _item.GetSizePrototype(ent.Comp.MaxItemSize))
-                return;
-        }
-        else
+        if (!TryComp<ItemComponent>(args.Used, out var item))
+            return;
+
+        // check if size of an item you're trying to put in is too big
+        if (_item.GetSizePrototype(item.Size) > _item.GetSizePrototype(ent.Comp.MaxItemSize))
             return;
 
         if (ent.Comp.ContentStorage.Count >= ent.Comp.ContentCapacity)
@@ -267,6 +266,12 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
             ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
     }
 
+    protected void UpdateLight(Entity<WorkshopComponent?> ent)
+    {
+        if (Resolve(ent, ref ent.Comp) && _pointLight.TryGetLight(ent, out var light))
+            _pointLight.SetEnabled(ent, ent.Comp.Crafting, light);
+    }
+
     private TimeSpan GetCraftingEndTime(
         Entity<WorkshopComponent?> ent,
         ProtoId<WorkshopRecipePrototype> protoId)
@@ -316,6 +321,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
             FinishTask(ent);
 
         UpdateAudioLoop(ent);
+        UpdateLight(ent);
         UpdateAppearance(ent);
         UpdateUi(ent);
     }

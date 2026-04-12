@@ -3,9 +3,10 @@ using Content.Shared._RF.Workshops.Components;
 using Content.Shared.Chemistry.Components.SolutionManager;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
-using Content.Shared.Hands.Components;
 using Content.Shared.Item;
 using Content.Shared.Stacks;
+using Content.Shared.Storage;
+using Content.Shared.Storage.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 
@@ -75,11 +76,12 @@ public partial class WorkshopSystem
                 || nearest?.Dist < distance)
                 continue;
 
-            if(_inventory.TryGetContainingSlot(uid, out _))
+            if (_inventory.TryGetContainingSlot(uid, out _))
                 continue;
 
             if (Container.TryGetContainingContainer(new(uid, xform, null), out var container)
-                && HasComp<HandsComponent>(container.Owner))
+                && !HasComp<EntityStorageComponent>(container.Owner)
+                && !HasComp<StorageComponent>(container.Owner))
                 continue;
 
             nearest = (uid, comp.Count, distance);
@@ -120,11 +122,12 @@ public partial class WorkshopSystem
                 || nearest?.Dist < distance)
                 continue;
 
-            if(_inventory.TryGetContainingSlot(uid, out _))
+            if (_inventory.TryGetContainingSlot(uid, out _))
                 continue;
 
             if (Container.TryGetContainingContainer(new(uid, xform, null), out var container)
-                && HasComp<HandsComponent>(container.Owner))
+                && !HasComp<EntityStorageComponent>(container.Owner)
+                && !HasComp<StorageComponent>(container.Owner))
                 continue;
 
             nearest = (uid, distance);
@@ -178,11 +181,12 @@ public partial class WorkshopSystem
                 || nearest?.Dist < distance)
                 continue;
 
-            if(_inventory.TryGetContainingSlot(uid, out _))
+            if (_inventory.TryGetContainingSlot(uid, out _))
                 continue;
 
             if (Container.TryGetContainingContainer(new(uid, xform, null), out var container)
-                && HasComp<HandsComponent>(container.Owner))
+                && !HasComp<EntityStorageComponent>(container.Owner)
+                && !HasComp<StorageComponent>(container.Owner))
                 continue;
 
             nearest = (uid, distance, quantity);
