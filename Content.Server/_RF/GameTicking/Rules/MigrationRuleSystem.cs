@@ -17,9 +17,12 @@ public sealed class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent
 
     protected override void Started(EntityUid uid, MigrationRuleComponent component, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
     {
+        if (Rule.GetRule() is not { } rule)
+            return;
+
         // We spawn one entity anyway, regardless of points, so as not to trigger the event for nothing
         var spawn = new List<EntProtoId> { Random.Pick(component.Spawn.Keys) };
-        var points = _narrator.EventPoints(args.Target, Rule.GetRule().Narrator, args.TargetCoordinates) - worldRule.Cost;
+        var points = _narrator.EventPoints(args.Target, rule.Narrator, args.TargetCoordinates) - worldRule.Cost;
 
         while (true)
         {

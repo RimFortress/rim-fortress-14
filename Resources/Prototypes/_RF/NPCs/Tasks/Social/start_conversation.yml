@@ -18,6 +18,8 @@
   - !type:HasComponentPrecondition
     components:
     - type: ConversationActor
+      script: Smalltalk01
+      actorId: idle
 
 - type: htnCompound
   id: StartConversationCompound

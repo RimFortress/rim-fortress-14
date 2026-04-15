@@ -16,7 +16,7 @@ public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleCompon
     {
         base.Started(uid, component, gameRule, args);
 
-        var map = _rule.GetRule().WorldMap;
+        var map = _rule.GetRule()?.WorldMap;
 
         if (!TryComp(map, out MapAtmosphereComponent? mapAtmos))
             return;
@@ -28,7 +28,7 @@ public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleCompon
     {
         base.ActiveTick(uid, component, gameRule, frameTime);
 
-        var map = _rule.GetRule().WorldMap;
+        var map = _rule.GetRule()?.WorldMap;
 
         if (!TryComp(map, out MapAtmosphereComponent? mapAtmos))
             return;
@@ -37,7 +37,7 @@ public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleCompon
         var mixture = mapAtmos.Mixture;
         mixture.Temperature = temp;
 
-        _atmos.SetMapAtmosphere(map, false, mixture);
+        _atmos.SetMapAtmosphere(map.Value, false, mixture);
         RaiseNetworkEvent(new WorldTemperatureChangedMessage(GetNetEntity(uid), temp));
     }
 }

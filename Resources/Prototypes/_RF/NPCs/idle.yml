@@ -5,6 +5,8 @@
     - !type:HasComponentPrecondition
       components:
       - type: ConversationActor
+        script: Smalltalk01
+        actorId: idle
     tasks:
     - !type:HTNCompoundTask
       task: ConversationCompound

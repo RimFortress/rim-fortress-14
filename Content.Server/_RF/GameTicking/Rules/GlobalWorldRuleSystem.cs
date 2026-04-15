@@ -16,7 +16,10 @@ public sealed class GlobalWorldRuleSystem : GameRuleSystem<GlobalWorldRuleCompon
     {
         base.Started(uid, component, gameRule, args);
 
-        var points = _narrator.GlobalEventPoints(_rule.GetRule());
+        if (_rule.GetRule() is not { } rule)
+            return;
+
+        var points = _narrator.GlobalEventPoints(rule);
         component.EndAt = _timing.CurTime + TimeSpan.FromMinutes(points / component.TimeCost);
         component.StartedAt = _timing.CurTime;
     }
