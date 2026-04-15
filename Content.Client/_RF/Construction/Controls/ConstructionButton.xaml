@@ -9,7 +9,7 @@
 
         <PanelContainer StyleClasses="HighDivider" Margin="3 5"/>
 
-        <Label Name="Label" Align="Left" VAlign="Fill"
+        <Label Name="NameLabel" Align="Left" VAlign="Fill"
                ClipText="True" HorizontalExpand="True"/>
     </BoxContainer>
 </Button>

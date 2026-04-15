@@ -12,8 +12,6 @@ namespace Content.Client._RF.Lobby.UI;
 
 public sealed partial class RfHumanoidProfileEditor
 {
-    public event Action<List<ProtoId<GuideEntryPrototype>>>? OnOpenGuidebook;
-
     private ColorSelectorSliders _rgbSkinColorSelector;
     private List<SpeciesPrototype> _species = new();
     private static readonly ProtoId<GuideEntryPrototype> DefaultSpeciesGuidebook = "Species";

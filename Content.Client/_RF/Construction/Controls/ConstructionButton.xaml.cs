@@ -24,7 +24,7 @@ public sealed partial class ConstructionButton : Button
 
         var construction = _entityManager.System<ConstructionSystem>();
 
-        Label.Text = prototype.SetName.HasValue ? Loc.GetString(prototype.SetName) : prototype.Name;
+        NameLabel.Text = prototype.SetName.HasValue ? Loc.GetString(prototype.SetName) : prototype.Name;
 
         if (construction.TryGetRecipePrototype(prototype.ID, out var recipe)
             && _prototype.TryIndex(recipe, out var target))
@@ -46,7 +46,7 @@ public sealed partial class ConstructionButton : Button
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
-        Label.Text = _locale.TryGetString(name, out var locName) ? locName : name;
+        NameLabel.Text = _locale.TryGetString(name, out var locName) ? locName : name;
         Texture.SetPrototype(proto);
     }
 }

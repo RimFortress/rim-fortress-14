@@ -22,7 +22,7 @@ public sealed partial class NpcJobsPopCell : Control
         Icon.SetEntity(uid);
 
         if (_entity.TryGetComponent(uid, out MetaDataComponent? comp))
-            Name.Text = comp.EntityName;
+            NameLabel.Text = comp.EntityName;
     }
 }
 

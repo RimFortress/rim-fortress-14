@@ -98,7 +98,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     public void SpawnPlayer(ICommonSession session)
     {
         if (Rule is not { } rule)
-            return ;
+            return;
 
         var coords = Turf.GetTileCenter(GetSpawnTiles(1).First());
         var spawnBox = Box2.CenteredAround(coords.Position, new Vector2(SpawnAreaRadius));
@@ -221,7 +221,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
             foreach (var entity in _lookup.GetEntitiesIntersecting(rule.WorldMap, box, LookupFlags.Static))
             {
-                EntityManager.DeleteEntity(entity);
+                Del(entity);
             }
 
             spawnTiles.Add(tileRef);
@@ -247,9 +247,8 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         foreach (var (_, profile) in prefs.Characters.Take(_cvar.GetCVar(RfVars.MaxRoundstartPops)))
         {
             var coords = Turf.GetTileCenter(_random.Pick(spawnTiles));
-            var character = (HumanoidCharacterProfile) profile;
-            var job = PickPopJob(character.JobPriorities) ?? rule.DefaultPopsJob;
-            var pop = _station.SpawnPlayerMob(coords, job, character, null);
+            var job = PickPopJob(profile.JobPriorities) ?? rule.DefaultPopsJob;
+            var pop = _station.SpawnPlayerMob(coords, job, profile, null);
 
             if (_prototype.TryIndex(rule.PopsComponentsOverride, out var overrides))
                 EntityManager.AddComponents(pop, overrides.Components);

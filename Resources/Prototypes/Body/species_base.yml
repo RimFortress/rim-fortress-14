@@ -218,7 +218,6 @@
         tags:
         - AwfulMeal
         - Raw
-        - Ingredient
         - DonkPocket
         requireAll: false
       MoodAteFineMeal:

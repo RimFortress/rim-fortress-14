@@ -16,7 +16,7 @@
 
             <PanelContainer Margin="5 2" StyleClasses="HighDivider"/>
 
-            <Label Name="Label" Align="Left" VAlign="Fill"
+            <Label Name="NameLabel" Align="Left" VAlign="Fill"
                    ClipText="True" HorizontalExpand="True"/>
 
             <BoxContainer Orientation="Horizontal" HorizontalAlignment="Right">
