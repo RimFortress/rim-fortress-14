@@ -1,6 +1,7 @@
 using Content.Server.Hands.Systems;
 using Content.Server.Weapons.Melee;
 using Content.Shared.EntityEffects;
+using Content.Shared.Hands.Components;
 using Content.Shared.Weapons.Melee;
 using Robust.Shared.Prototypes;
 
@@ -9,22 +10,19 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// <summary>
 /// Forces the entity to attack itself with whatever it has in its hand.
 /// </summary>
-public sealed partial class SelfAttack : EntityEffect
+public sealed partial class SelfAttack : EntityEffectBase<SelfAttack>;
+
+public sealed class SelfAttackEntityEffectSystem : EntityEffectSystem<HandsComponent, SelfAttack>
 {
-    protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) =>
-        null;
+    [Dependency] private readonly MeleeWeaponSystem _melee = default!;
+    [Dependency] private readonly HandsSystem _hands = default!;
 
-    public override void Effect(EntityEffectBaseArgs args)
+    protected override void Effect(Entity<HandsComponent> entity, ref EntityEffectEvent<SelfAttack> args)
     {
-        if (!args.EntityManager.TryGetComponent(args.TargetEntity, out MeleeWeaponComponent? comp))
-            return;
-
-        var melee = args.EntityManager.System<MeleeWeaponSystem>();
-        var hands = args.EntityManager.System<HandsSystem>();
-
-        if (hands.TryGetActiveItem(args.TargetEntity, out var weapon))
-            melee.AttemptLightAttack(args.TargetEntity, weapon.Value, comp, args.TargetEntity);
-        else
-            melee.AttemptLightAttack(args.TargetEntity, args.TargetEntity, comp, args.TargetEntity);
+        if (_hands.TryGetActiveItem(entity.AsNullable(), out var weapon)
+            && TryComp(entity, out MeleeWeaponComponent? melee))
+            _melee.AttemptLightAttack(entity, weapon.Value, melee, entity);
+        else if (TryComp(entity, out melee))
+            _melee.AttemptLightAttack(entity, entity, melee, entity);
     }
 }

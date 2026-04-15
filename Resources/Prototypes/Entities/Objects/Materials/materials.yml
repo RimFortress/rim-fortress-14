@@ -168,11 +168,11 @@
     experience: 40
     resultFactor: 0.2
     failTargetEffects:
-    - !type:ModifyBleedAmount
+    - !type:ModifyBleed
       probability: 0.9
       amount: 4
     successTargetEffects:
-    - !type:ModifyBleedAmount
+    - !type:ModifyBleed
       probability: 0.33
       amount: -4
     - !type:HealthChange

@@ -8,11 +8,11 @@ namespace Content.Shared._RF.Conversation;
 /// Prototype conversation script between NPCs
 /// </summary>
 [Prototype]
-public sealed class ConversationScriptPrototype : IPrototype, IInheritingPrototype
+public sealed partial class ConversationScriptPrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <inheritdoc />
     [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<ConversationScriptPrototype>))]
@@ -32,7 +32,7 @@ public sealed class ConversationScriptPrototype : IPrototype, IInheritingPrototy
     /// Effects that will be applied to conversation actors upon completion
     /// </summary>
     [DataField]
-    public Dictionary<string, List<EntityEffect>> Effects = new();
+    public Dictionary<string, EntityEffect[]> Effects = new();
 
     /// <summary>
     /// List of conversation lines for each actor
@@ -93,8 +93,3 @@ public abstract partial class ConversationActorRequirement
     /// <param name="entMan">EntityManager</param>
     public abstract bool Check(EntityUid author, EntityUid? actor, EntityManager entMan);
 }
-
-public record EntityEffectConversationArgs(
-    EntityUid TargetEntity,
-    Dictionary<string, EntityUid> Actors,
-    IEntityManager EntityManager) : EntityEffectBaseArgs(TargetEntity, EntityManager);

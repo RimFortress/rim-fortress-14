@@ -983,6 +983,11 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
                 continue;
             }
 
+            // RimFortress Start
+            if (Deleted(ent))
+                continue;
+            // RimFortress End
+
             Del(ent);
         }
 

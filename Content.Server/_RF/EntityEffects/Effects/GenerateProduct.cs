@@ -9,29 +9,28 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// <summary>
 /// Causes the plant holder to spawn the product of the current plant
 /// </summary>
-public sealed partial class GenerateProduct : EntityEffect
+public sealed partial class GenerateProduct : EntityEffectBase<GenerateProduct>
 {
     /// <summary>
     /// Modifier of the quantity of the generated product
     /// </summary>
     [DataField]
     public int YieldMod = 1;
+}
 
-    protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) =>
-        null;
+public sealed class GenerateProductEntityEffectSystem : EntityEffectSystem<PlantHolderComponent, GenerateProduct>
+{
+    [Dependency] private readonly BotanySystem _botany = default!;
+    [Dependency] private readonly RandomHelperSystem _randomHelper = default!;
 
-    public override void Effect(EntityEffectBaseArgs args)
+    protected override void Effect(Entity<PlantHolderComponent> entity, ref EntityEffectEvent<GenerateProduct> args)
     {
-        if (!args.EntityManager.TryGetComponent(args.TargetEntity, out PlantHolderComponent? comp) || comp.Seed == null)
+        if (entity.Comp.Seed == null)
             return;
 
-        var botany = args.EntityManager.System<BotanySystem>();
-        var random = args.EntityManager.System<RandomHelperSystem>();
-        var coords = args.EntityManager.GetComponent<TransformComponent>(args.TargetEntity).Coordinates;
-
-        foreach (var uid in botany.GenerateProduct(comp.Seed, coords, YieldMod))
+        foreach (var uid in _botany.GenerateProduct(entity.Comp.Seed, Transform(entity).Coordinates, args.Effect.YieldMod))
         {
-            random.RandomOffset(uid, 0.25f);
+            _randomHelper.RandomOffset(uid, 0.25f);
         }
     }
 }

@@ -1,7 +1,7 @@
-using Content.Server.Temperature.Components;
 using Content.Shared._RF.Info;
 using Content.Shared.Body.Components;
 using Content.Shared.Chemistry.EntitySystems;
+using Content.Shared.Temperature.Components;
 
 namespace Content.Server._RF.Info;
 
@@ -21,17 +21,11 @@ public sealed class EntityInfoSystem : EntitySystem
     {
         var uid = GetEntity(msg.Uid);
         var temperature = 0f;
-        var heatDamageThreshold = 360f;
-        var coldDamageThreshold = 260f;
         var bloodLevel = 0f;
         var bleeding = false;
 
         if (TryComp(uid, out TemperatureComponent? temp))
-        {
             temperature = temp.CurrentTemperature;
-            heatDamageThreshold = temp.HeatDamageThreshold;
-            coldDamageThreshold = temp.ColdDamageThreshold;
-        }
 
         if (TryComp<BloodstreamComponent>(uid, out var bloodstream) &&
             _solutionContainer.ResolveSolution(uid, bloodstream.BloodSolutionName, ref bloodstream.BloodSolution, out var bloodSolution))
@@ -41,7 +35,7 @@ public sealed class EntityInfoSystem : EntitySystem
         }
 
         RaiseNetworkEvent(
-            new EntityHealthInfoResponse(msg.Uid, temperature, coldDamageThreshold, heatDamageThreshold, bloodLevel, bleeding),
+            new EntityHealthInfoResponse(msg.Uid, temperature, bloodLevel, bleeding),
             args.SenderSession);
     }
 }

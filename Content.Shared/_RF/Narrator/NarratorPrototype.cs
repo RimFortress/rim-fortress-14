@@ -6,11 +6,11 @@ namespace Content.Shared._RF.Narrator;
 /// This is a prototype of a storyteller who is responsible for the chances of occurrence and the scope of events over time
 /// </summary>
 [Prototype]
-public sealed class NarratorPrototype : IPrototype
+public sealed partial class NarratorPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <summary>
     /// Modifier of the effect of the value of buildings on the calculation of settlement wealth

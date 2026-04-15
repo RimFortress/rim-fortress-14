@@ -1,7 +1,5 @@
 using System.Linq;
-using Content.Client._RF.Lobby;
 using Content.Client._RF.Lobby.UI;
-using Content.Client.Humanoid;
 using Content.Client.Inventory;
 using Content.Client.Lobby;
 using Content.Client.Station;
@@ -25,7 +23,7 @@ using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-namespace Content.Client._Rf.Lobby;
+namespace Content.Client._RF.Lobby;
 
 public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortressLobbyState>, IOnStateExited<RimFortressLobbyState>
 {
@@ -34,7 +32,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
     [Dependency] private readonly IPlayerManager _playerManager = default!;
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly IStateManager _stateManager = default!;
-    [UISystemDependency] private readonly HumanoidAppearanceSystem _humanoid = default!;
+    [UISystemDependency] private readonly HumanoidProfileSystem _humanoid = default!;
     [UISystemDependency] private readonly ClientInventorySystem _inventory = default!;
     [UISystemDependency] private readonly StationSpawningSystem _spawn = default!;
 
@@ -115,8 +113,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         var (characterGui, profileEditor, equipmentEditor) = EnsureGui();
 
         characterGui.ReloadCharacterPickers();
-        profileEditor.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
-            _characterSetup?.SelectedProfileIndex);
+        profileEditor.SetProfile(_characterSetup?.SelectedProfile, _characterSetup?.SelectedProfileIndex);
         equipmentEditor.BuildList();
 
         characterGui.IsDirty = false;
@@ -283,8 +280,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
                 _characterSetup.IsDirty = true;
             }
 
-            _profileEditor?.SetProfile((HumanoidCharacterProfile?) _characterSetup?.SelectedProfile,
-                _characterSetup?.SelectedProfileIndex);
+            _profileEditor?.SetProfile(_characterSetup?.SelectedProfile, _characterSetup?.SelectedProfileIndex);
         };
 
         _equipmentEditor = new RfExpeditionEquipmentEditor();
@@ -372,7 +368,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
                         // Try startinggear first
                         if (_prototypeManager.TryIndex(loadoutProto.StartingGear, out var loadoutGear))
                         {
-                            var itemType = ((IEquipmentLoadout) loadoutGear).GetGear(slot.Name);
+                            var itemType = ((IEquipmentLoadout)loadoutGear).GetGear(slot.Name);
 
                             if (_inventory.TryUnequip(dummy, slot.Name, out var unequippedItem, silent: true, force: true, reparent: false))
                             {
@@ -387,7 +383,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
                         }
                         else
                         {
-                            var itemType = ((IEquipmentLoadout) loadoutProto).GetGear(slot.Name);
+                            var itemType = ((IEquipmentLoadout)loadoutProto).GetGear(slot.Name);
 
                             if (_inventory.TryUnequip(dummy, slot.Name, out var unequippedItem, silent: true, force: true, reparent: false))
                             {
@@ -410,7 +406,7 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
 
         foreach (var slot in slots)
         {
-            var itemType = ((IEquipmentLoadout) gear).GetGear(slot.Name);
+            var itemType = ((IEquipmentLoadout)gear).GetGear(slot.Name);
 
             if (_inventory.TryUnequip(dummy, slot.Name, out var unequippedItem, silent: true, force: true, reparent: false))
             {
@@ -453,10 +449,11 @@ public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortr
         }
         else
         {
-            dummyEnt = EntityManager.SpawnEntity(_prototypeManager.Index<SpeciesPrototype>(SharedHumanoidAppearanceSystem.DefaultSpecies).DollPrototype, MapCoordinates.Nullspace);
+            dummyEnt = EntityManager.SpawnEntity(_prototypeManager.Index(HumanoidCharacterProfile.DefaultSpecies).DollPrototype, MapCoordinates.Nullspace);
         }
 
-        _humanoid.LoadProfile(dummyEnt, humanoid);
+        if (humanoid != null)
+            _humanoid.ApplyProfileTo(dummyEnt, humanoid);
 
         if (humanoid != null && jobClothes)
         {

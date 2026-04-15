@@ -171,10 +171,10 @@ public sealed partial class InventoryInfoTab : Control, IInfoTab
         button.Pressed += SlotPressed;
 
         var heldEntity = _hands.GetHeldItem(ent.AsNullable(), handId);
-        if (_entity.TryGetComponent<VirtualItemComponent>(heldEntity, out var virt))
+        if (_entity.TryGetComponent<VirtualItemComponent>(heldEntity, out var virt) && _uid != null)
         {
             button.Blocked = true;
-            if (_entity.TryGetComponent<CuffableComponent>(_uid, out var cuff) && _cuffable.GetAllCuffs(cuff).Contains(virt.BlockingEntity))
+            if (_cuffable.GetAllCuffs(_uid.Value).Contains(virt.BlockingEntity))
                 button.BlockedRect.MouseFilter = MouseFilterMode.Ignore;
         }
 

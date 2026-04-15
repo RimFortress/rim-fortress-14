@@ -8,13 +8,13 @@ namespace Content.Shared._RF.Stockpile;
 /// Prototype category for customizing storage items in the stockpile
 /// </summary>
 [Prototype]
-public sealed class StockpileCategoryPrototype : IPrototype, ISerializationHooks
+public sealed partial class StockpileCategoryPrototype : IPrototype, ISerializationHooks
 {
     private ILocalizationManager _loc = default!;
 
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     [DataField("name")]
     private string? _name;

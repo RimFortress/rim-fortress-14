@@ -13,7 +13,7 @@ public sealed partial class NeedPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <summary>
     /// A dictionary with threshold values of satisfaction of a need and their IDs

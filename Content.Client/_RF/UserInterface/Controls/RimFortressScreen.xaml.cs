@@ -36,13 +36,13 @@ public sealed partial class RimFortressScreen : InGameScreen
         MenuBar.EmotesButton.Visible = false;
         MenuBar.CraftingButton.Visible = false;
 
-        MenuBar.GuidebookButton.RemoveStyleClass(StyleBase.ButtonSquare);
-        MenuBar.AdminButton.RemoveStyleClass(StyleBase.ButtonSquare);
-        MenuBar.SandboxButton.RemoveStyleClass(StyleBase.ButtonSquare);
+        MenuBar.GuidebookButton.RemoveStyleClass(StyleClass.ButtonSquare);
+        MenuBar.AdminButton.RemoveStyleClass(StyleClass.ButtonSquare);
+        MenuBar.SandboxButton.RemoveStyleClass(StyleClass.ButtonSquare);
 
-        MenuBar.GuidebookButton.AddStyleClass(StyleBase.ButtonOpenBoth);
-        MenuBar.AdminButton.AddStyleClass(StyleBase.ButtonOpenBoth);
-        MenuBar.SandboxButton.AddStyleClass(StyleBase.ButtonOpenBoth);
+        MenuBar.GuidebookButton.AddStyleClass(StyleClass.ButtonOpenBoth);
+        MenuBar.AdminButton.AddStyleClass(StyleClass.ButtonOpenBoth);
+        MenuBar.SandboxButton.AddStyleClass(StyleClass.ButtonOpenBoth);
     }
 
     public override void SetChatSize(Vector2 size)

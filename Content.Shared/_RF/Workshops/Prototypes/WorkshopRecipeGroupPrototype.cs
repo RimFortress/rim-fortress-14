@@ -7,20 +7,20 @@ namespace Content.Shared._RF.Workshops.Prototypes;
 /// Prototype of the workshop recipe category.
 /// </summary>
 [Prototype]
-public sealed class WorkshopRecipeGroupPrototype : IPrototype, IInheritingPrototype
+public sealed partial class WorkshopRecipeGroupPrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = string.Empty;
 
     /// <inheritdoc/>
     [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<WorkshopRecipeGroupPrototype>))]
-    public string[]? Parents { get; }
+    public string[]? Parents { get; private set; }
 
     /// <inheritdoc/>
     [NeverPushInheritance]
     [AbstractDataField]
-    public bool Abstract { get; }
+    public bool Abstract { get; private set; }
 
     public string Name => Loc.GetString($"workshop-recipe-group-{ID.ToLowerInvariant()}-name");
 

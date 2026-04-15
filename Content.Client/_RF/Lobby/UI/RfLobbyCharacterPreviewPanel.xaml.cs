@@ -52,7 +52,7 @@ public sealed partial class RfLobbyCharacterPreviewPanel : Control
             {
                 Text = name,
                 MaxWidth = 112,
-                VerticalAlignment = VAlignment.Bottom,
+                VerticalAlignment = VAlignment.Top,
             };
 
             var spriteView = new SpriteView

@@ -20,7 +20,7 @@
     targetLevel: 5
     experience: 50
     failTargetEffects:
-    - !type:ModifyBleedAmount
+    - !type:ModifyBleed
       probability: 0.6
       amount: 4
     - !type:HealthChange
@@ -32,7 +32,7 @@
           Shock: 3
           Caustic: 1
     successTargetEffects:
-    - !type:ModifyBleedAmount
+    - !type:ModifyBleed
       probability: 0.33
       amount: -2
     - !type:HealthChange

@@ -7,7 +7,7 @@
 
     <BoxContainer Orientation="Vertical" Margin="3 0"> <!-- RimFortress: Margin -->
         <Control>
-            <PanelContainer StyleClasses="WindowHeadingBackground" />
+            <PanelContainer StyleClasses="WindowHeadingBackground" Name="WindowHeader" />
             <BoxContainer Margin="4 5 8 0" Orientation="Horizontal"> <!-- RimFortress: Margin -->
                 <Label Name="WindowTitle"
                        HorizontalExpand="True" VAlign="Center" StyleClasses="FancyWindowTitle" ClipText="true" />

@@ -1,7 +1,7 @@
-using Content.Server.Atmos.Components;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared.Atmos.Components;
 using Content.Shared.GameTicking.Components;
 
 namespace Content.Server._RF.GameTicking.Rules;

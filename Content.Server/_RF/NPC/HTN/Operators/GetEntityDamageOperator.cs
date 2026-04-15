@@ -2,7 +2,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN.PrimitiveTasks;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
+using Content.Shared.Damage.Systems;
 using Content.Shared.FixedPoint;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
@@ -10,6 +11,7 @@ namespace Content.Server._RF.NPC.HTN.Operators;
 public sealed partial class GetEntityDamageOperator : HTNOperator
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
+    private DamageableSystem _damageable = default!;
 
     [DataField]
     public string TargetKey = NPCBlackboard.Owner;
@@ -20,6 +22,12 @@ public sealed partial class GetEntityDamageOperator : HTNOperator
     [DataField]
     public string DamageTypeKey = "DamageType";
 
+    public override void Initialize(IEntitySystemManager sysManager)
+    {
+        base.Initialize(sysManager);
+        _damageable = sysManager.GetEntitySystem<DamageableSystem>();
+    }
+
     public override async Task<(bool Valid, Dictionary<string, object>? Effects)> Plan(NPCBlackboard blackboard, CancellationToken cancelToken)
     {
         if (!blackboard.TryGetValue(TargetKey, out EntityUid? entity, _entManager)
@@ -29,7 +37,7 @@ public sealed partial class GetEntityDamageOperator : HTNOperator
 
         (string Type, FixedPoint2 Value)? maxDamage = null;
 
-        foreach (var (type, value) in damageable.Damage.DamageDict)
+        foreach (var (type, value) in _damageable.GetDamagePerGroup(new(entity.Value, damageable)))
         {
             if (maxDamage == null && value > 0
                 || maxDamage != null && maxDamage.Value.Value < value)

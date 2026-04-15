@@ -55,7 +55,10 @@
                     <BoxContainer Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom">
                         <info:DevInfoBanner Name="DevInfoBanner" VerticalExpand="false" Margin="3 3 3 3" />
                         <PanelContainer StyleClasses="AngleRect">
-                            <RichTextLabel Name="LobbySong" Access="Public" HorizontalAlignment="Center" />
+                            <BoxContainer>
+                                <RichTextLabel Name="LobbySong" Access="Public" HorizontalAlignment="Center" Margin="4 0 2 0"/>
+                                <RichTextLabel Name="LobbyBackground" Access="Public" HorizontalAlignment="Left" Margin="2 0 4 0"/>
+                            </BoxContainer>
                         </PanelContainer>
                     </BoxContainer>
                 </Control>

@@ -189,7 +189,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             if (!_passiveTaskQuery.TryComp(uid, out var comp))
                 continue;
 
-            EntityManager.RemoveComponent(uid, comp);
+            RemComp(uid, comp);
             removed.Add(uid);
         }
 
@@ -523,7 +523,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
         if (control.CurrentTask != null)
             FinishTask(new(entity, control, htn), TaskFinishStatus.Replaced);
 
-        if (target != null)
+        if (target != null && !TerminatingOrDeleted(target))
             EnsureComp<ActiveNpcTaskTargetComponent>(target.Value).Tasks.GetOrNew(proto).Add(entity);
 
         if (htn.Plan != null)
@@ -641,7 +641,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
     /// </summary>
     private TileRef? GetNeighborTile(List<TileRef> tiles)
     {
-        var directions = new[] {Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down};
+        var directions = new[] { Vector2i.Left, Vector2i.Right, Vector2i.Up, Vector2i.Down };
         var indicates = tiles.Select(tile => tile.GridIndices).ToList();
 
         foreach (var tile in tiles)
@@ -820,7 +820,7 @@ public sealed class NpcControlSystem : SharedNpcControlSystem
             return null;
 
         EntityUid? target = null;
-        var minDist = (float) int.MaxValue;
+        var minDist = (float)int.MaxValue;
         var canControlCache = new Dictionary<EntityUid, bool>();
         var coords = Transform(npc).Coordinates;
 

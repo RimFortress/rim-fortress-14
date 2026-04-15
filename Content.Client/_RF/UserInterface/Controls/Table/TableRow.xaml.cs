@@ -65,7 +65,7 @@ public sealed partial class TableRow : Control
         if (column == Columns)
         {
             if (Columns != 0)
-                Container.AddChild(new PanelContainer { StyleClasses = { StyleBase.ClassLowDivider }});
+                Container.AddChild(new PanelContainer { StyleClasses = { StyleClass.LowDivider } });
 
             Container.AddChild(cell);
         }
@@ -82,7 +82,7 @@ public sealed partial class TableRow : Control
         for (var i = 0; i < Columns; i++)
         {
             if (i != 0)
-                Container.AddChild(new PanelContainer { StyleClasses = { StyleBase.ClassLowDivider }});
+                Container.AddChild(new PanelContainer { StyleClasses = { StyleClass.LowDivider } });
 
             Container.AddChild(Cells[i]);
         }

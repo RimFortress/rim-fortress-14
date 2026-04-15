@@ -31,10 +31,10 @@ public sealed partial class RfCharacterSetupGui : Control
     public event Action? OnBeforeSave;
     public event Action? OnSave;
 
-    public Dictionary<int, ICharacterProfile>? Profiles;
+    public Dictionary<int, HumanoidCharacterProfile>? Profiles;
     public int SelectedProfileIndex = -1;
 
-    public ICharacterProfile? SelectedProfile
+    public HumanoidCharacterProfile? SelectedProfile
     {
         set
         {
@@ -161,7 +161,7 @@ public sealed partial class RfCharacterSetupGui : Control
                 Characters.AddChild(new PanelContainer
                 {
                     Margin = new Thickness(0, 10f),
-                    StyleClasses = { StyleBase.ClassHighDivider },
+                    StyleClasses = { StyleClass.HighDivider },
                 });
 
                 separatorAdded = true;

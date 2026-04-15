@@ -8,16 +8,14 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// <summary>
 /// Resets the cooldown of melee weapon use
 /// </summary>
-public sealed partial class ResetMeleeCooldown : EntityEffect
+public sealed partial class ResetMeleeCooldown : EntityEffectBase<ResetMeleeCooldown>;
+
+public sealed class ResetMeleeCooldownEntityEffectSystem : EntityEffectSystem<MeleeWeaponComponent, GenerateProduct>
 {
-    protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) =>
-        null;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
-    public override void Effect(EntityEffectBaseArgs args)
+    protected override void Effect(Entity<MeleeWeaponComponent> entity, ref EntityEffectEvent<GenerateProduct> args)
     {
-        if (!args.EntityManager.TryGetComponent(args.TargetEntity, out MeleeWeaponComponent? comp))
-            return;
-
-        comp.NextAttack = IoCManager.Resolve<IGameTiming>().CurTime;
+        entity.Comp.NextAttack = _timing.CurTime;
     }
 }

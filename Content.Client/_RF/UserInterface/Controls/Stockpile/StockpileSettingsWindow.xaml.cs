@@ -19,8 +19,7 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
 
     private const string StockTitlePrefix = "stockpile-label-prefix";
 
-    [ValidatePrototypeId<EntityCategoryPrototype>]
-    private readonly ProtoId<EntityCategoryPrototype> _doNotMapCategory = "DoNotMap";
+    private static readonly ProtoId<EntityCategoryPrototype> DoNotMapCategory = "DoNotMap";
 
     private readonly StockpileUiController _stockpileController;
 
@@ -104,7 +103,7 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
     {
         _categoryItems.Clear();
 
-        var doNotMap = _prototype.Index(_doNotMapCategory);
+        var doNotMap = _prototype.Index(DoNotMapCategory);
 
         foreach (var prototype in _prototype.EnumeratePrototypes<EntityPrototype>())
         {

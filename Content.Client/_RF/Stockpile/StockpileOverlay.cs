@@ -20,8 +20,7 @@ public sealed class StockpileOverlay : GridOverlay
     private const float SelectedBorderSize = 0.05f;
     private const float SelectedBorderColorDelta = 0.05f;
 
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string LineShader = "AnimatedDottedLine";
+    private static readonly ProtoId<ShaderPrototype> LineShader = "AnimatedDottedLine";
 
     private readonly Color _mainColor = Color.LightGray.WithAlpha(0.3f);
     private readonly Color _secondaryColor = Color.DarkGray.WithAlpha(0.3f);
