@@ -250,7 +250,7 @@ public sealed class NeedsSystem : EntitySystem
     {
         data = null;
 
-        if (Resolve(ent, ref ent.Comp))
+        if (Resolve(ent, ref ent.Comp, false))
             data = ent.Comp.Needs.FirstOrDefault(x => x.Id == protoId);
 
         return data != null;
