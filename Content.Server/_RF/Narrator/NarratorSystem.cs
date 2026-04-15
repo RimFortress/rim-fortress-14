@@ -262,7 +262,8 @@ public sealed partial class NarratorSystem : EntitySystem
 
     private string DebugTextGlobal()
     {
-        var rule = _rule.GetRule();
+        if (_rule.GetRule() is not { } rule)
+            return string.Empty;
 
         if (!_prototype.TryIndex(rule.Narrator, out var narrator))
             return "Unknown";
