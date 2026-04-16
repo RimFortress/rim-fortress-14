@@ -179,6 +179,19 @@ public sealed class NeedsSystem : EntitySystem
         UpdateCurrentThreshold(ent, protoId);
     }
 
+    // For integration tests
+    [PublicAPI]
+    public void SetAllNeedsMax(Entity<NeedsComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp, false))
+            return;
+
+        foreach (var need in ent.Comp.Needs)
+        {
+            SetValue(ent, need.Id, int.MaxValue);
+        }
+    }
+
     private void SetAuthoritativeValue(Entity<NeedsComponent?> ent, ProtoId<NeedPrototype> protoId, float value)
     {
         if (!TryGetNeed(ent, protoId, out var need))
@@ -250,7 +263,7 @@ public sealed class NeedsSystem : EntitySystem
     {
         data = null;
 
-        if (Resolve(ent, ref ent.Comp))
+        if (Resolve(ent, ref ent.Comp, false))
             data = ent.Comp.Needs.FirstOrDefault(x => x.Id == protoId);
 
         return data != null;

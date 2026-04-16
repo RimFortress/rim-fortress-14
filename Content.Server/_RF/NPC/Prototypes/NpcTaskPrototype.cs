@@ -15,7 +15,7 @@ namespace Content.Server._RF.NPC.Prototypes;
 /// A prototype of the various complex tasks that <see cref="NpcControlComponent"/> owners can issue for NPCs
 /// </summary>
 [Prototype]
-public sealed class NpcTaskPrototype : IPrototype, IInheritingPrototype, ISerializationHooks
+public sealed partial class NpcTaskPrototype : IPrototype, IInheritingPrototype, ISerializationHooks
 {
     private ILocalizationManager _loc = default!;
 
@@ -29,7 +29,7 @@ public sealed class NpcTaskPrototype : IPrototype, IInheritingPrototype, ISerial
 
     /// <inheritdoc/>
     [IdDataField, ViewVariables]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <summary>
     /// Task name that is used when displayed in the context menu

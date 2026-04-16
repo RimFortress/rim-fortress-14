@@ -1,5 +1,6 @@
 using Content.Server.Stack;
 using Content.Shared.EntityEffects;
+using Content.Shared.Stacks;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.EntityEffects.Effects;
@@ -7,19 +8,21 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// <summary>
 /// Changes the amount of material in the stack
 /// </summary>
-public sealed partial class ChangeStack : EntityEffect
+public sealed partial class ChangeStack : EntityEffectBase<ChangeStack>
 {
     /// <summary>
     /// Amount of material to be changed to
     /// </summary>
     [DataField]
     public int Amount;
+}
 
-    protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) => null;
+public sealed class ChangeStackEntityEffectSystem : EntityEffectSystem<StackComponent, ChangeStack>
+{
+    [Dependency] private readonly StackSystem _stack = default!;
 
-    public override void Effect(EntityEffectBaseArgs args)
+    protected override void Effect(Entity<StackComponent> entity, ref EntityEffectEvent<ChangeStack> args)
     {
-        var stack = args.EntityManager.System<StackSystem>();
-        stack.SetCount(args.TargetEntity, stack.GetCount(args.TargetEntity) + Amount);
+        _stack.SetCount(entity.AsNullable(), _stack.GetCount(entity.AsNullable()) + args.Effect.Amount);
     }
 }

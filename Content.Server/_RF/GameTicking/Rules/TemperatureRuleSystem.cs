@@ -1,7 +1,7 @@
-using Content.Server.Atmos.Components;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared.Atmos.Components;
 using Content.Shared.GameTicking.Components;
 
 namespace Content.Server._RF.GameTicking.Rules;
@@ -16,7 +16,7 @@ public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleCompon
     {
         base.Started(uid, component, gameRule, args);
 
-        var map = _rule.GetRule().WorldMap;
+        var map = _rule.GetRule()?.WorldMap;
 
         if (!TryComp(map, out MapAtmosphereComponent? mapAtmos))
             return;
@@ -28,16 +28,20 @@ public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleCompon
     {
         base.ActiveTick(uid, component, gameRule, frameTime);
 
-        var map = _rule.GetRule().WorldMap;
+        var map = _rule.GetRule()?.WorldMap;
 
         if (!TryComp(map, out MapAtmosphereComponent? mapAtmos))
             return;
 
         var temp = _globalRule.GetInterpolatedValue(uid, component.DefaultTemp, component.TargetTemperature);
+
+        if (float.IsNaN(temp))
+            return;
+
         var mixture = mapAtmos.Mixture;
         mixture.Temperature = temp;
 
-        _atmos.SetMapAtmosphere(map, false, mixture);
+        _atmos.SetMapAtmosphere(map.Value, false, mixture);
         RaiseNetworkEvent(new WorldTemperatureChangedMessage(GetNetEntity(uid), temp));
     }
 }

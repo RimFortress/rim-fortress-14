@@ -30,7 +30,7 @@ public sealed partial class BloodLevelPrecondition : InvertiblePrecondition
         if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager))
             return false;
 
-        var bloodLevel = _bloodstream.GetBloodLevelPercentage(uid.Value);
+        var bloodLevel = _bloodstream.GetBloodLevel(uid.Value);
 
         return MoreThan != null && bloodLevel > MoreThan
                || LessThan != null && bloodLevel < LessThan;

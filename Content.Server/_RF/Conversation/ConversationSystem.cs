@@ -2,6 +2,7 @@ using Content.Server._RF.NPC.Systems;
 using Content.Server.Chat.Systems;
 using Content.Shared._RF.Conversation;
 using Content.Shared._RF.Conversation.Components;
+using Content.Shared.Chat;
 
 namespace Content.Server._RF.Conversation;
 

@@ -12,20 +12,20 @@ namespace Content.Shared._RF.Workshops.Prototypes;
 /// A prototype of a recipe that can be crafted in a workshop.
 /// </summary>
 [Prototype]
-public sealed class WorkshopRecipePrototype : IPrototype, IInheritingPrototype
+public sealed partial class WorkshopRecipePrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <inheritdoc/>
     [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<WorkshopRecipePrototype>))]
-    public string[]? Parents { get; }
+    public string[]? Parents { get; private set; }
 
     /// <inheritdoc/>
     [NeverPushInheritance]
     [AbstractDataField]
-    public bool Abstract { get; }
+    public bool Abstract { get; private set; }
 
     /// <summary>
     /// The result of producing this recipe.

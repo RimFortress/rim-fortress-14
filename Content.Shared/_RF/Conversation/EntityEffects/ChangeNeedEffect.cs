@@ -8,7 +8,7 @@ namespace Content.Shared._RF.Conversation.EntityEffects;
 /// <summary>
 /// Changes the level of satisfaction of an entity's need
 /// </summary>
-public sealed partial class ChangeNeedEffect : EntityEffect
+public sealed partial class ChangeNeedEffect : EntityEffectBase<ChangeNeedEffect>
 {
     /// <summary>
     /// Need prototype
@@ -21,9 +21,4 @@ public sealed partial class ChangeNeedEffect : EntityEffect
     /// </summary>
     [DataField]
     public float Amount;
-
-    public override void Effect(EntityEffectBaseArgs args)
-        => args.EntityManager.System<NeedsSystem>().AddValue(args.TargetEntity, Need, Amount);
-
-    protected override string? ReagentEffectGuidebookText(IPrototypeManager prototype, IEntitySystemManager entSys) => null;
 }

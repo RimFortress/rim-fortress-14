@@ -6,11 +6,11 @@ namespace Content.Shared._RF.Workshops.Prototypes;
 /// Prototype of the workshop's recipe table.
 /// </summary>
 [Prototype]
-public sealed class WorkshopRecipeTablePrototype : IPrototype
+public sealed partial class WorkshopRecipeTablePrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     [DataField]
     public List<ProtoId<WorkshopRecipePrototype>> Recipes = new();

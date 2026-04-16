@@ -51,7 +51,7 @@
 - type: npcJob
   id: Cooking
   name: Cooking
-  icon: /Textures/_RF/Interface/utensils-solid-full.svg.192dpi.png
+  icon: /Textures/_RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
   tasks:
   - Cook
 

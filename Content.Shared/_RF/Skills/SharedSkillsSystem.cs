@@ -15,6 +15,7 @@ public abstract class SharedSkillsSystem : EntitySystem
 {
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly IRobustRandom Random = default!;
+    [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
 
     public const string DefaultSkillProfession = "skill-profession-default";
 
@@ -151,7 +152,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         var ev = new GetSkillLevelModifierEvent(skill, 0, 1f);
         RaiseLocalEvent(ent, ref ev);
 
-        return Math.Clamp((int) ((GetLevel(ent, skill) + ev.Modificator) * ev.Multiplier), 0, proto.MaxLevel);
+        return Math.Clamp((int)((GetLevel(ent, skill) + ev.Modificator) * ev.Multiplier), 0, proto.MaxLevel);
     }
 
     /// <summary>
@@ -175,7 +176,7 @@ public abstract class SharedSkillsSystem : EntitySystem
             experience * (proto.LevelExpMultiplier - 1) / proto.LevelUpExp + 1,
             proto.LevelExpMultiplier);
 
-        return Math.Min((int) Math.Floor(level), proto.MaxLevel);
+        return Math.Min((int)Math.Floor(level), proto.MaxLevel);
     }
 
     /// <summary>
@@ -191,7 +192,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         // If I hadn't skipped school I wouldn't have had
         // to search for the sum of geometric progression formula
         // Sₙ = a₁ * (qⁿ - 1) / (q - 1)
-        return (int) (proto.LevelUpExp
+        return (int)(proto.LevelUpExp
                       * (Math.Pow(proto.LevelExpMultiplier, level) - 1)
                       / (proto.LevelExpMultiplier - 1));
     }
@@ -255,25 +256,11 @@ public abstract class SharedSkillsSystem : EntitySystem
         if (oldLevel == data.CurrentLevel)
             return;
 
-        var args = new EntityEffectBaseArgs(ent, EntityManager);
-
         if (proto.LevelUpEffects.TryGetValue(0, out var zeroEffects))
-        {
-            foreach (var effect in zeroEffects)
-            {
-                if (effect.ShouldApply(args, Random))
-                    effect.Effect(args);
-            }
-        }
+            _entityEffects.ApplyEffects(ent, zeroEffects);
 
         if (data.CurrentLevel != 0 && proto.LevelUpEffects.TryGetValue(data.CurrentLevel, out var effects))
-        {
-            foreach (var effect in effects)
-            {
-                if (effect.ShouldApply(args, Random))
-                    effect.Effect(args);
-            }
-        }
+            _entityEffects.ApplyEffects(ent, effects);
 
         RaiseLocalEvent(ent, new SkillLevelChanged(data.CurrentLevel, oldLevel));
     }
@@ -318,7 +305,7 @@ public abstract class SharedSkillsSystem : EntitySystem
     /// </summary>
     public int GetInteractionResult(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, int value)
     {
-        return (int) Math.Floor(GetInteractionResult(ent, user, (float) value));
+        return (int)Math.Floor(GetInteractionResult(ent, user, (float)value));
     }
 
     /// <summary>
@@ -349,7 +336,7 @@ public abstract class SharedSkillsSystem : EntitySystem
         Entity<SkillsComponent?> user,
         TimeSpan delay)
     {
-        return TimeSpan.FromSeconds(GetDelay(ent, user, (float) delay.TotalSeconds));
+        return TimeSpan.FromSeconds(GetDelay(ent, user, (float)delay.TotalSeconds));
     }
 
     /// <summary>
@@ -428,31 +415,12 @@ public abstract class SharedSkillsSystem : EntitySystem
         {
             AddExperience(user, ent.Comp.Skill, (int)(experience * interact.ExpSuccessFactor));
 
-            foreach (var effect in interact.SuccessEffects)
+            _entityEffects.ApplyEffects(ent, interact.SuccessEffects);
+            _entityEffects.ApplyEffects(user, interact.SuccessUserEffects);
+
+            foreach (var target in targets)
             {
-                var args = new EntityEffectBaseArgs(ent, EntityManager);
-
-                if (effect.ShouldApply(args, Random))
-                    effect.Effect(args);
-            }
-
-            foreach (var effect in interact.SuccessUserEffects)
-            {
-                var args = new EntityEffectBaseArgs(ent, EntityManager);
-
-                if (effect.ShouldApply(args, Random))
-                    effect.Effect(args);
-            }
-
-            foreach (var effect in interact.SuccessTargetEffects)
-            {
-                foreach (var target in targets)
-                {
-                    var args = new EntityEffectBaseArgs(target, EntityManager);
-
-                    if (effect.ShouldApply(args, Random))
-                        effect.Effect(args);
-                }
+                _entityEffects.ApplyEffects(target, interact.SuccessTargetEffects);
             }
 
 #if DEBUG
@@ -469,31 +437,12 @@ public abstract class SharedSkillsSystem : EntitySystem
         {
             AddExperience(user, ent.Comp.Skill, (int)(experience * interact.ExpFailFactor));
 
-            foreach (var effect in interact.FailEffects)
+            _entityEffects.ApplyEffects(ent, interact.FailEffects);
+            _entityEffects.ApplyEffects(user, interact.FailUserEffects);
+
+            foreach (var target in targets)
             {
-                var args = new EntityEffectBaseArgs(ent, EntityManager);
-
-                if (effect.ShouldApply(args, Random))
-                    effect.Effect(args);
-            }
-
-            foreach (var effect in interact.FailUserEffects)
-            {
-                var args = new EntityEffectBaseArgs(ent, EntityManager);
-
-                if (effect.ShouldApply(args, Random))
-                    effect.Effect(args);
-            }
-
-            foreach (var effect in interact.FailTargetEffects)
-            {
-                foreach (var target in targets)
-                {
-                    var args = new EntityEffectBaseArgs(target, EntityManager);
-
-                    if (effect.ShouldApply(args, Random))
-                        effect.Effect(args);
-                }
+                _entityEffects.ApplyEffects(target, interact.FailTargetEffects);
             }
 
 #if DEBUG

@@ -10,20 +10,20 @@ namespace Content.Shared._RF.Notifications;
 /// This is a prototype for notification for the player.
 /// </summary>
 [Prototype]
-public sealed class NotificationPrototype : IPrototype, IInheritingPrototype
+public sealed partial class NotificationPrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <inheritdoc/>
     [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<NotificationPrototype>))]
-    public string[]? Parents { get; }
+    public string[]? Parents { get; private set; }
 
     /// <inheritdoc/>
     [NeverPushInheritance]
     [AbstractDataField]
-    public bool Abstract { get; }
+    public bool Abstract { get; private set; }
 
     /// <summary>
     /// ID for localization of notification name.

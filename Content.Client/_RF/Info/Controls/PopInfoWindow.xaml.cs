@@ -44,15 +44,16 @@ public sealed partial class PopInfoWindow : FancyWindow
     public void SetInfo(EntityUid uid)
     {
         if (!_entity.TryGetComponent(uid, out MetaDataComponent? meta)
-            || !_entity.TryGetComponent(uid, out HumanoidAppearanceComponent? appearance))
+            || !_entity.TryGetComponent(uid, out HumanoidProfileComponent? appearance))
             return;
 
         _uid = uid;
+        var sex = appearance.Sex;
 
         NameLabel.Text = Loc.GetString("pop-info-summary",
             ("name", meta.EntityName),
             ("species", Loc.GetString(_prototype.Index(appearance.Species).Name)),
-            ("sex", appearance.Sex.ToString().ToLowerInvariant()),
+            ("sex", sex.ToString().ToLowerInvariant()),
             ("age", appearance.Age),
             ("profession", _entity.System<SkillsSystem>().SkillProfession(uid)));
 

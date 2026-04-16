@@ -19,6 +19,7 @@ public abstract class SharedConversationSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly SharedTransformSystem _xform = default!;
+    [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
 
     public override void Initialize()
     {
@@ -196,17 +197,9 @@ public abstract class SharedConversationSystem : EntitySystem
 
         foreach (var (id, uid) in ent.Comp.Actors)
         {
-            if (!proto.Effects.TryGetValue(id, out var effects))
-                continue;
-
             // apply conversation completion effects
-            var args = new EntityEffectConversationArgs(uid, ent.Comp.Actors, EntityManager);
-
-            foreach (var effect in effects)
-            {
-                if (effect.ShouldApply(args))
-                    effect.Effect(args);
-            }
+            if (proto.Effects.TryGetValue(id, out var effects))
+                _entityEffects.ApplyEffects(uid, effects);
         }
     }
 

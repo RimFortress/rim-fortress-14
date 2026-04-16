@@ -10,7 +10,7 @@ public sealed partial class SocialEffectPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <summary>
     /// Name of the effect.

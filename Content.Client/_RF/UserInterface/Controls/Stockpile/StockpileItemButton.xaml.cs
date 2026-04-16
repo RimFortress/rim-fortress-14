@@ -54,7 +54,7 @@ public sealed partial class StockpileItemButton : Button
 
         _category = true;
 
-        Label.Text = count == 0 ? proto.Name : $"{proto.Name} ({count})";
+        NameLabel.Text = count == 0 ? proto.Name : $"{proto.Name} ({count})";
 
         if (_prototype.TryIndex(proto.IconEntity, out var entProto))
         {
@@ -77,8 +77,8 @@ public sealed partial class StockpileItemButton : Button
 
         Disabled = true;
 
-        Label.Text = string.IsNullOrEmpty(proto.EditorSuffix) ? proto.Name : $"{proto.Name} [{proto.EditorSuffix}]";
-        Label.Text = count == 0 ? Label.Text : $"{Label.Text} ({count})";
+        NameLabel.Text = string.IsNullOrEmpty(proto.EditorSuffix) ? proto.Name : $"{proto.Name} [{proto.EditorSuffix}]";
+        NameLabel.Text = count == 0 ? NameLabel.Text : $"{NameLabel.Text} ({count})";
 
         Texture.Textures.AddRange(SpriteComponent
             .GetPrototypeTextures(proto, _resources)
@@ -91,7 +91,7 @@ public sealed partial class StockpileItemButton : Button
 
     private void EnsureSetup()
     {
-        ToolTip = Label.Text;
+        ToolTip = NameLabel.Text;
 
         UnlimitedCheck.OnPressed += _ =>
         {

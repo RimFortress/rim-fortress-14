@@ -6,7 +6,7 @@
             <SpriteView Name="Icon" OverrideDirection="South"
                         SetSize="48 48" Stretch="Fill" Margin="2"/>
         </PanelContainer>
-        <RichTextLabel Name="Name" Margin="5 0"
+        <RichTextLabel Name="NameLabel" Margin="5 0"
                        VerticalExpand="True" HorizontalExpand="True"/>
     </BoxContainer>
 </controls:NpcJobsPopCell>

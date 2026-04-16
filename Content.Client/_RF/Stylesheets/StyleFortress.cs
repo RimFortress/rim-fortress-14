@@ -9,6 +9,7 @@ using Content.Client.PDA;
 using Content.Client.Resources;
 using Content.Client.Silicons.Laws.SiliconLawEditUi;
 using Content.Client.Stylesheets;
+using Content.Client.Stylesheets.Sheetlets;
 using Content.Client.UserInterface.Controls;
 using Content.Client.UserInterface.Controls.FancyTree;
 using Content.Client.Verbs.UI;
@@ -146,6 +147,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassPanelHighlighted = "PanelHighlighted";
     public const string StyleClassPanelHighlightedTransparent = "PanelHighlightedTransparent";
 
+    public const string ClassAngleRect = "AngleRect";
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
     public const string StyleClassTopInfoPanel = "TopInfoPanel";
@@ -162,6 +164,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassLowDividerDark = "LowDividerDark";
 
     // Buttons
+    public const string ButtonCaution = "negative";
     public const string StyleClassChatChannelSelectorButton = "chatSelectorOptionButton";
     public const string StyleClassChatFilterOptionButton = "chatFilterOptionButton";
     public const string StyleClassStorageButton = "storageButton";
@@ -317,8 +320,8 @@ public sealed class StyleFortress : StyleBase
         var vScrollBarGrabberNormal = new StyleBoxFlat
         {
             BackgroundColor = ButtonColorDefault.WithAlpha(0.35f),
-            ContentMarginLeftOverride = DefaultGrabberSize,
-            ContentMarginTopOverride = DefaultGrabberSize,
+            ContentMarginLeftOverride = ScrollbarSheetlet.DefaultGrabberSize,
+            ContentMarginTopOverride = ScrollbarSheetlet.DefaultGrabberSize,
         };
         var vScrollBarGrabberHover = new StyleBoxFlat(vScrollBarGrabberNormal)
             { BackgroundColor = ButtonColorHovered.WithAlpha(0.35f) };
@@ -328,7 +331,7 @@ public sealed class StyleFortress : StyleBase
         var hScrollBarGrabberNormal = new StyleBoxFlat
         {
             BackgroundColor = ButtonColorDefault.WithAlpha(0.35f),
-            ContentMarginTopOverride = DefaultGrabberSize,
+            ContentMarginTopOverride = ScrollbarSheetlet.DefaultGrabberSize,
         };
         var hScrollBarGrabberHover = new StyleBoxFlat(hScrollBarGrabberNormal)
             { BackgroundColor = ButtonColorHovered.WithAlpha(0.35f) };
@@ -405,11 +408,7 @@ public sealed class StyleFortress : StyleBase
         var itemListItemBackgroundTransparent =
             new StyleBoxFlat(itemListItemBackground) { BackgroundColor = Color.Transparent };
 
-        var listContainerButton = new StyleBoxTexture
-        {
-            Texture = resCache.GetTexture("/Textures/Interface/Nano/square.png"),
-            ContentMarginLeftOverride = 10,
-        };
+        var listContainerButton = new StyleBoxFlat { ContentMarginLeftOverride = 10 };
 
         #endregion
 
@@ -572,7 +571,7 @@ public sealed class StyleFortress : StyleBase
                 .Prop("font", sourceCode12),
 
             Element()
-                .Class(StyleClassItalic)
+                .Class(StyleClass.Italic)
                 .Prop("font", sourceCodeItalic12),
 
             #region Scroll bars
@@ -694,19 +693,19 @@ public sealed class StyleFortress : StyleBase
                 .Prop(ContainerButton.StylePropertyStyleBox, button),
 
             Element<ContainerButton>()
-                .Class(ContainerButton.StyleClassButton, ButtonOpenRight)
+                .Class(ContainerButton.StyleClassButton, StyleClass.ButtonOpenRight)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenRight),
 
             Element<ContainerButton>()
-                .Class(ContainerButton.StyleClassButton, ButtonOpenLeft)
+                .Class(ContainerButton.StyleClassButton, StyleClass.ButtonOpenLeft)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenLeft),
 
             Element<ContainerButton>()
-                .Class(ContainerButton.StyleClassButton, ButtonOpenBoth)
+                .Class(ContainerButton.StyleClassButton, StyleClass.ButtonOpenBoth)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenBoth),
 
             Element<ContainerButton>()
-                .Class(ContainerButton.StyleClassButton, ButtonSquare)
+                .Class(ContainerButton.StyleClassButton, StyleClass.ButtonSquare)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonSquare),
 
             Element<ContainerButton>()
@@ -1241,10 +1240,10 @@ public sealed class StyleFortress : StyleBase
             #endregion
 
             // small number for the entity counter in the entity menu
-            Element<Label>()
-                .Class(ContextMenuElement.StyleClassEntityMenuIconLabel)
-                .Prop(Label.StylePropertyFont, sourceCode10)
-                .Prop(Label.StylePropertyAlignMode, Label.AlignMode.Right),
+            // Element<Label>()
+            //     .Class(ContextMenuElement.StyleClassEntityMenuIconLabel)
+            //     .Prop(Label.StylePropertyFont, sourceCode10)
+            //     .Prop(Label.StylePropertyAlignMode, Label.AlignMode.Right),
 
             #region ItemList
 
@@ -1293,7 +1292,7 @@ public sealed class StyleFortress : StyleBase
 
             // Big Label
             Element<Label>()
-                .Class(StyleClassLabelHeading)
+                .Class(StyleClass.LabelHeading)
                 .Prop(Label.StylePropertyFont, sourceCodeBold16)
                 .Prop(Label.StylePropertyFontColor, GoldFortress),
 
@@ -1305,7 +1304,7 @@ public sealed class StyleFortress : StyleBase
 
             // Small Label
             Element<Label>()
-                .Class(StyleClassLabelSubText)
+                .Class(StyleClass.LabelSubText)
                 .Prop(Label.StylePropertyFont, sourceCode10)
                 .Prop(Label.StylePropertyFontColor, GraySilver),
 
@@ -1367,19 +1366,19 @@ public sealed class StyleFortress : StyleBase
             // which is NOT the case for the default BaseButton styles (OpenLeft/OpenRight adds extra padding on one of the sides
             // which makes the TopButton icons appear off-center, which we don't want).
             Element<MenuButton>()
-                .Class(ButtonSquare)
+                .Class(StyleClass.ButtonSquare)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonSquare),
 
             Element<MenuButton>()
-                .Class(ButtonOpenLeft)
+                .Class(StyleClass.ButtonOpenLeft)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenLeft),
 
             Element<MenuButton>()
-                .Class(ButtonOpenRight)
+                .Class(StyleClass.ButtonOpenRight)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenRight),
 
             Element<MenuButton>()
-                .Class(ButtonOpenBoth)
+                .Class(StyleClass.ButtonOpenBoth)
                 .Prop(ContainerButton.StylePropertyStyleBox, buttonOpenBoth),
 
             Element<MenuButton>()
@@ -1387,7 +1386,7 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Control.StylePropertyModulateSelf, ButtonColorDefault),
 
             Element<MenuButton>()
-                .Class(MenuButton.StyleClassRedTopButton)
+                .Class(ButtonCaution)
                 .Pseudo(ContainerButton.StylePseudoClassNormal)
                 .Prop(Control.StylePropertyModulateSelf, Bad),
 
@@ -1400,7 +1399,7 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Control.StylePropertyModulateSelf, ButtonColorHovered),
 
             Element<MenuButton>()
-                .Class(MenuButton.StyleClassRedTopButton)
+                .Class(ButtonCaution)
                 .Pseudo(ContainerButton.StylePseudoClassHover)
                 .Prop(Control.StylePropertyModulateSelf, LightBad),
 
@@ -1556,7 +1555,7 @@ public sealed class StyleFortress : StyleBase
             #region Dividers
 
             Element<PanelContainer>()
-                .Class(ClassLowDivider)
+                .Class(StyleClass.LowDivider)
                 .Prop(PanelContainer.StylePropertyPanel,
                     new StyleBoxFlat
                     {
@@ -1566,7 +1565,7 @@ public sealed class StyleFortress : StyleBase
                     }),
 
             Element<PanelContainer>()
-                .Class(ClassHighDivider)
+                .Class(StyleClass.HighDivider)
                 .Prop(PanelContainer.StylePropertyPanel,
                     new StyleBoxFlat
                     {

@@ -1,6 +1,7 @@
 <BoxContainer xmlns="https://spacestation14.io"
          xmlns:humanoid="clr-namespace:Content.Client.Humanoid"
          xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
+         xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
          HorizontalExpand="True">
         <BoxContainer Orientation="Vertical" Margin="10" HorizontalExpand="True">
             <!-- Middle container -->
@@ -41,14 +42,14 @@
 
             <!-- tabContainer -->
             <TabContainer Name="TabContainer" VerticalExpand="True">
-                <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+                <BoxContainer Name="AppearanceTab" Orientation="Vertical" HorizontalExpand="True">
                     <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
                         <!-- Sprite view -->
                         <PanelContainer StyleClasses="PanelDarkBordered" Margin="3">
                             <BoxContainer Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True">
-                                <SpriteView Name="SpriteView" Stretch="Fill"
-                                            MinSize="250 250" SizeFlagsStretchRatio="1"
-                                            VerticalExpand="True" HorizontalExpand="True"/>
+                                <profile:ProfilePreviewSpriteView Name="SpriteView" Stretch="Fill"
+                                                                  MinSize="250 250" SizeFlagsStretchRatio="1"
+                                                                  VerticalExpand="True" HorizontalExpand="True"/>
                                 <BoxContainer VerticalExpand="True"/>
                                 <BoxContainer Orientation="Horizontal"
                                               HorizontalAlignment="Center" VerticalAlignment="Bottom">
@@ -103,35 +104,28 @@
                                     <BoxContainer Name="RgbSkinColorContainer" Visible="False" Orientation="Vertical" HorizontalExpand="True"></BoxContainer>
                                 </BoxContainer>
                             </PanelContainer>
-                            <PanelContainer StyleClasses="PanelHighlighted" Margin="10">
+                            <PanelContainer StyleClasses="PanelHighlighted" HorizontalExpand="True" VerticalExpand="True" Margin="10">
                                 <BoxContainer Orientation="Vertical">
                                     <!-- Eyes -->
                                     <Label Text="{Loc 'humanoid-profile-editor-eyes-label'}"/>
                                     <humanoid:EyeColorPicker Name="EyeColorPicker" Margin="0 0 0 10"/>
-                                    <!-- Hair -->
-                                    <BoxContainer Orientation="Horizontal">
-                                        <humanoid:SingleMarkingPicker Name="HairStylePicker"
-                                                                      Category="Hair" Margin="0 0 5 0"/>
-                                        <humanoid:SingleMarkingPicker Name="FacialHairPicker"
-                                                                      Category="FacialHair" Margin="5 0 0 0"/>
-                                    </BoxContainer>
-                                </BoxContainer>
-                            </PanelContainer>
-                            <!-- Markings -->
-                            <PanelContainer StyleClasses="PanelHighlighted" Margin="10">
-                                <BoxContainer Margin="10" Orientation="Vertical">
-                                    <Label Text="{Loc 'humanoid-profile-editor-markings-tab'}"/>
-                                    <humanoid:MarkingPicker Name="Markings" IgnoreCategories="Hair,FacialHair"/>
+                                    <!-- Markings -->
+                                    <PanelContainer StyleClasses="PanelHighlighted" HorizontalExpand="True" VerticalExpand="True" Margin="10">
+                                        <BoxContainer Margin="10" Orientation="Vertical">
+                                            <Label Text="{Loc 'humanoid-profile-editor-markings-tab'}"/>
+                                            <humanoid:MarkingPicker Name="Markings" HorizontalExpand="True" VerticalExpand="True"/>
+                                        </BoxContainer>
+                                    </PanelContainer>
                                 </BoxContainer>
                             </PanelContainer>
                         </BoxContainer>
                     </ScrollContainer>
                 </BoxContainer>
                 <ui:CharacterSkillsTab Name="SkillsTab" Margin="10"/>
-                <BoxContainer Orientation="Vertical" Margin="10">
+                <BoxContainer Name="TraitsTab" Orientation="Vertical" Margin="10">
                     <!-- Traits -->
                     <ScrollContainer VerticalExpand="True">
-                        <BoxContainer Name="TraitsList" Orientation="Vertical" />
+                        <BoxContainer Name="TraitsList" Orientation="Vertical"/>
                     </ScrollContainer>
                 </BoxContainer>
             </TabContainer>

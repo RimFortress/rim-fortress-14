@@ -48,7 +48,7 @@ public sealed partial class SplitStackOperator : HTNOperator
         // if any, and get the coordinates relative to the grid
         var coords = _transform.ToCoordinates(_transform.GetMapCoordinates(xform));
 
-        var newStack = _stack.Split(target, amount, coords, stackComp);
+        var newStack = _stack.Split(target, amount, coords);
         blackboard.SetValue(TargetKey, newStack ?? target);
         return HTNOperatorStatus.Finished;
     }

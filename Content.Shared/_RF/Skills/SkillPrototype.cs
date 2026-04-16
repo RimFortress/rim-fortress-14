@@ -6,7 +6,7 @@ using Robust.Shared.Utility;
 namespace Content.Shared._RF.Skills;
 
 [Prototype]
-public sealed class SkillPrototype : IPrototype, IInheritingPrototype
+public sealed partial class SkillPrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc />
     [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<SkillPrototype>))]
@@ -18,7 +18,7 @@ public sealed class SkillPrototype : IPrototype, IInheritingPrototype
 
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     /// <summary>
     /// Human-readable skill name
@@ -88,5 +88,5 @@ public sealed class SkillPrototype : IPrototype, IInheritingPrototype
     /// The effects for level zero are applied every level up
     /// </remarks>
     [DataField]
-    public Dictionary<int, List<EntityEffect>> LevelUpEffects = new();
+    public Dictionary<int, EntityEffect[]> LevelUpEffects = new();
 }

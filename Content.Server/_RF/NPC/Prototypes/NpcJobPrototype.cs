@@ -14,7 +14,7 @@ public sealed partial class NpcJobPrototype : IPrototype, ISerializationHooks
 
     /// <inheritdoc/>
     [IdDataField]
-    public string ID { get; } = default!;
+    public string ID { get; private set; } = default!;
 
     [DataField("name")]
     private string _name = string.Empty;

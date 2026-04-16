@@ -26,7 +26,7 @@ public sealed partial class DamageGroupInfo : Control
     public DamageGroupInfo(
         ProtoId<DamageGroupPrototype> groupId,
         FixedPoint2 groupDamage,
-        IReadOnlyDictionary<string, FixedPoint2> damageDict)
+        IReadOnlyDictionary<ProtoId<DamageTypePrototype>, FixedPoint2> damageDict)
     {
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
@@ -51,7 +51,7 @@ public sealed partial class DamageGroupInfo : Control
             DamageTypes.AddChild(new RichTextLabel
             {
                 Text = Loc.GetString("health-info-tab-damage-type",
-                    ("type", _prototype.Index<DamageTypePrototype>(type).LocalizedName),
+                    ("type", _prototype.Index(type).LocalizedName),
                     ("amount", amount)),
             });
         }

@@ -127,7 +127,7 @@ namespace Content.Client.Examine
             }
 
             // RimFortress Start
-            if (HasComp<HumanoidAppearanceComponent>(entity))
+            if (HasComp<HumanoidProfileComponent>(entity))
             {
                 _userInterfaceManager.GetUIController<PopInfoUIController>().OpenWindow(entity);
                 return false;

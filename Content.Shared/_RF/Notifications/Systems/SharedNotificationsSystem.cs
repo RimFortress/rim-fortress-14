@@ -1,4 +1,5 @@
 using Content.Shared._RF.Notifications.Components;
+using Content.Shared.Body;
 using Content.Shared.Humanoid;
 using JetBrains.Annotations;
 using Robust.Shared.GameStates;
@@ -195,12 +196,14 @@ public abstract class SharedNotificationsSystem : EntitySystem
     {
         var name = MetaData(uid).EntityName;
 
-        if (!TryComp(uid, out HumanoidAppearanceComponent? appearance))
+        if (!TryComp(uid, out HumanoidProfileComponent? profile))
             return name;
+
+        var sex = profile.Sex;
 
         return Loc.GetString(EntityNameWrapper,
             ("name", name),
-            ("sex", appearance.Sex.ToString().ToLowerInvariant()));
+            ("sex", sex.ToString().ToLowerInvariant()));
     }
 
     /// <summary>

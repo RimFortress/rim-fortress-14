@@ -121,14 +121,14 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         }
     }
 
-    public RimFortressRuleComponent GetRule()
+    public RimFortressRuleComponent? GetRule()
     {
         while (EntityQueryEnumerator<RimFortressRuleComponent>().MoveNext(out var comp))
         {
             return comp;
         }
 
-        return EntityManager.ComponentFactory.GetComponent<RimFortressRuleComponent>();
+        return null;
     }
 
     public bool IsGameRuleActive(EntityUid ruleEntity, WorldRuleComponent? component = null)

@@ -1,5 +1,5 @@
 using Content.Shared._RF.Trigger.Components.Triggers;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Systems;
 using Content.Shared.Trigger.Systems;
 
 namespace Content.Shared._RF.Trigger.Systems;

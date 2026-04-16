@@ -1,5 +1,6 @@
 using Content.Server.NPC;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
+using Content.Shared.Damage.Systems;
 
 namespace Content.Server._RF.NPC.HTN.Preconditions;
 
@@ -8,6 +9,8 @@ namespace Content.Server._RF.NPC.HTN.Preconditions;
 /// </summary>
 public sealed partial class TotalDamagePrecondition : InvertiblePrecondition
 {
+    private DamageableSystem _damageable = default!;
+
     [DataField]
     public string TargetKey = NPCBlackboard.Owner;
 
@@ -17,13 +20,19 @@ public sealed partial class TotalDamagePrecondition : InvertiblePrecondition
     [DataField]
     public float? LessThan;
 
+    public override void Initialize(IEntitySystemManager sysManager)
+    {
+        base.Initialize(sysManager);
+        _damageable = sysManager.GetEntitySystem<DamageableSystem>();
+    }
+
     public override bool IsMetInvertible(NPCBlackboard blackboard)
     {
         if (!blackboard.TryGetValue(TargetKey, out EntityUid? uid, EntityManager)
             || !EntityManager.TryGetComponent(uid, out DamageableComponent? damageable))
             return false;
 
-        return MoreThan != null && damageable.TotalDamage.Float() > MoreThan
-               || LessThan != null && damageable.TotalDamage.Float() < LessThan;
+        var total = _damageable.GetTotalDamage(new(uid.Value, damageable));
+        return total > MoreThan || total < LessThan;
     }
 }

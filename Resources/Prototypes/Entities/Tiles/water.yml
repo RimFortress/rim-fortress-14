@@ -62,7 +62,7 @@
         - Catwalk
   - type: TileEntityEffect
     effects:
-    - !type:ExtinguishReaction
+    - !type:Extinguish
   # RimFortress Start
   - type: Tag
     tags:
