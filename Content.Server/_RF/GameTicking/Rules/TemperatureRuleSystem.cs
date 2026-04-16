@@ -34,6 +34,10 @@ public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleCompon
             return;
 
         var temp = _globalRule.GetInterpolatedValue(uid, component.DefaultTemp, component.TargetTemperature);
+
+        if (float.IsNaN(temp))
+            return;
+
         var mixture = mapAtmos.Mixture;
         mixture.Temperature = temp;
 
