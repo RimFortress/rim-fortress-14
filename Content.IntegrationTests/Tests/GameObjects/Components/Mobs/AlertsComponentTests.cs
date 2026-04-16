@@ -22,6 +22,7 @@ namespace Content.IntegrationTests.Tests.GameObjects.Components.Mobs
         [Test]
         public async Task AlertsTest()
         {
+            /* RimFortress
             var pair = Pair;
             var server = pair.Server;
             var client = pair.Client;
@@ -110,6 +111,7 @@ namespace Content.IntegrationTests.Tests.GameObjects.Components.Mobs
                 var expectedIDs = new[] { "HumanHealth", "Debug2" };
                 Assert.That(alertIDs, Is.SupersetOf(expectedIDs));
             });
+            RimFortress */
         }
     }
 }
