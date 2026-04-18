@@ -212,7 +212,6 @@ public sealed class GoapPlanJob(
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float Heuristic(GoapState current, GoapState goal)
     {
-        // Простейшая эвристика – количество неудовлетворённых целевых условий.
         var unsatisfied = 0;
         foreach (var kv in goal)
         {

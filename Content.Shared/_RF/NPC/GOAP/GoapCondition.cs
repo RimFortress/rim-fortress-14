@@ -13,7 +13,7 @@ public abstract partial class GoapCondition
     /// Returns true if the check is passed; otherwise, false.
     /// </summary>
     [Pure]
-    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheker cheker);
+    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker);
 }
 
 /// <summary>
@@ -33,7 +33,7 @@ public abstract partial class SimpleGoapCondition : GoapCondition
 /// </summary>
 public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
 {
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheker cheker)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
     {
         if (this is not T type)
             return false;
@@ -53,7 +53,7 @@ public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T
     [DataField]
     public bool Invert;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheker cheker)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
     {
         if (this is not T type)
             return false;

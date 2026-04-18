@@ -7,7 +7,7 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.GOAP.Systems;
 
-public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheker, IGoapActionPerformer
+public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, IGoapActionPerformer
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
@@ -30,7 +30,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheker, IGo
     private void OnStartup(Entity<GoapComponent> ent, ref ComponentStartup args)
     {
         ent.Comp.State.SetValue(GoapState.Owner, ent);
-        ent.Comp.ExecutableTasks = GetExecubaleTasks(ent.Comp.RootTask);
+        ent.Comp.ExecutableTasks = GetExecutableTasks(ent.Comp.RootTask);
     }
 
     private void ReloadPrototypes()
@@ -39,11 +39,11 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheker, IGo
 
         while (enumerator.MoveNext(out var comp))
         {
-            comp.ExecutableTasks = GetExecubaleTasks(comp.RootTask);
+            comp.ExecutableTasks = GetExecutableTasks(comp.RootTask);
         }
     }
 
-    private List<ExecutableGoapTask> GetExecubaleTasks(ProtoId<GoapCompoundPrototype> protoId)
+    private List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
     {
         if (!_proto.Resolve(protoId, out var proto))
             return new();
@@ -64,7 +64,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheker, IGo
                     tasks.Add(new(compound.Actions, compound.Preconditions, compound.Effects));
                     break;
                 case GoapCompoundPrototypeTask protoCompound:
-                    tasks.AddRange(GetExecubaleTasks(protoCompound.Proto));
+                    tasks.AddRange(GetExecutableTasks(protoCompound.Proto));
                     break;
                 default:
                     throw new InvalidOperationException();
@@ -233,7 +233,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheker, IGo
 /// <summary>
 /// Used to check GOAP conditions without losing the type of condition.
 /// </summary>
-public interface IGoapConditionCheker
+public interface IGoapConditionCheсker
 {
     /// <summary>
     /// Checks whether the GOAP target entity satisfies the condition.
