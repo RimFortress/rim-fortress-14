@@ -13,6 +13,12 @@ using Robust.Server.GameObjects;
 using Robust.Shared.Configuration;
 using Robust.Shared.Player;
 
+// RimFortress Start
+using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Server._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.GOAP;
+// RimFortress End
+
 namespace Content.Server.NPC.Systems
 {
     /// <summary>
@@ -27,6 +33,7 @@ namespace Content.Server.NPC.Systems
         [Dependency] private readonly IConfigurationManager _configurationManager = default!;
         [Dependency] private readonly HTNSystem _htn = default!;
         [Dependency] private readonly MobStateSystem _mobState = default!;
+        [Dependency] private readonly GoapSystem _goap = default!; // RimFortress
 
         /// <summary>
         /// Whether any NPCs are allowed to run at all.
@@ -46,12 +53,12 @@ namespace Content.Server.NPC.Systems
             Subs.CVar(_configurationManager, CCVars.NPCMaxUpdates, obj => _maxUpdates = obj, true);
         }
 
-        public void OnPlayerNPCAttach(EntityUid uid, HTNComponent component, PlayerAttachedEvent args)
+        public void OnPlayerNPCAttach(EntityUid uid, IComponent component, PlayerAttachedEvent args) // RimFortress
         {
-            SleepNPC(uid, component);
+            SleepNPC(uid); // RimFortress
         }
 
-        public void OnPlayerNPCDetach(EntityUid uid, HTNComponent component, PlayerDetachedEvent args)
+        public void OnPlayerNPCDetach(EntityUid uid, IComponent component, PlayerDetachedEvent args) // RimFortress
         {
             if (_mobState.IsIncapacitated(uid) || TerminatingOrDeleted(uid))
                 return;
@@ -60,7 +67,7 @@ namespace Content.Server.NPC.Systems
             if (TryComp<MindContainerComponent>(uid, out var mindContainer) && mindContainer.HasMind)
                 return;
 
-            WakeNPC(uid, component);
+            WakeNPC(uid); // RimFortress
         }
 
         public void OnNPCStartup(EntityUid uid, HTNComponent component, ComponentStartup args)
@@ -68,19 +75,19 @@ namespace Content.Server.NPC.Systems
             component.Blackboard.SetValue(NPCBlackboard.Owner, uid);
         }
 
-        public void OnNPCMapInit(EntityUid uid, HTNComponent component, MapInitEvent args)
+        public void OnNPCMapInit(EntityUid uid, IComponent component, MapInitEvent args) // RimFortress
         {
-            WakeNPC(uid, component);
+            WakeNPC(uid); // RimFortress
         }
 
-        public void OnNPCShutdown(EntityUid uid, HTNComponent component, ComponentShutdown args)
+        public void OnNPCShutdown(EntityUid uid, IComponent component, ComponentShutdown args) // RimFortress
         {
-            SleepNPC(uid, component);
+            SleepNPC(uid); // RimFortress
         }
 
         public override bool IsNpc(EntityUid uid)
         {
-            return HasComp<HTNComponent>(uid);
+            return HasComp<HTNComponent>(uid) || HasComp<GoapComponent>(uid); // RimFortress
         }
 
         /// <summary>
@@ -110,10 +117,12 @@ namespace Content.Server.NPC.Systems
         /// </summary>
         public void WakeNPC(EntityUid uid, HTNComponent? component = null)
         {
+            /* RimFortress
             if (!Resolve(uid, ref component, false))
             {
                 return;
             }
+            RimFortress */
 
             Log.Debug($"Waking {ToPrettyString(uid)}");
             EnsureComp<ActiveNPCComponent>(uid);
@@ -121,10 +130,12 @@ namespace Content.Server.NPC.Systems
 
         public void SleepNPC(EntityUid uid, HTNComponent? component = null)
         {
+            /* RimFortress
             if (!Resolve(uid, ref component, false))
             {
                 return;
             }
+            RimFortress */
 
             // Don't bother with an event
             if (TryComp<HTNComponent>(uid, out var htn))
@@ -137,6 +148,14 @@ namespace Content.Server.NPC.Systems
                     htn.Plan = null;
                 }
             }
+
+            // RimFortress Start
+            if (TryComp<GoapComponent>(uid, out var goap) && goap.Plan is { } plan)
+            {
+                _goap.ActionShutdown(uid, plan.CurrentAction);
+                _goap.PlanShutdown(new(uid, goap));
+            }
+            // RimFortress End
 
             Log.Debug($"Sleeping {ToPrettyString(uid)}");
             RemComp<ActiveNPCComponent>(uid);
@@ -152,11 +171,12 @@ namespace Content.Server.NPC.Systems
 
             // Add your system here.
             _htn.UpdateNPC(ref _count, _maxUpdates, frameTime);
+            _goap.UpdateNPC(ref _count, _maxUpdates, frameTime); // RimFortress
 
             ActiveGauge.Set(Count<ActiveNPCComponent>());
         }
 
-        public void OnMobStateChange(EntityUid uid, HTNComponent component, MobStateChangedEvent args)
+        public void OnMobStateChange(EntityUid uid, IComponent component, MobStateChangedEvent args) // RimFortress
         {
             if (HasComp<ActorComponent>(uid))
                 return;
@@ -164,11 +184,11 @@ namespace Content.Server.NPC.Systems
             switch (args.NewMobState)
             {
                 case MobState.Alive:
-                    WakeNPC(uid, component);
+                    WakeNPC(uid); // RimFortress
                     break;
                 case MobState.Critical:
                 case MobState.Dead:
-                    SleepNPC(uid, component);
+                    SleepNPC(uid); // RimFortress
                     break;
             }
         }

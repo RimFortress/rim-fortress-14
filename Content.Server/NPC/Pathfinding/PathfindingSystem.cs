@@ -27,6 +27,8 @@ using Robust.Shared.Utility;
 using Content.Server.Parallax;
 using Robust.Shared.Prototypes;
 using Content.Server._RF.NPC.Components;
+using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Components;
 // RimFortress End
 
 namespace Content.Server.NPC.Pathfinding
@@ -453,6 +455,11 @@ namespace Content.Server.NPC.Pathfinding
 
         public PathFlags GetFlags(EntityUid uid)
         {
+            // RimFortress Start
+            if (TryComp(uid, out GoapComponent? goap))
+                return GetFlags(goap.State);
+            // RimFortress End
+
             if (!_npc.TryGetNpc(uid, out var npc))
             {
                 return PathFlags.None;
@@ -487,6 +494,27 @@ namespace Content.Server.NPC.Pathfinding
 
             return flags;
         }
+
+        // RimFortress Start
+        public PathFlags GetFlags(GoapState state)
+        {
+            var flags = PathFlags.None;
+
+            if (state.TryGetValue<bool>(NPCBlackboard.NavPry, out var pry) && pry)
+                flags |= PathFlags.Prying;
+
+            if (state.TryGetValue<bool>(NPCBlackboard.NavSmash, out var smash) && smash)
+                flags |= PathFlags.Smashing;
+
+            if (state.TryGetValue<bool>(NPCBlackboard.NavClimb, out var climb) && climb)
+                flags |= PathFlags.Climbing;
+
+            if (state.TryGetValue<bool>(NPCBlackboard.NavInteract, out var interact) && interact)
+                flags |= PathFlags.Interact;
+
+            return flags;
+        }
+        // RimFortress End
 
         private async Task<PathResultEvent> GetPath(
             PathRequest request, bool safe = false)

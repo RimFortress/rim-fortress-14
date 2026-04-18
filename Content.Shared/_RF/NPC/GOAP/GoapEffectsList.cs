@@ -1,5 +1,7 @@
 using System.Collections;
 
+namespace Content.Shared._RF.NPC.GOAP;
+
 /// <summary>
 /// List of effects that can be applied to GoapState.
 /// </summary>

@@ -29,7 +29,7 @@ public abstract partial class SimpleGoapCondition : GoapCondition
 }
 
 /// <summary>
-/// A check that uses entity systems to work.
+/// A condition that uses entity systems to work.
 /// </summary>
 public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
 {
@@ -39,5 +39,30 @@ public abstract partial class BaseGoapCondition<T> : GoapCondition where T : Bas
             return false;
 
         return cheker.CheckCondition(target, state, type);
+    }
+}
+
+/// <summary>
+/// A condition with a built-in option to invert the result.
+/// </summary>
+public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
+{
+    /// <summary>
+    /// Whether the result of the check will be inverted.
+    /// </summary>
+    [DataField]
+    public bool Invert;
+
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheker cheker)
+    {
+        if (this is not T type)
+            return false;
+
+        var result = cheker.CheckCondition(target, state, type);
+
+        if (Invert)
+            return !result;
+
+        return result;
     }
 }

@@ -17,7 +17,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <summary>
     /// Is the state available in read-only mode.
     /// </summary>
-    [Access(typeof(GoapSystem))]
+    [Access(typeof(SharedGoapSystem))]
     public bool ReadOnly;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -36,6 +36,12 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </summary>
     [PublicAPI]
     public void Clear() => _state.Clear();
+
+    /// <summary>
+    /// Gets the number of key/value pairs contained in the GoapState.
+    /// </summary>
+    [PublicAPI]
+    public int Count => _state.Count;
 
     /// <exception cref="ArgumentNullException"/>
     /// <exception cref="KeyNotFoundException"/>
@@ -155,6 +161,26 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// The entity to which GoapState belongs.
     /// </summary>
     public static readonly StateKey<EntityUid> Owner = "Owner";
+
+    /// <summary>
+    /// Can the NPC click open entities such as doors.
+    /// </summary>
+    public static readonly StateKey<bool> NavInteract = "NavInteract";
+
+    /// <summary>
+    /// Can the NPC pry open doors for steering.
+    /// </summary>
+    public static readonly StateKey<bool> NavPry = "NavPry";
+
+    /// <summary>
+    /// Can the NPC smash obstacles for steering.
+    /// </summary>
+    public static readonly StateKey<bool> NavSmash = "NavSmash";
+
+    /// <summary>
+    /// Can the NPC climb obstacles for steering.
+    /// </summary>
+    public static readonly StateKey<bool> NavClimb = "NavClimb";
 
     #endregion
 }

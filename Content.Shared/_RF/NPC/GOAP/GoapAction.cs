@@ -8,17 +8,47 @@ namespace Content.Shared._RF.NPC.GOAP;
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class GoapAction
 {
+    public abstract float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer);
+
     public abstract GoapActionResult Update(EntityUid target, IGoapActionPerformer performer);
+
+    public abstract void Startup(EntityUid target, IGoapActionPerformer performer);
+
+    public abstract void Shutdown(EntityUid target, IGoapActionPerformer performer);
 }
 
 public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapAction<T>
 {
-    public override GoapActionResult Update(EntityUid target, IGoapActionPerformer cheker)
+    public override float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer)
+    {
+        if (this is not T type)
+            return 0f;
+
+        return performer.ActionCost(target, state, type);
+    }
+
+    public override GoapActionResult Update(EntityUid target, IGoapActionPerformer performer)
     {
         if (this is not T type)
             return GoapActionResult.Failed;
 
-        return cheker.UpdateAction(target, type);
+        return performer.UpdateAction(target, type);
+    }
+
+    public override void Startup(EntityUid target, IGoapActionPerformer performer)
+    {
+        if (this is not T type)
+            return;
+
+        performer.ActionStartup(target, type);
+    }
+
+    public override void Shutdown(EntityUid target, IGoapActionPerformer performer)
+    {
+        if (this is not T type)
+            return;
+
+        performer.ActionShutdown(target, type);
     }
 }
 
