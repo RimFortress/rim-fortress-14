@@ -1,3 +1,4 @@
+using System.Globalization;
 using Robust.Shared.Reflection;
 using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.Manager;
@@ -26,6 +27,9 @@ public sealed class GoapStateSerializer : ITypeReader<GoapState, MappingDataNode
                 validated.Add(new ErrorNode(node.GetKeyNode(key), $"Unable to validate {key}'s type"));
                 continue;
             }
+
+            if (TryParseScalar(value.Tag, out _))
+                return new ValidatedValueNode(node.GetKeyNode(key));
 
             var typeString = value.Tag[6..];
 
@@ -59,6 +63,12 @@ public sealed class GoapStateSerializer : ITypeReader<GoapState, MappingDataNode
             if (value.Tag == null)
                 throw new NullReferenceException($"Found null tag for {key}");
 
+            if (TryParseScalar(value.Tag, out var result))
+            {
+                state.SetValue(key, result);
+                continue;
+            }
+
             var typeString = value.Tag[6..];
 
             if (!reflection.TryLooseGetType(typeString, out var type))
@@ -91,5 +101,29 @@ public sealed class GoapStateSerializer : ITypeReader<GoapState, MappingDataNode
             var current = enumerator.Current;
             target.SetValue(current.Key, current.Value);
         }
+    }
+
+    private static bool TryParseScalar(string raw, out object value)
+    {
+        if (bool.TryParse(raw, out var boolValue))
+        {
+            value = boolValue;
+            return true;
+        }
+
+        if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue))
+        {
+            value = intValue;
+            return true;
+        }
+
+        if (float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var floatValue))
+        {
+            value = floatValue;
+            return true;
+        }
+
+        value = default!;
+        return false;
     }
 }
