@@ -16,7 +16,6 @@ using Robust.Shared.Player;
 // RimFortress Start
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
 // RimFortress End
 
 namespace Content.Server.NPC.Systems
@@ -151,10 +150,7 @@ namespace Content.Server.NPC.Systems
 
             // RimFortress Start
             if (TryComp<GoapComponent>(uid, out var goap) && goap.Plan is { } plan)
-            {
-                _goap.ActionShutdown(uid, plan.CurrentAction);
                 _goap.PlanShutdown(new(uid, goap));
-            }
             // RimFortress End
 
             Log.Debug($"Sleeping {ToPrettyString(uid)}");

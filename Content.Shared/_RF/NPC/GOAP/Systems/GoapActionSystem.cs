@@ -105,7 +105,6 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     {
 #if DEBUG
         dump = new GoapDebugDump(
-            nameof(T),
             reason,
             state.GetStateDump());
 #else

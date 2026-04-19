@@ -50,7 +50,6 @@ public abstract class GoapConditionSystem<T> : EntitySystem where T : BaseGoapCo
     {
 #if DEBUG
         dump = new GoapDebugDump(
-            nameof(T),
             reason,
             state.GetStateDump());
 #else

@@ -151,7 +151,6 @@ public sealed class GoapSystem : SharedGoapSystem
                 case GoapActionResult.Continuing:
                     break;
                 case GoapActionResult.Failed:
-                    ActionShutdown(ent, action);
                     PlanShutdown(ent);
                     break;
                 // Action completed so go to the next one.
@@ -162,7 +161,7 @@ public sealed class GoapSystem : SharedGoapSystem
                     // Plan finished!
                     if (plan.Actions.Count <= plan.Index)
                     {
-                        PlanShutdown(ent);
+                        PlanShutdown(ent, false);
                         break;
                     }
 

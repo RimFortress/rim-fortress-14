@@ -269,9 +269,13 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// Shutdowns the current NPC plan.
     /// </summary>
     [PublicAPI]
-    public void PlanShutdown(Entity<GoapComponent> ent)
+    public void PlanShutdown(Entity<GoapComponent> ent, bool shutdownAction = true)
     {
         DebugTools.Assert(ent.Comp.Plan != null);
+
+        if (shutdownAction)
+            ActionShutdown(ent, ent.Comp.Plan.Value.CurrentAction);
+
         ent.Comp.Plan = null;
         ent.Comp.PlanDebug = null;
     }

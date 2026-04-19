@@ -32,7 +32,7 @@ public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapA
     {
         if (this is not T type)
         {
-            dump = new(nameof(T), $"Invalid type {typeof(T)}", new());
+            dump = new($"Invalid type {typeof(T)}", new());
             return GoapActionResult.Failed;
         }
 
@@ -43,7 +43,7 @@ public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapA
     {
         if (this is not T type)
         {
-            dump = new(nameof(T), $"Invalid type {typeof(T)}", new());
+            dump = new($"Invalid type {typeof(T)}", new());
             return;
         }
 
@@ -54,7 +54,7 @@ public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapA
     {
         if (this is not T type)
         {
-            dump = new(nameof(T), $"Invalid type {typeof(T)}", new());
+            dump = new($"Invalid type {typeof(T)}", new());
             return;
         }
 
