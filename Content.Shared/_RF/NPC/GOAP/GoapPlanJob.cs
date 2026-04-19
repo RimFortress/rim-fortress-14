@@ -182,7 +182,7 @@ public sealed class GoapPlanJob(
 #if DEBUG
                     debug.Nodes.Add(new(
                         preconditions.ToArray(),
-                        task.Effects.ToDump(),
+                        task.Effects.GetStateDump(),
                         stateBefore,
                         null,
                         current.G,
@@ -207,7 +207,7 @@ public sealed class GoapPlanJob(
 #if DEBUG
                     debug.Nodes.Add(new(
                         preconditions.ToArray(),
-                        task.Effects.ToDump(),
+                        task.Effects.GetStateDump(),
                         stateBefore,
                         newState.GetStateDump(),
                         taskCost,
@@ -235,7 +235,7 @@ public sealed class GoapPlanJob(
 #if DEBUG
                 debug.Nodes.Add(new(
                     preconditions.ToArray(),
-                    task.Effects.ToDump(),
+                    task.Effects.GetStateDump(),
                     stateBefore,
                     newState.GetStateDump(),
                     taskCost,
@@ -288,6 +288,7 @@ public sealed class GoapPlanJob(
             if (!current.TryGetValue<object>(kv.Key, out var curValue) || !Equals(curValue, kv.Value))
                 return false;
         }
+
         return true;
     }
 
@@ -295,15 +296,10 @@ public sealed class GoapPlanJob(
     /// Creates a new state by applying the effects of a task to the given state.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static GoapState ApplyEffects(GoapState state, GoapEffectsList effects)
+    private static GoapState ApplyEffects(GoapState state, GoapState effects)
     {
         var newState = state.ShallowClone();
-
-        foreach (var effect in effects.Effects)
-        {
-            newState.SetValue(effect.Key, effect.Value);
-        }
-
+        newState.OverwiteFrom(effects);
         return newState;
     }
 
@@ -315,11 +311,13 @@ public sealed class GoapPlanJob(
     private static float Heuristic(GoapState current, GoapState goal)
     {
         var unsatisfied = 0;
+
         foreach (var kv in goal)
         {
             if (!current.TryGetValue<object>(kv.Key, out var curValue) || !Equals(curValue, kv.Value))
                 unsatisfied++;
         }
+
         return unsatisfied;
     }
 

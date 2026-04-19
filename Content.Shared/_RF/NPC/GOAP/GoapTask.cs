@@ -19,7 +19,7 @@ public abstract partial class GoapTask
     /// Effects that will be applied to the agent's state after this node completes.
     /// </summary>
     [DataField]
-    public GoapEffectsList Effects = new();
+    public GoapState Effects = new();
 }
 
 /// <summary>

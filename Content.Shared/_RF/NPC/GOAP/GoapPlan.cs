@@ -9,7 +9,7 @@ namespace Content.Shared._RF.NPC.GOAP;
 public readonly record struct ExecutableGoapTask(
     IReadOnlyList<GoapAction> Actions,
     IReadOnlyList<GoapCondition> Preconditions,
-    GoapEffectsList Effects);
+    GoapState Effects);
 
 /// <summary>
 /// The current plan for a GOAP NPC.

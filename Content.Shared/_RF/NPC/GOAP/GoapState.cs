@@ -164,6 +164,19 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return new GoapStateDebugDump(state);
     }
 
+    /// <summary>
+    /// Overwrites the state keys with values from another
+    /// </summary>
+    /// <param name="other"></param>
+    [Pure, PublicAPI]
+    public void OverwiteFrom(GoapState other)
+    {
+        foreach (var (key, value) in other)
+        {
+            SetValue(key, value);
+        }
+    }
+
     #endregion
 
     #region Defaults
