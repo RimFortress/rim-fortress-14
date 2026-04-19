@@ -107,7 +107,10 @@ public sealed class GoapSystem : SharedGoapSystem
                     continue;
 
                 if (comp.Plan != null)
-                    PlanShutdown(ent);
+                    PlanShutdown(ent, GoapPlanFinishReason.Interrupted);
+
+                if (comp.PlanningJob.Result.Plan == null)
+                    RaiseLocalEvent(uid, new GoapPlaningFailed());
 
                 (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 
@@ -151,7 +154,7 @@ public sealed class GoapSystem : SharedGoapSystem
                 case GoapActionResult.Continuing:
                     break;
                 case GoapActionResult.Failed:
-                    PlanShutdown(ent);
+                    PlanShutdown(ent, GoapPlanFinishReason.Failed);
                     break;
                 // Action completed so go to the next one.
                 case GoapActionResult.Finished:
@@ -161,7 +164,7 @@ public sealed class GoapSystem : SharedGoapSystem
                     // Plan finished!
                     if (plan.Actions.Count <= plan.Index)
                     {
-                        PlanShutdown(ent, false);
+                        PlanShutdown(ent, GoapPlanFinishReason.Finished, false);
                         break;
                     }
 

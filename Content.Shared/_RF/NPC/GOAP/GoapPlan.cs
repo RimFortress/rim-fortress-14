@@ -1,3 +1,5 @@
+using Robust.Shared.Serialization;
+
 namespace Content.Shared._RF.NPC.GOAP;
 
 /// <summary>
@@ -20,4 +22,27 @@ public readonly record struct ExecutableGoapTask(
 public record struct GoapPlan(List<GoapAction> Actions, int Index, List<GoapActionDebugInfo>? ActionsDebug = null)
 {
     public readonly GoapAction CurrentAction => Actions[Index];
+}
+
+/// <summary>
+/// Possible reasons for the cancellation of the GOAP plan.
+/// </summary>
+[Serializable, NetSerializable]
+public enum GoapPlanFinishReason : byte
+{
+    /// <summary>
+    /// The plan has been fully completed.
+    /// </summary>
+    Finished,
+
+    /// <summary>
+    /// The plan failed to be completed due to the failure of a particular action.
+    /// </summary>
+    Failed,
+
+    /// <summary>
+    /// The execution of the plan was interrupted for reasons beyond the agent's control.
+    /// For example, the plan was replaced by another one.
+    /// </summary>
+    Interrupted,
 }

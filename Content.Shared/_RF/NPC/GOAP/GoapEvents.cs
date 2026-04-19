@@ -63,3 +63,16 @@ public record struct GoapActionStartup<T>(T Action, GoapDebugDump Dump) where T 
 /// <param name="Dump">Debug output about GOAP action shutdown.</param>
 [PublicAPI, ByRefEvent]
 public record struct GoapActionShutdown<T>(T Action, GoapDebugDump Dump) where T : GoapAction;
+
+/// <summary>
+/// Event raised when GOAP planning fails.
+/// </summary>
+[PublicAPI]
+public readonly record struct GoapPlaningFailed();
+
+/// <summary>
+/// Event raised when GOAP plan finished.
+/// </summary>
+/// <param name="Reason">The reason why the plan was finished.</param>
+[PublicAPI]
+public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason);
