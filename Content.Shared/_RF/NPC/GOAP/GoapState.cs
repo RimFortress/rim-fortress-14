@@ -148,6 +148,22 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [Pure, PublicAPI]
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => _state.GetEnumerator();
 
+    /// <summary>
+    /// Returns a debug state dump.
+    /// </summary>
+    [Pure, PublicAPI]
+    public GoapStateDebugDump GetStateDump()
+    {
+        var state = new Dictionary<string, (string, string)>();
+
+        foreach (var (key, value) in _state)
+        {
+            state[key] = (value.GetType().ToString(), value.ToString() ?? "null");
+        }
+
+        return new GoapStateDebugDump(state);
+    }
+
     #endregion
 
     #region Defaults

@@ -1,6 +1,4 @@
 
-using Content.Shared._RF.NPC.GOAP.Systems;
-
 namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 public abstract partial class Equals<T> : SimpleGoapCondition
@@ -9,7 +7,7 @@ public abstract partial class Equals<T> : SimpleGoapCondition
     [DataField(required: true)]
     public T Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<T>(Key).Equals(Value);
 }
 
@@ -25,7 +23,7 @@ public abstract partial class NotEquals<T> : SimpleGoapCondition
     [DataField(required: true)]
     public T Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => !state.GetValue<T>(Key).Equals(Value);
 }
 
@@ -40,7 +38,7 @@ public sealed partial class MoreThanInt : SimpleGoapCondition
     [DataField(required: true)]
     public int Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<int>(Key) > Value;
 }
 
@@ -49,7 +47,7 @@ public sealed partial class MoreThanFloat : SimpleGoapCondition
     [DataField(required: true)]
     public float Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<float>(Key) > Value;
 }
 
@@ -58,7 +56,7 @@ public sealed partial class MoreThanOrEqualInt : SimpleGoapCondition
     [DataField(required: true)]
     public int Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<int>(Key) >= Value;
 }
 
@@ -67,7 +65,7 @@ public sealed partial class MoreThanOrEqualFloat : SimpleGoapCondition
     [DataField(required: true)]
     public float Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<float>(Key) >= Value;
 }
 
@@ -76,7 +74,7 @@ public sealed partial class LessThanInt : SimpleGoapCondition
     [DataField(required: true)]
     public int Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<int>(Key) < Value;
 }
 
@@ -85,7 +83,7 @@ public sealed partial class LessThanFloat : SimpleGoapCondition
     [DataField(required: true)]
     public float Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<float>(Key) < Value;
 }
 
@@ -94,7 +92,7 @@ public sealed partial class LessThanOrEqualInt : SimpleGoapCondition
     [DataField(required: true)]
     public int Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<int>(Key) <= Value;
 }
 
@@ -103,6 +101,6 @@ public sealed partial class LessThanOrEqualFloat : SimpleGoapCondition
     [DataField(required: true)]
     public float Value = default!;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool SimpleCheck(EntityUid target, GoapState state)
         => state.GetValue<float>(Key) <= Value;
 }

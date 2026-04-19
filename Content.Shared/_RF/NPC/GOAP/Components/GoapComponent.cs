@@ -27,10 +27,6 @@ public sealed partial class GoapComponent : Component
     [DataField(required: true)]
     public ProtoId<GoapCompoundPrototype> RootTask;
 
-    /// <inheritdoc cref="GoapPlan"/>
-    [DataField]
-    public GoapPlan? Plan;
-
     /// <summary>
     /// How long to wait after having planned to try planning again.
     /// </summary>
@@ -41,16 +37,24 @@ public sealed partial class GoapComponent : Component
     public bool ConstantlyReplan = true;
 
     /// <summary>
-    /// Is this NPC currently planning?
-    /// </summary>
-    [ViewVariables]
-    public bool Planning => PlanningJob != null;
-
-    /// <summary>
     /// Determines whether plans should be made / updated for this entity
     /// </summary>
     [DataField]
     public bool Enabled = true;
+
+    /// <inheritdoc cref="GoapPlan"/>
+    [ViewVariables]
+    public GoapPlan? Plan;
+
+    /// <inheritdoc cref="GoapPlanDebugInfo"/>
+    [ViewVariables]
+    public GoapPlanDebugInfo? PlanDebug;
+
+    /// <summary>
+    /// Is this NPC currently planning?
+    /// </summary>
+    [ViewVariables]
+    public bool Planning => PlanningJob != null;
 
     /// <summary>
     /// A list of all actions available to NPCs.

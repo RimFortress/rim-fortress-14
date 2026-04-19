@@ -13,7 +13,7 @@ public abstract partial class GoapCondition
     /// Returns true if the check is passed; otherwise, false.
     /// </summary>
     [Pure]
-    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker);
+    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump);
 }
 
 /// <summary>
@@ -26,6 +26,14 @@ public abstract partial class SimpleGoapCondition : GoapCondition
     /// </summary>
     [DataField(required: true)]
     public string Key = string.Empty;
+
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump)
+    {
+        dump = new();
+        return SimpleCheck(target, state);
+    }
+
+    public abstract bool SimpleCheck(EntityUid target, GoapState state);
 }
 
 /// <summary>
@@ -33,12 +41,15 @@ public abstract partial class SimpleGoapCondition : GoapCondition
 /// </summary>
 public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
 {
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump)
     {
         if (this is not T type)
+        {
+            dump = new($"Invalid type {typeof(T)}", new());
             return false;
+        }
 
-        return cheker.CheckCondition(target, state, type);
+        return cheker.CheckCondition(target, state, type, out dump);
     }
 }
 
@@ -53,15 +64,23 @@ public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T
     [DataField]
     public bool Invert;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump)
     {
         if (this is not T type)
+        {
+            dump = new($"Invalid type {typeof(T)}", new());
             return false;
+        }
 
-        var result = cheker.CheckCondition(target, state, type);
+        var result = cheker.CheckCondition(target, state, type, out dump);
 
         if (Invert)
+        {
+#if DEBUG
+            dump = new GoapDebugDump($"{dump.Dump}\nResult was inverted".Trim(), dump.StateSnapshot);
+#endif
             return !result;
+        }
 
         return result;
     }

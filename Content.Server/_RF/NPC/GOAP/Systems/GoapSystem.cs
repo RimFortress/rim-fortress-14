@@ -109,7 +109,7 @@ public sealed class GoapSystem : SharedGoapSystem
                 if (comp.Plan != null)
                     PlanShutdown(ent);
 
-                comp.Plan = comp.PlanningJob.Result;
+                (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 
                 // Startup the first task and anything else we need to do.
                 if (comp.Plan != null)

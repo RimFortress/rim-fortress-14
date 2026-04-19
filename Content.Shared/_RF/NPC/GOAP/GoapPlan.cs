@@ -16,7 +16,8 @@ public readonly record struct ExecutableGoapTask(
 /// </summary>
 /// <param name="Actions">List of actions to perform during the current plan.</param>
 /// <param name="Index">Current action index.</param>
-public record struct GoapPlan(List<GoapAction> Actions, int Index)
+/// <param name="ActionsDebug">Debug information for each action in the plan.</param>
+public record struct GoapPlan(List<GoapAction> Actions, int Index, List<GoapActionDebugInfo>? ActionsDebug = null)
 {
     public readonly GoapAction CurrentAction => Actions[Index];
 }
