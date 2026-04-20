@@ -5,6 +5,7 @@ using Content.Server.Construction.Components;
 using Content.Server.GameTicking;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Narrator;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.World;
@@ -28,10 +29,11 @@ public sealed partial class NarratorSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly RimFortressRuleSystem _rule = default!;
     [Dependency] private readonly RimFortressWorldSystem _world = default!;
-    [Dependency] private readonly IConsoleHost _host  = default!;
+    [Dependency] private readonly IConsoleHost _host = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly EntityTableSystem _table = default!;
     [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private readonly MathCurvesSystem _curves = default!;
 
     private EntityQuery<ItemComponent> _itemQuery;
     private EntityQuery<ConstructionComponent> _constructionQuery;
@@ -87,7 +89,7 @@ public sealed partial class NarratorSystem : EntitySystem
             popCost += _pricing.GetPrice(pop);
         }
 
-        return (float) (itemCost + constructionCost * narrator.ConstructionCostMod + popCost);
+        return (float)(itemCost + constructionCost * narrator.ConstructionCostMod + popCost);
     }
 
     /// <summary>
@@ -102,20 +104,10 @@ public sealed partial class NarratorSystem : EntitySystem
             return 0;
 
         var waitPoints = WaitPoint(narrator, player.Comp);
-        var wealth = SettlementWealth(player, proto, settlement);
-        var narratorMood = 0f;
+        var wealth = _curves.Get(narrator.WealthCurves, SettlementWealth(player, proto, settlement));
+        var narratorMood = _curves.Get(narrator.MoodCurves);
 
-        foreach (var curve in narrator.WealthCurves)
-        {
-            wealth = curve.Curve(wealth);
-        }
-
-        foreach (var curve in narrator.MoodCurves)
-        {
-            narratorMood = curve.Curve(narratorMood);
-        }
-
-        return (int) Math.Floor(wealth + waitPoints * narratorMood);
+        return (int)Math.Floor(wealth + waitPoints * narratorMood);
     }
 
     public int GlobalEventPoints(RimFortressRuleComponent rule)
@@ -124,14 +116,9 @@ public sealed partial class NarratorSystem : EntitySystem
             return 0;
 
         var waitPoints = GlobalWaitPoint(rule);
-        var narratorMood = 0f;
+        var narratorMood = _curves.Get(narrator.MoodCurves);
 
-        foreach (var curve in narrator.MoodCurves)
-        {
-            narratorMood = curve.Curve(narratorMood);
-        }
-
-        return (int) Math.Floor(waitPoints * narratorMood);
+        return (int)Math.Floor(waitPoints * narratorMood);
     }
 
     /// <summary>
@@ -139,7 +126,7 @@ public sealed partial class NarratorSystem : EntitySystem
     /// </summary>
     public int WaitPoint(NarratorPrototype narrator, RimFortressPlayerComponent player)
     {
-        return (int) Math.Floor((_ticker.RoundDuration() - player.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
+        return (int)Math.Floor((_ticker.RoundDuration() - player.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
     }
 
     public int GlobalWaitPoint(RimFortressRuleComponent rule)
@@ -147,7 +134,7 @@ public sealed partial class NarratorSystem : EntitySystem
         if (!_prototype.TryIndex(rule.Narrator, out var narrator))
             return 0;
 
-        return (int) Math.Floor((_ticker.RoundDuration() - rule.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
+        return (int)Math.Floor((_ticker.RoundDuration() - rule.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
     }
 
     public override void Update(float frameTime)
@@ -168,12 +155,7 @@ public sealed partial class NarratorSystem : EntitySystem
 
                 if (_lastWaitPoint.TryGetValue(uid, out var point) && point != newPoints)
                 {
-                    float chance = newPoints;
-
-                    foreach (var curve in proto.EventChanceCurves)
-                    {
-                        chance = curve.Curve(chance);
-                    }
+                    var chance = _curves.Get(proto.EventChanceCurves, newPoints);
 
                     if (_random.NextFloat() < chance
                         && PickRandomEvent(new(uid, player), comp.Narrator) is { } ev)
@@ -198,14 +180,8 @@ public sealed partial class NarratorSystem : EntitySystem
 
             if (comp.LastWaitPoints != globalWaitPoints)
             {
-                float globalChance = globalWaitPoints;
+                var globalChance = _curves.Get(proto.EventChanceCurves, globalWaitPoints);
                 var chance = _random.NextFloat();
-
-                foreach (var curve in proto.EventChanceCurves)
-                {
-                    globalChance = curve.Curve(globalChance);
-                }
-
                 var available = new List<EntProtoId>();
 
                 foreach (var eventId in _table.GetSpawns(comp.GlobalEvents))
@@ -269,19 +245,9 @@ public sealed partial class NarratorSystem : EntitySystem
             return "Unknown";
 
         var waitPoints = GlobalEventPoints(rule);
-        var narratorMood = 0f;
+        var narratorMood = _curves.Get(narrator.MoodCurves);
+        var chance = _curves.Get(narrator.EventChanceCurves, waitPoints);
         var events = "";
-        float chance = waitPoints;
-
-        foreach (var curve in narrator.MoodCurves)
-        {
-            narratorMood = curve.Curve(narratorMood);
-        }
-
-        foreach (var curve in narrator.EventChanceCurves)
-        {
-            chance = curve.Curve(chance);
-        }
 
         foreach (var eventId in _table.GetSpawns(rule.GlobalEvents))
         {
@@ -290,7 +256,7 @@ public sealed partial class NarratorSystem : EntitySystem
                 || globalRule.Cost > waitPoints * narratorMood)
                 continue;
 
-            events += $"- {eventId}: {(int) Math.Floor(chance * globalRule.ChanceMod * 100)}%\n";
+            events += $"- {eventId}: {(int)Math.Floor(chance * globalRule.ChanceMod * 100)}%\n";
         }
 
         return "========GLOBAL EVENTS INFO========\n" +
@@ -309,29 +275,14 @@ public sealed partial class NarratorSystem : EntitySystem
 
         var text = "";
         var waitPoints = WaitPoint(proto, player.Comp);
-        var narratorMood = 0f;
+        var narratorMood = _curves.Get(proto.MoodCurves);
         var rules = _rule.AvailableRules(new(player, player.Comp));
-        float chance = waitPoints;
-
-        foreach (var curve in proto.MoodCurves)
-        {
-            narratorMood = curve.Curve(narratorMood);
-        }
-
-        foreach (var curve in proto.EventChanceCurves)
-        {
-            chance = curve.Curve(chance);
-        }
+        var chance = _curves.Get(proto.EventChanceCurves, waitPoints);
 
         foreach (var coords in _world.GetPlayerSettlements(player))
         {
             var wealth = SettlementWealth(player, proto, coords);
-            var wealthFactor = wealth;
-
-            foreach (var curve in proto.WealthCurves)
-            {
-                wealthFactor = curve.Curve(wealthFactor);
-            }
+            var wealthFactor = _curves.Get(proto.WealthCurves, wealth);
 
             var events = "";
             foreach (var (_, eventId, comp) in rules)
