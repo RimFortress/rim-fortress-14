@@ -9,7 +9,7 @@ namespace Content.Shared._RF.MathHelpers.MathCurve;
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class MathCurve
 {
-    public abstract float Curve(float value, IMathCurveHandler handler);
+    public abstract float Curve(float value, IMathCurveHandler handler, EntityUid? user = null);
 
     public static float ListValue(IEnumerable<MathCurve> curves, IMathCurveHandler handler, float value = 0)
     {
@@ -31,11 +31,6 @@ public abstract partial class MathCurve
 /// <typeparam name="T">Math curve type.</typeparam>
 public abstract partial class BaseMathCurve<T> : MathCurve where T : BaseMathCurve<T>
 {
-    public override float Curve(float value, IMathCurveHandler handler)
-    {
-        if (this is not T type)
-            return 0f;
-
-        return handler.Get(type, value);
-    }
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
+        => handler.Get((T)this, value, user);
 }

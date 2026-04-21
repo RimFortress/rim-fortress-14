@@ -12,6 +12,6 @@ public sealed class RoundTimeSecondsCurveSystem : MathCurveSystem<RoundTimeSecon
 {
     [Dependency] private readonly SharedGameTicker _ticker = default!;
 
-    protected override float Curve(RoundTimeSeconds curve, float input)
+    protected override float Curve(RoundTimeSeconds curve, float input, EntityUid? user)
         => _ticker.RoundDuration().Seconds;
 }

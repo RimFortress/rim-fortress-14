@@ -15,7 +15,7 @@ public abstract class MathCurveSystem<T> : EntitySystem where T : BaseMathCurve<
 
     private void OnMathCurveResult(ref MathCurveResult<T> ev)
     {
-        ev.Result = Curve(ev.Curve, ev.Input);
+        ev.Result = Curve(ev.Curve, ev.Input, ev.User);
     }
 
     /// <summary>
@@ -23,5 +23,6 @@ public abstract class MathCurveSystem<T> : EntitySystem where T : BaseMathCurve<
     /// </summary>
     /// <param name="curve">Mathematical curve.</param>
     /// <param name="input">Input value.</param>
-    protected abstract float Curve(T curve, float input);
+    /// <param name="user">Entity for which the calculation is performed.</param>
+    protected abstract float Curve(T curve, float input, EntityUid? user);
 }

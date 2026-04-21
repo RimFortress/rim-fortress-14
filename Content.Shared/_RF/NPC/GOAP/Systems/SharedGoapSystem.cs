@@ -278,7 +278,21 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
         ent.Comp.Plan = null;
         ent.Comp.PlanDebug = null;
-        RaiseLocalEvent(ent, new GoapPlanFinished(reason));
+        RaiseLocalEvent(ent, new GoapPlanFinished(reason, ent.Comp.GoalState));
+    }
+
+    /// <summary>
+    /// Sets the goal state for the GOAP agent, which will be used during the next planning.
+    /// </summary>
+    /// <param name="ent">GOAP agent entity.</param>
+    /// <param name="goalState">Goal state.</param>
+    [PublicAPI]
+    public void SetGoal(Entity<GoapComponent?> ent, GoapState goalState)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        ent.Comp.GoalState = goalState;
     }
 }
 

@@ -22,6 +22,21 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+    public bool Equals(GoapState? other)
+    {
+        if (other?.Count != Count)
+            return false;
+
+        foreach (var (key, value) in _state)
+        {
+            if (!other.TryGetValue<object>(key, out var otherValue)
+                || otherValue != value)
+                return false;
+        }
+
+        return true;
+    }
+
     #region API
 
     /// <summary>

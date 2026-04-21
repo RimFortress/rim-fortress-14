@@ -110,7 +110,7 @@ public sealed class GoapSystem : SharedGoapSystem
                     PlanShutdown(ent, GoapPlanFinishReason.Interrupted);
 
                 if (comp.PlanningJob.Result.Plan == null)
-                    RaiseLocalEvent(uid, new GoapPlaningFailed());
+                    RaiseLocalEvent(uid, new GoapPlaningFailed(comp.GoalState));
 
                 (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 

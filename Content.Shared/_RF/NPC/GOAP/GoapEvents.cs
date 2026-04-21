@@ -67,12 +67,14 @@ public record struct GoapActionShutdown<T>(T Action, GoapDebugDump Dump) where T
 /// <summary>
 /// Event raised when GOAP planning fails.
 /// </summary>
+/// <param name="GoalState">State that was the goal for the failed plan.</param>
 [PublicAPI]
-public readonly record struct GoapPlaningFailed();
+public readonly record struct GoapPlaningFailed(GoapState GoalState);
 
 /// <summary>
 /// Event raised when GOAP plan finished.
 /// </summary>
 /// <param name="Reason">The reason why the plan was finished.</param>
+/// <param name="GoalState">State that was the goal for the finished plan.</param>
 [PublicAPI]
-public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason);
+public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason, GoapState GoalState);

@@ -16,6 +16,6 @@ public sealed class RandomCurveCurveSystem : MathCurveSystem<RandomCurve>
 {
     [Dependency] private readonly IRobustRandom _random = default!;
 
-    protected override float Curve(RandomCurve curve, float input)
+    protected override float Curve(RandomCurve curve, float input, EntityUid? user)
         => curve.Random.Next(_random);
 }
