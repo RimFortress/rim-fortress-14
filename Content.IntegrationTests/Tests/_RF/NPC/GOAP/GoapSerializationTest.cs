@@ -1,0 +1,70 @@
+using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Conditions;
+using Content.Shared._RF.NPC.GOAP.Serializers;
+using Content.Tests;
+using Robust.Shared.IoC;
+using Robust.Shared.Serialization.Manager;
+
+namespace Content.IntegrationTests.Tests._RF.NPC.GOAP;
+
+[TestFixture]
+[TestOf(typeof(GoapStateSerializer))]
+[TestOf(typeof(GoapConditionSerializer))]
+[TestOf(typeof(GoapConditionExpression))]
+public sealed class GoapSerializationTest : ContentUnitTest
+{
+    private ISerializationManager _serializationManager = default!;
+
+    [OneTimeSetUp]
+    public void OneTimeSetup()
+    {
+        _serializationManager = IoCManager.Resolve<ISerializationManager>();
+        _serializationManager.Initialize();
+    }
+
+    [TestCase("Count == 1", typeof(EqualsInt))]
+    [TestCase("Count == 1.0", typeof(EqualsFloat))]
+    [TestCase("Count == -1", typeof(EqualsInt))]
+    [TestCase("Count == -1.5", typeof(EqualsFloat))]
+    public void TryParse_SelectsExpectedNumericType(string text, Type expectedType)
+    {
+        Assert.That(GoapConditionExpression.TryParse(text, out var condition), Is.True);
+        Assert.That(condition, Is.TypeOf(expectedType));
+    }
+
+    [Test]
+    public void ConditionExpression_RejectsUnsupportedBoolOperator()
+    {
+        Assert.That(
+            () => GoapConditionExpression.TryParse("Flag > true", out _),
+            Throws.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public void GoapStateSerializer_CopyTo_CopiesAllValues()
+    {
+        var serializer = new GoapStateSerializer();
+
+        var source = new GoapState();
+        source.SetValue<bool>("HasFood", true);
+        source.SetValue<int>("Count", 4);
+        source.SetValue<float>("Temperature", 1.25f);
+
+        var target = new GoapState();
+
+        serializer.CopyTo(
+            _serializationManager,
+            source,
+            ref target,
+            dependencies: null!,
+            hookCtx: default);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(target.Equals(source), Is.True);
+            Assert.That(target.GetValue<bool>("HasFood"), Is.True);
+            Assert.That(target.GetValue<int>("Count"), Is.EqualTo(4));
+            Assert.That(target.GetValue<float>("Temperature"), Is.EqualTo(1.25f).Within(0.0001f));
+        }
+    }
+}

@@ -74,7 +74,7 @@ public static class GoapConditionExpression
             {
                 "==" => new EqualsBool { Key = key, Value = boolValue },
                 "!=" => new NotEqualsBool { Key = key, Value = boolValue },
-                _ => throw new FormatException($"Operator '{op}' is not valid for bool condition.")
+                _ => throw new ArgumentException($"Operator '{op}' is not valid for bool condition.")
             };
             return true;
         }
@@ -89,7 +89,7 @@ public static class GoapConditionExpression
                 ">=" => new MoreThanOrEqualInt { Key = key, Value = intValue },
                 "<" => new LessThanInt { Key = key, Value = intValue },
                 "<=" => new LessThanOrEqualInt { Key = key, Value = intValue },
-                _ => throw new FormatException($"Unsupported operator '{op}' for int condition.")
+                _ => throw new ArgumentException($"Unsupported operator '{op}' for int condition.")
             };
             return true;
         }
@@ -104,11 +104,11 @@ public static class GoapConditionExpression
                 ">=" => new MoreThanOrEqualFloat { Key = key, Value = floatValue },
                 "<" => new LessThanFloat { Key = key, Value = floatValue },
                 "<=" => new LessThanOrEqualFloat { Key = key, Value = floatValue },
-                _ => throw new FormatException($"Unsupported operator '{op}' for float condition.")
+                _ => throw new ArgumentException($"Unsupported operator '{op}' for float condition.")
             };
             return true;
         }
 
-        throw new FormatException($"Unsupported shorthand condition '{text}'.");
+        throw new ArgumentException($"Unsupported shorthand condition '{text}'.");
     }
 }

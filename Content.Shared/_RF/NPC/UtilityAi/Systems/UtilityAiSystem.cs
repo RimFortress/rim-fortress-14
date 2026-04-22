@@ -223,7 +223,7 @@ public sealed class UtilityAiSystem : EntitySystem
         if (!_net.IsServer)
             return;
 
-        var enumerator = new EntityQueryEnumerator<UtilityAiComponent>();
+        var enumerator = EntityQueryEnumerator<UtilityAiComponent>();
         while (enumerator.MoveNext(out var comp))
         {
             var toRemove = new List<ProtoId<UtilityAiGoalPrototype>>();

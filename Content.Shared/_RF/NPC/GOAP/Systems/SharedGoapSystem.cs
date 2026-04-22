@@ -327,7 +327,8 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
             nodes.Add(new GoapStaticGraphNode(
                 Id: i,
-                Task: task,
+                Actions: task.Actions,
+                Preconditions: task.Preconditions,
                 EffectsDump: task.Effects.GetStateDump(),
                 PreconditionsCount: task.Preconditions.Count,
                 EffectsCount: task.Effects.Count));

@@ -101,10 +101,95 @@ public sealed class GoapPlanJob(
         }
     }
 
+    internal sealed class MinHeap<T>
+    {
+        private readonly List<Entry> _data = new(128);
+
+        public int Count => _data.Count;
+
+        private readonly record struct Entry(T Item, float Priority);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Enqueue(T item, float priority)
+        {
+            _data.Add(new(item, priority));
+            SiftUp(_data.Count - 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryDequeue(out T item, out float priority)
+        {
+            if (_data.Count == 0)
+            {
+                item = default!;
+                priority = default;
+                return false;
+            }
+
+            var root = _data[0];
+            item = root.Item;
+            priority = root.Priority;
+
+            var last = _data[^1];
+            _data.RemoveAt(_data.Count - 1);
+
+            if (_data.Count > 0)
+            {
+                _data[0] = last;
+                SiftDown(0);
+            }
+
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SiftUp(int index)
+        {
+            var data = _data;
+
+            while (index > 0)
+            {
+                var parent = (index - 1) >> 1;
+
+                if (data[index].Priority >= data[parent].Priority)
+                    break;
+
+                (data[index], data[parent]) = (data[parent], data[index]);
+                index = parent;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SiftDown(int index)
+        {
+            var data = _data;
+            var count = data.Count;
+
+            while (true)
+            {
+                var left = (index << 1) + 1;
+                if (left >= count)
+                    break;
+
+                var right = left + 1;
+                var smallest = left;
+
+                if (right < count && data[right].Priority < data[left].Priority)
+                    smallest = right;
+
+                if (data[index].Priority <= data[smallest].Priority)
+                    break;
+
+                (data[index], data[smallest]) = (data[smallest], data[index]);
+                index = smallest;
+            }
+        }
+    }
+
     /// <inheritdoc/>
     protected override async Task<(GoapPlan? Plan, GoapPlanDebugInfo? Debug)> Process()
     {
-        var openSet = new PriorityQueue<Node, float>();
+        var openSet = new MinHeap<Node>();
         var closedSet = new HashSet<GoapState>(GoapStateComparer.Instance);
         var nodeCache = new Dictionary<GoapState, Node>(GoapStateComparer.Instance);
 

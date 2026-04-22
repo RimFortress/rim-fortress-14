@@ -122,7 +122,8 @@ public sealed record GoapStaticGraph(
 [Serializable, NetSerializable]
 public sealed record GoapStaticGraphNode(
     int Id,
-    ExecutableGoapTask Task,
+    IReadOnlyList<GoapAction> Actions,
+    IReadOnlyList<GoapCondition> Preconditions,
     GoapStateDebugDump EffectsDump,
     int PreconditionsCount,
     int EffectsCount);

@@ -68,6 +68,19 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public T GetValue<T>(StateKey<T> key) where T : notnull => (T)_state[key];
 
     /// <summary>
+    /// Tries to get the value associated with the specified key in the dictionary.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="key"></param>
+    /// <returns>
+    /// A object instance. When the method is successful,
+    /// the returned object is the value associated with the specified key.
+    /// When the method fails, it returns the default value for object.
+    /// </returns>
+    [Pure, PublicAPI]
+    public T GetValueOrDefault<T>(StateKey<T> key) where T : notnull => (T)_state.GetValueOrDefault(key)!;
+
+    /// <summary>
     /// Gets the value associated with the specified key.
     /// </summary>
     /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
@@ -82,7 +95,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
                 value = typed;
                 return true;
             }
-            throw new InvalidCastException($"Key '{key}' contains '{data.GetType()}', expected '{typeof(T)}'.");
+
+            throw new ArgumentException($"Key '{key}' contains '{data.GetType()}', expected '{typeof(T)}'.");
         }
 
         if (Defaults.TryGetValue(key, out data))
@@ -92,7 +106,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
                 value = typed;
                 return true;
             }
-            throw new InvalidCastException($"Default key '{key}' contains '{data.GetType()}', expected '{typeof(T)}'.");
+
+            throw new ArgumentException($"Default key '{key}' contains '{data.GetType()}', expected '{typeof(T)}'.");
         }
 
         value = default;
