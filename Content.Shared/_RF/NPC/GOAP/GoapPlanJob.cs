@@ -153,8 +153,9 @@ public sealed class GoapPlanJob(
                 continue;
 
             // Expand node by applying all executable tasks
-            foreach (var task in tasks)
+            for (var i = 0; i < tasks.Count; i++)
             {
+                var task = tasks[i];
 #if DEBUG
                 var stateBefore = current.State.GetStateDump();
                 var preconditions = new List<GoapPreconditionDebugDump>();
@@ -181,6 +182,7 @@ public sealed class GoapPlanJob(
                 {
 #if DEBUG
                     debug.Nodes.Add(new(
+                        i,
                         preconditions.ToArray(),
                         task.Effects.GetStateDump(),
                         stateBefore,
@@ -206,6 +208,7 @@ public sealed class GoapPlanJob(
                 {
 #if DEBUG
                     debug.Nodes.Add(new(
+                        i,
                         preconditions.ToArray(),
                         task.Effects.GetStateDump(),
                         stateBefore,
@@ -234,6 +237,7 @@ public sealed class GoapPlanJob(
 
 #if DEBUG
                 debug.Nodes.Add(new(
+                    i,
                     preconditions.ToArray(),
                     task.Effects.GetStateDump(),
                     stateBefore,

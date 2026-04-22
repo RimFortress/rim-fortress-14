@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using JetBrains.Annotations;
@@ -294,6 +295,115 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
         ent.Comp.GoalState = goalState;
     }
+
+    #region Debug
+
+    /// <summary>
+    /// Builds a static dependency graph from a list of executable GOAP tasks.
+    /// </summary>
+    /// <param name="uid">
+    /// Target entity used when evaluating conditions.
+    /// Required because conditions may depend on ECS state.
+    /// </param>
+    /// <param name="tasks">List of executable tasks.</param>
+    /// <param name="includeSelfEdges">
+    /// If true, allows edges from a node to itself.
+    /// Normally disabled to avoid trivial/self loops.
+    /// </param>
+    /// <returns>Constructed GOAP static graph.</returns>
+    public GoapStaticGraph Build(
+        EntityUid uid,
+        IReadOnlyList<ExecutableGoapTask> tasks,
+        bool includeSelfEdges = false)
+    {
+        var nodes = new List<GoapStaticGraphNode>(tasks.Count);
+        var edges = new List<GoapStaticGraphEdge>();
+        var issues = new List<GoapStaticGraphIssue>();
+
+        // Create graph nodes
+        for (var i = 0; i < tasks.Count; i++)
+        {
+            var task = tasks[i];
+
+            nodes.Add(new GoapStaticGraphNode(
+                Id: i,
+                Task: task,
+                EffectsDump: task.Effects.GetStateDump(),
+                PreconditionsCount: task.Preconditions.Count,
+                EffectsCount: task.Effects.Count));
+        }
+
+        // Build edges by checking condition satisfaction
+        for (var to = 0; to < tasks.Count; to++)
+        {
+            var consumer = tasks[to];
+
+            // Iterate over each precondition of the consumer task
+            for (var condIndex = 0; condIndex < consumer.Preconditions.Count; condIndex++)
+            {
+                var condition = consumer.Preconditions[condIndex];
+                var matched = false;
+
+                // Try all possible producers
+                for (var from = 0; from < tasks.Count; from++)
+                {
+                    if (!includeSelfEdges && from == to)
+                        continue;
+
+                    var producer = tasks[from];
+
+                    // Clone the state so we don't mutate the original Effects
+                    var effectsState = producer.Effects.ShallowClone();
+
+                    // Use actual GOAP system logic to check condition
+                    if (!CheckCondition(uid, effectsState, condition, out var dump))
+                        continue;
+
+                    matched = true;
+
+                    edges.Add(new GoapStaticGraphEdge(
+                        FromNodeId: from,
+                        ToNodeId: to,
+                        ConditionIndex: condIndex,
+                        ConditionType: condition.GetType().Name,
+                        CheckDump: dump));
+                }
+
+                // If no producer satisfies this condition, report it as an issue
+                if (!matched)
+                {
+                    issues.Add(new GoapStaticGraphIssue(
+                        NodeId: to,
+                        Message: $"No producer found for precondition #{condIndex}.",
+                        ConditionType: condition.GetType().Name));
+                }
+            }
+        }
+
+        // Build lookup dictionaries for fast graph traversal
+        var outgoing = edges
+            .GroupBy(x => x.FromNodeId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<GoapStaticGraphEdge>)g.ToArray());
+
+        var incoming = edges
+            .GroupBy(x => x.ToNodeId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<GoapStaticGraphEdge>)g.ToArray());
+
+        return new GoapStaticGraph(
+            Nodes: nodes,
+            Edges: edges,
+            Issues: issues)
+        {
+            OutgoingByNodeId = outgoing,
+            IncomingByNodeId = incoming
+        };
+    }
+
+    #endregion
 }
 
 /// <summary>

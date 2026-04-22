@@ -23,6 +23,7 @@ public readonly record struct GoapStateDebugDump(
 /// <summary>
 /// A single step in the A* search: trying to apply a task to a state.
 /// </summary>
+/// <param name="TaskId">Index of this node in the list of all nodes available for planning.</param>
 /// <param name="Preconditions">Dump about the conditions of the task.</param>
 /// <param name="Effects">Effects of completing this task.</param>
 /// <param name="StateBefore">State before applying the task.</param>
@@ -34,6 +35,7 @@ public readonly record struct GoapStateDebugDump(
 /// <param name="SkipReason">Reason why node was skipped (if not added).</param>
 [Serializable, NetSerializable]
 public readonly record struct GoapNodeDebugEntry(
+    int TaskId,
     GoapPreconditionDebugDump[] Preconditions,
     GoapStateDebugDump Effects,
     GoapStateDebugDump StateBefore,
@@ -87,3 +89,63 @@ public readonly record struct GoapActionUpdateDebugDump(
     GameTick Tick,
     GoapDebugDump Dump,
     GoapActionResult Result);
+
+// Static graph stuff
+
+/// <summary>
+/// Represents a static dependency graph of GOAP tasks.
+/// Nodes are executable tasks, and edges represent that
+/// one task's effects can satisfy another task's preconditions.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed record GoapStaticGraph(
+    IReadOnlyList<GoapStaticGraphNode> Nodes,
+    IReadOnlyList<GoapStaticGraphEdge> Edges,
+    IReadOnlyList<GoapStaticGraphIssue> Issues)
+{
+    /// <summary>
+    /// Outgoing edges grouped by source node id.
+    /// Useful for fast traversal in UI/debug tools.
+    /// </summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<GoapStaticGraphEdge>> OutgoingByNodeId { get; init; } = default!;
+
+    /// <summary>
+    /// Incoming edges grouped by destination node id.
+    /// Useful for reverse traversal (dependencies).
+    /// </summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<GoapStaticGraphEdge>> IncomingByNodeId { get; init; } = default!;
+}
+
+/// <summary>
+/// Represents a single GOAP task node in the static graph.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed record GoapStaticGraphNode(
+    int Id,
+    ExecutableGoapTask Task,
+    GoapStateDebugDump EffectsDump,
+    int PreconditionsCount,
+    int EffectsCount);
+
+/// <summary>
+/// Represents a directed edge between two GOAP tasks.
+/// The edge exists if the source task's effects satisfy
+/// one of the destination task's preconditions.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed record GoapStaticGraphEdge(
+    int FromNodeId,
+    int ToNodeId,
+    int ConditionIndex,
+    string ConditionType,
+    GoapDebugDump CheckDump);
+
+/// <summary>
+/// Represents a problem detected during graph construction,
+/// for example when no producer exists for a precondition.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed record GoapStaticGraphIssue(
+    int NodeId,
+    string Message,
+    string? ConditionType = null);
