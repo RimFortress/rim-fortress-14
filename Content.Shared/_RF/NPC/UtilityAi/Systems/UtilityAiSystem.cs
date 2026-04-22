@@ -6,6 +6,7 @@ using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using JetBrains.Annotations;
+using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -18,6 +19,7 @@ public sealed class UtilityAiSystem : EntitySystem
 {
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly SharedGoapSystem _goap = default!;
     [Dependency] private readonly MathCurvesSystem _curves = default!;
 
@@ -120,6 +122,26 @@ public sealed class UtilityAiSystem : EntitySystem
         => SetGoal(new Entity<UtilityAiComponent?, GoapComponent?>(ent.Owner, ent.Comp, null), protoId);
 
     /// <summary>
+    /// Returns the agent's current Utility Ai goal.
+    /// </summary>
+    /// <param name="ent">GOAP agent entity.</param>
+    /// <param name="protoId">Current goal prototype.</param>
+    /// <returns></returns>
+    [PublicAPI, Pure]
+    public bool TryGetCurrentGoal(
+        Entity<UtilityAiComponent?> ent,
+        [NotNullWhen(true)] out ProtoId<UtilityAiGoalPrototype> protoId)
+    {
+        protoId = default;
+
+        if (!Resolve(ent, ref ent.Comp) || ent.Comp.CurrentGoal == null)
+            return false;
+
+        protoId = ent.Comp.CurrentGoal.Value;
+        return true;
+    }
+
+    /// <summary>
     /// Searches for the best available goal for the GOAP agent to achieve.
     /// </summary>
     /// <param name="ent">GOAP agent entity.</param>
@@ -197,6 +219,9 @@ public sealed class UtilityAiSystem : EntitySystem
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
+
+        if (!_net.IsServer)
+            return;
 
         var enumerator = new EntityQueryEnumerator<UtilityAiComponent>();
         while (enumerator.MoveNext(out var comp))
