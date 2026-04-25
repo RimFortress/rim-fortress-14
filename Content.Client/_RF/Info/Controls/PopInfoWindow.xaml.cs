@@ -70,5 +70,5 @@ public sealed partial class PopInfoWindow : FancyWindow
 
 public interface IInfoTab
 {
-    public void UpdateInfo(EntityUid uid);
+    void UpdateInfo(EntityUid uid);
 }

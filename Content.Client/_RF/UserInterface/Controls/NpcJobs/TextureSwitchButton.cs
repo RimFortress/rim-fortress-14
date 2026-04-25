@@ -1,6 +1,9 @@
 using System.Linq;
+using Robust.Client.Graphics;
+using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
+using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Input;
 
 namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
@@ -8,16 +11,25 @@ namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
 [Virtual]
 public sealed class TextureSwitchButton : TextureButton
 {
+    [Dependency] private readonly IResourceCache _cache = default!;
+
     private int _index;
-    private List<string> _textures = new();
+    private List<Texture> _textures = new();
+    private List<string> _texturesPaths = new();
 
     public string TexturesCollection
     {
         set
         {
-            _textures = value
+            _texturesPaths = value
                 .Split([' ', '\t', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
                 .ToList();
+            _textures.Clear();
+
+            foreach (var path in _texturesPaths)
+            {
+                _textures.Add(_cache.GetResource<TextureResource>(path));
+            }
 
             Index = _index;
         }
@@ -35,15 +47,21 @@ public sealed class TextureSwitchButton : TextureButton
             else
                 _index = value;
 
-            var path = _textures[_index];
-            TexturePath = path;
-            OnTextureChanged?.Invoke(path);
+            var texture = _textures[_index];
+            TextureNormal = texture;
+            OnTextureChanged?.Invoke(texture);
         }
     }
 
-    public string? CurrentTexturePath => Index <= _textures.Count ? _textures[Index] : null;
+    public string? CurrentTexturePath => Index <= _texturesPaths.Count ? _texturesPaths[Index] : null;
 
-    public event Action<string>? OnTextureChanged;
+    public event Action<Texture>? OnTextureChanged;
+
+    public TextureSwitchButton()
+    {
+        RobustXamlLoader.Load(this);
+        IoCManager.InjectDependencies(this);
+    }
 
     protected override void KeyBindUp(GUIBoundKeyEventArgs args)
     {
@@ -56,17 +74,17 @@ public sealed class TextureSwitchButton : TextureButton
             Index--;
     }
 
-    public void SetTexture(string texturePath)
+    public void SetTexture(Texture texture)
     {
-        var index = _textures.IndexOf(texturePath);
+        var index = _textures.IndexOf(texture);
 
         if (index == -1)
         {
-            _textures.Add(texturePath);
-            Index =  _textures.Count - 1;
+            _textures.Add(texture);
+            Index = _textures.Count - 1;
         }
         else
-            Index =  index;
+            Index = index;
     }
 }
 

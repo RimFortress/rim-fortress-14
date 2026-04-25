@@ -5,7 +5,6 @@ using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.ResourceManagement;
-using Robust.Client.Utility;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -21,14 +20,13 @@ public sealed class SelectionOverlay : Overlay
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
 
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string SelectShader = "DottedOutline";
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string SelectAreaShader = "DottedSquareOutline";
+    private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
+    private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";
 
     private readonly SelectionSystem _selection;
     private readonly TurfSystem _turf;
     private readonly TransformSystem _transform;
+    private readonly SpriteSystem _sprite;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
@@ -43,6 +41,7 @@ public sealed class SelectionOverlay : Overlay
         _selection = _entityManager.System<SelectionSystem>();
         _turf = _entityManager.System<TurfSystem>();
         _transform = _entityManager.System<TransformSystem>();
+        _sprite = _entityManager.System<SpriteSystem>();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -72,8 +71,8 @@ public sealed class SelectionOverlay : Overlay
         if (_selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
             DrawSelectArea(args, startPoint, endPoint);
 
-        if (_selection.IconPath != null)
-            DrawMouseIcon(args, _selection.IconPath, _selection.IconColor);
+        if (_selection.Icon != null)
+            DrawMouseIcon(args, _selection.Icon, _selection.IconColor);
     }
 
     private void SetShader(EntityUid entity, Color color)
@@ -83,7 +82,7 @@ public sealed class SelectionOverlay : Overlay
             || !sprite.Visible)
             return;
 
-        var shader = _prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
+        var shader = _prototype.Index(SelectShader).InstanceUnique();
         _highlightedSprites.Add(sprite);
         shader.SetParameter("color", color);
 
@@ -93,7 +92,7 @@ public sealed class SelectionOverlay : Overlay
 
     private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
     {
-        var shader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
+        var shader = _prototype.Index(SelectAreaShader).InstanceUnique();
         var area = new Box2(start.Position, end.Position);
         var prevShader = args.WorldHandle.GetShader();
 
@@ -118,7 +117,7 @@ public sealed class SelectionOverlay : Overlay
         args.WorldHandle.UseShader(prevShader);
     }
 
-    private void DrawMouseIcon(in OverlayDrawArgs args, string path, Color color)
+    private void DrawMouseIcon(in OverlayDrawArgs args, SpriteSpecifier sprite, Color color)
     {
         if (_input.MouseScreenPosition is not { IsValid: true } mousePos)
             return;
@@ -129,7 +128,7 @@ public sealed class SelectionOverlay : Overlay
         if (mapPos.Position == Vector2.Zero)
             return;
 
-        var icon = new SpriteSpecifier.Texture(new ResPath(path)).GetTexture(_resourceCache);
+        var icon = _sprite.Frame0(sprite);
         var box = new Box2(new Vector2(mapPos.X, mapPos.Y - size), new Vector2(mapPos.X + size, mapPos.Y));
 
         args.WorldHandle.DrawRect(box, StyleNano.PanelDark.WithAlpha(0.6f));

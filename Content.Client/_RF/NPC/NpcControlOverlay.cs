@@ -1,14 +1,14 @@
 using System.Numerics;
+using Content.Client._RF.NPC.UtilityAi.Systems;
 using Content.Client._RF.Selection;
-using Content.Client.Stylesheets;
+using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
-using Robust.Client.Utility;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.NPC;
 
@@ -16,22 +16,21 @@ public sealed class NpcControlOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IResourceCache _resourceCache = default!;
 
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string SelectShader = "DottedOutline";
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string PointCircleShader = "DottedCircle";
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string PointLineShader = "DottedLine";
+    private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
+    private static readonly ProtoId<ShaderPrototype> PointCircleShader = "DottedCircle";
+    private static readonly ProtoId<ShaderPrototype> PointLineShader = "DottedLine";
 
-    private readonly NpcControlSystem _npcControl;
+    private readonly ExecutableGoalSystem _executable;
+    private readonly UtilityAiSystem _utilityAi;
     private readonly SelectionSystem _selection;
     private readonly SharedTransformSystem _transform;
+    private readonly SpriteSystem _sprite;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
     private readonly EntityQuery<TransformComponent> _transformQuery;
+    private readonly EntityQuery<ControllableNpcComponent> _controllableQuery;
 
     public override bool RequestScreenTexture => true;
 
@@ -41,11 +40,14 @@ public sealed class NpcControlOverlay : Overlay
     {
         IoCManager.InjectDependencies(this);
 
-        _npcControl = _entityManager.System<NpcControlSystem>();
+        _executable = _entityManager.System<ExecutableGoalSystem>();
+        _utilityAi = _entityManager.System<UtilityAiSystem>();
         _selection = _entityManager.System<SelectionSystem>();
         _transform = _entityManager.System<SharedTransformSystem>();
+        _sprite = _entityManager.System<SpriteSystem>();
 
         _transformQuery = _entityManager.GetEntityQuery<TransformComponent>();
+        _controllableQuery = _entityManager.GetEntityQuery<ControllableNpcComponent>();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -58,34 +60,29 @@ public sealed class NpcControlOverlay : Overlay
 
         _highlightedSprites.Clear();
 
-        DrawPassiveTasks(args);
+        DrawPassiveGoals(args);
 
         foreach (var entity in _selection.Selected)
         {
-            if (!_npcControl.Tasks.TryGetValue(entity, out var task)
-                || !_transformQuery.TryComp(entity, out var entityForm))
+            if (!_controllableQuery.TryComp(entity, out var controllable)
+                || !_transformQuery.TryComp(entity, out var entityForm)
+                || !_utilityAi.TryGetCurrentGoal(entity, out var goal)
+                || !_prototype.Resolve(goal, out var proto))
                 continue;
 
-            if (!_transformQuery.TryComp(task.Target, out var xform)
-                && task.Coordinates == null)
+            if (!_executable.TryGetTargetCoordinates(entity, out var coords))
                 return;
 
-            var coords = task.Coordinates ?? xform!.Coordinates;
             var start = _transform.ToMapCoordinates(entityForm.Coordinates);
-            var end = _transform.ToMapCoordinates(coords);
+            var end = _transform.ToMapCoordinates(coords.Value);
             var dist = (end.Position - start.Position).Length();
 
-            if (task.Target != null)
-            {
-                SetShader(task.Target.Value, task.Color);
-            }
-            else
-            {
-                if (dist > 0.5f)
-                    DrawPointCircle(args, end, task.Color);
-            }
+            if (_executable.TryGetTarget(entity, out var uid))
+                SetShader(uid.Value, proto.Color);
+            else if (dist > 0.5f)
+                DrawPointCircle(args, end, proto.Color);
 
-            DrawLine(args, task.Color, start, end);
+            DrawLine(args, proto.Color, start, end);
         }
     }
 
@@ -96,7 +93,7 @@ public sealed class NpcControlOverlay : Overlay
             || !sprite.Visible)
             return;
 
-        var shader = _prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
+        var shader = _prototype.Index(SelectShader).InstanceUnique();
         _highlightedSprites.Add(sprite);
         shader.SetParameter("color", color);
 
@@ -114,7 +111,7 @@ public sealed class NpcControlOverlay : Overlay
             || end.Position == Vector2.Zero)
             return;
 
-        var shader = _prototype.Index<ShaderPrototype>(PointLineShader).InstanceUnique();
+        var shader = _prototype.Index(PointLineShader).InstanceUnique();
         var prevShader = args.WorldHandle.GetShader();
 
         var screenEnd = args.Viewport.WorldToLocal(end.Position);
@@ -139,7 +136,7 @@ public sealed class NpcControlOverlay : Overlay
 
     private void DrawPointCircle(in OverlayDrawArgs args, MapCoordinates worldCoords, Color color)
     {
-        var shader = _prototype.Index<ShaderPrototype>(PointCircleShader).InstanceUnique();
+        var shader = _prototype.Index(PointCircleShader).InstanceUnique();
         var prevShader = args.WorldHandle.GetShader();
 
         var position = args.Viewport.WorldToLocal(worldCoords.Position);
@@ -156,24 +153,22 @@ public sealed class NpcControlOverlay : Overlay
         args.WorldHandle.UseShader(prevShader);
     }
 
-    private void DrawPassiveTasks(in OverlayDrawArgs args)
+    private void DrawPassiveGoals(in OverlayDrawArgs args)
     {
-        foreach (var (task, targets) in _npcControl.PassiveTasks)
+        var enumerator = _entityManager.EntityQueryEnumerator<TransformComponent, PassiveGoalTargetComponent>();
+        while (enumerator.MoveNext(out var xform, out var comp))
         {
-            if (task.IconPath == null)
+            var proto = _prototype.Index(comp.Goal);
+
+            if (proto.VerbIcon == null)
                 continue;
 
-            foreach (var target in targets)
-            {
-                if (!_transformQuery.TryComp(target, out var xform))
-                    continue;
+            var icon = _sprite.Frame0(proto.VerbIcon);
+            var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(0.5f));
+            var color = _prototype.Index(proto.Goal).Color.WithAlpha(0.6f);
 
-                var icon = new SpriteSpecifier.Texture(new ResPath(task.IconPath)).GetTexture(_resourceCache);
-                var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(0.5f));
-
-                args.WorldHandle.DrawRect(box, StyleNano.PanelDark.WithAlpha(0.3f));
-                args.WorldHandle.DrawTextureRect(icon, box, task.Color.WithAlpha(0.6f));
-            }
+            args.WorldHandle.DrawRect(box, Color.Black.WithAlpha(0.3f));
+            args.WorldHandle.DrawTextureRect(icon, box, color);
         }
     }
 }

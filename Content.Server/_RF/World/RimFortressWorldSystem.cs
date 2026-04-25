@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
-using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.Parallax.Fog;
 using Content.Server.Administration.Managers;
 using Content.Server.Mind;
@@ -16,7 +15,6 @@ using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
-using Content.Shared.Preferences;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
 using Robust.Shared.Configuration;
@@ -25,6 +23,7 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Content.Server._RF.NPC.UtilityAi.Systems;
 
 namespace Content.Server._RF.World;
 
@@ -45,7 +44,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
-    [Dependency] private readonly NpcControlSystem _npc = default!;
+    [Dependency] private readonly ExecutableGoalSystem _executable = default!;
     [Dependency] private readonly FogOfWarSystem _faw = default!;
     [Dependency] private readonly OwnershipSystem _ownership = default!;
 
@@ -132,7 +131,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         foreach (var pop in pops)
         {
-            _npc.AddNpcControl(player.Owner, pop);
+            _executable.AddControl(player.Owner, pop);
 
             var beacon = EnsureComp<NavMapBeaconComponent>(pop);
             beacon.Color = player.Comp.FactionColor;
@@ -154,7 +153,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (!Resolve(player.Owner, ref player.Comp))
             return;
 
-        _npc.AddNpcControl(player.Owner, pop);
+        _executable.AddControl(player.Owner, pop);
 
         var beacon = EnsureComp<NavMapBeaconComponent>(pop);
         beacon.Color = player.Comp.FactionColor;
@@ -184,7 +183,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (!player.Comp.Pops.Remove(pop))
             return false;
 
-        _npc.RemoveNpcControl(player.Owner, pop);
+        _executable.RemoveControl(player.Owner, pop);
         RemComp<NavMapBeaconComponent>(pop);
 
         _faw.RemoveFogClearer(pop, player);

@@ -1,4 +1,3 @@
-using Content.Shared._RF.NPC;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
@@ -7,6 +6,7 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Selection;
 
@@ -39,7 +39,7 @@ public sealed class SelectionSystem : EntitySystem
     /// <summary>
     /// Selection drawing color
     /// </summary>
-    public Color SelectionColor = Color.White;
+    public Color SelectionColor { get; private set; } = Color.White;
 
     /// <summary>
     /// A function that filters entities for selection
@@ -74,7 +74,7 @@ public sealed class SelectionSystem : EntitySystem
     /// <summary>
     /// An icon that will be drawn next to the mouse cursor
     /// </summary>
-    public string? IconPath { get; private set; }
+    public SpriteSpecifier? Icon { get; private set; }
 
     /// <summary>
     /// Color of the icon that will be drawn next to the mouse cursor
@@ -106,7 +106,15 @@ public sealed class SelectionSystem : EntitySystem
         CommandBinds.Builder
             .Bind(EngineKeyFunctions.Use, new PointerStateInputCmdHandler(OnSelectEnabled, OnSelectDisabled))
             .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
-            .Register<SharedNpcControlSystem>();
+            .Register<SelectionSystem>();
+    }
+
+    public override void Shutdown()
+    {
+        base.Shutdown();
+
+        _overlay.RemoveOverlay<SelectionOverlay>();
+        CommandBinds.Unregister<SelectionSystem>();
     }
 
     private bool OnSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
@@ -192,7 +200,7 @@ public sealed class SelectionSystem : EntitySystem
         Color? color = null,
         Func<EntityUid, bool>? filter = null,
         Action<HashSet<EntityUid>>? onSelected = null,
-        string? iconPath = null,
+        SpriteSpecifier? icon = null,
         Color? iconColor = null)
     {
         SetDefault();
@@ -200,7 +208,7 @@ public sealed class SelectionSystem : EntitySystem
         SelectionColor = color ?? Color.LightGray;
         _selectionFilter = filter;
         _onSelected = onSelected;
-        IconPath = iconPath;
+        Icon = icon;
         IconColor = iconColor ?? Color.LightGray;
         _act = act;
 
@@ -212,7 +220,7 @@ public sealed class SelectionSystem : EntitySystem
         Color? color = null,
         Func<TileRef, bool>? filter = null,
         Action<HashSet<TileRef>>? onSelected = null,
-        string? iconPath = null,
+        SpriteSpecifier? icon = null,
         Color? iconColor = null)
     {
         SetDefault();
@@ -220,7 +228,7 @@ public sealed class SelectionSystem : EntitySystem
         SelectionColor = color ?? Color.LightGray;
         _tileSelectionFilter = filter;
         _onTileSelected = onSelected;
-        IconPath = iconPath;
+        Icon = icon;
         IconColor = iconColor ?? Color.LightGray;
         _tileAct = act;
 
@@ -234,7 +242,7 @@ public sealed class SelectionSystem : EntitySystem
         _selectionFilter = null;
         _onSelected = null;
         _onTileSelected = null;
-        IconPath = null;
+        Icon = null;
         IconColor = Color.LightGray;
         _act = null;
         _tileAct = null;

@@ -1,19 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Server._RF.NPC.Components;
 using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.Workshops.Components;
-using Content.Server.NPC.HTN;
+using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Systems;
 using Content.Shared.Inventory;
-using Robust.Shared.Utility;
 
 namespace Content.Server._RF.Workshops.Systems;
 
 public sealed partial class WorkshopSystem : SharedWorkshopSystem
 {
-    [Dependency] private readonly NpcControlSystem _npcControl = default!;
     [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
 
@@ -23,12 +20,15 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
     {
         base.Initialize();
 
+        /* TODO
         SubscribeLocalEvent<WorkshopComponent, NpcTaskGivenTarget>(OnTaskGiven);
         SubscribeLocalEvent<WorkshopComponent, NpcTaskFinishedTarget>(OnTaskFinished);
+        */
 
         _query = GetEntityQuery<WorkshopTaskSourceComponent>();
     }
 
+    /* TODO
     private void OnTaskGiven(Entity<WorkshopComponent> ent, ref NpcTaskGivenTarget args)
     {
         if (!_query.TryComp(ent, out var source) || source.Task != args.Task)
@@ -48,9 +48,11 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
         else if (ent.Comp.Crafting)
             StopCrafting(ent.AsNullable(), false);
     }
+    */
 
     protected override void UpdateNpcRecipe(EntityUid uid)
     {
+        /* TODO
         if (!_query.TryComp(uid, out var comp)
             || !_npcControl.TryGetUser(comp.Task, uid, out var npc)
             || !TryComp(npc, out HTNComponent? htn)
@@ -58,16 +60,18 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
             return;
 
         htn.Blackboard.SetValue(comp.TargetRecipeKey, protoId);
+        */
     }
 
     protected override void AddPassiveTask(Entity<WorkshopComponent?> ent)
     {
+        /* TODO
         if (!Resolve(ent, ref ent.Comp)
             || !_query.TryComp(ent, out var comp)
             || GetQueueRecipe(ent.Comp, 0) is not { } protoId)
             return;
 
-        if (HasComp<PassiveNpcTaskTargetComponent>(ent))
+        if (HasComp<PassiveGoalTargetComponent>(ent))
             return;
 
         foreach (var owner in Ownership.GetOwners(ent))
@@ -83,27 +87,31 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
                 additionalKeys: new() { { comp.TargetRecipeKey, protoId } });
             break;
         }
+        */
     }
 
     protected override void FinishTask(Entity<WorkshopComponent?> ent)
     {
+        /* TODO
         if (!Resolve(ent, ref ent.Comp)
             || !_query.TryComp(ent, out var source)
             || !_npcControl.TryGetUser(source.Task, ent, out var npc))
             return;
 
         _npcControl.FinishTask(npc.Value);
+        */
         UpdateUi(ent);
     }
 
     protected override void RemovePassiveTask(EntityUid ent)
     {
-        RemComp<PassiveNpcTaskTargetComponent>(ent);
+        RemComp<PassiveGoalTargetComponent>(ent);
     }
 
     public override bool TryGetUser(Entity<WorkshopComponent?> ent, [NotNullWhen(true)] out EntityUid? user)
     {
         user = null;
+        /* TODO
         if (!Resolve(ent, ref ent.Comp)
             || !_query.TryComp(ent, out var source)
             || !TryComp(ent, out ActiveNpcTaskTargetComponent? target)
@@ -111,6 +119,7 @@ public sealed partial class WorkshopSystem : SharedWorkshopSystem
             return false;
 
         user = users.FirstOrNull();
+        */
         return user != null;
     }
 

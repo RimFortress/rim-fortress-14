@@ -55,22 +55,6 @@ public sealed class RfVars : CVars
     public static readonly CVarDef<int> MaxPrefSkillsLevel =
         CVarDef.Create("rimfortress.max_pref_skills_level", 10, CVar.SERVER | CVar.REPLICATED);
 
-    #region Npc
-
-    /// <summary>
-    /// Whether to finish a routine NPC task if at least one active target of that task has failed
-    /// </summary>
-    public static readonly CVarDef<bool> FinishTaskOnFailed =
-        CVarDef.Create("npc.finish_task_on_failed", true, CVar.SERVER | CVar.SERVERONLY);
-
-    /// <summary>
-    /// Time for which a routine NPC task cannot be recalled after a failed completion
-    /// </summary>
-    public static readonly CVarDef<TimeSpan> TaskCooldownOnFail =
-        CVarDef.Create("npc.task_cooldown_on_failed", TimeSpan.FromSeconds(10), CVar.SERVER | CVar.SERVERONLY);
-
-    #endregion
-
     #region Social
 
     /// <summary>

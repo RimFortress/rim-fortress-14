@@ -1,5 +1,5 @@
 using System.Linq;
-using Content.Client._RF.NPC;
+using Content.Client._RF.NPC.UtilityAi.Systems;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
@@ -18,6 +18,7 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controllers;
 
@@ -34,7 +35,7 @@ public sealed class StockpileUiController :
     [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
     [UISystemDependency] private readonly StockpileSystem _stockpile = default!;
-    [UISystemDependency] private readonly NpcControlSystem _npc = default!;
+    [UISystemDependency] private readonly ExecutableGoalSystem _executable = default!;
 
     public StockpileSelectionMode SelectMode = StockpileSelectionMode.None;
     public event Action<Stock>? OnStockSelected;
@@ -74,6 +75,10 @@ public sealed class StockpileUiController :
             return (SettingStock.CenterCoordinates(), SelectedStock.CenterCoordinates());
         }
     }
+
+    private SpriteSpecifier _createSelectionIcon = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"));
+    private SpriteSpecifier _addTileSelection = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
+    private SpriteSpecifier _removeTileSelection = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
 
     public override void Initialize()
     {
@@ -164,11 +169,11 @@ public sealed class StockpileUiController :
             return;
 
         _selection.SetTileSelection(
-            act: _ => _npc.DefaultSelection(),
+            act: _ => _executable.DefaultSelection(),
             onSelected: tiles =>
             {
                 var stock = _stockpile.CreateStockpile(tiles, entity);
-                _npc.DefaultSelection();
+                _executable.DefaultSelection();
 
                 if (stock == null)
                     return;
@@ -178,33 +183,33 @@ public sealed class StockpileUiController :
                 OnStockSelected?.Invoke(stock);
             },
             filter: AddTileFilter,
-            iconPath: "/Textures/_RF/Interface/cubes-solid.svg.192dpi.png");
+            icon: _createSelectionIcon);
     }
 
     public void AddTileSelection(Stock stock)
     {
         _selection.SetTileSelection(
-            act: _ => _npc.DefaultSelection(),
+            act: _ => _executable.DefaultSelection(),
             onSelected: tiles =>
             {
                 _stockpile.AddTiles(tiles, stock);
                 AddTileSelection(stock);
             },
             filter: AddTileFilter,
-            iconPath: "/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png");
+            icon: _addTileSelection);
     }
 
     public void RemoveTileSelection(Stock stock)
     {
         _selection.SetTileSelection(
-            act: _ => _npc.DefaultSelection(),
+            act: _ => _executable.DefaultSelection(),
             onSelected: tiles =>
             {
                 _stockpile.RemoveTiles(tiles, stock);
                 RemoveTileSelection(stock);
             },
             filter: RemoveTileFilter,
-            iconPath: "/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png");
+            icon: _removeTileSelection);
     }
 
     private bool AddTileFilter(TileRef tile)
@@ -226,7 +231,7 @@ public sealed class StockpileUiController :
         SettingStock = null;
         SelectedStock = null;
         SelectMode = StockpileSelectionMode.None;
-        _npc.DefaultSelection();
+        _executable.DefaultSelection();
     }
 
     public override void FrameUpdate(FrameEventArgs args)

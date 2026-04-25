@@ -123,8 +123,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <summary>
     /// Tries to get the GoapState data for a particular key. Returns default if not found
     /// </summary>
-    [Pure]
-    public T? GetValueOrDefault<T>(string key)
+    [Pure, PublicAPI]
+    public T? GetValueOrDefault<T>(string key) where T : notnull
     {
         if (_state.TryGetValue(key, out var value))
             return (T)value;
@@ -133,6 +133,22 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
             return (T)value;
 
         return default;
+    }
+
+    [PublicAPI]
+    public void Remove<T>(string key) where T : notnull
+    {
+        DebugTools.Assert(_state.TryGetValue(key, out var value));
+        DebugTools.Assert(value is T);
+        _state.Remove(key);
+    }
+
+    [PublicAPI]
+    public void Remove<T>(StateKey<T> key) where T : notnull
+    {
+        DebugTools.Assert(_state.TryGetValue(key, out var value));
+        DebugTools.Assert(value is T);
+        _state.Remove(key);
     }
 
     /// <summary>
@@ -249,6 +265,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 /// </summary>
 /// <typeparam name="T">The data type stored in this key.</typeparam>
 /// <param name="Id">Key ID.</param>
+[Serializable]
 public readonly record struct StateKey<T>(string Id) :
     IEquatable<string>,
     IComparable<StateKey<T>>

@@ -52,7 +52,7 @@ public sealed class UtilityAiSystem : EntitySystem
                 ent.Comp.CurrentGoal = null;
 
                 if (TryGetGoal(ent.AsNullable(), out var goal))
-                    SetGoal(ent.AsNullable(), goal);
+                    SetGoal(ent.Owner, goal);
 
                 break;
             case GoapPlanFinishReason.Failed:
@@ -79,7 +79,7 @@ public sealed class UtilityAiSystem : EntitySystem
             if (!ConditionsMet(ent.Owner, fallback))
                 continue;
 
-            SetGoal(ent.AsNullable(), fallback);
+            SetGoal(ent.Owner, fallback);
             return;
         }
 
@@ -96,7 +96,7 @@ public sealed class UtilityAiSystem : EntitySystem
         }
 
         if (TryGetGoal(ent.AsNullable(), out var goal))
-            SetGoal(ent.AsNullable(), goal);
+            SetGoal(ent.Owner, goal);
     }
 
     /// <summary>
@@ -115,11 +115,6 @@ public sealed class UtilityAiSystem : EntitySystem
         ent.Comp1.CurrentGoal = protoId;
         ent.Comp1.Penalties.Clear();
     }
-
-    /// <inheritdoc cref="SetGoal"/>
-    [PublicAPI]
-    public void SetGoal(Entity<UtilityAiComponent?> ent, ProtoId<UtilityAiGoalPrototype> protoId)
-        => SetGoal(new Entity<UtilityAiComponent?, GoapComponent?>(ent.Owner, ent.Comp, null), protoId);
 
     /// <summary>
     /// Returns the agent's current Utility Ai goal.
@@ -198,8 +193,11 @@ public sealed class UtilityAiSystem : EntitySystem
             return 0f;
 
         var score = _curves.Get(proto.ScoreCurves, user: ent);
-        var penalty = ent.Comp.Penalties.GetValueOrDefault(protoId);
-        return Math.Clamp(score - penalty * proto.FailPenalty, 0f, 1f);
+        var penalty = ent.Comp.Penalties.GetValueOrDefault(protoId) * proto.FailPenalty;
+        var ev = new UtilityAiGoalScoreModify(protoId, score - penalty);
+
+        RaiseLocalEvent(ent, ref ev);
+        return Math.Clamp(ev.Score, 0f, 1f);
     }
 
     /// <summary>

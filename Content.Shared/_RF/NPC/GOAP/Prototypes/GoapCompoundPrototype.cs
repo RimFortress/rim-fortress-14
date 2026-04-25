@@ -12,6 +12,6 @@ public sealed partial class GoapCompoundPrototype : IPrototype
     [IdDataField]
     public string ID { get; private set; } = default!;
 
-    [DataField(required: true)]
+    [DataField(required: true, serverOnly: true)]
     public List<GoapTask> Tasks = new();
 }

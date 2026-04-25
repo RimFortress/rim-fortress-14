@@ -294,6 +294,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
             return;
 
         ent.Comp.GoalState = goalState;
+        Replan(ent);
     }
 
     #region Debug

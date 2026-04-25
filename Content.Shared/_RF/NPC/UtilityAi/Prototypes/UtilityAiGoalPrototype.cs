@@ -25,6 +25,18 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     public string ID { get; private set; } = default!;
 
     /// <summary>
+    /// Human-readable goal name.
+    /// </summary>
+    [DataField]
+    public LocId Name;
+
+    /// <summary>
+    ///The color associated with this goal for display in the UI.
+    /// </summary>
+    [DataField]
+    public Color Color = Color.White;
+
+    /// <summary>
     /// The conditions required to achieve this goal.
     /// If these conditions are not met, the score will not even be calculated.
     /// </summary>
@@ -51,7 +63,7 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// Fallback goals that will be assigned if the current goal cannot be completed or planned.
     /// </summary>
     /// <remarks>
-    /// Points will not be calculated for this goal, but the conditions will still be checked; 
+    /// Points will not be calculated for this goal, but the conditions will still be checked;
     /// If none of the fallback conditions are met, the <see cref="FailPolicy"/> will be performed.
     /// </remarks>
     [DataField]
