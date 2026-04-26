@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
+using Content.Shared.Hands.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
@@ -13,6 +14,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly SharedHandsSystem _hands = default!;
 
     public override void Initialize()
     {
@@ -345,13 +347,22 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
     private bool TryGetStateDefaults(GoapState state, string key, [NotNullWhen(true)] out object? value)
     {
+        value = null;
+
         if (key == GoapState.OwnerCoordinates)
         {
             value = Transform(state.GetValue(GoapState.Owner)).Coordinates;
             return true;
         }
+        if (key == GoapState.ActiveHand)
+        {
+            if (_hands.GetActiveHand(state.GetValue(GoapState.Owner)) is not { } hand)
+                return false;
 
-        value = null;
+            value = hand;
+            return true;
+        }
+
         return false;
     }
 

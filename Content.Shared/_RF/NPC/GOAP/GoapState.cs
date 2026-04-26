@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared.Hands.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Utility;
@@ -139,16 +140,14 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [PublicAPI]
     public void Remove<T>(string key) where T : notnull
     {
-        DebugTools.Assert(_state.TryGetValue(key, out var value));
-        DebugTools.Assert(value is T);
+        DebugTools.Assert(!_state.TryGetValue(key, out var value) || value is T);
         _state.Remove(key);
     }
 
     [PublicAPI]
     public void Remove<T>(StateKey<T> key) where T : notnull
     {
-        DebugTools.Assert(_state.TryGetValue(key, out var value));
-        DebugTools.Assert(value is T);
+        DebugTools.Assert(!_state.TryGetValue(key, out var value) || value is T);
         _state.Remove(key);
     }
 
@@ -231,7 +230,10 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <summary>
     /// Global defaults for NPCs
     /// </summary>
-    private static readonly Dictionary<string, object> Defaults = new();
+    private static readonly Dictionary<string, object> Defaults = new()
+    {
+        {RotateSpeed, float.MaxValue},
+    };
 
     /// <summary>
     /// The entity to which GoapState belongs.
@@ -263,6 +265,10 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// Can the NPC climb obstacles for steering.
     /// </summary>
     public static readonly StateKey<bool> NavClimb = "NavClimb";
+
+    public static readonly StateKey<float> RotateSpeed = "RotateSpeed";
+
+    public static readonly StateKey<string> ActiveHand = "ActiveHand";
 
     #endregion
 }

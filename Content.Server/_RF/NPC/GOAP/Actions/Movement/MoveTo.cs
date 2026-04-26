@@ -9,7 +9,7 @@ using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
-namespace Content.Server._RF.NPC.GOAP.Actions;
+namespace Content.Server._RF.NPC.GOAP.Actions.Movement;
 
 /// <summary>
 /// Moves an NPC to the specified target key. Hands the actual steering off to NPCSystem.Steering.
@@ -69,7 +69,7 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
     {
         var state = ent.Comp.State;
 
-        if (!state.TryGetValue(action.TargetKey, out var targetCoordinates))
+        if (!Goap.TryGetValue(state, action.TargetKey, out var targetCoordinates))
         {
             KeyNotFound(ent, action, action.TargetKey);
             return false;

@@ -7,7 +7,7 @@ using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
-namespace Content.Server._RF.NPC.GOAP.Actions;
+namespace Content.Server._RF.NPC.GOAP.Actions.Movement;
 
 /// <summary>
 /// Chooses a nearby coordinate and puts it into the resulting key.
@@ -15,7 +15,7 @@ namespace Content.Server._RF.NPC.GOAP.Actions;
 public sealed partial class PickAccessible : BaseGoapAction<PickAccessible>
 {
     [DataField(required: true)]
-    public string RangeKey = string.Empty;
+    public StateKey<float> RangeKey = string.Empty;
 
     [DataField]
     public StateKey<EntityCoordinates> TargetCoordinates = "TargetCoordinates";
@@ -41,7 +41,7 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
         var state = ent.Comp.State;
         var owner = state.GetValue(GoapState.Owner);
 
-        state.TryGetValue<float>(action.RangeKey, out var maxRange);
+        Goap.TryGetValue(state, action.RangeKey, out var maxRange);
 
         if (maxRange == 0f)
             maxRange = 7f;
