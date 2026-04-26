@@ -199,13 +199,14 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     public float ActionCost(Entity<GoapComponent?> ent, GoapAction action)
         => Resolve(ent, ref ent.Comp) ? ActionCost(ent, ent.Comp.State, action) : 0f;
 
-    public void ActionStartup<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>
+    public bool ActionStartup<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>
     {
         action.Dump = null;
-        var ev = new GoapActionStartup<T>(action);
+        var ev = new GoapActionStartup<T>(action, true);
         RaiseLocalEvent(target, ref ev);
         dump = action.Dump;
         action.Dump = null;
+        return ev.Success;
     }
 
     /// <summary>
@@ -213,10 +214,11 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// </summary>
     /// <param name="target">Target entity.</param>
     /// <param name="action">GOAP action.</param>
-    protected void ActionStartup(EntityUid target, GoapAction action)
+    /// <returns>True, if the action startup was successful.</returns>
+    protected bool ActionStartup(EntityUid target, GoapAction action)
     {
 #if DEBUG
-        action.Startup(target, this, out var dump);
+        var succes = action.Startup(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
             comp.Plan != null,
@@ -225,8 +227,10 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         DebugTools.Assert(plan.Actions.Count == plan.ActionsDebug?.Count);
         var current = plan.ActionsDebug[plan.Index];
         current.StartupDump = dump;
+        current.StartupSuccess = succes;
+        return succes;
 #else
-        action.Startup(target, this, out _);
+        return action.Startup(target, this, out _);
 #endif
     }
 
@@ -514,7 +518,8 @@ public interface IGoapActionPerformer
     /// <param name="target">Target entity.</param>
     /// <param name="action">GOAP action.</param>
     /// <param name="dump">Debug dump.</param>
-    void ActionStartup<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
+    /// <returns>True, if the action startup was successful.</returns>
+    bool ActionStartup<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
 
     /// <summary>
     /// Finishes the action.

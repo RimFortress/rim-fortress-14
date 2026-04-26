@@ -440,7 +440,7 @@ public sealed class GoapPlanJob(
 
 #if DEBUG
         return new GoapPlan(actions, 0, actions
-            .Select(x => new GoapActionDebugInfo(x.GetType().ToString(), null, null, new()))
+            .Select(x => new GoapActionDebugInfo(x.GetType().ToString(), false, null, null, new()))
             .ToList());
 #else
         return new GoapPlan(actions, 0);

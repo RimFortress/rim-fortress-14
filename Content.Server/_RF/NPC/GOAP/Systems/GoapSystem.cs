@@ -115,8 +115,8 @@ public sealed class GoapSystem : SharedGoapSystem
                 (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 
                 // Startup the first task and anything else we need to do.
-                if (comp.Plan != null)
-                    ActionStartup(ent, comp.Plan.Value.CurrentAction);
+                if (comp.Plan != null && !ActionStartup(ent, comp.Plan.Value.CurrentAction))
+                    PlanShutdown(ent, GoapPlanFinishReason.Failed);
 
                 comp.PlanningJob = null;
                 comp.PlanningToken = null;
@@ -168,7 +168,8 @@ public sealed class GoapSystem : SharedGoapSystem
                         break;
                     }
 
-                    ActionStartup(ent, plan.CurrentAction);
+                    if (!ActionStartup(ent, plan.CurrentAction))
+                        PlanShutdown(ent, GoapPlanFinishReason.Failed, false);
                     break;
                 default:
                     throw new InvalidOperationException();

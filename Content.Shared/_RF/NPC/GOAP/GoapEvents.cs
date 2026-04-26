@@ -47,8 +47,9 @@ public record struct GoapActionCost<T>(T Action, GoapState State, float Cost) wh
 /// </summary>
 /// <typeparam name="T">GOAP action type.</typeparam>
 /// <param name="Action">GOAP action.</param>
+/// <param name="Success">Was the action startup successful?</param>
 [PublicAPI, ByRefEvent]
-public record struct GoapActionStartup<T>(T Action) where T : GoapAction;
+public record struct GoapActionStartup<T>(T Action, bool Success) where T : GoapAction;
 
 /// <summary>
 /// Event raised to shutdown GOAP action.

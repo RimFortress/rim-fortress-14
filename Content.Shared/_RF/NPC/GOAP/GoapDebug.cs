@@ -74,12 +74,14 @@ public record struct GoapPlanDebugInfo(
 /// Debug information about the GOAP plan action.
 /// </summary>
 /// <param name="Type">GOAP action type.</param>
+/// <param name="StartupSuccess">Was the action start successful?</param>
 /// <param name="StartupDump">Dump about action startup.</param>
 /// <param name="ShutdownDump">Dump about action shutdown.</param>
 /// <param name="UpdateDumps">Dumps about action updates.</param>
 [Serializable, NetSerializable]
 public record struct GoapActionDebugInfo(
     string Type,
+    bool StartupSuccess,
     GoapDebugDump? StartupDump,
     GoapDebugDump? ShutdownDump,
     List<GoapActionUpdateDebugDump> UpdateDumps);

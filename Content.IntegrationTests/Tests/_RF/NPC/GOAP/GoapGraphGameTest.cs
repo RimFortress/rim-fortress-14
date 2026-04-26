@@ -130,9 +130,10 @@ public sealed partial class GoapGraphGameTest : GameTest
             return GoapActionResult.Finished;
         }
 
-        public override void Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
+        public override bool Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
         {
             dump = new GoapDebugDump("noop startup", new GoapStateDebugDump(new()));
+            return true;
         }
 
         public override void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)

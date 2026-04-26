@@ -16,7 +16,7 @@ public abstract partial class GoapAction
 
     public abstract GoapActionResult Update(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
 
-    public abstract void Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
+    public abstract bool Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
 
     public abstract void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
 }
@@ -42,15 +42,15 @@ public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapA
         return performer.UpdateAction(target, type, out dump);
     }
 
-    public override void Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
+    public override bool Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
     {
         if (this is not T type)
         {
             dump = new($"Invalid type {typeof(T)}", new());
-            return;
+            return false;
         }
 
-        performer.ActionStartup(target, type, out dump);
+        return performer.ActionStartup(target, type, out dump);
     }
 
     public override void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)

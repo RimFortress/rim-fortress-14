@@ -33,7 +33,7 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
 
     private void OnActionStartup(Entity<GoapComponent> ent, ref GoapActionStartup<T> args)
     {
-        ActionStartup(ent, args.Action);
+        args.Success = ActionStartup(ent, args.Action);
     }
 
     private void OnActionShutdown(Entity<GoapComponent> ent, ref GoapActionShutdown<T> args)
@@ -69,7 +69,11 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     /// </summary>
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
-    protected virtual void ActionStartup(Entity<GoapComponent> ent, T action) { }
+    /// <returns>True, if the action startup was successful.</returns>
+    protected virtual bool ActionStartup(Entity<GoapComponent> ent, T action)
+    {
+        return true;
+    }
 
     /// <summary>
     /// Called once after the action has finished.
@@ -77,6 +81,8 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
     protected virtual void ActionShutdown(Entity<GoapComponent> ent, T action) { }
+
+    #region Debug
 
     /// <summary>
     /// Generates a debug dump about the action.
@@ -87,6 +93,33 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     [Conditional("DEBUG")]
     protected void CreateDump(Entity<GoapComponent> ent, T action, string? reason = null)
     {
-        action.Dump = new GoapDebugDump(reason, ent.Comp.State.GetStateDump());
+        if (action.Dump is { } exist)
+        {
+            action.Dump = new GoapDebugDump(
+                $"{exist.Dump};\n{reason}".Trim(),
+                ent.Comp.State.GetStateDump());
+        }
+        else
+            action.Dump = new GoapDebugDump(reason, ent.Comp.State.GetStateDump());
     }
+
+    [Conditional("DEBUG")]
+    protected void KeyNotFound<TKey>(Entity<GoapComponent> ent, T action, StateKey<TKey> key) where TKey : notnull
+    {
+        CreateDump(ent, action, $"key '{key}' of type '{typeof(TKey)}' not found");
+    }
+
+    [Conditional("DEBUG")]
+    protected void KeyNotFound(Entity<GoapComponent> ent, T action, string key)
+    {
+        CreateDump(ent, action, $"key '{key}' of not found");
+    }
+
+    [Conditional("DEBUG")]
+    protected void ComponentNotFound<TComp>(Entity<GoapComponent> ent, T action, EntityUid? target = null) where TComp : Component
+    {
+        CreateDump(ent, action, $"entity {ToPrettyString(target ?? ent)} does not have component '{typeof(TComp)}'");
+    }
+
+    #endregion
 }
