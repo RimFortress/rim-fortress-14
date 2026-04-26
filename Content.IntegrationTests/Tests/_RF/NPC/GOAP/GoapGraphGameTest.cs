@@ -124,18 +124,18 @@ public sealed partial class GoapGraphGameTest : GameTest
     {
         public override float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer) => 1f;
 
-        public override GoapActionResult Update(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump dump)
+        public override GoapActionResult Update(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
         {
             dump = new GoapDebugDump("noop update", new GoapStateDebugDump(new()));
             return GoapActionResult.Finished;
         }
 
-        public override void Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump dump)
+        public override void Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
         {
             dump = new GoapDebugDump("noop startup", new GoapStateDebugDump(new()));
         }
 
-        public override void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump dump)
+        public override void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
         {
             dump = new GoapDebugDump("noop shutdown", new GoapStateDebugDump(new()));
         }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using JetBrains.Annotations;
+using Robust.Shared.Map;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.GOAP;
@@ -236,6 +237,12 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// The entity to which GoapState belongs.
     /// </summary>
     public static readonly StateKey<EntityUid> Owner = "Owner";
+
+    /// <summary>
+    /// GoapState owner's coordinates.
+    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// </summary>
+    public static readonly StateKey<EntityCoordinates> OwnerCoordinates = "Owner";
 
     /// <summary>
     /// Can the NPC click open entities such as doors.

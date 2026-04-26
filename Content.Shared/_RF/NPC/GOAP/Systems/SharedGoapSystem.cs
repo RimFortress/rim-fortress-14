@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
@@ -134,11 +135,13 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
     #region Actions
 
-    public GoapActionResult UpdateAction<T>(EntityUid target, T action, out GoapDebugDump dump) where T : BaseGoapAction<T>
+    public GoapActionResult UpdateAction<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>
     {
-        var ev = new GoapActionUpdate<T>(action, GoapActionResult.Continuing, new());
+        action.Dump = null;
+        var ev = new GoapActionUpdate<T>(action, GoapActionResult.Continuing);
         RaiseLocalEvent(target, ref ev);
-        dump = ev.Dump;
+        dump = action.Dump;
+        action.Dump = null;
         return ev.Result;
     }
 
@@ -159,8 +162,8 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var plan = comp.Plan.Value;
         DebugTools.Assert(plan.Actions.Count == plan.ActionsDebug?.Count);
 
-        if (result != GoapActionResult.Continuing || dump.Dump != null) // There's no need to spam every tick about action updates
-            plan.ActionsDebug[plan.Index].UpdateDumps.Add(new(Timing.CurTick, dump, result));
+        if (result != GoapActionResult.Continuing || dump?.Dump != null) // There's no need to spam every tick about action updates
+            plan.ActionsDebug[plan.Index].UpdateDumps.Add(new(Timing.CurTick, dump!.Value, result));
 
         return result;
 #else
@@ -196,11 +199,13 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     public float ActionCost(Entity<GoapComponent?> ent, GoapAction action)
         => Resolve(ent, ref ent.Comp) ? ActionCost(ent, ent.Comp.State, action) : 0f;
 
-    public void ActionStartup<T>(EntityUid target, T action, out GoapDebugDump dump) where T : BaseGoapAction<T>
+    public void ActionStartup<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>
     {
-        var ev = new GoapActionStartup<T>(action, new());
+        action.Dump = null;
+        var ev = new GoapActionStartup<T>(action);
         RaiseLocalEvent(target, ref ev);
-        dump = ev.Dump;
+        dump = action.Dump;
+        action.Dump = null;
     }
 
     /// <summary>
@@ -225,11 +230,13 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 #endif
     }
 
-    public void ActionShutdown<T>(EntityUid target, T action, out GoapDebugDump dump) where T : BaseGoapAction<T>
+    public void ActionShutdown<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>
     {
-        var ev = new GoapActionShutdown<T>(action, new());
+        action.Dump = null;
+        var ev = new GoapActionShutdown<T>(action);
         RaiseLocalEvent(target, ref ev);
-        dump = ev.Dump;
+        dump = action.Dump;
+        action.Dump = null;
     }
 
     /// <summary>
@@ -295,6 +302,53 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
         ent.Comp.GoalState = goalState;
         Replan(ent);
+    }
+
+    /// <summary>
+    /// Returns the value of a key from the agent's GOAP state.
+    /// </summary>
+    /// <remarks>
+    /// This method differs from <see cref="GoapState.TryGetValue"/> in that it returns
+    /// the default values for certain keys that are not present in the state,
+    /// such as <see cref="GoapState.OwnerCoordinates"/>.
+    /// </remarks>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="state">Agent GoapState.</param>
+    /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
+    [PublicAPI, Pure]
+    public bool TryGetValue<T>(
+        GoapState state,
+        string key,
+        [NotNullWhen(true)] out T? value) where T : notnull
+    {
+        if (state.TryGetValue(key, out value))
+            return true;
+
+        if (!TryGetStateDefaults(state, key, out var @default))
+            return false;
+
+        value = (T)@default;
+        return true;
+    }
+
+    /// <inheritdoc cref="TryGetValue"/>
+    [PublicAPI, Pure]
+    public bool TryGetValue<T>(
+        GoapState state,
+        StateKey<T> key,
+        [NotNullWhen(true)] out T? value) where T : notnull
+        => TryGetValue(state, key, out value);
+
+    private bool TryGetStateDefaults(GoapState state, string key, [NotNullWhen(true)] out object? value)
+    {
+        if (key == GoapState.OwnerCoordinates)
+        {
+            value = Transform(state.GetValue(GoapState.Owner)).Coordinates;
+            return true;
+        }
+
+        value = null;
+        return false;
     }
 
     #region Debug
@@ -451,7 +505,7 @@ public interface IGoapActionPerformer
     /// <param name="action">GOAP action.</param>
     /// <param name="dump">Debug dump.</param>
     /// <returns>Update result.</returns>
-    GoapActionResult UpdateAction<T>(EntityUid target, T action, out GoapDebugDump dump) where T : BaseGoapAction<T>;
+    GoapActionResult UpdateAction<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
 
     /// <summary>
     /// Starts the action.
@@ -460,7 +514,7 @@ public interface IGoapActionPerformer
     /// <param name="target">Target entity.</param>
     /// <param name="action">GOAP action.</param>
     /// <param name="dump">Debug dump.</param>
-    void ActionStartup<T>(EntityUid target, T action, out GoapDebugDump dump) where T : BaseGoapAction<T>;
+    void ActionStartup<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
 
     /// <summary>
     /// Finishes the action.
@@ -469,5 +523,5 @@ public interface IGoapActionPerformer
     /// <param name="target">Target entity.</param>
     /// <param name="action">GOAP action.</param>
     /// <param name="dump">Debug dump.</param>
-    void ActionShutdown<T>(EntityUid target, T action, out GoapDebugDump dump) where T : BaseGoapAction<T>;
+    void ActionShutdown<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
 }

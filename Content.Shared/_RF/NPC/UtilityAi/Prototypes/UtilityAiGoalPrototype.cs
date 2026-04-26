@@ -40,7 +40,7 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// The conditions required to achieve this goal.
     /// If these conditions are not met, the score will not even be calculated.
     /// </summary>
-    [DataField]
+    [DataField(serverOnly: true)]
     public List<GoapCondition> Conditions = new();
 
     /// <summary>

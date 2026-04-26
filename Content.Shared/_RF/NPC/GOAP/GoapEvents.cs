@@ -26,12 +26,8 @@ public record struct GoapConditionCheck<T>(
 /// <typeparam name="T">GOAP action type.</typeparam>
 /// <param name="Action">GOAP action.</param>
 /// <param name="Result">Action execution result.</param>
-/// <param name="Dump">Debug output of GOAP action update status.</param>
 [PublicAPI, ByRefEvent]
-public record struct GoapActionUpdate<T>(
-    T Action,
-    GoapActionResult Result,
-    GoapDebugDump Dump) where T : GoapAction;
+public record struct GoapActionUpdate<T>(T Action, GoapActionResult Result) where T : GoapAction;
 
 /// <summary>
 /// Event raised to get GOAP action cost.
@@ -51,18 +47,16 @@ public record struct GoapActionCost<T>(T Action, GoapState State, float Cost) wh
 /// </summary>
 /// <typeparam name="T">GOAP action type.</typeparam>
 /// <param name="Action">GOAP action.</param>
-/// <param name="Dump">Debug output about GOAP action startup.</param>
 [PublicAPI, ByRefEvent]
-public record struct GoapActionStartup<T>(T Action, GoapDebugDump Dump) where T : GoapAction;
+public record struct GoapActionStartup<T>(T Action) where T : GoapAction;
 
 /// <summary>
 /// Event raised to shutdown GOAP action.
 /// </summary>
 /// <typeparam name="T">GOAP action type.</typeparam>
 /// <param name="Action">GOAP action.</param>
-/// <param name="Dump">Debug output about GOAP action shutdown.</param>
 [PublicAPI, ByRefEvent]
-public record struct GoapActionShutdown<T>(T Action, GoapDebugDump Dump) where T : GoapAction;
+public record struct GoapActionShutdown<T>(T Action) where T : GoapAction;
 
 /// <summary>
 /// Event raised when GOAP planning fails.

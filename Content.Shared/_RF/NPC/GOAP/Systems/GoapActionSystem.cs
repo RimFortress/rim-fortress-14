@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Content.Shared._RF.NPC.GOAP.Components;
 
 namespace Content.Shared._RF.NPC.GOAP.Systems;
@@ -8,6 +9,8 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// <typeparam name="T">GOAP action type.</typeparam>
 public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
 {
+    [Dependency] protected readonly SharedGoapSystem Goap = default!;
+
     public override void Initialize()
     {
         base.Initialize();
@@ -25,20 +28,17 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
 
     private void OnActionUpdate(Entity<GoapComponent> ent, ref GoapActionUpdate<T> args)
     {
-        args.Result = ActionUpdate(ent, args.Action, out var dump);
-        args.Dump = dump;
+        args.Result = ActionUpdate(ent, args.Action);
     }
 
     private void OnActionStartup(Entity<GoapComponent> ent, ref GoapActionStartup<T> args)
     {
-        ActionStartup(ent, args.Action, out var dump);
-        args.Dump = dump;
+        ActionStartup(ent, args.Action);
     }
 
     private void OnActionShutdown(Entity<GoapComponent> ent, ref GoapActionShutdown<T> args)
     {
-        ActionShutdown(ent, args.Action, out var dump);
-        args.Dump = dump;
+        ActionShutdown(ent, args.Action);
     }
 
     /// <summary>
@@ -58,12 +58,9 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     /// </summary>
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
-    /// <param name="dump">Debug dump.</param>
     /// <returns>Update result.</returns>
-    [MustCallBase(true)]
-    protected virtual GoapActionResult ActionUpdate(Entity<GoapComponent> ent, T action, out GoapDebugDump dump)
+    protected virtual GoapActionResult ActionUpdate(Entity<GoapComponent> ent, T action)
     {
-        GetDump(ent, out dump);
         return GoapActionResult.Finished;
     }
 
@@ -72,43 +69,24 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     /// </summary>
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
-    /// <param name="dump">Debug dump.</param>
-    [MustCallBase(true)]
-    protected virtual void ActionStartup(Entity<GoapComponent> ent, T action, out GoapDebugDump dump)
-    {
-        GetDump(ent, out dump);
-    }
+    protected virtual void ActionStartup(Entity<GoapComponent> ent, T action) { }
 
     /// <summary>
     /// Called once after the action has finished.
     /// </summary>
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
-    /// <param name="dump">Debug dump.</param>
-    [MustCallBase(true)]
-    protected virtual void ActionShutdown(Entity<GoapComponent> ent, T action, out GoapDebugDump dump)
-    {
-        GetDump(ent, out dump);
-    }
-
-    /// <inheritdoc cref="GetDump(GoapState, out GoapDebugDump, string?)"/>
-    protected void GetDump(Entity<GoapComponent> ent, out GoapDebugDump dump, string? reason = null)
-        => GetDump(ent.Comp.State, out dump, reason);
+    protected virtual void ActionShutdown(Entity<GoapComponent> ent, T action) { }
 
     /// <summary>
     /// Generates a debug dump about the action.
     /// </summary>
-    /// <param name="state">Current agent state.</param>
-    /// <param name="dump">Debug dump.</param>
+    /// <param name="ent">Goap agent entity.</param>
+    /// <param name="action">GOAP action.</param>
     /// <param name="reason">Message with debug information.</param>
-    protected void GetDump(GoapState state, out GoapDebugDump dump, string? reason = null)
+    [Conditional("DEBUG")]
+    protected void CreateDump(Entity<GoapComponent> ent, T action, string? reason = null)
     {
-#if DEBUG
-        dump = new GoapDebugDump(
-            reason,
-            state.GetStateDump());
-#else
-        dump = new();
-#endif
+        action.Dump = new GoapDebugDump(reason, ent.Comp.State.GetStateDump());
     }
 }
