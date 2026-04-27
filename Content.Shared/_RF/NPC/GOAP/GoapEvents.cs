@@ -12,13 +12,8 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// It may differ from the agent's actual state.
 /// </param>
 /// <param name="Result">Check result.</param>
-/// <param name="Dump">Debug output of GOAP condtition check.</param>
 [PublicAPI, ByRefEvent]
-public record struct GoapConditionCheck<T>(
-    T Condition,
-    GoapState State,
-    bool Result,
-    GoapDebugDump Dump) where T : BaseGoapCondition<T>;
+public record struct GoapConditionCheck<T>(T Condition, GoapState State, bool Result) where T : BaseGoapCondition<T>;
 
 /// <summary>
 /// Event raised to update a GOAP action.

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Content.Shared._RF.NPC.GOAP.Components;
 
 namespace Content.Shared._RF.NPC.GOAP.Systems;
@@ -7,7 +6,7 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// An entity system that provides GOAP action functionality.
 /// </summary>
 /// <typeparam name="T">GOAP action type.</typeparam>
-public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
+public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAction
 {
     [Dependency] protected readonly SharedGoapSystem Goap = default!;
 
@@ -81,45 +80,4 @@ public abstract class GoapActionSystem<T> : EntitySystem where T : GoapAction
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
     protected virtual void ActionShutdown(Entity<GoapComponent> ent, T action) { }
-
-    #region Debug
-
-    /// <summary>
-    /// Generates a debug dump about the action.
-    /// </summary>
-    /// <param name="ent">Goap agent entity.</param>
-    /// <param name="action">GOAP action.</param>
-    /// <param name="reason">Message with debug information.</param>
-    [Conditional("DEBUG")]
-    protected void CreateDump(Entity<GoapComponent> ent, T action, string? reason = null)
-    {
-        if (action.Dump is { } exist)
-        {
-            action.Dump = new GoapDebugDump(
-                $"{exist.Dump};\n{reason}".Trim(),
-                ent.Comp.State.GetStateDump());
-        }
-        else
-            action.Dump = new GoapDebugDump(reason, ent.Comp.State.GetStateDump());
-    }
-
-    [Conditional("DEBUG")]
-    protected void KeyNotFound<TKey>(Entity<GoapComponent> ent, T action, StateKey<TKey> key) where TKey : notnull
-    {
-        CreateDump(ent, action, $"key '{key}' of type '{typeof(TKey)}' not found");
-    }
-
-    [Conditional("DEBUG")]
-    protected void KeyNotFound(Entity<GoapComponent> ent, T action, string key)
-    {
-        CreateDump(ent, action, $"key '{key}' of not found");
-    }
-
-    [Conditional("DEBUG")]
-    protected void ComponentNotFound<TComp>(Entity<GoapComponent> ent, T action, EntityUid? target = null) where TComp : Component
-    {
-        CreateDump(ent, action, $"entity {ToPrettyString(target ?? ent)} does not have component '{typeof(TComp)}'");
-    }
-
-    #endregion
 }

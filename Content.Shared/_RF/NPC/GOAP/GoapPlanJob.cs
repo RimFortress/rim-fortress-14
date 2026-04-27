@@ -257,7 +257,7 @@ public sealed class GoapPlanJob(
                     if (!result)
                         preconditionsMet = false;
 
-                    preconditions.Add(new(cond.GetType().ToString(), condDump, result));
+                    preconditions.Add(new(cond.GetType().ToString(), condDump ?? new(null, current.State.GetStateDump()), result));
                 }
 #else
                 var preconditionsMet = goap.CheckCondition(target, current.State, task.Preconditions);

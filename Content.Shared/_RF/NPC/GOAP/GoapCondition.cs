@@ -7,13 +7,18 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// Conditions used by the GOAP planner to check whether an action or sequence of actions can be executed.
 /// </summary>
 [ImplicitDataDefinitionForInheritors]
-public abstract partial class GoapCondition
+public abstract partial class GoapCondition : IGoapDebuggable
 {
+    private GoapDebugDump? _dump;
+
+    [ViewVariables]
+    public GoapDebugDump? Dump { get => _dump; set => _dump = value; }
+
     /// <summary>
     /// Returns true if the check is passed; otherwise, false.
     /// </summary>
     [Pure]
-    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump);
+    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump);
 }
 
 /// <summary>
@@ -27,9 +32,9 @@ public abstract partial class SimpleGoapCondition : GoapCondition
     [DataField(required: true)]
     public string Key = string.Empty;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
     {
-        dump = new();
+        dump = null;
         return SimpleCheck(target, state);
     }
 
@@ -41,15 +46,9 @@ public abstract partial class SimpleGoapCondition : GoapCondition
 /// </summary>
 public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
 {
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
     {
-        if (this is not T type)
-        {
-            dump = new($"Invalid type {typeof(T)}", new());
-            return false;
-        }
-
-        return cheker.CheckCondition(target, state, type, out dump);
+        return cheker.CheckCondition(target, state, (T)this, out dump);
     }
 }
 
@@ -64,7 +63,7 @@ public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T
     [DataField]
     public bool Invert;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
     {
         if (this is not T type)
         {
@@ -77,7 +76,7 @@ public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T
         if (Invert)
         {
 #if DEBUG
-            dump = new GoapDebugDump($"{dump.Dump}\nResult was inverted".Trim(), dump.StateSnapshot);
+            dump = new GoapDebugDump($"{dump?.Dump}\nresult was inverted".Trim(), dump?.StateSnapshot ?? state.GetStateDump());
 #endif
             return !result;
         }

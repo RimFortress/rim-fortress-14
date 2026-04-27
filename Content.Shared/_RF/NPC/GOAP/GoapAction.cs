@@ -7,10 +7,12 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// A single action to execute the GOAP plan.
 /// </summary>
 [ImplicitDataDefinitionForInheritors]
-public abstract partial class GoapAction
+public abstract partial class GoapAction : IGoapDebuggable
 {
+    private GoapDebugDump? _dump;
+
     [ViewVariables]
-    public GoapDebugDump? Dump;
+    public GoapDebugDump? Dump { get => _dump; set => _dump = value; }
 
     public abstract float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer);
 

@@ -80,13 +80,14 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
     #region Conditions
 
-    public bool CheckCondition<T>(EntityUid target, GoapState state, T effect, out GoapDebugDump dump) where T : BaseGoapCondition<T>
+    public bool CheckCondition<T>(EntityUid target, GoapState state, T condition, out GoapDebugDump? dump) where T : BaseGoapCondition<T>
     {
         state.ReadOnly = true;
-        var ev = new GoapConditionCheck<T>(effect, state, true, new());
+        condition.Dump = null;
+        var ev = new GoapConditionCheck<T>(condition, state, true);
         RaiseLocalEvent(target, ref ev);
         state.ReadOnly = false;
-        dump = ev.Dump;
+        dump = condition.Dump;
         return ev.Result;
     }
 
@@ -102,7 +103,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// <param name="dump">Debug dump.</param>
     /// <returns>True, if the check is passed; otherwise, false</returns>
     [PublicAPI]
-    public bool CheckCondition(EntityUid uid, GoapState state, GoapCondition condition, out GoapDebugDump dump)
+    public bool CheckCondition(EntityUid uid, GoapState state, GoapCondition condition, out GoapDebugDump? dump)
         => condition.Check(uid, state, this, out dump);
 
     /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump)"/>
@@ -437,7 +438,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
                         ToNodeId: to,
                         ConditionIndex: condIndex,
                         ConditionType: condition.GetType().Name,
-                        CheckDump: dump));
+                        CheckDump: dump ?? new(null, effectsState.GetStateDump())));
                 }
 
                 // If no producer satisfies this condition, report it as an issue
@@ -494,7 +495,7 @@ public interface IGoapConditionCheсker
     /// <param name="condition">GOAP condtition.</param>
     /// <param name="dump">Debug dump.</param>
     /// <returns>True, if the check is passed; otherwise, false</returns>
-    bool CheckCondition<T>(EntityUid target, GoapState state, T condition, out GoapDebugDump dump) where T : BaseGoapCondition<T>;
+    bool CheckCondition<T>(EntityUid target, GoapState state, T condition, out GoapDebugDump? dump) where T : BaseGoapCondition<T>;
 }
 
 public interface IGoapActionPerformer

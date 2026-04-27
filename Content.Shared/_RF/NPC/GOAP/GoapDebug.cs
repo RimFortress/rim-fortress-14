@@ -3,6 +3,11 @@ using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.NPC.GOAP;
 
+public interface IGoapDebuggable
+{
+    GoapDebugDump? Dump { get; set; }
+}
+
 /// <summary>
 /// Dump with a debug message from some GOAP class.
 /// </summary>
