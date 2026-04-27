@@ -13,6 +13,12 @@ public sealed partial class NpcSearcherQueryPrototype : IPrototype
     public string ID { get; private set; } = default!;
 
     /// <summary>
+    /// Time during which the results of this search query will be considered valid.
+    /// </summary>
+    [DataField]
+    public TimeSpan ValidTime = TimeSpan.FromSeconds(10f);
+
+    /// <summary>
     /// A search query whose results will be filtered and scored.
     /// </summary>
     [DataField(required: true, serverOnly: true)]

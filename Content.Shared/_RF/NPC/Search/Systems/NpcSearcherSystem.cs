@@ -2,9 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.Search.Systems;
@@ -15,6 +17,7 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
 
     private readonly HashSet<EntityUid> _query = new();
@@ -102,22 +105,30 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     }
 
     /// <summary>
-    /// Returns the most relevant entity for the given search query.
+    /// Returns all entities matching the search query, sorted from best to worst.
     /// </summary>
+    /// <remarks>
+    /// Calling this function frequently is relatively inexpensive,
+    /// since the search results are cached for a certain time.
+    /// </remarks>
+    /// <param name="ent">Agent entity.</param>
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="protoId">Search query prototype.</param>
-    /// <param name="result">Best entity.</param>
-    /// <returns>True, if the entity found; otherwise, false</returns>
-    [PublicAPI, Pure]
-    public bool TryGetBestResult(
+    [PublicAPI]
+    public List<EntityUid> GetResults(
+        Entity<NpcSearcherComponent?> ent,
         GoapState state,
-        ProtoId<NpcSearcherQueryPrototype> protoId,
-        [NotNullWhen(true)] out EntityUid? result)
+        ProtoId<NpcSearcherQueryPrototype> protoId)
     {
-        result = null;
+        if (!Resolve(ent, ref ent.Comp))
+            return new();
+
+        if (ent.Comp.Queries.TryGetValue(protoId, out var cache)
+            && cache.ValidUntil >= _timing.CurTime)
+            return cache.Result;
 
         if (!_proto.Resolve(protoId, out var proto))
-            return false;
+            return new();
 
         var query = new Dictionary<EntityUid, float>();
 
@@ -127,76 +138,42 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
                 continue;
 
             var score = Score(state, uid, proto.Considerations);
-
-            // Early exit with the highest score
-            if (score == 1)
-            {
-                result = uid;
-                return true;
-            }
-
             query.Add(uid, score);
         }
 
-        if (query.Count == 0)
-            return false;
-
-        result = query.MaxBy(x => x.Value).Key;
-        return true;
+        var result = query
+            .OrderBy(x => x.Value)
+            .Select(x => x.Key)
+            .ToList();
+        ent.Comp.Queries[protoId] = new(_timing.CurTime + proto.ValidTime, result);
+        return result;
     }
 
     /// <summary>
-    /// Checks whether the search result contains the specified minimum number of entities.
+    /// Returns the most relevant entity for the given search query.
     /// </summary>
+    /// <param name="ent">Agent entity.</param>
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="protoId">Search query prototype.</param>
-    /// <param name="count">The minimum number of entities that must be included in the query result.</param>
+    /// <param name="result">Best entity.</param>
+    /// <returns>True, if the entity found; otherwise, false</returns>
     [PublicAPI, Pure]
-    public bool ResultsMinCount(
+    public bool TryGetBestResult(
+        Entity<NpcSearcherComponent?> ent,
         GoapState state,
         ProtoId<NpcSearcherQueryPrototype> protoId,
-        int count)
+        [NotNullWhen(true)] out EntityUid? result)
     {
-        if (count == 0)
-            return true;
+        result = null;
 
-        var results = 0;
+        var results = GetResults(ent, state, protoId);
 
-        if (!_proto.Resolve(protoId, out var proto))
+        if (results.Count == 0)
             return false;
 
-        Query(state, proto.Query);
-
-        if (_query.Count < count)
-            return false;
-
-        foreach (var uid in _query)
-        {
-            if (Filter(state, uid, proto.Filters))
-                continue;
-
-            var score = Score(state, uid, proto.Considerations);
-
-            if (score == 0)
-                continue;
-
-            results++;
-
-            if (results >= count)
-                return true;
-        }
-
-        return false;
+        result = results[0];
+        return true;
     }
-
-    /// <summary>
-    /// Checks whether this search query has at least one result.
-    /// </summary>
-    /// <param name="state">GoapState of the agent requesting the search.</param>
-    /// <param name="protoId">Search query prototype.</param>
-    [PublicAPI, Pure]
-    public bool NotEmpty(GoapState state, ProtoId<NpcSearcherQueryPrototype> protoId)
-        => ResultsMinCount(state, protoId, 1);
 }
 
 public interface IQuerySearcher
