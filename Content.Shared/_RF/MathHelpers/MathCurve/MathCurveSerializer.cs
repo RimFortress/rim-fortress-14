@@ -41,6 +41,9 @@ public sealed class MathCurveSerializer : ITypeReader<MathCurve, MappingDataNode
         if (node.Has("random"))
             return typeof(RandomCurve);
 
+        if (node.Has("preset"))
+            return typeof(PrototypeCurve);
+
         return null;
     }
 

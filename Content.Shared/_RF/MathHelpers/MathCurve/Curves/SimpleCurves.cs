@@ -133,3 +133,33 @@ public sealed partial class PowCurve : MathCurve
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
         => (float)Math.Pow(value, ListValue(Pow, handler));
 }
+
+/// <summary>
+/// A simple quadratic equation: Slope * (x - XOffset) ^ Exponent + YOffset.
+/// </summary>
+public sealed partial class Quadratic : MathCurve
+{
+    [DataField]
+    public float Slope = 1f;
+
+    [DataField]
+    public float Exponent = 1f;
+
+    [DataField]
+    public float YOffset;
+
+    [DataField]
+    public float XOffset;
+
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
+        => Slope * MathF.Pow(value - XOffset, Exponent) + YOffset;
+}
+
+/// <summary>
+/// Returns the normalized value of the input number.
+/// </summary>
+public sealed partial class Normalize : MathCurve
+{
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
+        => 1 - 1 / value;
+}
