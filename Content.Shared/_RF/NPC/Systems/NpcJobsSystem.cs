@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
@@ -46,6 +47,7 @@ public sealed class NpcJobsSystem : EntitySystem
         foreach (var job in ent.Comp.Jobs)
         {
             job.Id = _nextJobId;
+            job.Name = Loc.GetString(job.Name);
             _jobOwners[_nextJobId] = ent;
             _nextJobId++;
 

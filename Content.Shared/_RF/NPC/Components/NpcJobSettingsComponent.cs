@@ -8,7 +8,7 @@ namespace Content.Shared._RF.NPC.Components;
 /// </summary>
 [Access(typeof(NpcJobsSystem))]
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
-public abstract partial class NpcJobSettingsComponent : Component
+public sealed partial class NpcJobSettingsComponent : Component
 {
     /// <summary>
     /// Dictionary containing job ids and their priorities.

@@ -24,6 +24,7 @@ public readonly record struct ExecutableGoapTask(
 public record struct GoapPlan(List<GoapAction> Actions, int Index, List<GoapActionDebugInfo>? ActionsDebug = null)
 {
     public readonly GoapAction CurrentAction => Actions[Index];
+    public GoapPlan MoveNext() => this with { Index = Index + 1 };
 }
 
 /// <summary>

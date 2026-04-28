@@ -370,7 +370,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         var control = EnsureComp<NpcControlComponent>(user);
         var comp = EnsureComp<ControllableNpcComponent>(uid);
         comp.CanControl.Add(user);
-        Dirty(uid, control);
+        RaiseLocalEvent(uid, new NpcControllerAdded(user));
+        Dirty(user, control);
         Dirty(uid, comp);
     }
 

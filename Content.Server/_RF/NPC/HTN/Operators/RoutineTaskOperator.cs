@@ -11,6 +11,7 @@ namespace Content.Server._RF.NPC.HTN.Operators;
 /// </summary>
 public sealed partial class RoutineTaskOperator : HTNOperator
 {
+    /*
     [Dependency] private readonly IEntityManager _entManager = default!;
 
     private RoutineNpcTasksSystem _routineSystem = default!;
@@ -26,4 +27,5 @@ public sealed partial class RoutineTaskOperator : HTNOperator
         var owner = blackboard.GetValueOrDefault<EntityUid>(NPCBlackboard.Owner, _entManager);
         return (_routineSystem.TrySetRoutineTask(owner), null);
     }
+    */
 }

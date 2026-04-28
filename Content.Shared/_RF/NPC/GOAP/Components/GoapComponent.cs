@@ -1,6 +1,7 @@
 using System.Threading;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.NPC.GOAP.Components;
@@ -8,8 +9,8 @@ namespace Content.Shared._RF.NPC.GOAP.Components;
 /// <summary>
 /// A component used for Goal-Oriented Action Planning NPCs.
 /// </summary>
-[RegisterComponent]
 [Access(typeof(SharedGoapSystem))]
+[RegisterComponent, NetworkedComponent]
 public sealed partial class GoapComponent : Component
 {
     /// <inheritdoc cref="GoapState"/>

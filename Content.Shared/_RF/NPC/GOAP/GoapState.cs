@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared.Hands.Components;
+using Content.Shared.Interaction;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Utility;
@@ -228,23 +228,9 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     #region Defaults
 
     /// <summary>
-    /// Global defaults for NPCs
-    /// </summary>
-    private static readonly Dictionary<string, object> Defaults = new()
-    {
-        {RotateSpeed, float.MaxValue},
-    };
-
-    /// <summary>
     /// The entity to which GoapState belongs.
     /// </summary>
     public static readonly StateKey<EntityUid> Owner = "Owner";
-
-    /// <summary>
-    /// GoapState owner's coordinates.
-    /// The value of this key can be got via GoapSystem.TryGetValue.
-    /// </summary>
-    public static readonly StateKey<EntityCoordinates> OwnerCoordinates = "Owner";
 
     /// <summary>
     /// Can the NPC click open entities such as doors.
@@ -268,7 +254,38 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     public static readonly StateKey<float> RotateSpeed = "RotateSpeed";
 
+    public static readonly StateKey<float> MovementRange = "MovementRange";
+
+    // Entity system defaults
+
+    /// <summary>
+    /// GoapState owner's coordinates.
+    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// </summary>
+    public static readonly StateKey<EntityCoordinates> OwnerCoordinates = "OwnerCoordinates";
+
+    /// <summary>
+    /// Stores the ID of the agent's currently active hand.
+    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// </summary>
     public static readonly StateKey<string> ActiveHand = "ActiveHand";
+
+    /// <summary>
+    /// Is the agent currently inside a container?
+    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// </summary>
+    public static readonly StateKey<bool> InContainer = "InContainer";
+
+    /// <summary>
+    /// Global defaults for NPCs
+    /// </summary>
+    private static readonly Dictionary<string, object> Defaults = new()
+    {
+        {RotateSpeed, float.MaxValue},
+        {"IdleRange", 7f},
+        {"InteractRange", SharedInteractionSystem.InteractionRange - 0.15f },
+        {MovementRange, 0.3f},
+    };
 
     #endregion
 }

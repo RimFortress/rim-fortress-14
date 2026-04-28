@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.NPC.Pathfinding;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 

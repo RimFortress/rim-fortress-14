@@ -33,19 +33,21 @@ public sealed class UtilityAiSystem : EntitySystem
 
     private void OnGoapPlaningFailed(Entity<UtilityAiComponent> ent, ref GoapPlaningFailed args)
     {
-        if (!_proto.TryIndex(ent.Comp.CurrentGoal, out var proto)
-            || !proto.GoalState.Equals(args.GoalState))
-            return;
+        if (ent.Comp.CurrentGoal == null)
+        {
+            if (!TryGetGoal(ent.AsNullable(), out var goal))
+                return;
 
-        DoGoalFail(ent);
+            SetGoal(ent.Owner, goal);
+            return;
+        }
+
+        DoGoalFail(ent, ent.Comp.CurrentGoal.Value);
+        ent.Comp.CurrentGoal = null;
     }
 
     private void OnGoapPlanFinished(Entity<UtilityAiComponent> ent, ref GoapPlanFinished args)
     {
-        if (!_proto.TryIndex(ent.Comp.CurrentGoal, out var proto)
-            || !proto.GoalState.Equals(args.GoalState))
-            return;
-
         switch (args.Reason)
         {
             case GoapPlanFinishReason.Finished:
@@ -56,7 +58,17 @@ public sealed class UtilityAiSystem : EntitySystem
 
                 break;
             case GoapPlanFinishReason.Failed:
-                DoGoalFail(ent);
+                if (ent.Comp.CurrentGoal == null)
+                {
+                    if (!TryGetGoal(ent.AsNullable(), out goal))
+                        break;
+
+                    SetGoal(ent.Owner, goal);
+                    break;
+                }
+
+                DoGoalFail(ent, ent.Comp.CurrentGoal.Value);
+                ent.Comp.CurrentGoal = null;
                 break;
             case GoapPlanFinishReason.Interrupted:
                 ent.Comp.CurrentGoal = null;
@@ -66,13 +78,10 @@ public sealed class UtilityAiSystem : EntitySystem
         }
     }
 
-    private void DoGoalFail(Entity<UtilityAiComponent> ent)
+    private void DoGoalFail(Entity<UtilityAiComponent> ent, ProtoId<UtilityAiGoalPrototype> protoId)
     {
-        if (ent.Comp.CurrentGoal == null
-            || !_proto.Resolve(ent.Comp.CurrentGoal, out var proto))
+        if (!_proto.Resolve(protoId, out var proto))
             return;
-
-        ent.Comp.CurrentGoal = null;
 
         foreach (var fallback in proto.Fallbacks)
         {
@@ -89,7 +98,8 @@ public sealed class UtilityAiSystem : EntitySystem
                 ent.Comp.Cooldowns[proto] = _timing.CurTime + proto.FailCooldown;
                 break;
             case UtilityAiFailPolicy.Penalty:
-                ent.Comp.Penalties[proto]++;
+                if (!ent.Comp.Penalties.TryAdd(proto, 1))
+                    ent.Comp.Penalties[proto]++;
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -114,6 +124,7 @@ public sealed class UtilityAiSystem : EntitySystem
         _goap.SetGoal(new(ent, ent.Comp2), proto.GoalState);
         ent.Comp1.CurrentGoal = protoId;
         ent.Comp1.Penalties.Clear();
+        RaiseLocalEvent(ent, new UtilityAiGoalGiven(protoId));
     }
 
     /// <summary>

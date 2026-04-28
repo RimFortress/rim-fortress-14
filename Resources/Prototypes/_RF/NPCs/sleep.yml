@@ -1,50 +1,72 @@
-- type: htnCompound
-  id: SleepCompound
-  branches:
-  # Going to sleep on the bed
-  - tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:UtilityOperator
-        proto: Bed
-    - !type:HTNPrimitiveTask
-      operator: !type:EntityCoordinatesOperator
-        targetKey: Target
-    - !type:HTNPrimitiveTask
-      operator: !type:MoveToOperator
-        rangeKey: InteractRange
-    - !type:HTNPrimitiveTask
-      operator: !type:BuckleOperator
-        buckleKey: TargetKey
-    - !type:HTNPrimitiveTask
-      operator: !type:SleepOperator
-
-  # Or we sleep on the floor if there is no free bed
-  - tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:PickAccessibleOperator
-        rangeKey: IdleRange
-    - !type:HTNPrimitiveTask
-      operator: !type:MoveToOperator
-        rangeKey: MoveToCloseRange
-        pathfindInPlanning: false
-    - !type:HTNPrimitiveTask
-      operator: !type:SleepOperator
-
-- type: htnCompound
-  id: WakeUpCompound
-  branches:
+- type: goapCompound
+  id: Sleep
+  tasks:
   - preconditions:
-    - !type:BuckledPrecondition
-      isBuckled: true
-    tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:WakeUpOperator
-    - !type:HTNPrimitiveTask
-      operator: !type:UnbuckleOperator
+    - !type:SearchQueryEmpty
+      query: Bed
+      invert: true
+    action: !type:SearchQuery
+      query: Bed
+      targetKey: Bed
+    effects:
+      BedFound: true
 
-  - tasks:
-    - !type:HTNPrimitiveTask
-      operator: !type:WakeUpOperator
-    - !type:HTNPrimitiveTask
-      operator: !type:AddMoodEffectOperator
-        effect: MoodSleptOnFloor
+  - preconditions:
+    - BedFound == true
+    actions:
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:SwapToFreeHand
+    - !type:InteractWith
+      targetKey: Bed
+    effects:
+      ReadyForSleep: true
+
+  - preconditions:
+    - !type:SearchQueryEmpty
+      query: Bed
+    actions:
+    - !type:PickAccessible
+      rangeKey: IdleRange
+    - !type:MoveTo
+      findPath: false
+    effects:
+      ReadyForSleep: true
+
+  - preconditions:
+    - ReadyForSleep == true
+    action: !type:Sleep
+    effects:
+      Sleeping: true
+
+  - preconditions:
+    - Sleeping == true
+    actions:
+    - !type:RandomFloat
+      key: TargetSleepLevel
+      min: 70
+      max: 90
+    - !type:WaitWhile
+      conditions:
+      - !type:NeedLevel
+        need: Sleep
+        maxKey: TargetSleepLevel
+    effects:
+      Rested: true
+
+  - preconditions:
+    - BedFound == true
+    actions:
+    - !type:WakeUp
+    - !type:Unbuckle
+    effects:
+      WokeUp: true
+
+  - preconditions:
+    - BedFound == null
+    actions:
+    - !type:WakeUp
+    - !type:AddMoodEffect
+      effect: MoodSleptOnFloor
+    effects:
+      WokeUp: true

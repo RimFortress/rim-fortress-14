@@ -1,9 +1,9 @@
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.CombatMode;
 using Content.Server.DoAfter;
 using Content.Server.Interaction;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.CombatMode;
 using Content.Shared.DoAfter;
 using Content.Shared.Timing;

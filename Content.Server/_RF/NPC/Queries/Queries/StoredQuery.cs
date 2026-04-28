@@ -1,7 +1,7 @@
 using System.Linq;
-using Content.Server._RF.NPC.Components;
 using Content.Server._RF.Stockpile;
 using Content.Server.NPC;
+using Content.Shared._RF.NPC.Components;
 
 namespace Content.Server._RF.NPC.Queries.Queries;
 

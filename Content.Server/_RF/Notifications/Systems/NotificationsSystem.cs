@@ -1,5 +1,3 @@
-using Content.Server._RF.NPC.Components;
-using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.Notifications;
 using Content.Shared._RF.Notifications.Components;
 using Content.Shared._RF.Notifications.Systems;
@@ -20,11 +18,12 @@ public sealed class NotificationsSystem : SharedNotificationsSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<ControllableNpcComponent, NpcTaskFinished>(OnTaskFinished);
+        //SubscribeLocalEvent<ControllableNpcComponent, GoapPlanFinished>(OnGoapPlanFinished);
         SubscribeNetworkEvent<FocusToNotificationRequest>(OnFocusToNotificationRequest);
     }
 
-    private void OnTaskFinished(Entity<ControllableNpcComponent> ent, ref NpcTaskFinished args)
+    /*
+    private void OnGoapPlanFinished(Entity<ControllableNpcComponent> ent, ref GoapPlanFinished args)
     {
         if (args.Status != TaskFinishStatus.Failed
             || !Proto.Resolve(args.Task, out var proto)
@@ -46,6 +45,7 @@ public sealed class NotificationsSystem : SharedNotificationsSystem
                 SendNotification(uid, TaskSuspendedNotify, desc);
         }
     }
+    */
 
     private void OnFocusToNotificationRequest(FocusToNotificationRequest request, EntitySessionEventArgs args)
     {

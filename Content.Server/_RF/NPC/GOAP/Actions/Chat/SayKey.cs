@@ -1,7 +1,7 @@
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Chat.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Chat;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Chat;

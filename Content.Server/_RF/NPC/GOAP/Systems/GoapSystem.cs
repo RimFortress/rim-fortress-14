@@ -2,17 +2,20 @@ using System.Threading;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Mobs;
 using Content.Shared.NPC;
 using Robust.Shared.CPUJob.JobQueues;
 using Robust.Shared.CPUJob.JobQueues.Queues;
 using Robust.Shared.Player;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.GOAP.Systems;
 
 public sealed class GoapSystem : SharedGoapSystem
 {
+    [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
 
     private JobQueue _planQueue = new(0.04f);
@@ -21,11 +24,26 @@ public sealed class GoapSystem : SharedGoapSystem
     {
         base.Initialize();
 
+        SubscribeLocalEvent<GoapComponent, ComponentStartup>(OnStartup);
         SubscribeLocalEvent<GoapComponent, ComponentShutdown>(OnGoapShutdown);
         SubscribeLocalEvent<GoapComponent, MobStateChangedEvent>(_npc.OnMobStateChange);
         SubscribeLocalEvent<GoapComponent, MapInitEvent>(_npc.OnNPCMapInit);
         SubscribeLocalEvent<GoapComponent, PlayerAttachedEvent>(_npc.OnPlayerNPCAttach);
         SubscribeLocalEvent<GoapComponent, PlayerDetachedEvent>(_npc.OnPlayerNPCDetach);
+
+        _proto.PrototypesReloaded += args =>
+        {
+            if (args.WasModified<GoapCompoundPrototype>())
+                ReloadPrototypes();
+        };
+
+        ReloadPrototypes();
+    }
+
+    private void OnStartup(Entity<GoapComponent> ent, ref ComponentStartup args)
+    {
+        ent.Comp.State.SetValue(GoapState.Owner, ent);
+        ent.Comp.ExecutableTasks = GetExecutableTasks(ent.Comp.RootTask);
     }
 
     private void OnGoapShutdown(Entity<GoapComponent> ent, ref ComponentShutdown args)
@@ -35,15 +53,53 @@ public sealed class GoapSystem : SharedGoapSystem
         ent.Comp.PlanningJob = null;
     }
 
+    private void ReloadPrototypes()
+    {
+        var enumerator = AllEntityQuery<GoapComponent>();
+
+        while (enumerator.MoveNext(out var comp))
+        {
+            comp.ExecutableTasks = GetExecutableTasks(comp.RootTask);
+        }
+    }
+
+    private List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
+    {
+        if (!_proto.Resolve(protoId, out var proto))
+            return new();
+
+        var tasks = new List<ExecutableGoapTask>();
+
+        foreach (var task in proto.Tasks)
+        {
+            switch (task)
+            {
+                case GoapActionTask action:
+                    tasks.Add(new(
+                        new List<GoapAction>() { action.Action },
+                        action.Preconditions,
+                        action.Effects));
+                    break;
+                case GoapCompoundTask compound:
+                    tasks.Add(new(compound.Actions, compound.Preconditions, compound.Effects));
+                    break;
+                case GoapCompoundPrototypeTask protoCompound:
+                    tasks.AddRange(GetExecutableTasks(protoCompound.Proto));
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+
+        return tasks;
+    }
+
     /// <summary>
     /// Request a new plan for this NPC, even if running an existing plan.
     /// </summary>
     private void RequestPlan(Entity<GoapComponent> ent)
     {
         if (ent.Comp.Planning)
-            return;
-
-        if (ent.Comp.GoalState.Count == 0)
             return;
 
         var cancelToken = new CancellationTokenSource();
@@ -159,7 +215,9 @@ public sealed class GoapSystem : SharedGoapSystem
                 // Action completed so go to the next one.
                 case GoapActionResult.Finished:
                     ActionShutdown(ent, action);
-                    plan.Index++;
+
+                    ent.Comp.Plan = plan.MoveNext();
+                    plan = ent.Comp.Plan.Value;
 
                     // Plan finished!
                     if (plan.Actions.Count <= plan.Index)

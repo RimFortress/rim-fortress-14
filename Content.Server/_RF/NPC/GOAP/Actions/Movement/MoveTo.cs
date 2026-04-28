@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Pathfinding;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
@@ -44,7 +44,7 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
     /// How close we need to get before considering movement finished.
     /// </summary>
     [DataField]
-    public StateKey<float> RangeKey = "MovementRange";
+    public StateKey<float> RangeKey = GoapState.MovementRange;
 
     /// <summary>
     /// Do we only need to move into line of sight.
@@ -69,15 +69,12 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
     {
         var state = ent.Comp.State;
 
-        if (!Goap.TryGetValue(state, action.TargetKey, out var targetCoordinates))
-        {
-            KeyNotFound(ent, action, action.TargetKey);
+        if (!TryGetValue(state, action, action.TargetKey, out var targetCoordinates)
+            || !TryGetValue(state, action, action.RangeKey, out var range))
             return false;
-        }
 
         var owner = state.GetValue(GoapState.Owner);
         var xform = Transform(owner);
-        var range = state.GetValueOrDefault(action.RangeKey);
 
         if (xform.Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance) && distance <= range)
             return true;
@@ -85,11 +82,8 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
         // If there's no need to search for a path, we'll use the existing one.
         if (!action.FindPath)
         {
-            if (!state.TryGetValue(action.PathfindKey, out var path))
-            {
-                KeyNotFound(ent, action, action.PathfindKey);
+            if (!TryGetValue(state, action, action.PathfindKey, out var path))
                 return false;
-            }
 
             var mapCoords = _transform.ToMapCoordinates(state.GetValue(GoapState.OwnerCoordinates));
             _steering.PrunePath(owner, mapCoords, _transform.ToMapCoordinates(targetCoordinates).Position - mapCoords.Position, path.Path);

@@ -27,11 +27,11 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// <summary>
     /// Human-readable goal name.
     /// </summary>
-    [DataField]
-    public LocId Name;
+    [ViewVariables]
+    public LocId Name => $"utility-ai-goal-{ID.ToLowerInvariant()}-name";
 
     /// <summary>
-    ///The color associated with this goal for display in the UI.
+    /// The color associated with this goal for display in the UI.
     /// </summary>
     [DataField]
     public Color Color = Color.White;
@@ -50,20 +50,20 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// The function must return a normalized result (between 0 and 1);
     /// otherwise, the result will simply be clipped.
     /// </remarks>
-    [DataField]
+    [DataField(serverOnly: true)]
     public List<MathCurve> ScoreCurves = new();
 
     /// <summary>
     /// Goals for the agent to achieve.
     /// </summary>
-    [DataField]
+    [DataField(serverOnly: true)]
     public GoapState GoalState = new();
 
     /// <summary>
     /// Fallback goals that will be assigned if the current goal cannot be completed or planned.
     /// </summary>
     /// <remarks>
-    /// Points will not be calculated for this goal, but the conditions will still be checked;
+    /// Score will not be calculated for this goal, but the conditions will still be checked;
     /// If none of the fallback conditions are met, the <see cref="FailPolicy"/> will be performed.
     /// </remarks>
     [DataField]

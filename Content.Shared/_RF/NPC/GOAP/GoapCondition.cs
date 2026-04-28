@@ -35,27 +35,16 @@ public abstract partial class SimpleGoapCondition : GoapCondition
     public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
     {
         dump = null;
-        return SimpleCheck(target, state);
+        return SimpleCheck(state, cheker);
     }
 
-    public abstract bool SimpleCheck(EntityUid target, GoapState state);
+    public abstract bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker);
 }
 
 /// <summary>
 /// A condition that uses entity systems to work.
 /// </summary>
 public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
-{
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
-    {
-        return cheker.CheckCondition(target, state, (T)this, out dump);
-    }
-}
-
-/// <summary>
-/// A condition with a built-in option to invert the result.
-/// </summary>
-public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
 {
     /// <summary>
     /// Whether the result of the check will be inverted.
@@ -65,13 +54,7 @@ public abstract partial class InvertibleGoapCondition<T> : GoapCondition where T
 
     public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
     {
-        if (this is not T type)
-        {
-            dump = new($"Invalid type {typeof(T)}", new());
-            return false;
-        }
-
-        var result = cheker.CheckCondition(target, state, type, out dump);
+        var result = cheker.CheckCondition(target, state, (T)this, out dump);
 
         if (Invert)
         {

@@ -1,0 +1,10 @@
+- type: searchQuery
+  id: Bed
+  query: !type:Owned
+  considerations:
+  - !type:BuckleHealing
+    curves:
+    - !type:Normalize
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

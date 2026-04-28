@@ -6,7 +6,7 @@ namespace Content.Shared._RF.NPC.Search.Prototypes;
 /// A prototype for entity search query.
 /// </summary>
 [Prototype]
-public sealed partial class NpcSearcherQueryPrototype : IPrototype
+public sealed partial class SearchQueryPrototype : IPrototype
 {
     /// <inheritdoc/>
     [IdDataField]

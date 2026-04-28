@@ -64,7 +64,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
             foreach (var task in suitable)
             {
                 if (!tasks.TryAdd(task, new()))
-                    tasks[task].AddRange(entity);
+                    tasks[task].Add(entity);
             }
         }
 

@@ -1,6 +1,6 @@
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Random;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Movement;

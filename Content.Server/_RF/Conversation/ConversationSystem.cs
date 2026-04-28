@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.Systems;
 using Content.Server.Chat.Systems;
 using Content.Shared._RF.Conversation;
 using Content.Shared._RF.Conversation.Components;
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared.Chat;
 
 namespace Content.Server._RF.Conversation;
@@ -15,10 +15,10 @@ public sealed class ConversationSystem : SharedConversationSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<ConversationActorComponent, NpcTaskGiven>(OnTaskGiven);
+        SubscribeLocalEvent<ConversationActorComponent, GoapPlanFinished>(OnGoapPlanFinished);
     }
 
-    private void OnTaskGiven(EntityUid uid, ConversationActorComponent component, NpcTaskGiven args)
+    private void OnGoapPlanFinished(EntityUid uid, ConversationActorComponent component, GoapPlanFinished args)
     {
         EndConversation(new(uid, component));
     }

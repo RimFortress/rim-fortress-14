@@ -1,0 +1,29 @@
+- type: utilityAiGoal
+  id: Sleep
+  scoreCurves:
+  - !type:NeedLevel
+    need: Sleep
+  - pow:
+    - float: 2
+  goalState:
+    Rested: true
+    WokeUp: true
+  fallbacks:
+  - WakeUp
+
+- type: utilityAiGoal
+  id: WakeUp
+  goalState:
+    WokeUp: true
+
+- type: utilityAiGoal
+  id: Idle
+  scoreCurves:
+  - float: 0.15
+  goalState:
+    Idle: true
+
+- type: utilityAiGoal
+  id: MoveTo
+  goalState:
+    NearTargetPlace: true

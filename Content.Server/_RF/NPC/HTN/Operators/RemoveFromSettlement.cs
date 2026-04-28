@@ -1,9 +1,9 @@
 using System.Linq;
-using Content.Server._RF.NPC.Components;
 using Content.Server._RF.World;
 using Content.Server.NPC;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.PrimitiveTasks;
+using Content.Shared._RF.NPC.Components;
 
 namespace Content.Server._RF.NPC.HTN.Operators;
 

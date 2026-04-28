@@ -4,6 +4,7 @@ using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared.Hands.EntitySystems;
 using JetBrains.Annotations;
+using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -13,70 +14,8 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, IGoapActionPerformer
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
-
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<GoapComponent, ComponentStartup>(OnStartup);
-
-        _proto.PrototypesReloaded += args =>
-        {
-            if (args.WasModified<GoapCompoundPrototype>())
-                ReloadPrototypes();
-        };
-
-        ReloadPrototypes();
-    }
-
-    private void OnStartup(Entity<GoapComponent> ent, ref ComponentStartup args)
-    {
-        ent.Comp.State.SetValue(GoapState.Owner, ent);
-        ent.Comp.ExecutableTasks = GetExecutableTasks(ent.Comp.RootTask);
-    }
-
-    private void ReloadPrototypes()
-    {
-        var enumerator = AllEntityQuery<GoapComponent>();
-
-        while (enumerator.MoveNext(out var comp))
-        {
-            comp.ExecutableTasks = GetExecutableTasks(comp.RootTask);
-        }
-    }
-
-    private List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
-    {
-        if (!_proto.Resolve(protoId, out var proto))
-            return new();
-
-        var tasks = new List<ExecutableGoapTask>();
-
-        foreach (var task in proto.Tasks)
-        {
-            switch (task)
-            {
-                case GoapActionTask action:
-                    tasks.Add(new(
-                        new List<GoapAction>() { action.Action },
-                        action.Preconditions,
-                        action.Effects));
-                    break;
-                case GoapCompoundTask compound:
-                    tasks.Add(new(compound.Actions, compound.Preconditions, compound.Effects));
-                    break;
-                case GoapCompoundPrototypeTask protoCompound:
-                    tasks.AddRange(GetExecutableTasks(protoCompound.Proto));
-                    break;
-                default:
-                    throw new InvalidOperationException();
-            }
-        }
-
-        return tasks;
-    }
+    [Dependency] private readonly SharedContainerSystem _container = default!;
 
     #region Conditions
 
@@ -165,8 +104,15 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var plan = comp.Plan.Value;
         DebugTools.Assert(plan.Actions.Count == plan.ActionsDebug?.Count);
 
-        if (result != GoapActionResult.Continuing || dump?.Dump != null) // There's no need to spam every tick about action updates
-            plan.ActionsDebug[plan.Index].UpdateDumps.Add(new(Timing.CurTick, dump!.Value, result));
+        // There's no need to spam every tick about action updates
+        if (result != GoapActionResult.Continuing || dump?.Dump != null)
+        {
+            var updateDump = new GoapActionUpdateDebugDump(
+                Timing.CurTick,
+                dump ?? new(null, comp.State.GetStateDump()),
+                result);
+            plan.ActionsDebug[plan.Index].UpdateDumps.Add(updateDump);
+        }
 
         return result;
 #else
@@ -311,17 +257,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         Replan(ent);
     }
 
-    /// <summary>
-    /// Returns the value of a key from the agent's GOAP state.
-    /// </summary>
-    /// <remarks>
-    /// This method differs from <see cref="GoapState.TryGetValue"/> in that it returns
-    /// the default values for certain keys that are not present in the state,
-    /// such as <see cref="GoapState.OwnerCoordinates"/>.
-    /// </remarks>
-    /// <typeparam name="T">Value type.</typeparam>
-    /// <param name="state">Agent GoapState.</param>
-    /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
+    /// <inheritdoc/>
     [PublicAPI, Pure]
     public bool TryGetValue<T>(
         GoapState state,
@@ -338,13 +274,13 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         return true;
     }
 
-    /// <inheritdoc cref="TryGetValue"/>
+    /// <inheritdoc/>
     [PublicAPI, Pure]
     public bool TryGetValue<T>(
         GoapState state,
         StateKey<T> key,
         [NotNullWhen(true)] out T? value) where T : notnull
-        => TryGetValue(state, key, out value);
+        => TryGetValue(state, (string)key, out value);
 
     private bool TryGetStateDefaults(GoapState state, string key, [NotNullWhen(true)] out object? value)
     {
@@ -355,12 +291,19 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
             value = Transform(state.GetValue(GoapState.Owner)).Coordinates;
             return true;
         }
+
         if (key == GoapState.ActiveHand)
         {
             if (_hands.GetActiveHand(state.GetValue(GoapState.Owner)) is not { } hand)
                 return false;
 
             value = hand;
+            return true;
+        }
+
+        if (key == GoapState.InContainer)
+        {
+            value = _container.IsEntityInContainer(state.GetValue(GoapState.Owner));
             return true;
         }
 
@@ -495,7 +438,36 @@ public interface IGoapConditionCheсker
     /// <param name="condition">GOAP condtition.</param>
     /// <param name="dump">Debug dump.</param>
     /// <returns>True, if the check is passed; otherwise, false</returns>
-    bool CheckCondition<T>(EntityUid target, GoapState state, T condition, out GoapDebugDump? dump) where T : BaseGoapCondition<T>;
+    bool CheckCondition<T>(
+        EntityUid target,
+        GoapState state,
+        T condition,
+        out GoapDebugDump? dump)
+        where T : BaseGoapCondition<T>;
+
+    /// <summary>
+    /// Returns the value of a key from the agent's GOAP state.
+    /// </summary>
+    /// <remarks>
+    /// This method differs from <see cref="GoapState.TryGetValue"/> in that it returns
+    /// the default values for certain keys that are not present in the state,
+    /// such as <see cref="GoapState.OwnerCoordinates"/>.
+    /// </remarks>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <param name="state">Agent GoapState.</param>
+    /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
+    bool TryGetValue<T>(
+        GoapState state,
+        string key,
+        [NotNullWhen(true)] out T? value)
+        where T : notnull;
+
+    /// <inheritdoc cref="TryGetValue"/>
+    bool TryGetValue<T>(
+        GoapState state,
+        StateKey<T> key,
+        [NotNullWhen(true)] out T? value)
+        where T : notnull;
 }
 
 public interface IGoapActionPerformer

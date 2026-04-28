@@ -12,7 +12,7 @@ namespace Content.Shared._RF.NPC.Search.Components;
 public sealed partial class NpcSearcherComponent : Component
 {
     [DataField]
-    public Dictionary<ProtoId<NpcSearcherQueryPrototype>, QueryResult> Queries = new();
+    public Dictionary<ProtoId<SearchQueryPrototype>, QueryResult> Queries = new();
 
     [Serializable]
     public readonly record struct QueryResult(TimeSpan ValidUntil, List<EntityUid> Result);

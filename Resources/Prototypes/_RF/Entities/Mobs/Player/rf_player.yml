@@ -38,18 +38,20 @@
   - type: NoRotateOnMove
   - type: MouseDragMove
   - type: NpcControl
-    tasks:
+    goals:
     - MoveTo
-    - Attack
-    - PickUp
-    - TakeOwnership
-    - Pry
-    - Deconstruct
-    - Dig
-    - FreeHandInteract
-    - Heal
-    - Chop
-    - Cook
+    #- Attack
+    #- PickUp
+    #- TakeOwnership
+    #- Pry
+    #- Deconstruct
+    #- Dig
+    #- FreeHandInteract
+    #- Heal
+    #- Chop
+    #- Cook
+  - type: NpcJobs
+    jobs: [] # TODO
   - type: NpcFactionMember
     factions:
     - RimFortress

@@ -35,7 +35,7 @@ public sealed partial class NpcJobsComponent : Component
 /// An NPC “job” that combines a list of Utility AI goals to be completed
 /// and allows users to set the priority of these goals.
 /// </summary>
-[DataDefinition, NetSerializable]
+[DataDefinition, Serializable, NetSerializable]
 [Access(typeof(NpcJobsSystem))]
 public sealed partial class NpcJob
 {

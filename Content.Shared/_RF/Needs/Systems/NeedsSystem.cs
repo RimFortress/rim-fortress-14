@@ -91,6 +91,27 @@ public sealed class NeedsSystem : EntitySystem
     }
 
     /// <summary>
+    /// Returns the maximum possible need value.
+    /// </summary>
+    /// <param name="protoId">Need prototype.</param>
+    [PublicAPI, Pure]
+    public float MaxValue(ProtoId<NeedPrototype> protoId)
+    {
+        if (!_prototype.Resolve(protoId, out var proto))
+            return 0f;
+
+        float max = int.MinValue;
+
+        foreach (var threshold in proto.Thresholds)
+        {
+            if (threshold.Value > max)
+                max = threshold.Value;
+        }
+
+        return max;
+    }
+
+    /// <summary>
     /// Returns the ID of the threshold value of the given need of the entity
     /// </summary>
     [PublicAPI]
@@ -241,20 +262,7 @@ public sealed class NeedsSystem : EntitySystem
     }
 
     private float ClampWithinThresholds(ProtoId<NeedPrototype> protoId, float value)
-    {
-        if (!_prototype.Resolve(protoId, out var proto))
-            return value;
-
-        float max = int.MinValue;
-
-        foreach (var threshold in proto.Thresholds)
-        {
-            if (threshold.Value > max)
-                max = threshold.Value;
-        }
-
-        return Math.Clamp(value, 0, max);
-    }
+        => Math.Clamp(value, 0, MaxValue(protoId));
 
     private bool TryGetNeed(
         Entity<NeedsComponent?> ent,

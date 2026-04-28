@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.NPC.UtilityAi.Components;
@@ -7,8 +8,8 @@ namespace Content.Shared._RF.NPC.UtilityAi.Components;
 /// <summary>
 /// A component that allows the use of Utility Ai to find the GOAP goal state.
 /// </summary>
-[RegisterComponent]
 [Access(typeof(UtilityAiSystem))]
+[RegisterComponent, NetworkedComponent]
 public sealed partial class UtilityAiComponent : Component
 {
     /// <summary>

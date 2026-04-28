@@ -68,6 +68,17 @@ public static class GoapConditionExpression
         var op = match.Groups["op"].Value;
         var rawValue = match.Groups["value"].Value.Trim();
 
+        if (rawValue.ToLowerInvariant() == "null")
+        {
+            condition = op switch
+            {
+                "==" => new KeyNotExist { Key = key },
+                "!=" => new KeyExist { Key = key },
+                _ => throw new ArgumentException($"Operator '{op}' is not valid for null condition.")
+            };
+            return true;
+        }
+
         if (bool.TryParse(rawValue, out var boolValue))
         {
             condition = op switch

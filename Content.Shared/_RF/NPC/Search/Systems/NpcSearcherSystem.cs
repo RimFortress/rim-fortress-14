@@ -118,7 +118,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     public List<EntityUid> GetResults(
         Entity<NpcSearcherComponent?> ent,
         GoapState state,
-        ProtoId<NpcSearcherQueryPrototype> protoId)
+        ProtoId<SearchQueryPrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp))
             return new();
@@ -161,7 +161,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     public bool TryGetBestResult(
         Entity<NpcSearcherComponent?> ent,
         GoapState state,
-        ProtoId<NpcSearcherQueryPrototype> protoId,
+        ProtoId<SearchQueryPrototype> protoId,
         [NotNullWhen(true)] out EntityUid? result)
     {
         result = null;

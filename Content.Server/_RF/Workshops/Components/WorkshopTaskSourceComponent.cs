@@ -1,5 +1,5 @@
-using Content.Server._RF.NPC.Prototypes;
 using Content.Server._RF.Workshops.Systems;
+using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Workshops.Components;
@@ -14,7 +14,7 @@ public sealed partial class WorkshopTaskSourceComponent : Component
     /// The task that will be given for crafting the recipe.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<NpcTaskPrototype> Task;
+    public ProtoId<ExecutableGoalPrototype> Task;
 
     /// <summary>
     /// The key to which the target recipe will be saved in Blackboard when production begins.

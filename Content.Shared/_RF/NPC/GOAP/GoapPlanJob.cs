@@ -206,9 +206,20 @@ public sealed class GoapPlanJob(
         var debug = new GoapPlanDebugInfo
         {
             StartState = startState.GetStateDump(),
-            GoalState = goalState.GetStateDump()
+            GoalState = goalState.GetStateDump(),
+            Nodes = new(),
         };
 #endif
+
+        if (goalState.Count == 0)
+        {
+#if DEBUG
+            debug.Success = false;
+            return (null, debug);
+#else
+            return (null, null);
+#endif
+        }
 
         openSet.Enqueue(startNode, startNode.F);
         nodeCache[startState] = startNode;

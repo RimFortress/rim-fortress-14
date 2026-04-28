@@ -1,5 +1,0 @@
-- type: npcTask
-  id: Cook
-  parent: BaseWorkshopTask
-  verbIcon: /Textures/_RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
-  overlayColor: "#9D6280"
