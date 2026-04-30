@@ -1,0 +1,23 @@
+<controls:AiDevWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
+    <PanelContainer StyleClasses="PanelLight"/>
+    <BoxContainer Orientation="Vertical">
+        <BoxContainer Margin="5 5 5 0">
+            <BoxContainer HorizontalExpand="True" Orientation="Vertical">
+                <Label Name="TargetLabel"/>
+                <Label Name="TimeLabel"/>
+                <Label Name="TickLabel"/>
+            </BoxContainer>
+            <BoxContainer Orientation="Vertical">
+                <Button Name="Refresh" Text="Refresh" Disabled="True"/>
+            </BoxContainer>
+        </BoxContainer>
+
+        <PanelContainer StyleClasses="LowDivider"/>
+
+        <TabContainer Name="TabContainer" VerticalExpand="True">
+            <controls:GoapDebugTab Name="GoapDebugTab"/>
+        </TabContainer>
+    </BoxContainer>
+</controls:AiDevWindow>

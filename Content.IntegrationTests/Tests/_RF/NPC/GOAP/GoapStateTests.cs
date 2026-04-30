@@ -34,7 +34,7 @@ public sealed class GoapStateTests
         right.SetValue<int>("A", 2);
         right.SetValue<bool>("B", false);
 
-        left.OverwiteFrom(right);
+        left.OverwriteFrom(right);
 
         using (Assert.EnterMultipleScope())
         {

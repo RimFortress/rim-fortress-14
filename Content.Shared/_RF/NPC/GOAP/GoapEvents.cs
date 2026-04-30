@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.NPC.GOAP;
 
@@ -68,3 +69,17 @@ public readonly record struct GoapPlaningFailed(GoapState GoalState);
 /// <param name="GoalState">State that was the goal for the finished plan.</param>
 [PublicAPI]
 public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason, GoapState GoalState);
+
+[Serializable, NetSerializable]
+public sealed partial class GoapDebugInfoRequest(NetEntity target) : EntityEventArgs
+{
+    public NetEntity Target = target;
+}
+
+[Serializable, NetSerializable]
+public sealed partial class GoapDebugInfoMessage(NetEntity target, GoapPlanDebugInfo? plan, GoapStaticGraph graph) : EntityEventArgs
+{
+    public NetEntity Target = target;
+    public GoapPlanDebugInfo? Plan = plan;
+    public GoapStaticGraph Graph = graph;
+}

@@ -1,3 +1,5 @@
+using Content.Shared._RF.NPC.GOAP.Prototypes;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.NPC.GOAP;
@@ -8,20 +10,21 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// <param name="Actions">Sequence of actions that make up this task.</param>
 /// <param name="Preconditions">Conditions that must hold before this task can be executed.</param>
 /// <param name="Effects">State changes that occur after successful execution.</param>
+/// <param name="Compound">The compound from which this task was extracted.</param>
 [Serializable]
 public readonly record struct ExecutableGoapTask(
     IReadOnlyList<GoapAction> Actions,
     IReadOnlyList<GoapCondition> Preconditions,
-    GoapState Effects);
+    GoapState Effects,
+    ProtoId<GoapCompoundPrototype>? Compound);
 
 /// <summary>
 /// The current plan for a GOAP NPC.
 /// </summary>
 /// <param name="Actions">List of actions to perform during the current plan.</param>
 /// <param name="Index">Current action index.</param>
-/// <param name="ActionsDebug">Debug information for each action in the plan.</param>
 [Serializable]
-public record struct GoapPlan(List<GoapAction> Actions, int Index, List<GoapActionDebugInfo>? ActionsDebug = null)
+public record struct GoapPlan(List<GoapAction> Actions, int Index)
 {
     public readonly GoapAction CurrentAction => Actions[Index];
     public GoapPlan MoveNext() => this with { Index = Index + 1 };

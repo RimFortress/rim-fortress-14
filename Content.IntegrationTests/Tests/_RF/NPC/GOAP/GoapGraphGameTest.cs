@@ -13,7 +13,7 @@ namespace Content.IntegrationTests.Tests._RF.NPC.GOAP;
 public sealed partial class GoapGraphGameTest : GameTest
 {
     [SidedDependency(Side.Server)]
-    private GoapSystem _goap = default!;
+    private readonly GoapSystem _goap = default!;
 
     [Test]
     public void Build_CreatesEdgeWhenProducerSatisfiesConsumer()
@@ -31,12 +31,14 @@ public sealed partial class GoapGraphGameTest : GameTest
             new(
                 Actions: new List<GoapAction> { new TestNoopAction() },
                 Preconditions: new List<GoapCondition>(),
-                Effects: producerEffects),
+                Effects: producerEffects,
+                Compound: null),
 
             new(
                 Actions: new List<GoapAction> { new TestNoopAction() },
                 Preconditions: consumerPreconditions,
-                Effects: new GoapState())
+                Effects: new GoapState(),
+                Compound: null),
         };
 
         var graph = _goap.Build(EntityUid.Invalid, tasks);
@@ -46,7 +48,6 @@ public sealed partial class GoapGraphGameTest : GameTest
         {
             Assert.That(graph.Nodes, Has.Count.EqualTo(2));
             Assert.That(graph.Edges, Has.Count.EqualTo(1));
-            Assert.That(graph.Issues, Is.Empty);
             Assert.That(graph.OutgoingByNodeId[0], Has.Count.EqualTo(1));
             Assert.That(graph.IncomingByNodeId[1], Has.Count.EqualTo(1));
 
@@ -54,69 +55,6 @@ public sealed partial class GoapGraphGameTest : GameTest
             Assert.That(edge.ToNodeId, Is.EqualTo(1));
             Assert.That(edge.ConditionIndex, Is.Zero);
             Assert.That(edge.ConditionType, Is.EqualTo(nameof(EqualsBool)));
-        }
-
-    }
-
-    [Test]
-    public void Build_ReportsMissingProducerAsIssue()
-    {
-        var consumerPreconditions = new List<GoapCondition>
-        {
-            new EqualsInt { Key = "Energy", Value = 5 }
-        };
-
-        var tasks = new List<ExecutableGoapTask>
-        {
-            new(
-                Actions: new List<GoapAction> { new TestNoopAction() },
-                Preconditions: new List<GoapCondition>(),
-                Effects: new GoapState()),
-
-            new(
-                Actions: new List<GoapAction> { new TestNoopAction() },
-                Preconditions: consumerPreconditions,
-                Effects: new GoapState())
-        };
-
-        var graph = _goap.Build(EntityUid.Invalid, tasks);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(graph.Edges, Is.Empty);
-            Assert.That(graph.Issues, Has.Count.EqualTo(1));
-            Assert.That(graph.Issues[0].NodeId, Is.EqualTo(1));
-            Assert.That(graph.Issues[0].ConditionType, Is.EqualTo(nameof(EqualsInt)));
-        }
-    }
-
-    [Test]
-    public void Build_CanIncludeSelfEdges_WhenRequested()
-    {
-        var effects = new GoapState();
-        effects.SetValue<bool>("Ready", true);
-
-        var task = new ExecutableGoapTask(
-            Actions: new List<GoapAction> { new TestNoopAction() },
-            Preconditions: new List<GoapCondition>
-            {
-                new EqualsBool { Key = "Ready", Value = true }
-            },
-            Effects: effects);
-
-        var tasks = new List<ExecutableGoapTask> { task };
-
-        var withoutSelfEdges = _goap.Build(EntityUid.Invalid, tasks, includeSelfEdges: false);
-        var withSelfEdges = _goap.Build(EntityUid.Invalid, tasks, includeSelfEdges: true);
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(withoutSelfEdges.Edges, Is.Empty);
-            Assert.That(withoutSelfEdges.Issues, Has.Count.EqualTo(1));
-            Assert.That(withSelfEdges.Edges, Has.Count.EqualTo(1));
-            Assert.That(withSelfEdges.Issues, Is.Empty);
-            Assert.That(withSelfEdges.Edges[0].FromNodeId, Is.Zero);
-            Assert.That(withSelfEdges.Edges[0].ToNodeId, Is.Zero);
         }
     }
 

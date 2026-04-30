@@ -1,0 +1,15 @@
+<controls:ExpandableBox
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
+    <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+        <BoxContainer Name="TitleBox" MouseFilter="Pass">
+            <TextureRect Name="Marker" SetSize="18 18"
+                         Margin="3 0" Stretch="KeepAspectCentered"/>
+            <RichTextLabel Name="TitleLabel"/>
+            <Control HorizontalExpand="True"/>
+            <RichTextLabel Name="SecondaryLabel" Margin="5 0"/>
+        </BoxContainer>
+        <BoxContainer Name="Content" Access="Public" Visible="False"
+                      Orientation="Vertical" Margin="20 0 0 0"/>
+    </BoxContainer>
+</controls:ExpandableBox>

@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,6 +50,8 @@ public sealed class GoapPlanJob(
         /// The task that was applied to reach this node from its parent.
         /// </summary>
         public required ExecutableGoapTask? TaskFromParent;
+
+        public required int? TaskIdFromParent;
     }
 
     /// <summary>
@@ -92,7 +93,7 @@ public sealed class GoapPlanJob(
             {
                 var pairHash = HashCode.Combine(
                     key.GetHashCode(StringComparison.Ordinal),
-                    value?.GetHashCode() ?? 0);
+                    value.GetHashCode());
 
                 hash ^= pairHash;
             }
@@ -198,11 +199,12 @@ public sealed class GoapPlanJob(
             State = startState.ShallowClone(),
             Parent = null,
             TaskFromParent = null,
+            TaskIdFromParent = null,
             G = 0f,
-            F = Heuristic(startState, goalState)
+            F = Heuristic(startState, goalState),
         };
 
-#if DEBUG
+#if TOOLS
         var debug = new GoapPlanDebugInfo
         {
             StartState = startState.GetStateDump(),
@@ -213,8 +215,9 @@ public sealed class GoapPlanJob(
 
         if (goalState.Count == 0)
         {
-#if DEBUG
+#if TOOLS
             debug.Success = false;
+            debug.ElapsedTime = StopWatch.Elapsed;
             return (null, debug);
 #else
             return (null, null);
@@ -229,19 +232,18 @@ public sealed class GoapPlanJob(
             // Check for timeout
             await SuspendIfOutOfTime();
 
-#if DEBUG
-            debug.NodesExpanded++;
-#endif
-
             // Goal reached?
             if (IsGoalSatisfied(current.State, goalState))
             {
-#if DEBUG
+#if TOOLS
                 debug.Success = true;
                 debug.TotalCost = current.G;
-                return (BuildPlan(current), debug);
+                var (plan, actions) = BuildPlan(current);
+                debug.Actions = actions ?? new();
+                debug.ElapsedTime = StopWatch.Elapsed;
+                return (plan, debug);
 #else
-                return (BuildPlan(current), null);
+                return (BuildPlan(current).Plan, null);
 #endif
             }
 
@@ -252,14 +254,15 @@ public sealed class GoapPlanJob(
             for (var i = 0; i < tasks.Count; i++)
             {
                 var task = tasks[i];
-#if DEBUG
+#if TOOLS
                 var stateBefore = current.State.GetStateDump();
                 var preconditions = new List<GoapPreconditionDebugDump>();
+                debug.NodesExpanded++;
 #endif
 
                 // Check preconditions
-#if DEBUG
-                // In DEBUG dump all conditions
+#if TOOLS
+                // In TOOLS dump all conditions
                 var preconditionsMet = true;
                 foreach (var cond in task.Preconditions)
                 {
@@ -268,7 +271,7 @@ public sealed class GoapPlanJob(
                     if (!result)
                         preconditionsMet = false;
 
-                    preconditions.Add(new(cond.GetType().ToString(), condDump ?? new(null, current.State.GetStateDump()), result));
+                    preconditions.Add(new(condDump ?? new(null, current.State.GetStateDump()), result));
                 }
 #else
                 var preconditionsMet = goap.CheckCondition(target, current.State, task.Preconditions);
@@ -276,11 +279,11 @@ public sealed class GoapPlanJob(
 
                 if (!preconditionsMet)
                 {
-#if DEBUG
+#if TOOLS
                     debug.Nodes.Add(new(
                         i,
+                        task.Compound,
                         preconditions.ToArray(),
-                        task.Effects.GetStateDump(),
                         stateBefore,
                         null,
                         current.G,
@@ -302,11 +305,11 @@ public sealed class GoapPlanJob(
                 // Skip if we already found a cheaper path to this state
                 if (nodeCache.TryGetValue(newState, out var existingNode) && existingNode.G <= newG)
                 {
-#if DEBUG
+#if TOOLS
                     debug.Nodes.Add(new(
                         i,
+                        task.Compound,
                         preconditions.ToArray(),
-                        task.Effects.GetStateDump(),
                         stateBefore,
                         newState.GetStateDump(),
                         taskCost,
@@ -324,18 +327,19 @@ public sealed class GoapPlanJob(
                     State = newState,
                     Parent = current,
                     TaskFromParent = task,
+                    TaskIdFromParent = i,
                     G = newG,
-                    F = newG + h
+                    F = newG + h,
                 };
 
                 openSet.Enqueue(newNode, newNode.F);
                 nodeCache[newState] = newNode;
 
-#if DEBUG
+#if TOOLS
                 debug.Nodes.Add(new(
                     i,
+                    task.Compound,
                     preconditions.ToArray(),
-                    task.Effects.GetStateDump(),
                     stateBefore,
                     newState.GetStateDump(),
                     taskCost,
@@ -348,8 +352,9 @@ public sealed class GoapPlanJob(
         }
 
         // No plan found
-#if DEBUG
+#if TOOLS
         debug.Success = false;
+        debug.ElapsedTime = StopWatch.Elapsed;
         return (null, debug);
 #else
         return (null, null);
@@ -399,7 +404,7 @@ public sealed class GoapPlanJob(
     private static GoapState ApplyEffects(GoapState state, GoapState effects)
     {
         var newState = state.ShallowClone();
-        newState.OverwiteFrom(effects);
+        newState.OverwriteFrom(effects);
         return newState;
     }
 
@@ -426,16 +431,16 @@ public sealed class GoapPlanJob(
     /// Returns a flat list of actions to execute.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static GoapPlan BuildPlan(Node goalNode)
+    private static (GoapPlan Plan, List<GoapActionDebugInfo>? Debug) BuildPlan(Node goalNode)
     {
         // Collect tasks in reverse order
-        var tasks = new List<ExecutableGoapTask>();
+        var tasks = new List<(ExecutableGoapTask Task, int Id)>();
         var current = goalNode;
 
         while (current.Parent != null)
         {
             DebugTools.Assert(current.TaskFromParent != null, "Non-root node must have a task.");
-            tasks.Add(current.TaskFromParent!.Value);
+            tasks.Add((current.TaskFromParent!.Value, current.TaskIdFromParent!.Value));
             current = current.Parent;
         }
 
@@ -444,17 +449,30 @@ public sealed class GoapPlanJob(
         // Flatten tasks into a sequence of actions
         var actions = new List<GoapAction>();
 
-        foreach (var task in tasks)
+        foreach (var (task, _) in tasks)
         {
             actions.AddRange(task.Actions);
         }
 
-#if DEBUG
-        return new GoapPlan(actions, 0, actions
-            .Select(x => new GoapActionDebugInfo(x.GetType().ToString(), false, null, null, new()))
-            .ToList());
+#if TOOLS
+        var debug = new List<GoapActionDebugInfo>();
+
+        foreach (var (task, id) in tasks)
+        {
+            for (var j = 0; j < task.Actions.Count; j++)
+            {
+                debug.Add(new GoapActionDebugInfo(
+                    id,
+                    j,
+                    null,
+                    null,
+                    null,
+                    new()));
+            }
+        }
+        return (new GoapPlan(actions, 0), debug);
 #else
-        return new GoapPlan(actions, 0);
+        return new (GoapPlan(actions, 0), null);
 #endif
     }
 }

@@ -65,7 +65,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [Pure, PublicAPI]
     public T GetValue<T>(string key) => (T)_state[key];
 
-    /// <inheritdoc cref="GetValue"/>
+    /// <inheritdoc cref="GetValue{T}(string)"/>
     [Pure, PublicAPI]
     public T GetValue<T>(StateKey<T> key) where T : notnull => (T)_state[key];
 
@@ -116,7 +116,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return false;
     }
 
-    /// <inheritdoc cref="TryGetValue"/>
+    /// <inheritdoc cref="TryGetValue{T}(string, out T?)"/>
     [Pure, PublicAPI]
     public bool TryGetValue<T>(StateKey<T> key, [NotNullWhen(true)] out T? value)
         where T : notnull
@@ -204,7 +204,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
         foreach (var (key, value) in _state)
         {
-            state[key] = (value.GetType().ToString(), value.ToString() ?? "null");
+            state[key] = (value.GetType().Name, value.ToString() ?? "null");
         }
 
         return new GoapStateDebugDump(state);
@@ -214,8 +214,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// Overwrites the state keys with values from another
     /// </summary>
     /// <param name="other"></param>
-    [Pure, PublicAPI]
-    public void OverwiteFrom(GoapState other)
+    [PublicAPI]
+    public void OverwriteFrom(GoapState other)
     {
         foreach (var (key, value) in other)
         {

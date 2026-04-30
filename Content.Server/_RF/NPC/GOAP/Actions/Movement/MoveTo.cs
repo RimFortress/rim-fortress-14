@@ -85,8 +85,9 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
             if (!TryGetValue(state, action, action.PathfindKey, out var path))
                 return false;
 
-            var mapCoords = _transform.ToMapCoordinates(state.GetValue(GoapState.OwnerCoordinates));
+            var mapCoords = _transform.ToMapCoordinates(Goap.GetValue(state, GoapState.OwnerCoordinates));
             _steering.PrunePath(owner, mapCoords, _transform.ToMapCoordinates(targetCoordinates).Position - mapCoords.Position, path.Path);
+            _steering.Register(owner, targetCoordinates).ArriveOnLineOfSight = action.StopOnLineOfSight;
             return true;
         }
 
@@ -133,8 +134,11 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
             var state = ent.Comp.State;
             state.SetValue(action.PathfindKey, path);
 
+            if (!TryGetValue(state, action, action.TargetKey, out var targetCoords))
+                return GoapActionResult.Failed;
+
             if (!_steeringQuery.TryComp(owner, out var steering))
-                steering = _steering.Register(owner, state.GetValue(action.TargetKey));
+                steering = _steering.Register(owner, targetCoords);
 
             steering.ArriveOnLineOfSight = action.StopOnLineOfSight;
             steering.CurrentPath = new Queue<PathPoly>(path.Path);

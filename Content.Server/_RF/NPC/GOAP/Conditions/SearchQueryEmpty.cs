@@ -26,5 +26,9 @@ public sealed class SearchQueryEmptySystem : GoapConditionSystem<SearchQueryEmpt
     [Dependency] private readonly NpcSearcherSystem _npcSearcher = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, SearchQueryEmpty condition)
-        => _npcSearcher.GetResults(uid, state, condition.Query).Count > 0;
+    {
+        var result = _npcSearcher.GetResults(uid, state, condition.Query).Count;
+        CreateDump(state, condition, $"query count was {result}");
+        return result == 0;
+    }
 }

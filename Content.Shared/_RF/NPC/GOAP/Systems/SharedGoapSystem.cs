@@ -1,11 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared.Hands.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -45,12 +42,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     public bool CheckCondition(EntityUid uid, GoapState state, GoapCondition condition, out GoapDebugDump? dump)
         => condition.Check(uid, state, this, out dump);
 
-    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump)"/>
+    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump?)"/>
     [PublicAPI]
     public bool CheckCondition(EntityUid uid, GoapState state, GoapCondition condition)
         => condition.Check(uid, state, this, out _);
 
-    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump)"/>
+    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump?)"/>
     [PublicAPI]
     public bool CheckCondition(EntityUid uid, GoapState state, IEnumerable<GoapCondition> conditions)
     {
@@ -63,12 +60,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         return true;
     }
 
-    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump)"/>
+    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump?)"/>
     [PublicAPI]
     public bool CheckCondition(Entity<GoapComponent?> ent, GoapCondition condition)
         => Resolve(ent, ref ent.Comp) && CheckCondition(ent, ent.Comp.State, condition);
 
-    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump)"/>
+    /// <inheritdoc cref="CheckCondition(EntityUid, GoapState, GoapCondition, out GoapDebugDump?)"/>
     [PublicAPI]
     public bool CheckCondition(Entity<GoapComponent?> ent, IEnumerable<GoapCondition> conditions)
         => Resolve(ent, ref ent.Comp) && CheckCondition(ent, ent.Comp.State, conditions);
@@ -99,19 +96,20 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var result = action.Update(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
-            comp.Plan != null,
+            comp is { Plan: not null, PlanDebug: not null },
             $"attempt to update action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
         var plan = comp.Plan.Value;
-        DebugTools.Assert(plan.Actions.Count == plan.ActionsDebug?.Count);
+        var planDebug = comp.PlanDebug.Value;
+        DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
 
         // There's no need to spam every tick about action updates
         if (result != GoapActionResult.Continuing || dump?.Dump != null)
         {
-            var updateDump = new GoapActionUpdateDebugDump(
-                Timing.CurTick,
-                dump ?? new(null, comp.State.GetStateDump()),
-                result);
-            plan.ActionsDebug[plan.Index].UpdateDumps.Add(updateDump);
+            planDebug.Actions[plan.Index] = planDebug.Actions[plan.Index]
+                .WithUpdate(new GoapActionUpdateDebugDump(
+                    Timing.CurTick,
+                    dump ?? new(null, comp.State.GetStateDump()),
+                    result));
         }
 
         return result;
@@ -167,17 +165,16 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     protected bool ActionStartup(EntityUid target, GoapAction action)
     {
 #if DEBUG
-        var succes = action.Startup(target, this, out var dump);
+        var success = action.Startup(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
-            comp.Plan != null,
+            comp is { Plan: not null, PlanDebug: not null },
             $"attempt to startup action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
         var plan = comp.Plan.Value;
-        DebugTools.Assert(plan.Actions.Count == plan.ActionsDebug?.Count);
-        var current = plan.ActionsDebug[plan.Index];
-        current.StartupDump = dump;
-        current.StartupSuccess = succes;
-        return succes;
+        var planDebug = comp.PlanDebug.Value;
+        DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
+        planDebug.Actions[plan.Index] = planDebug.Actions[plan.Index].WithStartup(success, dump);
+        return success;
 #else
         return action.Startup(target, this, out _);
 #endif
@@ -203,12 +200,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         action.Shutdown(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
-            comp.Plan != null,
+            comp is { Plan: not null, PlanDebug: not null },
             $"attempt to shutdown action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
         var plan = comp.Plan.Value;
-        DebugTools.Assert(plan.Actions.Count == plan.ActionsDebug?.Count);
-        var current = plan.ActionsDebug[plan.Index];
-        current.ShutdownDump = dump;
+        var planDebug = comp.PlanDebug.Value;
+        DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
+        planDebug.Actions[plan.Index] = planDebug.Actions[plan.Index].WithShutdown(dump);
 #else
         action.Shutdown(target, this, out _);
 #endif
@@ -238,7 +235,6 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
             ActionShutdown(ent, ent.Comp.Plan.Value.CurrentAction);
 
         ent.Comp.Plan = null;
-        ent.Comp.PlanDebug = null;
         RaiseLocalEvent(ent, new GoapPlanFinished(reason, ent.Comp.GoalState));
     }
 
@@ -282,6 +278,21 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         [NotNullWhen(true)] out T? value) where T : notnull
         => TryGetValue(state, (string)key, out value);
 
+    /// <inheritdoc/>
+    [PublicAPI, Pure]
+    public T GetValue<T>(GoapState state, string key) where T : notnull
+    {
+        if (TryGetStateDefaults(state, key, out var value))
+            return (T)value;
+
+        return state.GetValue<T>(key);
+    }
+
+    /// <inheritdoc/>
+    [PublicAPI, Pure]
+    public T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull
+        => GetValue<T>(state, (string)key);
+
     private bool TryGetStateDefaults(GoapState state, string key, [NotNullWhen(true)] out object? value)
     {
         value = null;
@@ -309,116 +320,6 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
         return false;
     }
-
-    #region Debug
-
-    /// <summary>
-    /// Builds a static dependency graph from a list of executable GOAP tasks.
-    /// </summary>
-    /// <param name="uid">
-    /// Target entity used when evaluating conditions.
-    /// Required because conditions may depend on ECS state.
-    /// </param>
-    /// <param name="tasks">List of executable tasks.</param>
-    /// <param name="includeSelfEdges">
-    /// If true, allows edges from a node to itself.
-    /// Normally disabled to avoid trivial/self loops.
-    /// </param>
-    /// <returns>Constructed GOAP static graph.</returns>
-    public GoapStaticGraph Build(
-        EntityUid uid,
-        IReadOnlyList<ExecutableGoapTask> tasks,
-        bool includeSelfEdges = false)
-    {
-        var nodes = new List<GoapStaticGraphNode>(tasks.Count);
-        var edges = new List<GoapStaticGraphEdge>();
-        var issues = new List<GoapStaticGraphIssue>();
-
-        // Create graph nodes
-        for (var i = 0; i < tasks.Count; i++)
-        {
-            var task = tasks[i];
-
-            nodes.Add(new GoapStaticGraphNode(
-                Id: i,
-                Actions: task.Actions,
-                Preconditions: task.Preconditions,
-                EffectsDump: task.Effects.GetStateDump(),
-                PreconditionsCount: task.Preconditions.Count,
-                EffectsCount: task.Effects.Count));
-        }
-
-        // Build edges by checking condition satisfaction
-        for (var to = 0; to < tasks.Count; to++)
-        {
-            var consumer = tasks[to];
-
-            // Iterate over each precondition of the consumer task
-            for (var condIndex = 0; condIndex < consumer.Preconditions.Count; condIndex++)
-            {
-                var condition = consumer.Preconditions[condIndex];
-                var matched = false;
-
-                // Try all possible producers
-                for (var from = 0; from < tasks.Count; from++)
-                {
-                    if (!includeSelfEdges && from == to)
-                        continue;
-
-                    var producer = tasks[from];
-
-                    // Clone the state so we don't mutate the original Effects
-                    var effectsState = producer.Effects.ShallowClone();
-
-                    // Use actual GOAP system logic to check condition
-                    if (!CheckCondition(uid, effectsState, condition, out var dump))
-                        continue;
-
-                    matched = true;
-
-                    edges.Add(new GoapStaticGraphEdge(
-                        FromNodeId: from,
-                        ToNodeId: to,
-                        ConditionIndex: condIndex,
-                        ConditionType: condition.GetType().Name,
-                        CheckDump: dump ?? new(null, effectsState.GetStateDump())));
-                }
-
-                // If no producer satisfies this condition, report it as an issue
-                if (!matched)
-                {
-                    issues.Add(new GoapStaticGraphIssue(
-                        NodeId: to,
-                        Message: $"No producer found for precondition #{condIndex}.",
-                        ConditionType: condition.GetType().Name));
-                }
-            }
-        }
-
-        // Build lookup dictionaries for fast graph traversal
-        var outgoing = edges
-            .GroupBy(x => x.FromNodeId)
-            .ToDictionary(
-                g => g.Key,
-                g => (IReadOnlyList<GoapStaticGraphEdge>)g.ToArray());
-
-        var incoming = edges
-            .GroupBy(x => x.ToNodeId)
-            .ToDictionary(
-                g => g.Key,
-                g => (IReadOnlyList<GoapStaticGraphEdge>)g.ToArray());
-
-        return new GoapStaticGraph(
-            Nodes: nodes,
-            Edges: edges,
-            Issues: issues)
-        {
-            OutgoingByNodeId = outgoing,
-            IncomingByNodeId = incoming
-        };
-    }
-
-    #endregion
 }
 
 /// <summary>
@@ -429,13 +330,13 @@ public interface IGoapConditionCheсker
     /// <summary>
     /// Checks whether the GOAP target entity satisfies the condition.
     /// </summary>
-    /// <typeparam name="T">GOAP condtition type./</typeparam>
+    /// <typeparam name="T">GOAP condition type./</typeparam>
     /// <param name="target">Target entity.</param>
     /// <param name="state">
     /// The state against which the check should be performed.
     /// It may differ from the agent's actual state.
     /// </param>
-    /// <param name="condition">GOAP condtition.</param>
+    /// <param name="condition">GOAP condition.</param>
     /// <param name="dump">Debug dump.</param>
     /// <returns>True, if the check is passed; otherwise, false</returns>
     bool CheckCondition<T>(
@@ -449,12 +350,11 @@ public interface IGoapConditionCheсker
     /// Returns the value of a key from the agent's GOAP state.
     /// </summary>
     /// <remarks>
-    /// This method differs from <see cref="GoapState.TryGetValue"/> in that it returns
+    /// This method differs from <see cref="GoapState.TryGetValue{T}(string, out T?)"/> in that it returns
     /// the default values for certain keys that are not present in the state,
     /// such as <see cref="GoapState.OwnerCoordinates"/>.
     /// </remarks>
     /// <typeparam name="T">Value type.</typeparam>
-    /// <param name="state">Agent GoapState.</param>
     /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
     bool TryGetValue<T>(
         GoapState state,
@@ -462,12 +362,22 @@ public interface IGoapConditionCheсker
         [NotNullWhen(true)] out T? value)
         where T : notnull;
 
-    /// <inheritdoc cref="TryGetValue"/>
+    /// <inheritdoc cref="TryGetValue{T}(Content.Shared._RF.NPC.GOAP.GoapState,string,out T?)"/>
     bool TryGetValue<T>(
         GoapState state,
         StateKey<T> key,
         [NotNullWhen(true)] out T? value)
+
         where T : notnull;
+
+    /// <summary>
+    /// Returns the value of a key from the agent's GOAP state.
+    /// </summary>
+    /// <typeparam name="T">Value type.</typeparam>
+    T GetValue<T>(GoapState state, string key) where T : notnull;
+
+    /// <inheritdoc cref="GetValue{T}(Content.Shared._RF.NPC.GOAP.GoapState,string)"/>
+    T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull;
 }
 
 public interface IGoapActionPerformer
