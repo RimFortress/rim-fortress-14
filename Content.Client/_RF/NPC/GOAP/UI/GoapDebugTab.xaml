@@ -4,44 +4,54 @@
     NodeSize="350 400">
     <PanelContainer StyleClasses="PanelDark"/>
 
-    <controls:DraggableScrollContainer HorizontalExpand="True" VerticalExpand="True">
+    <controls:DraggableScrollContainer Name="ScrollContainer"
+                                       HorizontalExpand="True"
+                                       VerticalExpand="True">
         <Control Name="GraphRoot">
             <controls:GoapGraphEdgeOverlay Name="EdgeOverlay" />
             <LayoutContainer Name="NodesLayer" />
         </Control>
     </controls:DraggableScrollContainer>
 
-    <Control Name="PlanPanel" Margin="50"
-             HorizontalAlignment="Right" VerticalAlignment="Bottom">
-        <PanelContainer StyleClasses="PanelLightBorderedTransparent"/>
-        <BoxContainer Orientation="Vertical" Margin="1">
-            <Control>
-                <PanelContainer StyleClasses="PanelDarkTransparent"/>
-                <BoxContainer Margin="5 5 8 0">
-                    <Label Text="Planning Info"/>
-                </BoxContainer>
-            </Control>
+    <LayoutContainer HorizontalExpand="True" VerticalExpand="True">
+        <controls:DraggablePanel Name="BreakpointsPanel" Title="Breakpoints">
+            <BoxContainer Name="Breakpoints" Orientation="Vertical"/>
+
             <PanelContainer StyleClasses="LowDivider"/>
-
-            <BoxContainer Margin="2" Orientation="Vertical">
-                <RichTextLabel Name="TotalCost" Margin="5 0"/>
-                <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
-
-                <RichTextLabel Name="NodesExpanded" Margin="5 0"/>
-                <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
-
-                <RichTextLabel Name="Planning" Margin="5 0"/>
-                <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
-
-                <RichTextLabel Name="ElapsedTime" Margin="5 0"/>
-                <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
-
-                <controls:ExpandableBox Name="StartState" Title="[bold]Start State[/bold]"/>
-                <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
-
-                <controls:ExpandableBox Name="GoalState" Title="[bold]Goal State[/bold]"/>
-                <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+            <BoxContainer Name="CreatePointBox" Margin="3"
+                          Orientation="Vertical" Visible="False">
+                <OptionButton Name="NodeId"/>
+                <OptionButton Name="PointType" Visible="False"/>
+                <OptionButton Name="Index" Visible="False"/>
+                <OptionButton Name="Result" Visible="False"/>
+                <BoxContainer>
+                    <Button Name="Confirm" Text="Confirm" HorizontalExpand="True"
+                            StyleClasses="ButtonColorGreen" Disabled="True"/>
+                    <Button Name="Cancel" Text="Cancel"
+                            HorizontalExpand="True" StyleClasses="ButtonColorRed"/>
+                </BoxContainer>
             </BoxContainer>
-        </BoxContainer>
-    </Control>
+            <Button Name="AddPointButton" Text="Add Breakpoint"/>
+        </controls:DraggablePanel>
+
+        <controls:DraggablePanel Name="PlanPanel" Title="Plan Info">
+            <RichTextLabel Name="TotalCost" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="NodesExpanded" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="Planning" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="ElapsedTime" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <controls:ExpandableBox Name="StartState" Title="[bold]Start State[/bold]"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <controls:ExpandableBox Name="GoalState" Title="[bold]Goal State[/bold]"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+        </controls:DraggablePanel>
+    </LayoutContainer>
 </controls:GoapDebugTab>

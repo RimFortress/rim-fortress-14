@@ -41,7 +41,7 @@ public sealed partial class GoapGraphGameTest : GameTest
                 Compound: null),
         };
 
-        var graph = _goap.Build(EntityUid.Invalid, tasks);
+        var graph = _goap.BuildStaticGraph(EntityUid.Invalid, tasks);
         var edge = graph.Edges[0];
 
         using (Assert.EnterMultipleScope())

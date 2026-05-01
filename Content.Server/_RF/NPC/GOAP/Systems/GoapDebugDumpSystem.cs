@@ -19,8 +19,8 @@ public abstract class GoapDebugDumpSystem : EntitySystem
     /// <param name="state">Goap agent state.</param>
     /// <param name="debug">GOAP object to debug.</param>
     /// <param name="reason">Message with debug information.</param>
-    [Conditional("DEBUG")]
-    protected void CreateDump(GoapState state, IGoapDebuggable debug, string? reason = null)
+    [Conditional("TOOLS")]
+    protected static void CreateDump(GoapState state, IGoapDebuggable debug, string? reason = null)
     {
         if (debug.Dump is { } exist)
         {
@@ -32,42 +32,41 @@ public abstract class GoapDebugDumpSystem : EntitySystem
             debug.Dump = new GoapDebugDump(reason, state.GetStateDump());
     }
 
-    /// <inheritdoc cref="CreateDump"/>
-    [Conditional("DEBUG")]
-    protected void CreateDump(Entity<GoapComponent> ent, IGoapDebuggable debug, string? reason = null)
+    /// <inheritdoc cref="CreateDump(GoapState, IGoapDebuggable, string?)"/>
+    [Conditional("TOOLS")]
+    protected static void CreateDump(Entity<GoapComponent> ent, IGoapDebuggable debug, string? reason = null)
         => CreateDump(ent.Comp.State, debug, reason);
 
-    [Conditional("DEBUG")]
-    protected void KeyNotFound<TKey>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<TKey> key) where TKey : notnull
+    [Conditional("TOOLS")]
+    protected static void KeyNotFound<TKey>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<TKey> key) where TKey : notnull
         => KeyNotFound(ent.Comp.State, debug, key);
 
-    [Conditional("DEBUG")]
-    protected void KeyNotFound<TKey>(GoapState state, IGoapDebuggable debug, StateKey<TKey> key) where TKey : notnull
+    [Conditional("TOOLS")]
+    protected static void KeyNotFound<TKey>(GoapState state, IGoapDebuggable debug, StateKey<TKey> key) where TKey : notnull
         => CreateDump(state, debug, $"key '{key}' of type '{typeof(TKey)}' not found");
 
-    [Conditional("DEBUG")]
-    protected void KeyNotFound(Entity<GoapComponent> ent, IGoapDebuggable debug, string key)
+    [Conditional("TOOLS")]
+    protected static void KeyNotFound(Entity<GoapComponent> ent, IGoapDebuggable debug, string key)
         => KeyNotFound(ent.Comp.State, debug, key);
 
-    [Conditional("DEBUG")]
-    protected void KeyNotFound(GoapState state, IGoapDebuggable debug, string key)
+    [Conditional("TOOLS")]
+    protected static void KeyNotFound(GoapState state, IGoapDebuggable debug, string key)
         => CreateDump(state, debug, $"key '{key}' of not found");
 
-    [Conditional("DEBUG")]
+    [Conditional("TOOLS")]
     protected void ComponentNotFound(GoapState state, IGoapDebuggable debug, EntityUid target, Type type)
         => CreateDump(state, debug, $"entity {ToPrettyString(target)} does not have component '{type}'");
 
-    [Conditional("DEBUG")]
+    [Conditional("TOOLS")]
     protected void ComponentNotFound<TComp>(GoapState state, IGoapDebuggable debug, EntityUid target) where TComp : Component
         => ComponentNotFound(state, debug, target, typeof(TComp));
 
-    [Conditional("DEBUG")]
+    [Conditional("TOOLS")]
     protected void ComponentNotFound<TComp>(Entity<GoapComponent> ent, IGoapDebuggable debug, EntityUid? target = null) where TComp : Component
-        => ComponentNotFound(ent.Comp.State, debug, target ?? ent, typeof(TComp));
+        => ComponentNotFound<TComp>(ent.Comp.State, debug, target ?? ent);
 
-
-    /// <inheritdoc cref="SharedGoapSystem.TryGetValue"/>
-    protected bool TryGetvalue<T>(
+    /// <inheritdoc cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>
+    protected bool TryGetValue<T>(
         Entity<GoapComponent> ent,
         IGoapDebuggable debug,
         StateKey<T> key,
@@ -75,7 +74,7 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         where T : notnull
         => TryGetValue(ent.Comp.State, debug, key, out value);
 
-    /// <inheritdoc cref="SharedGoapSystem.TryGetValue"/>
+    /// <inheritdoc cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>
     protected bool TryGetValue<T>(
         GoapState state,
         IGoapDebuggable debug,
@@ -93,7 +92,7 @@ public abstract class GoapDebugDumpSystem : EntitySystem
     }
 
     /// <summary>
-    /// Returns GoapStateOwner.
+    /// Returns <see cref="GoapState.Owner"/>.
     /// </summary>
-    protected EntityUid Owner(GoapState state) => state.GetValue(GoapState.Owner);
+    protected static EntityUid Owner(GoapState state) => state.GetValue(GoapState.Owner);
 }

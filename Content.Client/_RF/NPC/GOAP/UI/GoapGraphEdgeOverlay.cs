@@ -13,7 +13,7 @@ public sealed class GoapGraphEdgeOverlay : Control
 
     public void SetData(
         GoapStaticGraph graph,
-        Dictionary<int, Control> nodeControls,
+        Dictionary<int, GraphNodeControl> nodeControls,
         GoapPlanDebugInfo? plan)
     {
         _graph = graph;

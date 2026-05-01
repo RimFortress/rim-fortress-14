@@ -15,16 +15,236 @@ public sealed partial class GoapDebugTab : Control
 {
     public Vector2 NodeSize { get; set; }
 
+    private readonly AiDevWindowUiController _controller;
+    private readonly Dictionary<GoapBreakpoint, BreakpointControl> _points = new();
+    private readonly Dictionary<int, GraphNodeControl> _nodeControls = new();
+    private GoapStaticGraph? _graph;
+    private EntityUid? _target;
+
     public GoapDebugTab()
     {
         RobustXamlLoader.Load(this);
+
+        _controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
+
+        LayoutContainer.SetAnchorAndMarginPreset(PlanPanel, LayoutContainer.LayoutPreset.BottomRight, margin: 50);
+        LayoutContainer.SetAnchorAndMarginPreset(BreakpointsPanel, LayoutContainer.LayoutPreset.TopRight, margin: 50);
+
+        NodeId.OnItemSelected += args =>
+        {
+            if (_graph == null)
+                return;
+
+            PointType.Visible = true;
+            Index.Visible = false;
+            Result.Visible = false;
+            PointType.Clear();
+            UpdateConfirm();
+
+            NodeId.Select(args.Id);
+            var node = _graph.Value.Nodes[NodeId.SelectedId];
+
+            if (node.Preconditions.Count > 0)
+            {
+                PointType.AddItem("Precondition", 0);
+                PointType.SetItemMetadata(0, GoapBreakpointKind.Precondition);
+            }
+
+            if (node.Actions.Count > 0)
+            {
+                PointType.AddItem("Action Startup", 1);
+                PointType.SetItemMetadata(1, GoapBreakpointKind.ActionStartup);
+                PointType.AddItem("Action Update", 2);
+                PointType.SetItemMetadata(2, GoapBreakpointKind.ActionUpdate);
+                PointType.AddItem("Action Startup", 3);
+                PointType.SetItemMetadata(3, GoapBreakpointKind.ActionShutdown);
+            }
+        };
+
+        PointType.OnItemSelected += args =>
+        {
+            if (_graph == null)
+                return;
+
+            Index.Visible = true;
+            Result.Visible = true;
+            Index.Clear();
+            Result.Clear();
+            PointType.Select(args.Id);
+            UpdateConfirm();
+
+            if (PointType.SelectedMetadata is not GoapBreakpointKind kind)
+                return;
+
+            var node = _graph.Value.Nodes[NodeId.SelectedId];
+
+            if (kind == GoapBreakpointKind.Precondition)
+            {
+                foreach (var condition in node.Preconditions)
+                {
+                    Index.AddItem(condition.Type);
+                }
+            }
+            else
+            {
+                foreach (var action in node.Actions)
+                {
+                    Index.AddItem(action.Type);
+                }
+            }
+
+            switch (kind)
+            {
+                case GoapBreakpointKind.Precondition:
+                case GoapBreakpointKind.ActionStartup:
+                    Result.AddItem("True", 0);
+                    Result.SetItemMetadata(0, GoapBreakpointResultKind.True);
+                    Result.AddItem("False", 1);
+                    Result.SetItemMetadata(1, GoapBreakpointResultKind.False);
+                    break;
+                case GoapBreakpointKind.ActionUpdate:
+                    Result.AddItem("Continuing", 0);
+                    Result.SetItemMetadata(0, GoapBreakpointResultKind.Continuing);
+                    Result.AddItem("Finished", 1);
+                    Result.SetItemMetadata(1, GoapBreakpointResultKind.Finished);
+                    Result.AddItem("Failed", 2);
+                    Result.SetItemMetadata(2, GoapBreakpointResultKind.Failed);
+                    break;
+                case GoapBreakpointKind.ActionShutdown:
+                default:
+                    Result.AddItem("None", 0);
+                    Result.SetItemMetadata(0, GoapBreakpointResultKind.None);
+                    break;
+            }
+        };
+
+        Index.OnItemSelected += args =>
+        {
+            Index.Select(args.Id);
+            UpdateConfirm();
+        };
+
+        Result.OnItemSelected += args =>
+        {
+            Result.Select(args.Id);
+            UpdateConfirm();
+        };
+
+        Confirm.OnPressed += _ =>
+        {
+            if (_graph == null
+                || _target == null
+                || PointType.SelectedMetadata is not GoapBreakpointKind kind
+                || Result.SelectedMetadata is not GoapBreakpointResultKind result)
+                return;
+
+            _controller.AddBreakpoint(
+                _target.Value,
+                NodeId.SelectedId,
+                Index.SelectedId,
+                kind,
+                result);
+            CreatePointBox.Visible = false;
+            AddPointButton.Visible = true;
+        };
+
+        Cancel.OnPressed += _ =>
+        {
+            CreatePointBox.Visible = false;
+            AddPointButton.Visible = true;
+        };
+
+        AddPointButton.OnPressed += _ =>
+        {
+            CreatePointBox.Visible = true;
+            AddPointButton.Visible = false;
+            UpdateConfirm();
+        };
+
+        _controller.OnBreakpointAdded += point =>
+        {
+            if (_points.TryGetValue(point, out var check))
+            {
+                check.Check.Pressed = true;
+                return;
+            }
+
+            check = new BreakpointControl();
+            check.Check.Text = GetName(point);
+            check.Check.Pressed = true;
+            _points[point] = check;
+            Breakpoints.AddChild(check);
+
+            check.Check.OnToggled += _ =>
+            {
+                if (!check.Check.Pressed)
+                    _controller.RemoveBreakpoint(point);
+                else
+                    _controller.AddBreakpoint(point);
+            };
+
+            check.RemoveButton.OnPressed += _ =>
+            {
+                _points.Remove(point);
+                Breakpoints.RemoveChild(check);
+                _controller.RemoveBreakpoint(point);
+            };
+        };
+
+        _controller.OnBreakpointRemoved += point =>
+        {
+            if (_points.TryGetValue(point, out var check))
+                check.Check.Pressed = false;
+        };
+
+        _controller.OnBreakpointRaised += point =>
+        {
+            if (_nodeControls.TryGetValue(point.NodeId, out var node))
+                CenterOnNode(node);
+        };
+
+        return;
+
+        string GetName(GoapBreakpoint point)
+        {
+            if (_graph == null)
+                return string.Empty;
+
+            var node = _graph.Value.Nodes[point.NodeId];
+
+            return point.Kind switch
+            {
+                GoapBreakpointKind.Precondition =>
+                    $"#{point.NodeId} {node.Preconditions[point.Index].Type} ({point.Index}): {point.Result}",
+                GoapBreakpointKind.ActionStartup =>
+                    $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Startup: {point.Result}",
+                GoapBreakpointKind.ActionUpdate =>
+                    $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Update: {point.Result}",
+                GoapBreakpointKind.ActionShutdown =>
+                    $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Shutdown",
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+        }
+
+        void UpdateConfirm()
+        {
+            Confirm.Disabled = _graph == null
+                               || _target == null
+                               || PointType.ItemCount == 0
+                               || PointType.SelectedMetadata == null
+                               || Result.ItemCount == 0
+                               || Result.SelectedMetadata == null;
+        }
     }
 
-    public void Update(GoapStaticGraph graph, GoapPlanDebugInfo? plan)
+    public void Update(EntityUid target, GoapStaticGraph graph, GoapPlanDebugInfo? plan)
     {
+        _graph = graph;
+        _target = target;
+        _nodeControls.Clear();
+
         NodesLayer.RemoveAllChildren();
         var layout = GoapGraphLayoutBuilder.Build(graph, NodeSize);
-        var nodeControls = new Dictionary<int, Control>();
 
         GraphRoot.MinSize = layout.TotalSize;
 
@@ -42,10 +262,26 @@ public sealed partial class GoapDebugTab : Control
 
             LayoutContainer.SetPosition(control, placement.Position);
             control.SetSize = placement.Size;
-            nodeControls[node.Id] = control;
+            _nodeControls[node.Id] = control;
         }
 
-        EdgeOverlay.SetData(graph, nodeControls, plan);
+        EdgeOverlay.SetData(graph, _nodeControls, plan);
+
+        // BreakpointsPanel
+        if (NodeId.ItemCount != graph.Nodes.Count)
+        {
+            NodeId.Clear();
+            PointType.Visible = false;
+            Index.Visible = false;
+            Result.Visible = false;
+            Confirm.Disabled = true;
+
+            for (var i = 0; i < graph.Nodes.Count; i++)
+            {
+                var node = graph.Nodes[i];
+                NodeId.AddItem((plan?.Nodes[i].Compound ?? "Node") + $" #{node.Id}", node.Id);
+            }
+        }
 
         // PlanPanel
         PlanPanel.Visible = plan != null;
@@ -58,7 +294,7 @@ public sealed partial class GoapDebugTab : Control
         Planning.Text = plan.Value.Success
             ? $"[bold]Planning: [color={StyleFortress.LightGood.ToHex()}]Success[/color][/bold]"
             : $"[bold]Planning: [color={StyleFortress.LightBad.ToHex()}]Failed[/color][/bold]";
-        ElapsedTime.Text = $"[bold]Elapsed Time: {plan.Value.ElapsedTime.ToString()}[/bold]";
+        ElapsedTime.Text = $"[bold]Elapsed Time: {plan.Value.ElapsedTime.Milliseconds}ms[/bold]";
         AddTypes(StartState, plan.Value.StartState);
         AddTypes(GoalState, plan.Value.GoalState);
 
@@ -105,6 +341,13 @@ public sealed partial class GoapDebugTab : Control
                 });
             }
         }
+    }
+
+    private void CenterOnNode(Control node)
+    {
+        var nodeCenter = node.Position + node.Size / 2f;
+        var targetOffset = nodeCenter - ScrollContainer.Size / 2f;
+        ScrollContainer.SetScrollValue(targetOffset);
     }
 }
 

@@ -257,16 +257,17 @@ public sealed class GoapPlanJob(
 #if TOOLS
                 var stateBefore = current.State.GetStateDump();
                 var preconditions = new List<GoapPreconditionDebugDump>();
-                debug.NodesExpanded++;
 #endif
 
                 // Check preconditions
 #if TOOLS
                 // In TOOLS dump all conditions
                 var preconditionsMet = true;
-                foreach (var cond in task.Preconditions)
+                for (var j = 0; j < task.Preconditions.Count; j++)
                 {
+                    var cond = task.Preconditions[j];
                     var result = goap.CheckCondition(target, current.State, cond, out var condDump);
+                    goap.RaisePreconditionBreakpoint(target, i, j, result);
 
                     if (!result)
                         preconditionsMet = false;
@@ -294,6 +295,10 @@ public sealed class GoapPlanJob(
 #endif
                     continue;
                 }
+
+#if TOOLS
+                debug.NodesExpanded++;
+#endif
 
                 // Apply effects to get the new state
                 var newState = ApplyEffects(current.State, task.Effects);

@@ -152,3 +152,54 @@ public readonly record struct GoapStaticGraphEdge(
 public readonly record struct GoapStaticGraphObject(
     string Type,
     Dictionary<string, (string Type, string Value)> Reflection);
+
+// Breakpoints
+
+[Serializable, NetSerializable]
+public enum GoapBreakpointKind : byte
+{
+    Precondition,
+    ActionStartup,
+    ActionUpdate,
+    ActionShutdown,
+}
+
+[Serializable, NetSerializable]
+public enum GoapBreakpointResultKind : byte
+{
+    /// <summary>
+    /// <see cref="GoapActionResult.Finished"/>
+    /// </summary>
+    Finished,
+
+    /// <summary>
+    /// <see cref="GoapActionResult.Continuing"/>
+    /// </summary>
+    Continuing,
+
+    /// <summary>
+    /// <see cref="GoapActionResult.Failed"/>
+    /// </summary>
+    Failed,
+
+    True,
+    False,
+    None,
+}
+
+/// <summary>
+/// A class representing a custom breakpoint for a GOAP event.
+/// When this breakpoint is triggered, the client receives debugging information about the plan.
+/// </summary>
+/// <param name="Target">Target GOAP NPC.</param>
+/// <param name="NodeId">The ID of the node in the plan containing the target goap object.</param>
+/// <param name="Index">The object's index in the node.</param>
+/// <param name="Kind">The GOAP type of the object tracked by this breakpoint.</param>
+/// <param name="Result">The result of the object under which the client will receive debugging information.</param>
+[Serializable, NetSerializable]
+public readonly record struct GoapBreakpoint(
+    NetEntity Target,
+    int NodeId,
+    int Index,
+    GoapBreakpointKind Kind,
+    GoapBreakpointResultKind Result);

@@ -32,9 +32,12 @@ public sealed partial class GraphNodeControl : Control
         TabContainer.SetTabVisible(ActionsTab, graphNode.Actions.Count > 0);
         TabContainer.SetTabVisible(PreconditionsTab, graphNode.Preconditions.Count > 0);
 
+        var controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
+
         // ActionsTab
         for (var i = 0; i < graphNode.Actions.Count; i++)
         {
+            var index = i;
             var action = graphNode.Actions[i];
 
             // Static graph info
@@ -42,7 +45,6 @@ public sealed partial class GraphNodeControl : Control
             AddTypes(box.Content, "Fields", action.Reflection);
 
             // Runtime debug info
-            var index = i;
             if (actions?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
                 continue;
 
@@ -61,6 +63,17 @@ public sealed partial class GraphNodeControl : Control
                     AddTypes(startupBox.Content, "State Snapshot", debugAction.StartupDump.Value.StateSnapshot.State);
                     AddLogs(startupBox.Content, debugAction.StartupDump.Value.Dump);
                 }
+
+                controller.OnBreakpointRaised += point =>
+                {
+                    if (point.NodeId != graphNode.Id
+                        || point.Index != index
+                        || point.Kind != GoapBreakpointKind.ActionStartup)
+                        return;
+
+                    startupBox.ExpandAll();
+                    TabContainer.CurrentTab = 1;
+                };
             }
 
             // Shutdown
@@ -70,8 +83,20 @@ public sealed partial class GraphNodeControl : Control
 
                 AddTypes(shutdownBox.Content, "State Snapshot", debugAction.ShutdownDump.Value.StateSnapshot.State);
                 AddLogs(shutdownBox.Content, debugAction.ShutdownDump.Value.Dump);
+
+                controller.OnBreakpointRaised += point =>
+                {
+                    if (point.NodeId != graphNode.Id
+                        || point.Index != index
+                        || point.Kind != GoapBreakpointKind.ActionShutdown)
+                        return;
+
+                    shutdownBox.ExpandAll();
+                    TabContainer.CurrentTab = 1;
+                };
             }
 
+            // Updates
             if (debugAction.UpdateDumps.Count == 0)
                 continue;
 
@@ -91,11 +116,23 @@ public sealed partial class GraphNodeControl : Control
                 AddTypes(upd.Content, "State Snapshot", update.Dump.StateSnapshot.State);
                 AddLogs(upd.Content, update.Dump.Dump);
             }
+
+            controller.OnBreakpointRaised += point =>
+            {
+                if (point.NodeId != graphNode.Id
+                    || point.Index != index
+                    || point.Kind != GoapBreakpointKind.ActionUpdate)
+                    return;
+
+                updateBox.ExpandAll();
+                TabContainer.CurrentTab = 1;
+            };
         }
 
         // PreconditionsTab
         for (var i = 0; i < graphNode.Preconditions.Count; i++)
         {
+            var index = i;
             var condition = graphNode.Preconditions[i];
 
             // Static graph info
@@ -107,6 +144,17 @@ public sealed partial class GraphNodeControl : Control
                         ? $"[color={StyleFortress.LightGood.ToHex()}]True[/color]"
                         : $"[color={StyleFortress.LightBad.ToHex()}]False[/color]");
             AddTypes(box.Content, "Fields", condition.Reflection);
+
+            controller.OnBreakpointRaised += point =>
+            {
+                if (point.NodeId != graphNode.Id
+                    || point.Index != index
+                    || point.Kind != GoapBreakpointKind.Precondition)
+                    return;
+
+                box.ExpandAll();
+                TabContainer.CurrentTab = 2;
+            };
 
             // Planing debug info
             if (debug == null)

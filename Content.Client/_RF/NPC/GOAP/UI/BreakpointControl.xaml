@@ -1,0 +1,10 @@
+<controls:BreakpointControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
+    <BoxContainer Margin="0 2">
+        <CheckBox Name="Check" Margin="3 0" Access="Public"/>
+        <Control HorizontalExpand="True"/>
+        <TextureButton Name="RemoveButton" Margin="3 0"
+                       Access="Public" StyleClasses="CrossButtonRed"/>
+    </BoxContainer>
+</controls:BreakpointControl>

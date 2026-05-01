@@ -58,7 +58,7 @@ public abstract partial class BaseGoapCondition<T> : GoapCondition where T : Bas
 
         if (Invert)
         {
-#if DEBUG
+#if TOOLS
             dump = new GoapDebugDump($"{dump?.Dump}\nresult was inverted".Trim(), dump?.StateSnapshot ?? state.GetStateDump());
 #endif
             return !result;

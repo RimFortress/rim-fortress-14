@@ -51,6 +51,10 @@ public sealed partial class GoapComponent : Component
     [ViewVariables]
     public GoapPlanDebugInfo? PlanDebug;
 
+    /// <inheritdoc cref="GoapStaticGraph"/>
+    [ViewVariables]
+    public GoapStaticGraph? StaticGraph;
+
     /// <summary>
     /// Is this NPC currently planning?
     /// </summary>

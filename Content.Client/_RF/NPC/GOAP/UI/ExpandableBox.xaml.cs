@@ -59,5 +59,19 @@ public sealed partial class ExpandableBox : BoxContainer
             : "/Textures/_RF/Interface/chevron-right-solid.svg.192dpi.png";
         Content.Visible = expanded;
     }
+
+    public void ExpandAll()
+    {
+        Expanded = true;
+        var parent = Parent;
+
+        while (parent != null)
+        {
+            if (parent is ExpandableBox box)
+                box.Expanded = true;
+
+            parent = parent.Parent;
+        }
+    }
 }
 

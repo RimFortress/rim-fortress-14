@@ -167,12 +167,12 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
         switch (steeringComp.Status)
         {
             case SteeringStatus.InRange:
-                CreateDump(ent, action, "steering finished with result: '{steeringComp.Status}'");
+                CreateDump(ent, action, $"steering finished with result: '{steeringComp.Status}'");
                 return GoapActionResult.Finished;
             case SteeringStatus.Moving:
                 return GoapActionResult.Continuing;
             case SteeringStatus.NoPath:
-                CreateDump(ent, action, "steering finished with result: '{steeringComp.Status}'");
+                CreateDump(ent, action, $"steering finished with result: '{steeringComp.Status}'");
                 return GoapActionResult.Failed;
             default:
                 throw new ArgumentOutOfRangeException();

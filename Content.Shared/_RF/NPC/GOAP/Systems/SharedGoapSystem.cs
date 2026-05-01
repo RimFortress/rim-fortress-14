@@ -3,6 +3,7 @@ using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared.Hands.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
+using Robust.Shared.Player;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -13,6 +14,9 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
+
+    protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
+    protected readonly List<(ICommonSession Session, EntityUid Target, GoapBreakpoint? Breakpoint)> DebugSendQueue = new();
 
     #region Conditions
 
@@ -92,7 +96,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// <returns>Update result.</returns>
     protected GoapActionResult UpdateAction(EntityUid target, GoapAction action)
     {
-#if DEBUG
+#if TOOLS
         var result = action.Update(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
@@ -110,6 +114,39 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
                     Timing.CurTick,
                     dump ?? new(null, comp.State.GetStateDump()),
                     result));
+        }
+
+        // Sending debug information to users when a breakpoint is hit
+        var debugAction = planDebug.Actions[plan.Index];
+        var netTarget = GetNetEntity(target);
+        foreach (var (session, points) in Breakpoints)
+        {
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+
+                if (point.Target != netTarget
+                    || point.NodeId != debugAction.NodeIndex
+                    || point.Index != debugAction.ActionIndex
+                    || point.Kind != GoapBreakpointKind.ActionUpdate)
+                    continue;
+
+                switch (result)
+                {
+                    case GoapActionResult.Continuing
+                        when point.Result != GoapBreakpointResultKind.Continuing:
+                    case GoapActionResult.Failed
+                        when point.Result != GoapBreakpointResultKind.Failed:
+                    case GoapActionResult.Finished
+                        when point.Result != GoapBreakpointResultKind.Finished:
+                        continue;
+                    default:
+                        SendDebug(session, target, point);
+                        RemoveBreakpoint(session, point);
+                        i--;
+                        break;
+                }
+            }
         }
 
         return result;
@@ -164,7 +201,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// <returns>True, if the action startup was successful.</returns>
     protected bool ActionStartup(EntityUid target, GoapAction action)
     {
-#if DEBUG
+#if TOOLS
         var success = action.Startup(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
@@ -174,6 +211,37 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var planDebug = comp.PlanDebug.Value;
         DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
         planDebug.Actions[plan.Index] = planDebug.Actions[plan.Index].WithStartup(success, dump);
+
+        // Sending debug information to users when a breakpoint is hit
+        var debugAction = planDebug.Actions[plan.Index];
+        var netTarget = GetNetEntity(target);
+        foreach (var (session, points) in Breakpoints)
+        {
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+                if (point.Target != netTarget
+                    || point.NodeId != debugAction.NodeIndex
+                    || point.Index != debugAction.ActionIndex
+                    || point.Kind != GoapBreakpointKind.ActionStartup)
+                    continue;
+
+                switch (success)
+                {
+                    case true
+                        when point.Result != GoapBreakpointResultKind.True:
+                    case false
+                        when point.Result != GoapBreakpointResultKind.False:
+                        continue;
+                    default:
+                        SendDebug(session, target, point);
+                        RemoveBreakpoint(session, point);
+                        i--;
+                        break;
+                }
+            }
+        }
+
         return success;
 #else
         return action.Startup(target, this, out _);
@@ -196,7 +264,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// <param name="action">GOAP action.</param>
     protected void ActionShutdown(EntityUid target, GoapAction action)
     {
-#if DEBUG
+#if TOOLS
         action.Shutdown(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
@@ -206,6 +274,28 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var planDebug = comp.PlanDebug.Value;
         DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
         planDebug.Actions[plan.Index] = planDebug.Actions[plan.Index].WithShutdown(dump);
+
+        // Sending debug information to users when a breakpoint is hit
+        var debugAction = planDebug.Actions[plan.Index];
+        var netTarget = GetNetEntity(target);
+        foreach (var (session, points) in Breakpoints)
+        {
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+
+                if (point.Target != netTarget
+                    || point.NodeId != debugAction.NodeIndex
+                    || point.Index != debugAction.ActionIndex
+                    || point.Kind != GoapBreakpointKind.ActionShutdown
+                    || point.Result != GoapBreakpointResultKind.None)
+                    continue;
+
+                SendDebug(session, target, point);
+                RemoveBreakpoint(session, point);
+                i--;
+            }
+        }
 #else
         action.Shutdown(target, this, out _);
 #endif
@@ -320,6 +410,76 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
         return false;
     }
+
+    #region Debug
+
+    protected virtual void SendDebug(
+        ICommonSession session,
+        EntityUid target,
+        GoapBreakpoint? breakpoint = null)
+    {
+        // Noop on client
+    }
+
+    /// <summary>
+    /// Adds the player to the list of those who will receive debug information about the NPC's next plan.
+    /// </summary>
+    protected virtual void QueueDebugSend(
+        ICommonSession session,
+        EntityUid target,
+        GoapBreakpoint? breakpoint = null)
+    {
+        // Noop on client
+    }
+
+    /// <summary>
+    /// Adds all players who have subscribed to updates for
+    /// this condition with this result to the notification queue.
+    /// </summary>
+    [PublicAPI]
+    public void RaisePreconditionBreakpoint(EntityUid target, int nodeId, int conditionIndex, bool result)
+    {
+        var netTarget = GetNetEntity(target);
+
+        foreach (var (session, points) in Breakpoints)
+        {
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+
+                if (point.Target != netTarget
+                    || point.NodeId != nodeId
+                    || point.Index != conditionIndex
+                    || point.Kind != GoapBreakpointKind.Precondition)
+                    continue;
+
+                switch (result)
+                {
+                    case true
+                        when point.Result != GoapBreakpointResultKind.True:
+                    case false
+                        when point.Result != GoapBreakpointResultKind.False:
+                        continue;
+                    default:
+                        QueueDebugSend(session, target, point);
+                        RemoveBreakpoint(session, point);
+                        i--;
+                        break;
+                }
+            }
+        }
+    }
+
+    protected void RemoveBreakpoint(ICommonSession session, GoapBreakpoint point)
+    {
+        if (!Breakpoints.TryGetValue(session, out var points)
+            || !points.Remove(point))
+            return;
+
+        RaiseNetworkEvent(new GoapBreakpointRemoveMessage(point), session);
+    }
+
+    #endregion
 }
 
 /// <summary>

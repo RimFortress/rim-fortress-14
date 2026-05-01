@@ -26,45 +26,16 @@ public abstract partial class GoapAction : IGoapDebuggable
 public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapAction<T>
 {
     public override float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer)
-    {
-        if (this is not T type)
-            return 0f;
-
-        return performer.ActionCost(target, state, type);
-    }
+        => performer.ActionCost(target, state, (T)this);
 
     public override GoapActionResult Update(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
-    {
-        if (this is not T type)
-        {
-            dump = new($"Invalid type {typeof(T)}", new());
-            return GoapActionResult.Failed;
-        }
-
-        return performer.UpdateAction(target, type, out dump);
-    }
+        => performer.UpdateAction(target, (T)this, out dump);
 
     public override bool Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
-    {
-        if (this is not T type)
-        {
-            dump = new($"Invalid type {typeof(T)}", new());
-            return false;
-        }
-
-        return performer.ActionStartup(target, type, out dump);
-    }
+        => performer.ActionStartup(target, (T)this, out dump);
 
     public override void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
-    {
-        if (this is not T type)
-        {
-            dump = new($"Invalid type {typeof(T)}", new());
-            return;
-        }
-
-        performer.ActionShutdown(target, type, out dump);
-    }
+        => performer.ActionShutdown(target, (T)this, out dump);
 }
 
 /// <summary>

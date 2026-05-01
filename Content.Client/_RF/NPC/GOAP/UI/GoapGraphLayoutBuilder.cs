@@ -4,14 +4,11 @@ using Content.Shared._RF.NPC.GOAP;
 
 namespace Content.Client._RF.NPC.GOAP.UI;
 
-public sealed record GoapGraphLayout(
+public readonly record struct GoapGraphLayout(
     Dictionary<int, GoapGraphNodeLayout> Nodes,
     Vector2 TotalSize);
 
-public sealed record GoapGraphNodeLayout(
-    int NodeId,
-    int Layer,
-    int Order,
+public readonly record struct GoapGraphNodeLayout(
     Vector2 Position,
     Vector2 Size);
 
@@ -22,7 +19,7 @@ public static class GoapGraphLayoutBuilder
         Vector2 nodeSize,
         float horizontalSpacing = 50f,
         float verticalSpacing = 90f,
-        float padding = 40f,
+        float padding = 80f,
         int sweeps = 4)
     {
         var nodeIds = graph.Nodes.Select(x => x.Id).ToArray();
@@ -134,17 +131,9 @@ public static class GoapGraphLayoutBuilder
 
             var y = padding + layer * (nodeSize.Y + verticalSpacing);
 
-            for (var order = 0; order < rowPlacements.Count; order++)
+            foreach (var (id, x) in rowPlacements)
             {
-                var (id, x) = rowPlacements[order];
-
-                placements[id] = new GoapGraphNodeLayout(
-                    NodeId: id,
-                    Layer: layer,
-                    Order: order,
-                    Position: new Vector2(x, y),
-                    Size: nodeSize);
-
+                placements[id] = new GoapGraphNodeLayout(new Vector2(x, y), nodeSize);
                 maxRight = Math.Max(maxRight, x + nodeSize.X);
             }
 

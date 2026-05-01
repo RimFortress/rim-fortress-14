@@ -6,8 +6,8 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// <summary>
 /// An event raised to get the result of a condition check.
 /// </summary>
-/// <typeparam name="T">GOAP condtition type.</typeparam>
-/// <param name="Condition">GOAP condtition.</param>
+/// <typeparam name="T">GOAP condition type.</typeparam>
+/// <param name="Condition">GOAP condition.</param>
 /// <param name="State">
 /// The state against which the check should be performed.
 /// It may differ from the agent's actual state.
@@ -70,16 +70,35 @@ public readonly record struct GoapPlaningFailed(GoapState GoalState);
 [PublicAPI]
 public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason, GoapState GoalState);
 
+// Net messages
+
 [Serializable, NetSerializable]
-public sealed partial class GoapDebugInfoRequest(NetEntity target) : EntityEventArgs
+public sealed class GoapDebugInfoRequest(NetEntity target) : EntityEventArgs
 {
     public NetEntity Target = target;
 }
 
 [Serializable, NetSerializable]
-public sealed partial class GoapDebugInfoMessage(NetEntity target, GoapPlanDebugInfo? plan, GoapStaticGraph graph) : EntityEventArgs
+public sealed class GoapDebugInfoMessage(
+    NetEntity target,
+    GoapPlanDebugInfo? plan,
+    GoapStaticGraph graph,
+    GoapBreakpoint? breakpoint) : EntityEventArgs
 {
     public NetEntity Target = target;
     public GoapPlanDebugInfo? Plan = plan;
     public GoapStaticGraph Graph = graph;
+    public readonly GoapBreakpoint? Breakpoint = breakpoint;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapBreakpointMessage(GoapBreakpoint point) : EntityEventArgs
+{
+    public readonly GoapBreakpoint Point = point;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapBreakpointRemoveMessage(GoapBreakpoint point) : EntityEventArgs
+{
+    public readonly GoapBreakpoint Point = point;
 }

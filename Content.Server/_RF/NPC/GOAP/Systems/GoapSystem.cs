@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Content.Server.Administration.Managers;
 using Content.Server.NPC.Systems;
@@ -7,10 +5,8 @@ using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared.Administration;
 using Content.Shared.Mobs;
 using Content.Shared.NPC;
-using JetBrains.Annotations;
 using Robust.Shared.CPUJob.JobQueues;
 using Robust.Shared.CPUJob.JobQueues.Queues;
 using Robust.Shared.Player;
@@ -18,7 +14,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.GOAP.Systems;
 
-public sealed class GoapSystem : SharedGoapSystem
+public sealed partial class GoapSystem : SharedGoapSystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IAdminManager _admin = default!;
@@ -37,7 +33,7 @@ public sealed class GoapSystem : SharedGoapSystem
         SubscribeLocalEvent<GoapComponent, PlayerAttachedEvent>(_npc.OnPlayerNPCAttach);
         SubscribeLocalEvent<GoapComponent, PlayerDetachedEvent>(_npc.OnPlayerNPCDetach);
 
-        SubscribeNetworkEvent<GoapDebugInfoRequest>(OnDebugInfoRequest);
+        InitializeDebug();
 
         _proto.PrototypesReloaded += args =>
         {
@@ -52,6 +48,9 @@ public sealed class GoapSystem : SharedGoapSystem
     {
         ent.Comp.State.SetValue(GoapState.Owner, ent);
         ent.Comp.ExecutableTasks = GetExecutableTasks(ent.Comp.RootTask);
+#if TOOLS
+        ent.Comp.StaticGraph = BuildStaticGraph(ent, ent.Comp.ExecutableTasks);
+#endif
     }
 
     private void OnGoapShutdown(Entity<GoapComponent> ent, ref ComponentShutdown args)
@@ -59,20 +58,6 @@ public sealed class GoapSystem : SharedGoapSystem
         _npc.SleepNPC(ent);
         ent.Comp.PlanningToken?.Cancel();
         ent.Comp.PlanningJob = null;
-    }
-
-    private void OnDebugInfoRequest(GoapDebugInfoRequest request, EntitySessionEventArgs args)
-    {
-        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug)
-            || !TryGetEntity(request.Target, out var uid)
-            || !TryComp(uid, out GoapComponent? comp))
-            return;
-
-        RaiseNetworkEvent(new GoapDebugInfoMessage(
-            GetNetEntity(uid.Value),
-            comp.PlanDebug,
-            Build(uid.Value, comp.ExecutableTasks)),
-            args.SenderSession);
     }
 
     private void ReloadPrototypes()
@@ -197,6 +182,16 @@ public sealed class GoapSystem : SharedGoapSystem
 
                 (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 
+#if TOOLS
+                // Sends debug information about the new plan to those who are waiting for it.
+                foreach (var (session, target, breakpoint) in DebugSendQueue)
+                {
+                    SendDebug(session, target, breakpoint);
+                }
+
+                DebugSendQueue.Clear();
+#endif
+
                 // Startup the first task and anything else we need to do.
                 if (comp.Plan != null && !ActionStartup(ent, comp.Plan.Value.CurrentAction))
                     PlanShutdown(ent, GoapPlanFinishReason.Failed);
@@ -261,121 +256,4 @@ public sealed class GoapSystem : SharedGoapSystem
             }
         }
     }
-
-    #region Debug
-
-    /// <summary>
-    /// Builds a static dependency graph from a list of executable GOAP tasks.
-    /// </summary>
-    /// <param name="uid">
-    /// Target entity used when evaluating conditions.
-    /// Required because conditions may depend on ECS state.
-    /// </param>
-    /// <param name="tasks">List of executable tasks.</param>
-    /// <returns>Constructed GOAP static graph.</returns>
-    [PublicAPI]
-    public GoapStaticGraph Build(EntityUid uid, IReadOnlyList<ExecutableGoapTask> tasks)
-    {
-        var edges = new List<GoapStaticGraphEdge>();
-
-        // Create graph nodes
-        var nodes = tasks.Select((task, i) => new GoapStaticGraphNode(
-                Id: i,
-                Actions: task.Actions.Select(ToObject).ToList(),
-                Preconditions: task.Preconditions.Select(ToObject).ToList(),
-                EffectsDump: task.Effects.GetStateDump()))
-            .ToList();
-
-        // Build edges by checking condition satisfaction
-        for (var to = 0; to < tasks.Count; to++)
-        {
-            var consumer = tasks[to];
-
-            // Iterate over each precondition of the consumer task
-            for (var condIndex = 0; condIndex < consumer.Preconditions.Count; condIndex++)
-            {
-                var condition = consumer.Preconditions[condIndex];
-
-                // Try all possible producers
-                for (var from = 0; from < tasks.Count; from++)
-                {
-                    if (from == to)
-                        continue;
-
-                    var producer = tasks[from];
-
-                    // We perform two checks: the first when the state is empty,
-                    // and the second on the node's effects.
-                    // This is done to verify that the effects and conditions actually
-                    // link the two nodes, rather than the second node simply having no conditions.
-                    var dummyState = new GoapState();
-                    dummyState.SetValue(GoapState.Owner, uid);
-                    var dummyCheck = CheckCondition(uid, dummyState, condition);
-
-                    var effectsState = producer.Effects.ShallowClone();
-                    effectsState.SetValue(GoapState.Owner, uid);
-                    var effectsCheck = CheckCondition(uid, effectsState, condition);
-
-                    if (!effectsCheck || effectsCheck == dummyCheck)
-                        continue;
-
-                    edges.Add(new GoapStaticGraphEdge(
-                        FromNodeId: from,
-                        ToNodeId: to,
-                        ConditionIndex: condIndex,
-                        ConditionType: condition.GetType().Name));
-                }
-            }
-        }
-
-        // Build lookup dictionaries for fast graph traversal
-        var outgoing = edges
-            .GroupBy(x => x.FromNodeId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.ToList());
-
-        var incoming = edges
-            .GroupBy(x => x.ToNodeId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.ToList());
-
-        return new GoapStaticGraph(
-            Nodes: nodes,
-            Edges: edges,
-            OutgoingByNodeId: outgoing,
-            IncomingByNodeId: incoming);
-    }
-
-    private static GoapStaticGraphObject ToObject(object obj)
-    {
-        var type = obj.GetType();
-        var fields = type
-            .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(f => !f.IsStatic && f.IsDefined(typeof(DataFieldAttribute), inherit: true));
-        var reflection = new Dictionary<string, (string, string)>();
-
-        foreach (var field in fields)
-        {
-            try
-            {
-                reflection.Add(
-                    field.Name,
-                    (field.FieldType.Name,
-                    field.GetValue(obj)?.ToString() ?? "null"));
-            }
-            catch (Exception e)
-            {
-                reflection.Add(
-                    field.Name,
-                    (field.FieldType.Name,
-                    $"<error: {e.GetType().Name}, {e.Message}>"));
-            }
-        }
-
-        return new(type.Name, reflection);
-    }
-
-    #endregion
 }
