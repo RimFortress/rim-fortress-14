@@ -30,8 +30,9 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
             return;
 
         RaiseNetworkEvent(new UtilityAiDebugInfoMessage(
-            msg.Target,
-            GetDebugInfo(new(target.Value, comp, goap))));
+                msg.Target,
+                GetDebugInfo(new(target.Value, comp, goap))),
+            args.SenderSession);
     }
 
     private UtilityAiDebugInfo GetDebugInfo(Entity<UtilityAiComponent, GoapComponent> ent)
