@@ -2,7 +2,7 @@ using Content.Shared._RF.NPC.GOAP;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface.Controllers;
 
-namespace Content.Client._RF.NPC.GOAP.UI;
+namespace Content.Client._RF.NPC.UI;
 
 public sealed class AiDevWindowUiController : UIController
 {

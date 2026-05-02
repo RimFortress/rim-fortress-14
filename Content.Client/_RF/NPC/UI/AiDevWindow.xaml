@@ -1,6 +1,7 @@
 <controls:AiDevWindow
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.UI"
+    xmlns:goap="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
     <PanelContainer StyleClasses="PanelLight"/>
     <BoxContainer Orientation="Vertical">
         <BoxContainer Margin="5 5 5 0">
@@ -17,7 +18,7 @@
         <PanelContainer StyleClasses="LowDivider"/>
 
         <TabContainer Name="TabContainer" VerticalExpand="True">
-            <controls:GoapDebugTab Name="GoapDebugTab"/>
+            <goap:GoapDebugTab Name="GoapDebugTab"/>
         </TabContainer>
     </BoxContainer>
 </controls:AiDevWindow>

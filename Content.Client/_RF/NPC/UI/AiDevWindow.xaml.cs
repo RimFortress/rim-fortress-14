@@ -7,7 +7,7 @@ using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Console;
 using Robust.Shared.Timing;
 
-namespace Content.Client._RF.NPC.GOAP.UI;
+namespace Content.Client._RF.NPC.UI;
 
 [GenerateTypedNameReferences]
 public sealed partial class AiDevWindow : Control
