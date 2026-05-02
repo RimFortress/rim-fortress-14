@@ -15,13 +15,13 @@ namespace Content.Shared._RF.NPC.UtilityAi.Systems;
 /// <summary>
 /// A system that manages GOAP NPCs using Utility AI to find a goal state.
 /// </summary>
-public sealed class UtilityAiSystem : EntitySystem
+public abstract class SharedUtilityAiSystem : EntitySystem
 {
     [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly SharedGoapSystem _goap = default!;
-    [Dependency] private readonly MathCurvesSystem _curves = default!;
+    [Dependency] protected readonly IPrototypeManager Proto = default!;
+    [Dependency] protected readonly SharedGoapSystem Goap = default!;
+    [Dependency] protected readonly MathCurvesSystem Curves = default!;
 
     public override void Initialize()
     {
@@ -38,7 +38,7 @@ public sealed class UtilityAiSystem : EntitySystem
             if (!TryGetGoal(ent.AsNullable(), out var goal))
                 return;
 
-            SetGoal(ent.Owner, goal);
+            SetGoal(ent.Owner, goal.Value);
             return;
         }
 
@@ -54,7 +54,7 @@ public sealed class UtilityAiSystem : EntitySystem
                 ent.Comp.CurrentGoal = null;
 
                 if (TryGetGoal(ent.AsNullable(), out var goal))
-                    SetGoal(ent.Owner, goal);
+                    SetGoal(ent.Owner, goal.Value);
 
                 break;
             case GoapPlanFinishReason.Failed:
@@ -63,7 +63,7 @@ public sealed class UtilityAiSystem : EntitySystem
                     if (!TryGetGoal(ent.AsNullable(), out goal))
                         break;
 
-                    SetGoal(ent.Owner, goal);
+                    SetGoal(ent.Owner, goal.Value);
                     break;
                 }
 
@@ -80,7 +80,7 @@ public sealed class UtilityAiSystem : EntitySystem
 
     private void DoGoalFail(Entity<UtilityAiComponent> ent, ProtoId<UtilityAiGoalPrototype> protoId)
     {
-        if (!_proto.Resolve(protoId, out var proto))
+        if (!Proto.Resolve(protoId, out var proto))
             return;
 
         foreach (var fallback in proto.Fallbacks)
@@ -106,7 +106,7 @@ public sealed class UtilityAiSystem : EntitySystem
         }
 
         if (TryGetGoal(ent.AsNullable(), out var goal))
-            SetGoal(ent.Owner, goal);
+            SetGoal(ent.Owner, goal.Value);
     }
 
     /// <summary>
@@ -117,11 +117,11 @@ public sealed class UtilityAiSystem : EntitySystem
     [PublicAPI]
     public void SetGoal(Entity<UtilityAiComponent?, GoapComponent?> ent, ProtoId<UtilityAiGoalPrototype> protoId)
     {
-        if (!_proto.Resolve(protoId, out var proto)
+        if (!Proto.Resolve(protoId, out var proto)
             || !Resolve(ent, ref ent.Comp1, ref ent.Comp2))
             return;
 
-        _goap.SetGoal(new(ent, ent.Comp2), proto.GoalState);
+        Goap.SetGoal(new(ent, ent.Comp2), proto.GoalState);
         ent.Comp1.CurrentGoal = protoId;
         ent.Comp1.Penalties.Clear();
         RaiseLocalEvent(ent, new UtilityAiGoalGiven(protoId));
@@ -136,9 +136,9 @@ public sealed class UtilityAiSystem : EntitySystem
     [PublicAPI, Pure]
     public bool TryGetCurrentGoal(
         Entity<UtilityAiComponent?> ent,
-        [NotNullWhen(true)] out ProtoId<UtilityAiGoalPrototype> protoId)
+        [NotNullWhen(true)] out ProtoId<UtilityAiGoalPrototype>? protoId)
     {
-        protoId = default;
+        protoId = null;
 
         if (!Resolve(ent, ref ent.Comp) || ent.Comp.CurrentGoal == null)
             return false;
@@ -156,9 +156,9 @@ public sealed class UtilityAiSystem : EntitySystem
     [PublicAPI, Pure]
     public bool TryGetGoal(
         Entity<UtilityAiComponent?> ent,
-        [NotNullWhen(true)] out ProtoId<UtilityAiGoalPrototype> protoId)
+        [NotNullWhen(true)] out ProtoId<UtilityAiGoalPrototype>? protoId)
     {
-        protoId = default;
+        protoId = null;
 
         if (!Resolve(ent, ref ent.Comp))
             return false;
@@ -173,6 +173,7 @@ public sealed class UtilityAiSystem : EntitySystem
 
             var score = GetScore(ent, goal);
 
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (score == 1f)
             {
                 protoId = goal;
@@ -200,10 +201,10 @@ public sealed class UtilityAiSystem : EntitySystem
         Entity<UtilityAiComponent?> ent,
         ProtoId<UtilityAiGoalPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_proto.Resolve(protoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(protoId, out var proto))
             return 0f;
 
-        var score = _curves.Get(proto.ScoreCurves, user: ent);
+        var score = Curves.Get(proto.ScoreCurves, user: ent);
         var penalty = ent.Comp.Penalties.GetValueOrDefault(protoId) * proto.FailPenalty;
         var ev = new UtilityAiGoalScoreModify(protoId, score - penalty);
 
@@ -222,8 +223,8 @@ public sealed class UtilityAiSystem : EntitySystem
         Entity<GoapComponent?> ent,
         ProtoId<UtilityAiGoalPrototype> protoId)
         => Resolve(ent, ref ent.Comp)
-            && _proto.Resolve(protoId, out var proto)
-            && _goap.CheckCondition(ent, proto.Conditions);
+            && Proto.Resolve(protoId, out var proto)
+            && Goap.CheckCondition(ent, proto.Conditions);
 
     public override void Update(float frameTime)
     {

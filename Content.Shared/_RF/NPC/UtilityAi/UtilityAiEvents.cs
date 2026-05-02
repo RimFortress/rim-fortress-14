@@ -1,6 +1,7 @@
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.NPC.UtilityAi;
 
@@ -21,3 +22,18 @@ public record struct UtilityAiGoalGiven(ProtoId<UtilityAiGoalPrototype> Goal);
 
 [PublicAPI]
 public record struct NpcControllerAdded(EntityUid User);
+
+// Net Messages
+
+[Serializable, NetSerializable]
+public sealed class UtilityAiDebugInfoRequest(NetEntity target) : EntityEventArgs
+{
+    public NetEntity Target = target;
+}
+
+[Serializable, NetSerializable]
+public sealed class UtilityAiDebugInfoMessage(NetEntity target, UtilityAiDebugInfo info) : EntityEventArgs
+{
+    public NetEntity Target = target;
+    public UtilityAiDebugInfo Info = info;
+}

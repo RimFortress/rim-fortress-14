@@ -24,18 +24,23 @@ public sealed partial class AiDevWindow : Control
         RobustXamlLoader.Load(this);
 
         TabContainer.SetTabTitle(GoapDebugTab, "GOAP");
+        TabContainer.SetTabTitle(UtilityAiDebugTab, "Utility AI");
 
         _aiController = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
-        _aiController.OnDebugInfo += args =>
+        _aiController.OnGoapDebugInfo += args =>
         {
-            Refresh.Disabled = false;
             Target = args.Target;
-
-            TargetLabel.Text = $"Target: {_entity.ToPrettyString(Target)}";
-            TimeLabel.Text = $"CurTime: {_timing.CurTime.ToString()}";
-            TickLabel.Text = $"CurTick: {_timing.CurTick.Value}";
-
+            Refresh.Disabled = false;
+            UpdateInfo();
             GoapDebugTab.Update(args.Target, args.Graph, args.Plan);
+        };
+
+        _aiController.OnUtilityAiDebugInfo += args =>
+        {
+            Target = args.Target;
+            Refresh.Disabled = false;
+            UpdateInfo();
+            UtilityAiDebugTab.Update(args.Info);
         };
 
         Refresh.OnPressed += _ => SetTarget(Target!.Value);
@@ -43,7 +48,15 @@ public sealed partial class AiDevWindow : Control
 
     public void SetTarget(EntityUid target)
     {
-        _aiController.RequestDebug(target);
+        _aiController.RequestGoapDebug(target);
+        _aiController.RequestUtilityAiDebug(target);
+    }
+
+    private void UpdateInfo()
+    {
+        TargetLabel.Text = $"Target: {_entity.ToPrettyString(Target)}";
+        TimeLabel.Text = $"CurTime: {_timing.CurTime.ToString()}";
+        TickLabel.Text = $"CurTick: {_timing.CurTick.Value}";
     }
 }
 

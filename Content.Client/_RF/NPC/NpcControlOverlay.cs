@@ -22,7 +22,7 @@ public sealed class NpcControlOverlay : Overlay
     private static readonly ProtoId<ShaderPrototype> PointLineShader = "DottedLine";
 
     private readonly ExecutableGoalSystem _executable;
-    private readonly UtilityAiSystem _utilityAi;
+    private readonly SharedUtilityAiSystem _utilityAi;
     private readonly SelectionSystem _selection;
     private readonly SharedTransformSystem _transform;
     private readonly SpriteSystem _sprite;
@@ -41,7 +41,7 @@ public sealed class NpcControlOverlay : Overlay
         IoCManager.InjectDependencies(this);
 
         _executable = _entityManager.System<ExecutableGoalSystem>();
-        _utilityAi = _entityManager.System<UtilityAiSystem>();
+        _utilityAi = _entityManager.System<SharedUtilityAiSystem>();
         _selection = _entityManager.System<SelectionSystem>();
         _transform = _entityManager.System<SharedTransformSystem>();
         _sprite = _entityManager.System<SpriteSystem>();

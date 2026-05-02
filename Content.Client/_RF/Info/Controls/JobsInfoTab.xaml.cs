@@ -18,7 +18,7 @@ public sealed partial class JobsInfoTab : Control, IInfoTab
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
 
-    private UtilityAiSystem _utilityAi = default!;
+    private SharedUtilityAiSystem _utilityAi = default!;
     private NpcJobsSystem _npcJobs = default!;
 
     private EntityUid? _uid;
@@ -39,7 +39,7 @@ public sealed partial class JobsInfoTab : Control, IInfoTab
         if (_setup)
             return;
 
-        _utilityAi = _entity.System<UtilityAiSystem>();
+        _utilityAi = _entity.System<SharedUtilityAiSystem>();
         _npcJobs = _entity.System<NpcJobsSystem>();
 
         _npcJobs.OnJobChanged += _ =>

@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.UtilityAi;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface.Controllers;
 
@@ -9,7 +10,12 @@ public sealed class AiDevWindowUiController : UIController
     /// <summary>
     /// An event invoked when the client receives debug information about a GOAP NPC.
     /// </summary>
-    public event Action<(EntityUid Target, GoapPlanDebugInfo? Plan, GoapStaticGraph Graph)>? OnDebugInfo;
+    public event Action<(EntityUid Target, GoapPlanDebugInfo? Plan, GoapStaticGraph Graph)>? OnGoapDebugInfo;
+
+    /// <summary>
+    /// An event invoked when the client receives debug information about a Utility AI NPC.
+    /// </summary>
+    public event Action<(EntityUid Target, UtilityAiDebugInfo Info)>? OnUtilityAiDebugInfo;
 
     public event Action<GoapBreakpoint>? OnBreakpointAdded;
     public event Action<GoapBreakpoint>? OnBreakpointRemoved;
@@ -19,17 +25,23 @@ public sealed class AiDevWindowUiController : UIController
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<GoapDebugInfoMessage>(OnDebugInfoMessage);
+        SubscribeNetworkEvent<GoapDebugInfoMessage>(OnGoapDebugInfoMessage);
+        SubscribeNetworkEvent<UtilityAiDebugInfoMessage>(OnUtilityAiDebugInfoMessage);
         SubscribeNetworkEvent<GoapBreakpointMessage>(OnBreakpoint);
         SubscribeNetworkEvent<GoapBreakpointRemoveMessage>(OnRemoveBreakpoint);
     }
 
-    private void OnDebugInfoMessage(GoapDebugInfoMessage msg, EntitySessionEventArgs args)
+    private void OnGoapDebugInfoMessage(GoapDebugInfoMessage msg, EntitySessionEventArgs args)
     {
-        OnDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Plan, msg.Graph));
+        OnGoapDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Plan, msg.Graph));
 
         if (msg.Breakpoint != null)
             OnBreakpointRaised?.Invoke(msg.Breakpoint.Value);
+    }
+
+    private void OnUtilityAiDebugInfoMessage(UtilityAiDebugInfoMessage msg, EntitySessionEventArgs args)
+    {
+        OnUtilityAiDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Info));
     }
 
     private void OnBreakpoint(GoapBreakpointMessage msg, EntitySessionEventArgs args)
@@ -46,14 +58,25 @@ public sealed class AiDevWindowUiController : UIController
 
     /// <summary>
     /// Requests debug information about the GOAP NPC,
-    /// which can be received by subscribing to <see cref="OnDebugInfo"/>.
+    /// which can be received by subscribing to <see cref="OnGoapDebugInfo"/>.
     /// </summary>
     /// <param name="uid">GOAP NPC entity.</param>
     [PublicAPI]
-    public void RequestDebug(EntityUid uid)
+    public void RequestGoapDebug(EntityUid uid)
         => EntityManager
             .EntityNetManager
             .SendSystemNetworkMessage(new GoapDebugInfoRequest(EntityManager.GetNetEntity(uid)));
+
+    /// <summary>
+    /// Requests debug information about the Utility AI NPC,
+    /// which can be received by subscribing to <see cref="OnUtilityAiDebugInfo"/>.
+    /// </summary>
+    /// <param name="uid">Utility AI NPC entity.</param>
+    [PublicAPI]
+    public void RequestUtilityAiDebug(EntityUid uid)
+        => EntityManager
+            .EntityNetManager
+            .SendSystemNetworkMessage(new UtilityAiDebugInfoRequest(EntityManager.GetNetEntity(uid)));
 
     [PublicAPI]
     public void AddBreakpoint(

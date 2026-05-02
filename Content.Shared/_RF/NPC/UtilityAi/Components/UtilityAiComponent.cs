@@ -8,7 +8,7 @@ namespace Content.Shared._RF.NPC.UtilityAi.Components;
 /// <summary>
 /// A component that allows the use of Utility Ai to find the GOAP goal state.
 /// </summary>
-[Access(typeof(UtilityAiSystem))]
+[Access(typeof(SharedUtilityAiSystem))]
 [RegisterComponent, NetworkedComponent]
 public sealed partial class UtilityAiComponent : Component
 {
@@ -25,8 +25,8 @@ public sealed partial class UtilityAiComponent : Component
     public ProtoId<UtilityAiGoalPrototype>? CurrentGoal;
 
     [ViewVariables]
-    public Dictionary<ProtoId<UtilityAiGoalPrototype>, TimeSpan> Cooldowns = new();
+    public readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, TimeSpan> Cooldowns = new();
 
     [ViewVariables]
-    public Dictionary<ProtoId<UtilityAiGoalPrototype>, int> Penalties = new();
+    public readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, int> Penalties = new();
 }

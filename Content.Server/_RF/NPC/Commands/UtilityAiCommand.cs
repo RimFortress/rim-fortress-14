@@ -58,7 +58,7 @@ public sealed class XUaiCommand : SystemCommand<ExecutableGoalSystem>
 }
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class UaiCommand : SystemCommand<UtilityAiSystem>
+public sealed class UaiCommand : SystemCommand<SharedUtilityAiSystem>
 {
     [CommandImplementation("get_score")]
     public IEnumerable<float> GetScore(

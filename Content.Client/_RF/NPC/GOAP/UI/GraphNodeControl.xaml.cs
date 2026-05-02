@@ -167,7 +167,7 @@ public sealed partial class GraphNodeControl : Control
         }
 
         // Common
-        if (debug?.AddedToOpenList == false)
+        if (debug is { AddedToOpenList: false, PreconditionsMet: false })
             StatusLabel.Text = $@"[color={StyleFortress.GraySilver.ToHex()}]\[Skipped\][/color]";
 
         StatusLabel.Text = debug?.PreconditionsMet switch
@@ -181,6 +181,9 @@ public sealed partial class GraphNodeControl : Control
         {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
 
+            if (actions?.Any(x => x.StartupSuccess == null) == true)
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Not Started\][/color]";
+
             if (actions?.Any(x
                     => x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Continuing)) == true)
@@ -188,12 +191,14 @@ public sealed partial class GraphNodeControl : Control
 
             if (actions?.Any(x
                     => x.UpdateDumps.Any(y
-                        => y.Result == GoapActionResult.Failed)) == true)
+                        => y.Result == GoapActionResult.Failed)
+                       || x.StartupSuccess == false) == true)
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Failed\][/color]";
 
-            if (actions?.All(x
-                    => x.UpdateDumps.All(y
-                        => y.Result == GoapActionResult.Finished)) == true)
+            if (actions?.Count > 0
+                && actions.All(x
+                    => x.UpdateDumps.Any(y
+                        => y.Result == GoapActionResult.Finished)))
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Finished\][/color]";
         }
 

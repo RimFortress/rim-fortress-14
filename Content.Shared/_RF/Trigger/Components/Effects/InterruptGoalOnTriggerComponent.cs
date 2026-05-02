@@ -9,7 +9,7 @@ namespace Content.Shared._RF.Trigger.Components.Effects;
 /// Interrupts the execution of certain Utility Ai goals when the entity is triggered.
 /// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
-public sealed partial class IterruptGoalOnTriggerComponent : BaseXOnTriggerComponent
+public sealed partial class InterruptGoalOnTriggerComponent : BaseXOnTriggerComponent
 {
     /// <summary>
     /// A dictionary containing keys and a list of the goals they interrupt.

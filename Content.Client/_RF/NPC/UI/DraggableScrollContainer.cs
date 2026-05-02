@@ -4,7 +4,7 @@ using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Input;
 
-namespace Content.Client._RF.NPC.GOAP.UI;
+namespace Content.Client._RF.NPC.UI;
 
 public sealed class DraggableScrollContainer : ScrollContainer
 {

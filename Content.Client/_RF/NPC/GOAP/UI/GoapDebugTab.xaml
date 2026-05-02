@@ -1,17 +1,18 @@
 <controls:GoapDebugTab
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI"
+    xmlns:npc="clr-namespace:Content.Client._RF.NPC.UI"
     NodeSize="350 400">
     <PanelContainer StyleClasses="PanelDark"/>
 
-    <controls:DraggableScrollContainer Name="ScrollContainer"
-                                       HorizontalExpand="True"
-                                       VerticalExpand="True">
+    <npc:DraggableScrollContainer Name="ScrollContainer"
+                                  HorizontalExpand="True"
+                                  VerticalExpand="True">
         <Control Name="GraphRoot">
             <controls:GoapGraphEdgeOverlay Name="EdgeOverlay" />
             <LayoutContainer Name="NodesLayer" />
         </Control>
-    </controls:DraggableScrollContainer>
+    </npc:DraggableScrollContainer>
 
     <LayoutContainer HorizontalExpand="True" VerticalExpand="True">
         <controls:DraggablePanel Name="BreakpointsPanel" Title="Breakpoints">

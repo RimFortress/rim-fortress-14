@@ -1,0 +1,14 @@
+<controls:UtilityAiDebugTab
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.UtilityAi.UI"
+    xmlns:npc="clr-namespace:Content.Client._RF.NPC.UI">
+    <PanelContainer StyleClasses="PanelDark"/>
+
+    <npc:DraggableScrollContainer
+        HorizontalExpand="True"
+        VerticalExpand="True">
+        <GridContainer Name="Grid" Margin="80"
+                       MaxGridWidth="100" VerticalExpand="True"
+                       HSeparationOverride="50" VSeparationOverride="90"/>
+    </npc:DraggableScrollContainer>
+</controls:UtilityAiDebugTab>
