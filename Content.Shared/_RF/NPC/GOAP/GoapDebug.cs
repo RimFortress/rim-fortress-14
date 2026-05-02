@@ -132,7 +132,8 @@ public readonly record struct GoapStaticGraph(
     List<GoapStaticGraphNode> Nodes,
     List<GoapStaticGraphEdge> Edges,
     Dictionary<int, List<GoapStaticGraphEdge>> OutgoingByNodeId,
-    Dictionary<int, List<GoapStaticGraphEdge>> IncomingByNodeId);
+    Dictionary<int, List<GoapStaticGraphEdge>> IncomingByNodeId)
+    : IStaticGraph<GoapStaticGraphNode, GoapStaticGraphEdge>;
 
 /// <summary>
 /// Represents a single GOAP task node in the static graph.
@@ -142,7 +143,7 @@ public readonly record struct GoapStaticGraphNode(
     int Id,
     List<GoapStaticGraphObject> Actions,
     List<GoapStaticGraphObject> Preconditions,
-    GoapStateDebugDump EffectsDump);
+    GoapStateDebugDump EffectsDump) : IStaticGraphNode;
 
 /// <summary>
 /// Represents a directed edge between two GOAP tasks.
@@ -150,11 +151,7 @@ public readonly record struct GoapStaticGraphNode(
 /// one of the destination task's preconditions.
 /// </summary>
 [Serializable, NetSerializable]
-public readonly record struct GoapStaticGraphEdge(
-    int FromNodeId,
-    int ToNodeId,
-    int ConditionIndex,
-    string ConditionType);
+public readonly record struct GoapStaticGraphEdge(int FromNodeId, int ToNodeId) : IStaticGraphEdge;
 
 [Serializable, NetSerializable]
 public readonly record struct GoapStaticGraphObject(

@@ -9,8 +9,8 @@
                                   HorizontalExpand="True"
                                   VerticalExpand="True">
         <Control Name="GraphRoot">
-            <controls:GoapGraphEdgeOverlay Name="EdgeOverlay" />
-            <LayoutContainer Name="NodesLayer" />
+            <npc:GoapGraphEdgeOverlay Name="EdgeOverlay"/>
+            <LayoutContainer Name="NodesLayer"/>
         </Control>
     </npc:DraggableScrollContainer>
 

@@ -8,11 +8,20 @@ namespace Content.Shared._RF.NPC.UtilityAi;
 [Serializable, NetSerializable]
 public readonly record struct UtilityAiDebugInfo(
     ProtoId<UtilityAiGoalPrototype>? CurrentGoal,
-    UtilityAiGoalDebugInfo[] Goals);
+    UtilityAiStaticGraph Graph);
+
+[Serializable, NetSerializable]
+public readonly record struct UtilityAiStaticGraph(
+    List<UtilityAiGoalDebugInfo> Nodes,
+    List<UtilityAiStaticGraphEdge> Edges,
+    Dictionary<int, List<UtilityAiStaticGraphEdge>> OutgoingByNodeId,
+    Dictionary<int, List<UtilityAiStaticGraphEdge>> IncomingByNodeId)
+    : IStaticGraph<UtilityAiGoalDebugInfo, UtilityAiStaticGraphEdge>;
 
 [Serializable, NetSerializable]
 public readonly record struct UtilityAiGoalDebugInfo(
-    ProtoId<UtilityAiGoalPrototype> Id,
+    int Id,
+    ProtoId<UtilityAiGoalPrototype> ProtoId,
     UtilityAiConditionDebugDump[] Preconditions,
     GoapStateDebugDump GoalState,
     UtilityAiCurveDebugDump[] Curves,
@@ -20,7 +29,15 @@ public readonly record struct UtilityAiGoalDebugInfo(
     float Penalty,
     float Modified,
     float Result,
-    bool AgentGoal);
+    bool AgentGoal,
+    bool FallbackGoal,
+    bool ExecutableGoal,
+    bool InActiveBranch) : IStaticGraphNode;
+
+[Serializable, NetSerializable]
+public readonly record struct  UtilityAiStaticGraphEdge(
+    int FromNodeId,
+    int ToNodeId) : IStaticGraphEdge;
 
 [Serializable, NetSerializable]
 public readonly record struct UtilityAiCurveDebugDump(

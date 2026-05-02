@@ -36,17 +36,77 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
 
     private UtilityAiDebugInfo GetDebugInfo(Entity<UtilityAiComponent, GoapComponent> ent)
     {
-        var goals = new List<UtilityAiGoalDebugInfo>();
-        var prototypes = new HashSet<ProtoId<UtilityAiGoalPrototype>>();
+        var nodes = new List<UtilityAiGoalDebugInfo>();
+        var edges = new List<UtilityAiStaticGraphEdge>();
 
-        foreach (var protoId in ent.Comp1.Goals)
+        var nodeIdByProto = new Dictionary<ProtoId<UtilityAiGoalPrototype>, int>();
+        var expanded = new HashSet<ProtoId<UtilityAiGoalPrototype>>();
+        var edgeSet = new HashSet<(int From, int To)>();
+
+        var agentGoals = ent.Comp1.Goals.ToHashSet();
+        var executables = Proto.EnumeratePrototypes<ExecutableGoalPrototype>()
+            .Select(x => x.Goal)
+            .ToHashSet();
+
+        foreach (var protoId in agentGoals)
         {
-            AddGoal(protoId);
+            AddGoal(protoId, ent.Comp1.CurrentGoal == protoId);
         }
 
-        foreach (var goal in prototypes)
+        foreach (var protoId in executables)
         {
-            var proto = Proto.Index(goal);
+            AddGoal(protoId, ent.Comp1.CurrentGoal == protoId);
+        }
+
+        var outgoing = edges
+            .GroupBy(x => x.FromNodeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var incoming = edges
+            .GroupBy(x => x.ToNodeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        return new UtilityAiDebugInfo(
+            ent.Comp1.CurrentGoal,
+            new UtilityAiStaticGraph(nodes, edges, outgoing, incoming));
+
+        int AddGoal(ProtoId<UtilityAiGoalPrototype> protoId, bool inActiveBranch)
+        {
+            if (!Proto.Resolve(protoId, out var proto))
+                return -1;
+
+            if (!nodeIdByProto.TryGetValue(protoId, out var nodeId))
+            {
+                nodeId = nodes.Count;
+                nodeIdByProto.Add(protoId, nodeId);
+                nodes.Add(BuildGoalDebugInfo(nodeId, proto, inActiveBranch));
+            }
+
+            if (!expanded.Add(protoId))
+                return nodeId;
+
+            foreach (var fallbackId in proto.Fallbacks)
+            {
+                var fallbackNodeId = AddGoal(fallbackId, inActiveBranch);
+
+                if (fallbackNodeId < 0)
+                    continue;
+
+                if (edgeSet.Add((nodeId, fallbackNodeId)))
+                {
+                    edges.Add(new UtilityAiStaticGraphEdge(
+                        FromNodeId: nodeId,
+                        ToNodeId: fallbackNodeId));
+                }
+            }
+
+            return nodeId;
+        }
+
+        UtilityAiGoalDebugInfo BuildGoalDebugInfo(int id,
+            UtilityAiGoalPrototype proto,
+            bool inActiveBranch)
+        {
             var curves = new List<UtilityAiCurveDebugDump>();
             var conditions = new List<UtilityAiConditionDebugDump>();
             var score = 0f;
@@ -72,36 +132,26 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
                 score = output;
             }
 
-            var penalty = ent.Comp1.Penalties.GetValueOrDefault(goal) * proto.FailPenalty;
-            var ev = new UtilityAiGoalScoreModify(goal, score - penalty);
+            var penalty = ent.Comp1.Penalties.GetValueOrDefault(proto) * proto.FailPenalty;
+            var ev = new UtilityAiGoalScoreModify(proto, score - penalty);
             RaiseLocalEvent(ent, ref ev);
+
             var result = Math.Clamp(ev.Score, 0f, 1f);
 
-            goals.Add(new(
-                goal,
-                conditions.ToArray(),
-                proto.GoalState.GetStateDump(),
-                curves.ToArray(),
-                ent.Comp1.Cooldowns.GetValueOrDefault(goal),
-                penalty,
-                ev.Score,
-                result,
-                ent.Comp1.Goals.Contains(goal)));
-        }
-
-        return new UtilityAiDebugInfo(ent.Comp1.CurrentGoal, goals.ToArray());
-
-        void AddGoal(ProtoId<UtilityAiGoalPrototype> protoId)
-        {
-            if (!Proto.Resolve(protoId, out var proto))
-                return;
-
-            prototypes.Add(protoId);
-
-            foreach (var fallback in proto.Fallbacks)
-            {
-                AddGoal(fallback);
-            }
+            return new UtilityAiGoalDebugInfo(
+                Id: id,
+                ProtoId: proto,
+                Preconditions: conditions.ToArray(),
+                GoalState: proto.GoalState.GetStateDump(),
+                Curves: curves.ToArray(),
+                Cooldown: ent.Comp1.Cooldowns.GetValueOrDefault(proto),
+                Penalty: penalty,
+                Modified: ev.Score,
+                Result: result,
+                AgentGoal: agentGoals.Contains(proto),
+                FallbackGoal: !agentGoals.Contains(proto) && !executables.Contains(proto),
+                ExecutableGoal: executables.Contains(proto),
+                InActiveBranch: inActiveBranch);
         }
     }
 

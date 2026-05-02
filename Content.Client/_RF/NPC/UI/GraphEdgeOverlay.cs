@@ -1,39 +1,36 @@
+using System.Linq;
 using System.Numerics;
+using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.UtilityAi;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 
-namespace Content.Client._RF.NPC.GOAP.UI;
+namespace Content.Client._RF.NPC.UI;
 
-public sealed class GoapGraphEdgeOverlay : Control
+public sealed class GoapGraphEdgeOverlay : GraphEdgeOverlay<GoapStaticGraphNode, GoapStaticGraphEdge>;
+
+public sealed class UtilityAiGraphEdgeOverlay : GraphEdgeOverlay<UtilityAiGoalDebugInfo, UtilityAiStaticGraphEdge>;
+
+public abstract class GraphEdgeOverlay<TNode, TEdge> : Control
+    where TNode : IStaticGraphNode
+    where TEdge : IStaticGraphEdge
 {
-    private GoapStaticGraph? _graph;
-    private readonly Dictionary<int, Control> _nodeControls = new();
-    private readonly HashSet<int> _planNodes = new();
+    private IStaticGraph<TNode, TEdge>? _graph;
+    private Dictionary<int, Control> _nodeControls = new();
+    private HashSet<int> _activeNodes = new();
 
     public void SetData(
-        GoapStaticGraph graph,
-        Dictionary<int, GraphNodeControl> nodeControls,
-        GoapPlanDebugInfo? plan)
+        IStaticGraph<TNode, TEdge> graph,
+        Dictionary<int, Control> nodeControls,
+        IEnumerable<int>? activeNodes)
     {
         _graph = graph;
+        _nodeControls = nodeControls;
+        _activeNodes.Clear();
 
-        _nodeControls.Clear();
-        foreach (var (id, ctrl) in nodeControls)
-        {
-            _nodeControls[id] = ctrl;
-        }
-
-        _planNodes.Clear();
-
-        if (plan == null)
-            return;
-
-        foreach (var node in plan.Value.Nodes)
-        {
-            if (node.InPlan)
-                _planNodes.Add(node.NodeId);
-        }
+        if (activeNodes != null)
+            _activeNodes = activeNodes.ToHashSet();
     }
 
     protected override void Draw(DrawingHandleScreen handle)
@@ -43,7 +40,7 @@ public sealed class GoapGraphEdgeOverlay : Control
         if (_graph == null)
             return;
 
-        foreach (var edge in _graph.Value.Edges)
+        foreach (var edge in _graph.Edges)
         {
             if (!_nodeControls.TryGetValue(edge.FromNodeId, out var fromCtrl)
                 || !_nodeControls.TryGetValue(edge.ToNodeId, out var toCtrl))
@@ -63,8 +60,8 @@ public sealed class GoapGraphEdgeOverlay : Control
             start -= GlobalPixelRect.TopLeft;
             end -= GlobalPixelRect.TopLeft;
 
-            var color = _planNodes.Contains(edge.FromNodeId) &&
-                        _planNodes.Contains(edge.ToNodeId)
+            var color = _activeNodes.Contains(edge.FromNodeId) &&
+                        _activeNodes.Contains(edge.ToNodeId)
                 ? Color.LimeGreen
                 : Color.DimGray;
 

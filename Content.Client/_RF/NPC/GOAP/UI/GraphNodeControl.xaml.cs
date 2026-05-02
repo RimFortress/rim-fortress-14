@@ -167,16 +167,6 @@ public sealed partial class GraphNodeControl : Control
         }
 
         // Common
-        if (debug is { AddedToOpenList: false, PreconditionsMet: false })
-            StatusLabel.Text = $@"[color={StyleFortress.GraySilver.ToHex()}]\[Skipped\][/color]";
-
-        StatusLabel.Text = debug?.PreconditionsMet switch
-        {
-            false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NotMet\][/color]",
-            true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Met\][/color]",
-            _ => StatusLabel.Text,
-        };
-
         if (debug?.InPlan == true)
         {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
@@ -200,6 +190,18 @@ public sealed partial class GraphNodeControl : Control
                     => x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Finished)))
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Finished\][/color]";
+        }
+        else
+        {
+            if (debug is { AddedToOpenList: false, PreconditionsMet: false })
+                StatusLabel.Text = $@"[color={StyleFortress.GraySilver.ToHex()}]\[Skipped\][/color]";
+
+            StatusLabel.Text = debug?.PreconditionsMet switch
+            {
+                false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NotMet\][/color]",
+                true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Met\][/color]",
+                _ => StatusLabel.Text,
+            };
         }
 
         StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";

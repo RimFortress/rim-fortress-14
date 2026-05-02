@@ -53,8 +53,6 @@ public sealed partial class GoapGraphGameTest : GameTest
 
             Assert.That(edge.FromNodeId, Is.Zero);
             Assert.That(edge.ToNodeId, Is.EqualTo(1));
-            Assert.That(edge.ConditionIndex, Is.Zero);
-            Assert.That(edge.ConditionType, Is.EqualTo(nameof(EqualsBool)));
         }
     }
 

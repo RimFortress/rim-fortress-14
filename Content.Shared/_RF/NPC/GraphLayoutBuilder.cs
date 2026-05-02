@@ -1,26 +1,113 @@
 using System.Linq;
 using System.Numerics;
-using Content.Shared._RF.NPC.GOAP;
 
-namespace Content.Client._RF.NPC.GOAP.UI;
+namespace Content.Shared._RF.NPC;
 
-public readonly record struct GoapGraphLayout(
-    Dictionary<int, GoapGraphNodeLayout> Nodes,
+/// <summary>
+/// Represents the computed 2D layout of a graph.
+/// </summary>
+/// <param name="Nodes">Calculated position and size for each graph node, indexed by node ID.</param>
+/// <param name="TotalSize">Overall bounds of the layout, including padding.</param>
+public readonly record struct GraphLayout(
+    Dictionary<int, GraphNodeLayout> Nodes,
     Vector2 TotalSize);
 
-public readonly record struct GoapGraphNodeLayout(
+/// <summary>
+/// Describes the visual placement of a single graph node.
+/// </summary>
+/// <param name="Position">Top-left position of the node in layout space.</param>
+/// <param name="Size">Rendered size of the node.</param>
+public readonly record struct GraphNodeLayout(
     Vector2 Position,
     Vector2 Size);
 
-public static class GoapGraphLayoutBuilder
+/// <summary>
+/// Represents a static directed graph that can be laid out and visualized.
+/// </summary>
+/// <typeparam name="TNode">The node type used by the graph.</typeparam>
+/// <typeparam name="TEdge">The edge type used by the graph.</typeparam>
+public interface IStaticGraph<TNode, TEdge>
+    where TNode : IStaticGraphNode
+    where TEdge : IStaticGraphEdge
 {
-    public static GoapGraphLayout Build(
-        GoapStaticGraph graph,
+    /// <summary>
+    /// Gets or sets all nodes in the graph.
+    /// </summary>
+    List<TNode> Nodes { get; init; }
+
+    /// <summary>
+    /// Gets or sets all edges in the graph.
+    /// </summary>
+    List<TEdge> Edges { get; init; }
+
+    /// <summary>
+    /// Gets or sets the outgoing edges grouped by source node ID.
+    /// </summary>
+    Dictionary<int, List<TEdge>> OutgoingByNodeId { get; init; }
+
+    /// <summary>
+    /// Gets or sets the incoming edges grouped by destination node ID.
+    /// </summary>
+    Dictionary<int, List<TEdge>> IncomingByNodeId { get; init; }
+}
+
+/// <summary>
+/// Represents a node that can be stored inside a static graph.
+/// </summary>
+public interface IStaticGraphNode
+{
+    /// <summary>
+    /// Gets or sets the unique identifier of the node.
+    /// </summary>
+    int Id { get; init; }
+}
+
+/// <summary>
+/// Represents a directed edge between two nodes in a static graph.
+/// </summary>
+public interface IStaticGraphEdge
+{
+    /// <summary>
+    /// Gets or sets the source node identifier.
+    /// </summary>
+    int FromNodeId { get; init; }
+
+    /// <summary>
+    /// Gets or sets the destination node identifier.
+    /// </summary>
+    int ToNodeId { get; init; }
+}
+
+/// <summary>
+/// Builds a layered layout for a static directed graph.
+/// </summary>
+/// <remarks>
+/// The builder places nodes into layers based on graph dependencies and then
+/// uses barycentric sweeps to reduce edge crossings and improve readability.
+/// </remarks>
+public static class GraphLayoutBuilder
+{
+    /// <summary>
+    /// Computes a 2D layout for the specified graph.
+    /// </summary>
+    /// <typeparam name="TNode">The node type used by the graph.</typeparam>
+    /// <typeparam name="TEdge">The edge type used by the graph.</typeparam>
+    /// <param name="graph">The graph to lay out.</param>
+    /// <param name="nodeSize">The size assigned to every node.</param>
+    /// <param name="horizontalSpacing">Horizontal distance between nodes within the same layer.</param>
+    /// <param name="verticalSpacing">Vertical distance between layers.</param>
+    /// <param name="padding">Padding applied around the whole layout.</param>
+    /// <param name="sweeps">Number of barycentric refinement passes.</param>
+    /// <returns>The calculated graph layout.</returns>
+    public static GraphLayout Build<TNode, TEdge>(
+        IStaticGraph<TNode, TEdge> graph,
         Vector2 nodeSize,
         float horizontalSpacing = 50f,
         float verticalSpacing = 90f,
         float padding = 80f,
         int sweeps = 4)
+        where TNode : IStaticGraphNode
+        where TEdge : IStaticGraphEdge
     {
         var nodeIds = graph.Nodes.Select(x => x.Id).ToArray();
 
@@ -86,7 +173,7 @@ public static class GoapGraphLayoutBuilder
             }
         }
 
-        var placements = new Dictionary<int, GoapGraphNodeLayout>(nodeIds.Length);
+        var placements = new Dictionary<int, GraphNodeLayout>(nodeIds.Length);
         var maxRight = padding;
         var maxBottom = padding;
 
@@ -133,19 +220,30 @@ public static class GoapGraphLayoutBuilder
 
             foreach (var (id, x) in rowPlacements)
             {
-                placements[id] = new GoapGraphNodeLayout(new Vector2(x, y), nodeSize);
+                placements[id] = new GraphNodeLayout(new Vector2(x, y), nodeSize);
                 maxRight = Math.Max(maxRight, x + nodeSize.X);
             }
 
             maxBottom = Math.Max(maxBottom, y + nodeSize.Y);
         }
 
-        return new GoapGraphLayout(
+        return new GraphLayout(
             Nodes: placements,
             TotalSize: new Vector2(maxRight + padding, maxBottom + padding));
     }
 
-    private static Dictionary<int, int> ComputeLayers(GoapStaticGraph graph, int[] nodeIds)
+    /// <summary>
+    /// Assigns each node to a layer based on graph topology.
+    /// </summary>
+    /// <remarks>
+    /// Nodes with no incoming edges are placed into the first layer.
+    /// Cycles and disconnected components are placed into fallback layers.
+    /// </remarks>
+    private static Dictionary<int, int> ComputeLayers<TNode, TEdge>(
+        IStaticGraph<TNode, TEdge> graph,
+        int[] nodeIds)
+        where TNode : IStaticGraphNode
+        where TEdge : IStaticGraphEdge
     {
         var layerByNode = nodeIds.ToDictionary(id => id, _ => 0);
 
@@ -186,14 +284,22 @@ public static class GoapGraphLayoutBuilder
         return layerByNode;
     }
 
-    private static float GetPreferredX(
+    /// <summary>
+    /// Computes the preferred horizontal position for a node inside its layer.
+    /// </summary>
+    /// <remarks>
+    /// The target position is based on the average X position of parent nodes when available.
+    /// </remarks>
+    private static float GetPreferredX<TNode, TEdge>(
         int nodeId,
         int currentLayer,
         Dictionary<int, int> layerByNode,
         Dictionary<int, int> orderByNode,
-        GoapStaticGraph graph,
+        IStaticGraph<TNode, TEdge> graph,
         Vector2 nodeSize,
         float horizontalSpacing)
+        where TNode : IStaticGraphNode
+        where TEdge : IStaticGraphEdge
     {
         if (graph.IncomingByNodeId.TryGetValue(nodeId, out var incoming) && incoming.Count > 0)
         {
@@ -214,12 +320,17 @@ public static class GoapGraphLayoutBuilder
             : nodeId * (nodeSize.X + horizontalSpacing);
     }
 
-    private static float GetParentBarycenter(
+    /// <summary>
+    /// Computes the average order of all parent nodes that are located above the current layer.
+    /// </summary>
+    private static float GetParentBarycenter<TNode, TEdge>(
         int nodeId,
         int currentLayer,
         Dictionary<int, int> layerByNode,
         Dictionary<int, int> orderByNode,
-        GoapStaticGraph graph)
+        IStaticGraph<TNode, TEdge> graph)
+        where TNode : IStaticGraphNode
+        where TEdge : IStaticGraphEdge
     {
         if (!graph.IncomingByNodeId.TryGetValue(nodeId, out var incoming) || incoming.Count == 0)
             return orderByNode.GetValueOrDefault(nodeId, nodeId);
@@ -236,12 +347,17 @@ public static class GoapGraphLayoutBuilder
         return (float)parents.Average(p => orderByNode.GetValueOrDefault(p, p));
     }
 
-    private static float GetChildBarycenter(
+    /// <summary>
+    /// Computes the average order of all child nodes that are located below the current layer.
+    /// </summary>
+    private static float GetChildBarycenter<TNode, TEdge>(
         int nodeId,
         int currentLayer,
         Dictionary<int, int> layerByNode,
         Dictionary<int, int> orderByNode,
-        GoapStaticGraph graph)
+        IStaticGraph<TNode, TEdge> graph)
+        where TNode : IStaticGraphNode
+        where TEdge : IStaticGraphEdge
     {
         if (!graph.OutgoingByNodeId.TryGetValue(nodeId, out var outgoing) || outgoing.Count == 0)
             return orderByNode.GetValueOrDefault(nodeId, nodeId);
@@ -258,6 +374,9 @@ public static class GoapGraphLayoutBuilder
         return (float)children.Average(c => orderByNode.GetValueOrDefault(c, c));
     }
 
+    /// <summary>
+    /// Returns the horizontal center position of a node based on its order in the layer.
+    /// </summary>
     private static float GetNodeCenterX(
         int nodeId,
         Dictionary<int, int> orderByNode,

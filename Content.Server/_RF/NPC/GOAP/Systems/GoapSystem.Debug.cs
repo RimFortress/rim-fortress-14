@@ -148,11 +148,7 @@ public partial class GoapSystem
                     if (!effectsCheck || effectsCheck == dummyCheck)
                         continue;
 
-                    edges.Add(new GoapStaticGraphEdge(
-                        FromNodeId: from,
-                        ToNodeId: to,
-                        ConditionIndex: condIndex,
-                        ConditionType: condition.GetType().Name));
+                    edges.Add(new GoapStaticGraphEdge(from, to));
                 }
             }
         }

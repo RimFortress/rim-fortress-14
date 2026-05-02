@@ -37,11 +37,17 @@ public sealed partial class UtilityAiGoalControl : Control
         TabContainer.SetTabVisible(ConditionsTab, info.Preconditions.Length > 0);
 
         // Status
-        if (current == info.Id)
+        if (current == info.ProtoId)
             StatusLabel.Text = $@"[color={StyleFortress.LightGood.ToHex()}]\[Active][/color]";
 
         if (info.AgentGoal)
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Available][/color]";
+
+        if (info.FallbackGoal)
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Fallback][/color]";
+
+        if (info.ExecutableGoal)
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Orange.ToHex()}]\[Executable][/color]";
 
         if (info.Cooldown != TimeSpan.Zero)
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Cooldown][/color]";
@@ -51,10 +57,10 @@ public sealed partial class UtilityAiGoalControl : Control
 
         StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
 
-        if (!_proto.Resolve(info.Id, out var proto))
+        if (!_proto.Resolve(info.ProtoId, out var proto))
             return;
 
-        Title.Text = $"[bold][color={proto.Color.ToHex()}]{info.Id}[/color] ({info.Result:F2})[/bold]";
+        Title.Text = $"[bold][color={proto.Color.ToHex()}]{info.ProtoId}[/color] ({info.Result:F2})[/bold]";
 
         // Common
         AddLabel(CommonTab, "Name:", Loc.GetString(proto.Name));
