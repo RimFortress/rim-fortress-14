@@ -56,7 +56,7 @@ public sealed partial class GoapDebugTab : Control
                 PointType.SetItemMetadata(1, GoapBreakpointKind.ActionStartup);
                 PointType.AddItem("Action Update", 2);
                 PointType.SetItemMetadata(2, GoapBreakpointKind.ActionUpdate);
-                PointType.AddItem("Action Startup", 3);
+                PointType.AddItem("Action Shutdown", 3);
                 PointType.SetItemMetadata(3, GoapBreakpointKind.ActionShutdown);
             }
         };
@@ -250,8 +250,10 @@ public sealed partial class GoapDebugTab : Control
 
         foreach (var node in graph.Nodes)
         {
-            var planNode = plan?.Nodes.FirstOrNull(x => x.TaskId == node.Id);
-            var actions = plan?.Actions.Where(x => x.NodeIndex == node.Id).ToList();
+            var planNode = GetNode(node.Id);
+            var actions = plan?.Actions
+                .Where(x => x.NodeIndex == node.Id)
+                .ToList();
 
             var control = new GraphNodeControl(node, actions, planNode);
 
@@ -276,10 +278,11 @@ public sealed partial class GoapDebugTab : Control
             Result.Visible = false;
             Confirm.Disabled = true;
 
-            for (var i = 0; i < graph.Nodes.Count; i++)
+            foreach (var node in graph.Nodes)
             {
-                var node = graph.Nodes[i];
-                NodeId.AddItem((plan?.Nodes[i].Compound ?? "Node") + $" #{node.Id}", node.Id);
+                NodeId.AddItem(
+                    (plan?.Nodes.FirstOrNull(x => x.NodeId == node.Id)?.Compound ?? "Node") + $" #{node.Id}",
+                    node.Id);
             }
         }
 
@@ -290,6 +293,15 @@ public sealed partial class GoapDebugTab : Control
             return;
 
         TotalCost.Text = $"[bold]Total Cost: {plan.Value.TotalCost}[/bold]";
+        ConditionsChecked.Text = $"[bold]Conditions Checked: {plan.Value.ConditionsChecked}[/bold]";
+        PlanningNodes.Text = $"[bold]Available Nodes: {graph.Nodes.Count}[/bold]";
+        NodesInPlan.Text = "[bold]Nodes in Plan: "
+                           + graph.Nodes.Count(x
+                               => plan.Value.Actions.Any(y
+                                   => y.NodeIndex == x.Id))
+                           + "[/bold]";
+        EffectsApplied.Text = $"[bold]Effects Applied: {plan.Value.EffectsApplied}[/bold]";
+        SkippedExpensiveNodes.Text = $"[bold]Skipped Expensive Nodes: {plan.Value.SkippedExpensiveNodes}[/bold]";
         NodesExpanded.Text = $"[bold]Nodes Expanded: {plan.Value.NodesExpanded}[/bold]";
         Planning.Text = plan.Value.Success
             ? $"[bold]Planning: [color={StyleFortress.LightGood.ToHex()}]Success[/color][/bold]"
@@ -340,6 +352,21 @@ public sealed partial class GoapDebugTab : Control
                     },
                 });
             }
+        }
+
+        GoapNodeDebugEntry? GetNode(int id)
+        {
+            if (plan == null)
+                return null;
+
+            var nodes = plan.Value.Nodes
+                .Where(x => x.NodeId == id)
+                .ToList();
+            return nodes.FirstOrNull(x => x.InPlan)
+                   ?? nodes.FirstOrNull(x => x.AddedToOpenList)
+                   ?? nodes.OrderByDescending(x
+                           => x.Preconditions.Count(y => y.Result))
+                       .FirstOrNull();
         }
     }
 

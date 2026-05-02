@@ -7,6 +7,8 @@
         <Control Name="Drag" MouseFilter="Pass">
             <PanelContainer StyleClasses="PanelDark"/>
             <BoxContainer Margin="5 5 8 0">
+                <TextureRect Name="Marker" SetSize="18 18"
+                             Margin="3 0" Stretch="KeepAspectCentered"/>
                 <Label Name="Label"/>
             </BoxContainer>
         </Control>

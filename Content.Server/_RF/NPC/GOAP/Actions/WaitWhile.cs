@@ -33,9 +33,11 @@ public sealed class WaitWhileSystem : GoapActionSystem<WaitWhile>
         {
             var check = Goap.CheckCondition(ent, ent.Comp.State, con, out var dump);
 
-            CreateDump(ent, action, dump?.Dump != null
-                ? $"{con.GetType()}: {check} ({dump?.Dump})"
-                : $"{con.GetType()}: {check}");
+            CreateDump(ent,
+                action,
+                dump?.Dump != null
+                    ? $"{con.GetType().Name}: {check} ({dump?.Dump})"
+                    : $"{con.GetType().Name}: {check}");
 
             if (!check)
                 return GoapActionResult.Finished;

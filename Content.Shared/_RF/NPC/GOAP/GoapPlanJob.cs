@@ -52,6 +52,12 @@ public sealed class GoapPlanJob(
         public required ExecutableGoapTask? TaskFromParent;
 
         public required int? TaskIdFromParent;
+
+#if TOOLS
+        public required GoapStateDebugDump StateBefore;
+        public required GoapPreconditionDebugDump[] Preconditions;
+        public required float H;
+#endif
     }
 
     /// <summary>
@@ -102,11 +108,9 @@ public sealed class GoapPlanJob(
         }
     }
 
-    internal sealed class MinHeap<T>
+    private sealed class MinHeap<T>
     {
         private readonly List<Entry> _data = new(128);
-
-        public int Count => _data.Count;
 
         private readonly record struct Entry(T Item, float Priority);
 
@@ -118,28 +122,25 @@ public sealed class GoapPlanJob(
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryDequeue(out T item, out float priority)
+        public bool TryDequeue(out T item)
         {
             if (_data.Count == 0)
             {
                 item = default!;
-                priority = default;
                 return false;
             }
 
             var root = _data[0];
             item = root.Item;
-            priority = root.Priority;
 
             var last = _data[^1];
             _data.RemoveAt(_data.Count - 1);
 
-            if (_data.Count > 0)
-            {
-                _data[0] = last;
-                SiftDown(0);
-            }
+            if (_data.Count <= 0)
+                return true;
 
+            _data[0] = last;
+            SiftDown(0);
             return true;
         }
 
@@ -202,6 +203,11 @@ public sealed class GoapPlanJob(
             TaskIdFromParent = null,
             G = 0f,
             F = Heuristic(startState, goalState),
+#if TOOLS
+            StateBefore = startState.GetStateDump(),
+            Preconditions = Array.Empty<GoapPreconditionDebugDump>(),
+            H = Heuristic(startState, goalState),
+#endif
         };
 
 #if TOOLS
@@ -227,7 +233,7 @@ public sealed class GoapPlanJob(
         openSet.Enqueue(startNode, startNode.F);
         nodeCache[startState] = startNode;
 
-        while (openSet.TryDequeue(out var current, out _))
+        while (openSet.TryDequeue(out var current))
         {
             // Check for timeout
             await SuspendIfOutOfTime();
@@ -238,9 +244,21 @@ public sealed class GoapPlanJob(
 #if TOOLS
                 debug.Success = true;
                 debug.TotalCost = current.G;
-                var (plan, actions) = BuildPlan(current);
+                var (plan, nodes, actions) = BuildPlan(current);
                 debug.Actions = actions ?? new();
                 debug.ElapsedTime = StopWatch.Elapsed;
+                debug.Nodes.AddRange(nodes ?? new());
+
+                // At this time, we only support breakpoints for nodes included in the plan,
+                // since conditions are checked multiple times during planning and behavior may be unpredictable.
+                foreach (var node in nodes ?? new())
+                {
+                    for (var i = 0; i < node.Preconditions.Length; i++)
+                    {
+                        goap.RaisePreconditionBreakpoint(target, node.NodeId, i, node.Preconditions[i].Result);
+                    }
+                }
+
                 return (plan, debug);
 #else
                 return (BuildPlan(current).Plan, null);
@@ -267,12 +285,12 @@ public sealed class GoapPlanJob(
                 {
                     var cond = task.Preconditions[j];
                     var result = goap.CheckCondition(target, current.State, cond, out var condDump);
-                    goap.RaisePreconditionBreakpoint(target, i, j, result);
 
                     if (!result)
                         preconditionsMet = false;
 
                     preconditions.Add(new(condDump ?? new(null, current.State.GetStateDump()), result));
+                    debug.ConditionsChecked++;
                 }
 #else
                 var preconditionsMet = goap.CheckCondition(target, current.State, task.Preconditions);
@@ -282,26 +300,28 @@ public sealed class GoapPlanJob(
                 {
 #if TOOLS
                     debug.Nodes.Add(new(
-                        i,
-                        task.Compound,
-                        preconditions.ToArray(),
-                        stateBefore,
-                        null,
-                        current.G,
-                        0,
-                        false,
-                        false,
-                        "Preconditions not met"));
+                        NodeId: i,
+                        Compound: task.Compound,
+                        Preconditions: preconditions.ToArray(),
+                        StateBefore: stateBefore,
+                        StateAfter: null,
+                        TaskCost: current.G,
+                        Heuristic: 0,
+                        AddedToOpenList: false,
+                        PreconditionsMet: false,
+                        InPlan: false,
+                        SkipReason: "Preconditions not met"));
 #endif
                     continue;
                 }
 
-#if TOOLS
-                debug.NodesExpanded++;
-#endif
-
                 // Apply effects to get the new state
                 var newState = ApplyEffects(current.State, task.Effects);
+
+#if TOOLS
+                debug.NodesExpanded++;
+                debug.EffectsApplied += task.Effects.Count;
+#endif
 
                 // Compute cost to reach new state
                 var taskCost = TaskCost(target, current.State, task, goap);
@@ -312,16 +332,18 @@ public sealed class GoapPlanJob(
                 {
 #if TOOLS
                     debug.Nodes.Add(new(
-                        i,
-                        task.Compound,
-                        preconditions.ToArray(),
-                        stateBefore,
-                        newState.GetStateDump(),
-                        taskCost,
-                        0,
-                        false,
-                        true,
-                        $"Cheaper path already exists (existing G={existingNode.G}, new G={newG})"));
+                        NodeId: i,
+                        Compound: task.Compound,
+                        Preconditions: preconditions.ToArray(),
+                        StateBefore: stateBefore,
+                        StateAfter: newState.GetStateDump(),
+                        TaskCost: taskCost,
+                        Heuristic: Heuristic(newState, goalState),
+                        AddedToOpenList: false,
+                        PreconditionsMet: true,
+                        InPlan: false,
+                        SkipReason: $"Cheaper path already exists (existing G={existingNode.G}, new G={newG})"));
+                    debug.SkippedExpensiveNodes++;
 #endif
                     continue;
                 }
@@ -335,6 +357,11 @@ public sealed class GoapPlanJob(
                     TaskIdFromParent = i,
                     G = newG,
                     F = newG + h,
+#if TOOLS
+                    StateBefore = stateBefore,
+                    Preconditions = preconditions.ToArray(),
+                    H = h,
+#endif
                 };
 
                 openSet.Enqueue(newNode, newNode.F);
@@ -342,16 +369,17 @@ public sealed class GoapPlanJob(
 
 #if TOOLS
                 debug.Nodes.Add(new(
-                    i,
-                    task.Compound,
-                    preconditions.ToArray(),
-                    stateBefore,
-                    newState.GetStateDump(),
-                    taskCost,
-                    h,
-                    true,
-                    true,
-                    null));
+                    NodeId: i,
+                    Compound: task.Compound,
+                    Preconditions: preconditions.ToArray(),
+                    StateBefore: stateBefore,
+                    StateAfter: newState.GetStateDump(),
+                    TaskCost: taskCost,
+                    Heuristic: h,
+                    AddedToOpenList: true,
+                    PreconditionsMet: true,
+                    InPlan: false,
+                    SkipReason: null));
 #endif
             }
         }
@@ -379,9 +407,9 @@ public sealed class GoapPlanJob(
     {
         var cost = 0f;
 
-        for (var i = 0; i < task.Actions.Count; i++)
+        foreach (var action in task.Actions)
         {
-            cost += goap.ActionCost(target, state, task.Actions[i]);
+            cost += goap.ActionCost(target, state, action);
         }
 
         return cost;
@@ -436,16 +464,35 @@ public sealed class GoapPlanJob(
     /// Returns a flat list of actions to execute.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (GoapPlan Plan, List<GoapActionDebugInfo>? Debug) BuildPlan(Node goalNode)
+    private static (GoapPlan Plan, List<GoapNodeDebugEntry>? Nodes, List<GoapActionDebugInfo>? Debug) BuildPlan(Node goalNode)
     {
         // Collect tasks in reverse order
         var tasks = new List<(ExecutableGoapTask Task, int Id)>();
+#if TOOLS
+        var nodes = new List<GoapNodeDebugEntry>();
+#endif
         var current = goalNode;
 
         while (current.Parent != null)
         {
             DebugTools.Assert(current.TaskFromParent != null, "Non-root node must have a task.");
             tasks.Add((current.TaskFromParent!.Value, current.TaskIdFromParent!.Value));
+
+#if TOOLS
+            nodes.Add(new GoapNodeDebugEntry(
+                NodeId: current.TaskIdFromParent!.Value,
+                Compound: current.TaskFromParent!.Value.Compound,
+                Preconditions: current.Preconditions,
+                StateBefore: current.StateBefore,
+                StateAfter: current.State.GetStateDump(),
+                TaskCost: current.G,
+                Heuristic: current.H,
+                AddedToOpenList: true,
+                PreconditionsMet: true,
+                InPlan: true,
+                SkipReason: null));
+#endif
+
             current = current.Parent;
         }
 
@@ -475,9 +522,9 @@ public sealed class GoapPlanJob(
                     new()));
             }
         }
-        return (new GoapPlan(actions, 0), debug);
+        return (new GoapPlan(actions, 0), nodes, debug);
 #else
-        return new (GoapPlan(actions, 0), null);
+        return new (GoapPlan(actions, 0), null, null);
 #endif
     }
 }

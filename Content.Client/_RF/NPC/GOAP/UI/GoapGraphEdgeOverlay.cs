@@ -25,17 +25,14 @@ public sealed class GoapGraphEdgeOverlay : Control
         }
 
         _planNodes.Clear();
+
         if (plan == null)
             return;
 
         foreach (var node in plan.Value.Nodes)
         {
-            _planNodes.Add(node.TaskId);
-        }
-
-        foreach (var action in plan.Value.Actions)
-        {
-            _planNodes.Add(action.NodeIndex);
+            if (node.InPlan)
+                _planNodes.Add(node.NodeId);
         }
     }
 

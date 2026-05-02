@@ -176,9 +176,25 @@ public sealed partial class GraphNodeControl : Control
             _ => StatusLabel.Text,
         };
 
-        if (actions?.Any(x => x.NodeIndex == graphNode.Id) == true
-            && debug?.PreconditionsMet == true)
+        if (debug?.InPlan == true)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
+
+            if (actions?.Any(x
+                    => x.UpdateDumps.Any(y
+                        => y.Result == GoapActionResult.Continuing)) == true)
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Continuing\][/color]";
+
+            if (actions?.Any(x
+                    => x.UpdateDumps.Any(y
+                        => y.Result == GoapActionResult.Failed)) == true)
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Failed\][/color]";
+
+            if (actions?.All(x
+                    => x.UpdateDumps.All(y
+                        => y.Result == GoapActionResult.Finished)) == true)
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Finished\][/color]";
+        }
 
         StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
 

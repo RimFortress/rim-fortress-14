@@ -30,7 +30,7 @@ public readonly record struct GoapStateDebugDump(
 /// <summary>
 /// A single step in the A* search: trying to apply a task to a state.
 /// </summary>
-/// <param name="TaskId">Index of this node in the list of all nodes available for planning.</param>
+/// <param name="NodeId">Index of this node in the list of all nodes available for planning.</param>
 /// <param name="Compound">The compound from which this node was extracted.</param>
 /// <param name="Preconditions">Dump about the conditions of the task.</param>
 /// <param name="StateBefore">State before applying the task.</param>
@@ -39,10 +39,11 @@ public readonly record struct GoapStateDebugDump(
 /// <param name="Heuristic">Heuristic value for the resulting state.</param>
 /// <param name="AddedToOpenList">Was this node added to the open set?</param>
 /// <param name="PreconditionsMet">Were preconditions satisfied?</param>
+/// <param name="InPlan">Is this node included in the final plan?</param>
 /// <param name="SkipReason">Reason why node was skipped (if not added).</param>
 [Serializable, NetSerializable]
 public readonly record struct GoapNodeDebugEntry(
-    int TaskId,
+    int NodeId,
     ProtoId<GoapCompoundPrototype>? Compound,
     GoapPreconditionDebugDump[] Preconditions,
     GoapStateDebugDump StateBefore,
@@ -51,6 +52,7 @@ public readonly record struct GoapNodeDebugEntry(
     float Heuristic,
     bool AddedToOpenList,
     bool PreconditionsMet,
+    bool InPlan,
     string? SkipReason);
 
 [Serializable, NetSerializable]
@@ -64,6 +66,9 @@ public readonly record struct GoapPreconditionDebugDump(GoapDebugDump Dump, bool
 /// <param name="TotalCost">Total cost of the found plan.</param>
 /// <param name="Success">Whether a plan was found.</param>
 /// <param name="NodesExpanded">Expanded node count.</param>
+/// <param name="ConditionsChecked">Preconditions check count.</param>
+/// <param name="EffectsApplied">Applied effects count.</param>
+/// <param name="SkippedExpensiveNodes">Expensive node skip count.</param>
 /// <param name="ElapsedTime">Planning elapsed time.</param>
 /// <param name="Nodes">Step-by-step log of node expansions.</param>
 /// <param name="Actions">Debug information for each action in the plan.</param>
@@ -74,6 +79,9 @@ public record struct GoapPlanDebugInfo(
     float TotalCost,
     bool Success,
     int NodesExpanded,
+    int ConditionsChecked,
+    int EffectsApplied,
+    int SkippedExpensiveNodes,
     TimeSpan ElapsedTime,
     List<GoapNodeDebugEntry> Nodes,
     List<GoapActionDebugInfo> Actions);

@@ -38,6 +38,21 @@
             <RichTextLabel Name="TotalCost" Margin="5 0"/>
             <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
 
+            <RichTextLabel Name="PlanningNodes" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="NodesInPlan" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="ConditionsChecked" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="EffectsApplied" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
+            <RichTextLabel Name="SkippedExpensiveNodes" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
             <RichTextLabel Name="NodesExpanded" Margin="5 0"/>
             <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
 
