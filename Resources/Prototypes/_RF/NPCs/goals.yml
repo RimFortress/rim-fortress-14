@@ -3,6 +3,8 @@
   scoreCurves:
   - !type:NeedLevel
     need: Sleep
+  - minus:
+    - float: 1
   - pow:
     - float: 2
   goalState:

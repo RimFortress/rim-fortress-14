@@ -55,7 +55,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     [PublicAPI, Pure]
     public bool Filter(GoapState state, EntityUid target, SearchFilter filter) => filter.Filter(state, target, this);
 
-    /// <inheritdoc cref="Filter"/>
+    /// <inheritdoc cref="Filter(GoapState, EntityUid, SearchFilter)"/>
     [PublicAPI, Pure]
     public bool Filter(GoapState state, EntityUid target, List<SearchFilter> filters)
     {
@@ -85,7 +85,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     [PublicAPI, Pure]
     public float Score(GoapState state, EntityUid target, SearchConsideration con) => con.Score(state, target, this);
 
-    /// <inheritdoc cref="Score"/>
+    /// <inheritdoc cref="Score(GoapState, EntityUid, SearchConsideration)"/>
     [PublicAPI, Pure]
     public float Score(GoapState state, EntityUid target, List<SearchConsideration> cons)
     {

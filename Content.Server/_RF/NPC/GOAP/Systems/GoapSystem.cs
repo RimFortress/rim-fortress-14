@@ -26,10 +26,9 @@ public sealed partial class GoapSystem : SharedGoapSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GoapComponent, ComponentStartup>(OnStartup);
+        SubscribeLocalEvent<GoapComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<GoapComponent, ComponentShutdown>(OnGoapShutdown);
         SubscribeLocalEvent<GoapComponent, MobStateChangedEvent>(_npc.OnMobStateChange);
-        SubscribeLocalEvent<GoapComponent, MapInitEvent>(_npc.OnNPCMapInit);
         SubscribeLocalEvent<GoapComponent, PlayerAttachedEvent>(_npc.OnPlayerNPCAttach);
         SubscribeLocalEvent<GoapComponent, PlayerDetachedEvent>(_npc.OnPlayerNPCDetach);
 
@@ -44,13 +43,14 @@ public sealed partial class GoapSystem : SharedGoapSystem
         ReloadPrototypes();
     }
 
-    private void OnStartup(Entity<GoapComponent> ent, ref ComponentStartup args)
+    private void OnMapInit(Entity<GoapComponent> ent, ref MapInitEvent args)
     {
         ent.Comp.State.SetValue(GoapState.Owner, ent);
         ent.Comp.ExecutableTasks = GetExecutableTasks(ent.Comp.RootTask);
 #if TOOLS
         ent.Comp.StaticGraph = BuildStaticGraph(ent, ent.Comp.ExecutableTasks);
 #endif
+        _npc.OnNPCMapInit(ent, ent.Comp, args);
     }
 
     private void OnGoapShutdown(Entity<GoapComponent> ent, ref ComponentShutdown args)
