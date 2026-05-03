@@ -1,0 +1,28 @@
+- type: goapCompound
+  id: Eat
+  tasks:
+  - preconditions:
+    - !type:SearchQueryEmpty
+      query: Food
+      invert: true
+    action: !type:SearchQuery
+      query: Food
+      targetKey: PickupTarget
+    effects:
+      FoodFound: true
+
+  - preconditions:
+    - FoodFound == true
+    - TargetPickedUp == true
+    action: !type:InteractWith
+      targetKey: PickupTarget
+    effects:
+      FoodOpened: true
+
+  - preconditions:
+    - TargetPickedUp == true
+    - FoodOpened == true
+    action: !type:InteractWith
+      targetKey: PickupTarget
+    effects:
+      FoodEaten: true

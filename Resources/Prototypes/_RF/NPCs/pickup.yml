@@ -1,0 +1,32 @@
+- type: goapCompound
+  id: Pickup
+  tasks:
+  - preconditions:
+    - InContainer == false
+    actions:
+    - !type:EntityCoords
+      targetKey: PickupTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    effects:
+      NearPickupTarget: true
+
+  - preconditions:
+    - !type:CanInsert
+    action: !type:Storage
+    effects:
+      ActiveHandFree: true
+
+  - action: !type:Drop
+    effects:
+      ActiveHandFree: true
+
+  - preconditions:
+    - ActiveHandFree == true
+    actions:
+    - !type:Pickup
+      targetKey: PickupTarget
+    - !type:MarkOwner
+      targetKey: PickupTarget
+    effects:
+      TargetPickedUp: true

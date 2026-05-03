@@ -386,16 +386,17 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     private bool TryGetStateDefaults(GoapState state, string key, [NotNullWhen(true)] out object? value)
     {
         value = null;
+        var owner = state.GetValue(GoapState.Owner);
 
         if (key == GoapState.OwnerCoordinates)
         {
-            value = Transform(state.GetValue(GoapState.Owner)).Coordinates;
+            value = Transform(owner).Coordinates;
             return true;
         }
 
         if (key == GoapState.ActiveHand)
         {
-            if (_hands.GetActiveHand(state.GetValue(GoapState.Owner)) is not { } hand)
+            if (_hands.GetActiveHand(owner) is not { } hand)
                 return false;
 
             value = hand;
@@ -404,7 +405,22 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
         if (key == GoapState.InContainer)
         {
-            value = _container.IsEntityInContainer(state.GetValue(GoapState.Owner));
+            value = _container.IsEntityInContainer(owner);
+            return true;
+        }
+
+        if (key == GoapState.ActiveHand)
+        {
+            value = _hands.ActiveHandIsEmpty(owner);
+            return true;
+        }
+
+        if (key == GoapState.ActiveHandEntity)
+        {
+            if (!_hands.TryGetActiveItem(owner, out var uid))
+                return false;
+
+            value = uid;
             return true;
         }
 

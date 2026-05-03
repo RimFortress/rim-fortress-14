@@ -3,16 +3,8 @@
   tasks:
   - proto: Sleep
   - proto: MoveTo
-
-  - preconditions:
-    - InContainer == true
-    actions:
-    - !type:Container
-      resultKey: Container
-    - !type:ContainerEscape
-      targetKey: Container
-    effects:
-      InContainer: false
+  - proto: Escape
+  - proto: Pickup
 
   - preconditions:
     - InContainer == false

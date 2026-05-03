@@ -260,21 +260,33 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     /// <summary>
     /// GoapState owner's coordinates.
-    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<EntityCoordinates> OwnerCoordinates = "OwnerCoordinates";
 
     /// <summary>
     /// Stores the ID of the agent's currently active hand.
-    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<string> ActiveHand = "ActiveHand";
 
     /// <summary>
     /// Is the agent currently inside a container?
-    /// The value of this key can be got via GoapSystem.TryGetValue.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<bool> InContainer = "InContainer";
+
+    /// <summary>
+    /// Is the agent's active hand free?
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<bool> ActiveHandFree = "ActiveHandFree";
+
+    /// <summary>
+    /// Stores the entity In the active hand.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<EntityUid> ActiveHandEntity = "ActiveHandEntity";
 
     /// <summary>
     /// Global defaults for NPCs

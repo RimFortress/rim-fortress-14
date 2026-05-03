@@ -20,13 +20,13 @@ public sealed partial class InteractWith : BaseGoapAction<InteractWith>
     /// Key that contains the target entity.
     /// </summary>
     [DataField(required: true)]
-    public StateKey<EntityUid> TargetKey = default!;
+    public StateKey<EntityUid> TargetKey;
 
     /// <summary>
     /// Exit with failure if doafter wasn't raised
     /// </summary>
     [DataField]
-    public bool ExpectDoAfter = false;
+    public bool ExpectDoAfter;
 
     public StateKey<ushort> CurrentDoAfter = "CurrentInteractWithDoAfter";
 }

@@ -17,20 +17,5 @@ public sealed class DropSystem : GoapActionSystem<Drop>
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Drop action) => 0f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Drop action)
-    {
-        var state = ent.Comp.State;
-
-        if (!Goap.TryGetValue(state, GoapState.ActiveHand, out _))
-        {
-            CreateDump(ent, action, "agent has no hands");
-            return false;
-        }
-
-        var owner = state.GetValue(GoapState.Owner);
-
-        if (_hands.TryDrop(owner))
-            return true;
-
-        return false;
-    }
+        => TryGetValue(ent, action, GoapState.ActiveHand, out _) && _hands.TryDrop(ent.Owner);
 }

@@ -1,0 +1,10 @@
+- type: goapCompound
+  id: Escape
+  tasks:
+  - actions:
+    - !type:Container
+      resultKey: Container
+    - !type:ContainerEscape
+      targetKey: Container
+    effects:
+      InContainer: false
