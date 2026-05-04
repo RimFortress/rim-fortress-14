@@ -9,8 +9,10 @@ namespace Content.Shared._RF.NPC.GOAP;
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class GoapAction : IGoapDebuggable
 {
+    private GoapDebugDump? _dump;
+
     [ViewVariables]
-    public GoapDebugDump? Dump { get; set; }
+    public GoapDebugDump? Dump { get => _dump; set => _dump = value; }
 
     public abstract float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer);
 

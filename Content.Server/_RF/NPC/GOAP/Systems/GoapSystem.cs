@@ -85,7 +85,6 @@ public sealed partial class GoapSystem : SharedGoapSystem
                     tasks.Add(new(
                         new List<GoapAction> { action.Action },
                         action.Preconditions,
-                        action.Services,
                         action.Effects,
                         protoId));
                     break;
@@ -93,7 +92,6 @@ public sealed partial class GoapSystem : SharedGoapSystem
                     tasks.Add(new(
                         compound.Actions,
                         compound.Preconditions,
-                        compound.Services,
                         compound.Effects,
                         protoId));
                     break;

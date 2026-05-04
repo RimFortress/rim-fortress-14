@@ -20,7 +20,6 @@
                 <BoxContainer Name="CommonTab" Orientation="Vertical"/>
                 <BoxContainer Name="ActionsTab" Orientation="Vertical"/>
                 <BoxContainer Name="PreconditionsTab" Orientation="Vertical"/>
-                <BoxContainer Name="ServicesTab" Orientation="Vertical"/>
             </TabContainer>
         </ScrollContainer>
     </BoxContainer>

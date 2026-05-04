@@ -53,12 +53,9 @@ public sealed class GoapPlanJob(
 
         public required int? TaskIdFromParent;
 
-        public required GoapState ServiceEffects;
-
 #if TOOLS
         public required GoapStateDebugDump StateBefore;
         public required GoapPreconditionDebugDump[] Preconditions;
-        public required GoapServiceDebugDump[] Services;
         public required float H;
 #endif
     }
@@ -111,48 +108,11 @@ public sealed class GoapPlanJob(
         }
     }
 
-    private sealed class GoapConditionCacheComparer : IEqualityComparer<(GoapState, GoapCondition)>
-    {
-        public static readonly GoapConditionCacheComparer Instance = new();
-
-        public bool Equals((GoapState?, GoapCondition?) x, (GoapState?, GoapCondition?) y)
-        {
-            return GoapStateComparer.Instance.Equals(x.Item1, y.Item1) && Equals(x.Item2, y.Item2);
-        }
-
-        public int GetHashCode((GoapState?, GoapCondition?) obj)
-        {
-            return HashCode.Combine(
-                GoapStateComparer.Instance.GetHashCode(obj.Item1!),
-                obj.Item2?.GetHashCode() ?? 0);
-        }
-    }
-
-    private sealed class GoapServiceCacheComparer : IEqualityComparer<(GoapState, GoapService)>
-    {
-        public static readonly GoapServiceCacheComparer Instance = new();
-
-        public bool Equals((GoapState?, GoapService?) x, (GoapState?, GoapService?) y)
-        {
-            return GoapStateComparer.Instance.Equals(x.Item1, y.Item1) && Equals(x.Item2, y.Item2);
-        }
-
-        public int GetHashCode((GoapState?, GoapService?) obj)
-        {
-            return HashCode.Combine(
-                GoapStateComparer.Instance.GetHashCode(obj.Item1!),
-                obj.Item2?.GetHashCode() ?? 0);
-        }
-    }
-
     private sealed class MinHeap<T>
     {
         private readonly List<Entry> _data = new(128);
 
         private readonly record struct Entry(T Item, float Priority);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear() => _data.Clear();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Enqueue(T item, float priority)
@@ -228,22 +188,12 @@ public sealed class GoapPlanJob(
         }
     }
 
-    private readonly MinHeap<Node> _openSet = new();
-    private readonly HashSet<GoapState> _closedSet = new(GoapStateComparer.Instance);
-    private readonly Dictionary<GoapState, Node> _nodeCache = new(GoapStateComparer.Instance);
-    private readonly Dictionary<(GoapState, GoapCondition), (bool Result, GoapDebugDump? Dump)> _conditionsCache
-        = new(GoapConditionCacheComparer.Instance);
-    private readonly Dictionary<(GoapState, GoapService), (GoapState? Result, GoapDebugDump? Dump)> _servicesCache
-        = new(GoapServiceCacheComparer.Instance);
-
     /// <inheritdoc/>
     protected override async Task<(GoapPlan? Plan, GoapPlanDebugInfo? Debug)> Process()
     {
-        _openSet.Clear();
-        _closedSet.Clear();
-        _nodeCache.Clear();
-        _conditionsCache.Clear();
-        _servicesCache.Clear();
+        var openSet = new MinHeap<Node>();
+        var closedSet = new HashSet<GoapState>(GoapStateComparer.Instance);
+        var nodeCache = new Dictionary<GoapState, Node>(GoapStateComparer.Instance);
 
         var startNode = new Node
         {
@@ -253,11 +203,9 @@ public sealed class GoapPlanJob(
             TaskIdFromParent = null,
             G = 0f,
             F = Heuristic(startState, goalState),
-            ServiceEffects = new(),
 #if TOOLS
             StateBefore = startState.GetStateDump(),
             Preconditions = Array.Empty<GoapPreconditionDebugDump>(),
-            Services = Array.Empty<GoapServiceDebugDump>(),
             H = Heuristic(startState, goalState),
 #endif
         };
@@ -282,10 +230,10 @@ public sealed class GoapPlanJob(
 #endif
         }
 
-        _openSet.Enqueue(startNode, startNode.F);
-        _nodeCache[startState] = startNode;
+        openSet.Enqueue(startNode, startNode.F);
+        nodeCache[startState] = startNode;
 
-        while (_openSet.TryDequeue(out var current))
+        while (openSet.TryDequeue(out var current))
         {
             // Check for timeout
             await SuspendIfOutOfTime();
@@ -309,11 +257,6 @@ public sealed class GoapPlanJob(
                     {
                         goap.RaisePreconditionBreakpoint(target, node.NodeId, i, node.Preconditions[i].Result);
                     }
-
-                    for (var i = 0; i < node.Services.Length; i++)
-                    {
-                        goap.RaiseServiceBreakpoint(target, node.NodeId, i, node.Services[i].Result != null);
-                    }
                 }
 
                 return (plan, debug);
@@ -322,7 +265,7 @@ public sealed class GoapPlanJob(
 #endif
             }
 
-            if (!_closedSet.Add(current.State))
+            if (!closedSet.Add(current.State))
                 continue;
 
             // Expand node by applying all executable tasks
@@ -335,33 +278,23 @@ public sealed class GoapPlanJob(
 #endif
 
                 // Check preconditions
+#if TOOLS
+                // In TOOLS dump all conditions
                 var preconditionsMet = true;
-                foreach (var cond in task.Preconditions)
+                for (var j = 0; j < task.Preconditions.Count; j++)
                 {
-                    var ind = (current.State, cond);
-                    if (!_conditionsCache.TryGetValue((current.State, cond), out var result))
-                    {
-                        result = (goap.CheckCondition(target, current.State, cond, out var condDump), condDump);
-                        _conditionsCache[ind] = result;
-#if TOOLS
-                        debug.ConditionsChecked++;
-#endif
-                    }
+                    var cond = task.Preconditions[j];
+                    var result = goap.CheckCondition(target, current.State, cond, out var condDump);
 
-                    if (!result.Result)
-                    {
+                    if (!result)
                         preconditionsMet = false;
-                        // In TOOLS dump all conditions
-#if RELEASE
-                        break;
-#endif
-                    }
 
-#if TOOLS
-                    preconditions.Add(new(result.Dump ?? new(null, current.State.GetStateDump()), result.Result));
-#endif
-
+                    preconditions.Add(new(condDump ?? new(null, current.State.GetStateDump()), result));
+                    debug.ConditionsChecked++;
                 }
+#else
+                var preconditionsMet = goap.CheckCondition(target, current.State, task.Preconditions);
+#endif
 
                 if (!preconditionsMet)
                 {
@@ -370,7 +303,6 @@ public sealed class GoapPlanJob(
                         NodeId: i,
                         Compound: task.Compound,
                         Preconditions: preconditions.ToArray(),
-                        Services: Array.Empty<GoapServiceDebugDump>(),
                         StateBefore: stateBefore,
                         StateAfter: null,
                         TaskCost: current.G,
@@ -383,66 +315,8 @@ public sealed class GoapPlanJob(
                     continue;
                 }
 
-                // Check services
-#if TOOLS
-                var services = new List<GoapServiceDebugDump>();
-#endif
-
-                // In TOOLS dump all services
-                var servicesValid = true;
-                var serviceEffects = new GoapState();
-
-                foreach (var service in task.Services)
-                {
-                    var ind = (current.State, service);
-
-                    if (!_servicesCache.TryGetValue(ind, out var result))
-                    {
-                        result = await WaitAsyncTask(goap.CheckService(target, current.State, service, Cancellation));
-                        await SuspendIfOutOfTime();
-                        _servicesCache[ind] = result;
-#if TOOLS
-                        debug.ServicesChecked++;
-#endif
-                    }
-
-                    if (result.Result == null)
-                    {
-                        servicesValid = false;
-#if RELEASE
-                        break;
-#endif
-                    }
-                    else
-                        serviceEffects.OverwriteFrom(result.Result);
-
-#if TOOLS
-                    services.Add(new(result.Dump ?? new(null, current.State.GetStateDump()), result.Result?.GetStateDump()));
-#endif
-                }
-
-                if (!servicesValid)
-                {
-#if TOOLS
-                    debug.Nodes.Add(new(
-                        NodeId: i,
-                        Compound: task.Compound,
-                        Preconditions: preconditions.ToArray(),
-                        Services: services.ToArray(),
-                        StateBefore: stateBefore,
-                        StateAfter: null,
-                        TaskCost: current.G,
-                        Heuristic: 0,
-                        AddedToOpenList: false,
-                        PreconditionsMet: false,
-                        InPlan: false,
-                        SkipReason: "Services failed"));
-#endif
-                    continue;
-                }
-
                 // Apply effects to get the new state
-                var newState = ApplyEffects(current.State, task.Effects, serviceEffects);
+                var newState = ApplyEffects(current.State, task.Effects);
 
 #if TOOLS
                 debug.NodesExpanded++;
@@ -454,14 +328,13 @@ public sealed class GoapPlanJob(
                 var newG = current.G + taskCost;
 
                 // Skip if we already found a cheaper path to this state
-                if (_nodeCache.TryGetValue(newState, out var existingNode) && existingNode.G <= newG)
+                if (nodeCache.TryGetValue(newState, out var existingNode) && existingNode.G <= newG)
                 {
 #if TOOLS
                     debug.Nodes.Add(new(
                         NodeId: i,
                         Compound: task.Compound,
                         Preconditions: preconditions.ToArray(),
-                        Services: services.ToArray(),
                         StateBefore: stateBefore,
                         StateAfter: newState.GetStateDump(),
                         TaskCost: taskCost,
@@ -484,24 +357,21 @@ public sealed class GoapPlanJob(
                     TaskIdFromParent = i,
                     G = newG,
                     F = newG + h,
-                    ServiceEffects = serviceEffects,
 #if TOOLS
                     StateBefore = stateBefore,
                     Preconditions = preconditions.ToArray(),
-                    Services = services.ToArray(),
                     H = h,
 #endif
                 };
 
-                _openSet.Enqueue(newNode, newNode.F);
-                _nodeCache[newState] = newNode;
+                openSet.Enqueue(newNode, newNode.F);
+                nodeCache[newState] = newNode;
 
 #if TOOLS
                 debug.Nodes.Add(new(
                     NodeId: i,
                     Compound: task.Compound,
                     Preconditions: preconditions.ToArray(),
-                    Services: services.ToArray(),
                     StateBefore: stateBefore,
                     StateAfter: newState.GetStateDump(),
                     TaskCost: taskCost,
@@ -564,11 +434,10 @@ public sealed class GoapPlanJob(
     /// Creates a new state by applying the effects of a task to the given state.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static GoapState ApplyEffects(GoapState state, GoapState effects, GoapState service)
+    private static GoapState ApplyEffects(GoapState state, GoapState effects)
     {
         var newState = state.ShallowClone();
         newState.OverwriteFrom(effects);
-        newState.OverwriteFrom(service);
         return newState;
     }
 
@@ -598,7 +467,7 @@ public sealed class GoapPlanJob(
     private static (GoapPlan Plan, List<GoapNodeDebugEntry>? Nodes, List<GoapActionDebugInfo>? Debug) BuildPlan(Node goalNode)
     {
         // Collect tasks in reverse order
-        var tasks = new List<(ExecutableGoapTask Task, GoapState Effects, int Id)>();
+        var tasks = new List<(ExecutableGoapTask Task, int Id)>();
 #if TOOLS
         var nodes = new List<GoapNodeDebugEntry>();
 #endif
@@ -607,14 +476,13 @@ public sealed class GoapPlanJob(
         while (current.Parent != null)
         {
             DebugTools.Assert(current.TaskFromParent != null, "Non-root node must have a task.");
-            tasks.Add((current.TaskFromParent!.Value, current.ServiceEffects, current.TaskIdFromParent!.Value));
+            tasks.Add((current.TaskFromParent!.Value, current.TaskIdFromParent!.Value));
 
 #if TOOLS
             nodes.Add(new GoapNodeDebugEntry(
                 NodeId: current.TaskIdFromParent!.Value,
                 Compound: current.TaskFromParent!.Value.Compound,
                 Preconditions: current.Preconditions,
-                Services: current.Services,
                 StateBefore: current.StateBefore,
                 StateAfter: current.State.GetStateDump(),
                 TaskCost: current.G,
@@ -632,18 +500,16 @@ public sealed class GoapPlanJob(
 
         // Flatten tasks into a sequence of actions
         var actions = new List<GoapAction>();
-        var services = new Dictionary<int, GoapState>();
 
-        foreach (var (task, effects, _) in tasks)
+        foreach (var (task, _) in tasks)
         {
-            services[actions.Count] = effects;
             actions.AddRange(task.Actions);
         }
 
 #if TOOLS
         var debug = new List<GoapActionDebugInfo>();
 
-        foreach (var (task, _, id) in tasks)
+        foreach (var (task, id) in tasks)
         {
             for (var j = 0; j < task.Actions.Count; j++)
             {
@@ -656,9 +522,9 @@ public sealed class GoapPlanJob(
                     new()));
             }
         }
-        return (new GoapPlan(actions, 0, services), nodes, debug);
+        return (new GoapPlan(actions, 0), nodes, debug);
 #else
-        return new (GoapPlan(actions, 0, service), null, null);
+        return new (GoapPlan(actions, 0), null, null);
 #endif
     }
 }

@@ -16,14 +16,6 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 {
     private readonly Dictionary<string, object> _state = new();
 
-    public GoapState(params (string, object)[] kv)
-    {
-        foreach (var (key, value) in kv)
-        {
-            _state[key] = value;
-        }
-    }
-
     /// <summary>
     /// Is the state available in read-only mode.
     /// </summary>
@@ -263,8 +255,6 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public static readonly StateKey<float> RotateSpeed = "RotateSpeed";
 
     public static readonly StateKey<float> MovementRange = "MovementRange";
-
-    public const string MovementPathfinding = "MovementPathfinding";
 
     // Entity system defaults
 

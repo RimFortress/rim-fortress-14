@@ -9,17 +9,12 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// </summary>
 /// <param name="Actions">Sequence of actions that make up this task.</param>
 /// <param name="Preconditions">Conditions that must hold before this task can be executed.</param>
-/// <param name="Services">
-/// Services that provide additional effects during the planning phase,
-/// which require additional calculations.
-/// </param>
 /// <param name="Effects">State changes that occur after successful execution.</param>
 /// <param name="Compound">The compound from which this task was extracted.</param>
 [Serializable]
 public readonly record struct ExecutableGoapTask(
     IReadOnlyList<GoapAction> Actions,
     IReadOnlyList<GoapCondition> Preconditions,
-    IReadOnlyList<GoapService> Services,
     GoapState Effects,
     ProtoId<GoapCompoundPrototype>? Compound);
 
@@ -29,10 +24,9 @@ public readonly record struct ExecutableGoapTask(
 /// <param name="Actions">List of actions to perform during the current plan.</param>
 /// <param name="Index">Current action index.</param>
 [Serializable]
-public record struct GoapPlan(List<GoapAction> Actions, int Index, Dictionary<int, GoapState> ServiceEffects)
+public record struct GoapPlan(List<GoapAction> Actions, int Index)
 {
     public readonly GoapAction CurrentAction => Actions[Index];
-    public readonly GoapState CurrentEffect => ServiceEffects.GetValueOrDefault(Index, new());
     public GoapPlan MoveNext() => this with { Index = Index + 1 };
 }
 

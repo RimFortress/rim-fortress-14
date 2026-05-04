@@ -33,7 +33,6 @@ public readonly record struct GoapStateDebugDump(
 /// <param name="NodeId">Index of this node in the list of all nodes available for planning.</param>
 /// <param name="Compound">The compound from which this node was extracted.</param>
 /// <param name="Preconditions">Dump about the conditions of the task.</param>
-/// <param name="Services">Dump about the services of the task.</param>
 /// <param name="StateBefore">State before applying the task.</param>
 /// <param name="StateAfter">State after applying effects (if preconditions met).</param>
 /// <param name="TaskCost">Task cost (sum of action costs).</param>
@@ -47,7 +46,6 @@ public readonly record struct GoapNodeDebugEntry(
     int NodeId,
     ProtoId<GoapCompoundPrototype>? Compound,
     GoapPreconditionDebugDump[] Preconditions,
-    GoapServiceDebugDump[] Services,
     GoapStateDebugDump StateBefore,
     GoapStateDebugDump? StateAfter,
     float TaskCost,
@@ -60,9 +58,6 @@ public readonly record struct GoapNodeDebugEntry(
 [Serializable, NetSerializable]
 public readonly record struct GoapPreconditionDebugDump(GoapDebugDump Dump, bool Result);
 
-[Serializable, NetSerializable]
-public readonly record struct GoapServiceDebugDump(GoapDebugDump Dump, GoapStateDebugDump? Result);
-
 /// <summary>
 /// Debug information about the planning process for a single GOAP agent.
 /// </summary>
@@ -72,7 +67,6 @@ public readonly record struct GoapServiceDebugDump(GoapDebugDump Dump, GoapState
 /// <param name="Success">Whether a plan was found.</param>
 /// <param name="NodesExpanded">Expanded node count.</param>
 /// <param name="ConditionsChecked">Preconditions check count.</param>
-/// <param name="ServicesChecked">Services check count.</param>
 /// <param name="EffectsApplied">Applied effects count.</param>
 /// <param name="SkippedExpensiveNodes">Expensive node skip count.</param>
 /// <param name="ElapsedTime">Planning elapsed time.</param>
@@ -86,7 +80,6 @@ public record struct GoapPlanDebugInfo(
     bool Success,
     int NodesExpanded,
     int ConditionsChecked,
-    int ServicesChecked,
     int EffectsApplied,
     int SkippedExpensiveNodes,
     TimeSpan ElapsedTime,
@@ -150,7 +143,6 @@ public readonly record struct GoapStaticGraphNode(
     int Id,
     List<GoapStaticGraphObject> Actions,
     List<GoapStaticGraphObject> Preconditions,
-    List<GoapStaticGraphObject> Services,
     GoapStateDebugDump EffectsDump) : IStaticGraphNode;
 
 /// <summary>
@@ -172,7 +164,6 @@ public readonly record struct GoapStaticGraphObject(
 public enum GoapBreakpointKind : byte
 {
     Precondition,
-    Service,
     ActionStartup,
     ActionUpdate,
     ActionShutdown,

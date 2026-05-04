@@ -1,7 +1,6 @@
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Robust.Shared.Prototypes;
-
-namespace Content.Shared._RF.NPC.GOAP;
 
 /// <summary>
 /// An abstract action plan node. GOAP has no knowledge of what
@@ -17,17 +16,10 @@ public abstract partial class GoapTask
     public List<GoapCondition> Preconditions = new();
 
     /// <summary>
-    /// Effects of completing this task, applied to the planning state.
+    /// Effects that will be applied to the agent's state after this node completes.
     /// </summary>
     [DataField]
     public GoapState Effects = new();
-
-    /// <summary>
-    /// Services that provide additional effects during the planning phase,
-    /// which require additional calculations.
-    /// </summary>
-    [DataField]
-    public List<GoapService> Services = new();
 }
 
 /// <summary>
