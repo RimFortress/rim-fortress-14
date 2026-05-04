@@ -48,6 +48,9 @@
             <RichTextLabel Name="ConditionsChecked" Margin="5 0"/>
             <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
 
+            <RichTextLabel Name="ServicesChecked" Margin="5 0"/>
+            <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
+
             <RichTextLabel Name="EffectsApplied" Margin="5 0"/>
             <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
 

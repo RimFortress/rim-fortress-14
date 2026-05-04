@@ -2,11 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.Search.Systems;
@@ -17,7 +15,6 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
 
     private readonly HashSet<EntityUid> _query = new();
@@ -107,26 +104,11 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     /// <summary>
     /// Returns all entities matching the search query, sorted from best to worst.
     /// </summary>
-    /// <remarks>
-    /// Calling this function frequently is relatively inexpensive,
-    /// since the search results are cached for a certain time.
-    /// </remarks>
-    /// <param name="ent">Agent entity.</param>
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="protoId">Search query prototype.</param>
     [PublicAPI]
-    public List<EntityUid> GetResults(
-        Entity<NpcSearcherComponent?> ent,
-        GoapState state,
-        ProtoId<SearchQueryPrototype> protoId)
+    public List<EntityUid> GetResults(GoapState state, ProtoId<SearchQueryPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp))
-            return new();
-
-        if (ent.Comp.Queries.TryGetValue(protoId, out var cache)
-            && cache.ValidUntil >= _timing.CurTime)
-            return cache.Result;
-
         if (!_proto.Resolve(protoId, out var proto))
             return new();
 
@@ -145,28 +127,25 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
             .OrderBy(x => x.Value)
             .Select(x => x.Key)
             .ToList();
-        ent.Comp.Queries[protoId] = new(_timing.CurTime + proto.ValidTime, result);
         return result;
     }
 
     /// <summary>
     /// Returns the most relevant entity for the given search query.
     /// </summary>
-    /// <param name="ent">Agent entity.</param>
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="protoId">Search query prototype.</param>
     /// <param name="result">Best entity.</param>
     /// <returns>True, if the entity found; otherwise, false</returns>
     [PublicAPI, Pure]
     public bool TryGetBestResult(
-        Entity<NpcSearcherComponent?> ent,
         GoapState state,
         ProtoId<SearchQueryPrototype> protoId,
         [NotNullWhen(true)] out EntityUid? result)
     {
         result = null;
 
-        var results = GetResults(ent, state, protoId);
+        var results = GetResults(state, protoId);
 
         if (results.Count == 0)
             return false;

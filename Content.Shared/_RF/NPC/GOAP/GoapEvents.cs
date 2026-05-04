@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Robust.Shared.Serialization;
 
@@ -15,6 +17,24 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// <param name="Result">Check result.</param>
 [PublicAPI, ByRefEvent]
 public record struct GoapConditionCheck<T>(T Condition, GoapState State, bool Result) where T : BaseGoapCondition<T>;
+
+/// <summary>
+/// An event raised to get the result of a service check.
+/// </summary>
+/// <typeparam name="T">GOAP service type.</typeparam>
+/// <param name="Service">GOAP service.</param>
+/// <param name="State">
+/// The state against which the check should be performed.
+/// It may differ from the agent's actual state.
+/// </param>
+/// <param name="Result">An asynchronous operation whose result is the output of the service.</param>
+/// <param name="Cancellation">A token for interrupting the asynchronous operation of the service.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapServiceCheck<T>(
+    T Service,
+    GoapState State,
+    Task<GoapState?> Result,
+    CancellationToken Cancellation) where T : BaseGoapService<T>;
 
 /// <summary>
 /// Event raised to update a GOAP action.

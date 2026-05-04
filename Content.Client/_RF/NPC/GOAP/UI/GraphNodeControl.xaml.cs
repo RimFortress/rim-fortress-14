@@ -29,9 +29,11 @@ public sealed partial class GraphNodeControl : Control
         TabContainer.SetTabTitle(CommonTab, "Common");
         TabContainer.SetTabTitle(ActionsTab, "Actions");
         TabContainer.SetTabTitle(PreconditionsTab, "Preconditions");
+        TabContainer.SetTabTitle(ServicesTab, "Services");
 
         TabContainer.SetTabVisible(ActionsTab, graphNode.Actions.Count > 0);
         TabContainer.SetTabVisible(PreconditionsTab, graphNode.Preconditions.Count > 0);
+        TabContainer.SetTabVisible(ServicesTab, graphNode.Services.Count > 0);
 
         var controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
 
@@ -166,6 +168,42 @@ public sealed partial class GraphNodeControl : Control
             AddLogs(box.Content, debugCon.Dump.Dump);
         }
 
+        // ServicesTab
+        for (var i = 0; i < graphNode.Services.Count; i++)
+        {
+            var index = i;
+            var service = graphNode.Services[i];
+
+            // Static graph info
+            var box = debug?.Services.TryGetValue(i, out var result) != true
+                ? AddBox(ServicesTab, service.Type)
+                : AddBox(ServicesTab,
+                    service.Type,
+                    result.Result != null
+                        ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
+                        : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
+            AddTypes(box.Content, "Fields", service.Reflection);
+
+            controller.OnBreakpointRaised += point =>
+            {
+                if (point.NodeId != graphNode.Id
+                    || point.Index != index
+                    || point.Kind != GoapBreakpointKind.Service)
+                    return;
+
+                box.ExpandAll();
+                TabContainer.CurrentTab = 3;
+            };
+
+            // Planing debug info
+            if (debug?.Services.TryGetValue(i, out var debugService) != true)
+                continue;
+
+            AddTypes(box.Content, "Results", debugService.Result?.State);
+            AddTypes(box.Content, "State Snapshot", debugService.Dump.StateSnapshot.State);
+            AddLogs(box.Content, debugService.Dump.Dump);
+        }
+
         // Common
         if (debug?.InPlan == true)
         {
@@ -183,13 +221,13 @@ public sealed partial class GraphNodeControl : Control
                     => x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Failed)
                        || x.StartupSuccess == false) == true)
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Failed\][/color]";
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Bad.ToHex()}]\[Failed\][/color]";
 
             if (actions?.Count > 0
                 && actions.All(x
                     => x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Finished)))
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Finished\][/color]";
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[Finished\][/color]";
         }
         else
         {

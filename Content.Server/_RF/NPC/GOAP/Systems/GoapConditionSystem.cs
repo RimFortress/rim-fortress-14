@@ -6,7 +6,7 @@ namespace Content.Server._RF.NPC.GOAP.Systems;
 /// <summary>
 /// An entity system that implements GOAP condition check.
 /// </summary>
-/// <typeparam name="T">GOAP condtition type.</typeparam>
+/// <typeparam name="T">GOAP condition type.</typeparam>
 public abstract class GoapConditionSystem<T> : GoapDebugDumpSystem where T : BaseGoapCondition<T>
 {
     public override void Initialize()

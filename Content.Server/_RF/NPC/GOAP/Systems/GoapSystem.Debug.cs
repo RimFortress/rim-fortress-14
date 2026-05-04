@@ -31,7 +31,7 @@ public partial class GoapSystem
             return;
 
         // Holy shit
-        if (msg.Point.Kind is GoapBreakpointKind.Precondition or GoapBreakpointKind.ActionStartup
+        if (msg.Point.Kind is GoapBreakpointKind.Precondition or GoapBreakpointKind.ActionStartup or GoapBreakpointKind.Service
             && msg.Point.Result != GoapBreakpointResultKind.True
             && msg.Point.Result != GoapBreakpointResultKind.False
             || msg.Point.Kind == GoapBreakpointKind.ActionUpdate
@@ -112,6 +112,7 @@ public partial class GoapSystem
                 Id: i,
                 Actions: task.Actions.Select(ToObject).ToList(),
                 Preconditions: task.Preconditions.Select(ToObject).ToList(),
+                Services: task.Services.Select(ToObject).ToList(),
                 EffectsDump: task.Effects.GetStateDump()))
             .ToList();
 

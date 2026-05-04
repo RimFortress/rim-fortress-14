@@ -9,16 +9,14 @@ namespace Content.Shared._RF.NPC.GOAP;
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class GoapCondition : IGoapDebuggable
 {
-    private GoapDebugDump? _dump;
-
     [ViewVariables]
-    public GoapDebugDump? Dump { get => _dump; set => _dump = value; }
+    public GoapDebugDump? Dump { get; set; }
 
     /// <summary>
     /// Returns true if the check is passed; otherwise, false.
     /// </summary>
     [Pure]
-    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump);
+    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump);
 }
 
 /// <summary>
@@ -32,13 +30,13 @@ public abstract partial class SimpleGoapCondition : GoapCondition
     [DataField(required: true)]
     public string Key = string.Empty;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump)
     {
         dump = null;
-        return SimpleCheck(state, cheker);
+        return SimpleCheck(state, checker);
     }
 
-    public abstract bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker);
+    public abstract bool SimpleCheck(GoapState state, IGoapConditionCheсker checker);
 }
 
 /// <summary>
@@ -52,9 +50,9 @@ public abstract partial class BaseGoapCondition<T> : GoapCondition where T : Bas
     [DataField]
     public bool Invert;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker cheker, out GoapDebugDump? dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump)
     {
-        var result = cheker.CheckCondition(target, state, (T)this, out dump);
+        var result = checker.CheckCondition(target, state, (T)this, out dump);
 
         if (Invert)
         {

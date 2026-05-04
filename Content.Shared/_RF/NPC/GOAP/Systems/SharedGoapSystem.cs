@@ -1,4 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared.Hands.EntitySystems;
 using JetBrains.Annotations;
@@ -9,7 +11,7 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.GOAP.Systems;
 
-public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, IGoapActionPerformer
+public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, IGoapActionPerformer, IGoapServiceChecker
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
@@ -73,6 +75,60 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     [PublicAPI]
     public bool CheckCondition(Entity<GoapComponent?> ent, IEnumerable<GoapCondition> conditions)
         => Resolve(ent, ref ent.Comp) && CheckCondition(ent, ent.Comp.State, conditions);
+
+    #endregion
+
+    #region Services
+
+    public Task<GoapState?> CheckService<T>(
+        EntityUid target,
+        GoapState state,
+        T service,
+        CancellationToken cancellation = default) where T : BaseGoapService<T>
+    {
+        service.Dump = null;
+        state.ReadOnly = true;
+        var ev = new GoapServiceCheck<T>(service, state, Task.FromResult<GoapState?>(null), cancellation);
+        RaiseLocalEvent(target, ref ev);
+        state.ReadOnly = false;
+        return ev.Result;
+    }
+
+    /// <inheritdoc cref="CheckService{T}"/>
+    public async Task<(GoapState? Result, GoapDebugDump? Dump)> CheckService(
+        EntityUid target,
+        GoapState state,
+        GoapService service,
+        CancellationToken cancellation = default)
+    {
+        var result = await service.Check(target, state, this, cancellation);
+        return (result, service.Dump);
+    }
+
+    /// <inheritdoc cref="CheckService{T}"/>
+    public async Task<GoapState?> CheckService(
+        EntityUid target,
+        GoapState state,
+        IReadOnlyList<GoapService> services,
+        CancellationToken cancellation = default)
+    {
+        var result = new GoapState();
+
+        foreach (var service in services)
+        {
+            var effects = await service.Check(target, state, this, cancellation);
+
+            if (effects == null)
+                return null;
+
+            foreach (var (key, value) in effects)
+            {
+                result.SetValue(key, value);
+            }
+        }
+
+        return result;
+    }
 
     #endregion
 
@@ -201,9 +257,14 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// <returns>True, if the action startup was successful.</returns>
     protected bool ActionStartup(EntityUid target, GoapAction action)
     {
+        if (!TryComp(target, out GoapComponent? comp))
+            return false;
+
+        if (comp.Plan?.CurrentEffect.Count > 0)
+            comp.State.OverwriteFrom(comp.Plan.Value.CurrentEffect);
+
 #if TOOLS
         var success = action.Startup(target, this, out var dump);
-        var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
             comp is { Plan: not null, PlanDebug: not null },
             $"attempt to startup action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
@@ -486,6 +547,40 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         }
     }
 
+    [PublicAPI]
+    public void RaiseServiceBreakpoint(EntityUid target, int nodeId, int serviceIndex, bool result)
+    {
+        var netTarget = GetNetEntity(target);
+
+        foreach (var (session, points) in Breakpoints)
+        {
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+
+                if (point.Target != netTarget
+                    || point.NodeId != nodeId
+                    || point.Index != serviceIndex
+                    || point.Kind != GoapBreakpointKind.Service)
+                    continue;
+
+                switch (result)
+                {
+                    case true
+                        when point.Result != GoapBreakpointResultKind.True:
+                    case false
+                        when point.Result != GoapBreakpointResultKind.False:
+                        continue;
+                    default:
+                        QueueDebugSend(session, target, point);
+                        RemoveBreakpoint(session, point);
+                        i--;
+                        break;
+                }
+            }
+        }
+    }
+
     protected void RemoveBreakpoint(ICommonSession session, GoapBreakpoint point)
     {
         if (!Breakpoints.TryGetValue(session, out var points)
@@ -599,4 +694,25 @@ public interface IGoapActionPerformer
     /// <param name="action">GOAP action.</param>
     /// <param name="dump">Debug dump.</param>
     void ActionShutdown<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
+}
+
+public interface IGoapServiceChecker
+{
+    /// <param name="target">Target entity.</param>
+    /// <param name="state">
+    /// The state against which the check should be performed.
+    /// It may differ from the agent's actual state.
+    /// </param>
+    /// <param name="service">GOAP service.</param>
+    /// <param name="cancellation">A token for interrupting the asynchronous operation of the service.</param>
+    /// <typeparam name="T">GOAP service type.</typeparam>
+    /// <returns>
+    /// A state that stores the results of the service's operation,
+    /// or <b>null</b> if the service's operation failed.
+    /// </returns>
+    Task<GoapState?> CheckService<T>(
+        EntityUid target,
+        GoapState state,
+        T service,
+        CancellationToken cancellation = default) where T : BaseGoapService<T>;
 }

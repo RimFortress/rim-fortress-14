@@ -52,14 +52,20 @@ public sealed partial class GoapDebugTab : Control
                 PointType.SetItemMetadata(0, GoapBreakpointKind.Precondition);
             }
 
+            if (node.Preconditions.Count > 0)
+            {
+                PointType.AddItem("Service", 1);
+                PointType.SetItemMetadata(1, GoapBreakpointKind.Service);
+            }
+
             if (node.Actions.Count > 0)
             {
-                PointType.AddItem("Action Startup", 1);
-                PointType.SetItemMetadata(1, GoapBreakpointKind.ActionStartup);
-                PointType.AddItem("Action Update", 2);
-                PointType.SetItemMetadata(2, GoapBreakpointKind.ActionUpdate);
-                PointType.AddItem("Action Shutdown", 3);
-                PointType.SetItemMetadata(3, GoapBreakpointKind.ActionShutdown);
+                PointType.AddItem("Action Startup", 2);
+                PointType.SetItemMetadata(2, GoapBreakpointKind.ActionStartup);
+                PointType.AddItem("Action Update", 3);
+                PointType.SetItemMetadata(3, GoapBreakpointKind.ActionUpdate);
+                PointType.AddItem("Action Shutdown", 4);
+                PointType.SetItemMetadata(4, GoapBreakpointKind.ActionShutdown);
             }
         };
 
@@ -87,6 +93,13 @@ public sealed partial class GoapDebugTab : Control
                     Index.AddItem(condition.Type);
                 }
             }
+            else if (kind == GoapBreakpointKind.Service)
+            {
+                foreach (var service in node.Services)
+                {
+                    Index.AddItem(service.Type);
+                }
+            }
             else
             {
                 foreach (var action in node.Actions)
@@ -98,6 +111,7 @@ public sealed partial class GoapDebugTab : Control
             switch (kind)
             {
                 case GoapBreakpointKind.Precondition:
+                case GoapBreakpointKind.Service:
                 case GoapBreakpointKind.ActionStartup:
                     Result.AddItem("True", 0);
                     Result.SetItemMetadata(0, GoapBreakpointResultKind.True);
@@ -218,6 +232,8 @@ public sealed partial class GoapDebugTab : Control
             {
                 GoapBreakpointKind.Precondition =>
                     $"#{point.NodeId} {node.Preconditions[point.Index].Type} ({point.Index}): {point.Result}",
+                GoapBreakpointKind.Service =>
+                    $"{point.NodeId} {node.Services[point.Index].Type} ({point.Index}): {point.Result}",
                 GoapBreakpointKind.ActionStartup =>
                     $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Startup: {point.Result}",
                 GoapBreakpointKind.ActionUpdate =>
@@ -300,6 +316,7 @@ public sealed partial class GoapDebugTab : Control
 
         TotalCost.Text = $"[bold]Total Cost: {plan.Value.TotalCost}[/bold]";
         ConditionsChecked.Text = $"[bold]Conditions Checked: {plan.Value.ConditionsChecked}[/bold]";
+        ServicesChecked.Text = $"[bold]Services Checked: {plan.Value.ServicesChecked}[/bold]";
         PlanningNodes.Text = $"[bold]Available Nodes: {graph.Nodes.Count}[/bold]";
         NodesInPlan.Text = "[bold]Nodes in Plan: "
                            + graph.Nodes.Count(x

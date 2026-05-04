@@ -31,12 +31,14 @@ public sealed partial class GoapGraphGameTest : GameTest
             new(
                 Actions: new List<GoapAction> { new TestNoopAction() },
                 Preconditions: new List<GoapCondition>(),
+                Services: new List<GoapService>(),
                 Effects: producerEffects,
                 Compound: null),
 
             new(
                 Actions: new List<GoapAction> { new TestNoopAction() },
                 Preconditions: consumerPreconditions,
+                Services: new List<GoapService>(),
                 Effects: new GoapState(),
                 Compound: null),
         };
