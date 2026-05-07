@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Interaction;
 using JetBrains.Annotations;
@@ -22,21 +23,52 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [Access(typeof(SharedGoapSystem))]
     public bool ReadOnly;
 
+    /// <summary>
+    /// Whether entity defaults should be used when a key is missing.
+    /// </summary>
+    [Access(typeof(SharedGoapSystem))]
+    public bool UseEntityDefaults = true;
+
+    public int CachedHash { get; private set; }
+
+    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public bool Equals(GoapState? other)
     {
-        if (other?.Count != Count)
+        if (ReferenceEquals(this, other))
+            return true;
+
+        if (other is null)
+            return false;
+
+        if (Count != other.Count || CachedHash != other.CachedHash)
             return false;
 
         foreach (var (key, value) in _state)
         {
-            if (!other.TryGetValue<object>(key, out var otherValue)
-                || otherValue != value)
+            if (!other._state.TryGetValue(key, out var otherValue)
+                || !Equals(value, otherValue))
                 return false;
         }
 
         return true;
+    }
+
+    public override bool Equals(object? obj) => obj is GoapState other && Equals(other);
+
+    public override int GetHashCode() => unchecked((CachedHash * 397) ^ Count);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int HashEntry(string key, object value)
+    {
+        unchecked
+        {
+            var hash = key.GetHashCode();
+            hash = (hash * 397) ^ value.GetType().GetHashCode();
+            hash = (hash * 397) ^ value.GetHashCode();
+            return hash;
+        }
     }
 
     #region API
@@ -140,16 +172,22 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [PublicAPI]
     public void Remove<T>(string key) where T : notnull
     {
-        DebugTools.Assert(!_state.TryGetValue(key, out var value) || value is T);
+        if (ReadOnly)
+        {
+            DebugTools.Assert(false, $"Tried to write key '{key}' to an GoapState that is readonly!");
+            return;
+        }
+
+        if (!_state.TryGetValue(key, out var value))
+            return;
+
+        DebugTools.Assert(value is T);
+        CachedHash ^= HashEntry(key, value);
         _state.Remove(key);
     }
 
     [PublicAPI]
-    public void Remove<T>(StateKey<T> key) where T : notnull
-    {
-        DebugTools.Assert(!_state.TryGetValue(key, out var value) || value is T);
-        _state.Remove(key);
-    }
+    public void Remove<T>(StateKey<T> key) where T : notnull => Remove<T>((string)key);
 
     /// <summary>
     /// Sets the value associated with the specified key.
@@ -159,10 +197,20 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     {
         if (ReadOnly)
         {
-            DebugTools.Assert(false, "Tried to write key '{key}' to an NPC GoapState that is readonly!");
+            DebugTools.Assert(false, $"Tried to write key '{key}' to an GoapState that is readonly!");
             return;
         }
+
+        if (_state.TryGetValue(key, out var oldValue))
+        {
+            if (Equals(oldValue, value))
+                return;
+
+            CachedHash ^= HashEntry(key, oldValue);
+        }
+
         _state[key] = value;
+        CachedHash ^= HashEntry(key, value);
     }
 
     /// <inheritdoc cref="SetValue"/>
@@ -171,19 +219,29 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     {
         if (ReadOnly)
         {
-            DebugTools.Assert(false, "Tried to write key '{key}' to an NPC GoapState that is readonly!");
+            DebugTools.Assert(false, $"Tried to write key '{key}' to an GoapState that is readonly!");
             return;
         }
+
+        if (_state.TryGetValue(key, out var oldValue))
+        {
+            if (Equals(oldValue, value))
+                return;
+
+            CachedHash ^= HashEntry(key, oldValue);
+        }
+
         _state[key] = value;
+        CachedHash ^= HashEntry(key, value);
     }
 
     [PublicAPI]
     public GoapState ShallowClone()
     {
-        var dict = new GoapState();
+        var dict = new GoapState { CachedHash = CachedHash };
         foreach (var item in _state)
         {
-            dict.SetValue(item.Key, item.Value);
+            dict._state[item.Key] = item.Value;
         }
         return dict;
     }

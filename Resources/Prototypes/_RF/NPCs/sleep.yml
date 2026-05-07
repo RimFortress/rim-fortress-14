@@ -2,9 +2,8 @@
   id: Sleep
   tasks:
   - preconditions:
-    - !type:SearchQueryEmpty
+    - !type:SearchQueryValid
       query: Bed
-      invert: true
     action: !type:SearchQuery
       query: Bed
       targetKey: Bed
@@ -23,8 +22,9 @@
       ReadyForSleep: true
 
   - preconditions:
-    - !type:SearchQueryEmpty
+    - !type:SearchQueryValid
       query: Bed
+      invert: true
     actions:
     - !type:PickAccessible
       rangeKey: IdleRange

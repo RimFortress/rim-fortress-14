@@ -272,9 +272,9 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         DebugTools.Assert(proto.TaskType != ExecutableGoalPrototype.ExecutableGoalType.Place || target == null);
 
         if (target != null)
-            goap.State.SetValue(proto.TargetKey, target);
+            goap.State.SetValue(proto.TargetKey, target.Value);
         if (coords != null)
-            goap.State.SetValue(proto.TargetCoordinatesKey, coords);
+            goap.State.SetValue(proto.TargetCoordinatesKey, coords.Value);
 
         if (additionalKeys != null)
         {
@@ -481,9 +481,12 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var goal in goals)
         {
-            if (Proto.Resolve(goal, out var proto)
-                && goap.State.TryGetValue(proto.TargetKey, out target))
-                return true;
+            if (!Proto.Resolve(goal, out var proto)
+                || !goap.State.TryGetValue(proto.TargetKey, out var uid))
+                continue;
+
+            target = uid;
+            return true;
         }
 
         return false;
@@ -509,8 +512,11 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             if (!Proto.Resolve(goal, out var proto))
                 continue;
 
-            if (goap.State.TryGetValue(proto.TargetCoordinatesKey, out coords))
+            if (goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
+            {
+                coords = result;
                 return true;
+            }
 
             if (goap.State.TryGetValue(proto.TargetKey, out var uid))
             {

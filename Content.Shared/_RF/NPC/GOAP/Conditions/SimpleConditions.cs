@@ -2,14 +2,10 @@ using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
-public abstract partial class Equals<T> : SimpleGoapCondition
-    where T : notnull, IEquatable<T>
+public abstract partial class Equals<T> : SimpleGoapCondition<T> where T : IEquatable<T>
 {
-    [DataField(required: true)]
-    public T Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<T>(state, Key, out var value) && value.Equals(Value);
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value.Equals(Value);
 }
 
 public sealed partial class EqualsBool : Equals<bool>;
@@ -18,14 +14,10 @@ public sealed partial class EqualsInt : Equals<int>;
 
 public sealed partial class EqualsFloat : Equals<float>;
 
-public abstract partial class NotEquals<T> : SimpleGoapCondition
-    where T : notnull, IEquatable<T>
+public abstract partial class NotEquals<T> : SimpleGoapCondition<T> where T : IEquatable<T>
 {
-    [DataField(required: true)]
-    public T Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<T>(state, Key, out var value) && !value.Equals(Value);
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && !value.Equals(Value);
 }
 
 public sealed partial class NotEqualsBool : NotEquals<bool>;
@@ -34,86 +26,86 @@ public sealed partial class NotEqualsInt : NotEquals<int>;
 
 public sealed partial class NotEqualsFloat : NotEquals<float>;
 
-public sealed partial class MoreThanInt : SimpleGoapCondition
+public sealed partial class MoreThanInt : SimpleGoapCondition<int>
 {
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value > Value;
+}
+
+public sealed partial class MoreThanFloat : SimpleGoapCondition<float>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value > Value;
+}
+
+public sealed partial class MoreThanOrEqualInt : SimpleGoapCondition<int>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value >= Value;
+}
+
+public sealed partial class MoreThanOrEqualFloat : SimpleGoapCondition<float>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value >= Value;
+}
+
+public sealed partial class LessThanInt : SimpleGoapCondition<int>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value < Value;
+}
+
+public sealed partial class LessThanFloat : SimpleGoapCondition<float>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value < Value;
+}
+
+public sealed partial class LessThanOrEqualInt : SimpleGoapCondition<int>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value <= Value;
+}
+
+public sealed partial class LessThanOrEqualFloat : SimpleGoapCondition<float>
+{
+    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker checker)
+        => checker.TryGetValue(state, Key, out var value) && value <= Value;
+}
+
+public sealed partial class KeyNotExist : GoapCondition
+{
+    /// <summary>
+    /// The key that this check refers to.
+    /// </summary>
     [DataField(required: true)]
-    public int Value = default!;
+    public StateKey<bool> Key = string.Empty;
 
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<int>(state, Key, out var value) && value > Value;
+    public override bool Check(EntityUid target,
+        GoapState state,
+        IGoapConditionCheсker checker,
+        out GoapDebugDump? dump)
+    {
+        dump = null;
+        return !state.ContainsKey(Key);
+    }
 }
 
-public sealed partial class MoreThanFloat : SimpleGoapCondition
+public sealed partial class KeyExist : GoapCondition
 {
+    /// <summary>
+    /// The key that this check refers to.
+    /// </summary>
     [DataField(required: true)]
-    public float Value = default!;
+    public StateKey<bool> Key = string.Empty;
 
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<float>(state, Key, out var value) && value > Value;
-}
-
-public sealed partial class MoreThanOrEqualInt : SimpleGoapCondition
-{
-    [DataField(required: true)]
-    public int Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<int>(state, Key, out var value) && value >= Value;
-}
-
-public sealed partial class MoreThanOrEqualFloat : SimpleGoapCondition
-{
-    [DataField(required: true)]
-    public float Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<float>(state, Key, out var value) && value >= Value;
-}
-
-public sealed partial class LessThanInt : SimpleGoapCondition
-{
-    [DataField(required: true)]
-    public int Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<int>(state, Key, out var value) && value < Value;
-}
-
-public sealed partial class LessThanFloat : SimpleGoapCondition
-{
-    [DataField(required: true)]
-    public float Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<float>(state, Key, out var value) && value < Value;
-}
-
-public sealed partial class LessThanOrEqualInt : SimpleGoapCondition
-{
-    [DataField(required: true)]
-    public int Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<int>(state, Key, out var value) && value <= Value;
-}
-
-public sealed partial class LessThanOrEqualFloat : SimpleGoapCondition
-{
-    [DataField(required: true)]
-    public float Value = default!;
-
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => cheker.TryGetValue<float>(state, Key, out var value) && value <= Value;
-}
-
-public sealed partial class KeyNotExist : SimpleGoapCondition
-{
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => !state.ContainsKey(Key);
-}
-
-public sealed partial class KeyExist : SimpleGoapCondition
-{
-    public override bool SimpleCheck(GoapState state, IGoapConditionCheсker cheker)
-        => state.ContainsKey(Key);
+    public override bool Check(EntityUid target,
+        GoapState state,
+        IGoapConditionCheсker checker,
+        out GoapDebugDump? dump)
+    {
+        dump = null;
+        return state.ContainsKey(Key);
+    }
 }

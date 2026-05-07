@@ -347,7 +347,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     [PublicAPI, Pure]
     public bool TryGetValue<T>(
         GoapState state,
-        string key,
+        StateKey<T> key,
         [NotNullWhen(true)] out T? value) where T : notnull
     {
         if (state.TryGetValue(key, out value))
@@ -362,39 +362,31 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 
     /// <inheritdoc/>
     [PublicAPI, Pure]
-    public bool TryGetValue<T>(
-        GoapState state,
-        StateKey<T> key,
-        [NotNullWhen(true)] out T? value) where T : notnull
-        => TryGetValue(state, (string)key, out value);
-
-    /// <inheritdoc/>
-    [PublicAPI, Pure]
-    public T GetValue<T>(GoapState state, string key) where T : notnull
+    public T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull
     {
         if (TryGetStateDefaults(state, key, out var value))
             return (T)value;
 
-        return state.GetValue<T>(key);
+        return state.GetValue(key);
     }
 
-    /// <inheritdoc/>
-    [PublicAPI, Pure]
-    public T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull
-        => GetValue<T>(state, (string)key);
-
-    private bool TryGetStateDefaults(GoapState state, string key, [NotNullWhen(true)] out object? value)
+    private bool TryGetStateDefaults<T>(GoapState state, StateKey<T> key, [NotNullWhen(true)] out object? value)
+        where T : notnull
     {
         value = null;
+
+        if (!state.UseEntityDefaults)
+            return false;
+
         var owner = state.GetValue(GoapState.Owner);
 
-        if (key == GoapState.OwnerCoordinates)
+        if (key.Equals(GoapState.OwnerCoordinates))
         {
             value = Transform(owner).Coordinates;
             return true;
         }
 
-        if (key == GoapState.ActiveHand)
+        if (key.Equals(GoapState.ActiveHand))
         {
             if (_hands.GetActiveHand(owner) is not { } hand)
                 return false;
@@ -403,19 +395,19 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
             return true;
         }
 
-        if (key == GoapState.InContainer)
+        if (key.Equals(GoapState.InContainer))
         {
             value = _container.IsEntityInContainer(owner);
             return true;
         }
 
-        if (key == GoapState.ActiveHand)
+        if (key.Equals(GoapState.ActiveHand))
         {
             value = _hands.ActiveHandIsEmpty(owner);
             return true;
         }
 
-        if (key == GoapState.ActiveHandEntity)
+        if (key.Equals(GoapState.ActiveHandEntity))
         {
             if (!_hands.TryGetActiveItem(owner, out var uid))
                 return false;
@@ -526,19 +518,12 @@ public interface IGoapConditionCheсker
     /// Returns the value of a key from the agent's GOAP state.
     /// </summary>
     /// <remarks>
-    /// This method differs from <see cref="GoapState.TryGetValue{T}(string, out T?)"/> in that it returns
+    /// This method differs from <see cref="GoapState.TryGetValue{T}(StateKey{T}, out T?)"/> in that it returns
     /// the default values for certain keys that are not present in the state,
     /// such as <see cref="GoapState.OwnerCoordinates"/>.
     /// </remarks>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
-    bool TryGetValue<T>(
-        GoapState state,
-        string key,
-        [NotNullWhen(true)] out T? value)
-        where T : notnull;
-
-    /// <inheritdoc cref="TryGetValue{T}(Content.Shared._RF.NPC.GOAP.GoapState,string,out T?)"/>
     bool TryGetValue<T>(
         GoapState state,
         StateKey<T> key,
@@ -550,9 +535,6 @@ public interface IGoapConditionCheсker
     /// Returns the value of a key from the agent's GOAP state.
     /// </summary>
     /// <typeparam name="T">Value type.</typeparam>
-    T GetValue<T>(GoapState state, string key) where T : notnull;
-
-    /// <inheritdoc cref="GetValue{T}(Content.Shared._RF.NPC.GOAP.GoapState,string)"/>
     T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull;
 }
 

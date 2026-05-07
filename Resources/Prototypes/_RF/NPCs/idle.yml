@@ -5,6 +5,8 @@
   - proto: MoveTo
   - proto: Escape
   - proto: Pickup
+  - proto: Eat
+  - proto: Drink
 
   - preconditions:
     - InContainer == false
@@ -13,10 +15,10 @@
       rangeKey: IdleRange
     - !type:MoveTo
       findPath: false
-    - !type:RandomFloat
+    - !type:RandomTime
       key: IdleTime
-      min: 2
-      max: 7
+      minSec: 2
+      maxSec: 7
     - !type:Wait
       timeKey: IdleTime
     effects:

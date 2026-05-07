@@ -138,10 +138,12 @@ public partial class GoapSystem
                     // This is done to verify that the effects and conditions actually
                     // link the two nodes, rather than the second node simply having no conditions.
                     var dummyState = new GoapState();
+                    dummyState.UseEntityDefaults = false;
                     dummyState.SetValue(GoapState.Owner, uid);
                     var dummyCheck = CheckCondition(uid, dummyState, condition);
 
                     var effectsState = producer.Effects.ShallowClone();
+                    effectsState.UseEntityDefaults = false;
                     effectsState.SetValue(GoapState.Owner, uid);
                     var effectsCheck = CheckCondition(uid, effectsState, condition);
 

@@ -33,17 +33,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
 
     private void OnGoapPlaningFailed(Entity<UtilityAiComponent> ent, ref GoapPlaningFailed args)
     {
-        if (ent.Comp.CurrentGoal == null)
-        {
-            if (!TryGetGoal(ent.AsNullable(), out var goal))
-                return;
-
-            SetGoal(ent.Owner, goal.Value);
-            return;
-        }
-
-        DoGoalFail(ent, ent.Comp.CurrentGoal.Value);
-        ent.Comp.CurrentGoal = null;
+        DoGoalFail(ent);
     }
 
     private void OnGoapPlanFinished(Entity<UtilityAiComponent> ent, ref GoapPlanFinished args)
@@ -52,35 +42,36 @@ public abstract class SharedUtilityAiSystem : EntitySystem
         {
             case GoapPlanFinishReason.Finished:
                 ent.Comp.CurrentGoal = null;
+                ent.Comp.Penalties.Clear();
 
                 if (TryGetGoal(ent.AsNullable(), out var goal))
                     SetGoal(ent.Owner, goal.Value);
 
                 break;
             case GoapPlanFinishReason.Failed:
-                if (ent.Comp.CurrentGoal == null)
-                {
-                    if (!TryGetGoal(ent.AsNullable(), out goal))
-                        break;
-
-                    SetGoal(ent.Owner, goal.Value);
-                    break;
-                }
-
-                DoGoalFail(ent, ent.Comp.CurrentGoal.Value);
-                ent.Comp.CurrentGoal = null;
+                DoGoalFail(ent);
                 break;
             case GoapPlanFinishReason.Interrupted:
                 ent.Comp.CurrentGoal = null;
+                ent.Comp.Penalties.Clear();
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
 
-    private void DoGoalFail(Entity<UtilityAiComponent> ent, ProtoId<UtilityAiGoalPrototype> protoId)
+    private void DoGoalFail(Entity<UtilityAiComponent> ent)
     {
-        if (!Proto.Resolve(protoId, out var proto))
+        if (ent.Comp.CurrentGoal == null)
+        {
+            if (TryGetGoal(ent.AsNullable(), out var newGoal))
+                SetGoal(ent.Owner, newGoal.Value);
+
+            ent.Comp.CurrentGoal = null;
+            return;
+        }
+
+        if (!Proto.Resolve(ent.Comp.CurrentGoal, out var proto))
             return;
 
         foreach (var fallback in proto.Fallbacks)
@@ -91,6 +82,8 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             SetGoal(ent.Owner, fallback);
             return;
         }
+
+        ent.Comp.CurrentGoal = null;
 
         switch (proto.FailPolicy)
         {
@@ -123,7 +116,6 @@ public abstract class SharedUtilityAiSystem : EntitySystem
 
         Goap.SetGoal(new(ent, ent.Comp2), proto.GoalState);
         ent.Comp1.CurrentGoal = protoId;
-        ent.Comp1.Penalties.Clear();
         RaiseLocalEvent(ent, new UtilityAiGoalGiven(protoId));
     }
 

@@ -6,7 +6,7 @@
   - minus:
     - float: 1
   - pow:
-    - float: 2
+    - float: 4
   goalState:
     Rested: true
     WokeUp: true
@@ -29,3 +29,25 @@
   id: MoveTo
   goalState:
     NearTargetPlace: true
+
+- type: utilityAiGoal
+  id: Eat
+  scoreCurves:
+  - !type:HungerLevel
+  - minus:
+    - float: 1
+  - pow:
+    - float: 2
+  goalState:
+    FoodEaten: true
+
+- type: utilityAiGoal
+  id: Drink
+  scoreCurves:
+  - !type:ThirstLevel
+  - minus:
+    - float: 1
+  - pow:
+    - float: 2
+  goalState:
+    DrinkDrunk: true

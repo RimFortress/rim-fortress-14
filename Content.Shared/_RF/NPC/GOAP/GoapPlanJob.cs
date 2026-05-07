@@ -60,59 +60,16 @@ public sealed class GoapPlanJob(
 #endif
     }
 
-    /// <summary>
-    /// Equality comparer for <see cref="GoapState"/> that compares the contents
-    /// of the state dictionaries.
-    /// </summary>
-    private sealed class GoapStateComparer : IEqualityComparer<GoapState>
-    {
-        public static readonly GoapStateComparer Instance = new();
-
-        public bool Equals(GoapState? x, GoapState? y)
-        {
-            if (ReferenceEquals(x, y))
-                return true;
-
-            if (x is null || y is null)
-                return false;
-
-            if (x.Count != y.Count)
-                return false;
-
-            foreach (var (key, value) in x)
-            {
-                if (!y.TryGetValue<object>(key, out var other))
-                    return false;
-
-                if (!Equals(value, other))
-                    return false;
-            }
-
-            return true;
-        }
-
-        public int GetHashCode(GoapState obj)
-        {
-            var hash = obj.Count;
-
-            foreach (var (key, value) in obj)
-            {
-                var pairHash = HashCode.Combine(
-                    key.GetHashCode(StringComparison.Ordinal),
-                    value.GetHashCode());
-
-                hash ^= pairHash;
-            }
-
-            return hash;
-        }
-    }
+    private readonly record struct ConditionCacheEntry(GoapState State, bool Result, GoapDebugDump? Dump);
 
     private sealed class MinHeap<T>
     {
         private readonly List<Entry> _data = new(128);
 
         private readonly record struct Entry(T Item, float Priority);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear() => _data.Clear();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Enqueue(T item, float priority)
@@ -136,7 +93,7 @@ public sealed class GoapPlanJob(
             var last = _data[^1];
             _data.RemoveAt(_data.Count - 1);
 
-            if (_data.Count <= 0)
+            if (_data.Count == 0)
                 return true;
 
             _data[0] = last;
@@ -188,27 +145,23 @@ public sealed class GoapPlanJob(
         }
     }
 
-    /// <inheritdoc/>
+    private readonly MinHeap<Node> _openSet = new();
+
+    // Best-known node for a state, bucketed by hash.
+    private readonly Dictionary<int, List<Node>> _bestNodesByHash = new();
+
+    // Closed states, bucketed by hash.
+    private readonly Dictionary<int, List<GoapState>> _closedByHash = new();
+
+    // Condition cache, bucketed by state hash + condition.
+    private readonly Dictionary<(int StateHash, GoapCondition Condition), List<ConditionCacheEntry>> _conditionCache = new();
+
     protected override async Task<(GoapPlan? Plan, GoapPlanDebugInfo? Debug)> Process()
     {
-        var openSet = new MinHeap<Node>();
-        var closedSet = new HashSet<GoapState>(GoapStateComparer.Instance);
-        var nodeCache = new Dictionary<GoapState, Node>(GoapStateComparer.Instance);
-
-        var startNode = new Node
-        {
-            State = startState.ShallowClone(),
-            Parent = null,
-            TaskFromParent = null,
-            TaskIdFromParent = null,
-            G = 0f,
-            F = Heuristic(startState, goalState),
-#if TOOLS
-            StateBefore = startState.GetStateDump(),
-            Preconditions = Array.Empty<GoapPreconditionDebugDump>(),
-            H = Heuristic(startState, goalState),
-#endif
-        };
+        _openSet.Clear();
+        _bestNodesByHash.Clear();
+        _closedByHash.Clear();
+        _conditionCache.Clear();
 
 #if TOOLS
         var debug = new GoapPlanDebugInfo
@@ -216,6 +169,7 @@ public sealed class GoapPlanJob(
             StartState = startState.GetStateDump(),
             GoalState = goalState.GetStateDump(),
             Nodes = new(),
+            Actions = new(),
         };
 #endif
 
@@ -230,15 +184,40 @@ public sealed class GoapPlanJob(
 #endif
         }
 
-        openSet.Enqueue(startNode, startNode.F);
-        nodeCache[startState] = startNode;
+        var startClone = startState.ShallowClone();
+        var startHeuristic = Heuristic(startClone, goalState);
 
-        while (openSet.TryDequeue(out var current))
+        var startNode = new Node
+        {
+            State = startClone,
+            Parent = null,
+            TaskFromParent = null,
+            TaskIdFromParent = null,
+            G = 0f,
+            F = startHeuristic,
+#if TOOLS
+            StateBefore = startState.GetStateDump(),
+            Preconditions = Array.Empty<GoapPreconditionDebugDump>(),
+            H = startHeuristic,
+#endif
+        };
+
+        _openSet.Enqueue(startNode, startNode.F);
+        SetBestNode(startNode);
+
+        while (_openSet.TryDequeue(out var current))
         {
             // Check for timeout
             await SuspendIfOutOfTime();
 
-            // Goal reached?
+            // Lazy deletion: skip nodes that are no longer the best known path to this state.
+            if (!TryGetBestNode(current.State.CachedHash, current.State, out var bestForState)
+                || !ReferenceEquals(bestForState, current))
+                continue;
+
+            if (IsClosed(current.State.CachedHash, current.State))
+                continue;
+
             if (IsGoalSatisfied(current.State, goalState))
             {
 #if TOOLS
@@ -265,8 +244,7 @@ public sealed class GoapPlanJob(
 #endif
             }
 
-            if (!closedSet.Add(current.State))
-                continue;
+            MarkClosed(current.State.CachedHash, current.State);
 
             // Expand node by applying all executable tasks
             for (var i = 0; i < tasks.Count; i++)
@@ -274,27 +252,34 @@ public sealed class GoapPlanJob(
                 var task = tasks[i];
 #if TOOLS
                 var stateBefore = current.State.GetStateDump();
-                var preconditions = new List<GoapPreconditionDebugDump>();
+                var preconditions = new List<GoapPreconditionDebugDump>(task.Preconditions.Count);
 #endif
 
-                // Check preconditions
-#if TOOLS
-                // In TOOLS dump all conditions
                 var preconditionsMet = true;
-                for (var j = 0; j < task.Preconditions.Count; j++)
+
+                foreach (var cond in task.Preconditions)
                 {
-                    var cond = task.Preconditions[j];
-                    var result = goap.CheckCondition(target, current.State, cond, out var condDump);
-
-                    if (!result)
-                        preconditionsMet = false;
-
-                    preconditions.Add(new(condDump ?? new(null, current.State.GetStateDump()), result));
-                    debug.ConditionsChecked++;
-                }
-#else
-                var preconditionsMet = goap.CheckCondition(target, current.State, task.Preconditions);
+                    if (!TryGetCachedCondition(current.State.CachedHash, current.State, cond, out var cached))
+                    {
+                        cached = (goap.CheckCondition(target, current.State, cond, out var condDump), condDump);
+                        SetCachedCondition(current.State.CachedHash, current.State, cond, cached);
+#if TOOLS
+                        debug.ConditionsChecked++;
 #endif
+                    }
+
+                    if (!cached.Result)
+                    {
+                        preconditionsMet = false;
+#if RELEASE
+                        break;
+#endif
+                    }
+
+#if TOOLS
+                    preconditions.Add(new(cached.Dump ?? new(null, current.State.GetStateDump()), cached.Result));
+#endif
+                }
 
                 if (!preconditionsMet)
                 {
@@ -328,7 +313,7 @@ public sealed class GoapPlanJob(
                 var newG = current.G + taskCost;
 
                 // Skip if we already found a cheaper path to this state
-                if (nodeCache.TryGetValue(newState, out var existingNode) && existingNode.G <= newG)
+                if (TryGetBestNode(newState.CachedHash, newState, out var existingNode) && existingNode.G <= newG)
                 {
 #if TOOLS
                     debug.Nodes.Add(new(
@@ -349,6 +334,7 @@ public sealed class GoapPlanJob(
                 }
 
                 var h = Heuristic(newState, goalState);
+
                 var newNode = new Node
                 {
                     State = newState,
@@ -364,8 +350,8 @@ public sealed class GoapPlanJob(
 #endif
                 };
 
-                openSet.Enqueue(newNode, newNode.F);
-                nodeCache[newState] = newNode;
+                _openSet.Enqueue(newNode, newNode.F);
+                SetBestNode(newNode);
 
 #if TOOLS
                 debug.Nodes.Add(new(
@@ -443,7 +429,7 @@ public sealed class GoapPlanJob(
 
     /// <summary>
     /// Heuristic function that estimates the cost from the current state to the goal.
-    /// Currently returns the number of unsatisfied goal conditions.
+    /// Currently, returns the number of unsatisfied goal conditions.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float Heuristic(GoapState current, GoapState goal)
@@ -526,5 +512,141 @@ public sealed class GoapPlanJob(
 #else
         return new (GoapPlan(actions, 0), null, null);
 #endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryGetBestNode(
+        Dictionary<int, List<Node>> buckets,
+        int hash,
+        GoapState state,
+        out Node node)
+    {
+        if (buckets.TryGetValue(hash, out var bucket))
+        {
+            foreach (var candidate in bucket)
+            {
+                if (!candidate.State.Equals(state))
+                    continue;
+                node = candidate;
+                return true;
+            }
+        }
+
+        node = default!;
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool TryGetBestNode(int hash, GoapState state, out Node node)
+        => TryGetBestNode(_bestNodesByHash, hash, state, out node);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetBestNode(Node node)
+    {
+        if (!_bestNodesByHash.TryGetValue(node.State.CachedHash, out var bucket))
+        {
+            bucket = new List<Node>(1);
+            bucket.Add(node);
+            _bestNodesByHash.Add(node.State.CachedHash, bucket);
+            return;
+        }
+
+        for (var i = 0; i < bucket.Count; i++)
+        {
+            if (!bucket[i].State.Equals(node.State))
+                continue;
+
+            bucket[i] = node;
+            return;
+        }
+
+        bucket.Add(node);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsClosed(int hash, GoapState state)
+    {
+        if (!_closedByHash.TryGetValue(hash, out var bucket))
+            return false;
+
+        foreach (var item in bucket)
+        {
+            if (item.Equals(state))
+                return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void MarkClosed(int hash, GoapState state)
+    {
+        if (!_closedByHash.TryGetValue(hash, out var bucket))
+        {
+            bucket = new List<GoapState>(1);
+            bucket.Add(state);
+            _closedByHash.Add(hash, bucket);
+            return;
+        }
+
+        foreach (var item in bucket)
+        {
+            if (item.Equals(state))
+                return;
+        }
+
+        bucket.Add(state);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool TryGetCachedCondition(
+        int stateHash,
+        GoapState state,
+        GoapCondition condition,
+        out (bool Result, GoapDebugDump? Dump) result)
+    {
+        var key = (stateHash, condition);
+        if (_conditionCache.TryGetValue(key, out var bucket))
+        {
+            foreach (var entry in bucket)
+            {
+                if (!entry.State.Equals(state))
+                    continue;
+
+                result = (entry.Result, entry.Dump);
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetCachedCondition(
+        int stateHash,
+        GoapState state,
+        GoapCondition condition,
+        (bool Result, GoapDebugDump? Dump) result)
+    {
+        var key = (stateHash, condition);
+        if (!_conditionCache.TryGetValue(key, out var bucket))
+        {
+            bucket = new List<ConditionCacheEntry>(1);
+            bucket.Add(new ConditionCacheEntry(state, result.Result, result.Dump));
+            _conditionCache.Add(key, bucket);
+            return;
+        }
+
+        for (var i = 0; i < bucket.Count; i++)
+        {
+            if (!bucket[i].State.Equals(state))
+                continue;
+
+            bucket[i] = new ConditionCacheEntry(state, result.Result, result.Dump);
+            return;
+        }
+
+        bucket.Add(new ConditionCacheEntry(state, result.Result, result.Dump));
     }
 }

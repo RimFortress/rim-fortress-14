@@ -1,38 +1,38 @@
 - type: goapCompound
-  id: Eat
+  id: Drink
   tasks:
   - preconditions:
     - !type:SearchQueryValid
-      query: FoodOpened
+      query: DrinkOpened
     action: !type:SearchQuery
-      query: FoodOpened
+      query: DrinkOpened
       targetKey: PickupTarget
     effects:
-      FoodFound: true
-      FoodOpened: true
+      DrinkFound: true
+      DrinkOpened: true
 
   - preconditions:
     - !type:SearchQueryValid
-      query: FoodClosed
+      query: DrinkClosed
     action: !type:SearchQuery
-      query: FoodClosed
+      query: DrinkClosed
       targetKey: PickupTarget
     effects:
-      FoodFound: true
-      FoodOpened: false
+      DrinkFound: true
+      DrinkOpened: false
 
   - preconditions:
-    - FoodFound == true
+    - DrinkFound == true
     - TargetPickedUp == true
     action: !type:InteractWith
       targetKey: PickupTarget
     effects:
-      FoodOpened: true
+      DrinkOpened: true
 
   - preconditions:
     - TargetPickedUp == true
-    - FoodOpened == true
+    - DrinkOpened == true
     action: !type:InteractWith
       targetKey: PickupTarget
     effects:
-      FoodEaten: true
+      DrinkDrunk: true

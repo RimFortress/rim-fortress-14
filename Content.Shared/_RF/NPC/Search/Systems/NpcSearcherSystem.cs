@@ -111,19 +111,18 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     /// Calling this function frequently is relatively inexpensive,
     /// since the search results are cached for a certain time.
     /// </remarks>
-    /// <param name="ent">Agent entity.</param>
+    /// <param name="agent">Agent entity.</param>
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="protoId">Search query prototype.</param>
     [PublicAPI]
     public List<EntityUid> GetResults(
-        Entity<NpcSearcherComponent?> ent,
+        EntityUid agent,
         GoapState state,
         ProtoId<SearchQueryPrototype> protoId)
     {
-        if (!Resolve(ent, ref ent.Comp))
-            return new();
+        var comp = EnsureComp<NpcSearcherComponent>(agent);
 
-        if (ent.Comp.Queries.TryGetValue(protoId, out var cache)
+        if (comp.Queries.TryGetValue(protoId, out var cache)
             && cache.ValidUntil >= _timing.CurTime)
             return cache.Result;
 
@@ -145,28 +144,28 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
             .OrderBy(x => x.Value)
             .Select(x => x.Key)
             .ToList();
-        ent.Comp.Queries[protoId] = new(_timing.CurTime + proto.ValidTime, result);
+        comp.Queries[protoId] = new(_timing.CurTime + proto.ValidTime, result);
         return result;
     }
 
     /// <summary>
     /// Returns the most relevant entity for the given search query.
     /// </summary>
-    /// <param name="ent">Agent entity.</param>
+    /// <param name="agent">Agent entity.</param>
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="protoId">Search query prototype.</param>
     /// <param name="result">Best entity.</param>
     /// <returns>True, if the entity found; otherwise, false</returns>
     [PublicAPI, Pure]
     public bool TryGetBestResult(
-        Entity<NpcSearcherComponent?> ent,
+        EntityUid agent,
         GoapState state,
         ProtoId<SearchQueryPrototype> protoId,
         [NotNullWhen(true)] out EntityUid? result)
     {
         result = null;
 
-        var results = GetResults(ent, state, protoId);
+        var results = GetResults(agent, state, protoId);
 
         if (results.Count == 0)
             return false;

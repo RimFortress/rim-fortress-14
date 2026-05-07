@@ -15,7 +15,7 @@ namespace Content.Server._RF.NPC.GOAP.Actions.Movement;
 public sealed partial class PickAccessible : BaseGoapAction<PickAccessible>
 {
     [DataField(required: true)]
-    public StateKey<float> RangeKey = string.Empty;
+    public StateKey<float> RangeKey;
 
     [DataField]
     public StateKey<EntityCoordinates> TargetCoordinates = "TargetCoordinates";

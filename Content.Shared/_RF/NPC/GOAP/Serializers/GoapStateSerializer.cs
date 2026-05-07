@@ -1,5 +1,4 @@
 using System.Globalization;
-using Robust.Shared.Reflection;
 using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Serialization.Markdown;
@@ -13,10 +12,13 @@ namespace Content.Shared._RF.NPC.GOAP.Serializers;
 [TypeSerializer]
 public sealed class GoapStateSerializer : ITypeReader<GoapState, MappingDataNode>, ITypeCopier<GoapState>
 {
-    public ValidationNode Validate(ISerializationManager serializationManager, MappingDataNode node,
-        IDependencyCollection dependencies, ISerializationContext? context = null)
+    public ValidationNode Validate(
+        ISerializationManager serializationManager,
+        MappingDataNode node,
+        IDependencyCollection dependencies,
+        ISerializationContext? context = null)
     {
-        var validated = new List<ValidationNode>();
+        var validated = new List<ValidationNode>(node.Count);
 
         if (node.Count <= 0)
             return new ValidatedSequenceNode(validated);
@@ -32,17 +34,18 @@ public sealed class GoapStateSerializer : ITypeReader<GoapState, MappingDataNode
         return new ValidatedSequenceNode(validated);
     }
 
-    public GoapState Read(ISerializationManager serializationManager, MappingDataNode node,
+    public GoapState Read(
+        ISerializationManager serializationManager,
+        MappingDataNode node,
         IDependencyCollection dependencies,
-        SerializationHookContext hookCtx, ISerializationContext? context = null,
+        SerializationHookContext hookCtx,
+        ISerializationContext? context = null,
         ISerializationManager.InstantiationDelegate<GoapState>? instanceProvider = null)
     {
         var state = instanceProvider != null ? instanceProvider() : new GoapState();
 
         if (node.Count <= 0)
             return state;
-
-        var reflection = dependencies.Resolve<IReflectionManager>();
 
         foreach (var (key, value) in node)
         {

@@ -101,19 +101,11 @@ public sealed partial class GraphNodeControl : Control
             if (debugAction.UpdateDumps.Count == 0)
                 continue;
 
-            var updateBox = AddBox(box.Content, "Updates");
+            var updateBox = AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
 
             foreach (var update in debugAction.UpdateDumps)
             {
-                var result = update.Result switch
-                {
-                    GoapActionResult.Finished => $"[color={StyleFortress.LightGood.ToHex()}]Finished[/color]",
-                    GoapActionResult.Failed => $"[color={StyleFortress.LightBad.ToHex()}]Failed[/color]",
-                    GoapActionResult.Continuing => $"[color={Color.Yellow.ToHex()}]Continuing[/color]",
-                    _ => throw new ArgumentOutOfRangeException(nameof(update.Result)),
-                };
-
-                var upd = AddBox(updateBox.Content, update.Tick.ToString(), result);
+                var upd = AddBox(updateBox.Content, update.Tick.ToString(), UpdateText(update.Result));
                 AddTypes(upd.Content, "State Snapshot", update.Dump.StateSnapshot.State);
                 AddLogs(upd.Content, update.Dump.Dump);
             }
@@ -183,13 +175,13 @@ public sealed partial class GraphNodeControl : Control
                     => x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Failed)
                        || x.StartupSuccess == false) == true)
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Failed\][/color]";
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.BetterViolet.ToHex()}]\[Failed\][/color]";
 
             if (actions?.Count > 0
                 && actions.All(x
                     => x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Finished)))
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Finished\][/color]";
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[Finished\][/color]";
         }
         else
         {
@@ -323,6 +315,17 @@ public sealed partial class GraphNodeControl : Control
             };
             parent.AddChild(box);
             return box;
+        }
+
+        string UpdateText(GoapActionResult result)
+        {
+            return result switch
+            {
+                GoapActionResult.Finished => $"[color={StyleFortress.LightGood.ToHex()}]Finished[/color]",
+                GoapActionResult.Failed => $"[color={StyleFortress.LightBad.ToHex()}]Failed[/color]",
+                GoapActionResult.Continuing => $"[color={Color.Yellow.ToHex()}]Continuing[/color]",
+                _ => throw new ArgumentOutOfRangeException(),
+            };
         }
     }
 }
