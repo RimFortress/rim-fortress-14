@@ -22,7 +22,7 @@ public sealed partial class InHands : BaseSearchFilter<InHands>
 public sealed class InHandsSystem : NpcSearchFilterSystem<InHands>
 {
     [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly EntityQuery<HandsComponent> _handsQuery;
+    [Dependency] private readonly EntityQuery<HandsComponent> _handsQuery = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, InHands filter)
     {

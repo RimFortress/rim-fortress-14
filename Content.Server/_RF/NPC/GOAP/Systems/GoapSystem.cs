@@ -70,7 +70,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
         }
     }
 
-    private List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
+    public List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
     {
         if (!_proto.Resolve(protoId, out var proto))
             return new();

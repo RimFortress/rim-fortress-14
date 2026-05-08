@@ -14,8 +14,8 @@ public sealed partial class TotalNutrition : BaseSearchConsideration<TotalNutrit
 public sealed class TotalNutritionSystem : NpcSearchConsiderationSystem<TotalNutrition>
 {
     [Dependency] private readonly IngestionSystem _ingestion = default!;
-    [Dependency] private readonly EntityQuery<IgnoreBadFoodComponent> _ignoreQuery;
-    [Dependency] private readonly EntityQuery<BadFoodComponent> _badFoodQuery;
+    [Dependency] private readonly EntityQuery<IgnoreBadFoodComponent> _ignoreQuery = default!;
+    [Dependency] private readonly EntityQuery<BadFoodComponent> _badFoodQuery = default!;
 
     protected override float GetScore(GoapState state, EntityUid target, TotalNutrition con)
     {

@@ -26,6 +26,7 @@ public sealed partial class GoapComponent : Component
 
     /// <inheritdoc cref="GoapCompoundPrototype"/>
     [DataField(required: true)]
+    [Access(Other = AccessPermissions.ReadWrite)]
     public ProtoId<GoapCompoundPrototype> RootTask;
 
     /// <summary>
@@ -41,6 +42,7 @@ public sealed partial class GoapComponent : Component
     /// Determines whether plans should be made / updated for this entity
     /// </summary>
     [DataField]
+    [Access(Other = AccessPermissions.ReadWrite)]
     public bool Enabled = true;
 
     /// <inheritdoc cref="GoapPlan"/>

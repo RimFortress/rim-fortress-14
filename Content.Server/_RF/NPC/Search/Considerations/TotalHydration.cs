@@ -14,7 +14,7 @@ public sealed partial class TotalHydration : BaseSearchConsideration<TotalHydrat
 public sealed class TotalHydrationSystem : NpcSearchConsiderationSystem<TotalHydration>
 {
     [Dependency] private readonly IngestionSystem _ingestion = default!;
-    [Dependency] private readonly EntityQuery<BadFoodComponent> _badQuery;
+    [Dependency] private readonly EntityQuery<BadFoodComponent> _badQuery = default!;
 
     protected override float GetScore(GoapState state, EntityUid target, TotalHydration con)
     {

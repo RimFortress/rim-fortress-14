@@ -13,7 +13,7 @@ public sealed partial class BuckleHealing : BaseSearchConsideration<BuckleHealin
 
 public sealed class BedHealingConSystem : NpcSearchConsiderationSystem<BuckleHealing>
 {
-    [Dependency] private readonly EntityQuery<HealOnBuckleComponent> _query;
+    [Dependency] private readonly EntityQuery<HealOnBuckleComponent> _query = default!;
 
     protected override float GetScore(GoapState state, EntityUid target, BuckleHealing con)
     {

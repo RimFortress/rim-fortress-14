@@ -59,7 +59,7 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
     [Dependency] private readonly NPCSteeringSystem _steering = default!;
     [Dependency] private readonly PathfindingSystem _pathfinding = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery;
+    [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery = default!;
 
     private readonly Dictionary<EntityUid, Task<PathResultEvent>> _pendingPaths = new();
 

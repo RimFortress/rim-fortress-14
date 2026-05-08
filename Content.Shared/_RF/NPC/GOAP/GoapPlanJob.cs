@@ -60,7 +60,7 @@ public sealed class GoapPlanJob(
 #endif
     }
 
-    private readonly record struct ConditionCacheEntry(GoapState State, bool Result, GoapDebugDump? Dump);
+    private readonly record struct ConditionCacheEntry(bool Result, GoapDebugDump? Dump);
 
     private sealed class MinHeap<T>
     {
@@ -148,19 +148,19 @@ public sealed class GoapPlanJob(
     private readonly MinHeap<Node> _openSet = new();
 
     // Best-known node for a state, bucketed by hash.
-    private readonly Dictionary<int, List<Node>> _bestNodesByHash = new();
+    private readonly Dictionary<GoapState, Node> _bestNodes = new();
 
     // Closed states, bucketed by hash.
-    private readonly Dictionary<int, List<GoapState>> _closedByHash = new();
+    private readonly HashSet<GoapState> _closed = new();
 
     // Condition cache, bucketed by state hash + condition.
-    private readonly Dictionary<(int StateHash, GoapCondition Condition), List<ConditionCacheEntry>> _conditionCache = new();
+    private readonly Dictionary<(GoapState, GoapCondition), ConditionCacheEntry> _conditionCache = new();
 
     protected override async Task<(GoapPlan? Plan, GoapPlanDebugInfo? Debug)> Process()
     {
         _openSet.Clear();
-        _bestNodesByHash.Clear();
-        _closedByHash.Clear();
+        _bestNodes.Clear();
+        _closed.Clear();
         _conditionCache.Clear();
 
 #if TOOLS
@@ -203,19 +203,15 @@ public sealed class GoapPlanJob(
         };
 
         _openSet.Enqueue(startNode, startNode.F);
-        SetBestNode(startNode);
+        _bestNodes[startClone] = startNode;
 
         while (_openSet.TryDequeue(out var current))
         {
             // Check for timeout
             await SuspendIfOutOfTime();
 
-            // Lazy deletion: skip nodes that are no longer the best known path to this state.
-            if (!TryGetBestNode(current.State.CachedHash, current.State, out var bestForState)
-                || !ReferenceEquals(bestForState, current))
-                continue;
-
-            if (IsClosed(current.State.CachedHash, current.State))
+            // Skip if we have already closed this state.
+            if (_closed.Contains(current.State))
                 continue;
 
             if (IsGoalSatisfied(current.State, goalState))
@@ -244,7 +240,7 @@ public sealed class GoapPlanJob(
 #endif
             }
 
-            MarkClosed(current.State.CachedHash, current.State);
+            _closed.Add(current.State);
 
             // Expand node by applying all executable tasks
             for (var i = 0; i < tasks.Count; i++)
@@ -259,10 +255,12 @@ public sealed class GoapPlanJob(
 
                 foreach (var cond in task.Preconditions)
                 {
-                    if (!TryGetCachedCondition(current.State.CachedHash, current.State, cond, out var cached))
+                    var key = (current.State, cond);
+                    if (!_conditionCache.TryGetValue(key, out var cached))
                     {
-                        cached = (goap.CheckCondition(target, current.State, cond, out var condDump), condDump);
-                        SetCachedCondition(current.State.CachedHash, current.State, cond, cached);
+                        var res = goap.CheckCondition(target, current.State, cond, out var condDump);
+                        cached = new(res, condDump);
+                        _conditionCache[key] = cached;
 #if TOOLS
                         debug.ConditionsChecked++;
 #endif
@@ -313,7 +311,7 @@ public sealed class GoapPlanJob(
                 var newG = current.G + taskCost;
 
                 // Skip if we already found a cheaper path to this state
-                if (TryGetBestNode(newState.CachedHash, newState, out var existingNode) && existingNode.G <= newG)
+                if (_bestNodes.TryGetValue(newState, out var existingNode) && existingNode.G <= newG)
                 {
 #if TOOLS
                     debug.Nodes.Add(new(
@@ -351,7 +349,7 @@ public sealed class GoapPlanJob(
                 };
 
                 _openSet.Enqueue(newNode, newNode.F);
-                SetBestNode(newNode);
+                _bestNodes[newState] = newNode;
 
 #if TOOLS
                 debug.Nodes.Add(new(
@@ -510,143 +508,7 @@ public sealed class GoapPlanJob(
         }
         return (new GoapPlan(actions, 0), nodes, debug);
 #else
-        return new (GoapPlan(actions, 0), null, null);
+        return (new GoapPlan(actions, 0), null, null);
 #endif
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryGetBestNode(
-        Dictionary<int, List<Node>> buckets,
-        int hash,
-        GoapState state,
-        out Node node)
-    {
-        if (buckets.TryGetValue(hash, out var bucket))
-        {
-            foreach (var candidate in bucket)
-            {
-                if (!candidate.State.Equals(state))
-                    continue;
-                node = candidate;
-                return true;
-            }
-        }
-
-        node = default!;
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool TryGetBestNode(int hash, GoapState state, out Node node)
-        => TryGetBestNode(_bestNodesByHash, hash, state, out node);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetBestNode(Node node)
-    {
-        if (!_bestNodesByHash.TryGetValue(node.State.CachedHash, out var bucket))
-        {
-            bucket = new List<Node>(1);
-            bucket.Add(node);
-            _bestNodesByHash.Add(node.State.CachedHash, bucket);
-            return;
-        }
-
-        for (var i = 0; i < bucket.Count; i++)
-        {
-            if (!bucket[i].State.Equals(node.State))
-                continue;
-
-            bucket[i] = node;
-            return;
-        }
-
-        bucket.Add(node);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsClosed(int hash, GoapState state)
-    {
-        if (!_closedByHash.TryGetValue(hash, out var bucket))
-            return false;
-
-        foreach (var item in bucket)
-        {
-            if (item.Equals(state))
-                return true;
-        }
-
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void MarkClosed(int hash, GoapState state)
-    {
-        if (!_closedByHash.TryGetValue(hash, out var bucket))
-        {
-            bucket = new List<GoapState>(1);
-            bucket.Add(state);
-            _closedByHash.Add(hash, bucket);
-            return;
-        }
-
-        foreach (var item in bucket)
-        {
-            if (item.Equals(state))
-                return;
-        }
-
-        bucket.Add(state);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool TryGetCachedCondition(
-        int stateHash,
-        GoapState state,
-        GoapCondition condition,
-        out (bool Result, GoapDebugDump? Dump) result)
-    {
-        var key = (stateHash, condition);
-        if (_conditionCache.TryGetValue(key, out var bucket))
-        {
-            foreach (var entry in bucket)
-            {
-                if (!entry.State.Equals(state))
-                    continue;
-
-                result = (entry.Result, entry.Dump);
-                return true;
-            }
-        }
-
-        result = default;
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetCachedCondition(
-        int stateHash,
-        GoapState state,
-        GoapCondition condition,
-        (bool Result, GoapDebugDump? Dump) result)
-    {
-        var key = (stateHash, condition);
-        if (!_conditionCache.TryGetValue(key, out var bucket))
-        {
-            bucket = new List<ConditionCacheEntry>(1);
-            bucket.Add(new ConditionCacheEntry(state, result.Result, result.Dump));
-            _conditionCache.Add(key, bucket);
-            return;
-        }
-
-        for (var i = 0; i < bucket.Count; i++)
-        {
-            if (!bucket[i].State.Equals(state))
-                continue;
-
-            bucket[i] = new ConditionCacheEntry(state, result.Result, result.Dump);
-            return;
-        }
-
-        bucket.Add(new ConditionCacheEntry(state, result.Result, result.Dump));
     }
 }
