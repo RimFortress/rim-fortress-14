@@ -15,6 +15,11 @@
 
 - type: utilityAiGoal
   id: WakeUp
+  conditions:
+  - !type:Or
+    conditions:
+    - !type:IsBuckled
+    - !type:Sleeping
   goalState:
     WokeUp: true
 

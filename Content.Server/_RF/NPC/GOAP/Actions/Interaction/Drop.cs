@@ -14,8 +14,6 @@ public sealed class DropSystem : GoapActionSystem<Drop>
 {
     [Dependency] private readonly HandsSystem _hands = default!;
 
-    protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Drop action) => 0f;
-
     protected override bool ActionStartup(Entity<GoapComponent> ent, Drop action)
         => TryGetValue(ent, action, GoapState.ActiveHand, out _) && _hands.TryDrop(ent.Owner);
 }

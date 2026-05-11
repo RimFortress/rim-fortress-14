@@ -66,8 +66,9 @@ public abstract class SharedUtilityAiSystem : EntitySystem
         {
             if (TryGetGoal(ent.AsNullable(), out var newGoal))
                 SetGoal(ent.Owner, newGoal.Value);
+            else
+                ent.Comp.CurrentGoal = null;
 
-            ent.Comp.CurrentGoal = null;
             return;
         }
 
@@ -82,8 +83,6 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             SetGoal(ent.Owner, fallback);
             return;
         }
-
-        ent.Comp.CurrentGoal = null;
 
         switch (proto.FailPolicy)
         {

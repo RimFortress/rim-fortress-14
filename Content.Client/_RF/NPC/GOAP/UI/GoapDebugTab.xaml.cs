@@ -46,20 +46,20 @@ public sealed partial class GoapDebugTab : Control
             NodeId.Select(args.Id);
             var node = _graph.Value.Nodes[NodeId.SelectedId];
 
-            if (node.Preconditions.Count > 0)
-            {
-                PointType.AddItem("Precondition", 0);
-                PointType.SetItemMetadata(0, GoapBreakpointKind.Precondition);
-            }
-
             if (node.Actions.Count > 0)
             {
-                PointType.AddItem("Action Startup", 1);
-                PointType.SetItemMetadata(1, GoapBreakpointKind.ActionStartup);
-                PointType.AddItem("Action Update", 2);
-                PointType.SetItemMetadata(2, GoapBreakpointKind.ActionUpdate);
-                PointType.AddItem("Action Shutdown", 3);
-                PointType.SetItemMetadata(3, GoapBreakpointKind.ActionShutdown);
+                PointType.AddItem("Action Startup", 0);
+                PointType.SetItemMetadata(0, GoapBreakpointKind.ActionStartup);
+                PointType.AddItem("Action Update", 1);
+                PointType.SetItemMetadata(1, GoapBreakpointKind.ActionUpdate);
+                PointType.AddItem("Action Shutdown", 2);
+                PointType.SetItemMetadata(2, GoapBreakpointKind.ActionShutdown);
+            }
+
+            if (node.Preconditions.Count > 0)
+            {
+                PointType.AddItem("Precondition", 3);
+                PointType.SetItemMetadata(3, GoapBreakpointKind.Precondition);
             }
         };
 

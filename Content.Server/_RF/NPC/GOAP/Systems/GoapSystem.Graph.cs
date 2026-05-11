@@ -42,7 +42,7 @@ public partial class GoapSystem
         {
             var from = nodes[fromInd];
 
-            if (from.Preconditions.Any(x => x is IComplexGoapCondition))
+            if (from.Preconditions.Any(x => x.EntityCondition))
             {
                 notConnected.Add(from.Id);
                 continue;
@@ -52,8 +52,7 @@ public partial class GoapSystem
             {
                 var to = nodes[toInd];
 
-                if (fromInd == toInd
-                    || to.Preconditions.Any(x => x is IComplexGoapCondition))
+                if (fromInd == toInd || notConnected.Contains(toInd))
                     continue;
 
                 var hasConnection = false;

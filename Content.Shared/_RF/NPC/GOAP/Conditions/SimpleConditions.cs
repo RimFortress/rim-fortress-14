@@ -82,6 +82,9 @@ public sealed partial class KeyNotExist : GoapCondition
     [DataField(required: true)]
     public StateKey<bool> Key = string.Empty;
 
+    /// <inheritdoc/>
+    public override bool EntityCondition => false;
+
     public override bool Check(EntityUid target,
         GoapState state,
         IGoapConditionCheсker checker,
@@ -99,6 +102,9 @@ public sealed partial class KeyExist : GoapCondition
     /// </summary>
     [DataField(required: true)]
     public StateKey<bool> Key = string.Empty;
+
+    /// <inheritdoc/>
+    public override bool EntityCondition => false;
 
     public override bool Check(EntityUid target,
         GoapState state,

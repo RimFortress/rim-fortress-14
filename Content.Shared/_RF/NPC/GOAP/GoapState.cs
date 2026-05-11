@@ -361,6 +361,11 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {MovementRange, 0.3f},
     };
 
+    public static readonly HashSet<string> EntityDefaults = new()
+    {
+        OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree, ActiveHandEntity,
+    };
+
     #endregion
 }
 

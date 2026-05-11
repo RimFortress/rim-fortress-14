@@ -13,6 +13,13 @@ public abstract partial class GoapCondition : IGoapDebuggable
     public GoapDebugDump? Dump { get; set; }
 
     /// <summary>
+    /// Whether the condition refers to ECS during the check.
+    /// The planner cannot fully predict the behavior of such conditions,
+    /// and they are handled by the planner in a special way.
+    /// </summary>
+    public abstract bool EntityCondition { get; }
+
+    /// <summary>
     /// Returns true if the check is passed; otherwise, false.
     /// </summary>
     [Pure]
@@ -34,6 +41,9 @@ public abstract partial class SimpleGoapCondition<T> : GoapCondition
     [DataField(required: true)]
     public T Value = default!;
 
+    /// <inheritdoc/>
+    public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
+
     public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump)
     {
         dump = null;
@@ -46,13 +56,16 @@ public abstract partial class SimpleGoapCondition<T> : GoapCondition
 /// <summary>
 /// A condition that uses entity systems to work.
 /// </summary>
-public abstract partial class BaseGoapCondition<T> : GoapCondition, IComplexGoapCondition where T : BaseGoapCondition<T>
+public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
 {
     /// <summary>
     /// Whether the result of the check will be inverted.
     /// </summary>
     [DataField]
     public bool Invert;
+
+    /// <inheritdoc/>
+    public override bool EntityCondition => true;
 
     public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump)
     {
@@ -69,10 +82,3 @@ public abstract partial class BaseGoapCondition<T> : GoapCondition, IComplexGoap
         return result;
     }
 }
-
-/// <summary>
-/// An interface used to define GOAP conditions that involve the ECS
-/// and whose behavior cannot be fully determined by the planner.
-/// Such conditions are handled by the planner in a special way.
-/// </summary>
-public interface IComplexGoapCondition;
