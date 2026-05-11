@@ -46,7 +46,7 @@ public abstract partial class SimpleGoapCondition<T> : GoapCondition
 /// <summary>
 /// A condition that uses entity systems to work.
 /// </summary>
-public abstract partial class BaseGoapCondition<T> : GoapCondition where T : BaseGoapCondition<T>
+public abstract partial class BaseGoapCondition<T> : GoapCondition, IComplexGoapCondition where T : BaseGoapCondition<T>
 {
     /// <summary>
     /// Whether the result of the check will be inverted.

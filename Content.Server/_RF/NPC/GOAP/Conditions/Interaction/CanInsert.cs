@@ -11,7 +11,7 @@ namespace Content.Server._RF.NPC.GOAP.Conditions.Interaction;
 /// </summary>
 public sealed partial class CanInsert : BaseGoapCondition<CanInsert>;
 
-public sealed class CanInsertSystem : GoapConditionSystem<CanInsert>, IComplexGoapCondition
+public sealed class CanInsertSystem : GoapConditionSystem<CanInsert>
 {
     [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly StorageSystem _storage = default!;

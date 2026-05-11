@@ -7,7 +7,7 @@ namespace Content.Server._RF.NPC.GOAP.Conditions;
 /// <summary>
 /// Checks whether the target entity has the specified components.
 /// </summary>
-public sealed partial class HasComponent : BaseGoapCondition<HasComponent>, IComplexGoapCondition
+public sealed partial class HasComponent : BaseGoapCondition<HasComponent>
 {
     /// <summary>
     /// Target entity.
