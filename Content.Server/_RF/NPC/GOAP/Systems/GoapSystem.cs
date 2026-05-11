@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Content.Server.Administration.Managers;
 using Content.Server.NPC.Systems;
@@ -7,6 +8,7 @@ using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Mobs;
 using Content.Shared.NPC;
+using JetBrains.Annotations;
 using Robust.Shared.CPUJob.JobQueues;
 using Robust.Shared.CPUJob.JobQueues.Queues;
 using Robust.Shared.Player;
@@ -20,7 +22,11 @@ public sealed partial class GoapSystem : SharedGoapSystem
     [Dependency] private readonly IAdminManager _admin = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
 
+    private static readonly ProtoId<GoapCompoundPrototype> DummyCompound = "Empty";
+
     private readonly JobQueue _planQueue = new(0.04f);
+    private readonly Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph> _staticGraphs = new();
+    private bool _queueGraphsBuild;
 
     public override void Initialize()
     {
@@ -37,18 +43,19 @@ public sealed partial class GoapSystem : SharedGoapSystem
         _proto.PrototypesReloaded += args =>
         {
             if (args.WasModified<GoapCompoundPrototype>())
-                ReloadPrototypes();
+                BuildGraphs();
         };
 
-        ReloadPrototypes();
+        // We cannot build the graphs during system initialization because
+        // the EntityManager is not fully ready, so we defer the construction until the first update
+        _queueGraphsBuild = true;
     }
 
     private void OnMapInit(Entity<GoapComponent> ent, ref MapInitEvent args)
     {
         ent.Comp.State.SetValue(GoapState.Owner, ent);
-        ent.Comp.ExecutableTasks = GetExecutableTasks(ent.Comp.RootTask);
 #if TOOLS
-        ent.Comp.StaticGraph = BuildStaticGraph(ent, ent.Comp.ExecutableTasks);
+        ent.Comp.StaticGraph = BuildDebugGraph(ent);
 #endif
         _npc.OnNPCMapInit(ent, ent.Comp, args);
     }
@@ -60,17 +67,124 @@ public sealed partial class GoapSystem : SharedGoapSystem
         ent.Comp.PlanningJob = null;
     }
 
-    private void ReloadPrototypes()
+    private void BuildGraphs()
     {
-        var enumerator = AllEntityQuery<GoapComponent>();
+        _staticGraphs.Clear();
+        Log.Info("building GOAP static dependency graphs...");
 
-        while (enumerator.MoveNext(out var comp))
+        foreach (var compound in _proto.EnumeratePrototypes<GoapCompoundPrototype>())
         {
-            comp.ExecutableTasks = GetExecutableTasks(comp.RootTask);
+            _staticGraphs[compound] = GetStaticGraph(compound);
         }
+
+        Log.Info("graphs built");
     }
 
-    public List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
+    [PublicAPI]
+    public GoapStaticGraph GetStaticGraph(
+        ProtoId<GoapCompoundPrototype> protoId,
+        bool optimize = true)
+    {
+        if (!_proto.Resolve(protoId, out var compound))
+            return new();
+
+        var dummy = Spawn();
+        var comp = Factory.GetComponent<GoapComponent>();
+        comp.RootTask = DummyCompound;
+        AddComp(dummy, comp);
+        var nodes = GetExecutableTasks(compound).OrderBy(x => x.Id).ToList();
+        var edges = new HashSet<GoapStaticGraphEdge>();
+        var notConnected = new HashSet<int>();
+
+        for (var fromInd = 0; fromInd < nodes.Count; fromInd++)
+        {
+            var from = nodes[fromInd];
+
+            if (from.Preconditions.Any(x => x is IComplexGoapCondition))
+            {
+                notConnected.Add(from.Id);
+                continue;
+            }
+
+            for (var toInd = 0; toInd < nodes.Count; toInd++)
+            {
+                var to = nodes[toInd];
+
+                if (fromInd == toInd
+                    || to.Preconditions.Any(x => x is IComplexGoapCondition))
+                    continue;
+
+                var hasConnection = false;
+                var skip = new HashSet<int>();
+
+                for (var i = 0; i < to.Preconditions.Count; i++)
+                {
+                    var condition = to.Preconditions[i];
+
+                    // We perform two checks: the first when the state is empty,
+                    // and the second on the node's effects.
+                    // This is done to verify that the effects and conditions actually
+                    // link the two nodes, rather than the second node simply having no conditions.
+                    var dummyState = new GoapState();
+                    dummyState.UseEntityDefaults = false;
+                    dummyState.SetValue(GoapState.Owner, dummy);
+                    var dummyCheck = CheckCondition(dummy, dummyState, condition);
+
+                    var effectsState = from.Effects.ShallowClone();
+                    effectsState.UseEntityDefaults = false;
+                    effectsState.SetValue(GoapState.Owner, dummy);
+                    var effectsCheck = CheckCondition(dummy, effectsState, condition);
+
+                    if (!effectsCheck || effectsCheck == dummyCheck)
+                        continue;
+
+                    hasConnection = true;
+                    skip.Add(i);
+                }
+
+                if (!hasConnection)
+                    continue;
+
+                edges.Add(new GoapStaticGraphEdge(fromInd, toInd, skip));
+            }
+        }
+
+        var edgesList = edges.ToList();
+
+        var outgoing = edgesList
+            .GroupBy(x => x.FromNodeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var incoming = edgesList
+            .GroupBy(x => x.ToNodeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var notConnectedArray = notConnected.ToArray();
+
+        var rootCandidates = BuildRootCandidates(nodes, incoming, notConnectedArray);
+        var candidatesByNodeId = BuildCandidatesByNodeId(nodes, outgoing, notConnectedArray);
+
+        Del(dummy);
+
+        return new GoapStaticGraph(
+            Nodes: nodes,
+            Edges: edgesList,
+            OutgoingByNodeId: outgoing,
+            IncomingByNodeId: incoming,
+            NotConnected: notConnected,
+            RootCandidates: rootCandidates,
+            CandidatesByNodeId: candidatesByNodeId);
+    }
+
+    private List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
+    {
+        var nextId = 0;
+        return GetExecutableTasks(protoId, ref nextId);
+    }
+
+    private List<ExecutableGoapTask> GetExecutableTasks(
+        ProtoId<GoapCompoundPrototype> protoId,
+        ref int nextId)
     {
         if (!_proto.Resolve(protoId, out var proto))
             return new();
@@ -83,27 +197,102 @@ public sealed partial class GoapSystem : SharedGoapSystem
             {
                 case GoapActionTask action:
                     tasks.Add(new(
+                        nextId++,
                         new List<GoapAction> { action.Action },
                         action.Preconditions,
                         action.Effects,
                         protoId));
                     break;
+
                 case GoapCompoundTask compound:
                     tasks.Add(new(
+                        nextId++,
                         compound.Actions,
                         compound.Preconditions,
                         compound.Effects,
                         protoId));
                     break;
+
                 case GoapCompoundPrototypeTask protoCompound:
-                    tasks.AddRange(GetExecutableTasks(protoCompound.Proto));
+                    tasks.AddRange(GetExecutableTasks(protoCompound.Proto, ref nextId));
                     break;
+
                 default:
                     throw new InvalidOperationException();
             }
         }
 
         return tasks;
+    }
+
+    private static GoapStaticGraphCandidate[] BuildRootCandidates(
+        List<ExecutableGoapTask> nodes,
+        Dictionary<int, List<GoapStaticGraphEdge>> incoming,
+        int[] notConnected)
+    {
+        var result = new List<GoapStaticGraphCandidate>(nodes.Count);
+        var seen = new HashSet<int>();
+
+        foreach (var node in nodes)
+        {
+            if (incoming.ContainsKey(node.Id))
+                continue;
+
+            if (!seen.Add(node.Id))
+                continue;
+
+            result.Add(new GoapStaticGraphCandidate(node, null));
+        }
+
+        foreach (var id in notConnected)
+        {
+            if (!seen.Add(id))
+                continue;
+
+            result.Add(new GoapStaticGraphCandidate(nodes[id], null));
+        }
+
+        return result.ToArray();
+    }
+
+    private static Dictionary<int, GoapStaticGraphCandidate[]> BuildCandidatesByNodeId(
+        List<ExecutableGoapTask> nodes,
+        Dictionary<int, List<GoapStaticGraphEdge>> outgoing,
+        int[] notConnected)
+    {
+        var result = new Dictionary<int, GoapStaticGraphCandidate[]>(nodes.Count);
+
+        foreach (var node in nodes)
+        {
+            var list = new List<GoapStaticGraphCandidate>(8);
+            var seen = new HashSet<int>();
+
+            if (outgoing.TryGetValue(node.Id, out var edges))
+            {
+                foreach (var edge in edges)
+                {
+                    if (!seen.Add(edge.ToNodeId))
+                        continue;
+
+                    list.Add(new GoapStaticGraphCandidate(nodes[edge.ToNodeId], edge));
+                }
+            }
+
+            foreach (var id in notConnected)
+            {
+                if (id == node.Id)
+                    continue;
+
+                if (!seen.Add(id))
+                    continue;
+
+                list.Add(new GoapStaticGraphCandidate(nodes[id], null));
+            }
+
+            result[node.Id] = list.ToArray();
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -114,6 +303,12 @@ public sealed partial class GoapSystem : SharedGoapSystem
         if (ent.Comp.Planning)
             return;
 
+        if (!_staticGraphs.TryGetValue(ent.Comp.RootTask, out var graph))
+        {
+            Log.Error($"graph for compound '{ent.Comp.RootTask}' not found");
+            return;
+        }
+
         var cancelToken = new CancellationTokenSource();
         var job = new GoapPlanJob(
             0.02f,
@@ -121,8 +316,9 @@ public sealed partial class GoapSystem : SharedGoapSystem
             ent,
             ent.Comp.State,
             ent.Comp.GoalState,
-            ent.Comp.ExecutableTasks,
-            cancellation: cancelToken.Token);
+            graph,
+            cancellation: cancelToken.Token,
+            collectDebug: DebugSendQueue.Exists(x => x.Target == ent.Owner));
 
         _planQueue.EnqueueJob(job);
         ent.Comp.PlanningJob = job;
@@ -182,15 +378,21 @@ public sealed partial class GoapSystem : SharedGoapSystem
 
                 (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 
-#if TOOLS
                 // Sends debug information about the new plan to those who are waiting for it.
-                foreach (var (session, target, breakpoint) in DebugSendQueue)
+                if (comp.PlanDebug != null)
                 {
-                    SendDebug(session, target, breakpoint);
-                }
+                    for (var i = 0; i < DebugSendQueue.Count; i++)
+                    {
+                        var (session, target, breakpoint) = DebugSendQueue[i];
 
-                DebugSendQueue.Clear();
-#endif
+                        if (target != uid)
+                            continue;
+
+                        SendDebug(session, target, breakpoint);
+                        DebugSendQueue.RemoveAt(i);
+                        i--;
+                    }
+                }
 
                 // Startup the first task and anything else we need to do.
                 if (comp.Plan != null && !ActionStartup(ent, comp.Plan.Value.CurrentAction))
@@ -255,5 +457,16 @@ public sealed partial class GoapSystem : SharedGoapSystem
                     throw new InvalidOperationException();
             }
         }
+    }
+
+    public override void Update(float frameTime)
+    {
+        base.Update(frameTime);
+
+        if (!_queueGraphsBuild)
+            return;
+
+        BuildGraphs();
+        _queueGraphsBuild = false;
     }
 }

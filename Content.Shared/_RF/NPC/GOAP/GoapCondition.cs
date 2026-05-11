@@ -69,3 +69,10 @@ public abstract partial class BaseGoapCondition<T> : GoapCondition where T : Bas
         return result;
     }
 }
+
+/// <summary>
+/// An interface used to define GOAP conditions that involve the ECS
+/// and whose behavior cannot be fully determined by the planner.
+/// Such conditions are handled by the planner in a special way.
+/// </summary>
+public interface IComplexGoapCondition;

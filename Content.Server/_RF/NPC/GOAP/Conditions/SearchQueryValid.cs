@@ -13,7 +13,7 @@ namespace Content.Server._RF.NPC.GOAP.Conditions;
 /// <remarks>
 /// Always use this condition in the <see cref="SearchQuery"/> action to avoid planning bugs.
 /// </remarks>
-public sealed partial class SearchQueryValid : BaseGoapCondition<SearchQueryValid>
+public sealed partial class SearchQueryValid : BaseGoapCondition<SearchQueryValid>, IComplexGoapCondition
 {
     /// <summary>
     /// Search query prototype;

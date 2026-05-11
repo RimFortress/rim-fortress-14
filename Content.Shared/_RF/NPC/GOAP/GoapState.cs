@@ -78,12 +78,14 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </summary>
     /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
     [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ContainsKey(string key) => _state.ContainsKey(key);
 
     /// <summary>
     /// Removes all keys and values from the GoapState.
     /// </summary>
     [PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear() => _state.Clear();
 
     /// <summary>
@@ -95,10 +97,12 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <exception cref="ArgumentNullException"/>
     /// <exception cref="KeyNotFoundException"/>
     [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetValue<T>(string key) => (T)_state[key];
 
     /// <inheritdoc cref="GetValue{T}(string)"/>
     [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetValue<T>(StateKey<T> key) where T : notnull => (T)_state[key];
 
     /// <summary>
@@ -112,6 +116,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// When the method fails, it returns the default value for object.
     /// </returns>
     [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetValueOrDefault<T>(StateKey<T> key) where T : notnull => (T)_state.GetValueOrDefault(key)!;
 
     /// <summary>
@@ -158,12 +163,11 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// Tries to get the GoapState data for a particular key. Returns default if not found
     /// </summary>
     [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? GetValueOrDefault<T>(string key) where T : notnull
     {
-        if (_state.TryGetValue(key, out var value))
-            return (T)value;
-
-        if (Defaults.TryGetValue(key, out value))
+        if (_state.TryGetValue(key, out var value)
+            || Defaults.TryGetValue(key, out value))
             return (T)value;
 
         return default;

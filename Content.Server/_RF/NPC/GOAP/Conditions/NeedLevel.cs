@@ -9,7 +9,7 @@ namespace Content.Server._RF.NPC.GOAP.Conditions;
 /// <summary>
 /// Checks the agent's need level.
 /// </summary>
-public sealed partial class NeedLevel : BaseGoapCondition<NeedLevel>
+public sealed partial class NeedLevel : BaseGoapCondition<NeedLevel>, IComplexGoapCondition
 {
     /// <summary>
     /// Need prototype.

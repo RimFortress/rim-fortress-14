@@ -20,7 +20,7 @@ public partial class GoapSystem
 
     private void OnDebugInfoRequest(GoapDebugInfoRequest request, EntitySessionEventArgs args)
     {
-        SendDebug(args.SenderSession, GetEntity(request.Target));
+        QueueDebugSend(args.SenderSession, GetEntity(request.Target));
     }
 
     private void OnBreakpoint(GoapBreakpointMessage msg, EntitySessionEventArgs args)
@@ -100,79 +100,24 @@ public partial class GoapSystem
     /// Target entity used when evaluating conditions.
     /// Required because conditions may depend on ECS state.
     /// </param>
-    /// <param name="tasks">List of executable tasks.</param>
     /// <returns>Constructed GOAP static graph.</returns>
     [PublicAPI]
-    public GoapStaticGraph BuildStaticGraph(EntityUid uid, IReadOnlyList<ExecutableGoapTask> tasks)
+    public GoapStaticGraphDebug BuildDebugGraph(EntityUid uid)
     {
-        var edges = new List<GoapStaticGraphEdge>();
+        if (!TryComp(uid, out GoapComponent? comp)
+            || !_staticGraphs.TryGetValue(comp.RootTask, out var graph))
+            return new();
 
-        // Create graph nodes
-        var nodes = tasks.Select((task, i) => new GoapStaticGraphNode(
-                Id: i,
-                Actions: task.Actions.Select(ToObject).ToList(),
-                Preconditions: task.Preconditions.Select(ToObject).ToList(),
-                EffectsDump: task.Effects.GetStateDump()))
-            .ToList();
-
-        // Build edges by checking condition satisfaction
-        for (var to = 0; to < tasks.Count; to++)
-        {
-            var consumer = tasks[to];
-
-            // Iterate over each precondition of the consumer task
-            for (var condIndex = 0; condIndex < consumer.Preconditions.Count; condIndex++)
-            {
-                var condition = consumer.Preconditions[condIndex];
-
-                // Try all possible producers
-                for (var from = 0; from < tasks.Count; from++)
-                {
-                    if (from == to)
-                        continue;
-
-                    var producer = tasks[from];
-
-                    // We perform two checks: the first when the state is empty,
-                    // and the second on the node's effects.
-                    // This is done to verify that the effects and conditions actually
-                    // link the two nodes, rather than the second node simply having no conditions.
-                    var dummyState = new GoapState();
-                    dummyState.UseEntityDefaults = false;
-                    dummyState.SetValue(GoapState.Owner, uid);
-                    var dummyCheck = CheckCondition(uid, dummyState, condition);
-
-                    var effectsState = producer.Effects.ShallowClone();
-                    effectsState.UseEntityDefaults = false;
-                    effectsState.SetValue(GoapState.Owner, uid);
-                    var effectsCheck = CheckCondition(uid, effectsState, condition);
-
-                    if (!effectsCheck || effectsCheck == dummyCheck)
-                        continue;
-
-                    edges.Add(new GoapStaticGraphEdge(from, to));
-                }
-            }
-        }
-
-        // Build lookup dictionaries for fast graph traversal
-        var outgoing = edges
-            .GroupBy(x => x.FromNodeId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.ToList());
-
-        var incoming = edges
-            .GroupBy(x => x.ToNodeId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.ToList());
-
-        return new GoapStaticGraph(
-            Nodes: nodes,
-            Edges: edges,
-            OutgoingByNodeId: outgoing,
-            IncomingByNodeId: incoming);
+        return new GoapStaticGraphDebug(
+            Nodes: graph.Nodes.Select(x => new GoapStaticGraphNodeDebug(
+                    Id: x.Id,
+                    Actions: x.Actions.Select(ToObject).ToList(),
+                    Preconditions: x.Preconditions.Select(ToObject).ToList(),
+                    EffectsDump: x.Effects.GetStateDump()))
+                .ToList(),
+            Edges: graph.Edges,
+            OutgoingByNodeId: graph.OutgoingByNodeId,
+            IncomingByNodeId: graph.IncomingByNodeId);
     }
 
     private static GoapStaticGraphObject ToObject(object obj)

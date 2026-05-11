@@ -53,22 +53,15 @@ public sealed partial class GoapComponent : Component
     [ViewVariables]
     public GoapPlanDebugInfo? PlanDebug;
 
-    /// <inheritdoc cref="GoapStaticGraph"/>
+    /// <inheritdoc cref="GoapStaticGraphDebug"/>
     [ViewVariables]
-    public GoapStaticGraph? StaticGraph;
+    public GoapStaticGraphDebug? StaticGraph;
 
     /// <summary>
     /// Is this NPC currently planning?
     /// </summary>
     [ViewVariables]
     public bool Planning => PlanningJob != null;
-
-    /// <summary>
-    /// A list of all actions available to NPCs.
-    /// These actions will be used by the planner.
-    /// </summary>
-    [ViewVariables]
-    public List<ExecutableGoapTask> ExecutableTasks = new();
 
     [ViewVariables]
     public GoapPlanJob? PlanningJob = null;

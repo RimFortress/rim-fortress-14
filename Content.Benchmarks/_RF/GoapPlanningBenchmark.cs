@@ -38,7 +38,7 @@ public class GoapPlanningBenchmark
     private Entity<GoapComponent> _target;
     private GoapState _startState = default!;
 
-    private IReadOnlyList<ExecutableGoapTask> _tasks = default!;
+    private GoapStaticGraph _graph;
     private JobQueue _planQueue = new(0.04f);
     private List<GoapPlanJob> _jobs = new();
 
@@ -78,7 +78,7 @@ public class GoapPlanningBenchmark
 
             _startState = comp.State;
             _target = new(uid, comp);
-            _tasks = _goap.GetExecutableTasks(RootTask);
+            _graph = _goap.GetStaticGraph(RootTask);
         });
     }
 
@@ -101,7 +101,7 @@ public class GoapPlanningBenchmark
                 target: _target.Owner,
                 startState: _startState.ShallowClone(),
                 goalState: proto.GoalState.ShallowClone(),
-                tasks: _tasks);
+                graph: _graph);
 
             _jobs.Add(planJob);
             _planQueue.EnqueueJob(planJob);

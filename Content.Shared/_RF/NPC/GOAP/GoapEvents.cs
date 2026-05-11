@@ -82,12 +82,12 @@ public sealed class GoapDebugInfoRequest(NetEntity target) : EntityEventArgs
 public sealed class GoapDebugInfoMessage(
     NetEntity target,
     GoapPlanDebugInfo? plan,
-    GoapStaticGraph graph,
+    GoapStaticGraphDebug graphDebug,
     GoapBreakpoint? breakpoint) : EntityEventArgs
 {
     public NetEntity Target = target;
     public GoapPlanDebugInfo? Plan = plan;
-    public GoapStaticGraph Graph = graph;
+    public GoapStaticGraphDebug GraphDebug = graphDebug;
     public readonly GoapBreakpoint? Breakpoint = breakpoint;
 }
 

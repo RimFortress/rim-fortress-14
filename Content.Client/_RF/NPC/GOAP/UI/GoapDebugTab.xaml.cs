@@ -20,7 +20,7 @@ public sealed partial class GoapDebugTab : Control
     private readonly AiDevWindowUiController _controller;
     private readonly Dictionary<GoapBreakpoint, BreakpointControl> _points = new();
     private readonly Dictionary<int, Control> _nodeControls = new();
-    private GoapStaticGraph? _graph;
+    private GoapStaticGraphDebug? _graph;
     private EntityUid? _target;
 
     public GoapDebugTab()
@@ -239,18 +239,18 @@ public sealed partial class GoapDebugTab : Control
         }
     }
 
-    public void Update(EntityUid target, GoapStaticGraph graph, GoapPlanDebugInfo? plan)
+    public void Update(EntityUid target, GoapStaticGraphDebug graphDebug, GoapPlanDebugInfo? plan)
     {
-        _graph = graph;
+        _graph = graphDebug;
         _target = target;
         _nodeControls.Clear();
 
         NodesLayer.RemoveAllChildren();
-        var layout = GraphLayoutBuilder.Build(graph, NodeSize);
+        var layout = GraphLayoutBuilder.Build(graphDebug, NodeSize);
 
         GraphRoot.MinSize = layout.TotalSize;
 
-        foreach (var node in graph.Nodes)
+        foreach (var node in graphDebug.Nodes)
         {
             var planNode = GetNode(node.Id);
             var actions = plan?.Actions
@@ -269,14 +269,14 @@ public sealed partial class GoapDebugTab : Control
             _nodeControls[node.Id] = control;
         }
 
-        EdgeOverlay.SetData(graph,
+        EdgeOverlay.SetData(graphDebug,
             _nodeControls,
             plan?.Nodes
                 .Where(x => x.InPlan)
                 .Select(x => x.NodeId));
 
         // BreakpointsPanel
-        if (NodeId.ItemCount != graph.Nodes.Count)
+        if (NodeId.ItemCount != graphDebug.Nodes.Count)
         {
             NodeId.Clear();
             PointType.Visible = false;
@@ -284,7 +284,7 @@ public sealed partial class GoapDebugTab : Control
             Result.Visible = false;
             Confirm.Disabled = true;
 
-            foreach (var node in graph.Nodes)
+            foreach (var node in graphDebug.Nodes)
             {
                 NodeId.AddItem(
                     (plan?.Nodes.FirstOrNull(x => x.NodeId == node.Id)?.Compound ?? "Node") + $" #{node.Id}",
@@ -300,9 +300,9 @@ public sealed partial class GoapDebugTab : Control
 
         TotalCost.Text = $"[bold]Total Cost: {plan.Value.TotalCost}[/bold]";
         ConditionsChecked.Text = $"[bold]Conditions Checked: {plan.Value.ConditionsChecked}[/bold]";
-        PlanningNodes.Text = $"[bold]Available Nodes: {graph.Nodes.Count}[/bold]";
+        PlanningNodes.Text = $"[bold]Available Nodes: {graphDebug.Nodes.Count}[/bold]";
         NodesInPlan.Text = "[bold]Nodes in Plan: "
-                           + graph.Nodes.Count(x
+                           + graphDebug.Nodes.Count(x
                                => plan.Value.Actions.Any(y
                                    => y.NodeIndex == x.Id))
                            + "[/bold]";

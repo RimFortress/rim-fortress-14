@@ -10,7 +10,7 @@ public sealed class AiDevWindowUiController : UIController
     /// <summary>
     /// An event invoked when the client receives debug information about a GOAP NPC.
     /// </summary>
-    public event Action<(EntityUid Target, GoapPlanDebugInfo? Plan, GoapStaticGraph Graph)>? OnGoapDebugInfo;
+    public event Action<(EntityUid Target, GoapPlanDebugInfo? Plan, GoapStaticGraphDebug Graph)>? OnGoapDebugInfo;
 
     /// <summary>
     /// An event invoked when the client receives debug information about a Utility AI NPC.
@@ -33,7 +33,7 @@ public sealed class AiDevWindowUiController : UIController
 
     private void OnGoapDebugInfoMessage(GoapDebugInfoMessage msg, EntitySessionEventArgs args)
     {
-        OnGoapDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Plan, msg.Graph));
+        OnGoapDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Plan, msg.GraphDebug));
 
         if (msg.Breakpoint != null)
             OnBreakpointRaised?.Invoke(msg.Breakpoint.Value);

@@ -100,8 +100,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var result = action.Update(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
-            comp is { Plan: not null, PlanDebug: not null },
+            comp.Plan != null,
             $"attempt to update action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
+
+        if (comp.PlanDebug == null)
+            return result;
+
         var plan = comp.Plan.Value;
         var planDebug = comp.PlanDebug.Value;
         DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
@@ -205,8 +209,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var success = action.Startup(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
-            comp is { Plan: not null, PlanDebug: not null },
+            comp.Plan != null,
             $"attempt to startup action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
+
+        if (comp.PlanDebug == null)
+            return success;
+
         var plan = comp.Plan.Value;
         var planDebug = comp.PlanDebug.Value;
         DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
@@ -268,8 +276,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         action.Shutdown(target, this, out var dump);
         var comp = Comp<GoapComponent>(target);
         DebugTools.Assert(
-            comp is { Plan: not null, PlanDebug: not null },
+            comp.Plan != null,
             $"attempt to shutdown action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
+
+        if (comp.PlanDebug == null)
+            return;
+
         var plan = comp.Plan.Value;
         var planDebug = comp.PlanDebug.Value;
         DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);

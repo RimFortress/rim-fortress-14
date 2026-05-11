@@ -109,7 +109,7 @@ public static class GraphLayoutBuilder
         where TNode : IStaticGraphNode
         where TEdge : IStaticGraphEdge
     {
-        var nodeIds = graph.Nodes.Select(x => x.Id).ToArray();
+        var nodeIds = graph.Nodes.Select(x => x.Id).ToHashSet();
 
         var layerByNode = ComputeLayers(graph, nodeIds);
         var maxLayer = layerByNode.Count == 0 ? 0 : layerByNode.Values.Max();
@@ -123,7 +123,7 @@ public static class GraphLayoutBuilder
             layers[layerByNode[id]].Add(id);
         }
 
-        var orderByNode = new Dictionary<int, int>(nodeIds.Length);
+        var orderByNode = new Dictionary<int, int>(nodeIds.Count);
 
         // Initial order.
         foreach (var layer in layers)
@@ -173,7 +173,7 @@ public static class GraphLayoutBuilder
             }
         }
 
-        var placements = new Dictionary<int, GraphNodeLayout>(nodeIds.Length);
+        var placements = new Dictionary<int, GraphNodeLayout>(nodeIds.Count);
         var maxRight = padding;
         var maxBottom = padding;
 
@@ -241,7 +241,7 @@ public static class GraphLayoutBuilder
     /// </remarks>
     private static Dictionary<int, int> ComputeLayers<TNode, TEdge>(
         IStaticGraph<TNode, TEdge> graph,
-        int[] nodeIds)
+        HashSet<int> nodeIds)
         where TNode : IStaticGraphNode
         where TEdge : IStaticGraphEdge
     {
@@ -305,7 +305,7 @@ public static class GraphLayoutBuilder
         {
             var parentXs = incoming
                 .Select(e => e.FromNodeId)
-                .Where(parent => layerByNode[parent] < currentLayer)
+                .Where(parent => layerByNode.TryGetValue(parent, out var l) && l < currentLayer)
                 .Distinct()
                 .Select(parent => GetNodeCenterX(parent, orderByNode, nodeSize, horizontalSpacing))
                 .ToArray();

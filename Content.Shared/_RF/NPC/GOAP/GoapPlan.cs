@@ -13,10 +13,48 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// <param name="Compound">The compound from which this task was extracted.</param>
 [Serializable]
 public readonly record struct ExecutableGoapTask(
+    int Id,
     IReadOnlyList<GoapAction> Actions,
     IReadOnlyList<GoapCondition> Preconditions,
     GoapState Effects,
-    ProtoId<GoapCompoundPrototype>? Compound);
+    ProtoId<GoapCompoundPrototype>? Compound)
+    : IStaticGraphNode;
+
+/// <summary>
+/// Represents a directed edge between two GOAP tasks.
+/// The edge exists if the source task's effects satisfy
+/// one of the destination task's preconditions.
+/// </summary>
+[Serializable]
+public readonly record struct GoapStaticGraphEdge(
+    int FromNodeId,
+    int ToNodeId,
+    HashSet<int> SkipConditions)
+    : IStaticGraphEdge;
+
+[Serializable]
+public readonly record struct GoapStaticGraphCandidate(
+    ExecutableGoapTask Task,
+    GoapStaticGraphEdge? Edge);
+
+/// <summary>
+/// A graph that stores static dependencies between GOAP nodes in a compound.
+/// </summary>
+/// <param name="Nodes"></param>
+/// <param name="Edges"></param>
+/// <param name="OutgoingByNodeId"></param>
+/// <param name="IncomingByNodeId"></param>
+/// <param name="NotConnected">Nodes whose connections are not static and must be checked by the planner.</param>
+[Serializable]
+public readonly record struct GoapStaticGraph(
+    List<ExecutableGoapTask> Nodes,
+    List<GoapStaticGraphEdge> Edges,
+    Dictionary<int, List<GoapStaticGraphEdge>> OutgoingByNodeId,
+    Dictionary<int, List<GoapStaticGraphEdge>> IncomingByNodeId,
+    HashSet<int> NotConnected,
+    GoapStaticGraphCandidate[] RootCandidates,
+    Dictionary<int, GoapStaticGraphCandidate[]> CandidatesByNodeId)
+    : IStaticGraph<ExecutableGoapTask, GoapStaticGraphEdge>;
 
 /// <summary>
 /// The current plan for a GOAP NPC.

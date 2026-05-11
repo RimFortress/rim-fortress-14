@@ -19,7 +19,7 @@ public sealed partial class GraphNodeControl : Control
     }
 
     public GraphNodeControl(
-        GoapStaticGraphNode graphNode,
+        GoapStaticGraphNodeDebug graphNode,
         List<GoapActionDebugInfo>? actions = null,
         GoapNodeDebugEntry? debug = null)
     {

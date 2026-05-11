@@ -8,7 +8,7 @@ using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.NPC.UI;
 
-public sealed class GoapGraphEdgeOverlay : GraphEdgeOverlay<GoapStaticGraphNode, GoapStaticGraphEdge>;
+public sealed class GoapGraphEdgeOverlay : GraphEdgeOverlay<GoapStaticGraphNodeDebug, GoapStaticGraphEdge>;
 
 public sealed class UtilityAiGraphEdgeOverlay : GraphEdgeOverlay<UtilityAiGoalDebugInfo, UtilityAiStaticGraphEdge>;
 
