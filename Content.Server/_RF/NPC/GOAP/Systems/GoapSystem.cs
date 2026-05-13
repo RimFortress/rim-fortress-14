@@ -81,7 +81,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
 
         var cancelToken = new CancellationTokenSource();
         var job = new GoapPlanJob(
-            0.02f,
+            0.015f,
             this,
             ent,
             ent.Comp.State,
@@ -153,12 +153,12 @@ public sealed partial class GoapSystem : SharedGoapSystem
                 {
                     for (var i = 0; i < DebugSendQueue.Count; i++)
                     {
-                        var (session, target, breakpoint) = DebugSendQueue[i];
+                        var (session, target) = DebugSendQueue[i];
 
                         if (target != uid)
                             continue;
 
-                        SendDebug(session, target, breakpoint);
+                        SendDebug(session, target);
                         DebugSendQueue.RemoveAt(i);
                         i--;
                     }
@@ -184,7 +184,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
 
     private void Update(Entity<GoapComponent> ent)
     {
-        if ((ent.Comp.ConstantlyReplan || ent.Comp.Plan == null) && ent.Comp.NextPlanning <= Timing.CurTime)
+        if (ent.Comp.Plan == null && ent.Comp.NextPlanning <= Timing.CurTime)
             RequestPlan(ent);
 
         // Getting a new plan so do nothing.

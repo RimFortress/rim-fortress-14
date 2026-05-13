@@ -35,97 +35,19 @@ public sealed partial class GraphNodeControl : Control
 
         var controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
 
-        // ActionsTab
-        for (var i = 0; i < graphNode.Actions.Count; i++)
+        controller.OnBreakpointHit += args =>
         {
-            var index = i;
-            var action = graphNode.Actions[i];
+            ActionsTab.RemoveAllChildren();
+            TabContainer.CurrentTab = 1;
+            AddAction(args.Actions);
+        };
 
-            // Static graph info
-            var box = AddBox(ActionsTab, action.Type);
-            AddTypes(box.Content, "Fields", action.Reflection);
-
-            // Runtime debug info
-            if (actions?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
-                continue;
-
-            // Startup
-            if (debugAction.StartupSuccess != null)
-            {
-                var startupBox = AddBox(
-                    box.Content,
-                    "Startup",
-                    debugAction.StartupSuccess == true
-                        ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
-                        : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
-
-                if (debugAction.StartupDump != null)
-                {
-                    AddTypes(startupBox.Content, "State Snapshot", debugAction.StartupDump.Value.StateSnapshot.State);
-                    AddLogs(startupBox.Content, debugAction.StartupDump.Value.Dump);
-                }
-
-                controller.OnBreakpointRaised += point =>
-                {
-                    if (point.NodeId != graphNode.Id
-                        || point.Index != index
-                        || point.Kind != GoapBreakpointKind.ActionStartup)
-                        return;
-
-                    startupBox.ExpandAll();
-                    TabContainer.CurrentTab = 1;
-                };
-            }
-
-            // Shutdown
-            if (debugAction.ShutdownDump != null)
-            {
-                var shutdownBox = AddBox(box.Content, "Shutdown");
-
-                AddTypes(shutdownBox.Content, "State Snapshot", debugAction.ShutdownDump.Value.StateSnapshot.State);
-                AddLogs(shutdownBox.Content, debugAction.ShutdownDump.Value.Dump);
-
-                controller.OnBreakpointRaised += point =>
-                {
-                    if (point.NodeId != graphNode.Id
-                        || point.Index != index
-                        || point.Kind != GoapBreakpointKind.ActionShutdown)
-                        return;
-
-                    shutdownBox.ExpandAll();
-                    TabContainer.CurrentTab = 1;
-                };
-            }
-
-            // Updates
-            if (debugAction.UpdateDumps.Count == 0)
-                continue;
-
-            var updateBox = AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
-
-            foreach (var update in debugAction.UpdateDumps)
-            {
-                var upd = AddBox(updateBox.Content, update.Tick.ToString(), UpdateText(update.Result));
-                AddTypes(upd.Content, "State Snapshot", update.Dump.StateSnapshot.State);
-                AddLogs(upd.Content, update.Dump.Dump);
-            }
-
-            controller.OnBreakpointRaised += point =>
-            {
-                if (point.NodeId != graphNode.Id
-                    || point.Index != index
-                    || point.Kind != GoapBreakpointKind.ActionUpdate)
-                    return;
-
-                updateBox.ExpandAll();
-                TabContainer.CurrentTab = 1;
-            };
-        }
+        // ActionsTab
+        AddAction(actions ?? new());
 
         // PreconditionsTab
         for (var i = 0; i < graphNode.Preconditions.Count; i++)
         {
-            var index = i;
             var condition = graphNode.Preconditions[i];
 
             // Static graph info
@@ -137,17 +59,6 @@ public sealed partial class GraphNodeControl : Control
                         ? $"[color={StyleFortress.LightGood.ToHex()}]True[/color]"
                         : $"[color={StyleFortress.LightBad.ToHex()}]False[/color]");
             AddTypes(box.Content, "Fields", condition.Reflection);
-
-            controller.OnBreakpointRaised += point =>
-            {
-                if (point.NodeId != graphNode.Id
-                    || point.Index != index
-                    || point.Kind != GoapBreakpointKind.Precondition)
-                    return;
-
-                box.ExpandAll();
-                TabContainer.CurrentTab = 2;
-            };
 
             // Planing debug info
             if (debug == null)
@@ -326,6 +237,62 @@ public sealed partial class GraphNodeControl : Control
                 GoapActionResult.Continuing => $"[color={Color.Yellow.ToHex()}]Continuing[/color]",
                 _ => throw new ArgumentOutOfRangeException(),
             };
+        }
+
+        void AddAction(List<GoapActionDebugInfo> actionsDebug)
+        {
+            for (var i = 0; i < graphNode.Actions.Count; i++)
+            {
+                var index = i;
+                var action = graphNode.Actions[i];
+
+                // Static graph info
+                var box = AddBox(ActionsTab, action.Type);
+                AddTypes(box.Content, "Fields", action.Reflection);
+
+                // Runtime debug info
+                if (actionsDebug?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
+                    continue;
+
+                // Startup
+                if (debugAction.StartupSuccess != null)
+                {
+                    var startupBox = AddBox(
+                        box.Content,
+                        "Startup",
+                        debugAction.StartupSuccess == true
+                            ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
+                            : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
+
+                    if (debugAction.StartupDump != null)
+                    {
+                        AddTypes(startupBox.Content, "State Snapshot", debugAction.StartupDump.Value.StateSnapshot.State);
+                        AddLogs(startupBox.Content, debugAction.StartupDump.Value.Dump);
+                    }
+                }
+
+                // Shutdown
+                if (debugAction.ShutdownDump != null)
+                {
+                    var shutdownBox = AddBox(box.Content, "Shutdown");
+
+                    AddTypes(shutdownBox.Content, "State Snapshot", debugAction.ShutdownDump.Value.StateSnapshot.State);
+                    AddLogs(shutdownBox.Content, debugAction.ShutdownDump.Value.Dump);
+                }
+
+                // Updates
+                if (debugAction.UpdateDumps.Count == 0)
+                    continue;
+
+                var updateBox = AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
+
+                foreach (var update in debugAction.UpdateDumps)
+                {
+                    var upd = AddBox(updateBox.Content, update.Tick.ToString(), UpdateText(update.Result));
+                    AddTypes(upd.Content, "State Snapshot", update.Dump.StateSnapshot.State);
+                    AddLogs(upd.Content, update.Dump.Dump);
+                }
+            }
         }
     }
 }

@@ -155,7 +155,6 @@ public readonly record struct GoapStaticGraphObject(
 [Serializable, NetSerializable]
 public enum GoapBreakpointKind : byte
 {
-    Precondition,
     ActionStartup,
     ActionUpdate,
     ActionShutdown,

@@ -19,7 +19,7 @@ public sealed class AiDevWindowUiController : UIController
 
     public event Action<GoapBreakpoint>? OnBreakpointAdded;
     public event Action<GoapBreakpoint>? OnBreakpointRemoved;
-    public event Action<GoapBreakpoint>? OnBreakpointRaised;
+    public event Action<(GoapBreakpoint Point, List<GoapActionDebugInfo> Actions)>? OnBreakpointHit;
 
     public override void Initialize()
     {
@@ -29,14 +29,12 @@ public sealed class AiDevWindowUiController : UIController
         SubscribeNetworkEvent<UtilityAiDebugInfoMessage>(OnUtilityAiDebugInfoMessage);
         SubscribeNetworkEvent<GoapBreakpointMessage>(OnBreakpoint);
         SubscribeNetworkEvent<GoapBreakpointRemoveMessage>(OnRemoveBreakpoint);
+        SubscribeNetworkEvent<GoapBreakpointHitMessage>(OnBreakpointHitMessage);
     }
 
     private void OnGoapDebugInfoMessage(GoapDebugInfoMessage msg, EntitySessionEventArgs args)
     {
         OnGoapDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Plan, msg.GraphDebug));
-
-        if (msg.Breakpoint != null)
-            OnBreakpointRaised?.Invoke(msg.Breakpoint.Value);
     }
 
     private void OnUtilityAiDebugInfoMessage(UtilityAiDebugInfoMessage msg, EntitySessionEventArgs args)
@@ -49,11 +47,14 @@ public sealed class AiDevWindowUiController : UIController
         OnBreakpointAdded?.Invoke(msg.Point);
     }
 
-    private void OnRemoveBreakpoint(
-        GoapBreakpointRemoveMessage msg,
-        EntitySessionEventArgs args)
+    private void OnRemoveBreakpoint(GoapBreakpointRemoveMessage msg, EntitySessionEventArgs args)
     {
         OnBreakpointRemoved?.Invoke(msg.Point);
+    }
+
+    private void OnBreakpointHitMessage(GoapBreakpointHitMessage msg, EntitySessionEventArgs args)
+    {
+        OnBreakpointHit?.Invoke((msg.Point, msg.Actions));
     }
 
     /// <summary>

@@ -24,19 +24,30 @@ public sealed class WaitSystem : GoapActionSystem<Wait>
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Wait action) => 1.5f;
 
+    protected override bool ActionStartup(Entity<GoapComponent> ent, Wait action)
+    {
+        if (!TryGetValue(ent, action, action.TimeKey, out var time))
+            return false;
+
+        CreateDump(ent, action, $"waiting {time}. CurTime: {_timing.CurTime}");
+        return true;
+    }
+
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Wait action)
     {
         var state = ent.Comp.State;
 
-        if (!Goap.TryGetValue(state, action.TimeKey, out var time))
-        {
-            KeyNotFound(ent, action, action.TimeKey);
+        if (!TryGetValue(state, action, action.TimeKey, out var time))
             return GoapActionResult.Failed;
-        }
 
         time -= _timing.FrameTime;
         state.SetValue(action.TimeKey, time);
 
         return time <= TimeSpan.Zero ? GoapActionResult.Finished : GoapActionResult.Continuing;
+    }
+
+    protected override void ActionShutdown(Entity<GoapComponent> ent, Wait action)
+    {
+        CreateDump(ent, action, $"waiting finished. CurTime: {_timing.CurTime}");
     }
 }

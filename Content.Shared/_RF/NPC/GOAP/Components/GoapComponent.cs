@@ -35,9 +35,6 @@ public sealed partial class GoapComponent : Component
     [DataField]
     public TimeSpan PlanCooldown = TimeSpan.FromSeconds(0.45f);
 
-    [DataField]
-    public bool ConstantlyReplan = true;
-
     /// <summary>
     /// Determines whether plans should be made / updated for this entity
     /// </summary>

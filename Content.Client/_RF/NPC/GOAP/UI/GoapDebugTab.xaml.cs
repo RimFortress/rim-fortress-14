@@ -41,26 +41,17 @@ public sealed partial class GoapDebugTab : Control
             Index.Visible = false;
             Result.Visible = false;
             PointType.Clear();
+
+            NodeId.Select(NodeId.GetIdx(args.Id));
+
+            PointType.AddItem("Action Startup", 0);
+            PointType.SetItemMetadata(0, GoapBreakpointKind.ActionStartup);
+            PointType.AddItem("Action Update", 1);
+            PointType.SetItemMetadata(1, GoapBreakpointKind.ActionUpdate);
+            PointType.AddItem("Action Shutdown", 2);
+            PointType.SetItemMetadata(2, GoapBreakpointKind.ActionShutdown);
+
             UpdateConfirm();
-
-            NodeId.Select(args.Id);
-            var node = _graph.Value.Nodes[NodeId.SelectedId];
-
-            if (node.Actions.Count > 0)
-            {
-                PointType.AddItem("Action Startup", 0);
-                PointType.SetItemMetadata(0, GoapBreakpointKind.ActionStartup);
-                PointType.AddItem("Action Update", 1);
-                PointType.SetItemMetadata(1, GoapBreakpointKind.ActionUpdate);
-                PointType.AddItem("Action Shutdown", 2);
-                PointType.SetItemMetadata(2, GoapBreakpointKind.ActionShutdown);
-            }
-
-            if (node.Preconditions.Count > 0)
-            {
-                PointType.AddItem("Precondition", 3);
-                PointType.SetItemMetadata(3, GoapBreakpointKind.Precondition);
-            }
         };
 
         PointType.OnItemSelected += args =>
@@ -73,31 +64,22 @@ public sealed partial class GoapDebugTab : Control
             Index.Clear();
             Result.Clear();
             PointType.Select(args.Id);
-            UpdateConfirm();
 
             if (PointType.SelectedMetadata is not GoapBreakpointKind kind)
                 return;
 
-            var node = _graph.Value.Nodes[NodeId.SelectedId];
-
-            if (kind == GoapBreakpointKind.Precondition)
-            {
-                foreach (var condition in node.Preconditions)
-                {
-                    Index.AddItem(condition.Type);
-                }
-            }
-            else
+            if (_graph.Value.Nodes.TryGetValue(NodeId.SelectedId, out var node))
             {
                 foreach (var action in node.Actions)
                 {
                     Index.AddItem(action.Type);
                 }
             }
+            else
+                Index.AddItem("Any", -1);
 
             switch (kind)
             {
-                case GoapBreakpointKind.Precondition:
                 case GoapBreakpointKind.ActionStartup:
                     Result.AddItem("True", 0);
                     Result.SetItemMetadata(0, GoapBreakpointResultKind.True);
@@ -118,11 +100,13 @@ public sealed partial class GoapDebugTab : Control
                     Result.SetItemMetadata(0, GoapBreakpointResultKind.None);
                     break;
             }
+
+            UpdateConfirm();
         };
 
         Index.OnItemSelected += args =>
         {
-            Index.Select(args.Id);
+            Index.Select(Index.GetIdx(args.Id));
             UpdateConfirm();
         };
 
@@ -199,9 +183,9 @@ public sealed partial class GoapDebugTab : Control
                 check.Check.Pressed = false;
         };
 
-        _controller.OnBreakpointRaised += point =>
+        _controller.OnBreakpointHit += point =>
         {
-            if (_nodeControls.TryGetValue(point.NodeId, out var node))
+            if (_nodeControls.TryGetValue(point.Point.NodeId, out var node))
                 CenterOnNode(node);
         };
 
@@ -212,18 +196,19 @@ public sealed partial class GoapDebugTab : Control
             if (_graph == null)
                 return string.Empty;
 
-            var node = _graph.Value.Nodes[point.NodeId];
+            var nodeName = point.NodeId != -1
+                ? $"#{point.NodeId}"
+                : "#Any";
+            var actName = point.Index != -1
+                ? $"{_graph.Value.Nodes[point.NodeId].Actions[point.Index].Type} ({point.Index})"
+                : "Any";
+            var str = $"{nodeName} {actName}";
 
             return point.Kind switch
             {
-                GoapBreakpointKind.Precondition =>
-                    $"#{point.NodeId} {node.Preconditions[point.Index].Type} ({point.Index}): {point.Result}",
-                GoapBreakpointKind.ActionStartup =>
-                    $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Startup: {point.Result}",
-                GoapBreakpointKind.ActionUpdate =>
-                    $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Update: {point.Result}",
-                GoapBreakpointKind.ActionShutdown =>
-                    $"#{point.NodeId} {node.Actions[point.Index].Type} ({point.Index}) Shutdown",
+                GoapBreakpointKind.ActionStartup => $"{str} Startup: {point.Result}",
+                GoapBreakpointKind.ActionUpdate => $"{str} Update: {point.Result}",
+                GoapBreakpointKind.ActionShutdown => $"{str} Shutdown",
                 _ => throw new ArgumentOutOfRangeException(),
             };
         }
@@ -276,13 +261,14 @@ public sealed partial class GoapDebugTab : Control
                 .Select(x => x.NodeId));
 
         // BreakpointsPanel
-        if (NodeId.ItemCount != graphDebug.Nodes.Count)
+        if (NodeId.ItemCount != graphDebug.Nodes.Count + 1)
         {
             NodeId.Clear();
             PointType.Visible = false;
             Index.Visible = false;
             Result.Visible = false;
             Confirm.Disabled = true;
+            NodeId.AddItem("Any", -1);
 
             foreach (var node in graphDebug.Nodes)
             {

@@ -102,7 +102,6 @@ public sealed class GoapPlanJob(
             return true;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SiftUp(int index)
         {
             var data = _data;
@@ -119,7 +118,6 @@ public sealed class GoapPlanJob(
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SiftDown(int index)
         {
             var data = _data;
@@ -166,30 +164,21 @@ public sealed class GoapPlanJob(
         _closed.Clear();
         _conditionCache.Clear();
 
-        GoapPlanDebugInfo? debugInfo = null;
-
-        // -- Debug
-        if (collectDebug)
+#if TOOLS // Debug
+        var debugInfo = new GoapPlanDebugInfo
         {
-            debugInfo = new GoapPlanDebugInfo
-            {
-                StartState = startState.GetStateDump(),
-                GoalState = goalState.GetStateDump(),
-                Nodes = new(),
-                Actions = new(),
-            };
-        }
-        // -- Debug
+            StartState = startState.GetStateDump(),
+            GoalState = goalState.GetStateDump(),
+            Nodes = new(),
+            Actions = new(),
+        };
+#endif
 
         if (goalState.Count == 0 || graph.Nodes.Count == 0)
         {
-            // -- Debug
-            if (debugInfo is { } debug)
-            {
-                debug.Success = false;
-                debug.ElapsedTime = StopWatch.Elapsed;
-            }
-            // -- Debug
+#if TOOLS // Debug
+            debugInfo.ElapsedTime = StopWatch.Elapsed;
+#endif
             return (null, debugInfo);
         }
 
@@ -205,11 +194,11 @@ public sealed class GoapPlanJob(
             TaskIdFromParent = null,
             G = 0f,
             F = startHeuristic,
-            // -- Debug
+#if TOOLS // Debug
             StateBefore = collectDebug ? startState.GetStateDump() : new(),
             Preconditions = Array.Empty<GoapPreconditionDebugDump>(),
             H = startHeuristic,
-            // -- Debug
+#endif
         };
 
         _openSet.Enqueue(startNode, startNode.F);
@@ -223,30 +212,18 @@ public sealed class GoapPlanJob(
 
             if (IsGoalSatisfied(current.State, goalState))
             {
-                // -- Debug
-                if (debugInfo is { } debug)
-                {
-                    debug.Success = true;
-                    debug.TotalCost = current.G;
-                    var (plan, nodes, actions) = BuildPlan(current, collectDebug);
-                    debug.Actions = actions ?? new();
-                    debug.ElapsedTime = StopWatch.Elapsed;
-                    debug.Nodes.AddRange(nodes ?? new());
 
-                    // At this time, we only support breakpoints for nodes included in the plan,
-                    // since conditions are checked multiple times during planning and behavior may be unpredictable.
-                    foreach (var node in nodes ?? new())
-                    {
-                        for (var i = 0; i < node.Preconditions.Length; i++)
-                        {
-                            goap.RaisePreconditionBreakpoint(target, node.NodeId, i, node.Preconditions[i].Result);
-                        }
-                    }
-
-                    return (plan, debug);
-                }
-                // -- Debug
+#if TOOLS // Debug
+                debugInfo.Success = true;
+                debugInfo.TotalCost = current.G;
+                var (plan, nodes, actions) = BuildPlan(current, collectDebug);
+                debugInfo.Actions = actions ?? new();
+                debugInfo.ElapsedTime = StopWatch.Elapsed;
+                debugInfo.Nodes.AddRange(nodes ?? new());
+                return (plan, debugInfo);
+#else // Release
                 return (BuildPlan(current, collectDebug).Plan, null);
+#endif
             }
 
             _closed.Add(current.State);
@@ -257,29 +234,30 @@ public sealed class GoapPlanJob(
                 graph.CandidatesByNodeId.TryGetValue(fromId, out var cachedCandidates)
                     ? cachedCandidates
                     : graph.RootCandidates,
+#if TOOLS // Debug
                 debugInfo);
+#else // Release
+                null);
+#endif
 
             // Check for timeout
             await SuspendIfOutOfTime();
         }
 
         // No plan found
-        // -- Debug
-        if (debugInfo != null)
-        {
-            var debug = debugInfo.Value;
-            debug.Success = false;
-            debug.ElapsedTime = StopWatch.Elapsed;
-        }
-        // -- Debug
+#if TOOLS // Debug
+        debugInfo.Success = false;
+        debugInfo.ElapsedTime = StopWatch.Elapsed;
         return (null, debugInfo);
+#else // Release
+        return (null, null);
+#endif
     }
 
     /// <summary>
     /// Calculates the total cost of executing a task by summing the costs
     /// of all its constituent actions.
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float TaskCost(
         EntityUid target,
         GoapState state,
@@ -299,7 +277,6 @@ public sealed class GoapPlanJob(
     /// <summary>
     /// Checks whether the current state satisfies all conditions of the goal state.
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsGoalSatisfied(GoapState current, GoapState goal)
     {
         foreach (var kv in goal)
@@ -326,7 +303,6 @@ public sealed class GoapPlanJob(
     /// Heuristic function that estimates the cost from the current state to the goal.
     /// Currently, returns the number of unsatisfied goal conditions.
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float Heuristic(GoapState current, GoapState goal)
     {
         var unsatisfied = 0;
@@ -352,35 +328,33 @@ public sealed class GoapPlanJob(
         var tasks = new List<(ExecutableGoapTask Task, int Id)>();
         var current = goalNode;
 
-        // -- Debug
-        List<GoapNodeDebugEntry>? nodes = null;
-        List<GoapActionDebugInfo>? debug = null;
-        if (collectDebug)
-        {
-            nodes = new List<GoapNodeDebugEntry>();
-            debug = new List<GoapActionDebugInfo>();
-        }
-        // -- Debug
+#if TOOLS // Debug
+        var nodes = new List<GoapNodeDebugEntry>();
+        var debug = new List<GoapActionDebugInfo>();
+#endif
 
         while (current.Parent != null)
         {
             DebugTools.Assert(current.TaskFromParent != null, "Non-root node must have a task.");
             tasks.Add((current.TaskFromParent!.Value, current.TaskIdFromParent!.Value));
 
-            // -- Debug
-            nodes?.Add(new GoapNodeDebugEntry(
-                NodeId: current.TaskIdFromParent!.Value,
-                Compound: current.TaskFromParent!.Value.Compound,
-                Preconditions: current.Preconditions,
-                StateBefore: current.StateBefore,
-                StateAfter: current.State.GetStateDump(),
-                TaskCost: current.G,
-                Heuristic: current.H,
-                AddedToOpenList: true,
-                PreconditionsMet: true,
-                InPlan: true,
-                SkipReason: null));
-            // -- Debug
+#if TOOLS // Debug
+            if (collectDebug)
+            {
+                nodes.Add(new GoapNodeDebugEntry(
+                    NodeId: current.TaskIdFromParent!.Value,
+                    Compound: current.TaskFromParent!.Value.Compound,
+                    Preconditions: current.Preconditions,
+                    StateBefore: current.StateBefore,
+                    StateAfter: current.State.GetStateDump(),
+                    TaskCost: current.G,
+                    Heuristic: current.H,
+                    AddedToOpenList: true,
+                    PreconditionsMet: true,
+                    InPlan: true,
+                    SkipReason: null));
+            }
+#endif
 
             current = current.Parent;
         }
@@ -395,26 +369,27 @@ public sealed class GoapPlanJob(
             actions.AddRange(task.Actions);
         }
 
-        // -- Debug
-        if (collectDebug)
+#if TOOLS // Debug
+        foreach (var (task, id) in tasks)
         {
-            foreach (var (task, id) in tasks)
+            for (var j = 0; j < task.Actions.Count; j++)
             {
-                for (var j = 0; j < task.Actions.Count; j++)
-                {
-                    debug?.Add(new GoapActionDebugInfo(
-                        id,
-                        j,
-                        null,
-                        null,
-                        null,
-                        new()));
-                }
+                debug?.Add(new GoapActionDebugInfo(
+                    id,
+                    j,
+                    null,
+                    null,
+                    null,
+                    new()));
             }
         }
-        // -- Debug
+#endif
 
+#if TOOLS // Debug
         return (new GoapPlan(actions, 0), nodes, debug);
+#else // Release
+        return (new GoapPlan(actions, 0), null, null);
+#endif
     }
 
     /// <summary>
@@ -430,7 +405,7 @@ public sealed class GoapPlanJob(
     {
         foreach (var candidate in candidates)
         {
-            // -- Debug
+#if TOOLS // Debug
             GoapStateDebugDump? stateBefore = null;
             List<GoapPreconditionDebugDump>? preconditions = null;
 
@@ -439,7 +414,7 @@ public sealed class GoapPlanJob(
                 stateBefore = current.State.GetStateDump();
                 preconditions = new List<GoapPreconditionDebugDump>(candidate.Task.Preconditions.Count);
             }
-            // -- Debug
+#endif
 
             var preconditionsMet = true;
 
@@ -448,10 +423,9 @@ public sealed class GoapPlanJob(
                 // Conditions covered by a static edge are guaranteed by the edge itself.
                 if (candidate.Edge?.SkipConditions.Contains(j) == true)
                 {
-                    // -- Debug
-                    if (collectDebug)
-                        preconditions?.Add(new(new(null, current.State.GetStateDump()), true));
-                    // -- Debug
+#if TOOLS // Debug
+                    preconditions?.Add(new(new(null, current.State.GetStateDump()), true));
+#endif
                     continue;
                 }
 
@@ -463,56 +437,63 @@ public sealed class GoapPlanJob(
                     var res = goap.CheckCondition(target, current.State, condition, out var condDump);
                     cached = new(res, condDump);
                     _conditionCache[key] = cached;
-                    // -- Debug
-                    if (debugInfo is { } debug)
+#if TOOLS // Debug
+                    if (collectDebug && debugInfo is { } debug)
                         debug.ConditionsChecked++;
-                    // -- Debug
+#endif
                 }
 
                 if (!cached.Result)
                 {
                     preconditionsMet = false;
 
+#if TOOLS // Debug
                     if (!collectDebug)
                         break;
+#else // Release
+                    break;
+#endif
                 }
 
-                // -- Debug
+#if TOOLS // Debug
                 if (collectDebug)
                     preconditions?.Add(new(cached.Dump ?? new(null, current.State.GetStateDump()), cached.Result));
-                // -- Debug
+#endif
             }
 
             if (!preconditionsMet)
             {
-                // -- Debug
-                debugInfo?.Nodes.Add(new(
-                    NodeId: candidate.Task.Id,
-                    Compound: candidate.Task.Compound,
-                    Preconditions: preconditions!.ToArray(),
-                    StateBefore: stateBefore!.Value,
-                    StateAfter: null,
-                    TaskCost: current.G,
-                    Heuristic: 0,
-                    AddedToOpenList: false,
-                    PreconditionsMet: false,
-                    InPlan: false,
-                    SkipReason: "Preconditions not met"));
-                // -- Debug
+#if TOOLS // Debug
+                if (collectDebug)
+                {
+                    debugInfo?.Nodes.Add(new(
+                        NodeId: candidate.Task.Id,
+                        Compound: candidate.Task.Compound,
+                        Preconditions: preconditions!.ToArray(),
+                        StateBefore: stateBefore!.Value,
+                        StateAfter: null,
+                        TaskCost: current.G,
+                        Heuristic: 0,
+                        AddedToOpenList: false,
+                        PreconditionsMet: false,
+                        InPlan: false,
+                        SkipReason: "Preconditions not met"));
+                }
+#endif
                 continue;
             }
 
             // Apply effects to get the new state
             var newState = ApplyEffects(current.State, candidate.Task.Effects);
 
-            // -- Debug
-            if (debugInfo != null)
+#if TOOLS // Debug
+            if (collectDebug && debugInfo != null)
             {
                 var debug = debugInfo.Value;
                 debug.NodesExpanded++;
                 debug.EffectsApplied += candidate.Task.Effects.Count;
             }
-            // -- Debug
+#endif
 
             // Compute cost to reach new state
             var taskCost = TaskCost(target, current.State, candidate.Task, goap);
@@ -521,22 +502,26 @@ public sealed class GoapPlanJob(
             // Skip if we already found a cheaper path to this state
             if (_bestNodes.TryGetValue(newState, out var existingNode) && existingNode.G <= newG)
             {
-                // -- Debug
-                debugInfo?.Nodes.Add(new(
-                    NodeId: candidate.Task.Id,
-                    Compound: candidate.Task.Compound,
-                    Preconditions: preconditions!.ToArray(),
-                    StateBefore: stateBefore!.Value,
-                    StateAfter: newState.GetStateDump(),
-                    TaskCost: taskCost,
-                    Heuristic: Heuristic(newState, goalState),
-                    AddedToOpenList: false,
-                    PreconditionsMet: true,
-                    InPlan: false,
-                    SkipReason: $"Cheaper path already exists (existing G={existingNode.G}, new G={newG})"));
-                if (debugInfo is { } debug)
-                    debug.SkippedExpensiveNodes++;
-                // -- Debug
+#if TOOLS // Debug
+                if (collectDebug)
+                {
+                    debugInfo?.Nodes.Add(new(
+                        NodeId: candidate.Task.Id,
+                        Compound: candidate.Task.Compound,
+                        Preconditions: preconditions!.ToArray(),
+                        StateBefore: stateBefore!.Value,
+                        StateAfter: newState.GetStateDump(),
+                        TaskCost: taskCost,
+                        Heuristic: Heuristic(newState, goalState),
+                        AddedToOpenList: false,
+                        PreconditionsMet: true,
+                        InPlan: false,
+                        SkipReason: $"Cheaper path already exists (existing G={existingNode.G}, new G={newG})"));
+
+                    if (debugInfo is { } debug)
+                        debug.SkippedExpensiveNodes++;
+                }
+#endif
                 continue;
             }
 
@@ -550,36 +535,41 @@ public sealed class GoapPlanJob(
                 TaskIdFromParent = candidate.Task.Id,
                 G = newG,
                 F = newG + h,
+#if TOOLS // Debug
                 StateBefore = new(),
                 Preconditions = Array.Empty<GoapPreconditionDebugDump>(),
                 H = h,
+#endif
             };
 
-            // -- Debug
+#if TOOLS // Debug
             if (collectDebug)
             {
                 newNode.StateBefore = stateBefore!.Value;
                 newNode.Preconditions = preconditions!.ToArray();
             }
-            // -- Debug
+#endif
 
             _openSet.Enqueue(newNode, newNode.F);
             _bestNodes[newState] = newNode;
 
-            // -- Debug
-            debugInfo?.Nodes.Add(new(
-                NodeId: candidate.Task.Id,
-                Compound: candidate.Task.Compound,
-                Preconditions: preconditions!.ToArray(),
-                StateBefore: stateBefore!.Value,
-                StateAfter: newState.GetStateDump(),
-                TaskCost: taskCost,
-                Heuristic: h,
-                AddedToOpenList: true,
-                PreconditionsMet: true,
-                InPlan: false,
-                SkipReason: null));
-            // -- Debug
+#if TOOLS // Debug
+            if (collectDebug)
+            {
+                debugInfo?.Nodes.Add(new(
+                    NodeId: candidate.Task.Id,
+                    Compound: candidate.Task.Compound,
+                    Preconditions: preconditions!.ToArray(),
+                    StateBefore: stateBefore!.Value,
+                    StateAfter: newState.GetStateDump(),
+                    TaskCost: taskCost,
+                    Heuristic: h,
+                    AddedToOpenList: true,
+                    PreconditionsMet: true,
+                    InPlan: false,
+                    SkipReason: null));
+            }
+#endif
         }
     }
 }

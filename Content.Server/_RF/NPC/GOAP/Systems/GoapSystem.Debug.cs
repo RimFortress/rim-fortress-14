@@ -31,7 +31,7 @@ public partial class GoapSystem
             return;
 
         // Holy shit
-        if (msg.Point.Kind is GoapBreakpointKind.Precondition or GoapBreakpointKind.ActionStartup
+        if (msg.Point.Kind == GoapBreakpointKind.ActionStartup
             && msg.Point.Result != GoapBreakpointResultKind.True
             && msg.Point.Result != GoapBreakpointResultKind.False
             || msg.Point.Kind == GoapBreakpointKind.ActionUpdate
@@ -65,10 +65,7 @@ public partial class GoapSystem
         RemoveBreakpoint(args.SenderSession, msg.Point);
     }
 
-    protected override void SendDebug(
-        ICommonSession session,
-        EntityUid target,
-        GoapBreakpoint? breakpoint = null)
+    protected override void SendDebug(ICommonSession session, EntityUid target)
     {
         if (!_admin.HasAdminFlag(session, AdminFlags.Debug)
             || !TryComp(target, out GoapComponent? comp)
@@ -78,19 +75,26 @@ public partial class GoapSystem
         RaiseNetworkEvent(new GoapDebugInfoMessage(
                 GetNetEntity(target),
                 comp.PlanDebug,
-                comp.StaticGraph.Value,
-                breakpoint),
+                comp.StaticGraph.Value),
             session);
     }
 
-    protected override void QueueDebugSend(
-        ICommonSession session,
-        EntityUid target,
-        GoapBreakpoint? breakpoint = null)
+    protected override void QueueDebugSend(ICommonSession session, EntityUid target)
     {
         if (_admin.HasAdminFlag(session, AdminFlags.Debug)
             && HasComp<GoapComponent>(target))
-            DebugSendQueue.Add((session, target, breakpoint));
+            DebugSendQueue.Add((session, target));
+    }
+
+    protected override void BreakpointHit(
+        ICommonSession session,
+        GoapBreakpoint breakpoint,
+        List<GoapActionDebugInfo> actions)
+    {
+        if (!_admin.HasAdminFlag(session, AdminFlags.Debug))
+            return;
+
+        RaiseNetworkEvent(new GoapBreakpointHitMessage(breakpoint, actions), session);
     }
 
     /// <summary>

@@ -358,7 +358,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {RotateSpeed, float.MaxValue},
         {"IdleRange", 7f},
         {"InteractRange", SharedInteractionSystem.InteractionRange - 0.15f },
-        {MovementRange, 0.3f},
+        {MovementRange, 0.333f},
     };
 
     public static readonly HashSet<string> EntityDefaults = new()
