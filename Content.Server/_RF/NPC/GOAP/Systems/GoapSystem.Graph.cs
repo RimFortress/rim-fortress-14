@@ -14,9 +14,14 @@ public partial class GoapSystem
         _staticGraphs.Clear();
         Log.Info("building GOAP static dependency graphs...");
 
+        var dummy = Spawn();
+        var comp = Factory.GetComponent<GoapComponent>();
+        comp.RootTask = DummyCompound;
+        AddComp(dummy, comp);
+
         foreach (var compound in _proto.EnumeratePrototypes<GoapCompoundPrototype>())
         {
-            _staticGraphs[compound] = GetStaticGraph(compound);
+            _staticGraphs[compound] = GetStaticGraph(compound, dummy);
         }
 
         Log.Info("graphs built");
@@ -25,15 +30,19 @@ public partial class GoapSystem
     [PublicAPI]
     public GoapStaticGraph GetStaticGraph(
         ProtoId<GoapCompoundPrototype> protoId,
-        bool optimize = true)
+        EntityUid? dummy = null)
     {
         if (!_proto.Resolve(protoId, out var compound))
             return new();
 
-        var dummy = Spawn();
-        var comp = Factory.GetComponent<GoapComponent>();
-        comp.RootTask = DummyCompound;
-        AddComp(dummy, comp);
+        if (dummy == null)
+        {
+            dummy = Spawn();
+            var comp = Factory.GetComponent<GoapComponent>();
+            comp.RootTask = DummyCompound;
+            AddComp(dummy.Value, comp);
+        }
+
         var nodes = GetExecutableTasks(compound).OrderBy(x => x.Id).ToList();
         var edges = new HashSet<GoapStaticGraphEdge>();
         var notConnected = new HashSet<int>();
@@ -42,7 +51,8 @@ public partial class GoapSystem
         {
             var from = nodes[fromInd];
 
-            if (from.Preconditions.Any(x => x.EntityCondition))
+            if (from.Preconditions.Any(x => x.EntityCondition)
+                || from.Effects.Any(x => GoapState.EntityDefaults.Contains(x.Key)))
             {
                 notConnected.Add(from.Id);
                 continue;
@@ -68,13 +78,13 @@ public partial class GoapSystem
                     // link the two nodes, rather than the second node simply having no conditions.
                     var dummyState = new GoapState();
                     dummyState.UseEntityDefaults = false;
-                    dummyState.SetValue(GoapState.Owner, dummy);
-                    var dummyCheck = CheckCondition(dummy, dummyState, condition);
+                    dummyState.SetValue(GoapState.Owner, dummy.Value);
+                    var dummyCheck = CheckCondition(dummy.Value, dummyState, condition);
 
                     var effectsState = from.Effects.ShallowClone();
                     effectsState.UseEntityDefaults = false;
-                    effectsState.SetValue(GoapState.Owner, dummy);
-                    var effectsCheck = CheckCondition(dummy, effectsState, condition);
+                    effectsState.SetValue(GoapState.Owner, dummy.Value);
+                    var effectsCheck = CheckCondition(dummy.Value, effectsState, condition);
 
                     if (!effectsCheck || effectsCheck == dummyCheck)
                         continue;

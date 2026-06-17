@@ -5,10 +5,10 @@ using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
-using Robust.Client.ResourceManagement;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.NPC;
 
@@ -64,7 +64,7 @@ public sealed class NpcControlOverlay : Overlay
 
         foreach (var entity in _selection.Selected)
         {
-            if (!_controllableQuery.TryComp(entity, out var controllable)
+            if (!_controllableQuery.HasComp(entity)
                 || !_transformQuery.TryComp(entity, out var entityForm)
                 || !_utilityAi.TryGetCurrentGoal(entity, out var goal)
                 || !_prototype.Resolve(goal, out var proto))
@@ -163,7 +163,7 @@ public sealed class NpcControlOverlay : Overlay
             if (proto.VerbIcon == null)
                 continue;
 
-            var icon = _sprite.Frame0(proto.VerbIcon);
+            var icon = _sprite.Frame0(new SpriteSpecifier.Texture(proto.VerbIcon.Value));
             var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(0.5f));
             var color = _prototype.Index(proto.Goal).Color.WithAlpha(0.6f);
 

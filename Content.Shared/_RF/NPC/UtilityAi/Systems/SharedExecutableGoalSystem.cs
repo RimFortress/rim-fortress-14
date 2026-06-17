@@ -13,6 +13,7 @@ using Content.Shared.Whitelist;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -25,8 +26,9 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 {
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly EntityWhitelistSystem Whitelist = default!;
+    [Dependency] protected readonly IGameTiming Timing = default!;
+    [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
     [Dependency] private readonly SharedGoapSystem _goap = default!;
@@ -46,6 +48,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         SubscribeNetworkEvent<SetGoalRequest>(OnGoalRequest);
         SubscribeNetworkEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
         SubscribeNetworkEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
+        SubscribeNetworkEvent<SetGoalMessage>(OnSetGoalMessage);
 
         Proto.PrototypesReloaded += args =>
         {
@@ -71,7 +74,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
     private void OnGoalRequest(SetGoalRequest request, EntitySessionEventArgs args)
     {
-        if (!_timing.IsFirstTimePredicted
+        if (!Timing.IsFirstTimePredicted
             || args.SenderSession.AttachedEntity is not { } requester
             || !ControlQuery.TryComp(requester, out var control))
             return;
@@ -151,7 +154,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
     private void OnPassiveGoalRequest(PassiveGoalRequest request, EntitySessionEventArgs args)
     {
-        if (!_timing.IsFirstTimePredicted || args.SenderSession.AttachedEntity is not { } uid)
+        if (!Timing.IsFirstTimePredicted || args.SenderSession.AttachedEntity is not { } uid)
             return;
 
         SetPassiveTarget(uid, request.GoalId, GetEntityList(request.Entities));
@@ -159,7 +162,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
     private void OnPassiveGoalRemoveRequest(PassiveGoalRemoveRequest request, EntitySessionEventArgs args)
     {
-        if (!_timing.IsFirstTimePredicted
+        if (!Timing.IsFirstTimePredicted
             || !ControlQuery.HasComp(args.SenderSession.AttachedEntity))
             return;
 
@@ -171,6 +174,19 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
             RemComp(uid, comp);
         }
+    }
+
+    private void OnSetGoalMessage(SetGoalMessage msg, EntitySessionEventArgs args)
+    {
+        if (!GoapQuery.TryComp(GetEntity(msg.Agent), out var comp)
+            || !Proto.Resolve(msg.Goal, out var goal))
+            return;
+
+        if (GetEntity(msg.Target) is { } uid)
+            comp.State.SetValue(goal.TargetKey, uid);
+
+        if (GetCoordinates(msg.TargetCoordinates) is { } coords)
+            comp.State.SetValue(goal.TargetCoordinatesKey, coords);
     }
 
     #endregion
@@ -246,7 +262,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         SetGoal(
             new(ent, ent.Comp1, ent.Comp2, ent.Comp3),
             proto,
-            null,
+            target,
             targetCoords,
             additionalKeys: additionalKeys);
         return true;
@@ -275,6 +291,17 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             goap.State.SetValue(proto.TargetKey, target.Value);
         if (coords != null)
             goap.State.SetValue(proto.TargetCoordinatesKey, coords.Value);
+
+        if (_net.IsServer)
+        {
+            RaiseNetworkEvent(new SetGoalMessage
+            {
+                Agent = GetNetEntity(ent),
+                Goal = proto,
+                Target = GetNetEntity(target),
+                TargetCoordinates = GetNetCoordinates(coords),
+            });
+        }
 
         if (additionalKeys != null)
         {
@@ -534,8 +561,17 @@ public sealed class SetGoalRequest : EntityEventArgs
 {
     public ProtoId<ExecutableGoalPrototype>? Goal;
     public List<NetEntity> Entities { get; set; } = new();
-    public NetEntity? Target { get; set; } = new();
-    public NetCoordinates TargetCoordinates { get; set; }
+    public NetEntity? Target;
+    public NetCoordinates TargetCoordinates;
+}
+
+[Serializable, NetSerializable]
+public sealed class SetGoalMessage : EntityEventArgs
+{
+    public NetEntity Agent;
+    public ProtoId<ExecutableGoalPrototype>? Goal;
+    public NetEntity? Target;
+    public NetCoordinates? TargetCoordinates;
 }
 
 [Serializable, NetSerializable]

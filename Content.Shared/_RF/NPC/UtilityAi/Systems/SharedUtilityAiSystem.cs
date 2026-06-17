@@ -43,6 +43,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             case GoapPlanFinishReason.Finished:
                 ent.Comp.CurrentGoal = null;
                 ent.Comp.Penalties.Clear();
+                Dirty(ent);
 
                 if (TryGetGoal(ent.AsNullable(), out var goal))
                     SetGoal(ent.Owner, goal.Value);
@@ -54,6 +55,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             case GoapPlanFinishReason.Interrupted:
                 ent.Comp.CurrentGoal = null;
                 ent.Comp.Penalties.Clear();
+                Dirty(ent);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -67,7 +69,10 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             if (TryGetGoal(ent.AsNullable(), out var newGoal))
                 SetGoal(ent.Owner, newGoal.Value);
             else
+            {
                 ent.Comp.CurrentGoal = null;
+                Dirty(ent);
+            }
 
             return;
         }
@@ -115,6 +120,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
 
         Goap.SetGoal(new(ent, ent.Comp2), proto.GoalState);
         ent.Comp1.CurrentGoal = protoId;
+        Dirty(ent, ent.Comp1);
         RaiseLocalEvent(ent, new UtilityAiGoalGiven(protoId));
     }
 

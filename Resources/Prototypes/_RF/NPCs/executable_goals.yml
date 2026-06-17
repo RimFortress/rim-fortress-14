@@ -1,4 +1,0 @@
-- type: executableGoal
-  id: MoveTo
-  goal: MoveTo
-  taskType: Place

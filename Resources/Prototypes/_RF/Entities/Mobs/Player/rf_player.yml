@@ -41,7 +41,7 @@
     goals:
     - MoveTo
     #- Attack
-    #- PickUp
+    - PickUp
     #- TakeOwnership
     #- Pry
     #- Deconstruct

@@ -14,6 +14,7 @@
     factions:
     - RimFortress
   - type: NpcJobSettings
+  - type: ControllableNpc
   - type: FogOfWarClearer
   - type: NotifyOnStateChanged
     notifications:

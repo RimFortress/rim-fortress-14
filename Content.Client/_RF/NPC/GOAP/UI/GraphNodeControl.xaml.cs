@@ -37,9 +37,12 @@ public sealed partial class GraphNodeControl : Control
 
         controller.OnBreakpointHit += args =>
         {
+            if (args.Point.NodeId == graphNode.Id)
+                TabContainer.CurrentTab = 1;
+
             ActionsTab.RemoveAllChildren();
-            TabContainer.CurrentTab = 1;
             AddAction(args.Actions);
+            UpdateStatus(args.Actions);
         };
 
         // ActionsTab
@@ -70,44 +73,7 @@ public sealed partial class GraphNodeControl : Control
         }
 
         // Common
-        if (debug?.InPlan == true)
-        {
-            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
-
-            if (actions?.Any(x => x.StartupSuccess == null) == true)
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Not Started\][/color]";
-
-            if (actions?.Any(x
-                    => x.UpdateDumps.Any(y
-                        => y.Result == GoapActionResult.Continuing)) == true)
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Continuing\][/color]";
-
-            if (actions?.Any(x
-                    => x.UpdateDumps.Any(y
-                        => y.Result == GoapActionResult.Failed)
-                       || x.StartupSuccess == false) == true)
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.BetterViolet.ToHex()}]\[Failed\][/color]";
-
-            if (actions?.Count > 0
-                && actions.All(x
-                    => x.UpdateDumps.Any(y
-                        => y.Result == GoapActionResult.Finished)))
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[Finished\][/color]";
-        }
-        else
-        {
-            if (debug is { AddedToOpenList: false, PreconditionsMet: false })
-                StatusLabel.Text = $@"[color={StyleFortress.GraySilver.ToHex()}]\[Skipped\][/color]";
-
-            StatusLabel.Text = debug?.PreconditionsMet switch
-            {
-                false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NotMet\][/color]",
-                true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Met\][/color]",
-                _ => StatusLabel.Text,
-            };
-        }
-
-        StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
+        UpdateStatus(actions);
 
         AddTypes(CommonTab, "Effects", graphNode.EffectsDump.State);
 
@@ -293,6 +259,50 @@ public sealed partial class GraphNodeControl : Control
                     AddLogs(upd.Content, update.Dump.Dump);
                 }
             }
+        }
+
+        void UpdateStatus(List<GoapActionDebugInfo>? actionsDebug)
+        {
+            StatusLabel.Text = string.Empty;
+
+            if (actionsDebug?.Any(x => x.NodeIndex == graphNode.Id) == true)
+            {
+                StatusLabel.Text = $@"[color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
+
+                if (actionsDebug.Any(x => x.StartupSuccess == null))
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Not Started\][/color]";
+
+                if (actionsDebug.Any(x
+                        => x.UpdateDumps.Any(y
+                            => y.Result == GoapActionResult.Continuing)))
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Continuing\][/color]";
+
+                if (actionsDebug.Any(x
+                        => x.UpdateDumps.Any(y
+                               => y.Result == GoapActionResult.Failed)
+                           || x.StartupSuccess == false))
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.BetterViolet.ToHex()}]\[Failed\][/color]";
+
+                if (actionsDebug.Count > 0
+                    && actionsDebug.All(x
+                        => x.UpdateDumps.Any(y
+                            => y.Result == GoapActionResult.Finished)))
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[Finished\][/color]";
+            }
+            else
+            {
+                if (debug is { AddedToOpenList: false, PreconditionsMet: false })
+                    StatusLabel.Text = $@"[color={StyleFortress.GraySilver.ToHex()}]\[Skipped\][/color]";
+
+                StatusLabel.Text = debug?.PreconditionsMet switch
+                {
+                    false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NotMet\][/color]",
+                    true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Met\][/color]",
+                    _ => StatusLabel.Text,
+                };
+            }
+
+            StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
         }
     }
 }

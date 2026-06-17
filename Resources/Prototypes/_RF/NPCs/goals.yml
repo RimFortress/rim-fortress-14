@@ -31,11 +31,6 @@
     Idle: true
 
 - type: utilityAiGoal
-  id: MoveTo
-  goalState:
-    NearTargetPlace: true
-
-- type: utilityAiGoal
   id: Eat
   scoreCurves:
   - !type:HungerLevel
@@ -56,3 +51,14 @@
     - float: 2
   goalState:
     DrinkDrunk: true
+
+- type: utilityAiGoal
+  id: MoveTo
+  goalState:
+    NearTargetPlace: true
+
+- type: utilityAiGoal
+  id: PickUp
+  color: "#00D5FF"
+  goalState:
+    TargetPickedUp: true

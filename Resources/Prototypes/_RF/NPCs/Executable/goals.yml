@@ -1,0 +1,14 @@
+- type: executableGoal
+  id: MoveTo
+  goal: MoveTo
+  taskType: Place
+
+- type: executableGoal
+  id: PickUp
+  goal: PickUp
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  targetKey: PickUpTarget
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Item

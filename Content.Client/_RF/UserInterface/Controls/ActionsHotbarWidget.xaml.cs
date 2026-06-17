@@ -12,6 +12,7 @@ using Robust.Client.Player;
 using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
@@ -80,7 +81,7 @@ public sealed partial class ActionsHotbarWidget : UIWidget
             {
                 ToolTip = _proto.Index(proto.Goal).Name,
                 ToggleMode = true,
-                Texture = proto.VerbIcon != null ? _sprite.Frame0(proto.VerbIcon) : null,
+                Texture = proto.VerbIcon != null ? _sprite.Frame0(new SpriteSpecifier.Texture(proto.VerbIcon.Value)) : null,
             };
 
             button.OnToggled += args => _executable.SetSelectedTask(args.Pressed ? (ProtoId<ExecutableGoalPrototype>?)goal : null);

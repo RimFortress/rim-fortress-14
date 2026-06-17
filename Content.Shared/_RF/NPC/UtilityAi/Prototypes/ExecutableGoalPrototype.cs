@@ -43,7 +43,7 @@ public sealed partial class ExecutableGoalPrototype : IPrototype, IInheritingPro
     /// If <see cref="TaskType"/> is <see cref="ExecutableGoalType.Verb"/>.
     /// </summary>
     [DataField]
-    public SpriteSpecifier? VerbIcon;
+    public ResPath? VerbIcon;
 
     /// <summary>
     /// Filter for the goal target entity.

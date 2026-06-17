@@ -9,7 +9,7 @@ namespace Content.Shared._RF.NPC.UtilityAi.Components;
 /// A component that allows the use of Utility Ai to find the GOAP goal state.
 /// </summary>
 [Access(typeof(SharedUtilityAiSystem))]
-[RegisterComponent, NetworkedComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class UtilityAiComponent : Component
 {
     /// <summary>
@@ -21,7 +21,7 @@ public sealed partial class UtilityAiComponent : Component
     /// <summary>
     /// The agent's current goal, specified via Utility Ai.
     /// </summary>
-    [ViewVariables]
+    [ViewVariables, AutoNetworkedField]
     public ProtoId<UtilityAiGoalPrototype>? CurrentGoal;
 
     [ViewVariables]

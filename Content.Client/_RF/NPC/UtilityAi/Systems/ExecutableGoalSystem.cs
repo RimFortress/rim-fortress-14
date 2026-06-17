@@ -79,11 +79,14 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
             ev.Verbs.Add(new()
             {
-                Text = Proto.Index(proto.Goal).Name,
-                Icon = proto.VerbIcon,
+                Text = Loc.GetString(Proto.Index(proto.Goal).Name),
+                Icon = proto.VerbIcon != null ? new SpriteSpecifier.Texture(proto.VerbIcon.Value) : null,
                 Category = VerbCategory.NpcTask,
                 Act = () =>
                 {
+                    if (!Timing.IsFirstTimePredicted)
+                        return;
+
                     RaisePredictiveEvent(new SetGoalRequest
                     {
                         Goal = goal,
@@ -127,7 +130,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                         entities.Select(x => GetNetEntity(x)).ToList())),
                 filter: NpcTaskFilter,
                 color: goal.Color,
-                icon: proto.VerbIcon,
+                icon: proto.VerbIcon != null ? new SpriteSpecifier.Texture(proto.VerbIcon.Value) : null,
                 iconColor: goal.Color);
         }
         else
