@@ -23,7 +23,6 @@ public sealed partial class GoapSystem : SharedGoapSystem
     private static readonly ProtoId<GoapCompoundPrototype> DummyCompound = "Empty";
 
     private readonly JobQueue _planQueue = new(0.04f);
-    private readonly Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph> _staticGraphs = new();
     private bool _queueGraphsBuild;
 
     public override void Initialize()
@@ -73,7 +72,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
         if (ent.Comp.Planning)
             return;
 
-        if (!_staticGraphs.TryGetValue(ent.Comp.RootTask, out var graph))
+        if (!StaticGraphs.TryGetValue(ent.Comp.RootTask, out var graph))
         {
             Log.Error($"graph for compound '{ent.Comp.RootTask}' not found");
             return;
@@ -153,7 +152,10 @@ public sealed partial class GoapSystem : SharedGoapSystem
                 {
                     for (var i = 0; i < DebugSendQueue.Count; i++)
                     {
-                        var (session, target) = DebugSendQueue[i];
+                        var (session, target, condition) = DebugSendQueue[i];
+
+                        if (condition != null && condition != (comp.Plan != null))
+                            continue;
 
                         if (target != uid)
                             continue;

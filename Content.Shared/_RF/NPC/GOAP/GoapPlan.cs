@@ -26,16 +26,7 @@ public readonly record struct ExecutableGoapTask(
 /// one of the destination task's preconditions.
 /// </summary>
 [Serializable]
-public readonly record struct GoapStaticGraphEdge(
-    int FromNodeId,
-    int ToNodeId,
-    HashSet<int> SkipConditions)
-    : IStaticGraphEdge;
-
-[Serializable]
-public readonly record struct GoapStaticGraphCandidate(
-    ExecutableGoapTask Task,
-    GoapStaticGraphEdge? Edge);
+public readonly record struct GoapStaticGraphEdge(int FromNodeId, int ToNodeId) : IStaticGraphEdge;
 
 /// <summary>
 /// A graph that stores static dependencies between GOAP nodes in a compound.
@@ -44,16 +35,14 @@ public readonly record struct GoapStaticGraphCandidate(
 /// <param name="Edges"></param>
 /// <param name="OutgoingByNodeId"></param>
 /// <param name="IncomingByNodeId"></param>
-/// <param name="NotConnected">Nodes whose connections are not static and must be checked by the planner.</param>
 [Serializable]
 public readonly record struct GoapStaticGraph(
     List<ExecutableGoapTask> Nodes,
     List<GoapStaticGraphEdge> Edges,
     Dictionary<int, List<GoapStaticGraphEdge>> OutgoingByNodeId,
     Dictionary<int, List<GoapStaticGraphEdge>> IncomingByNodeId,
-    HashSet<int> NotConnected,
-    GoapStaticGraphCandidate[] RootCandidates,
-    Dictionary<int, GoapStaticGraphCandidate[]> CandidatesByNodeId)
+    Dictionary<int, ExecutableGoapTask[]> CandidatesByNodeId,
+    Dictionary<(string, object), List<ExecutableGoapTask>> NodesByEffect)
     : IStaticGraph<ExecutableGoapTask, GoapStaticGraphEdge>;
 
 /// <summary>

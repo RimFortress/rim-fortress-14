@@ -1,9 +1,12 @@
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared.Hands.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -16,7 +19,9 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     [Dependency] private readonly SharedContainerSystem _container = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
-    protected readonly List<(ICommonSession Session, EntityUid Target)> DebugSendQueue = new();
+    protected readonly List<(ICommonSession Session, EntityUid Target, bool? Condition)> DebugSendQueue = new();
+    protected FrozenDictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph> StaticGraphs =
+            new Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph>().ToFrozenDictionary();
 
     #region Conditions
 
@@ -441,7 +446,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     /// <summary>
     /// Adds the player to the list of those who will receive debug information about the NPC's next plan.
     /// </summary>
-    protected virtual void QueueDebugSend(ICommonSession session, EntityUid target)
+    protected virtual void QueueDebugSend(ICommonSession session, EntityUid target, bool? condition = null)
     {
         // Noop on client
     }
@@ -504,7 +509,6 @@ public interface IGoapConditionCheсker
         GoapState state,
         StateKey<T> key,
         [NotNullWhen(true)] out T? value)
-
         where T : notnull;
 
     /// <summary>

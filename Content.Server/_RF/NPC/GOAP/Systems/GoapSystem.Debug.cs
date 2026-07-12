@@ -49,6 +49,7 @@ public partial class GoapSystem
             && points.Contains(msg.Point))
             return;
 
+        QueueDebugSend(args.SenderSession, target.Value, true);
         Breakpoints.GetOrNew(args.SenderSession).Add(msg.Point);
         RaiseNetworkEvent(new GoapBreakpointMessage(msg.Point), args.SenderSession);
     }
@@ -79,11 +80,11 @@ public partial class GoapSystem
             session);
     }
 
-    protected override void QueueDebugSend(ICommonSession session, EntityUid target)
+    protected override void QueueDebugSend(ICommonSession session, EntityUid target, bool? condition = null)
     {
         if (_admin.HasAdminFlag(session, AdminFlags.Debug)
             && HasComp<GoapComponent>(target))
-            DebugSendQueue.Add((session, target));
+            DebugSendQueue.Add((session, target, condition));
     }
 
     protected override void BreakpointHit(
@@ -109,7 +110,7 @@ public partial class GoapSystem
     public GoapStaticGraphDebug BuildDebugGraph(EntityUid uid)
     {
         if (!TryComp(uid, out GoapComponent? comp)
-            || !_staticGraphs.TryGetValue(comp.RootTask, out var graph))
+            || !StaticGraphs.TryGetValue(comp.RootTask, out var graph))
             return new();
 
         return new GoapStaticGraphDebug(

@@ -36,7 +36,6 @@ public readonly record struct GoapStateDebugDump(
 /// <param name="StateBefore">State before applying the task.</param>
 /// <param name="StateAfter">State after applying effects (if preconditions met).</param>
 /// <param name="TaskCost">Task cost (sum of action costs).</param>
-/// <param name="Heuristic">Heuristic value for the resulting state.</param>
 /// <param name="AddedToOpenList">Was this node added to the open set?</param>
 /// <param name="PreconditionsMet">Were preconditions satisfied?</param>
 /// <param name="InPlan">Is this node included in the final plan?</param>
@@ -49,7 +48,6 @@ public readonly record struct GoapNodeDebugEntry(
     GoapStateDebugDump StateBefore,
     GoapStateDebugDump? StateAfter,
     float TaskCost,
-    float Heuristic,
     bool AddedToOpenList,
     bool PreconditionsMet,
     bool InPlan,

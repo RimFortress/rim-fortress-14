@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Linq;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -11,7 +12,7 @@ public partial class GoapSystem
 {
     private void BuildGraphs()
     {
-        _staticGraphs.Clear();
+        var staticGraphs = new Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph>();
         Log.Info("building GOAP static dependency graphs...");
 
         var dummy = Spawn();
@@ -21,12 +22,17 @@ public partial class GoapSystem
 
         foreach (var compound in _proto.EnumeratePrototypes<GoapCompoundPrototype>())
         {
-            _staticGraphs[compound] = GetStaticGraph(compound, dummy);
+            staticGraphs[compound] = GetStaticGraph(compound, dummy);
         }
+
+        StaticGraphs = staticGraphs.ToFrozenDictionary();
 
         Log.Info("graphs built");
     }
 
+    /// <summary>
+    /// Builds the static dependency graph for a compound prototype.
+    /// </summary>
     [PublicAPI]
     public GoapStaticGraph GetStaticGraph(
         ProtoId<GoapCompoundPrototype> protoId,
@@ -51,26 +57,31 @@ public partial class GoapSystem
         {
             var from = nodes[fromInd];
 
-            if (from.Preconditions.Any(x => x.EntityCondition)
-                || from.Effects.Any(x => GoapState.EntityDefaults.Contains(x.Key)))
-            {
+            // A node with at least one effect on an entity-default key has some effect whose
+            // real runtime value can't be trusted from a dummy-entity probe. It still
+            // participates in normal edge building below (for its other, static effects), but
+            // it also needs to remain in the fallback pool so it's still considered as a
+            // possible dynamic contributor everywhere - see the NotConnected remarks above.
+            if (from.Effects.Any(x => GoapState.EntityDefaults.Contains(x.Key)))
                 notConnected.Add(from.Id);
-                continue;
-            }
 
             for (var toInd = 0; toInd < nodes.Count; toInd++)
             {
                 var to = nodes[toInd];
 
-                if (fromInd == toInd || notConnected.Contains(toInd))
+                if (fromInd == toInd)
                     continue;
 
                 var hasConnection = false;
-                var skip = new HashSet<int>();
 
-                for (var i = 0; i < to.Preconditions.Count; i++)
+                foreach (var condition in to.Preconditions)
                 {
-                    var condition = to.Preconditions[i];
+                    // Conditions that read live ECS state can't be reliably predicted from a
+                    // dummy entity at graph-build time - always leave these for the planner to
+                    // resolve dynamically (via the NotConnected fallback pool) instead of risking
+                    // a false static edge based on the dummy's unrepresentative state.
+                    if (condition.EntityCondition)
+                        continue;
 
                     // We perform two checks: the first when the state is empty,
                     // and the second on the node's effects.
@@ -81,22 +92,33 @@ public partial class GoapSystem
                     dummyState.SetValue(GoapState.Owner, dummy.Value);
                     var dummyCheck = CheckCondition(dummy.Value, dummyState, condition);
 
-                    var effectsState = from.Effects.ShallowClone();
+                    var effectsState = new GoapState();
                     effectsState.UseEntityDefaults = false;
                     effectsState.SetValue(GoapState.Owner, dummy.Value);
+
+                    foreach (var (key, value) in from.Effects)
+                    {
+                        // Skip effect keys whose real runtime value is entity-derived - only
+                        // probe with effects we can actually trust to be what's declared, so a
+                        // static edge is never created based on an untrustworthy dummy value.
+                        if (GoapState.EntityDefaults.Contains(key))
+                            continue;
+
+                        effectsState.SetValue(key, value);
+                    }
+
                     var effectsCheck = CheckCondition(dummy.Value, effectsState, condition);
 
                     if (!effectsCheck || effectsCheck == dummyCheck)
                         continue;
 
                     hasConnection = true;
-                    skip.Add(i);
                 }
 
                 if (!hasConnection)
                     continue;
 
-                edges.Add(new GoapStaticGraphEdge(fromInd, toInd, skip));
+                edges.Add(new GoapStaticGraphEdge(fromInd, toInd));
             }
         }
 
@@ -110,10 +132,21 @@ public partial class GoapSystem
             .GroupBy(x => x.ToNodeId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var notConnectedArray = notConnected.ToArray();
+        var candidatesByNodeId = BuildCandidatesByNodeId(nodes, incoming, notConnected.ToArray());
 
-        var rootCandidates = BuildRootCandidates(nodes, incoming, notConnectedArray);
-        var candidatesByNodeId = BuildCandidatesByNodeId(nodes, outgoing, notConnectedArray);
+        var nodesByEffect = new Dictionary<(string, object), List<ExecutableGoapTask>>();
+        foreach (var node in nodes)
+        {
+            foreach (var (k, v) in node.Effects)
+            {
+                var tuple = (k, v);
+
+                if (nodesByEffect.TryGetValue(tuple, out var list))
+                    list.Add(node);
+                else
+                    nodesByEffect[tuple] = new() { node };
+            }
+        }
 
         Del(dummy);
 
@@ -122,9 +155,8 @@ public partial class GoapSystem
             Edges: edgesList,
             OutgoingByNodeId: outgoing,
             IncomingByNodeId: incoming,
-            NotConnected: notConnected,
-            RootCandidates: rootCandidates,
-            CandidatesByNodeId: candidatesByNodeId);
+            CandidatesByNodeId: candidatesByNodeId,
+            NodesByEffect: nodesByEffect);
     }
 
     private List<ExecutableGoapTask> GetExecutableTasks(ProtoId<GoapCompoundPrototype> protoId)
@@ -176,56 +208,26 @@ public partial class GoapSystem
         return tasks;
     }
 
-    private static GoapStaticGraphCandidate[] BuildRootCandidates(
+    private static Dictionary<int, ExecutableGoapTask[]> BuildCandidatesByNodeId(
         List<ExecutableGoapTask> nodes,
         Dictionary<int, List<GoapStaticGraphEdge>> incoming,
         int[] notConnected)
     {
-        var result = new List<GoapStaticGraphCandidate>(nodes.Count);
-        var seen = new HashSet<int>();
+        var result = new Dictionary<int, ExecutableGoapTask[]>(nodes.Count);
 
         foreach (var node in nodes)
         {
-            if (incoming.ContainsKey(node.Id))
-                continue;
-
-            if (!seen.Add(node.Id))
-                continue;
-
-            result.Add(new GoapStaticGraphCandidate(node, null));
-        }
-
-        foreach (var id in notConnected)
-        {
-            if (!seen.Add(id))
-                continue;
-
-            result.Add(new GoapStaticGraphCandidate(nodes[id], null));
-        }
-
-        return result.ToArray();
-    }
-
-    private static Dictionary<int, GoapStaticGraphCandidate[]> BuildCandidatesByNodeId(
-        List<ExecutableGoapTask> nodes,
-        Dictionary<int, List<GoapStaticGraphEdge>> outgoing,
-        int[] notConnected)
-    {
-        var result = new Dictionary<int, GoapStaticGraphCandidate[]>(nodes.Count);
-
-        foreach (var node in nodes)
-        {
-            var list = new List<GoapStaticGraphCandidate>(8);
+            var list = new List<ExecutableGoapTask>(8);
             var seen = new HashSet<int>();
 
-            if (outgoing.TryGetValue(node.Id, out var edges))
+            if (incoming.TryGetValue(node.Id, out var edges))
             {
                 foreach (var edge in edges)
                 {
                     if (!seen.Add(edge.ToNodeId))
                         continue;
 
-                    list.Add(new GoapStaticGraphCandidate(nodes[edge.ToNodeId], edge));
+                    list.Add(nodes[edge.ToNodeId]);
                 }
             }
 
@@ -237,7 +239,7 @@ public partial class GoapSystem
                 if (!seen.Add(id))
                     continue;
 
-                list.Add(new GoapStaticGraphCandidate(nodes[id], null));
+                list.Add(nodes[id]);
             }
 
             result[node.Id] = list.ToArray();

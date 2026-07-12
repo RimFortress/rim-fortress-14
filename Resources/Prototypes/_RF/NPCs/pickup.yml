@@ -23,6 +23,7 @@
 
   - preconditions:
     - ActiveHandFree == true
+    - NearPickupTarget == true
     actions:
     - !type:Pickup
       targetKey: PickupTarget

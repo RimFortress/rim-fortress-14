@@ -81,7 +81,6 @@ public sealed partial class GraphNodeControl : Control
             return;
 
         AddLabel(CommonTab, "Cost:", $"{debug.Value.TaskCost}");
-        AddLabel(CommonTab, "Heuristic:", $"{debug.Value.Heuristic}");
         AddTypes(CommonTab, "State Before", debug.Value.StateBefore.State);
         AddTypes(CommonTab, "State After", debug.Value.StateAfter?.State);
 
