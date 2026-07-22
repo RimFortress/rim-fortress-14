@@ -106,7 +106,8 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, MoveTo action)
     {
-        var owner = ent.Comp.State.GetValue(GoapState.Owner);
+        var state = ent.Comp.State;
+        var owner = state.GetValue(GoapState.Owner);
 
         if (_pendingPaths.TryGetValue(owner, out var pathTask))
         {
@@ -131,7 +132,6 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
                 return GoapActionResult.Failed;
             }
 
-            var state = ent.Comp.State;
             state.SetValue(action.PathfindKey, path);
 
             if (!TryGetValue(state, action, action.TargetKey, out var targetCoords))
@@ -144,7 +144,7 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
             steering.CurrentPath = new Queue<PathPoly>(path.Path);
 
             // Launch steering along the found path.
-            if (Goap.TryGetValue(state, GoapState.OwnerCoordinates, out var coords))
+            if (TryGetValue(state, action, GoapState.OwnerCoordinates, out var coords))
             {
                 var mapCoords = _transform.ToMapCoordinates(coords);
                 _steering.PrunePath(
@@ -160,6 +160,12 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
 
         if (!_steeringQuery.TryComp(owner, out var steeringComp))
         {
+            if (TryGetValue(state, action, action.TargetKey, out var targetCoordinates)
+                && TryGetValue(state, action, action.RangeKey, out var range)
+                && Transform(owner).Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance)
+                && distance <= range)
+                return GoapActionResult.Finished;
+
             ComponentNotFound<NPCSteeringComponent>(ent, action);
             return GoapActionResult.Failed;
         }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Interaction;
@@ -94,6 +95,41 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [PublicAPI]
     public int Count => _state.Count;
 
+    /// <summary>
+    /// Returns the first element of a state, if any.
+    /// </summary>
+    [PublicAPI, Pure]
+    public (string, object)? First()
+    {
+        foreach (var (key, value) in _state)
+        {
+            return (key, value);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Returns the first key-value pair and removes it from the state.
+    /// </summary>
+    /// <returns>True, if the state is not empty.</returns>
+    [PublicAPI]
+    public bool TryDequeue(
+        [NotNullWhen(true)] out string? key,
+        [NotNullWhen(true)] out object? value)
+    {
+        if (_state.Count == 0)
+        {
+            key = null;
+            value = null;
+            return false;
+        }
+
+        (key, value) = _state.First();
+        _state.Remove(key);
+        return false;
+    }
+
     /// <exception cref="ArgumentNullException"/>
     /// <exception cref="KeyNotFoundException"/>
     [Pure, PublicAPI]
@@ -173,6 +209,9 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return default;
     }
 
+    /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
     [PublicAPI]
     public void Remove<T>(string key) where T : notnull
     {
@@ -190,8 +229,25 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         _state.Remove(key);
     }
 
+    /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
     [PublicAPI]
     public void Remove<T>(StateKey<T> key) where T : notnull => Remove<T>((string)key);
+
+    /// <summary>
+    /// Removes a key-value pair from the state.
+    /// </summary>
+    /// <returns>True, if the state contains a key with specified value.</returns>
+    [PublicAPI]
+    public bool Remove(string key, object value)
+    {
+        if (!_state.TryGetValue(key, out var current) || !Equals(value, current))
+            return false;
+
+        _state.Remove(key);
+        return false;
+    }
 
     /// <summary>
     /// Sets the value associated with the specified key.

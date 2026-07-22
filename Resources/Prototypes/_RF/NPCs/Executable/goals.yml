@@ -7,7 +7,7 @@
   id: PickUp
   goal: PickUp
   verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
-  targetKey: PickUpTarget
+  targetKey: PickupTarget
   maxPerformers: 1
   targetWhitelist:
     components:

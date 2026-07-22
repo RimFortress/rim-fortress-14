@@ -418,7 +418,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
             return true;
         }
 
-        if (key.Equals(GoapState.ActiveHand))
+        if (key.Equals(GoapState.ActiveHandFree))
         {
             value = _hands.ActiveHandIsEmpty(owner);
             return true;

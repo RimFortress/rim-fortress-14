@@ -72,6 +72,7 @@ public readonly record struct GoapPreconditionDebugDump(GoapDebugDump Dump, bool
 /// <param name="ElapsedTime">Planning elapsed time.</param>
 /// <param name="Nodes">Step-by-step log of node expansions.</param>
 /// <param name="Actions">Debug information for each action in the plan.</param>
+/// <param name="Message">A message from the planner with some important information.</param>
 [Serializable, NetSerializable]
 public record struct GoapPlanDebugInfo(
     GoapStateDebugDump StartState,
@@ -84,7 +85,8 @@ public record struct GoapPlanDebugInfo(
     int SkippedExpensiveNodes,
     TimeSpan ElapsedTime,
     List<GoapNodeDebugEntry> Nodes,
-    List<GoapActionDebugInfo> Actions);
+    List<GoapActionDebugInfo> Actions,
+    string? Message);
 
 /// <summary>
 /// Debug information about the GOAP plan action.

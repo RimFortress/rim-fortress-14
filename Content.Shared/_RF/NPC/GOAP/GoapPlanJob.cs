@@ -245,14 +245,7 @@ public sealed class GoapPlanJob(
         // An empty goal is trivially "already satisfied" but has no plan to offer; an empty
         // graph means there is nothing the agent even knows how to do.
         if (goalState.Count == 0 || graph.Nodes.Count == 0)
-        {
-#if TOOLS // Debug
-            debugInfo.ElapsedTime = StopWatch.Elapsed;
-            return (null, debugInfo);
-#else // Release
-            return (null, null);
-#endif
-        }
+            return Return();
 
         var goals = new List<KeyValuePair<string, object>>(goalState);
         var startClone = startState.ShallowClone();
@@ -262,17 +255,7 @@ public sealed class GoapPlanJob(
         var plan = _bestPlan;
 
         if (plan == null)
-        {
-#if TOOLS // Debug
-            debugInfo.Success = false;
-            debugInfo.NodesExpanded = _nodesExpanded;
-            debugInfo.ConditionsChecked = _conditionsChecked;
-            debugInfo.ElapsedTime = StopWatch.Elapsed;
-            return (null, debugInfo);
-#else // Release
-            return (null, null);
-#endif
-        }
+            return Return();
 
         // Flatten the ordered task chain into a flat action list. The total cost was already
         // computed precisely during the search (_bestCost), so there's no need to replay costs
@@ -325,16 +308,25 @@ public sealed class GoapPlanJob(
 #endif
         }
 
+        return Return(actions);
+
+        (GoapPlan? Plan, GoapPlanDebugInfo? Debug) Return(
+            List<GoapAction>? planActions = null,
+            string? message = null)
+        {
+            var goapPlan = planActions != null ? new GoapPlan(planActions, 0) : (GoapPlan?)null;
 #if TOOLS // Debug
-        debugInfo.Success = true;
-        debugInfo.TotalCost = _bestCost;
-        debugInfo.NodesExpanded = _nodesExpanded;
-        debugInfo.ConditionsChecked = _conditionsChecked;
-        debugInfo.ElapsedTime = StopWatch.Elapsed;
-        return (new GoapPlan(actions, 0), debugInfo);
+            debugInfo.Success = planActions != null;
+            debugInfo.TotalCost = _bestCost;
+            debugInfo.NodesExpanded = _nodesExpanded;
+            debugInfo.ConditionsChecked = _conditionsChecked;
+            debugInfo.ElapsedTime = StopWatch.Elapsed;
+            debugInfo.Message = message;
+            return (goapPlan, debugInfo);
 #else // Release
-        return (new GoapPlan(actions, 0), null);
+            return (goapPlan, null);
 #endif
+        }
     }
 
     /// <summary>

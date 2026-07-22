@@ -224,10 +224,10 @@ public partial class GoapSystem
             {
                 foreach (var edge in edges)
                 {
-                    if (!seen.Add(edge.ToNodeId))
+                    if (!seen.Add(edge.FromNodeId))
                         continue;
 
-                    list.Add(nodes[edge.ToNodeId]);
+                    list.Add(nodes[edge.FromNodeId]);
                 }
             }
 
