@@ -1,6 +1,8 @@
 <controls:DraggablePanel
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI"
+    HorizontalAlignment="Left"
+    VerticalAlignment="Top"
     MouseFilter="Pass">
     <PanelContainer StyleClasses="PanelLightBordered"/>
     <BoxContainer Orientation="Vertical" Margin="1">

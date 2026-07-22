@@ -72,20 +72,7 @@ public sealed partial class DraggablePanel : Control
         var mouse = UserInterfaceManager.MousePositionScaled.Position;
         var delta = mouse - _lastMousePosition;
         _lastMousePosition = mouse;
-
-        var newPos = Position + delta;
-
-        if (Parent == null)
-        {
-            LayoutContainer.SetPosition(this, newPos);
-            args.Handle();
-            return;
-        }
-
-        newPos.X = Math.Clamp(newPos.X, 0, Parent.Width - Size.X);
-        newPos.Y = Math.Clamp(newPos.Y, 0, Parent.Height - Size.Y);
-
-        LayoutContainer.SetPosition(this, newPos);
+        UpdatePos(Position + delta);
         args.Handle();
     }
 
@@ -96,6 +83,24 @@ public sealed partial class DraggablePanel : Control
             : "/Textures/_RF/Interface/chevron-right-solid.svg.192dpi.png";
         Divider.Visible = expanded;
         Contents.Visible = expanded;
+    }
+
+    protected override Vector2 MeasureOverride(Vector2 finalSize)
+    {
+        var size = base.MeasureOverride(finalSize);
+        UpdatePos(Position, size);
+        return size;
+    }
+
+    private void UpdatePos(Vector2 pos, Vector2? size = null)
+    {
+        if (Parent == null)
+            return;
+
+        pos.X = Math.Clamp(pos.X, 0, Math.Max(0, Parent.Width - (size ?? Size).X));
+        pos.Y = Math.Clamp(pos.Y, 0, Math.Max(0, Parent.Height - (size ?? Size).Y));
+
+        LayoutContainer.SetPosition(this, pos);
     }
 }
 

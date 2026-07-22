@@ -18,8 +18,6 @@
         <controls:DraggablePanel Name="BreakpointsPanel" Title="Breakpoints">
             <BoxContainer Name="Breakpoints" Orientation="Vertical"/>
 
-            <PanelContainer StyleClasses="LowDivider" Margin="3 2"/>
-
             <BoxContainer Name="CreatePointBox" Margin="3"
                           Orientation="Vertical" Visible="False">
                 <OptionButton Name="NodeId"/>

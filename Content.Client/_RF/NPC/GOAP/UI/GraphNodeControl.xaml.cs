@@ -211,13 +211,24 @@ public sealed partial class GraphNodeControl : Control
                 var index = i;
                 var action = graphNode.Actions[i];
 
-                // Static graph info
-                var box = AddBox(ActionsTab, action.Type);
-                AddTypes(box.Content, "Fields", action.Reflection);
-
                 // Runtime debug info
                 if (actionsDebug?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
+                {
+                    // Static graph info
+                    var staticBox = AddBox(ActionsTab, action.Type);
+                    AddTypes(staticBox.Content, "Fields", action.Reflection);
                     continue;
+                }
+
+                // Static graph info
+                var box = AddBox(ActionsTab,
+                    action.Type,
+                    debugAction.UpdateDumps.Count > 0
+                        ? UpdateText(debugAction.UpdateDumps.Last().Result)
+                        : debugAction.StartupSuccess == true
+                            ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
+                            : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
+                AddTypes(box.Content, "Fields", action.Reflection);
 
                 // Startup
                 if (debugAction.StartupSuccess != null)
