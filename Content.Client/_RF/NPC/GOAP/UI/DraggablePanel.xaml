@@ -12,8 +12,7 @@
                 <Label Name="Label"/>
             </BoxContainer>
         </Control>
-        <PanelContainer StyleClasses="LowDivider"/>
-
+        <PanelContainer Name="Divider" StyleClasses="LowDivider"/>
         <BoxContainer Name="Contents" Margin="2" Orientation="Vertical"/>
     </BoxContainer>
 </controls:DraggablePanel>

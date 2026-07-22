@@ -34,6 +34,9 @@ public partial class GoapSystem
         if (msg.Point.Kind == GoapBreakpointKind.ActionStartup
             && msg.Point.Result != GoapBreakpointResultKind.True
             && msg.Point.Result != GoapBreakpointResultKind.False
+            || msg.Point.Kind == GoapBreakpointKind.Planning
+            && msg.Point.Result != GoapBreakpointResultKind.True
+            && msg.Point.Result != GoapBreakpointResultKind.False
             || msg.Point.Kind == GoapBreakpointKind.ActionUpdate
             && msg.Point.Result != GoapBreakpointResultKind.Continuing
             && msg.Point.Result != GoapBreakpointResultKind.Failed
@@ -49,7 +52,10 @@ public partial class GoapSystem
             && points.Contains(msg.Point))
             return;
 
-        QueueDebugSend(args.SenderSession, target.Value, true);
+        QueueDebugSend(
+            args.SenderSession,
+            target.Value,
+            msg.Point is not { Kind: GoapBreakpointKind.Planning, Result: GoapBreakpointResultKind.False });
         Breakpoints.GetOrNew(args.SenderSession).Add(msg.Point);
         RaiseNetworkEvent(new GoapBreakpointMessage(msg.Point), args.SenderSession);
     }

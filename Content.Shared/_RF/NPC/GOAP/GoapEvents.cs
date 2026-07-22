@@ -90,9 +90,10 @@ public sealed class GoapDebugInfoMessage(
 }
 
 [Serializable, NetSerializable]
-public sealed class GoapBreakpointMessage(GoapBreakpoint point) : EntityEventArgs
+public sealed class GoapBreakpointMessage(GoapBreakpoint point, bool requestPlan = true) : EntityEventArgs
 {
     public readonly GoapBreakpoint Point = point;
+    public readonly bool RequestPlan = requestPlan;
 }
 
 [Serializable, NetSerializable]

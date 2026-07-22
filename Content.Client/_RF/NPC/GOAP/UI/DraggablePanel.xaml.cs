@@ -94,6 +94,7 @@ public sealed partial class DraggablePanel : Control
         Marker.TexturePath = expanded
             ? "/Textures/_RF/Interface/chevron-down-solid-full.svg.192dpi.png"
             : "/Textures/_RF/Interface/chevron-right-solid.svg.192dpi.png";
+        Divider.Visible = expanded;
         Contents.Visible = expanded;
     }
 }

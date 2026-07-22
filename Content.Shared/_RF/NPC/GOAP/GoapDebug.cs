@@ -31,6 +31,7 @@ public readonly record struct GoapStateDebugDump(
 /// A single step in the A* search: trying to apply a task to a state.
 /// </summary>
 /// <param name="NodeId">Index of this node in the list of all nodes available for planning.</param>
+/// <param name="FromNodeId">The ID of the node from which the check was performed on this node.</param>
 /// <param name="Compound">The compound from which this node was extracted.</param>
 /// <param name="Preconditions">Dump about the conditions of the task.</param>
 /// <param name="StateBefore">State before applying the task.</param>
@@ -43,6 +44,7 @@ public readonly record struct GoapStateDebugDump(
 [Serializable, NetSerializable]
 public readonly record struct GoapNodeDebugEntry(
     int NodeId,
+    int? FromNodeId,
     ProtoId<GoapCompoundPrototype>? Compound,
     GoapPreconditionDebugDump[] Preconditions,
     GoapStateDebugDump StateBefore,
@@ -156,6 +158,7 @@ public enum GoapBreakpointKind : byte
     ActionStartup,
     ActionUpdate,
     ActionShutdown,
+    Planning,
 }
 
 [Serializable, NetSerializable]

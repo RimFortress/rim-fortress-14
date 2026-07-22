@@ -147,8 +147,43 @@ public sealed partial class GoapDebugTab : Control
             UpdateConfirm();
         };
 
+        PlanningSuccessButton.OnPressed += _ =>
+        {
+            if (_target is not { } uid)
+                return;
+
+            if (PlanningSuccessButton.Pressed)
+                _controller.AddBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.True, false);
+            else
+                _controller.RemoveBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.True);
+        };
+
+        PlanningFailedButton.OnPressed += _ =>
+        {
+            if (_target is not { } uid)
+                return;
+
+            if (PlanningFailedButton.Pressed)
+                _controller.AddBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.False, false);
+            else
+                _controller.RemoveBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.False);
+        };
+
         _controller.OnBreakpointAdded += point =>
         {
+            if (point.Kind == GoapBreakpointKind.Planning)
+            {
+                switch (point.Result)
+                {
+                    case GoapBreakpointResultKind.True:
+                        PlanningSuccessButton.Pressed = true;
+                        return;
+                    case GoapBreakpointResultKind.False:
+                        PlanningFailedButton.Pressed = true;
+                        return;
+                }
+            }
+
             if (_points.TryGetValue(point, out var check))
             {
                 check.Check.Pressed = true;
@@ -181,6 +216,19 @@ public sealed partial class GoapDebugTab : Control
         {
             if (_points.TryGetValue(point, out var check))
                 check.Check.Pressed = false;
+
+            if (point.Kind != GoapBreakpointKind.Planning)
+                return;
+
+            switch (point.Result)
+            {
+                case GoapBreakpointResultKind.True:
+                    PlanningSuccessButton.Pressed = false;
+                    break;
+                case GoapBreakpointResultKind.False:
+                    PlanningFailedButton.Pressed = false;
+                    break;
+            }
         };
 
         _controller.OnBreakpointHit += point =>
@@ -209,6 +257,7 @@ public sealed partial class GoapDebugTab : Control
                 GoapBreakpointKind.ActionStartup => $"{str} Startup: {point.Result}",
                 GoapBreakpointKind.ActionUpdate => $"{str} Update: {point.Result}",
                 GoapBreakpointKind.ActionShutdown => $"{str} Shutdown",
+                GoapBreakpointKind.Planning => $"Planning: {point.Result}",
                 _ => throw new ArgumentOutOfRangeException(),
             };
         }
@@ -254,7 +303,8 @@ public sealed partial class GoapDebugTab : Control
             _nodeControls[node.Id] = control;
         }
 
-        EdgeOverlay.SetData(graphDebug,
+        EdgeOverlay.SetData(
+            graphDebug,
             _nodeControls,
             plan?.Nodes
                 .Where(x => x.InPlan)

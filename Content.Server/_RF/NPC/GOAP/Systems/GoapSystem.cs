@@ -147,6 +147,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
 
                 (comp.Plan, comp.PlanDebug) = comp.PlanningJob.Result;
 
+#if TOOLS
                 // Sends debug information about the new plan to those who are waiting for it.
                 if (comp.PlanDebug != null)
                 {
@@ -163,8 +164,32 @@ public sealed partial class GoapSystem : SharedGoapSystem
                         SendDebug(session, target);
                         DebugSendQueue.RemoveAt(i);
                         i--;
+
+                        // Planning breakpoints
+                        if (!Breakpoints.TryGetValue(session, out var points))
+                            continue;
+
+                        var netTarget = GetNetEntity(uid);
+
+                        for (var y = 0; y < points.Count; y++)
+                        {
+                            var point = points[y];
+
+                            if (point.Target != netTarget || point.Kind != GoapBreakpointKind.Planning)
+                                continue;
+
+                            if (comp.Plan != null && point.Result != GoapBreakpointResultKind.True)
+                                continue;
+
+                            if (comp.Plan == null && point.Result != GoapBreakpointResultKind.False)
+                                continue;
+
+                            RemoveBreakpoint(session, point);
+                            y--;
+                        }
                     }
                 }
+#endif
 
                 // Startup the first task and anything else we need to do.
                 if (comp.Plan != null && !ActionStartup(ent, comp.Plan.Value.CurrentAction))

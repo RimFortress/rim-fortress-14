@@ -85,21 +85,39 @@ public sealed class AiDevWindowUiController : UIController
         int nodeId,
         int index,
         GoapBreakpointKind kind,
-        GoapBreakpointResultKind result)
+        GoapBreakpointResultKind result,
+        bool requestPlan = true)
         => EntityManager
             .EntityNetManager
             .SendSystemNetworkMessage(new GoapBreakpointMessage(new(
-                EntityManager.GetNetEntity(target),
-                nodeId,
-                index,
-                kind,
-                result)));
+                    EntityManager.GetNetEntity(target),
+                    nodeId,
+                    index,
+                    kind,
+                    result),
+                requestPlan));
 
     [PublicAPI]
     public void AddBreakpoint(GoapBreakpoint breakpoint)
         => EntityManager
             .EntityNetManager
             .SendSystemNetworkMessage(new GoapBreakpointMessage(breakpoint));
+
+    [PublicAPI]
+    public void RemoveBreakpoint(
+        EntityUid target,
+        int nodeId,
+        int index,
+        GoapBreakpointKind kind,
+        GoapBreakpointResultKind result)
+        => EntityManager
+            .EntityNetManager
+            .SendSystemNetworkMessage(new GoapBreakpointRemoveMessage(new(
+                EntityManager.GetNetEntity(target),
+                nodeId,
+                index,
+                kind,
+                result)));
 
     [PublicAPI]
     public void RemoveBreakpoint(GoapBreakpoint breakpoint)

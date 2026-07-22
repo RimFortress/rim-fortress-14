@@ -81,10 +81,13 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// <b>Search-time attempts</b> (<see cref="GoapNodeDebugEntry.InPlan"/> <c>== false</c>), logged
 /// from <see cref="ResolveTask"/> (trivial "preconditions already met" cases) and
 /// <see cref="ResolveLoop"/> (every candidate actually considered as a "take" option - whether it
-/// was pruned as irrelevant, failed to resolve, or was successfully committed). These are
-/// deduplicated via <see cref="_loggedTrivial"/> and <see cref="_loggedCandidates"/> so that the
-/// many repeated visits an exhaustive search makes to the same (task, state) subproblem don't
-/// produce a flood of identical log entries.
+/// was pruned as irrelevant, failed to resolve, or was successfully committed). Each entry records
+/// <see cref="GoapNodeDebugEntry.FromNodeId"/> - the id of the parent task that was checking this
+/// node (or <c>null</c> if it was requested directly for a top-level goal fact). Deduplication via
+/// <see cref="_loggedTrivial"/> and <see cref="_loggedCandidates"/> is keyed to include this parent
+/// id, so if the SAME node is checked, at the same state, by two DIFFERENT parents somewhere in the
+/// exhaustive search, both perspectives are kept as separate entries - only truly redundant repeat
+/// visits (same node, same state, same parent) are collapsed.
 /// </description>
 /// </item>
 /// <item>
@@ -96,6 +99,12 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// </description>
 /// </item>
 /// </list>
+/// <para>
+/// As in the previous A*-based planner, <see cref="GoapNodeDebugEntry.Heuristic"/> is always
+/// <c>0f</c> here, since this algorithm has no heuristic function, and
+/// <see cref="GoapNodeDebugEntry.AddedToOpenList"/> is repurposed to mean "this task/candidate was
+/// committed to on this search branch" rather than its original A* open-list meaning.
+/// </para>
 /// <para>
 /// <b>Handling of dynamic (entity) conditions.</b> Some preconditions reference live ECS state
 /// (<see cref="GoapCondition.EntityCondition"/>) and cannot be predicted at static-graph-build
@@ -182,12 +191,17 @@ public sealed class GoapPlanJob(
 
     /// <summary>
     /// Deduplicates search-time "preconditions already met" entries logged by
-    /// <see cref="ResolveTask"/>. Without this, the trivial case (checked before the memoization
-    /// cache, since it's even cheaper than a dictionary lookup) would log a fresh entry every
-    /// single time an exhaustive branch happens to revisit an already-satisfied
-    /// <c>(task, state)</c> pair, which can be extremely often.
+    /// <see cref="ResolveTask"/>, keyed by (the task being checked, the id of the parent task that
+    /// was checking it - or <c>null</c> if it was requested directly for a goal fact, the state it
+    /// was checked in). The parent is included in the key deliberately: the same task at the same
+    /// state can legitimately be checked by several different parent tasks across the exhaustive
+    /// search (e.g. two different tasks might both list it as a candidate), and each such
+    /// perspective is kept as its own debug entry via <see cref="GoapNodeDebugEntry.FromNodeId"/>
+    /// rather than only the first one encountered. Without any dedup at all, however, the same
+    /// (task, parent, state) triple could still be logged many times by different backtracking
+    /// branches that happen to re-ask the identical question, which is what this set prevents.
     /// </summary>
-    private readonly HashSet<(int TaskId, GoapState State)> _loggedTrivial = new();
+    private readonly HashSet<(int TaskId, int? FromNodeId, GoapState State)> _loggedTrivial = new();
 
     /// <summary>
     /// Deduplicates search-time "candidate considered" entries logged by <see cref="ResolveLoop"/>,
@@ -286,6 +300,7 @@ public sealed class GoapPlanJob(
 
                 debugInfo.Nodes.Add(new GoapNodeDebugEntry(
                     NodeId: task.Id,
+                    FromNodeId: null,
                     Compound: task.Compound,
                     Preconditions: preconditions,
                     StateBefore: stateBefore,
@@ -370,7 +385,9 @@ public sealed class GoapPlanJob(
 
         foreach (var producer in producers)
         {
-            var (subPlan, subCost) = await ResolveTask(producer, state, 0);
+            // fromNodeId: null - this producer is being resolved directly for a goal fact, not
+            // as a candidate of some other task.
+            var (subPlan, subCost) = await ResolveTask(producer, state, 0, null);
 
             if (subPlan == null)
                 continue;
@@ -397,15 +414,40 @@ public sealed class GoapPlanJob(
     /// Finds the cheapest prerequisite chain that satisfies <paramref name="task"/>'s
     /// preconditions from <paramref name="state"/>.
     /// </summary>
+    /// <param name="task">The task whose preconditions must be satisfied.</param>
+    /// <param name="state">The simulated state to check/resolve preconditions against.</param>
+    /// <param name="depth">Current recursion depth, used to enforce <see cref="MaxDepth"/>.</param>
+    /// <param name="fromNodeId">
+    /// The id of the parent task that is asking <paramref name="task"/> to be resolved (i.e. the
+    /// owner task for which <paramref name="task"/> is being considered as a candidate), or
+    /// <c>null</c> if <paramref name="task"/> is being resolved directly for a top-level goal fact
+    /// rather than as a candidate of some other task. Purely informational for debug logging
+    /// (see <see cref="GoapNodeDebugEntry.FromNodeId"/>) - it plays no role in the search or
+    /// caching logic itself, since the cheapest way to resolve <c>(task, state)</c> does not
+    /// depend on who is asking.
+    /// </param>
     /// <remarks>
     /// <para>
     /// See the type-level remarks for the overall search strategy. Order of operations: check the
     /// trivial already-satisfied case first (logging a search-time debug entry for it, deduplicated
-    /// via <see cref="_loggedTrivial"/>), then the memo cache, then the cycle guard, then fall
-    /// through to <see cref="ResolveLoop"/>.
+    /// via <see cref="_loggedTrivial"/> - keyed to include <paramref name="fromNodeId"/> so the
+    /// same task/state checked by different parents is preserved as separate entries rather than
+    /// collapsed into one), then the memo cache, then the cycle guard, then fall through to
+    /// <see cref="ResolveLoop"/>.
+    /// </para>
+    /// <para>
+    /// Note that the trivial check is re-evaluated on every call regardless of
+    /// <see cref="_resolveCache"/> - it runs before the cache is even consulted - so a second call
+    /// for the same <c>(task, state)</c> but a different <paramref name="fromNodeId"/> always gets
+    /// its own fresh trivial-case log entry instead of being silently absorbed by a cache hit from
+    /// the first caller.
     /// </para>
     /// </remarks>
-    private async Task<(List<ExecutableGoapTask>? Plan, float Cost)> ResolveTask(ExecutableGoapTask task, GoapState state, int depth)
+    private async Task<(List<ExecutableGoapTask>? Plan, float Cost)> ResolveTask(
+        ExecutableGoapTask task,
+        GoapState state,
+        int depth,
+        int? fromNodeId)
     {
         if (depth > MaxDepth)
             return (null, float.PositiveInfinity);
@@ -417,10 +459,11 @@ public sealed class GoapPlanJob(
         if (AllConditionsMet(task, state))
         {
 #if TOOLS // Debug
-            if (collectDebug && _debugNodes != null && _loggedTrivial.Add((task.Id, state)))
+            if (collectDebug && _loggedTrivial.Add((task.Id, fromNodeId, state)))
             {
-                _debugNodes.Add(new GoapNodeDebugEntry(
+                _debugNodes?.Add(new GoapNodeDebugEntry(
                     NodeId: task.Id,
+                    FromNodeId: fromNodeId,
                     Compound: task.Compound,
                     Preconditions: BuildPreconditionDumps(task, state),
                     StateBefore: state.GetStateDump(),
@@ -511,7 +554,9 @@ public sealed class GoapPlanJob(
 
         if (ImprovesConditions(task, state, probeState))
         {
-            var (subPlan, subCost) = await ResolveTask(candidate, state, depth + 1);
+            // fromNodeId: task.Id - candidate.Task is being resolved because `task` (the owner)
+            // is checking it as a way to satisfy its own preconditions.
+            var (subPlan, subCost) = await ResolveTask(candidate, state, depth + 1, task.Id);
 
             if (subPlan != null)
             {
@@ -521,11 +566,11 @@ public sealed class GoapPlanJob(
                 var newState = ApplyEffects(stateAfterSub, candidate.Effects);
 
 #if TOOLS // Debug
-                if (collectDebug && _debugNodes != null
-                    && _loggedCandidates.Add((task.Id, candidate.Id, state)))
+                if (collectDebug && _loggedCandidates.Add((task.Id, candidate.Id, state)))
                 {
-                    _debugNodes.Add(new GoapNodeDebugEntry(
+                    _debugNodes?.Add(new GoapNodeDebugEntry(
                         NodeId: candidate.Id,
+                        FromNodeId: task.Id,
                         Compound: candidate.Compound,
                         Preconditions: BuildPreconditionDumps(candidate, stateAfterSub),
                         StateBefore: state.GetStateDump(),
@@ -549,11 +594,11 @@ public sealed class GoapPlanJob(
                     best = take;
             }
 #if TOOLS // Debug
-            else if (collectDebug && _debugNodes != null
-                     && _loggedCandidates.Add((task.Id, candidate.Id, state)))
+            else if (collectDebug && _loggedCandidates.Add((task.Id, candidate.Id, state)))
             {
-                _debugNodes.Add(new GoapNodeDebugEntry(
+                _debugNodes?.Add(new GoapNodeDebugEntry(
                     NodeId: candidate.Id,
+                    FromNodeId: task.Id,
                     Compound: candidate.Compound,
                     Preconditions: BuildPreconditionDumps(candidate, state),
                     StateBefore: state.GetStateDump(),
@@ -567,11 +612,11 @@ public sealed class GoapPlanJob(
 #endif
         }
 #if TOOLS // Debug
-        else if (collectDebug && _debugNodes != null
-                 && _loggedCandidates.Add((task.Id, candidate.Id, state)))
+        else if (collectDebug && _loggedCandidates.Add((task.Id, candidate.Id, state)))
         {
-            _debugNodes.Add(new GoapNodeDebugEntry(
+            _debugNodes?.Add(new GoapNodeDebugEntry(
                 NodeId: candidate.Id,
+                FromNodeId: task.Id,
                 Compound: candidate.Compound,
                 Preconditions: BuildPreconditionDumps(candidate, state),
                 StateBefore: state.GetStateDump(),
@@ -597,10 +642,8 @@ public sealed class GoapPlanJob(
     {
         foreach (var condition in task.Preconditions)
         {
-            if (CheckCached(condition, before).Result)
-                continue;
-
-            if (CheckCached(condition, after).Result)
+            if (!CheckCached(condition, before).Result
+                && CheckCached(condition, after).Result)
                 return true;
         }
 

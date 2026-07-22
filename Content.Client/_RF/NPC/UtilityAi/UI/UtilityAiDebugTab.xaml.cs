@@ -43,7 +43,8 @@ public sealed partial class UtilityAiDebugTab : Control
             _nodeControls[node.Id] = control;
         }
 
-        EdgeOverlay.SetData(info.Graph,
+        EdgeOverlay.SetData(
+            info.Graph,
             _nodeControls,
             info.Graph.Nodes
                 .Where(x => x.InActiveBranch)

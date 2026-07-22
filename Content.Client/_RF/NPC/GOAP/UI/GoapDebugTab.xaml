@@ -18,7 +18,8 @@
         <controls:DraggablePanel Name="BreakpointsPanel" Title="Breakpoints">
             <BoxContainer Name="Breakpoints" Orientation="Vertical"/>
 
-            <PanelContainer StyleClasses="LowDivider"/>
+            <PanelContainer StyleClasses="LowDivider" Margin="3 2"/>
+
             <BoxContainer Name="CreatePointBox" Margin="3"
                           Orientation="Vertical" Visible="False">
                 <OptionButton Name="NodeId"/>
@@ -33,6 +34,20 @@
                 </BoxContainer>
             </BoxContainer>
             <Button Name="AddPointButton" Text="Add Breakpoint"/>
+
+            <PanelContainer StyleClasses="LowDivider" Margin="3 2"/>
+
+            <BoxContainer Margin="3">
+                <Label Text="Planning fail"/>
+                <Control HorizontalExpand="True"/>
+                <CheckBox Name="PlanningFailedButton"/>
+            </BoxContainer>
+
+            <BoxContainer Margin="3">
+                <Label Text="Planning success"/>
+                <Control HorizontalExpand="True"/>
+                <CheckBox Name="PlanningSuccessButton"/>
+            </BoxContainer>
         </controls:DraggablePanel>
 
         <controls:DraggablePanel Name="PlanPanel" Title="Plan Info">
