@@ -170,7 +170,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
         var ev = new GoapActionCost<T>(action, state, 1f);
         RaiseLocalEvent(target, ref ev);
         state.ReadOnly = false;
-        return ev.Cost;
+        return ev.Cost * action.CostMultiplier;
     }
 
     /// <summary>

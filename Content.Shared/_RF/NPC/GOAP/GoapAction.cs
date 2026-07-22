@@ -12,6 +12,12 @@ public abstract partial class GoapAction : IGoapDebuggable
     [ViewVariables]
     public GoapDebugDump? Dump { get; set; }
 
+    /// <summary>
+    /// The cost multiplier for this action during planning.
+    /// </summary>
+    [DataField]
+    public float CostMultiplier = 1f;
+
     public abstract float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer);
 
     public abstract GoapActionResult Update(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);

@@ -14,6 +14,8 @@
   - preconditions:
     - !type:CanInsert
     action: !type:Storage
+      # Reduce the cost of the action so that the planner prioritizes storing the item in the inventory
+      costMultiplier: 0.5
     effects:
       ActiveHandFree: true
 
