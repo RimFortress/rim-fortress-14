@@ -123,8 +123,9 @@ public partial class GoapSystem
             Nodes: graph.Nodes.Select(x => new GoapStaticGraphNodeDebug(
                     Id: x.Id,
                     Actions: x.Actions.Select(ToObject).ToList(),
-                    Preconditions: x.Preconditions.Select(ToObject).ToList(),
-                    EffectsDump: x.Effects.GetStateDump()))
+                    Preconditions: x.Preconditions.Select(y => (ToObject(y), y.EntityCondition)).ToList(),
+                    EffectsDump: x.Effects.GetStateDump(),
+                    Compound: x.Compound))
                 .ToList(),
             Edges: graph.Edges,
             OutgoingByNodeId: graph.OutgoingByNodeId,

@@ -83,6 +83,14 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public bool ContainsKey(string key) => _state.ContainsKey(key);
 
     /// <summary>
+    /// Determines whether the GoapState contains the specified key-value pair.
+    /// </summary>
+    /// <returns>true if the GoapState contains a value with the specified key; otherwise, false.</returns>
+    [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool Contains(string key, object value) => _state.TryGetValue(key, out var val) && Equals(val, value);
+
+    /// <summary>
     /// Removes all keys and values from the GoapState.
     /// </summary>
     [PublicAPI]

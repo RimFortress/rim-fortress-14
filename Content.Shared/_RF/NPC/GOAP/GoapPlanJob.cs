@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -99,12 +100,6 @@ namespace Content.Shared._RF.NPC.GOAP;
 /// </description>
 /// </item>
 /// </list>
-/// <para>
-/// As in the previous A*-based planner, <see cref="GoapNodeDebugEntry.Heuristic"/> is always
-/// <c>0f</c> here, since this algorithm has no heuristic function, and
-/// <see cref="GoapNodeDebugEntry.AddedToOpenList"/> is repurposed to mean "this task/candidate was
-/// committed to on this search branch" rather than its original A* open-list meaning.
-/// </para>
 /// <para>
 /// <b>Handling of dynamic (entity) conditions.</b> Some preconditions reference live ECS state
 /// (<see cref="GoapCondition.EntityCondition"/>) and cannot be predicted at static-graph-build
@@ -215,7 +210,7 @@ public sealed class GoapPlanJob(
 
     /// <summary>
     /// Entry point for the planning job. Exhaustively resolves every fact in
-    /// <paramref name="goalState"/> via <see cref="ResolveGoal"/>, keeping the cheapest complete
+    /// <see cref="goalState"/> via <see cref="ResolveGoal"/>, keeping the cheapest complete
     /// plan found, then flattens it into a concrete <see cref="GoapPlan"/>.
     /// </summary>
     protected override async Task<(GoapPlan? Plan, GoapPlanDebugInfo? Debug)> Process()
@@ -284,14 +279,13 @@ public sealed class GoapPlanJob(
                 debugInfo.Nodes.Add(new GoapNodeDebugEntry(
                     NodeId: task.Id,
                     FromNodeId: null,
-                    Compound: task.Compound,
                     Preconditions: preconditions,
                     StateBefore: stateBefore,
                     StateAfter: runningState.GetStateDump(),
                     TaskCost: taskCost,
-                    AddedToOpenList: true,
                     PreconditionsMet: true,
                     InPlan: true,
+                    HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
                     SkipReason: null));
             }
 
@@ -310,9 +304,7 @@ public sealed class GoapPlanJob(
 
         return Return(actions);
 
-        (GoapPlan? Plan, GoapPlanDebugInfo? Debug) Return(
-            List<GoapAction>? planActions = null,
-            string? message = null)
+        (GoapPlan? Plan, GoapPlanDebugInfo? Debug) Return(List<GoapAction>? planActions = null)
         {
             var goapPlan = planActions != null ? new GoapPlan(planActions, 0) : (GoapPlan?)null;
 #if TOOLS // Debug
@@ -321,7 +313,6 @@ public sealed class GoapPlanJob(
             debugInfo.NodesExpanded = _nodesExpanded;
             debugInfo.ConditionsChecked = _conditionsChecked;
             debugInfo.ElapsedTime = StopWatch.Elapsed;
-            debugInfo.Message = message;
             return (goapPlan, debugInfo);
 #else // Release
             return (goapPlan, null);
@@ -456,14 +447,13 @@ public sealed class GoapPlanJob(
                 _debugNodes?.Add(new GoapNodeDebugEntry(
                     NodeId: task.Id,
                     FromNodeId: fromNodeId,
-                    Compound: task.Compound,
                     Preconditions: BuildPreconditionDumps(task, state),
                     StateBefore: state.GetStateDump(),
                     StateAfter: null,
                     TaskCost: 0f,
-                    AddedToOpenList: false,
                     PreconditionsMet: true,
                     InPlan: false,
+                    HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
                     SkipReason: null));
             }
 #endif
@@ -485,8 +475,43 @@ public sealed class GoapPlanJob(
             {
                 var none = (Plan: (List<ExecutableGoapTask>?)null, Cost: float.PositiveInfinity);
                 _resolveCache[cacheKey] = none;
+
+#if TOOLS
+                if (collectDebug && _loggedTrivial.Add((task.Id, fromNodeId, state)))
+                {
+                    _debugNodes?.Add(new GoapNodeDebugEntry(
+                        NodeId: task.Id,
+                        FromNodeId: fromNodeId,
+                        Preconditions: BuildPreconditionDumps(task, state),
+                        StateBefore: state.GetStateDump(),
+                        StateAfter: null,
+                        TaskCost: 0f,
+                        PreconditionsMet: false,
+                        InPlan: false,
+                        HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                        SkipReason: "No nodes were found that could help satisfy the conditions of this"));
+                }
+#endif
+
                 return none;
             }
+
+#if TOOLS
+            if (collectDebug && _loggedTrivial.Add((task.Id, fromNodeId, state)))
+            {
+                _debugNodes?.Add(new GoapNodeDebugEntry(
+                    NodeId: task.Id,
+                    FromNodeId: fromNodeId,
+                    Preconditions: BuildPreconditionDumps(task, state),
+                    StateBefore: state.GetStateDump(),
+                    StateAfter: null,
+                    TaskCost: 0f,
+                    PreconditionsMet: false,
+                    InPlan: false,
+                    HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                    SkipReason: null));
+            }
+#endif
 
             var result = await ResolveLoop(task, state, new List<ExecutableGoapTask>(), 0f, candidates, 0, depth);
             _resolveCache[cacheKey] = result;
@@ -563,14 +588,13 @@ public sealed class GoapPlanJob(
                     _debugNodes?.Add(new GoapNodeDebugEntry(
                         NodeId: candidate.Id,
                         FromNodeId: task.Id,
-                        Compound: candidate.Compound,
                         Preconditions: BuildPreconditionDumps(candidate, stateAfterSub),
                         StateBefore: state.GetStateDump(),
                         StateAfter: newState.GetStateDump(),
                         TaskCost: candidateCost,
-                        AddedToOpenList: true,
                         PreconditionsMet: true,
                         InPlan: false,
+                        HelpGoal: candidate.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
                         SkipReason: null));
                 }
 #endif
@@ -591,14 +615,13 @@ public sealed class GoapPlanJob(
                 _debugNodes?.Add(new GoapNodeDebugEntry(
                     NodeId: candidate.Id,
                     FromNodeId: task.Id,
-                    Compound: candidate.Compound,
                     Preconditions: BuildPreconditionDumps(candidate, state),
                     StateBefore: state.GetStateDump(),
                     StateAfter: null,
                     TaskCost: 0f,
-                    AddedToOpenList: false,
                     PreconditionsMet: false,
                     InPlan: false,
+                    HelpGoal: candidate.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
                     SkipReason: "Could not resolve this candidate's own prerequisites"));
             }
 #endif
@@ -609,14 +632,13 @@ public sealed class GoapPlanJob(
             _debugNodes?.Add(new GoapNodeDebugEntry(
                 NodeId: candidate.Id,
                 FromNodeId: task.Id,
-                Compound: candidate.Compound,
                 Preconditions: BuildPreconditionDumps(candidate, state),
                 StateBefore: state.GetStateDump(),
                 StateAfter: null,
                 TaskCost: 0f,
-                AddedToOpenList: false,
                 PreconditionsMet: false,
                 InPlan: false,
+                HelpGoal: candidate.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
                 SkipReason: "Not relevant to any unmet precondition of the requesting task"));
         }
 #endif

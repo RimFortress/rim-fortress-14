@@ -32,27 +32,25 @@ public readonly record struct GoapStateDebugDump(
 /// </summary>
 /// <param name="NodeId">Index of this node in the list of all nodes available for planning.</param>
 /// <param name="FromNodeId">The ID of the node from which the check was performed on this node.</param>
-/// <param name="Compound">The compound from which this node was extracted.</param>
 /// <param name="Preconditions">Dump about the conditions of the task.</param>
 /// <param name="StateBefore">State before applying the task.</param>
 /// <param name="StateAfter">State after applying effects (if preconditions met).</param>
 /// <param name="TaskCost">Task cost (sum of action costs).</param>
-/// <param name="AddedToOpenList">Was this node added to the open set?</param>
 /// <param name="PreconditionsMet">Were preconditions satisfied?</param>
 /// <param name="InPlan">Is this node included in the final plan?</param>
+/// <param name="HelpGoal">Whether the node's effects help with fully or partially achieving the goal.</param>
 /// <param name="SkipReason">Reason why node was skipped (if not added).</param>
 [Serializable, NetSerializable]
 public readonly record struct GoapNodeDebugEntry(
     int NodeId,
     int? FromNodeId,
-    ProtoId<GoapCompoundPrototype>? Compound,
     GoapPreconditionDebugDump[] Preconditions,
     GoapStateDebugDump StateBefore,
     GoapStateDebugDump? StateAfter,
     float TaskCost,
-    bool AddedToOpenList,
     bool PreconditionsMet,
     bool InPlan,
+    bool HelpGoal,
     string? SkipReason);
 
 [Serializable, NetSerializable]
@@ -72,7 +70,6 @@ public readonly record struct GoapPreconditionDebugDump(GoapDebugDump Dump, bool
 /// <param name="ElapsedTime">Planning elapsed time.</param>
 /// <param name="Nodes">Step-by-step log of node expansions.</param>
 /// <param name="Actions">Debug information for each action in the plan.</param>
-/// <param name="Message">A message from the planner with some important information.</param>
 [Serializable, NetSerializable]
 public record struct GoapPlanDebugInfo(
     GoapStateDebugDump StartState,
@@ -85,8 +82,7 @@ public record struct GoapPlanDebugInfo(
     int SkippedExpensiveNodes,
     TimeSpan ElapsedTime,
     List<GoapNodeDebugEntry> Nodes,
-    List<GoapActionDebugInfo> Actions,
-    string? Message);
+    List<GoapActionDebugInfo> Actions);
 
 /// <summary>
 /// Debug information about the GOAP plan action.
@@ -144,8 +140,9 @@ public readonly record struct GoapStaticGraphDebug(
 public readonly record struct GoapStaticGraphNodeDebug(
     int Id,
     List<GoapStaticGraphObject> Actions,
-    List<GoapStaticGraphObject> Preconditions,
-    GoapStateDebugDump EffectsDump) : IStaticGraphNode;
+    List<(GoapStaticGraphObject Object, bool EntityCondition)> Preconditions,
+    GoapStateDebugDump EffectsDump,
+    ProtoId<GoapCompoundPrototype>? Compound) : IStaticGraphNode;
 
 [Serializable, NetSerializable]
 public readonly record struct GoapStaticGraphObject(

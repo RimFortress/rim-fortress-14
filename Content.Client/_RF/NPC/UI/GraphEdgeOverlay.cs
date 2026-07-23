@@ -3,6 +3,7 @@ using System.Numerics;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.UtilityAi;
+using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 
@@ -16,17 +17,23 @@ public abstract class GraphEdgeOverlay<TNode, TEdge> : Control
     where TNode : IStaticGraphNode
     where TEdge : IStaticGraphEdge
 {
-    private IStaticGraph<TNode, TEdge>? _graph;
     private Dictionary<int, Control> _nodeControls = new();
+    private Dictionary<(int From, int To), List<Vector2>> _edgePaths = new();
     private HashSet<int> _activeNodes = new();
 
+    [PublicAPI]
+    public Color ActiveConnectionColor { get; set; } = Color.LimeGreen;
+
+    [PublicAPI]
+    public Color ConnectionColor { get; set; } = Color.DimGray;
+
     public void SetData(
-        IStaticGraph<TNode, TEdge> graph,
         Dictionary<int, Control> nodeControls,
+        Dictionary<(int From, int To), List<Vector2>> edgePaths,
         IEnumerable<int>? activeNodes)
     {
-        _graph = graph;
         _nodeControls = nodeControls;
+        _edgePaths = edgePaths;
         _activeNodes.Clear();
 
         if (activeNodes != null)
@@ -37,35 +44,34 @@ public abstract class GraphEdgeOverlay<TNode, TEdge> : Control
     {
         base.Draw(handle);
 
-        if (_graph == null)
-            return;
-
-        foreach (var edge in _graph.Edges)
+        foreach (var ((from, to), points) in _edgePaths)
         {
-            if (!_nodeControls.TryGetValue(edge.FromNodeId, out var fromCtrl)
-                || !_nodeControls.TryGetValue(edge.ToNodeId, out var toCtrl))
+            if (!_nodeControls.TryGetValue(from, out var fromCtrl)
+                || !_nodeControls.TryGetValue(to, out var toCtrl))
                 continue;
 
-            var fromRect = fromCtrl.GlobalPixelRect;
-            var toRect = toCtrl.GlobalPixelRect;
+            if (!fromCtrl.Visible || !toCtrl.Visible)
+                continue;
 
-            var start = new Vector2(
-                fromRect.Left + fromRect.Width / 2f,
-                fromRect.Bottom);
+            var color = (_activeNodes.Contains(from) &&
+                         _activeNodes.Contains(to)
+                ? ActiveConnectionColor
+                : ConnectionColor) * fromCtrl.Modulate * toCtrl.Modulate;
 
-            var end = new Vector2(
-                toRect.Left + toRect.Width / 2f,
-                toRect.Top);
+            // Screen position that corresponds to layout-space (0, 0), derived from the one
+            // point we know for certain in both spaces: the "from" control's own placement.
+            var origin = fromCtrl.GlobalPixelRect.TopLeft - fromCtrl.Position * UIScale;
 
-            start -= GlobalPixelRect.TopLeft;
-            end -= GlobalPixelRect.TopLeft;
+            for (var i = 0; i < points.Count - 1; i++)
+            {
+                var start = ToScreen(points[i]);
+                var end = ToScreen(points[i + 1]);
+                handle.DrawLine(start, end, color);
+            }
 
-            var color = _activeNodes.Contains(edge.FromNodeId) &&
-                        _activeNodes.Contains(edge.ToNodeId)
-                ? Color.LimeGreen
-                : Color.DimGray;
+            continue;
 
-            handle.DrawLine(start, end, color);
+            Vector2 ToScreen(Vector2 layoutPoint) => origin + layoutPoint * UIScale - GlobalPixelRect.TopLeft;
         }
     }
 }
