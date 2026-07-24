@@ -10,6 +10,7 @@
     - Sleep
     - Eat
     - Drink
+    - Construction
   - type: NpcFactionMember
     factions:
     - RimFortress

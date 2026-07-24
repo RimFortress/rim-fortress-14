@@ -12,7 +12,7 @@ public sealed partial class Owned : BaseSearchQuery<Owned>;
 
 public sealed class OwnedQuerySystem : NpcSearchQuerySystem<Owned>
 {
-    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
 
     protected override void GetQuery(GoapState state, Owned query)
     {

@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.GOAP.Systems;
 
@@ -38,11 +39,13 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         => CreateDump(ent.Comp.State, debug, reason);
 
     [Conditional("TOOLS")]
-    protected static void KeyNotFound<TKey>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<TKey> key) where TKey : notnull
+    protected static void KeyNotFound<TKey>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<TKey> key)
+        where TKey : notnull
         => KeyNotFound(ent.Comp.State, debug, key);
 
     [Conditional("TOOLS")]
-    protected static void KeyNotFound<TKey>(GoapState state, IGoapDebuggable debug, StateKey<TKey> key) where TKey : notnull
+    protected static void KeyNotFound<TKey>(GoapState state, IGoapDebuggable debug, StateKey<TKey> key)
+        where TKey : notnull
         => CreateDump(state, debug, $"key '{key}' of type '{typeof(TKey)}' not found");
 
     [Conditional("TOOLS")]
@@ -58,12 +61,24 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         => CreateDump(state, debug, $"entity {ToPrettyString(target)} does not have component '{type}'");
 
     [Conditional("TOOLS")]
-    protected void ComponentNotFound<TComp>(GoapState state, IGoapDebuggable debug, EntityUid target) where TComp : Component
+    protected void ComponentNotFound<TComp>(GoapState state, IGoapDebuggable debug, EntityUid target)
+        where TComp : Component
         => ComponentNotFound(state, debug, target, typeof(TComp));
 
     [Conditional("TOOLS")]
-    protected void ComponentNotFound<TComp>(Entity<GoapComponent> ent, IGoapDebuggable debug, EntityUid? target = null) where TComp : Component
+    protected void ComponentNotFound<TComp>(Entity<GoapComponent> ent, IGoapDebuggable debug, EntityUid? target = null)
+        where TComp : Component
         => ComponentNotFound<TComp>(ent.Comp.State, debug, target ?? ent);
+
+    [Conditional("TOOLS")]
+    protected static void ProtoNotFound<T>(GoapState state, IGoapDebuggable debug, ProtoId<T> proto)
+        where T : class, IPrototype
+        => CreateDump(state, debug, $"{typeof(T)} with ID: `{proto}` not found");
+
+    [Conditional("TOOLS")]
+    protected static void ProtoNotFound<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, ProtoId<T> proto)
+        where T : class, IPrototype
+        => CreateDump(ent, debug, $"{typeof(T)} with ID: `{proto}` not found");
 
     /// <inheritdoc cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>
     protected bool TryGetValue<T>(
@@ -82,13 +97,11 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         [NotNullWhen(true)] out T? value)
         where T : notnull
     {
-        if (!Goap.TryGetValue(state, key, out value))
-        {
-            KeyNotFound(state, debug, key);
-            return false;
-        }
+        if (Goap.TryGetValue(state, key, out value))
+            return true;
 
-        return true;
+        KeyNotFound(state, debug, key);
+        return false;
     }
 
     /// <summary>

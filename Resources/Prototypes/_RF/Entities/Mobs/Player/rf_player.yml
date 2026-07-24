@@ -44,6 +44,7 @@
     - PickUp
     #- TakeOwnership
     #- Pry
+    - Construction
     #- Deconstruct
     #- Dig
     #- FreeHandInteract
@@ -51,7 +52,11 @@
     #- Chop
     #- Cook
   - type: NpcJobs
-    jobs: [] # TODO
+    jobs:
+    - name: npc-job-сonstruction-name
+      icon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+      goals:
+      - Construction
   - type: NpcFactionMember
     factions:
     - RimFortress

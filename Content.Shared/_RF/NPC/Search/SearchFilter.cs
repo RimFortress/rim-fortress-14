@@ -4,7 +4,7 @@ using Content.Shared._RF.NPC.Search.Systems;
 namespace Content.Shared._RF.NPC.Search;
 
 /// <summary>
-/// Entity serach query filter.
+/// Entity search query filter.
 /// </summary>
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class SearchFilter

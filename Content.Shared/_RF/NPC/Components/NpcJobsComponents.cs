@@ -28,7 +28,7 @@ public sealed partial class NpcJobsComponent : Component
     /// It is generated based on the list of all goals described in <see cref="Jobs"/>.
     /// </summary>
     [ViewVariables]
-    public HashSet<ProtoId<UtilityAiGoalPrototype>> AccessibleGoals = new();
+    public readonly HashSet<ProtoId<UtilityAiGoalPrototype>> AccessibleGoals = new();
 }
 
 /// <summary>
@@ -42,11 +42,16 @@ public sealed partial class NpcJob
     [ViewVariables]
     public int Id;
 
+    [DataField("name")]
+    private LocId? _name;
+
+    [ViewVariables]
+    public string? SetName;
+
     /// <summary>
     /// The name of this job
     /// </summary>
-    [DataField(required: true)]
-    public string Name;
+    public string Name => SetName ?? (_name != null ? Loc.GetString(_name) : string.Empty);
 
     /// <summary>
     /// The icon for this job.

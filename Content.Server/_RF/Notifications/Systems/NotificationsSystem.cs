@@ -22,7 +22,7 @@ public sealed class NotificationsSystem : SharedNotificationsSystem
         SubscribeNetworkEvent<FocusToNotificationRequest>(OnFocusToNotificationRequest);
     }
 
-    /*
+    /* TODO
     private void OnGoapPlanFinished(Entity<ControllableNpcComponent> ent, ref GoapPlanFinished args)
     {
         if (args.Status != TaskFinishStatus.Failed

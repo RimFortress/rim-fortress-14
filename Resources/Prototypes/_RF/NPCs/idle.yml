@@ -7,6 +7,7 @@
   - proto: Pickup
   - proto: Eat
   - proto: Drink
+  - proto: Construction
 
   - preconditions:
     - InContainer == false

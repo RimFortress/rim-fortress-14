@@ -18,9 +18,12 @@ public sealed class SwapToFreeHandSystem : GoapActionSystem<SwapToFreeHand>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, SwapToFreeHand action)
     {
-        if (!_hands.TrySelectEmptyHand(ent.Comp.State.GetValue(GoapState.Owner)))
-            return false;
+        if (!_hands.IsHolding(ent.Owner, null))
+        {
+            CreateDump(ent, action, "active entity hand was empty");
+            return true;
+        }
 
-        return true;
+        return _hands.TrySelectEmptyHand(ent.Comp.State.GetValue(GoapState.Owner));
     }
 }

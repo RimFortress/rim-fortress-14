@@ -20,15 +20,12 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
 
-    private readonly HashSet<EntityUid> _query = new();
-
     public HashSet<EntityUid> Query<T>(GoapState state, T query) where T : BaseSearchQuery<T>
     {
-        _query.Clear();
-        var ev = new GetSearchQuery<T>(query, state, _query);
+        var ev = new GetSearchQuery<T>(query, state, new());
         RaiseLocalEvent(state.GetValue(GoapState.Owner), ref ev);
-        DebugTools.Assert(_query.Count <= query.Limit);
-        return _query;
+        DebugTools.Assert(ev.Result.Count <= query.Limit);
+        return ev.Result;
     }
 
     /// <summary>

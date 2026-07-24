@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search.Components;
 
 namespace Content.Shared._RF.NPC.Search.Systems;
 
@@ -8,16 +9,16 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// <typeparam name="T">Search query type.</typeparam>
 public abstract class NpcSearchQuerySystem<T> : EntitySystem where T : BaseSearchQuery<T>
 {
-    protected HashSet<EntityUid> Query = new();
+    protected readonly HashSet<EntityUid> Query = new();
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GetSearchQuery<T>>(OnGetSearchQuery);
+        SubscribeLocalEvent<NpcSearcherComponent, GetSearchQuery<T>>(OnGetSearchQuery);
     }
 
-    private void OnGetSearchQuery(ref GetSearchQuery<T> ev)
+    private void OnGetSearchQuery(Entity<NpcSearcherComponent> ent, ref GetSearchQuery<T> ev)
     {
         Query.Clear();
         GetQuery(ev.State, ev.Query);

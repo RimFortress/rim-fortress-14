@@ -1,0 +1,24 @@
+- type: goapCompound
+  id: Construction
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: ConstructionTarget
+    action: !type:SearchQuery
+      query: ConstructionTarget
+    effect:
+      ConstructionTargetFound: true
+
+  - preconditions:
+    - ConstructionTargetFound == true
+    action: !type:ConstructionItems
+      targetKey: Target
+    effects:
+      ConstructionItemsFound: true
+
+  - preconditions:
+    - ConstructionItemsFound == true
+    action: !type:Construction
+      targetKey: Target
+    effect:
+      TargetConstructed: true

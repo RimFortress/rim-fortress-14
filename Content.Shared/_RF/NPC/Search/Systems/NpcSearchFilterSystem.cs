@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search.Components;
 
 namespace Content.Shared._RF.NPC.Search.Systems;
 
@@ -12,10 +13,10 @@ public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSear
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GetSearchFilter<T>>(OnGetSearchFilter);
+        SubscribeLocalEvent<NpcSearcherComponent, GetSearchFilter<T>>(OnGetSearchFilter);
     }
 
-    private void OnGetSearchFilter(ref GetSearchFilter<T> ev)
+    private void OnGetSearchFilter(Entity<NpcSearcherComponent> ent, ref GetSearchFilter<T> ev)
     {
         ev.Result = Filter(ev.State, ev.Target, ev.Filter);
     }

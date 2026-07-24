@@ -3,7 +3,6 @@ using System.Linq;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
-using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
@@ -47,7 +46,6 @@ public sealed class NpcJobsSystem : EntitySystem
         foreach (var job in ent.Comp.Jobs)
         {
             job.Id = _nextJobId;
-            job.Name = Loc.GetString(job.Name);
             _jobOwners[_nextJobId] = ent;
             _nextJobId++;
 
@@ -76,7 +74,7 @@ public sealed class NpcJobsSystem : EntitySystem
             if (!TryGetJob(jobId, out var job) || !job.Goals.Contains(ev.Goal))
                 continue;
 
-            ev.Score *= 1 / priority;
+            ev.Score *= 1 / (float)priority;
             return;
         }
     }
@@ -91,7 +89,7 @@ public sealed class NpcJobsSystem : EntitySystem
 
     private void OnJobPriority(NpcJobPriority msg, EntitySessionEventArgs args)
     {
-        if (!TryComp(args.SenderSession.AttachedEntity, out NpcJobsComponent? comp)
+        if (!HasComp<NpcJobsComponent>(args.SenderSession.AttachedEntity)
             || !IsOwner(msg.Id, args.SenderSession.AttachedEntity))
             return;
 
@@ -173,7 +171,7 @@ public sealed class NpcJobsSystem : EntitySystem
         {
             Id = _nextJobId,
             Icon = icon,
-            Name = name,
+            SetName = name,
             Goals = goals ?? new(),
         };
 
@@ -217,7 +215,7 @@ public sealed class NpcJobsSystem : EntitySystem
             || ent.Comp.Jobs.FirstOrDefault(x => x.Id == jobId) is not { } job)
             return;
 
-        job.Name = name;
+        job.SetName = name;
         job.Icon = icon;
         job.Goals = goals.Where(ent.Comp.AccessibleGoals.Contains).ToList();
         Dirty(ent);
@@ -292,7 +290,7 @@ public sealed class NpcJobsSystem : EntitySystem
     public bool IsOwner(int jobId, EntityUid? uid)
         => _jobOwners.TryGetValue(jobId, out var owner) && owner == uid;
 
-    /// <inheritdoc cref="IsOwner"/>
+    /// <inheritdoc cref="IsOwner(int, EntityUid?)"/>
     [PublicAPI, Pure]
     public bool IsOwner(NpcJob job, EntityUid? uid) => IsOwner(job.Id, uid);
 }

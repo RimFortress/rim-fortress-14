@@ -62,3 +62,14 @@
   color: "#00D5FF"
   goalState:
     TargetPickedUp: true
+
+- type: utilityAiGoal
+  id: Construction
+  color: "#FFFF00"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Construction
+  - add:
+    - float: 0.2
+  goalState:
+    TargetConstructed: true

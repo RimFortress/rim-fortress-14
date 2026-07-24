@@ -12,3 +12,13 @@
   targetWhitelist:
     components:
     - Item
+
+- type: executableGoal
+  id: Construction
+  goal: Construction
+  verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - CommonConstructionGhost
+    - Construction

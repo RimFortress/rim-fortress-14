@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search.Components;
 
 namespace Content.Shared._RF.NPC.Search.Systems;
 
@@ -12,10 +13,10 @@ public abstract class NpcSearchConsiderationSystem<T> : EntitySystem where T : B
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GetSearchScore<T>>(OnGetSearchScore);
+        SubscribeLocalEvent<NpcSearcherComponent, GetSearchScore<T>>(OnGetSearchScore);
     }
 
-    private void OnGetSearchScore(ref GetSearchScore<T> ev)
+    private void OnGetSearchScore(Entity<NpcSearcherComponent> ent, ref GetSearchScore<T> ev)
     {
         ev.Result = GetScore(ev.State, ev.Target, ev.Con);
     }
