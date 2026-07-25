@@ -303,6 +303,9 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         CachedHash ^= HashEntry(key, value);
     }
 
+    /// <summary>
+    /// Returns a new state with identical content.
+    /// </summary>
     [PublicAPI]
     public GoapState ShallowClone()
     {
@@ -427,6 +430,9 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {MovementRange, 0.333f},
     };
 
+    /// <summary>
+    /// List of all ECS state variables.
+    /// </summary>
     public static readonly HashSet<string> EntityDefaults = new()
     {
         OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree, ActiveHandEntity,

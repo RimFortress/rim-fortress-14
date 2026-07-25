@@ -1,6 +1,7 @@
-using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Robust.Shared.Prototypes;
+
+namespace Content.Shared._RF.NPC.GOAP;
 
 /// <summary>
 /// An abstract action plan node. GOAP has no knowledge of what

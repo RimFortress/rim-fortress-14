@@ -5,6 +5,9 @@ using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.NPC.GOAP;
 
+/// <summary>
+/// An interface for GOAP objects able to store debugging information.
+/// </summary>
 public interface IGoapDebuggable
 {
     GoapDebugDump? Dump { get; set; }

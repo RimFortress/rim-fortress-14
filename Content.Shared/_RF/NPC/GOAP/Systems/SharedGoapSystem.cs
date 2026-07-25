@@ -12,6 +12,10 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.GOAP.Systems;
 
+/// <summary>
+/// A system that handles all the logic of the Goal-Oriented Action Planning AI
+/// and provides an API for working with it.
+/// </summary>
 public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
@@ -439,6 +443,11 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
 
     #region Debug
 
+    /// <summary>
+    /// Sends debugging information about the AI to the client.
+    /// </summary>
+    /// <param name="session">Target client.</param>
+    /// <param name="target">AI entity.</param>
     protected virtual void SendDebug(ICommonSession session, EntityUid target)
     {
         // Noop on client
@@ -516,6 +525,9 @@ public interface IGoapConditionChecker
     T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull;
 }
 
+/// <summary>
+/// Used to work with GOAP actions without losing their type.
+/// </summary>
 public interface IGoapActionPerformer
 {
     /// <summary>

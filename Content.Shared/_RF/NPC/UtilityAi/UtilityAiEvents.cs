@@ -20,6 +20,12 @@ public record struct UtilityAiGoalScoreModify(ProtoId<UtilityAiGoalPrototype> Go
 [PublicAPI]
 public record struct UtilityAiGoalGiven(ProtoId<UtilityAiGoalPrototype> Goal);
 
+// Executable goals
+
+/// <summary>
+/// Invoked when a user who can control this entity is added.
+/// </summary>
+/// <param name="User">User entity.</param>
 [PublicAPI]
 public record struct NpcControllerAdded(EntityUid User);
 

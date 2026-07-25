@@ -18,12 +18,42 @@ public abstract partial class GoapAction : IGoapDebuggable
     [DataField]
     public float CostMultiplier = 1f;
 
+    /// <summary>
+    /// Calculates the cost of executing a GOAP action.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    /// <param name="state">
+    /// The state against which the calculation should be performed.
+    /// It may differ from the agent's actual state.
+    /// </param>
+    /// <param name="performer"></param>
+    /// <returns>Action execution cost.</returns>
     public abstract float Cost(EntityUid target, GoapState state, IGoapActionPerformer performer);
 
+    /// <summary>
+    /// Updates the execution of a GOAP action.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    /// <param name="performer"></param>
+    /// <param name="dump">Debug dump.</param>
+    /// <returns>Update result.</returns>
     public abstract GoapActionResult Update(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
 
+    /// <summary>
+    /// Starts the action.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    /// <param name="performer"></param>
+    /// <param name="dump">Debug dump.</param>
+    /// <returns>True, if the action startup was successful.</returns>
     public abstract bool Startup(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
 
+    /// <summary>
+    /// Finishes the action.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    /// <param name="performer"></param>
+    /// <param name="dump">Debug dump.</param>
     public abstract void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
 }
 

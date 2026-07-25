@@ -31,10 +31,6 @@ public readonly record struct GoapStaticGraphEdge(int FromNodeId, int ToNodeId) 
 /// <summary>
 /// A graph that stores static dependencies between GOAP nodes in a compound.
 /// </summary>
-/// <param name="Nodes"></param>
-/// <param name="Edges"></param>
-/// <param name="OutgoingByNodeId"></param>
-/// <param name="IncomingByNodeId"></param>
 [Serializable]
 public readonly record struct GoapStaticGraph(
     List<ExecutableGoapTask> Nodes,
@@ -54,6 +50,11 @@ public readonly record struct GoapStaticGraph(
 public record struct GoapPlan(List<GoapAction> Actions, int Index)
 {
     public readonly GoapAction CurrentAction => Actions[Index];
+
+    /// <summary>
+    /// Moves the current action index of the plan.
+    /// </summary>
+    /// <returns>Updated plan.</returns>
     public GoapPlan MoveNext() => this with { Index = Index + 1 };
 }
 
