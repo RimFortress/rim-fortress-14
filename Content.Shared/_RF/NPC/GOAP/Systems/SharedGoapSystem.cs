@@ -12,13 +12,14 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.GOAP.Systems;
 
-public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, IGoapActionPerformer
+public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
+    protected readonly Dictionary<EntityUid, HashSet<ICommonSession>> DebugSubscriptions = new();
     protected readonly List<(ICommonSession Session, EntityUid Target, bool? Condition)> DebugSendQueue = new();
     protected FrozenDictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph> StaticGraphs =
             new Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph>().ToFrozenDictionary();
@@ -150,7 +151,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
                         when point.Result != GoapBreakpointResultKind.Finished:
                         continue;
                     default:
-                        BreakpointHit(session, point, planDebug.Actions);
+                        BreakpointHit(session, point, planDebug);
                         RemoveBreakpoint(session, point);
                         i--;
                         break;
@@ -247,7 +248,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
                         when point.Result != GoapBreakpointResultKind.False:
                         continue;
                     default:
-                        BreakpointHit(session, point, planDebug.Actions);
+                        BreakpointHit(session, point, planDebug);
                         RemoveBreakpoint(session, point);
                         i--;
                         break;
@@ -308,7 +309,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
                     || point.Result != GoapBreakpointResultKind.None)
                     continue;
 
-                BreakpointHit(session, point, planDebug.Actions);
+                BreakpointHit(session, point, planDebug);
                 RemoveBreakpoint(session, point);
                 i--;
             }
@@ -454,18 +455,15 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
     protected virtual void BreakpointHit(
         ICommonSession session,
         GoapBreakpoint breakpoint,
-        List<GoapActionDebugInfo> actions)
+        GoapPlanDebugInfo plan)
     {
         // Noop on client
     }
 
     protected void RemoveBreakpoint(ICommonSession session, GoapBreakpoint point)
     {
-        if (!Breakpoints.TryGetValue(session, out var points)
-            || !points.Remove(point))
-            return;
-
-        RaiseNetworkEvent(new GoapBreakpointRemoveMessage(point), session);
+        if (Breakpoints.TryGetValue(session, out var points) && points.Remove(point))
+            RaiseNetworkEvent(new GoapBreakpointRemoveMessage(point), session);
     }
 
     #endregion
@@ -474,7 +472,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionCheсker, I
 /// <summary>
 /// Used to check GOAP conditions without losing the type of condition.
 /// </summary>
-public interface IGoapConditionCheсker
+public interface IGoapConditionChecker
 {
     /// <summary>
     /// Checks whether the GOAP target entity satisfies the condition.

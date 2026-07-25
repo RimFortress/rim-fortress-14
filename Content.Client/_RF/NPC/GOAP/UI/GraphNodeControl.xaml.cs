@@ -344,12 +344,12 @@ public sealed partial class GraphNodeControl : Control
         base.ExitedTree();
     }
 
-    private void _onBreakpointHit((GoapBreakpoint Point, List<GoapActionDebugInfo> Actions) args)
+    private void _onBreakpointHit((GoapBreakpoint Point, GoapPlanDebugInfo Plan) args)
     {
         if (args.Point.NodeId == _graphNode.Id)
             TabContainer.CurrentTab = 1;
 
-        var nodeActions = args.Actions
+        var nodeActions = args.Plan.Actions
             .Where(x => x.NodeIndex == _graphNode.Id)
             .ToList();
 

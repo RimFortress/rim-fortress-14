@@ -87,7 +87,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
             ent.Comp.GoalState,
             graph,
             cancellation: cancelToken.Token,
-            collectDebug: DebugSendQueue.Exists(x => x.Target == ent.Owner));
+            collectDebug: DebugSubscriptions.ContainsKey(ent));
 
         _planQueue.EnqueueJob(job);
         ent.Comp.PlanningJob = job;
@@ -164,28 +164,35 @@ public sealed partial class GoapSystem : SharedGoapSystem
                         SendDebug(session, target);
                         DebugSendQueue.RemoveAt(i);
                         i--;
+                    }
 
-                        // Planning breakpoints
-                        if (!Breakpoints.TryGetValue(session, out var points))
-                            continue;
-
-                        var netTarget = GetNetEntity(uid);
-
-                        for (var y = 0; y < points.Count; y++)
+                    if (DebugSubscriptions.TryGetValue(uid, out var sessions))
+                    {
+                        foreach (var session in sessions)
                         {
-                            var point = points[y];
-
-                            if (point.Target != netTarget || point.Kind != GoapBreakpointKind.Planning)
+                            // Planning breakpoints
+                            if (!Breakpoints.TryGetValue(session, out var points))
                                 continue;
 
-                            if (comp.Plan != null && point.Result != GoapBreakpointResultKind.True)
-                                continue;
+                            var netTarget = GetNetEntity(uid);
 
-                            if (comp.Plan == null && point.Result != GoapBreakpointResultKind.False)
-                                continue;
+                            for (var y = 0; y < points.Count; y++)
+                            {
+                                var point = points[y];
 
-                            RemoveBreakpoint(session, point);
-                            y--;
+                                if (point.Target != netTarget || point.Kind != GoapBreakpointKind.Planning)
+                                    continue;
+
+                                if (comp.Plan != null && point.Result != GoapBreakpointResultKind.True)
+                                    continue;
+
+                                if (comp.Plan == null && point.Result != GoapBreakpointResultKind.False)
+                                    continue;
+
+                                SendDebug(session, uid);
+                                RemoveBreakpoint(session, point);
+                                y--;
+                            }
                         }
                     }
                 }

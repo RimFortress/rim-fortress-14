@@ -23,7 +23,7 @@ public abstract partial class GoapCondition : IGoapDebuggable
     /// Returns true if the check is passed; otherwise, false.
     /// </summary>
     [Pure]
-    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump);
+    public abstract bool Check(EntityUid target, GoapState state, IGoapConditionChecker checker, out GoapDebugDump? dump);
 }
 
 /// <summary>
@@ -44,13 +44,13 @@ public abstract partial class SimpleGoapCondition<T> : GoapCondition
     /// <inheritdoc/>
     public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionChecker checker, out GoapDebugDump? dump)
     {
         dump = null;
         return SimpleCheck(state, checker);
     }
 
-    public abstract bool SimpleCheck(GoapState state, IGoapConditionCheсker checker);
+    public abstract bool SimpleCheck(GoapState state, IGoapConditionChecker checker);
 }
 
 /// <summary>
@@ -67,7 +67,7 @@ public abstract partial class BaseGoapCondition<T> : GoapCondition where T : Bas
     /// <inheritdoc/>
     public override bool EntityCondition => true;
 
-    public override bool Check(EntityUid target, GoapState state, IGoapConditionCheсker checker, out GoapDebugDump? dump)
+    public override bool Check(EntityUid target, GoapState state, IGoapConditionChecker checker, out GoapDebugDump? dump)
     {
         var result = checker.CheckCondition(target, state, (T)this, out dump);
 

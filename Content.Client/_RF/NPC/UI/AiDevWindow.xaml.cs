@@ -16,6 +16,9 @@ public sealed partial class AiDevWindow : Control
     [Dependency] private readonly IEntityManager _entity = default!;
     private readonly AiDevWindowUiController _aiController;
 
+    private bool _goapReady;
+    private bool _utilityAiReady;
+
     public EntityUid? Target { get; private set; }
 
     public AiDevWindow()
@@ -32,15 +35,18 @@ public sealed partial class AiDevWindow : Control
             Target = args.Target;
             Refresh.Disabled = false;
             UpdateInfo();
-            GoapDebugTab.Update(args.Target, args.Graph, args.Plan);
+            GoapDebugTab.Update(args.Graph, args.Plan);
+            _goapReady = true;
+            UpdateRefresh();
         };
 
         _aiController.OnUtilityAiDebugInfo += args =>
         {
             Target = args.Target;
-            Refresh.Disabled = false;
             UpdateInfo();
             UtilityAiDebugTab.Update(args.Info);
+            _utilityAiReady = true;
+            UpdateRefresh();
         };
 
         Refresh.OnPressed += _ => SetTarget(Target!.Value);
@@ -48,7 +54,10 @@ public sealed partial class AiDevWindow : Control
 
     public void SetTarget(EntityUid target)
     {
-        _aiController.RequestGoapDebug(target);
+        _goapReady = false;
+        _utilityAiReady = false;
+        UpdateRefresh();
+        GoapDebugTab.SetTarget(target);
         _aiController.RequestUtilityAiDebug(target);
     }
 
@@ -58,6 +67,8 @@ public sealed partial class AiDevWindow : Control
         TimeLabel.Text = $"CurTime: {_timing.CurTime.ToString()}";
         TickLabel.Text = $"CurTick: {_timing.CurTick.Value}";
     }
+
+    private void UpdateRefresh() => Refresh.Disabled = !_goapReady || !_utilityAiReady;
 }
 
 [UsedImplicitly]

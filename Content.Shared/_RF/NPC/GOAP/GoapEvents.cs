@@ -90,10 +90,9 @@ public sealed class GoapDebugInfoMessage(
 }
 
 [Serializable, NetSerializable]
-public sealed class GoapBreakpointMessage(GoapBreakpoint point, bool requestPlan = true) : EntityEventArgs
+public sealed class GoapBreakpointMessage(GoapBreakpoint point) : EntityEventArgs
 {
     public readonly GoapBreakpoint Point = point;
-    public readonly bool RequestPlan = requestPlan;
 }
 
 [Serializable, NetSerializable]
@@ -105,8 +104,17 @@ public sealed class GoapBreakpointRemoveMessage(GoapBreakpoint point) : EntityEv
 [Serializable, NetSerializable]
 public sealed class GoapBreakpointHitMessage(
     GoapBreakpoint point,
-    List<GoapActionDebugInfo> actions) : EntityEventArgs
+    GoapPlanDebugInfo plan) : EntityEventArgs
 {
     public readonly GoapBreakpoint Point = point;
-    public readonly List<GoapActionDebugInfo> Actions = actions;
+    public readonly GoapPlanDebugInfo Plan = plan;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapDebugInfoSubscriptionMessage(
+    NetEntity target,
+    bool subscription) : EntityEventArgs
+{
+    public NetEntity Target = target;
+    public readonly bool Subscription = subscription;
 }

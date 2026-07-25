@@ -162,9 +162,22 @@ public sealed partial class GoapDebugTab : Control
                 return;
 
             if (PlanningSuccessButton.Pressed)
-                _controller.AddBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.True, false);
+            {
+                _controller.AddBreakpoint(uid,
+                    -1,
+                    -1,
+                    GoapBreakpointKind.Planning,
+                    GoapBreakpointResultKind.True);
+            }
             else
-                _controller.RemoveBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.True);
+            {
+                _controller.RemoveBreakpoint(
+                    uid,
+                    -1,
+                    -1,
+                    GoapBreakpointKind.Planning,
+                    GoapBreakpointResultKind.True);
+            }
         };
 
         PlanningFailedButton.OnPressed += _ =>
@@ -173,9 +186,22 @@ public sealed partial class GoapDebugTab : Control
                 return;
 
             if (PlanningFailedButton.Pressed)
-                _controller.AddBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.False, false);
+            {
+                _controller.AddBreakpoint(uid,
+                    -1,
+                    -1,
+                    GoapBreakpointKind.Planning,
+                    GoapBreakpointResultKind.False);
+            }
             else
-                _controller.RemoveBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.False);
+            {
+                _controller.RemoveBreakpoint(
+                    uid,
+                    -1,
+                    -1,
+                    GoapBreakpointKind.Planning,
+                    GoapBreakpointResultKind.False);
+            }
         };
 
         _controller.OnBreakpointAdded += _onBreakpointAdded;
@@ -183,11 +209,20 @@ public sealed partial class GoapDebugTab : Control
         _controller.OnBreakpointHit += _onBreakpointHit;
     }
 
-    public void Update(EntityUid target, GoapStaticGraphDebug graphDebug, GoapPlanDebugInfo? plan)
+    public void SetTarget(EntityUid target)
+    {
+        if (_target != null && _target != target)
+            _controller.Unsubscribe(_target.Value);
+
+        _controller.Subscribe(target);
+        _controller.RequestGoapDebug(target);
+        _target = target;
+    }
+
+    public void Update(GoapStaticGraphDebug graphDebug, GoapPlanDebugInfo? plan)
     {
         _graph = graphDebug;
         _plan = plan;
-        _target = target;
         _nodeControls.Clear();
 
         NodesLayer.RemoveAllChildren();
@@ -457,6 +492,9 @@ public sealed partial class GoapDebugTab : Control
             _controller.RemoveBreakpoint(point);
         }
 
+        if (_target != null)
+            _controller.Unsubscribe(_target.Value);
+
         _controller.OnBreakpointAdded += _onBreakpointAdded;
         _controller.OnBreakpointRemoved += _onBreakpointRemoved;
         _controller.OnBreakpointHit += _onBreakpointHit;
@@ -551,8 +589,11 @@ public sealed partial class GoapDebugTab : Control
         }
     }
 
-    private void _onBreakpointHit((GoapBreakpoint Point, List<GoapActionDebugInfo> Actions) point)
+    private void _onBreakpointHit((GoapBreakpoint Point, GoapPlanDebugInfo Plan) point)
     {
+        if (_graph != null)
+            Update(_graph.Value, point.Plan);
+
         if (_nodeControls.TryGetValue(point.Point.NodeId, out var node))
             CenterOnNode(node);
     }

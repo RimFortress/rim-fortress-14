@@ -19,7 +19,7 @@ public sealed class AiDevWindowUiController : UIController
 
     public event Action<GoapBreakpoint>? OnBreakpointAdded;
     public event Action<GoapBreakpoint>? OnBreakpointRemoved;
-    public event Action<(GoapBreakpoint Point, List<GoapActionDebugInfo> Actions)>? OnBreakpointHit;
+    public event Action<(GoapBreakpoint Point, GoapPlanDebugInfo Plan)>? OnBreakpointHit;
 
     public override void Initialize()
     {
@@ -54,7 +54,7 @@ public sealed class AiDevWindowUiController : UIController
 
     private void OnBreakpointHitMessage(GoapBreakpointHitMessage msg, EntitySessionEventArgs args)
     {
-        OnBreakpointHit?.Invoke((msg.Point, msg.Actions));
+        OnBreakpointHit?.Invoke((msg.Point, msg.Plan));
     }
 
     /// <summary>
@@ -85,17 +85,15 @@ public sealed class AiDevWindowUiController : UIController
         int nodeId,
         int index,
         GoapBreakpointKind kind,
-        GoapBreakpointResultKind result,
-        bool requestPlan = true)
+        GoapBreakpointResultKind result)
         => EntityManager
             .EntityNetManager
             .SendSystemNetworkMessage(new GoapBreakpointMessage(new(
-                    EntityManager.GetNetEntity(target),
-                    nodeId,
-                    index,
-                    kind,
-                    result),
-                requestPlan));
+                EntityManager.GetNetEntity(target),
+                nodeId,
+                index,
+                kind,
+                result)));
 
     [PublicAPI]
     public void AddBreakpoint(GoapBreakpoint breakpoint)
@@ -124,4 +122,20 @@ public sealed class AiDevWindowUiController : UIController
         => EntityManager
             .EntityNetManager
             .SendSystemNetworkMessage(new GoapBreakpointRemoveMessage(breakpoint));
+
+    [PublicAPI]
+    public void Subscribe(EntityUid target)
+        => EntityManager
+            .EntityNetManager
+            .SendSystemNetworkMessage(new GoapDebugInfoSubscriptionMessage(
+                EntityManager.GetNetEntity(target),
+                true));
+
+    [PublicAPI]
+    public void Unsubscribe(EntityUid target)
+        => EntityManager
+            .EntityNetManager
+            .SendSystemNetworkMessage(new GoapDebugInfoSubscriptionMessage(
+                EntityManager.GetNetEntity(target),
+                false));
 }

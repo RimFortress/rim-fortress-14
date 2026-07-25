@@ -14,13 +14,38 @@ public partial class GoapSystem
     private void InitializeDebug()
     {
         SubscribeNetworkEvent<GoapDebugInfoRequest>(OnDebugInfoRequest);
+        SubscribeNetworkEvent<GoapDebugInfoSubscriptionMessage>(OnGoapDebugInfoSubscriptionMessage);
         SubscribeNetworkEvent<GoapBreakpointMessage>(OnBreakpoint);
         SubscribeNetworkEvent<GoapBreakpointRemoveMessage>(OnRemoveBreakpoint);
     }
 
     private void OnDebugInfoRequest(GoapDebugInfoRequest request, EntitySessionEventArgs args)
     {
-        QueueDebugSend(args.SenderSession, GetEntity(request.Target));
+        if (_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug)
+            && TryGetEntity(request.Target, out var target)
+            && HasComp<GoapComponent>(target))
+            QueueDebugSend(args.SenderSession, target.Value);
+    }
+
+    private void OnGoapDebugInfoSubscriptionMessage(GoapDebugInfoSubscriptionMessage msg, EntitySessionEventArgs args)
+    {
+        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug)
+            || !TryGetEntity(msg.Target, out var target)
+            || !HasComp<GoapComponent>(target))
+            return;
+
+        if (!msg.Subscription)
+        {
+            if (DebugSubscriptions.TryGetValue(target.Value, out var sessions))
+                sessions.Remove(args.SenderSession);
+
+            return;
+        }
+
+        if (!DebugSubscriptions.GetOrNew(target.Value).Add(args.SenderSession))
+            return;
+
+        QueueDebugSend(args.SenderSession, target.Value);
     }
 
     private void OnBreakpoint(GoapBreakpointMessage msg, EntitySessionEventArgs args)
@@ -52,10 +77,6 @@ public partial class GoapSystem
             && points.Contains(msg.Point))
             return;
 
-        QueueDebugSend(
-            args.SenderSession,
-            target.Value,
-            msg.Point is not { Kind: GoapBreakpointKind.Planning, Result: GoapBreakpointResultKind.False });
         Breakpoints.GetOrNew(args.SenderSession).Add(msg.Point);
         RaiseNetworkEvent(new GoapBreakpointMessage(msg.Point), args.SenderSession);
     }
@@ -96,12 +117,12 @@ public partial class GoapSystem
     protected override void BreakpointHit(
         ICommonSession session,
         GoapBreakpoint breakpoint,
-        List<GoapActionDebugInfo> actions)
+        GoapPlanDebugInfo plan)
     {
-        if (!_admin.HasAdminFlag(session, AdminFlags.Debug))
-            return;
-
-        RaiseNetworkEvent(new GoapBreakpointHitMessage(breakpoint, actions), session);
+        if (_admin.HasAdminFlag(session, AdminFlags.Debug)
+            && TryGetEntity(breakpoint.Target, out var target)
+            && HasComp<GoapComponent>(target))
+            RaiseNetworkEvent(new GoapBreakpointHitMessage(breakpoint, plan), session);
     }
 
     /// <summary>
