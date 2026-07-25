@@ -11,7 +11,7 @@
                                   HScrollBarHidden="True"
                                   VScrollBarHidden="True">
         <Control Name="GraphRoot">
-            <npc:GoapGraphEdgeOverlay Name="EdgeOverlay"/>
+            <npc:GraphEdgeOverlay Name="EdgeOverlay"/>
             <LayoutContainer Name="NodesLayer"/>
         </Control>
     </npc:DraggableScrollContainer>

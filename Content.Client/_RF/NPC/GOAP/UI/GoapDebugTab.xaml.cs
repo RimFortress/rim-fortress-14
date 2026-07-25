@@ -443,7 +443,7 @@ public sealed partial class GoapDebugTab : Control
 
         foreach (var (nodeId, control) in _nodeControls)
         {
-            control.Modulate = highlight.Contains(nodeId) ? Color.White : Color.White.WithAlpha(0.45f);
+            control.Modulate = highlight.Contains(nodeId) ? Color.White : Color.White.WithAlpha(0.30f);
         }
     }
 
@@ -474,11 +474,28 @@ public sealed partial class GoapDebugTab : Control
         EdgeOverlay.SetData(
             _nodeControls,
             layout.EdgePaths,
-            _plan?.Nodes
-                .Where(x => x.InPlan)
-                .Select(x => x.NodeId));
+            layout.EdgePaths
+                .Select(xy => (xy.Key, ConnectionColor(xy.Key)))
+                .ToDictionary());
 
         GraphRoot.MinSize = layout.TotalSize;
+        return;
+
+        Color ConnectionColor((int From, int To) fromTo)
+        {
+            if (_plan?.Nodes.Any(x => x.NodeId == fromTo.From && x.InPlan) == true)
+                return Color.LimeGreen;
+
+            if (_graph?.Nodes.FirstOrNull(x => x.Id == fromTo.From)?.Compound is not { } compound)
+                return Color.DimGray; // Default color
+
+            var hash = (uint)compound.GetHashCode();
+            hash = (hash ^ (hash >> 16)) * 0x45d9f3b;
+            hash = (hash ^ (hash >> 16)) * 0x45d9f3b;
+            hash ^= hash >> 16;
+            var hue = hash / (float)uint.MaxValue;
+            return Color.FromHsv(new(hue, 0.5f, 0.6f, 1f));
+        }
     }
 
     private void SelectNodeId(int id)

@@ -1,43 +1,25 @@
-using System.Linq;
 using System.Numerics;
-using Content.Shared._RF.NPC;
-using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.UtilityAi;
-using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.NPC.UI;
 
-public sealed class GoapGraphEdgeOverlay : GraphEdgeOverlay<GoapStaticGraphNodeDebug, GoapStaticGraphEdge>;
-
-public sealed class UtilityAiGraphEdgeOverlay : GraphEdgeOverlay<UtilityAiGoalDebugInfo, UtilityAiStaticGraphEdge>;
-
-public abstract class GraphEdgeOverlay<TNode, TEdge> : Control
-    where TNode : IStaticGraphNode
-    where TEdge : IStaticGraphEdge
+public sealed class GraphEdgeOverlay : Control
 {
     private Dictionary<int, Control> _nodeControls = new();
     private Dictionary<(int From, int To), List<Vector2>> _edgePaths = new();
-    private HashSet<int> _activeNodes = new();
+    private Dictionary<(int From, int To), Color> _colorSettings = new();
 
-    [PublicAPI]
-    public Color ActiveConnectionColor { get; set; } = Color.LimeGreen;
-
-    [PublicAPI]
-    public Color ConnectionColor { get; set; } = Color.DimGray;
+    private readonly Color _defaultColor = Color.DimGray;
 
     public void SetData(
         Dictionary<int, Control> nodeControls,
         Dictionary<(int From, int To), List<Vector2>> edgePaths,
-        IEnumerable<int>? activeNodes)
+        Dictionary<(int From, int To), Color>? colorSettings = null)
     {
         _nodeControls = nodeControls;
         _edgePaths = edgePaths;
-        _activeNodes.Clear();
-
-        if (activeNodes != null)
-            _activeNodes = activeNodes.ToHashSet();
+        _colorSettings = colorSettings ?? new();
     }
 
     protected override void Draw(DrawingHandleScreen handle)
@@ -53,10 +35,7 @@ public abstract class GraphEdgeOverlay<TNode, TEdge> : Control
             if (!fromCtrl.Visible || !toCtrl.Visible)
                 continue;
 
-            var color = (_activeNodes.Contains(from) &&
-                         _activeNodes.Contains(to)
-                ? ActiveConnectionColor
-                : ConnectionColor) * fromCtrl.Modulate * toCtrl.Modulate;
+            var color = _colorSettings.GetValueOrDefault((from, to), _defaultColor) * toCtrl.Modulate;
 
             // Screen position that corresponds to layout-space (0, 0), derived from the one
             // point we know for certain in both spaces: the "from" control's own placement.

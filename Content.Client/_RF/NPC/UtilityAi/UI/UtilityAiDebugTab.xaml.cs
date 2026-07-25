@@ -65,7 +65,6 @@ public sealed partial class UtilityAiDebugTab : Control
         UpdateLayout();
     }
 
-
     private void UpdateLayout()
     {
         if (_layout == null)
@@ -85,11 +84,20 @@ public sealed partial class UtilityAiDebugTab : Control
         EdgeOverlay.SetData(
             _nodeControls,
             layout.EdgePaths,
-            _info?.Graph.Nodes
-                .Where(x => x.InActiveBranch)
-                .Select(x => x.Id));
+            layout.EdgePaths
+                .Select(xy => (xy.Key, ConnectionColor(xy.Key)))
+                .ToDictionary());
 
         GraphRoot.MinSize = layout.TotalSize;
+        return;
+
+        Color ConnectionColor((int From, int To) fromTo)
+        {
+            if (_info?.Graph.Nodes.Any(x => x.Id == fromTo.From && x.InActiveBranch) == true)
+                return Color.LimeGreen;
+
+            return Color.DimGray; // Default color
+        }
     }
 
     protected override void MouseWheel(GUIMouseWheelEventArgs args)
