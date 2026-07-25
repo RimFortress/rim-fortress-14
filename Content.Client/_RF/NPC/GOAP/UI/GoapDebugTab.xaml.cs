@@ -178,98 +178,9 @@ public sealed partial class GoapDebugTab : Control
                 _controller.RemoveBreakpoint(uid, -1, -1, GoapBreakpointKind.Planning, GoapBreakpointResultKind.False);
         };
 
-        _controller.OnBreakpointAdded += point =>
-        {
-            if (point.Kind == GoapBreakpointKind.Planning)
-            {
-                switch (point.Result)
-                {
-                    case GoapBreakpointResultKind.True:
-                        PlanningSuccessButton.Pressed = true;
-                        return;
-                    case GoapBreakpointResultKind.False:
-                        PlanningFailedButton.Pressed = true;
-                        return;
-                }
-            }
-
-            if (_points.TryGetValue(point, out var check))
-            {
-                check.Check.Pressed = true;
-                return;
-            }
-
-            check = new BreakpointControl();
-            check.Check.Text = GetName(point);
-            check.Check.Pressed = true;
-            _points[point] = check;
-            Breakpoints.AddChild(check);
-
-            check.Check.OnToggled += _ =>
-            {
-                if (!check.Check.Pressed)
-                    _controller.RemoveBreakpoint(point);
-                else
-                    _controller.AddBreakpoint(point);
-            };
-
-            check.RemoveButton.OnPressed += _ =>
-            {
-                _points.Remove(point);
-                Breakpoints.RemoveChild(check);
-                _controller.RemoveBreakpoint(point);
-            };
-        };
-
-        _controller.OnBreakpointRemoved += point =>
-        {
-            if (_points.TryGetValue(point, out var check))
-                check.Check.Pressed = false;
-
-            if (point.Kind != GoapBreakpointKind.Planning)
-                return;
-
-            switch (point.Result)
-            {
-                case GoapBreakpointResultKind.True:
-                    PlanningSuccessButton.Pressed = false;
-                    break;
-                case GoapBreakpointResultKind.False:
-                    PlanningFailedButton.Pressed = false;
-                    break;
-            }
-        };
-
-        _controller.OnBreakpointHit += point =>
-        {
-            if (_nodeControls.TryGetValue(point.Point.NodeId, out var node))
-                CenterOnNode(node);
-        };
-
-        return;
-
-        string GetName(GoapBreakpoint point)
-        {
-            if (_graph == null)
-                return string.Empty;
-
-            var nodeName = point.NodeId != -1
-                ? $"#{point.NodeId}"
-                : "#Any";
-            var actName = point.Index != -1
-                ? $"{_graph.Value.Nodes[point.NodeId].Actions[point.Index].Type} ({point.Index})"
-                : "Any";
-            var str = $"{nodeName} {actName}";
-
-            return point.Kind switch
-            {
-                GoapBreakpointKind.ActionStartup => $"{str} Startup: {point.Result}",
-                GoapBreakpointKind.ActionUpdate => $"{str} Update: {point.Result}",
-                GoapBreakpointKind.ActionShutdown => $"{str} Shutdown",
-                GoapBreakpointKind.Planning => $"Planning: {point.Result}",
-                _ => throw new ArgumentOutOfRangeException(),
-            };
-        }
+        _controller.OnBreakpointAdded += _onBreakpointAdded;
+        _controller.OnBreakpointRemoved += _onBreakpointRemoved;
+        _controller.OnBreakpointHit += _onBreakpointHit;
     }
 
     public void Update(EntityUid target, GoapStaticGraphDebug graphDebug, GoapPlanDebugInfo? plan)
@@ -537,6 +448,113 @@ public sealed partial class GoapDebugTab : Control
         _zoom = Math.Clamp(_zoom + zoomChange, MinZoom, MaxZoom);
         UpdateLayout();
         args.Handle();
+    }
+
+    protected override void ExitedTree()
+    {
+        foreach (var (point, _) in _points)
+        {
+            _controller.RemoveBreakpoint(point);
+        }
+
+        _controller.OnBreakpointAdded += _onBreakpointAdded;
+        _controller.OnBreakpointRemoved += _onBreakpointRemoved;
+        _controller.OnBreakpointHit += _onBreakpointHit;
+
+        base.ExitedTree();
+    }
+
+    private void _onBreakpointAdded(GoapBreakpoint point)
+    {
+        if (point.Kind == GoapBreakpointKind.Planning)
+        {
+            switch (point.Result)
+            {
+                case GoapBreakpointResultKind.True:
+                    PlanningSuccessButton.Pressed = true;
+                    return;
+                case GoapBreakpointResultKind.False:
+                    PlanningFailedButton.Pressed = true;
+                    return;
+            }
+        }
+
+        if (_points.TryGetValue(point, out var check))
+        {
+            check.Check.Pressed = true;
+            return;
+        }
+
+        check = new BreakpointControl();
+        check.Check.Text = GetName();
+        check.Check.Pressed = true;
+        _points[point] = check;
+        Breakpoints.AddChild(check);
+
+        check.Check.OnToggled += _ =>
+        {
+            if (!check.Check.Pressed)
+                _controller.RemoveBreakpoint(point);
+            else
+                _controller.AddBreakpoint(point);
+        };
+
+        check.RemoveButton.OnPressed += _ =>
+        {
+            _points.Remove(point);
+            Breakpoints.RemoveChild(check);
+            _controller.RemoveBreakpoint(point);
+        };
+
+        return;
+
+        string GetName()
+        {
+            if (_graph == null)
+                return string.Empty;
+
+            var nodeName = point.NodeId != -1
+                ? $"#{point.NodeId}"
+                : "#Any";
+            var actName = point.Index != -1
+                ? $"{_graph.Value.Nodes[point.NodeId].Actions[point.Index].Type} ({point.Index})"
+                : "Any";
+            var str = $"{nodeName} {actName}";
+
+            return point.Kind switch
+            {
+                GoapBreakpointKind.ActionStartup => $"{str} Startup: {point.Result}",
+                GoapBreakpointKind.ActionUpdate => $"{str} Update: {point.Result}",
+                GoapBreakpointKind.ActionShutdown => $"{str} Shutdown",
+                GoapBreakpointKind.Planning => $"Planning: {point.Result}",
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+        }
+    }
+
+    private void _onBreakpointRemoved(GoapBreakpoint point)
+    {
+        if (_points.TryGetValue(point, out var check))
+            check.Check.Pressed = false;
+
+        if (point.Kind != GoapBreakpointKind.Planning)
+            return;
+
+        switch (point.Result)
+        {
+            case GoapBreakpointResultKind.True:
+                PlanningSuccessButton.Pressed = false;
+                break;
+            case GoapBreakpointResultKind.False:
+                PlanningFailedButton.Pressed = false;
+                break;
+        }
+    }
+
+    private void _onBreakpointHit((GoapBreakpoint Point, List<GoapActionDebugInfo> Actions) point)
+    {
+        if (_nodeControls.TryGetValue(point.Point.NodeId, out var node))
+            CenterOnNode(node);
     }
 }
 

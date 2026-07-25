@@ -14,11 +14,15 @@ namespace Content.Client._RF.NPC.GOAP.UI;
 [GenerateTypedNameReferences]
 public sealed partial class GraphNodeControl : Control
 {
+    private readonly AiDevWindowUiController _controller;
+    private readonly GoapStaticGraphNodeDebug _graphNode;
+    private readonly GoapNodeDebugEntry? _debug;
     private bool _selected;
 
     public GraphNodeControl()
     {
         RobustXamlLoader.Load(this);
+        _controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
     }
 
     public GraphNodeControl(
@@ -36,21 +40,11 @@ public sealed partial class GraphNodeControl : Control
         TabContainer.SetTabVisible(ActionsTab, graphNode.Actions.Count > 0);
         TabContainer.SetTabVisible(PreconditionsTab, graphNode.Preconditions.Count > 0);
 
-        var controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
+        _graphNode = graphNode;
+        _debug = debug;
+        _controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
 
-        controller.OnBreakpointHit += args =>
-        {
-            if (args.Point.NodeId == graphNode.Id)
-                TabContainer.CurrentTab = 1;
-
-            var nodeActions = args.Actions
-                .Where(x => x.NodeIndex == graphNode.Id)
-                .ToList();
-
-            ActionsTab.RemoveAllChildren();
-            AddAction(nodeActions);
-            UpdateStatus(nodeActions);
-        };
+        _controller.OnBreakpointHit += _onBreakpointHit;
 
         OnMouseEntered += _ => _selected = true;
         OnMouseExited += _ => _selected = false;
@@ -97,242 +91,240 @@ public sealed partial class GraphNodeControl : Control
 
         if (debug.Value.SkipReason != null)
             AddExpandLabel(CommonTab, "Skip Reason",  debug.Value.SkipReason);
+    }
 
-        return;
+    private void AddTypes(Control parent, string title, Dictionary<string, (string, string)>? data)
+    {
+        if (data == null || data.Count == 0)
+            return;
 
-        void AddTypes(Control parent, string title, Dictionary<string, (string, string)>? data)
+        AddSeparator(parent);
+        var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
+        parent.AddChild(expandBox);
+
+        foreach (var (key, (type, value)) in data)
         {
-            if (data == null || data.Count == 0)
-                return;
-
-            AddSeparator(parent);
-            var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
-            parent.AddChild(expandBox);
-
-            foreach (var (key, (type, value)) in data)
+            AddSeparator(expandBox.Content);
+            expandBox.Content.AddChild(new BoxContainer
             {
-                AddSeparator(expandBox.Content);
-                expandBox.Content.AddChild(new BoxContainer
-                {
-                    Orientation = BoxContainer.LayoutOrientation.Vertical,
-                    Margin = new Thickness(0f, 1f),
-                    MaxWidth = 300,
-                    Children =
-                    {
-                        new BoxContainer
-                        {
-                            Children =
-                            {
-                                new RichTextLabel { Text = $"[bold]{key}[/bold]" },
-                                new Control { HorizontalExpand = true },
-                                new RichTextLabel { Text = $":{type}" },
-                            },
-                        },
-                        new BoxContainer
-                        {
-                            Children =
-                            {
-                                new RichTextLabel { Text = value },
-                            },
-                        },
-                    },
-                });
-            }
-        }
-
-        void AddLabel(Control parent, string left, string right)
-        {
-            AddSeparator(parent);
-            parent.AddChild(new BoxContainer
-            {
-                Margin = new Thickness(20f, 0f, 5f, 0f),
+                Orientation = BoxContainer.LayoutOrientation.Vertical,
+                Margin = new Thickness(0f, 1f),
+                MaxWidth = 300,
                 Children =
                 {
-                    new RichTextLabel { Text = $"[bold]{left}[/bold]" },
-                    new Control { HorizontalExpand = true },
-                    new RichTextLabel { Text = $"[bold]{right}[/bold]" },
+                    new BoxContainer
+                    {
+                        Children =
+                        {
+                            new RichTextLabel { Text = $"[bold]{key}[/bold]" },
+                            new Control { HorizontalExpand = true },
+                            new RichTextLabel { Text = $":{type}" },
+                        },
+                    },
+                    new BoxContainer
+                    {
+                        Children =
+                        {
+                            new RichTextLabel { Text = value },
+                        },
+                    },
                 },
             });
         }
+    }
 
-        void AddExpandLabel(Control parent, string title, string text)
+    private void AddLabel(Control parent, string left, string right)
+    {
+        AddSeparator(parent);
+        parent.AddChild(new BoxContainer
         {
-            AddSeparator(parent);
-            var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
-            parent.AddChild(expandBox);
-            expandBox.Content.AddChild(new RichTextLabel
+            Margin = new Thickness(20f, 0f, 5f, 0f),
+            Children =
             {
-                Text = text,
+                new RichTextLabel { Text = $"[bold]{left}[/bold]" },
+                new Control { HorizontalExpand = true },
+                new RichTextLabel { Text = $"[bold]{right}[/bold]" },
+            },
+        });
+    }
+
+    private void AddExpandLabel(Control parent, string title, string text)
+    {
+        AddSeparator(parent);
+        var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
+        parent.AddChild(expandBox);
+        expandBox.Content.AddChild(new RichTextLabel
+        {
+            Text = text,
+            MaxWidth = 300,
+        });
+    }
+
+    private void AddSeparator(Control parent)
+    {
+        parent.AddChild(new PanelContainer
+        {
+            StyleClasses = { StyleFortress.StyleClassLowDividerDark },
+            Margin = new Thickness(3f, 2f),
+        });
+    }
+
+    private void AddLogs(Control parent, string? logs)
+    {
+        if (string.IsNullOrWhiteSpace(logs))
+            return;
+
+        AddSeparator(parent);
+        var box = new ExpandableBox { Title = "[bold]Logs[/bold]" };
+        parent.AddChild(box);
+        var dumps = logs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var dump in dumps)
+        {
+            box.Content.AddChild(new RichTextLabel
+            {
+                Text = dump,
                 MaxWidth = 300,
             });
         }
+    }
 
-        void AddSeparator(Control parent)
+    private ExpandableBox AddBox(Control parent, string title, string? second = null)
+    {
+        AddSeparator(parent);
+        var box = new ExpandableBox
         {
-            parent.AddChild(new PanelContainer
-            {
-                StyleClasses = { StyleFortress.StyleClassLowDividerDark },
-                Margin = new Thickness(3f, 2f),
-            });
-        }
+            Title = $"[bold]{title}[/bold]",
+            SecondaryText = second != null ? $"[bold]{second}[/bold]" : null,
+        };
+        parent.AddChild(box);
+        return box;
+    }
 
-        void AddLogs(Control parent, string? logs)
+    private string UpdateText(GoapActionResult result)
+    {
+        return result switch
         {
-            if (string.IsNullOrWhiteSpace(logs))
-                return;
+            GoapActionResult.Finished => $"[color={StyleFortress.LightGood.ToHex()}]Finished[/color]",
+            GoapActionResult.Failed => $"[color={StyleFortress.LightBad.ToHex()}]Failed[/color]",
+            GoapActionResult.Continuing => $"[color={Color.Yellow.ToHex()}]Continuing[/color]",
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+    }
 
-            AddSeparator(parent);
-            var box = new ExpandableBox { Title = "[bold]Logs[/bold]" };
-            parent.AddChild(box);
-            var dumps = logs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    private string? ActionStatusText(GoapActionDebugInfo action)
+    {
+        if (action.StartupSuccess == null)
+            return null;
 
-            foreach (var dump in dumps)
+        if (action.StartupSuccess == false)
+            return $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]";
+
+        if (action.UpdateDumps.Count == 0)
+            return $"[color={Color.Yellow.ToHex()}]Not Started[/color]";
+
+        return action.UpdateDumps.Count > 0 ? UpdateText(action.UpdateDumps.Last().Result) : null;
+    }
+
+    private void AddAction(List<GoapActionDebugInfo> actionsDebug)
+    {
+        for (var i = 0; i < _graphNode.Actions.Count; i++)
+        {
+            var index = i;
+            var action = _graphNode.Actions[i];
+
+            if (actionsDebug?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
             {
-                box.Content.AddChild(new RichTextLabel
+                // Static graph info
+                var staticBox = AddBox(ActionsTab, action.Type);
+                AddTypes(staticBox.Content, "Fields", action.Reflection);
+                continue;
+            }
+
+            // Runtime debug info
+            var box = AddBox(ActionsTab, action.Type, ActionStatusText(debugAction));
+            AddTypes(box.Content, "Fields", action.Reflection);
+
+            // Startup
+            if (debugAction.StartupSuccess != null)
+            {
+                var startupBox = AddBox(
+                    box.Content,
+                    "Startup",
+                    debugAction.StartupSuccess == true
+                        ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
+                        : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
+
+                if (debugAction.StartupDump != null)
                 {
-                    Text = dump,
-                    MaxWidth = 300,
-                });
+                    AddTypes(startupBox.Content, "State Snapshot", debugAction.StartupDump.Value.StateSnapshot.State);
+                    AddLogs(startupBox.Content, debugAction.StartupDump.Value.Dump);
+                }
+            }
+
+            // Shutdown
+            if (debugAction.ShutdownDump != null)
+            {
+                var shutdownBox = AddBox(box.Content, "Shutdown");
+
+                AddTypes(shutdownBox.Content, "State Snapshot", debugAction.ShutdownDump.Value.StateSnapshot.State);
+                AddLogs(shutdownBox.Content, debugAction.ShutdownDump.Value.Dump);
+            }
+
+            // Updates
+            if (debugAction.UpdateDumps.Count == 0)
+                continue;
+
+            var updateBox = AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
+
+            foreach (var update in debugAction.UpdateDumps)
+            {
+                var upd = AddBox(updateBox.Content, update.Tick.ToString(), UpdateText(update.Result));
+                AddTypes(upd.Content, "State Snapshot", update.Dump.StateSnapshot.State);
+                AddLogs(upd.Content, update.Dump.Dump);
             }
         }
+    }
 
-        ExpandableBox AddBox(Control parent, string title, string? second = null)
+    private void UpdateStatus(List<GoapActionDebugInfo>? actionsDebug)
+    {
+        StatusLabel.Text = string.Empty;
+
+        if (_debug is { HelpGoal: true })
+            StatusLabel.Text = $@"[color={StyleFortress.GoldFortress.ToHex()}]\[Goal\][/color]";
+
+        if (actionsDebug?.Count > 0)
         {
-            AddSeparator(parent);
-            var box = new ExpandableBox
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
+
+            if (actionsDebug.All(x => x.StartupSuccess == null))
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Starting\][/color]";
+            else if (actionsDebug.Any(x
+                    => x.UpdateDumps.Any(y
+                           => y.Result == GoapActionResult.Failed)
+                       || x.StartupSuccess == false))
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.BetterViolet.ToHex()}]\[Failed\][/color]";
+            else if (actionsDebug.Any(x
+                    => x.StartupSuccess == null || x.UpdateDumps.Any(y
+                        => y.Result == GoapActionResult.Continuing)))
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Continuing\][/color]";
+            else if (actionsDebug.Count > 0
+                && actionsDebug.All(x
+                    => x.UpdateDumps.Any(y
+                        => y.Result == GoapActionResult.Finished)))
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[Finished\][/color]";
+        }
+        else
+        {
+            StatusLabel.Text = _debug?.PreconditionsMet switch
             {
-                Title = $"[bold]{title}[/bold]",
-                SecondaryText = second != null ? $"[bold]{second}[/bold]" : null,
+                false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NotMet\][/color]",
+                true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Met\][/color]",
+                _ => StatusLabel.Text,
             };
-            parent.AddChild(box);
-            return box;
         }
 
-        string UpdateText(GoapActionResult result)
-        {
-            return result switch
-            {
-                GoapActionResult.Finished => $"[color={StyleFortress.LightGood.ToHex()}]Finished[/color]",
-                GoapActionResult.Failed => $"[color={StyleFortress.LightBad.ToHex()}]Failed[/color]",
-                GoapActionResult.Continuing => $"[color={Color.Yellow.ToHex()}]Continuing[/color]",
-                _ => throw new ArgumentOutOfRangeException(),
-            };
-        }
-
-        string? ActionStatusText(GoapActionDebugInfo action)
-        {
-            if (action.StartupSuccess == null)
-                return null;
-
-            if (action.StartupSuccess == false)
-                return $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]";
-
-            if (action.UpdateDumps.Count == 0)
-                return $"[color={Color.Yellow.ToHex()}]Not Started[/color]";
-
-            return action.UpdateDumps.Count > 0 ? UpdateText(action.UpdateDumps.Last().Result) : null;
-        }
-
-        void AddAction(List<GoapActionDebugInfo> actionsDebug)
-        {
-            for (var i = 0; i < graphNode.Actions.Count; i++)
-            {
-                var index = i;
-                var action = graphNode.Actions[i];
-
-                if (actionsDebug?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
-                {
-                    // Static graph info
-                    var staticBox = AddBox(ActionsTab, action.Type);
-                    AddTypes(staticBox.Content, "Fields", action.Reflection);
-                    continue;
-                }
-
-                // Runtime debug info
-                var box = AddBox(ActionsTab, action.Type, ActionStatusText(debugAction));
-                AddTypes(box.Content, "Fields", action.Reflection);
-
-                // Startup
-                if (debugAction.StartupSuccess != null)
-                {
-                    var startupBox = AddBox(
-                        box.Content,
-                        "Startup",
-                        debugAction.StartupSuccess == true
-                            ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
-                            : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
-
-                    if (debugAction.StartupDump != null)
-                    {
-                        AddTypes(startupBox.Content, "State Snapshot", debugAction.StartupDump.Value.StateSnapshot.State);
-                        AddLogs(startupBox.Content, debugAction.StartupDump.Value.Dump);
-                    }
-                }
-
-                // Shutdown
-                if (debugAction.ShutdownDump != null)
-                {
-                    var shutdownBox = AddBox(box.Content, "Shutdown");
-
-                    AddTypes(shutdownBox.Content, "State Snapshot", debugAction.ShutdownDump.Value.StateSnapshot.State);
-                    AddLogs(shutdownBox.Content, debugAction.ShutdownDump.Value.Dump);
-                }
-
-                // Updates
-                if (debugAction.UpdateDumps.Count == 0)
-                    continue;
-
-                var updateBox = AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
-
-                foreach (var update in debugAction.UpdateDumps)
-                {
-                    var upd = AddBox(updateBox.Content, update.Tick.ToString(), UpdateText(update.Result));
-                    AddTypes(upd.Content, "State Snapshot", update.Dump.StateSnapshot.State);
-                    AddLogs(upd.Content, update.Dump.Dump);
-                }
-            }
-        }
-
-        void UpdateStatus(List<GoapActionDebugInfo>? actionsDebug)
-        {
-            StatusLabel.Text = string.Empty;
-
-            if (debug is { HelpGoal: true })
-                StatusLabel.Text = $@"[color={StyleFortress.GoldFortress.ToHex()}]\[Goal\][/color]";
-
-            if (actionsDebug?.Count > 0)
-            {
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
-
-                if (actionsDebug.All(x => x.StartupSuccess == null))
-                    StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Starting\][/color]";
-                else if (actionsDebug.Any(x
-                        => x.UpdateDumps.Any(y
-                               => y.Result == GoapActionResult.Failed)
-                           || x.StartupSuccess == false))
-                    StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.BetterViolet.ToHex()}]\[Failed\][/color]";
-                else if (actionsDebug.Any(x
-                        => x.StartupSuccess == null || x.UpdateDumps.Any(y
-                            => y.Result == GoapActionResult.Continuing)))
-                    StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Continuing\][/color]";
-                else if (actionsDebug.Count > 0
-                    && actionsDebug.All(x
-                        => x.UpdateDumps.Any(y
-                            => y.Result == GoapActionResult.Finished)))
-                    StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[Finished\][/color]";
-            }
-            else
-            {
-                StatusLabel.Text = debug?.PreconditionsMet switch
-                {
-                    false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NotMet\][/color]",
-                    true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Met\][/color]",
-                    _ => StatusLabel.Text,
-                };
-            }
-
-            StatusLabel.Text = $"[bold]{StatusLabel.Text.Trim()}[/bold]";
-        }
+        StatusLabel.Text = $"[bold]{StatusLabel.Text.Trim()}[/bold]";
     }
 
     protected override void Draw(DrawingHandleScreen handle)
@@ -344,5 +336,25 @@ public sealed partial class GraphNodeControl : Control
         }
 
         base.Draw(handle);
+    }
+
+    protected override void ExitedTree()
+    {
+        _controller.OnBreakpointHit += _onBreakpointHit;
+        base.ExitedTree();
+    }
+
+    private void _onBreakpointHit((GoapBreakpoint Point, List<GoapActionDebugInfo> Actions) args)
+    {
+        if (args.Point.NodeId == _graphNode.Id)
+            TabContainer.CurrentTab = 1;
+
+        var nodeActions = args.Actions
+            .Where(x => x.NodeIndex == _graphNode.Id)
+            .ToList();
+
+        ActionsTab.RemoveAllChildren();
+        AddAction(nodeActions);
+        UpdateStatus(nodeActions);
     }
 }
