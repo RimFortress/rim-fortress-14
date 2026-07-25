@@ -36,6 +36,6 @@ public sealed class SkillLevelSystem : MathCurveSystem<SkillLevel>
         if (level == 0)
             return 0;
 
-        return curve.Normalize ? _skills.GetMaxLevel(curve.Skill) / level : level;
+        return curve.Normalize ? level / _skills.GetMaxLevel(curve.Skill) : level;
     }
 }

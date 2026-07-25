@@ -43,9 +43,13 @@ public sealed partial class GraphNodeControl : Control
             if (args.Point.NodeId == graphNode.Id)
                 TabContainer.CurrentTab = 1;
 
+            var nodeActions = args.Actions
+                .Where(x => x.NodeIndex == graphNode.Id)
+                .ToList();
+
             ActionsTab.RemoveAllChildren();
-            AddAction(args.Actions);
-            UpdateStatus(args.Actions);
+            AddAction(nodeActions);
+            UpdateStatus(nodeActions);
         };
 
         OnMouseEntered += _ => _selected = true;
@@ -296,7 +300,7 @@ public sealed partial class GraphNodeControl : Control
             if (debug is { HelpGoal: true })
                 StatusLabel.Text = $@"[color={StyleFortress.GoldFortress.ToHex()}]\[Goal\][/color]";
 
-            if (actionsDebug?.Any(x => x.NodeIndex == graphNode.Id) == true)
+            if (actionsDebug?.Count > 0)
             {
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
 
