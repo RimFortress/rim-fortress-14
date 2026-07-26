@@ -3,6 +3,7 @@ using System.Linq;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
+using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Network;
 using Robust.Shared.Prototypes;

@@ -1,7 +1,8 @@
 - type: executableGoal
   id: MoveTo
   goal: MoveTo
-  taskType: Place
+  taskType:
+  - Place
 
 - type: executableGoal
   id: PickUp

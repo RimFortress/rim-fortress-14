@@ -57,6 +57,7 @@ public sealed class SelectionSystem : SharedSelectionSystem
             return false;
 
         ClearSelection(new(_player.LocalEntity.Value, comp));
+        OnSelectedChanged?.Invoke();
 
         comp.StartPoint = _transform.ToMapCoordinates(coords);
         comp.EndPoint = comp.StartPoint;

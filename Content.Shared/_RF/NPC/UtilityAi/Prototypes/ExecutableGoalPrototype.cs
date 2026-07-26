@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
@@ -79,23 +80,29 @@ public sealed partial class ExecutableGoalPrototype : IPrototype, IInheritingPro
     /// </summary>
     [DataField]
     public StateKey<EntityCoordinates> TargetCoordinatesKey = "TargetCoordinates";
+}
 
-    [Serializable, NetSerializable]
-    public enum ExecutableGoalType
-    {
-        /// <summary>
-        /// The goal can be issued by simply clicking on the target.
-        /// </summary>
-        Simple,
+[Flags]
+[Serializable, NetSerializable]
+public enum ExecutableGoalType : byte
+{
+    None = 0,
 
-        /// <summary>
-        /// The goal can only be issued via the target context menu.
-        /// </summary>
-        Verb,
+    /// <summary>
+    /// The goal can be issued via the target context menu.
+    /// </summary>
+    Verb = 1 << 0,
 
-        /// <summary>
-        /// The goal can only have target coordinates.
-        /// </summary>
-        Place,
-    }
+    /// <summary>
+    /// The goal can only have target coordinates.
+    /// </summary>
+    Place = 1 << 1,
+
+    /// <summary>
+    /// Passive targets can be assigned for this goal.
+    /// <see cref="PassiveGoalTargetComponent"/>
+    /// </summary>
+    Passive = 1 << 2,
+
+    All = Verb |  Place | Passive,
 }

@@ -74,7 +74,8 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
         foreach (var goal in control.Goals)
         {
-            if (!_proto.Resolve(goal, out var proto))
+            if (!_proto.Resolve(goal, out var proto)
+                || !proto.TaskType.HasFlag(ExecutableGoalType.Passive))
                 continue;
 
             var button = new TreeMenuButton
@@ -84,7 +85,8 @@ public sealed partial class ActionsHotbarWidget : UIWidget
                 Texture = proto.VerbIcon != null ? _sprite.Frame0(new SpriteSpecifier.Texture(proto.VerbIcon.Value)) : null,
             };
 
-            button.OnToggled += args => _executable.SetSelectedTask(args.Pressed ? (ProtoId<ExecutableGoalPrototype>?)goal : null);
+            button.OnToggled += args =>
+                _executable.SetSelectedTask(args.Pressed ? (ProtoId<ExecutableGoalPrototype>?)goal : null);
             _taskButtons.Add(goal, button);
             PassiveTasksButton.AddContent(button);
         }

@@ -24,6 +24,9 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.UtilityAi.Systems;
 
+/// <summary>
+/// A system that allows the player to set Utility AI goals for NPCs.
+/// </summary>
 public abstract class SharedExecutableGoalSystem : EntitySystem
 {
     [Dependency] protected readonly IPrototypeManager Proto = default!;
@@ -87,7 +90,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         foreach (var entity in _selection.SelectedEntities(ev.User))
         {
             if (!CanControl(ev.User, entity)
-                || FindSatisfiedGoals(entity, ev.Target, prototypes) is not { } suitable)
+                || FindSatisfiedGoals(entity, ev.Target, prototypes, ExecutableGoalType.Verb) is not { } suitable)
                 continue;
 
             foreach (var task in suitable)
@@ -101,9 +104,6 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var (goal, entities) in tasks)
         {
-            if (goal.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place)
-                continue;
-
             ev.Verbs.Add(new()
             {
                 Text = Loc.GetString(Proto.Index(goal.Goal).Name),
@@ -139,13 +139,11 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var entity in entities)
         {
-            if (FindSatisfiedGoals(entity, null, allGoals) is not { } satisfied)
+            if (FindSatisfiedGoals(entity, null, allGoals, ExecutableGoalType.Place) is not { } satisfied)
                 continue;
 
-            goal = satisfied.FirstOrDefault(x => x.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place);
-
-            if (goal != null)
-                break;
+            goal = satisfied[0];
+            break;
         }
 
         if (goal == null)
@@ -220,14 +218,18 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     protected List<ExecutableGoalPrototype>? FindSatisfiedGoals(
         Entity<GoapComponent?> ent,
         EntityUid? target,
-        List<ExecutableGoalPrototype> goals)
+        List<ExecutableGoalPrototype> goals,
+        ExecutableGoalType? type = null)
     {
         List<ExecutableGoalPrototype>? zeroGoals = null;
         List<ExecutableGoalPrototype>? satisfied = null;
 
         foreach (var proto in goals)
         {
-            if (proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place)
+            if (type != null && !proto.TaskType.HasFlag(type))
+                continue;
+
+            if (proto.TaskType.HasFlag(ExecutableGoalType.Place))
             {
                 zeroGoals ??= new();
                 zeroGoals.Add(proto);
@@ -275,12 +277,11 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             || !Proto.TryIndex(protoId, out var proto))
             return false;
 
-        if (proto.TaskType != ExecutableGoalPrototype.ExecutableGoalType.Place
+        if (!proto.TaskType.HasFlag(ExecutableGoalType.Place)
             && (target == null || !CheckGoalStart(new(ent, ent.Comp1), proto, target.Value)))
             return false;
 
-        if (proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place
-            && targetCoords == null)
+        if (proto.TaskType.HasFlag(ExecutableGoalType.Place) && targetCoords == null)
             return false;
 
         SetGoal(
@@ -308,8 +309,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         if (goap.Plan != null)
             _goap.PlanShutdown(new(ent, goap), GoapPlanFinishReason.Interrupted);
 
-        DebugTools.Assert(proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place || coords == null);
-        DebugTools.Assert(proto.TaskType != ExecutableGoalPrototype.ExecutableGoalType.Place || target == null);
+        DebugTools.Assert(proto.TaskType.HasFlag(ExecutableGoalType.Place) || coords == null);
+        DebugTools.Assert(!proto.TaskType.HasFlag(ExecutableGoalType.Place) || target == null);
 
         if (target != null)
             goap.State.SetValue(proto.TargetKey, target.Value);
@@ -498,7 +499,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         if (!Resolve(user, ref user.Comp)
             || !user.Comp.Goals.Contains(protoId)
             || !Proto.Resolve(protoId, out var proto)
-            || proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place)
+            || !proto.TaskType.HasFlag(ExecutableGoalType.Passive))
             return;
 
         foreach (var uid in entities)
@@ -563,7 +564,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             if (!Proto.Resolve(goal, out var proto))
                 continue;
 
-            if (proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place
+            if (proto.TaskType.HasFlag(ExecutableGoalType.Place)
                 && goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
             {
                 coords = result;
@@ -580,6 +581,13 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         return false;
     }
 }
+
+/// <summary>
+/// Invoked when a user who can control this entity is added.
+/// </summary>
+/// <param name="User">User entity.</param>
+[PublicAPI]
+public record struct NpcControllerAdded(EntityUid User);
 
 [Serializable, NetSerializable]
 public sealed class SetGoalRequest : EntityEventArgs
