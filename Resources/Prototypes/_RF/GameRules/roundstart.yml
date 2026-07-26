@@ -16,6 +16,19 @@
     - RimFortress
   - type: NpcJobSettings
   - type: ControllableNpc
+    goals:
+    - MoveTo
+    #- Attack
+    - PickUp
+    #- TakeOwnership
+    #- Pry
+    - Construction
+    #- Deconstruct
+    #- Dig
+    #- FreeHandInteract
+    #- Heal
+    #- Chop
+    #- Cook
   - type: FogOfWarClearer
   - type: NotifyOnStateChanged
     notifications:

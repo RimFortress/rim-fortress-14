@@ -114,7 +114,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         _selection.SetSelection(
             act: args =>
             {
-                if (!ControlQuery.HasComp(_player.LocalEntity)
+                if (!ControllerQuery.HasComp(_player.LocalEntity)
                     || args.Selected.Count == 0)
                     return;
 

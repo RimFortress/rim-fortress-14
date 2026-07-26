@@ -46,7 +46,7 @@ public sealed class XUaiCommand : SystemCommand<ExecutableGoalSystem>
         EntityUid controller)
         => uids.Where(uid =>
         {
-            System.AddControl(controller, uid);
+            System.AddController(controller, uid);
             return true;
         });
 
@@ -54,7 +54,7 @@ public sealed class XUaiCommand : SystemCommand<ExecutableGoalSystem>
     public IEnumerable<EntityUid> RemoveControl(
         [PipedArgument] IEnumerable<EntityUid> uids,
         EntityUid controller)
-        => uids.Where(uid => System.RemoveControl(controller, uid));
+        => uids.Where(uid => System.RemoveController(controller, uid));
 }
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]

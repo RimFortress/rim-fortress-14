@@ -131,7 +131,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         foreach (var pop in pops)
         {
-            _executable.AddControl(player.Owner, pop);
+            _executable.AddController(player.Owner, pop);
 
             var beacon = EnsureComp<NavMapBeaconComponent>(pop);
             beacon.Color = player.Comp.FactionColor;
@@ -153,7 +153,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (!Resolve(player.Owner, ref player.Comp))
             return;
 
-        _executable.AddControl(player.Owner, pop);
+        _executable.AddController(player.Owner, pop);
 
         var beacon = EnsureComp<NavMapBeaconComponent>(pop);
         beacon.Color = player.Comp.FactionColor;
@@ -183,7 +183,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (!player.Comp.Pops.Remove(pop))
             return false;
 
-        _executable.RemoveControl(player.Owner, pop);
+        _executable.RemoveController(player.Owner, pop);
         RemComp<NavMapBeaconComponent>(pop);
 
         _faw.RemoveFogClearer(pop, player);

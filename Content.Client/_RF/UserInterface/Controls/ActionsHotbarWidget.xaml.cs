@@ -69,7 +69,7 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
         PassiveTasksButton.AddContent(_taskEraseButton);
 
-        if (!_entity.TryGetComponent(_player.LocalEntity, out NpcControlComponent? control))
+        if (!_entity.TryGetComponent(_player.LocalEntity, out NpcControllerComponent? control))
             return;
 
         foreach (var goal in control.Goals)
