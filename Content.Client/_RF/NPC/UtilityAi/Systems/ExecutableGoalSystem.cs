@@ -1,10 +1,8 @@
 using System.Linq;
 using Content.Client._RF.Selection;
-using Content.Client.ContextMenu.UI;
-using Content.Shared._RF.NPC.Components;
+using Content.Client.Verbs.UI;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
-using Content.Shared.Verbs;
 using Robust.Client.Graphics;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
@@ -35,8 +33,6 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
-        SubscribeNetworkEvent<NpcGoalsContextMenuMessage>(OnContextMenu);
         SubscribeLocalEvent<PlayerAttachedEvent>(OnPlayerAttached);
 
         _overlay.AddOverlay(new NpcControlOverlay());
@@ -48,69 +44,9 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         _overlay.RemoveOverlay<NpcControlOverlay>();
     }
 
-    private void OnGetVerbs(GetVerbsEvent<Verb> ev)
-    {
-        if (!TryComp(ev.User, out NpcControlComponent? control))
-            return;
-
-        var tasks = new Dictionary<ExecutableGoalPrototype, List<EntityUid>>();
-        var prototypes = control.Goals.Select(Proto.Index).ToList();
-
-        foreach (var entity in _selection.SelectedEntities(ev.User))
-        {
-            if (FindSatisfiedGoals(entity, ev.Target, prototypes) is not { } suitable)
-                continue;
-
-            foreach (var task in suitable)
-            {
-                if (!tasks.TryAdd(task, new()))
-                    tasks[task].Add(entity);
-            }
-        }
-
-        foreach (var goal in control.Goals)
-        {
-            if (!Proto.Resolve(goal, out var proto)
-                || proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place)
-                continue;
-
-            if (!Whitelist.IsWhitelistPassOrNull(proto.TargetWhitelist, ev.Target))
-                continue;
-
-            ev.Verbs.Add(new()
-            {
-                Text = Loc.GetString(Proto.Index(proto.Goal).Name),
-                Icon = proto.VerbIcon != null ? new SpriteSpecifier.Texture(proto.VerbIcon.Value) : null,
-                Category = VerbCategory.NpcTask,
-                Act = () =>
-                {
-                    if (!Timing.IsFirstTimePredicted)
-                        return;
-
-                    RaisePredictiveEvent(new SetGoalRequest
-                    {
-                        Goal = goal,
-                        Entities = GetNetEntityList(_selection.SelectedEntities(ev.User).ToList()),
-                        Target = GetNetEntity(ev.Target),
-                    });
-                },
-            });
-        }
-    }
-
-    private void OnContextMenu(NpcGoalsContextMenuMessage ev, EntitySessionEventArgs args)
-    {
-        OpenContextMenu(args.SenderSession, GetEntity(ev.Target));
-    }
-
     private void OnPlayerAttached(PlayerAttachedEvent args)
     {
         DefaultSelection();
-    }
-
-    protected override void OpenContextMenu(ICommonSession player, EntityUid uid)
-    {
-        _ui.GetUIController<EntityMenuUIController>().OpenRootMenu(new() { uid });
     }
 
     #region Selection
@@ -182,10 +118,15 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                     || args.Selected.Count == 0)
                     return;
 
+                if (args.ActUid is { } uid)
+                {
+                    _ui.GetUIController<VerbMenuUIController>().OpenVerbMenu(uid);
+                    return;
+                }
+
                 RaiseNetworkEvent(new SetGoalRequest
                 {
                     Entities = args.Selected.Select(x => GetNetEntity(x)).ToList(),
-                    Target = GetNetEntity(args.ActUid),
                     TargetCoordinates = GetNetCoordinates(args.ActCoords),
                 });
             },

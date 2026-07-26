@@ -6,9 +6,11 @@ using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
+using Content.Shared._RF.Selection.Systems;
 using Content.Shared.Maps;
 using Content.Shared.NPC;
 using Content.Shared.Physics;
+using Content.Shared.Verbs;
 using Content.Shared.Whitelist;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
@@ -31,6 +33,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
+    [Dependency] private readonly SharedSelectionSystem _selection = default!;
     [Dependency] private readonly SharedGoapSystem _goap = default!;
 
     [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
@@ -45,6 +48,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     {
         base.Initialize();
 
+        SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeNetworkEvent<SetGoalRequest>(OnGoalRequest);
         SubscribeNetworkEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
         SubscribeNetworkEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
@@ -72,6 +76,51 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    private void OnGetVerbs(GetVerbsEvent<Verb> ev)
+    {
+        if (!TryComp(ev.User, out NpcControlComponent? control))
+            return;
+
+        var tasks = new Dictionary<ExecutableGoalPrototype, List<EntityUid>>();
+        var prototypes = control.Goals.Select(Proto.Index).ToList();
+
+        foreach (var entity in _selection.SelectedEntities(ev.User))
+        {
+            if (!CanControl(ev.User, entity)
+                || FindSatisfiedGoals(entity, ev.Target, prototypes) is not { } suitable)
+                continue;
+
+            foreach (var task in suitable)
+            {
+                if (!tasks.TryAdd(task, new()))
+                    tasks[task].Add(entity);
+                else
+                    tasks[task] = new() { entity };
+            }
+        }
+
+        foreach (var (goal, entities) in tasks)
+        {
+            if (goal.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place)
+                continue;
+
+            ev.Verbs.Add(new()
+            {
+                Text = Loc.GetString(Proto.Index(goal.Goal).Name),
+                Icon = goal.VerbIcon is { } icon ? new SpriteSpecifier.Texture(icon) : null,
+                Category = VerbCategory.NpcTask,
+                CloseMenu = true,
+                Act = () =>
+                {
+                    foreach (var uid in entities)
+                    {
+                        TrySetGoal(uid, goal, target: ev.Target);
+                    }
+                },
+            });
+        }
+    }
+
     private void OnGoalRequest(SetGoalRequest request, EntitySessionEventArgs args)
     {
         if (!Timing.IsFirstTimePredicted
@@ -83,40 +132,20 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             .Select(GetEntity)
             .Where(x => CanControl(requester, x))
             .ToList();
-        var target = GetEntity(request.Target);
         var targetCoords = GetCoordinates(request.TargetCoordinates);
         var allGoals = control.Goals.Select(t => Proto.Index(t)).ToList();
         var previousTargets = new List<TileRef>();
+        ExecutableGoalPrototype? goal = null;
 
-        Proto.TryIndex(request.Goal, out var goal);
-
-        if (goal == null || !control.Goals.Contains(goal))
+        foreach (var entity in entities)
         {
-            foreach (var entity in entities)
-            {
-                if (FindSatisfiedGoals(entity, target, allGoals) is not { } satisfied)
-                    continue;
+            if (FindSatisfiedGoals(entity, null, allGoals) is not { } satisfied)
+                continue;
 
-                // If there is more than one suitable goal call the context menu
-                if (target != null
-                    && (satisfied.Count > 1
-                    || satisfied.Any(x => x.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Verb)))
-                {
-                    OpenContextMenu(args.SenderSession, target.Value);
-                    return;
-                }
+            goal = satisfied.FirstOrDefault(x => x.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place);
 
-                if (target != null
-                    && goal != null
-                    && goal.TaskType != ExecutableGoalPrototype.ExecutableGoalType.Place
-                    && goal != satisfied[0])
-                {
-                    OpenContextMenu(args.SenderSession, target.Value);
-                    return;
-                }
-
-                goal = satisfied[0];
-            }
+            if (goal != null)
+                break;
         }
 
         if (goal == null)
@@ -124,12 +153,6 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var uid in entities)
         {
-            if (goal.TaskType != ExecutableGoalPrototype.ExecutableGoalType.Place && target != null)
-            {
-                TrySetGoal(uid, goal, target: target);
-                continue;
-            }
-
             if (previousTargets.Count == 0)
             {
                 if (!TryComp(targetCoords.EntityId, out MapGridComponent? grid)
@@ -191,12 +214,13 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
     #endregion
 
-    protected abstract void OpenContextMenu(ICommonSession player, EntityUid uid);
-
     /// <summary>
     /// Finds the suitable goals for the target from the goals list.
     /// </summary>
-    protected List<ExecutableGoalPrototype>? FindSatisfiedGoals(Entity<GoapComponent?> ent, EntityUid? target, List<ExecutableGoalPrototype> goals)
+    protected List<ExecutableGoalPrototype>? FindSatisfiedGoals(
+        Entity<GoapComponent?> ent,
+        EntityUid? target,
+        List<ExecutableGoalPrototype> goals)
     {
         List<ExecutableGoalPrototype>? zeroGoals = null;
         List<ExecutableGoalPrototype>? satisfied = null;
@@ -539,7 +563,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             if (!Proto.Resolve(goal, out var proto))
                 continue;
 
-            if (goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
+            if (proto.TaskType == ExecutableGoalPrototype.ExecutableGoalType.Place
+                && goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
             {
                 coords = result;
                 return true;
@@ -559,9 +584,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 [Serializable, NetSerializable]
 public sealed class SetGoalRequest : EntityEventArgs
 {
-    public ProtoId<ExecutableGoalPrototype>? Goal;
     public List<NetEntity> Entities { get; set; } = new();
-    public NetEntity? Target;
     public NetCoordinates TargetCoordinates;
 }
 
@@ -572,12 +595,6 @@ public sealed class SetGoalMessage : EntityEventArgs
     public ProtoId<ExecutableGoalPrototype>? Goal;
     public NetEntity? Target;
     public NetCoordinates? TargetCoordinates;
-}
-
-[Serializable, NetSerializable]
-public sealed class NpcGoalsContextMenuMessage(NetEntity target) : EntityEventArgs
-{
-    public NetEntity Target { get; set; } = target;
 }
 
 [Serializable, NetSerializable]

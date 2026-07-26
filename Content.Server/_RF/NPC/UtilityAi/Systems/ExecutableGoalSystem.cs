@@ -4,7 +4,6 @@ using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
-using Robust.Shared.Player;
 
 namespace Content.Server._RF.NPC.UtilityAi.Systems;
 
@@ -17,11 +16,6 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
         SubscribeLocalEvent<ConstructionComponent, ConstructionChangeEntityEvent>(OnEntityChange);
         SubscribeLocalEvent<CommonConstructionGhostComponent, ConstructionChangeEntityEvent>(OnEntityChange);
-    }
-
-    protected override void OpenContextMenu(ICommonSession player, EntityUid uid)
-    {
-        RaiseNetworkEvent(new NpcGoalsContextMenuMessage(GetNetEntity(uid)), player);
     }
 
     // Help construction NPCs keep up-to-date information on the entity to be built
