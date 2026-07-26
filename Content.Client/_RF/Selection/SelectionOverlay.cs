@@ -1,9 +1,11 @@
 using System.Numerics;
 using Content.Client.Stylesheets;
+using Content.Shared._RF.Selection.Components;
 using Content.Shared.Maps;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
+using Robust.Client.Player;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -15,13 +17,13 @@ public sealed class SelectionOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
 
     private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
     private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";
 
-    private readonly SelectionSystem _selection;
     private readonly TurfSystem _turf;
     private readonly TransformSystem _transform;
     private readonly SpriteSystem _sprite;
@@ -36,7 +38,6 @@ public sealed class SelectionOverlay : Overlay
     {
         IoCManager.InjectDependencies(this);
 
-        _selection = _entityManager.System<SelectionSystem>();
         _turf = _entityManager.System<TurfSystem>();
         _transform = _entityManager.System<TransformSystem>();
         _sprite = _entityManager.System<SpriteSystem>();
@@ -52,25 +53,28 @@ public sealed class SelectionOverlay : Overlay
 
         _highlightedSprites.Clear();
 
-        foreach (var entity in _selection.Selected)
+        if (!_entityManager.TryGetComponent(_player.LocalEntity, out SelectionComponent? selection))
+            return;
+
+        foreach (var entity in selection.Selected)
         {
-            SetShader(entity, _selection.SelectionColor);
+            SetShader(entity, selection.SelectionColor);
         }
 
-        foreach (var tileRef in _selection.SelectedTiles)
+        foreach (var tileRef in selection.SelectedTiles)
         {
             var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
             var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
             var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
 
-            DrawSelectArea(args, start, end);
+            DrawSelectArea(args, start, end, selection.SelectionColor);
         }
 
-        if (_selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
-            DrawSelectArea(args, startPoint, endPoint);
+        if (selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
+            DrawSelectArea(args, startPoint, endPoint, selection.SelectionColor);
 
-        if (_selection.Icon != null)
-            DrawMouseIcon(args, _selection.Icon, _selection.IconColor);
+        if (selection.Icon != null)
+            DrawMouseIcon(args, selection.Icon, selection.IconColor);
     }
 
     private void SetShader(EntityUid entity, Color color)
@@ -88,7 +92,7 @@ public sealed class SelectionOverlay : Overlay
         sprite.RenderOrder = _entityManager.CurrentTick.Value;
     }
 
-    private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
+    private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end, Color color)
     {
         var shader = _prototype.Index(SelectAreaShader).InstanceUnique();
         var area = new Box2(start.Position, end.Position);
@@ -104,7 +108,7 @@ public sealed class SelectionOverlay : Overlay
         var topRight = args.Viewport.WorldToLocal(area.TopRight);
         topRight.Y = args.Viewport.Size.Y - topRight.Y;
 
-        shader.SetParameter("color", _selection.SelectionColor);
+        shader.SetParameter("color", color);
         shader.SetParameter("point1", bottomLeft);
         shader.SetParameter("point2", bottomRight);
         shader.SetParameter("point3", topLeft);

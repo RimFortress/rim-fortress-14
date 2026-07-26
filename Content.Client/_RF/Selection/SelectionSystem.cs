@@ -1,98 +1,32 @@
-using Robust.Client.GameObjects;
+using Content.Shared._RF.Selection.Components;
+using Content.Shared._RF.Selection.Systems;
+using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
+using Robust.Client.Player;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
-using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Selection;
 
-public sealed class SelectionSystem : EntitySystem
+public sealed class SelectionSystem : SharedSelectionSystem
 {
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly IOverlayManager _overlay = default!;
+    [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
-    [Dependency] private readonly IOverlayManager _overlay = default!;
-    [Dependency] private readonly MapSystem _map = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     /// <summary>
-    /// Selection frame start point
-    /// </summary>
-    public MapCoordinates? StartPoint { get; private set; }
-
-    /// <summary>
-    /// Selection frame endpoint
-    /// </summary>
-    public MapCoordinates? EndPoint { get; private set; }
-
-    /// <summary>
-    /// Entities within the boundaries of the selection frame
-    /// </summary>
-    public HashSet<EntityUid> Selected { get; private set; } = new();
-
-    public HashSet<TileRef> SelectedTiles { get; private set; } = new();
-
-    /// <summary>
-    /// Selection drawing color
-    /// </summary>
-    public Color SelectionColor { get; private set; } = Color.White;
-
-    /// <summary>
-    /// A function that filters entities for selection
-    /// </summary>
-    private Func<EntityUid, bool>? _selectionFilter;
-
-    /// <summary>
-    /// A function that filters tiles for selection
-    /// </summary>
-    private Func<TileRef, bool>? _tileSelectionFilter;
-
-    /// <summary>
-    /// Action taken when the selection is completed, if selection mode in Entity
-    /// </summary>
-    private Action<HashSet<EntityUid>>? _onSelected;
-
-    /// <summary>
-    /// Action taken when the selection is completed, if selection mode in Tile
-    /// </summary>
-    private Action<HashSet<TileRef>>? _onTileSelected;
-
-    /// <summary>
-    /// The action performed on selected entities when the right mouse button is pressed
-    /// </summary>
-    private Action<(HashSet<EntityUid> Selected, EntityUid? ActUid, EntityCoordinates ActCoords)>? _act;
-
-    /// <summary>
-    /// The action performed on selected tiles when the right mouse button is pressed
-    /// </summary>
-    private Action<(HashSet<TileRef> Selected, EntityCoordinates ActCoords)>? _tileAct;
-
-    /// <summary>
-    /// An icon that will be drawn next to the mouse cursor
-    /// </summary>
-    public SpriteSpecifier? Icon { get; private set; }
-
-    /// <summary>
-    /// Color of the icon that will be drawn next to the mouse cursor
-    /// </summary>
-    public Color IconColor { get; private set; } = Color.White;
-
-    /// <summary>
-    /// Current selection mode
-    /// </summary>
-    public SelectionMode Mode { get; private set; } = SelectionMode.Entity;
-
-    /// <summary>
-    /// Invoked each time the selection mode settings are changed
+    /// Invoked each time the selection mode settings are changed.
     /// </summary>
     public event Action? OnUpdateSelection;
 
     /// <summary>
-    /// Called every time entities/tiles in the selection are changed
+    /// Called every time entities/tiles in the selection are changed.
     /// </summary>
     public event Action? OnSelectedChanged;
 
@@ -119,102 +53,90 @@ public sealed class SelectionSystem : EntitySystem
 
     private bool OnSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        Selected.Clear();
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+            return false;
 
-        StartPoint = _transform.ToMapCoordinates(coords);
-        EndPoint = StartPoint;
+        ClearSelection(new(_player.LocalEntity.Value, comp));
+
+        comp.StartPoint = _transform.ToMapCoordinates(coords);
+        comp.EndPoint = comp.StartPoint;
         return false;
     }
 
     private bool OnSelectDisabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (Selected.Count > 0)
-            _onSelected?.Invoke(Selected);
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+            return false;
 
-        if (SelectedTiles.Count > 0)
-            _onTileSelected?.Invoke(SelectedTiles);
+        if (comp.Selected.Count > 0)
+            comp.OnSelected?.Invoke(comp.Selected);
 
-        StartPoint = null;
-        EndPoint = null;
+        if (comp.SelectedTiles.Count > 0)
+            comp.OnTileSelected?.Invoke(comp.SelectedTiles);
+
+        comp.StartPoint = null;
+        comp.EndPoint = null;
         return false;
     }
 
     private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        _act?.Invoke((Selected, uid.IsValid() ? uid : null, coords));
-        _tileAct?.Invoke((SelectedTiles, coords));
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+            return false;
 
-        return Selected.Count > 0 || SelectedTiles.Count > 0;
+        comp.Act?.Invoke((comp.Selected, uid.IsValid() ? uid : null, coords));
+        comp.TileAct?.Invoke((comp.SelectedTiles, coords));
+
+        return comp.Selected.Count > 0 || comp.SelectedTiles.Count > 0;
     }
 
     /// <summary>
-    /// Gets the list of entities in the selection area
+    /// Sets the settings for player entity selection.
     /// </summary>
-    private HashSet<EntityUid> EntitiesInSelect()
-    {
-        if (StartPoint is not { } start
-            || EndPoint is not { } end
-            || start.MapId != end.MapId)
-            return new();
-
-        var area = new Box2(start.Position, end.Position);
-        var entities = _lookup.GetEntitiesIntersecting(start.MapId, area);
-
-        if (_selectionFilter == null)
-            return entities;
-
-        foreach (var entity in entities)
-        {
-            if (!_selectionFilter(entity))
-                entities.Remove(entity);
-        }
-
-        return entities;
-    }
-
-    private HashSet<TileRef> TilesInSelect()
-    {
-        if (StartPoint is not { } start
-            || EndPoint is not { } end
-            || start.MapId != end.MapId)
-            return new();
-
-        var tiles = new HashSet<TileRef>();
-        var map = _map.GetMap(start.MapId);
-        var area = new Box2(start.Position, end.Position);
-        var enumerator = _map.GetTilesEnumerator(map, Comp<MapGridComponent>(map), area);
-
-        while (enumerator.MoveNext(out var tile))
-        {
-            if (_tileSelectionFilter != null && !_tileSelectionFilter(tile))
-                continue;
-
-            tiles.Add(tile);
-        }
-
-        return tiles;
-    }
-
+    /// <param name="act"><see cref="SelectionComponent.Act"/></param>
+    /// <param name="color"><see cref="SelectionComponent.SelectionColor"/></param>
+    /// <param name="filter"><see cref="SelectionComponent.SelectionFilter"/></param>
+    /// <param name="onSelected"><see cref="SelectionComponent.OnSelected"/></param>
+    /// <param name="icon"><see cref="SelectionComponent.Icon"/></param>
+    /// <param name="iconColor"><see cref="SelectionComponent.IconColor"/></param>
+    /// <param name="netSync"><see cref="SelectionComponent.NetSync"/></param>
+    [PublicAPI]
     public void SetSelection(
         Action<(HashSet<EntityUid> Selected, EntityUid? ActUid, EntityCoordinates ActCoords)>? act = null,
         Color? color = null,
         Func<EntityUid, bool>? filter = null,
         Action<HashSet<EntityUid>>? onSelected = null,
         SpriteSpecifier? icon = null,
-        Color? iconColor = null)
+        Color? iconColor = null,
+        bool netSync = false)
     {
-        SetDefault();
+        if (_player.LocalEntity is not { } uid)
+            return;
 
-        SelectionColor = color ?? Color.LightGray;
-        _selectionFilter = filter;
-        _onSelected = onSelected;
-        Icon = icon;
-        IconColor = iconColor ?? Color.LightGray;
-        _act = act;
+        var comp = EnsureComp<SelectionComponent>(uid);
+        SetDefault(uid);
+
+        comp.SelectionColor = color ?? Color.LightGray;
+        comp.SelectionFilter = filter;
+        comp.OnSelected = onSelected;
+        comp.Icon = icon;
+        comp.IconColor = iconColor ?? Color.LightGray;
+        comp.Act = act;
+        comp.NetSync = netSync;
 
         OnUpdateSelection?.Invoke();
     }
 
+    /// <summary>
+    /// Sets the settings for player tile selection.
+    /// </summary>
+    /// <param name="act"><see cref="SelectionComponent.TileAct"/></param>
+    /// <param name="color"><see cref="SelectionComponent.SelectionColor"/></param>
+    /// <param name="filter"><see cref="SelectionComponent.TileSelectionFilter"/></param>
+    /// <param name="onSelected"><see cref="SelectionComponent.OnTileSelected"/></param>
+    /// <param name="icon"><see cref="SelectionComponent.Icon"/></param>
+    /// <param name="iconColor"><see cref="SelectionComponent.IconColor"/></param>
+    [PublicAPI]
     public void SetTileSelection(
         Action<(HashSet<TileRef> Selected, EntityCoordinates ActCoords)>? act = null,
         Color? color = null,
@@ -223,94 +145,133 @@ public sealed class SelectionSystem : EntitySystem
         SpriteSpecifier? icon = null,
         Color? iconColor = null)
     {
-        SetDefault();
+        if (_player.LocalEntity is not { } uid)
+            return;
 
-        SelectionColor = color ?? Color.LightGray;
-        _tileSelectionFilter = filter;
-        _onTileSelected = onSelected;
-        Icon = icon;
-        IconColor = iconColor ?? Color.LightGray;
-        _tileAct = act;
+        var comp = EnsureComp<SelectionComponent>(uid);
+        SetDefault(uid);
 
-        Mode = SelectionMode.Tile;
+        comp.SelectionColor = color ?? Color.LightGray;
+        comp.TileSelectionFilter = filter;
+        comp.OnTileSelected = onSelected;
+        comp.Icon = icon;
+        comp.IconColor = iconColor ?? Color.LightGray;
+        comp.TileAct = act;
+        comp.NetSync = false; // TODO: tiles NetSync
+
+        comp.Mode = SelectionMode.Tile;
 
         OnUpdateSelection?.Invoke();
     }
 
-    private void SetDefault()
+    /// <summary>
+    /// Adds an entity to the player's current selection.
+    /// </summary>
+    [PublicAPI]
+    public bool Select(EntityUid uid)
     {
-        _selectionFilter = null;
-        _onSelected = null;
-        _onTileSelected = null;
-        Icon = null;
-        IconColor = Color.LightGray;
-        _act = null;
-        _tileAct = null;
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
+            || !Select(new(_player.LocalEntity.Value, comp), uid))
+            return false;
 
-        Mode = SelectionMode.Entity;
-
-        Selected.Clear();
-        SelectedTiles.Clear();
-    }
-
-    public void Select(EntityUid uid)
-    {
-        Selected.Add(uid);
         OnSelectedChanged?.Invoke();
+        return true;
     }
 
-    public void DeSelect(EntityUid uid)
+    /// <summary>
+    /// Removes the entity from the player's current selection.
+    /// </summary>
+    [PublicAPI]
+    public bool DeSelect(EntityUid uid)
     {
-        Selected.Remove(uid);
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
+            || !DeSelect(new(_player.LocalEntity.Value, comp), uid))
+            return false;
+
         OnSelectedChanged?.Invoke();
+        return true;
     }
+
+    /// <summary>
+    /// Returns a list of entities in the player's selection.
+    /// </summary>
+    [PublicAPI]
+    public IReadOnlySet<EntityUid> SelectedEntities()
+        => _player.LocalEntity is { } uid ? SelectedEntities(uid) : new HashSet<EntityUid>();
 
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
 
-        if (!_input.IsKeyDown(Keyboard.Key.MouseLeft) || StartPoint == null)
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+            return;
+
+        if (!_input.IsKeyDown(Keyboard.Key.MouseLeft) || comp.StartPoint == null)
         {
-            if (Selected.Count > 0)
-                _onSelected?.Invoke(Selected);
+            if (comp.Selected.Count > 0)
+                comp.OnSelected?.Invoke(comp.Selected);
 
-            if (SelectedTiles.Count > 0)
-                _onTileSelected?.Invoke(SelectedTiles);
+            if (comp.SelectedTiles.Count > 0)
+                comp.OnTileSelected?.Invoke(comp.SelectedTiles);
 
-            StartPoint = null;
-            EndPoint = null;
+            comp.StartPoint = null;
+            comp.EndPoint = null;
             return;
         }
 
         if (_input.MouseScreenPosition is { IsValid: true } mousePos)
-            EndPoint = _eye.PixelToMap(mousePos);
+            comp.EndPoint = _eye.PixelToMap(mousePos);
 
-        switch (Mode)
+        switch (comp.Mode)
         {
             case SelectionMode.Entity:
-                var selected = EntitiesInSelect();
+                var selected = EntitiesInSelect(_player.LocalEntity.Value);
 
-                if (selected == Selected)
+                if (comp.Selected.Count == 0 && selected.Count == 0)
                     break;
 
-                Selected = selected;
+                var added = new HashSet<EntityUid>();
+                var removed = new HashSet<EntityUid>();
+
+                foreach (var uid in selected)
+                {
+                    if (!comp.Selected.Contains(uid))
+                        added.Add(uid);
+                }
+
+                foreach (var uid in comp.Selected)
+                {
+                    if (!selected.Contains(uid))
+                        removed.Add(uid);
+                }
+
+                if (added.Count == 0 && removed.Count == 0)
+                    break;
+
+                comp.Selected = selected;
                 OnSelectedChanged?.Invoke();
+
+                if (comp.NetSync)
+                {
+                    if (selected.Count > 0)
+                    {
+                        RaiseNetworkEvent(new SelectionEntityDeltaMessage(
+                            added.Count > 0 ? GetNetEntitySet(added) : null,
+                            removed.Count > 0 ? GetNetEntitySet(removed) : null));
+                    }
+                    else
+                        RaiseNetworkEvent(new SelectionClearedMessage());
+                }
                 break;
             case SelectionMode.Tile:
-                var tiles = TilesInSelect();
+                var tiles = TilesInSelect(_player.LocalEntity.Value);
 
-                if (tiles == SelectedTiles)
+                if (tiles == comp.SelectedTiles)
                     break;
 
-                SelectedTiles = tiles;
+                comp.SelectedTiles = tiles;
                 OnSelectedChanged?.Invoke();
                 break;
         }
     }
-}
-
-public enum SelectionMode : byte
-{
-    Entity = 0,
-    Tile = 1,
 }

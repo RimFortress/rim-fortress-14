@@ -59,9 +59,11 @@ public sealed partial class PopList : UIWidget
 
     private void UpdateSelection()
     {
+        var selected = _selection.SelectedEntities();
+
         foreach (var (uid, icon) in _icons)
         {
-            icon.Pressed = _selection.Selected.Contains(uid);
+            icon.Pressed = selected.Contains(uid);
         }
     }
 

@@ -37,9 +37,9 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeNetworkEvent<NpcGoalsContextMenuMessage>(OnContextMenu);
+        SubscribeLocalEvent<PlayerAttachedEvent>(OnPlayerAttached);
 
         _overlay.AddOverlay(new NpcControlOverlay());
-        DefaultSelection();
     }
 
     public override void Shutdown()
@@ -56,7 +56,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         var tasks = new Dictionary<ExecutableGoalPrototype, List<EntityUid>>();
         var prototypes = control.Goals.Select(Proto.Index).ToList();
 
-        foreach (var entity in _selection.Selected)
+        foreach (var entity in _selection.SelectedEntities(ev.User))
         {
             if (FindSatisfiedGoals(entity, ev.Target, prototypes) is not { } suitable)
                 continue;
@@ -90,7 +90,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                     RaisePredictiveEvent(new SetGoalRequest
                     {
                         Goal = goal,
-                        Entities = GetNetEntityList(_selection.Selected),
+                        Entities = GetNetEntityList(_selection.SelectedEntities(ev.User).ToList()),
                         Target = GetNetEntity(ev.Target),
                     });
                 },
@@ -101,6 +101,11 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     private void OnContextMenu(NpcGoalsContextMenuMessage ev, EntitySessionEventArgs args)
     {
         OpenContextMenu(args.SenderSession, GetEntity(ev.Target));
+    }
+
+    private void OnPlayerAttached(PlayerAttachedEvent args)
+    {
+        DefaultSelection();
     }
 
     protected override void OpenContextMenu(ICommonSession player, EntityUid uid)
@@ -131,7 +136,8 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                 filter: NpcTaskFilter,
                 color: goal.Color,
                 icon: proto.VerbIcon != null ? new SpriteSpecifier.Texture(proto.VerbIcon.Value) : null,
-                iconColor: goal.Color);
+                iconColor: goal.Color,
+                netSync: true);
         }
         else
             DefaultSelection();
@@ -155,7 +161,8 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                 onSelected: entities
                     => RaisePredictiveEvent(new PassiveGoalRemoveRequest(
                         entities.Select(x => GetNetEntity(x)).ToList())),
-                icon: EraseIcon);
+                icon: EraseIcon,
+                netSync: true);
         }
         else
             DefaultSelection();
@@ -182,7 +189,8 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                     TargetCoordinates = GetNetCoordinates(args.ActCoords),
                 });
             },
-            filter: NpcFilter);
+            filter: NpcFilter,
+            netSync: true);
     }
 
     #endregion

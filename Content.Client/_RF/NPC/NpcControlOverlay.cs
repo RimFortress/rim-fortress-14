@@ -62,7 +62,7 @@ public sealed class NpcControlOverlay : Overlay
 
         DrawPassiveGoals(args);
 
-        foreach (var entity in _selection.Selected)
+        foreach (var entity in _selection.SelectedEntities())
         {
             if (!_controllableQuery.HasComp(entity)
                 || !_transformQuery.TryComp(entity, out var entityForm)
