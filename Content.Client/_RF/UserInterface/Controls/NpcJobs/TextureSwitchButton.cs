@@ -3,7 +3,6 @@ using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
-using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Input;
 
 namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
@@ -59,7 +58,6 @@ public sealed class TextureSwitchButton : TextureButton
 
     public TextureSwitchButton()
     {
-        RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);
     }
 

@@ -161,5 +161,5 @@ public sealed partial class Quadratic : MathCurve
 public sealed partial class Normalize : MathCurve
 {
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => 1 - 1 / value;
+        => value != 0 ? 1 - 1 / value : 0;
 }

@@ -8,28 +8,7 @@
       targetKey: PickupTarget
     - !type:MoveTo
       rangeKey: InteractRange
-    effects:
-      NearPickupTarget: true
-
-  - preconditions:
-    - !type:CanInsert
-    action: !type:Storage
-      # Reduce the cost of the action so that the planner prioritizes storing the item in the inventory
-      costMultiplier: 0.5
-    effects:
-      ActiveHandFree: true
-
-  - action: !type:Drop
-    effects:
-      ActiveHandFree: true
-
-  - preconditions:
-    - ActiveHandFree == true
-    - NearPickupTarget == true
-    actions:
     - !type:Pickup
-      targetKey: PickupTarget
-    - !type:MarkOwner
       targetKey: PickupTarget
     effects:
       TargetPickedUp: true

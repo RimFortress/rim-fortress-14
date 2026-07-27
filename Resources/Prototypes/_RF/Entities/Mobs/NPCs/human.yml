@@ -23,28 +23,29 @@
   parent: MobHuman
   save: false
   components:
-    - type: RandomHumanoidAppearance
-      randomizeName: false
-    - type: RandomMetadata
-      nameSegments:
-        - NamesFirst
-        - NamesLast
-    - type: Loadout
-      prototypes:
-        - SafariRaid1Gear
-        - SafariRaid2Gear
-        - SafariRaid3Gear
-        - SafariRaid4Gear
-        - RandomVisualRaid1Gear
-        - RandomVisualRaid2Gear
-        - RandomVisualRaid3Gear
-        - RandomVisualRaid4Gear
-    - type: InputMover
-    - type: MobMover
-    - type: HTN
-      rootTask:
-        task: IdleCompound
-    - type: NpcFactionMember
-      factions:
-        - Raiders
-    - type: ControllableNpc
+  - type: RandomHumanoidAppearance
+    randomizeName: false
+  - type: RandomMetadata
+    nameSegments:
+    - NamesFirst
+    - NamesLast
+  - type: Loadout
+    prototypes:
+    - SafariRaid1Gear
+    - SafariRaid2Gear
+    - SafariRaid3Gear
+    - SafariRaid4Gear
+    - RandomVisualRaid1Gear
+    - RandomVisualRaid2Gear
+    - RandomVisualRaid3Gear
+    - RandomVisualRaid4Gear
+  - type: InputMover
+  - type: MobMover
+  - type: HTN
+    rootTask:
+      task: IdleCompound
+  - type: NpcFactionMember
+    factions:
+    - Raiders
+  - type: ControllableNpc
+    goals: [] # TODO

@@ -20,7 +20,7 @@ public sealed class SelfAttackEntityEffectSystem : EntityEffectSystem<HandsCompo
     protected override void Effect(Entity<HandsComponent> entity, ref EntityEffectEvent<SelfAttack> args)
     {
         if (_hands.TryGetActiveItem(entity.AsNullable(), out var weapon)
-            && TryComp(entity, out MeleeWeaponComponent? melee))
+            && TryComp(weapon, out MeleeWeaponComponent? melee))
             _melee.AttemptLightAttack(entity, weapon.Value, melee, entity);
         else if (TryComp(entity, out melee))
             _melee.AttemptLightAttack(entity, entity, melee, entity);

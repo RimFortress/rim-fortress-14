@@ -22,15 +22,27 @@
       FoodOpened: false
 
   - preconditions:
+    - InContainer == false
     - FoodFound == true
-    - TargetPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: PickupTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: PickupTarget
+    effects:
+      FoodPickedUp: true
+
+  - preconditions:
+    - FoodPickedUp == true
     action: !type:InteractWith
       targetKey: PickupTarget
     effects:
       FoodOpened: true
 
   - preconditions:
-    - TargetPickedUp == true
+    - FoodPickedUp == true
     - FoodOpened == true
     action: !type:InteractWith
       targetKey: PickupTarget

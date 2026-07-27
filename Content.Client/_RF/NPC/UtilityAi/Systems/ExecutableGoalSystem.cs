@@ -54,7 +54,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     public void SetSelectedTask(ProtoId<ExecutableGoalPrototype>? taskId)
     {
         if (taskId == SelectedTask
-            || !ControllableQuery.HasComp(_player.LocalEntity))
+            || !ControllerQuery.HasComp(_player.LocalEntity))
             return;
 
         SelectedTask = taskId;
@@ -65,10 +65,15 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         {
             _selection.SetSelection(
                 act: _ => SetSelectedTask(null),
-                onSelected: entities
-                    => RaisePredictiveEvent(new PassiveGoalRequest(
-                        proto,
-                        entities.Select(x => GetNetEntity(x)).ToList())),
+                onSelected: entities =>
+                {
+                    if (Timing.IsFirstTimePredicted)
+                    {
+                        RaisePredictiveEvent(new PassiveGoalRequest(
+                            proto,
+                            entities.Select(x => GetNetEntity(x)).ToList()));
+                    }
+                },
                 filter: NpcTaskFilter,
                 color: goal.Color,
                 icon: proto.VerbIcon != null ? new SpriteSpecifier.Texture(proto.VerbIcon.Value) : null,
@@ -94,9 +99,14 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         {
             _selection.SetSelection(
                 act: _ => SetEraser(false),
-                onSelected: entities
-                    => RaisePredictiveEvent(new PassiveGoalRemoveRequest(
-                        entities.Select(x => GetNetEntity(x)).ToList())),
+                onSelected: entities =>
+                {
+                    if (Timing.IsFirstTimePredicted)
+                    {
+                        RaisePredictiveEvent(new PassiveGoalRemoveRequest(
+                            entities.Select(x => GetNetEntity(x)).ToList()));
+                    }
+                },
                 icon: EraseIcon,
                 netSync: true);
         }
@@ -105,7 +115,8 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     }
 
     private bool NpcTaskFilter(EntityUid uid) =>
-        Proto.TryIndex(SelectedTask, out var proto) && Whitelist.IsWhitelistPassOrNull(proto.TargetWhitelist, uid);
+        Proto.TryIndex(SelectedTask, out var proto)
+        && Whitelist.IsWhitelistPassOrNull(proto.TargetWhitelist, uid);
 
     private bool NpcFilter(EntityUid uid) => GoapQuery.HasComp(uid);
 

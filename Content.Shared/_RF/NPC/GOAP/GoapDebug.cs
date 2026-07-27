@@ -42,6 +42,7 @@ public readonly record struct GoapStateDebugDump(
 /// <param name="PreconditionsMet">Were preconditions satisfied?</param>
 /// <param name="InPlan">Is this node included in the final plan?</param>
 /// <param name="HelpGoal">Whether the node's effects help with fully or partially achieving the goal.</param>
+/// <param name="IndexInPlan">Node index in the plan.</param>
 /// <param name="SkipReason">Reason why node was skipped (if not added).</param>
 [Serializable, NetSerializable]
 public readonly record struct GoapNodeDebugEntry(
@@ -54,6 +55,7 @@ public readonly record struct GoapNodeDebugEntry(
     bool PreconditionsMet,
     bool InPlan,
     bool HelpGoal,
+    int? IndexInPlan,
     string? SkipReason);
 
 [Serializable, NetSerializable]

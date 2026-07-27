@@ -1,0 +1,36 @@
+using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Systems;
+using Content.Shared.Inventory;
+using Robust.Server.Containers;
+
+namespace Content.Server._RF.NPC.Search.Filters;
+
+/// <summary>
+/// Filters entities in inventory of another entity.
+/// </summary>
+public sealed partial class InInventory : BaseSearchFilter<InInventory>
+{
+    /// <summary>
+    /// Should the owner's inventory be excluded from the check?
+    /// </summary>
+    [DataField]
+    public bool ExcludeSelf = true;
+}
+
+public sealed class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
+{
+    [Dependency] private readonly ContainerSystem _container = default!;
+    [Dependency] private readonly InventorySystem _inventory = default!;
+
+    protected override bool Filter(GoapState state, EntityUid target, InInventory filter)
+    {
+        if (!_container.TryGetContainingContainer(target, out var container))
+            return false;
+
+        if (filter.ExcludeSelf && container.Owner == state.GetValue(GoapState.Owner))
+            return false;
+
+        return _inventory.TryGetSlot(container.Owner, container.ID, out _);
+    }
+}

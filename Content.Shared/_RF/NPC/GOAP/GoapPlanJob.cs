@@ -262,8 +262,9 @@ public sealed class GoapPlanJob(
         var runningState = startState.ShallowClone();
 #endif
 
-        foreach (var task in plan)
+        for (var i = 0; i < plan.Count; i++)
         {
+            var task = plan[i];
             actions.AddRange(task.Actions);
 
 #if TOOLS // Debug
@@ -286,6 +287,7 @@ public sealed class GoapPlanJob(
                     PreconditionsMet: true,
                     InPlan: true,
                     HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                    IndexInPlan: i,
                     SkipReason: null));
             }
 
@@ -454,6 +456,7 @@ public sealed class GoapPlanJob(
                     PreconditionsMet: true,
                     InPlan: false,
                     HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                    IndexInPlan: null,
                     SkipReason: null));
             }
 #endif
@@ -489,6 +492,7 @@ public sealed class GoapPlanJob(
                         PreconditionsMet: false,
                         InPlan: false,
                         HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                        IndexInPlan: null,
                         SkipReason: "No nodes were found that could help satisfy the conditions of this"));
                 }
 #endif
@@ -509,6 +513,7 @@ public sealed class GoapPlanJob(
                     PreconditionsMet: false,
                     InPlan: false,
                     HelpGoal: task.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                    IndexInPlan: null,
                     SkipReason: null));
             }
 #endif
@@ -595,6 +600,7 @@ public sealed class GoapPlanJob(
                         PreconditionsMet: true,
                         InPlan: false,
                         HelpGoal: candidate.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                    IndexInPlan: null,
                         SkipReason: null));
                 }
 #endif
@@ -622,6 +628,7 @@ public sealed class GoapPlanJob(
                     PreconditionsMet: false,
                     InPlan: false,
                     HelpGoal: candidate.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                    IndexInPlan: null,
                     SkipReason: "Could not resolve this candidate's own prerequisites"));
             }
 #endif
@@ -639,6 +646,7 @@ public sealed class GoapPlanJob(
                 PreconditionsMet: false,
                 InPlan: false,
                 HelpGoal: candidate.Effects.Any(kv => goalState.Contains(kv.Key, kv.Value)),
+                IndexInPlan: null,
                 SkipReason: "Not relevant to any unmet precondition of the requesting task"));
         }
 #endif

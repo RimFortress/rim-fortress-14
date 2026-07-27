@@ -6,7 +6,7 @@
       query: ConstructionTarget
     action: !type:SearchQuery
       query: ConstructionTarget
-    effect:
+    effects:
       ConstructionTargetFound: true
 
   - preconditions:
@@ -20,5 +20,5 @@
     - ConstructionItemsFound == true
     action: !type:Construction
       targetKey: Target
-    effect:
+    effects:
       TargetConstructed: true

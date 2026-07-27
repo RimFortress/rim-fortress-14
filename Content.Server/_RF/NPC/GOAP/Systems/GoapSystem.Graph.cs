@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Diagnostics;
 using System.Linq;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -12,8 +13,9 @@ public partial class GoapSystem
 {
     private void BuildGraphs()
     {
-        var staticGraphs = new Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph>();
         Log.Info("building GOAP static dependency graphs...");
+        var sw = Stopwatch.StartNew();
+        var staticGraphs = new Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph>();
 
         var dummy = Spawn();
         var comp = Factory.GetComponent<GoapComponent>();
@@ -27,7 +29,16 @@ public partial class GoapSystem
 
         StaticGraphs = staticGraphs.ToFrozenDictionary();
 
-        Log.Info("graphs built");
+        // Updating debug info
+        foreach (var (uid, sessions) in DebugSubscriptions)
+        {
+            foreach (var session in sessions)
+            {
+                SendDebug(session, uid);
+            }
+        }
+
+        Log.Info($"{StaticGraphs.Count} graphs built in {sw.Elapsed}");
     }
 
     /// <summary>

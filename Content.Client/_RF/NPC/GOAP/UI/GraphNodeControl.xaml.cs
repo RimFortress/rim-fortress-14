@@ -93,7 +93,7 @@ public sealed partial class GraphNodeControl : Control
             AddExpandLabel(CommonTab, "Skip Reason",  debug.Value.SkipReason);
     }
 
-    private void AddTypes(Control parent, string title, Dictionary<string, (string, string)>? data)
+    private static void AddTypes(Control parent, string title, Dictionary<string, (string, string)>? data)
     {
         if (data == null || data.Count == 0)
             return;
@@ -133,7 +133,7 @@ public sealed partial class GraphNodeControl : Control
         }
     }
 
-    private void AddLabel(Control parent, string left, string right)
+    private static void AddLabel(Control parent, string left, string right)
     {
         AddSeparator(parent);
         parent.AddChild(new BoxContainer
@@ -148,7 +148,7 @@ public sealed partial class GraphNodeControl : Control
         });
     }
 
-    private void AddExpandLabel(Control parent, string title, string text)
+    private static void AddExpandLabel(Control parent, string title, string text)
     {
         AddSeparator(parent);
         var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
@@ -160,7 +160,7 @@ public sealed partial class GraphNodeControl : Control
         });
     }
 
-    private void AddSeparator(Control parent)
+    private static void AddSeparator(Control parent)
     {
         parent.AddChild(new PanelContainer
         {
@@ -169,7 +169,7 @@ public sealed partial class GraphNodeControl : Control
         });
     }
 
-    private void AddLogs(Control parent, string? logs)
+    private static void AddLogs(Control parent, string? logs)
     {
         if (string.IsNullOrWhiteSpace(logs))
             return;
@@ -189,7 +189,7 @@ public sealed partial class GraphNodeControl : Control
         }
     }
 
-    private ExpandableBox AddBox(Control parent, string title, string? second = null)
+    private static ExpandableBox AddBox(Control parent, string title, string? second = null)
     {
         AddSeparator(parent);
         var box = new ExpandableBox
@@ -201,7 +201,7 @@ public sealed partial class GraphNodeControl : Control
         return box;
     }
 
-    private string UpdateText(GoapActionResult result)
+    private static string UpdateText(GoapActionResult result)
     {
         return result switch
         {
@@ -212,7 +212,7 @@ public sealed partial class GraphNodeControl : Control
         };
     }
 
-    private string? ActionStatusText(GoapActionDebugInfo action)
+    private static string? ActionStatusText(GoapActionDebugInfo action)
     {
         if (action.StartupSuccess == null)
             return null;
@@ -295,7 +295,7 @@ public sealed partial class GraphNodeControl : Control
 
         if (actionsDebug?.Count > 0)
         {
-            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[In Plan\][/color]";
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[Plan #{_debug?.IndexInPlan}\][/color]";
 
             if (actionsDebug.All(x => x.StartupSuccess == null))
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Starting\][/color]";

@@ -1,7 +1,14 @@
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Hands.Systems;
+using Content.Server.Interaction;
+using Content.Server.Storage.EntitySystems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared.Inventory;
+using Content.Shared.Item;
+using Content.Shared.Storage;
+using Content.Shared.Tools.Components;
+using JetBrains.Annotations;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
@@ -17,11 +24,75 @@ public sealed partial class Pickup : BaseGoapAction<Pickup>
     public StateKey<EntityUid> TargetKey = "Target";
 }
 
-public sealed class PickupSystem : GoapActionSystem<Pickup>
+public sealed class PickupActionSystem : GoapActionSystem<Pickup>
 {
     [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private readonly StorageSystem _storage = default!;
+    [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly InteractionSystem _interaction = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Pickup action)
         => TryGetValue(ent, action, action.TargetKey, out var target)
-           && _hands.TryPickup(ent, target);
+           && Pickup(ent, target, action);
+
+    /// <summary>
+    /// The NPC will attempt to pick up the target entity, freeing up its active hand if necessary.
+    /// </summary>
+    /// <param name="ent">NPC entity.</param>
+    /// <param name="target">Target entity.</param>
+    /// <param name="action">GOAP action.</param>
+    /// <returns>True, if the entity was successfully picked up</returns>
+    [PublicAPI]
+    public bool Pickup(Entity<GoapComponent> ent, EntityUid target, GoapAction action)
+    {
+        if (!HasComp<ItemComponent>(target))
+        {
+            ComponentNotFound<ItemComponent>(ent, action, target);
+            return false;
+        }
+
+        // If we have an item in hands, we put it away in inventory
+        if (_hands.TryGetActiveItem(ent.Owner, out var handItem) && handItem != target)
+        {
+            // If the welder is turned on in hands, turn it off first
+            if (TryComp(handItem, out WelderComponent? welder)
+                && TryComp(handItem, out TransformComponent? itemForm)
+                && welder.Enabled)
+            {
+                CreateDump(ent, action, "turning off welder");
+                _interaction.UserInteraction(ent, itemForm.Coordinates, handItem);
+            }
+
+            foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))
+            {
+                if (!TryComp(entity, out StorageComponent? storage)
+                    || !_storage.Insert(entity, handItem.Value, out _, storageComp: storage))
+                    continue;
+
+                CreateDump(ent, action, $"{ToPrettyString(handItem.Value)} stored in {ToPrettyString(entity)}");
+                break;
+            }
+
+            // If we couldn't put the item in the inventory, we throw it away
+            if (_hands.TryGetActiveItem(ent.Owner, out _))
+            {
+                if (!_hands.TryDrop(handItem.Value))
+                {
+                    CreateDump(ent, action, $"failed to drop {ToPrettyString(handItem.Value)} from the hands");
+                    return false;
+                }
+
+                CreateDump(ent, action, $"{ToPrettyString(handItem.Value)} was thrown from the hands");
+            }
+        }
+
+        // Pick up the item
+        if (handItem != target && !_hands.TryPickup(ent, target))
+        {
+            CreateDump(ent, action, $"failed to pick up {ToPrettyString(target)}");
+            return false;
+        }
+
+        return true;
+    }
 }

@@ -138,6 +138,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
         }
 
         var result = query
+            .Where(x => x.Value > 0)
             .OrderBy(x => x.Value)
             .Select(x => x.Key)
             .ToList();

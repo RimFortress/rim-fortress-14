@@ -7,3 +7,4 @@ utility-ai-goal-drink-name = Drink
 utility-ai-goal-moveto-name = Move to
 utility-ai-goal-pickup-name = Pick up
 utility-ai-goal-construction-name = Construct
+utility-ai-goal-dig-name = Dig

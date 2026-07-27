@@ -23,3 +23,15 @@
     components:
     - CommonConstructionGhost
     - Construction
+
+- type: executableGoal
+  id: Dig
+  goal: Dig
+  verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  maxPerformers: 1
+  taskType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    tags:
+    - Diggable

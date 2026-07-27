@@ -46,17 +46,21 @@
     #- Pry
     - Construction
     #- Deconstruct
-    #- Dig
+    - Dig
     #- FreeHandInteract
     #- Heal
     #- Chop
     #- Cook
   - type: NpcJobs
     jobs:
-    - name: npc-job-сonstruction-name
+    - name: npc-job-construction-name
       icon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
       goals:
       - Construction
+    - name: npc-job-mining-name
+      icon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+      tasks:
+      - Dig
   - type: NpcFactionMember
     factions:
     - RimFortress

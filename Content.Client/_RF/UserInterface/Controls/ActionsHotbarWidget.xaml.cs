@@ -80,7 +80,7 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
             var button = new TreeMenuButton
             {
-                ToolTip = _proto.Index(proto.Goal).Name,
+                ToolTip = Loc.GetString(_proto.Index(proto.Goal).Name),
                 ToggleMode = true,
                 Texture = proto.VerbIcon != null ? _sprite.Frame0(new SpriteSpecifier.Texture(proto.VerbIcon.Value)) : null,
             };

@@ -1,14 +1,10 @@
 using Content.Server._RF.NPC.GOAP.Actions.Interaction;
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Server.Hands.Systems;
 using Content.Server.Interaction;
 using Content.Server.NPC.Pathfinding;
-using Content.Server.Storage.EntitySystems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared.Inventory;
-using Content.Shared.Storage;
 using Content.Shared.Tools.Components;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Construction;
@@ -52,12 +48,10 @@ public sealed partial class Construction : BaseGoapAction<Construction>
 
 public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
 {
-    [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly InteractionSystem _interaction = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly StorageSystem _storage = default!;
     [Dependency] private readonly InteractWithSystem _interactWith = default!;
     [Dependency] private readonly MoveToSystem _moveTo = default!;
+    [Dependency] private readonly PickupActionSystem _pickup = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Construction action) => 3f;
 
@@ -103,55 +97,15 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         else if (_moveTo.StartedUp(ent))
             _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-        // Pick up item
-        // If we have an item in hands, we put it away in inventory
-        if (_hands.TryGetActiveItem(ent.Owner, out var handItem) && handItem != item)
-        {
-            // If the welder is turned on in hands, turn it off first
-            if (TryComp(handItem, out WelderComponent? welder)
-                && TryComp(handItem, out TransformComponent? itemForm)
-                && welder.Enabled)
-            {
-                CreateDump(ent, action, "turning off welder");
-                _interaction.UserInteraction(ent, itemForm.Coordinates, handItem);
-            }
-
-            foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))
-            {
-                if (!TryComp(entity, out StorageComponent? storage)
-                    || !_storage.Insert(entity, handItem.Value, out _, storageComp: storage))
-                    continue;
-
-                CreateDump(ent, action, $"{ToPrettyString(handItem.Value)} stored in {ToPrettyString(entity)}");
-                break;
-            }
-
-            // If we couldn't put the item in the inventory, we throw it away
-            if (_hands.TryGetActiveItem(ent.Owner, out _))
-            {
-                if (!_hands.TryDrop(handItem.Value))
-                {
-                    CreateDump(ent, action, $"failed to throw {ToPrettyString(handItem.Value)} from the hands");
-                    return GoapActionResult.Failed;
-                }
-
-                CreateDump(ent, action, $"{ToPrettyString(handItem.Value)} was thrown from the hands");
-            }
-        }
-
         // Pick up the item
-        if (handItem != item && !_hands.TryPickup(ent, item))
-        {
-            CreateDump(ent, action, $"failed to pick up {ToPrettyString(item)}");
+        if (!_pickup.Pickup(ent, item, action))
             return GoapActionResult.Failed;
-        }
 
         // Turn on welder
-        if (TryComp(handItem, out WelderComponent? nextWelder)
-            && !nextWelder.Enabled)
+        if (TryComp(item, out WelderComponent? welder) && !welder.Enabled)
         {
             CreateDump(ent, action, "turning on welder");
-            _interaction.UserInteraction(ent, Transform(handItem.Value).Coordinates, handItem);
+            _interaction.UserInteraction(ent, Transform(item).Coordinates, item);
         }
 
         var interactResult = _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, false);

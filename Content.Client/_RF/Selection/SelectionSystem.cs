@@ -207,18 +207,8 @@ public sealed class SelectionSystem : SharedSelectionSystem
         if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
             return;
 
-        if (!_input.IsKeyDown(Keyboard.Key.MouseLeft) || comp.StartPoint == null)
-        {
-            if (comp.Selected.Count > 0)
-                comp.OnSelected?.Invoke(comp.Selected);
-
-            if (comp.SelectedTiles.Count > 0)
-                comp.OnTileSelected?.Invoke(comp.SelectedTiles);
-
-            comp.StartPoint = null;
-            comp.EndPoint = null;
+        if (comp.StartPoint == null)
             return;
-        }
 
         if (_input.MouseScreenPosition is { IsValid: true } mousePos)
             comp.EndPoint = _eye.PixelToMap(mousePos);

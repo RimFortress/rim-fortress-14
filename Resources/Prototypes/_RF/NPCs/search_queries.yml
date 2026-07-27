@@ -15,6 +15,7 @@
   filters:
   - !type:IsAlive
   - !type:IsClosed
+  - !type:InInventory
   - !type:InHands
   - !type:Accessible
     invert: true
@@ -36,6 +37,7 @@
   - !type:IsAlive
   - !type:IsClosed
     invert: true
+  - !type:InInventory
   - !type:InHands
   - !type:Accessible
     invert: true
@@ -53,6 +55,7 @@
   filters:
   - !type:IsAlive
   - !type:IsClosed
+  - !type:InInventory
   - !type:InHands
   - !type:Accessible
     invert: true
@@ -74,6 +77,7 @@
   - !type:IsAlive
   - !type:IsClosed
     invert: true
+  - !type:InInventory
   - !type:InHands
   - !type:Accessible
     invert: true
@@ -98,6 +102,44 @@
     requireAll: false
     invert: true
   - !type:Constructed
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: PickaxeWieldabe
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Wieldable
+    invert: true
+  - !type:HasTags
+    tags:
+    - Pickaxe
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Pickaxe
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - Pickaxe
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
     invert: true
   considerations:
   - !type:TargetDistance

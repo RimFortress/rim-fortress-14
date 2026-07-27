@@ -22,15 +22,27 @@
       DrinkOpened: false
 
   - preconditions:
+    - InContainer == false
     - DrinkFound == true
-    - TargetPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: PickupTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: PickupTarget
+    effects:
+      DrinkPickedUp: true
+
+  - preconditions:
+    - DrinkPickedUp == true
     action: !type:InteractWith
       targetKey: PickupTarget
     effects:
       DrinkOpened: true
 
   - preconditions:
-    - TargetPickedUp == true
+    - DrinkPickedUp == true
     - DrinkOpened == true
     action: !type:InteractWith
       targetKey: PickupTarget
