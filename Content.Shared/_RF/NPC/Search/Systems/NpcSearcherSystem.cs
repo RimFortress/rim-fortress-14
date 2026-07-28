@@ -69,7 +69,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
     {
         var ev = new GetSearchScore<T>(con, state, target, 0f);
         RaiseLocalEvent(state.GetValue(GoapState.Owner), ref ev);
-        var result = _mathCurves.Get(con.Curves, ev.Result);
+        var result = _mathCurves.Get(con.Curves, ev.Result, state.GetValue(GoapState.Owner));
         return Math.Clamp(result, 0f, 1f);
     }
 

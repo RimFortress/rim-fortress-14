@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
@@ -19,6 +20,40 @@ public record struct UtilityAiGoalScoreModify(ProtoId<UtilityAiGoalPrototype> Go
 /// <param name="Goal">Utility AI goal prototype.</param>
 [PublicAPI]
 public record struct UtilityAiGoalGiven(ProtoId<UtilityAiGoalPrototype> Goal);
+
+/// <summary>
+/// Invoked each time the Utility AI goal is completed.
+/// </summary>
+/// <remarks>
+/// Basically, it's just a layer on top of <see cref="GoapPlanFinished"/>
+/// and <see cref="GoapPlaningFailed"/> that allows you to avoid dealing with low-level AI.
+/// </remarks>
+/// <param name="Goal">Utility AI goal.</param>
+/// <param name="Reason">The reason why the goal completion ended.</param>
+[PublicAPI]
+public record struct UtilityAiGoalFinished(
+    ProtoId<UtilityAiGoalPrototype> Goal,
+    UtilityAiGoalFinishReason Reason);
+
+[Serializable, NetSerializable]
+public enum UtilityAiGoalFinishReason : byte
+{
+    /// <summary>
+    /// The agent successfully reached the goal.
+    /// </summary>
+    Finished,
+
+    /// <summary>
+    /// The agent was unable to plan a path to achieve the goal or failed to execute the plan.
+    /// </summary>
+    Failed,
+
+    /// <summary>
+    /// The execution of the goal was interrupted for reasons beyond the agent's control.
+    /// For example, the goal was replaced by another one.
+    /// </summary>
+    Interrupted,
+}
 
 // Net Messages
 

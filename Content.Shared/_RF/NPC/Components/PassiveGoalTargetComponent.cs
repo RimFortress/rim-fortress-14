@@ -1,5 +1,5 @@
-using Content.Shared._RF.NPC.UtilityAi.Prototypes;
-using Content.Shared._RF.NPC.UtilityAi.Systems;
+using Content.Shared._RF.NPC.Prototypes;
+using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 

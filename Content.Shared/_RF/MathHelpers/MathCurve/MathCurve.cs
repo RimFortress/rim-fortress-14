@@ -11,13 +11,17 @@ public abstract partial class MathCurve
 {
     public abstract float Curve(float value, IMathCurveHandler handler, EntityUid? user = null);
 
-    public static float ListValue(IEnumerable<MathCurve> curves, IMathCurveHandler handler, float value = 0)
+    public static float ListValue(
+        IEnumerable<MathCurve> curves,
+        IMathCurveHandler handler,
+        float value = 0,
+        EntityUid? user = null)
     {
         var result = value;
 
         foreach (var curve in curves)
         {
-            result = curve.Curve(result, handler);
+            result = curve.Curve(result, handler, user);
         }
 
         return result;

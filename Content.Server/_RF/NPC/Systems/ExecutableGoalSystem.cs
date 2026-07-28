@@ -2,10 +2,10 @@ using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.NPC.UtilityAi.Components;
-using Content.Shared._RF.NPC.UtilityAi.Systems;
 
-namespace Content.Server._RF.NPC.UtilityAi.Systems;
+namespace Content.Server._RF.NPC.Systems;
 
 public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 {

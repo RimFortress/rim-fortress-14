@@ -38,9 +38,24 @@ public abstract class SharedUtilityAiSystem : EntitySystem
 
     private void OnGoapPlanFinished(Entity<UtilityAiComponent> ent, ref GoapPlanFinished args)
     {
+        // Removing temp keys
+        if (Proto.TryIndex(ent.Comp.CurrentGoal, out var proto)
+            && TryComp(ent, out GoapComponent? goap))
+        {
+            foreach (var key in proto.TempKeys)
+            {
+                goap.State.Remove<object>(key);
+            }
+        }
+
         switch (args.Reason)
         {
             case GoapPlanFinishReason.Finished:
+                if (ent.Comp.CurrentGoal != null)
+                {
+                    RaiseLocalEvent(ent,
+                        new UtilityAiGoalFinished(ent.Comp.CurrentGoal.Value, UtilityAiGoalFinishReason.Finished));
+                }
                 ent.Comp.CurrentGoal = null;
                 ent.Comp.Penalties.Clear();
                 Dirty(ent);
@@ -53,6 +68,11 @@ public abstract class SharedUtilityAiSystem : EntitySystem
                 DoGoalFail(ent);
                 break;
             case GoapPlanFinishReason.Interrupted:
+                if (ent.Comp.CurrentGoal != null)
+                {
+                    RaiseLocalEvent(ent,
+                        new UtilityAiGoalFinished(ent.Comp.CurrentGoal.Value, UtilityAiGoalFinishReason.Interrupted));
+                }
                 ent.Comp.CurrentGoal = null;
                 ent.Comp.Penalties.Clear();
                 Dirty(ent);
@@ -76,6 +96,9 @@ public abstract class SharedUtilityAiSystem : EntitySystem
 
             return;
         }
+
+        RaiseLocalEvent(ent,
+            new UtilityAiGoalFinished(ent.Comp.CurrentGoal.Value, UtilityAiGoalFinishReason.Failed));
 
         if (!Proto.Resolve(ent.Comp.CurrentGoal, out var proto))
             return;
@@ -219,9 +242,8 @@ public abstract class SharedUtilityAiSystem : EntitySystem
     public bool ConditionsMet(
         Entity<GoapComponent?> ent,
         ProtoId<UtilityAiGoalPrototype> protoId)
-        => Resolve(ent, ref ent.Comp)
-            && Proto.Resolve(protoId, out var proto)
-            && Goap.CheckCondition(ent, proto.Conditions);
+        => Proto.Resolve(protoId, out var proto)
+           && Goap.CheckCondition(ent, proto.Conditions);
 
     public override void Update(float frameTime)
     {

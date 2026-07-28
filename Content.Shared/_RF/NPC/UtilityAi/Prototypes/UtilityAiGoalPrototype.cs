@@ -86,6 +86,12 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// </summary>
     [DataField]
     public float FailPenalty = 0.2f;
+
+    /// <summary>
+    /// Keys that will be deleted when the goal is completed/failed.
+    /// </summary>
+    [DataField]
+    public HashSet<string> TempKeys = new();
 }
 
 /// <summary>

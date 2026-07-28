@@ -1,7 +1,7 @@
 - type: executableGoal
   id: MoveTo
   goal: MoveTo
-  taskType:
+  goalType:
   - Place
 
 - type: executableGoal
@@ -28,10 +28,24 @@
   id: Dig
   goal: Dig
   verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  targetKey: DigTarget
   maxPerformers: 1
-  taskType:
+  goalType:
   - Verb
   - Passive
   targetWhitelist:
     tags:
     - Diggable
+
+- type: executableGoal
+  id: TakeOwnership
+  goal: TakeOwnership
+  verbIcon: /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  targetKey: TakeOwnershipTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - Item

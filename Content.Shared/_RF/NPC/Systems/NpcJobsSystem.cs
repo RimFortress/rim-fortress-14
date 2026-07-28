@@ -142,13 +142,8 @@ public sealed class NpcJobsSystem : EntitySystem
         ent.Comp.Jobs[jobId] = priority;
         Dirty(ent);
 
-        if (!_net.IsClient)
-            return;
-
-        foreach (var uid in _ownership.GetOwners(ent))
-        {
-            RaiseNetworkEvent(new NpcJobPriority(jobId, GetNetEntity(ent), priority), uid);
-        }
+        if (_net.IsClient)
+            RaiseNetworkEvent(new NpcJobPriority(jobId, GetNetEntity(ent), priority));
     }
 
     /// <summary>
@@ -183,7 +178,7 @@ public sealed class NpcJobsSystem : EntitySystem
 
         if (_net.IsClient)
         {
-            RaiseNetworkEvent(new NpcJobCreated(job), ent);
+            RaiseNetworkEvent(new NpcJobCreated(job));
             OnJobChanged?.Invoke(job.Id);
             return;
         }
@@ -223,7 +218,7 @@ public sealed class NpcJobsSystem : EntitySystem
 
         if (_net.IsClient)
         {
-            RaiseNetworkEvent(new NpcJobUpdated(job), ent);
+            RaiseNetworkEvent(new NpcJobUpdated(job));
             OnJobChanged?.Invoke(job.Id);
         }
     }
@@ -252,7 +247,7 @@ public sealed class NpcJobsSystem : EntitySystem
 
         if (_net.IsClient)
         {
-            RaiseNetworkEvent(new NpcJobDeleted(id), ent);
+            RaiseNetworkEvent(new NpcJobDeleted(id));
             OnJobChanged?.Invoke(job.Id);
         }
 

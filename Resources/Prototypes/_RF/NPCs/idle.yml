@@ -9,6 +9,7 @@
   - proto: Drink
   - proto: Construction
   - proto: Dig
+  - proto: TakeOwnership
 
   - preconditions:
     - InContainer == false
@@ -16,6 +17,7 @@
     - !type:PickAccessible
       rangeKey: IdleRange
     - !type:MoveTo
+      rangeKey: InteractRange
       findPath: false
     - !type:RandomTime
       key: IdleTime

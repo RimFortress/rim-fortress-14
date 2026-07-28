@@ -1,0 +1,23 @@
+- type: goapCompound
+  id: TakeOwnership
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: TakeOwnershipPassiveTarget
+    action: !type:SearchQuery
+      query: TakeOwnershipPassiveTarget
+      targetKey: TakeOwnershipTarget
+    effects:
+      TakeOwnershipTarget: true
+
+  - preconditions:
+    - TakeOwnershipTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: TakeOwnershipTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:MarkOwner
+      targetKey: TakeOwnershipTarget
+    effects:
+      TargetOwned: true

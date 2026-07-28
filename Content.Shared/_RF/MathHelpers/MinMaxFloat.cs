@@ -1,5 +1,7 @@
 using Robust.Shared.Random;
 
+namespace Content.Shared._RF.MathHelpers;
+
 [DataDefinition, Serializable]
 public partial struct MinMaxFloat
 {

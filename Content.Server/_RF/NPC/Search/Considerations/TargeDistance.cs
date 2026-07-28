@@ -10,15 +10,18 @@ namespace Content.Server._RF.NPC.Search.Considerations;
 /// </summary>
 public sealed partial class TargetDistance : BaseSearchConsideration<TargetDistance>;
 
-public sealed class TargeDistanceConSystem : NpcSearchConsiderationSystem<TargetDistance>
+public sealed class TargetDistanceConsiderationSystem : NpcSearchConsiderationSystem<TargetDistance>
 {
     [Dependency] private readonly TransformSystem _transform = default!;
+
     protected override float GetScore(GoapState state, EntityUid target, TargetDistance con)
     {
-        var coords = Transform(state.GetValue(GoapState.Owner)).Coordinates;
-        var targetCoords = Transform(target).Coordinates;
+        if (!EntityManager.TransformQuery.TryComp(target, out var xform))
+            return 0f;
 
-        if (!targetCoords.TryDistance(EntityManager, _transform, coords, out var distance))
+        var coords = Transform(state.GetValue(GoapState.Owner)).Coordinates;
+
+        if (!xform.Coordinates.TryDistance(EntityManager, _transform, coords, out var distance))
             return 0f;
 
         return distance;

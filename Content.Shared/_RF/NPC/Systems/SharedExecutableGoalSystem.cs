@@ -4,8 +4,11 @@ using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.Prototypes;
+using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
+using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Content.Shared._RF.Selection.Systems;
 using Content.Shared.Maps;
 using Content.Shared.NPC;
@@ -22,7 +25,7 @@ using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.NPC.UtilityAi.Systems;
+namespace Content.Shared._RF.NPC.Systems;
 
 /// <summary>
 /// A system that allows the player to set Utility AI goals for NPCs.
@@ -43,6 +46,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     [Dependency] protected readonly EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
     [Dependency] protected readonly EntityQuery<NpcControllerComponent> ControllerQuery = default!;
     [Dependency] protected readonly EntityQuery<PassiveGoalTargetComponent> PassiveGoalQuery = default!;
+    [Dependency] private readonly EntityQuery<ActiveNPCComponent> _activeQuery = default!;
 
     protected readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, HashSet<ProtoId<ExecutableGoalPrototype>>> Executables = new();
 
@@ -52,6 +56,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         base.Initialize();
 
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
+        SubscribeLocalEvent<ControllableNpcComponent, UtilityAiGoalFinished>(OnUtilityAiGoalFinished);
+
         SubscribeNetworkEvent<SetGoalRequest>(OnGoalRequest);
         SubscribeNetworkEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
         SubscribeNetworkEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
@@ -118,6 +124,35 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
                     }
                 },
             });
+        }
+    }
+
+    private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref UtilityAiGoalFinished args)
+    {
+        if (!Executables.TryGetValue(args.Goal, out var execs)
+            || !TryComp(ent, out GoapComponent? goap))
+            return;
+
+        foreach (var exec in execs)
+        {
+            if (!ent.Comp.Goals.Contains(exec)
+                || !Proto.Resolve(exec, out var proto))
+                continue;
+
+            // Remove passive target when the goal successfully finished.
+            if (args.Reason == UtilityAiGoalFinishReason.Finished
+                && proto.GoalType.HasFlag(ExecutableGoalType.Passive)
+                && goap.State.TryGetValue(proto.TargetKey, out var target)
+                && PassiveGoalQuery.TryComp(target, out var passive)
+                && passive.Goal == exec)
+                RemComp(target, passive);
+
+            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
+                goap.State.Remove(proto.TargetCoordinatesKey);
+            else
+                goap.State.Remove(proto.TargetKey);
+
+            break;
         }
     }
 
@@ -226,10 +261,10 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var proto in goals)
         {
-            if (type != null && !proto.TaskType.HasFlag(type))
+            if (type != null && !proto.GoalType.HasFlag(type))
                 continue;
 
-            if (proto.TaskType.HasFlag(ExecutableGoalType.Place))
+            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
             {
                 zeroGoals ??= new();
                 zeroGoals.Add(proto);
@@ -282,11 +317,11 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             || !Proto.TryIndex(protoId, out var proto))
             return false;
 
-        if (!proto.TaskType.HasFlag(ExecutableGoalType.Place)
+        if (!proto.GoalType.HasFlag(ExecutableGoalType.Place)
             && (target == null || !CheckGoalStart(new(ent, ent.Comp1, ent.Comp3), proto, target.Value)))
             return false;
 
-        if (proto.TaskType.HasFlag(ExecutableGoalType.Place) && targetCoords == null)
+        if (proto.GoalType.HasFlag(ExecutableGoalType.Place) && targetCoords == null)
             return false;
 
         SetGoal(
@@ -314,8 +349,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         if (goap.Plan != null)
             _goap.PlanShutdown(new(ent, goap), GoapPlanFinishReason.Interrupted);
 
-        DebugTools.Assert(proto.TaskType.HasFlag(ExecutableGoalType.Place) || coords == null);
-        DebugTools.Assert(!proto.TaskType.HasFlag(ExecutableGoalType.Place) || target == null);
+        DebugTools.Assert(proto.GoalType.HasFlag(ExecutableGoalType.Place) || coords == null);
+        DebugTools.Assert(!proto.GoalType.HasFlag(ExecutableGoalType.Place) || target == null);
 
         if (target != null)
             goap.State.SetValue(proto.TargetKey, target.Value);
@@ -380,8 +415,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     [PublicAPI]
     public bool CanControl(EntityUid user, EntityUid entity)
         => ControllableQuery.TryComp(entity, out var control)
-            && HasComp<ActiveNPCComponent>(entity)
-            && control.CanControl.Contains(user);
+           && _activeQuery.HasComp(entity)
+           && control.CanControl.Contains(user);
 
     /// <inheritdoc cref="CanControl(EntityUid, EntityUid)"/>
     [PublicAPI]
@@ -496,7 +531,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         => SetPassiveTarget(user, protoId, new List<EntityUid> { uid });
 
     // It's fucking long
-    /// <inheritdoc cref="SetPassiveTarget(Robust.Shared.GameObjects.Entity{NpcControllerComponent?},Robust.Shared.Prototypes.ProtoId{Content.Shared._RF.NPC.UtilityAi.Prototypes.ExecutableGoalPrototype},Robust.Shared.GameObjects.EntityUid)"/>
+    /// <inheritdoc cref="SetPassiveTarget(Robust.Shared.GameObjects.Entity{NpcControllerComponent?},Robust.Shared.Prototypes.ProtoId{ExecutableGoalPrototype},Robust.Shared.GameObjects.EntityUid)"/>
     [PublicAPI]
     public void SetPassiveTarget(
         Entity<NpcControllerComponent?> user,
@@ -506,7 +541,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         if (!Resolve(user, ref user.Comp)
             || !user.Comp.Goals.Contains(protoId)
             || !Proto.Resolve(protoId, out var proto)
-            || !proto.TaskType.HasFlag(ExecutableGoalType.Passive))
+            || !proto.GoalType.HasFlag(ExecutableGoalType.Passive))
             return;
 
         foreach (var uid in entities)
@@ -571,11 +606,15 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             if (!Proto.Resolve(goal, out var proto))
                 continue;
 
-            if (proto.TaskType.HasFlag(ExecutableGoalType.Place)
-                && goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
+            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
             {
-                coords = result;
-                return true;
+                if (goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
+                {
+                    coords = result;
+                    return true;
+                }
+
+                continue;
             }
 
             if (goap.State.TryGetValue(proto.TargetKey, out var uid))

@@ -11,6 +11,8 @@
     - Eat
     - Drink
     - Construction
+    - Dig
+    - TakeOwnership
   - type: NpcFactionMember
     factions:
     - RimFortress
@@ -20,7 +22,7 @@
     - MoveTo
     #- Attack
     - PickUp
-    #- TakeOwnership
+    - TakeOwnership
     #- Pry
     - Construction
     #- Deconstruct

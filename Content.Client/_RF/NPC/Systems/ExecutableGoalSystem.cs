@@ -1,8 +1,8 @@
 using System.Linq;
 using Content.Client._RF.Selection;
 using Content.Client.Verbs.UI;
-using Content.Shared._RF.NPC.UtilityAi.Prototypes;
-using Content.Shared._RF.NPC.UtilityAi.Systems;
+using Content.Shared._RF.NPC.Prototypes;
+using Content.Shared._RF.NPC.Systems;
 using Robust.Client.Graphics;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
@@ -10,7 +10,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-namespace Content.Client._RF.NPC.UtilityAi.Systems;
+namespace Content.Client._RF.NPC.Systems;
 
 public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 {
@@ -89,7 +89,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         if (Eraser == enabled)
             return;
 
-        if (!ControllableQuery.HasComp(_player.LocalEntity))
+        if (!ControllerQuery.HasComp(_player.LocalEntity))
             return;
 
         Eraser = enabled;

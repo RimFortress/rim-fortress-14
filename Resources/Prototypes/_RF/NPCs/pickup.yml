@@ -10,5 +10,7 @@
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: PickupTarget
+    - !type:MarkOwner
+      targetKey: PickupTarget
     effects:
       TargetPickedUp: true

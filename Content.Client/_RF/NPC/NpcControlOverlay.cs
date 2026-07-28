@@ -1,5 +1,5 @@
 using System.Numerics;
-using Content.Client._RF.NPC.UtilityAi.Systems;
+using Content.Client._RF.NPC.Systems;
 using Content.Client._RF.Selection;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.UtilityAi.Systems;

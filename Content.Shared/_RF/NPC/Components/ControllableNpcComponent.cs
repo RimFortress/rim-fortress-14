@@ -1,5 +1,5 @@
-using Content.Shared._RF.NPC.UtilityAi.Prototypes;
-using Content.Shared._RF.NPC.UtilityAi.Systems;
+using Content.Shared._RF.NPC.Prototypes;
+using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
@@ -16,7 +16,7 @@ public sealed partial class ControllableNpcComponent : Component
     /// Entities that can control this npc.
     /// </summary>
     [ViewVariables, AutoNetworkedField]
-    public readonly List<EntityUid> CanControl = new();
+    public readonly HashSet<EntityUid> CanControl = new();
 
     /// <summary>
     /// Goals that can be assigned to this entity.

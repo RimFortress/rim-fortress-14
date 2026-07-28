@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -7,7 +8,7 @@ using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.NPC.UtilityAi.Prototypes;
+namespace Content.Shared._RF.NPC.Prototypes;
 
 /// <summary>
 /// A prototype for the Utility AI goal, allowing the player to manually assign it to an NPC.
@@ -37,46 +38,46 @@ public sealed partial class ExecutableGoalPrototype : IPrototype, IInheritingPro
     /// Type of this goal.
     /// </summary>
     [DataField]
-    public ExecutableGoalType TaskType = ExecutableGoalType.Verb;
+    public ExecutableGoalType GoalType = ExecutableGoalType.Verb;
 
     /// <summary>
     /// An icon to display the goal in the context menu.
-    /// If <see cref="TaskType"/> is <see cref="ExecutableGoalType.Verb"/>.
+    /// If <see cref="GoalType"/> is <see cref="ExecutableGoalType.Verb"/>.
     /// </summary>
     [DataField]
     public ResPath? VerbIcon;
 
     /// <summary>
     /// Filter for the goal target entity.
-    /// If <see cref="TaskType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
     /// </summary>
     [DataField]
     public EntityWhitelist? TargetWhitelist;
 
     /// <summary>
     /// Could the target of this goal be the entity that performs it.
-    /// If <see cref="TaskType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
     /// </summary>
     [DataField]
     public bool SelfPerform;
 
     /// <summary>
     /// Maximum number of entities that can perform this goal on a one target.
-    /// If <see cref="TaskType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
     /// </summary>
     [DataField]
     public int MaxPerformers = int.MaxValue;
 
     /// <summary>
     /// The key to store the goal target to the <see cref="GoapState"/>.
-    /// If <see cref="TaskType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
     /// </summary>
     [DataField]
     public StateKey<EntityUid> TargetKey = "Target";
 
     /// <summary>
     /// The key to store the coordinates of the goal target in the <see cref="GoapState"/>.
-    /// If <see cref="TaskType"/> is <see cref="ExecutableGoalType.Place"/>.
+    /// If <see cref="GoalType"/> is <see cref="ExecutableGoalType.Place"/>.
     /// </summary>
     [DataField]
     public StateKey<EntityCoordinates> TargetCoordinatesKey = "TargetCoordinates";

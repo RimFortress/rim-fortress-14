@@ -42,7 +42,7 @@
     - MoveTo
     #- Attack
     - PickUp
-    #- TakeOwnership
+    - TakeOwnership
     #- Pry
     - Construction
     #- Deconstruct

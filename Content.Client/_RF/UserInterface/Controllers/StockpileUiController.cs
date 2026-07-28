@@ -1,5 +1,5 @@
 using System.Linq;
-using Content.Client._RF.NPC.UtilityAi.Systems;
+using Content.Client._RF.NPC.Systems;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;

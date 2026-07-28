@@ -255,7 +255,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
                     }
 
                     if (!ActionStartup(ent, plan.CurrentAction))
-                        PlanShutdown(ent, GoapPlanFinishReason.Failed, false);
+                        PlanShutdown(ent, GoapPlanFinishReason.Failed);
                     break;
                 default:
                     throw new InvalidOperationException();

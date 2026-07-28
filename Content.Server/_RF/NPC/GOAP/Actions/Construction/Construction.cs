@@ -64,6 +64,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     protected override void ActionShutdown(Entity<GoapComponent> ent, Construction action)
     {
         ent.Comp.State.Remove(action.CurrentDoAfter);
+        ent.Comp.State.Remove(action.ItemsKey);
         _moveTo.ShutdownMovement(ent, action.PathfindKey);
     }
 

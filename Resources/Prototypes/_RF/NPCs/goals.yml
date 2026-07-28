@@ -7,6 +7,9 @@
     - float: 1
   - pow:
     - float: 4
+  tempKeys:
+  - Bed
+  - TargetSleepLevel
   goalState:
     Rested: true
     WokeUp: true
@@ -33,22 +36,26 @@
 - type: utilityAiGoal
   id: Eat
   scoreCurves:
-  - !type:HungerLevel
+  - float: 1
   - minus:
-    - float: 1
+    - !type:HungerLevel
   - pow:
     - float: 2
+  tempKeys:
+  - PickupTarget
   goalState:
     FoodEaten: true
 
 - type: utilityAiGoal
   id: Drink
   scoreCurves:
-  - !type:ThirstLevel
+  - float: 1
   - minus:
-    - float: 1
+    - !type:ThirstLevel
   - pow:
     - float: 2
+  tempKeys:
+  - PickupTarget
   goalState:
     DrinkDrunk: true
 
@@ -69,8 +76,22 @@
   scoreCurves:
   - !type:SkillLevel
     skill: Construction
+  - div:
+    - float: 3
   - add:
-    - float: 0.2
+    - !type:SearchQueryCount
+      query: ConstructionTarget
+    - !type:Normalize
+    - pow:
+      - float: 2
+    - div:
+      - !type:GoalPerformers
+        goal: Construction
+      - clamp:
+          min: 1
+          max: 10
+    - mul:
+      - float: 0.35
   goalState:
     TargetConstructed: true
 
@@ -80,7 +101,29 @@
   scoreCurves:
   - !type:SkillLevel
     skill: Mining
+  - div:
+    - float: 3
   - add:
-    - float: 0.2
+    - !type:PassiveTargets
+      goal: Dig
+    - !type:Normalize
+    - pow:
+      - float: 2
+    - div:
+      - !type:GoalPerformers
+        goal: Dig
+      - clamp:
+          min: 1
+          max: 10
+    - mul:
+      - float: 0.35
   goalState:
     TargetDug: true
+
+- type: utilityAiGoal
+  id: TakeOwnership
+  color: "#075967"
+  scoreCurves:
+  - float: 0.8
+  goalState:
+    TargetOwned: true

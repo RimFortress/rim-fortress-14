@@ -1,0 +1,64 @@
+- type: goapCompound
+  id: Dig
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: DigPassiveTarget
+    action: !type:SearchQuery
+      query: DigPassiveTarget
+      targetKey: DigTarget
+    effects:
+      DigTarget: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: PickaxeWieldabe
+    action: !type:SearchQuery
+      query: PickaxeWieldabe
+      targetKey: PickupTarget
+    effects:
+      Wieldable: true
+      PickaxeFound: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: Pickaxe
+    action: !type:SearchQuery
+      query: Pickaxe
+      targetKey: PickupTarget
+      costMultiplier: 2.5
+    effects:
+      Wielded: false
+      PickaxeFound: true
+
+  - preconditions:
+    - InContainer == false
+    - PickaxeFound == true
+    actions:
+    - !type:EntityCoords
+      targetKey: PickupTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: PickupTarget
+    effects:
+      PickaxePickedUp: true
+
+  - preconditions:
+    - Wieldable == true
+    - PickaxePickedUp == true
+    action: !type:Wield
+      targetState: true
+    effects:
+      Wielded: true
+
+  - preconditions:
+    - Wielded != null
+    - DigTarget != null
+    - PickaxePickedUp == true
+    actions:
+    - !type:Melee
+      targetKey: DigTarget
+    - !type:MarkOwnerInRange
+    effects:
+      TargetDug: true

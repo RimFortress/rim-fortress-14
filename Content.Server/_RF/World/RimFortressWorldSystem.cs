@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
+using Content.Server._RF.NPC.Systems;
 using Content.Server._RF.Parallax.Fog;
 using Content.Server.Administration.Managers;
 using Content.Server.Mind;
@@ -23,7 +24,6 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Content.Server._RF.NPC.UtilityAi.Systems;
 
 namespace Content.Server._RF.World;
 

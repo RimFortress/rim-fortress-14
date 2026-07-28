@@ -42,7 +42,7 @@ public sealed partial class ConditionCurve : MathCurve
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
     {
         if (value > MoreThan || value < LessThan)
-            return ListValue(Value, handler, value);
+            return ListValue(Value, handler, value, user);
 
         return value;
     }
@@ -57,7 +57,7 @@ public sealed partial class DivideCurve : MathCurve
     public List<MathCurve> Div = new();
 
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => value != 0 ? value / ListValue(Div, handler) : 0f;
+        => value != 0 ? value / ListValue(Div, handler, user: user) : 0f;
 }
 
 /// <summary>
@@ -69,7 +69,7 @@ public sealed partial class MultiplyCurve : MathCurve
     public List<MathCurve> Mul = new();
 
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => value != 0 ? value * ListValue(Mul, handler) : 0f;
+        => value != 0 ? value * ListValue(Mul, handler, user: user) : 0f;
 }
 
 /// <summary>
@@ -107,7 +107,7 @@ public sealed partial class AddCurve : MathCurve
     public List<MathCurve> Add = new();
 
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => value + ListValue(Add, handler);
+        => value + ListValue(Add, handler, user: user);
 }
 
 /// <summary>
@@ -119,7 +119,7 @@ public sealed partial class MinusCurve : MathCurve
     public List<MathCurve> Minus = new();
 
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => value - ListValue(Minus, handler);
+        => value - ListValue(Minus, handler, user: user);
 }
 
 /// <summary>
@@ -131,7 +131,7 @@ public sealed partial class PowCurve : MathCurve
     public List<MathCurve> Pow = new();
 
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => (float)Math.Pow(value, ListValue(Pow, handler));
+        => (float)Math.Pow(value, ListValue(Pow, handler, user: user));
 }
 
 /// <summary>
