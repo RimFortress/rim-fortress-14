@@ -19,7 +19,10 @@ public sealed class AiDevWindowUiController : UIController
 
     public event Action<GoapBreakpoint>? OnBreakpointAdded;
     public event Action<GoapBreakpoint>? OnBreakpointRemoved;
+
     public event Action<(GoapBreakpoint Point, GoapPlanDebugInfo Plan)>? OnBreakpointHit;
+
+    public List<GoapBreakpoint> GoapBreakpoints { get; private set; } = new();
 
     public override void Initialize()
     {
@@ -44,16 +47,19 @@ public sealed class AiDevWindowUiController : UIController
 
     private void OnBreakpoint(GoapBreakpointMessage msg, EntitySessionEventArgs args)
     {
+        GoapBreakpoints.Add(msg.Point);
         OnBreakpointAdded?.Invoke(msg.Point);
     }
 
     private void OnRemoveBreakpoint(GoapBreakpointRemoveMessage msg, EntitySessionEventArgs args)
     {
+        GoapBreakpoints.Remove(msg.Point);
         OnBreakpointRemoved?.Invoke(msg.Point);
     }
 
     private void OnBreakpointHitMessage(GoapBreakpointHitMessage msg, EntitySessionEventArgs args)
     {
+        GoapBreakpoints.Remove(msg.Point);
         OnBreakpointHit?.Invoke((msg.Point, msg.Plan));
     }
 
@@ -86,14 +92,12 @@ public sealed class AiDevWindowUiController : UIController
         int index,
         GoapBreakpointKind kind,
         GoapBreakpointResultKind result)
-        => EntityManager
-            .EntityNetManager
-            .SendSystemNetworkMessage(new GoapBreakpointMessage(new(
-                EntityManager.GetNetEntity(target),
-                nodeId,
-                index,
-                kind,
-                result)));
+        => AddBreakpoint(new(
+            EntityManager.GetNetEntity(target),
+            nodeId,
+            kind == GoapBreakpointKind.Planning ? -1 : index,
+            kind,
+            result));
 
     [PublicAPI]
     public void AddBreakpoint(GoapBreakpoint breakpoint)
@@ -108,14 +112,12 @@ public sealed class AiDevWindowUiController : UIController
         int index,
         GoapBreakpointKind kind,
         GoapBreakpointResultKind result)
-        => EntityManager
-            .EntityNetManager
-            .SendSystemNetworkMessage(new GoapBreakpointRemoveMessage(new(
-                EntityManager.GetNetEntity(target),
-                nodeId,
-                index,
-                kind,
-                result)));
+        => RemoveBreakpoint(new(
+            EntityManager.GetNetEntity(target),
+            nodeId,
+            index,
+            kind,
+            result));
 
     [PublicAPI]
     public void RemoveBreakpoint(GoapBreakpoint breakpoint)

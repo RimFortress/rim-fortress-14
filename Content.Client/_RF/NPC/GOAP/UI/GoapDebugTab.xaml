@@ -34,20 +34,11 @@
                 </BoxContainer>
             </BoxContainer>
             <Button Name="AddPointButton" Text="Add Breakpoint"/>
+        </controls:DraggablePanel>
 
-            <PanelContainer StyleClasses="LowDivider" Margin="3 2"/>
-
-            <BoxContainer Margin="3">
-                <Label Text="Planning fail"/>
-                <Control HorizontalExpand="True"/>
-                <CheckBox Name="PlanningFailedButton"/>
-            </BoxContainer>
-
-            <BoxContainer Margin="3">
-                <Label Text="Planning success"/>
-                <Control HorizontalExpand="True"/>
-                <CheckBox Name="PlanningSuccessButton"/>
-            </BoxContainer>
+        <controls:DraggablePanel Name="VisibilityPanel" Title="Visibility">
+            <Label Text="Compounds:"/>
+            <BoxContainer Name="VisibilityBox" Orientation="Vertical"/>
         </controls:DraggablePanel>
 
         <controls:DraggablePanel Name="PlanPanel" Title="Plan Info">
@@ -85,4 +76,6 @@
             <PanelContainer StyleClasses="LowDividerDark" Margin="3 2"/>
         </controls:DraggablePanel>
     </LayoutContainer>
+
+    <PopupContainer Name="MenuRoot"/>
 </controls:GoapDebugTab>

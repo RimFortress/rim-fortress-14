@@ -1,26 +1,10 @@
 <controls:UtilityAiGoalControl
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client._RF.NPC.UtilityAi.UI">
-    <PanelContainer StyleClasses="PanelHighlighted"/>
-
-    <BoxContainer Orientation="Vertical" Margin="1">
-        <Control>
-            <PanelContainer StyleClasses="PanelDark"/>
-            <BoxContainer Margin="5 5 8 0">
-                <RichTextLabel Name="Title"/>
-                <Control HorizontalExpand="True"/>
-                <RichTextLabel Name="StatusLabel"/>
-            </BoxContainer>
-        </Control>
-        <PanelContainer StyleClasses="LowDivider"/>
-
-        <ScrollContainer HorizontalExpand="True" VerticalExpand="True">
-            <TabContainer Name="TabContainer" VerticalExpand="True"
-                          HorizontalExpand="True">
-                <BoxContainer Name="CommonTab" Orientation="Vertical"/>
-                <BoxContainer Name="CurvesTab" Orientation="Vertical"/>
-                <BoxContainer Name="ConditionsTab" Orientation="Vertical"/>
-            </TabContainer>
-        </ScrollContainer>
-    </BoxContainer>
+    <TabContainer Name="TabContainer" VerticalExpand="True"
+                  HorizontalExpand="True">
+        <BoxContainer Name="CommonTab" Orientation="Vertical"/>
+        <BoxContainer Name="CurvesTab" Orientation="Vertical"/>
+        <BoxContainer Name="ConditionsTab" Orientation="Vertical"/>
+    </TabContainer>
 </controls:UtilityAiGoalControl>

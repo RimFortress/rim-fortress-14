@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Content.Server.Administration.Managers;
 using Content.Server.NPC.Systems;
@@ -187,6 +188,9 @@ public sealed partial class GoapSystem : SharedGoapSystem
                                     continue;
 
                                 if (comp.Plan == null && point.Result != GoapBreakpointResultKind.False)
+                                    continue;
+
+                                if (point.NodeId != -1 && comp.PlanDebug.Value.Nodes.All(x => x.NodeId != point.NodeId))
                                     continue;
 
                                 SendDebug(session, uid);
