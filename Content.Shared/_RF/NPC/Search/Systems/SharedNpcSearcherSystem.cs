@@ -14,9 +14,9 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// <summary>
 /// A system that allows GOAP agents to search for entities using complex filters.
 /// </summary>
-public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
+public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
 
@@ -123,7 +123,7 @@ public sealed class NpcSearcherSystem : EntitySystem, IQuerySearcher
             && cache.ValidUntil >= _timing.CurTime)
             return cache.Result;
 
-        if (!_proto.Resolve(protoId, out var proto))
+        if (!Proto.Resolve(protoId, out var proto))
             return new();
 
         var query = new Dictionary<EntityUid, float>();

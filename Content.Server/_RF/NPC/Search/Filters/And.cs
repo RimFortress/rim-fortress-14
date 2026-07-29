@@ -15,7 +15,7 @@ public sealed partial class And : BaseSearchFilter<And>
 
 public sealed class AndSystem : NpcSearchFilterSystem<And>
 {
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, And filter)
     {

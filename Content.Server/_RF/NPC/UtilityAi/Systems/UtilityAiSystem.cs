@@ -20,7 +20,10 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
     public override void Initialize()
     {
         base.Initialize();
+
+#if TOOLS
         SubscribeNetworkEvent<UtilityAiDebugInfoRequest>(OnDebugInfoRequest);
+#endif
     }
 
     private void OnDebugInfoRequest(UtilityAiDebugInfoRequest msg, EntitySessionEventArgs args)

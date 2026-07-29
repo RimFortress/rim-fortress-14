@@ -13,7 +13,6 @@ using Content.Shared.Tools;
 using JetBrains.Annotations;
 using Robust.Server.Containers;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization;
 
 namespace Content.Server._RF.NPC.Systems;
 
@@ -217,10 +216,12 @@ public sealed class NpcHelperSystem : EntitySystem
 
     private static bool IsComplexObject(Type type)
     {
-        if (type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(EntityUid))
-            return false;
-
-        if (type == typeof(TimeSpan))
+        if (type.IsPrimitive
+            || type.IsEnum
+            || type == typeof(string)
+            || type == typeof(EntityUid)
+            || type == typeof(ProtoId<>)
+            || type == typeof(TimeSpan))
             return false;
 
         return true;

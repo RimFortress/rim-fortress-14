@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.UtilityAi;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface.Controllers;
@@ -17,6 +18,11 @@ public sealed class AiDevWindowUiController : UIController
     /// </summary>
     public event Action<(EntityUid Target, UtilityAiDebugInfo Info)>? OnUtilityAiDebugInfo;
 
+    /// <summary>
+    /// An event invoked when the client receives debug information about a NPC Search.
+    /// </summary>
+    public event Action<(EntityUid Target, NpcSearchGraph Info)>? OnNpcSearchDebugInfo;
+
     public event Action<GoapBreakpoint>? OnBreakpointAdded;
     public event Action<GoapBreakpoint>? OnBreakpointRemoved;
 
@@ -30,6 +36,7 @@ public sealed class AiDevWindowUiController : UIController
 
         SubscribeNetworkEvent<GoapDebugInfoMessage>(OnGoapDebugInfoMessage);
         SubscribeNetworkEvent<UtilityAiDebugInfoMessage>(OnUtilityAiDebugInfoMessage);
+        SubscribeNetworkEvent<NpcSearchDebugInfoMessage>(OnNpcSearchDebugInfoMessage);
         SubscribeNetworkEvent<GoapBreakpointMessage>(OnBreakpoint);
         SubscribeNetworkEvent<GoapBreakpointRemoveMessage>(OnRemoveBreakpoint);
         SubscribeNetworkEvent<GoapBreakpointHitMessage>(OnBreakpointHitMessage);
@@ -43,6 +50,11 @@ public sealed class AiDevWindowUiController : UIController
     private void OnUtilityAiDebugInfoMessage(UtilityAiDebugInfoMessage msg, EntitySessionEventArgs args)
     {
         OnUtilityAiDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Info));
+    }
+
+    private void OnNpcSearchDebugInfoMessage(NpcSearchDebugInfoMessage msg, EntitySessionEventArgs args)
+    {
+        OnNpcSearchDebugInfo?.Invoke((EntityManager.GetEntity(msg.Target), msg.Info));
     }
 
     private void OnBreakpoint(GoapBreakpointMessage msg, EntitySessionEventArgs args)
@@ -84,6 +96,17 @@ public sealed class AiDevWindowUiController : UIController
         => EntityManager
             .EntityNetManager
             .SendSystemNetworkMessage(new UtilityAiDebugInfoRequest(EntityManager.GetNetEntity(uid)));
+
+    /// <summary>
+    /// Requests debug information about the NPC Search,
+    /// which can be received by subscribing to <see cref="OnNpcSearchDebugInfo"/>.
+    /// </summary>
+    /// <param name="uid">NPC entity.</param>
+    [PublicAPI]
+    public void RequestNpcSearchDebug(EntityUid uid)
+        => EntityManager
+            .EntityNetManager
+            .SendSystemNetworkMessage(new NpcSearchDebugInfoRequest(EntityManager.GetNetEntity(uid)));
 
     [PublicAPI]
     public void AddBreakpoint(

@@ -8,7 +8,7 @@ namespace Content.Shared._RF.NPC.Search.Components;
 /// A component that stores a cache of entity search results.
 /// </summary>
 [RegisterComponent]
-[Access(typeof(NpcSearcherSystem))]
+[Access(typeof(SharedNpcSearcherSystem))]
 public sealed partial class NpcSearcherComponent : Component
 {
     [DataField]

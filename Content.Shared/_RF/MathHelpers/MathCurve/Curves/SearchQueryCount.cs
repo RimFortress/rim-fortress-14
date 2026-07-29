@@ -21,7 +21,7 @@ public sealed partial class SearchQueryCount : BaseMathCurve<SearchQueryCount>
 
 public sealed class SearchQueryCountCurveSystem : MathCurveSystem<SearchQueryCount>
 {
-    [Dependency] private readonly NpcSearcherSystem _npcSearcher = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _npcSearcher = default!;
 
     protected override float Curve(SearchQueryCount curve, float input, EntityUid? user)
         => TryComp(user, out GoapComponent? goap)

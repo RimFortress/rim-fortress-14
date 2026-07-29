@@ -35,7 +35,7 @@ public sealed partial class SearchQuery : BaseGoapAction<SearchQuery>
 public sealed class SearchQuerySystem : GoapActionSystem<SearchQuery>
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly NpcSearcherSystem _npcSearcher = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _npcSearcher = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, SearchQuery action)
     {

@@ -18,6 +18,7 @@ public sealed partial class AiDevWindow : Control
 
     private bool _goapReady;
     private bool _utilityAiReady;
+    private bool _searcherReady;
 
     public EntityUid? Target { get; private set; }
 
@@ -28,6 +29,7 @@ public sealed partial class AiDevWindow : Control
 
         TabContainer.SetTabTitle(GoapDebugTab, "GOAP");
         TabContainer.SetTabTitle(UtilityAiDebugTab, "Utility AI");
+        TabContainer.SetTabTitle(SearcherDebugTab, "Searcher");
 
         _aiController = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
         _aiController.OnGoapDebugInfo += args =>
@@ -49,6 +51,15 @@ public sealed partial class AiDevWindow : Control
             UpdateRefresh();
         };
 
+        _aiController.OnNpcSearchDebugInfo += args =>
+        {
+            Target = args.Target;
+            UpdateInfo();
+            SearcherDebugTab.Update(args.Info);
+            _searcherReady = true;
+            UpdateRefresh();
+        };
+
         Refresh.OnPressed += _ => SetTarget(Target!.Value);
     }
 
@@ -56,9 +67,11 @@ public sealed partial class AiDevWindow : Control
     {
         _goapReady = false;
         _utilityAiReady = false;
+        _searcherReady = false;
         UpdateRefresh();
         GoapDebugTab.SetTarget(target);
         _aiController.RequestUtilityAiDebug(target);
+        _aiController.RequestNpcSearchDebug(target);
     }
 
     private void UpdateInfo()
@@ -68,7 +81,7 @@ public sealed partial class AiDevWindow : Control
         TickLabel.Text = $"CurTick: {_timing.CurTick.Value}";
     }
 
-    private void UpdateRefresh() => Refresh.Disabled = !_goapReady || !_utilityAiReady;
+    private void UpdateRefresh() => Refresh.Disabled = !_goapReady || !_utilityAiReady || !_searcherReady;
 }
 
 [UsedImplicitly]

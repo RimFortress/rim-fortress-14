@@ -24,7 +24,7 @@ public sealed partial class SearchQueryValid : BaseGoapCondition<SearchQueryVali
 
 public sealed class SearchQueryValidSystem : GoapConditionSystem<SearchQueryValid>
 {
-    [Dependency] private readonly NpcSearcherSystem _npcSearcher = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _npcSearcher = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, SearchQueryValid condition)
     {

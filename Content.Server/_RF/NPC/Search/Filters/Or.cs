@@ -15,7 +15,7 @@ public sealed partial class Or : BaseSearchFilter<Or>
 
 public sealed class OrSystem : NpcSearchFilterSystem<Or>
 {
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, Or filter)
     {
