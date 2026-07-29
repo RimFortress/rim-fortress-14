@@ -62,14 +62,14 @@ public sealed partial class GraphNodeControl : DebugNodeControl
 
             // Static graph info
             var box = debug == null
-                ? AiUiHelper.AddBox(PreconditionsTab, condition.Type)
+                ? AiUiHelper.AddBox(PreconditionsTab, condition.Name)
                 : AiUiHelper.AddBox(PreconditionsTab,
-                    condition.Type,
+                    condition.Name,
                     debug.Value.Preconditions[i].Result
                         ? $"[color={StyleFortress.LightGood.ToHex()}]True[/color]"
                         : $"[color={StyleFortress.LightBad.ToHex()}]False[/color]");
             AiUiHelper.AddLabel(box.Content, "Type:", entityCon ? "ECS" : "Static");
-            AiUiHelper.AddTypes(box.Content, "Fields", condition.Reflection);
+            AiUiHelper.AddTypes(box.Content, "Fields", condition);
 
             // Planing debug info
             if (debug == null)
@@ -131,14 +131,14 @@ public sealed partial class GraphNodeControl : DebugNodeControl
             if (_actions?.FirstOrNull(x => x.ActionIndex == index) is not { } debugAction)
             {
                 // Static graph info
-                var staticBox = AiUiHelper.AddBox(ActionsTab, action.Type);
-                AiUiHelper.AddTypes(staticBox.Content, "Fields", action.Reflection);
+                var staticBox = AiUiHelper.AddBox(ActionsTab, action.Name);
+                AiUiHelper.AddTypes(staticBox.Content, "Fields", action);
                 continue;
             }
 
             // Runtime debug info
-            var box = AiUiHelper.AddBox(ActionsTab, action.Type, ActionStatusText(debugAction));
-            AiUiHelper.AddTypes(box.Content, "Fields", action.Reflection);
+            var box = AiUiHelper.AddBox(ActionsTab, action.Name, ActionStatusText(debugAction));
+            AiUiHelper.AddTypes(box.Content, "Fields", action);
 
             // Startup
             if (debugAction.StartupSuccess != null)

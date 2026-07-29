@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Reflection;
+using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared.Administration;
@@ -151,34 +152,7 @@ public partial class GoapSystem
             Edges: graph.Edges,
             OutgoingByNodeId: graph.OutgoingByNodeId,
             IncomingByNodeId: graph.IncomingByNodeId);
-    }
 
-    private static GoapStaticGraphObject ToObject(object obj)
-    {
-        var type = obj.GetType();
-        var fields = type
-            .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(f => !f.IsStatic && f.IsDefined(typeof(DataFieldAttribute), inherit: true));
-        var reflection = new Dictionary<string, (string, string)>();
-
-        foreach (var field in fields)
-        {
-            try
-            {
-                reflection.Add(
-                    field.Name,
-                    (field.FieldType.Name,
-                    field.GetValue(obj)?.ToString() ?? "null"));
-            }
-            catch (Exception e)
-            {
-                reflection.Add(
-                    field.Name,
-                    (field.FieldType.Name,
-                    $"<error: {e.GetType().Name}, {e.Message}>"));
-            }
-        }
-
-        return new(type.Name, reflection);
+        ObjectDebugReflection ToObject(object obj) => _npcHelper.GetReflection(obj);
     }
 }

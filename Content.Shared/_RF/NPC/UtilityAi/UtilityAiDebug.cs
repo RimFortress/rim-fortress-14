@@ -41,14 +41,12 @@ public readonly record struct  UtilityAiStaticGraphEdge(
 
 [Serializable, NetSerializable]
 public readonly record struct UtilityAiCurveDebugDump(
-    Dictionary<string, (string Type, string Value)> Reflection,
-    string Type,
+    ObjectDebugReflection Reflection,
     float Input,
     float Output);
 
 [Serializable, NetSerializable]
 public readonly record struct UtilityAiConditionDebugDump(
-    Dictionary<string, (string Type, string Value)> Reflection,
-    string Type,
+    ObjectDebugReflection Reflection,
     GoapDebugDump Dump,
     bool Result);

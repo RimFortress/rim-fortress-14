@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration.Managers;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC.GOAP;
@@ -20,6 +21,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IAdminManager _admin = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
+    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
 
     private static readonly ProtoId<GoapCompoundPrototype> DummyCompound = "Empty";
 

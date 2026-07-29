@@ -89,7 +89,7 @@ public sealed partial class GoapDebugTab : Control
 
                 foreach (var action in node.Actions)
                 {
-                    Index.AddItem(action.Type);
+                    Index.AddItem(action.Name);
                 }
             }
             else
@@ -419,7 +419,7 @@ public sealed partial class GoapDebugTab : Control
             .Submenu("Add breakpoint",
                 r => r
                     .Submenus(node.Actions,
-                        act => act.Type,
+                        act => act.Name,
                         (b, _, actIndex) => b
                             .Submenus(kinds,
                                 k => PointTypeString(k.Kind),
@@ -536,7 +536,7 @@ public sealed partial class GoapDebugTab : Control
             ? $"#{point.NodeId}"
             : "#Any";
         var actName = point.Index != -1
-            ? $"{nodes[point.NodeId].Actions[point.Index].Type} ({point.Index})"
+            ? $"{nodes[point.NodeId].Actions[point.Index].Name} ({point.Index})"
             : "Any";
         var str = $"{nodeName} {actName}";
 

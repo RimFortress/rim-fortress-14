@@ -144,15 +144,10 @@ public readonly record struct GoapStaticGraphDebug(
 [Serializable, NetSerializable]
 public readonly record struct GoapStaticGraphNodeDebug(
     int Id,
-    List<GoapStaticGraphObject> Actions,
-    List<(GoapStaticGraphObject Object, bool EntityCondition)> Preconditions,
+    List<ObjectDebugReflection> Actions,
+    List<(ObjectDebugReflection Object, bool EntityCondition)> Preconditions,
     GoapStateDebugDump EffectsDump,
     ProtoId<GoapCompoundPrototype>? Compound) : IStaticGraphNode;
-
-[Serializable, NetSerializable]
-public readonly record struct GoapStaticGraphObject(
-    string Type,
-    Dictionary<string, (string Type, string Value)> Reflection);
 
 // Breakpoints
 

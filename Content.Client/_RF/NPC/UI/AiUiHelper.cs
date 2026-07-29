@@ -1,5 +1,6 @@
 using Content.Client._RF.NPC.GOAP.UI;
 using Content.Client._RF.Stylesheets;
+using Content.Shared._RF.NPC;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 
@@ -44,6 +45,60 @@ public static class AiUiHelper
                     },
                 },
             });
+        }
+    }
+
+    public static void AddTypes(Control parent, string? title, ObjectDebugReflection node)
+    {
+        var header = title != null
+            ? $"[bold]{title}[/bold]"
+            : (string.IsNullOrEmpty(node.Name)
+                ? $"[bold]{node.TypeName}[/bold]"
+                : $"[bold]{node.Name}[/bold] ({node.TypeName})");
+
+        AddSeparator(parent);
+        var expandBox = new ExpandableBox { Title = header };
+        parent.AddChild(expandBox);
+
+        if (node.Fields.Count > 0)
+        {
+            foreach (var (key, (type, value)) in node.Fields)
+            {
+                AddSeparator(expandBox.Content);
+                expandBox.Content.AddChild(new BoxContainer
+                {
+                    Orientation = BoxContainer.LayoutOrientation.Vertical,
+                    Margin = new Thickness(0f, 1f),
+                    MaxWidth = 300,
+                    Children =
+                    {
+                        new BoxContainer
+                        {
+                            Children =
+                            {
+                                new RichTextLabel { Text = $"[bold]{key}[/bold]" },
+                                new Control { HorizontalExpand = true },
+                                new RichTextLabel { Text = $":{type}" },
+                            },
+                        },
+                        new BoxContainer
+                        {
+                            Children =
+                            {
+                                new RichTextLabel { Text = value },
+                            },
+                        },
+                    },
+                });
+            }
+        }
+
+        if (node.Children.Count <= 0)
+            return;
+
+        foreach (var child in node.Children)
+        {
+            AddTypes(expandBox.Content, null, child);
         }
     }
 

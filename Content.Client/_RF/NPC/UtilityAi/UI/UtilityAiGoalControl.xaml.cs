@@ -77,25 +77,25 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
         AiUiHelper.AddTypes(CommonTab, "Goal State", info.GoalState.State);
 
         // Curves
+        foreach (var curve in info.Curves)
+        {
+            var box = AiUiHelper.AddBox(CurvesTab, curve.Reflection.Name, $"{curve.Output:F3}");
+            AiUiHelper.AddTypes(box.Content, "Fields", curve.Reflection);
+            AiUiHelper.AddLabel(box.Content, "Input:", $"{curve.Input:F3}");
+        }
+
         if (info.Penalty > 0)
             AiUiHelper.AddLabel(CurvesTab, "Total Penalty:", $"{info.Penalty:F3}");
 
         AiUiHelper.AddLabel(CurvesTab, "Modified Score:", $"{info.Modified:F3}");
         AiUiHelper.AddLabel(CurvesTab, "Total Score:", $"{info.Result:F3}");
 
-        foreach (var curve in info.Curves)
-        {
-            var box = AiUiHelper.AddBox(CurvesTab, curve.Type, $"{curve.Output:F3}");
-            AiUiHelper.AddTypes(box.Content, "Fields", curve.Reflection);
-            AiUiHelper.AddLabel(box.Content, "Input:", $"{curve.Input:F3}");
-        }
-
         // Conditions
         foreach (var condition in info.Preconditions)
         {
             var box = AiUiHelper.AddBox(
                 ConditionsTab,
-                condition.Type,
+                condition.Reflection.Name,
                 condition.Result
                     ? $"[color={StyleFortress.LightGood.ToHex()}]True[/color]"
                     : $"[color={StyleFortress.LightBad.ToHex()}]False[/color]");

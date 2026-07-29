@@ -1,5 +1,5 @@
 using System.Linq;
-using System.Reflection;
+using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration.Managers;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Prototypes;
@@ -15,6 +15,7 @@ namespace Content.Server._RF.NPC.UtilityAi.Systems;
 public sealed class UtilityAiSystem : SharedUtilityAiSystem
 {
     [Dependency] private readonly IAdminManager _admin = default!;
+    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
 
     public override void Initialize()
     {
@@ -117,8 +118,7 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
             {
                 var check = Goap.CheckCondition(ent, ent.Comp2.State, condition, out var dump);
                 conditions.Add(new(
-                    GetReflection(condition),
-                    condition.GetType().Name,
+                    _npcHelper.GetReflection(condition),
                     dump ?? new(null, ent.Comp2.State.GetStateDump()),
                     check));
             }
@@ -127,8 +127,7 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
             {
                 var output = Curves.Get(curve, input: score, user: ent);
                 curves.Add(new(
-                    GetReflection(curve),
-                    curve.GetType().Name,
+                    _npcHelper.GetReflection(curve),
                     score,
                     output));
                 score = output;
@@ -155,34 +154,5 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
                 ExecutableGoal: executables.Contains(proto),
                 InActiveBranch: inActiveBranch);
         }
-    }
-
-    private static Dictionary<string, (string, string)> GetReflection(object obj)
-    {
-        var type = obj.GetType();
-        var fields = type
-            .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(f => !f.IsStatic && f.IsDefined(typeof(DataFieldAttribute), inherit: true));
-        var reflection = new Dictionary<string, (string, string)>();
-
-        foreach (var field in fields)
-        {
-            try
-            {
-                reflection.Add(
-                    field.Name,
-                    (field.FieldType.Name,
-                        field.GetValue(obj)?.ToString() ?? "null"));
-            }
-            catch (Exception e)
-            {
-                reflection.Add(
-                    field.Name,
-                    (field.FieldType.Name,
-                        $"<error: {e.GetType().Name}, {e.Message}>"));
-            }
-        }
-
-        return reflection;
     }
 }
