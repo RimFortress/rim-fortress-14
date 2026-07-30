@@ -142,12 +142,13 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <exception cref="KeyNotFoundException"/>
     [Pure, PublicAPI]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetValue<T>(string key) => (T)_state[key];
+    public T GetValue<T>(string key) => _state.TryGetValue(key, out var val) ? (T)val : (T)Defaults[key];
 
     /// <inheritdoc cref="GetValue{T}(string)"/>
     [Pure, PublicAPI]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetValue<T>(StateKey<T> key) where T : notnull => (T)_state[key];
+    public T GetValue<T>(StateKey<T> key) where T : notnull =>
+        _state.TryGetValue(key, out var val) ? (T)val : (T)Defaults[key];
 
     /// <summary>
     /// Tries to get the value associated with the specified key in the dictionary.

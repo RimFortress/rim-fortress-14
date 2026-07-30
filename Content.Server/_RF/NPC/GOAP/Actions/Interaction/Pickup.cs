@@ -52,7 +52,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
         }
 
         // If we have an item in hands, we put it away in inventory
-        if (_hands.TryGetActiveItem(ent.Owner, out var handItem) && handItem != target)
+        if (TryGetValue(ent, action, GoapState.ActiveHandEntity, out var handItem) && handItem != target)
         {
             // If the welder is turned on in hands, turn it off first
             if (TryComp(handItem, out WelderComponent? welder)
@@ -66,23 +66,23 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
             foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))
             {
                 if (!TryComp(entity, out StorageComponent? storage)
-                    || !_storage.Insert(entity, handItem.Value, out _, storageComp: storage))
+                    || !_storage.Insert(entity, handItem, out _, storageComp: storage))
                     continue;
 
-                CreateDump(ent, action, $"{ToPrettyString(handItem.Value)} stored in {ToPrettyString(entity)}");
+                CreateDump(ent, action, $"{ToPrettyString(handItem)} stored in {ToPrettyString(entity)}");
                 break;
             }
 
             // If we couldn't put the item in the inventory, we throw it away
-            if (_hands.TryGetActiveItem(ent.Owner, out _))
+            if (TryGetValue(ent, action, GoapState.ActiveHandEntity, out var h))
             {
-                if (!_hands.TryDrop(handItem.Value))
+                if (!_hands.TryDrop(h))
                 {
-                    CreateDump(ent, action, $"failed to drop {ToPrettyString(handItem.Value)} from the hands");
+                    CreateDump(ent, action, $"failed to drop {ToPrettyString(h)} from the hands");
                     return false;
                 }
 
-                CreateDump(ent, action, $"{ToPrettyString(handItem.Value)} was thrown from the hands");
+                CreateDump(ent, action, $"{ToPrettyString(h)} was thrown from the hands");
             }
         }
 

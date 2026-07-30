@@ -78,19 +78,84 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             return GoapActionResult.Finished;
 
         var item = items[0];
-        var coords = Transform(item).Coordinates;
 
-        if (!TryGetValue(ent, action, action.RangeKey, out var range)
-            || !Transform(ent).Coordinates.TryDistance(EntityManager, coords, out var distance))
+        // If we already started an interaction for this item, check its outcome FIRST,
+        // before anything else - including before the Deleted() check below. A successful
+        // interaction very often consumes/deletes `item` as part of finishing (e.g. the
+        // material gets built into the structure), so `item` legitimately not existing
+        // anymore is an expected side effect of success here, not a failure. If we checked
+        // Deleted(item) first, a doAfter that finished (and deleted the item) between two
+        // updates would be misread as the item having gone missing out from under us.
+        if (TryGetValue(ent, action, action.CurrentDoAfter, out _))
+        {
+            var pendingResult = _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, false);
+
+            if (pendingResult != GoapActionResult.Finished)
+                return pendingResult;
+
+            return AdvanceToNextItem(ent, action, items);
+        }
+
+        // No interaction in flight for this item yet, so it genuinely should still exist -
+        // we're about to walk to it / pick it up.
+        if (Deleted(item))
+        {
+            CreateDump(ent, action, $"{ToPrettyString(item)} not exist");
             return GoapActionResult.Failed;
+        }
 
-        // Movement
-        if (distance > range)
+        var itemCoords = Transform(item).Coordinates;
+        var ownerCoords = Goap.GetValue(ent.Comp.State, GoapState.OwnerCoordinates);
+        var targetCoords = Transform(target).Coordinates;
+        float distance;
+
+        if (!TryGetValue(ent, action, GoapState.ActiveHandEntity, out var heldEnt) || heldEnt != item)
+        {
+            if (!TryGetValue(ent, action, action.RangeKey, out var range)
+                || !ownerCoords.TryDistance(EntityManager, itemCoords, out distance))
+                return GoapActionResult.Failed;
+
+            // Movement
+            if (distance > range)
+            {
+                if (!_moveTo.StartedUp(ent))
+                {
+                    CreateDump(ent, action, $"started moving toward the item: {ToPrettyString(item)}");
+                    _moveTo.StartupMovement(ent, action, itemCoords, true, action.PathfindKey, action.RangeKey, false);
+                }
+
+                var result = _moveTo.UpdateMovement(ent, action, itemCoords, action.PathfindKey, action.RangeKey, false);
+
+                if (result != GoapActionResult.Finished)
+                    return result;
+            }
+            else if (_moveTo.StartedUp(ent))
+                _moveTo.ShutdownMovement(ent, action.PathfindKey);
+
+            // Pick up the item
+            if (!_pickup.Pickup(ent, item, action))
+                return GoapActionResult.Failed;
+
+            CreateDump(ent, action, $"{ToPrettyString(item)} picked up");
+
+            // Turn on welder
+            if (TryComp(item, out WelderComponent? welder) && !welder.Enabled)
+            {
+                CreateDump(ent, action, "turning on welder");
+                _interaction.UserInteraction(ent, Transform(item).Coordinates, item);
+            }
+        }
+
+        if (ownerCoords.TryDistance(EntityManager, targetCoords, out distance)
+            && distance > Goap.GetValue(ent.Comp.State, GoapState.InteractRange))
         {
             if (!_moveTo.StartedUp(ent))
-                _moveTo.StartupMovement(ent, action, coords, true, action.PathfindKey, action.RangeKey, false);
+            {
+                CreateDump(ent, action, $"started moving toward the target: {ToPrettyString(target)}");
+                _moveTo.StartupMovement(ent, action, targetCoords, true, action.PathfindKey, action.RangeKey, false);
+            }
 
-            var result = _moveTo.UpdateMovement(ent, action, coords, action.PathfindKey, action.RangeKey, false);
+            var result = _moveTo.UpdateMovement(ent, action, targetCoords, action.PathfindKey, action.RangeKey, false);
 
             if (result != GoapActionResult.Finished)
                 return result;
@@ -98,21 +163,23 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         else if (_moveTo.StartedUp(ent))
             _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-        // Pick up the item
-        if (!_pickup.Pickup(ent, item, action))
-            return GoapActionResult.Failed;
-
-        // Turn on welder
-        if (TryComp(item, out WelderComponent? welder) && !welder.Enabled)
-        {
-            CreateDump(ent, action, "turning on welder");
-            _interaction.UserInteraction(ent, Transform(item).Coordinates, item);
-        }
-
         var interactResult = _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, false);
 
         if (interactResult != GoapActionResult.Finished)
             return interactResult;
+
+        return AdvanceToNextItem(ent, action, items);
+    }
+
+    /// <summary>
+    /// Called once the interaction for <c>items[0]</c> has finished successfully. Clears the
+    /// per-item doAfter tracking so the next item starts a fresh interaction (instead of
+    /// re-reading this item's already-finished doAfter status), and either advances the item
+    /// list or finishes the whole action if that was the last item.
+    /// </summary>
+    private static GoapActionResult AdvanceToNextItem(Entity<GoapComponent> ent, Construction action, List<EntityUid> items)
+    {
+        ent.Comp.State.Remove(action.CurrentDoAfter);
 
         if (items.Count == 1)
             return GoapActionResult.Finished;
