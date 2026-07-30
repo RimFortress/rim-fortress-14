@@ -20,6 +20,8 @@ namespace Content.Client._RF.NPC.GOAP.UI;
 [GenerateTypedNameReferences]
 public sealed partial class GoapDebugTab : Control
 {
+    [Dependency] private readonly IClipboardManager _clipboard = default!;
+
     /// <summary>
     /// The base size of the graph's nodes.
     /// </summary>
@@ -59,6 +61,7 @@ public sealed partial class GoapDebugTab : Control
 
     public GoapDebugTab()
     {
+        IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
         _controller = UserInterfaceManager.GetUIController<AiDevWindowUiController>();
@@ -414,6 +417,9 @@ public sealed partial class GoapDebugTab : Control
         var existing = _controller.GoapBreakpoints
             .Where(p => p.NodeId == node.Id || p.NodeId == -1)
             .ToList();
+        var nodeActions = _plan?.Actions
+            .Where(x => x.NodeIndex == node.Id)
+            .ToList();
         var menu = ContextMenuBuilder
             .New(Root!.ModalRoot)
             .Submenu("Add breakpoint",
@@ -440,6 +446,11 @@ public sealed partial class GoapDebugTab : Control
                                 -1,
                                 GoapBreakpointKind.Planning,
                                 result))))
+            .When(nodeActions != null,
+                r => r.Submenu("Copy logs",
+                    b => b.Items(nodeActions!,
+                        act => node.Actions[act.ActionIndex].Name,
+                        act => _clipboard.SetText(act.GetLogsString()))))
             .When(existing.Count > 0,
                 r => r.Submenu("Remove breakpoint",
                     b => b

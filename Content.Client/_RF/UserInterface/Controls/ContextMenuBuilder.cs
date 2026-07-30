@@ -85,21 +85,30 @@ public sealed class ContextMenuBuilder
     }
 
     /// <summary>
-    /// Projects a source sequence into leaf entries, LINQ-<c>Select</c>-style.
+    /// Projects a source sequence into leaf entries.
     /// </summary>
     public ContextMenuBuilder Items<T>(
         IEnumerable<T> source,
         Func<T, string> text,
-        Action<T> onClick)
+        Action<T, int> onClick)
     {
+        var index = 0;
         foreach (var item in source)
         {
             var captured = item;
-            Item(text(captured), () => onClick(captured));
+            var i = index++;
+            Item(text(captured), () => onClick(captured, i));
         }
 
         return this;
     }
+
+    /// <inheritdoc cref="Items{T}(System.Collections.Generic.IEnumerable{T},System.Func{T,string},System.Action{T,int})"/>
+    public ContextMenuBuilder Items<T>(
+        IEnumerable<T> source,
+        Func<T, string> text,
+        Action<T> onClick)
+        => Items(source, text, (b, _) => onClick(b));
 
     /// <summary>
     /// Projects a source sequence into nested submenus, one per item, with the item's index available -

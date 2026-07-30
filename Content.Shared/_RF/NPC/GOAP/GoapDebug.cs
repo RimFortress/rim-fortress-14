@@ -115,6 +115,65 @@ public readonly record struct GoapActionDebugInfo(
 
     public GoapActionDebugInfo WithShutdown(GoapDebugDump? dump)
         => this with { ShutdownDump = dump };
+
+    /// <summary>
+    /// Returns all debug information about the action in text format.
+    /// </summary>
+    public string GetLogsString()
+    {
+        var str = $"NodeIndex: {NodeIndex}\nActionIndex: {ActionIndex}\n";
+
+        if (StartupDump != null)
+        {
+            str += "Update:\n";
+            str += $"  Result: {StartupSuccess}\n";
+
+            if (StartupDump?.Dump is { } dump)
+            {
+                str += "  Logs:\n";
+
+                foreach (var log in dump.Split('\n'))
+                {
+                    str += $"  - {log}\n";
+                }
+            }
+        }
+
+        if (ShutdownDump?.Dump != null)
+        {
+            str += "Shutdown:\n";
+
+            foreach (var log in ShutdownDump.Value.Dump.Split('\n'))
+            {
+                str += $"- {log}\n";
+            }
+        }
+
+        if (UpdateDumps.Count > 0)
+        {
+            str += "Updates:\n";
+            str += $"  Result: {StartupSuccess}\n";
+            str += "  Ticks:\n";
+
+            foreach (var update in UpdateDumps)
+            {
+                str += $"  - Tick: {update.Tick}\n";
+                str += $"    Result: {update.Result}\n";
+
+                if (update.Dump.Dump is not { } dump)
+                    continue;
+
+                str += "    Logs:\n";
+
+                foreach (var log in dump.Split('\n'))
+                {
+                    str += $"    - {log}\n";
+                }
+            }
+        }
+
+        return str;
+    }
 }
 
 [Serializable, NetSerializable]
