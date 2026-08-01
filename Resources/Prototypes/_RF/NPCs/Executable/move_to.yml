@@ -1,3 +1,9 @@
+- type: executableGoal
+  id: MoveTo
+  goal: MoveTo
+  goalType:
+  - Place
+
 - type: goapCompound
   id: MoveTo
   tasks:

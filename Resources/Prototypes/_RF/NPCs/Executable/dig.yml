@@ -1,3 +1,16 @@
+- type: executableGoal
+  id: Dig
+  goal: Dig
+  verbIcon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  targetKey: DigTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    tags:
+    - Diggable
+
 - type: goapCompound
   id: Dig
   tasks:
@@ -62,3 +75,53 @@
     - !type:MarkOwnerInRange
     effects:
       TargetDug: true
+
+# Queries
+
+- type: searchQuery
+  id: DigPassiveTarget
+  query: !type:PassiveTargets
+    goals:
+    - Dig
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: PickaxeWieldabe
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Wieldable
+    invert: true
+  - !type:HasTags
+    tags:
+    - Pickaxe
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Pickaxe
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - Pickaxe
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

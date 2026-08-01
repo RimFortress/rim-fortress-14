@@ -1,3 +1,16 @@
+- type: executableGoal
+  id: TakeOwnership
+  goal: TakeOwnership
+  verbIcon: /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  targetKey: TakeOwnershipTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - Item
+
 - type: goapCompound
   id: TakeOwnership
   tasks:
@@ -21,3 +34,13 @@
       targetKey: TakeOwnershipTarget
     effects:
       TargetOwned: true
+
+- type: searchQuery
+  id: TakeOwnershipPassiveTarget
+  query: !type:PassiveTargets
+    goals:
+    - TakeOwnership
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
