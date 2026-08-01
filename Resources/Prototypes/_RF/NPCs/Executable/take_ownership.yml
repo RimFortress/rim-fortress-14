@@ -11,6 +11,14 @@
     components:
     - Item
 
+- type: utilityAiGoal
+  id: TakeOwnership
+  color: "#075967"
+  scoreCurves:
+  - float: 0.8
+  goalState:
+    TargetOwned: true
+
 - type: goapCompound
   id: TakeOwnership
   tasks:

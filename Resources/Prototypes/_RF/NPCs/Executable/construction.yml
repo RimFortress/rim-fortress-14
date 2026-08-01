@@ -9,6 +9,31 @@
     - CommonConstructionGhost
     - Construction
 
+- type: utilityAiGoal
+  id: Construction
+  color: "#FFFF00"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Construction
+  - div:
+    - float: 3
+  - add:
+    - !type:SearchQueryCount
+      query: ConstructionTarget
+    - !type:Normalize
+    - pow:
+      - float: 2
+    - div:
+      - !type:GoalPerformers
+        goal: Construction
+      - clamp:
+          min: 1
+          max: 10
+    - mul:
+      - float: 0.35
+  goalState:
+    TargetConstructed: true
+
 - type: goapCompound
   id: Construction
   tasks:

@@ -11,6 +11,33 @@
     tags:
     - Diggable
 
+- type: utilityAiGoal
+  id: Dig
+  color: "#E36414"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Mining
+  - div:
+    - float: 3
+  - add:
+    - !type:PassiveTargets
+      goal: Dig
+    - !type:Normalize
+    - pow:
+      - float: 2
+    - div:
+      - !type:GoalPerformers
+        goal: Dig
+      - clamp:
+          min: 1
+          max: 10
+    - mul:
+      - float: 0.35
+  goalState:
+    TargetDug: true
+
+# Compound
+
 - type: goapCompound
   id: Dig
   tasks:

@@ -47,7 +47,7 @@
     - Construction
     #- Deconstruct
     - Dig
-    #- FreeHandInteract
+    - Interact
     #- Heal
     #- Chop
     #- Cook

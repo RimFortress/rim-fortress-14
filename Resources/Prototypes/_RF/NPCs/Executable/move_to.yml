@@ -4,6 +4,11 @@
   goalType:
   - Place
 
+- type: utilityAiGoal
+  id: MoveTo
+  goalState:
+    NearTargetPlace: true
+
 - type: goapCompound
   id: MoveTo
   tasks:
