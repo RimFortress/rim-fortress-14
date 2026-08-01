@@ -31,10 +31,8 @@ public sealed class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTarge
 
         while (Query.Count < query.Limit && enumerator.MoveNext(out var uid, out var comp))
         {
-            if (!query.Goals.Contains(comp.Goal) || !_executable.CanControl(owner, comp.User))
-                continue;
-
-            Query.Add(uid);
+            if (query.Goals.Contains(comp.Goal) && _executable.CanControl(comp.User, owner))
+                Query.Add(uid);
         }
     }
 }

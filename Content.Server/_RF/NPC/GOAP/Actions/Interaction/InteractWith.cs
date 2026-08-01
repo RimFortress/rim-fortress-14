@@ -46,6 +46,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
     [Dependency] private readonly UseDelaySystem _useDelay = default!;
     [Dependency] private readonly CombatModeSystem _combatMode = default!;
     [Dependency] private readonly InteractionSystem _interaction = default!;
+
     [Dependency] private readonly EntityQuery<DoAfterComponent> _doAfterQuery = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, InteractWith action) => 1f;
@@ -89,8 +90,48 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
         StateKey<ushort> currentDoAfter,
         bool expectDoAfter)
     {
+        var waitResult = Wait(ent, action, currentDoAfter, out var nextId);
+
+        if (waitResult != GoapActionResult.Finished)
+            return waitResult;
+
+        if (TryComp<CombatModeComponent>(ent, out var combatMode))
+            _combatMode.SetInCombatMode(ent, false, combatMode);
+
+#if TOOLS
+        var handEnt = Goap.TryGetValue(ent.Comp.State, GoapState.ActiveHandEntity, out var hand)
+            ? ToPrettyString(hand)
+            : "hand";
+        CreateDump(ent, action, $"interacted with {ToPrettyString(target)} using {handEnt}");
+#endif
+        _interaction.UserInteraction(ent, Transform(target).Coordinates, target);
+
+        // Detect doAfter, save it, and don't exit from this operator
+        if (_doAfterQuery.TryComp(ent, out var doAfter) && nextId != doAfter.NextId)
+        {
+            CreateDump(ent, action, $"started doAfter {nextId} at {_timing.CurTime}");
+            ent.Comp.State.SetValue(currentDoAfter, nextId);
+            return GoapActionResult.Continuing;
+        }
+
+        // We shouldn't arrive here if we start a doafter, so fail if we expected a doafter
+        if (!expectDoAfter)
+            return GoapActionResult.Finished;
+
+        CreateDump(ent, action, "expected doAfter, but not started");
+        return GoapActionResult.Failed;
+    }
+
+    [PublicAPI]
+    public GoapActionResult Wait(
+        Entity<GoapComponent> ent,
+        GoapAction action,
+        StateKey<ushort> currentDoAfter,
+        out ushort nextId)
+    {
+        nextId = 0;
+
         // Handle ongoing doAfter, and store the doAfter.nextId so we can detect if we started one
-        ushort nextId = 0;
         if (_doAfterQuery.TryComp(ent, out var doAfter))
         {
             // if currentDoAfter contains something, we have an active doAfter
@@ -117,24 +158,6 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
             && _useDelay.IsDelayed(new(ent, useDelay)))
             return GoapActionResult.Continuing;
 
-        if (TryComp<CombatModeComponent>(ent, out var combatMode))
-            _combatMode.SetInCombatMode(ent, false, combatMode);
-
-        _interaction.UserInteraction(ent, Transform(target).Coordinates, target);
-
-        // Detect doAfter, save it, and don't exit from this operator
-        if (doAfter != null && nextId != doAfter.NextId)
-        {
-            CreateDump(ent, action, $"started doAfter {nextId} at {_timing.CurTime}");
-            ent.Comp.State.SetValue(currentDoAfter, nextId);
-            return GoapActionResult.Continuing;
-        }
-
-        // We shouldn't arrive here if we start a doafter, so fail if we expected a doafter
-        if (!expectDoAfter)
-            return GoapActionResult.Finished;
-
-        CreateDump(ent, action, "expected doAfter, but not started");
-        return GoapActionResult.Failed;
+        return GoapActionResult.Finished;
     }
 }

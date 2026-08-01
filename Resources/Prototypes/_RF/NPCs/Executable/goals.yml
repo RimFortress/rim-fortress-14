@@ -18,6 +18,7 @@
   id: Construction
   goal: Construction
   verbIcon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+  targetKey: ConstructionTarget
   maxPerformers: 1
   targetWhitelist:
     components:

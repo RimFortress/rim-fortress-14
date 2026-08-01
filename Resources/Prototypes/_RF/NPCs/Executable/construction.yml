@@ -6,19 +6,13 @@
       query: ConstructionTarget
     action: !type:SearchQuery
       query: ConstructionTarget
+      targetKey: ConstructionTarget
     effects:
-      ConstructionTargetFound: true
+      ConstructionTarget: true
 
   - preconditions:
-    - ConstructionTargetFound == true
-    action: !type:ConstructionItems
-      targetKey: Target
-    effects:
-      ConstructionItemsFound: true
-
-  - preconditions:
-    - ConstructionItemsFound == true
+    - ConstructionTarget != null
     action: !type:Construction
-      targetKey: Target
+      targetKey: ConstructionTarget
     effects:
       TargetConstructed: true

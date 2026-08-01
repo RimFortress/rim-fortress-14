@@ -147,10 +147,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
                 && passive.Goal == exec)
                 RemComp(target, passive);
 
-            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
-                goap.State.Remove(proto.TargetCoordinatesKey);
-            else
-                goap.State.Remove(proto.TargetKey);
+            goap.State.Remove(proto.TargetCoordinatesKey);
+            goap.State.Remove(proto.TargetKey);
 
             break;
         }

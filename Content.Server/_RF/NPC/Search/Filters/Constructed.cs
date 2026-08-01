@@ -15,5 +15,5 @@ public sealed partial class ConstructedFilterSystem : NpcSearchFilterSystem<Cons
     [Dependency] private readonly EntityQuery<ConstructionComponent> _query = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, Constructed filter)
-        => _query.TryComp(target, out var comp) && !string.IsNullOrEmpty(comp.TargetNode);
+        => _query.TryComp(target, out var comp) && string.IsNullOrEmpty(comp.TargetNode);
 }
