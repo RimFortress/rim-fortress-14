@@ -51,17 +51,18 @@ public sealed partial class NpcJob
     /// <summary>
     /// The name of this job
     /// </summary>
+    [ViewVariables]
     public string Name => SetName ?? (_name != null ? Loc.GetString(_name) : string.Empty);
 
     /// <summary>
     /// The icon for this job.
     /// </summary>
-    [ViewVariables]
+    [DataField]
     public SpriteSpecifier? Icon;
 
     /// <summary>
     /// Goals of this job.
     /// </summary>
-    [ViewVariables]
+    [DataField]
     public List<ProtoId<UtilityAiGoalPrototype>> Goals = new();
 }

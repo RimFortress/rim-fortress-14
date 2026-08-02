@@ -21,7 +21,8 @@ public sealed class OwnedQuerySystem : NpcSearchQuerySystem<Owned>
 
         while (Query.Count < query.Limit && enumerator.MoveNext(out var uid))
         {
-            Query.Add(uid);
+            if (!Deleted(uid))
+                Query.Add(uid);
         }
     }
 }

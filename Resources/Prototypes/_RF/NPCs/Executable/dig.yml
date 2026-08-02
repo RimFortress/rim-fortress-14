@@ -28,11 +28,13 @@
     - div:
       - !type:GoalPerformers
         goal: Dig
+      - minus:
+        - float: 1
       - clamp:
           min: 1
-          max: 10
+          max: 4
     - mul:
-      - float: 0.35
+      - float: 0.45
   goalState:
     TargetDug: true
 
@@ -52,23 +54,11 @@
 
   - preconditions:
     - !type:SearchQueryValid
-      query: PickaxeWieldabe
-    action: !type:SearchQuery
-      query: PickaxeWieldabe
-      targetKey: PickupTarget
-    effects:
-      Wieldable: true
-      PickaxeFound: true
-
-  - preconditions:
-    - !type:SearchQueryValid
       query: Pickaxe
     action: !type:SearchQuery
       query: Pickaxe
       targetKey: PickupTarget
-      costMultiplier: 2.5
     effects:
-      Wielded: false
       PickaxeFound: true
 
   - preconditions:
@@ -81,19 +71,12 @@
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: PickupTarget
+    - !type:Wield
+      targetState: true
     effects:
       PickaxePickedUp: true
 
   - preconditions:
-    - Wieldable == true
-    - PickaxePickedUp == true
-    action: !type:Wield
-      targetState: true
-    effects:
-      Wielded: true
-
-  - preconditions:
-    - Wielded != null
     - DigTarget != null
     - PickaxePickedUp == true
     actions:
@@ -110,27 +93,6 @@
   query: !type:PassiveTargets
     goals:
     - Dig
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
-
-- type: searchQuery
-  id: PickaxeWieldabe
-  query: !type:Owned
-  filters:
-  - !type:Component
-    components:
-    - type: Wieldable
-    invert: true
-  - !type:HasTags
-    tags:
-    - Pickaxe
-    invert: true
-  - !type:InInventory
-  - !type:InHands
-  - !type:Accessible
-    invert: true
   considerations:
   - !type:TargetDistance
     curves:

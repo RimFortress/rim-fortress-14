@@ -21,16 +21,16 @@
     - !type:SearchQueryCount
       query: ConstructionTarget
     - !type:Normalize
-    - pow:
-      - float: 2
     - div:
       - !type:GoalPerformers
         goal: Construction
+      - minus:
+        - float: 1
       - clamp:
           min: 1
-          max: 10
+          max: 4
     - mul:
-      - float: 0.35
+      - float: 0.55
   goalState:
     TargetConstructed: true
 

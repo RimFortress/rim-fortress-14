@@ -22,6 +22,12 @@ public sealed partial class Wield : BaseGoapAction<Wield>
     /// </summary>
     [DataField]
     public bool? TargetState;
+
+    /// <summary>
+    /// Will the action fail if the target entity does not have a WieldableComponent?
+    /// </summary>
+    [DataField]
+    public bool FailIfNoComp;
 }
 
 public sealed class WieldActionSystem : GoapActionSystem<Wield>
@@ -36,7 +42,7 @@ public sealed class WieldActionSystem : GoapActionSystem<Wield>
         if (!TryComp(target, out WieldableComponent? comp))
         {
             ComponentNotFound<WieldableComponent>(ent, action);
-            return false;
+            return !action.FailIfNoComp;
         }
 
         if (comp.Wielded == action.TargetState)

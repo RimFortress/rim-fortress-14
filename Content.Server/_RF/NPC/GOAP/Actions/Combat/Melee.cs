@@ -66,7 +66,7 @@ public sealed class MeleeActionSystem : GoapActionSystem<Melee>
         if (!TryGetValue(ent, action, action.TargetKey, out var target))
             return GoapActionResult.Failed;
 
-        if (TryComp(target, out MobStateComponent? mobState)
+        if (Deleted(target) || TryComp(target, out MobStateComponent? mobState)
             && mobState.CurrentState > action.TargetState)
             return GoapActionResult.Finished;
 

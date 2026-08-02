@@ -48,6 +48,9 @@
   - !type:TotalNutrition
     curves:
     - !type:Normalize
+    - !type:Quadratic
+      slope: 1
+      exponent: 0.4
 
 - type: searchQuery
   id: DrinkOpened

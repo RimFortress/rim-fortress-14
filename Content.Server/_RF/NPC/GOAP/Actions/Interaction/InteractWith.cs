@@ -49,6 +49,18 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
 
     [Dependency] private readonly EntityQuery<DoAfterComponent> _doAfterQuery = default!;
 
+    /// <summary>
+    /// How many ticks to keep waiting for <c>doAfter.NextId</c> to change after calling
+    /// <see cref="Content.Server.Interaction.InteractionSystem.UserInteraction"/>, before
+    /// concluding a doAfter genuinely never started. Some interaction handlers (notably
+    /// <c>ConstructionSystem</c>, which validates and applies interactions through an internal
+    /// queue rather than synchronously) don't actually start their doAfter until a tick or
+    /// more after <c>UserInteraction</c> returns, so checking <c>NextId</c> only once,
+    /// immediately, produces false "expected doAfter, but not started" failures for
+    /// interactions that DID start, just not instantly.
+    /// </summary>
+    private const uint DoAfterDetectionGraceTicks = 5;
+
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, InteractWith action) => 1f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, InteractWith action)
@@ -144,6 +156,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
                         return GoapActionResult.Continuing;
                     case DoAfterStatus.Finished:
                         CreateDump(ent, action, $"doAfter returned status '{status}' at {_timing.CurTime}");
+                        ent.Comp.State.Remove(currentDoAfter);
                         return GoapActionResult.Finished;
                     default:
                         CreateDump(ent, action, $"doAfter returned status '{status}' at {_timing.CurTime}");
@@ -158,6 +171,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
             && _useDelay.IsDelayed(new(ent, useDelay)))
             return GoapActionResult.Continuing;
 
+        ent.Comp.State.Remove(currentDoAfter);
         return GoapActionResult.Finished;
     }
 }

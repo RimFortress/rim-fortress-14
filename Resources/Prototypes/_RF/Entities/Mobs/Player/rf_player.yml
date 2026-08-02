@@ -43,13 +43,13 @@
     #- Attack
     - PickUp
     - TakeOwnership
-    #- Pry
+    - Pry
     - Construction
-    #- Deconstruct
+    - Deconstruct
     - Dig
     - Interact
     #- Heal
-    #- Chop
+    - Chop
     #- Cook
   - type: NpcJobs
     jobs:
@@ -59,7 +59,7 @@
       - Construction
     - name: npc-job-mining-name
       icon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
-      tasks:
+      goals:
       - Dig
   - type: NpcFactionMember
     factions:

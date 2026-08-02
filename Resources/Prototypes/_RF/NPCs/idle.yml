@@ -8,9 +8,12 @@
   - proto: Eat
   - proto: Drink
   - proto: Construction
+  - proto: Deconstruct
   - proto: Dig
   - proto: TakeOwnership
   - proto: Interact
+  - proto: Pry
+  - proto: Chop
 
   - preconditions:
     - InContainer == false

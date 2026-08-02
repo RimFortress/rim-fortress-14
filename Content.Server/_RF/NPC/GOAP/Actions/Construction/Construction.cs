@@ -3,6 +3,7 @@ using Content.Server._RF.NPC.GOAP.Actions.Interaction;
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Systems;
+using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Construction.Conditions;
 using Content.Server.Interaction;
@@ -12,14 +13,13 @@ using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared.Construction;
-using Content.Shared.Construction.Prototypes;
 using Content.Shared.Construction.Steps;
+using Content.Shared.DoAfter;
 using Content.Shared.Stacks;
 using Content.Shared.Tag;
 using Content.Shared.Tools;
 using Content.Shared.Tools.Components;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Construction;
 
@@ -62,20 +62,6 @@ public sealed partial class Construction : BaseGoapAction<Construction>
     /// The key where the ID of the current `doAfter` is stored.
     /// </summary>
     public readonly StateKey<ushort> CurrentDoAfter = "CurrentConstructionInteractDoAfter";
-
-    /// <summary>
-    /// Set right after an interaction finishes, holding the tick at which it's safe to look
-    /// for the next need again. <see cref="Content.Server.Construction.ConstructionSystem"/>
-    /// applies an interaction's completion (deleting/storing the material, advancing
-    /// StepIndex, possibly changing node) through a queued event rather than synchronously
-    /// when the doAfter reports <c>Finished</c>, so there can be a short lag before the
-    /// construction graph actually reflects what was just done. Without this pause,
-    /// <see cref="NpcConstructionSystem.FindNextItem"/> can run against stale graph state one
-    /// tick too early.
-    /// </summary>
-    public readonly StateKey<uint> ResumeAtTickKey = "ConstructionResumeAtTick";
-
-    public readonly StateKey<GoapActionResult> LastWaitResultKey = "LastWaitResult";
 }
 
 public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
@@ -88,18 +74,14 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     [Dependency] private readonly InteractWithSystem _interactWith = default!;
     [Dependency] private readonly MoveToSystem _moveTo = default!;
     [Dependency] private readonly PickupActionSystem _pickup = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly ConstructionSystem _construction = default!;
+
+    [Dependency] private readonly EntityQuery<ActiveDoAfterComponent> _activeDoAfterQuery = default!;
+    [Dependency] private readonly EntityQuery<ConstructionComponent> _constructionQuery = default!;
 
     private static readonly ProtoId<ToolQualityPrototype> AnchoringQuality = "Anchoring";
     private static readonly ProtoId<ToolQualityPrototype> WeldingQuality = "Welding";
     private static readonly ProtoId<ToolQualityPrototype> ScrewingQuality = "Screwing";
-
-    /// <summary>
-    /// Number of ticks to wait after an interaction finishes before looking for the next
-    /// need, to give ConstructionSystem's queued completion processing time to actually apply
-    /// the previous step's effects. See the remarks on <see cref="Construction.ResumeAtTickKey"/>.
-    /// </summary>
-    private const uint SettleTicks = 3;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Construction action) => 3f;
 
@@ -122,41 +104,21 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         if (!TryGetValue(ent, action, action.TargetKey, out var target))
             return GoapActionResult.Failed;
 
-        // Give ConstructionSystem's queued interaction-completion processing (deleting/storing
-        // the material, advancing StepIndex, possibly changing node) a couple of ticks to
-        // actually land before we ask what's needed next - see ResumeAtTickKey's remarks.
-        if (TryGetValue(ent, action, action.ResumeAtTickKey, out var resumeAtTick))
-        {
-            if (_timing.CurTick.Value < resumeAtTick)
-                return GoapActionResult.Continuing;
-
-            ent.Comp.State.Remove(action.ResumeAtTickKey);
-        }
-
         var waitResult = _interactWith.Wait(ent, action, action.CurrentDoAfter, out _);
-
-        if (TryGetValue(ent, action, action.LastWaitResultKey, out var lastWait)
-            && waitResult != lastWait
-            && waitResult == GoapActionResult.Finished)
-        {
-            ent.Comp.State.SetValue(action.ResumeAtTickKey, _timing.CurTick.Value + SettleTicks);
-            ent.Comp.State.Remove(action.LastWaitResultKey);
-            CreateDump(ent, action, $"started waiting for tick {_timing.CurTick.Value + SettleTicks}");
-            return GoapActionResult.Continuing;
-        }
-
-        ent.Comp.State.SetValue(action.LastWaitResultKey, waitResult);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
+
+        if (_activeDoAfterQuery.HasComp(ent)
+            || _constructionQuery.TryComp(target, out var comp)
+            && comp.InteractionQueue.Count > 0)
+            return GoapActionResult.Continuing;
 
         // No item locked in yet for this round - figure out fresh, from the target's
         // current construction state, what's needed next.
         if (!TryGetValue(ent, action, action.CurrentItemKey, out var item))
         {
-            var needResult = FindNextItem(ent, action, target, out var found);
-
-            switch (needResult)
+            switch (FindNextItem(ent, action, target, out var found))
             {
                 case NeedResult.Done:
                     return GoapActionResult.Finished;
@@ -236,11 +198,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         else if (_moveTo.StartedUp(ent))
             _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-        var interactResult = _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, true);
-
-        if (interactResult != GoapActionResult.Finished)
-            return interactResult;
-
+        _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, false);
         return AdvanceToNextItem(ent, action);
     }
 
@@ -276,24 +234,126 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     }
 
     /// <summary>
-    /// Looks at the target's construction graph exactly as it stands right now and returns
-    /// the single next thing needed: the first unmet condition of the first relevant edge,
-    /// or (if all of that edge's conditions are met) the next unapplied step of that edge.
-    /// Unlike the old upfront batch collection, this never looks further ahead than the very
-    /// next actionable need, so it can't go stale as soon as the target advances.
+    /// Looks at the target's construction state exactly as it stands right now and returns
+    /// the single next thing needed: the first unmet condition of the relevant edge, or (if
+    /// all of that edge's conditions are met) the next unapplied step of that edge.
     /// </summary>
-    private NeedResult FindNextItem(Entity<GoapComponent> ent, Construction action, EntityUid target, out EntityUid item)
+    /// <remarks>
+    /// For an entity that already has a <see cref="ConstructionComponent"/>, "the relevant
+    /// edge" is asked directly from <see cref="ConstructionSystem"/> - the SAME authority
+    /// <c>HandleEvent</c> itself uses to validate interactions - rather than being
+    /// reconstructed from <see cref="ConstructionComponent.NodePathfinding"/>.
+    /// <c>NodePathfinding</c> is a lookahead path computed for pathfinding/UI purposes and can
+    /// legitimately point further ahead than <see cref="ConstructionComponent.EdgeIndex"/> /
+    /// <see cref="ConstructionComponent.StepIndex"/> - the actual, authoritative position in
+    /// the graph - which is exactly what caused items to be requested for a step construction
+    /// wasn't actually waiting on yet.
+    /// </remarks>
+    private NeedResult FindNextItem(Entity<GoapComponent> ent,
+        Construction action,
+        EntityUid target,
+        out EntityUid item)
+        => TryComp(target, out ConstructionComponent? construct)
+            ? FindNextItemForStructure(ent, action, target, construct, out item)
+            : FindNextItemForGhost(ent, action, target, out item);
+
+    /// <summary>
+    /// Finds the next need for an entity that already has a live <see cref="ConstructionComponent"/>,
+    /// using <see cref="ConstructionSystem"/>'s own authoritative current node/edge/step
+    /// instead of reconstructing them.
+    /// </summary>
+    private NeedResult FindNextItemForStructure(
+        Entity<GoapComponent> ent,
+        Construction action,
+        EntityUid target,
+        ConstructionComponent construct,
+        out EntityUid item)
     {
         item = default;
-        var edges = GetEdges(target);
 
-        if (edges.Count == 0)
+        if (_construction.GetCurrentNode(target, construct) is not { } node)
             return NeedResult.Done;
+
+        ConstructionGraphEdge edge;
+        int stepIndex;
+
+        if (_construction.GetCurrentEdge(target, construct) is { } currentEdge)
+        {
+            // We've already entered an edge - construction.StepIndex is authoritative for
+            // exactly how far into it we are.
+            edge = currentEdge;
+            stepIndex = construct.StepIndex;
+        }
+        else if (construct.TargetEdgeIndex is { } targetEdgeIndex && targetEdgeIndex < node.Edges.Count)
+        {
+            // Not inside an edge yet, but UpdatePathfinding already picked which of this
+            // node's edges we should be taking next - that's the one HandleNode will accept
+            // an interaction for once its conditions are satisfied.
+            edge = node.Edges[targetEdgeIndex];
+            stepIndex = 0;
+        }
+        else
+        {
+            // No edge in progress and no pathfinding target chosen yet. This is usually
+            // transient (resolves itself once UpdatePathfinding runs) rather than "done".
+            return NeedResult.Done;
+        }
 
         var query = _npcHelper.FreeOwnedEntities(ent);
 
-        foreach (var edge in edges)
+        foreach (var condition in edge.Conditions)
         {
+            if (condition.Condition(target, EntityManager))
+                continue;
+
+            if (ConditionQuery(ent, action, query, condition, target) is not { } conditionUid)
+                return NeedResult.NotFound;
+
+            item = conditionUid;
+            return NeedResult.Found;
+        }
+
+        for (var i = stepIndex; i < edge.Steps.Count; i++)
+        {
+            if (StepQuery(ent, action, query, edge.Steps[i]) is not { } stepUid)
+                return NeedResult.NotFound;
+
+            item = stepUid;
+            return NeedResult.Found;
+        }
+
+        return NeedResult.Done;
+    }
+
+    /// <summary>
+    /// Finds the next need for a construction ghost, which has no live
+    /// <see cref="ConstructionComponent"/> (and therefore no authoritative EdgeIndex/StepIndex)
+    /// yet - the whole start-to-target path is still ahead of us, so we walk it from the
+    /// beginning using the ghost's static prototype data.
+    /// </summary>
+    private NeedResult FindNextItemForGhost(Entity<GoapComponent> ent, Construction action, EntityUid target, out EntityUid item)
+    {
+        item = default;
+
+        if (!TryComp(target, out CommonConstructionGhostComponent? ghost)
+            || !_proto.Resolve(ghost.ConstructionProto, out var proto)
+            || !_proto.Resolve(proto.Graph, out var graph))
+            return NeedResult.Done;
+
+        var path = graph.PathId(proto.StartNode, proto.TargetNode)?.ToList();
+
+        if (path == null)
+            return NeedResult.Done;
+
+        path.Insert(0, proto.StartNode);
+
+        var query = _npcHelper.FreeOwnedEntities(ent);
+
+        for (var i = 0; i < path.Count - 1; i++)
+        {
+            if (graph.Edge(path[i], path[i + 1]) is not { } edge)
+                continue;
+
             foreach (var condition in edge.Conditions)
             {
                 if (condition.Condition(target, EntityManager))
@@ -306,11 +366,11 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
                 return NeedResult.Found;
             }
 
-            var stepIndex = TryComp(target, out ConstructionComponent? construct) ? construct.StepIndex : 0;
-
-            for (var i = stepIndex; i < edge.Steps.Count; i++)
+            // A ghost hasn't started this edge yet - there's no StepIndex to speak of, so we
+            // always begin at step 0 of the first edge with an unmet need.
+            foreach (var step in edge.Steps)
             {
-                if (StepQuery(ent, action, query, edge.Steps[i]) is not { } stepUid)
+                if (StepQuery(ent, action, query, step) is not { } stepUid)
                     return NeedResult.NotFound;
 
                 item = stepUid;
@@ -533,62 +593,5 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
 
         CreateDump(ent, action, $"material `{stack}`, amount: {amount}, not found");
         return null;
-    }
-
-    /// <summary>
-    /// Returns all edges to complete the construction of the target entity, computed fresh
-    /// from the target's LIVE construction state every time it's called (never cached across
-    /// calls) - as soon as a step advances <see cref="ConstructionComponent.StepIndex"/> or
-    /// the current node, the very next call reflects that automatically.
-    /// </summary>
-    private List<ConstructionGraphEdge> GetEdges(EntityUid uid)
-    {
-        var edges = new List<ConstructionGraphEdge>();
-        var path = new List<string>();
-        string? start = null;
-        ConstructionGraphPrototype? graph = null;
-
-        // Searching for a path of nodes for an existing structure
-        if (TryComp(uid, out ConstructionComponent? comp))
-        {
-            if (!_proto.TryIndex(comp.Graph, out graph))
-                return edges;
-
-            if (comp.NodePathfinding == null || comp.NodePathfinding.Count == 0)
-                return edges;
-
-            start = graph.Start;
-            path = comp.NodePathfinding.ToList();
-
-            // If there is one node left to execute,
-            // add the current node to the path for correct edge search
-            if (path.Count == 1)
-                path.Insert(0, comp.Node);
-        }
-        // Searching for a path of nodes for a construction ghost
-        else if (TryComp(uid, out CommonConstructionGhostComponent? ghost))
-        {
-            if (!_proto.TryIndex(ghost.ConstructionProto, out var proto)
-                || !_proto.TryIndex(proto.Graph, out graph))
-                return edges;
-
-            start = proto.StartNode;
-            path = graph.PathId(proto.StartNode, proto.TargetNode)?.ToList();
-        }
-
-        if (path == null || graph == null || start == null)
-            return edges;
-
-        path.Insert(0, start);
-
-        for (var i = 0; i < path.Count - 1; i++)
-        {
-            if (graph.Edge(path[i], path[i + 1]) is not { } edge)
-                continue;
-
-            edges.Add(edge);
-        }
-
-        return edges;
     }
 }

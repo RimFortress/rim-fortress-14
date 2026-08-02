@@ -212,13 +212,13 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
             return GoapActionResult.Continuing;
         }
 
+        if (TryGetValue(ent, action, rangeKey, out var range)
+            && Transform(ent).Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance)
+            && distance <= range)
+            return GoapActionResult.Finished;
+
         if (!_steeringQuery.TryComp(ent, out var steeringComp))
         {
-            if (TryGetValue(ent, action, rangeKey, out var range)
-                && Transform(ent).Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance)
-                && distance <= range)
-                return GoapActionResult.Finished;
-
             ComponentNotFound<NPCSteeringComponent>(ent, action);
             return GoapActionResult.Failed;
         }
