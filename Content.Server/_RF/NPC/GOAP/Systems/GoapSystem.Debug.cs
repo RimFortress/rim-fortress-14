@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Reflection;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -57,17 +56,14 @@ public partial class GoapSystem
             return;
 
         // Holy shit
-        if (msg.Point.Kind == GoapBreakpointKind.ActionStartup
-            && msg.Point.Result != GoapBreakpointResultKind.True
-            && msg.Point.Result != GoapBreakpointResultKind.False
-            || msg.Point.Kind == GoapBreakpointKind.Planning
+        if (msg.Point.Kind is GoapBreakpointKind.Planning or GoapBreakpointKind.ActionStartup
             && msg.Point.Result != GoapBreakpointResultKind.True
             && msg.Point.Result != GoapBreakpointResultKind.False
             || msg.Point.Kind == GoapBreakpointKind.ActionUpdate
             && msg.Point.Result != GoapBreakpointResultKind.Continuing
             && msg.Point.Result != GoapBreakpointResultKind.Failed
             && msg.Point.Result != GoapBreakpointResultKind.Finished
-            || msg.Point.Kind == GoapBreakpointKind.ActionShutdown
+            || msg.Point.Kind is GoapBreakpointKind.ActionShutdown or GoapBreakpointKind.ActionPlanShutdown
             && msg.Point.Result != GoapBreakpointResultKind.None)
         {
             DebugTools.Assert(false, $"wrong goap breakpoint settings, kind: {msg.Point.Kind}, result: {msg.Point.Result}");

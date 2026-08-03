@@ -299,6 +299,7 @@ public sealed class GoapPlanJob(
                     null,
                     null,
                     null,
+                    null,
                     new()));
             }
 #endif

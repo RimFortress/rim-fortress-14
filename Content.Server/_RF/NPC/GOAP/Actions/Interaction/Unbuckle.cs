@@ -24,10 +24,6 @@ public sealed class UnbuckleSystem : GoapActionSystem<Unbuckle>
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Unbuckle action) => 0.5f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Unbuckle action)
-    {
-        if (!TryGetValue(ent.Comp.State, action, action.TargetKey, out var target))
-            return false;
-
-        return _buckle.TryUnbuckle(target, ent, false);
-    }
+        => TryGetValue(ent.Comp.State, action, action.TargetKey, out var target)
+           && _buckle.TryUnbuckle(target, ent, false);
 }

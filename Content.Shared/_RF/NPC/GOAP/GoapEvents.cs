@@ -56,6 +56,15 @@ public record struct GoapActionStartup<T>(T Action, bool Success) where T : Goap
 public record struct GoapActionShutdown<T>(T Action) where T : GoapAction;
 
 /// <summary>
+/// Event raised when the plan in which the action is contained has finished.
+/// </summary>
+/// <typeparam name="T">GOAP action type.</typeparam>
+/// <param name="Action">GOAP action.</param>
+/// <param name="Reason">The reason the plan was finished.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapActionPlanShutdown<T>(T Action, GoapPlanFinishReason Reason) where T : GoapAction;
+
+/// <summary>
 /// Event raised when GOAP planning fails.
 /// </summary>
 /// <param name="GoalState">State that was the goal for the failed plan.</param>

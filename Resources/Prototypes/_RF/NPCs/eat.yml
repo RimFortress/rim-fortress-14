@@ -23,6 +23,8 @@
 
   - preconditions:
     - InContainer == false
+    - Buckled == false
+    - Pulled == false
     - FoodFound == true
     actions:
     - !type:EntityCoords

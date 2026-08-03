@@ -14,6 +14,8 @@ public sealed partial class EqualsInt : Equals<int>;
 
 public sealed partial class EqualsFloat : Equals<float>;
 
+public sealed partial class EqualsString : Equals<string>;
+
 public abstract partial class NotEquals<T> : SimpleGoapCondition<T> where T : IEquatable<T>
 {
     public override bool SimpleCheck(GoapState state, IGoapConditionChecker checker)
@@ -25,6 +27,8 @@ public sealed partial class NotEqualsBool : NotEquals<bool>;
 public sealed partial class NotEqualsInt : NotEquals<int>;
 
 public sealed partial class NotEqualsFloat : NotEquals<float>;
+
+public sealed partial class NotEqualsString : NotEquals<string>;
 
 public sealed partial class MoreThanInt : SimpleGoapCondition<int>
 {

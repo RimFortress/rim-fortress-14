@@ -32,6 +32,9 @@
       TakeOwnershipTarget: true
 
   - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
     - TakeOwnershipTarget != null
     actions:
     - !type:EntityCoords

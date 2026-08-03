@@ -55,6 +55,18 @@ public abstract partial class GoapAction : IGoapDebuggable
     /// <param name="performer"></param>
     /// <param name="dump">Debug dump.</param>
     public abstract void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump);
+
+    /// <summary>
+    /// Finishes the action in plan.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    /// <param name="performer"></param>
+    /// <param name="reason">The reason the plan was finished.</param>
+    /// <param name="dump">Debug dump.</param>
+    public abstract void PlanShutdown(EntityUid target,
+        IGoapActionPerformer performer,
+        GoapPlanFinishReason reason,
+        out GoapDebugDump? dump);
 }
 
 public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapAction<T>
@@ -70,6 +82,13 @@ public abstract partial class BaseGoapAction<T> : GoapAction where T : BaseGoapA
 
     public override void Shutdown(EntityUid target, IGoapActionPerformer performer, out GoapDebugDump? dump)
         => performer.ActionShutdown(target, (T)this, out dump);
+
+    public override void PlanShutdown(
+        EntityUid target,
+        IGoapActionPerformer performer,
+        GoapPlanFinishReason reason,
+        out GoapDebugDump? dump)
+        => performer.ActionPlanShutdown(target, (T)this, reason, out dump);
 }
 
 /// <summary>

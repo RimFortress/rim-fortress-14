@@ -73,29 +73,32 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
                 _interaction.UserInteraction(ent, itemForm.Coordinates, handItem);
             }
 
-            var stored = false;
-
-            foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))
+            if (!_hands.TrySelectEmptyHand(ent))
             {
-                if (!TryComp(entity, out StorageComponent? storage)
-                    || !_storage.Insert(entity, handItem, out _, storageComp: storage))
-                    continue;
+                var stored = false;
 
-                CreateDump(ent, action, $"{ToPrettyString(handItem)} stored in {ToPrettyString(entity)}");
-                stored = true;
-                break;
-            }
-
-            // If we couldn't put the item in the inventory, we throw it away
-            if (!stored)
-            {
-                if (!_hands.TryDrop(handItem))
+                foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))
                 {
-                    CreateDump(ent, action, $"failed to drop {ToPrettyString(handItem)} from the hands");
-                    return false;
+                    if (!TryComp(entity, out StorageComponent? storage)
+                        || !_storage.Insert(entity, handItem, out _, storageComp: storage))
+                        continue;
+
+                    CreateDump(ent, action, $"{ToPrettyString(handItem)} stored in {ToPrettyString(entity)}");
+                    stored = true;
+                    break;
                 }
 
-                CreateDump(ent, action, $"{ToPrettyString(handItem)} was thrown from the hands");
+                // If we couldn't put the item in the inventory, we throw it away
+                if (!stored)
+                {
+                    if (!_hands.TryDrop(handItem))
+                    {
+                        CreateDump(ent, action, $"failed to drop {ToPrettyString(handItem)} from the hands");
+                        return false;
+                    }
+
+                    CreateDump(ent, action, $"{ToPrettyString(handItem)} was thrown from the hands");
+                }
             }
         }
 

@@ -16,7 +16,7 @@ public sealed partial class SearchQueryPrototype : IPrototype
     /// Time during which the results of this search query will be considered valid.
     /// </summary>
     [DataField]
-    public TimeSpan ValidTime = TimeSpan.FromSeconds(0.2f);
+    public TimeSpan ValidTime = TimeSpan.FromSeconds(5f);
 
     /// <summary>
     /// A search query whose results will be filtered and scored.

@@ -11,6 +11,9 @@
       BedFound: true
 
   - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
     - BedFound == true
     actions:
     - !type:MoveTo

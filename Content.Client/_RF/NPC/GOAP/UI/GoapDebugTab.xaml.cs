@@ -115,7 +115,6 @@ public sealed partial class GoapDebugTab : Control
                     Result.AddItem("Failed", 2);
                     Result.SetItemMetadata(2, GoapBreakpointResultKind.Failed);
                     break;
-                case GoapBreakpointKind.ActionShutdown:
                 default:
                     Result.AddItem("None", 0);
                     Result.SetItemMetadata(0, GoapBreakpointResultKind.None);
@@ -437,6 +436,12 @@ public sealed partial class GoapDebugTab : Control
                                     node.Id,
                                     actIndex,
                                     GoapBreakpointKind.ActionShutdown,
+                                    GoapBreakpointResultKind.None))
+                            .Item("Plan Shutdown",
+                                () => _controller.AddBreakpoint(uid,
+                                    node.Id,
+                                    actIndex,
+                                    GoapBreakpointKind.ActionPlanShutdown,
                                     GoapBreakpointResultKind.None)))
                     .Submenu("Planning",
                         s => s.Items(new[] { GoapBreakpointResultKind.True, GoapBreakpointResultKind.False },
@@ -522,8 +527,10 @@ public sealed partial class GoapDebugTab : Control
         PointType.SetItemMetadata(1, GoapBreakpointKind.ActionUpdate);
         PointType.AddItem("Action Shutdown", 2);
         PointType.SetItemMetadata(2, GoapBreakpointKind.ActionShutdown);
-        PointType.AddItem("Planning", 3);
-        PointType.SetItemMetadata(3, GoapBreakpointKind.Planning);
+        PointType.AddItem("Action Plan Shutdown", 3);
+        PointType.SetItemMetadata(3, GoapBreakpointKind.ActionPlanShutdown);
+        PointType.AddItem("Planning", 4);
+        PointType.SetItemMetadata(4, GoapBreakpointKind.Planning);
 
         UpdateConfirm();
     }
@@ -556,6 +563,7 @@ public sealed partial class GoapDebugTab : Control
             GoapBreakpointKind.ActionStartup => $"{str} Startup: {point.Result}",
             GoapBreakpointKind.ActionUpdate => $"{str} Update: {point.Result}",
             GoapBreakpointKind.ActionShutdown => $"{str} Shutdown",
+            GoapBreakpointKind.ActionPlanShutdown => $"{str} Plan Shutdown",
             GoapBreakpointKind.Planning => $"{nodeName} Planning: {point.Result}",
             _ => throw new ArgumentOutOfRangeException(),
         };
@@ -568,6 +576,7 @@ public sealed partial class GoapDebugTab : Control
             GoapBreakpointKind.ActionStartup => "Startup",
             GoapBreakpointKind.ActionUpdate => "Update",
             GoapBreakpointKind.ActionShutdown => "Shutdown",
+            GoapBreakpointKind.ActionPlanShutdown => "Plan Shutdown",
             GoapBreakpointKind.Planning => "Planning",
             _ => throw new ArgumentOutOfRangeException(),
         };

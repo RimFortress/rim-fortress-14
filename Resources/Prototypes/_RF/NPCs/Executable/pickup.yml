@@ -19,6 +19,8 @@
   tasks:
   - preconditions:
     - InContainer == false
+    - Buckled == false
+    - Pulled == false
     actions:
     - !type:EntityCoords
       targetKey: PickupTarget

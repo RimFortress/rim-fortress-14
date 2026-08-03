@@ -152,7 +152,9 @@ public sealed partial class GraphNodeControl : DebugNodeControl
 
                 if (debugAction.StartupDump != null)
                 {
-                    AiUiHelper.AddTypes(startupBox.Content, "State Snapshot", debugAction.StartupDump.Value.StateSnapshot.State);
+                    AiUiHelper.AddTypes(startupBox.Content,
+                        "State Snapshot",
+                        debugAction.StartupDump.Value.StateSnapshot.State);
                     AiUiHelper.AddLogs(startupBox.Content, debugAction.StartupDump.Value.Dump);
                 }
             }
@@ -162,15 +164,29 @@ public sealed partial class GraphNodeControl : DebugNodeControl
             {
                 var shutdownBox = AiUiHelper.AddBox(box.Content, "Shutdown");
 
-                AiUiHelper.AddTypes(shutdownBox.Content, "State Snapshot", debugAction.ShutdownDump.Value.StateSnapshot.State);
+                AiUiHelper.AddTypes(shutdownBox.Content,
+                    "State Snapshot",
+                    debugAction.ShutdownDump.Value.StateSnapshot.State);
                 AiUiHelper.AddLogs(shutdownBox.Content, debugAction.ShutdownDump.Value.Dump);
+            }
+
+            // Plan Shutdown
+            if (debugAction.ShutdownPlanDump != null)
+            {
+                var shutdownBox = AiUiHelper.AddBox(box.Content, "Plan Shutdown");
+
+                AiUiHelper.AddTypes(shutdownBox.Content,
+                    "State Snapshot",
+                    debugAction.ShutdownPlanDump.Value.StateSnapshot.State);
+                AiUiHelper.AddLogs(shutdownBox.Content, debugAction.ShutdownPlanDump.Value.Dump);
             }
 
             // Updates
             if (debugAction.UpdateDumps.Count == 0)
                 continue;
 
-            var updateBox = AiUiHelper.AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
+            var updateBox =
+                AiUiHelper.AddBox(box.Content, "Updates", UpdateText(debugAction.UpdateDumps.Last().Result));
 
             foreach (var update in debugAction.UpdateDumps)
             {

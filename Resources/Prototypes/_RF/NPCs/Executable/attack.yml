@@ -1,0 +1,175 @@
+- type: executableGoal
+  id: Attack
+  goal: Attack
+  verbIcon: /Textures/_RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
+  targetKey: AttackTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - MobState
+
+- type: utilityAiGoal
+  id: Attack
+  color: "#FF0000"
+  conditions:
+  - !type:Or
+    conditions:
+    - AttackTarget == null
+    - !type:MobState
+      targetKey: AttackTarget
+      targetState: Dead
+      invert: true
+  scoreCurves:
+  - float: 1
+  goalState:
+    TargetAttacked: true
+
+# Compound
+
+- type: goapCompound
+  id: Combat
+  tasks:
+  # Search
+  - preconditions:
+    - !type:SearchQueryValid
+      query: AttackPassiveTarget
+    action: !type:SearchQuery
+      query: AttackPassiveTarget
+      targetKey: AttackTarget
+    effects:
+      AttackTarget: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: InventoryGuns
+    action: !type:SearchQuery
+      query: InventoryGuns
+      targetKey: WeaponTarget
+    effects:
+      GunFound: true
+      WeaponTarget: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: InventoryMelees
+    action: !type:SearchQuery
+      query: InventoryMelees
+      targetKey: WeaponTarget
+    effects:
+      MeleeFound: true
+      WeaponTarget: true
+
+  # Combat
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - WeaponTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: WeaponTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: WeaponTarget
+    effects:
+      WeaponPickedUp: true
+
+  # Gun
+  - preconditions:
+    - GunFound == true
+    - WeaponPickedUp == true
+    - AttackTarget != null
+    actions:
+    - !type:SwitchBoltClosed
+    - !type:Wield
+      targetState: true
+    - !type:EntityCoords
+      targetKey: AttackTarget
+    - !type:MoveTo
+      rangeKey: MeleeRange
+      stopOnLineOfSight: true
+    - !type:Juke
+      jukeType: Away
+    - !type:Gun
+      targetKey: AttackTarget
+    effects:
+      TargetAttacked: true
+
+  # Melee
+  - preconditions:
+    - MeleeFound == true
+    - WeaponPickedUp == true
+    - AttackTarget != null
+    actions:
+    - !type:Wield
+      targetState: true
+    - !type:EntityCoords
+      targetKey: AttackTarget
+    - !type:MoveTo
+      rangeKey: MeleeRange
+    - !type:Juke
+    - !type:Melee
+      targetKey: AttackTarget
+    effects:
+      TargetAttacked: true
+
+  - preconditions:
+    - WeaponTarget == null
+    - AttackTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: AttackTarget
+    - !type:MoveTo
+      rangeKey: MeleeRange
+    - !type:Juke
+    - !type:Melee
+      targetKey: AttackTarget
+      costMultiplier: 100
+    effects:
+      TargetAttacked: true
+
+# Queries
+
+- type: searchQuery
+  id: AttackPassiveTarget
+  query: !type:PassiveTargets
+    goals:
+    - Attack
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: InventoryGuns
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: Gun
+    invert: true
+  considerations:
+  - !type:Ammo
+    curves:
+    - !type:Quadratic
+
+- type: searchQuery
+  id: InventoryMelees
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: MeleeWeapon
+      damage:
+        types:
+          Slash: 0
+    invert: true
+  considerations:
+  - !type:MeleeDamage
+    curves:
+    - !type:Normalize
+    - !type:Quadratic

@@ -12,6 +12,10 @@
 - type: goapCompound
   id: MoveTo
   tasks:
-  - action: !type:MoveTo
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    action: !type:MoveTo
     effects:
       NearTargetPlace: true

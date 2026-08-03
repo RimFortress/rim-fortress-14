@@ -40,7 +40,7 @@
   - type: NpcController
     goals:
     - MoveTo
-    #- Attack
+    - Attack
     - PickUp
     - TakeOwnership
     - Pry

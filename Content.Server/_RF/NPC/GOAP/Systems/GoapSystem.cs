@@ -248,20 +248,20 @@ public sealed partial class GoapSystem : SharedGoapSystem
                     break;
                 // Action completed so go to the next one.
                 case GoapActionResult.Finished:
-                    ActionShutdown(ent, action);
-
-                    ent.Comp.Plan = plan.MoveNext();
-                    plan = ent.Comp.Plan.Value;
-
-                    // Plan finished!
-                    if (plan.Actions.Count <= plan.Index)
+                    if (plan.Index < plan.Actions.Count - 1)
                     {
-                        PlanShutdown(ent, GoapPlanFinishReason.Finished, false);
+                        ActionShutdown(ent, action);
+                        ent.Comp.Plan = plan.MoveNext();
+                        plan = ent.Comp.Plan.Value;
+
+                        if (!ActionStartup(ent, plan.CurrentAction))
+                            PlanShutdown(ent, GoapPlanFinishReason.Failed);
+
                         break;
                     }
 
-                    if (!ActionStartup(ent, plan.CurrentAction))
-                        PlanShutdown(ent, GoapPlanFinishReason.Failed);
+                    // Plan finished!
+                    PlanShutdown(ent, GoapPlanFinishReason.Finished);
                     break;
                 default:
                     throw new InvalidOperationException();

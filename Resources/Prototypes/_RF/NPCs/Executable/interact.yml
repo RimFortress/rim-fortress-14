@@ -21,7 +21,10 @@
   id: Interact
   tasks:
   - preconditions:
+    - ActiveHandFree == true
     - InContainer == false
+    - Buckled == false
+    - Pulled == false
     actions:
     - !type:EntityCoords
       targetKey: Target

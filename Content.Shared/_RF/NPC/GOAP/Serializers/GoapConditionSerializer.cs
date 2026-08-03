@@ -120,6 +120,13 @@ public static class GoapConditionExpression
             return true;
         }
 
-        throw new ArgumentException($"Unsupported shorthand condition '{text}'.");
+        condition = op switch
+        {
+            "==" => new EqualsString { Key = key, Value = rawValue },
+            "!=" => new NotEqualsString { Key = key, Value = rawValue },
+            _ => throw new ArgumentException($"Unsupported operator '{op}' for string condition."),
+        };
+
+        return true;
     }
 }

@@ -2,7 +2,9 @@ using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
+using Content.Shared.Buckle;
 using Content.Shared.Hands.EntitySystems;
+using Content.Shared.Movement.Pulling.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
@@ -21,6 +23,8 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
+    [Dependency] private readonly SharedBuckleSystem _buckle = default!;
+    [Dependency] private readonly PullingSystem _pulling = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
     protected readonly Dictionary<EntityUid, HashSet<ICommonSession>> DebugSubscriptions = new();
@@ -323,6 +327,64 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
 #endif
     }
 
+    public void ActionPlanShutdown<T>(EntityUid target, T action, GoapPlanFinishReason reason, out GoapDebugDump? dump)
+        where T : BaseGoapAction<T>
+    {
+        action.Dump = null;
+        var ev = new GoapActionPlanShutdown<T>(action, reason);
+        RaiseLocalEvent(target, ref ev);
+        dump = action.Dump;
+        action.Dump = null;
+    }
+
+    /// <summary>
+    /// Finishes the action in plan.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    /// <param name="action">GOAP action.</param>
+    protected void ActionPlanShutdown(EntityUid target, GoapAction action, GoapPlanFinishReason reason)
+    {
+#if TOOLS
+        action.PlanShutdown(target, this, reason, out var dump);
+        var comp = Comp<GoapComponent>(target);
+        DebugTools.Assert(
+            comp.Plan != null,
+            $"attempt to shutdown action for an agent without a plan! Agent: {ToPrettyString(target)}, Action: {action.GetType().ToString()}");
+
+        if (comp.PlanDebug == null)
+            return;
+
+        var plan = comp.Plan.Value;
+        var planDebug = comp.PlanDebug.Value;
+        DebugTools.Assert(plan.Actions.Count == planDebug.Actions.Count);
+        planDebug.Actions[plan.Index] = planDebug.Actions[plan.Index].WithPlanShutdown(dump);
+
+        // Sending debug information to users when a breakpoint is hit
+        var debugAction = planDebug.Actions[plan.Index];
+        var netTarget = GetNetEntity(target);
+        foreach (var (session, points) in Breakpoints)
+        {
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+
+                if (point.Target != netTarget
+                    || point.NodeId != debugAction.NodeIndex && point.NodeId != -1
+                    || point.Index != debugAction.ActionIndex && point.Index != -1
+                    || point.Kind != GoapBreakpointKind.ActionPlanShutdown
+                    || point.Result != GoapBreakpointResultKind.None)
+                    continue;
+
+                BreakpointHit(session, point, planDebug);
+                RemoveBreakpoint(session, point);
+                i--;
+            }
+        }
+#else
+        action.PlanShutdown(target, this, out _);
+#endif
+    }
+
     #endregion
 
     /// <summary>
@@ -339,12 +401,16 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     /// Shutdowns the current NPC plan.
     /// </summary>
     [PublicAPI]
-    public void PlanShutdown(Entity<GoapComponent> ent, GoapPlanFinishReason reason, bool shutdownAction = true)
+    public void PlanShutdown(Entity<GoapComponent> ent, GoapPlanFinishReason reason)
     {
         DebugTools.Assert(ent.Comp.Plan != null);
 
-        if (shutdownAction)
-            ActionShutdown(ent, ent.Comp.Plan.Value.CurrentAction);
+        ActionShutdown(ent, ent.Comp.Plan.Value.CurrentAction);
+
+        for (var i = 0; i < ent.Comp.Plan.Value.Index + 1; i++)
+        {
+            ActionPlanShutdown(ent, ent.Comp.Plan.Value.Actions[i], reason);
+        }
 
         ent.Comp.Plan = null;
         RaiseLocalEvent(ent, new GoapPlanFinished(reason, ent.Comp.GoalState));
@@ -435,6 +501,24 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
                 return false;
 
             value = uid;
+            return true;
+        }
+
+        if (key.Equals(GoapState.Buckled))
+        {
+            value = _buckle.IsBuckled(owner);
+            return true;
+        }
+
+        if (key.Equals(GoapState.Pulled))
+        {
+            value = _pulling.IsPulled(owner);
+            return true;
+        }
+
+        if (key.Equals(GoapState.FreeHandsCount))
+        {
+            value = _hands.CountFreeHands(owner);
             return true;
         }
 
@@ -571,4 +655,15 @@ public interface IGoapActionPerformer
     /// <param name="action">GOAP action.</param>
     /// <param name="dump">Debug dump.</param>
     void ActionShutdown<T>(EntityUid target, T action, out GoapDebugDump? dump) where T : BaseGoapAction<T>;
+
+    /// <summary>
+    /// Notifies the action about the plan being finished.
+    /// </summary>
+    /// <typeparam name="T">GOAP action type.</typeparam>
+    /// <param name="target">Target entity.</param>
+    /// <param name="action">GOAP action.</param>
+    /// <param name="reason">Plan finish reason.</param>
+    /// <param name="dump">Debug dump.</param>
+    void ActionPlanShutdown<T>(EntityUid target, T action, GoapPlanFinishReason reason, out GoapDebugDump? dump)
+        where T : BaseGoapAction<T>;
 }

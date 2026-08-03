@@ -17,6 +17,7 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
         SubscribeLocalEvent<GoapComponent, GoapActionUpdate<T>>(OnActionUpdate);
         SubscribeLocalEvent<GoapComponent, GoapActionStartup<T>>(OnActionStartup);
         SubscribeLocalEvent<GoapComponent, GoapActionShutdown<T>>(OnActionShutdown);
+        SubscribeLocalEvent<GoapComponent, GoapActionPlanShutdown<T>>(OnActionPlanShutdown);
     }
 
     private void OnActionCost(Entity<GoapComponent> ent, ref GoapActionCost<T> args)
@@ -37,6 +38,11 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
     private void OnActionShutdown(Entity<GoapComponent> ent, ref GoapActionShutdown<T> args)
     {
         ActionShutdown(ent, args.Action);
+    }
+
+    private void OnActionPlanShutdown(Entity<GoapComponent> ent, ref GoapActionPlanShutdown<T> args)
+    {
+        ActionPlanShutdown(ent, args.Action, args.Reason);
     }
 
     /// <summary>
@@ -79,4 +85,12 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
     /// <param name="ent">Target entity.</param>
     /// <param name="action">GOAP action.</param>
     protected virtual void ActionShutdown(Entity<GoapComponent> ent, T action) { }
+
+    /// <summary>
+    /// Called once after the plan has finished.
+    /// </summary>
+    /// <param name="ent">Target entity.</param>
+    /// <param name="action">GOAP action.</param>
+    /// <param name="reason">The reason the plan was finished.</param>
+    protected virtual void ActionPlanShutdown(Entity<GoapComponent> ent, T action, GoapPlanFinishReason reason) { }
 }

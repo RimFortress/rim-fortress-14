@@ -61,6 +61,8 @@
 
   - preconditions:
     - InContainer == false
+    - Buckled == false
+    - Pulled == false
     - Axe != null
     actions:
     - !type:EntityCoords

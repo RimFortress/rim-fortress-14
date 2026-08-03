@@ -47,6 +47,9 @@
       ConstructionTarget: true
 
   - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
     - ConstructionTarget != null
     action: !type:Construction
       targetKey: ConstructionTarget

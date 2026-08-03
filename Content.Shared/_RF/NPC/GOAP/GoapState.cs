@@ -388,6 +388,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     public static readonly StateKey<float> InteractRange = "InteractRange";
 
+    public static readonly StateKey<float> MeleeRange = "MeleeRange";
+
     // Entity system defaults
 
     /// <summary>
@@ -397,19 +399,19 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public static readonly StateKey<EntityCoordinates> OwnerCoordinates = "OwnerCoordinates";
 
     /// <summary>
-    /// Stores the ID of the agent's currently active hand.
+    /// Stores the ID of the owner's currently active hand.
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<string> ActiveHand = "ActiveHand";
 
     /// <summary>
-    /// Is the agent currently inside a container?
+    /// Is the owner currently inside a container?
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<bool> InContainer = "InContainer";
 
     /// <summary>
-    /// Is the agent's active hand free?
+    /// Is the owner's active hand free?
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<bool> ActiveHandFree = "ActiveHandFree";
@@ -421,7 +423,25 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public static readonly StateKey<EntityUid> ActiveHandEntity = "ActiveHandEntity";
 
     /// <summary>
-    /// Global defaults for NPCs
+    /// Stores whether the owner is buckled up.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<bool> Buckled = "Buckled";
+
+    /// <summary>
+    /// Stores whether the owner is being pulled or not.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<bool> Pulled = "Pulled";
+
+    /// <summary>
+    /// Stores information about how many free hands the owner has.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<int> FreeHandsCount = "FreeHandsCount";
+
+    /// <summary>
+    /// Global defaults for NPCs.
     /// </summary>
     private static readonly Dictionary<string, object> Defaults = new()
     {
@@ -429,6 +449,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {"IdleRange", 7f},
         {InteractRange, SharedInteractionSystem.InteractionRange - 0.15f },
         {MovementRange, 0.333f},
+        {MeleeRange, 1f},
     };
 
     /// <summary>
@@ -436,7 +457,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </summary>
     public static readonly HashSet<string> EntityDefaults = new()
     {
-        OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree, ActiveHandEntity,
+        OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree,
+        ActiveHandEntity, Buckled, Pulled, FreeHandsCount,
     };
 
     #endregion

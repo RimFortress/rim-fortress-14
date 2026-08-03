@@ -20,7 +20,7 @@
   - type: ControllableNpc
     goals:
     - MoveTo
-    #- Attack
+    - Attack
     - PickUp
     - TakeOwnership
     - Pry

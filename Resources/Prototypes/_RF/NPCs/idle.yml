@@ -3,7 +3,7 @@
   tasks:
   - proto: Sleep
   - proto: MoveTo
-  - proto: Escape
+  - proto: Utility
   - proto: Pickup
   - proto: Eat
   - proto: Drink
@@ -14,9 +14,12 @@
   - proto: Interact
   - proto: Pry
   - proto: Chop
+  - proto: Combat
 
   - preconditions:
     - InContainer == false
+    - Buckled == false
+    - Pulled == false
     actions:
     - !type:PickAccessible
       rangeKey: IdleRange

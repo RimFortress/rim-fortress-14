@@ -13,3 +13,4 @@ utility-ai-goal-interact-name = Interact
 utility-ai-goal-chop-name = Chop down
 utility-ai-goal-pry-name = Pry
 utility-ai-goal-deconstruct-name = Deconstruct
+utility-ai-goal-attack-name = Attack

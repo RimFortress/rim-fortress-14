@@ -97,6 +97,7 @@ public record struct GoapPlanDebugInfo(
 /// <param name="StartupSuccess">Was the action start successful?</param>
 /// <param name="StartupDump">Dump about action startup.</param>
 /// <param name="ShutdownDump">Dump about action shutdown.</param>
+/// <param name="ShutdownPlanDump">Dump about action plan shutdown.</param>
 /// <param name="UpdateDumps">Dumps about action updates.</param>
 [Serializable, NetSerializable]
 public readonly record struct GoapActionDebugInfo(
@@ -105,6 +106,7 @@ public readonly record struct GoapActionDebugInfo(
     bool? StartupSuccess,
     GoapDebugDump? StartupDump,
     GoapDebugDump? ShutdownDump,
+    GoapDebugDump? ShutdownPlanDump,
     List<GoapActionUpdateDebugDump> UpdateDumps)
 {
     public GoapActionDebugInfo WithUpdate(GoapActionUpdateDebugDump update)
@@ -115,6 +117,9 @@ public readonly record struct GoapActionDebugInfo(
 
     public GoapActionDebugInfo WithShutdown(GoapDebugDump? dump)
         => this with { ShutdownDump = dump };
+
+    public GoapActionDebugInfo WithPlanShutdown(GoapDebugDump? dump)
+        => this with { ShutdownPlanDump = dump };
 
     /// <summary>
     /// Returns all debug information about the action in text format.
@@ -144,6 +149,16 @@ public readonly record struct GoapActionDebugInfo(
             str += "Shutdown:\n";
 
             foreach (var log in ShutdownDump.Value.Dump.Split('\n'))
+            {
+                str += $"- {log}\n";
+            }
+        }
+
+        if (ShutdownPlanDump?.Dump != null)
+        {
+            str += "PlanShutdown:\n";
+
+            foreach (var log in ShutdownPlanDump.Value.Dump.Split('\n'))
             {
                 str += $"- {log}\n";
             }
@@ -216,6 +231,7 @@ public enum GoapBreakpointKind : byte
     ActionStartup,
     ActionUpdate,
     ActionShutdown,
+    ActionPlanShutdown,
     Planning,
 }
 
