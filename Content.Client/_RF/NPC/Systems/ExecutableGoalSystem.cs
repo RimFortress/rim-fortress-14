@@ -101,11 +101,12 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                 act: _ => SetEraser(false),
                 onSelected: entities =>
                 {
-                    if (Timing.IsFirstTimePredicted)
-                    {
-                        RaisePredictiveEvent(new PassiveGoalRemoveRequest(
-                            entities.Select(x => GetNetEntity(x)).ToList()));
-                    }
+                    if (!Timing.IsFirstTimePredicted)
+                        return;
+
+                    _selection.ClearSelection();
+                    RaisePredictiveEvent(new PassiveGoalRemoveRequest(
+                        entities.Select(x => GetNetEntity(x)).ToList()));
                 },
                 icon: EraseIcon,
                 netSync: true);
@@ -135,7 +136,10 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                     return;
                 }
 
-                RaiseNetworkEvent(new SetGoalRequest
+                if (!Timing.IsFirstTimePredicted)
+                    return;
+
+                RaisePredictiveEvent(new SetGoalRequest
                 {
                     Entities = args.Selected.Select(x => GetNetEntity(x)).ToList(),
                     TargetCoordinates = GetNetCoordinates(args.ActCoords),

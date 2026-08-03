@@ -58,10 +58,11 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeLocalEvent<ControllableNpcComponent, UtilityAiGoalFinished>(OnUtilityAiGoalFinished);
 
-        SubscribeNetworkEvent<SetGoalRequest>(OnGoalRequest);
-        SubscribeNetworkEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
-        SubscribeNetworkEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
+        SubscribeAllEvent<SetGoalRequest>(OnGoalRequest);
+        SubscribeAllEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
+        SubscribeAllEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
         SubscribeNetworkEvent<SetGoalMessage>(OnSetGoalMessage);
+        SubscribeNetworkEvent<GoalTargetsClearedMessage>(OnGoalTargetsCleared);
 
         Proto.PrototypesReloaded += args =>
         {
@@ -150,8 +151,25 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             goap.State.Remove(proto.TargetCoordinatesKey);
             goap.State.Remove(proto.TargetKey);
 
+            // The state changes above only happen on this side (this handler normally only
+            // runs on the server, since that's where UtilityAiGoalFinished is raised). The
+            // client has its own copy of GoapState with the same target/coordinates, set
+            // earlier via SetGoalMessage, and has no other way of knowing it's now stale.
+            if (_net.IsServer)
+                RaiseNetworkEvent(new GoalTargetsClearedMessage(GetNetEntity(ent), exec));
+
             break;
         }
+    }
+
+    private void OnGoalTargetsCleared(GoalTargetsClearedMessage msg, EntitySessionEventArgs args)
+    {
+        if (!GoapQuery.TryComp(GetEntity(msg.Agent), out var comp)
+            || !Proto.Resolve(msg.Goal, out var goal))
+            return;
+
+        comp.State.Remove(goal.TargetCoordinatesKey);
+        comp.State.Remove(goal.TargetKey);
     }
 
     private void OnGoalRequest(SetGoalRequest request, EntitySessionEventArgs args)
@@ -257,12 +275,19 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         List<ExecutableGoalPrototype>? zeroGoals = null;
         List<ExecutableGoalPrototype>? satisfied = null;
 
+        // Needed below to check whether this specific NPC is allowed to perform a place
+        // goal at all - CheckGoalStart does the same check for targeted goals, but place
+        // goals have no target to run CheckGoalStart against.
+        ControllableQuery.TryComp(ent, out var controllable);
+
         foreach (var proto in goals)
         {
             if (type != null && !proto.GoalType.HasFlag(type))
                 continue;
 
-            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
+            if (proto.GoalType.HasFlag(ExecutableGoalType.Place)
+                && controllable != null
+                && controllable.Goals.Contains(proto))
             {
                 zeroGoals ??= new();
                 zeroGoals.Add(proto);
@@ -315,12 +340,19 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             || !Proto.TryIndex(protoId, out var proto))
             return false;
 
-        if (!proto.GoalType.HasFlag(ExecutableGoalType.Place)
-            && (target == null || !CheckGoalStart(new(ent, ent.Comp1, ent.Comp3), proto, target.Value)))
-            return false;
-
-        if (proto.GoalType.HasFlag(ExecutableGoalType.Place) && targetCoords == null)
-            return false;
+        if (!proto.GoalType.HasFlag(ExecutableGoalType.Place))
+        {
+            if (target == null || !CheckGoalStart(new(ent, ent.Comp1, ent.Comp3), proto, target.Value))
+                return false;
+        }
+        else
+        {
+            // Place goals have no target entity to validate via CheckGoalStart, but the NPC
+            // still needs to actually be allowed to perform this specific goal - previously
+            // this check was skipped entirely for place goals.
+            if (targetCoords == null || !ent.Comp3.Goals.Contains(proto))
+                return false;
+        }
 
         SetGoal(
             new(ent, ent.Comp1, ent.Comp2, ent.Comp3),
@@ -660,4 +692,15 @@ public sealed class PassiveGoalRequest(ProtoId<ExecutableGoalPrototype> goalId, 
 public sealed class PassiveGoalRemoveRequest(List<NetEntity> entities) : EntityEventArgs
 {
     public List<NetEntity> Entities { get; set; } = entities;
+}
+
+/// <summary>
+/// Sent from server to client(s) when a finished goal's target/coordinates were removed
+/// from the agent's GoapState, so the client can drop its own now-stale copy of them.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class GoalTargetsClearedMessage(NetEntity agent, ProtoId<ExecutableGoalPrototype> goal) : EntityEventArgs
+{
+    public NetEntity Agent { get; set; } = agent;
+    public ProtoId<ExecutableGoalPrototype> Goal { get; set; } = goal;
 }

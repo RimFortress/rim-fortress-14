@@ -194,6 +194,16 @@ public sealed class SelectionSystem : SharedSelectionSystem
     }
 
     /// <summary>
+    /// Clears all entities selected by the user.
+    /// </summary>
+    [PublicAPI]
+    public void ClearSelection()
+    {
+        if (TryComp(_player.LocalEntity, out SelectionComponent? comp))
+            ClearSelection(new(_player.LocalEntity.Value, comp));
+    }
+
+    /// <summary>
     /// Returns a list of entities in the player's selection.
     /// </summary>
     [PublicAPI]
