@@ -1,0 +1,122 @@
+- type: executableGoal
+  id: Chop
+  goal: Chop
+  verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  targetKey: ChopTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    tags:
+    - Tree
+
+- type: utilityAiGoal
+  id: Chop
+  color: "#A0522D"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Woodcutting
+  - div:
+    - float: 3
+  - add:
+    - !type:PassiveTargets
+      goal: Chop
+    - !type:Normalize
+    - pow:
+      - float: 2
+    - div:
+      - !type:GoalPerformers
+        goal: Chop
+      - clamp:
+          min: 1
+          max: 10
+    - mul:
+      - float: 0.35
+  goalState:
+    TargetChopDown: true
+
+# Compound
+
+- type: goapCompound
+  id: Chop
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: ChopPassiveTarget
+    action: !type:SearchQuery
+      query: ChopPassiveTarget
+      targetKey: ChopTarget
+    effects:
+      ChopTarget: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: Axe
+    action: !type:SearchQuery
+      query: Axe
+      targetKey: Axe
+    effects:
+      Axe: true
+
+  - preconditions:
+    - InContainer == false
+    - Axe != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Axe
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Axe
+    - !type:Wield
+      targetKey: Axe
+      targetState: true
+    effects:
+      AxePickedUp: true
+
+  - preconditions:
+    - AxePickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: ChopTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Axe
+    - !type:Melee
+      targetKey: ChopTarget
+    - !type:MarkOwnerInRange
+    effects:
+      TargetChopDown: true
+
+# Query
+
+- type: searchQuery
+  id: ChopPassiveTarget
+  query: !type:PassiveTargets
+    goals:
+    - Chop
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Axe
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - FireAxe
+    - BotanyHatchet
+    requireAll: false
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

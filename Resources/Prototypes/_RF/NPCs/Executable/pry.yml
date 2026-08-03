@@ -1,0 +1,67 @@
+- type: executableGoal
+  id: Pry
+  goal: Pry
+  verbIcon: /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Door
+
+- type: utilityAiGoal
+  id: Pry
+  color: "#00D5FF"
+  goalState:
+    TargetPry: true
+
+- type: goapCompound
+  id: Pry
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: Crowbar
+    action: !type:SearchQuery
+      query: Crowbar
+      targetKey: Crowbar
+    effects:
+      Crowbar: true
+
+  - preconditions:
+    - InContainer == false
+    - Crowbar != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Crowbar
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Crowbar
+    effects:
+      CrowbarPickedUp: true
+
+  - preconditions:
+    - CrowbarPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Target
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Target
+    effects:
+      TargetPry: true
+
+- type: searchQuery
+  id: Crowbar
+  query: !type:Owned
+  filters:
+  - !type:ToolQuality
+    quality: Prying
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

@@ -1,0 +1,32 @@
+- type: executableGoal
+  id: PickUp
+  goal: PickUp
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  targetKey: PickupTarget
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Item
+
+- type: utilityAiGoal
+  id: PickUp
+  color: "#00D5FF"
+  goalState:
+    TargetPickedUp: true
+
+- type: goapCompound
+  id: Pickup
+  tasks:
+  - preconditions:
+    - InContainer == false
+    actions:
+    - !type:EntityCoords
+      targetKey: PickupTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: PickupTarget
+    - !type:MarkOwner
+      targetKey: PickupTarget
+    effects:
+      TargetPickedUp: true

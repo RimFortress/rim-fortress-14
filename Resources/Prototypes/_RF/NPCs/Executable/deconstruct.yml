@@ -1,0 +1,50 @@
+- type: executableGoal
+  id: Deconstruct
+  goal: Deconstruct
+  verbIcon: /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
+  targetKey: DeconstructTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - CommonConstructionGhost
+    - Construction
+
+- type: utilityAiGoal
+  id: Deconstruct
+  color: "#945A1C"
+  scoreCurves:
+  - float: 1
+  goalState:
+    TargetDeconstruct: true
+
+- type: goapCompound
+  id: Deconstruct
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: DeconstructPassiveTarget
+    action: !type:SearchQuery
+      query: DeconstructPassiveTarget
+      targetKey: DeconstructTarget
+    effects:
+      DeconstructTarget: true
+
+  - preconditions:
+    - DeconstructTarget != null
+    action: !type:StartDeconstruction
+      targetKey: DeconstructTarget
+    effects:
+      TargetDeconstruct: true
+
+- type: searchQuery
+  id: DeconstructPassiveTarget
+  query: !type:PassiveTargets
+    goals:
+    - Deconstruct
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
