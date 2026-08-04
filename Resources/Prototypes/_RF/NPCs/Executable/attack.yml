@@ -3,7 +3,6 @@
   goal: Attack
   verbIcon: /Textures/_RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
   targetKey: AttackTarget
-  maxPerformers: 1
   goalType:
   - Verb
   - Passive
@@ -14,6 +13,7 @@
 - type: utilityAiGoal
   id: Attack
   color: "#FF0000"
+  failPenalty: 0.05
   conditions:
   - !type:Or
     conditions:
@@ -84,9 +84,6 @@
     - WeaponPickedUp == true
     - AttackTarget != null
     actions:
-    - !type:SwitchBoltClosed
-    - !type:Wield
-      targetState: true
     - !type:EntityCoords
       targetKey: AttackTarget
     - !type:MoveTo
@@ -114,9 +111,11 @@
     - !type:Juke
     - !type:Melee
       targetKey: AttackTarget
+      costMultiplier: 4
     effects:
       TargetAttacked: true
 
+  # Fistfight
   - preconditions:
     - WeaponTarget == null
     - AttackTarget != null
@@ -128,7 +127,7 @@
     - !type:Juke
     - !type:Melee
       targetKey: AttackTarget
-      costMultiplier: 100
+      costMultiplier: 100 # A fistfight is the least desirable option
     effects:
       TargetAttacked: true
 
@@ -140,6 +139,9 @@
     goals:
     - Attack
   considerations:
+  - !type:Damage
+    curves:
+    - !type:Normalize
   - !type:TargetDistance
     curves:
     - preset: TargetDistance

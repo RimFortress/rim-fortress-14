@@ -390,6 +390,11 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     public static readonly StateKey<float> MeleeRange = "MeleeRange";
 
+    /// <summary>
+    /// Default key for storing the action queue.
+    /// </summary>
+    public static readonly StateKey<List<(TimeSpan Time, Func<bool>? Act)>> WaitActionsQueue = "WaitActionsQueue";
+
     // Entity system defaults
 
     /// <summary>

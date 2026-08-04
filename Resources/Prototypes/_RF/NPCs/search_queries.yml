@@ -92,3 +92,18 @@
     curves:
     - !type:Normalize
 
+# Used by Gun action
+- type: searchQuery
+  id: InventoryMagazine
+  query: !type:Inventory
+  filters:
+  - !type:KeyWhitelist
+    targetKey: MagazineWhitelist
+    passWhenNull: true
+    invert: true
+  - !type:KeyWhitelist
+    targetKey: MagazineBlacklist
+  considerations:
+  - !type:Ammo
+    curves:
+    - !type:Quadratic

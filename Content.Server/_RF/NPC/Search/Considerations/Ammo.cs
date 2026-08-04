@@ -1,13 +1,12 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
-using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
 
 namespace Content.Server._RF.NPC.Search.Considerations;
 
 /// <summary>
-/// Evaluates a weapon based on the number of bullets in it.
+/// Evaluates a weapon/magazine based on the number of bullets in it.
 /// </summary>
 public sealed partial class Ammo : BaseSearchConsideration<Ammo>
 {
@@ -20,13 +19,8 @@ public sealed partial class Ammo : BaseSearchConsideration<Ammo>
 
 public sealed class AmmoConsiderationSystem : NpcSearchConsiderationSystem<Ammo>
 {
-    [Dependency] private readonly EntityQuery<GunComponent> _gunQuery = default!;
-
     protected override float GetScore(GoapState state, EntityUid target, Ammo con)
     {
-        if (!_gunQuery.HasComp(target))
-            return 0f;
-
         var ev = new GetAmmoCountEvent();
         RaiseLocalEvent(target, ref ev);
 

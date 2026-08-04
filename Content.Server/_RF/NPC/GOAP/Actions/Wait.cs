@@ -1,4 +1,5 @@
 using Content.Server._RF.NPC.GOAP.Systems;
+using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Robust.Shared.Timing;
@@ -18,9 +19,10 @@ public sealed partial class Wait : BaseGoapAction<Wait>
     public StateKey<TimeSpan> TimeKey;
 }
 
-public sealed class WaitSystem : GoapActionSystem<Wait>
+public sealed class WaitActionSystem : GoapActionSystem<Wait>
 {
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Wait action) => 1.5f;
 
@@ -34,17 +36,7 @@ public sealed class WaitSystem : GoapActionSystem<Wait>
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Wait action)
-    {
-        var state = ent.Comp.State;
-
-        if (!TryGetValue(state, action, action.TimeKey, out var time))
-            return GoapActionResult.Failed;
-
-        time -= _timing.FrameTime;
-        state.SetValue(action.TimeKey, time);
-
-        return time <= TimeSpan.Zero ? GoapActionResult.Finished : GoapActionResult.Continuing;
-    }
+        => _npcTiming.Wait(ent, action, action.TimeKey);
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Wait action)
     {
