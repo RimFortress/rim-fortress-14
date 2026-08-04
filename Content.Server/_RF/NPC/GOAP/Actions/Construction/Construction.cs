@@ -72,7 +72,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
     [Dependency] private readonly InteractionSystem _interaction = default!;
     [Dependency] private readonly InteractWithSystem _interactWith = default!;
-    [Dependency] private readonly MoveToSystem _moveTo = default!;
+    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
     [Dependency] private readonly PickupActionSystem _pickup = default!;
     [Dependency] private readonly ConstructionSystem _construction = default!;
 

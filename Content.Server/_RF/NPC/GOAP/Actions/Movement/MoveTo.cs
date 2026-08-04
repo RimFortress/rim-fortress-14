@@ -57,7 +57,7 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
 /// <summary>
 /// Manages <see cref="MoveTo"/> operator and also provides out-of-the-box AI movement logic for other operators.
 /// </summary>
-public sealed class MoveToSystem : GoapActionSystem<MoveTo>
+public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
 {
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly NPCSteeringSystem _steering = default!;
@@ -191,9 +191,7 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
 
             ent.Comp.State.SetValue(pathfindKey, path);
 
-            if (!_steeringQuery.TryComp(ent, out var steering))
-                steering = _steering.Register(ent, targetCoordinates);
-
+            var steering = _steering.Register(ent, targetCoordinates);
             steering.ArriveOnLineOfSight = stopOnLineOfSight;
             steering.CurrentPath = new Queue<PathPoly>(path.Path);
 
@@ -243,14 +241,17 @@ public sealed class MoveToSystem : GoapActionSystem<MoveTo>
     /// </summary>
     /// <param name="ent">AI entity.</param>
     /// <param name="pathfindKey">Where the pathfinding result will be stored (if applicable).</param>
+    /// <param name="unregisterSteering"><see cref="NPCSteeringSystem.Unregister"/></param>
     [PublicAPI]
     public void ShutdownMovement(
         Entity<GoapComponent> ent,
-        StateKey<PathResultEvent> pathfindKey)
+        StateKey<PathResultEvent> pathfindKey,
+        bool unregisterSteering = true)
     {
         _pendingPaths.Remove(ent);
         ent.Comp.State.Remove(pathfindKey);
-        _steering.Unregister(ent);
+        if (unregisterSteering)
+            _steering.Unregister(ent);
     }
 
     /// <summary>

@@ -245,6 +245,16 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public void Remove<T>(StateKey<T> key) where T : notnull => Remove<T>((string)key);
 
     /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
+    [PublicAPI]
+    public void Remove<T>(StateKey<T>? key) where T : notnull
+    {
+        if (key != null)
+            Remove<T>((string)key.Value);
+    }
+
+    /// <summary>
     /// Removes a key-value pair from the state.
     /// </summary>
     /// <returns>True, if the state contains a key with specified value.</returns>

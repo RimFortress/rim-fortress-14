@@ -1,9 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
+using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
 using Content.Server.NPC.Components;
+using Content.Server.NPC.Pathfinding;
 using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -79,6 +80,27 @@ public sealed partial class Gun : BaseGoapAction<Gun>
 
     [ViewVariables]
     public static readonly StateKey<bool> TargetInLosKey = "GunTargetInLos";
+
+    /// <summary>
+    /// A flag indicating that the agent is moving toward a new magazine.
+    /// </summary>
+    [ViewVariables]
+    public static readonly StateKey<bool> MovingToMagazineKey = "MovingToMagazine";
+
+    /// <summary>
+    /// Where the pathfinding result will be stored (if applicable).
+    /// </summary>
+    [ViewVariables]
+    public static readonly StateKey<PathResultEvent> PathfindKey = "GunMovementPathfinding";
+
+    /// <summary>
+    /// The key that unlocks the found store, which should be picked up.
+    /// </summary>
+    [ViewVariables]
+    public static readonly StateKey<EntityUid> NearbyMagazineKey = "NearbyMagazine";
+
+    [ViewVariables]
+    public static readonly StateKey<JukeType> PreviousJukeTypeKey = "PreviousJukeType";
 }
 
 public sealed class GunActionSystem : GoapActionSystem<Gun>
@@ -99,6 +121,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly HandsSystem _hands = default!;
     [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
+    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
 
     [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
     [Dependency] private readonly EntityQuery<PhysicsComponent> _physicsQuery = default!;
@@ -109,8 +132,10 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private readonly EntityQuery<WieldableComponent> _wieldQuery = default!;
     [Dependency] private readonly EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery = default!;
     [Dependency] private readonly EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery = default!;
+    [Dependency] private readonly EntityQuery<NPCJukeComponent> _jukeQuery = default!;
 
-    private static readonly ProtoId<SearchQueryPrototype> MagazineSearchQuery = "InventoryMagazine";
+    private static readonly ProtoId<SearchQueryPrototype> InventoryMagazineQuery = "InventoryMagazine";
+    private static readonly ProtoId<SearchQueryPrototype> NearbyMagazineQuery = "NearbyMagazine";
     private static readonly StateKey<EntityWhitelist> MagazineWhitelistKey = "MagazineWhitelist";
     private static readonly StateKey<EntityWhitelist> MagazineBlacklistKey = "MagazineBlacklist";
 
@@ -135,6 +160,9 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         state.SetValue(Gun.NextLosCheckKey, TimeSpan.Zero);
         state.SetValue(Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
         state.SetValue(Gun.TargetInLosKey, false);
+        state.SetValue(Gun.MovingToMagazineKey, false);
+        state.Remove(Gun.NearbyMagazineKey);
+        state.Remove(Gun.PreviousJukeTypeKey);
 
         return true;
     }
@@ -147,6 +175,9 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         state.Remove(Gun.NextLosCheckKey);
         state.Remove(Gun.ShootReadyAtKey);
         state.Remove(Gun.TargetInLosKey);
+        state.Remove(Gun.MovingToMagazineKey);
+        state.Remove(Gun.NearbyMagazineKey);
+        state.Remove(Gun.PreviousJukeTypeKey);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Gun action)
@@ -165,6 +196,31 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return waitResult;
 
         var state = ent.Comp.State;
+
+        if (state.GetValue(Gun.MovingToMagazineKey))
+        {
+            if (!TryGetValue(ent, action, Gun.NearbyMagazineKey, out var ammoUid))
+                return GoapActionResult.Failed;
+
+            var result = _moveTo.UpdateMovement(ent,
+                action,
+                Transform(ammoUid).Coordinates,
+                Gun.PathfindKey,
+                GoapState.InteractRange,
+                false);
+
+            if (result != GoapActionResult.Finished)
+                return result;
+
+            _moveTo.ShutdownMovement(ent, Gun.PathfindKey, false);
+            state.SetValue(Gun.MovingToMagazineKey, false);
+
+            if (TryGetValue(ent, action, Gun.PreviousJukeTypeKey, out var type))
+                EnsureComp<NPCJukeComponent>(ent).JukeType = type;
+
+            state.Remove(Gun.PreviousJukeTypeKey);
+            return ReplaceMagazine(ent, action, ammoUid);
+        }
 
         if (!TryGetValue(ent, action, Gun.NextLosCheckKey, out var nextLosCheck))
             return GoapActionResult.Failed;
@@ -331,11 +387,94 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return GoapActionResult.Failed;
         }
 
+        var state = ent.Comp.State;
+
         // Searching for an ammo
-        if (!TryFindSpareAmmo(ent, action, slot, out var ammoUid))
+        if (slot.Whitelist != null)
+            state.SetValue(MagazineWhitelistKey, slot.Whitelist);
+
+        if (slot.Blacklist != null)
+            state.SetValue(MagazineBlacklistKey, slot.Blacklist);
+
+        _searcher.TryGetBestResult(ent, state, InventoryMagazineQuery, out var ammoUid);
+        CreateDump(ent, action, $"query `{InventoryMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
+
+        if (ammoUid == null)
+        {
+            _searcher.TryGetBestResult(ent, state, NearbyMagazineQuery, out ammoUid);
+            CreateDump(ent, action, $"query `{NearbyMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
+            state.SetValue(Gun.MovingToMagazineKey, ammoUid != null);
+        }
+
+        state.Remove(MagazineWhitelistKey);
+        state.Remove(MagazineBlacklistKey);
+
+        if (ammoUid == null)
         {
             CreateDump(ent, action, "out of ammo, no spare magazine/speedloader found");
             return GoapActionResult.Failed;
+        }
+
+        // If the magazine is within arm's reach, we change it right away
+        if (!state.GetValue(Gun.MovingToMagazineKey))
+            return ReplaceMagazine(ent, action, ammoUid.Value, gun: gun, slot: slot);
+
+        // Else, going to the magazine
+        state.SetValue(Gun.MovingToMagazineKey, true);
+        state.SetValue(Gun.NearbyMagazineKey, ammoUid.Value);
+
+        if (_jukeQuery.TryComp(ent, out var juke))
+        {
+            state.SetValue(Gun.PreviousJukeTypeKey, juke.JukeType);
+            RemComp(ent, juke);
+        }
+
+        if (!_moveTo.StartupMovement(
+                ent,
+                action,
+                Transform(ammoUid.Value).Coordinates,
+                true,
+                Gun.PathfindKey,
+                GoapState.InteractRange,
+                false))
+            return GoapActionResult.Failed;
+
+        return GoapActionResult.Continuing;
+    }
+
+    private GoapActionResult ReplaceMagazine(
+        Entity<GoapComponent> ent,
+        Gun action,
+        EntityUid ammoUid,
+        Entity<GunComponent>? gun = null,
+        ItemSlot? slot = null)
+    {
+        if (gun == null)
+        {
+            if (!_gun.TryGetGun(ent, out var g))
+            {
+                CreateDump(ent, action, "no gun equipped");
+                return GoapActionResult.Failed;
+            }
+
+            gun = g;
+        }
+
+        if (slot == null)
+        {
+            if (!_slotsQuery.TryComp(gun, out var itemSlots))
+            {
+                ComponentNotFound<ItemSlotsComponent>(ent, action, gun);
+                return GoapActionResult.Failed;
+            }
+
+            if (!_slots.TryGetSlot(gun.Value, SharedGunSystem.MagazineSlot, out slot, itemSlots))
+            {
+                CreateDump(ent,
+                    action,
+                    $"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
+                return GoapActionResult.Failed;
+            }
         }
 
         _wieldQuery.TryComp(gun, out var wield);
@@ -346,7 +485,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             _npcTiming.EnqueueWait(ent,
                 action,
                 _random.NextFloat(0.15f, 0.33f),
-                onFinish: () => _wield.TryUnwield(gun, wield, ent));
+                onFinish: () => _wield.TryUnwield(gun.Value, wield, ent));
         }
 
         // Remove the old magazine
@@ -355,7 +494,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             _random.NextFloat(0.33f, 0.5f),
             onFinish: () =>
             {
-                if (_slots.TryEject(gun, slot, ent, out var eject))
+                if (_slots.TryEject(gun.Value, slot, ent, out var eject))
                 {
                     // For dramatic effect, throw the magazine in a random direction.
                     _throw.TryThrow(eject.Value,
@@ -372,17 +511,17 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             _random.NextFloat(0.33f, 0.55f),
             onFinish: () =>
             {
-                if (!_hands.TryPickupAnyHand(ent, ammoUid.Value))
+                if (!_hands.TryPickupAnyHand(ent, ammoUid))
                 {
-                    CreateDump(ent, action, $"failed to pickup {ToPrettyString(ammoUid.Value)}");
+                    CreateDump(ent, action, $"failed to pickup {ToPrettyString(ammoUid)}");
                     return false;
                 }
 
-                if (!_slots.TryInsert(gun, slot, ammoUid.Value, ent))
+                if (!_slots.TryInsert(gun.Value, slot, ammoUid, ent))
                 {
                     CreateDump(ent,
                         action,
-                        $"failed to insert magazine `{ToPrettyString(ammoUid.Value)}` in gun `{ToPrettyString(gun)}`");
+                        $"failed to insert magazine `{ToPrettyString(ammoUid)}` in gun `{ToPrettyString(gun)}`");
                     return false;
                 }
 
@@ -396,39 +535,11 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             onFinish: () =>
             {
                 if (wield != null)
-                    _wield.TryWield(gun, wield, ent);
+                    _wield.TryWield(gun.Value, wield, ent);
 
                 CreateDump(ent, action, "gun reloaded");
             });
 
         return GoapActionResult.Continuing;
-    }
-
-    private bool TryFindSpareAmmo(
-        Entity<GoapComponent> ent,
-        GoapAction action,
-        ItemSlot slot,
-        [NotNullWhen(true)] out EntityUid? ammoUid)
-    {
-        ammoUid = null;
-
-        var state = ent.Comp.State;
-
-        if (slot.Whitelist != null)
-            state.SetValue(MagazineWhitelistKey, slot.Whitelist);
-
-        if (slot.Blacklist != null)
-            state.SetValue(MagazineBlacklistKey, slot.Blacklist);
-
-        _searcher.TryGetBestResult(ent, state, MagazineSearchQuery, out ammoUid);
-        CreateDump(ent, action, $"query `{MagazineSearchQuery}` returned: {ToPrettyString(ammoUid)}");
-
-        if (slot.Whitelist != null)
-            state.Remove(MagazineWhitelistKey);
-
-        if (slot.Blacklist != null)
-            state.Remove(MagazineBlacklistKey);
-
-        return ammoUid != null;
     }
 }

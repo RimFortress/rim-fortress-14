@@ -107,3 +107,24 @@
   - !type:Ammo
     curves:
     - !type:Quadratic
+
+- type: searchQuery
+  id: NearbyMagazine
+  query: !type:Nearby
+    range: 7
+  filters:
+  - !type:KeyWhitelist
+    targetKey: MagazineWhitelist
+    passWhenNull: true
+    invert: true
+  - !type:KeyWhitelist
+    targetKey: MagazineBlacklist
+  - !type:InInventory
+  - !type:InHands
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+  - !type:Ammo
+    curves:
+    - !type:Quadratic

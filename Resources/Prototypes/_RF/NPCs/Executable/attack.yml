@@ -62,7 +62,29 @@
       MeleeFound: true
       WeaponTarget: true
 
-  # Combat
+  - preconditions:
+    - !type:SearchQueryValid
+      query: NearbyGuns
+    action: !type:SearchQuery
+      query: NearbyGuns
+      targetKey: WeaponTarget
+      costMultiplier: 2
+    effects:
+      GunFound: true
+      WeaponTarget: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: NearbyMelees
+    action: !type:SearchQuery
+      query: NearbyMelees
+      targetKey: WeaponTarget
+      costMultiplier: 2
+    effects:
+      MeleeFound: true
+      WeaponTarget: true
+
+  # Pickup
   - preconditions:
     - InContainer == false
     - Buckled == false
@@ -142,6 +164,13 @@
   - !type:Damage
     curves:
     - !type:Normalize
+    - mul:
+      - !type:PassiveTargets
+        goal: Attack
+      - clamp:
+          min: 1
+          max: 10
+      - !type:Normalize
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
@@ -160,6 +189,25 @@
     - !type:Quadratic
 
 - type: searchQuery
+  id: NearbyGuns
+  query: !type:Nearby
+    range: 7
+  filters:
+  - !type:Component
+    components:
+    - type: Gun
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+  - !type:Ammo
+    curves:
+    - !type:Quadratic
+
+- type: searchQuery
   id: InventoryMelees
   query: !type:Inventory
   filters:
@@ -171,6 +219,29 @@
           Slash: 0
     invert: true
   considerations:
+  - !type:MeleeDamage
+    curves:
+    - !type:Normalize
+    - !type:Quadratic
+
+- type: searchQuery
+  id: NearbyMelees
+  query: !type:Nearby
+    range: 7
+  filters:
+  - !type:Component
+    components:
+    - type: MeleeWeapon
+      damage:
+        types:
+          Slash: 0
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
   - !type:MeleeDamage
     curves:
     - !type:Normalize
