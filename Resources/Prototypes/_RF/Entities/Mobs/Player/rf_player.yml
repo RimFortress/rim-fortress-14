@@ -64,6 +64,10 @@
       icon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
       goals:
       - Dig
+    - name: npc-job-woodcutting-name
+      icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+      goals:
+      - Chop
   - type: NpcFactionMember
     factions:
     - RimFortress
