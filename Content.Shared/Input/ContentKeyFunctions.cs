@@ -136,6 +136,17 @@ namespace Content.Shared.Input
 
         // RimFortress Start
         public static readonly BoundKeyFunction DragMove = "DragMove";
+
+        /// <summary>
+        /// If this button is pressed, NPC goals will be added to the queue rather than being applied immediately.
+        /// </summary>
+        public static readonly BoundKeyFunction NpcGoalAddToQueue = "NpcGoalAddToQueue";
+
+        /// <summary>
+        /// If this button is pressed on verb button,
+        /// NPC goals will be added to the queue rather than being applied immediately.
+        /// </summary>
+        public static readonly BoundKeyFunction NpcVerbGoalAddToQueue = "NpcVerbGoalAddToQueue";
         // RimFortress End
     }
 }

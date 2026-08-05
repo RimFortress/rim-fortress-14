@@ -48,6 +48,24 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             }
         }
 
+        // Allow other systems to take over the logic of selecting a new goal
+        if (ent.Comp.CurrentGoal != null)
+        {
+            var ev = new BeforeUtilityAiGoalFinished(ent.Comp.CurrentGoal.Value,
+                args.Reason switch
+                {
+                    GoapPlanFinishReason.Finished => UtilityAiGoalFinishReason.Finished,
+                    GoapPlanFinishReason.Failed => UtilityAiGoalFinishReason.Failed,
+                    GoapPlanFinishReason.Interrupted => UtilityAiGoalFinishReason.Interrupted,
+                    _ => throw new ArgumentOutOfRangeException()
+                },
+                false);
+            RaiseLocalEvent(ent, ref ev);
+
+            if (ev.Handled)
+                return;
+        }
+
         switch (args.Reason)
         {
             case GoapPlanFinishReason.Finished:

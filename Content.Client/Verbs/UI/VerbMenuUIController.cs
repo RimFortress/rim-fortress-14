@@ -244,7 +244,8 @@ namespace Content.Client.Verbs.UI
 
         public void OnKeyBindDown(ContextMenuElement element, GUIBoundKeyEventArgs args)
         {
-            if (args.Function != EngineKeyFunctions.Use && args.Function != ContentKeyFunctions.ActivateItemInWorld)
+            if (args.Function != EngineKeyFunctions.Use && args.Function != ContentKeyFunctions.ActivateItemInWorld
+                && args.Function != ContentKeyFunctions.NpcVerbGoalAddToQueue) // RimFortress
                 return;
 
             if (element is not VerbMenuElement verbElement)

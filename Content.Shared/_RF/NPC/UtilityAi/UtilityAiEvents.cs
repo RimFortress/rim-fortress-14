@@ -22,6 +22,22 @@ public record struct UtilityAiGoalScoreModify(ProtoId<UtilityAiGoalPrototype> Go
 public record struct UtilityAiGoalGiven(ProtoId<UtilityAiGoalPrototype> Goal);
 
 /// <summary>
+/// An event raised after the current goal's plan has been finished, but before a new goal is set.
+/// It allows other systems to intervene in the logic of selecting a new goal.
+/// </summary>
+/// <param name="Goal">Finished Utility AI goal prototype.</param>
+/// <param name="Reason">The reason why the goal completion ended.</param>
+/// <param name="Handled">
+/// Has this event been handled by any system?
+/// If true, Utility AI will not search for a new goal for the agent.
+/// </param>
+[PublicAPI, ByRefEvent]
+public record struct BeforeUtilityAiGoalFinished(
+    ProtoId<UtilityAiGoalPrototype> Goal,
+    UtilityAiGoalFinishReason Reason,
+    bool Handled);
+
+/// <summary>
 /// Invoked each time the Utility AI goal is completed.
 /// </summary>
 /// <remarks>

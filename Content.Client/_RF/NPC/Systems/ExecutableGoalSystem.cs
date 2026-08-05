@@ -3,7 +3,9 @@ using Content.Client._RF.Selection;
 using Content.Client.Verbs.UI;
 using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.Systems;
+using Content.Shared.Input;
 using Robust.Client.Graphics;
+using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Shared.Player;
@@ -17,6 +19,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     [Dependency] private readonly IUserInterfaceManager _ui = default!;
     [Dependency] private readonly IOverlayManager _overlay = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly SelectionSystem _selection = default!;
 
     private static readonly SpriteSpecifier EraseIcon
@@ -48,6 +51,9 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     {
         DefaultSelection();
     }
+
+    protected override bool NeedForceGoalExecution()
+        => !_input.DownKeyFunctions.Contains(ContentKeyFunctions.NpcGoalAddToQueue);
 
     #region Selection
 
@@ -143,6 +149,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                 {
                     Entities = args.Selected.Select(x => GetNetEntity(x)).ToList(),
                     TargetCoordinates = GetNetCoordinates(args.ActCoords),
+                    AddToQueue = !NeedForceGoalExecution(),
                 });
             },
             filter: NpcFilter,

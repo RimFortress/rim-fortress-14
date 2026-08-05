@@ -95,7 +95,11 @@ public sealed class SelectionOverlay : Overlay
     private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end, Color color)
     {
         var shader = _prototype.Index(SelectAreaShader).InstanceUnique();
-        var area = new Box2(start.Position, end.Position);
+        var area = new Box2(
+            Math.Min(start.X, end.X),
+            Math.Min(start.Y, end.Y),
+            Math.Max(start.X, end.X),
+            Math.Max(start.Y, end.Y));
         var prevShader = args.WorldHandle.GetShader();
 
         var bottomLeft = args.Viewport.WorldToLocal(area.BottomLeft);
@@ -113,6 +117,8 @@ public sealed class SelectionOverlay : Overlay
         shader.SetParameter("point2", bottomRight);
         shader.SetParameter("point3", topLeft);
         shader.SetParameter("point4", topRight);
+
+        area = area.Enlarged(1f);
 
         args.WorldHandle.UseShader(shader);
         args.WorldHandle.DrawRect(area, Color.White);

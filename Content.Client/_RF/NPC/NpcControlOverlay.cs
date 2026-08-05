@@ -28,7 +28,6 @@ public sealed class NpcControlOverlay : Overlay
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
-    private readonly EntityQuery<TransformComponent> _transformQuery;
     private readonly EntityQuery<ControllableNpcComponent> _controllableQuery;
 
     public override bool RequestScreenTexture => true;
@@ -45,7 +44,6 @@ public sealed class NpcControlOverlay : Overlay
         _transform = _entityManager.System<SharedTransformSystem>();
         _sprite = _entityManager.System<SpriteSystem>();
 
-        _transformQuery = _entityManager.GetEntityQuery<TransformComponent>();
         _controllableQuery = _entityManager.GetEntityQuery<ControllableNpcComponent>();
     }
 
@@ -63,25 +61,52 @@ public sealed class NpcControlOverlay : Overlay
 
         foreach (var entity in _selection.SelectedEntities())
         {
-            if (!_controllableQuery.HasComp(entity)
-                || !_transformQuery.TryComp(entity, out var entityForm)
+            if (!_controllableQuery.TryComp(entity, out var controllable)
                 || !_utilityAi.TryGetCurrentGoal(entity, out var goal)
                 || !_prototype.Resolve(goal, out var proto))
                 continue;
 
-            if (!_executable.TryGetTargetCoordinates(entity, out var coords))
-                return;
+            MapCoordinates lastPos;
 
-            var start = _transform.ToMapCoordinates(entityForm.Coordinates);
-            var end = _transform.ToMapCoordinates(coords.Value);
-            var dist = (end.Position - start.Position).Length();
+            if (_executable.TryGetTargetCoordinates(entity, out var coords))
+            {
+                var start = _transform.GetMapCoordinates(entity);
+                var end = _transform.ToMapCoordinates(coords.Value);
+                var dist = (end.Position - start.Position).Length();
 
-            if (_executable.TryGetTarget(entity, out var uid))
-                SetShader(uid.Value, proto.Color);
-            else if (dist > 0.5f)
-                DrawPointCircle(args, end, proto.Color);
+                if (_executable.TryGetTarget(entity, out var uid))
+                    SetShader(uid.Value, proto.Color);
+                else if (dist > 0.5f)
+                    DrawPointCircle(args, end, proto.Color);
 
-            DrawLine(args, proto.Color, start, end);
+                DrawLine(args, proto.Color, start, end);
+                lastPos = end;
+            }
+            else
+                lastPos = _transform.GetMapCoordinates(entity);
+
+            foreach (var entry in controllable.Queue)
+            {
+                if (!_prototype.Resolve(entry.Goal, out var entryExecProto)
+                    || !_prototype.Resolve(entryExecProto.Goal, out var entryProto))
+                    continue;
+
+                if (entry.Target == null && entry.TargetCoordinates == null)
+                    continue;
+
+                var targetUid = _entityManager.GetEntity(entry.Target);
+                var mapPos = targetUid != null
+                    ? _transform.GetMapCoordinates(targetUid.Value)
+                    : _transform.ToMapCoordinates(entry.TargetCoordinates!.Value);
+
+                if (targetUid != null)
+                    SetShader(targetUid.Value, entryProto.Color);
+                else
+                    DrawPointCircle(args, mapPos, entryProto.Color);
+
+                DrawLine(args, entryProto.Color, lastPos, mapPos);
+                lastPos = mapPos;
+            }
         }
     }
 
@@ -128,8 +153,15 @@ public sealed class NpcControlOverlay : Overlay
         shader.SetParameter("start", screenEnd);
         shader.SetParameter("end", screeStart);
 
+        var box = new Box2(
+                Math.Min(start.X, end.X),
+                Math.Min(start.Y, end.Y),
+                Math.Max(start.X, end.X),
+                Math.Max(start.Y, end.Y))
+            .Enlarged(1f);
+
         args.WorldHandle.UseShader(shader);
-        args.WorldHandle.DrawRect(new Box2(start.Position, end.Position), Color.White);
+        args.WorldHandle.DrawRect(box, Color.White);
         args.WorldHandle.UseShader(prevShader);
     }
 

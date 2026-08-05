@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
@@ -30,7 +29,7 @@ namespace Content.Shared._RF.NPC.Systems;
 /// <summary>
 /// A system that allows the player to set Utility AI goals for NPCs.
 /// </summary>
-public abstract class SharedExecutableGoalSystem : EntitySystem
+public abstract partial class SharedExecutableGoalSystem : EntitySystem
 {
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly EntityWhitelistSystem Whitelist = default!;
@@ -58,13 +57,14 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         base.Initialize();
 
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
-        SubscribeLocalEvent<ControllableNpcComponent, UtilityAiGoalFinished>(OnUtilityAiGoalFinished);
+        SubscribeLocalEvent<ControllableNpcComponent, BeforeUtilityAiGoalFinished>(OnUtilityAiGoalFinished);
         SubscribeLocalEvent<NpcControllerComponent, PlayerAttachedEvent>(OnPlayerAttachedEvent);
 
         SubscribeAllEvent<SetGoalRequest>(OnGoalRequest);
         SubscribeAllEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
         SubscribeAllEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
-        SubscribeNetworkEvent<SetGoalMessage>(OnSetGoalMessage);
+        SubscribeAllEvent<ForceGoalExecutionMessage>(OnForceGoalExecutionMessage);
+        SubscribeAllEvent<SetGoalMessage>(OnSetGoalMessage);
         SubscribeNetworkEvent<GoalTargetsClearedMessage>(OnGoalTargetsCleared);
         SubscribeNetworkEvent<GoalsIgnoreMessage>(OnGoalsIgnoreMessage);
 
@@ -132,53 +132,97 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
                 {
                     foreach (var uid in entities)
                     {
-                        TrySetGoal(uid, goal, target: ev.Target);
+                        if (!TryAddToQueue(uid, goal, ev.User, target: ev.Target))
+                            continue;
+
+                        if (_net.IsClient && Timing.IsFirstTimePredicted && NeedForceGoalExecution())
+                            RaisePredictiveEvent(new ForceGoalExecutionMessage(GetNetEntity(uid)));
                     }
                 },
             });
         }
     }
 
-    private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref UtilityAiGoalFinished args)
+    private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref BeforeUtilityAiGoalFinished args)
     {
-        if (!Executables.TryGetValue(args.Goal, out var execs)
-            || !TryComp(ent, out GoapComponent? goap))
-            return;
+        // In a situation where an agent has completed an executable goal and there is another one in the queue,
+        // a situation may occur where we send a message to the client
+        // in a single tick to clear the old goal and issue a new one,
+        // which could lead to a race of information and visual bugs on the client.
+        // So we clear the old goal only if the new one hasn't been assigned.
+        Action? notifyClient = null;
 
-        foreach (var exec in execs)
+        if (Executables.TryGetValue(args.Goal, out var execs)
+            && TryComp(ent, out GoapComponent? goap))
         {
-            if (!ent.Comp.Goals.Contains(exec)
-                || !Proto.Resolve(exec, out var proto))
+            foreach (var exec in execs)
+            {
+                if (!ent.Comp.Goals.Contains(exec)
+                    || !Proto.Resolve(exec, out var proto))
+                    continue;
+
+                // Remove passive target when the goal successfully finished.
+                if (args.Reason == UtilityAiGoalFinishReason.Finished
+                    && proto.GoalType.HasFlag(ExecutableGoalType.Passive)
+                    && goap.State.TryGetValue(proto.TargetKey, out var target)
+                    && PassiveGoalQuery.TryComp(target, out var passive)
+                    && passive.Goal == exec)
+                    RemComp(target, passive);
+
+                // The state changes above only happen on this side. The
+                // client has its own copy of GoapState with the same target/coordinates, set
+                // earlier via SetGoalMessage, and has no other way of knowing it's now stale.
+                notifyClient = () =>
+                {
+                    if (!_net.IsServer)
+                        return;
+
+                    foreach (var owner in ent.Comp.CanControl)
+                    {
+                        RaiseNetworkEvent(new GoalTargetsClearedMessage
+                            {
+                                Agent = GetNetEntity(ent),
+                                Goal = exec,
+                                Target = goap.State.TryGetValue(proto.TargetKey, out var uid) ? GetNetEntity(uid) : null,
+                                TargetCoordinates = goap.State.TryGetValue(proto.TargetCoordinatesKey, out var coords)
+                                    ? GetNetCoordinates(coords)
+                                    : null,
+                            },
+                            owner);
+                    }
+                };
+
+                goap.State.Remove(proto.TargetCoordinatesKey);
+                goap.State.Remove(proto.TargetKey);
+                break;
+            }
+        }
+
+        if (args.Handled || ent.Comp.Queue.Count == 0)
+        {
+            notifyClient?.Invoke();
+            return;
+        }
+
+        if (args.Reason == UtilityAiGoalFinishReason.Failed && ent.Comp.ClearQueueOnFail)
+        {
+            notifyClient?.Invoke();
+            ClearQueue(ent.AsNullable());
+            return;
+        }
+
+        while (ent.Comp.Queue.TryDequeue(out var entry))
+        {
+            if (!TrySetGoal(ent.Owner, entry))
                 continue;
 
-            // Remove passive target when the goal successfully finished.
-            if (args.Reason == UtilityAiGoalFinishReason.Finished
-                && proto.GoalType.HasFlag(ExecutableGoalType.Passive)
-                && goap.State.TryGetValue(proto.TargetKey, out var target)
-                && PassiveGoalQuery.TryComp(target, out var passive)
-                && passive.Goal == exec)
-                RemComp(target, passive);
-
-            // The state changes above only happen on this side. The
-            // client has its own copy of GoapState with the same target/coordinates, set
-            // earlier via SetGoalMessage, and has no other way of knowing it's now stale.
-            if (_net.IsServer)
-            {
-                RaiseNetworkEvent(new GoalTargetsClearedMessage
-                {
-                    Agent = GetNetEntity(ent),
-                    Goal = exec,
-                    Target = goap.State.TryGetValue(proto.TargetKey, out var uid) ? GetNetEntity(uid) : null,
-                    TargetCoordinates = goap.State.TryGetValue(proto.TargetCoordinatesKey, out var coords)
-                        ? GetNetCoordinates(coords)
-                        : null,
-                });
-            }
-
-            goap.State.Remove(proto.TargetCoordinatesKey);
-            goap.State.Remove(proto.TargetKey);
-            break;
+            args.Handled = true;
+            DirtyField(ent.AsNullable(), nameof(ControllableNpcComponent.Queue));
+            return;
         }
+
+        notifyClient?.Invoke();
+        DirtyField(ent.AsNullable(), nameof(ControllableNpcComponent.Queue));
     }
 
     private void OnPlayerAttachedEvent(EntityUid uid, NpcControllerComponent component, PlayerAttachedEvent ev)
@@ -193,11 +237,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             || !Proto.Resolve(msg.Goal, out var goal))
             return;
 
-        if (GetCoordinates(msg.TargetCoordinates) is { } coords)
-            comp.State.Remove(goal.TargetCoordinatesKey, coords);
-
-        if (GetEntity(msg.Target) is { } uid)
-            comp.State.Remove(goal.TargetKey, uid);
+        comp.State.Remove(goal.TargetCoordinatesKey);
+        comp.State.Remove(goal.TargetKey);
     }
 
     private void OnGoalsIgnoreMessage(GoalsIgnoreMessage msg, EntitySessionEventArgs args)
@@ -244,7 +285,13 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
                     break;
 
                 previousTargets.Add(tileRef);
-                TrySetGoal(uid, goal, targetCoords: _turf.GetTileCenter(tileRef));
+                if (!request.AddToQueue)
+                {
+                    TrySetGoal(uid, goal, targetCoords: _turf.GetTileCenter(tileRef));
+                    ClearQueue(uid);
+                }
+                else
+                    TryAddToQueue(uid, goal, requester, targetCoords: _turf.GetTileCenter(tileRef));
                 continue;
             }
 
@@ -254,7 +301,13 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             previousTargets.Add(tile);
 
             var tileCenter = _turf.GetTileCenter(tile);
-            TrySetGoal(uid, goal, targetCoords: tileCenter);
+            if (!request.AddToQueue)
+            {
+                TrySetGoal(uid, goal, targetCoords: tileCenter);
+                ClearQueue(uid);
+            }
+            else
+                TryAddToQueue(uid, goal, requester, targetCoords: tileCenter);
         }
     }
 
@@ -282,6 +335,21 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    private void OnForceGoalExecutionMessage(ForceGoalExecutionMessage msg, EntitySessionEventArgs args)
+    {
+        if (!Timing.IsFirstTimePredicted
+            || !TryGetEntity(msg.Agent, out var entity)
+            || args.SenderSession.AttachedEntity is not { } player
+            || !CanControl(player, entity.Value)
+            || !ControllableQuery.TryComp(entity, out var comp)
+            || comp.Queue.Count == 0)
+            return;
+
+        var entry = comp.Queue.Last();
+        TrySetGoal(entity.Value, entry);
+        ClearQueue(entity.Value);
+    }
+
     private void OnSetGoalMessage(SetGoalMessage msg, EntitySessionEventArgs args)
     {
         if (!GoapQuery.TryComp(GetEntity(msg.Agent), out var comp)
@@ -296,6 +364,8 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     }
 
     #endregion
+
+    protected virtual bool NeedForceGoalExecution() => false;
 
     /// <summary>
     /// Finds the suitable goals for the target from the goals list.
@@ -363,45 +433,6 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     }
 
     /// <summary>
-    /// Tries to set a new goal for an NPC
-    /// </summary>
-    /// <returns>True, if the goal is successfully set</returns>
-    [PublicAPI]
-    public bool TrySetGoal(
-        Entity<GoapComponent?, UtilityAiComponent?, ControllableNpcComponent?> ent,
-        ProtoId<ExecutableGoalPrototype> protoId,
-        EntityUid? target = null,
-        EntityCoordinates? targetCoords = null,
-        Dictionary<string, object>? additionalKeys = null)
-    {
-        if (!Resolve(ent, ref ent.Comp1, ref ent.Comp2, ref ent.Comp3)
-            || !Proto.TryIndex(protoId, out var proto))
-            return false;
-
-        if (!proto.GoalType.HasFlag(ExecutableGoalType.Place))
-        {
-            if (target == null || !CheckGoalStart(new(ent, ent.Comp1, ent.Comp3), proto, target.Value))
-                return false;
-        }
-        else
-        {
-            // Place goals have no target entity to validate via CheckGoalStart, but the NPC
-            // still needs to actually be allowed to perform this specific goal - previously
-            // this check was skipped entirely for place goals.
-            if (targetCoords == null || !ent.Comp3.Goals.Contains(proto))
-                return false;
-        }
-
-        SetGoal(
-            new(ent, ent.Comp1, ent.Comp2, ent.Comp3),
-            proto,
-            target,
-            targetCoords,
-            additionalKeys: additionalKeys);
-        return true;
-    }
-
-    /// <summary>
     /// Creates a new goal for the NPC.
     /// </summary>
     private void SetGoal(
@@ -427,13 +458,17 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         if (_net.IsServer)
         {
-            RaiseNetworkEvent(new SetGoalMessage
+            foreach (var owner in ent.Comp3.CanControl)
             {
-                Agent = GetNetEntity(ent),
-                Goal = proto,
-                Target = GetNetEntity(target),
-                TargetCoordinates = GetNetCoordinates(coords),
-            });
+                RaiseNetworkEvent(new SetGoalMessage
+                    {
+                        Agent = GetNetEntity(ent),
+                        Goal = proto,
+                        Target = GetNetEntity(target),
+                        TargetCoordinates = GetNetCoordinates(coords),
+                    },
+                    owner);
+            }
         }
 
         if (additionalKeys != null)
@@ -474,226 +509,6 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         return null;
     }
-
-    /// <summary>
-    /// Checks if the user can control this NPC
-    /// </summary>
-    /// <param name="user">NPC controller entity.</param>
-    /// <param name="entity">NPC entity.</param>
-    [PublicAPI]
-    public bool CanControl(EntityUid user, EntityUid entity)
-        => ControllableQuery.TryComp(entity, out var control)
-           && _activeQuery.HasComp(entity)
-           && control.CanControl.Contains(user);
-
-    /// <inheritdoc cref="CanControl(EntityUid, EntityUid)"/>
-    [PublicAPI]
-    public bool CanControl(ICommonSession user, EntityUid entity)
-        => user.AttachedEntity is { } uid && CanControl(uid, entity);
-
-    /// <summary>
-    /// Returns a list of all entities that can be controlled by this user
-    /// </summary>
-    [PublicAPI]
-    public List<EntityUid> ControllableEntities(EntityUid user)
-    {
-        var uids = new List<EntityUid>();
-        var query = EntityQueryEnumerator<ControllableNpcComponent>();
-
-        while (query.MoveNext(out var uid, out var comp))
-        {
-            if (comp.CanControl.Contains(user))
-                uids.Add(uid);
-        }
-
-        return uids;
-    }
-
-    /// <summary>
-    /// Counts the number of performers of goal on the given target.
-    /// </summary>
-    [PublicAPI]
-    public int GoalPerformersCount(ProtoId<ExecutableGoalPrototype> goal, EntityUid target)
-    {
-        if (!Proto.Resolve(goal, out var proto))
-            return 0;
-
-        var count = 0;
-        var enumerator = EntityQueryEnumerator<UtilityAiComponent, GoapComponent>();
-
-        while (enumerator.MoveNext(out var comp, out var goap))
-        {
-            if (comp.CurrentGoal == proto.Goal
-                && goap.State.TryGetValue(proto.TargetKey, out var uid)
-                && uid == target)
-                count++;
-        }
-
-        return count;
-    }
-
-    /// <summary>
-    /// Give the user access to control this NPC
-    /// </summary>
-    [PublicAPI]
-    public void AddController(EntityUid user, EntityUid uid)
-    {
-        var control = EnsureComp<NpcControllerComponent>(user);
-        var comp = EnsureComp<ControllableNpcComponent>(uid);
-        comp.CanControl.Add(user);
-        RaiseLocalEvent(uid, new NpcControllerAdded(user));
-        Dirty(user, control);
-        Dirty(uid, comp);
-    }
-
-    /// <summary>
-    /// Remove the user access to control this NPC.
-    /// </summary>
-    [PublicAPI]
-    public bool RemoveController(EntityUid user, Entity<ControllableNpcComponent?> uid)
-    {
-        if (!Resolve(uid, ref uid.Comp) || !uid.Comp.CanControl.Remove(user))
-            return false;
-
-        Dirty(uid);
-        return true;
-    }
-
-    /// <summary>
-    /// Allows the player to issue the given goal.
-    /// </summary>
-    [PublicAPI]
-    public void AddAllowedGoal(Entity<NpcControllerComponent?> user, ProtoId<ExecutableGoalPrototype> proto)
-    {
-        if (!Resolve(user, ref user.Comp))
-            return;
-
-        user.Comp.Goals.Add(proto);
-        Dirty(user);
-    }
-
-    /// <summary>
-    /// Forbids the player from issuing the given goal.
-    /// </summary>
-    [PublicAPI]
-    public void RemoveAllowedGoal(Entity<NpcControllerComponent?> user, ProtoId<ExecutableGoalPrototype> proto)
-    {
-        if (!Resolve(user, ref user.Comp))
-            return;
-
-        user.Comp.Goals.Remove(proto);
-        Dirty(user);
-    }
-
-    /// <summary>
-    /// Creates a passive target for a Utility AI goal.
-    /// </summary>
-    /// <param name="user">The user who issues the target.</param>
-    /// <param name="protoId">Goal prototype.</param>
-    /// <param name="uid">An entity that will become a passive target.</param>
-    [PublicAPI]
-    public void SetPassiveTarget(
-        Entity<NpcControllerComponent?> user,
-        ProtoId<ExecutableGoalPrototype> protoId,
-        EntityUid uid)
-        => SetPassiveTarget(user, protoId, new List<EntityUid> { uid });
-
-    // It's fucking long
-    /// <inheritdoc cref="SetPassiveTarget(Robust.Shared.GameObjects.Entity{NpcControllerComponent?},Robust.Shared.Prototypes.ProtoId{ExecutableGoalPrototype},Robust.Shared.GameObjects.EntityUid)"/>
-    [PublicAPI]
-    public void SetPassiveTarget(
-        Entity<NpcControllerComponent?> user,
-        ProtoId<ExecutableGoalPrototype> protoId,
-        List<EntityUid> entities)
-    {
-        if (!Resolve(user, ref user.Comp)
-            || !user.Comp.Goals.Contains(protoId)
-            || !Proto.Resolve(protoId, out var proto)
-            || !proto.GoalType.HasFlag(ExecutableGoalType.Passive))
-            return;
-
-        foreach (var uid in entities)
-        {
-            if (PassiveGoalQuery.TryComp(uid, out var task) && task.Goal == proto)
-                continue;
-
-            if (!Whitelist.IsWhitelistPassOrNull(proto.TargetWhitelist, uid)
-                || GoalPerformersCount(proto, uid) >= proto.MaxPerformers)
-                continue;
-
-            var comp = EnsureComp<PassiveGoalTargetComponent>(uid);
-            comp.Goal = proto.ID;
-            comp.User = user;
-            Dirty(uid, comp);
-        }
-    }
-
-    /// <summary>
-    /// Returns the current target of the Utility AI goal, if any.
-    /// </summary>
-    [PublicAPI, Pure]
-    public bool TryGetTarget(Entity<UtilityAiComponent?> ent, [NotNullWhen(true)] out EntityUid? target)
-    {
-        target = null;
-
-        if (!_utilityAi.TryGetCurrentGoal(ent, out var current)
-            || !Executables.TryGetValue(current.Value, out var goals)
-            || !GoapQuery.TryComp(ent, out var goap))
-            return false;
-
-        foreach (var goal in goals)
-        {
-            if (!Proto.Resolve(goal, out var proto)
-                || !goap.State.TryGetValue(proto.TargetKey, out var uid))
-                continue;
-
-            target = uid;
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Returns the current target coordinates of the Utility AI goal, if any.
-    /// </summary>
-    [PublicAPI, Pure]
-    public bool TryGetTargetCoordinates(
-        Entity<UtilityAiComponent?> ent,
-        [NotNullWhen(true)] out EntityCoordinates? coords)
-    {
-        coords = null;
-
-        if (!_utilityAi.TryGetCurrentGoal(ent, out var current)
-            || !Executables.TryGetValue(current.Value, out var goals)
-            || !GoapQuery.TryComp(ent, out var goap))
-            return false;
-
-        foreach (var goal in goals)
-        {
-            if (!Proto.Resolve(goal, out var proto))
-                continue;
-
-            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
-            {
-                if (goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
-                {
-                    coords = result;
-                    return true;
-                }
-
-                continue;
-            }
-
-            if (goap.State.TryGetValue(proto.TargetKey, out var uid))
-            {
-                coords = Transform(uid).Coordinates;
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
 
 /// <summary>
@@ -708,6 +523,7 @@ public sealed class SetGoalRequest : EntityEventArgs
 {
     public List<NetEntity> Entities { get; set; } = new();
     public NetCoordinates TargetCoordinates;
+    public bool AddToQueue;
 }
 
 [Serializable, NetSerializable]
@@ -752,4 +568,14 @@ public sealed class GoalTargetsClearedMessage : EntityEventArgs
 public sealed class GoalsIgnoreMessage(HashSet<ProtoId<ExecutableGoalPrototype>> goals) : EntityEventArgs
 {
     public HashSet<ProtoId<ExecutableGoalPrototype>> Goals = goals;
+}
+
+/// <summary>
+/// Sent by the client to notify the server that the last
+/// target added to the agent's queue must be executed immediately.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ForceGoalExecutionMessage(NetEntity agent) : EntityEventArgs
+{
+    public NetEntity Agent = agent;
 }

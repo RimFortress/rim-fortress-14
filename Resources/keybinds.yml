@@ -655,4 +655,11 @@ binds:
 - function: DragMove
   type: State
   key: MouseMiddle
+- function: NpcGoalAddToQueue
+  type: State
+  key: Shift
+- function: NpcVerbGoalAddToQueue
+  type: State
+  key: MouseLeft
+  mod1: Shift
 # RimFortress End
