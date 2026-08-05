@@ -3,6 +3,7 @@ using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using JetBrains.Annotations;
+using Robust.Shared.Random;
 using Robust.Shared.Timing;
 
 namespace Content.Server._RF.NPC.Systems;
@@ -13,6 +14,7 @@ namespace Content.Server._RF.NPC.Systems;
 public sealed class NpcTimingSystem : GoapDebugDumpSystem
 {
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
 
     /// <summary>
     /// Waits for the time specified in the agent's state.
@@ -103,10 +105,36 @@ public sealed class NpcTimingSystem : GoapDebugDumpSystem
     public GoapActionResult EnqueueWait(
         Entity<GoapComponent> ent,
         GoapAction action,
+        (float Min, float Max) minMaxSeconds,
+        StateKey<List<(TimeSpan Time, Func<bool>? Act)>>? queueKey = null,
+        Action? onFinish = null)
+        => EnqueueWait(ent,
+            action,
+            TimeSpan.FromSeconds(_random.NextFloat(minMaxSeconds.Min, minMaxSeconds.Max)),
+            queueKey,
+            onFinish);
+
+    [PublicAPI]
+    public GoapActionResult EnqueueWait(
+        Entity<GoapComponent> ent,
+        GoapAction action,
         float timeSeconds,
         StateKey<List<(TimeSpan Time, Func<bool>? Act)>>? queueKey = null,
         Func<bool>? onFinish = null)
         => EnqueueWait(ent, action, TimeSpan.FromSeconds(timeSeconds), queueKey, onFinish);
+
+    [PublicAPI]
+    public GoapActionResult EnqueueWait(
+        Entity<GoapComponent> ent,
+        GoapAction action,
+        (float Min, float Max) minMaxSeconds,
+        StateKey<List<(TimeSpan Time, Func<bool>? Act)>>? queueKey = null,
+        Func<bool>? onFinish = null)
+        => EnqueueWait(ent,
+            action,
+            TimeSpan.FromSeconds(_random.NextFloat(minMaxSeconds.Min, minMaxSeconds.Max)),
+            queueKey,
+            onFinish);
 
     /// <summary>
     /// Handles the logic of the action queue.
@@ -168,4 +196,18 @@ public sealed class NpcTimingSystem : GoapDebugDumpSystem
         state.SetValue(queueKey.Value, queue);
         return GoapActionResult.Continuing;
     }
+
+    /// <summary>
+    /// Clears action queue.
+    /// </summary>
+    /// <param name="ent">GOAP agent.</param>
+    /// <param name="queueKey">
+    /// A key that stores the queue of actions.
+    /// By default <see cref="GoapState.WaitActionsQueue"/>.
+    /// </param>
+    [PublicAPI]
+    public static void ClearQueue(
+        Entity<GoapComponent> ent,
+        StateKey<List<(TimeSpan Time, Func<bool>? Act)>>? queueKey = null)
+        => ent.Comp.State.SetValue(queueKey ?? GoapState.WaitActionsQueue, new());
 }

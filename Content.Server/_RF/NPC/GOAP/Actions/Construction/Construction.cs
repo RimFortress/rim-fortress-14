@@ -75,6 +75,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     [Dependency] private readonly MoveToActionSystem _moveTo = default!;
     [Dependency] private readonly PickupActionSystem _pickup = default!;
     [Dependency] private readonly ConstructionSystem _construction = default!;
+    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
 
     [Dependency] private readonly EntityQuery<ActiveDoAfterComponent> _activeDoAfterQuery = default!;
     [Dependency] private readonly EntityQuery<ConstructionComponent> _constructionQuery = default!;
@@ -89,6 +90,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     {
         ent.Comp.State.Remove(action.CurrentDoAfter);
         ent.Comp.State.Remove(action.CurrentItemKey);
+        NpcTimingSystem.ClearQueue(ent);
         return true;
     }
 
@@ -96,6 +98,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     {
         ent.Comp.State.Remove(action.CurrentDoAfter);
         ent.Comp.State.Remove(action.CurrentItemKey);
+        NpcTimingSystem.ClearQueue(ent);
         _moveTo.ShutdownMovement(ent, action.PathfindKey);
     }
 
@@ -108,6 +111,11 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
+
+        var queuerResult = _npcTiming.WaitQueue(ent, action);
+
+        if (queuerResult != GoapActionResult.Finished)
+            return queuerResult;
 
         if (_activeDoAfterQuery.HasComp(ent)
             || _constructionQuery.TryComp(target, out var comp)
@@ -167,18 +175,26 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             else if (_moveTo.StartedUp(ent))
                 _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-            // Pick up the item
-            if (!_pickup.Pickup(ent, item, action))
-                return GoapActionResult.Failed;
+            return _npcTiming.EnqueueWait(ent,
+                action,
+                (0.33f, 0.66f),
+                onFinish:() =>
+                {
+                    // Pick up the item
+                    if (!_pickup.Pickup(ent, item, action))
+                        return false;
 
-            CreateDump(ent, action, $"{ToPrettyString(item)} picked up");
+                    CreateDump(ent, action, $"{ToPrettyString(item)} picked up");
 
-            // Turn on welder
-            if (TryComp(item, out WelderComponent? welder) && !welder.Enabled)
-            {
-                CreateDump(ent, action, "turning on welder");
-                _interaction.UserInteraction(ent, Transform(item).Coordinates, item);
-            }
+                    // Turn on welder
+                    if (TryComp(item, out WelderComponent? welder) && !welder.Enabled)
+                    {
+                        CreateDump(ent, action, "turning on welder");
+                        _interaction.UserInteraction(ent, Transform(item).Coordinates, item);
+                    }
+
+                    return true;
+                });
         }
 
         if (ownerCoords.TryDistance(EntityManager, targetCoords, out distance)
@@ -198,8 +214,14 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         else if (_moveTo.StartedUp(ent))
             _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-        _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, false);
-        return AdvanceToNextItem(ent, action);
+        return _npcTiming.EnqueueWait(ent,
+            action,
+            (0.33f, 0.66f),
+            onFinish:() =>
+            {
+                _interactWith.DoInteraction(ent, action, target, action.CurrentDoAfter, false);
+                AdvanceToNextItem(ent, action);
+            });
     }
 
     /// <summary>
@@ -208,11 +230,10 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     /// starts a fresh interaction and re-derives what's needed next from the target's
     /// (possibly now different) construction state.
     /// </summary>
-    private GoapActionResult AdvanceToNextItem(Entity<GoapComponent> ent, Construction action)
+    private void AdvanceToNextItem(Entity<GoapComponent> ent, Construction action)
     {
         ent.Comp.State.Remove(action.CurrentDoAfter);
         ent.Comp.State.Remove(action.CurrentItemKey);
-        return GoapActionResult.Continuing;
     }
 
     private enum NeedResult
@@ -313,9 +334,9 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             return NeedResult.Found;
         }
 
-        for (var i = stepIndex; i < edge.Steps.Count; i++)
+        for (;stepIndex < edge.Steps.Count;)
         {
-            if (StepQuery(ent, action, query, edge.Steps[i]) is not { } stepUid)
+            if (StepQuery(ent, action, query, edge.Steps[stepIndex]) is not { } stepUid)
                 return NeedResult.NotFound;
 
             item = stepUid;

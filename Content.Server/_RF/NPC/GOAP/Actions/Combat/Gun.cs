@@ -177,6 +177,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         state.SetValue(Gun.MovingToMagazineKey, false);
         state.Remove(Gun.NearbyMagazineKey);
         state.Remove(Gun.PreviousJukeTypeKey);
+        NpcTimingSystem.ClearQueue(ent);
 
         return true;
     }
@@ -192,6 +193,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         state.Remove(Gun.MovingToMagazineKey);
         state.Remove(Gun.NearbyMagazineKey);
         state.Remove(Gun.PreviousJukeTypeKey);
+        NpcTimingSystem.ClearQueue(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Gun action)
