@@ -8,7 +8,6 @@ using Robust.Client.Graphics;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.NPC;
 
@@ -163,7 +162,7 @@ public sealed class NpcControlOverlay : Overlay
             if (proto.VerbIcon == null)
                 continue;
 
-            var icon = _sprite.Frame0(new SpriteSpecifier.Texture(proto.VerbIcon.Value));
+            var icon = _sprite.Frame0(proto.VerbIcon);
             var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(0.5f));
             var color = _prototype.Index(proto.Goal).Color.WithAlpha(0.6f);
 

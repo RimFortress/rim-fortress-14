@@ -1,7 +1,7 @@
 - type: executableGoal
   id: Pry
   goal: Pry
-  verbIcon: /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
+  verbIcon: _RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
   maxPerformers: 1
   targetWhitelist:
     components:

@@ -1,7 +1,7 @@
 - type: executableGoal
   id: InventoryStorage
   goal: InventoryStorage
-  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   targetWhitelist:
     components:
     - Item

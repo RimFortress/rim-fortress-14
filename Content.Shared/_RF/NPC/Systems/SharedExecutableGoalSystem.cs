@@ -125,7 +125,7 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             ev.Verbs.Add(new()
             {
                 Text = Loc.GetString(Proto.Index(goal.Goal).Name),
-                Icon = goal.VerbIcon is { } icon ? new SpriteSpecifier.Texture(icon) : null,
+                Icon = goal.VerbIcon,
                 Category = VerbCategory.NpcTask,
                 CloseMenu = true,
                 Act = () =>

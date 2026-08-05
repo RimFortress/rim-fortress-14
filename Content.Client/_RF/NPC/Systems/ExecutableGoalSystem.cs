@@ -76,7 +76,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                 },
                 filter: NpcTaskFilter,
                 color: goal.Color,
-                icon: proto.VerbIcon != null ? new SpriteSpecifier.Texture(proto.VerbIcon.Value) : null,
+                icon: proto.VerbIcon,
                 iconColor: goal.Color,
                 netSync: true);
         }

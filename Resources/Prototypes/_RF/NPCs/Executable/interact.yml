@@ -1,7 +1,7 @@
 - type: executableGoal
   id: Interact
   goal: Interact
-  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
+  verbIcon: _RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
   maxPerformers: 1
   targetWhitelist:
     requireAll: false

@@ -1,7 +1,7 @@
 - type: executableGoal
   id: Drop
   goal: Drop
-  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   selfPerform: true
 
 - type: utilityAiGoal

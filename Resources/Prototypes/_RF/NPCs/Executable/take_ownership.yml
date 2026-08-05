@@ -1,7 +1,7 @@
 - type: executableGoal
   id: TakeOwnership
   goal: TakeOwnership
-  verbIcon: /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
   targetKey: TakeOwnershipTarget
   maxPerformers: 1
   goalType:

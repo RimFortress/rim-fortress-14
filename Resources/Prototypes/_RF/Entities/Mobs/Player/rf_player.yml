@@ -56,12 +56,12 @@
   - type: NpcJobs
     jobs:
     - name: npc-job-construction-name
-      icon: /Textures/_RF/Interface/hammer-solid.svg.192dpi.png
+      icon: _RF/Interface/hammer-solid.svg.192dpi.png
       goals:
       - Construction
       - Deconstruct
     - name: npc-job-mining-name
-      icon: /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+      icon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
       goals:
       - Dig
   - type: NpcFactionMember

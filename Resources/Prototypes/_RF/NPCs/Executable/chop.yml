@@ -1,7 +1,7 @@
 - type: executableGoal
   id: Chop
   goal: Chop
-  verbIcon: /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  verbIcon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   targetKey: ChopTarget
   maxPerformers: 1
   goalType:
