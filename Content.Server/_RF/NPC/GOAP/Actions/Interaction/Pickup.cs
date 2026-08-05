@@ -91,7 +91,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
                 // If we couldn't put the item in the inventory, we throw it away
                 if (!stored)
                 {
-                    if (!_hands.TryDrop(handItem))
+                    if (!_hands.TryDrop(ent.Owner))
                     {
                         CreateDump(ent, action, $"failed to drop {ToPrettyString(handItem)} from the hands");
                         return false;

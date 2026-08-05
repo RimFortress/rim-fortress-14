@@ -49,6 +49,14 @@
   color: "#C74848"
 
 - type: skill
+  id: Gun
+  parent: BaseSkill
+  name: skill-gun-name
+  profession: skill-gun-profession
+  icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png
+  color: "#C74848"
+
+- type: skill
   id: Farming
   parent: BaseSkill
   name: skill-farming-name

@@ -1,7 +1,9 @@
+using System.Numerics;
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
+using Content.Server._RF.Skills;
 using Content.Server.Hands.Systems;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Pathfinding;
@@ -9,6 +11,7 @@ using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
+using Content.Shared._RF.Skills;
 using Content.Shared.CombatMode;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Interaction;
@@ -122,6 +125,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private readonly HandsSystem _hands = default!;
     [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
     [Dependency] private readonly MoveToActionSystem _moveTo = default!;
+    [Dependency] private readonly SkillsSystem _skills = default!;
 
     [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
     [Dependency] private readonly EntityQuery<PhysicsComponent> _physicsQuery = default!;
@@ -145,6 +149,16 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     /// Cooldown on raycasting to check LOS.
     /// </summary>
     private const float UnoccludedCooldown = 0.2f;
+
+    /// <summary>
+    /// A modifier affecting the spread of fire based on the agent's current speed.
+    /// </summary>
+    private const float MovementScatterFactor = 2f;
+
+    /// <summary>
+    /// A modifier affecting the spread of fire based on the distance from the agent to the target.
+    /// </summary>
+    private const float DistanceScatterFactor = 0.5f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Gun action)
     {
@@ -212,7 +226,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             if (result != GoapActionResult.Finished)
                 return result;
 
-            _moveTo.ShutdownMovement(ent, Gun.PathfindKey, false);
+            _moveTo.ShutdownMovement(ent, Gun.PathfindKey);
             state.SetValue(Gun.MovingToMagazineKey, false);
 
             if (TryGetValue(ent, action, Gun.PreviousJukeTypeKey, out var type))
@@ -355,14 +369,40 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             || !_gun.CanShoot(gun))
             return GoapActionResult.Continuing;
 
-        var targetCoordinates = _mapManager.TryFindGridAt(xform.MapID, targetPos, out var gridUid, out var mapGrid)
-            ? new EntityCoordinates(gridUid, _map.WorldToLocal(gridUid, mapGrid, targetSpot))
-            : new EntityCoordinates(xform.MapUid!.Value, targetSpot);
-
         if (gun.Comp.NextFire <= _timing.CurTime)
-            _gun.AttemptShoot(ent, gun, targetCoordinates, target);
+            _gun.AttemptShoot(ent, gun, ShootCoords(), target);
 
         return GoapActionResult.Continuing;
+
+        // Returns the coordinates for firing at a target, taking into account the required spread
+        EntityCoordinates ShootCoords()
+        {
+            var coords = _mapManager.TryFindGridAt(xform.MapID, targetPos, out var gridUid, out var mapGrid)
+                ? new EntityCoordinates(gridUid, _map.WorldToLocal(gridUid, mapGrid, targetSpot))
+                : new EntityCoordinates(xform.MapUid!.Value, targetSpot);
+
+            if (!_physicsQuery.TryComp(ent, out var agentBody))
+                return coords;
+
+            var offset = agentBody.AngularVelocity * MovementScatterFactor + 0.5f;
+            /* TODO: skills refactor
+
+            offset = _skills.GetInteractionResult(gun.Owner, ent.Owner, offset);
+
+            switch (_skills.DoInteractionCheck(gun.Owner, ent.Owner, target))
+            {
+                case SkillCheckResult.AdditionalSuccess:
+                    offset /= 2;
+                    break;
+                case SkillCheckResult.Fail:
+                    offset *= 2;
+                    break;
+            }
+            */
+
+            var offsetVec = new Vector2(_random.NextFloat(-offset, offset), _random.NextFloat(-offset, offset));
+            return new EntityCoordinates(coords.EntityId, coords.Position + offsetVec);
+        }
     }
 
     private GoapActionResult HandleEmptyAmmo(
