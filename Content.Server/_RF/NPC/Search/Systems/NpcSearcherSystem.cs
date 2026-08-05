@@ -98,6 +98,9 @@ public sealed class NpcSearcherSystem : SharedNpcSearcherSystem
                 parts.Add(s);
             }
 
+            if (score == 0)
+                continue;
+
             results.Add(str, (parts, score));
         }
 
