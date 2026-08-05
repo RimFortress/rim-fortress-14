@@ -48,7 +48,9 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     [Dependency] protected readonly EntityQuery<PassiveGoalTargetComponent> PassiveGoalQuery = default!;
     [Dependency] private readonly EntityQuery<ActiveNPCComponent> _activeQuery = default!;
 
-    protected readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, HashSet<ProtoId<ExecutableGoalPrototype>>> Executables = new();
+    protected readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, HashSet<ProtoId<ExecutableGoalPrototype>>>
+        Executables = new();
+    protected HashSet<ProtoId<ExecutableGoalPrototype>> IgnoreGoalsList = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -57,12 +59,14 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeLocalEvent<ControllableNpcComponent, UtilityAiGoalFinished>(OnUtilityAiGoalFinished);
+        SubscribeLocalEvent<NpcControllerComponent, PlayerAttachedEvent>(OnPlayerAttachedEvent);
 
         SubscribeAllEvent<SetGoalRequest>(OnGoalRequest);
         SubscribeAllEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
         SubscribeAllEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
         SubscribeNetworkEvent<SetGoalMessage>(OnSetGoalMessage);
         SubscribeNetworkEvent<GoalTargetsClearedMessage>(OnGoalTargetsCleared);
+        SubscribeNetworkEvent<GoalsIgnoreMessage>(OnGoalsIgnoreMessage);
 
         Proto.PrototypesReloaded += args =>
         {
@@ -78,12 +82,19 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
     private void ReloadPrototypes()
     {
         Executables.Clear();
+        IgnoreGoalsList.Clear();
 
         foreach (var proto in Proto.EnumeratePrototypes<ExecutableGoalPrototype>())
         {
             if (!Executables.TryAdd(proto.Goal, new() { proto }))
                 Executables[proto.Goal].Add(proto);
+
+            if (Proto.Resolve(proto.Goal, out var goal) && goal.Conditions.Count > 0)
+                IgnoreGoalsList.Add(proto);
         }
+
+        if (_net.IsServer)
+            RaiseNetworkEvent(new GoalsIgnoreMessage(IgnoreGoalsList));
     }
 
     private void OnGetVerbs(GetVerbsEvent<Verb> ev)
@@ -148,18 +159,32 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
                 && passive.Goal == exec)
                 RemComp(target, passive);
 
-            goap.State.Remove(proto.TargetCoordinatesKey);
-            goap.State.Remove(proto.TargetKey);
-
-            // The state changes above only happen on this side (this handler normally only
-            // runs on the server, since that's where UtilityAiGoalFinished is raised). The
+            // The state changes above only happen on this side. The
             // client has its own copy of GoapState with the same target/coordinates, set
             // earlier via SetGoalMessage, and has no other way of knowing it's now stale.
             if (_net.IsServer)
-                RaiseNetworkEvent(new GoalTargetsClearedMessage(GetNetEntity(ent), exec));
+            {
+                RaiseNetworkEvent(new GoalTargetsClearedMessage
+                {
+                    Agent = GetNetEntity(ent),
+                    Goal = exec,
+                    Target = goap.State.TryGetValue(proto.TargetKey, out var uid) ? GetNetEntity(uid) : null,
+                    TargetCoordinates = goap.State.TryGetValue(proto.TargetCoordinatesKey, out var coords)
+                        ? GetNetCoordinates(coords)
+                        : null,
+                });
+            }
 
+            goap.State.Remove(proto.TargetCoordinatesKey);
+            goap.State.Remove(proto.TargetKey);
             break;
         }
+    }
+
+    private void OnPlayerAttachedEvent(EntityUid uid, NpcControllerComponent component, PlayerAttachedEvent ev)
+    {
+        if (_net.IsServer)
+            RaiseNetworkEvent(new GoalsIgnoreMessage(IgnoreGoalsList), ev.Player);
     }
 
     private void OnGoalTargetsCleared(GoalTargetsClearedMessage msg, EntitySessionEventArgs args)
@@ -168,8 +193,17 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
             || !Proto.Resolve(msg.Goal, out var goal))
             return;
 
-        comp.State.Remove(goal.TargetCoordinatesKey);
-        comp.State.Remove(goal.TargetKey);
+        if (GetCoordinates(msg.TargetCoordinates) is { } coords)
+            comp.State.Remove(goal.TargetCoordinatesKey, coords);
+
+        if (GetEntity(msg.Target) is { } uid)
+            comp.State.Remove(goal.TargetKey, uid);
+    }
+
+    private void OnGoalsIgnoreMessage(GoalsIgnoreMessage msg, EntitySessionEventArgs args)
+    {
+        if (_net.IsClient)
+            IgnoreGoalsList = msg.Goals;
     }
 
     private void OnGoalRequest(SetGoalRequest request, EntitySessionEventArgs args)
@@ -282,6 +316,10 @@ public abstract class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var proto in goals)
         {
+            // The client should not handle the logic of goals with conditions
+            if (_net.IsClient && IgnoreGoalsList.Contains(proto))
+                continue;
+
             if (type != null && !proto.GoalType.HasFlag(type))
                 continue;
 
@@ -699,8 +737,19 @@ public sealed class PassiveGoalRemoveRequest(List<NetEntity> entities) : EntityE
 /// from the agent's GoapState, so the client can drop its own now-stale copy of them.
 /// </summary>
 [Serializable, NetSerializable]
-public sealed class GoalTargetsClearedMessage(NetEntity agent, ProtoId<ExecutableGoalPrototype> goal) : EntityEventArgs
+public sealed class GoalTargetsClearedMessage : EntityEventArgs
 {
-    public NetEntity Agent { get; set; } = agent;
-    public ProtoId<ExecutableGoalPrototype> Goal { get; set; } = goal;
+    public NetEntity Agent;
+    public ProtoId<ExecutableGoalPrototype> Goal;
+    public NetEntity? Target;
+    public NetCoordinates? TargetCoordinates;
+}
+
+/// <summary>
+/// Sent to the client for notification; the logic determines which goals it should ignore.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class GoalsIgnoreMessage(HashSet<ProtoId<ExecutableGoalPrototype>> goals) : EntityEventArgs
+{
+    public HashSet<ProtoId<ExecutableGoalPrototype>> Goals = goals;
 }

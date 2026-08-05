@@ -84,10 +84,10 @@ public sealed partial class KeyNotExist : GoapCondition
     /// The key that this check refers to.
     /// </summary>
     [DataField(required: true)]
-    public StateKey<bool> Key = string.Empty;
+    public StateKey<object> Key;
 
     /// <inheritdoc/>
-    public override bool EntityCondition => false;
+    public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
 
     public override bool Check(EntityUid target,
         GoapState state,
@@ -95,7 +95,7 @@ public sealed partial class KeyNotExist : GoapCondition
         out GoapDebugDump? dump)
     {
         dump = null;
-        return !state.ContainsKey(Key);
+        return !checker.TryGetValue(state, Key, out _);
     }
 }
 
@@ -105,10 +105,10 @@ public sealed partial class KeyExist : GoapCondition
     /// The key that this check refers to.
     /// </summary>
     [DataField(required: true)]
-    public StateKey<bool> Key = string.Empty;
+    public StateKey<object> Key;
 
     /// <inheritdoc/>
-    public override bool EntityCondition => false;
+    public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
 
     public override bool Check(EntityUid target,
         GoapState state,
@@ -116,7 +116,7 @@ public sealed partial class KeyExist : GoapCondition
         out GoapDebugDump? dump)
     {
         dump = null;
-        return state.ContainsKey(Key);
+        return checker.TryGetValue(state, Key, out _);
     }
 }
 
@@ -141,8 +141,8 @@ public sealed partial class KeyEqual : GoapCondition
         out GoapDebugDump? dump)
     {
         dump = null;
-        return state.TryGetValue(Key1, out var value1)
-               && state.TryGetValue(Key2, out var value2)
+        return checker.TryGetValue(state, Key1, out var value1)
+               && checker.TryGetValue(state, Key2, out var value2)
                && Equals(value1, value2);
     }
 }
