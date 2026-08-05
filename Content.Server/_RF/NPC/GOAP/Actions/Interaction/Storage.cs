@@ -8,9 +8,16 @@ using Content.Shared.Storage;
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
 /// <summary>
-/// Places an entity in the active hand into any available storage in the inventory.
+/// Places the target entity into any available storage in the inventory.
 /// </summary>
-public sealed partial class Storage : BaseGoapAction<Storage>;
+public sealed partial class Storage : BaseGoapAction<Storage>
+{
+    /// <summary>
+    /// Target entity.
+    /// </summary>
+    [DataField]
+    public StateKey<EntityUid> TargetKey = GoapState.ActiveHandEntity;
+}
 
 public sealed class StorageActionSystem : GoapActionSystem<Storage>
 {
@@ -19,7 +26,7 @@ public sealed class StorageActionSystem : GoapActionSystem<Storage>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Storage action)
     {
-        if (TryGetValue(ent, action, GoapState.ActiveHandEntity, out var heldEntity))
+        if (!TryGetValue(ent, action, action.TargetKey, out var heldEntity))
             return false;
 
         foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))

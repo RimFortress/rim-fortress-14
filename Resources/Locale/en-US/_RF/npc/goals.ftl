@@ -14,3 +14,5 @@ utility-ai-goal-chop-name = Chop down
 utility-ai-goal-pry-name = Pry
 utility-ai-goal-deconstruct-name = Deconstruct
 utility-ai-goal-attack-name = Attack
+utility-ai-goal-inventorystorage-name = Put in inventory
+utility-ai-goal-drop-name = Drop

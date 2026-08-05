@@ -1,0 +1,32 @@
+- type: executableGoal
+  id: InventoryStorage
+  goal: InventoryStorage
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  targetWhitelist:
+    components:
+    - Item
+
+- type: utilityAiGoal
+  id: InventoryStorage
+  color: "#00D5FF"
+  goalState:
+    TargetStoredInInventory: true
+
+- type: goapCompound
+  id: InventoryStorage
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:EntityCoords
+      targetKey: Target
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Storage
+      targetKey: Target
+    - !type:MarkOwner
+      targetKey: Target
+    effects:
+      TargetStoredInInventory: true

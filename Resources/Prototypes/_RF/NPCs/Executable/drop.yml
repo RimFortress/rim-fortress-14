@@ -1,0 +1,24 @@
+- type: executableGoal
+  id: Drop
+  goal: Drop
+  verbIcon: /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  selfPerform: true
+
+- type: utilityAiGoal
+  id: Drop
+  color: "#00D5FF"
+  conditions:
+  - ActiveHandEntity != null
+  - !type:KeyEqual
+    key1: Target
+    key2: Owner
+  goalState:
+    TargetDroped: true
+
+- type: goapCompound
+  id: Drop
+  tasks:
+  - actions:
+    - !type:Drop
+    effects:
+      TargetDroped: true

@@ -31,6 +31,8 @@
     #- Heal
     - Chop
     #- Cook
+    - InventoryStorage
+    - Drop
   - type: FogOfWarClearer
   - type: NotifyOnStateChanged
     notifications:

@@ -119,3 +119,30 @@ public sealed partial class KeyExist : GoapCondition
         return state.ContainsKey(Key);
     }
 }
+
+/// <summary>
+/// Checks whether the values of two keys are equal.
+/// </summary>
+public sealed partial class KeyEqual : GoapCondition
+{
+    [DataField(required: true)]
+    public StateKey<object> Key1;
+
+    [DataField(required: true)]
+    public StateKey<object> Key2;
+
+    /// <inheritdoc/>
+    public override bool EntityCondition =>
+        GoapState.EntityDefaults.Contains(Key1) || GoapState.EntityDefaults.Contains(Key2);
+
+    public override bool Check(EntityUid target,
+        GoapState state,
+        IGoapConditionChecker checker,
+        out GoapDebugDump? dump)
+    {
+        dump = null;
+        return state.TryGetValue(Key1, out var value1)
+               && state.TryGetValue(Key2, out var value2)
+               && Equals(value1, value2);
+    }
+}

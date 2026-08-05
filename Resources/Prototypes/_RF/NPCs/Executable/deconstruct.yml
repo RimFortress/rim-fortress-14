@@ -9,7 +9,6 @@
   - Passive
   targetWhitelist:
     components:
-    - CommonConstructionGhost
     - Construction
 
 - type: utilityAiGoal
