@@ -24,13 +24,3 @@
       targetKey: TakeOwnershipTarget
     effects:
       TargetOwned: true
-
-- type: searchQuery
-  id: TakeOwnershipPassiveTarget
-  query: !type:PassiveTargets
-    goals:
-    - TakeOwnership
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance

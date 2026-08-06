@@ -16,13 +16,3 @@
       targetKey: DeconstructTarget
     effects:
       TargetDeconstruct: true
-
-- type: searchQuery
-  id: DeconstructPassiveTarget
-  query: !type:PassiveTargets
-    goals:
-    - Deconstruct
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance

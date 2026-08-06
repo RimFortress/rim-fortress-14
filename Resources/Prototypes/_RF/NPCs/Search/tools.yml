@@ -76,3 +76,55 @@
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
+
+- type: searchQuery
+  id: Axe
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - FireAxe
+    - BotanyHatchet
+    requireAll: false
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Pickaxe
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - Pickaxe
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Crowbar
+  query: !type:Owned
+  filters:
+  - !type:ToolQuality
+    quality: Prying
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

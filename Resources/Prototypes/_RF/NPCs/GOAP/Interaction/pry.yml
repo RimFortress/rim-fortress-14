@@ -36,19 +36,3 @@
       targetKey: Target
     effects:
       TargetPry: true
-
-- type: searchQuery
-  id: Crowbar
-  query: !type:Owned
-  filters:
-  - !type:ToolQuality
-    quality: Prying
-    invert: true
-  - !type:InInventory
-  - !type:InHands
-  - !type:Accessible
-    invert: true
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance

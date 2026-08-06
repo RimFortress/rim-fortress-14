@@ -19,21 +19,3 @@
       targetKey: ConstructionTarget
     effects:
       TargetConstructed: true
-
-- type: searchQuery
-  id: ConstructionTarget
-  query: !type:Owned
-  filters:
-  - !type:Component
-    components:
-    - type: CommonConstructionGhost
-    - type: Construction
-      graph: FloorBananium
-      node: BananiumFloor
-    requireAll: false
-    invert: true
-  - !type:Constructed
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
