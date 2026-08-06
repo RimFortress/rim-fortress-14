@@ -11,8 +11,17 @@
     - Eat
     - Drink
     - Construction
+    - Deconstruct
     - Dig
+    - Chop
     - TakeOwnership
+    - Attack
+    - Plant
+    - Harvest
+    - RemoveWeed
+    - SamplePlant
+    - RemovePlant
+    - WaterPlant
   - type: NpcFactionMember
     factions:
     - RimFortress
@@ -33,6 +42,12 @@
     #- Cook
     - InventoryStorage
     - Drop
+    - Plant
+    - Harvest
+    - RemoveWeed
+    - SamplePlant
+    - RemovePlant
+    - WaterPlant
   - type: FogOfWarClearer
   - type: NotifyOnStateChanged
     notifications:

@@ -53,6 +53,12 @@
     #- Cook
     - InventoryStorage
     - Drop
+    - Plant
+    - Harvest
+    - RemoveWeed
+    - SamplePlant
+    - RemovePlant
+    - WaterPlant
   - type: NpcJobs
     jobs:
     - name: npc-job-construction-name

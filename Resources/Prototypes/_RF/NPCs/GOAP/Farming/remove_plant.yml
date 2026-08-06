@@ -1,0 +1,37 @@
+- type: goapCompound
+  id: RemovePlant
+  tasks:
+  - preconditions:
+    - ActiveHandFree == true
+    - !type:SearchQueryValid
+      query: DeadPlant
+    action: !type:SearchQuery
+      query: DeadPlant
+      targetKey: DeadPlant
+    effects:
+      DeadPlant: true
+      NeedSharp: false
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: SharpDeadPlant
+    action: !type:SearchQuery
+      query: SharpDeadPlant
+      targetKey: DeadPlant
+    effects:
+      DeadPlant: true
+      NeedSharp: true
+
+  - preconditions:
+    - DeadPlant != null
+    - NeedSharp == false
+    actions:
+    - !type:EntityCoords
+      targetKey: DeadPlant
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: DeadPlant
+    - !type:MarkOwnerInRange
+    effects:
+      PlantRemoved: true

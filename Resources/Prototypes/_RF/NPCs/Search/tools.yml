@@ -1,0 +1,78 @@
+- type: searchQuery
+  id: Sharp
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Sharp
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Hoe
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - Hoe
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: PlantSampleTaker
+  query: !type:Owned
+  filters:
+  - !type:HasTags
+    tags:
+    - PlantSampleTaker
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Bucket
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: SolutionTransfer
+    - type: Item
+    invert: true
+  - !type:DrainableSolution
+    solutionMaxLessThan: 80.0
+  - !type:Or
+    filters:
+    - !type:DrainableSolution
+      solutionEmpty: true
+    - !type:DrainableSolution
+      reagent: Water
+      onlyReagent: true
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

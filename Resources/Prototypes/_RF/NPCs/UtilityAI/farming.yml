@@ -1,0 +1,191 @@
+- type: utilityAiGoal
+  id: Plant
+  color: "#1a9927"
+  conditions:
+  - !type:Or
+    conditions:
+    - EmptyPlantHolder == null # This key is not null only when it is issued via ExecutableGoal
+    - !type:PlantHolder
+      targetKey: EmptyPlantHolder
+      filled: false
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Farming
+  - div: [float: 3]
+  - add:
+    - !type:SearchQueryCount
+      query: EmptyPlantHolder
+    - !type:Normalize
+    - pow: [float: 2]
+    - div:
+      - !type:GoalPerformers
+        goal: Plant
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [float: 0.35]
+  tempKeys:
+  - Seed
+  - EmptyPlantHolder
+  goalState:
+    SeedPlanted: true
+
+- type: utilityAiGoal
+  id: Harvest
+  color: "#1A9927"
+  conditions:
+  - !type:Or
+    conditions:
+    - HarvestPlant == null
+    - !type:PlantHolder
+      targetKey: HarvestPlant
+      harvest: true
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Farming
+  - div: [float: 3]
+  - add:
+    - !type:SearchQueryCount
+      query: HarvestPlant
+    - add:
+      - !type:SearchQueryCount
+        query: SharpHarvestPlant
+    - !type:Normalize
+    - pow: [float: 2]
+    - div:
+      - !type:GoalPerformers
+        goal: Plant
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [float: 0.35]
+  tempKeys:
+  - HarvestPlant
+  - SharpTarget
+  goalState:
+    PlantHarvested: true
+
+- type: utilityAiGoal
+  id: RemoveWeed
+  color: "#1A9927"
+  conditions:
+  - !type:Or
+    conditions:
+    - WeedPlantHolder == null
+    - !type:PlantHolder
+      targetKey: WeedPlantHolder
+      hasWeed: true
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Farming
+  - div: [float: 3]
+  - add:
+    - !type:SearchQueryCount
+      query: WeedPlantHolder
+    - !type:Normalize
+    - pow: [float: 2]
+    - div:
+      - !type:GoalPerformers
+        goal: RemoveWeed
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [float: 0.35]
+  tempKeys:
+  - WeedPlantHolder
+  - Hoe
+  goalState:
+    WeedRemoved: true
+
+- type: utilityAiGoal
+  id: SamplePlant
+  color: "#1A9927"
+  conditions:
+  - !type:Or
+    conditions:
+    - SamplePlant == null
+    - !type:PlantHolder
+      targetKey: SamplePlant
+      sampled: false
+      dead: false
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Farming
+  - div: [float: 3]
+  - add:
+    - !type:SearchQueryCount
+      query: SamplePlant
+    - !type:Normalize
+    - pow: [float: 2]
+    - div:
+      - !type:GoalPerformers
+        goal: SamplePlant
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [float: 0.35]
+  tempKeys:
+  - SamplePlant
+  - PlantSampleTaker
+  goalState:
+    SampleTaken: true
+
+- type: utilityAiGoal
+  id: RemovePlant
+  color: "#1A9927"
+  conditions:
+  - !type:Or
+    conditions:
+    - DeadPlant == null
+    - !type:PlantHolder
+      targetKey: DeadPlant
+      dead: true
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Farming
+  - div: [float: 3]
+  - add:
+    - !type:SearchQueryCount
+      query: DeadPlant
+    - add:
+      - !type:SearchQueryCount
+        query: SharpDeadPlant
+    - !type:Normalize
+    - pow: [float: 2]
+    - div:
+      - !type:GoalPerformers
+        goal: DeadPlant
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [float: 0.35]
+  tempKeys:
+  - DeadPlant
+  - SharpTarget
+  goalState:
+    PlantRemoved: true
+
+- type: utilityAiGoal
+  id: WaterPlant
+  color: "#1A9927"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Farming
+  - div: [float: 3]
+  - add:
+    - !type:SearchQueryCount
+      query: PlantWaterTarget
+    - !type:Normalize
+    - pow: [float: 2]
+    - div:
+      - !type:GoalPerformers
+        goal: PlantWaterTarget
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [float: 0.35]
+  tempKeys:
+  - Bucket
+  - WaterSource
+  goalState:
+    PlantWaterFilled: true

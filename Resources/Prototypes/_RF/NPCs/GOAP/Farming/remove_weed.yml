@@ -1,0 +1,40 @@
+- type: goapCompound
+  id: RemoveWeed
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: WeedPlantHolder
+    action: !type:SearchQuery
+      query: WeedPlantHolder
+      targetKey: WeedPlantHolder
+    effects:
+      WeedPlantHolder: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: Hoe
+    actions:
+    - !type:SearchQuery
+      query: Hoe
+      targetKey: Hoe
+    - !type:EntityCoords
+      targetKey: Hoe
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Hoe
+    effects:
+      Hoe: true
+
+  - preconditions:
+    - WeedPlantHolder != null
+    - Hoe != null
+    actions:
+    - !type:EntityCoords
+      targetKey: WeedPlantHolder
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: WeedPlantHolder
+    effects:
+      WeedRemoved: true

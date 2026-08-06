@@ -1,0 +1,41 @@
+- type: goapCompound
+  id: SamplePlant
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: SamplePlant
+    action: !type:SearchQuery
+      query: SamplePlant
+      targetKey: SamplePlant
+    effects:
+      SamplePlant: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: PlantSampleTaker
+    actions:
+    - !type:SearchQuery
+      query: PlantSampleTaker
+      targetKey: PlantSampleTaker
+    - !type:EntityCoords
+      targetKey: PlantSampleTaker
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: PlantSampleTaker
+    effects:
+      PlantSamplePickedUp: true
+
+  - preconditions:
+    - SamplePlant != null
+    - PlantSamplePickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: SamplePlant
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: SamplePlant
+    - !type:MarkOwnerInRange
+    effects:
+      SampleTaken: true

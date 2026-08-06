@@ -1,0 +1,45 @@
+- type: goapCompound
+  id: Planting
+  tasks:
+  - preconditions:
+    - !type:SearchQueryValid
+      query: Seed
+    action: !type:SearchQuery
+      query: Seed
+      targetKey: Seed
+    effects:
+      Seed: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: EmptyPlantHolder
+    action: !type:SearchQuery
+      query: EmptyPlantHolder
+      targetKey: EmptyPlantHolder
+    effects:
+      EmptyPlantHolder: true
+
+  - preconditions:
+    - Seed != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Seed
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Seed
+    effects:
+      SeedPickedUp: true
+
+  - preconditions:
+    - EmptyPlantHolder != null
+    - SeedPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: EmptyPlantHolder
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: EmptyPlantHolder
+    effects:
+      SeedPlanted: true

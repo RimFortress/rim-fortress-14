@@ -1,0 +1,53 @@
+- type: goapCompound
+  id: Harvest
+  tasks:
+  - preconditions:
+    - ActiveHandFree == true
+    - !type:SearchQueryValid
+      query: HarvestPlant
+    action: !type:SearchQuery
+      query: HarvestPlant
+      targetKey: HarvestPlant
+    effects:
+      HarvestPlant: true
+      NeedSharp: false
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: SharpHarvestPlant
+    action: !type:SearchQuery
+      query: SharpHarvestPlant
+      targetKey: HarvestPlant
+    effects:
+      HarvestPlant: true
+      NeedSharp: true
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: Sharp
+    actions:
+    - !type:SearchQuery
+      query: Sharp
+      targetKey: SharpTarget
+    - !type:EntityCoords
+      targetKey: SharpTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: SharpTarget
+    effects:
+      NeedSharp: false
+
+  - preconditions:
+    - HarvestPlant != null
+    - NeedSharp == false
+    actions:
+    - !type:EntityCoords
+      targetKey: HarvestPlant
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: HarvestPlant
+    - !type:MarkOwnerInRange
+    effects:
+      PlantHarvested: true

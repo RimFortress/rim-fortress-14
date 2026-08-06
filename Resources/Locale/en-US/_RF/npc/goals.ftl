@@ -16,3 +16,10 @@ utility-ai-goal-deconstruct-name = Deconstruct
 utility-ai-goal-attack-name = Attack
 utility-ai-goal-inventorystorage-name = Put in inventory
 utility-ai-goal-drop-name = Drop
+
+utility-ai-goal-plant-name = Plant
+utility-ai-goal-harvest-name = Gather the harvest
+utility-ai-goal-removeweed-name = Remove weeds
+utility-ai-goal-sampleplant-name = Take sample
+utility-ai-goal-removeplant-name = Remove plant
+utility-ai-goal-waterplant-name = Water plant

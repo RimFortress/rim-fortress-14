@@ -102,6 +102,12 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
         StateKey<ushort> currentDoAfter,
         bool expectDoAfter)
     {
+        if (Deleted(target))
+        {
+            CreateDump(ent, action, $"{ToPrettyString(target)} deleted");
+            return GoapActionResult.Failed;
+        }
+
         var waitResult = Wait(ent, action, currentDoAfter, out var nextId);
 
         if (waitResult != GoapActionResult.Finished)

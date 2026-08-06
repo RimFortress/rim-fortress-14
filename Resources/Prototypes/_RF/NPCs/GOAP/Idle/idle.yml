@@ -17,6 +17,7 @@
   - proto: Combat
   - proto: InventoryStorage
   - proto: Drop
+  - proto: Farming
 
   - preconditions:
     - InContainer == false

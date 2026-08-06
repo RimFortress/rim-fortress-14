@@ -121,7 +121,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 
         if (comp.Queries.TryGetValue(protoId, out var cache)
             && cache.ValidUntil >= _timing.CurTime)
-            return cache.Result;
+            return cache.Result.Where(x => !Deleted(x)).ToList();
 
         if (!Proto.Resolve(protoId, out var proto))
             return new();

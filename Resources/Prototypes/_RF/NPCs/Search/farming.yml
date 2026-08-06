@@ -1,0 +1,179 @@
+- type: searchQuery
+  id: Seed
+  validTime: 0.5s
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Seed
+      seedId: wheat
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: EmptyPlantHolder
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  - !type:PlantHolder
+    filled: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: HarvestPlant
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  - !type:PlantHolder
+    harvest: false
+    dead: true
+    needSharp: true
+  considerations:
+  - !type:SamePlantCount
+    curves:
+    - lessThan: 4
+      value:
+      - mul: [float: 0] # We don't harvest if we have fewer than 4 seeds left, so we don't run out
+    - !type:Normalize
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: SamplePlant
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  - !type:PlantHolder
+    harvest: false
+    dead: true
+    sampled: true
+  considerations:
+  - !type:SamePlantCount
+    curves:
+    - !type:Normalize
+    - minus: [float: 1]
+    - !type:Abs # More points for the plants that have the fewest
+    - pow: [float: 2]
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: SharpHarvestPlant
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  - !type:PlantHolder
+    harvest: false
+    dead: true
+    needSharp: false
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: DeadPlant
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  - !type:PlantHolder
+    dead: false
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: SharpDeadPlant
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  - !type:PlantHolder
+    dead: false
+    needSharp: false
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: WeedPlantHolder
+  query: !type:Owned
+  considerations:
+  - !type:Weed
+    curves:
+    - !type:Normalize
+    - lessThan: 0.15
+      value:
+      - mul: [float: 0]
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: WaterSource
+  query: !type:Nearby
+    whitelist:
+      components:
+      - DrainableSolution
+    range: 15
+  filters:
+  - !type:DrainableSolution
+    reagent: Water
+    reagentMoreThan: 80.0
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: PlantWaterTarget
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+    invert: true
+  considerations:
+  - !type:RefillableReagent
+    reagent: Water
+    curves:
+    - moreThan: 0.40
+      value:
+      - mul: [float: 0]
+    - minus: [float: 1]
+    - !type:Abs
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
