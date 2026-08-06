@@ -1,24 +1,3 @@
-- type: executableGoal
-  id: TakeOwnership
-  goal: TakeOwnership
-  verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
-  targetKey: TakeOwnershipTarget
-  maxPerformers: 1
-  goalType:
-  - Verb
-  - Passive
-  targetWhitelist:
-    components:
-    - Item
-
-- type: utilityAiGoal
-  id: TakeOwnership
-  color: "#075967"
-  scoreCurves:
-  - float: 0.8
-  goalState:
-    TargetOwned: true
-
 - type: goapCompound
   id: TakeOwnership
   tasks:

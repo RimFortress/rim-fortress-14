@@ -1,0 +1,7 @@
+- type: goapCompound
+  id: Drop
+  tasks:
+  - actions:
+    - !type:Drop
+    effects:
+      TargetDroped: true

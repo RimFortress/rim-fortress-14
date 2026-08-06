@@ -1,0 +1,4 @@
+- type: utilityAiGoal
+  id: MoveTo
+  goalState:
+    NearTargetPlace: true

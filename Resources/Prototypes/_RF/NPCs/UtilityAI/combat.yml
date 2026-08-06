@@ -1,0 +1,16 @@
+- type: utilityAiGoal
+  id: Attack
+  color: "#FF0000"
+  failPenalty: 0.05
+  conditions:
+  - !type:Or
+    conditions:
+    - AttackTarget == null
+    - !type:MobState
+      targetKey: AttackTarget
+      targetState: Dead
+      invert: true
+  scoreCurves:
+  - float: 1
+  goalState:
+    TargetAttacked: true

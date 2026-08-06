@@ -1,0 +1,23 @@
+- type: executableGoal
+  id: Construction
+  goal: Construction
+  verbIcon: _RF/Interface/hammer-solid.svg.192dpi.png
+  targetKey: ConstructionTarget
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - CommonConstructionGhost
+    - Construction
+
+- type: executableGoal
+  id: Deconstruct
+  goal: Deconstruct
+  verbIcon: _RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
+  targetKey: DeconstructTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - Construction

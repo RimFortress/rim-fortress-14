@@ -1,0 +1,11 @@
+- type: executableGoal
+  id: Attack
+  goal: Attack
+  verbIcon: _RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
+  targetKey: AttackTarget
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - MobState

@@ -1,0 +1,42 @@
+- type: utilityAiGoal
+  id: Drop
+  color: "#00D5FF"
+  conditions:
+  - ActiveHandEntity != null
+  - !type:KeyEqual
+    key1: Target
+    key2: Owner
+  goalState:
+    TargetDroped: true
+
+- type: utilityAiGoal
+  id: Interact
+  color: "#00D5FF"
+  goalState:
+    TargetInteracted: true
+
+- type: utilityAiGoal
+  id: InventoryStorage
+  color: "#00D5FF"
+  goalState:
+    TargetStoredInInventory: true
+
+- type: utilityAiGoal
+  id: PickUp
+  color: "#00D5FF"
+  goalState:
+    TargetPickedUp: true
+
+- type: utilityAiGoal
+  id: Pry
+  color: "#00D5FF"
+  goalState:
+    TargetPry: true
+
+- type: utilityAiGoal
+  id: TakeOwnership
+  color: "#075967"
+  scoreCurves:
+  - float: 0.8
+  goalState:
+    TargetOwned: true

@@ -1,0 +1,5 @@
+- type: executableGoal
+  id: MoveTo
+  goal: MoveTo
+  goalType:
+  - Place

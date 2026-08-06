@@ -1,0 +1,32 @@
+- type: utilityAiGoal
+  id: Construction
+  color: "#FFFF00"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Construction
+  - div:
+    - float: 3
+  - add:
+    - !type:SearchQueryCount
+      query: ConstructionTarget
+    - !type:Normalize
+    - div:
+      - !type:GoalPerformers
+        goal: Construction
+      - minus:
+        - float: 1
+      - clamp:
+          min: 1
+          max: 4
+    - mul:
+      - float: 0.55
+  goalState:
+    TargetConstructed: true
+
+- type: utilityAiGoal
+  id: Deconstruct
+  color: "#945A1C"
+  scoreCurves:
+  - float: 1
+  goalState:
+    TargetDeconstruct: true

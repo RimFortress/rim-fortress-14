@@ -1,0 +1,58 @@
+- type: executableGoal
+  id: Drop
+  goal: Drop
+  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  selfPerform: true
+
+- type: executableGoal
+  id: Interact
+  goal: Interact
+  verbIcon: _RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
+  maxPerformers: 1
+  targetWhitelist:
+    requireAll: false
+    components:
+    - Strap
+    - Door
+    tags:
+    - HandGatherable
+
+- type: executableGoal
+  id: InventoryStorage
+  goal: InventoryStorage
+  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  targetWhitelist:
+    components:
+    - Item
+
+- type: executableGoal
+  id: PickUp
+  goal: PickUp
+  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  targetKey: PickupTarget
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Item
+
+- type: executableGoal
+  id: Pry
+  goal: Pry
+  verbIcon: _RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Door
+
+- type: executableGoal
+  id: TakeOwnership
+  goal: TakeOwnership
+  verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  targetKey: TakeOwnershipTarget
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - Item

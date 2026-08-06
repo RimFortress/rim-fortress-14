@@ -1,22 +1,3 @@
-- type: executableGoal
-  id: Interact
-  goal: Interact
-  verbIcon: _RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
-  maxPerformers: 1
-  targetWhitelist:
-    requireAll: false
-    components:
-    - Strap
-    - Door
-    tags:
-    - HandGatherable
-
-- type: utilityAiGoal
-  id: Interact
-  color: "#00D5FF"
-  goalState:
-    TargetInteracted: true
-
 - type: goapCompound
   id: Interact
   tasks:

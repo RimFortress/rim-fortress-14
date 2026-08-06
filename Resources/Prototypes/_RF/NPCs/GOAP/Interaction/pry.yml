@@ -1,18 +1,3 @@
-- type: executableGoal
-  id: Pry
-  goal: Pry
-  verbIcon: _RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
-  maxPerformers: 1
-  targetWhitelist:
-    components:
-    - Door
-
-- type: utilityAiGoal
-  id: Pry
-  color: "#00D5FF"
-  goalState:
-    TargetPry: true
-
 - type: goapCompound
   id: Pry
   tasks:

@@ -1,17 +1,3 @@
-- type: executableGoal
-  id: InventoryStorage
-  goal: InventoryStorage
-  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
-  targetWhitelist:
-    components:
-    - Item
-
-- type: utilityAiGoal
-  id: InventoryStorage
-  color: "#00D5FF"
-  goalState:
-    TargetStoredInInventory: true
-
 - type: goapCompound
   id: InventoryStorage
   tasks:
