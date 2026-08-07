@@ -1,28 +1,34 @@
+using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.World;
 
 namespace Content.Shared._RF.Conversation.Requirements;
 
 /// <summary>
-/// Checks the current hour of the day
+/// Checks the current hour of the day.
 /// </summary>
-public sealed partial class DayHour : ConversationActorRequirement
+public sealed partial class DayHour : BaseConversationCondition<DayHour>
 {
     /// <summary>
-    /// Minimum day hour
+    /// Minimum day hour.
     /// </summary>
     [DataField]
     public int? MoreThan;
 
     /// <summary>
-    /// Maximum day hour
+    /// Maximum day hour.
     /// </summary>
     [DataField]
     public int? LessThan;
+}
 
-    public override bool Check(EntityUid author, EntityUid? actor, EntityManager entMan)
+public sealed class DayHourConversationConditionSystem : ConversationConditionSystem<DayHour>
+{
+    [Dependency] private readonly SharedRimFortressWorldSystem _world = default!;
+
+    protected override bool Check(EntityUid target, EntityUid? other, DayHour condition)
     {
-        var hour = entMan.System<SharedRimFortressWorldSystem>().WorldDateTime().Hours;
-        return (MoreThan == null || hour > MoreThan)
-               && (LessThan == null || hour < LessThan);
+        var hour = _world.WorldDateTime().Hours;
+        return (condition.MoreThan == null || hour > condition.MoreThan)
+               && (condition.LessThan == null || hour < condition.LessThan);
     }
 }

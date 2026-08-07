@@ -1,4 +1,6 @@
+using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.Social;
+using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
@@ -6,45 +8,50 @@ using Robust.Shared.Utility;
 namespace Content.Shared._RF.Conversation.Requirements;
 
 /// <summary>
-/// Check for one entity's opinion of another
+/// Check for one entity's opinion of another.
 /// </summary>
-public sealed partial class Opinion : ConversationActorRequirement
+public sealed partial class Opinion : BaseConversationCondition<Opinion>
 {
     /// <summary>
-    /// Minimum opinion level
+    /// Minimum opinion level.
     /// </summary>
     [DataField]
     public int? MoreThan;
 
     /// <summary>
-    /// Maximum opinion level
+    /// Maximum opinion level.
     /// </summary>
     [DataField]
     public int? LessThan;
 
     /// <summary>
-    /// Opinion effects to an entity that needs to be checked for
+    /// Opinion effects to an entity that needs to be checked for.
     /// </summary>
     [DataField]
     public List<ProtoId<SocialEffectPrototype>> HasEffects = new();
+}
 
-    public override bool Check(EntityUid author, EntityUid? actor, EntityManager entMan)
+public sealed class OpinionConversationConditionSystem : ConversationConditionSystem<SocialComponent, Opinion>
+{
+    [Dependency] private readonly SocialSystem _social = default!;
+
+    protected override bool Check(Entity<SocialComponent> ent, EntityUid? other, Opinion condition)
     {
-        DebugTools.AssertNotNull(actor, "Opinion requirement can only be used as a requirement from one actor to another");
-
-        if (actor == null)
-            return false;
-
-        var sys = entMan.System<SocialSystem>();
-
-        foreach (var effect in HasEffects)
+        if (other == null)
         {
-            if (!sys.HasOpinionEffect(author, actor.Value, effect))
+            DebugTools.Assert(false, "Opinion requirement can only be used as a requirement from one actor to another");
+            return false;
+        }
+
+        foreach (var effect in condition.HasEffects)
+        {
+            if (!_social.HasOpinionEffect(ent.AsNullable(), other.Value, effect))
                 return false;
         }
 
-        var opinion = sys.GetOpinion(author, actor.Value);
+        var opinion = _social.GetOpinion(ent.AsNullable(), other.Value);
 
-        return (MoreThan == null || opinion > MoreThan) && (LessThan == null || opinion < LessThan);
+        return (condition.MoreThan == null || opinion > condition.MoreThan)
+               && (condition.LessThan == null || opinion < condition.LessThan);
     }
 }

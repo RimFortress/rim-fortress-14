@@ -2,34 +2,24 @@
   id: ThankForHealing
   parent: BaseDialog
   actors:
-  - id: patient
+  - id: initiator
     reqsFor:
-      healer:
+      responder:
       - !type:Opinion
         moreThan: 0
         hasEffects:
         - OpinionHealed
-  - id: healer
-  lines:
-  - patient: conversation-thankforhealing-patient-1
-  - healer: conversation-thankforhealing-healer-1
-  - patient: conversation-thankforhealing-patient-2
-  - healer: conversation-thankforhealing-healer-2
+  - id: responder
 
 - type: conversationScript
   id: CheckOnPatient
   parent: BaseDialog
   actors:
-  - id: healer
-  - id: patient
+  - id: initiator
+  - id: responder
     reqsFor:
-      healer:
+      initiator:
       - !type:Opinion
         moreThan: 0
         hasEffects:
         - OpinionHealed
-  lines:
-  - healer: conversation-checkonpatient-healer-1
-  - patient: conversation-checkonpatient-patient-1
-  - healer: conversation-checkonpatient-healer-2
-  - patient: conversation-checkonpatient-patient-2

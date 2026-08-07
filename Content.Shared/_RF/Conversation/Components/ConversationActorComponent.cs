@@ -38,7 +38,7 @@ public sealed partial class ConversationActorComponent : Component
     /// if next in conversation
     /// </summary>
     [DataField, ViewVariables]
-    public LocId? NextMessage;
+    public int NextMessage;
 
     /// <summary>
     /// The coordinates where the conversation takes place

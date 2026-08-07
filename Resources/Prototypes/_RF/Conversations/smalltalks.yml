@@ -20,54 +20,41 @@
         moreThan: -5
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodPleasantConversation
-    - !type:AddOpinionEffect
+    - !type:AddOpinion
       actors:
       - respondent
       proto: OpinionPoliteDialogue
-    - !type:ChangeNeedEffect
+    - !type:ChangeNeed
       need: Socialization
       amount: 10
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodPleasantConversation
-    - !type:AddOpinionEffect
+    - !type:AddOpinion
       actors:
       - initiator
       proto: OpinionPoliteDialogue
-    - !type:ChangeNeedEffect
+    - !type:ChangeNeed
       need: Socialization
       amount: 10
+  order:
+    lines: 4
 
 - type: conversationScript
   id: Smalltalk01
   parent: BaseDialog
-  lines:
-  - initiator: conversation-smalltalk01-line1-a
-  - responder: conversation-smalltalk01-line1-b
-  - initiator: conversation-smalltalk01-line2-a
-  - responder: conversation-smalltalk01-line2-b
 
 - type: conversationScript
   id: Smalltalk02
   parent: BaseDialog
-  lines:
-  - initiator: conversation-smalltalk02-line1-a
-  - responder: conversation-smalltalk02-line1-b
-  - initiator: conversation-smalltalk02-line2-a
-  - responder: conversation-smalltalk02-line2-b
-  - initiator: conversation-smalltalk02-line3-a
-  - responder: conversation-smalltalk02-line3-b
+  order:
+    lines: 6
 
 - type: conversationScript
   id: GreetingCasual
   parent: BaseDialog
-  lines:
-  - initiator: conversation-greeting-casual-hello
-  - responder: conversation-greeting-casual-response
-  - initiator: conversation-greeting-casual-how-are-you
-  - responder: conversation-greeting-casual-im-fine
 
 - type: conversationScript
   id: MorningGreeting
@@ -91,9 +78,8 @@
       initiator:
       - !type:Opinion
         moreThan: -5
-  lines:
-  - initiator: conversation-morning-greeting-initiator
-  - responder: conversation-morning-greeting-responder
+  order:
+    lines: 2
 
 # Bad mood
 - type: conversationScript
@@ -113,20 +99,20 @@
       lessThan: -15
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodUnpleasantConversation
-    - !type:ChangeNeedEffect
+    - !type:ChangeNeed
       need: Socialization
       amount: 3
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodConversationIrritated
-  lines:
-  - initiator: conversation-smalltalkrejected-initiator-1
-  - respondent: conversation-smalltalkrejected-respondent-1
+  order:
+    lines: 2
 
 - type: conversationScript
   id: SmalltalkIgnored
+  parent: BaseDialog
   actors:
   - id: initiator
     reqs:
@@ -142,19 +128,15 @@
       lessThan: -25
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodUnpleasantConversation
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodConversationIrritated
-  lines:
-  - initiator: conversation-smalltalkignored-initiator-1
-  - respondent: conversation-smalltalkignored-respondent-1
-  - initiator: conversation-smalltalkignored-initiator-2
-  - respondent: conversation-smalltalkignored-respondent-2
 
 - type: conversationScript
   id: SmalltalkRude
+  parent: BaseDialog
   actors:
   - id: initiator
     reqs:
@@ -170,17 +152,12 @@
       lessThan: -30
   effects:
     initiator:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodRudeConversation
-    - !type:AddOpinionEffect
+    - !type:AddOpinion
       actors:
       - respondent
       proto: OpinionRudeDialogue
     respondent:
-    - !type:AddMoodEffect
+    - !type:AddMood
       proto: MoodConversationIrritated
-  lines:
-  - initiator: conversation-smalltalkrude-initiator-1
-  - respondent: conversation-smalltalkrude-respondent-1
-  - initiator: conversation-smalltalkrude-initiator-2
-  - respondent: conversation-smalltalkrude-respondent-2
