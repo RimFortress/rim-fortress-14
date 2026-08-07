@@ -74,6 +74,15 @@
       icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
       goals:
       - Chop
+    - name: npc-job-farming-name
+      icon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+      goals:
+      - Plant
+      - Harvest
+      - RemoveWeed
+      - SamplePlant
+      - RemovePlant
+      - WaterPlant
   - type: NpcFactionMember
     factions:
     - RimFortress
