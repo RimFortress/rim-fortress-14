@@ -2,8 +2,6 @@
   id: TargetDistance
   curves:
   - !type:Normalize
-  - !type:Quadratic
-    slope: -1
-    exponent: 1
-    yOffset: 1
-    xOffset: 0
+    saturation: 2
+  - minus: [float: 1]
+  - !type:Abs

@@ -1,6 +1,6 @@
 - type: utilityAiGoal
   id: Idle
   scoreCurves:
-  - float: 0.15
+  - float: 0.10
   goalState:
     Idle: true

@@ -89,6 +89,9 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
             if (!Executables.TryAdd(proto.Goal, new() { proto }))
                 Executables[proto.Goal].Add(proto);
 
+            if (proto.Conditions.Count > 0)
+                IgnoreGoalsList.Add(proto);
+
             if (Proto.Resolve(proto.Goal, out var goal) && goal.Conditions.Count > 0)
                 IgnoreGoalsList.Add(proto);
         }
@@ -422,12 +425,13 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
             || GoalPerformersCount(goal, target) >= goal.MaxPerformers
             || !GoapQuery.Resolve(ent, ref ent.Comp1)
             || !ControllableQuery.Resolve(ent, ref ent.Comp2)
-            || !ent.Comp2.Goals.Contains(goal))
+            || !ent.Comp2.Goals.Contains(goal)
+            || !_utilityAi.ConditionsMet(ent, goal.Goal))
             return false;
 
         // Set a temporary variables in GoapState to check conditions.
         ent.Comp1.State.SetValue(goal.TargetKey, target);
-        var result = _utilityAi.ConditionsMet(ent, goal.Goal);
+        var result = _goap.CheckCondition(ent, goal.Conditions);
         ent.Comp1.State.Remove(goal.TargetKey);
         return result;
     }

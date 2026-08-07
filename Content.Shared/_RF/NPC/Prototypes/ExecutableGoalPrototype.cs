@@ -41,6 +41,18 @@ public sealed partial class ExecutableGoalPrototype : IPrototype, IInheritingPro
     public ExecutableGoalType GoalType = ExecutableGoalType.Verb;
 
     /// <summary>
+    /// Conditions that must be met for a goal to be issued and displayed in the Verb menu.
+    /// </summary>
+    [DataField(serverOnly: true)]
+    public List<GoapCondition> Conditions = new();
+
+    /// <summary>
+    /// The counter of goal performers will also include the performers of the specified goals on the same target.
+    /// </summary>
+    [DataField]
+    public List<ProtoId<UtilityAiGoalPrototype>> UnionPerformersWith = new();
+
+    /// <summary>
     /// An icon to display the goal in the context menu.
     /// If <see cref="GoalType"/> is <see cref="ExecutableGoalType.Verb"/>.
     /// </summary>

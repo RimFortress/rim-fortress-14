@@ -3,7 +3,7 @@ using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 namespace Content.Shared._RF.MathHelpers.MathCurve.Curves;
 
 /// <summary>
-/// Just returns input value
+/// Just returns input value.
 /// </summary>
 public sealed partial class FloatCurve : MathCurve
 {
@@ -14,7 +14,7 @@ public sealed partial class FloatCurve : MathCurve
 }
 
 /// <summary>
-/// Limits the value of the number
+/// Limits the value of the number.
 /// </summary>
 public sealed partial class ClampCurve : MathCurve
 {
@@ -26,7 +26,7 @@ public sealed partial class ClampCurve : MathCurve
 }
 
 /// <summary>
-/// Checks the value of the number and if the condition is met, applies curve on it
+/// Checks the value of the number and if the condition is met, applies curve on it.
 /// </summary>
 public sealed partial class ConditionCurve : MathCurve
 {
@@ -49,7 +49,7 @@ public sealed partial class ConditionCurve : MathCurve
 }
 
 /// <summary>
-/// Divides the input number by the given number
+/// Divides the input number by the given number.
 /// </summary>
 public sealed partial class DivideCurve : MathCurve
 {
@@ -61,7 +61,7 @@ public sealed partial class DivideCurve : MathCurve
 }
 
 /// <summary>
-/// Multiplies the input number by the given number
+/// Multiplies the input number by the given number.
 /// </summary>
 public sealed partial class MultiplyCurve : MathCurve
 {
@@ -73,33 +73,33 @@ public sealed partial class MultiplyCurve : MathCurve
 }
 
 /// <summary>
-/// Returns the square root of the input number
+/// Returns the square root of the input number.
 /// </summary>
 public sealed partial class Sqrt : MathCurve
 {
-    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => (float)Math.Sqrt(value);
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => MathF.Sqrt(value);
 }
 
 public sealed partial class Sin : MathCurve
 {
-    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => (float)Math.Sin(value);
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => MathF.Sin(value);
 }
 
 public sealed partial class Cos : MathCurve
 {
-    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => (float)Math.Cos(value);
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => MathF.Cos(value);
 }
 
 /// <summary>
-/// Returns the absolute value of the input number
+/// Returns the absolute value of the input number.
 /// </summary>
 public sealed partial class Abs : MathCurve
 {
-    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => Math.Abs(value);
+    public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null) => MathF.Abs(value);
 }
 
 /// <summary>
-/// Increases the input number by the specified number
+/// Increases the input number by the specified number.
 /// </summary>
 public sealed partial class AddCurve : MathCurve
 {
@@ -111,7 +111,7 @@ public sealed partial class AddCurve : MathCurve
 }
 
 /// <summary>
-/// Decreases the input number by the specified number
+/// Decreases the input number by the specified number.
 /// </summary>
 public sealed partial class MinusCurve : MathCurve
 {
@@ -123,7 +123,7 @@ public sealed partial class MinusCurve : MathCurve
 }
 
 /// <summary>
-/// Returns the input number raised to a power
+/// Returns the input number raised to a power.
 /// </summary>
 public sealed partial class PowCurve : MathCurve
 {
@@ -131,7 +131,7 @@ public sealed partial class PowCurve : MathCurve
     public List<MathCurve> Pow = new();
 
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => (float)Math.Pow(value, ListValue(Pow, handler, user: user));
+        => MathF.Pow(value, ListValue(Pow, handler, user: user));
 }
 
 /// <summary>
@@ -160,6 +160,12 @@ public sealed partial class Quadratic : MathCurve
 /// </summary>
 public sealed partial class Normalize : MathCurve
 {
+    /// <summary>
+    /// Saturation constant: the lower the value, the faster the curve reaches a plateau.
+    /// </summary>
+    [DataField]
+    public float Saturation = 1f;
+
     public override float Curve(float value, IMathCurveHandler handler, EntityUid? user = null)
-        => value != 0 ? 1 - 1 / value : 0;
+        => value != 0 ? 1 - 1 / (value + Saturation) : 0;
 }

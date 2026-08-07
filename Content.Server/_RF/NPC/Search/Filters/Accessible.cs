@@ -20,7 +20,7 @@ public sealed class AccessibleSystem : NpcSearchFilterSystem<Accessible>
 
     protected override bool Filter(GoapState state, EntityUid target, Accessible filter)
     {
-        if (!_container.TryGetContainingContainer(target, out var container))
+        if (!_container.TryGetOuterContainer(target, Transform(target), out var container))
             return true;
 
         if (container.Owner == state.GetValue(GoapState.Owner))

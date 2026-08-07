@@ -78,7 +78,7 @@ public sealed class DrainableSolutionFilterSystem : NpcSearchFilterSystem<Draina
         if (solution.Contents.FirstOrNull(x => x.Reagent.Prototype == filter.Reagent) is not { } reagent)
             return false;
 
-        if (filter.OnlyReagent && solution.Contents.Count > 0)
+        if (filter.OnlyReagent && solution.Contents.Count > 1)
             return false;
 
         return (filter.ReagentMoreThan == null || reagent.Quantity > filter.ReagentMoreThan)

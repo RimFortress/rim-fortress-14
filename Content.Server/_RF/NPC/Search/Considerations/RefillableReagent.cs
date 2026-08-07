@@ -32,7 +32,7 @@ public sealed class RefillableReagentConsiderationSystem : NpcSearchConsideratio
 
     protected override float GetScore(GoapState state, EntityUid target, RefillableReagent con)
     {
-        if (!_solution.TryGetDrainableSolution(target, out _, out var solution)
+        if (!_solution.TryGetRefillableSolution(target, out _, out var solution)
             || solution.Contents.FirstOrNull(x => x.Reagent.Prototype == con.Reagent) is not { } reagent)
             return 0f;
 

@@ -1,11 +1,6 @@
 - type: utilityAiGoal
   id: Drop
   color: "#00D5FF"
-  conditions:
-  - ActiveHandEntity != null
-  - !type:KeyEqual
-    key1: Target
-    key2: Owner
   goalState:
     TargetDroped: true
 
@@ -36,13 +31,6 @@
 - type: utilityAiGoal
   id: TakeOwnership
   color: "#075967"
-  conditions:
-  - !type:Or
-    conditions:
-    - TakeOwnershipTarget == null # This key is not null only when it is issued via ExecutableGoal
-    - !type:HasSameOwner
-      targetKey: TakeOwnershipTarget
-      invert: true
   scoreCurves:
   - float: 0.8
   goalState:

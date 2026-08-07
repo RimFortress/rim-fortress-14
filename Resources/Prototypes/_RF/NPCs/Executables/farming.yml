@@ -6,39 +6,72 @@
   targetWhitelist:
     components:
     - PlantHolder
+  unionPerformersWith:
+  - Plant
+  - Harvest
+  - RemoveWeed
+  - SamplePlant
+  - RemovePlant
+  - WaterPlant
 
 - type: executableGoal
   id: Plant
   parent: BaseFarmingGoal
   goal: Plant
   targetKey: EmptyPlantHolder
+  conditions:
+  - !type:PlantHolder
+    targetKey: EmptyPlantHolder
+    filled: false
 
 - type: executableGoal
   id: Harvest
   parent: BaseFarmingGoal
   goal: Harvest
   targetKey: HarvestPlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: HarvestPlant
+    harvest: true
 
 - type: executableGoal
   id: RemoveWeed
   parent: BaseFarmingGoal
   goal: RemoveWeed
   targetKey: WeedPlantHolder
+  conditions:
+  - !type:PlantHolder
+    targetKey: WeedPlantHolder
+    hasWeed: true
 
 - type: executableGoal
   id: SamplePlant
   parent: BaseFarmingGoal
   goal: SamplePlant
   targetKey: SamplePlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: SamplePlant
+    filled: true
+    sampled: false
+    dead: false
 
 - type: executableGoal
   id: RemovePlant
   parent: BaseFarmingGoal
   goal: RemovePlant
   targetKey: RemovePlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: RemovePlant
+    dead: true
 
 - type: executableGoal
   id: WaterPlant
   parent: BaseFarmingGoal
   goal: WaterPlant
   targetKey: PlantWaterTarget
+  conditions:
+  - !type:PlantHolder
+    targetKey: PlantWaterTarget
+    waterLessThan: 50

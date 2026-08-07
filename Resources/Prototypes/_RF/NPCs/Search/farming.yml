@@ -26,7 +26,8 @@
     - type: PlantHolder
     invert: true
   - !type:PlantHolder
-    filled: true
+    filled: false
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -41,9 +42,10 @@
     - type: PlantHolder
     invert: true
   - !type:PlantHolder
-    harvest: false
-    dead: true
-    needSharp: true
+    harvest: true
+    dead: false
+    needSharp: false
+    invert: true
   considerations:
   - !type:SamePlantCount
     curves:
@@ -64,9 +66,10 @@
     - type: PlantHolder
     invert: true
   - !type:PlantHolder
-    harvest: false
-    dead: true
-    sampled: true
+    harvest: true
+    dead: false
+    sampled: false
+    invert: true
   considerations:
   - !type:SamePlantCount
     curves:
@@ -87,9 +90,10 @@
     - type: PlantHolder
     invert: true
   - !type:PlantHolder
-    harvest: false
-    dead: true
-    needSharp: false
+    harvest: true
+    dead: false
+    needSharp: true
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -104,7 +108,10 @@
     - type: PlantHolder
     invert: true
   - !type:PlantHolder
-    dead: false
+    filled: true
+    dead: true
+    needSharp: false
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -119,8 +126,10 @@
     - type: PlantHolder
     invert: true
   - !type:PlantHolder
-    dead: false
-    needSharp: false
+    filled: true
+    dead: true
+    needSharp: true
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -132,10 +141,10 @@
   considerations:
   - !type:Weed
     curves:
-    - !type:Normalize
-    - lessThan: 0.15
-      value:
-      - mul: [float: 0]
+    - minus: [float: 0.40]
+    - clamp:
+        min: 0
+        max: 1
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
@@ -166,14 +175,14 @@
     - type: PlantHolder
     invert: true
   considerations:
-  - !type:RefillableReagent
-    reagent: Water
+  - !type:PlantHolderWater
     curves:
-    - moreThan: 0.40
-      value:
-      - mul: [float: 0]
     - minus: [float: 1]
     - !type:Abs
+    - minus: [float: 0.4]
+    - clamp:
+        min: 0
+        max: 1
   - !type:TargetDistance
     curves:
     - preset: TargetDistance

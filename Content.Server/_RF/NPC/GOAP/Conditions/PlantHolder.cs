@@ -32,6 +32,12 @@ public sealed partial class PlantHolder : BaseGoapCondition<PlantHolder>
 
     [DataField]
     public bool? Sampled;
+
+    [DataField]
+    public float? WaterMoreThan;
+
+    [DataField]
+    public float? WaterLessThan;
 }
 
 public sealed class PlantHolderConditionSystem : GoapConditionSystem<PlantHolder>
@@ -46,5 +52,7 @@ public sealed class PlantHolderConditionSystem : GoapConditionSystem<PlantHolder
            && (condition.Filled == null || condition.Filled == (comp.Seed != null))
            && (condition.NeedSharp == null || condition.NeedSharp == comp.Seed is { Ligneous: true })
            && (condition.HasWeed == null || condition.HasWeed == comp.WeedLevel > 0)
-           && (condition.Sampled == null || condition.Sampled == comp.Sampled);
+           && (condition.Sampled == null || condition.Sampled == comp.Sampled)
+           && (condition.WaterMoreThan == null || comp.WaterLevel > condition.WaterMoreThan)
+           && (condition.WaterLessThan == null || comp.WaterLevel < condition.WaterLessThan);
 }

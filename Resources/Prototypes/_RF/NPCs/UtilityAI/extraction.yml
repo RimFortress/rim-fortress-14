@@ -10,6 +10,7 @@
     - !type:PassiveTargets
       goal: Chop
     - !type:Normalize
+      saturation: 2
     - pow:
       - float: 2
     - div:
@@ -35,6 +36,7 @@
     - !type:PassiveTargets
       goal: Dig
     - !type:Normalize
+      saturation: 2
     - pow:
       - float: 2
     - div:

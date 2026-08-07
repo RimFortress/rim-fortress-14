@@ -1,7 +1,6 @@
 - type: utilityAiGoal
   id: Attack
   color: "#FF0000"
-  failPenalty: 0.05
   conditions:
   - !type:Or
     conditions:

@@ -1,13 +1,6 @@
 - type: utilityAiGoal
   id: Plant
   color: "#1a9927"
-  conditions:
-  - !type:Or
-    conditions:
-    - EmptyPlantHolder == null # This key is not null only when it is issued via ExecutableGoal
-    - !type:PlantHolder
-      targetKey: EmptyPlantHolder
-      filled: false
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -16,14 +9,13 @@
     - !type:SearchQueryCount
       query: EmptyPlantHolder
     - !type:Normalize
-    - pow: [float: 2]
     - div:
       - !type:GoalPerformers
         goal: Plant
       - clamp:
           min: 1
           max: 10
-    - mul: [float: 0.35]
+    - mul: [float: 0.50]
   tempKeys:
   - Seed
   - EmptyPlantHolder
@@ -33,13 +25,6 @@
 - type: utilityAiGoal
   id: Harvest
   color: "#1A9927"
-  conditions:
-  - !type:Or
-    conditions:
-    - HarvestPlant == null
-    - !type:PlantHolder
-      targetKey: HarvestPlant
-      harvest: true
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -58,7 +43,7 @@
       - clamp:
           min: 1
           max: 10
-    - mul: [float: 0.35]
+    - mul: [float: 0.50]
   tempKeys:
   - HarvestPlant
   - SharpTarget
@@ -68,13 +53,6 @@
 - type: utilityAiGoal
   id: RemoveWeed
   color: "#1A9927"
-  conditions:
-  - !type:Or
-    conditions:
-    - WeedPlantHolder == null
-    - !type:PlantHolder
-      targetKey: WeedPlantHolder
-      hasWeed: true
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -83,14 +61,13 @@
     - !type:SearchQueryCount
       query: WeedPlantHolder
     - !type:Normalize
-    - pow: [float: 2]
     - div:
       - !type:GoalPerformers
         goal: RemoveWeed
       - clamp:
           min: 1
           max: 10
-    - mul: [float: 0.35]
+    - mul: [float: 0.50]
   tempKeys:
   - WeedPlantHolder
   - Hoe
@@ -100,14 +77,6 @@
 - type: utilityAiGoal
   id: SamplePlant
   color: "#1A9927"
-  conditions:
-  - !type:Or
-    conditions:
-    - SamplePlant == null
-    - !type:PlantHolder
-      targetKey: SamplePlant
-      sampled: false
-      dead: false
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -123,7 +92,7 @@
       - clamp:
           min: 1
           max: 10
-    - mul: [float: 0.35]
+    - mul: [float: 0.50]
   tempKeys:
   - SamplePlant
   - PlantSampleTaker
@@ -133,13 +102,6 @@
 - type: utilityAiGoal
   id: RemovePlant
   color: "#1A9927"
-  conditions:
-  - !type:Or
-    conditions:
-    - DeadPlant == null
-    - !type:PlantHolder
-      targetKey: DeadPlant
-      dead: true
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -158,7 +120,7 @@
       - clamp:
           min: 1
           max: 10
-    - mul: [float: 0.35]
+    - mul: [float: 0.50]
   tempKeys:
   - DeadPlant
   - SharpTarget
@@ -183,7 +145,7 @@
       - clamp:
           min: 1
           max: 10
-    - mul: [float: 0.35]
+    - mul: [float: 0.50]
   tempKeys:
   - Bucket
   - WaterSource

@@ -3,6 +3,10 @@
   goal: Drop
   verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   selfPerform: true
+  conditions:
+  - !type:KeyEqual
+    key1: Target
+    key2: Owner
 
 - type: executableGoal
   id: Interact
@@ -50,6 +54,10 @@
   verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
   targetKey: TakeOwnershipTarget
   maxPerformers: 1
+  conditions:
+  - !type:HasSameOwner
+    targetKey: TakeOwnershipTarget
+    invert: true
   goalType:
   - Verb
   - Passive

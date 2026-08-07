@@ -157,13 +157,14 @@ public partial class SharedExecutableGoalSystem
             return 0;
 
         var count = 0;
-        var enumerator = EntityQueryEnumerator<UtilityAiComponent, GoapComponent>();
+        var enumerator = EntityQueryEnumerator<UtilityAiComponent>();
 
-        while (enumerator.MoveNext(out var comp, out var goap))
+        while (enumerator.MoveNext(out var uid, out var comp))
         {
-            if (comp.CurrentGoal == proto.Goal
-                && goap.State.TryGetValue(proto.TargetKey, out var uid)
-                && uid == target)
+            if (comp.CurrentGoal != null
+                && (comp.CurrentGoal == proto.Goal || proto.UnionPerformersWith.Contains(comp.CurrentGoal.Value))
+                && TryGetTarget(new(uid, comp), out var t)
+                && t == target)
                 count++;
         }
 

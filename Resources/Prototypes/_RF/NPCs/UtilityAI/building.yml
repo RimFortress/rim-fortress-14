@@ -10,6 +10,7 @@
     - !type:SearchQueryCount
       query: ConstructionTarget
     - !type:Normalize
+      saturation: 2
     - div:
       - !type:GoalPerformers
         goal: Construction
