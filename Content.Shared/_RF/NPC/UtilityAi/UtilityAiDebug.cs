@@ -25,6 +25,7 @@ public readonly record struct UtilityAiGoalDebugInfo(
     UtilityAiConditionDebugDump[] Preconditions,
     GoapStateDebugDump GoalState,
     UtilityAiCurveDebugDump[] Curves,
+    UtilityAiCurveDebugDump[] IncumbentBonus,
     TimeSpan Cooldown,
     float Penalty,
     float Modified,

@@ -114,6 +114,7 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
             bool inActiveBranch)
         {
             var curves = new List<UtilityAiCurveDebugDump>();
+            var incumbentBonus = new List<UtilityAiCurveDebugDump>();
             var conditions = new List<UtilityAiConditionDebugDump>();
             var score = 0f;
 
@@ -136,6 +137,19 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
                 score = output;
             }
 
+            if (ent.Comp1.CurrentGoal == proto)
+            {
+                foreach (var curve in proto.IncumbentBonus)
+                {
+                    var output = Curves.Get(curve, input: score, user: ent);
+                    incumbentBonus.Add(new(
+                        _npcHelper.GetReflection(curve),
+                        score,
+                        output));
+                    score = output;
+                }
+            }
+
             var penalty = ent.Comp1.Penalties.GetValueOrDefault(proto) * proto.FailPenalty;
             var ev = new UtilityAiGoalScoreModify(proto, score - penalty);
             RaiseLocalEvent(ent, ref ev);
@@ -148,6 +162,7 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
                 Preconditions: conditions.ToArray(),
                 GoalState: proto.GoalState.GetStateDump(),
                 Curves: curves.ToArray(),
+                IncumbentBonus: incumbentBonus.ToArray(),
                 Cooldown: ent.Comp1.Cooldowns.GetValueOrDefault(proto),
                 Penalty: penalty,
                 Modified: ev.Score,

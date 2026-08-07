@@ -54,6 +54,12 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     public List<MathCurve> ScoreCurves = new();
 
     /// <summary>
+    /// Curves that will be applied in score calculation after this goal is successfully completed.
+    /// </summary>
+    [DataField(serverOnly: true)]
+    public List<MathCurve> IncumbentBonus = new();
+
+    /// <summary>
     /// Goals for the agent to achieve.
     /// </summary>
     [DataField(serverOnly: true)]

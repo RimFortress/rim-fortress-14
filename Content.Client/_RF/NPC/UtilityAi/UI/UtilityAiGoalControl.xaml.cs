@@ -54,6 +54,9 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
         if (info.Penalty != 0)
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Penalty][/color]";
 
+        if (info.IncumbentBonus.Length > 0)
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Bonus][/color]";
+
         StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
 
         if (!_proto.Resolve(info.ProtoId, out var proto))
@@ -82,6 +85,18 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
             var box = AiUiHelper.AddBox(CurvesTab, curve.Reflection.Name, $"{curve.Output:F3}");
             AiUiHelper.AddTypes(box.Content, "Fields", curve.Reflection);
             AiUiHelper.AddLabel(box.Content, "Input:", $"{curve.Input:F3}");
+        }
+
+        if (info.IncumbentBonus.Length > 0)
+        {
+            var incumbentBox = AiUiHelper.AddBox(CurvesTab, "Incumbent Bonus", $"{info.IncumbentBonus[-1].Output:F3}");
+
+            foreach (var curve in info.IncumbentBonus)
+            {
+                var box = AiUiHelper.AddBox(incumbentBox, curve.Reflection.Name, $"{curve.Output:F3}");
+                AiUiHelper.AddTypes(box.Content, "Fields", curve.Reflection);
+                AiUiHelper.AddLabel(box.Content, "Input:", $"{curve.Input:F3}");
+            }
         }
 
         if (info.Penalty > 0)

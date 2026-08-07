@@ -1,6 +1,13 @@
 - type: utilityAiGoal
-  id: Plant
+  id: BaseFarmingGoal
+  abstract: true
   color: "#1a9927"
+  incumbentBonus:
+  - mul: [float: 1.10]
+
+- type: utilityAiGoal
+  id: Plant
+  parent: BaseFarmingGoal
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -24,7 +31,7 @@
 
 - type: utilityAiGoal
   id: Harvest
-  color: "#1A9927"
+  parent: BaseFarmingGoal
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -52,7 +59,7 @@
 
 - type: utilityAiGoal
   id: RemoveWeed
-  color: "#1A9927"
+  parent: BaseFarmingGoal
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -76,7 +83,7 @@
 
 - type: utilityAiGoal
   id: SamplePlant
-  color: "#1A9927"
+  parent: BaseFarmingGoal
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -101,7 +108,7 @@
 
 - type: utilityAiGoal
   id: RemovePlant
-  color: "#1A9927"
+  parent: BaseFarmingGoal
   scoreCurves:
   - !type:SkillLevel
     skill: Farming
@@ -129,7 +136,7 @@
 
 - type: utilityAiGoal
   id: WaterPlant
-  color: "#1A9927"
+  parent: BaseFarmingGoal
   scoreCurves:
   - !type:SkillLevel
     skill: Farming

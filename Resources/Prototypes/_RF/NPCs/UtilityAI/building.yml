@@ -21,6 +21,9 @@
           max: 4
     - mul:
       - float: 0.55
+  incumbentBonus:
+  - add: 0.05
+  - mul: [float: 1.10]
   goalState:
     TargetConstructed: true
 

@@ -57,7 +57,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
                     GoapPlanFinishReason.Finished => UtilityAiGoalFinishReason.Finished,
                     GoapPlanFinishReason.Failed => UtilityAiGoalFinishReason.Failed,
                     GoapPlanFinishReason.Interrupted => UtilityAiGoalFinishReason.Interrupted,
-                    _ => throw new ArgumentOutOfRangeException()
+                    _ => throw new ArgumentOutOfRangeException(),
                 },
                 false);
             RaiseLocalEvent(ent, ref ev);
@@ -74,12 +74,16 @@ public abstract class SharedUtilityAiSystem : EntitySystem
                     RaiseLocalEvent(ent,
                         new UtilityAiGoalFinished(ent.Comp.CurrentGoal.Value, UtilityAiGoalFinishReason.Finished));
                 }
-                ent.Comp.CurrentGoal = null;
+
                 ent.Comp.Penalties.Clear();
-                Dirty(ent);
 
                 if (TryGetGoal(ent.AsNullable(), out var goal))
                     SetGoal(ent.Owner, goal.Value);
+                else
+                {
+                    ent.Comp.CurrentGoal = null;
+                    Dirty(ent);
+                }
 
                 break;
             case GoapPlanFinishReason.Failed:
@@ -91,8 +95,8 @@ public abstract class SharedUtilityAiSystem : EntitySystem
                     RaiseLocalEvent(ent,
                         new UtilityAiGoalFinished(ent.Comp.CurrentGoal.Value, UtilityAiGoalFinishReason.Interrupted));
                 }
-                ent.Comp.CurrentGoal = null;
                 ent.Comp.Penalties.Clear();
+                ent.Comp.CurrentGoal = null;
                 Dirty(ent);
                 break;
             default:
@@ -142,6 +146,9 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             default:
                 throw new ArgumentOutOfRangeException();
         }
+
+        ent.Comp.CurrentGoal = null;
+        Dirty(ent);
 
         if (TryGetGoal(ent.AsNullable(), out var goal))
             SetGoal(ent.Owner, goal.Value);
@@ -243,6 +250,10 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             return 0f;
 
         var score = Curves.Get(proto.ScoreCurves, user: ent);
+
+        if (ent.Comp.CurrentGoal == protoId)
+            score = Curves.Get(proto.IncumbentBonus, user: ent, input: score);
+
         var penalty = ent.Comp.Penalties.GetValueOrDefault(protoId) * proto.FailPenalty;
         var ev = new UtilityAiGoalScoreModify(protoId, score - penalty);
 

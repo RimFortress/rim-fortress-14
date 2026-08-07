@@ -20,7 +20,10 @@
           min: 1
           max: 10
     - mul:
-      - float: 0.35
+      - float: 0.45
+  incumbentBonus:
+  - add: 0.05
+  - mul: [float: 1.10]
   goalState:
     TargetChopDown: true
 
@@ -49,5 +52,8 @@
           max: 4
     - mul:
       - float: 0.45
+  incumbentBonus:
+  - add: 0.05
+  - mul: [float: 1.10]
   goalState:
     TargetDug: true
