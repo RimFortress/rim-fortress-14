@@ -49,5 +49,8 @@
     - !type:InteractWith
       targetKey: HarvestPlant
     - !type:MarkOwnerInRange
+      whitelist:
+        components:
+        - Produce
     effects:
       PlantHarvested: true

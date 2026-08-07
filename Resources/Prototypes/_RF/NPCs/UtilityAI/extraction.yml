@@ -22,7 +22,7 @@
     - mul:
       - float: 0.45
   incumbentBonus:
-  - add: 0.05
+  - add: [float: 0.05]
   - mul: [float: 1.10]
   goalState:
     TargetChopDown: true
@@ -53,7 +53,7 @@
     - mul:
       - float: 0.45
   incumbentBonus:
-  - add: 0.05
+  - add: [float: 0.05]
   - mul: [float: 1.10]
   goalState:
     TargetDug: true

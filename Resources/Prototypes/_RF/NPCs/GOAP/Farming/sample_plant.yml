@@ -37,5 +37,8 @@
     - !type:InteractWith
       targetKey: SamplePlant
     - !type:MarkOwnerInRange
+      whitelist:
+        components:
+        - Seed
     effects:
       SampleTaken: true

@@ -32,6 +32,5 @@
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: DeadPlant
-    - !type:MarkOwnerInRange
     effects:
       PlantRemoved: true

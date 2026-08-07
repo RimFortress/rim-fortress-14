@@ -43,5 +43,8 @@
     - !type:Melee
       targetKey: DigTarget
     - !type:MarkOwnerInRange
+      whitelist:
+        tags:
+        - Log
     effects:
       TargetDug: true

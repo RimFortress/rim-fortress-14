@@ -49,5 +49,8 @@
     - !type:Melee
       targetKey: ChopTarget
     - !type:MarkOwnerInRange
+      whitelist:
+        components:
+        - Log
     effects:
       TargetChopDown: true

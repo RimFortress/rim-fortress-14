@@ -3,11 +3,12 @@ using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared.Item;
+using Content.Shared.Whitelist;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Ownership;
 
 /// <summary>
-/// Marks items within a certain radius of the agent as owned by the agent's owners.
+/// Marks entities within a certain radius of the agent as owned by the agent's owners.
 /// </summary>
 public sealed partial class MarkOwnerInRange : BaseGoapAction<MarkOwnerInRange>
 {
@@ -16,12 +17,19 @@ public sealed partial class MarkOwnerInRange : BaseGoapAction<MarkOwnerInRange>
     /// </summary>
     [DataField]
     public float Range = 1f;
+
+    /// <summary>
+    /// Whitelist for entities within a radius.
+    /// </summary>
+    [DataField]
+    public EntityWhitelist? Whitelist;
 }
 
 public sealed class MarkOwnerInRangeActionSystem : GoapActionSystem<MarkOwnerInRange>
 {
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, MarkOwnerInRange action)
     {
@@ -33,13 +41,14 @@ public sealed class MarkOwnerInRangeActionSystem : GoapActionSystem<MarkOwnerInR
             return true;
         }
 
-        var entities = _lookup.GetEntitiesInRange<ItemComponent>(
+        var entities = _lookup.GetEntitiesInRange(
             Goap.GetValue(ent.Comp.State, GoapState.OwnerCoordinates),
             action.Range);
 
         foreach (var entity in entities)
         {
-            _ownership.AddOwners(entity, owners);
+            if (_whitelist.IsWhitelistPassOrNull(action.Whitelist, entity))
+                _ownership.AddOwners(entity, owners);
         }
 
         CreateDump(ent,
