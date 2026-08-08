@@ -1,4 +1,3 @@
-using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Conversation.Components;
@@ -38,10 +37,4 @@ public sealed partial class ConversationActorComponent : Component
     /// </summary>
     [DataField, ViewVariables]
     public int NextMessage;
-
-    /// <summary>
-    /// The coordinates where the conversation takes place.
-    /// </summary>
-    [DataField, ViewVariables]
-    public EntityCoordinates ConversationCoords;
 }

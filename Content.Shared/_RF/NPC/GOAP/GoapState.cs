@@ -405,6 +405,23 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </summary>
     public static readonly StateKey<List<(TimeSpan Time, Func<bool>? Act)>> WaitActionsQueue = "WaitActionsQueue";
 
+    /// <summary>
+    /// A key for storing invites to conversations from other NPCs.
+    /// </summary>
+    public static readonly StateKey<Dictionary<EntityUid, TimeSpan>> ConversationInvitesKey =
+        "ConversationInvites";
+
+    /// <summary>
+    /// A key for storing invites to conversations to other NPCs.
+    /// </summary>
+    public static readonly StateKey<Dictionary<EntityUid, TimeSpan>> ConversationInvitesToOtherKey =
+        "ConversationInvitesToOther";
+
+    /// <summary>
+    /// The time during which the owner's invites to conversation will remain valid.
+    /// </summary>
+    public static readonly StateKey<TimeSpan> ConversationInviteValidTimeKey = "ConversationInviteValidTime";
+
     // Entity system defaults
 
     /// <summary>
@@ -465,6 +482,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {InteractRange, SharedInteractionSystem.InteractionRange - 0.15f },
         {MovementRange, 0.333f},
         {MeleeRange, 1f},
+        {ConversationInviteValidTimeKey, TimeSpan.FromSeconds(2f)},
     };
 
     /// <summary>
