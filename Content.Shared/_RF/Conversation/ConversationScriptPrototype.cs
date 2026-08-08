@@ -73,22 +73,22 @@ public sealed partial class ConversationCustomOrderType : ConversationOrderType
 public sealed partial class ConversationActorData
 {
     /// <summary>
-    /// Conversation actor identifier
+    /// Conversation actor identifier.
     /// </summary>
     [DataField(required: true)]
     public string Id = string.Empty;
 
     /// <summary>
-    /// Common requirements for the entity to take on this role
+    /// Common requirements for the entity to take on this role.
     /// </summary>
     /// <remarks>
-    /// The null value will be passed to the actor parameter in these requirements
+    /// The null value will be passed to the actor parameter in these requirements.
     /// </remarks>
     [DataField("reqs")]
     public List<ConversationCondition> Requirements = new();
 
     /// <summary>
-    /// Requirements for other participants in the conversation to take up this role
+    /// Requirements for other participants in the conversation to take up this role.
     /// </summary>
     [DataField("reqsFor")]
     public Dictionary<string, List<ConversationCondition>> RequirementsFor = new();

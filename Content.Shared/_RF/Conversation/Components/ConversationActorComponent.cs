@@ -10,19 +10,19 @@ namespace Content.Shared._RF.Conversation.Components;
 public sealed partial class ConversationActorComponent : Component
 {
     /// <summary>
-    /// Conversation script prototype
+    /// Conversation script prototype.
     /// </summary>
     [DataField, ViewVariables]
     public ProtoId<ConversationScriptPrototype> Script;
 
     /// <summary>
-    /// All participants in the conversation with their identifiers
+    /// All participants in the conversation with their identifiers.
     /// </summary>
     [DataField, ViewVariables]
     public Dictionary<string, EntityUid> Actors = new();
 
     /// <summary>
-    /// Identifier of the conversation participant for this entity
+    /// Identifier of the conversation participant for this entity.
     /// </summary>
     [DataField, ViewVariables]
     public string ActorId;
@@ -34,14 +34,13 @@ public sealed partial class ConversationActorComponent : Component
     public EntityUid NextActor = EntityUid.Invalid;
 
     /// <summary>
-    /// The next line spoken by this entity in the conversation,
-    /// if next in conversation
+    /// The next line spoken by this entity in the conversation.
     /// </summary>
     [DataField, ViewVariables]
     public int NextMessage;
 
     /// <summary>
-    /// The coordinates where the conversation takes place
+    /// The coordinates where the conversation takes place.
     /// </summary>
     [DataField, ViewVariables]
     public EntityCoordinates ConversationCoords;
