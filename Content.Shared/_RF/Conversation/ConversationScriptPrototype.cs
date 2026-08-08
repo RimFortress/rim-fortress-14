@@ -1,3 +1,4 @@
+using Content.Shared._RF.MathHelpers;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
@@ -55,6 +56,12 @@ public sealed partial class ConversationSequentialOrderType : ConversationOrderT
     /// </summary>
     [DataField(required: true)]
     public int Lines;
+
+    /// <summary>
+    /// The minimum and maximum durations of the pause between lines.
+    /// </summary>
+    [DataField]
+    public MinMaxFloat Delay = new(0.66f, 1.66f);
 }
 
 /// <summary>
@@ -63,10 +70,16 @@ public sealed partial class ConversationSequentialOrderType : ConversationOrderT
 public sealed partial class ConversationCustomOrderType : ConversationOrderType
 {
     /// <summary>
-    /// A list of actor IDs, in the order in which their lines will be spoken.
+    /// A list of lines that specifies the custom order
+    /// in which the actors will pronounce them and the pauses between them.
     /// </summary>
     [DataField(required: true)]
-    public List<string> Custom = new();
+    public List<CustomOrderLine> Custom = new();
+
+    /// <param name="Id">The ID of the actor who will speak this line.</param>
+    /// <param name="Delay">The minimum and maximum durations of the pause after this.</param>
+    [Serializable]
+    public readonly record struct CustomOrderLine(string Id, MinMaxFloat Delay);
 }
 
 [DataDefinition]

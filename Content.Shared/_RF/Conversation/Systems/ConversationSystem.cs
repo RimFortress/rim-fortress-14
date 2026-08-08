@@ -82,21 +82,26 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         }
     }
 
-    private static (int Index, string Actor)? GetNextMessage(ConversationScriptPrototype script, int current = -1)
+    private (int Index, string Actor, TimeSpan Delay)? GetNextMessage(ConversationScriptPrototype script, int current = -1)
     {
+        var next = current + 1;
+
         switch (script.Order)
         {
             case ConversationSequentialOrderType seq:
                 if (current >= seq.Lines - 1)
                     return null;
 
-                var next = current + 1;
-                return (next, script.Actors[script.Actors.Count % next].Id);
+                var actor = script.Actors[script.Actors.Count % next].Id;
+                var delay = TimeSpan.FromSeconds(_random.NextFloat(seq.Delay.Min, seq.Delay.Max));
+                return (next, actor, delay);
             case ConversationCustomOrderType custom:
-                if (current < custom.Custom.Count - 1)
-                    return (current + 1, custom.Custom[current + 1]);
+                if (current >= custom.Custom.Count - 1)
+                    return null;
 
-                return null;
+                var nextLine = custom.Custom[next];
+                delay = TimeSpan.FromSeconds(_random.NextFloat(nextLine.Delay.Min, nextLine.Delay.Max));
+                return (next, nextLine.Id, delay);
             default:
                 throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
         }
@@ -189,6 +194,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             comp.ActorId = id;
             comp.NextActor = actors[first.Actor];
             comp.NextMessage = first.Index;
+            comp.NextDelay = first.Delay;
         }
 
         return true;
@@ -206,13 +212,19 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     /// Returns the line of conversation that the entity should say.
     /// </summary>
     [PublicAPI, Pure]
-    public bool TryGetLine(Entity<ConversationActorComponent?> ent, [NotNullWhen(true)] out string? line)
+    public bool TryGetLine(
+        Entity<ConversationActorComponent?> ent,
+        [NotNullWhen(true)] out string? line,
+        [NotNullWhen(true)] out TimeSpan? delay)
     {
         line = null;
+        delay = null;
+
         if (!Resolve(ent, ref ent.Comp) || ent.Comp.NextMessage < 0)
             return false;
 
         line = Loc.GetString($"conversation-{ent.Comp.Script.Id.ToLowerInvariant()}-line-{ent.Comp.NextMessage}");
+        delay = ent.Comp.NextDelay;
         return true;
     }
 
@@ -234,6 +246,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         }
 
         ent.Comp.NextMessage = next.Index;
+        ent.Comp.NextDelay = next.Delay;
         var nextActor = ent.Comp.Actors[next.Actor];
 
         // Update next line
