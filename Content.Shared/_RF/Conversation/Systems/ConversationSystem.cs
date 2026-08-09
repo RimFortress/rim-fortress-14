@@ -228,7 +228,8 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         convComp.NextDelay = first.Delay;
         convComp.NextSpeakType = first.SpeakType;
         convComp.NextSpeak = first.Speak;
-        convComp.StartPosition = Transform(_random.Pick(uids)).Coordinates; // TODO
+        // TODO: I think the starting location for the conversation should be determined using a more advanced method
+        convComp.StartPosition = Transform(_random.Pick(uids)).Coordinates;
 
         foreach (var (_, uid) in actors)
         {
@@ -272,7 +273,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             || !conv.NextSpeak)
             return false;
 
-        line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{conv.NextMessage}");
+        line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{conv.NextMessage + 1}");
         delay = conv.NextDelay;
         speakType = conv.NextSpeakType;
         return true;
