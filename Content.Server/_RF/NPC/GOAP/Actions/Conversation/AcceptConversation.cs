@@ -27,13 +27,19 @@ public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConv
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, AcceptConversation action)
     {
-        if (!_npcSearcher.TryGetBestResult(ent, ent.Comp.State, action.Query, out var target))
+        var results = _npcSearcher.GetResults(ent, ent.Comp.State, action.Query);
+
+        if (results.Count == 0)
         {
-            CreateDump(ent, action, $"{action.Query} was empty");
+            CreateDump(ent, action, "query was empty");
             return false;
         }
 
-        CreateDump(ent, action, $"query return {ToPrettyString(target.Value)}");
-        return _conversation.AcceptInvite(ent.Owner, target.Value);
+        foreach (var uid in results)
+        {
+            _conversation.AcceptInvite(ent.Owner, uid);
+        }
+
+        return true;
     }
 }

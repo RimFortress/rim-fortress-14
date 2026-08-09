@@ -26,4 +26,4 @@ utility-ai-goal-waterplant-name = Water plant
 
 utility-ai-goal-acceptconversationinvite-name = Communicates
 utility-ai-goal-startconversation-name = Communicates
-utility-ai-goal-Conversation-name = Communicates
+utility-ai-goal-conversation-name = Communicates

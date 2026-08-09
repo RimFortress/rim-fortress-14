@@ -44,13 +44,11 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Conversation action)
     {
-        if (!_actorQuery.HasComp(ent))
-        {
-            ComponentNotFound<ConversationActorComponent>(ent, action);
-            return false;
-        }
+        if (_actorQuery.HasComp(ent))
+            return true;
 
-        return true;
+        ComponentNotFound<ConversationActorComponent>(ent, action);
+        return false;
     }
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Conversation action)
@@ -92,12 +90,12 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
         if (_moveTo.StartedUp(ent))
             _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-        _conversation.SetReady(actor, true);
-
         var waitResult = _npcTiming.WaitQueue(ent, action);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
+
+        _conversation.SetReady(actor, true);
 
         if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {

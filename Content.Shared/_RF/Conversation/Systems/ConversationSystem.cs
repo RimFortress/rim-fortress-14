@@ -273,10 +273,34 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             || !conv.NextSpeak)
             return false;
 
-        line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{conv.NextMessage + 1}");
+        line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{Id()}");
         delay = conv.NextDelay;
         speakType = conv.NextSpeakType;
         return true;
+
+        int Id()
+        {
+            if (!_prototype.Resolve(conv.Script, out var script))
+                return conv.NextMessage + 1;
+
+            switch (script.Order)
+            {
+                case ConversationBasicOrderType:
+                    return conv.NextMessage + 1;
+                case ConversationCustomOrderType custom:
+                    var id = 0;
+
+                    for (var i = 0; i <= conv.NextMessage; i++)
+                    {
+                        if (custom.Custom[i].Speak)
+                            id++;
+                    }
+
+                    return id;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
+            }
+        }
     }
 
     /// <summary>
@@ -309,7 +333,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         if (script.Order is ConversationCustomOrderType custom
             && custom.Custom[conv.NextMessage].PosOffset is { } offset)
         {
-            actor.TargetPos = new EntityCoordinates(actor.TargetPos.EntityId, actor.TargetPos.Position + offset);
+            actor.TargetPos = new EntityCoordinates(conv.StartPosition.EntityId, conv.StartPosition.Position + offset);
             actor.TargetRangeKey = GoapState.MovementRange;
         }
 

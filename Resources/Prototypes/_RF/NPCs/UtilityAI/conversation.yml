@@ -8,6 +8,7 @@
     need: Socialization
   - minus: [float: 1]
   - pow: [float: 2]
+  - add: [float: 0.01]
   # If not invites: x * 0
   - mul:
     - !type:ConversationInvites
@@ -16,12 +17,14 @@
     - !type:ConversationInvites
       acceptedOnly: true
     - add: [float: 1]
+    - pow: [float: 2]
   goalState:
     ConversationInviteAccepted: true
 
 - type: utilityAiGoal
   id: StartConversation
   color: "#D3D3D3"
+  failPolicy: Cooldown
   scoreCurves:
   - !type:NeedLevel
     need: Socialization
