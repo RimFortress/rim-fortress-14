@@ -7,7 +7,6 @@ using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared.Chat;
 using Content.Shared.Interaction;
 using Robust.Shared.Map;
 
@@ -70,49 +69,50 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
         if (!_actorQuery.TryComp(ent, out var comp))
             return GoapActionResult.Finished;
 
-        if (!TryGetValue(ent, action, action.ConversationCoordinatesKey, out var coords)
-            || !TryGetValue(ent, action, action.ConversationRangeKey, out var range)
-            || !coords.TryDistance(EntityManager, Transform(ent).Coordinates, out var distance))
+        var actor = new Entity<ConversationActorComponent?>(ent, comp);
+
+        if (!TryGetValue(ent, action, comp.TargetRangeKey, out var targetRange)
+            || !comp.TargetPos.TryDistance(EntityManager, Transform(ent).Coordinates, out var dist) )
             return GoapActionResult.Failed;
 
-        if (distance > range)
+        if (dist > targetRange)
         {
+            _conversation.SetReady(actor, false);
+
             if (!_moveTo.StartedUp(ent)
-                && !_moveTo.StartupMovement(ent, action, coords, true, action.PathfindKey, action.ConversationRangeKey))
+                && !_moveTo.StartupMovement(ent, action, comp.TargetPos, true, action.PathfindKey, targetRange))
                 return GoapActionResult.Failed;
 
-            var result = _moveTo.UpdateMovement(ent, action, coords, action.PathfindKey, action.ConversationRangeKey);
+            var result = _moveTo.UpdateMovement(ent, action, comp.TargetPos, action.PathfindKey, targetRange);
 
             if (result != GoapActionResult.Finished)
                 return result;
         }
-        else if (_moveTo.StartedUp(ent))
+
+        if (_moveTo.StartedUp(ent))
             _moveTo.ShutdownMovement(ent, action.PathfindKey);
 
-        var actor = new Entity<ConversationActorComponent?>(ent, comp);
+        _conversation.SetReady(actor, true);
 
         var waitResult = _npcTiming.WaitQueue(ent, action);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
-        if (!_conversation.IsNextInConversation(actor))
-            return GoapActionResult.Continuing;
-
-        if (!_conversation.TryGetFaceTo(actor, out var faceTo)
-            || !_rotate.TryFaceCoordinates(ent, faceTo.Value))
+        if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {
             CreateDump(ent, action, "failed to face to the target coordinates");
             return GoapActionResult.Failed;
         }
 
-        if (!_conversation.ActorsInRange(actor, coords, range))
+        if (!_conversation.IsNextInConversation(actor) || !_conversation.AllReady(actor))
             return GoapActionResult.Continuing;
 
-        if (!_conversation.TryGetLine(actor, out var line, out var delay))
+        if (!_conversation.TryGetLine(actor, out var line, out var delay, out var type))
         {
-            CreateDump(ent, action, "failed to get next script line");
-            return GoapActionResult.Failed;
+            _conversation.ContinueConversation(actor);
+            // This isn't a failure, since the line can be intentionally disabled at this step.
+            return GoapActionResult.Continuing;
         }
 
         return _npcTiming.EnqueueWait(ent,
@@ -120,7 +120,7 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
             delay.Value,
             onFinish: () =>
             {
-                _chat.TrySendInGameICMessage(ent.Owner, line, InGameICChatType.Speak, true);
+                _chat.TrySendInGameICMessage(ent.Owner, line, type.Value, true);
                 _conversation.ContinueConversation(actor);
             });
     }

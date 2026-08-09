@@ -22,7 +22,9 @@
       proto: OpinionPoliteDialogue
     - !type:ChangeNeed
       need: Socialization
-      amount: 15
+      random:
+        min: 15
+        max: 30
     respondent:
     - !type:AddMood
       proto: MoodPleasantConversation
@@ -32,7 +34,9 @@
       proto: OpinionPoliteDialogue
     - !type:ChangeNeed
       need: Socialization
-      amount: 15
+      random:
+        min: 15
+        max: 30
   order:
     lines: 4
 
@@ -97,7 +101,9 @@
       proto: MoodUnpleasantConversation
     - !type:ChangeNeed
       need: Socialization
-      amount: 5
+      random:
+        min: 5
+        max: 10
     respondent:
     - !type:AddMood
       proto: MoodConversationIrritated

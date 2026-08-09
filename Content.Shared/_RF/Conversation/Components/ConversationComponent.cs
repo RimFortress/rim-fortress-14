@@ -1,4 +1,6 @@
 using System.Numerics;
+using Content.Shared.Chat;
+using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Conversation.Components;
@@ -40,8 +42,20 @@ public sealed partial class ConversationComponent : Component
     public TimeSpan NextDelay;
 
     /// <summary>
-    /// The coordinates in the direction the next actor should be facing.
+    /// The type of line in the conversation that will be spoken.
     /// </summary>
     [ViewVariables]
-    public Vector2 NextFaceTo;
+    public InGameICChatType NextSpeakType;
+
+    /// <summary>
+    /// Should the next line of the conversation be spoken or skipped?
+    /// </summary>
+    [ViewVariables]
+    public bool NextSpeak;
+
+    /// <summary>
+    /// The starting place for this conversation.
+    /// </summary>
+    [ViewVariables]
+    public EntityCoordinates StartPosition;
 }

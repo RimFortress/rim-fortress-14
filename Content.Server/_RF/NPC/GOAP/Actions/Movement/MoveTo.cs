@@ -102,17 +102,27 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     /// <param name="stopOnLineOfSight">Do we only need to move into line of sight?</param>
     /// <returns>True, if initialization was successful.</returns>
     [PublicAPI]
-    public bool StartupMovement(Entity<GoapComponent> ent,
+    public bool StartupMovement(
+        Entity<GoapComponent> ent,
         GoapAction action,
         EntityCoordinates targetCoordinates,
         bool findPath,
         StateKey<PathResultEvent> pathfindKey,
         StateKey<float> rangeKey,
         bool stopOnLineOfSight = false)
-    {
-        if (!TryGetValue(ent, action, rangeKey, out var range))
-            return false;
+        => TryGetValue(ent, action, rangeKey, out var range)
+           && StartupMovement(ent, action, targetCoordinates, findPath, pathfindKey, range, stopOnLineOfSight);
 
+    [PublicAPI]
+    public bool StartupMovement(
+        Entity<GoapComponent> ent,
+        GoapAction action,
+        EntityCoordinates targetCoordinates,
+        bool findPath,
+        StateKey<PathResultEvent> pathfindKey,
+        float range,
+        bool stopOnLineOfSight = false)
+    {
         var xform = Transform(ent);
 
         if (xform.Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance) && distance <= range)
@@ -165,6 +175,18 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
         StateKey<PathResultEvent> pathfindKey,
         StateKey<float> rangeKey,
         bool stopOnLineOfSight = false)
+        => TryGetValue(ent, action, rangeKey, out var range)
+            ? UpdateMovement(ent, action, targetCoordinates, pathfindKey, range, stopOnLineOfSight)
+            : GoapActionResult.Failed;
+
+    [PublicAPI]
+    public GoapActionResult UpdateMovement(
+        Entity<GoapComponent> ent,
+        GoapAction action,
+        EntityCoordinates targetCoordinates,
+        StateKey<PathResultEvent> pathfindKey,
+        float range,
+        bool stopOnLineOfSight = false)
     {
         if (_pendingPaths.TryGetValue(ent, out var pathTask))
         {
@@ -210,8 +232,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
             return GoapActionResult.Continuing;
         }
 
-        if (TryGetValue(ent, action, rangeKey, out var range)
-            && Transform(ent).Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance)
+        if (Transform(ent).Coordinates.TryDistance(EntityManager, targetCoordinates, out var distance)
             && distance <= range)
             return GoapActionResult.Finished;
 

@@ -13,7 +13,7 @@ public sealed class ConversationOrderTypeSerializer : ITypeReader<ConversationOr
     private static Type? GetType(MappingDataNode node)
     {
         if (node.Has("lines"))
-            return typeof(ConversationSequentialOrderType);
+            return typeof(ConversationBasicOrderType);
 
         if (node.Has("custom"))
             return typeof(ConversationCustomOrderType);

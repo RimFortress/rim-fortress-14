@@ -5,6 +5,7 @@ using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared.Bed.Sleep;
+using Content.Shared.Chat;
 using Content.Shared.EntityEffects;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
@@ -77,54 +78,67 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         }
     }
 
-    private (int Index, string Actor, TimeSpan Delay)? GetNextMessage(ConversationScriptPrototype script, int current = -1)
+    private (int Index, string Actor, TimeSpan Delay, InGameICChatType SpeakType, bool Speak)? GetNextMessage(
+        ConversationScriptPrototype script,
+        int current = -1)
     {
         var next = current + 1;
 
         switch (script.Order)
         {
-            case ConversationSequentialOrderType seq:
+            case ConversationBasicOrderType seq:
                 if (current >= seq.Lines - 1)
                     return null;
 
                 var actor = script.Actors[next % script.Actors.Count].Id;
                 var delay = TimeSpan.FromSeconds(_random.NextFloat(seq.Delay.Min, seq.Delay.Max));
-                return (next, actor, delay);
+                return (next, actor, delay, seq.SpeakType, true);
             case ConversationCustomOrderType custom:
                 if (current >= custom.Custom.Count - 1)
                     return null;
 
                 var nextLine = custom.Custom[next];
-                delay = TimeSpan.FromSeconds(_random.NextFloat(nextLine.Delay.Min, nextLine.Delay.Max));
-                return (next, nextLine.Id, delay);
+                delay = TimeSpan.FromSeconds(nextLine.Delay?.Next(_random) ?? custom.Delay.Next(_random));
+                return (next, nextLine.Id, delay, nextLine.SpeakType, nextLine.Speak);
             default:
                 throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
         }
     }
 
-    /// <summary>
-    /// Returns the coordinates in the direction the next actor should be facing.
-    /// </summary>
-    public Vector2 GetNextRotatePosition(ConversationComponent conv)
+    private Vector2 GetRotatePosition(ConversationComponent conv)
     {
         var script = _prototype.Index(conv.Script);
 
         switch (script.Order)
         {
-            case ConversationSequentialOrderType:
-                var pos = Vector2.Zero;
+            case ConversationBasicOrderType:
+                return ConversationCenter(conv);
+            case ConversationCustomOrderType custom:
+                var msg = custom.Custom[conv.NextMessage];
 
-                foreach (var (_, uid) in conv.Actors)
-                {
-                    pos += Transform(uid).Coordinates.Position;
-                }
+                if (msg.FaceDir != null)
+                    return Transform(conv.NextActor).Coordinates.Position + msg.FaceDir.Value;
 
-                pos /= conv.Actors.Count;
-                return pos;
-            //case ConversationCustomOrderType custom:
+                if (msg.FaceTo == null)
+                    return ConversationCenter(conv);
+
+                return Transform(conv.Actors[msg.FaceTo]).Coordinates.Position;
             default:
                 throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
         }
+    }
+
+    private Vector2 ConversationCenter(ConversationComponent conv)
+    {
+        var pos = Vector2.Zero;
+
+        foreach (var (_, uid) in conv.Actors)
+        {
+            pos += Transform(uid).Coordinates.Position;
+        }
+
+        pos /= conv.Actors.Count;
+        return pos;
     }
 
     /// <summary>
@@ -212,12 +226,20 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         convComp.NextActor = actors[first.Actor];
         convComp.NextMessage = first.Index;
         convComp.NextDelay = first.Delay;
-        convComp.NextFaceTo = GetNextRotatePosition(convComp);
+        convComp.NextSpeakType = first.SpeakType;
+        convComp.NextSpeak = first.Speak;
+        convComp.StartPosition = Transform(_random.Pick(uids)).Coordinates; // TODO
 
         foreach (var (_, uid) in actors)
         {
             var comp = EnsureComp<ConversationActorComponent>(uid);
             comp.Conversation = convEnt;
+            comp.Ready = false;
+            comp.TargetPos = convComp.StartPosition;
+            comp.TargetRangeKey = GoapState.ConversationRange;
+            comp.TargetFaceTo = uid == convComp.NextActor
+                ? GetRotatePosition(convComp)
+                : ConversationCenter(convComp);
         }
 
         return true;
@@ -238,16 +260,21 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     public bool TryGetLine(
         Entity<ConversationActorComponent?> ent,
         [NotNullWhen(true)] out string? line,
-        [NotNullWhen(true)] out TimeSpan? delay)
+        [NotNullWhen(true)] out TimeSpan? delay,
+        [NotNullWhen(true)] out InGameICChatType? speakType)
     {
         line = null;
         delay = null;
+        speakType = null;
 
-        if (!TryGetConversation(ent, out var conv) || conv.NextMessage < 0)
+        if (!TryGetConversation(ent, out var conv)
+            || conv.NextMessage < 0
+            || !conv.NextSpeak)
             return false;
 
         line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{conv.NextMessage}");
         delay = conv.NextDelay;
+        speakType = conv.NextSpeakType;
         return true;
     }
 
@@ -272,7 +299,20 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         conv.NextActor = nextActor;
         conv.NextDelay = next.Delay;
         conv.NextMessage = next.Index;
-        conv.NextFaceTo = GetNextRotatePosition(conv);
+        conv.NextSpeakType = next.SpeakType;
+        conv.NextSpeak = next.Speak;
+
+        if (!_actorQuery.TryComp(conv.NextActor, out var actor))
+            return;
+
+        if (script.Order is ConversationCustomOrderType custom
+            && custom.Custom[conv.NextMessage].PosOffset is { } offset)
+        {
+            actor.TargetPos = new EntityCoordinates(actor.TargetPos.EntityId, actor.TargetPos.Position + offset);
+            actor.TargetRangeKey = GoapState.MovementRange;
+        }
+
+        actor.TargetFaceTo = GetRotatePosition(conv);
     }
 
     /// <summary>
@@ -301,6 +341,34 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     }
 
     /// <summary>
+    /// Updates the actor's readiness to engage in conversation.
+    /// </summary>
+    [PublicAPI]
+    public void SetReady(Entity<ConversationActorComponent?> ent, bool ready)
+    {
+        if (Resolve(ent, ref ent.Comp))
+            ent.Comp.Ready = ready;
+    }
+
+    /// <summary>
+    /// Returns true if all actors have indicated their readiness to engage in a conversation.
+    /// </summary>
+    [PublicAPI]
+    public bool AllReady(Entity<ConversationActorComponent?> ent)
+    {
+        if (!TryGetConversation(ent, out var conv))
+            return false;
+
+        foreach (var (_, uid) in conv.Actors)
+        {
+            if (!_actorQuery.TryComp(uid, out var actor) || !actor.Ready)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Checks whether the entity is next in line in the conversation.
     /// </summary>
     [PublicAPI, Pure]
@@ -317,23 +385,6 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     {
         conversation = null;
         return Resolve(ent, ref ent.Comp) && TryComp(ent.Comp.Conversation, out conversation);
-    }
-
-    /// <summary>
-    /// Returns the coordinates in the direction the next actor should be facing.
-    /// </summary>
-    [PublicAPI, Pure]
-    public bool TryGetFaceTo(
-        Entity<ConversationActorComponent?> ent,
-        [NotNullWhen(true)] out Vector2? conversation)
-    {
-        conversation = null;
-
-        if (!TryGetConversation(ent, out var conv))
-            return false;
-
-        conversation = conv.NextFaceTo;
-        return true;
     }
 
     /// <summary>

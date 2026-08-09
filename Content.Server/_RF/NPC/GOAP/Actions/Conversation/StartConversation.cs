@@ -6,7 +6,6 @@ using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
-using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Conversation;
@@ -27,12 +26,6 @@ public sealed partial class StartConversation : BaseGoapAction<StartConversation
     /// </summary>
     [DataField]
     public StateKey<TimeSpan> WaitInvitesAcceptKey = "WaitInvitesAccept";
-
-    /// <summary>
-    /// The key in which the coordinates of the conversation start will be stored.
-    /// </summary>
-    [DataField]
-    public StateKey<EntityCoordinates> ConversationCoordinatesKey = "ConversationCoordinates";
 }
 
 public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartConversation>
@@ -88,22 +81,7 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
 #endif
 
         if (_conversation.TryStartConversation(ent.AsNullable(), out var actors))
-        {
-            var coords = Transform(ent).Coordinates; // TODO
-
-            foreach (var (_, uid) in actors)
-            {
-                if (!TryComp(uid, out GoapComponent? goap))
-                {
-                    ComponentNotFound<GoapComponent>(ent, action, uid);
-                    return GoapActionResult.Failed;
-                }
-
-                goap.State.SetValue(action.ConversationCoordinatesKey, coords);
-            }
-
             return GoapActionResult.Finished;
-        }
 
         CreateDump(ent, action, "failed to start conversation");
         return GoapActionResult.Failed;
@@ -111,7 +89,6 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
 
     protected override void ActionPlanShutdown(Entity<GoapComponent> ent, StartConversation action, GoapPlanFinishReason reason)
     {
-        ent.Comp.State.Remove(action.ConversationCoordinatesKey);
         ent.Comp.State.Remove(action.WaitInvitesAcceptKey);
     }
 }
