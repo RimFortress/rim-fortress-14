@@ -153,16 +153,35 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <summary>
     /// Tries to get the value associated with the specified key in the dictionary.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
+    /// <typeparam name="T">The type of the values in the state.</typeparam>
+    /// <param name="key">The key of the value to get.</param>
     /// <returns>
-    /// A object instance. When the method is successful,
+    /// An object instance. When the method is successful,
     /// the returned object is the value associated with the specified key.
     /// When the method fails, it returns the default value for object.
     /// </returns>
     [Pure, PublicAPI]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetValueOrDefault<T>(StateKey<T> key) where T : notnull => (T)_state.GetValueOrDefault(key)!;
+
+    /// <summary>
+    /// Tries to get the value associated with the specified key in the dictionary.
+    /// </summary>
+    /// <typeparam name="T">The type of the values in the state.</typeparam>
+    /// <param name="key">The key of the value to get.</param>
+    /// <param name="defaultValue">
+    /// The default value to return when the dictionary cannot
+    /// find a value associated with the specified key.
+    /// </param>
+    /// <returns>
+    /// An object instance. When the method is successful,
+    /// the returned object is the value associated with the specified key.
+    /// When the method fails, it returns the default value for object.
+    /// </returns>
+    [Pure, PublicAPI]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T GetValueOrDefault<T>(StateKey<T> key, T defaultValue) where T : notnull
+        => (T)_state.GetValueOrDefault(key, defaultValue);
 
     /// <summary>
     /// Gets the value associated with the specified key.
@@ -408,19 +427,24 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <summary>
     /// A key for storing invites to conversations from other NPCs.
     /// </summary>
-    public static readonly StateKey<Dictionary<EntityUid, TimeSpan>> ConversationInvitesKey =
-        "ConversationInvites";
+    public static readonly StateKey<Dictionary<EntityUid, (TimeSpan ValidUntil, bool Accespted)>>
+        ConversationInvitesKey = "ConversationInvites";
 
     /// <summary>
     /// A key for storing invites to conversations to other NPCs.
     /// </summary>
-    public static readonly StateKey<Dictionary<EntityUid, TimeSpan>> ConversationInvitesToOtherKey =
-        "ConversationInvitesToOther";
+    public static readonly StateKey<Dictionary<EntityUid, (TimeSpan ValidUntil, bool Accespted)>>
+        ConversationInvitesToOtherKey = "ConversationInvitesToOther";
 
     /// <summary>
     /// The time during which the owner's invites to conversation will remain valid.
     /// </summary>
     public static readonly StateKey<TimeSpan> ConversationInviteValidTimeKey = "ConversationInviteValidTime";
+
+    /// <summary>
+    /// The maximum distance at which an agent can carry on a conversation.
+    /// </summary>
+    public static readonly StateKey<float> ConversationRange = "ConversationRange";
 
     // Entity system defaults
 
@@ -473,6 +497,12 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public static readonly StateKey<int> FreeHandsCount = "FreeHandsCount";
 
     /// <summary>
+    /// Stores information about whether the agent is currently in a conversation.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<int> InConversation = "InConversation";
+
+    /// <summary>
     /// Global defaults for NPCs.
     /// </summary>
     private static readonly Dictionary<string, object> Defaults = new()
@@ -482,7 +512,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {InteractRange, SharedInteractionSystem.InteractionRange - 0.15f },
         {MovementRange, 0.333f},
         {MeleeRange, 1f},
-        {ConversationInviteValidTimeKey, TimeSpan.FromSeconds(2f)},
+        {ConversationInviteValidTimeKey, TimeSpan.FromSeconds(7f)},
+        {ConversationRange, 2.5f},
     };
 
     /// <summary>
@@ -491,7 +522,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public static readonly HashSet<string> EntityDefaults = new()
     {
         OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree,
-        ActiveHandEntity, Buckled, Pulled, FreeHandsCount,
+        ActiveHandEntity, Buckled, Pulled, FreeHandsCount, InConversation,
     };
 
     #endregion

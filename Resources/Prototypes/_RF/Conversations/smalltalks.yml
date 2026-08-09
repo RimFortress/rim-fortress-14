@@ -3,17 +3,11 @@
   abstract: true
   actors:
   - id: initiator
-    reqs:
-    - !type:Mood
-      moreThan: -5
     reqsFor:
       responder:
       - !type:Opinion
         moreThan: -5
   - id: responder
-    reqs:
-    - !type:Mood
-      moreThan: -5
     reqsFor:
       initiator:
       - !type:Opinion
@@ -28,7 +22,7 @@
       proto: OpinionPoliteDialogue
     - !type:ChangeNeed
       need: Socialization
-      amount: 10
+      amount: 15
     respondent:
     - !type:AddMood
       proto: MoodPleasantConversation
@@ -38,7 +32,7 @@
       proto: OpinionPoliteDialogue
     - !type:ChangeNeed
       need: Socialization
-      amount: 10
+      amount: 15
   order:
     lines: 4
 
@@ -103,7 +97,7 @@
       proto: MoodUnpleasantConversation
     - !type:ChangeNeed
       need: Socialization
-      amount: 3
+      amount: 5
     respondent:
     - !type:AddMood
       proto: MoodConversationIrritated

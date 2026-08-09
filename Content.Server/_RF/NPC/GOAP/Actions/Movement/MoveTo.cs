@@ -108,7 +108,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
         bool findPath,
         StateKey<PathResultEvent> pathfindKey,
         StateKey<float> rangeKey,
-        bool stopOnLineOfSight)
+        bool stopOnLineOfSight = false)
     {
         if (!TryGetValue(ent, action, rangeKey, out var range))
             return false;
@@ -164,7 +164,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
         EntityCoordinates targetCoordinates,
         StateKey<PathResultEvent> pathfindKey,
         StateKey<float> rangeKey,
-        bool stopOnLineOfSight)
+        bool stopOnLineOfSight = false)
     {
         if (_pendingPaths.TryGetValue(ent, out var pathTask))
         {

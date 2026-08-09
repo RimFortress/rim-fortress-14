@@ -61,7 +61,7 @@ public sealed partial class ConversationSequentialOrderType : ConversationOrderT
     /// The minimum and maximum durations of the pause between lines.
     /// </summary>
     [DataField]
-    public MinMaxFloat Delay = new(0.66f, 1.66f);
+    public MinMaxFloat Delay = new(1.33f, 3.33f);
 }
 
 /// <summary>

@@ -1,4 +1,5 @@
 using Content.Shared._RF.Conversation.Components;
+using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
 using Content.Shared.EntityEffects;
@@ -26,13 +27,17 @@ public sealed partial class AddOpinion : EntityEffectBase<AddOpinion>
 
 public sealed class AddOpinionEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, AddOpinion>
 {
+    [Dependency] private readonly ConversationSystem _conversation = default!;
     [Dependency] private readonly SocialSystem _social = default!;
 
     protected override void Effect(Entity<ConversationActorComponent> ent, ref EntityEffectEvent<AddOpinion> args)
     {
+        if (!_conversation.TryGetConversation(ent.AsNullable(), out var comp))
+            return;
+
         foreach (var actor in args.Effect.Actors)
         {
-            if (ent.Comp.Actors.TryGetValue(actor, out var uid))
+            if (comp.Actors.TryGetValue(actor, out var uid))
                 _social.AddOpinionEffect(ent.Owner, uid, args.Effect.Proto);
         }
     }

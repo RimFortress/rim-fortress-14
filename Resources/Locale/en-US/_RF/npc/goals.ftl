@@ -23,3 +23,7 @@ utility-ai-goal-removeweed-name = Remove weeds
 utility-ai-goal-sampleplant-name = Take sample
 utility-ai-goal-removeplant-name = Remove plant
 utility-ai-goal-waterplant-name = Water plant
+
+utility-ai-goal-acceptconversationinvite-name = Communicates
+utility-ai-goal-startconversation-name = Communicates
+utility-ai-goal-Conversation-name = Communicates

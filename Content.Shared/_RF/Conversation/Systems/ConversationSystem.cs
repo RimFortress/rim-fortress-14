@@ -1,18 +1,19 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared.Bed.Sleep;
 using Content.Shared.EntityEffects;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
-using Content.Shared.Weapons.Melee.Events;
 using JetBrains.Annotations;
+using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Conversation.Systems;
 
@@ -24,6 +25,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
 
     [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
@@ -36,19 +38,22 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
 
         SubscribeLocalEvent<ConversationActorComponent, ComponentRemove>(OnRemove);
         SubscribeLocalEvent<ConversationActorComponent, MobStateChangedEvent>(OnMobStateChanged);
-        SubscribeLocalEvent<ConversationActorComponent, AttackedEvent>(OnAttacked);
-        SubscribeLocalEvent<ConversationActorComponent, UtilityAiGoalFinished>(OnUtilityAiGoalFinished);
 
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<ConversationScriptPrototype>())
                 ReloadPrototypes();
         };
+
+        ReloadPrototypes();
     }
 
     private void OnRemove(Entity<ConversationActorComponent> ent, ref ComponentRemove args)
     {
-        foreach (var (_, actor) in ent.Comp.Actors)
+        if (!TryComp(ent.Comp.Conversation, out ConversationComponent? conv))
+            return;
+
+        foreach (var (_, actor) in conv.Actors)
         {
             if (actor != ent.Owner)
                 RemComp<ConversationActorComponent>(actor);
@@ -59,16 +64,6 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     {
         if (args.NewMobState != MobState.Alive)
             EndConversation(ent.AsNullable());
-    }
-
-    private void OnAttacked(Entity<ConversationActorComponent> ent, ref AttackedEvent args)
-    {
-        EndConversation(ent.AsNullable());
-    }
-
-    private void OnUtilityAiGoalFinished(Entity<ConversationActorComponent> ent, ref UtilityAiGoalFinished args)
-    {
-        EndConversation(ent.AsNullable());
     }
 
     private void ReloadPrototypes()
@@ -92,7 +87,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
                 if (current >= seq.Lines - 1)
                     return null;
 
-                var actor = script.Actors[script.Actors.Count % next].Id;
+                var actor = script.Actors[next % script.Actors.Count].Id;
                 var delay = TimeSpan.FromSeconds(_random.NextFloat(seq.Delay.Min, seq.Delay.Max));
                 return (next, actor, delay);
             case ConversationCustomOrderType custom:
@@ -108,9 +103,35 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     }
 
     /// <summary>
+    /// Returns the coordinates in the direction the next actor should be facing.
+    /// </summary>
+    public Vector2 GetNextRotatePosition(ConversationComponent conv)
+    {
+        var script = _prototype.Index(conv.Script);
+
+        switch (script.Order)
+        {
+            case ConversationSequentialOrderType:
+                var pos = Vector2.Zero;
+
+                foreach (var (_, uid) in conv.Actors)
+                {
+                    pos += Transform(uid).Coordinates.Position;
+                }
+
+                pos /= conv.Actors.Count;
+                return pos;
+            //case ConversationCustomOrderType custom:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
+        }
+    }
+
+    /// <summary>
     /// Start the conversation with the entities to whom the agent sent invites.
     /// </summary>
     /// <param name="ent">GOAP agent.</param>
+    /// <param name="actors">Dictionary mapping roleId -> EntityUid, or null if no valid assignment exists.</param>
     /// <returns>True, if the conversation has been successfully initiated.</returns>
     /// <remarks>
     /// A conversation scenario is selected at random, in descending order of the number of actors in it
@@ -120,30 +141,28 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     /// <seealso cref="InviteInConversation"/>
     /// <seealso cref="GoapState.ConversationInvitesToOtherKey"/>
     [PublicAPI]
-    public bool TryStartConversation(Entity<GoapComponent?> ent)
+    public bool TryStartConversation(Entity<GoapComponent?> ent,
+        [NotNullWhen(true)] out Dictionary<string, EntityUid>? actors)
     {
+        actors = null;
+
         if (!Resolve(ent, ref ent.Comp)
             || !ent.Comp.State.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invites))
             return false;
 
-        var actors = invites
-            .Where(x => x.Value >= _timing.CurTime)
+        var scripts = _prototype
+            .EnumeratePrototypes<ConversationScriptPrototype>()
+            .ToList();
+        var entities = invites
+            .Where(x => x.Value.ValidUntil >= _timing.CurTime && x.Value.Accespted)
             .Select(x => x.Key)
             .ToHashSet();
-        actors.Add(ent);
+        entities.Add(ent);
 
-        for (var i = invites.Count + 1; i > 0; i--)
+        while (scripts.Count > 0)
         {
-            if (!_scriptsByActors.TryGetValue(i, out var scripts))
-                continue;
-
-            var scriptsList = scripts.ToList();
-
-            while (scriptsList.Count > 0)
-            {
-                if (TryStartConversation(_random.PickAndTake(scriptsList), actors))
-                    return true;
-            }
+            if (TryStartConversation(_random.PickAndTake(scripts), entities, out actors))
+                return true;
         }
 
         return false;
@@ -186,15 +205,19 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             || GetNextMessage(script) is not { } first)
             return false;
 
-        foreach (var (id, uid) in actors)
+        var convEnt = Spawn();
+        var convComp = EnsureComp<ConversationComponent>(convEnt);
+        convComp.Script = protoId;
+        convComp.Actors = actors;
+        convComp.NextActor = actors[first.Actor];
+        convComp.NextMessage = first.Index;
+        convComp.NextDelay = first.Delay;
+        convComp.NextFaceTo = GetNextRotatePosition(convComp);
+
+        foreach (var (_, uid) in actors)
         {
             var comp = EnsureComp<ConversationActorComponent>(uid);
-            comp.Script = protoId;
-            comp.Actors = actors;
-            comp.ActorId = id;
-            comp.NextActor = actors[first.Actor];
-            comp.NextMessage = first.Index;
-            comp.NextDelay = first.Delay;
+            comp.Conversation = convEnt;
         }
 
         return true;
@@ -220,11 +243,11 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         line = null;
         delay = null;
 
-        if (!Resolve(ent, ref ent.Comp) || ent.Comp.NextMessage < 0)
+        if (!TryGetConversation(ent, out var conv) || conv.NextMessage < 0)
             return false;
 
-        line = Loc.GetString($"conversation-{ent.Comp.Script.Id.ToLowerInvariant()}-line-{ent.Comp.NextMessage}");
-        delay = ent.Comp.NextDelay;
+        line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{conv.NextMessage}");
+        delay = conv.NextDelay;
         return true;
     }
 
@@ -234,27 +257,22 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     [PublicAPI]
     public void ContinueConversation(Entity<ConversationActorComponent?> ent)
     {
-        if (!Resolve(ent, ref ent.Comp)
-            || ent.Comp.NextActor != ent.Owner
-            || !_prototype.Resolve(ent.Comp.Script, out var script))
+        if (!TryGetConversation(ent, out var conv)
+            || conv.NextActor != ent.Owner
+            || !_prototype.Resolve(conv.Script, out var script))
             return;
 
-        if (GetNextMessage(script, ent.Comp.NextMessage) is not { } next)
+        if (GetNextMessage(script, conv.NextMessage) is not { } next)
         {
             EndConversation(ent, true);
             return;
         }
 
-        ent.Comp.NextMessage = next.Index;
-        ent.Comp.NextDelay = next.Delay;
-        var nextActor = ent.Comp.Actors[next.Actor];
-
-        // Update next line
-        foreach (var (_, uid) in ent.Comp.Actors)
-        {
-            if (_actorQuery.TryComp(uid, out var comp))
-                comp.NextActor = nextActor;
-        }
+        var nextActor = conv.Actors[next.Actor];
+        conv.NextActor = nextActor;
+        conv.NextDelay = next.Delay;
+        conv.NextMessage = next.Index;
+        conv.NextFaceTo = GetNextRotatePosition(conv);
     }
 
     /// <summary>
@@ -263,8 +281,9 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     [PublicAPI]
     public void EndConversation(Entity<ConversationActorComponent?> ent, bool applyEffects = false)
     {
-        if (!Resolve(ent, ref ent.Comp)
-            || !_prototype.TryIndex(ent.Comp.Script, out var proto))
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !TryGetConversation(ent, out var conv)
+            || !_prototype.TryIndex(conv.Script, out var proto))
             return;
 
         RemCompDeferred<ConversationActorComponent>(ent);
@@ -273,7 +292,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         if (!applyEffects)
             return;
 
-        foreach (var (id, uid) in ent.Comp.Actors)
+        foreach (var (id, uid) in conv.Actors)
         {
             // Apply conversation completion effects
             if (proto.Effects.TryGetValue(id, out var effects))
@@ -286,7 +305,36 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     /// </summary>
     [PublicAPI, Pure]
     public bool IsNextInConversation(Entity<ConversationActorComponent?> ent)
-        => Resolve(ent, ref ent.Comp, false) && ent.Comp.NextActor == ent.Owner;
+        => TryGetConversation(ent, out var conv) && conv.NextActor == ent.Owner;
+
+    /// <summary>
+    /// Returns the conversation component in which the entity is participating.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool TryGetConversation(
+        Entity<ConversationActorComponent?> ent,
+        [NotNullWhen(true)] out ConversationComponent? conversation)
+    {
+        conversation = null;
+        return Resolve(ent, ref ent.Comp) && TryComp(ent.Comp.Conversation, out conversation);
+    }
+
+    /// <summary>
+    /// Returns the coordinates in the direction the next actor should be facing.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool TryGetFaceTo(
+        Entity<ConversationActorComponent?> ent,
+        [NotNullWhen(true)] out Vector2? conversation)
+    {
+        conversation = null;
+
+        if (!TryGetConversation(ent, out var conv))
+            return false;
+
+        conversation = conv.NextFaceTo;
+        return true;
+    }
 
     /// <summary>
     /// Attempts to assign conversation roles to entities according to all actor requirements.
@@ -301,6 +349,9 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         [NotNullWhen(true)] out Dictionary<string, EntityUid>? roles)
     {
         roles = null;
+
+        if (uids.Count < script.Actors.Count)
+            return false;
 
         var roleList = script.Actors.Select(a => a.Id).ToList();
         var actors = new Dictionary<string, EntityUid>();
@@ -429,25 +480,27 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         if (!Resolve(inviter, ref inviter.Comp) || !Resolve(invited, ref invited.Comp))
             return;
 
+        DebugTools.AssertNotEqual(inviter, invited);
+
         var inviterState = inviter.Comp.State;
         var invitedState = invited.Comp.State;
-        var validTime = _timing.CurTime + inviterState.GetValue(GoapState.ConversationInviteValidTimeKey);
+        var invite = (_timing.CurTime + inviterState.GetValue(GoapState.ConversationInviteValidTimeKey), false);
 
         if (inviterState.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
         {
-            invitesToOthers[invited] = validTime;
+            invitesToOthers[invited] = invite;
             inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, invitesToOthers);
         }
         else
-            inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, new { invitesToOthers });
+            inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, new() { { invited, invite } });
 
         if (invitedState.TryGetValue(GoapState.ConversationInvitesKey, out var invites))
         {
-            invites[inviter] = validTime;
+            invites[inviter] = invite;
             invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
         }
         else
-            invitedState.SetValue(GoapState.ConversationInvitesKey, new { inviter });
+            invitedState.SetValue(GoapState.ConversationInvitesKey, new() { { inviter, invite } });
     }
 
     /// <summary>
@@ -460,6 +513,8 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     {
         if (!Resolve(inviter, ref inviter.Comp) || !Resolve(invited, ref invited.Comp))
             return;
+
+        DebugTools.AssertNotEqual(inviter, invited);
 
         var inviterState = inviter.Comp.State;
         var invitedState = invited.Comp.State;
@@ -475,6 +530,38 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             invites.Remove(inviter);
             invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
         }
+    }
+
+    /// <summary>
+    /// Accepts an invitation to a conversation from another agent.
+    /// </summary>
+    /// <param name="invited">An agent invited to join the conversation.</param>
+    /// <param name="inviter">An agent who initiates a conversation.</param>
+    [PublicAPI]
+    public bool AcceptInvite(Entity<GoapComponent?> invited, Entity<GoapComponent?> inviter)
+    {
+        if (!Resolve(inviter, ref inviter.Comp) || !Resolve(invited, ref invited.Comp))
+            return false;
+
+        DebugTools.AssertNotEqual(inviter, invited);
+
+        var inviterState = inviter.Comp.State;
+        var invitedState = invited.Comp.State;
+
+        if (!inviterState.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invitesToOthers)
+            || !invitesToOthers.ContainsKey(invited))
+            return false;
+
+        if (!invitedState.TryGetValue(GoapState.ConversationInvitesKey, out var invites)
+            || !invites.ContainsKey(inviter))
+            return false;
+
+        var newInvite = (_timing.CurTime + inviterState.GetValue(GoapState.ConversationInviteValidTimeKey), true);
+        invitesToOthers[invited] = newInvite;
+        invites[inviter] = newInvite;
+        inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, invitesToOthers);
+        invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
+        return true;
     }
 
     /// <summary>
@@ -505,9 +592,33 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     [PublicAPI]
     public int InvitesCount(Entity<GoapComponent?> invited)
         => Resolve(invited, ref invited.Comp)
-            ? invited.Comp.State.GetValueOrDefault(GoapState.ConversationInvitesKey)
-                .Count(x => x.Value >= _timing.CurTime)
+            ? invited.Comp.State.GetValueOrDefault(GoapState.ConversationInvitesKey, new())
+                .Count(x => x.Value.ValidUntil >= _timing.CurTime)
             : 0;
+
+    /// <summary>
+    /// Checks whether all participants in the conversation are within a specified radius of the target location.
+    /// </summary>
+    /// <param name="ent">One of the participants in the conversation.</param>
+    /// <param name="targetCoords">Target coordinates.</param>
+    /// <param name="range">Maximum radius.</param>
+    [PublicAPI]
+    public bool ActorsInRange(
+        Entity<ConversationActorComponent?> ent,
+        EntityCoordinates targetCoords,
+        float range)
+    {
+        if (!TryGetConversation(ent, out var conv))
+            return false;
+
+        foreach (var (_, uid) in conv.Actors)
+        {
+            if (!_transform.InRange(Transform(uid).Coordinates, targetCoords, range))
+                return false;
+        }
+
+        return true;
+    }
 }
 
 public interface IConversationConditionChecker

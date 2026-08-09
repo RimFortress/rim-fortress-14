@@ -7,15 +7,21 @@
   - type: UtilityAi
     goals:
     - Idle
+    # Needs
     - Sleep
     - Eat
     - Drink
+    - StartConversation
+    - AcceptConversationInvite
+    - Conversation
+    # Executables
     - Construction
     - Deconstruct
     - Dig
     - Chop
     - TakeOwnership
     - Attack
+    # Farming
     - Plant
     - Harvest
     - RemoveWeed

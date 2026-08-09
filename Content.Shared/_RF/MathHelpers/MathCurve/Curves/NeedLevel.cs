@@ -35,7 +35,7 @@ public sealed partial class NeedLevelSystem : MathCurveSystem<NeedLevel>
         var value = _needs.GetValue(user.Value, curve.Need);
 
         if (curve.Normalize)
-            return value / _needs.MaxValue(curve.Need);
+            return value != 0 ? value / _needs.MaxValue(curve.Need) : 0f;
 
         return value;
     }

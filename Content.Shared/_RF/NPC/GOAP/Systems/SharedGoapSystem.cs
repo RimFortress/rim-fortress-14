@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
+using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared.Buckle;
@@ -519,6 +520,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (key.Equals(GoapState.FreeHandsCount))
         {
             value = _hands.CountFreeHands(owner);
+            return true;
+        }
+
+        if (key.Equals(GoapState.InConversation))
+        {
+            value = HasComp<ConversationActorComponent>(owner);
             return true;
         }
 

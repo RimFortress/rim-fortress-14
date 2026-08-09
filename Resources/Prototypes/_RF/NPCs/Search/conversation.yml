@@ -1,0 +1,31 @@
+- type: searchQuery
+  id: ConversationInviter
+  query: !type:ConversationInvites
+  filters:
+  - !type:IsAlive
+    invert: true
+  - !type:Component
+    components:
+    - type: ConversationActor
+  - !type:IsFriendly
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: ConversationTarget
+  query: !type:Owned
+  filters:
+  - !type:IsAlive
+    invert: true
+  - !type:Component
+    components:
+    - type: ConversationActor
+  - !type:IsFriendly
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

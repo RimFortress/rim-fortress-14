@@ -3,8 +3,7 @@
   scoreCurves:
   - !type:NeedLevel
     need: Sleep
-  - minus:
-    - float: 1
+  - minus: [float: 1]
   - pow:
     - float: 4
   tempKeys:
@@ -29,9 +28,8 @@
 - type: utilityAiGoal
   id: Eat
   scoreCurves:
-  - float: 1
-  - minus:
-    - !type:HungerLevel
+  - !type:HungerLevel
+  - minus: [float: 1]
   - pow:
     - float: 2
   tempKeys:
@@ -42,9 +40,8 @@
 - type: utilityAiGoal
   id: Drink
   scoreCurves:
-  - float: 1
-  - minus:
-    - !type:ThirstLevel
+  - !type:ThirstLevel
+  - minus: [float: 1]
   - pow:
     - float: 2
   tempKeys:

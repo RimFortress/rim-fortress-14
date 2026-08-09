@@ -18,6 +18,7 @@
   - proto: InventoryStorage
   - proto: Drop
   - proto: Farming
+  - proto: Conversation
 
   - preconditions:
     - InContainer == false

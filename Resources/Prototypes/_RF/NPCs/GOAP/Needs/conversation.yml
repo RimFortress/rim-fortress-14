@@ -1,0 +1,18 @@
+- type: goapCompound
+  id: Conversation
+  tasks:
+  - action: !type:AcceptConversation
+      query: ConversationInviter
+    effects:
+      ConversationInviteAccepted: true
+
+  - action: !type:StartConversation
+      query: ConversationTarget
+    effects:
+      InConversation: true
+
+  - preconditions:
+    - InConversation == true
+    action: !type:Conversation
+    effects:
+      ConversationFinished: true
