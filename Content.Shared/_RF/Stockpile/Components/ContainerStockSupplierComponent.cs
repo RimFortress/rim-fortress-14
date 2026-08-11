@@ -1,6 +1,7 @@
+using Content.Shared._RF.Stockpile.Systems;
 using Robust.Shared.GameStates;
 
-namespace Content.Shared._RF.Stockpile;
+namespace Content.Shared._RF.Stockpile.Components;
 
 /// <summary>
 /// This is used to supply stockpiles from the containers' contents.
@@ -16,5 +17,5 @@ public sealed partial class ContainerStockSupplierComponent : Component
     public List<string> Containers = new();
 
     [ViewVariables, AutoNetworkedField]
-    public HashSet<int> Supplied = new();
+    public HashSet<EntityUid> Supplied = new();
 }

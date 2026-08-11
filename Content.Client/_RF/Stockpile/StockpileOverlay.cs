@@ -1,6 +1,10 @@
 using System.Numerics;
 using Content.Client._RF.UserInterface.Controllers;
+using Content.Shared._RF.NPC;
+using Content.Shared._RF.Stockpile.Components;
+using Content.Shared._RF.Stockpile.Systems;
 using Robust.Client.Graphics;
+using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
@@ -10,10 +14,12 @@ namespace Content.Client._RF.Stockpile;
 
 public sealed class StockpileOverlay : GridOverlay
 {
+    [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IUserInterfaceManager _ui = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IEntityManager _entity = default!;
 
-    private readonly StockpileSystem _stockpile;
+    private StockpileSystem _stockpile = default!;
     private readonly StockpileUiController _stockpileController;
 
     private const float BorderSize = 0.03f;
@@ -34,19 +40,28 @@ public sealed class StockpileOverlay : GridOverlay
 
     public override OverlaySpace Space => OverlaySpace.WorldSpaceGrids;
 
-    public StockpileOverlay(StockpileSystem stockpile)
+    public StockpileOverlay()
     {
         IoCManager.InjectDependencies(this);
 
-        _stockpile = stockpile;
         _stockpileController = _ui.GetUIController<StockpileUiController>();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
     {
-        foreach (var stock in _stockpile.AllStockpiles())
+        if (_player.LocalEntity is not { } owner)
+            return;
+
+        _stockpile = _entity.System<StockpileSystem>();
+        var ownership = _entity.System<OwnershipSystem>();
+
+        foreach (var uid in ownership.GetOwned(owner))
         {
-            var selected = _stockpileController.HighlightedStockpiles.Contains(stock.Id);
+            if (!_entity.TryGetComponent(uid, out StockpileComponent? stock))
+                continue;
+
+            var ent = new Entity<StockpileComponent>(uid, stock);
+            var selected = _stockpileController.HighlightedStockpiles.Contains(uid);
             var borderSize = selected ? SelectedBorderSize : BorderSize;
             var borderColor = selected
                 ? new(
@@ -69,67 +84,67 @@ public sealed class StockpileOverlay : GridOverlay
                 args.WorldHandle.DrawRect(rtBox, selected ? _selectedMainColor : _mainColor);
 
                 // Borders drawing
-                if (!stock.Tiles.Contains(tile + Vector2i.Up))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.Up))
                 {
                     var box = Box2.FromDimensions(tile + new Vector2(0, 1f - borderSize), new Vector2(1f, borderSize));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.Down))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.Down))
                 {
                     var box = Box2.FromDimensions(tile, new Vector2(1f, borderSize));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.Left))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.Left))
                 {
                     var box = Box2.FromDimensions(tile, new Vector2(borderSize, 1f));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.Right))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.Right))
                 {
                     var box = Box2.FromDimensions(tile + new Vector2(1f - borderSize, 0), new Vector2(borderSize, 1f));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.UpLeft))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.UpLeft))
                 {
                     var box = Box2.FromDimensions(tile + new Vector2(0, 1f - borderSize), new Vector2(borderSize));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.UpRight))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.UpRight))
                 {
                     var box = Box2.FromDimensions(tile + new Vector2(1f - borderSize), new Vector2(borderSize));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.DownLeft))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.DownLeft))
                 {
                     var box = Box2.FromDimensions(tile, new Vector2(borderSize));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
 
-                if (!stock.Tiles.Contains(tile + Vector2i.DownRight))
+                if (!StockpileSystem.TileInStock(ent, tile + Vector2i.DownRight))
                 {
                     var box = Box2.FromDimensions(tile + new Vector2(1f - borderSize, 0), new Vector2(borderSize));
                     args.WorldHandle.DrawRect(box, borderColor);
                 }
             }
 
-            foreach (var id in stock.SuppliedStockpiles)
+            foreach (var supplied in stock.Supplied)
             {
+                if (!_entity.TryGetComponent(supplied, out StockpileComponent? suppliedComp))
+                    continue;
+
+                var center = _stockpile.StockCenter(ent);
+                var suppliedCenter = _stockpile.StockCenter(new(supplied, suppliedComp));
+
                 if (selected)
-                {
-                    if (_stockpile.TryGetStock(id, out var supplied))
-                        DrawLine(args, stock.CenterCoordinates(), supplied.CenterCoordinates(), _supplyingLineColor);
-                }
-                else if (_stockpileController.HighlightedStockpiles.Contains(id))
-                {
-                    if (_stockpile.TryGetStock(id, out var supplied))
-                        DrawLine(args, stock.CenterCoordinates(), supplied.CenterCoordinates(), _suppliedLineColor);
-                }
+                    DrawLine(args, center, suppliedCenter, _supplyingLineColor);
+                else if (_stockpileController.HighlightedStockpiles.Contains(supplied))
+                    DrawLine(args, center, suppliedCenter, _suppliedLineColor);
             }
         }
 
@@ -139,7 +154,7 @@ public sealed class StockpileOverlay : GridOverlay
 
     private void DrawLine(in OverlayDrawArgs args, EntityCoordinates start, EntityCoordinates end, Color color)
     {
-        var shader = _prototype.Index<ShaderPrototype>(LineShader).InstanceUnique();
+        var shader = _prototype.Index(LineShader).InstanceUnique();
         var prevShader = args.WorldHandle.GetShader();
 
         var screenEnd = args.Viewport.WorldToLocal(end.Position);

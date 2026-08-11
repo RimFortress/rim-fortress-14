@@ -150,9 +150,9 @@ public sealed class WorkshopSuspendMessage(int index) : BoundUserInterfaceMessag
 }
 
 [Serializable, NetSerializable]
-public sealed class WorkshopSuppliedStockMessage(int stockId) : BoundUserInterfaceMessage
+public sealed class WorkshopSuppliedStockMessage(NetEntity stockId) : BoundUserInterfaceMessage
 {
-    public int StockId = stockId;
+    public NetEntity StockId = stockId;
 }
 
 [Serializable, NetSerializable]

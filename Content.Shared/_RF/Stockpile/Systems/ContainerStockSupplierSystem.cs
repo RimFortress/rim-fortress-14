@@ -1,30 +1,36 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Shared._RF.Stockpile.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
 
-namespace Content.Shared._RF.Stockpile;
+namespace Content.Shared._RF.Stockpile.Systems;
 
 public sealed class ContainerStockSupplierSystem : EntitySystem
 {
     [Dependency] private readonly SharedContainerSystem _container = default!;
-    [Dependency] private readonly SharedStockpileSystem _stockpile = default!;
+    [Dependency] private readonly StockpileSystem _stockpile = default!;
 
     [PublicAPI]
-    public bool AddSupplied(Entity<ContainerStockSupplierComponent?> ent, int id)
+    public bool AddSupplied(
+        Entity<ContainerStockSupplierComponent?> ent,
+        Entity<StockpileComponent> stock)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_stockpile.TryGetStock(id, out _))
+        if (!Resolve(ent, ref ent.Comp))
             return false;
 
-        ent.Comp.Supplied.Add(id);
+        ent.Comp.Supplied.Add(stock);
         Dirty(ent);
         return true;
     }
 
     [PublicAPI]
-    public bool RemoveSupplied(Entity<ContainerStockSupplierComponent?> ent, int id)
+    public bool RemoveSupplied(
+        Entity<ContainerStockSupplierComponent?> ent,
+        Entity<StockpileComponent> stock)
     {
-        if (!Resolve(ent, ref ent.Comp) || !ent.Comp.Supplied.Remove(id))
+        if (!Resolve(ent, ref ent.Comp)
+            || !ent.Comp.Supplied.Remove(stock))
             return false;
 
         Dirty(ent);
@@ -32,12 +38,14 @@ public sealed class ContainerStockSupplierSystem : EntitySystem
     }
 
     [PublicAPI]
-    public bool SetOnlySupplied(Entity<ContainerStockSupplierComponent?> ent, int id)
+    public bool SetOnlySupplied(
+        Entity<ContainerStockSupplierComponent?> ent,
+        Entity<StockpileComponent> stock)
     {
-        if (!Resolve(ent, ref ent.Comp) || !_stockpile.TryGetStock(id, out _))
+        if (!Resolve(ent, ref ent.Comp))
             return false;
 
-        ent.Comp.Supplied = new() { id };
+        ent.Comp.Supplied = new() { stock };
         Dirty(ent);
         return true;
     }
@@ -71,34 +79,17 @@ public sealed class ContainerStockSupplierSystem : EntitySystem
     }
 
     [PublicAPI, Pure]
-    public List<Stock> FindLastSupplied(Entity<ContainerStockSupplierComponent?> ent, EntityUid uid)
+    public List<Entity<StockpileComponent>> FindLastSupplied(Entity<ContainerStockSupplierComponent?> ent, EntityUid uid)
     {
         if (!Resolve(ent, ref ent.Comp))
             return new();
 
-        var stockpiles = new List<Stock>();
+        var stockpiles = new List<Entity<StockpileComponent>>();
 
-        foreach (var id in ent.Comp.Supplied)
+        foreach (var supplied in ent.Comp.Supplied)
         {
-            if (_stockpile.TryGetStock(id, out var stock))
-                stockpiles.AddRange(_stockpile.FindLastSupplied(uid, stock));
-        }
-
-        return stockpiles;
-    }
-
-    [PublicAPI, Pure]
-    public List<Stock> SuppliedStockpiles(Entity<ContainerStockSupplierComponent?> ent)
-    {
-        if (!Resolve(ent, ref ent.Comp))
-            return new();
-
-        var stockpiles = new List<Stock>();
-
-        foreach (var id in ent.Comp.Supplied)
-        {
-            if (_stockpile.TryGetStock(id, out var stock))
-                stockpiles.Add(stock);
+            if (_stockpile.TryGetStock(supplied, out var stock))
+                stockpiles.AddRange(_stockpile.FindLastSupplied(stock.Value, uid));
         }
 
         return stockpiles;
@@ -132,4 +123,13 @@ public sealed class ContainerStockSupplierSystem : EntitySystem
 
         return ent != null;
     }
+
+    /// <summary>
+    /// Checks whether the target stockpile is supplied by this entity.
+    /// </summary>
+    /// <param name="ent">Supplier entity.</param>
+    /// <param name="supplied">Stockpile entity.</param>
+    [PublicAPI, Pure]
+    public bool IsSupplying(Entity<ContainerStockSupplierComponent?> ent, EntityUid supplied)
+        => Resolve(ent, ref ent.Comp, false) && ent.Comp.Supplied.Contains(supplied);
 }

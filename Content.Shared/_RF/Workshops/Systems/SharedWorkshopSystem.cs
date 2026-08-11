@@ -1,7 +1,8 @@
 using System.Linq;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.Skills;
-using Content.Shared._RF.Stockpile;
+using Content.Shared._RF.Stockpile.Components;
+using Content.Shared._RF.Stockpile.Systems;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared.Chemistry.EntitySystems;
@@ -31,7 +32,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
     [Dependency] private readonly ContainerStockSupplierSystem _containerSupplier = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedPointLightSystem _pointLight = default!;
-    [Dependency] private readonly SharedStockpileSystem _stockpile = default!;
+    [Dependency] private readonly StockpileSystem _stockpile = default!;
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedStackSystem _stack = default!;
@@ -205,8 +206,8 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
             return;
 
         if (_stockpile.TryGetStock(args.StockId, out var stock)
-            && stock.Owner == args.Actor)
-            _containerSupplier.SetOnlySupplied(new(ent, comp), args.StockId);
+            && Ownership.HasOwner(stock.Value.Owner, args.Actor))
+            _containerSupplier.SetOnlySupplied(new(ent, comp), stock.Value);
         else
             _containerSupplier.ClearSupplied(new(ent, comp));
     }

@@ -1,0 +1,6 @@
+- type: entity
+  id: BaseStockpile
+  components:
+  - type: Stockpile
+  - type: Physics
+  - type: Fixtures

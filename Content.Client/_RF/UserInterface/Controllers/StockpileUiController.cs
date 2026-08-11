@@ -1,9 +1,10 @@
-using System.Linq;
 using Content.Client._RF.NPC.Systems;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
-using Content.Shared._RF.Stockpile;
+using Content.Shared._RF.NPC;
+using Content.Shared._RF.Stockpile.Components;
+using Content.Shared._RF.Stockpile.Systems;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Robust.Client.GameObjects;
@@ -24,6 +25,7 @@ namespace Content.Client._RF.UserInterface.Controllers;
 
 public sealed class StockpileUiController :
     WindowUiController<StockpileSettingsWindow>,
+    IOnSystemLoaded<StockpileSystem>,
     IOnStateEntered<RimFortressState>,
     IOnStateExited<RimFortressState>
 {
@@ -31,31 +33,33 @@ public sealed class StockpileUiController :
     [Dependency] private readonly IEyeManager _eye = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private readonly IOverlayManager _overlay = default!;
     [UISystemDependency] private readonly TransformSystem _xform = default!;
     [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
     [UISystemDependency] private readonly StockpileSystem _stockpile = default!;
     [UISystemDependency] private readonly ExecutableGoalSystem _executable = default!;
+    [UISystemDependency] private readonly OwnershipSystem _ownership = default!;
 
     public StockpileSelectionMode SelectMode = StockpileSelectionMode.None;
-    public event Action<Stock>? OnStockSelected;
-    public event Action<int>? OnStockpileUpdated;
-    public event Action<Stock>? OnSupplyRequested;
+    public event Action<Entity<StockpileComponent>>? OnStockSelected;
+    public event Action<Entity<StockpileComponent>>? OnStockpileUpdated;
+    public event Action<Entity<StockpileComponent>>? OnSupplyRequested;
 
-    public Stock? SettingStock;
-    public Stock? SelectedStock;
+    public Entity<StockpileComponent>? SettingStock;
+    public Entity<StockpileComponent>? SelectedStock;
 
-    public List<int> HighlightedStockpiles
+    public List<EntityUid> HighlightedStockpiles
     {
         get
         {
-            var list = new List<int>();
+            var list = new List<EntityUid>();
 
             if (SelectedStock != null)
-                list.Add(SelectedStock.Id);
+                list.Add(SelectedStock.Value);
 
             if (SettingStock != null)
-                list.Add(SettingStock.Id);
+                list.Add(SettingStock.Value);
 
             return list;
         }
@@ -69,35 +73,36 @@ public sealed class StockpileUiController :
                 || SettingStock == null
                 || SelectedStock == null
                 || SettingStock == SelectedStock
-                || SelectedStock.SuppliedStockpiles.ToList().Contains(SettingStock.Id))
+                || StockpileSystem.HasSupplied(SelectedStock.Value, SettingStock.Value))
                 return null;
 
-            return (SettingStock.CenterCoordinates(), SelectedStock.CenterCoordinates());
+            return (_stockpile.StockCenter(SettingStock.Value), _stockpile.StockCenter(SelectedStock.Value));
         }
     }
 
-    private SpriteSpecifier _createSelectionIcon = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"));
-    private SpriteSpecifier _addTileSelection = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
-    private SpriteSpecifier _removeTileSelection = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
+    private readonly SpriteSpecifier _createSelectionIcon =
+        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"));
+
+    private readonly SpriteSpecifier _addTileSelection =
+        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
+
+    private readonly SpriteSpecifier _removeTileSelection =
+        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<StockpileEntityAttached>(OnEntityAttached);
-        SubscribeNetworkEvent<StockpileEntityDetached>(OnEntityDetached);
-
+        SubscribeNetworkEvent<StockpileContentUpdated>(OnContentUpdates);
         OnStockSelected += _ => OpenWindow();
+
+        _overlay.AddOverlay(new StockpileOverlay());
     }
 
-    private void OnEntityAttached(StockpileEntityAttached ev, EntitySessionEventArgs args)
+    private void OnContentUpdates(StockpileContentUpdated msg, EntitySessionEventArgs args)
     {
-        OnStockpileUpdated?.Invoke(ev.Id);
-    }
-
-    private void OnEntityDetached(StockpileEntityDetached ev, EntitySessionEventArgs args)
-    {
-        OnStockpileUpdated?.Invoke(ev.Id);
+        if (_stockpile.TryGetStock(msg.Uid, out var stock))
+            OnStockpileUpdated?.Invoke(stock.Value);
     }
 
     protected override StockpileSettingsWindow EnsureWindow()
@@ -105,7 +110,7 @@ public sealed class StockpileUiController :
         var window = base.EnsureWindow();
 
         if (SettingStock != null)
-            window.SetStock(SettingStock);
+            window.SetStock(SettingStock.Value);
 
         LayoutContainer.SetAnchorPreset(window, LayoutContainer.LayoutPreset.Center);
         return window;
@@ -172,40 +177,33 @@ public sealed class StockpileUiController :
             act: _ => _executable.DefaultSelection(),
             onSelected: tiles =>
             {
-                var stock = _stockpile.CreateStockpile(tiles, entity);
+                _stockpile.CreateStockpile(tiles, entity);
                 _executable.DefaultSelection();
-
-                if (stock == null)
-                    return;
-
-                SettingStock = stock;
-                SelectMode = StockpileSelectionMode.None;
-                OnStockSelected?.Invoke(stock);
             },
             filter: AddTileFilter,
             icon: _createSelectionIcon);
     }
 
-    public void AddTileSelection(Stock stock)
+    public void AddTileSelection(Entity<StockpileComponent> stock)
     {
         _selection.SetTileSelection(
             act: _ => _executable.DefaultSelection(),
             onSelected: tiles =>
             {
-                _stockpile.AddTiles(tiles, stock);
+                _stockpile.AddTiles(stock, tiles);
                 AddTileSelection(stock);
             },
             filter: AddTileFilter,
             icon: _addTileSelection);
     }
 
-    public void RemoveTileSelection(Stock stock)
+    public void RemoveTileSelection(Entity<StockpileComponent> stock)
     {
         _selection.SetTileSelection(
             act: _ => _executable.DefaultSelection(),
             onSelected: tiles =>
             {
-                _stockpile.RemoveTiles(tiles, stock);
+                _stockpile.RemoveTile(stock, tiles);
                 RemoveTileSelection(stock);
             },
             filter: RemoveTileFilter,
@@ -213,18 +211,12 @@ public sealed class StockpileUiController :
     }
 
     private bool AddTileFilter(TileRef tile)
-    {
-        return !_entManager.IsClientSide(tile.GridUid)
-            && !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
-            && !_stockpile.ContainsTile(tile.GridUid, tile.GridIndices);
-    }
+        => !_entManager.IsClientSide(tile.GridUid)
+           && !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
+           && !_stockpile.TileInStock(tile);
 
     private bool RemoveTileFilter(TileRef tile)
-    {
-        return SettingStock != null
-               && SettingStock.GridUid == tile.GridUid
-               && SettingStock.ContainsTile(tile.GridIndices);
-    }
+        => SettingStock != null && _stockpile.TileInStock(SettingStock.Value, tile);
 
     public void Clear()
     {
@@ -251,8 +243,20 @@ public sealed class StockpileUiController :
 
         _stockpile.TryGetStock(coords, out var stock);
 
-        if (stock == null || stock.Owner == _player.LocalSession?.AttachedEntity)
+        if (stock == null || _ownership.HasOwner(stock.Value.Owner, _player.LocalSession?.AttachedEntity))
             SelectedStock = stock;
+    }
+
+    public void OnSystemLoaded(StockpileSystem system)
+    {
+        system.OnStockCreated += stock =>
+        {
+            SettingStock = stock;
+            SelectMode = StockpileSelectionMode.None;
+            OnStockSelected?.Invoke(stock);
+        };
+
+        system.OnStockSettingsUpdated += stock => OnStockpileUpdated?.Invoke(stock);
     }
 }
 

@@ -119,15 +119,15 @@ public sealed class OwnershipSystem : EntitySystem
     /// Checks whether the target entity is the owner of a given.
     /// </summary>
     [Pure, PublicAPI]
-    public bool HasOwner(Entity<OwnershipComponent?> ent, EntityUid owner)
-        => Resolve(ent, ref ent.Comp, false) && ent.Comp.Owners.Contains(owner);
+    public bool HasOwner(Entity<OwnershipComponent?> ent, EntityUid? owner)
+        => owner != null && Resolve(ent, ref ent.Comp, false) && ent.Comp.Owners.Contains(owner.Value);
 
     /// <summary>
     /// Checks whether the target entity owns this.
     /// </summary>
     [Pure, PublicAPI]
-    public bool HasOwned(Entity<OwnershipComponent?> ent, EntityUid owned)
-        => Resolve(ent, ref ent.Comp, false) && ent.Comp.Owned.Contains(owned);
+    public bool HasOwned(Entity<OwnershipComponent?> ent, EntityUid? owned)
+        => owned != null && Resolve(ent, ref ent.Comp, false) && ent.Comp.Owned.Contains(owned.Value);
 
     /// <summary>
     /// Adds the target entity the owner of the given
@@ -430,9 +430,10 @@ public sealed class OwnershipSystem : EntitySystem
         public SameOwnerEntitiesEnumerator(List<HashSet<EntityUid>> entities)
         {
             _entities = entities;
-            _enumerator = _entities.Count == 0 ? new HashSet<EntityUid>.Enumerator() : _entities[0].GetEnumerator();
+            _enumerator = _entities.Count == 0 ? new HashSet<EntityUid>().GetEnumerator() : _entities[0].GetEnumerator();
         }
 
+        [PublicAPI]
         public bool MoveNext(out EntityUid uid)
         {
             if (_enumerator.MoveNext())
@@ -473,10 +474,11 @@ public sealed class OwnershipSystem : EntitySystem
         public SameOwnerEntitiesEnumerator(List<HashSet<EntityUid>> entities, EntityQuery<TComp1> comp1Query)
         {
             _entities = entities;
-            _enumerator = _entities.Count == 0 ? new HashSet<EntityUid>.Enumerator() : _entities[0].GetEnumerator();
+            _enumerator = _entities.Count == 0 ? new HashSet<EntityUid>().GetEnumerator() : _entities[0].GetEnumerator();
             _comp1Query = comp1Query;
         }
 
+        [PublicAPI]
         public bool MoveNext(out EntityUid uid, [NotNullWhen(true)] out TComp1? comp)
         {
             uid = EntityUid.Invalid;
@@ -502,6 +504,7 @@ public sealed class OwnershipSystem : EntitySystem
             }
         }
 
+        [PublicAPI]
         public bool MoveNext([NotNullWhen(true)] out TComp1? comp) => MoveNext(out _, out comp);
 
         public void Dispose()
@@ -526,7 +529,7 @@ public sealed class OwnershipSystem : EntitySystem
             EntityQuery<TComp2> comp2Query)
         {
             _entities = entities;
-            _enumerator = _entities.Count == 0 ? new HashSet<EntityUid>.Enumerator() : _entities[0].GetEnumerator();
+            _enumerator = _entities.Count == 0 ? new HashSet<EntityUid>().GetEnumerator() : _entities[0].GetEnumerator();
             _comp1Query = comp1Query;
             _comp2Query = comp2Query;
         }
@@ -560,6 +563,7 @@ public sealed class OwnershipSystem : EntitySystem
             }
         }
 
+        [PublicAPI]
         public bool MoveNext(
             [NotNullWhen(true)] out TComp1? comp1,
             [NotNullWhen(true)] out TComp2? comp2)

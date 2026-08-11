@@ -1,6 +1,7 @@
+using Content.Shared._RF.Stockpile.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Stockpile;
+namespace Content.Shared._RF.Stockpile.Components;
 
 /// <summary>
 /// Indicates that the entity belongs to the stock item category
