@@ -57,6 +57,12 @@ public sealed partial class StockpileComponent : Component
     public HashSet<Vector2i> Tiles = new();
 
     /// <summary>
+    /// A list of all free tiles in the stockpile.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public HashSet<Vector2i> FreeTiles = new();
+
+    /// <summary>
     /// A list of all entities in the stockpile.
     /// </summary>
     [DataField, AutoNetworkedField]

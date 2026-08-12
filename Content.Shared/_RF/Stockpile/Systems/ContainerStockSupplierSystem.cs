@@ -89,7 +89,7 @@ public sealed class ContainerStockSupplierSystem : EntitySystem
         foreach (var supplied in ent.Comp.Supplied)
         {
             if (_stockpile.TryGetStock(supplied, out var stock))
-                stockpiles.AddRange(_stockpile.FindLastSupplied(stock.Value, uid));
+                stockpiles.AddRange(_stockpile.GetSupplyingChain(stock.Value, uid));
         }
 
         return stockpiles;

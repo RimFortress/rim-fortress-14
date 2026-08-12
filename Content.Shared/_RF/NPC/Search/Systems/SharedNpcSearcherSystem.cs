@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using JetBrains.Annotations;
@@ -171,6 +172,20 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
         result = results[0];
         return true;
     }
+
+    /// <summary>
+    /// Returns the most relevant entity for the given search query.
+    /// </summary>
+    /// <param name="ent">Agent entity.</param>
+    /// <param name="protoId">Search query prototype.</param>
+    /// <param name="result">Best entity.</param>
+    /// <returns>True, if the entity found; otherwise, false</returns>
+    [PublicAPI, Pure]
+    public bool TryGetBestResult(
+        Entity<GoapComponent> ent,
+        ProtoId<SearchQueryPrototype> protoId,
+        [NotNullWhen(true)] out EntityUid? result)
+        => TryGetBestResult(ent, ent.Comp.State, protoId, out result);
 }
 
 public interface IQuerySearcher

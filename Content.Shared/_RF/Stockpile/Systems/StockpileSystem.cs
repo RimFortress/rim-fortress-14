@@ -2,6 +2,8 @@ using Content.Shared._RF.NPC;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared.Maps;
 using Content.Shared.Prototypes;
+using Content.Shared.Storage.Components;
+using Content.Shared.Storage.EntitySystems;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -26,10 +28,12 @@ public sealed partial class StockpileSystem : EntitySystem
     [Dependency] private readonly OwnershipSystem _ownership = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
+    [Dependency] private readonly SharedEntityStorageSystem _storage = default!;
 
     [Dependency] private readonly EntityQuery<StockpileComponent> _stockQuery = default!;
     [Dependency] private readonly EntityQuery<MapGridComponent> _gridQuery = default!;
     [Dependency] private readonly EntityQuery<ContainerManagerComponent> _containerQuery = default!;
+    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
 
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
 
@@ -310,6 +314,13 @@ public sealed partial class StockpileSystem : EntitySystem
     {
         if (!ent.Comp.Stored.Add(uid))
             return;
+
+        if (_turf.TryGetTileRef(Transform(uid).Coordinates, out var tile)
+            && !IsTileFree(ent, tile.Value))
+        {
+            ent.Comp.FreeTiles.Remove(tile.Value.GridIndices);
+            DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
+        }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Stored));
         var comp = EnsureComp<StockpileContentComponent>(uid);

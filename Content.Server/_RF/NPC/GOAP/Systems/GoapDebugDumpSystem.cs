@@ -104,6 +104,30 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         return false;
     }
 
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
+    protected static void Remove<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key)
+        where T : notnull => Remove(ent.Comp.State, debug, key);
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
+    protected static void Remove<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key)
+        where T : notnull
+    {
+        CreateDump(state, debug, $"removed key '{key}' of type '{typeof(T)}' for state");
+        state.Remove(key);
+    }
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
+    protected static void Set<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key, T value)
+        where T : notnull => Set(ent.Comp.State, debug, key, value);
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
+    protected static void Set<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key, T value)
+        where T : notnull
+    {
+        CreateDump(state, debug, $"key '{key}' of type '{typeof(T)}' value set to `{value.ToString()}`");
+        state.SetValue(key, value);
+    }
+
     /// <summary>
     /// Returns <see cref="GoapState.Owner"/>.
     /// </summary>

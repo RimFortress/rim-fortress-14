@@ -65,6 +65,12 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     [Dependency] private readonly TransformSystem _transform = default!;
     [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery = default!;
 
+    /// <summary>
+    /// The base key for storing the path that the agent must follow.
+    /// </summary>
+    [PublicAPI]
+    public static StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
+
     private readonly Dictionary<EntityUid, Task<PathResultEvent>> _pendingPaths = new();
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, MoveTo action) => 2f;
@@ -282,4 +288,41 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     [PublicAPI]
     public bool StartedUp(Entity<GoapComponent> ent)
         => _pendingPaths.ContainsKey(ent) || HasComp<NPCSteeringComponent>(ent);
+
+    /// <summary>
+    /// Implements all the logic for moving the agent to the target coordinates.
+    /// </summary>
+    [PublicAPI]
+    public GoapActionResult Move(
+        Entity<GoapComponent> ent,
+        GoapAction action,
+        EntityCoordinates targetCoordinates,
+        StateKey<float> rangeKey,
+        StateKey<PathResultEvent>? pathfindKey = null,
+        bool findPath = true,
+        bool stopOnLineOfSight = false,
+        bool unregisterSteering = true)
+    {
+        if (!targetCoordinates.TryDistance(EntityManager, _transform, Transform(ent).Coordinates, out var dist)
+            || !TryGetValue(ent, action, rangeKey, out var range))
+            return GoapActionResult.Failed;
+
+        pathfindKey ??= PathfindKey;
+
+        if (dist > range)
+        {
+            if (!StartedUp(ent))
+                StartupMovement(ent, action, targetCoordinates, true, pathfindKey.Value, rangeKey);
+
+            var result = UpdateMovement(ent, action, targetCoordinates, pathfindKey.Value, rangeKey);
+
+            if (result != GoapActionResult.Finished)
+                return result;
+        }
+
+        if (StartedUp(ent))
+            ShutdownMovement(ent, pathfindKey.Value, unregisterSteering: unregisterSteering);
+
+        return GoapActionResult.Finished;
+    }
 }

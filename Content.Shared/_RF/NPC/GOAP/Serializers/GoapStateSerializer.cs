@@ -99,6 +99,12 @@ public sealed class GoapStateSerializer : ITypeReader<GoapState, MappingDataNode
             return true;
         }
 
+        if (!valueNode.Value.StartsWith("!type:"))
+        {
+            value = valueNode.Value;
+            return true;
+        }
+
         return false;
     }
 }

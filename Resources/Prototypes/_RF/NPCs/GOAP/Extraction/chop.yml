@@ -39,6 +39,7 @@
 
   - preconditions:
     - AxePickedUp == true
+    - ChopTarget != null
     actions:
     - !type:EntityCoords
       targetKey: ChopTarget

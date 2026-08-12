@@ -14,14 +14,44 @@ namespace Content.Shared._RF.Stockpile.Systems;
 public partial class StockpileSystem
 {
     /// <summary>
-    /// Checks whether the target entity can be stored in the tile where it is located.
+    /// Checks whether the target entity can be stored in any tile or container in the target stockpile.
     /// </summary>
     /// <param name="ent">Stockpile entity.</param>
     /// <param name="toInsert">Entity to insert.</param>
     [PublicAPI, Pure]
     public bool CanInsert(Entity<StockpileComponent> ent, EntityUid toInsert)
-        => _turf.GetTileRef(Transform(ent).Coordinates) is { } tile
-           && CanInsert(ent, toInsert, tile.GridIndices);
+    {
+        if (!CanInsert(ent, Prototype(toInsert)?.ID))
+            return false;
+
+        if (ent.Comp.FreeTiles.Count > 0)
+            return true;
+
+        foreach (var uid in ent.Comp.Stored)
+        {
+            if (_storageQuery.TryComp(uid, out var comp)
+                && _storage.CanInsert(toInsert, uid, comp))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks whether given entity type can be stored in the stockpile.
+    /// </summary>
+    /// <param name="ent">Stockpile entity.</param>
+    /// <param name="proto">Entity prototype to insert.</param>
+    [PublicAPI, Pure]
+    public bool CanInsert(Entity<StockpileComponent> ent, EntProtoId? proto)
+    {
+        if (proto == null)
+            return false;
+
+        var max = GetProtoMax(ent, proto.Value);
+        var current = GetTypeCount(ent, proto.Value);
+        return max == -1 || current < max;
+    }
 
     /// <summary>
     /// Checks whether given entity can be stored in the target tile.
@@ -32,14 +62,11 @@ public partial class StockpileSystem
     [PublicAPI, Pure]
     public bool CanInsert(Entity<StockpileComponent> ent, EntityUid toInsert, Vector2i position)
     {
-        if (Prototype(toInsert) is not { } proto)
+        if (!CanInsert(ent, Prototype(toInsert)?.ID))
             return false;
 
-        var max = GetProtoMax(ent, proto);
-        var current = GetTypeCount(ent, proto);
-
-        if (max != -1 && current >= max)
-            return false;
+        if (ent.Comp.FreeTiles.Contains(position))
+            return true;
 
         if (_xform.GetGrid(ent.Owner) is not { } grid)
             return false;
@@ -134,7 +161,7 @@ public partial class StockpileSystem
     /// <param name="stock">Stockpile entity.</param>
     [PublicAPI, Pure]
     public bool TryGetStock(
-        NetEntity netEnt,
+        [NotNullWhen(true)] NetEntity? netEnt,
         [NotNullWhen(true)] out Entity<StockpileComponent>? stock)
     {
         stock = null;
@@ -143,7 +170,7 @@ public partial class StockpileSystem
 
     [PublicAPI, Pure]
     public bool TryGetStock(
-        EntityUid uid,
+        [NotNullWhen(true)] EntityUid? uid,
         [NotNullWhen(true)] out Entity<StockpileComponent>? stock)
     {
         stock = null;
@@ -151,7 +178,7 @@ public partial class StockpileSystem
         if (!_stockQuery.TryComp(uid, out var comp))
             return false;
 
-        stock = new(uid, comp);
+        stock = new(uid.Value, comp);
         return true;
     }
 
@@ -226,36 +253,139 @@ public partial class StockpileSystem
         => supplier.Comp.Supplied.Contains(supplied);
 
     /// <summary>
-    /// Searches for the last stockpiles in the supply chain to which the given entity can be stocked.
+    /// Checks the target stockpile tile to see if anything can be stored there.
     /// </summary>
-    public List<Entity<StockpileComponent>> FindLastSupplied(Entity<StockpileComponent> startStock, EntityUid toInsert)
+    /// <param name="ent">Stockpile entity.</param>
+    /// <param name="tile">Target tile.</param>
+    [PublicAPI, Pure]
+    public bool IsTileFree(Entity<StockpileComponent> ent, TileRef tile)
+    {
+        if (_xform.GetGrid(ent.Owner) is not { } grid
+            || grid != tile.GridUid
+            || !ent.Comp.Tiles.Contains(tile.GridIndices))
+            return true;
+
+        var intersecting = new HashSet<Entity<StockpileContentComponent>>();
+        _lookup.GetLocalEntitiesIntersecting(grid,
+            tile.GridIndices,
+            intersecting,
+            flags: LookupFlags.Dynamic | LookupFlags.Static | LookupFlags.Uncontained);
+
+        return intersecting.Count < ent.Comp.MaxTileEntities;
+    }
+
+    /// <summary>
+    /// Returns a reverse supply chain starting from the root stockpile,
+    /// to which only those stockpile where there is storage space for the target entity will be added.
+    /// </summary>
+    [PublicAPI, Pure]
+    public List<Entity<StockpileComponent>> GetSupplyingChain(
+        Entity<StockpileComponent> rootStock,
+        EntityUid toInsert,
+        bool includeRoot = false)
     {
         var stockpiles = new List<Entity<StockpileComponent>>();
         var queue = new Queue<Entity<StockpileComponent>>();
+        var added = new HashSet<EntityUid>();
 
-        if (!CanInsert(startStock, toInsert))
+        if (!CanInsert(rootStock, Prototype(toInsert)?.ID))
             return stockpiles;
 
-        queue.Enqueue(startStock);
+        queue.Enqueue(rootStock);
 
         while (queue.TryDequeue(out var stock))
         {
-            var valid = true;
+            if (!added.Add(stock))
+                continue;
 
             foreach (var uid in stock.Comp.Supplied)
             {
-                if (!_stockQuery.TryComp(uid, out var supplied)
-                    || !CanInsert(new(uid, supplied), toInsert))
-                    continue;
-
-                valid = false;
-                queue.Enqueue(new(uid, supplied));
+                if (TryGetStock(uid, out var supplied))
+                    queue.Enqueue(supplied.Value);
             }
 
-            if (valid)
-                stockpiles.Add(stock);
+            stockpiles.Add(stock);
+        }
+
+        if (!includeRoot)
+            stockpiles.Remove(rootStock);
+
+        stockpiles.Reverse();
+
+        for (var i = 0; i < stockpiles.Count; i++)
+        {
+            if (CanInsert(stockpiles[i], Prototype(toInsert)?.ID))
+                continue;
+
+            stockpiles.RemoveAt(i);
+            i--;
         }
 
         return stockpiles;
+    }
+
+    /// <summary>
+    /// Returns the number of all stocks supplied from this one.
+    /// </summary>
+    /// <param name="ent">Stockpile entity.</param>
+    [PublicAPI, Pure]
+    public int GetTotalSupplied(Entity<StockpileComponent> ent)
+    {
+        var count = 0;
+        var queue = new Queue<Entity<StockpileComponent>>();
+        var added = new HashSet<EntityUid>();
+
+        queue.Enqueue(ent);
+
+        while (queue.TryDequeue(out var stock))
+        {
+            if (!added.Add(stock))
+                continue;
+
+            foreach (var uid in stock.Comp.Supplied)
+            {
+                if (TryGetStock(uid, out var supplied))
+                    queue.Enqueue(supplied.Value);
+            }
+
+            count++;
+        }
+
+        return count - 1;
+    }
+
+    /// <summary>
+    /// Searches for the available stockpile tile closest to the target coordinates.
+    /// </summary>
+    /// <param name="ent">Stockpile entity.</param>
+    /// <param name="targetCoords">Target coordinates.</param>
+    /// <param name="tileCoords">The coordinates of the center of the found tile.</param>
+    /// <returns>True, if the tile is found.</returns>
+    [PublicAPI, Pure]
+    public bool TryFindClosestTile(
+        Entity<StockpileComponent> ent,
+        EntityCoordinates targetCoords,
+        [NotNullWhen(true)] out EntityCoordinates? tileCoords)
+    {
+        var min = ((float)int.MaxValue, EntityCoordinates.Invalid);
+        var grid = Transform(ent).Coordinates.EntityId;
+
+        foreach (var ind in ent.Comp.FreeTiles)
+        {
+            var coords = new EntityCoordinates(grid, ind + new Vector2(0.5f));
+
+            if (coords.TryDistance(EntityManager, _xform, targetCoords, out var dist)
+                && dist < min.Item1)
+                min = (dist, coords);
+        }
+
+        if (min.Invalid.IsValid(EntityManager))
+        {
+            tileCoords = min.Invalid;
+            return true;
+        }
+
+        tileCoords = null;
+        return false;
     }
 }

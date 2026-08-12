@@ -1,0 +1,38 @@
+- type: goapCompound
+  id: Storing
+  tasks:
+  - proto: FixStoredOffset
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: NotStoredItem
+    action: !type:SearchQuery
+      query: NotStoredItem
+      targetKey: StoringTarget
+    effects:
+      StoringType: Item
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: NotStoredCrate
+    action: !type:SearchQuery
+      query: NotStoredCrate
+      targetKey: StoringTarget
+    effects:
+      StoringType: Crate
+
+  - preconditions:
+    - StoringType == Item
+    actions:
+    - !type:StoringItem
+      targetKey: StoringTarget
+    effects:
+      TargetStored: true
+
+  - preconditions:
+    - StoringType == Crate
+    actions:
+    - !type:StoringCrate
+      targetKey: StoringTarget
+    effects:
+      TargetStored: true

@@ -446,6 +446,16 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </summary>
     public static readonly StateKey<float> ConversationRange = "ConversationRange";
 
+    /// <summary>
+    /// The maximum distance to which an item pulled by an NPC can be moved
+    /// </summary>
+    public static readonly StateKey<float> PullerThrowDistance = "PullerThrowDistance";
+
+    /// <summary>
+    /// How close to a given coordinate should an NPC attempt to move an entity that is being pulled
+    /// </summary>
+    public static readonly StateKey<float> PullingMoveCloseRange = "PullingMoveCloseRange";
+
     // Entity system defaults
 
     /// <summary>
@@ -514,6 +524,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {MeleeRange, 1f},
         {ConversationInviteValidTimeKey, TimeSpan.FromSeconds(7f)},
         {ConversationRange, 2.5f},
+        {PullerThrowDistance, 2f},
+        {PullingMoveCloseRange, 0.05f},
     };
 
     /// <summary>

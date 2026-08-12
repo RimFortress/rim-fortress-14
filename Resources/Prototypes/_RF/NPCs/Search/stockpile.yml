@@ -1,0 +1,134 @@
+- type: searchQuery
+  id: NotStoredItem
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+  - !type:Component
+    components:
+    - type: Item
+    invert: true
+  - !type:CanInsertInStock
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: NotStoredCrate
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+  - !type:Component
+    components:
+    - type: Pullable
+    - type: EntityStorage
+    invert: true
+  - !type:CanInsertInStock
+    invert: true
+  - !type:Pulled
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+
+- type: searchQuery
+  id: StoredItem
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: Item
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  validTime: 0
+  id: StoredCrate
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: EntityStorage
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+
+- type: searchQuery
+  id: OffsetStoredItem
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: Item
+    invert: true
+  - !type:TileOffset
+    lessThan: 0.06
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: OffsetStoredCrate
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: EntityStorage
+    - type: Pullable
+    invert: true
+  - !type:TileOffset
+    lessThan: 0.06
+  - !type:Pulled
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+
+- type: searchQuery
+  id: StockpileToStore
+  query: !type:Owned
+  filters:
+  - !type:StockCanInsert
+    targetKey: StoringTarget
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+  # We give priority to stockpiles at the end of the supply chain.
+  - !type:StockTotalSupplied
+    curves:
+    - !type:Normalize
+    - minus: [float: 1]
+    - !type:Abs

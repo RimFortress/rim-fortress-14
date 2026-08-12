@@ -19,6 +19,7 @@
   - proto: Drop
   - proto: Farming
   - proto: Conversation
+  - proto: Storing
 
   - preconditions:
     - InContainer == false

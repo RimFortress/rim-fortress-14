@@ -85,6 +85,7 @@ public partial class StockpileSystem
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Tiles));
+        DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
     }
 
     /// <summary>
@@ -98,7 +99,8 @@ public partial class StockpileSystem
     public bool AddTile(Entity<StockpileComponent> ent, TileRef tile, bool dirty = true)
     {
         if (TileInStock(tile)
-            || _turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable))
+            || _turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
+            || _xform.GetGrid(ent.Owner) != tile.GridUid)
             return false;
 
         var id = $"{tile.GridIndices.X},{tile.GridIndices.Y}";
@@ -117,6 +119,7 @@ public partial class StockpileSystem
 
         ent.Comp.TileFixtures[tile.GridIndices] = id;
         ent.Comp.Tiles.Add(tile.GridIndices);
+        ent.Comp.FreeTiles.Add(tile.GridIndices);
 
         if (!dirty)
             return true;
@@ -125,6 +128,7 @@ public partial class StockpileSystem
             RaiseNetworkEvent(new StockpileTileAdded(GetNetEntity(ent), new() { tile.GridIndices }));
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Tiles));
+        DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
         return true;
     }
 
@@ -149,6 +153,7 @@ public partial class StockpileSystem
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Tiles));
+        DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
     }
 
     /// <summary>
@@ -170,6 +175,8 @@ public partial class StockpileSystem
             return true;
         }
 
+        ent.Comp.FreeTiles.Remove(tile.GridIndices);
+
         if (ent.Comp.TileFixtures.Remove(tile.GridIndices, out var id))
             _fixture.DestroyFixture(ent, id);
 
@@ -180,6 +187,7 @@ public partial class StockpileSystem
             RaiseNetworkEvent(new StockpileTileRemoved(GetNetEntity(ent), new() { tile.GridIndices }));
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Tiles));
+        DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
         return true;
     }
 
@@ -250,13 +258,35 @@ public partial class StockpileSystem
         if (!ent.Comp.Stored.Remove(uid))
             return false;
 
+        if (_turf.TryGetTileRef(Transform(uid).Coordinates, out var tile)
+            && IsTileFree(ent, tile.Value))
+        {
+            ent.Comp.FreeTiles.Add(tile.Value.GridIndices);
+            DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
+        }
+
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Stored));
-        RemComp<StockpileContentComponent>(uid);
+        RemoveRecursively(uid);
 
         if (_net.IsServer)
             RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));
 
         return true;
+
+        void RemoveRecursively(EntityUid toRemove)
+        {
+            if (!RemComp<StockpileContentComponent>(toRemove)
+                || !_containerQuery.TryComp(toRemove, out var contComp))
+                return;
+
+            foreach (var container in _container.GetAllContainers(toRemove, contComp))
+            {
+                foreach (var contained in container.ContainedEntities)
+                {
+                    RemoveRecursively(contained);
+                }
+            }
+        }
     }
 
     /// <summary>
