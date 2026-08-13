@@ -18,14 +18,14 @@
       proto: MoodPleasantConversation
     - !type:AddOpinion
       actors:
-      - respondent
+      - responder
       proto: OpinionPoliteDialogue
     - !type:ChangeNeed
       need: Socialization
       random:
         min: 15
         max: 30
-    respondent:
+    responder:
     - !type:AddMood
       proto: MoodPleasantConversation
     - !type:AddOpinion
@@ -88,10 +88,10 @@
     - !type:Mood
       moreThan: -5
     reqsFor:
-      respondent:
+      responder:
       - !type:Opinion
         moreThan: -5
-  - id: respondent
+  - id: responder
     reqs:
     - !type:Mood
       lessThan: -15
@@ -104,7 +104,7 @@
       random:
         min: 5
         max: 10
-    respondent:
+    responder:
     - !type:AddMood
       proto: MoodConversationIrritated
   order:
@@ -119,10 +119,10 @@
     - !type:Mood
       moreThan: -5
     reqsFor:
-      respondent:
+      responder:
       - !type:Opinion
         moreThan: -5
-  - id: respondent
+  - id: responder
     reqs:
     - !type:Mood
       lessThan: -25
@@ -130,7 +130,7 @@
     initiator:
     - !type:AddMood
       proto: MoodUnpleasantConversation
-    respondent:
+    responder:
     - !type:AddMood
       proto: MoodConversationIrritated
 
@@ -143,10 +143,10 @@
     - !type:Mood
       moreThan: -5
     reqsFor:
-      respondent:
+      responder:
       - !type:Opinion
         moreThan: -5
-  - id: respondent
+  - id: responder
     reqs:
     - !type:Mood
       lessThan: -30
@@ -156,8 +156,8 @@
       proto: MoodRudeConversation
     - !type:AddOpinion
       actors:
-      - respondent
+      - responder
       proto: OpinionRudeDialogue
-    respondent:
+    responder:
     - !type:AddMood
       proto: MoodConversationIrritated

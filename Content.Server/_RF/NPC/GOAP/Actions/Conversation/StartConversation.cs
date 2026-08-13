@@ -59,6 +59,11 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
         return true;
     }
 
+    protected override void ActionShutdown(Entity<GoapComponent> ent, StartConversation action)
+    {
+        NpcTimingSystem.ClearQueue(ent);
+    }
+
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, StartConversation action)
     {
         var waitResult = _npcTiming.Wait(ent, action, action.WaitInvitesAcceptKey);

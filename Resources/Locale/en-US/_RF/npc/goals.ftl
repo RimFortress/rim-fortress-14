@@ -29,3 +29,4 @@ utility-ai-goal-startconversation-name = Communicates
 utility-ai-goal-conversation-name = Communicates
 
 utility-ai-goal-storing-name = Storing in the stock
+utility-ai-goal-fixstoredoffset-name = Fix stored offset

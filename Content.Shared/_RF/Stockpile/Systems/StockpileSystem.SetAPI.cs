@@ -258,6 +258,8 @@ public partial class StockpileSystem
         if (!ent.Comp.Stored.Remove(uid))
             return false;
 
+        RemoveRecursively(uid);
+
         if (_turf.TryGetTileRef(Transform(uid).Coordinates, out var tile)
             && IsTileFree(ent, tile.Value))
         {
@@ -266,7 +268,6 @@ public partial class StockpileSystem
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Stored));
-        RemoveRecursively(uid);
 
         if (_net.IsServer)
             RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));
@@ -329,5 +330,53 @@ public partial class StockpileSystem
 
         if (_net.IsClient)
             RaiseNetworkEvent(new StockpileSettingsUpdated(GetNetEntity(ent), settings));
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="ent"></param>
+    /// <param name="tile"></param>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    [PublicAPI]
+    public bool ReserveTile(Entity<StockpileComponent> ent, Vector2i tile, EntityUid user)
+    {
+        if (ent.Comp.ReservedTiles.ContainsKey(tile)
+            || !_ownership.HasSameOwner(ent.Owner, user))
+            return false;
+
+        ent.Comp.ReservedTiles[tile] = user;
+        return true;
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="ent"></param>
+    /// <param name="target"></param>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    [PublicAPI]
+    public bool ReserveEntity(Entity<StockpileComponent> ent, EntityUid target, EntityUid user)
+    {
+        if (ent.Comp.ReservedEntities.ContainsKey(target)
+            || !_ownership.HasSameOwner(ent.Owner, user))
+            return false;
+
+        ent.Comp.ReservedEntities[target] = user;
+        return true;
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="ent"></param>
+    /// <param name="user"></param>
+    [PublicAPI]
+    public static void ClearReserve(Entity<StockpileComponent> ent, EntityUid user)
+    {
+        ent.Comp.ReservedTiles = ent.Comp.ReservedTiles.Where(x => x.Value != user).ToDictionary();
+        ent.Comp.ReservedEntities = ent.Comp.ReservedEntities.Where(x => x.Value != user).ToDictionary();
     }
 }

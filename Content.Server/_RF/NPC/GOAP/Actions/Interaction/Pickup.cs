@@ -9,6 +9,7 @@ using Content.Shared.Item;
 using Content.Shared.Storage;
 using Content.Shared.Tools.Components;
 using JetBrains.Annotations;
+using Robust.Server.Containers;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
@@ -29,6 +30,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
     [Dependency] private readonly HandsSystem _hands = default!;
     [Dependency] private readonly StorageSystem _storage = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly ContainerSystem _container = default!;
     [Dependency] private readonly InteractionSystem _interaction = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Pickup action)
@@ -49,6 +51,17 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
         {
             ComponentNotFound<ItemComponent>(ent, action, target);
             return false;
+        }
+
+        if (_container.TryGetContainingContainer(target, out var container))
+        {
+            if (container.Owner != ent.Owner && _hands.TryGetHand(container.Owner, container.ID, out _))
+            {
+                CreateDump(ent,
+                    action,
+                    $"{ToPrettyString(target)} currently in hands of {ToPrettyString(container.Owner)}");
+                return false;
+            }
         }
 
         var coords = Transform(target).Coordinates;

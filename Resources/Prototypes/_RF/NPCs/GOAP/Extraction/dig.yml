@@ -43,6 +43,7 @@
     - !type:Melee
       targetKey: DigTarget
     - !type:MarkOwnerInRange
+      range: 3
       whitelist:
         tags:
         - Log

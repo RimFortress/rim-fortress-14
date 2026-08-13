@@ -140,7 +140,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 
         var result = query
             .Where(x => x.Value > 0)
-            .OrderBy(x => x.Value)
+            .OrderByDescending(x => x.Value)
             .Select(x => x.Key)
             .ToList();
         comp.Queries[protoId] = new(_timing.CurTime + proto.ValidTime, result);

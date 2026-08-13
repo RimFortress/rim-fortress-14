@@ -63,6 +63,19 @@ public sealed partial class StockpileComponent : Component
     public HashSet<Vector2i> FreeTiles = new();
 
     /// <summary>
+    /// Stockpile tiles reserved for a specific entity interaction and temporarily marked as unavailable.
+    /// </summary>
+    [DataField]
+    public Dictionary<Vector2i, EntityUid> ReservedTiles = new();
+
+    /// <summary>
+    /// Entities from the stockpile that are reserved for
+    /// interaction with other entities and are temporarily marked as unavailable.
+    /// </summary>
+    [DataField]
+    public Dictionary<EntityUid, EntityUid> ReservedEntities = new();
+
+    /// <summary>
     /// A list of all entities in the stockpile.
     /// </summary>
     [DataField, AutoNetworkedField]

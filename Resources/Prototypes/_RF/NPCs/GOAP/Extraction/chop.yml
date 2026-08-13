@@ -50,6 +50,7 @@
     - !type:Melee
       targetKey: ChopTarget
     - !type:MarkOwnerInRange
+      range: 3
       whitelist:
         components:
         - Log

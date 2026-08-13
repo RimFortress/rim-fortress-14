@@ -21,6 +21,8 @@ public sealed class MarkOwnerActionSystem : GoapActionSystem<MarkOwner>
 {
     [Dependency] private readonly OwnershipSystem _ownership = default!;
 
+    protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, MarkOwner action) => 0f;
+
     protected override bool ActionStartup(Entity<GoapComponent> ent, MarkOwner action)
     {
         if (!TryGetValue(ent, action, action.TargetKey, out var target))

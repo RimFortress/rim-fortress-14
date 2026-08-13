@@ -6,7 +6,6 @@ using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
 using Content.Server.Interaction;
 using Content.Server.NPC.Pathfinding;
-using Content.Server.Storage.EntitySystems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
@@ -63,7 +62,6 @@ public sealed partial class StoringItem : BaseGoapAction<StoringItem>
 public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
 {
     [Dependency] private readonly InteractionSystem _interaction = default!;
-    [Dependency] private readonly EntityStorageSystem _storage = default!;
     [Dependency] private readonly NpcSearcherSystem _searcher = default!;
     [Dependency] private readonly StockpileSystem _stockpile = default!;
     [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
@@ -91,23 +89,36 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
             return false;
         }
 
-        foreach (var uid in stock.Value.Comp.Stored)
+        var ownerCoords = Transform(ent).Coordinates;
+
+        if (_stockpile.TryFindClosestContainerToInsert(stock.Value, ownerCoords, target, out var container))
         {
-            if (!_storageQuery.TryComp(uid, out var comp)
-                || !_storage.CanInsert(target, uid, comp))
-                continue;
+            if (!_stockpile.ReserveEntity(stock.Value, container.Value, ent))
+            {
+                CreateDump(ent,
+                    action,
+                    $"failed to reserve entity {ToPrettyString(container)} in stock {ToPrettyString(stock)}");
+                return false;
+            }
 
             Set(ent, action, action.StockpileKey, result.Value);
-            Set(ent, action, action.StoringCrateKey, uid);
+            Set(ent, action, action.StoringCrateKey, container.Value);
             return true;
         }
 
         CreateDump(ent, action, $"free entity storage not found in stockpile '{ToPrettyString(stock)}'");
-        var ownerCoords = Transform(ent).Coordinates;
 
-        if (!_stockpile.TryFindClosestTile(stock.Value, ownerCoords, out var tileCoords))
+        if (!_stockpile.TryFindClosestTile(stock.Value, ownerCoords, out var ind, out var tileCoords))
         {
             CreateDump(ent, action, $"free tile not found in stockpile '{ToPrettyString(stock)}'");
+            return false;
+        }
+
+        if (!_stockpile.ReserveTile(stock.Value, ind.Value, ent))
+        {
+            CreateDump(ent,
+                action,
+                $"failed to reserve tile {ind} in stock {ToPrettyString(stock)}");
             return false;
         }
 
@@ -118,10 +129,14 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, StoringItem action)
     {
-        Remove(ent, action, action.StockpileKey);
+        if (Remove(ent, action, action.StockpileKey, out var uid)
+            && _stockpile.TryGetStock(uid, out var stock))
+            StockpileSystem.ClearReserve(stock.Value, ent);
+
         Remove(ent, action, action.StoringCoordinatesKey);
         Remove(ent, action, action.StoringCrateKey);
         Remove(ent, action, action.PathfindKey);
+        NpcTimingSystem.ClearQueue(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, StoringItem action)

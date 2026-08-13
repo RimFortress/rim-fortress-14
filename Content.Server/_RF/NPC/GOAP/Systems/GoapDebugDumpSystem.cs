@@ -105,16 +105,36 @@ public abstract class GoapDebugDumpSystem : EntitySystem
     }
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
-    protected static void Remove<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key)
-        where T : notnull => Remove(ent.Comp.State, debug, key);
-
-    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
-    protected static void Remove<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key)
+    protected static bool Remove<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key)
         where T : notnull
     {
         CreateDump(state, debug, $"removed key '{key}' of type '{typeof(T)}' for state");
-        state.Remove(key);
+        return state.Remove(key);
     }
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
+    protected static bool Remove<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key)
+        where T : notnull => Remove(ent.Comp.State, debug, key);
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T}, out T)"/>
+    protected static bool Remove<T>(
+        GoapState state,
+        IGoapDebuggable debug,
+        StateKey<T> key,
+        [NotNullWhen(true)] out T? removed)
+        where T : notnull
+    {
+        CreateDump(state, debug, $"removed key '{key}' of type '{typeof(T)}' for state");
+        return state.Remove(key, out removed);
+    }
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T}, out T)"/>
+    protected static bool Remove<T>(
+        Entity<GoapComponent> ent,
+        IGoapDebuggable debug,
+        StateKey<T> key,
+        [NotNullWhen(true)] out T? removed)
+        where T : notnull => Remove(ent.Comp.State, debug, key, out removed);
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
     protected static void Set<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key, T value)

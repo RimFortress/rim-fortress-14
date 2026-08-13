@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.Stockpile.Components;
+using Content.Shared.Storage.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
@@ -24,12 +25,13 @@ public partial class StockpileSystem
         if (!CanInsert(ent, Prototype(toInsert)?.ID))
             return false;
 
-        if (ent.Comp.FreeTiles.Count > 0)
+        if (ent.Comp.FreeTiles.Count - ent.Comp.ReservedTiles.Count > 0)
             return true;
 
         foreach (var uid in ent.Comp.Stored)
         {
-            if (_storageQuery.TryComp(uid, out var comp)
+            if (!ent.Comp.ReservedEntities.ContainsKey(uid)
+                && _storageQuery.TryComp(uid, out var comp)
                 && _storage.CanInsert(toInsert, uid, comp))
                 return true;
         }
@@ -180,6 +182,21 @@ public partial class StockpileSystem
 
         stock = new(uid.Value, comp);
         return true;
+    }
+
+    /// <summary>
+    /// Returns the stockpile where the target entity is located.
+    /// </summary>
+    /// <param name="ent">Target entity.</param>
+    /// <param name="stock">Found stockpile entity.</param>
+    /// <returns>True, if the stockpile is found.</returns>
+    [PublicAPI, Pure]
+    public bool TryGetContainingStock(
+        Entity<StockpileContentComponent?> ent,
+        [NotNullWhen(true)] out Entity<StockpileComponent>? stock)
+    {
+        stock = null;
+        return Resolve(ent, ref ent.Comp, false) && TryGetStock(ent.Comp.Stock, out stock);
     }
 
     /// <summary>
@@ -359,33 +376,114 @@ public partial class StockpileSystem
     /// </summary>
     /// <param name="ent">Stockpile entity.</param>
     /// <param name="targetCoords">Target coordinates.</param>
+    /// <param name="tile">Found tile.</param>
     /// <param name="tileCoords">The coordinates of the center of the found tile.</param>
     /// <returns>True, if the tile is found.</returns>
     [PublicAPI, Pure]
     public bool TryFindClosestTile(
         Entity<StockpileComponent> ent,
         EntityCoordinates targetCoords,
+        [NotNullWhen(true)] out Vector2i? tile,
         [NotNullWhen(true)] out EntityCoordinates? tileCoords)
     {
-        var min = ((float)int.MaxValue, EntityCoordinates.Invalid);
+        var min = ((float)int.MaxValue, Vector2i.Zero, EntityCoordinates.Invalid);
         var grid = Transform(ent).Coordinates.EntityId;
 
         foreach (var ind in ent.Comp.FreeTiles)
         {
+            if (ent.Comp.ReservedTiles.ContainsKey(ind))
+                continue;
+
             var coords = new EntityCoordinates(grid, ind + new Vector2(0.5f));
 
             if (coords.TryDistance(EntityManager, _xform, targetCoords, out var dist)
                 && dist < min.Item1)
-                min = (dist, coords);
+                min = (dist, ind, coords);
         }
 
         if (min.Invalid.IsValid(EntityManager))
         {
+            tile = min.Zero;
             tileCoords = min.Invalid;
             return true;
         }
 
+        tile = null;
         tileCoords = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Searches for the container closest to the target coordinates where the target entity can be stored.
+    /// </summary>
+    /// <param name="ent">Stockpile entity.</param>
+    /// <param name="targetCoords">Target coordinates.</param>
+    /// <param name="toInsert">Target entity to insert.</param>
+    /// <param name="container">Found container.</param>
+    /// <returns>True, if the container is found.</returns>
+    [PublicAPI, Pure]
+    public bool TryFindClosestContainerToInsert(
+        Entity<StockpileComponent> ent,
+        EntityCoordinates targetCoords,
+        EntityUid toInsert,
+        [NotNullWhen(true)] out EntityUid? container)
+    {
+        container = null;
+        var min = ((float)int.MaxValue, EntityUid.Invalid);
+
+        foreach (var uid in ent.Comp.Stored)
+        {
+            if (ent.Comp.ReservedEntities.ContainsKey(uid)
+                || !_storageQuery.TryComp(uid, out var comp)
+                || !_storage.CanInsert(toInsert, uid, comp))
+                continue;
+
+            var coords = Transform(uid).Coordinates;
+
+            if (coords.TryDistance(EntityManager, _xform, targetCoords, out var dist)
+                && dist < min.Item1)
+                min = (dist, uid);
+        }
+
+        if (min.Invalid.IsValid())
+        {
+            container = min.Invalid;
+            return true;
+        }
+
+        container = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Checks whether the target entity is in a container in the stockpile.
+    /// </summary>
+    /// <param name="target">Target entity.</param>
+    [PublicAPI, Pure]
+    public bool StoredInContainer(EntityUid target)
+    {
+        var xform = Transform(target);
+
+        if (_container.TryGetOuterContainer(target, xform, out var container)
+            && HasComp<StockpileContentComponent>(container.Owner))
+            return true;
+
+        if (!_turf.TryGetTileRef(xform.Coordinates, out var tile))
+            return false;
+
+        var intersecting = new HashSet<Entity<EntityStorageComponent>>();
+        _lookup.GetLocalEntitiesIntersecting(tile.Value.GridUid,
+            tile.Value.GridIndices,
+            intersecting,
+            flags: LookupFlags.Dynamic | LookupFlags.Static | LookupFlags.Uncontained);
+
+        foreach (var storage in intersecting)
+        {
+            if (HasComp<StockpileContentComponent>(storage)
+                && _storage.CanInsert(target, storage, storage.Comp))
+                return true;
+        }
+
         return false;
     }
 }

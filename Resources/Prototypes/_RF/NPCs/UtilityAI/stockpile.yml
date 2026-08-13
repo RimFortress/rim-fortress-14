@@ -7,8 +7,23 @@
   - add:
     - !type:SearchQueryCount
       query: NotStoredCrate
+  - add:
+    - !type:SearchQueryCount
+      query: OffsetStoredItem
+  - add:
+    - !type:SearchQueryCount
+      query: OffsetStoredCrate
+  - add:
+    - !type:SearchQueryCount
+      query: StoredItemToContainer
+  - add:
+    - !type:SearchQueryCount
+      query: StoredItemSupply
+  - add:
+    - !type:SearchQueryCount
+      query: StoredCrateSupply
   - !type:Normalize
-    saturation: 2
+    saturation: 3
   - div:
     - !type:GoalPerformers
       goal: Storing
@@ -17,33 +32,9 @@
     - clamp:
         min: 1
         max: 4
+  - mul: [float: 0.35]
   incumbentBonus:
   - add: [float: 0.05]
   - mul: [float: 1.10]
   goalState:
     TargetStored: true
-
-- type: utilityAiGoal
-  id: FixStoredOffset
-  color: "#A16C2B"
-  scoreCurves:
-  - !type:SearchQueryCount
-    query: OffsetStoredItem
-  - add:
-    - !type:SearchQueryCount
-      query: OffsetStoredCrate
-  - !type:Normalize
-    saturation: 2
-  - div:
-    - !type:GoalPerformers
-      goal: FixStoredOffset
-    - minus:
-      - float: 1
-    - clamp:
-        min: 1
-        max: 4
-  incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
-  goalState:
-    StoredOffsetFixed: true

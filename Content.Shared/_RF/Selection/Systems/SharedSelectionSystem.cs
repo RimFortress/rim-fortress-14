@@ -65,7 +65,9 @@ public abstract class SharedSelectionSystem : EntitySystem
             return new();
 
         var area = new Box2(start.Position, end.Position);
-        var entities = _lookup.GetEntitiesIntersecting(start.MapId, area);
+        var entities = _lookup.GetEntitiesIntersecting(start.MapId,
+            area,
+            flags: LookupFlags.Uncontained | LookupFlags.Dynamic | LookupFlags.Static);
 
         if (ent.Comp.SelectionFilter == null)
             return entities;

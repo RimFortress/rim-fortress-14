@@ -3,3 +3,5 @@
   curves:
   - !type:Normalize
     saturation: 2
+  - minus: [float: 1]
+  - !type:Abs

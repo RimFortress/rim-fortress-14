@@ -1,8 +1,7 @@
 - type: goapCompound
   id: Storing
   tasks:
-  - proto: FixStoredOffset
-
+  # Base
   - preconditions:
     - !type:SearchQueryValid
       query: NotStoredItem
@@ -20,6 +19,70 @@
       targetKey: StoringTarget
     effects:
       StoringType: Crate
+
+  # Fix offset
+  - preconditions:
+    - !type:SearchQueryValid
+      query: OffsetStoredItem
+    actions:
+    - !type:SearchQuery
+      query: OffsetStoredItem
+      targetKey: StoringTarget
+    - !type:RemoveFromStock
+      targetKey: StoringTarget
+    effects:
+      StoringType: Item
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: OffsetStoredCrate
+    actions:
+    - !type:SearchQuery
+      query: OffsetStoredCrate
+      targetKey: StoringTarget
+    - !type:RemoveFromStock
+      targetKey: StoringTarget
+    effects:
+      StoringType: Crate
+
+  # Move in container
+  - preconditions:
+    - !type:SearchQueryValid
+      query: StoredItemToContainer
+    actions:
+    - !type:SearchQuery
+      query: StoredItemToContainer
+      targetKey: StoringTarget
+    - !type:RemoveFromStock
+      targetKey: StoringTarget
+    effects:
+      StoringType: Item
+
+  # Supplying
+  - preconditions:
+    - !type:SearchQueryValid
+      query: StoredItemSupply
+    actions:
+    - !type:SearchQuery
+      query: StoredItemSupply
+      targetKey: StoringTarget
+    - !type:RemoveFromStock
+      targetKey: StoringTarget
+    effects:
+      StoringType: Item
+
+  - preconditions:
+    - !type:SearchQueryValid
+      query: StoredCrateSupply
+    actions:
+    - !type:SearchQuery
+      query: StoredCrateSupply
+      targetKey: StoringTarget
+    - !type:RemoveFromStock
+      targetKey: StoringTarget
+    effects:
+      StoringType: Crate
+
 
   - preconditions:
     - StoringType == Item

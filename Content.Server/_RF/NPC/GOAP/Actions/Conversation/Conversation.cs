@@ -54,6 +54,7 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
     protected override void ActionShutdown(Entity<GoapComponent> ent, Conversation action)
     {
         ent.Comp.State.Remove(action.PathfindKey);
+        NpcTimingSystem.ClearQueue(ent);
     }
 
     protected override void ActionPlanShutdown(Entity<GoapComponent> ent, Conversation action, GoapPlanFinishReason reason)

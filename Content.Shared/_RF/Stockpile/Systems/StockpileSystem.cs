@@ -315,6 +315,10 @@ public sealed partial class StockpileSystem : EntitySystem
         if (!ent.Comp.Stored.Add(uid))
             return;
 
+        var comp = EnsureComp<StockpileContentComponent>(uid);
+        comp.Stock = ent;
+        Dirty(uid, comp);
+
         if (_turf.TryGetTileRef(Transform(uid).Coordinates, out var tile)
             && !IsTileFree(ent, tile.Value))
         {
@@ -323,9 +327,6 @@ public sealed partial class StockpileSystem : EntitySystem
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Stored));
-        var comp = EnsureComp<StockpileContentComponent>(uid);
-        comp.Stock = ent;
-        Dirty(uid, comp);
 
         if (_net.IsServer)
             RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));

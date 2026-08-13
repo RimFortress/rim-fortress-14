@@ -29,7 +29,6 @@
     - RemovePlant
     - WaterPlant
     - Storing
-    - FixStoredOffset
   - type: NpcFactionMember
     factions:
     - RimFortress

@@ -116,6 +116,70 @@
 
 
 - type: searchQuery
+  id: StoredItemToContainer
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: Item
+    invert: true
+  - !type:StoredInStockContainer
+  - !type:CantInsertInStockContainer
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+
+- type: searchQuery
+  id: StoredItemSupply
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: Item
+    invert: true
+  - !type:CanSupplyStock
+    invert: true
+  - !type:InInventory
+  - !type:InHands
+  - !type:Accessible
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: StoredCrateSupply
+  validTime: 0
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: EntityStorage
+    - type: Pullable
+    invert: true
+  - !type:CanSupplyStock
+    invert: true
+  - !type:Pulled
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+
+- type: searchQuery
   id: StockpileToStore
   query: !type:Owned
   filters:

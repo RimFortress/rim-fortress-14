@@ -241,37 +241,50 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// Removes the value with the specified key from the state.
     /// </summary>
     [PublicAPI]
-    public void Remove<T>(string key) where T : notnull
+    public bool Remove<T>(string key) where T : notnull => Remove<T>(key, out _);
+
+    /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
+    [PublicAPI]
+    public bool Remove<T>(string key, [NotNullWhen(true)] out T? removed) where T : notnull
     {
+        removed = default;
+
         if (ReadOnly)
         {
             DebugTools.Assert(false, $"Tried to write key '{key}' to an GoapState that is readonly!");
-            return;
+            return false;
         }
 
         if (!_state.TryGetValue(key, out var value))
-            return;
+            return false;
 
         DebugTools.Assert(value is T);
         CachedHash ^= HashEntry(key, value);
-        _state.Remove(key);
+        removed = (T)value;
+        return _state.Remove(key);
     }
 
     /// <summary>
     /// Removes the value with the specified key from the state.
     /// </summary>
     [PublicAPI]
-    public void Remove<T>(StateKey<T> key) where T : notnull => Remove<T>((string)key);
+    public bool Remove<T>(StateKey<T> key) where T : notnull => Remove<T>((string)key);
 
     /// <summary>
     /// Removes the value with the specified key from the state.
     /// </summary>
     [PublicAPI]
-    public void Remove<T>(StateKey<T>? key) where T : notnull
-    {
-        if (key != null)
-            Remove<T>((string)key.Value);
-    }
+    public bool Remove<T>(StateKey<T> key, [NotNullWhen(true)] out T? removed)
+        where T : notnull => Remove((string)key, out removed);
+
+    /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
+    [PublicAPI]
+    public bool Remove<T>(StateKey<T>? key) where T : notnull
+        => key != null && Remove<T>((string)key.Value);
 
     /// <summary>
     /// Removes a key-value pair from the state.
