@@ -1,7 +1,9 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
+using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
+using Robust.Shared.Containers;
 
 namespace Content.Server._RF.NPC.Search.Considerations;
 
@@ -19,6 +21,14 @@ public sealed partial class Ammo : BaseSearchConsideration<Ammo>
 
 public sealed class AmmoConsiderationSystem : NpcSearchConsiderationSystem<Ammo>
 {
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeRescoreEvent<TakeAmmoEvent>();
+        SubscribeRescoreEvent<GunComponent, EntInsertedIntoContainerMessage>();
+    }
+
     protected override float GetScore(GoapState state, EntityUid target, Ammo con)
     {
         var ev = new GetAmmoCountEvent();

@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Nutrition.Components;
 using Content.Shared.Nutrition.EntitySystems;
@@ -14,6 +15,14 @@ public sealed partial class IsClosed : BaseSearchFilter<IsClosed>;
 public sealed class IsClosedSystem : NpcSearchFilterSystem<IsClosed>
 {
     [Dependency] private readonly OpenableSystem _openable = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeTrackedDirty<OpenableOpenedEvent>();
+        SubscribeTrackedDirty<OpenableClosedEvent>();
+    }
 
     protected override bool Filter(GoapState state, EntityUid target, IsClosed filter)
         => _openable.IsClosed(target);

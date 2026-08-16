@@ -80,6 +80,7 @@ namespace Content.Server.Construction
             if (!Resolve(uid, ref construction))
                 return false;
 
+            var old = construction.TargetNode; // RimFortress
             construction.TargetNode = targetNode.Name;
 
             // Check if we reached the target node.
@@ -130,6 +131,7 @@ namespace Content.Server.Construction
                 && construction.NodePathfinding != null)
                 construction.TargetEdgeIndex = (currentNode.GetEdgeIndex(construction.NodePathfinding.Peek()));
 
+            RaiseLocalEvent(uid, new ConstructionPathfindingUpdated(old, construction.TargetNode)); // RimFortress
             return true;
         }
 
@@ -143,9 +145,15 @@ namespace Content.Server.Construction
             if (!Resolve(uid, ref construction))
                 return;
 
+            var old = construction.TargetNode; // RimFortress
             construction.TargetNode = null;
             construction.TargetEdgeIndex = null;
             construction.NodePathfinding = null;
+            RaiseLocalEvent(uid, new ConstructionPathfindingUpdated(old, construction.TargetNode)); // RimFortress
         }
     }
+
+    // RimFortress Start
+    public readonly record struct ConstructionPathfindingUpdated(string? OldTargetNode, string? NewTargetNode);
+    // RimFortress End
 }

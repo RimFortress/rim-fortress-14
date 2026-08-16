@@ -3,6 +3,7 @@ using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.Stockpile;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
 using Content.Shared.Maps;

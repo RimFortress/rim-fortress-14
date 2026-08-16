@@ -18,6 +18,7 @@
   id: ConversationTarget
   query: !type:Owned
   filters:
+  - !type:Self
   - !type:IsAlive
     invert: true
   - !type:Component

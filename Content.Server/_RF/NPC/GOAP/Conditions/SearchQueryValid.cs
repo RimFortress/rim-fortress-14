@@ -28,7 +28,7 @@ public sealed class SearchQueryValidSystem : GoapConditionSystem<SearchQueryVali
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, SearchQueryValid condition)
     {
-        var result = _npcSearcher.GetResults(uid, state, condition.Query).Count;
+        var result = _npcSearcher.GetResultsCount(uid, state, condition.Query);
         CreateDump(state, condition, $"query count was {result}");
         return result > 0;
     }

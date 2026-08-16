@@ -3,7 +3,9 @@ using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
+using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Search.Queries;
@@ -23,6 +25,46 @@ public sealed partial class PassiveTargets : BaseSearchQuery<PassiveTargets>
 public sealed class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTargets>
 {
     [Dependency] private readonly ExecutableGoalSystem _executable = default!;
+    [Dependency] private readonly EntityQuery<NpcControllerComponent> _controllerQuery = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<NpcPassiveGoalSet>(OnPassiveGoapSet);
+        SubscribeLocalEvent<SearchTrackedComponent, NpcPassiveGoalRemoved>(OnPassiveGoalRemove);
+    }
+
+    private void OnPassiveGoapSet(NpcPassiveGoalSet ev)
+    {
+        if (!_controllerQuery.TryComp(ev.User, out var controller))
+            return;
+
+        foreach (var uid in controller.CanControl)
+        {
+            if (!SearcherQuery.TryComp(uid, out var comp))
+                continue;
+
+            foreach (var (proto, _) in comp.Queries)
+            {
+                if (!TryGetQuery(proto, out var query) || !query.Goals.Contains(ev.Goal))
+                    continue;
+
+                Searcher.ReportDirty(uid, proto, added: new() { ev.Target });
+            }
+        }
+    }
+
+    private void OnPassiveGoalRemove(Entity<SearchTrackedComponent> ent, ref NpcPassiveGoalRemoved ev)
+    {
+        foreach (var ((agent, proto), _) in ent.Comp.Tracking)
+        {
+            if (!TryGetQuery(proto, out var query) || !query.Goals.Contains(ev.Goal))
+                continue;
+
+            Searcher.ReportDirty(agent, proto, removed: new() { ent });
+        }
+    }
 
     protected override void GetQuery(GoapState state, PassiveTargets query)
     {

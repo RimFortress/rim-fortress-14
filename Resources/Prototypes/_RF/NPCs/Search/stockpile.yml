@@ -1,6 +1,5 @@
 - type: searchQuery
   id: NotStoredItem
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -10,7 +9,7 @@
     components:
     - type: Item
     invert: true
-  - !type:CanInsertInStock
+  - !type:StockpileStorage
     invert: true
   - !type:InInventory
   - !type:InHands
@@ -23,7 +22,6 @@
 
 - type: searchQuery
   id: NotStoredCrate
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -34,7 +32,7 @@
     - type: Pullable
     - type: EntityStorage
     invert: true
-  - !type:CanInsertInStock
+  - !type:StockpileStorage
     invert: true
   - !type:Pulled
   considerations:
@@ -45,7 +43,6 @@
 
 - type: searchQuery
   id: StoredItem
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -59,7 +56,6 @@
     - preset: TargetDistance
 
 - type: searchQuery
-  validTime: 0
   id: StoredCrate
   query: !type:Owned
   filters:
@@ -76,7 +72,6 @@
 
 - type: searchQuery
   id: OffsetStoredItem
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -84,7 +79,7 @@
     - type: StockpileContent
     - type: Item
     invert: true
-  - !type:TileOffset
+  - !type:StockStoredOffset
     lessThan: 0.06
   - !type:InInventory
   - !type:InHands
@@ -97,7 +92,6 @@
 
 - type: searchQuery
   id: OffsetStoredCrate
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -106,7 +100,7 @@
     - type: EntityStorage
     - type: Pullable
     invert: true
-  - !type:TileOffset
+  - !type:StockStoredOffset
     lessThan: 0.06
   - !type:Pulled
   considerations:
@@ -117,7 +111,6 @@
 
 - type: searchQuery
   id: StoredItemToContainer
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -125,8 +118,10 @@
     - type: StockpileContent
     - type: Item
     invert: true
-  - !type:StoredInStockContainer
-  - !type:CantInsertInStockContainer
+  - !type:StockpileStorage
+    storedInContainer: true
+  - !type:StockpileStorage
+    moveToContainer: true
     invert: true
   - !type:InInventory
   - !type:InHands
@@ -140,7 +135,6 @@
 
 - type: searchQuery
   id: StoredItemSupply
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -148,7 +142,8 @@
     - type: StockpileContent
     - type: Item
     invert: true
-  - !type:CanSupplyStock
+  - !type:StockpileStorage
+    supplyingOnly: true
     invert: true
   - !type:InInventory
   - !type:InHands
@@ -161,7 +156,6 @@
 
 - type: searchQuery
   id: StoredCrateSupply
-  validTime: 0
   query: !type:Owned
   filters:
   - !type:Component
@@ -170,7 +164,8 @@
     - type: EntityStorage
     - type: Pullable
     invert: true
-  - !type:CanSupplyStock
+  - !type:StockpileStorage
+    supplyingOnly: true
     invert: true
   - !type:Pulled
   considerations:

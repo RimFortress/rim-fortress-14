@@ -1,5 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search.Components;
+using Content.Shared._RF.NPC.Search.Prototypes;
+using JetBrains.Annotations;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.NPC.Search.Systems;
 
@@ -9,13 +13,38 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// <typeparam name="T">Search query type.</typeparam>
 public abstract class NpcSearchQuerySystem<T> : EntitySystem where T : BaseSearchQuery<T>
 {
+    [Dependency] protected readonly IPrototypeManager Proto = default!;
+    [Dependency] protected readonly SharedNpcSearcherSystem Searcher = default!;
+    [Dependency] protected readonly EntityQuery<NpcSearcherComponent> SearcherQuery = default!;
+    [Dependency] protected readonly EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
+
     protected readonly HashSet<EntityUid> Query = new();
+    private readonly Dictionary<ProtoId<SearchQueryPrototype>, T> _queries = new();
 
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<NpcSearcherComponent, GetSearchQuery<T>>(OnGetSearchQuery);
+
+        Proto.PrototypesReloaded += args =>
+        {
+            if (args.WasModified<SearchQueryPrototype>())
+                ReloadPrototypes();
+        };
+
+        ReloadPrototypes();
+    }
+
+    private void ReloadPrototypes()
+    {
+        _queries.Clear();
+
+        foreach (var proto in Proto.EnumeratePrototypes<SearchQueryPrototype>())
+        {
+            if (proto.Query is T query)
+                _queries[proto] = query;
+        }
     }
 
     private void OnGetSearchQuery(Entity<NpcSearcherComponent> ent, ref GetSearchQuery<T> ev)
@@ -31,4 +60,23 @@ public abstract class NpcSearchQuerySystem<T> : EntitySystem where T : BaseSearc
     /// <param name="state">GoapState of the agent requesting the search.</param>
     /// <param name="query">Search query.</param>
     protected abstract void GetQuery(GoapState state, T query);
+
+    /// <summary>
+    /// Returns an instance of a query of this type from this query prototype.
+    /// </summary>
+    /// <param name="protoId">Query prototype.</param>
+    /// <param name="query">Query instance.</param>
+    /// <typeparam name="T">Query type.</typeparam>
+    /// <returns>True, if the query type in the prototype matches T</returns>
+    [PublicAPI, Pure]
+    public bool TryGetQuery(ProtoId<SearchQueryPrototype> protoId, [NotNullWhen(true)] out T? query)
+        => _queries.TryGetValue(protoId, out query);
+
+    /// <summary>
+    /// Checks the query type of the search query prototype.
+    /// </summary>
+    /// <param name="protoId">Query prototype.</param>
+    /// <typeparam name="T">Query type.</typeparam>
+    [PublicAPI, Pure]
+    public bool QueryTypeIs(ProtoId<SearchQueryPrototype> protoId) => _queries.ContainsKey(protoId);
 }

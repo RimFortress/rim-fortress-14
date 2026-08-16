@@ -11,7 +11,6 @@ using Robust.Shared.Network;
 using Robust.Shared.Physics.Events;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Stockpile.Systems;
 
@@ -330,6 +329,10 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (_net.IsServer)
             RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));
+
+        var ev = new StockEntityInserted(ent, uid);
+        RaiseLocalEvent(ent, ev);
+        RaiseLocalEvent(uid, ev);
     }
 
     /// <summary>
@@ -345,6 +348,7 @@ public sealed partial class StockpileSystem : EntitySystem
             RemComp<StockpileContentComponent>(uid);
         }
 
+        var oldStored = new HashSet<EntityUid>(ent.Comp.Stored);
         ent.Comp.Stored.Clear();
         var grid = Transform(ent).Coordinates.EntityId;
 
@@ -375,6 +379,26 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (_net.IsServer)
             RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));
+
+        foreach (var uid in oldStored)
+        {
+            if (ent.Comp.Stored.Contains(uid))
+                continue;
+
+            var ev = new StockEntityRemoved(ent, uid);
+            RaiseLocalEvent(ent, ev);
+            RaiseLocalEvent(uid, ev);
+        }
+
+        foreach (var uid in ent.Comp.Stored)
+        {
+            if (oldStored.Contains(uid))
+                continue;
+
+            var ev = new StockEntityInserted(ent, uid);
+            RaiseLocalEvent(ent, ev);
+            RaiseLocalEvent(uid, ev);
+        }
 
         return;
 
@@ -415,79 +439,4 @@ public sealed partial class StockpileSystem : EntitySystem
             return true;
         }
     }
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileCreateRequest(NetEntity gridUid, HashSet<Vector2i> tiles) : EntityEventArgs
-{
-    public NetEntity GridUid = gridUid;
-    public HashSet<Vector2i> Tiles = tiles;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileCreated(NetEntity uid) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileDeleted(NetEntity uid) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileTileAdded(NetEntity uid, HashSet<Vector2i> tiles) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public HashSet<Vector2i> Tiles = tiles;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileTileRemoved(NetEntity uid, HashSet<Vector2i> tiles) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public HashSet<Vector2i> Tiles = tiles;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileSettingUpdated(NetEntity uid, EntProtoId protoId, int value) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public EntProtoId ProtoId = protoId;
-    public int Value = value;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileSettingsUpdated(NetEntity uid, Dictionary<EntProtoId, int> settings) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public Dictionary<EntProtoId, int> Settings = settings;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileSuppliedAdded(NetEntity supplier, NetEntity supplied) : EntityEventArgs
-{
-    public NetEntity Supplier = supplier;
-    public NetEntity Supplied = supplied;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileSuppliedRemoved(NetEntity supplier, NetEntity supplied) : EntityEventArgs
-{
-    public NetEntity Supplier = supplier;
-    public NetEntity Supplied = supplied;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileColorSet(NetEntity uid, Color color) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public Color Color = color;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileContentUpdated(NetEntity uid) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
 }

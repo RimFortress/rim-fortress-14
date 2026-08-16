@@ -1,6 +1,7 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
+using Content.Shared._RF.Stockpile.Components;
 using Content.Shared.Maps;
 
 namespace Content.Server._RF.NPC.Search.Filters;
@@ -8,7 +9,7 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// <summary>
 /// Filters entities that are within a specified distance from the center of the tile.
 /// </summary>
-public sealed partial class TileOffset : BaseSearchFilter<TileOffset>
+public sealed partial class StockStoredOffset : BaseSearchFilter<StockStoredOffset>
 {
     /// <summary>
     /// Entities that are farther away from the center of the tile will be filtered out.
@@ -23,11 +24,18 @@ public sealed partial class TileOffset : BaseSearchFilter<TileOffset>
     public float? LessThan;
 }
 
-public sealed class TileOffsetSearchFilterSystem : NpcSearchFilterSystem<TileOffset>
+public sealed class TileOffsetSearchFilterSystem : NpcSearchFilterSystem<StockStoredOffset>
 {
     [Dependency] private readonly TurfSystem _turf = default!;
 
-    protected override bool Filter(GoapState state, EntityUid target, TileOffset filter)
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeTrackedDirty<StockpileContentComponent, MoveEvent>();
+    }
+
+    protected override bool Filter(GoapState state, EntityUid target, StockStoredOffset filter)
     {
         var coords = Transform(target).Coordinates;
 

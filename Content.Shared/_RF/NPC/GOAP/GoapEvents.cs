@@ -79,6 +79,26 @@ public readonly record struct GoapPlaningFailed(GoapState GoalState);
 [PublicAPI]
 public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason, GoapState GoalState);
 
+// State events
+
+/// <summary>
+/// An event raised when the value in an agent's GOAP state changes.
+/// </summary>
+/// <param name="Key">A key whose value has been changed.</param>
+/// <param name="Value">New key value.</param>
+/// <typeparam name="T">Key value type.</typeparam>
+[PublicAPI]
+public readonly record struct GoapStateValueSet<T>(StateKey<T> Key, T Value) where T : notnull;
+
+/// <summary>
+/// An event raised when a value is removed from an agent's GOAP state.
+/// </summary>
+/// <param name="Key">A key whose value has been deleted.</param>
+/// <param name="Value">The value of the removed key.</param>
+/// <typeparam name="T">Key value type.</typeparam>
+[PublicAPI]
+public readonly record struct GoapStateValueRemove<T>(StateKey<T> Key, T Value) where T : notnull;
+
 // Net messages
 
 [Serializable, NetSerializable]

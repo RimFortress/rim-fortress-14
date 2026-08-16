@@ -7,10 +7,13 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// <summary>
 /// A filter that is triggered only after all its sub-filters have been triggered.
 /// </summary>
-public sealed partial class And : BaseSearchFilter<And>
+public sealed partial class And : BaseSearchFilter<And>, ICompositeSearchFilter
 {
     [DataField(required: true)]
     public List<SearchFilter> Filters = new();
+
+    [ViewVariables]
+    public IEnumerable<SearchFilter> Children => Filters;
 }
 
 public sealed class AndSystem : NpcSearchFilterSystem<And>

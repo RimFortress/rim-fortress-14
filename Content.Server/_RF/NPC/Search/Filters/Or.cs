@@ -7,10 +7,13 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// <summary>
 /// A filter that is triggered one of sub-filters have been triggered.
 /// </summary>
-public sealed partial class Or : BaseSearchFilter<Or>
+public sealed partial class Or : BaseSearchFilter<Or>, ICompositeSearchFilter
 {
     [DataField(required: true)]
     public List<SearchFilter> Filters = new();
+
+    [ViewVariables]
+    public IEnumerable<SearchFilter> Children => Filters;
 }
 
 public sealed class OrSystem : NpcSearchFilterSystem<Or>

@@ -36,3 +36,16 @@ public abstract partial class BaseSearchFilter<T> : SearchFilter where T : BaseS
         return !result;
     }
 }
+
+/// <summary>
+/// Implemented by filters that combine other filters (Or, And, ...)
+/// instead of evaluating world/agent state themselves. Lets the reactive
+/// index route point-invalidation from a nested filter's own type up to the
+/// top-level pipeline stage the composite actually occupies — a change deep
+/// inside an Or still needs to re-evaluate the Or as a whole, not just the
+/// child that changed.
+/// </summary>
+public interface ICompositeSearchFilter
+{
+    IEnumerable<SearchFilter> Children { get; }
+}

@@ -120,9 +120,11 @@ public partial class SharedExecutableGoalSystem
     /// <param name="entity">NPC entity.</param>
     [PublicAPI]
     public bool CanControl(EntityUid user, EntityUid entity)
-        => ControllableQuery.TryComp(entity, out var control)
+        => ControllableQuery.TryComp(entity, out var controllable)
+           && ControllerQuery.TryComp(user, out var controller)
            && _activeQuery.HasComp(entity)
-           && control.CanControl.Contains(user);
+           && controllable.CanControl.Contains(user)
+           && controller.CanControl.Contains(entity);
 
     /// <inheritdoc cref="CanControl(EntityUid, EntityUid)"/>
     [PublicAPI]
@@ -179,22 +181,27 @@ public partial class SharedExecutableGoalSystem
     {
         var control = EnsureComp<NpcControllerComponent>(user);
         var comp = EnsureComp<ControllableNpcComponent>(uid);
+        control.CanControl.Add(uid);
         comp.CanControl.Add(user);
         RaiseLocalEvent(uid, new NpcControllerAdded(user));
-        Dirty(user, control);
-        Dirty(uid, comp);
+        DirtyField(user, control, nameof(NpcControllerComponent.CanControl));
+        DirtyField(uid, comp, nameof(ControllableNpcComponent.CanControl));
     }
 
     /// <summary>
     /// Remove the user access to control this NPC.
     /// </summary>
     [PublicAPI]
-    public bool RemoveController(EntityUid user, Entity<ControllableNpcComponent?> uid)
+    public bool RemoveController(Entity<NpcControllerComponent?> user, Entity<ControllableNpcComponent?> uid)
     {
-        if (!Resolve(uid, ref uid.Comp) || !uid.Comp.CanControl.Remove(user))
+        if (!Resolve(user, ref user.Comp)
+            ||!Resolve(uid, ref uid.Comp)
+            || !user.Comp.CanControl.Remove(uid)
+            || !uid.Comp.CanControl.Remove(user))
             return false;
 
-        Dirty(uid);
+        DirtyField(uid, nameof(ControllableNpcComponent.CanControl));
+        DirtyField(user, nameof(NpcControllerComponent.CanControl));
         return true;
     }
 
@@ -208,7 +215,7 @@ public partial class SharedExecutableGoalSystem
             return;
 
         user.Comp.Goals.Add(proto);
-        Dirty(user);
+        DirtyField(user, nameof(NpcControllerComponent.Goals));
     }
 
     /// <summary>
@@ -221,7 +228,7 @@ public partial class SharedExecutableGoalSystem
             return;
 
         user.Comp.Goals.Remove(proto);
-        Dirty(user);
+        DirtyField(user, nameof(NpcControllerComponent.Goals));
     }
 
     /// <summary>
@@ -264,6 +271,34 @@ public partial class SharedExecutableGoalSystem
             comp.Goal = proto.ID;
             comp.User = user;
             Dirty(uid, comp);
+
+            var ev = new NpcPassiveGoalSet(protoId, uid, user);
+            RaiseLocalEvent(user, ev);
+            RaiseLocalEvent(uid, ev, broadcast: true);
+        }
+    }
+
+    /// <summary>
+    /// Removes a passive target for a Utility AI goal.
+    /// </summary>
+    /// <param name="uid">Passive target to remove.</param>
+    [PublicAPI]
+    public void RemovePassiveTarget(EntityUid uid) => RemovePassiveTarget(new List<EntityUid> { uid });
+
+    /// <summary>
+    /// Removes a passive target for a Utility AI goal.
+    /// </summary>
+    /// <param name="entities">Passive targets to remove.</param>
+    [PublicAPI]
+    public void RemovePassiveTarget(List<EntityUid> entities)
+    {
+        foreach (var uid in entities)
+        {
+            if (!PassiveGoalQuery.TryComp(uid, out var comp))
+                continue;
+
+            RaiseLocalEvent(uid, new NpcPassiveGoalRemoved(comp.Goal, uid, comp.User), broadcast: true);
+            RemComp<PassiveGoalTargetComponent>(uid);
         }
     }
 

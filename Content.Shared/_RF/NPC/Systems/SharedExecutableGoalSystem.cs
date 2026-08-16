@@ -170,7 +170,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
                     && goap.State.TryGetValue(proto.TargetKey, out var target)
                     && PassiveGoalQuery.TryComp(target, out var passive)
                     && passive.Goal == exec)
-                    RemComp(target, passive);
+                    RemovePassiveTarget(target);
 
                 // The state changes above only happen on this side. The
                 // client has its own copy of GoapState with the same target/coordinates, set
@@ -521,6 +521,31 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 /// <param name="User">User entity.</param>
 [PublicAPI]
 public record struct NpcControllerAdded(EntityUid User);
+
+/// <summary>
+/// An event raised when a passive NPC goal has been set.
+/// Raised both for user and target.
+/// </summary>
+/// <param name="Goal">Npc goal prototype.</param>
+/// <param name="Target">Passive goal target.</param>
+/// <param name="User">User who issued this goal.</param>
+[PublicAPI]
+public readonly record struct NpcPassiveGoalSet(
+    ProtoId<ExecutableGoalPrototype> Goal,
+    EntityUid Target,
+    EntityUid User);
+
+/// <summary>
+/// An event raised when a passive NPC goal has been removed.
+/// </summary>
+/// <param name="Goal">Npc goal prototype.</param>
+/// <param name="Target">Passive goal target.</param>
+/// <param name="User">User who issued this goal.</param>
+[PublicAPI]
+public readonly record struct NpcPassiveGoalRemoved(
+    ProtoId<ExecutableGoalPrototype> Goal,
+    EntityUid Target,
+    EntityUid User);
 
 [Serializable, NetSerializable]
 public sealed class SetGoalRequest : EntityEventArgs

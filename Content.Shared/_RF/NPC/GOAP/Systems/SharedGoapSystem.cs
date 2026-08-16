@@ -343,6 +343,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     /// </summary>
     /// <param name="target">Target entity.</param>
     /// <param name="action">GOAP action.</param>
+    /// <param name="reason">The reason the plan was completed.</param>
     protected void ActionPlanShutdown(EntityUid target, GoapAction action, GoapPlanFinishReason reason)
     {
 #if TOOLS
@@ -388,48 +389,34 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
 
     #endregion
 
-    /// <summary>
-    /// Forces the entity to perform a re-planning.
-    /// </summary>
+    #region GoapState Proxy
+
+    /// <inheritdoc cref="GoapState.SetValue"/>
     [PublicAPI]
-    public void Replan(Entity<GoapComponent?> ent)
+    public void SetValue<T>(GoapState state, StateKey<T> key, T value) where T : notnull
     {
-        if (Resolve(ent, ref ent.Comp))
-            ent.Comp.NextPlanning = Timing.CurTime;
+        state.SetValue(key, value);
+        RaiseLocalEvent(state.GetValue(GoapState.Owner), new GoapStateValueSet<T>(key, value));
     }
 
-    /// <summary>
-    /// Shutdowns the current NPC plan.
-    /// </summary>
+    /// <inheritdoc cref="GoapState.Remove"/>
     [PublicAPI]
-    public void PlanShutdown(Entity<GoapComponent> ent, GoapPlanFinishReason reason)
-    {
-        DebugTools.Assert(ent.Comp.Plan != null);
+    public bool RemoveKey<T>(GoapState state, StateKey<T> key)
+        where T : notnull => RemoveKey(state, key, out _);
 
-        ActionShutdown(ent, ent.Comp.Plan.Value.CurrentAction);
-
-        for (var i = 0; i < ent.Comp.Plan.Value.Index + 1; i++)
-        {
-            ActionPlanShutdown(ent, ent.Comp.Plan.Value.Actions[i], reason);
-        }
-
-        ent.Comp.Plan = null;
-        RaiseLocalEvent(ent, new GoapPlanFinished(reason, ent.Comp.GoalState));
-    }
-
-    /// <summary>
-    /// Sets the goal state for the GOAP agent, which will be used during the next planning.
-    /// </summary>
-    /// <param name="ent">GOAP agent entity.</param>
-    /// <param name="goalState">Goal state.</param>
+    /// <inheritdoc cref="GoapState.Remove"/>
     [PublicAPI]
-    public void SetGoal(Entity<GoapComponent?> ent, GoapState goalState)
+    public bool RemoveKey<T>(
+        GoapState state,
+        StateKey<T> key,
+        [NotNullWhen(true)] out T? value)
+        where T : notnull
     {
-        if (!Resolve(ent, ref ent.Comp))
-            return;
+        if (!state.Remove(key, out value))
+            return false;
 
-        ent.Comp.GoalState = goalState;
-        Replan(ent);
+        RaiseLocalEvent(state.GetValue(GoapState.Owner), new GoapStateValueSet<T>(key, value));
+        return true;
     }
 
     /// <inheritdoc/>
@@ -530,6 +517,52 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         }
 
         return false;
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Forces the entity to perform a re-planning.
+    /// </summary>
+    [PublicAPI]
+    public void Replan(Entity<GoapComponent?> ent)
+    {
+        if (Resolve(ent, ref ent.Comp))
+            ent.Comp.NextPlanning = Timing.CurTime;
+    }
+
+    /// <summary>
+    /// Shutdowns the current NPC plan.
+    /// </summary>
+    [PublicAPI]
+    public void PlanShutdown(Entity<GoapComponent> ent, GoapPlanFinishReason reason)
+    {
+        DebugTools.Assert(ent.Comp.Plan != null);
+
+        ActionShutdown(ent, ent.Comp.Plan.Value.CurrentAction);
+
+        for (var i = 0; i < ent.Comp.Plan.Value.Index + 1; i++)
+        {
+            ActionPlanShutdown(ent, ent.Comp.Plan.Value.Actions[i], reason);
+        }
+
+        ent.Comp.Plan = null;
+        RaiseLocalEvent(ent, new GoapPlanFinished(reason, ent.Comp.GoalState));
+    }
+
+    /// <summary>
+    /// Sets the goal state for the GOAP agent, which will be used during the next planning.
+    /// </summary>
+    /// <param name="ent">GOAP agent entity.</param>
+    /// <param name="goalState">Goal state.</param>
+    [PublicAPI]
+    public void SetGoal(Entity<GoapComponent?> ent, GoapState goalState)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        ent.Comp.GoalState = goalState;
+        Replan(ent);
     }
 
     #region Debug

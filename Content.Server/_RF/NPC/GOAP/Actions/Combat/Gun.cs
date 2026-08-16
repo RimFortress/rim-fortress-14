@@ -3,7 +3,6 @@ using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
-using Content.Server._RF.Skills;
 using Content.Server.Hands.Systems;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Pathfinding;
@@ -11,7 +10,6 @@ using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
-using Content.Shared._RF.Skills;
 using Content.Shared.CombatMode;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Interaction;
@@ -125,7 +123,6 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private readonly HandsSystem _hands = default!;
     [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
     [Dependency] private readonly MoveToActionSystem _moveTo = default!;
-    [Dependency] private readonly SkillsSystem _skills = default!;
 
     [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
     [Dependency] private readonly EntityQuery<PhysicsComponent> _physicsQuery = default!;
@@ -154,11 +151,6 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     /// A modifier affecting the spread of fire based on the agent's current speed.
     /// </summary>
     private const float MovementScatterFactor = 2f;
-
-    /// <summary>
-    /// A modifier affecting the spread of fire based on the distance from the agent to the target.
-    /// </summary>
-    private const float DistanceScatterFactor = 0.5f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Gun action)
     {
@@ -222,8 +214,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 action,
                 Transform(ammoUid).Coordinates,
                 Gun.PathfindKey,
-                GoapState.InteractRange,
-                false);
+                GoapState.InteractRange);
 
             if (result != GoapActionResult.Finished)
                 return result;
@@ -429,27 +420,25 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return GoapActionResult.Failed;
         }
 
-        var state = ent.Comp.State;
-
         // Searching for an ammo
         if (slot.Whitelist != null)
-            state.SetValue(MagazineWhitelistKey, slot.Whitelist);
+            Set(ent, action, MagazineWhitelistKey, slot.Whitelist);
 
         if (slot.Blacklist != null)
-            state.SetValue(MagazineBlacklistKey, slot.Blacklist);
+            Set(ent, action, MagazineBlacklistKey, slot.Blacklist);
 
-        _searcher.TryGetBestResult(ent, state, InventoryMagazineQuery, out var ammoUid);
+        _searcher.TryGetBestResult(ent, InventoryMagazineQuery, out var ammoUid);
         CreateDump(ent, action, $"query `{InventoryMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
 
         if (ammoUid == null)
         {
-            _searcher.TryGetBestResult(ent, state, NearbyMagazineQuery, out ammoUid);
+            _searcher.TryGetBestResult(ent, NearbyMagazineQuery, out ammoUid);
             CreateDump(ent, action, $"query `{NearbyMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
-            state.SetValue(Gun.MovingToMagazineKey, ammoUid != null);
+            Set(ent, action, Gun.MovingToMagazineKey, ammoUid != null);
         }
 
-        state.Remove(MagazineWhitelistKey);
-        state.Remove(MagazineBlacklistKey);
+        Remove(ent, action, MagazineWhitelistKey);
+        Remove(ent, action, MagazineBlacklistKey);
 
         if (ammoUid == null)
         {
@@ -458,16 +447,16 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         }
 
         // If the magazine is within arm's reach, we change it right away
-        if (!state.GetValue(Gun.MovingToMagazineKey))
+        if (!ent.Comp.State.GetValue(Gun.MovingToMagazineKey))
             return ReplaceMagazine(ent, action, ammoUid.Value, gun: gun, slot: slot);
 
         // Else, going to the magazine
-        state.SetValue(Gun.MovingToMagazineKey, true);
-        state.SetValue(Gun.NearbyMagazineKey, ammoUid.Value);
+        Set(ent, action, Gun.MovingToMagazineKey, true);
+        Set(ent, action, Gun.NearbyMagazineKey, ammoUid.Value);
 
         if (_jukeQuery.TryComp(ent, out var juke))
         {
-            state.SetValue(Gun.PreviousJukeTypeKey, juke.JukeType);
+            Set(ent, action, Gun.PreviousJukeTypeKey, juke.JukeType);
             RemComp(ent, juke);
         }
 
@@ -477,8 +466,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 Transform(ammoUid.Value).Coordinates,
                 true,
                 Gun.PathfindKey,
-                GoapState.InteractRange,
-                false))
+                GoapState.InteractRange))
             return GoapActionResult.Failed;
 
         return GoapActionResult.Continuing;

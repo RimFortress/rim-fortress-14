@@ -14,6 +14,13 @@ public sealed class TargetDistanceConsiderationSystem : NpcSearchConsiderationSy
 {
     [Dependency] private readonly TransformSystem _transform = default!;
 
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeRescoreEvent<MoveEvent>();
+    }
+
     protected override float GetScore(GoapState state, EntityUid target, TargetDistance con)
     {
         if (!EntityManager.TransformQuery.TryComp(target, out var xform))

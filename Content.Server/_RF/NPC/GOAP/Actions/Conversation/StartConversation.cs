@@ -43,8 +43,7 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
         }
 
         var state = ent.Comp.State;
-        var query = _searcher.GetResults(ent, state, action.Query);
-        query.Remove(ent); // We don't want to talk to ourselves
+        var query = _searcher.GetResults(ent, action.Query);
         CreateDump(ent, action, $"query '{action.Query}' return {query.Count} results");
 
         foreach (var uid in query)
@@ -85,7 +84,7 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
         }
 #endif
 
-        if (_conversation.TryStartConversation(ent.AsNullable(), out var actors))
+        if (_conversation.TryStartConversation(ent.AsNullable(), out _))
             return GoapActionResult.Finished;
 
         CreateDump(ent, action, "failed to start conversation");

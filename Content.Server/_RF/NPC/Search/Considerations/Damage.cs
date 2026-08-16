@@ -14,6 +14,13 @@ public sealed class DamageConsiderationSystem : NpcSearchConsiderationSystem<Dam
 {
     [Dependency] private readonly DamageableSystem _damageable = default!;
 
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeRescoreEvent<DamageChangedEvent>();
+    }
+
     protected override float GetScore(GoapState state, EntityUid target, Damage con)
         => _damageable.GetTotalDamage(target).Float();
 }

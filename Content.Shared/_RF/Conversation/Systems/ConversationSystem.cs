@@ -9,6 +9,7 @@ using Content.Shared.Chat;
 using Content.Shared.EntityEffects;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
+using Content.Shared.NPC;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -577,6 +578,10 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         }
         else
             invitedState.SetValue(GoapState.ConversationInvitesKey, new() { { inviter, invite } });
+
+        var ev = new ConversationInviteSent(inviter, invited);
+        RaiseLocalEvent(inviter, ev);
+        RaiseLocalEvent(invited, ev);
     }
 
     /// <summary>
@@ -606,6 +611,10 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             invites.Remove(inviter);
             invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
         }
+
+        var ev = new ConversationInviteRemoved(inviter, invited);
+        RaiseLocalEvent(inviter, ev);
+        RaiseLocalEvent(invited, ev);
     }
 
     /// <summary>
@@ -695,9 +704,49 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
 
         return true;
     }
+
+    public override void Update(float frameTime)
+    {
+        base.Update(frameTime);
+
+        // TODO: replace this with separate component for conversation invites
+        var enumerator = EntityQueryEnumerator<GoapComponent, ActiveNPCComponent>();
+        while (enumerator.MoveNext(out var uid, out var goap, out _))
+        {
+            if (!goap.State.TryGetValue(GoapState.ConversationInvitesKey, out var invites))
+                continue;
+
+            foreach (var (inviter, (validUntil, _)) in invites)
+            {
+                if (validUntil < _timing.CurTime)
+                    continue;
+
+                RemoveInvite(inviter, uid);
+                break;
+            }
+        }
+    }
 }
 
 public interface IConversationConditionChecker
 {
     bool CheckCondition<T>(EntityUid target, EntityUid? other, T condition) where T : BaseConversationCondition<T>;
 }
+
+/// <summary>
+/// An event raised when an entity sends an invitation to join a conversation to another entity.
+/// Raised for both entities.
+/// </summary>
+/// <param name="Inviter">The entity that sent the invitations.</param>
+/// <param name="Invited">The entity to whom the invitation was sent.</param>
+[PublicAPI]
+public readonly record struct ConversationInviteSent(EntityUid Inviter, EntityUid Invited);
+
+/// <summary>
+/// An event raised when a conversation invitation is canceled or has expired.
+/// Raised for both entities.
+/// </summary>
+/// <param name="Inviter">The entity that sent the invitations.</param>
+/// <param name="Invited">The entity to whom the invitation was sent.</param>
+[PublicAPI]
+public readonly record struct ConversationInviteRemoved(EntityUid Inviter, EntityUid Invited);

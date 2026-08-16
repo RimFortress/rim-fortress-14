@@ -223,6 +223,10 @@ public partial class StockpileSystem
 
         DirtyField(supplier.AsNullable(), nameof(StockpileComponent.Supplied));
         DirtyField(supplied.AsNullable(), nameof(StockpileComponent.Suppliers));
+
+        var ev = new StockpileSupplyingAdded(supplier, supplied);
+        RaiseLocalEvent(supplier, ev);
+        RaiseLocalEvent(supplied, ev);
     }
 
     /// <summary>
@@ -244,6 +248,10 @@ public partial class StockpileSystem
 
         DirtyField(supplier.AsNullable(), nameof(StockpileComponent.Supplied));
         DirtyField(supplied.AsNullable(), nameof(StockpileComponent.Suppliers));
+
+        var ev = new StockpileSupplyingRemoved(supplier, supplied);
+        RaiseLocalEvent(supplier, ev);
+        RaiseLocalEvent(supplied, ev);
     }
 
     /// <summary>
@@ -280,6 +288,10 @@ public partial class StockpileSystem
                 || !_containerQuery.TryComp(toRemove, out var contComp))
                 return;
 
+            var ev = new StockEntityRemoved(ent, toRemove);
+            RaiseLocalEvent(ent, ev);
+            RaiseLocalEvent(toRemove, ev);
+
             foreach (var container in _container.GetAllContainers(toRemove, contComp))
             {
                 foreach (var contained in container.ContainedEntities)
@@ -307,7 +319,9 @@ public partial class StockpileSystem
         if (_net.IsClient)
             RaiseNetworkEvent(new StockpileSettingUpdated(GetNetEntity(ent), protoId, max));
 
+        var old = ent.Comp.Settings[protoId];
         ent.Comp.Settings[protoId] = max;
+        RaiseLocalEvent(ent, new StockSettingsChanged(ent, protoId, old, max));
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Settings));
         ValidateStockEntities(ent);
     }
@@ -322,7 +336,13 @@ public partial class StockpileSystem
     {
         foreach (var (proto, value) in settings)
         {
+            var old = ent.Comp.Settings[proto];
+
+            if (old == value)
+                continue;
+
             ent.Comp.Settings[proto] = value;
+            RaiseLocalEvent(ent, new StockSettingsChanged(ent, proto, old, value));
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Settings));
@@ -332,13 +352,6 @@ public partial class StockpileSystem
             RaiseNetworkEvent(new StockpileSettingsUpdated(GetNetEntity(ent), settings));
     }
 
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="ent"></param>
-    /// <param name="tile"></param>
-    /// <param name="user"></param>
-    /// <returns></returns>
     [PublicAPI]
     public bool ReserveTile(Entity<StockpileComponent> ent, Vector2i tile, EntityUid user)
     {
@@ -350,13 +363,6 @@ public partial class StockpileSystem
         return true;
     }
 
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="ent"></param>
-    /// <param name="target"></param>
-    /// <param name="user"></param>
-    /// <returns></returns>
     [PublicAPI]
     public bool ReserveEntity(Entity<StockpileComponent> ent, EntityUid target, EntityUid user)
     {
@@ -368,11 +374,6 @@ public partial class StockpileSystem
         return true;
     }
 
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="ent"></param>
-    /// <param name="user"></param>
     [PublicAPI]
     public static void ClearReserve(Entity<StockpileComponent> ent, EntityUid user)
     {

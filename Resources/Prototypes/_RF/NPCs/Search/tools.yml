@@ -8,8 +8,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -25,8 +25,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -42,8 +42,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -70,8 +70,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -89,8 +89,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -106,8 +106,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -122,8 +122,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:

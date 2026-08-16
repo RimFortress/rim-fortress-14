@@ -8,7 +8,6 @@ namespace Content.Shared._RF.NPC.Search;
 /// Debug information about the NPC search execution.
 /// </summary>
 /// <param name="ProtoId">Search query prototype.</param>
-/// <param name="ValidTime">Time during which the results of this search query will be considered valid.</param>
 /// <param name="Query">A search query whose results will be filtered and scored.</param>
 /// <param name="Filters">Search query filters.</param>
 /// <param name="Considerations">Search query considerations.</param>
@@ -17,7 +16,6 @@ namespace Content.Shared._RF.NPC.Search;
 public readonly record struct NpcSearchDebugInfo(
     int Id,
     ProtoId<SearchQueryPrototype> ProtoId,
-    TimeSpan ValidTime,
     (ObjectDebugReflection Reflection, HashSet<string> Result) Query,
     List<(ObjectDebugReflection Reflection, HashSet<string> Filtered)> Filters,
     List<(ObjectDebugReflection Reflection, Dictionary<string, float> Result)> Considerations,

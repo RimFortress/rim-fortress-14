@@ -2,7 +2,9 @@ using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Inventory;
+using Content.Shared.Inventory.Events;
 using Robust.Server.Containers;
+using Robust.Shared.Containers;
 
 namespace Content.Server._RF.NPC.Search.Filters;
 
@@ -22,6 +24,16 @@ public sealed class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
 {
     [Dependency] private readonly ContainerSystem _container = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeTrackedDirty<GotEquippedEvent>();
+        SubscribeTrackedDirty<GotUnequippedEvent>();
+        SubscribeTrackedDirty<EntGotInsertedIntoContainerMessage>();
+        SubscribeTrackedDirty<EntGotRemovedFromContainerMessage>();
+    }
 
     protected override bool Filter(GoapState state, EntityUid target, InInventory filter)
     {

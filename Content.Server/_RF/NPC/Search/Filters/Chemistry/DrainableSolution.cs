@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
@@ -59,6 +60,13 @@ public sealed partial class DrainableSolution : BaseSearchFilter<DrainableSoluti
 public sealed class DrainableSolutionFilterSystem : NpcSearchFilterSystem<DrainableSolution>
 {
     [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeTrackedDirty<SearchTrackedComponent, SolutionChangedEvent>();
+    }
 
     protected override bool Filter(GoapState state, EntityUid target, DrainableSolution filter)
     {

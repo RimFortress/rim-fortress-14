@@ -1,6 +1,5 @@
 - type: searchQuery
   id: Seed
-  validTime: 0.5s
   query: !type:Owned
   filters:
   - !type:Component
@@ -10,8 +9,8 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:

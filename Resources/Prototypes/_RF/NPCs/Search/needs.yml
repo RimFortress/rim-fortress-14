@@ -17,13 +17,14 @@
   - !type:IsClosed
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
-  - !type:TotalNutrition
+  - !type:Ingestion
+    nutrition: true
     curves:
     - !type:Normalize
     - !type:Quadratic
@@ -39,13 +40,14 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
-  - !type:TotalNutrition
+  - !type:Ingestion
+    nutrition: true
     curves:
     - !type:Normalize
     - !type:Quadratic
@@ -60,13 +62,14 @@
   - !type:IsClosed
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
-  - !type:TotalHydration
+  - !type:Ingestion
+    hydration: true
     curves:
     - !type:Normalize
     - !type:Quadratic
@@ -82,12 +85,13 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
   considerations:
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
-  - !type:TotalHydration
+  - !type:Ingestion
+    hydration: true
     curves:
     - !type:Normalize

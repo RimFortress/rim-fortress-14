@@ -1,6 +1,7 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
+using Content.Shared.Chemistry.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
 using Robust.Shared.Prototypes;
@@ -29,6 +30,13 @@ public sealed partial class RefillableReagent : BaseSearchConsideration<Refillab
 public sealed class RefillableReagentConsiderationSystem : NpcSearchConsiderationSystem<RefillableReagent>
 {
     [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeRescoreEvent<RefillableSolutionComponent, SolutionContainerChangedEvent>();
+    }
 
     protected override float GetScore(GoapState state, EntityUid target, RefillableReagent con)
     {

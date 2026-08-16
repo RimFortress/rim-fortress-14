@@ -188,9 +188,7 @@ public sealed class OwnershipSystem : EntitySystem
         ownedComp.Owners.Add(uid);
 
         var comp = EnsureComp<OwnershipComponent>(uid);
-
-        if (!comp.Owned.Add(owned))
-            return false;
+        comp.Owned.Add(owned);
 
         var ev = new OwnershipAddedEvent(uid, owned);
         RaiseLocalEvent(uid, ev);

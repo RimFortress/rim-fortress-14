@@ -30,7 +30,6 @@ public sealed partial class SearchQueryControl : DebugNodeControl
         StatusLabel.Visible = false;
 
         // Query
-        AiUiHelper.AddLabel(QueryTab, "ValidTime", $"{info.ValidTime.TotalSeconds:F2}s");
         var query = AiUiHelper.AddBox(QueryTab, "Query", info.Query.Reflection.Name);
         AiUiHelper.AddTypes(query.Content, "Fields", info.Query.Reflection);
 

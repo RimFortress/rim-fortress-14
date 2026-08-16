@@ -27,6 +27,14 @@ public sealed class KeyWhitelistFilterSystem : NpcSearchFilterSystem<KeyWhitelis
 {
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeAgentDirty<GoapStateValueSet<EntityWhitelist>>();
+        SubscribeAgentDirty<GoapStateValueRemove<EntityWhitelist>>();
+    }
+
     protected override bool Filter(GoapState state, EntityUid target, KeyWhitelist filter)
         => !state.TryGetValue(filter.TargetKey, out var whitelist)
             ? filter.PassWhenNull

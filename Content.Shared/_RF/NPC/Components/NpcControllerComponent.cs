@@ -9,7 +9,7 @@ namespace Content.Shared._RF.NPC.Components;
 /// Allows player to issue Utility AI goals to NPCs.
 /// </summary>
 [Access(typeof(SharedExecutableGoalSystem))]
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
 public sealed partial class NpcControllerComponent : Component
 {
     /// <summary>
@@ -18,4 +18,10 @@ public sealed partial class NpcControllerComponent : Component
     /// </summary>
     [DataField(required: true), AutoNetworkedField]
     public List<ProtoId<ExecutableGoalPrototype>> Goals = new();
+
+    /// <summary>
+    /// Entities that this controller can control.
+    /// </summary>
+    [AutoNetworkedField]
+    public readonly HashSet<EntityUid> CanControl = new();
 }

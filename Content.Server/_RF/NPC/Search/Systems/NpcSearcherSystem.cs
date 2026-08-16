@@ -107,7 +107,6 @@ public sealed class NpcSearcherSystem : SharedNpcSearcherSystem
         return new NpcSearchDebugInfo(
             Id: id,
             ProtoId: proto,
-            ValidTime: proto.ValidTime,
             Query: (_npcHelper.GetReflection(proto.Query), query.Select(x => ToPrettyString(x).ToString()).ToHashSet()),
             Filters: filters,
             Considerations: considerations,

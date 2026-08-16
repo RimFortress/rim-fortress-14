@@ -105,19 +105,19 @@ public abstract class GoapDebugDumpSystem : EntitySystem
     }
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
-    protected static bool Remove<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key)
+    protected bool Remove<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key)
         where T : notnull
     {
         CreateDump(state, debug, $"removed key '{key}' of type '{typeof(T)}' for state");
-        return state.Remove(key);
+        return Goap.RemoveKey(state, key);
     }
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
-    protected static bool Remove<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key)
+    protected bool Remove<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key)
         where T : notnull => Remove(ent.Comp.State, debug, key);
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T}, out T)"/>
-    protected static bool Remove<T>(
+    protected bool Remove<T>(
         GoapState state,
         IGoapDebuggable debug,
         StateKey<T> key,
@@ -125,11 +125,11 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         where T : notnull
     {
         CreateDump(state, debug, $"removed key '{key}' of type '{typeof(T)}' for state");
-        return state.Remove(key, out removed);
+        return Goap.RemoveKey(state, key, out removed);
     }
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T}, out T)"/>
-    protected static bool Remove<T>(
+    protected bool Remove<T>(
         Entity<GoapComponent> ent,
         IGoapDebuggable debug,
         StateKey<T> key,
@@ -137,15 +137,15 @@ public abstract class GoapDebugDumpSystem : EntitySystem
         where T : notnull => Remove(ent.Comp.State, debug, key, out removed);
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
-    protected static void Set<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key, T value)
+    protected void Set<T>(Entity<GoapComponent> ent, IGoapDebuggable debug, StateKey<T> key, T value)
         where T : notnull => Set(ent.Comp.State, debug, key, value);
 
     /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
-    protected static void Set<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key, T value)
+    protected void Set<T>(GoapState state, IGoapDebuggable debug, StateKey<T> key, T value)
         where T : notnull
     {
         CreateDump(state, debug, $"key '{key}' of type '{typeof(T)}' value set to `{value.ToString()}`");
-        state.SetValue(key, value);
+        Goap.SetValue(state, key, value);
     }
 
     /// <summary>
