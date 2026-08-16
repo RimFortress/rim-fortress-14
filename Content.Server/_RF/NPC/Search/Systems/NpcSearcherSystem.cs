@@ -1,9 +1,8 @@
-using System.Linq;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration.Managers;
 using Content.Shared._RF.NPC;
-using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Administration;
@@ -28,16 +27,19 @@ public sealed class NpcSearcherSystem : SharedNpcSearcherSystem
     {
         if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug)
             || !TryGetEntity(msg.Target, out var target)
-            || !TryComp(target, out GoapComponent? goap))
+            || !TryComp(target, out NpcSearcherComponent? searcher))
             return;
 
-        var ent = new Entity<GoapComponent>(target.Value, goap);
+        var ent = new Entity<NpcSearcherComponent>(target.Value, searcher);
         var info = new List<NpcSearchDebugInfo>();
         var id = 0;
 
-        foreach (var proto in Proto.EnumeratePrototypes<SearchQueryPrototype>())
+        foreach (var (protoId, live) in searcher.Queries)
         {
-            info.Add(GetDebugInfo(ent, id, proto));
+            if (!Proto.Resolve(protoId, out var proto))
+                continue;
+
+            info.Add(GetDebugInfo(ent, id, proto, live));
             id++;
         }
 
@@ -45,69 +47,76 @@ public sealed class NpcSearcherSystem : SharedNpcSearcherSystem
         RaiseNetworkEvent(new NpcSearchDebugInfoMessage(GetNetEntity(target.Value), graph), args.SenderSession);
     }
 
-    private NpcSearchDebugInfo GetDebugInfo(Entity<GoapComponent> ent, int id, SearchQueryPrototype proto)
+    /// <summary>
+    /// Builds a debug snapshot for one query prototype straight from the
+    /// live pipeline state — <see cref="NpcSearcherComponent.Queries"/> for
+    /// which candidates are currently tracked, and each candidate's own
+    /// <see cref="SearchTrackedComponent"/> entry for where exactly it sits
+    /// (which Filter last rejected it, or its cached per-Consideration
+    /// scores). No Query/Filter/Consideration is ever re-run here — this is
+    /// a read of whatever the reactive pipeline already computed.
+    /// </summary>
+    private NpcSearchDebugInfo GetDebugInfo(
+        Entity<NpcSearcherComponent> ent,
+        int id,
+        SearchQueryPrototype proto,
+        NpcSearcherComponent.LiveSearchResult live)
     {
-        var query = Query(ent.Comp.State, proto.Query);
-        var filters = new List<(ObjectDebugReflection Reflection, HashSet<string> Filtered)>();
-        var filtered = query.ToHashSet();
+        var query = new HashSet<string>();
+        var filters = new List<(ObjectDebugReflection Reflection, HashSet<string> Filtered)>(proto.Filters.Count);
 
-        foreach (var uid in query)
+        foreach (var filter in proto.Filters)
         {
-            for (var i = 0; i < proto.Filters.Count; i++)
-            {
-                var filter = proto.Filters[i];
-
-                if (!Filter(ent.Comp.State, uid, filter))
-                {
-                    if (i > filters.Count - 1)
-                        filters.Add((_npcHelper.GetReflection(filter), new()));
-
-                    continue;
-                }
-
-                if (i > filters.Count - 1)
-                    filters.Add((_npcHelper.GetReflection(filter), new() { ToPrettyString(uid) }));
-                else
-                    filters[i].Filtered.Add(ToPrettyString(uid));
-
-                filtered.Remove(uid);
-                break;
-            }
+            filters.Add((_npcHelper.GetReflection(filter), new()));
         }
 
-        var considerations = new List<(ObjectDebugReflection Reflection, Dictionary<string, float> Result)>();
+        var considerations =
+            new List<(ObjectDebugReflection Reflection, Dictionary<string, float> Result)>(proto.Considerations.Count);
 
-        foreach (var consideration in proto.Considerations)
+        foreach (var con in proto.Considerations)
         {
-            considerations.Add((_npcHelper.GetReflection(consideration),
-                filtered.Select(x => (ToPrettyString(x).ToString(), Score(ent.Comp.State, x, consideration)))
-                    .ToDictionary()));
+            considerations.Add((_npcHelper.GetReflection(con), new()));
         }
 
         var results = new Dictionary<string, (List<float> Parts, float Result)>();
-        foreach (var uid in filtered)
+
+        foreach (var uid in live.Tracked)
         {
             var str = ToPrettyString(uid).ToString();
-            var parts = new List<float>();
-            var score = 1f;
+            query.Add(str);
 
-            foreach (var (_, result) in considerations)
+            if (!TryComp(uid, out SearchTrackedComponent? tracked)
+                || !TryGetTracker(tracked, (ent.Owner, proto), out var entry))
+                continue; // Tracked and SearchTrackedComponent are kept in sync - shouldn't happen
+
+            if (entry.ConsiderationScores == null)
             {
-                var s = result[str];
-                score *= s;
-                parts.Add(s);
+                // Still resting somewhere in the Filters chain - the
+                // filter right after its last cleared one is the one
+                // currently rejecting it.
+                filters[entry.FilterStage + 1].Filtered.Add(str);
+                continue;
             }
 
-            if (score == 0)
-                continue;
+            var parts = new List<float>(entry.ConsiderationScores.Length);
+            var score = 1f;
 
-            results.Add(str, (parts, score));
+            for (var i = 0; i < entry.ConsiderationScores.Length; i++)
+            {
+                var s = entry.ConsiderationScores[i];
+                considerations[i].Result[str] = s;
+                parts.Add(s);
+                score *= s;
+            }
+
+            if (score > 0f)
+                results[str] = (parts, score);
         }
 
         return new NpcSearchDebugInfo(
             Id: id,
             ProtoId: proto,
-            Query: (_npcHelper.GetReflection(proto.Query), query.Select(x => ToPrettyString(x).ToString()).ToHashSet()),
+            Query: (_npcHelper.GetReflection(proto.Query), query),
             Filters: filters,
             Considerations: considerations,
             Results: results);
