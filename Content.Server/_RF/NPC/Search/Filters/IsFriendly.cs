@@ -15,5 +15,5 @@ public sealed class IsFriendlySearchFilterSystem : NpcSearchFilterSystem<IsFrien
     [Dependency] private readonly NpcFactionSystem _faction = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, IsFriendly filter)
-        => _faction.IsEntityFriendly(state.GetValue(GoapState.Owner), target);
+        => _faction.IsEntityFriendly(Goap.GetValue(state, GoapState.Owner), target);
 }

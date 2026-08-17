@@ -29,13 +29,8 @@ public sealed class SayKeySystem : GoapActionSystem<SayKey>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, SayKey action)
     {
-        var state = ent.Comp.State;
-
-        if (!Goap.TryGetValue(state, action.Key, out var value))
-        {
-            KeyNotFound(ent, action, action.Key);
+        if (!TryGetValue(ent, action, action.Key, out var value))
             return false;
-        }
 
         var @string = value.ToString();
         if (@string is not { })
@@ -45,7 +40,7 @@ public sealed class SayKeySystem : GoapActionSystem<SayKey>
         }
 
         _chat.TrySendInGameICMessage(
-            state.GetValue(GoapState.Owner),
+            ent,
             @string,
             InGameICChatType.Speak,
             hideChat: action.Hidden,

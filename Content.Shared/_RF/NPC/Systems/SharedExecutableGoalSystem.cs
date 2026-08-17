@@ -34,12 +34,12 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly EntityWhitelistSystem Whitelist = default!;
     [Dependency] protected readonly IGameTiming Timing = default!;
+    [Dependency] protected readonly SharedGoapSystem Goap = default!;
     [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
     [Dependency] private readonly SharedSelectionSystem _selection = default!;
-    [Dependency] private readonly SharedGoapSystem _goap = default!;
 
     [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
     [Dependency] protected readonly EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
@@ -167,7 +167,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
                 // Remove passive target when the goal successfully finished.
                 if (args.Reason == UtilityAiGoalFinishReason.Finished
                     && proto.GoalType.HasFlag(ExecutableGoalType.Passive)
-                    && goap.State.TryGetValue(proto.TargetKey, out var target)
+                    && SharedGoapSystem.TryGetValueNoEcsDefaults(goap.State, proto.TargetKey, out var target)
                     && PassiveGoalQuery.TryComp(target, out var passive)
                     && passive.Goal == exec)
                     RemovePassiveTarget(target);
@@ -186,8 +186,8 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
                             {
                                 Agent = GetNetEntity(ent),
                                 Goal = exec,
-                                Target = goap.State.TryGetValue(proto.TargetKey, out var uid) ? GetNetEntity(uid) : null,
-                                TargetCoordinates = goap.State.TryGetValue(proto.TargetCoordinatesKey, out var coords)
+                                Target = Goap.TryGetValue(goap.State, proto.TargetKey, out var uid) ? GetNetEntity(uid) : null,
+                                TargetCoordinates = Goap.TryGetValue(goap.State, proto.TargetCoordinatesKey, out var coords)
                                     ? GetNetCoordinates(coords)
                                     : null,
                             },
@@ -195,8 +195,9 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
                     }
                 };
 
-                goap.State.Remove(proto.TargetCoordinatesKey);
-                goap.State.Remove(proto.TargetKey);
+                _utilityAi.ReleaseCaptured(ent.Owner);
+                Goap.RemoveKey(goap.State, proto.TargetCoordinatesKey);
+                Goap.RemoveKey(goap.State, proto.TargetKey);
                 break;
             }
         }
@@ -236,12 +237,14 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
     private void OnGoalTargetsCleared(GoalTargetsClearedMessage msg, EntitySessionEventArgs args)
     {
-        if (!GoapQuery.TryComp(GetEntity(msg.Agent), out var comp)
+        var uid = GetEntity(msg.Agent);
+
+        if (!GoapQuery.TryComp(uid, out var comp)
             || !Proto.Resolve(msg.Goal, out var goal))
             return;
 
-        comp.State.Remove(goal.TargetCoordinatesKey);
-        comp.State.Remove(goal.TargetKey);
+        Goap.RemoveKey(comp.State, goal.TargetCoordinatesKey);
+        Goap.RemoveKey(comp.State, goal.TargetKey);
     }
 
     private void OnGoalsIgnoreMessage(GoalsIgnoreMessage msg, EntitySessionEventArgs args)
@@ -431,7 +434,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
         // Set a temporary variables in GoapState to check conditions.
         ent.Comp1.State.SetValue(goal.TargetKey, target);
-        var result = _goap.CheckCondition(ent, goal.Conditions);
+        var result = Goap.CheckCondition(ent, goal.Conditions);
         ent.Comp1.State.Remove(goal.TargetKey);
         return result;
     }
@@ -450,7 +453,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         var utilityAi = ent.Comp2;
 
         if (goap.Plan != null)
-            _goap.PlanShutdown(new(ent, goap), GoapPlanFinishReason.Interrupted);
+            Goap.PlanShutdown(new(ent, goap), GoapPlanFinishReason.Interrupted);
 
         DebugTools.Assert(proto.GoalType.HasFlag(ExecutableGoalType.Place) || coords == null);
         DebugTools.Assert(!proto.GoalType.HasFlag(ExecutableGoalType.Place) || target == null);

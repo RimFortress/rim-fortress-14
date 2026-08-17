@@ -2,44 +2,41 @@
   id: Drink
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: DrinkOpened
-    action: !type:SearchQuery
-      query: DrinkOpened
-      targetKey: PickupTarget
+    - !type:ItemClosed
+      targetKey: Query/Drink
+      invert: true
+    action: !type:CaptureQuery
+      capture: Query/Drink
     effects:
-      DrinkFound: true
       DrinkOpened: true
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: DrinkClosed
-    action: !type:SearchQuery
-      query: DrinkClosed
-      targetKey: PickupTarget
+    - !type:ItemClosed
+      targetKey: Query/Drink
+    action: !type:CaptureQuery
+      capture: Query/Drink
     effects:
-      DrinkFound: true
       DrinkOpened: false
 
   - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - DrinkFound == true
+    - Query/Drink != null
     actions:
     - !type:EntityCoords
-      targetKey: PickupTarget
+      targetKey: Query/Drink
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: PickupTarget
+      targetKey: Query/Drink
     effects:
       DrinkPickedUp: true
 
   - preconditions:
     - DrinkPickedUp == true
     action: !type:InteractWith
-      targetKey: PickupTarget
+      targetKey: Query/Drink
     effects:
       DrinkOpened: true
 
@@ -47,6 +44,6 @@
     - DrinkPickedUp == true
     - DrinkOpened == true
     action: !type:InteractWith
-      targetKey: PickupTarget
+      targetKey: Query/Drink
     effects:
       DrinkDrunk: true

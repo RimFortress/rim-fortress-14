@@ -42,7 +42,7 @@ public abstract partial class SimpleGoapCondition<T> : GoapCondition
     public T Value = default!;
 
     /// <inheritdoc/>
-    public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
+    public override bool EntityCondition => GoapState.IsEntityDefault(Key);
 
     public override bool Check(EntityUid target, GoapState state, IGoapConditionChecker checker, out GoapDebugDump? dump)
     {

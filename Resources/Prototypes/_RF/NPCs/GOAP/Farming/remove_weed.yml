@@ -2,39 +2,26 @@
   id: RemoveWeed
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: WeedPlantHolder
-    action: !type:SearchQuery
-      query: WeedPlantHolder
-      targetKey: WeedPlantHolder
-    effects:
-      WeedPlantHolder: true
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: Hoe
+    - Query/Hoe != null
     actions:
-    - !type:SearchQuery
-      query: Hoe
-      targetKey: Hoe
     - !type:EntityCoords
-      targetKey: Hoe
+      targetKey: Query/Hoe
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: Hoe
+      targetKey: Query/Hoe
     effects:
-      Hoe: true
+      HoePickedUp: true
 
   - preconditions:
-    - WeedPlantHolder != null
-    - Hoe != null
+    - Query/WeedPlantHolder != null
+    - HoePickedUp == true
     actions:
     - !type:EntityCoords
-      targetKey: WeedPlantHolder
+      targetKey: Query/WeedPlantHolder
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:InteractWith
-      targetKey: WeedPlantHolder
+      targetKey: Query/WeedPlantHolder
     effects:
       WeedRemoved: true

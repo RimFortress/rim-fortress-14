@@ -110,9 +110,9 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                     if (!Timing.IsFirstTimePredicted)
                         return;
 
-                    _selection.ClearSelection();
                     RaisePredictiveEvent(new PassiveGoalRemoveRequest(
                         entities.Select(x => GetNetEntity(x)).ToList()));
+                    _selection.ClearSelection();
                 },
                 icon: EraseIcon,
                 netSync: true);

@@ -2,20 +2,14 @@
   id: Construction
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: ConstructionTarget
-    action: !type:SearchQuery
-      query: ConstructionTarget
-      targetKey: ConstructionTarget
-    effects:
-      ConstructionTarget: true
-
-  - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - ConstructionTarget != null
-    action: !type:Construction
-      targetKey: ConstructionTarget
+    - Query/Construction != null
+    actions:
+    - !type:CaptureQuery
+      capture: Construction
+    - !type:Construction
+      targetKey: Query/Construction
     effects:
       TargetConstructed: true

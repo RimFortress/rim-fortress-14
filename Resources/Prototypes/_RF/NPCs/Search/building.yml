@@ -1,5 +1,5 @@
 - type: searchQuery
-  id: ConstructionTarget
+  id: Construction
   query: !type:Owned
   filters:
   - !type:Component
@@ -11,13 +11,14 @@
     requireAll: false
     invert: true
   - !type:Constructed
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
 
 - type: searchQuery
-  id: DeconstructPassiveTarget
+  id: Deconstruct
   query: !type:PassiveTargets
     goals:
     - Deconstruct

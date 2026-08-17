@@ -2,40 +2,27 @@
   id: SamplePlant
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: SamplePlant
-    action: !type:SearchQuery
-      query: SamplePlant
-      targetKey: SamplePlant
-    effects:
-      SamplePlant: true
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: PlantSampleTaker
+    - Query/PlantSampleTaker != null
     actions:
-    - !type:SearchQuery
-      query: PlantSampleTaker
-      targetKey: PlantSampleTaker
     - !type:EntityCoords
-      targetKey: PlantSampleTaker
+      targetKey: Query/PlantSampleTaker
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: PlantSampleTaker
+      targetKey: Query/PlantSampleTaker
     effects:
       PlantSamplePickedUp: true
 
   - preconditions:
-    - SamplePlant != null
+    - Query/SamplePlant != null
     - PlantSamplePickedUp == true
     actions:
     - !type:EntityCoords
-      targetKey: SamplePlant
+      targetKey: Query/SamplePlant
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:InteractWith
-      targetKey: SamplePlant
+      targetKey: Query/SamplePlant
     - !type:MarkOwnerInRange
       whitelist:
         components:

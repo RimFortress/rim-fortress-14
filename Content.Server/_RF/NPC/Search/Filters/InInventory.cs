@@ -40,7 +40,7 @@ public sealed class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
         if (!_container.TryGetContainingContainer(target, out var container))
             return false;
 
-        if (filter.ExcludeSelf && container.Owner == state.GetValue(GoapState.Owner))
+        if (filter.ExcludeSelf && container.Owner == Goap.GetValue(state, GoapState.Owner))
             return false;
 
         return _inventory.TryGetSlot(container.Owner, container.ID, out _);

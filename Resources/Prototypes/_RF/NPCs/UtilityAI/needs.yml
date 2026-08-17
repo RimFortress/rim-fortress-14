@@ -6,8 +6,9 @@
   - minus: [float: 1]
   - pow:
     - float: 4
+  capture:
+  - Query/Bed
   tempKeys:
-  - Bed
   - TargetSleepLevel
   goalState:
     Rested: true
@@ -32,8 +33,6 @@
   - minus: [float: 1]
   - pow:
     - float: 2
-  tempKeys:
-  - PickupTarget
   goalState:
     FoodEaten: true
 
@@ -44,7 +43,5 @@
   - minus: [float: 1]
   - pow:
     - float: 2
-  tempKeys:
-  - PickupTarget
   goalState:
     DrinkDrunk: true

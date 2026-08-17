@@ -319,9 +319,10 @@ public partial class StockpileSystem
         if (_net.IsClient)
             RaiseNetworkEvent(new StockpileSettingUpdated(GetNetEntity(ent), protoId, max));
 
-        var old = ent.Comp.Settings[protoId];
+        var old = ent.Comp.Settings.GetValueOrDefault(protoId, 0);
         ent.Comp.Settings[protoId] = max;
-        RaiseLocalEvent(ent, new StockSettingsChanged(ent, protoId, old, max));
+        var ev = new StockSettingsChanged(ent, protoId, old, max);
+        RaiseLocalEvent(ent, ev, true);
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Settings));
         ValidateStockEntities(ent);
     }
@@ -336,13 +337,14 @@ public partial class StockpileSystem
     {
         foreach (var (proto, value) in settings)
         {
-            var old = ent.Comp.Settings[proto];
+            var old = ent.Comp.Settings.GetValueOrDefault(proto, 0);
 
             if (old == value)
                 continue;
 
             ent.Comp.Settings[proto] = value;
-            RaiseLocalEvent(ent, new StockSettingsChanged(ent, proto, old, value));
+            var ev = new StockSettingsChanged(ent, proto, old, value);
+            RaiseLocalEvent(ent, ev, true);
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Settings));

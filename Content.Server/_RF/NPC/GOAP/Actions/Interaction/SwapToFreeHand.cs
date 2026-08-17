@@ -24,6 +24,6 @@ public sealed class SwapToFreeHandSystem : GoapActionSystem<SwapToFreeHand>
             return true;
         }
 
-        return _hands.TrySelectEmptyHand(ent.Comp.State.GetValue(GoapState.Owner));
+        return _hands.TrySelectEmptyHand(Goap.GetValue(ent, GoapState.Owner));
     }
 }

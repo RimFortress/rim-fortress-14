@@ -37,3 +37,17 @@ public record struct GetSearchFilter<T>(T Filter, GoapState State, EntityUid Tar
 [PublicAPI, ByRefEvent]
 public record struct GetSearchScore<T>(T Con, GoapState State, EntityUid Target, float Result)
     where T : BaseSearchConsideration<T>;
+
+/// <summary>
+/// An event raised when the AI marks a search result as temporarily captured.
+/// </summary>
+/// <param name="User">Entity that captured the result.</param>
+[PublicAPI]
+public readonly record struct SearchResultCaptured(EntityUid User);
+
+/// <summary>
+/// An event raised when the AI releases a temporarily captured search result.
+/// </summary>
+/// <param name="User">Entity that captured the result.</param>
+[PublicAPI]
+public readonly record struct SearchResultReleased(EntityUid User);

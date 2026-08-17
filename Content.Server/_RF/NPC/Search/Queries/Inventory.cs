@@ -1,5 +1,6 @@
 using Content.Server.Hands.Systems;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
@@ -100,7 +101,7 @@ public sealed class InventoryQuerySystem : NpcSearchQuerySystem<Inventory>
 
     protected override void GetQuery(GoapState state, Inventory query)
     {
-        var owner = state.GetValue(GoapState.Owner);
+        var owner = SharedGoapSystem.Owner(state);
 
         if (!_inventory.TryGetContainerSlotEnumerator(owner, out var enumerator))
             return;

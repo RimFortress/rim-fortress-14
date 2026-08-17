@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
+using Content.Shared._RF.NPC.Search.Prototypes;
+using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Buckle;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Movement.Pulling.Systems;
@@ -22,8 +24,10 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
+    [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
     [Dependency] private readonly PullingSystem _pulling = default!;
 
@@ -32,6 +36,18 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     protected readonly List<(ICommonSession Session, EntityUid Target, bool? Condition)> DebugSendQueue = new();
     protected FrozenDictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph> StaticGraphs =
             new Dictionary<ProtoId<GoapCompoundPrototype>, GoapStaticGraph>().ToFrozenDictionary();
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<GoapComponent, ComponentAdd>(OnGoapAdded);
+    }
+
+    private static void OnGoapAdded(Entity<GoapComponent> ent, ref ComponentAdd ev)
+    {
+        ent.Comp.State.SetValue(GoapState.Owner, ent.Owner);
+    }
 
     #region Conditions
 
@@ -399,12 +415,17 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         RaiseLocalEvent(state.GetValue(GoapState.Owner), new GoapStateValueSet<T>(key, value));
     }
 
-    /// <inheritdoc cref="GoapState.Remove"/>
+    /// <inheritdoc cref="GoapState.SetValue"/>
+    [PublicAPI]
+    public void SetValue<T>(Entity<GoapComponent> ent, StateKey<T> key, T value) where T : notnull
+        => SetValue(ent.Comp.State, key, value);
+
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T})"/>
     [PublicAPI]
     public bool RemoveKey<T>(GoapState state, StateKey<T> key)
         where T : notnull => RemoveKey(state, key, out _);
 
-    /// <inheritdoc cref="GoapState.Remove"/>
+    /// <inheritdoc cref="GoapState.Remove{T}(StateKey{T}, out T?)"/>
     [PublicAPI]
     public bool RemoveKey<T>(
         GoapState state,
@@ -419,6 +440,24 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         return true;
     }
 
+    [PublicAPI, Pure]
+    public static bool TryGetValueNoEcsDefaults<T>(
+        GoapState state,
+        StateKey<T> key,
+        [NotNullWhen(true)] out T? value) where T : notnull
+    {
+        if (state.TryGetValue(key, out value))
+            return true;
+
+        foreach (var part in GoapState.GetOrParts(key))
+        {
+            if (state.TryGetValue(part, out value))
+                return true;
+        }
+
+        return false;
+    }
+
     /// <inheritdoc/>
     [PublicAPI, Pure]
     public bool TryGetValue<T>(
@@ -429,27 +468,61 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (state.TryGetValue(key, out value))
             return true;
 
-        if (!TryGetStateDefaults(state, key, out var @default))
-            return false;
+        if (TryGetStateDefaults(state, key, out var @default))
+        {
+            value = (T)@default;
+            return true;
+        }
 
-        value = (T)@default;
-        return true;
+        foreach (var part in GoapState.GetOrParts(key))
+        {
+            if (state.TryGetValue(part, out value))
+                return true;
+
+            if (!TryGetStateDefaults(state, part, out var partDefault))
+                continue;
+
+            value = (T)partDefault;
+            return true;
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>
     [PublicAPI, Pure]
     public T GetValue<T>(GoapState state, StateKey<T> key) where T : notnull
     {
-        if (TryGetStateDefaults(state, key, out var value))
-            return (T)value;
+        if (state.TryGetValue(key, out var value))
+            return value;
 
-        return state.GetValue(key);
+        if (TryGetStateDefaults(state, key, out var def))
+            return (T)def;
+
+        foreach (var part in GoapState.GetOrParts(key))
+        {
+            if (state.TryGetValue(part, out value))
+                return value;
+
+            if (TryGetStateDefaults(state, part, out var partDefault))
+                return (T)partDefault;
+        }
+
+        throw new KeyNotFoundException();
     }
+
+    /// <inheritdoc cref="GetValue{T}(GoapState, StateKey{T})"/>
+    [PublicAPI, Pure]
+    public T GetValue<T>(Entity<GoapComponent> ent, StateKey<T> key) where T : notnull
+        => GetValue(ent.Comp.State, key);
+
+    [PublicAPI, Pure]
+    public static EntityUid Owner(GoapState state) => state.GetValue(GoapState.Owner);
 
     private bool TryGetStateDefaults<T>(GoapState state, StateKey<T> key, [NotNullWhen(true)] out object? value)
         where T : notnull
     {
-        value = null;
+        value = default;
 
         if (!state.UseEntityDefaults)
             return false;
@@ -513,6 +586,19 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (key.Equals(GoapState.InConversation))
         {
             value = HasComp<ConversationActorComponent>(owner);
+            return true;
+        }
+
+        // Search query results: "Query:<ProtoId>"
+        if (key.Id.StartsWith(GoapState.QueryKeyPrefix, StringComparison.Ordinal))
+        {
+            ProtoId<SearchQueryPrototype> protoId = key.Id[GoapState.QueryKeyPrefix.Length..];
+
+            if (!_proto.HasIndex(protoId)
+                || !_searcher.TryGetBestResult(owner, state, protoId, out var result))
+                return false;
+
+            value = result.Value;
             return true;
         }
 

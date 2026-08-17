@@ -3,38 +3,34 @@
   tasks:
   - preconditions:
     - ActiveHandFree == true
-    - !type:SearchQueryValid
-      query: HarvestPlant
-    action: !type:SearchQuery
-      query: HarvestPlant
+    - Query/HarvestPlant != null
+    action: !type:CaptureQuery
+      capture: Query/HarvestPlant
       targetKey: HarvestPlant
     effects:
       HarvestPlant: true
       NeedSharp: false
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: SharpHarvestPlant
-    action: !type:SearchQuery
-      query: SharpHarvestPlant
+    - Query/SharpHarvestPlant != null
+    action: !type:CaptureQuery
+      capture: Query/SharpHarvestPlant
       targetKey: HarvestPlant
     effects:
       HarvestPlant: true
       NeedSharp: true
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: Sharp
+    - Query/Sharp != null
     actions:
-    - !type:SearchQuery
-      query: Sharp
-      targetKey: SharpTarget
+    - !type:CaptureQuery
+      capture: Query/Sharp
     - !type:EntityCoords
-      targetKey: SharpTarget
+      targetKey: Query/Sharp
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: SharpTarget
+      targetKey: Query/Sharp
     effects:
       NeedSharp: false
 

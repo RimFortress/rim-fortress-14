@@ -1,24 +1,30 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Tests;
 
 namespace Content.IntegrationTests.Tests._RF.NPC.GOAP;
 
 [TestFixture]
-public sealed class GoapStateTests
+public sealed class GoapStateTests : ContentUnitTest
 {
+    private static readonly StateKey<int> KeyA = "A";
+    private static readonly StateKey<bool> KeyB = "B";
+    private static readonly StateKey<int> CountKey = "Count";
+    private static readonly StateKey<bool> FlagKey = "Flag";
+
     [Test]
     public void Clone_IsIndependent()
     {
         var state = new GoapState();
-        state.SetValue<int>("A", 1);
-        state.SetValue<bool>("B", true);
+        state.SetValue(KeyA, 1);
+        state.SetValue(KeyB, true);
 
         var clone = state.ShallowClone();
-        clone.SetValue<int>("A", 5);
+        clone.SetValue(KeyA, 5);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(state.GetValue<int>("A"), Is.EqualTo(1));
-            Assert.That(clone.GetValue<int>("A"), Is.EqualTo(5));
+            Assert.That(state.GetValue(KeyA), Is.EqualTo(1));
+            Assert.That(clone.GetValue(KeyA), Is.EqualTo(5));
             Assert.That(state, Has.Count.EqualTo(2));
             Assert.That(clone, Has.Count.EqualTo(2));
         }
@@ -28,18 +34,18 @@ public sealed class GoapStateTests
     public void OverwriteFrom_CopiesValues()
     {
         var left = new GoapState();
-        left.SetValue<int>("A", 1);
+        left.SetValue(KeyA, 1);
 
         var right = new GoapState();
-        right.SetValue<int>("A", 2);
-        right.SetValue<bool>("B", false);
+        right.SetValue(KeyA, 2);
+        right.SetValue(KeyB, false);
 
         left.OverwriteFrom(right);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(left.GetValue<int>("A"), Is.EqualTo(2));
-            Assert.That(left.GetValue<bool>("B"), Is.False);
+            Assert.That(left.GetValue(KeyA), Is.EqualTo(2));
+            Assert.That(left.GetValue(KeyB), Is.False);
         }
 
     }
@@ -48,18 +54,17 @@ public sealed class GoapStateTests
     public void GetStateDump_ContainsTypeAndValue()
     {
         var state = new GoapState();
-        state.SetValue<int>("Count", 3);
-        state.SetValue<bool>("Flag", true);
+        state.SetValue(CountKey, 3);
+        state.SetValue(FlagKey, true);
 
         var dump = state.GetStateDump();
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(dump.State["Count"].Type, Does.Contain("Int32"));
-            Assert.That(dump.State["Count"].Value, Is.EqualTo("3"));
-            Assert.That(dump.State["Flag"].Type, Does.Contain("Boolean"));
-            Assert.That(dump.State["Flag"].Value, Is.EqualTo("True"));
+            Assert.That(dump.State[CountKey].Type, Does.Contain("Int32"));
+            Assert.That(dump.State[CountKey].Value, Is.EqualTo("3"));
+            Assert.That(dump.State[FlagKey].Type, Does.Contain("Boolean"));
+            Assert.That(dump.State[FlagKey].Value, Is.EqualTo("True"));
         }
-
     }
 }

@@ -1,6 +1,8 @@
 - type: searchQuery
   id: Bed
   query: !type:Owned
+  filters:
+  - !type:Captured
   considerations:
   - !type:BuckleHealing
     curves:
@@ -10,15 +12,15 @@
     - preset: TargetDistance
 
 - type: searchQuery
-  id: FoodOpened
+  id: Food
   query: !type:Owned
   filters:
   - !type:IsAlive
-  - !type:IsClosed
   - !type:InInventory
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -32,38 +34,15 @@
       exponent: 0.4
 
 - type: searchQuery
-  id: FoodClosed
+  id: Drink
   query: !type:Owned
   filters:
   - !type:IsAlive
-  - !type:IsClosed
-    invert: true
   - !type:InInventory
   - !type:InHands
   #- !type:Accessible
   #  invert: true
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
-  - !type:Ingestion
-    nutrition: true
-    curves:
-    - !type:Normalize
-    - !type:Quadratic
-      slope: 1
-      exponent: 0.4
-
-- type: searchQuery
-  id: DrinkOpened
-  query: !type:Owned
-  filters:
-  - !type:IsAlive
-  - !type:IsClosed
-  - !type:InInventory
-  - !type:InHands
-  #- !type:Accessible
-  #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -75,23 +54,3 @@
     - !type:Quadratic
       slope: 1
       exponent: 0.4
-
-- type: searchQuery
-  id: DrinkClosed
-  query: !type:Owned
-  filters:
-  - !type:IsAlive
-  - !type:IsClosed
-    invert: true
-  - !type:InInventory
-  - !type:InHands
-  #- !type:Accessible
-  #  invert: true
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
-  - !type:Ingestion
-    hydration: true
-    curves:
-    - !type:Normalize

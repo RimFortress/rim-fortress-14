@@ -26,10 +26,14 @@ public sealed class GoapSerializationTest : ContentUnitTest
     [TestCase("Count == 1.0", typeof(EqualsFloat))]
     [TestCase("Count == -1", typeof(EqualsInt))]
     [TestCase("Count == -1.5", typeof(EqualsFloat))]
+    [TestCase("Count == Number", typeof(EqualsString))]
     public void TryParse_SelectsExpectedNumericType(string text, Type expectedType)
     {
-        Assert.That(GoapConditionExpression.TryParse(text, out var condition), Is.True);
-        Assert.That(condition, Is.TypeOf(expectedType));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(GoapConditionExpression.TryParse(text, out var condition), Is.True);
+            Assert.That(condition, Is.TypeOf(expectedType));
+        }
     }
 
     [Test]
@@ -46,9 +50,13 @@ public sealed class GoapSerializationTest : ContentUnitTest
         var serializer = new GoapStateSerializer();
 
         var source = new GoapState();
-        source.SetValue<bool>("HasFood", true);
-        source.SetValue<int>("Count", 4);
-        source.SetValue<float>("Temperature", 1.25f);
+        var key1 = new StateKey<bool>("HasFood");
+        var key2 = new StateKey<int>("Count");
+        var key3 = new StateKey<float>("Temperature");
+
+        source.SetValue(key1, true);
+        source.SetValue(key2, 4);
+        source.SetValue(key3, 1.25f);
 
         var target = new GoapState();
 
@@ -62,9 +70,9 @@ public sealed class GoapSerializationTest : ContentUnitTest
         using (Assert.EnterMultipleScope())
         {
             Assert.That(target.Equals(source), Is.True);
-            Assert.That(target.GetValue<bool>("HasFood"), Is.True);
-            Assert.That(target.GetValue<int>("Count"), Is.EqualTo(4));
-            Assert.That(target.GetValue<float>("Temperature"), Is.EqualTo(1.25f).Within(0.0001f));
+            Assert.That(target.GetValue(key1), Is.True);
+            Assert.That(target.GetValue(key2), Is.EqualTo(4));
+            Assert.That(target.GetValue(key3), Is.EqualTo(1.25f).Within(0.0001f));
         }
     }
 }

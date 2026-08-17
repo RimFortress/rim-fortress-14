@@ -205,7 +205,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
         var state = ent.Comp.State;
 
-        if (state.GetValue(Gun.MovingToMagazineKey))
+        if (Goap.GetValue(state, Gun.MovingToMagazineKey))
         {
             if (!TryGetValue(ent, action, Gun.NearbyMagazineKey, out var ammoUid))
                 return GoapActionResult.Failed;
@@ -220,12 +220,12 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 return result;
 
             _moveTo.ShutdownMovement(ent, Gun.PathfindKey);
-            state.SetValue(Gun.MovingToMagazineKey, false);
+            Set(ent, action, Gun.MovingToMagazineKey, false);
 
             if (TryGetValue(ent, action, Gun.PreviousJukeTypeKey, out var type))
                 EnsureComp<NPCJukeComponent>(ent).JukeType = type;
 
-            state.Remove(Gun.PreviousJukeTypeKey);
+            Remove(ent, action, Gun.PreviousJukeTypeKey);
             return ReplaceMagazine(ent, action, ammoUid);
         }
 
@@ -315,18 +315,18 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         var targetPos = _transform.GetWorldPosition(targetXform);
         var distance = (targetPos - worldPos).Length();
 
-        var targetInLos = state.GetValue(Gun.TargetInLosKey);
+        var targetInLos = Goap.GetValue(state, Gun.TargetInLosKey);
 
         if (_timing.CurTime >= nextLosCheck)
         {
-            state.SetValue(Gun.NextLosCheckKey, _timing.CurTime + TimeSpan.FromSeconds(UnoccludedCooldown));
+            Set(ent, action, Gun.NextLosCheckKey, _timing.CurTime + TimeSpan.FromSeconds(UnoccludedCooldown));
 
             var oldInLos = targetInLos;
             var collisionGroup = action.UseOpaqueForLosChecks
                 ? CollisionGroup.Opaque
                 : CollisionGroup.Impassable | CollisionGroup.InteractImpassable;
             targetInLos = _interaction.InRangeUnobstructed(ent.Owner, target, distance + 0.1f, collisionGroup);
-            state.SetValue(Gun.TargetInLosKey, targetInLos);
+            Set(ent, action, Gun.TargetInLosKey, targetInLos);
 
             if (!oldInLos && targetInLos && TryGetValue(ent, action, Gun.SoundTargetInLos, out var sound))
                 _audio.PlayPvs(sound, ent);
@@ -335,7 +335,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         if (!targetInLos)
         {
             // Re-arm the shoot delay so returning into LOS requires "re-aiming".
-            state.SetValue(Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
+            Set(ent, action, Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
 
             if (steering != null)
                 steering.ForceMove = true;
@@ -343,7 +343,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return action.RequireLos ? GoapActionResult.Failed : GoapActionResult.Continuing;
         }
 
-        if (_timing.CurTime < state.GetValue(Gun.ShootReadyAtKey))
+        if (_timing.CurTime < Goap.GetValue(state, Gun.ShootReadyAtKey))
             return GoapActionResult.Continuing;
 
         // --- Aim & shoot ---
@@ -447,7 +447,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         }
 
         // If the magazine is within arm's reach, we change it right away
-        if (!ent.Comp.State.GetValue(Gun.MovingToMagazineKey))
+        if (!Goap.GetValue(ent.Comp.State, Gun.MovingToMagazineKey))
             return ReplaceMagazine(ent, action, ammoUid.Value, gun: gun, slot: slot);
 
         // Else, going to the magazine

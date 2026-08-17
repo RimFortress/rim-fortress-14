@@ -31,7 +31,7 @@ public sealed class CopyToSystem : GoapActionSystem<CopyTo>
         if (!TryGetValue(ent, action, action.From, out var from))
             return false;
 
-        ent.Comp.State.SetValue(action.To, from);
+        Goap.SetValue(ent, action.To, from);
         return true;
     }
 }

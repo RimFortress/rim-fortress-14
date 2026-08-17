@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
@@ -86,7 +87,7 @@ public sealed class NearbyQuerySystem : NpcSearchQuerySystem<Nearby>
 
     protected override void GetQuery(GoapState state, Nearby query)
     {
-        foreach (var uid in _lookup.GetEntitiesInRange(state.GetValue(GoapState.Owner), query.Range))
+        foreach (var uid in _lookup.GetEntitiesInRange(SharedGoapSystem.Owner(state), query.Range))
         {
             if (Query.Count >= query.Limit)
                 return;

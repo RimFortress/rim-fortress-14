@@ -2,17 +2,8 @@
   id: Deconstruct
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: DeconstructPassiveTarget
-    action: !type:SearchQuery
-      query: DeconstructPassiveTarget
-      targetKey: DeconstructTarget
-    effects:
-      DeconstructTarget: true
-
-  - preconditions:
-    - DeconstructTarget != null
+    - Query/Deconstruct != null
     action: !type:StartDeconstruction
-      targetKey: DeconstructTarget
+      targetKey: Query/Deconstruct
     effects:
       TargetDeconstruct: true

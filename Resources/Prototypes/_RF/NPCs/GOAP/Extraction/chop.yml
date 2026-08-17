@@ -2,53 +2,33 @@
   id: Chop
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: ChopPassiveTarget
-    action: !type:SearchQuery
-      query: ChopPassiveTarget
-      targetKey: ChopTarget
-    effects:
-      ChopTarget: true
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: Axe
-    action: !type:SearchQuery
-      query: Axe
-      targetKey: Axe
-    effects:
-      Axe: true
-
-  - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - Axe != null
+    - Query/Axe != null
     actions:
     - !type:EntityCoords
-      targetKey: Axe
+      targetKey: Query/Axe
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: Axe
+      targetKey: Query/Axe
     - !type:Wield
-      targetKey: Axe
+      targetKey: Query/Axe
       targetState: true
     effects:
       AxePickedUp: true
 
   - preconditions:
     - AxePickedUp == true
-    - ChopTarget != null
+    - Query/ChopTarget != null
     actions:
     - !type:EntityCoords
-      targetKey: ChopTarget
+      targetKey: Query/ChopTarget
     - !type:MoveTo
       rangeKey: InteractRange
-    - !type:Pickup
-      targetKey: Axe
     - !type:Melee
-      targetKey: ChopTarget
+      targetKey: Query/ChopTarget
     - !type:MarkOwnerInRange
       range: 3
       whitelist:

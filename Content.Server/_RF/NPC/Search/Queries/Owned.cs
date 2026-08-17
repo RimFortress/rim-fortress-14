@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
@@ -55,8 +56,7 @@ public sealed class OwnedQuerySystem : NpcSearchQuerySystem<Owned>
 
     protected override void GetQuery(GoapState state, Owned query)
     {
-        var owner = state.GetValue(GoapState.Owner);
-        var enumerator = _ownership.GetEntitiesEnumerator(owner);
+        var enumerator = _ownership.GetEntitiesEnumerator(SharedGoapSystem.Owner(state));
 
         while (Query.Count < query.Limit && enumerator.MoveNext(out var uid))
         {

@@ -25,6 +25,6 @@ public sealed class SearchQueryCountCurveSystem : MathCurveSystem<SearchQueryCou
 
     protected override float Curve(SearchQueryCount curve, float input, EntityUid? user)
         => TryComp(user, out GoapComponent? goap)
-            ? _npcSearcher.GetResults(user.Value, goap.State, curve.Query).Count
+            ? _npcSearcher.GetResultsCount(user.Value, goap.State, curve.Query)
             : 0f;
 }

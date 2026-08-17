@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using JetBrains.Annotations;
@@ -12,6 +13,7 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// <typeparam name="T">Search considerations type.</typeparam>
 public abstract class NpcSearchConsiderationSystem<T> : EntitySystem where T : BaseSearchConsideration<T>
 {
+    [Dependency] protected readonly SharedGoapSystem Goap = default!;
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly SharedNpcSearcherSystem Searcher = default!;
 

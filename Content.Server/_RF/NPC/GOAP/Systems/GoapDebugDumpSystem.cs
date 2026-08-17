@@ -151,5 +151,6 @@ public abstract class GoapDebugDumpSystem : EntitySystem
     /// <summary>
     /// Returns <see cref="GoapState.Owner"/>.
     /// </summary>
-    protected static EntityUid Owner(GoapState state) => state.GetValue(GoapState.Owner);
+    [ProxyFor(typeof(SharedGoapSystem))]
+    protected static EntityUid Owner(GoapState state) => SharedGoapSystem.Owner(state);
 }

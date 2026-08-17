@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Interaction;
@@ -103,48 +102,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     [PublicAPI]
     public int Count => _state.Count;
 
-    /// <summary>
-    /// Returns the first element of a state, if any.
-    /// </summary>
-    [PublicAPI, Pure]
-    public (string, object)? First()
-    {
-        foreach (var (key, value) in _state)
-        {
-            return (key, value);
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Returns the first key-value pair and removes it from the state.
-    /// </summary>
-    /// <returns>True, if the state is not empty.</returns>
-    [PublicAPI]
-    public bool TryDequeue(
-        [NotNullWhen(true)] out string? key,
-        [NotNullWhen(true)] out object? value)
-    {
-        if (_state.Count == 0)
-        {
-            key = null;
-            value = null;
-            return false;
-        }
-
-        (key, value) = _state.First();
-        _state.Remove(key);
-        return false;
-    }
-
     /// <exception cref="ArgumentNullException"/>
     /// <exception cref="KeyNotFoundException"/>
-    [Pure, PublicAPI]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetValue<T>(string key) => _state.TryGetValue(key, out var val) ? (T)val : (T)Defaults[key];
-
-    /// <inheritdoc cref="GetValue{T}(string)"/>
     [Pure, PublicAPI]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetValue<T>(StateKey<T> key) where T : notnull =>
@@ -162,6 +121,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </returns>
     [Pure, PublicAPI]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Access(typeof(SharedGoapSystem))]
     public T GetValueOrDefault<T>(StateKey<T> key) where T : notnull => (T)_state.GetValueOrDefault(key)!;
 
     /// <summary>
@@ -180,6 +140,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </returns>
     [Pure, PublicAPI]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Access(typeof(SharedGoapSystem))]
     public T GetValueOrDefault<T>(StateKey<T> key, T defaultValue) where T : notnull
         => (T)_state.GetValueOrDefault(key, defaultValue);
 
@@ -189,7 +150,9 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// <returns>true if the GoapState contains an element with the specified key; otherwise, false.</returns>
     /// <exception cref="InvalidCastException"/>
     [Pure, PublicAPI]
-    public bool TryGetValue<T>(string key, [NotNullWhen(true)] out T? value)
+    [Access(typeof(SharedGoapSystem))]
+    public bool TryGetValue<T>(StateKey<T> key, [NotNullWhen(true)] out T? value)
+        where T : notnull
     {
         if (_state.TryGetValue(key, out var data))
         {
@@ -217,37 +180,19 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return false;
     }
 
-    /// <inheritdoc cref="TryGetValue{T}(string, out T?)"/>
-    [Pure, PublicAPI]
-    public bool TryGetValue<T>(StateKey<T> key, [NotNullWhen(true)] out T? value)
+    /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
+    [PublicAPI]
+    public bool Remove<T>(StateKey<T> key) where T : notnull => Remove(key, out _);
+
+    /// <summary>
+    /// Removes the value with the specified key from the state.
+    /// </summary>
+    /// <returns>True, if the state contains a key with specified value.</returns>
+    [PublicAPI]
+    public bool Remove<T>(StateKey<T> key, [NotNullWhen(true)] out T? removed)
         where T : notnull
-        => TryGetValue(key.Id, out value);
-
-    /// <summary>
-    /// Tries to get the GoapState data for a particular key. Returns default if not found
-    /// </summary>
-    [Pure, PublicAPI]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? GetValueOrDefault<T>(string key) where T : notnull
-    {
-        if (_state.TryGetValue(key, out var value)
-            || Defaults.TryGetValue(key, out value))
-            return (T)value;
-
-        return default;
-    }
-
-    /// <summary>
-    /// Removes the value with the specified key from the state.
-    /// </summary>
-    [PublicAPI]
-    public bool Remove<T>(string key) where T : notnull => Remove<T>(key, out _);
-
-    /// <summary>
-    /// Removes the value with the specified key from the state.
-    /// </summary>
-    [PublicAPI]
-    public bool Remove<T>(string key, [NotNullWhen(true)] out T? removed) where T : notnull
     {
         removed = default;
 
@@ -266,65 +211,13 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return _state.Remove(key);
     }
 
-    /// <summary>
-    /// Removes the value with the specified key from the state.
-    /// </summary>
+    /// <inheritdoc cref="Remove{T}(StateKey{T}, out T?)"/>
     [PublicAPI]
-    public bool Remove<T>(StateKey<T> key) where T : notnull => Remove<T>((string)key);
-
-    /// <summary>
-    /// Removes the value with the specified key from the state.
-    /// </summary>
-    [PublicAPI]
-    public bool Remove<T>(StateKey<T> key, [NotNullWhen(true)] out T? removed)
-        where T : notnull => Remove((string)key, out removed);
-
-    /// <summary>
-    /// Removes the value with the specified key from the state.
-    /// </summary>
-    [PublicAPI]
-    public bool Remove<T>(StateKey<T>? key) where T : notnull
-        => key != null && Remove<T>((string)key.Value);
-
-    /// <summary>
-    /// Removes a key-value pair from the state.
-    /// </summary>
-    /// <returns>True, if the state contains a key with specified value.</returns>
-    [PublicAPI]
-    public bool Remove(string key, object value)
-    {
-        if (!_state.TryGetValue(key, out var current) || !Equals(value, current))
-            return false;
-
-        _state.Remove(key);
-        return false;
-    }
+    public bool Remove<T>(StateKey<T>? key) where T : notnull => key != null && Remove(key.Value);
 
     /// <summary>
     /// Sets the value associated with the specified key.
     /// </summary>
-    [PublicAPI]
-    public void SetValue(string key, object value)
-    {
-        if (ReadOnly)
-        {
-            DebugTools.Assert(false, $"Tried to write key '{key}' to an GoapState that is readonly!");
-            return;
-        }
-
-        if (_state.TryGetValue(key, out var oldValue))
-        {
-            if (Equals(oldValue, value))
-                return;
-
-            CachedHash ^= HashEntry(key, oldValue);
-        }
-
-        _state[key] = value;
-        CachedHash ^= HashEntry(key, value);
-    }
-
-    /// <inheritdoc cref="SetValue"/>
     [PublicAPI]
     public void SetValue<T>(StateKey<T> key, T value) where T : notnull
     {
@@ -542,6 +435,19 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     };
 
     /// <summary>
+    /// Prefix for dynamic keys exposing a SearchQueryPrototype's live best result through
+    /// <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/> — e.g. "Query/Drink".
+    /// </summary>
+    public const string QueryKeyPrefix = "Query/";
+
+    /// <summary>
+    /// A logical OR operator between keys that allows you to use
+    /// <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>
+    /// to retrieve the result of the first key that has a value.
+    /// </summary>
+    public const string OrKeySeparator = "||";
+
+    /// <summary>
     /// List of all ECS state variables.
     /// </summary>
     public static readonly HashSet<string> EntityDefaults = new()
@@ -549,6 +455,46 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree,
         ActiveHandEntity, Buckled, Pulled, FreeHandsCount, InConversation,
     };
+
+    /// <summary>
+    /// True if a key resolves without needing any task's effect to produce it
+    /// first — either a fixed entity default (<see cref="EntityDefaults"/>) or
+    /// a dynamic search-result key. Used by the planner's static graph builder
+    /// to exclude such keys from requiring a producing edge.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static bool IsEntityDefault<T>(StateKey<T> key) where T : notnull
+    {
+        if (EntityDefaults.Contains(key) || key.Id.StartsWith(QueryKeyPrefix, StringComparison.Ordinal))
+            return true;
+
+        var parts = GetOrParts(key);
+
+        foreach (var part in parts)
+        {
+            if (EntityDefaults.Contains(part) || key.Id.StartsWith(QueryKeyPrefix, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    [PublicAPI, Pure]
+    public static StateKey<T>[] GetOrParts<T>(StateKey<T> key) where T : notnull
+    {
+        if (!key.Id.Contains(OrKeySeparator, StringComparison.Ordinal))
+            return Array.Empty<StateKey<T>>();
+
+        var parts = key.Id.Split(OrKeySeparator, StringSplitOptions.RemoveEmptyEntries);
+        var keys = new StateKey<T>[parts.Length];
+
+        for (var i = 0; i < parts.Length; i++)
+        {
+            keys[i] = new StateKey<T>(parts[i]);
+        }
+
+        return keys;
+    }
 
     #endregion
 }
@@ -566,7 +512,7 @@ public readonly record struct StateKey<T>(string Id) :
 {
     public static implicit operator string(StateKey<T> key) => key.Id;
 
-    public static implicit operator StateKey<T>(string id) => new StateKey<T>(id);
+    public static implicit operator StateKey<T>(string id) => new(id);
 
     public static implicit operator StateKey<T>?(string? id)
         => id == null ? default(StateKey<T>?) : new StateKey<T>(id);

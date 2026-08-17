@@ -73,7 +73,7 @@ public partial class GoapSystem
             // participates in normal edge building below (for its other, static effects), but
             // it also needs to remain in the fallback pool so it's still considered as a
             // possible dynamic contributor everywhere - see the NotConnected remarks above.
-            if (from.Effects.Any(x => GoapState.EntityDefaults.Contains(x.Key)))
+            if (from.Effects.Any(x => GoapState.IsEntityDefault<object>(x.Key)))
                 notConnected.Add(from.Id);
 
             for (var toInd = 0; toInd < nodes.Count; toInd++)
@@ -112,7 +112,7 @@ public partial class GoapSystem
                         // Skip effect keys whose real runtime value is entity-derived - only
                         // probe with effects we can actually trust to be what's declared, so a
                         // static edge is never created based on an untrustworthy dummy value.
-                        if (GoapState.EntityDefaults.Contains(key))
+                        if (GoapState.IsEntityDefault<object>(key))
                             continue;
 
                         effectsState.SetValue(key, value);

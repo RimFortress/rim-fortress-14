@@ -43,7 +43,7 @@ public sealed class IngestionSearchConsiderationSystem : NpcSearchConsiderationS
     protected override float GetScore(GoapState state, EntityUid target, Ingestion con)
     {
         DebugTools.Assert(con.Hydration != con.Nutrition);
-        var owner = state.GetValue(GoapState.Owner);
+        var owner = Goap.GetValue(state, GoapState.Owner);
 
         if (!_ingestion.HasMouthAvailable(owner, target))
             return 0f;

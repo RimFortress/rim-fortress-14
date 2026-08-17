@@ -27,6 +27,8 @@
   color: "#00D5FF"
   goalState:
     TargetPry: true
+  capture:
+  - Query/Crowbar
 
 - type: utilityAiGoal
   id: TakeOwnership
@@ -35,3 +37,5 @@
   - float: 0.8
   goalState:
     TargetOwned: true
+  capture:
+  - Query/TakeOwnershipTarget

@@ -2,9 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using JetBrains.Annotations;
+using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
@@ -34,6 +36,7 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 {
     [Dependency] protected readonly IPrototypeManager Proto = default!;
+    [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
     [Dependency] private readonly EntityQuery<SearchTrackedComponent> _trackedQuery = default!;
     [Dependency] private readonly EntityQuery<NpcSearcherComponent> _searcherQuery = default!;
@@ -87,7 +90,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     public HashSet<EntityUid> Query<T>(GoapState state, T query) where T : BaseSearchQuery<T>
     {
         var ev = new GetSearchQuery<T>(query, state, new());
-        RaiseLocalEvent(state.GetValue(GoapState.Owner), ref ev);
+        RaiseLocalEvent(SharedGoapSystem.Owner(state), ref ev);
         DebugTools.Assert(ev.Result.Count <= query.Limit);
         return ev.Result;
     }
@@ -104,7 +107,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     public bool Filter<T>(GoapState state, EntityUid target, T filter) where T : BaseSearchFilter<T>
     {
         var ev = new GetSearchFilter<T>(filter, state, target, false);
-        RaiseLocalEvent(state.GetValue(GoapState.Owner), ref ev);
+        RaiseLocalEvent(SharedGoapSystem.Owner(state), ref ev);
         return ev.Result;
     }
 
@@ -134,8 +137,9 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     public float Score<T>(GoapState state, EntityUid target, T con) where T : BaseSearchConsideration<T>
     {
         var ev = new GetSearchScore<T>(con, state, target, 0f);
-        RaiseLocalEvent(state.GetValue(GoapState.Owner), ref ev);
-        var result = _mathCurves.Get(con.Curves, ev.Result, state.GetValue(GoapState.Owner));
+        var owner = SharedGoapSystem.Owner(state);
+        RaiseLocalEvent(owner, ref ev);
+        var result = _mathCurves.Get(con.Curves, ev.Result, owner);
         return Math.Clamp(result, 0f, 1f);
     }
 
@@ -175,8 +179,12 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
         GoapState state,
         ProtoId<SearchQueryPrototype> protoId)
     {
+        DebugTools.Assert(Proto.HasIndex(protoId), $"invalid search query '{protoId}'");
         var live = new NpcSearcherComponent.LiveSearchResult();
         agent.Comp.Queries[protoId] = live;
+
+        if (!_net.IsServer)
+            return live; // noop on client
 
         if (!_activeAgents.TryGetValue(protoId, out var agents))
             _activeAgents[protoId] = agents = new HashSet<EntityUid>();
@@ -511,6 +519,57 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
         ProtoId<SearchQueryPrototype> protoId,
         [NotNullWhen(true)] out EntityUid? result)
         => TryGetBestResult(ent, ent.Comp.State, protoId, out result);
+
+    /// <summary>
+    /// Declares the search result as having been captured by the user.
+    /// </summary>
+    /// <param name="ent">Target entity to capture.</param>
+    /// <param name="user">User entity.</param>
+    /// <returns>True, if the result is successfully captured.</returns>
+    [PublicAPI]
+    public bool CaptureResult(
+        Entity<SearchTrackedComponent?> ent,
+        EntityUid user)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return false;
+
+        if (!ent.Comp.Captured.Add(user))
+            return false;
+
+        var ev = new SearchResultCaptured(user);
+        RaiseLocalEvent(ent, ev);
+        return true;
+    }
+
+    /// <summary>
+    /// Releases the search result captured by the user.
+    /// </summary>
+    /// <param name="ent">Target entity to release.</param>
+    /// <param name="user">User entity.</param>
+    /// <returns>True if the result is successfully released.</returns>
+    [PublicAPI]
+    public bool ReleaseCapturedResult(
+        Entity<SearchTrackedComponent?> ent,
+        EntityUid user)
+    {
+        if (!Resolve(ent, ref ent.Comp, false))
+            return false;
+
+        if (!ent.Comp.Captured.Remove(user))
+            return false;
+
+        var ev = new SearchResultReleased(user);
+        RaiseLocalEvent(ent, ev);
+        return true;
+    }
+
+    /// <summary>
+    /// Checks whether the result has been captured by this entity.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool IsCaptured(Entity<SearchTrackedComponent?> result, EntityUid user)
+        => Resolve(result, ref result.Comp, false) && result.Comp.Captured.Contains(user);
 
     #endregion
 }

@@ -318,7 +318,7 @@ public partial class SharedExecutableGoalSystem
         foreach (var goal in goals)
         {
             if (!Proto.Resolve(goal, out var proto)
-                || !goap.State.TryGetValue(proto.TargetKey, out var uid))
+                || !Goap.TryGetValue(goap.State, proto.TargetKey, out var uid))
                 continue;
 
             target = uid;
@@ -350,7 +350,7 @@ public partial class SharedExecutableGoalSystem
 
             if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
             {
-                if (goap.State.TryGetValue(proto.TargetCoordinatesKey, out var result))
+                if (Goap.TryGetValue(goap.State, proto.TargetCoordinatesKey, out var result))
                 {
                     coords = result;
                     return true;
@@ -359,7 +359,7 @@ public partial class SharedExecutableGoalSystem
                 continue;
             }
 
-            if (goap.State.TryGetValue(proto.TargetKey, out var uid))
+            if (Goap.TryGetValue(goap.State, proto.TargetKey, out var uid))
             {
                 coords = Transform(uid).Coordinates;
                 return true;

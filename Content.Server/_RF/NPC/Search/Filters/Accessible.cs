@@ -23,7 +23,7 @@ public sealed class AccessibleSystem : NpcSearchFilterSystem<Accessible>
         if (!_container.TryGetOuterContainer(target, Transform(target), out var container))
             return true;
 
-        if (container.Owner == state.GetValue(GoapState.Owner))
+        if (container.Owner == Goap.GetValue(state, GoapState.Owner))
             return true;
 
         if (_storageQuery.TryComp(container.Owner, out var storage))

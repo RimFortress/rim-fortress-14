@@ -27,6 +27,7 @@ using Robust.Shared.Utility;
 using Content.Server.Parallax;
 using Robust.Shared.Prototypes;
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 // RimFortress End
@@ -64,6 +65,7 @@ namespace Content.Server.NPC.Pathfinding
         [Dependency] private readonly BiomeSystem _biome = default!;
         [Dependency] private readonly IPrototypeManager _prototype = default!;
         [Dependency] private readonly ITileDefinitionManager _tileDef = default!;
+        [Dependency] private readonly GoapSystem _goap = default!;
         // RimFortress End
 
         private readonly Dictionary<ICommonSession, PathfindingDebugMode> _subscribedSessions = new();
@@ -500,16 +502,16 @@ namespace Content.Server.NPC.Pathfinding
         {
             var flags = PathFlags.None;
 
-            if (state.TryGetValue<bool>(NPCBlackboard.NavPry, out var pry) && pry)
+            if (_goap.TryGetValue(state, GoapState.NavPry, out var pry) && pry)
                 flags |= PathFlags.Prying;
 
-            if (state.TryGetValue<bool>(NPCBlackboard.NavSmash, out var smash) && smash)
+            if (_goap.TryGetValue(state, GoapState.NavSmash, out var smash) && smash)
                 flags |= PathFlags.Smashing;
 
-            if (state.TryGetValue<bool>(NPCBlackboard.NavClimb, out var climb) && climb)
+            if (_goap.TryGetValue(state, GoapState.NavClimb, out var climb) && climb)
                 flags |= PathFlags.Climbing;
 
-            if (state.TryGetValue<bool>(NPCBlackboard.NavInteract, out var interact) && interact)
+            if (_goap.TryGetValue(state, GoapState.NavInteract, out var interact) && interact)
                 flags |= PathFlags.Interact;
 
             return flags;

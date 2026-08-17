@@ -11,6 +11,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -27,6 +28,7 @@
   - !type:PlantHolder
     filled: false
     invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -45,6 +47,7 @@
     dead: false
     needSharp: false
     invert: true
+  - !type:Captured
   considerations:
   - !type:SamePlantCount
     curves:
@@ -69,6 +72,7 @@
     dead: false
     sampled: false
     invert: true
+  - !type:Captured
   considerations:
   - !type:SamePlantCount
     curves:
@@ -93,6 +97,7 @@
     dead: false
     needSharp: true
     invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -111,6 +116,7 @@
     dead: true
     needSharp: false
     invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -129,6 +135,7 @@
     dead: true
     needSharp: true
     invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -137,6 +144,8 @@
 - type: searchQuery
   id: WeedPlantHolder
   query: !type:Owned
+  filters:
+  - !type:Captured
   considerations:
   - !type:Weed
     curves:
@@ -173,6 +182,7 @@
     components:
     - type: PlantHolder
     invert: true
+  - !type:Captured
   considerations:
   - !type:PlantHolderWater
     curves:

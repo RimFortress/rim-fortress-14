@@ -13,8 +13,9 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -35,6 +36,7 @@
   - !type:StockpileStorage
     invert: true
   - !type:Pulled
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -50,6 +52,7 @@
     - type: StockpileContent
     - type: Item
     invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -64,6 +67,7 @@
     - type: StockpileContent
     - type: EntityStorage
     invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -83,8 +87,9 @@
     lessThan: 0.06
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -103,6 +108,7 @@
   - !type:StockStoredOffset
     lessThan: 0.06
   - !type:Pulled
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -125,8 +131,9 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -147,8 +154,9 @@
     invert: true
   - !type:InInventory
   - !type:InHands
-  - !type:Accessible
-    invert: true
+  #- !type:Accessible
+  #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -168,6 +176,7 @@
     supplyingOnly: true
     invert: true
   - !type:Pulled
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -178,6 +187,10 @@
   id: StockpileToStore
   query: !type:Owned
   filters:
+  - !type:Component
+    components:
+    - type: Stockpile
+    invert: true
   - !type:StockCanInsert
     targetKey: StoringTarget
     invert: true

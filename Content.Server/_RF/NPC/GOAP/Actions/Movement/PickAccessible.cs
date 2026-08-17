@@ -38,19 +38,16 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, PickAccessible action)
     {
-        var state = ent.Comp.State;
-        var owner = state.GetValue(GoapState.Owner);
-
-        Goap.TryGetValue(state, action.RangeKey, out var maxRange);
+        TryGetValue(ent, action, action.RangeKey, out var maxRange);
 
         if (maxRange == 0f)
             maxRange = 7f;
 
-        _pendingPaths[owner] = _pathfinding.GetRandomPath(
-            owner,
+        _pendingPaths[ent] = _pathfinding.GetRandomPath(
+            ent,
             maxRange,
             default,
-            flags: _pathfinding.GetFlags(state));
+            flags: _pathfinding.GetFlags(ent.Comp.State));
 
         CreateDump(ent, action, $"random path search started at {_timing.CurTime}. MaxRange: {maxRange}");
         return true;
@@ -58,10 +55,7 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, PickAccessible action)
     {
-        var state = ent.Comp.State;
-        var owner = state.GetValue(GoapState.Owner);
-
-        if (!_pendingPaths.TryGetValue(owner, out var task))
+        if (!_pendingPaths.TryGetValue(ent, out var task))
         {
             CreateDump(ent, action, $"pathfinding task not found");
             return GoapActionResult.Failed;
@@ -71,7 +65,7 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
         if (!task.IsCompleted)
             return GoapActionResult.Continuing;
 
-        _pendingPaths.Remove(owner);
+        _pendingPaths.Remove(ent);
 
         if (!task.IsCompletedSuccessfully)
         {
@@ -89,8 +83,8 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
         }
 
         var target = path.Path.Last().Coordinates;
-        state.SetValue(action.TargetCoordinates, target);
-        state.SetValue(action.PathfindKey, path);
+        Set(ent, action, action.TargetCoordinates, target);
+        Set(ent, action, action.PathfindKey, path);
         return GoapActionResult.Finished;
     }
 }

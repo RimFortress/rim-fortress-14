@@ -2,26 +2,17 @@
   id: Pry
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: Crowbar
-    action: !type:SearchQuery
-      query: Crowbar
-      targetKey: Crowbar
-    effects:
-      Crowbar: true
-
-  - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - Crowbar != null
+    - Query/Crowbar != null
     actions:
     - !type:EntityCoords
-      targetKey: Crowbar
+      targetKey: Query/Crowbar
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: Crowbar
+      targetKey: Query/Crowbar
     effects:
       CrowbarPickedUp: true
 

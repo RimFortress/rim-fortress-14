@@ -26,7 +26,7 @@ public sealed class TargetDistanceConsiderationSystem : NpcSearchConsiderationSy
         if (!EntityManager.TransformQuery.TryComp(target, out var xform))
             return 0f;
 
-        var coords = Transform(state.GetValue(GoapState.Owner)).Coordinates;
+        var coords = Transform(Goap.GetValue(state, GoapState.Owner)).Coordinates;
 
         if (!xform.Coordinates.TryDistance(EntityManager, _transform, coords, out var distance))
             return 0f;

@@ -18,10 +18,11 @@
   id: Plant
   parent: BaseFarmingGoal
   goal: Plant
-  targetKey: EmptyPlantHolder
+  targetKey: Query/EmptyPlantHolder
   conditions:
+  - Query/Seed != null
   - !type:PlantHolder
-    targetKey: EmptyPlantHolder
+    targetKey: Query/EmptyPlantHolder
     filled: false
 
 - type: executableGoal
@@ -30,28 +31,29 @@
   goal: Harvest
   targetKey: HarvestPlant
   conditions:
+  - Query/Sharp != null
   - !type:PlantHolder
-    targetKey: HarvestPlant
+    targetKey: Query/HarvestPlant
     harvest: true
 
 - type: executableGoal
   id: RemoveWeed
   parent: BaseFarmingGoal
   goal: RemoveWeed
-  targetKey: WeedPlantHolder
+  targetKey: Query/WeedPlantHolder
   conditions:
   - !type:PlantHolder
-    targetKey: WeedPlantHolder
+    targetKey: Query/WeedPlantHolder
     hasWeed: true
 
 - type: executableGoal
   id: SamplePlant
   parent: BaseFarmingGoal
   goal: SamplePlant
-  targetKey: SamplePlant
+  targetKey: Query/SamplePlant
   conditions:
   - !type:PlantHolder
-    targetKey: SamplePlant
+    targetKey: Query/SamplePlant
     filled: true
     sampled: false
     dead: false
@@ -60,18 +62,18 @@
   id: RemovePlant
   parent: BaseFarmingGoal
   goal: RemovePlant
-  targetKey: RemovePlant
+  targetKey: Query/RemovePlant
   conditions:
   - !type:PlantHolder
-    targetKey: RemovePlant
+    targetKey: Query/RemovePlant
     dead: true
 
 - type: executableGoal
   id: WaterPlant
   parent: BaseFarmingGoal
   goal: WaterPlant
-  targetKey: PlantWaterTarget
+  targetKey: Query/PlantWaterTarget
   conditions:
   - !type:PlantHolder
-    targetKey: PlantWaterTarget
+    targetKey: Query/PlantWaterTarget
     waterLessThan: 50

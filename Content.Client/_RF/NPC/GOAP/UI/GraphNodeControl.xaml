@@ -1,7 +1,6 @@
 <controls:GraphNodeControl
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI"
-    MouseFilter="Pass">
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
     <TabContainer Name="TabContainer" VerticalExpand="True"
                   HorizontalExpand="True">
         <BoxContainer Name="CommonTab" Orientation="Vertical"/>

@@ -1,5 +1,6 @@
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
@@ -98,6 +99,16 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// </summary>
     [DataField]
     public HashSet<string> TempKeys = new();
+
+    /// <summary>
+    /// Keys whose values will be captured when the goal's execution starts and released when it finishes.
+    /// If the value of any key is not found, or if it cannot be captured,
+    /// the goal will still start if the <see cref="Conditions"/> are met.
+    /// </summary>
+    /// <seealso cref="SharedNpcSearcherSystem.CaptureResult"/>
+    /// <seealso cref="SharedNpcSearcherSystem.ReleaseCapturedResult"/>
+    [DataField]
+    public HashSet<StateKey<EntityUid>> Capture = new();
 }
 
 /// <summary>

@@ -2,25 +2,16 @@
   id: TakeOwnership
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: TakeOwnershipPassiveTarget
-    action: !type:SearchQuery
-      query: TakeOwnershipPassiveTarget
-      targetKey: TakeOwnershipTarget
-    effects:
-      TakeOwnershipTarget: true
-
-  - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - TakeOwnershipTarget != null
+    - Query/TakeOwnershipTarget != null
     actions:
     - !type:EntityCoords
-      targetKey: TakeOwnershipTarget
+      targetKey: Query/TakeOwnershipTarget
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:MarkOwner
-      targetKey: TakeOwnershipTarget
+      targetKey: Query/TakeOwnershipTarget
     effects:
       TargetOwned: true

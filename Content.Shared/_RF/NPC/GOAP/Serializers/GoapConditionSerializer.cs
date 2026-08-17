@@ -27,7 +27,7 @@ public sealed class GoapConditionSerializer : ITypeReader<GoapCondition, ValueDa
             return new ValidatedValueNode(node);
 
         // Let the normal Robust polymorphic path validate !type YAML.
-        return serializationManager.ValidateNode<GoapCondition>(node, context);
+        return serializationManager.ValidateNode<object>(node, context);
     }
 
     public GoapCondition Read(
@@ -42,7 +42,7 @@ public sealed class GoapConditionSerializer : ITypeReader<GoapCondition, ValueDa
             return condition;
 
         // Normal YAML form:
-        // - !type: EqualsInt
+        // - !type:EqualsInt
         //   key: IngredientCount
         //   value: 3
         return serializationManager.Read(node, context, instanceProvider: instanceProvider, notNullableOverride: true);
@@ -52,7 +52,7 @@ public sealed class GoapConditionSerializer : ITypeReader<GoapCondition, ValueDa
 public static class GoapConditionExpression
 {
     private static readonly Regex Expr = new(
-        @"^\s*(?<key>[A-Za-z_][A-Za-z0-9_.]*)\s*(?<op>==|!=|>=|<=|>|<)\s*(?<value>.+?)\s*$",
+        @"^\s*(?<key>[A-Za-z_][A-Za-z0-9_./|]*)\s*(?<op>==|!=|>=|<=|>|<)\s*(?<value>.+?)\s*$",
         RegexOptions.Compiled);
 
     public static bool TryParse(string text, out GoapCondition condition)

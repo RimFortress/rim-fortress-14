@@ -23,9 +23,9 @@
           min: 1
           max: 10
     - mul: [float: 0.50]
-  tempKeys:
-  - Seed
-  - EmptyPlantHolder
+  capture:
+  - Query/Seed
+  - Query/EmptyPlantHolder
   goalState:
     SeedPlanted: true
 
@@ -51,9 +51,8 @@
           min: 1
           max: 10
     - mul: [float: 0.50]
-  tempKeys:
-  - HarvestPlant
-  - SharpTarget
+  capture:
+  - Query/Sharp
   goalState:
     PlantHarvested: true
 
@@ -75,9 +74,9 @@
           min: 1
           max: 10
     - mul: [float: 0.50]
-  tempKeys:
-  - WeedPlantHolder
-  - Hoe
+  capture:
+  - Query/Hoe
+  - Query/WeedPlantHolder
   goalState:
     WeedRemoved: true
 
@@ -100,9 +99,9 @@
           min: 1
           max: 10
     - mul: [float: 0.50]
-  tempKeys:
-  - SamplePlant
-  - PlantSampleTaker
+  capture:
+  - Query/SamplePlant
+  - Query/PlantSampleTaker
   goalState:
     SampleTaken: true
 
@@ -128,9 +127,8 @@
           min: 1
           max: 10
     - mul: [float: 0.50]
-  tempKeys:
-  - DeadPlant
-  - SharpTarget
+  capture:
+  - Query/Sharp
   goalState:
     PlantRemoved: true
 
@@ -153,8 +151,9 @@
           min: 1
           max: 10
     - mul: [float: 0.50]
-  tempKeys:
-  - Bucket
-  - WaterSource
+  capture:
+  - Query/Bucket
+  - Query/WaterSource
+  - Query/PlantWaterTarget
   goalState:
     PlantWaterFilled: true

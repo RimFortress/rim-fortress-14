@@ -14,6 +14,15 @@ namespace Content.Shared._RF.NPC.Search.Components;
 [Access(typeof(SharedNpcSearcherSystem))]
 public sealed partial class SearchTrackedComponent : Component
 {
+    /// <summary>
+    /// An entities that has marked this entity as temporarily captured.
+    /// The captured result can be filtered using the Captured filter
+    /// to avoid AI conflicts over a single entity.
+    /// </summary>
+    [ViewVariables]
+    public readonly HashSet<EntityUid> Captured = new();
+
+    [ViewVariables]
     public readonly Dictionary<(EntityUid Agent, ProtoId<SearchQueryPrototype> ProtoId), SearchTrackEntry> Tracking = new();
 }
 

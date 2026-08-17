@@ -3,6 +3,7 @@ using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using JetBrains.Annotations;
@@ -22,6 +23,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly SharedGoapSystem Goap = default!;
     [Dependency] protected readonly MathCurvesSystem Curves = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
 
     public override void Initialize()
     {
@@ -33,6 +35,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
 
     private void OnGoapPlaningFailed(Entity<UtilityAiComponent> ent, ref GoapPlaningFailed args)
     {
+        ReleaseCaptured(ent.Owner);
         DoGoalFail(ent);
     }
 
@@ -44,7 +47,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
         {
             foreach (var key in proto.TempKeys)
             {
-                goap.State.Remove<object>(key);
+                Goap.RemoveKey<object>(goap.State, key);
             }
         }
 
@@ -63,8 +66,13 @@ public abstract class SharedUtilityAiSystem : EntitySystem
             RaiseLocalEvent(ent, ref ev);
 
             if (ev.Handled)
+            {
+                ReleaseCaptured(ent.Owner);
                 return;
+            }
         }
+
+        ReleaseCaptured(ent.Owner);
 
         switch (args.Reason)
         {
@@ -155,6 +163,23 @@ public abstract class SharedUtilityAiSystem : EntitySystem
     }
 
     /// <summary>
+    /// Releases entities captured by goal.
+    /// </summary>
+    [PublicAPI]
+    public void ReleaseCaptured(Entity<UtilityAiComponent?, GoapComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp1, ref ent.Comp2)
+            || !Proto.TryIndex(ent.Comp1.CurrentGoal, out var proto))
+            return;
+
+        foreach (var key in proto.Capture)
+        {
+            if (Goap.RemoveKey(ent.Comp2.State, key, out var value))
+                _searcher.ReleaseCapturedResult(value, ent);
+        }
+    }
+
+    /// <summary>
     /// Sets the agent's current GOAP goal.
     /// </summary>
     /// <param name="ent">GOAP agent entity.</param>
@@ -165,6 +190,15 @@ public abstract class SharedUtilityAiSystem : EntitySystem
         if (!Proto.Resolve(protoId, out var proto)
             || !Resolve(ent, ref ent.Comp1, ref ent.Comp2))
             return;
+
+        foreach (var key in proto.Capture)
+        {
+            if (!Goap.TryGetValue(ent.Comp2.State, key, out var value))
+                continue;
+
+            Goap.SetValue(ent.Comp2.State, key, value);
+            _searcher.CaptureResult(value, ent);
+        }
 
         Goap.SetGoal(new(ent, ent.Comp2), proto.GoalState);
         ent.Comp1.CurrentGoal = protoId;

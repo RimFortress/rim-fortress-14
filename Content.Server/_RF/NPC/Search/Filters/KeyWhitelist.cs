@@ -36,7 +36,7 @@ public sealed class KeyWhitelistFilterSystem : NpcSearchFilterSystem<KeyWhitelis
     }
 
     protected override bool Filter(GoapState state, EntityUid target, KeyWhitelist filter)
-        => !state.TryGetValue(filter.TargetKey, out var whitelist)
+        => !Goap.TryGetValue(state, filter.TargetKey, out var whitelist)
             ? filter.PassWhenNull
             : _whitelist.IsWhitelistPass(whitelist, target);
 }

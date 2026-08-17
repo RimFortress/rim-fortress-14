@@ -11,5 +11,7 @@
       invert: true
   scoreCurves:
   - float: 1
+  capture:
+  - Query/AttackTarget
   goalState:
     TargetAttacked: true

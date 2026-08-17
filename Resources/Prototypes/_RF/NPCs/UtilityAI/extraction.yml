@@ -24,6 +24,9 @@
   incumbentBonus:
   - add: [float: 0.05]
   - mul: [float: 1.10]
+  capture:
+  - Query/Axe
+  - Query/ChopTarget
   goalState:
     TargetChopDown: true
 
@@ -55,5 +58,8 @@
   incumbentBonus:
   - add: [float: 0.05]
   - mul: [float: 1.10]
+  capture:
+  - Query/Pickaxe
+  - Query/DigTarget
   goalState:
     TargetDug: true

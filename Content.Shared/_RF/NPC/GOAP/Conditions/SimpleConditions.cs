@@ -19,7 +19,7 @@ public sealed partial class EqualsString : Equals<string>;
 public abstract partial class NotEquals<T> : SimpleGoapCondition<T> where T : IEquatable<T>
 {
     public override bool SimpleCheck(GoapState state, IGoapConditionChecker checker)
-        => checker.TryGetValue(state, Key, out var value) && !value.Equals(Value);
+        => !checker.TryGetValue(state, Key, out var value) || !value.Equals(Value);
 }
 
 public sealed partial class NotEqualsBool : NotEquals<bool>;
@@ -87,7 +87,7 @@ public sealed partial class KeyNotExist : GoapCondition
     public StateKey<object> Key;
 
     /// <inheritdoc/>
-    public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
+    public override bool EntityCondition => GoapState.IsEntityDefault(Key);
 
     public override bool Check(EntityUid target,
         GoapState state,
@@ -108,7 +108,7 @@ public sealed partial class KeyExist : GoapCondition
     public StateKey<object> Key;
 
     /// <inheritdoc/>
-    public override bool EntityCondition => GoapState.EntityDefaults.Contains(Key);
+    public override bool EntityCondition => GoapState.IsEntityDefault(Key);
 
     public override bool Check(EntityUid target,
         GoapState state,
@@ -132,8 +132,7 @@ public sealed partial class KeyEqual : GoapCondition
     public StateKey<object> Key2;
 
     /// <inheritdoc/>
-    public override bool EntityCondition =>
-        GoapState.EntityDefaults.Contains(Key1) || GoapState.EntityDefaults.Contains(Key2);
+    public override bool EntityCondition => GoapState.IsEntityDefault(Key1) || GoapState.IsEntityDefault(Key2);
 
     public override bool Check(EntityUid target,
         GoapState state,

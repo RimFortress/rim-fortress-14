@@ -36,7 +36,7 @@
     - !type:Quadratic
 
 - type: searchQuery
-  id: AttackPassiveTarget
+  id: AttackTarget
   query: !type:PassiveTargets
     goals:
     - Attack
@@ -79,6 +79,7 @@
     invert: true
   - !type:InInventory
   - !type:InHands
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -118,6 +119,7 @@
     invert: true
   - !type:InInventory
   - !type:InHands
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:

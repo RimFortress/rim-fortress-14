@@ -42,7 +42,6 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
             return false;
         }
 
-        var state = ent.Comp.State;
         var query = _searcher.GetResults(ent, action.Query);
         CreateDump(ent, action, $"query '{action.Query}' return {query.Count} results");
 
@@ -53,8 +52,8 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
         }
 
         // Waiting until almost the very last moment before the invitation ends so that everyone has time to respond
-        var wait = state.GetValue(GoapState.ConversationInviteValidTimeKey) - TimeSpan.FromSeconds(0.5f);
-        state.SetValue(action.WaitInvitesAcceptKey, wait);
+        var wait = Goap.GetValue(ent, GoapState.ConversationInviteValidTimeKey) - TimeSpan.FromSeconds(0.5f);
+        Set(ent, action, action.WaitInvitesAcceptKey, wait);
         return true;
     }
 

@@ -4,6 +4,7 @@ using System.Numerics;
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Bed.Sleep;
 using Content.Shared.Chat;
 using Content.Shared.EntityEffects;
@@ -12,6 +13,7 @@ using Content.Shared.Mobs.Components;
 using Content.Shared.NPC;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
+using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -24,10 +26,12 @@ namespace Content.Shared._RF.Conversation.Systems;
 /// </summary>
 public sealed class ConversationSystem : EntitySystem, IConversationConditionChecker
 {
+    [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private readonly SharedGoapSystem _goap = default!;
     [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
 
     [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
@@ -162,7 +166,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         actors = null;
 
         if (!Resolve(ent, ref ent.Comp)
-            || !ent.Comp.State.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invites))
+            || !_goap.TryGetValue(ent.Comp.State, GoapState.ConversationInvitesToOtherKey, out var invites))
             return false;
 
         var scripts = _prototype
@@ -561,23 +565,23 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
 
         var inviterState = inviter.Comp.State;
         var invitedState = invited.Comp.State;
-        var invite = (_timing.CurTime + inviterState.GetValue(GoapState.ConversationInviteValidTimeKey), false);
+        var invite = (_timing.CurTime + _goap.GetValue(inviterState, GoapState.ConversationInviteValidTimeKey), false);
 
-        if (inviterState.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
+        if (_goap.TryGetValue(inviterState, GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
         {
             invitesToOthers[invited] = invite;
-            inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, invitesToOthers);
+            _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, invitesToOthers);
         }
         else
-            inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, new() { { invited, invite } });
+            _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, new() { { invited, invite } });
 
-        if (invitedState.TryGetValue(GoapState.ConversationInvitesKey, out var invites))
+        if (_goap.TryGetValue(invitedState, GoapState.ConversationInvitesKey, out var invites))
         {
             invites[inviter] = invite;
-            invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
+            _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, invites);
         }
         else
-            invitedState.SetValue(GoapState.ConversationInvitesKey, new() { { inviter, invite } });
+            _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, new() { { inviter, invite } });
 
         var ev = new ConversationInviteSent(inviter, invited);
         RaiseLocalEvent(inviter, ev);
@@ -600,16 +604,16 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         var inviterState = inviter.Comp.State;
         var invitedState = invited.Comp.State;
 
-        if (inviterState.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
+        if (_goap.TryGetValue(inviterState, GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
         {
             invitesToOthers.Remove(invited);
-            inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, invitesToOthers);
+            _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, invitesToOthers);
         }
 
-        if (invitedState.TryGetValue(GoapState.ConversationInvitesKey, out var invites))
+        if (_goap.TryGetValue(invitedState, GoapState.ConversationInvitesKey, out var invites))
         {
             invites.Remove(inviter);
-            invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
+            _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, invites);
         }
 
         var ev = new ConversationInviteRemoved(inviter, invited);
@@ -633,19 +637,19 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         var inviterState = inviter.Comp.State;
         var invitedState = invited.Comp.State;
 
-        if (!inviterState.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invitesToOthers)
+        if (!_goap.TryGetValue(inviterState, GoapState.ConversationInvitesToOtherKey, out var invitesToOthers)
             || !invitesToOthers.ContainsKey(invited))
             return false;
 
-        if (!invitedState.TryGetValue(GoapState.ConversationInvitesKey, out var invites)
+        if (!_goap.TryGetValue(invitedState, GoapState.ConversationInvitesKey, out var invites)
             || !invites.ContainsKey(inviter))
             return false;
 
-        var newInvite = (_timing.CurTime + inviterState.GetValue(GoapState.ConversationInviteValidTimeKey), true);
+        var newInvite = (_timing.CurTime + _goap.GetValue(inviterState, GoapState.ConversationInviteValidTimeKey), true);
         invitesToOthers[invited] = newInvite;
         invites[inviter] = newInvite;
-        inviterState.SetValue(GoapState.ConversationInvitesToOtherKey, invitesToOthers);
-        invitedState.SetValue(GoapState.ConversationInvitesKey, invites);
+        _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, invitesToOthers);
+        _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, invites);
         return true;
     }
 
@@ -659,9 +663,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         if (!Resolve(inviter, ref inviter.Comp))
             return;
 
-        var state = inviter.Comp.State;
-
-        if (!state.TryGetValue(GoapState.ConversationInvitesToOtherKey, out var invites))
+        if (!_goap.TryGetValue(inviter.Comp.State, GoapState.ConversationInvitesToOtherKey, out var invites))
             return;
 
         foreach (var (invited, _) in invites)
@@ -677,8 +679,9 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     [PublicAPI]
     public int InvitesCount(Entity<GoapComponent?> invited)
         => Resolve(invited, ref invited.Comp)
-            ? invited.Comp.State.GetValueOrDefault(GoapState.ConversationInvitesKey, new())
-                .Count(x => x.Value.ValidUntil >= _timing.CurTime)
+            ? _goap.TryGetValue(invited.Comp.State, GoapState.ConversationInvitesKey, out var invites)
+                ? invites.Count(x => x.Value.ValidUntil >= _timing.CurTime)
+                : 0
             : 0;
 
     /// <summary>
@@ -709,11 +712,14 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     {
         base.Update(frameTime);
 
+        if (!_net.IsServer)
+            return;
+
         // TODO: replace this with separate component for conversation invites
         var enumerator = EntityQueryEnumerator<GoapComponent, ActiveNPCComponent>();
         while (enumerator.MoveNext(out var uid, out var goap, out _))
         {
-            if (!goap.State.TryGetValue(GoapState.ConversationInvitesKey, out var invites))
+            if (!_goap.TryGetValue(goap.State, GoapState.ConversationInvitesKey, out var invites))
                 continue;
 
             foreach (var (inviter, (validUntil, _)) in invites)

@@ -2,7 +2,7 @@
   id: Construction
   goal: Construction
   verbIcon: _RF/Interface/hammer-solid.svg.192dpi.png
-  targetKey: ConstructionTarget
+  targetKey: Query/Construction
   maxPerformers: 1
   targetWhitelist:
     components:
@@ -13,7 +13,7 @@
   id: Deconstruct
   goal: Deconstruct
   verbIcon: _RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
-  targetKey: DeconstructTarget
+  targetKey: Query/Deconstruct
   maxPerformers: 1
   goalType:
   - Verb

@@ -147,8 +147,8 @@ public sealed class NpcHelperSystem : EntitySystem
             TypeName = GetFriendlyTypeName(type),
         };
 
-        var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(f => !f.IsStatic && f.IsDefined(typeof(DataFieldAttribute), inherit: true));
+        var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            //.Where(f => !f.IsStatic && f.IsDefined(typeof(DataFieldAttribute), inherit: true));
 
         foreach (var fieldInfo in fields)
         {

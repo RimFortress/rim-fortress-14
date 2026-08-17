@@ -2,7 +2,7 @@
   id: Attack
   goal: Attack
   verbIcon: _RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
-  targetKey: AttackTarget
+  targetKey: Query/AttackTarget
   goalType:
   - Verb
   - Passive

@@ -1,3 +1,4 @@
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
@@ -15,6 +16,7 @@ public sealed partial class ConversationInvites : BaseSearchQuery<ConversationIn
 public sealed class ConversationInvitesSearchQuerySystem : NpcSearchQuerySystem<ConversationInvites>
 {
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly GoapSystem _goap = default!;
 
     public override void Initialize()
     {
@@ -50,7 +52,7 @@ public sealed class ConversationInvitesSearchQuerySystem : NpcSearchQuerySystem<
 
     protected override void GetQuery(GoapState state, ConversationInvites query)
     {
-        if (!state.TryGetValue(GoapState.ConversationInvitesKey, out var invites))
+        if (!_goap.TryGetValue(state, GoapState.ConversationInvitesKey, out var invites))
             return;
 
         foreach (var (uid, invite) in invites)

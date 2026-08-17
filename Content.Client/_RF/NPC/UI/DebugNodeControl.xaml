@@ -1,6 +1,7 @@
 <controls:DebugNodeControl
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.NPC.UI">
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.UI"
+    MouseFilter="Pass">
     <PanelContainer StyleClasses="PanelHighlighted"/>
 
     <BoxContainer Orientation="Vertical" Margin="1">

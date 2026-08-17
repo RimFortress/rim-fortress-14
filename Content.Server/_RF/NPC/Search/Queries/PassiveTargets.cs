@@ -1,6 +1,7 @@
 using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
@@ -68,7 +69,7 @@ public sealed class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTarge
 
     protected override void GetQuery(GoapState state, PassiveTargets query)
     {
-        var owner = state.GetValue(GoapState.Owner);
+        var owner = SharedGoapSystem.Owner(state);
         var enumerator = EntityQueryEnumerator<PassiveGoalTargetComponent>();
 
         while (Query.Count < query.Limit && enumerator.MoveNext(out var uid, out var comp))

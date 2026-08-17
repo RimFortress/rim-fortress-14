@@ -3,20 +3,18 @@
   tasks:
   - preconditions:
     - ActiveHandFree == true
-    - !type:SearchQueryValid
-      query: DeadPlant
-    action: !type:SearchQuery
-      query: DeadPlant
+    - Query/DeadPlant != null
+    action: !type:CaptureQuery
+      capture: Query/DeadPlant
       targetKey: DeadPlant
     effects:
       DeadPlant: true
       NeedSharp: false
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: SharpDeadPlant
-    action: !type:SearchQuery
-      query: SharpDeadPlant
+    - Query/SharpDeadPlant != null
+    action: !type:CaptureQuery
+      capture: Query/SharpDeadPlant
       targetKey: DeadPlant
     effects:
       DeadPlant: true

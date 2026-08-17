@@ -2,61 +2,39 @@
   id: WaterPlant
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: PlantWaterTarget
-    action: !type:SearchQuery
-      query: PlantWaterTarget
-      targetKey: PlantWaterTarget
-    effects:
-      PlantWaterTarget: true
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: Bucket
-    action: !type:SearchQuery
-      query: Bucket
-      targetKey: Bucket
-    effects:
-      Bucket: true
-
-  - preconditions:
-    - Bucket != null
+    - Query/Bucket != null
     actions:
     - !type:EntityCoords
-      targetKey: Bucket
+      targetKey: Query/Bucket
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: Bucket
+      targetKey: Query/Bucket
     effects:
       BucketPickedUp: true
 
   - preconditions:
     - BucketPickedUp == true
-    - !type:SearchQueryValid
-      query: WaterSource
+    - Query/WaterSource != null
     actions:
-    - !type:SearchQuery
-      query: WaterSource
-      targetKey: WaterSource
     - !type:EntityCoords
-      targetKey: WaterSource
+      targetKey: Query/WaterSource
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:InteractWith
-      targetKey: WaterSource
+      targetKey: Query/WaterSource
     effects:
-      BackedFilled: true
+      BuckedFilled: true
 
   - preconditions:
-    - BackedFilled == true
-    - PlantWaterTarget != null
+    - BuckedFilled == true
+    - Query/PlantWaterTarget != null
     actions:
     - !type:EntityCoords
-      targetKey: PlantWaterTarget
+      targetKey: Query/PlantWaterTarget
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:InteractWith
-      targetKey: PlantWaterTarget
+      targetKey: Query/PlantWaterTarget
     effects:
       PlantWaterFilled: true

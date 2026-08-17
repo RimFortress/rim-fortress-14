@@ -32,7 +32,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
             foreach (var protoId in prototypes)
             {
                 if (!Proto.Resolve(protoId, out var proto)
-                    || !goap.State.TryGetValue(proto.TargetKey, out var target)
+                    || !Goap.TryGetValue(goap.State, proto.TargetKey, out var target)
                     || target != ev.Old)
                     continue;
 

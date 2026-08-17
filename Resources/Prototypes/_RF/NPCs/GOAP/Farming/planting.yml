@@ -2,44 +2,26 @@
   id: Planting
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: Seed
-    action: !type:SearchQuery
-      query: Seed
-      targetKey: Seed
-    effects:
-      Seed: true
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: EmptyPlantHolder
-    action: !type:SearchQuery
-      query: EmptyPlantHolder
-      targetKey: EmptyPlantHolder
-    effects:
-      EmptyPlantHolder: true
-
-  - preconditions:
-    - Seed != null
+    - Query/Seed != null
     actions:
     - !type:EntityCoords
-      targetKey: Seed
+      targetKey: Query/Seed
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: Seed
+      targetKey: Query/Seed
     effects:
       SeedPickedUp: true
 
   - preconditions:
-    - EmptyPlantHolder != null
+    - Query/EmptyPlantHolder != null
     - SeedPickedUp == true
     actions:
     - !type:EntityCoords
-      targetKey: EmptyPlantHolder
+      targetKey: Query/EmptyPlantHolder
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:InteractWith
-      targetKey: EmptyPlantHolder
+      targetKey: Query/EmptyPlantHolder
     effects:
       SeedPlanted: true

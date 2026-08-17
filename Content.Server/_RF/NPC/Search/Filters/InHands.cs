@@ -1,13 +1,10 @@
 using System.Linq;
-using Content.Server.Hands.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
-using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Hands;
 using Content.Shared.Hands.Components;
 using Robust.Server.Containers;
-using Robust.Shared.Containers;
 
 namespace Content.Server._RF.NPC.Search.Filters;
 
@@ -41,6 +38,6 @@ public sealed class InHandsSystem : NpcSearchFilterSystem<InHands>
         return _container.TryGetContainingContainer(new(target, null, null), out var container)
                && _handsQuery.TryComp(container.Owner, out var hands)
                && hands.Hands.Any(x => x.Key == container.ID)
-               && (!filter.ExcludeSelf || container.Owner != state.GetValue(GoapState.Owner));
+               && (!filter.ExcludeSelf || container.Owner != Goap.GetValue(state, GoapState.Owner));
     }
 }

@@ -53,7 +53,6 @@ public sealed partial class GoapSystem : SharedGoapSystem
 
     private void OnMapInit(Entity<GoapComponent> ent, ref MapInitEvent args)
     {
-        ent.Comp.State.SetValue(GoapState.Owner, ent);
 #if TOOLS
         ent.Comp.StaticGraph = BuildDebugGraph(ent);
 #endif

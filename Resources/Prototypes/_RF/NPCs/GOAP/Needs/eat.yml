@@ -2,44 +2,41 @@
   id: Eat
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: FoodOpened
-    action: !type:SearchQuery
-      query: FoodOpened
-      targetKey: PickupTarget
+    - !type:ItemClosed
+      targetKey: Query/Food
+      invert: true
+    action: !type:CaptureQuery
+      capture: Query/Food
     effects:
-      FoodFound: true
       FoodOpened: true
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: FoodClosed
-    action: !type:SearchQuery
-      query: FoodClosed
-      targetKey: PickupTarget
+    - !type:ItemClosed
+      targetKey: Query/Food
+    action: !type:CaptureQuery
+      capture: Query/Food
     effects:
-      FoodFound: true
       FoodOpened: false
 
   - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - FoodFound == true
+    - Query/Food != null
     actions:
     - !type:EntityCoords
-      targetKey: PickupTarget
+      targetKey: Query/Food
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: PickupTarget
+      targetKey: Query/Food
     effects:
       FoodPickedUp: true
 
   - preconditions:
     - FoodPickedUp == true
     action: !type:InteractWith
-      targetKey: PickupTarget
+      targetKey: Query/Food
     effects:
       FoodOpened: true
 
@@ -47,6 +44,6 @@
     - FoodPickedUp == true
     - FoodOpened == true
     action: !type:InteractWith
-      targetKey: PickupTarget
+      targetKey: Query/Food
     effects:
       FoodEaten: true

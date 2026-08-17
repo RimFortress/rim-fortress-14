@@ -2,46 +2,28 @@
   id: Dig
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: DigPassiveTarget
-    action: !type:SearchQuery
-      query: DigPassiveTarget
-      targetKey: DigTarget
-    effects:
-      DigTarget: true
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: Pickaxe
-    action: !type:SearchQuery
-      query: Pickaxe
-      targetKey: PickupTarget
-    effects:
-      PickaxeFound: true
-
-  - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - PickaxeFound == true
+    - Query/Pickaxe == true
     actions:
     - !type:EntityCoords
-      targetKey: PickupTarget
+      targetKey: Query/Pickaxe
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: PickupTarget
+      targetKey: Query/Pickaxe
     - !type:Wield
       targetState: true
     effects:
       PickaxePickedUp: true
 
   - preconditions:
-    - DigTarget != null
+    - Query/DigTarget != null
     - PickaxePickedUp == true
     actions:
     - !type:Melee
-      targetKey: DigTarget
+      targetKey: Query/DigTarget
     - !type:MarkOwnerInRange
       range: 3
       whitelist:

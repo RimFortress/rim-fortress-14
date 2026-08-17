@@ -1,8 +1,10 @@
 - type: searchQuery
-  id: TakeOwnershipPassiveTarget
+  id: TakeOwnershipTarget
   query: !type:PassiveTargets
     goals:
     - TakeOwnership
+  filters:
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:

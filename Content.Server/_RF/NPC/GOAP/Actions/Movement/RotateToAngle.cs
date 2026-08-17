@@ -37,27 +37,13 @@ public sealed class RotateToAngleSystem : GoapActionSystem<RotateToAngle>
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, RotateToAngle action)
     {
-        var state = ent.Comp.State;
-
-        if (!Goap.TryGetValue(state, action.TargetKey, out var angle))
-        {
-            KeyNotFound(ent, action, action.TargetKey);
+        if (!TryGetValue(ent, action, action.TargetKey, out var angle)
+            || !TryGetValue(ent, action, action.RotationSpeedKey, out var speed))
             return GoapActionResult.Failed;
-        }
 
-        if (!Goap.TryGetValue(state, action.RotationSpeedKey, out var speed))
-        {
-            KeyNotFound(ent, action, action.RotationSpeedKey);
-            return GoapActionResult.Failed;
-        }
-
-        var owner = state.GetValue(GoapState.Owner);
-
-        if (_rotate.TryRotateTo(owner, angle, _timing.FrameTime.Seconds, action.Tolerance, speed))
+        if (_rotate.TryRotateTo(ent, angle, _timing.FrameTime.Seconds, action.Tolerance, speed))
             return GoapActionResult.Finished;
-        else if (speed == float.MaxValue)
-            return GoapActionResult.Failed;
 
-        return GoapActionResult.Continuing;
+        return speed == float.MaxValue ? GoapActionResult.Failed : GoapActionResult.Continuing;
     }
 }

@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
 
@@ -12,5 +13,5 @@ public sealed partial class Self : BaseSearchFilter<Self>;
 public sealed class SelfSearchFilterSystem : NpcSearchFilterSystem<Self>
 {
     protected override bool Filter(GoapState state, EntityUid target, Self filter)
-        => target == state.GetValue(GoapState.Owner);
+        => target == SharedGoapSystem.Owner(state);
 }

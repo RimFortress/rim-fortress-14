@@ -7,8 +7,7 @@
   - proto: Pickup
   - proto: Eat
   - proto: Drink
-  - proto: Construction
-  - proto: Deconstruct
+  - proto: Building
   - proto: Dig
   - proto: TakeOwnership
   - proto: Interact

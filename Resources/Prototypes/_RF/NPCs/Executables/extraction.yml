@@ -2,8 +2,10 @@
   id: Chop
   goal: Chop
   verbIcon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
-  targetKey: ChopTarget
+  targetKey: Query/ChopTarget
   maxPerformers: 1
+  conditions:
+  - Query/Axe != null
   goalType:
   - Verb
   - Passive
@@ -15,8 +17,10 @@
   id: Dig
   goal: Dig
   verbIcon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
-  targetKey: DigTarget
+  targetKey: Query/DigTarget
   maxPerformers: 1
+  conditions:
+  - Query/Pickaxe != null
   goalType:
   - Verb
   - Passive

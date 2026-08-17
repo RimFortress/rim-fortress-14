@@ -10,6 +10,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -27,6 +28,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -44,6 +46,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -72,6 +75,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -91,6 +95,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -108,6 +113,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:
@@ -124,6 +130,7 @@
   - !type:InHands
   #- !type:Accessible
   #  invert: true
+  - !type:Captured
   considerations:
   - !type:TargetDistance
     curves:

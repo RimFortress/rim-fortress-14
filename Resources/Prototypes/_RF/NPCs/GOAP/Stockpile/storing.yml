@@ -3,88 +3,50 @@
   tasks:
   # Base
   - preconditions:
-    - !type:SearchQueryValid
-      query: NotStoredItem
-    action: !type:SearchQuery
-      query: NotStoredItem
+    - Query/NotStoredItem != null
+    action: !type:CaptureQuery
+      capture: Query/NotStoredItem
       targetKey: StoringTarget
     effects:
       StoringType: Item
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: NotStoredCrate
-    action: !type:SearchQuery
-      query: NotStoredCrate
+    - Query/NotStoredCrate != null
+    action: !type:CaptureQuery
+      capture: Query/NotStoredCrate
       targetKey: StoringTarget
     effects:
       StoringType: Crate
 
-  # Fix offset
+  # Stored
   - preconditions:
-    - !type:SearchQueryValid
-      query: OffsetStoredItem
-    actions:
-    - !type:SearchQuery
-      query: OffsetStoredItem
-      targetKey: StoringTarget
-    - !type:RemoveFromStock
+    - Query/OffsetStoredItem||Query/StoredItemToContainer||Query/StoredItemSupply != null
+    action: !type:CaptureQuery
+      capture: Query/OffsetStoredItem||Query/StoredItemToContainer||Query/StoredItemSupply
       targetKey: StoringTarget
     effects:
+      StoredRemoved: false
       StoringType: Item
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: OffsetStoredCrate
-    actions:
-    - !type:SearchQuery
-      query: OffsetStoredCrate
-      targetKey: StoringTarget
-    - !type:RemoveFromStock
+    - Query/OffsetStoredCrate||Query/StoredCrateSupply != null
+    action: !type:CaptureQuery
+      capture: Query/OffsetStoredCrate||Query/StoredCrateSupply
       targetKey: StoringTarget
     effects:
-      StoringType: Crate
-
-  # Move in container
-  - preconditions:
-    - !type:SearchQueryValid
-      query: StoredItemToContainer
-    actions:
-    - !type:SearchQuery
-      query: StoredItemToContainer
-      targetKey: StoringTarget
-    - !type:RemoveFromStock
-      targetKey: StoringTarget
-    effects:
-      StoringType: Item
-
-  # Supplying
-  - preconditions:
-    - !type:SearchQueryValid
-      query: StoredItemSupply
-    actions:
-    - !type:SearchQuery
-      query: StoredItemSupply
-      targetKey: StoringTarget
-    - !type:RemoveFromStock
-      targetKey: StoringTarget
-    effects:
-      StoringType: Item
-
-  - preconditions:
-    - !type:SearchQueryValid
-      query: StoredCrateSupply
-    actions:
-    - !type:SearchQuery
-      query: StoredCrateSupply
-      targetKey: StoringTarget
-    - !type:RemoveFromStock
-      targetKey: StoringTarget
-    effects:
+      StoredRemoved: false
       StoringType: Crate
 
 
   - preconditions:
+    - StoredRemoved == false
+    action: !type:RemoveFromStock
+      targetKey: StoringTarget
+    effect:
+      StoredRemoved: true
+
+  - preconditions:
+    - StoredRemoved != false
     - StoringType == Item
     actions:
     - !type:StoringItem
@@ -93,6 +55,7 @@
       TargetStored: true
 
   - preconditions:
+    - StoredRemoved != false
     - StoringType == Crate
     actions:
     - !type:StoringCrate

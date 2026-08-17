@@ -2,32 +2,21 @@
   id: Sleep
   tasks:
   - preconditions:
-    - !type:SearchQueryValid
-      query: Bed
-    action: !type:SearchQuery
-      query: Bed
-      targetKey: Bed
-    effects:
-      BedFound: true
-
-  - preconditions:
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - BedFound == true
+    - Query/Bed != null
     actions:
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:SwapToFreeHand
     - !type:InteractWith
-      targetKey: Bed
+      targetKey: Query/Bed
     effects:
       ReadyForSleep: true
 
   - preconditions:
-    - !type:SearchQueryValid
-      query: Bed
-      invert: true
+    - Query/Bed == null
     actions:
     - !type:PickAccessible
       rangeKey: IdleRange
@@ -58,7 +47,7 @@
       Rested: true
 
   - preconditions:
-    - BedFound == true
+    - Query/Bed != null
     actions:
     - !type:WakeUp
     - !type:Unbuckle
@@ -66,7 +55,7 @@
       WokeUp: true
 
   - preconditions:
-    - BedFound == null
+    - Query/Bed == null
     actions:
     - !type:WakeUp
     - !type:AddMoodEffect

@@ -52,11 +52,11 @@
   id: TakeOwnership
   goal: TakeOwnership
   verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
-  targetKey: TakeOwnershipTarget
+  targetKey: Query/TakeOwnershipTarget
   maxPerformers: 1
   conditions:
   - !type:HasSameOwner
-    targetKey: TakeOwnershipTarget
+    targetKey: Query/TakeOwnershipTarget
     invert: true
   goalType:
   - Verb
