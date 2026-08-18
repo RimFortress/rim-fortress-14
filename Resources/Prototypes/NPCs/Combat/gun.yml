@@ -24,12 +24,6 @@
 
         - !type:HTNPrimitiveTask
           preconditions:
-            - !type:BoltClosedPrecondition
-              invert: true
-          operator: !type:SwitchBoltClosedOperator
-
-        - !type:HTNPrimitiveTask
-          preconditions:
             - !type:KeyExistsPrecondition
               key: Target
           operator: !type:GunOperator

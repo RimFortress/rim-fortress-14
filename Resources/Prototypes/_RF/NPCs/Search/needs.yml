@@ -61,3 +61,30 @@
     - !type:Quadratic
       slope: 1
       exponent: 0.4
+
+- type: searchQuery
+  id: Mug
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: SolutionTransfer
+    - type: Item
+  - !type:Or
+    filters:
+    - !type:DrainableSolution
+      solutionEmpty: true
+    - !type:DrainableSolution
+      reagent: Water
+      onlyReagent: true
+  - !type:InInventory
+    invert: true
+  - !type:InHands
+    invert: true
+  #- !type:Accessible
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

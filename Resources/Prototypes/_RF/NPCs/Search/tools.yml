@@ -63,9 +63,6 @@
     components:
     - type: SolutionTransfer
     - type: Item
-  - !type:DrainableSolution
-    solutionMaxLessThan: 80.0
-    invert: true
   - !type:Or
     filters:
     - !type:DrainableSolution
@@ -81,6 +78,10 @@
   - !type:Captured
     invert: true
   considerations:
+  - !type:DrainableSolutionMaxVolume
+    curves:
+    - !type:Normalize
+      saturation: 3
   - !type:TargetDistance
     curves:
     - preset: TargetDistance

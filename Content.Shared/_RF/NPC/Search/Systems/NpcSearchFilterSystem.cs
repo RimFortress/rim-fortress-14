@@ -156,7 +156,7 @@ public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSear
         SearchTrackEntry track,
         int index)
     {
-        if (!Resolve(agent, ref agent.Comp))
+        if (!Resolve(agent, ref agent.Comp, false))
             return;
 
         switch (filter.Filter(agent.Comp.State, target, Searcher))
