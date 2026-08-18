@@ -337,7 +337,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
                 || comp.User != args.SenderSession.AttachedEntity)
                 continue;
 
-            RemComp(uid, comp);
+            RemovePassiveTarget(uid);
         }
     }
 

@@ -3,12 +3,11 @@
   query: !type:ConversationInvites
   filters:
   - !type:IsAlive
-    invert: true
   - !type:Component
     components:
     - type: ConversationActor
-  - !type:IsFriendly
     invert: true
+  - !type:IsFriendly
   considerations:
   - !type:TargetDistance
     curves:
@@ -19,13 +18,13 @@
   query: !type:Owned
   filters:
   - !type:Self
-  - !type:IsAlive
     invert: true
+  - !type:IsAlive
   - !type:Component
     components:
     - type: ConversationActor
-  - !type:IsFriendly
     invert: true
+  - !type:IsFriendly
   considerations:
   - !type:TargetDistance
     curves:

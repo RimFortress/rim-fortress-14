@@ -9,9 +9,10 @@
       graph: FloorBananium
       node: BananiumFloor
     requireAll: false
-    invert: true
   - !type:Constructed
+    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:

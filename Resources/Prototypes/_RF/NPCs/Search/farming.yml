@@ -6,12 +6,13 @@
     components:
     - type: Seed
       seedId: wheat
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -24,11 +25,10 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:PlantHolder
     filled: false
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -41,13 +41,12 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:PlantHolder
     harvest: true
     dead: false
     needSharp: false
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:SamePlantCount
     curves:
@@ -66,13 +65,12 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:PlantHolder
     harvest: true
     dead: false
     sampled: false
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:SamePlantCount
     curves:
@@ -91,13 +89,12 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:PlantHolder
     harvest: true
     dead: false
     needSharp: true
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -110,13 +107,12 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:PlantHolder
     filled: true
     dead: true
     needSharp: false
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -129,13 +125,12 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:PlantHolder
     filled: true
     dead: true
     needSharp: true
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -146,6 +141,7 @@
   query: !type:Owned
   filters:
   - !type:Captured
+    invert: true
   considerations:
   - !type:Weed
     curves:
@@ -168,7 +164,6 @@
   - !type:DrainableSolution
     reagent: Water
     reagentMoreThan: 80.0
-    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -181,8 +176,8 @@
   - !type:Component
     components:
     - type: PlantHolder
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:PlantHolderWater
     curves:

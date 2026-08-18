@@ -5,17 +5,18 @@
   - !type:Component
     components:
     - type: StockpileContent
+    invert: true
   - !type:Component
     components:
     - type: Item
-    invert: true
   - !type:StockpileStorage
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -28,15 +29,16 @@
   - !type:Component
     components:
     - type: StockpileContent
+    invert: true
   - !type:Component
     components:
     - type: Pullable
     - type: EntityStorage
-    invert: true
   - !type:StockpileStorage
-    invert: true
   - !type:Pulled
+    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -51,8 +53,8 @@
     components:
     - type: StockpileContent
     - type: Item
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -66,8 +68,8 @@
     components:
     - type: StockpileContent
     - type: EntityStorage
-    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -82,14 +84,16 @@
     components:
     - type: StockpileContent
     - type: Item
-    invert: true
   - !type:StockStoredOffset
     lessThan: 0.06
+    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -104,11 +108,13 @@
     - type: StockpileContent
     - type: EntityStorage
     - type: Pullable
-    invert: true
   - !type:StockStoredOffset
     lessThan: 0.06
+    invert: true
   - !type:Pulled
+    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -123,17 +129,18 @@
     components:
     - type: StockpileContent
     - type: Item
-    invert: true
   - !type:StockpileStorage
     storedInContainer: true
+    invert: true
   - !type:StockpileStorage
     moveToContainer: true
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -148,15 +155,15 @@
     components:
     - type: StockpileContent
     - type: Item
-    invert: true
   - !type:StockpileStorage
     supplyingOnly: true
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -171,12 +178,12 @@
     - type: StockpileContent
     - type: EntityStorage
     - type: Pullable
-    invert: true
   - !type:StockpileStorage
     supplyingOnly: true
-    invert: true
   - !type:Pulled
+    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -190,10 +197,8 @@
   - !type:Component
     components:
     - type: Stockpile
-    invert: true
   - !type:StockCanInsert
     targetKey: StoringTarget
-    invert: true
   considerations:
   - !type:TargetDistance
     curves:

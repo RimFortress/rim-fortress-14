@@ -3,6 +3,7 @@
   query: !type:Owned
   filters:
   - !type:Captured
+    invert: true
   considerations:
   - !type:BuckleHealing
     curves:
@@ -16,11 +17,14 @@
   query: !type:Owned
   filters:
   - !type:IsAlive
+    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -38,11 +42,14 @@
   query: !type:Owned
   filters:
   - !type:IsAlive
+    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:

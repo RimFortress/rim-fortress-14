@@ -161,10 +161,10 @@ public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSear
 
         switch (filter.Filter(agent.Comp.State, target, Searcher))
         {
-            case false when track.FilterStage == index - 1:
+            case true when track.FilterStage == index - 1:
                 Searcher.ReportDirty(agent, protoId, index, added: new() { target });
                 break;
-            case true when track.FilterStage >= index:
+            case false when track.FilterStage >= index:
                 Searcher.ReportRejected(agent, protoId, index, new() { target });
                 break;
         }

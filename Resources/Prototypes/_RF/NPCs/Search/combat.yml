@@ -6,9 +6,9 @@
   - !type:KeyWhitelist
     targetKey: MagazineWhitelist
     passWhenNull: true
-    invert: true
   - !type:KeyWhitelist
     targetKey: MagazineBlacklist
+    invert: true
   considerations:
   - !type:Ammo
     curves:
@@ -22,11 +22,13 @@
   - !type:KeyWhitelist
     targetKey: MagazineWhitelist
     passWhenNull: true
-    invert: true
   - !type:KeyWhitelist
     targetKey: MagazineBlacklist
+    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -62,7 +64,6 @@
   - !type:Component
     components:
     - type: Gun
-    invert: true
   considerations:
   - !type:Ammo
     curves:
@@ -76,10 +77,12 @@
   - !type:Component
     components:
     - type: Gun
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -98,7 +101,6 @@
       damage:
         types:
           Slash: 0
-    invert: true
   considerations:
   - !type:MeleeDamage
     curves:
@@ -116,10 +118,12 @@
       damage:
         types:
           Slash: 0
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:

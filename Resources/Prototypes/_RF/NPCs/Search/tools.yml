@@ -5,12 +5,13 @@
   - !type:Component
     components:
     - type: Sharp
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -23,12 +24,13 @@
   - !type:HasTags
     tags:
     - Hoe
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -41,12 +43,13 @@
   - !type:HasTags
     tags:
     - PlantSampleTaker
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -60,9 +63,9 @@
     components:
     - type: SolutionTransfer
     - type: Item
-    invert: true
   - !type:DrainableSolution
     solutionMaxLessThan: 80.0
+    invert: true
   - !type:Or
     filters:
     - !type:DrainableSolution
@@ -70,12 +73,13 @@
     - !type:DrainableSolution
       reagent: Water
       onlyReagent: true
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -90,12 +94,13 @@
     - FireAxe
     - BotanyHatchet
     requireAll: false
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -108,12 +113,13 @@
   - !type:HasTags
     tags:
     - Pickaxe
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:
@@ -125,12 +131,13 @@
   filters:
   - !type:ToolQuality
     quality: Prying
-    invert: true
   - !type:InInventory
+    invert: true
   - !type:InHands
+    invert: true
   #- !type:Accessible
-  #  invert: true
   - !type:Captured
+    invert: true
   considerations:
   - !type:TargetDistance
     curves:

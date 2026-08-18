@@ -232,7 +232,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 
         for (var i = fromStage + 1; i < proto.Filters.Count; i++)
         {
-            if (proto.Filters[i].Filter(state, candidate, this))
+            if (!Filter(state, candidate, proto.Filters[i]))
             {
                 // Rejected here - rests at `stage` until this Filter (or an
                 // earlier one) reports a change for it.
