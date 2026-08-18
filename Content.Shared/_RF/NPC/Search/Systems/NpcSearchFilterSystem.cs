@@ -165,7 +165,7 @@ public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSear
                 Searcher.ReportDirty(agent, protoId, index, added: new() { target });
                 break;
             case true when track.FilterStage >= index:
-                Searcher.ReportDirty(agent, protoId, index, removed: new() { target });
+                Searcher.ReportRejected(agent, protoId, index, new() { target });
                 break;
         }
     }

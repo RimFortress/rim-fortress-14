@@ -154,6 +154,7 @@ public partial class StockpileSystem
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Tiles));
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
+        ValidateStockEntities(ent);
     }
 
     /// <summary>
@@ -188,6 +189,7 @@ public partial class StockpileSystem
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Tiles));
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
+        ValidateStockEntities(ent);
         return true;
     }
 
@@ -319,9 +321,8 @@ public partial class StockpileSystem
         if (_net.IsClient)
             RaiseNetworkEvent(new StockpileSettingUpdated(GetNetEntity(ent), protoId, max));
 
-        var old = ent.Comp.Settings.GetValueOrDefault(protoId, 0);
         ent.Comp.Settings[protoId] = max;
-        var ev = new StockSettingsChanged(ent, protoId, old, max);
+        var ev = new StockSettingsChanged(ent, protoId, current, max);
         RaiseLocalEvent(ent, ev, true);
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Settings));
         ValidateStockEntities(ent);

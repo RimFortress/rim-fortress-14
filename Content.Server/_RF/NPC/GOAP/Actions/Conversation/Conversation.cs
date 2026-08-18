@@ -86,6 +86,12 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
 
             if (result != GoapActionResult.Finished)
                 return result;
+
+            if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
+            {
+                CreateDump(ent, action, "failed to face to the target coordinates");
+                return GoapActionResult.Failed;
+            }
         }
 
         if (_moveTo.StartedUp(ent))

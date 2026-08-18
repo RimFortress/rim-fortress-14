@@ -724,7 +724,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
 
             foreach (var (inviter, (validUntil, _)) in invites)
             {
-                if (validUntil < _timing.CurTime)
+                if (validUntil > _timing.CurTime)
                     continue;
 
                 RemoveInvite(inviter, uid);

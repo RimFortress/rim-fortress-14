@@ -369,6 +369,38 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     }
 
     /// <summary>
+    /// Reported by a Filter system when a candidate that had previously
+    /// cleared filter <paramref name="stage"/> no longer does. Unlike
+    /// <see cref="ReportDirty"/>'s removed set — which fully drops a candidate
+    /// from the pipeline, meant for Query-stage systems reporting "no longer a
+    /// candidate at all" — this keeps the candidate tracked, resting right
+    /// before the rejecting filter, exactly like a fresh rejection inside
+    /// Advance. That's what lets it be picked back up later without the Query
+    /// stage having to rediscover it from scratch (e.g. a stockpile that's
+    /// full now might have room again after the next delivery).
+    /// </summary>
+    /// <param name="agent">Agent whose result may be affected.</param>
+    /// <param name="protoId">Query prototype the reporting filter belongs to.</param>
+    /// <param name="stage">Index of the filter in <see cref="SearchQueryPrototype.Filters"/> that is now rejecting.</param>
+    /// <param name="rejected">Entities that no longer clear this filter.</param>
+    [PublicAPI]
+    public void ReportRejected(
+        EntityUid agent,
+        ProtoId<SearchQueryPrototype> protoId,
+        int stage,
+        HashSet<EntityUid> rejected)
+    {
+        if (!TryComp(agent, out NpcSearcherComponent? comp) || !comp.Queries.TryGetValue(protoId, out var live))
+            return;
+
+        foreach (var uid in rejected)
+        {
+            live.Remove(uid);
+            Track(uid, agent, protoId, stage - 1, null, live);
+        }
+    }
+
+    /// <summary>
     /// Reported by a Consideration system when its own score for some
     /// entities changed, for a specific agent + query prototype. Only
     /// affects entities that already cleared every Filter — replaces just
