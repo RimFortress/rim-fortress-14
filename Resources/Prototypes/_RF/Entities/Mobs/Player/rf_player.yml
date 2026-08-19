@@ -83,6 +83,10 @@
       - SamplePlant
       - RemovePlant
       - WaterPlant
+    - name: npc-job-storing-name
+      icon: _RF/Interface/cubes-solid.svg.192dpi.png
+      tasks:
+      - Storing
   - type: NpcFactionMember
     factions:
     - RimFortress
