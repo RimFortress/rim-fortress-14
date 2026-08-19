@@ -1,17 +1,4 @@
 <controls:SearcherDebugTab
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.NPC.Search.UI"
-    xmlns:npc="clr-namespace:Content.Client._RF.NPC.UI"
-    NodeSize="350 400" MouseFilter="Pass" ZoomStep="0.05">
-    <PanelContainer StyleClasses="PanelDark"/>
-
-    <npc:DraggableScrollContainer Name="ScrollContainer"
-                                  HorizontalExpand="True"
-                                  VerticalExpand="True"
-                                  HScrollBarHidden="True"
-                                  VScrollBarHidden="True">
-        <Control Name="GraphRoot">
-            <LayoutContainer Name="NodesLayer"/>
-        </Control>
-    </npc:DraggableScrollContainer>
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.Search.UI">
 </controls:SearcherDebugTab>

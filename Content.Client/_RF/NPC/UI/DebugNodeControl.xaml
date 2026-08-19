@@ -15,7 +15,9 @@
         </Control>
         <PanelContainer StyleClasses="LowDivider"/>
 
-        <ScrollContainer Name="Content" HorizontalExpand="True" VerticalExpand="True"/>
+        <ScrollContainer Name="Content"
+                         HorizontalExpand="True" VerticalExpand="True"
+                         HScrollEnabled="False" HScrollBarHidden="False"/>
 
         <RichTextLabel Name="StatusLabel" StyleClasses="LabelSubText" Margin="5 0"/>
     </BoxContainer>

@@ -662,4 +662,8 @@ binds:
   type: State
   key: MouseLeft
   mod1: Shift
+- function: TextFind
+  type: State
+  key: F
+  mod1: Control
 # RimFortress End

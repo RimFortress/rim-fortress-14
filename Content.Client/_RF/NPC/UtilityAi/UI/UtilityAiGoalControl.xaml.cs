@@ -37,25 +37,46 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
 
         // Status
         if (current == info.ProtoId)
+        {
             StatusLabel.Text = $@"[color={StyleFortress.LightGood.ToHex()}]\[Active][/color]";
+            SearchText.Add("Active");
+        }
 
         if (info.AgentGoal)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Available][/color]";
+            SearchText.Add("Available");
+        }
 
         if (info.FallbackGoal)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Fallback][/color]";
+            SearchText.Add("Fallback");
+        }
 
         if (info.ExecutableGoal)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Orange.ToHex()}]\[Executable][/color]";
+            SearchText.Add("Executable");
+        }
 
         if (info.Cooldown != TimeSpan.Zero)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Cooldown][/color]";
+            SearchText.Add("Cooldown");
+        }
 
         if (info.Penalty != 0)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Penalty][/color]";
+            SearchText.Add("Penalty");
+        }
 
         if (info.IncumbentBonus.Length > 0)
+        {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Bonus][/color]";
+            SearchText.Add("Bonus");
+        }
 
         StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
 
@@ -63,6 +84,7 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
             return;
 
         Title.Text = $"[bold][color={proto.Color.ToHex()}]{info.ProtoId}[/color] ({info.Result:F2})[/bold]";
+        SearchText.Add(info.ProtoId);
 
         // Common
         AiUiHelper.AddLabel(CommonTab, "Name:", Loc.GetString(proto.Name));

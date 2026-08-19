@@ -147,6 +147,11 @@ namespace Content.Shared.Input
         /// NPC goals will be added to the queue rather than being applied immediately.
         /// </summary>
         public static readonly BoundKeyFunction NpcVerbGoalAddToQueue = "NpcVerbGoalAddToQueue";
+
+        /// <summary>
+        /// Used for searching within the text.
+        /// </summary>
+        public static readonly BoundKeyFunction TextFind = "TextFind";
         // RimFortress End
     }
 }

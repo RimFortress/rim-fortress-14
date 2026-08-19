@@ -25,9 +25,11 @@ public sealed partial class SearchQueryControl : DebugNodeControl
         TabContainer.SetTabVisible(FiltersTab, info.Filters.Count > 0);
         TabContainer.SetTabVisible(ConsiderationsTab, info.Considerations.Count > 0);
 
-        Title.Text = info.ProtoId;
-        SubTitle.Text = info.Results.Count.ToString();
+        Title.Text = $"[bold]{info.ProtoId}[/bold]";
+        SubTitle.Text = $"[bold]{info.Results.Count}[/bold]";
         StatusLabel.Visible = false;
+
+        SearchText = new() { info.ProtoId.Id, info.Results.Count.ToString() };
 
         // Query
         var query = AiUiHelper.AddBox(QueryTab, "Query", info.Query.Reflection.Name);

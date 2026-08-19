@@ -21,10 +21,18 @@ public partial class GoapSystem
 
     private void OnDebugInfoRequest(GoapDebugInfoRequest request, EntitySessionEventArgs args)
     {
-        if (_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug)
-            && TryGetEntity(request.Target, out var target)
-            && HasComp<GoapComponent>(target))
+        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug)
+            || !TryGetEntity(request.Target, out var target)
+            || !HasComp<GoapComponent>(target))
+            return;
+
+        if (DebugSubscriptions.GetOrNew(target.Value).Add(args.SenderSession))
+        {
             QueueDebugSend(args.SenderSession, target.Value);
+            return;
+        }
+
+        SendDebug(args.SenderSession, target.Value);
     }
 
     private void OnGoapDebugInfoSubscriptionMessage(GoapDebugInfoSubscriptionMessage msg, EntitySessionEventArgs args)

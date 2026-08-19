@@ -35,6 +35,9 @@ public sealed class GraphEdgeOverlay : Control
             if (!fromCtrl.Visible || !toCtrl.Visible)
                 continue;
 
+            if (fromCtrl.Parent != toCtrl.Parent)
+                continue;
+
             var color = _colorSettings.GetValueOrDefault((from, to), _defaultColor) * toCtrl.Modulate;
 
             // Screen position that corresponds to layout-space (0, 0), derived from the one

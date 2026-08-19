@@ -24,7 +24,6 @@ public static class AiUiHelper
             {
                 Orientation = BoxContainer.LayoutOrientation.Vertical,
                 Margin = new Thickness(0f, 1f),
-                MaxWidth = 300,
                 Children =
                 {
                     new BoxContainer
@@ -69,7 +68,6 @@ public static class AiUiHelper
                 {
                     Orientation = BoxContainer.LayoutOrientation.Vertical,
                     Margin = new Thickness(0f, 1f),
-                    MaxWidth = 300,
                     Children =
                     {
                         new BoxContainer
@@ -122,11 +120,7 @@ public static class AiUiHelper
         AddSeparator(parent);
         var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
         parent.AddChild(expandBox);
-        expandBox.Content.AddChild(new RichTextLabel
-        {
-            Text = text,
-            MaxWidth = 300,
-        });
+        expandBox.Content.AddChild(new RichTextLabel { Text = text });
     }
 
     public static void AddSeparator(Control parent)
@@ -150,11 +144,7 @@ public static class AiUiHelper
 
         foreach (var dump in dumps)
         {
-            box.Content.AddChild(new RichTextLabel
-            {
-                Text = dump,
-                MaxWidth = 300,
-            });
+            box.Content.AddChild(new RichTextLabel { Text = dump });
         }
     }
 

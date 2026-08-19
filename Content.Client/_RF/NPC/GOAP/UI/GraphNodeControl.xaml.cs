@@ -194,47 +194,74 @@ public sealed partial class GraphNodeControl : DebugNodeControl
 
     private void UpdateStatus()
     {
+        SearchText.Clear();
+        SearchText.Add(_graphNode.Compound ?? "Node");
+        SearchText.Add(_graphNode.Id.ToString());
+
         StatusLabel.Text = string.Empty;
         SubTitle.Text = string.Empty;
 
         if (_controller.GoapBreakpoints.Any(x => x.NodeId == _graphNode.Id))
+        {
             SubTitle.Text = $@"[color={StyleFortress.LightBad.ToHex()}]\[BP\][/color]";
+            SearchText.Add("[BP]");
+        }
 
         if (_debug?.IndexInPlan is { } index)
             SubTitle.Text = $"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]#{index}[/color]";
 
         if (_debug is { HelpGoal: true })
+        {
             StatusLabel.Text = $@"[color={StyleFortress.GoldFortress.ToHex()}]\[GOAL\][/color]";
+            SearchText.Add("[GOAL]");
+        }
 
         if (_actions?.Count > 0)
         {
             StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Aqua.ToHex()}]\[PLAN\][/color]";
 
             if (_actions.All(x => x.StartupSuccess == null))
+            {
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[START\][/color]";
+                SearchText.Add("[START]");
+            }
             else if (_actions.Any(x
                     => x.UpdateDumps.Any(y
                            => y.Result == GoapActionResult.Failed)
                        || x.StartupSuccess == false))
+            {
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.BetterViolet.ToHex()}]\[FAIL\][/color]";
+                SearchText.Add("[FAIL]");
+            }
             else if (_actions.Any(x
                     => x.StartupSuccess == null || x.UpdateDumps.Any(y
                         => y.Result == GoapActionResult.Continuing)))
+            {
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[CONT\][/color]";
+                SearchText.Add("[CONT]");
+            }
             else if (_actions.Count > 0
                      && _actions.All(x
                          => x.UpdateDumps.Any(y
                              => y.Result == GoapActionResult.Finished)))
+            {
                 StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[FINISH\][/color]";
+                SearchText.Add("[FINISH]");
+            }
         }
         else
         {
-            StatusLabel.Text = _debug?.PreconditionsMet switch
+            switch (_debug?.PreconditionsMet)
             {
-                false => $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NOT MET\][/color]",
-                true => $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[MET\][/color]",
-                _ => StatusLabel.Text,
-            };
+                case true:
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NOT MET\][/color]";
+                    SearchText.Add("[NOT MET]");
+                    break;
+                case false:
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[MET\][/color]";
+                    SearchText.Add("[MET]");
+                    break;
+            }
         }
 
         SubTitle.Text = $"[bold]{SubTitle.Text.Trim()}[/bold]";
