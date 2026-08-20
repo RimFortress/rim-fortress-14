@@ -65,7 +65,7 @@ public sealed class DrainableSolutionFilterSystem : NpcSearchFilterSystem<Draina
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<SearchTrackedComponent, SolutionChangedEvent>();
+        SubscribeLocalEvent<SearchTrackedComponent, SolutionChangedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, DrainableSolution filter)

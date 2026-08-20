@@ -23,17 +23,12 @@ public sealed partial class KeyWhitelist : BaseSearchFilter<KeyWhitelist>
     public bool PassWhenNull;
 }
 
-public sealed class KeyWhitelistFilterSystem : NpcSearchFilterSystem<KeyWhitelist>
+public sealed class KeyWhitelistFilterSystem : NpcSearchGoapKeyFilterSystem<KeyWhitelist, EntityWhitelist>
 {
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeAgentDirty<GoapStateValueSet<EntityWhitelist>>();
-        SubscribeAgentDirty<GoapStateValueRemove<EntityWhitelist>>();
-    }
+    protected override HashSet<StateKey<EntityWhitelist>> GetSubscribeKeys(KeyWhitelist filter)
+        => new() { filter.TargetKey };
 
     protected override bool Filter(GoapState state, EntityUid target, KeyWhitelist filter)
         => !Goap.TryGetValue(state, filter.TargetKey, out var whitelist)

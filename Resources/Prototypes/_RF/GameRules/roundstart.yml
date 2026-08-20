@@ -6,7 +6,6 @@
     rootTask: Idle
   - type: UtilityAi
     goals:
-    - Idle
     # Needs
     - Sleep
     - Eat
@@ -15,8 +14,6 @@
     - AcceptConversationInvite
     - Conversation
     # Executables
-    - Construction
-    - Deconstruct
     - Dig
     - Chop
     - TakeOwnership
@@ -28,6 +25,12 @@
     - SamplePlant
     - RemovePlant
     - WaterPlant
+    # Crafting
+    - Construction
+    - Deconstruct
+    - Cooking
+    # Other
+    - Idle
     - Storing
   - type: NpcFactionMember
     factions:

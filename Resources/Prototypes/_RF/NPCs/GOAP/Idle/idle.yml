@@ -1,24 +1,28 @@
 - type: goapCompound
   id: Idle
   tasks:
-  - proto: Sleep
-  - proto: MoveTo
   - proto: Utility
-  - proto: Pickup
-  - proto: Eat
-  - proto: Drink
-  - proto: Building
   - proto: Dig
+  - proto: Chop
+  - proto: Farming
+  - proto: Storing
+  # Executables
+  - proto: MoveTo
+  - proto: Pry
+  - proto: Pickup
   - proto: TakeOwnership
   - proto: Interact
-  - proto: Pry
-  - proto: Chop
   - proto: Combat
   - proto: InventoryStorage
   - proto: Drop
-  - proto: Farming
+  # Needs
+  - proto: Sleep
+  - proto: Eat
+  - proto: Drink
   - proto: Conversation
-  - proto: Storing
+  # Crafting
+  - proto: Building
+  - proto: Workshop
 
   - preconditions:
     - InContainer == false

@@ -412,7 +412,9 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     public void SetValue<T>(GoapState state, StateKey<T> key, T value) where T : notnull
     {
         state.SetValue(key, value);
-        RaiseLocalEvent(state.GetValue(GoapState.Owner), new GoapStateValueSet<T>(key, value));
+        var owner = Owner(state);
+        var ev = new GoapStateValueSet<T>(owner, key, value);
+        RaiseLocalEvent(owner, ref ev, true);
     }
 
     /// <inheritdoc cref="GoapState.SetValue"/>
@@ -436,7 +438,9 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (!state.Remove(key, out value))
             return false;
 
-        RaiseLocalEvent(state.GetValue(GoapState.Owner), new GoapStateValueSet<T>(key, value));
+        var owner = Owner(state);
+        var ev = new GoapStateValueRemove<T>(owner, key, value);
+        RaiseLocalEvent(owner, ref ev, true);
         return true;
     }
 

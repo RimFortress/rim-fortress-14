@@ -48,8 +48,8 @@ public sealed class CanInsertInStockSearchFilterSystem : NpcSearchFilterSystem<S
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<StockEntityInserted>();
-        SubscribeTrackedDirty<StockEntityRemoved>();
+        SubscribeLocalEvent<SearchTrackedComponent, StockEntityInserted>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, StockEntityRemoved>((ent, ref _) => DirtyFilter(ent.Owner));
         SubscribeLocalEvent<StockSettingsChanged>(OnStockSettingsChanged);
     }
 

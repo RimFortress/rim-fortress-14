@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Inventory;
 using Content.Shared.Inventory.Events;
@@ -29,10 +30,10 @@ public sealed class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<GotEquippedEvent>();
-        SubscribeTrackedDirty<GotUnequippedEvent>();
-        SubscribeTrackedDirty<EntGotInsertedIntoContainerMessage>();
-        SubscribeTrackedDirty<EntGotRemovedFromContainerMessage>();
+        SubscribeLocalEvent<SearchTrackedComponent, GotEquippedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, GotUnequippedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, EntGotInsertedIntoContainerMessage>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, EntGotRemovedFromContainerMessage>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, InInventory filter)

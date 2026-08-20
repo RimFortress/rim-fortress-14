@@ -50,7 +50,6 @@
     - Interact
     #- Heal
     - Chop
-    #- Cook
     - InventoryStorage
     - Drop
     - Plant
@@ -87,6 +86,10 @@
       icon: _RF/Interface/cubes-solid.svg.192dpi.png
       tasks:
       - Storing
+    - name: npc-job-cooking-name
+      icon: _RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
+      tasks:
+      - Cooking
   - type: NpcFactionMember
     factions:
     - RimFortress

@@ -2,6 +2,7 @@ using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 
 namespace Content.Server._RF.NPC.Search.Filters;
@@ -19,7 +20,7 @@ public sealed partial class ConstructedFilterSystem : NpcSearchFilterSystem<Cons
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<ConstructionPathfindingUpdated>();
+        SubscribeLocalEvent<SearchTrackedComponent, ConstructionPathfindingUpdated>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, Constructed filter)

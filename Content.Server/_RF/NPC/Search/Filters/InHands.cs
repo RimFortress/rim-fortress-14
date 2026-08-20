@@ -1,6 +1,7 @@
 using System.Linq;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Hands;
 using Content.Shared.Hands.Components;
@@ -29,8 +30,8 @@ public sealed class InHandsSystem : NpcSearchFilterSystem<InHands>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<GotEquippedHandEvent>();
-        SubscribeTrackedDirty<GotUnequippedHandEvent>();
+        SubscribeLocalEvent<SearchTrackedComponent, GotEquippedHandEvent>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, GotUnequippedHandEvent>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, InHands filter)

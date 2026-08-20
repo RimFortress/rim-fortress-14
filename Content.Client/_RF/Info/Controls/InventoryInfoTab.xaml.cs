@@ -130,6 +130,9 @@ public sealed partial class InventoryInfoTab : Control, IInfoTab
 
     protected override void ExitedTree()
     {
+        if (!_setup)
+            return;
+
         _strippable.OnUiNeedsUpdate -= UpdateInfo;
         _setup = false;
     }

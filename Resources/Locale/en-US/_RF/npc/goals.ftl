@@ -30,3 +30,5 @@ utility-ai-goal-conversation-name = Communicates
 
 utility-ai-goal-storing-name = Storing in the stock
 utility-ai-goal-fixstoredoffset-name = Fix stored offset
+
+utility-ai-goal-cooking-name = Cooking

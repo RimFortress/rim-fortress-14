@@ -41,7 +41,7 @@ public sealed class PlantHolderFilterSystem : NpcSearchFilterSystem<PlantHolder>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<PlantHolderComponent, ContactInteractionEvent>();
+        SubscribeLocalEvent<PlantHolderComponent, ContactInteractionEvent>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, PlantHolder filter)

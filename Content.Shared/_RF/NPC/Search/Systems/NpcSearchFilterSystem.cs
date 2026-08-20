@@ -169,35 +169,89 @@ public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSear
                 break;
         }
     }
+}
 
-    [PublicAPI]
-    protected void SubscribeTrackedDirty<TEvent>()
-        where TEvent : notnull
+/// <summary>
+/// A system that provides built-in logic for search filters that use GOAP state keys for searching.
+/// </summary>
+/// <typeparam name="TFilter">Search filter type.</typeparam>
+/// <typeparam name="TKey">The key type on which the filter depends.</typeparam>
+public abstract class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFilterSystem<TFilter>
+    where TFilter : BaseSearchFilter<TFilter>
+    where TKey : notnull
+{
+    private readonly
+        Dictionary<StateKey<TKey>, HashSet<ProtoId<SearchQueryPrototype>>> _types = new();
+
+    public override void Initialize()
     {
-        Subs.SubscribeLocalEvent((Entity<SearchTrackedComponent> ent, ref TEvent _) => DirtyFilter(ent.AsNullable()));
+        base.Initialize();
+
+        SubscribeLocalEvent<GoapStateValueSet<TKey>>(OnGoapSetValue);
+        SubscribeLocalEvent<GoapStateValueRemove<TKey>>(OnGoapRemoveValue);
+        Subs.ProtoReload<SearchQueryPrototype>(Proto, ReloadPrototypes);
+
+        ReloadPrototypes();
     }
 
-    [PublicAPI]
-    protected void SubscribeTrackedDirty<TComp, TEvent>()
-        where TComp : Component
-        where TEvent : notnull
+    private void ReloadPrototypes()
     {
-        Subs.SubscribeLocalEvent((Entity<TComp> ent, ref TEvent _) => DirtyFilter(ent.Owner));
+        _types.Clear();
+
+        foreach (var proto in Proto.EnumeratePrototypes<SearchQueryPrototype>())
+        {
+            foreach (var f in proto.Filters)
+            {
+                if (f is not TFilter filter)
+                    continue;
+
+                foreach (var key in GetSubscribeKeys(filter))
+                {
+                    if (!_types.TryAdd(key, new() { proto }))
+                        _types[key].Add(proto);
+                }
+            }
+        }
     }
 
-    [PublicAPI]
-    protected void SubscribeAgentDirty<TEvent>()
-        where TEvent : notnull
+    private void OnGoapSetValue(ref GoapStateValueSet<TKey> ev)
     {
-        Subs.SubscribeLocalEvent((Entity<NpcSearcherComponent> ent, ref TEvent _) =>
-            DirtyAgentFilter(ent.AsNullable()));
+        OnValueChanged(ev.Agent, ev.Key);
     }
 
-    [PublicAPI]
-    protected void SubscribeAgentDirty<TComp, TEvent>()
-        where TComp : Component
-        where TEvent : notnull
+    private void OnGoapRemoveValue(ref GoapStateValueRemove<TKey> ev)
     {
-        Subs.SubscribeLocalEvent((Entity<TComp> ent, ref TEvent _) => DirtyAgentFilter(ent.Owner));
+        OnValueChanged(ev.Agent, ev.Key);
     }
+
+    private void OnValueChanged(EntityUid agentUid, StateKey<TKey> key)
+    {
+        if (!HasComp<NpcSearcherComponent>(agentUid)
+            || !_types.TryGetValue(key, out var prototypes)
+            || !GoapQuery.TryComp(agentUid, out var goap))
+            return;
+
+        var agent = new Entity<GoapComponent?>(agentUid, goap);
+
+        var enumerator = EntityQueryEnumerator<SearchTrackedComponent>();
+        while (enumerator.MoveNext(out var uid, out var comp))
+        {
+            foreach (var protoId in prototypes)
+            {
+                if (!SharedNpcSearcherSystem.TryGetTracker(comp, (agentUid, protoId), out var tracker)
+                    || !FilterPrototypes.TryGetValue(protoId, out var filters))
+                    continue;
+
+                foreach (var (index, filter) in filters)
+                {
+                    DirtyFilter(agent, protoId, uid, filter, tracker, index);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns a list of keys on which this filter depends.
+    /// </summary>
+    protected abstract HashSet<StateKey<TKey>> GetSubscribeKeys(TFilter filter);
 }

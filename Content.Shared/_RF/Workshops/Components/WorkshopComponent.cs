@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared._RF.Workshops.Systems;
+using Content.Shared.DoAfter;
 using Content.Shared.Item;
 using Robust.Shared.Audio;
 using Robust.Shared.Containers;
@@ -10,7 +11,7 @@ using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Workshops.Components;
 
-[Access(typeof(SharedWorkshopSystem))]
+[Access(typeof(WorkshopSystem))]
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
 public sealed partial class WorkshopComponent : Component
 {
@@ -122,7 +123,26 @@ public sealed partial class WorkshopComponent : Component
     [ViewVariables]
     public EntityUid? PlayingStream;
 
-    public bool Crafting => Queue.Crafting;
+    [ViewVariables]
+    public bool Crafting => CraftingDoAfter != null;
+
+    /// <summary>
+    /// The user who currently occupies the workshop.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? User;
+
+    /// <summary>
+    /// ID of a delayed crafting interaction in the workshop.
+    /// </summary>
+    [ViewVariables]
+    public DoAfterId? CraftingDoAfter;
+
+    /// <summary>
+    /// Entities currently being used to create the recipe.
+    /// </summary>
+    [ViewVariables]
+    public HashSet<EntityUid> CraftingIngredients = new();
 }
 
 [Serializable, NetSerializable]

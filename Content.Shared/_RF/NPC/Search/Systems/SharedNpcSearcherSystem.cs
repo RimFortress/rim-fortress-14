@@ -559,9 +559,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     /// <param name="user">User entity.</param>
     /// <returns>True, if the result is successfully captured.</returns>
     [PublicAPI]
-    public bool CaptureResult(
-        Entity<SearchTrackedComponent?> ent,
-        EntityUid user)
+    public bool CaptureResult(Entity<SearchTrackedComponent?> ent, EntityUid user)
     {
         if (!Resolve(ent, ref ent.Comp))
             return false;
@@ -574,6 +572,19 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
         return true;
     }
 
+    /// <inheritdoc cref="CaptureResult(Entity{SearchTrackedComponent?}, EntityUid)"/>
+    [PublicAPI]
+    public void CaptureResult(IEnumerable<EntityUid>? entities, EntityUid user)
+    {
+        if (entities == null)
+            return;
+
+        foreach (var uid in entities)
+        {
+            CaptureResult(uid, user);
+        }
+    }
+
     /// <summary>
     /// Releases the search result captured by the user.
     /// </summary>
@@ -581,9 +592,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     /// <param name="user">User entity.</param>
     /// <returns>True if the result is successfully released.</returns>
     [PublicAPI]
-    public bool ReleaseCapturedResult(
-        Entity<SearchTrackedComponent?> ent,
-        EntityUid user)
+    public bool ReleaseCapturedResult(Entity<SearchTrackedComponent?> ent, EntityUid user)
     {
         if (!Resolve(ent, ref ent.Comp, false))
             return false;
@@ -594,6 +603,19 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
         var ev = new SearchResultReleased(user);
         RaiseLocalEvent(ent, ev);
         return true;
+    }
+
+    /// <inheritdoc cref="ReleaseCapturedResult(Entity{SearchTrackedComponent?}, EntityUid)"/>
+    [PublicAPI]
+    public void ReleaseCapturedResult(IEnumerable<EntityUid>? entities, EntityUid user)
+    {
+        if (entities == null)
+            return;
+
+        foreach (var uid in entities)
+        {
+            ReleaseCapturedResult(uid, user);
+        }
     }
 
     /// <summary>

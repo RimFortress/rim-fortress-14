@@ -1,0 +1,30 @@
+- type: utilityAiGoal
+  id: Cooking
+  color: "#9D6280"
+  scoreCurves:
+  - !type:SkillLevel
+    skill: Cooking
+  - div:
+    - float: 3
+  - add:
+    - !type:WorkshopRecipesCount
+      tables:
+      - AllKitchenRecipesTable
+    - !type:Normalize
+      saturation: 2
+    - div:
+      - !type:GoalPerformers
+        goal: Cooking
+      - minus:
+        - float: 1
+      - clamp:
+          min: 1
+          max: 4
+    - mul:
+      - float: 0.50
+  incumbentBonus:
+  - add: [float: 0.05]
+  - mul: [float: 1.10]
+  goalState:
+    Workshop: Kitchen
+    CraftingFinished: true

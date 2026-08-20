@@ -1,5 +1,7 @@
 using System.Linq;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
@@ -8,6 +10,7 @@ using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Construction.EntitySystems;
 using Content.Shared.Destructible;
+using Content.Shared.DoAfter;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
 using Content.Shared.Item;
@@ -20,15 +23,15 @@ using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.Workshops.Systems;
 
-public abstract partial class SharedWorkshopSystem : EntitySystem
+public sealed partial class WorkshopSystem : EntitySystem
 {
-    [Dependency] protected readonly SharedSolutionContainerSystem Solution = default!;
-    [Dependency] protected readonly SharedContainerSystem Container = default!;
-    [Dependency] protected readonly OwnershipSystem Ownership = default!;
-    [Dependency] protected readonly SharedSkillsSystem Skills = default!;
-    [Dependency] protected readonly SharedAudioSystem Audio = default!;
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly IGameTiming Timing = default!;
+    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
+    [Dependency] private readonly SharedContainerSystem _container = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private readonly SharedSkillsSystem _skills = default!;
+    [Dependency] private readonly SharedAudioSystem _audio = default!;
+    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly ContainerStockSupplierSystem _containerSupplier = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedPointLightSystem _pointLight = default!;
@@ -37,8 +40,10 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedStackSystem _stack = default!;
     [Dependency] private readonly SharedItemSystem _item = default!;
+    [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
+    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
 
-    private EntityQuery<StackComponent> _stackQuery;
+    [Dependency] private readonly EntityQuery<StackComponent> _stackQuery = default!;
 
     public override void Initialize()
     {
@@ -48,10 +53,13 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         SubscribeLocalEvent<WorkshopComponent, ContainerIsInsertingAttemptEvent>(OnInsertAttempt);
         SubscribeLocalEvent<WorkshopComponent, EntInsertedIntoContainerMessage>(OnInserted);
         SubscribeLocalEvent<WorkshopComponent, EntRemovedFromContainerMessage>(OnRemoved);
+        SubscribeLocalEvent<WorkshopComponent, InteractHandEvent>(OnInteractHand);
         SubscribeLocalEvent<WorkshopComponent, InteractUsingEvent>(OnInteractUsing, after: new[] { typeof(AnchorableSystem) });
         SubscribeLocalEvent<WorkshopComponent, BreakageEventArgs>(OnBreak);
-
+        SubscribeLocalEvent<WorkshopComponent, SearchResultCaptured>(OnCaptured);
+        SubscribeLocalEvent<WorkshopComponent, SearchResultReleased>(OnReleased);
         SubscribeLocalEvent<WorkshopComponent, AnchorStateChangedEvent>(OnAnchorChanged);
+        SubscribeLocalEvent<WorkshopComponent, WorkshopCraftingDoAfterEvent>(OnWorkshopDoAfter);
 
         Subs.BuiEvents<WorkshopComponent>(WorkshopUiKey.Key,
             subs =>
@@ -63,15 +71,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
             subs.Event<WorkshopSuspendMessage>(OnSuspend);
             subs.Event<WorkshopSuppliedStockMessage>(OnSuppliedStock);
         });
-
-        _stackQuery = GetEntityQuery<StackComponent>();
-
-        Proto.PrototypesReloaded += args =>
-        {
-            if (args.WasModified<WorkshopRecipePrototype>()
-                || args.WasModified<WorkshopRecipeGroupPrototype>())
-                ReloadPrototypes();
-        };
+        Subs.ProtoReload<WorkshopRecipePrototype, WorkshopRecipeGroupPrototype>(_proto, ReloadPrototypes);
 
         ReloadPrototypes();
     }
@@ -80,8 +80,8 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
     private void OnInit(Entity<WorkshopComponent> ent, ref ComponentInit args)
     {
-        ent.Comp.ContentStorage = Container.EnsureContainer<Container>(ent, ent.Comp.ContentContainerId);
-        ent.Comp.ResultStorage = Container.EnsureContainer<Container>(ent, ent.Comp.ResultContainerId);
+        ent.Comp.ContentStorage = _container.EnsureContainer<Container>(ent, ent.Comp.ContentContainerId);
+        ent.Comp.ResultStorage = _container.EnsureContainer<Container>(ent, ent.Comp.ResultContainerId);
         UpdateAppearance(ent.Owner);
     }
 
@@ -116,16 +116,32 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
     private void OnInserted(Entity<WorkshopComponent> ent, ref EntInsertedIntoContainerMessage args)
     {
-        if (args.Container.ID == ent.Comp.ContentContainerId && !TryStartCrafting(ent.AsNullable()))
-            UpdateAppearance(ent.AsNullable());
+        if (args.Container.ID == ent.Comp.ContentContainerId)
+        {
+            var ev = new WorkshopIngredientInserted(ent, args.Entity);
+            RaiseLocalEvent(ent, ref ev, true);
+            RaiseLocalEvent(args.Entity, ref ev, true);
 
+            TryStartCrafting(ent.AsNullable());
+        }
+
+        UpdateAppearance(ent.AsNullable());
         UpdateUi(ent.AsNullable());
     }
 
     private void OnRemoved(Entity<WorkshopComponent> ent, ref EntRemovedFromContainerMessage args)
     {
         if (args.Container.ID == ent.Comp.ContentContainerId)
+        {
+            if (ent.Comp.CraftingIngredients.Contains(args.Entity))
+                StopCrafting(ent.AsNullable());
+
+            var ev = new WorkshopIngredientRemoved(ent, args.Entity);
+            RaiseLocalEvent(ent, ref ev, true);
+            RaiseLocalEvent(args.Entity, ref ev, true);
+
             UpdateAppearance(ent.AsNullable());
+        }
 
         UpdateUi(ent.AsNullable());
     }
@@ -133,7 +149,12 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
     private void OnAnchorChanged(Entity<WorkshopComponent> ent, ref AnchorStateChangedEvent args)
     {
         if (!TerminatingOrDeleted(ent) && !args.Anchored)
-            Container.EmptyContainer(ent.Comp.ContentStorage);
+            _container.EmptyContainer(ent.Comp.ContentStorage);
+    }
+
+    private void OnInteractHand(Entity<WorkshopComponent> ent, ref InteractHandEvent args)
+    {
+        TryStartCrafting(ent.AsNullable());
     }
 
     private void OnInteractUsing(Entity<WorkshopComponent> ent, ref InteractUsingEvent args)
@@ -157,56 +178,108 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
     private void OnBreak(Entity<WorkshopComponent> ent, ref BreakageEventArgs args)
     {
-        Container.EmptyContainer(ent.Comp.ContentStorage);
+        _container.EmptyContainer(ent.Comp.ContentStorage);
+    }
+
+    private void OnCaptured(Entity<WorkshopComponent> ent, ref SearchResultCaptured args)
+    {
+        ent.Comp.User = args.User;
+        UpdateUi(ent.AsNullable());
+    }
+
+    private void OnReleased(Entity<WorkshopComponent> ent, ref SearchResultReleased args)
+    {
+        ent.Comp.User = null;
+        UpdateUi(ent.AsNullable());
+    }
+
+    private void OnWorkshopDoAfter(Entity<WorkshopComponent> ent, ref WorkshopCraftingDoAfterEvent args)
+    {
+        var workshop = ent.AsNullable();
+
+        if (args.Cancelled
+            || !TryGetUser(workshop, out var user)
+            || !_proto.Resolve(GetCurrentRecipe(workshop), out var proto))
+        {
+            StopCrafting(workshop);
+            return;
+        }
+
+        foreach (var exp in proto.SkillsUp)
+        {
+            _skills.AddExperience(user.Value, exp);
+        }
+
+        DeleteIngredients(ent.Comp, proto);
+
+        if (_skills.DoInteractionCheck(ent.Owner, user.Value) != SkillCheckResult.Fail)
+        {
+            SpawnResult(workshop, proto.Result);
+            ent.Comp.CraftingDoAfter = null;
+            AdvanceQueue(workshop);
+            return;
+        }
+
+        if (ent.Comp.CraftingFailResult != null)
+            SpawnResult(workshop, ent.Comp.CraftingFailResult.Value);
+
+        _audio.PlayPvs(ent.Comp.CraftingFailSound, workshop);
+
+        ent.Comp.CraftingDoAfter = null;
+
+        if (!TryStartCrafting(workshop))
+            StopCrafting(workshop);
+        else
+            AdvanceQueue(workshop);
     }
 
     private void OnAddToQueue(Entity<WorkshopComponent> ent, ref WorkshopAddToQueueMessage args)
     {
-        if (!Timing.IsFirstTimePredicted)
+        if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (Ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.HasOwner(ent.Owner, args.Actor))
             AddToQueue(ent.AsNullable(), args.ProtoId);
     }
 
     private void OnRemoveFromQueue(Entity<WorkshopComponent> ent, ref WorkshopRemoveFromQueueMessage args)
     {
-        if (!Timing.IsFirstTimePredicted)
+        if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (Ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.HasOwner(ent.Owner, args.Actor))
             RemoveFromQueue(ent.AsNullable(), args.Index);
     }
 
     private void OnRepeat(Entity<WorkshopComponent> ent, ref WorkshopRepeatMessage args)
     {
-        if (!Timing.IsFirstTimePredicted)
+        if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (Ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.HasOwner(ent.Owner, args.Actor))
             ToggleRepeat(ent.AsNullable(), args.Index);
     }
 
     private void OnSuspend(Entity<WorkshopComponent> ent, ref WorkshopSuspendMessage args)
     {
-        if (!Timing.IsFirstTimePredicted)
+        if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (Ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.HasOwner(ent.Owner, args.Actor))
             ToggleSuspend(ent.AsNullable(), args.Index);
     }
 
     private void OnSuppliedStock(Entity<WorkshopComponent> ent, ref WorkshopSuppliedStockMessage args)
     {
-        if (!Timing.IsFirstTimePredicted)
+        if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (!Ownership.HasOwner(ent.Owner, args.Actor)
+        if (!_ownership.HasOwner(ent.Owner, args.Actor)
             || !TryComp(ent, out ContainerStockSupplierComponent? comp))
             return;
 
         if (_stockpile.TryGetStock(args.StockId, out var stock)
-            && Ownership.HasOwner(stock.Value.Owner, args.Actor))
+            && _ownership.HasOwner(stock.Value.Owner, args.Actor))
             _containerSupplier.SetOnlySupplied(new(ent, comp), stock.Value);
         else
             _containerSupplier.ClearSupplied(new(ent, comp));
@@ -219,7 +292,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
     #endregion
 
-    protected void AdvanceQueue(Entity<WorkshopComponent?> ent)
+    private void AdvanceQueue(Entity<WorkshopComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -230,12 +303,9 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
 
         if (ent.Comp.Queue.Count == 0 || ent.Comp.Queue.Queue.All(x => x.Suspended))
         {
-            RemovePassiveTask(ent.Owner);
             StopCrafting(ent);
             return;
         }
-
-        UpdateNpcRecipe(ent.Owner);
 
         if (!TryStartCrafting(ent))
             StopCrafting(ent);
@@ -244,7 +314,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         UpdateUi(ent);
     }
 
-    protected void UpdateAppearance(Entity<WorkshopComponent?, WorkshopVisualsComponent?, AppearanceComponent?> ent)
+    private void UpdateAppearance(Entity<WorkshopComponent?, WorkshopVisualsComponent?, AppearanceComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp1, ref ent.Comp2, ref ent.Comp3, false))
             return;
@@ -253,7 +323,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         _appearance.SetData(ent, WorkshopVisualsState.Items, ent.Comp1.ContentStorage.Count, ent.Comp3);
     }
 
-    protected void UpdateAudioLoop(Entity<WorkshopComponent?> ent)
+    private void UpdateAudioLoop(Entity<WorkshopComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -261,33 +331,19 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         if (ent.Comp.Crafting && ent.Comp.PlayingStream == null)
         {
             var param = ent.Comp.LoopingSound?.Params.WithLoop(true) ?? AudioParams.Default.WithLoop(true);
-            ent.Comp.PlayingStream = Audio.PlayPvs(ent.Comp.LoopingSound, ent, param)?.Entity;
+            ent.Comp.PlayingStream = _audio.PlayPvs(ent.Comp.LoopingSound, ent, param)?.Entity;
         }
         else if (!ent.Comp.Crafting)
-            ent.Comp.PlayingStream = Audio.Stop(ent.Comp.PlayingStream);
+            ent.Comp.PlayingStream = _audio.Stop(ent.Comp.PlayingStream);
     }
 
-    protected void UpdateLight(Entity<WorkshopComponent?> ent)
+    private void UpdateLight(Entity<WorkshopComponent?> ent)
     {
         if (Resolve(ent, ref ent.Comp) && _pointLight.TryGetLight(ent, out var light))
             _pointLight.SetEnabled(ent, ent.Comp.Crafting, light);
     }
 
-    private TimeSpan GetCraftingEndTime(
-        Entity<WorkshopComponent?> ent,
-        ProtoId<WorkshopRecipePrototype> protoId)
-    {
-        if (!Resolve(ent, ref ent.Comp) || !Proto.Resolve(protoId, out var proto))
-            return TimeSpan.Zero;
-
-        if (!TryGetUser(ent, out var user))
-            return Timing.CurTime + proto.CraftingTime * ent.Comp.CraftingTimeModifier;
-
-        var delay = Skills.GetDelay(ent.Owner, user.Value, proto.CraftingTime);
-        return Timing.CurTime + delay * ent.Comp.CraftingTimeModifier;
-    }
-
-    protected void SpawnResult(Entity<WorkshopComponent?> ent, EntProtoId protoId)
+    private void SpawnResult(Entity<WorkshopComponent?> ent, EntProtoId protoId)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -297,17 +353,17 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         if (ent.Comp.Queue.Entry?.CurrentPath is { } recipe
             && _recipes.TryGetValue(protoId, out var recipes)
             && recipes.Contains(recipe))
-            Container.Insert(spawned, ent.Comp.ContentStorage, force: true);
+            _container.Insert(spawned, ent.Comp.ContentStorage, force: true);
         else
-            Container.Insert(spawned, ent.Comp.ResultStorage, force: true);
+            _container.Insert(spawned, ent.Comp.ResultStorage, force: true);
 
-        foreach (var owner in Ownership.GetOwners(ent))
+        foreach (var owner in _ownership.GetOwners(ent))
         {
-            Ownership.AddOwner(spawned, owner);
+            _ownership.AddOwner(spawned, owner);
         }
     }
 
-    protected void StopCrafting(Entity<WorkshopComponent?> ent, bool finishTask = true)
+    private void StopCrafting(Entity<WorkshopComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -315,11 +371,15 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         ent.Comp.Queue.SetEndTime(null);
         DirtyField(ent, nameof(WorkshopComponent.Queue));
 
-        if (ent.Comp.PlayingStream?.IsValid() == true)
-            Audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
+        if (TryGetUser(ent, out var user))
+            _searcher.ReleaseCapturedResult(ent.Comp.CraftingIngredients, user.Value);
 
-        if (finishTask)
-            FinishTask(ent);
+        _doAfter.Cancel(ent.Comp.CraftingDoAfter);
+        ent.Comp.CraftingDoAfter = null;
+        ent.Comp.CraftingIngredients.Clear();
+
+        if (ent.Comp.PlayingStream?.IsValid() == true)
+            _audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
 
         UpdateAudioLoop(ent);
         UpdateLight(ent);
@@ -327,7 +387,7 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
         UpdateUi(ent);
     }
 
-    protected void UpdateUi(Entity<WorkshopComponent?> ent)
+    private void UpdateUi(Entity<WorkshopComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
@@ -343,16 +403,4 @@ public abstract partial class SharedWorkshopSystem : EntitySystem
                 GetNetEntity(GetUser(ent)),
                 ent.Comp.Recipes));
     }
-
-    #region NPC
-
-    protected virtual void UpdateNpcRecipe(EntityUid uid) { }
-
-    protected virtual void AddPassiveTask(Entity<WorkshopComponent?> ent) { }
-
-    protected virtual void RemovePassiveTask(EntityUid ent) { }
-
-    protected virtual void FinishTask(Entity<WorkshopComponent?> ent) { }
-
-    #endregion
 }

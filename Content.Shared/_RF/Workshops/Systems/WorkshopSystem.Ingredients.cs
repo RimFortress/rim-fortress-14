@@ -8,7 +8,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Workshops.Systems;
 
-public abstract partial class SharedWorkshopSystem
+public sealed partial class WorkshopSystem
 {
     /// <summary>
     /// Returns all the ingredients needed to create the recipe.
@@ -20,7 +20,7 @@ public abstract partial class SharedWorkshopSystem
         ProtoId<WorkshopRecipePrototype> protoId,
         ProtoId<WorkshopRecipeTablePrototype> tableId)
     {
-        if (!Proto.Resolve(protoId, out var proto))
+        if (!_proto.Resolve(protoId, out var proto))
             return new();
 
         var ingredients = new WorkshopRecipeIngredients(proto.Ingredients);
@@ -28,7 +28,7 @@ public abstract partial class SharedWorkshopSystem
 
         foreach (var recipeId in path)
         {
-            if (!Proto.Resolve(recipeId, out var recipe))
+            if (!_proto.Resolve(recipeId, out var recipe))
                 continue;
 
             if (ingredients.Items.TryGetValue(recipe.Result, out var count))
@@ -45,7 +45,7 @@ public abstract partial class SharedWorkshopSystem
         return ingredients;
     }
 
-    protected void DeleteIngredients(WorkshopComponent comp, WorkshopRecipePrototype proto)
+    private void DeleteIngredients(WorkshopComponent comp, WorkshopRecipePrototype proto)
     {
         var ingredients = new WorkshopRecipeIngredients(proto.Ingredients);
 
@@ -63,7 +63,7 @@ public abstract partial class SharedWorkshopSystem
 
                 if (stack.Count > stackCount)
                 {
-                    _stack.SetCount(uid, stack.Count - stackCount, stack);
+                    _stack.SetCount(new(uid, stack), stack.Count - stackCount);
                     ingredients.Materials.Remove(stack.StackTypeId);
                 }
                 else
@@ -87,7 +87,7 @@ public abstract partial class SharedWorkshopSystem
                 continue;
             }
 
-            if (!Solution.TryGetDrainableSolution(uid, out var solutionEntity, out var solution))
+            if (!_solution.TryGetDrainableSolution(uid, out var solutionEntity, out var solution))
                 continue;
 
             foreach (var (reagent, _) in ingredients.Reagents)
@@ -106,7 +106,7 @@ public abstract partial class SharedWorkshopSystem
                 else
                     ingredients.Reagents[reagent] -= quant;
 
-                Solution.RemoveReagent(solutionEntity.Value, reagent, quant);
+                _solution.RemoveReagent(solutionEntity.Value, reagent, quant);
             }
         }
     }
@@ -144,7 +144,7 @@ public abstract partial class SharedWorkshopSystem
             if (_stackQuery.TryComp(uid, out var stack) && !materials.TryAdd(stack.StackTypeId, stack.Count))
                 materials[stack.StackTypeId] += stack.Count;
 
-            if (!Solution.TryGetDrainableSolution(uid, out _, out var sol))
+            if (!_solution.TryGetDrainableSolution(uid, out _, out var sol))
                 continue;
 
             foreach (var (reagent, quantity) in sol)
@@ -155,16 +155,71 @@ public abstract partial class SharedWorkshopSystem
         }
     }
 
-    protected WorkshopRecipeIngredients GetRemainingIngredients(
-        WorkshopComponent comp,
+    /// <summary>
+    /// Returns entities from the workshop container that can be used to create the target recipe.
+    /// </summary>
+    private void GetIngredientsEntities(
+        Entity<WorkshopComponent?> ent,
+        WorkshopRecipePrototype proto,
+        out HashSet<EntityUid> entities)
+    {
+        entities = new();
+
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        var ingredients = new WorkshopRecipeIngredients(proto.Ingredients);
+
+        foreach (var uid in ent.Comp.ContentStorage.ContainedEntities)
+        {
+            if (EntityManager.IsQueuedForDeletion(uid))
+                continue;
+
+            if (Prototype(uid) is { } entProto
+                && ingredients.Items.GetValueOrDefault(entProto, 0) > 0)
+            {
+                ingredients.Items[entProto]--;
+                entities.Add(uid);
+            }
+
+            if (_stackQuery.TryComp(uid, out var stack)
+                && ingredients.Materials.GetValueOrDefault(stack.StackTypeId, 0) > 0)
+            {
+                ingredients.Materials[stack.StackTypeId] -= stack.Count;
+                entities.Add(uid);
+            }
+
+            if (!_solution.TryGetDrainableSolution(uid, out _, out var sol))
+                continue;
+
+            foreach (var (reagent, quantity) in sol)
+            {
+                if (ingredients.Reagents.GetValueOrDefault(reagent.Prototype, 0) <= 0)
+                    continue;
+
+                ingredients.Reagents[reagent.Prototype] -= quantity;
+                entities.Add(uid);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns a list of remaining ingredients needed to create the target recipe.
+    /// </summary>
+    /// <param name="ent">Workshop entity.</param>
+    /// <param name="protoId">Target recipe prototype.</param>
+    [PublicAPI, Pure]
+    public WorkshopRecipeIngredients GetRemainingIngredients(
+        Entity<WorkshopComponent?> ent,
         ProtoId<WorkshopRecipePrototype> protoId)
     {
-        if (!Proto.Resolve(protoId, out var proto))
+        if (!Resolve(ent, ref ent.Comp)
+            || !_proto.Resolve(protoId, out var proto))
             return new();
 
         var ingredients = new WorkshopRecipeIngredients(proto.Ingredients);
 
-        foreach (var uid in comp.ContentStorage.ContainedEntities)
+        foreach (var uid in ent.Comp.ContentStorage.ContainedEntities)
         {
             if (EntityManager.IsQueuedForDeletion(uid))
                 continue;
@@ -187,15 +242,15 @@ public abstract partial class SharedWorkshopSystem
                 }
             }
 
-            if (Prototype(uid) is { } ent && ingredients.Items.TryGetValue(ent, out var count))
+            if (Prototype(uid) is { } entProto && ingredients.Items.TryGetValue(entProto, out var count))
             {
                 if (count <= 1)
-                    ingredients.Items.Remove(ent);
+                    ingredients.Items.Remove(entProto);
                 else
-                    ingredients.Items[ent]--;
+                    ingredients.Items[entProto]--;
             }
 
-            if (!Solution.TryGetDrainableSolution(uid, out _, out var solution))
+            if (!_solution.TryGetDrainableSolution(uid, out _, out var solution))
                 continue;
 
             foreach (var (reagent, _) in ingredients.Reagents)

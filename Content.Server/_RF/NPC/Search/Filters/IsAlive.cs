@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Systems;
@@ -19,7 +20,7 @@ public sealed class IsAliveSystem : NpcSearchFilterSystem<IsAlive>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<MobStateChangedEvent>();
+        SubscribeLocalEvent<SearchTrackedComponent, MobStateChangedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, IsAlive filter)

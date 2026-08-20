@@ -32,7 +32,7 @@ public sealed class TileOffsetSearchFilterSystem : NpcSearchFilterSystem<StockSt
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<StockpileContentComponent, MoveEvent>();
+        SubscribeLocalEvent<StockpileContentComponent, MoveEvent>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, StockStoredOffset filter)

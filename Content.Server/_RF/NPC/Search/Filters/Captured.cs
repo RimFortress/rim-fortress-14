@@ -2,6 +2,7 @@ using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 
 namespace Content.Server._RF.NPC.Search.Filters;
@@ -16,8 +17,8 @@ public sealed class CapturedSearchFilterSystem : NpcSearchFilterSystem<Captured>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<SearchResultCaptured>();
-        SubscribeTrackedDirty<SearchResultReleased>();
+        SubscribeLocalEvent<SearchTrackedComponent, SearchResultCaptured>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, SearchResultReleased>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, Captured filter)

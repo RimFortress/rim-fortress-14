@@ -28,8 +28,8 @@ public sealed class ToolQualityFilterSystem : NpcSearchFilterSystem<ToolQuality>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<ToolComponent, MapInitEvent>();
-        SubscribeTrackedDirty<ToolComponent, ComponentRemove>();
+        SubscribeLocalEvent<ToolComponent, MapInitEvent>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<ToolComponent, ComponentRemove>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, ToolQuality filter)

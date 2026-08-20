@@ -10,7 +10,7 @@ namespace Content.Server._RF.NPC.Search.Considerations.Chemistry;
 /// </summary>
 public sealed partial class DrainableSolutionMaxVolume : BaseSearchConsideration<DrainableSolutionMaxVolume>;
 
-public sealed class DrainableSolutionVolumeConsiderationSystem : NpcSearchConsiderationSystem<DrainableSolutionMaxVolume>
+public sealed class DrainableSolutionMaxVolumeConsiderationSystem : NpcSearchConsiderationSystem<DrainableSolutionMaxVolume>
 {
     [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
 

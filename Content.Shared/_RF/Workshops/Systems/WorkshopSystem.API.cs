@@ -1,16 +1,15 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Prototypes;
+using Content.Shared.DoAfter;
 using JetBrains.Annotations;
-using Robust.Shared.Audio;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Workshops.Systems;
 
-public abstract partial class SharedWorkshopSystem
+public sealed partial class WorkshopSystem
 {
     /// <summary>
     /// Checks if all the ingredients for the target recipe are available in the workshop.
@@ -19,7 +18,7 @@ public abstract partial class SharedWorkshopSystem
     public bool CanCraft(Entity<WorkshopComponent?> ent, ProtoId<WorkshopRecipePrototype> protoId)
     {
         if (!Resolve(ent, ref ent.Comp)
-            || !Proto.Resolve(protoId, out var proto)
+            || !_proto.Resolve(protoId, out var proto)
             || !ContainsRecipe(ent, protoId))
             return false;
 
@@ -67,7 +66,7 @@ public abstract partial class SharedWorkshopSystem
 
         while (queue.TryDequeue(out var recipe))
         {
-            if (!Proto.Resolve(recipe.Proto, out var proto))
+            if (!_proto.Resolve(recipe.Proto, out var proto))
                 continue;
 
             if (recipes.Count <= recipe.Depth)
@@ -106,6 +105,18 @@ public abstract partial class SharedWorkshopSystem
     }
 
     /// <summary>
+    /// Checks whether it's possible to start crafting an active recipe in the workshop right now.
+    /// </summary>
+    /// <param name="ent">Workshop entity.</param>
+    [PublicAPI]
+    public bool CanStartCraft(Entity<WorkshopComponent?> ent)
+        => Resolve(ent, ref ent.Comp, false)
+           && !ent.Comp.Crafting
+           && GetCurrentRecipe(ent) is { } proto
+           && CanCraft(ent, proto)
+           && GetUser(ent) == null;
+
+    /// <summary>
     /// Starts crafting the first item in the workshop queue, if all the required items are available.
     /// </summary>
     /// <param name="ent">Workshop entity.</param>
@@ -115,13 +126,33 @@ public abstract partial class SharedWorkshopSystem
     {
         if (!Resolve(ent, ref ent.Comp)
             || ent.Comp.Crafting
-            || ent.Comp.ResultStorage.Count >= ent.Comp.ResultCapacity
-            || GetCurrentRecipe(ent) is not { } protoId
-            || !CanCraft(ent, protoId))
+            || !_proto.TryIndex(GetCurrentRecipe(ent), out var proto)
+            || !CanCraft(ent, proto)
+            || !TryGetUser(ent, out var user))
             return false;
 
-        Audio.PlayPvs(ent.Comp.StartCraftingSound, ent);
-        ent.Comp.Queue.SetEndTime(GetCraftingEndTime(ent, protoId));
+        GetIngredientsEntities(ent, proto, out var entities);
+        var delay = _skills.GetDelay(ent.Owner, user.Value, proto.CraftingTime) * ent.Comp.CraftingTimeModifier;
+        var ev = new WorkshopCraftingDoAfterEvent
+        {
+            Recipe = proto,
+            Ingredients = GetNetEntitySet(entities),
+        };
+        var args = new DoAfterArgs(EntityManager, user.Value, delay, ev, ent, target: user)
+        {
+            BreakOnMove = true,
+            BreakOnDamage = true,
+        };
+
+        if (!_doAfter.TryStartDoAfter(args, out var id))
+            return false;
+
+        ent.Comp.CraftingDoAfter = id;
+        ent.Comp.CraftingIngredients = entities;
+        ent.Comp.Queue.SetEndTime(_timing.CurTime + delay);
+
+        _searcher.CaptureResult(entities, user.Value);
+        _audio.PlayPvs(ent.Comp.StartCraftingSound, ent);
         DirtyField(ent, nameof(WorkshopComponent.Queue));
         UpdateAudioLoop(ent);
         UpdateLight(ent);
@@ -147,13 +178,14 @@ public abstract partial class SharedWorkshopSystem
         ent.Comp.Queue.Add(protoId, GetRecipePath(protoId, ent.Comp.Recipes));
         DirtyField(ent, nameof(WorkshopComponent.Queue));
 
-        AddPassiveTask(ent);
-
         if (!ent.Comp.Crafting)
             TryStartCrafting(ent);
 
         UpdateAppearance(ent);
         UpdateUi(ent);
+
+        var ev = new WorkshopQueueAdded(ent, protoId);
+        RaiseLocalEvent(ent, ref ev, true);
         return true;
     }
 
@@ -176,13 +208,13 @@ public abstract partial class SharedWorkshopSystem
         if (removedCurrent)
             StopCrafting(ent);
 
+        var protoId = ent.Comp.Queue.Queue[index].Recipe;
+
         ent.Comp.Queue.RemoveAt(index);
         DirtyField(ent, nameof(WorkshopComponent.Queue));
 
         if (ent.Comp.Queue.Count == 0)
         {
-            RemovePassiveTask(ent);
-            FinishTask(ent);
             UpdateAppearance(ent);
             UpdateUi(ent);
             return true;
@@ -190,14 +222,15 @@ public abstract partial class SharedWorkshopSystem
 
         if (removedCurrent)
         {
-            UpdateNpcRecipe(ent.Owner);
-
             if (TryStartCrafting(ent))
                 return true;
         }
 
         UpdateAppearance(ent);
         UpdateUi(ent);
+
+        var ev = new WorkshopQueueRemoved(ent, protoId);
+        RaiseLocalEvent(ent, ref ev, true);
         return true;
     }
 
@@ -257,9 +290,6 @@ public abstract partial class SharedWorkshopSystem
         if (entry.Suspended == suspend)
             return;
 
-        if (!suspend && ent.Comp.Queue.Queue.All(x => x.Suspended))
-            AddPassiveTask(ent);
-
         entry.Suspended = suspend;
 
         if (suspend && index == ent.Comp.Queue.Index)
@@ -270,6 +300,8 @@ public abstract partial class SharedWorkshopSystem
 
         DirtyField(ent, nameof(WorkshopComponent.Queue));
         UpdateUi(ent);
+        var ev = new WorkshopRecipeSuspend(ent, entry.Recipe, suspend);
+        RaiseLocalEvent(ent, ref ev, true);
     }
 
     /// <summary>
@@ -290,19 +322,22 @@ public abstract partial class SharedWorkshopSystem
     /// <summary>
     /// Returns current workshop NPC user.
     /// </summary>
-    [PublicAPI]
-    public virtual bool TryGetUser(Entity<WorkshopComponent?> ent, [NotNullWhen(true)] out EntityUid? user)
+    [PublicAPI, Pure]
+    public bool TryGetUser(Entity<WorkshopComponent?> ent, [NotNullWhen(true)] out EntityUid? user)
     {
         user = null;
-        return false;
+
+        if (!Resolve(ent, ref ent.Comp))
+            return false;
+
+        user = ent.Comp.User;
+        return user != null;
     }
 
     /// <summary>
     /// Returns current workshop NPC user.
     /// </summary>
-    [PublicAPI]
-    public virtual EntityUid? GetUser(Entity<WorkshopComponent?> ent)
-    {
-        return null;
-    }
+    [PublicAPI, Pure]
+    public EntityUid? GetUser(Entity<WorkshopComponent?> ent)
+        => !Resolve(ent, ref ent.Comp) ? null : ent.Comp.User;
 }

@@ -7,7 +7,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Workshops.Systems;
 
-public abstract partial class SharedWorkshopSystem
+public sealed partial class WorkshopSystem
 {
     private FrozenDictionary<EntProtoId, List<ProtoId<WorkshopRecipePrototype>>> _recipes
         = new Dictionary<EntProtoId, List<ProtoId<WorkshopRecipePrototype>>>().ToFrozenDictionary();
@@ -35,7 +35,7 @@ public abstract partial class SharedWorkshopSystem
         var nullGroups = new HashSet<ProtoId<WorkshopRecipeGroupPrototype>>();
         var nullRecipes = new HashSet<ProtoId<WorkshopRecipePrototype>>();
 
-        foreach (var proto in Proto.EnumeratePrototypes<WorkshopRecipePrototype>())
+        foreach (var proto in _proto.EnumeratePrototypes<WorkshopRecipePrototype>())
         {
             if (!recipes.ContainsKey(proto.Result))
                 recipes[proto.Result] = new();
@@ -52,7 +52,7 @@ public abstract partial class SharedWorkshopSystem
                 groupRecipes[proto.Group.Value].Add(proto);
         }
 
-        foreach (var proto in Proto.EnumeratePrototypes<WorkshopRecipeGroupPrototype>())
+        foreach (var proto in _proto.EnumeratePrototypes<WorkshopRecipeGroupPrototype>())
         {
             groupsParents[proto] = proto.SubGroups.ToHashSet();
         }
@@ -112,7 +112,7 @@ public abstract partial class SharedWorkshopSystem
     [PublicAPI, Pure]
     public bool ContainsRecipe(ProtoId<WorkshopRecipeTablePrototype> protoId, ProtoId<WorkshopRecipePrototype> recipe)
     {
-        if (!Proto.Resolve(protoId, out var proto))
+        if (!_proto.Resolve(protoId, out var proto))
             return false;
 
         if (proto.Recipes.Contains(recipe))
@@ -133,12 +133,12 @@ public abstract partial class SharedWorkshopSystem
     [PublicAPI, Pure]
     public bool ContainsGroup(ProtoId<WorkshopRecipeTablePrototype> protoId, ProtoId<WorkshopRecipeGroupPrototype> group)
     {
-        if (!Proto.Resolve(protoId, out var proto))
+        if (!_proto.Resolve(protoId, out var proto))
             return false;
 
         foreach (var recipeId in proto.Recipes)
         {
-            if (Proto.Resolve(recipeId, out var recipe) && recipe.Group == group)
+            if (_proto.Resolve(recipeId, out var recipe) && recipe.Group == group)
                 return true;
         }
 
@@ -157,7 +157,7 @@ public abstract partial class SharedWorkshopSystem
     [PublicAPI, Pure]
     public HashSet<ProtoId<WorkshopRecipePrototype>> GetTableRecipes(ProtoId<WorkshopRecipeTablePrototype> tableId)
     {
-        if (!Proto.Resolve(tableId, out var proto))
+        if (!_proto.Resolve(tableId, out var proto))
             return new();
 
         var tableRecipes = new HashSet<ProtoId<WorkshopRecipePrototype>>();
@@ -181,14 +181,14 @@ public abstract partial class SharedWorkshopSystem
     [PublicAPI, Pure]
     public HashSet<ProtoId<WorkshopRecipeGroupPrototype>> GetTableGroups(ProtoId<WorkshopRecipeTablePrototype> tableId)
     {
-        if (!Proto.Resolve(tableId, out var proto))
+        if (!_proto.Resolve(tableId, out var proto))
             return new();
 
         var tableGroups = new HashSet<ProtoId<WorkshopRecipeGroupPrototype>>();
 
         foreach (var recipeId in proto.Recipes)
         {
-            if (Proto.Resolve(recipeId, out var recipe) && recipe.Group != null)
+            if (_proto.Resolve(recipeId, out var recipe) && recipe.Group != null)
                 tableGroups.Add(recipe.Group.Value);
         }
 

@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Nutrition.Components;
 using Content.Shared.Nutrition.EntitySystems;
@@ -19,8 +20,8 @@ public sealed class IsClosedSystem : NpcSearchFilterSystem<IsClosed>
     {
         base.Initialize();
 
-        SubscribeTrackedDirty<OpenableOpenedEvent>();
-        SubscribeTrackedDirty<OpenableClosedEvent>();
+        SubscribeLocalEvent<SearchTrackedComponent, OpenableOpenedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<SearchTrackedComponent, OpenableClosedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, IsClosed filter)
