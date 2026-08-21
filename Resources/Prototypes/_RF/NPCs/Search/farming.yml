@@ -6,13 +6,8 @@
     components:
     - type: Seed
       seedId: wheat
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:

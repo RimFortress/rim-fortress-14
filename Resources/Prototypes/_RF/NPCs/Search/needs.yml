@@ -18,13 +18,8 @@
   filters:
   - !type:IsAlive
     invert: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -43,13 +38,8 @@
   filters:
   - !type:IsAlive
     invert: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -77,13 +67,8 @@
     - !type:DrainableSolution
       reagent: Water
       onlyReagent: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:

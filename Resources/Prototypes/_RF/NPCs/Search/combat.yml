@@ -25,10 +25,8 @@
   - !type:KeyWhitelist
     targetKey: MagazineBlacklist
     invert: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -77,12 +75,8 @@
   - !type:Component
     components:
     - type: Gun
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -118,12 +112,8 @@
       damage:
         types:
           Slash: 0
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
