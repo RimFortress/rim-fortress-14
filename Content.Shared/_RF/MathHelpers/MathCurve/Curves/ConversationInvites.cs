@@ -25,9 +25,9 @@ public sealed class ConversationInvitesCurveSystem : MathCurveSystem<Conversatio
     [Dependency] private readonly SharedGoapSystem _goap = default!;
     [Dependency] private readonly EntityQuery<GoapComponent> _goapQuery = default!;
 
-    protected override float Curve(ConversationInvites curve, float input, EntityUid? user)
+    protected override float Curve(ConversationInvites curve, float input, MathCurveContext ctx)
     {
-        if (!_goapQuery.TryComp(user, out var goap)
+        if (!_goapQuery.TryComp(ctx.User, out var goap)
             || !_goap.TryGetValue(goap.State, GoapState.ConversationInvitesKey, out var invites))
             return 0f;
 

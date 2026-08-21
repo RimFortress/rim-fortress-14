@@ -7,9 +7,9 @@ namespace Content.Shared._RF.MathHelpers.MathCurve.Systems;
 /// </summary>
 public sealed class MathCurvesSystem : EntitySystem, IMathCurveHandler
 {
-    public float Get<T>(T curve, float input, EntityUid? user = null) where T : BaseMathCurve<T>
+    public float Get<T>(T curve, float input, MathCurveContext ctx) where T : BaseMathCurve<T>
     {
-        var ev = new MathCurveResult<T>(curve, input, 0f, user);
+        var ev = new MathCurveResult<T>(curve, input, 0f, ctx);
         RaiseLocalEvent(ref ev);
         return ev.Result;
     }
@@ -20,9 +20,14 @@ public sealed class MathCurvesSystem : EntitySystem, IMathCurveHandler
     /// <param name="curve">Mathematical curve.</param>
     /// <param name="input">Input value.</param>
     /// <param name="user">Entity for which the calculation is performed.</param>
+    /// <param name="variables">Variables that can be used when calculating the curve.</param>
     [PublicAPI, Pure]
-    public float Get(MathCurve curve, float input = 0, EntityUid? user = null)
-        => curve.Curve(input, this, user);
+    public float Get(
+        MathCurve curve,
+        float input = 0,
+        EntityUid? user = null,
+        Dictionary<string, float>? variables = null)
+        => curve.Curve(input, this, new MathCurveContext(user, variables ?? new()));
 
     /// <summary>
     /// Returns the input data sequentially curved by a set of mathematical functions.
@@ -30,14 +35,32 @@ public sealed class MathCurvesSystem : EntitySystem, IMathCurveHandler
     /// <param name="curves">Mathematical curves.</param>
     /// <param name="input">Input value.</param>
     /// <param name="user">Entity for which the calculation is performed.</param>
+    /// <param name="variables">Variables that can be used when calculating the curve.</param>
     [PublicAPI, Pure]
-    public float Get(IEnumerable<MathCurve> curves, float input = 0, EntityUid? user = null)
+    public float Get(
+        IEnumerable<MathCurve> curves,
+        float input = 0,
+        EntityUid? user = null,
+        Dictionary<string, float>? variables = null)
+        => Get(curves, input, new MathCurveContext(user, variables ?? new()));
+
+    /// <summary>
+    /// Returns the input data sequentially curved by a set of mathematical functions.
+    /// </summary>
+    /// <param name="curves">Mathematical curves.</param>
+    /// <param name="input">Input value.</param>
+    /// <param name="ctx">The context in which this mathematical curve is calculated.</param>
+    [PublicAPI, Pure]
+    public float Get(
+        IEnumerable<MathCurve> curves,
+        float input,
+        MathCurveContext ctx)
     {
         var result = input;
 
         foreach (var curve in curves)
         {
-            result = curve.Curve(result, this, user);
+            result = curve.Curve(result, this, ctx);
         }
 
         return result;
@@ -52,8 +75,8 @@ public interface IMathCurveHandler
     /// <typeparam name="T">Math curve type.</typeparam>
     /// <param name="curve">Mathematical curve.</param>
     /// <param name="input">Input value.</param>
-    /// <param name="user">Entity for which the calculation is performed.</param>
-    float Get<T>(T curve, float input, EntityUid? user = null) where T : BaseMathCurve<T>;
+    /// <param name="ctx">The context in which this mathematical curve is calculated.</param>
+    float Get<T>(T curve, float input, MathCurveContext ctx) where T : BaseMathCurve<T>;
 }
 
 /// <summary>
@@ -63,6 +86,6 @@ public interface IMathCurveHandler
 /// <param name="Curve">Mathematical curve.</param>
 /// <param name="Input">Input value.</param>
 /// <param name="Result">Result of the curve calculation.</param>
-/// <param name="User">Entity for which the calculation is performed.</param>
+/// <param name="Ctx">The context in which this mathematical curve is calculated.</param>
 [PublicAPI, ByRefEvent]
-public record struct MathCurveResult<T>(T Curve, float Input, float Result, EntityUid? User) where T : BaseMathCurve<T>;
+public record struct MathCurveResult<T>(T Curve, float Input, float Result, MathCurveContext Ctx) where T : BaseMathCurve<T>;

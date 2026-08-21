@@ -26,12 +26,12 @@ public sealed class SkillLevelSystem : MathCurveSystem<SkillLevel>
 {
     [Dependency] private readonly SharedSkillsSystem _skills = default!;
 
-    protected override float Curve(SkillLevel curve, float input, EntityUid? user)
+    protected override float Curve(SkillLevel curve, float input, MathCurveContext ctx)
     {
-        if (user == null)
+        if (ctx.User == null)
             return input;
 
-        var level = (float)_skills.GetLevel(user.Value, curve.Skill);
+        var level = (float)_skills.GetLevel(ctx.User.Value, curve.Skill);
 
         if (level == 0)
             return 0;

@@ -9,20 +9,14 @@
   id: Plant
   parent: BaseFarmingGoal
   scoreCurves:
-  - !type:SkillLevel
-    skill: Farming
-  - div: [float: 3]
-  - add:
-    - !type:SearchQueryCount
-      query: EmptyPlantHolder
-    - !type:Normalize
-    - div:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: EmptyPlantHolder
+      performersCount:
       - !type:GoalPerformers
         goal: Plant
-      - clamp:
-          min: 1
-          max: 10
-    - mul: [float: 0.50]
   capture:
   - Query/Seed
   - Query/EmptyPlantHolder
@@ -33,24 +27,14 @@
   id: Harvest
   parent: BaseFarmingGoal
   scoreCurves:
-  - !type:SkillLevel
-    skill: Farming
-  - div: [float: 3]
-  - add:
-    - !type:SearchQueryCount
-      query: HarvestPlant
-    - add:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
       - !type:SearchQueryCount
         query: SharpHarvestPlant
-    - !type:Normalize
-    - pow: [float: 2]
-    - div:
+      performersCount:
       - !type:GoalPerformers
         goal: Plant
-      - clamp:
-          min: 1
-          max: 10
-    - mul: [float: 0.50]
   capture:
   - Query/Sharp
   goalState:
@@ -60,20 +44,14 @@
   id: RemoveWeed
   parent: BaseFarmingGoal
   scoreCurves:
-  - !type:SkillLevel
-    skill: Farming
-  - div: [float: 3]
-  - add:
-    - !type:SearchQueryCount
-      query: WeedPlantHolder
-    - !type:Normalize
-    - div:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: WeedPlantHolder
+      performersCount:
       - !type:GoalPerformers
         goal: RemoveWeed
-      - clamp:
-          min: 1
-          max: 10
-    - mul: [float: 0.50]
   capture:
   - Query/Hoe
   - Query/WeedPlantHolder
@@ -84,21 +62,14 @@
   id: SamplePlant
   parent: BaseFarmingGoal
   scoreCurves:
-  - !type:SkillLevel
-    skill: Farming
-  - div: [float: 3]
-  - add:
-    - !type:SearchQueryCount
-      query: SamplePlant
-    - !type:Normalize
-    - pow: [float: 2]
-    - div:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: SamplePlant
+      performersCount:
       - !type:GoalPerformers
         goal: SamplePlant
-      - clamp:
-          min: 1
-          max: 10
-    - mul: [float: 0.50]
   capture:
   - Query/SamplePlant
   - Query/PlantSampleTaker
@@ -109,24 +80,17 @@
   id: RemovePlant
   parent: BaseFarmingGoal
   scoreCurves:
-  - !type:SkillLevel
-    skill: Farming
-  - div: [float: 3]
-  - add:
-    - !type:SearchQueryCount
-      query: DeadPlant
-    - add:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
       - !type:SearchQueryCount
-        query: SharpDeadPlant
-    - !type:Normalize
-    - pow: [float: 2]
-    - div:
+        query: DeadPlant
+      - add:
+        - !type:SearchQueryCount
+          query: SharpDeadPlant
+      performersCount:
       - !type:GoalPerformers
         goal: DeadPlant
-      - clamp:
-          min: 1
-          max: 10
-    - mul: [float: 0.50]
   capture:
   - Query/Sharp
   goalState:
@@ -136,21 +100,14 @@
   id: WaterPlant
   parent: BaseFarmingGoal
   scoreCurves:
-  - !type:SkillLevel
-    skill: Farming
-  - div: [float: 3]
-  - add:
-    - !type:SearchQueryCount
-      query: PlantWaterTarget
-    - !type:Normalize
-    - pow: [float: 2]
-    - div:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: PlantWaterTarget
+      performersCount:
       - !type:GoalPerformers
         goal: PlantWaterTarget
-      - clamp:
-          min: 1
-          max: 10
-    - mul: [float: 0.50]
   capture:
   - Query/Bucket
   - Query/WaterSource

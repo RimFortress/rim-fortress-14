@@ -29,7 +29,7 @@ public sealed class PassiveTargetsCurveSystem : MathCurveSystem<PassiveTargets>
 {
     [Dependency] private readonly SharedExecutableGoalSystem _executable = default!;
 
-    protected override float Curve(PassiveTargets curve, float input, EntityUid? user)
+    protected override float Curve(PassiveTargets curve, float input, MathCurveContext ctx)
     {
         var enumerator = EntityQueryEnumerator<PassiveGoalTargetComponent>();
         var count = 0;
@@ -39,13 +39,13 @@ public sealed class PassiveTargetsCurveSystem : MathCurveSystem<PassiveTargets>
             if (comp.Goal != curve.Goal)
                 continue;
 
-            if (!curve.CanControlOnly || user == null)
+            if (!curve.CanControlOnly || ctx.User == null)
             {
                 count++;
                 continue;
             }
 
-            if (_executable.CanControl(comp.User, user.Value))
+            if (_executable.CanControl(comp.User, ctx.User.Value))
                 count++;
         }
 

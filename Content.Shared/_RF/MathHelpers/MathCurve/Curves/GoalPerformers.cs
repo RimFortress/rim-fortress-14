@@ -28,7 +28,7 @@ public sealed class GoalPerformersCurveSystem : MathCurveSystem<GoalPerformers>
 {
     [Dependency] private readonly OwnershipSystem _ownership = default!;
 
-    protected override float Curve(GoalPerformers curve, float input, EntityUid? user)
+    protected override float Curve(GoalPerformers curve, float input, MathCurveContext ctx)
     {
         var enumerator = EntityQueryEnumerator<UtilityAiComponent>();
         var count = 0;
@@ -38,13 +38,13 @@ public sealed class GoalPerformersCurveSystem : MathCurveSystem<GoalPerformers>
             if (comp.CurrentGoal != curve.Goal)
                 continue;
 
-            if (!curve.SameOwnerOnly || user == null)
+            if (!curve.SameOwnerOnly || ctx.User == null)
             {
                 count++;
                 continue;
             }
 
-            if (_ownership.HasSameOwner(user.Value, uid))
+            if (_ownership.HasSameOwner(ctx.User.Value, uid))
                 count++;
         }
 

@@ -27,12 +27,12 @@ public sealed partial class NeedLevelSystem : MathCurveSystem<NeedLevel>
 {
     [Dependency] private readonly NeedsSystem _needs = default!;
 
-    protected override float Curve(NeedLevel curve, float input, EntityUid? user)
+    protected override float Curve(NeedLevel curve, float input, MathCurveContext ctx)
     {
-        if (user == null)
+        if (ctx.User == null)
             return float.NaN;
 
-        var value = _needs.GetValue(user.Value, curve.Need);
+        var value = _needs.GetValue(ctx.User.Value, curve.Need);
 
         if (curve.Normalize)
             return value != 0 ? value / _needs.MaxValue(curve.Need) : 0f;

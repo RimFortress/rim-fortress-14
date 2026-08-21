@@ -14,9 +14,9 @@ public sealed partial class ThirstLevel : BaseMathCurve<ThirstLevel>
 
 public sealed class ThirstLevelSystem : MathCurveSystem<ThirstLevel>
 {
-    protected override float Curve(ThirstLevel curve, float input, EntityUid? user)
+    protected override float Curve(ThirstLevel curve, float input, MathCurveContext ctx)
     {
-        if (!TryComp(user, out ThirstComponent? thirst))
+        if (!TryComp(ctx.User, out ThirstComponent? thirst))
             return 0f;
 
         if (!curve.Normalize)

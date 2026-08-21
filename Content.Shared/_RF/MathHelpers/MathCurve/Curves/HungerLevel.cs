@@ -17,9 +17,9 @@ public sealed class HungerLevelSystem : MathCurveSystem<HungerLevel>
 {
     [Dependency] private readonly HungerSystem _hunger = default!;
 
-    protected override float Curve(HungerLevel curve, float input, EntityUid? user)
+    protected override float Curve(HungerLevel curve, float input, MathCurveContext ctx)
     {
-        if (!TryComp(user, out HungerComponent? hunger))
+        if (!TryComp(ctx.User, out HungerComponent? hunger))
             return 0f;
 
         if (!curve.Normalize)

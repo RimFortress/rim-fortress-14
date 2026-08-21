@@ -4,10 +4,11 @@
   conditions:
   - InConversation == false
   scoreCurves:
-  - !type:NeedLevel
-    need: Socialization
-  - minus: [float: 1]
-  - pow: [float: 2]
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:NeedLevel
+        need: Socialization
   - add: [float: 0.01]
   # If not invites: x * 0
   - mul:
@@ -26,10 +27,11 @@
   color: "#D3D3D3"
   failPolicy: Cooldown
   scoreCurves:
-  - !type:NeedLevel
-    need: Socialization
-  - minus: [float: 1]
-  - pow: [float: 2]
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:NeedLevel
+        need: Socialization
   - div:
     - !type:ConversationInvites
       acceptedOnly: true

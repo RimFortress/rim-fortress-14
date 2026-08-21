@@ -2,28 +2,19 @@
   id: Chop
   color: "#A0522D"
   scoreCurves:
-  - !type:SkillLevel
-    skill: Woodcutting
-  - div:
-    - float: 3
-  - add:
-    - !type:PassiveTargets
-      goal: Chop
-    - !type:Normalize
-      saturation: 2
-    - pow:
-      - float: 2
-    - div:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Woodcutting
+      targetsCount:
+      - !type:PassiveTargets
+        goal: Chop
+      performersCount:
       - !type:GoalPerformers
         goal: Chop
-      - clamp:
-          min: 1
-          max: 10
-    - mul:
-      - float: 0.45
   incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
+  - preset: BaseUAIBonus
   capture:
   - Query/Axe
   - Query/ChopTarget
@@ -34,30 +25,19 @@
   id: Dig
   color: "#E36414"
   scoreCurves:
-  - !type:SkillLevel
-    skill: Mining
-  - div:
-    - float: 3
-  - add:
-    - !type:PassiveTargets
-      goal: Dig
-    - !type:Normalize
-      saturation: 2
-    - pow:
-      - float: 2
-    - div:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Mining
+      targetsCount:
+      - !type:PassiveTargets
+        goal: Dig
+      performersCount:
       - !type:GoalPerformers
         goal: Dig
-      - minus:
-        - float: 1
-      - clamp:
-          min: 1
-          max: 4
-    - mul:
-      - float: 0.45
   incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
+  - preset: BaseUAIBonus
   capture:
   - Query/Pickaxe
   - Query/DigTarget

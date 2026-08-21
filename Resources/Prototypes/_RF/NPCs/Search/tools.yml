@@ -60,7 +60,7 @@
   - !type:DrainableSolutionMaxVolume
     curves:
     - !type:Normalize
-      saturation: 3
+      saturation: [float: 3]
   - !type:TargetDistance
     curves:
     - preset: TargetDistance

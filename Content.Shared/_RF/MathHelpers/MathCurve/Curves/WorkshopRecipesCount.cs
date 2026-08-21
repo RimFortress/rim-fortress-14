@@ -22,13 +22,13 @@ public sealed class WorkshopRecipesCountMathCurveSystem : MathCurveSystem<Worksh
 {
     [Dependency] private readonly OwnershipSystem _ownership = default!;
 
-    protected override float Curve(WorkshopRecipesCount curve, float input, EntityUid? user)
+    protected override float Curve(WorkshopRecipesCount curve, float input, MathCurveContext ctx)
     {
-        if (user == null)
+        if (ctx.User == null)
             return 0f;
 
         var count = 0f;
-        var enumerator = _ownership.GetEntitiesEnumerator<WorkshopComponent>(user.Value);
+        var enumerator = _ownership.GetEntitiesEnumerator<WorkshopComponent>(ctx.User.Value);
         while (enumerator.MoveNext(out var comp))
         {
             if (!curve.Tables.Contains(comp.Recipes))

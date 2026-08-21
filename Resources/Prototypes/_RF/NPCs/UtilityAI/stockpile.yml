@@ -2,39 +2,34 @@
   id: Storing
   color: "#A16C2B"
   scoreCurves:
-  - !type:SearchQueryCount
-    query: NotStoredItem
-  - add:
-    - !type:SearchQueryCount
-      query: NotStoredCrate
-  - add:
-    - !type:SearchQueryCount
-      query: OffsetStoredItem
-  - add:
-    - !type:SearchQueryCount
-      query: OffsetStoredCrate
-  - add:
-    - !type:SearchQueryCount
-      query: StoredItemToContainer
-  - add:
-    - !type:SearchQueryCount
-      query: StoredItemSupply
-  - add:
-    - !type:SearchQueryCount
-      query: StoredCrateSupply
-  - !type:Normalize
-    saturation: 3
-  - div:
-    - !type:GoalPerformers
-      goal: Storing
-    - minus:
-      - float: 1
-    - clamp:
-        min: 1
-        max: 4
-  - mul: [float: 0.35]
+  - preset: BaseUAIScore
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: NotStoredItem
+      - add:
+        - !type:SearchQueryCount
+          query: NotStoredCrate
+      - add:
+        - !type:SearchQueryCount
+          query: OffsetStoredItem
+      - add:
+        - !type:SearchQueryCount
+          query: OffsetStoredCrate
+      - add:
+        - !type:SearchQueryCount
+          query: StoredItemToContainer
+      - add:
+        - !type:SearchQueryCount
+          query: StoredItemSupply
+      - add:
+        - !type:SearchQueryCount
+          query: StoredCrateSupply
+      performersCount:
+      - !type:GoalPerformers
+        goal: Storing
+      importance: [float: 0.35]
   incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
+  - preset: BaseUAIBonus
   goalState:
     TargetStored: true

@@ -23,8 +23,8 @@ public sealed class SearchQueryCountCurveSystem : MathCurveSystem<SearchQueryCou
 {
     [Dependency] private readonly SharedNpcSearcherSystem _npcSearcher = default!;
 
-    protected override float Curve(SearchQueryCount curve, float input, EntityUid? user)
-        => TryComp(user, out GoapComponent? goap)
-            ? _npcSearcher.GetResultsCount(user.Value, goap.State, curve.Query)
+    protected override float Curve(SearchQueryCount curve, float input, MathCurveContext ctx)
+        => TryComp(ctx.User, out GoapComponent? goap)
+            ? _npcSearcher.GetResultsCount(ctx.User.Value, goap.State, curve.Query)
             : 0f;
 }

@@ -2,28 +2,20 @@
   id: Construction
   color: "#FFFF00"
   scoreCurves:
-  - !type:SkillLevel
-    skill: Construction
-  - div:
-    - float: 3
-  - add:
-    - !type:SearchQueryCount
-      query: Construction
-    - !type:Normalize
-      saturation: 2
-    - div:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Construction
+      targetsCount:
+      - !type:SearchQueryCount
+        query: Construction
+      performersCount:
       - !type:GoalPerformers
         goal: Construction
-      - minus:
-        - float: 1
-      - clamp:
-          min: 1
-          max: 4
-    - mul:
-      - float: 0.55
+      importance: [float: 0.55]
   incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
+  - preset: BaseUAIBonus
   goalState:
     TargetConstructed: true
 

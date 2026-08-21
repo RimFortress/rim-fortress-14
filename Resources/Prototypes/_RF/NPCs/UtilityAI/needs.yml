@@ -1,11 +1,12 @@
 - type: utilityAiGoal
   id: Sleep
   scoreCurves:
-  - !type:NeedLevel
-    need: Sleep
-  - minus: [float: 1]
-  - pow:
-    - float: 4
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:NeedLevel
+        need: Sleep
+      pow: [float: 4]
   capture:
   - Query/Bed
   tempKeys:
@@ -29,19 +30,19 @@
 - type: utilityAiGoal
   id: Eat
   scoreCurves:
-  - !type:HungerLevel
-  - minus: [float: 1]
-  - pow:
-    - float: 2
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:HungerLevel
   goalState:
     FoodEaten: true
 
 - type: utilityAiGoal
   id: Drink
   scoreCurves:
-  - !type:ThirstLevel
-  - minus: [float: 1]
-  - pow:
-    - float: 2
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:ThirstLevel
   goalState:
     DrinkDrunk: true

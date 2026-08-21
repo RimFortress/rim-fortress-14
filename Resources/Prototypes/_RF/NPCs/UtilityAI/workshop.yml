@@ -2,26 +2,21 @@
   id: Cooking
   color: "#9D6280"
   scoreCurves:
-  - !type:SkillLevel
-    skill: Cooking
-  - div: [float: 3]
-  - add:
-    - !type:WorkshopRecipesCount
-      tables:
-      - AllKitchenRecipesTable
-    - !type:Normalize
-      saturation: 2
-    - div:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Cooking
+      targetsCount:
+      - !type:WorkshopRecipesCount
+        tables:
+        - AllKitchenRecipesTable
+      performersCount:
       - !type:GoalPerformers
         goal: Cooking
-      - minus: [float: 1]
-      - clamp:
-          min: 1
-          max: 4
-    - mul: [float: 0.50]
+      importance: [float: 0.50]
   incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
+  - preset: BaseUAIBonus
   goalState:
     Workshop: Kitchen
     CraftingFinished: true
