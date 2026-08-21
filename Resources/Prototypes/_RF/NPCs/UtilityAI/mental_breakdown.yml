@@ -1,0 +1,62 @@
+- type: utilityAiGoal
+  id: MentalBreakdownStart
+  scoreCurves:
+  - !type:MoodLevel
+  - minus: [float: 1]
+  - !type:Abs
+  - div: [float: 2]
+  - pow: [float: 2]
+  conditions:
+  - !type:HasMoodEffect
+    effect: MoodMentalBreakdown
+    invert: true
+  - !type:Random
+    chance: 0.1
+  goalState:
+    MentalBreakdownStarted: true
+
+- type: utilityAiGoal
+  id: MentalBreakdownSpeak
+  scoreCurves:
+  - float: 0.92
+  conditions:
+  - !type:HasMoodEffect
+    effect: MoodMentalBreakdown
+  - !type:Random
+    chance: 0.1
+  goalState:
+    MentalBreakdownSpeak: true
+
+- type: utilityAiGoal
+  id: MentalBreakdownThrow
+  scoreCurves:
+  - float: 0.92
+  conditions:
+  - !type:HasMoodEffect
+    effect: MoodMentalBreakdown
+  - !type:Random
+    chance: 0.33
+  goalState:
+    MentalBreakdownThrow: true
+
+- type: utilityAiGoal
+  id: MentalBreakdownAttack
+  scoreCurves:
+  - float: 0.92
+  conditions:
+  - !type:HasMoodEffect
+    effect: MoodMentalBreakdown
+  - !type:Random
+    chance: 0.33
+  goalState:
+    MentalBreakdownAttack: true
+
+- type: utilityAiGoal
+  id: MentalBreakdownIdle
+  scoreCurves:
+  - float: 0.91
+  conditions:
+  - !type:HasMoodEffect
+    effect: MoodMentalBreakdown
+  goalState:
+    MentalBreakdownIdle: true

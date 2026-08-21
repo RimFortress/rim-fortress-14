@@ -10,9 +10,15 @@
     - Sleep
     - Eat
     - Drink
+    # Social
     - StartConversation
     - AcceptConversationInvite
     - Conversation
+    - MentalBreakdownStart
+    - MentalBreakdownSpeak
+    - MentalBreakdownThrow
+    - MentalBreakdownAttack
+    - MentalBreakdownIdle
     # Executables
     - Dig
     - Chop
@@ -49,7 +55,6 @@
     - Interact
     #- Heal
     - Chop
-    #- Cook
     - InventoryStorage
     - Drop
     - Plant
@@ -64,8 +69,8 @@
       Critical: ColonistCriticalEvent
       Dead: ColonistDeathEvent
   - type: NotifyOnGoalGiven
-    #notifications:
-    #  MentalBreakdown: MentalBreakdown
+    notifications:
+      MentalBreakdownStart: MentalBreakdown
     #  LeaveSettlement: LeaveSettlement
 
 - type: entity

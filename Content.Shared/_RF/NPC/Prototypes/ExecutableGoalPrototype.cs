@@ -43,7 +43,7 @@ public sealed partial class ExecutableGoalPrototype : IPrototype, IInheritingPro
     /// <summary>
     /// Conditions that must be met for a goal to be issued and displayed in the Verb menu.
     /// </summary>
-    [DataField(serverOnly: true)]
+    [DataField(serverOnly: true), AlwaysPushInheritance]
     public List<GoapCondition> Conditions = new();
 
     /// <summary>

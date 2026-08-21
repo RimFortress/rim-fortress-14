@@ -10,7 +10,7 @@
       targetState: Dead
       invert: true
   scoreCurves:
-  - float: 1
+  - float: 0.90
   capture:
   - Query/AttackTarget
   goalState:

@@ -32,3 +32,9 @@ utility-ai-goal-storing-name = Storing in the stock
 utility-ai-goal-fixstoredoffset-name = Fix stored offset
 
 utility-ai-goal-cooking-name = Cooking
+
+utility-ai-goal-mentalbreakdownstart-name = Mental breakdown
+utility-ai-goal-mentalbreakdownspeak-name = Mental breakdown
+utility-ai-goal-mentalbreakdownthrow-name = Mental breakdown
+utility-ai-goal-mentalbreakdownattack-name = Mental breakdown
+utility-ai-goal-mentalbreakdownidle-name = Mental breakdown

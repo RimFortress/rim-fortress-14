@@ -325,6 +325,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     public static readonly StateKey<float> MeleeRange = "MeleeRange";
 
+    public static readonly StateKey<float> VisionRange = "VisionRange";
+
     /// <summary>
     /// Default key for storing the action queue.
     /// </summary>
@@ -428,6 +430,7 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         {InteractRange, SharedInteractionSystem.InteractionRange - 0.15f },
         {MovementRange, 0.333f},
         {MeleeRange, 1f},
+        {VisionRange, 7f},
         {ConversationInviteValidTimeKey, TimeSpan.FromSeconds(7f)},
         {ConversationRange, 2.5f},
         {PullerThrowDistance, 2f},

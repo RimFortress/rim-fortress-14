@@ -29,7 +29,7 @@ public abstract class GoapConditionSystem<T> : GoapDebugDumpSystem where T : Bas
     /// The state against which the check should be performed.
     /// It may differ from the agent's actual state.
     /// </param>
-    /// <param name="condition">GOAP condtition./</param>
+    /// <param name="condition">GOAP condition.</param>
     /// <returns>True, if the check is passed; otherwise, false</returns>
     protected abstract bool ConditionCheck(EntityUid uid, GoapState state, T condition);
 }

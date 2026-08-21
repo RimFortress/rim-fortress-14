@@ -15,6 +15,8 @@
   - minus: [float: 1]
   - !type:Abs
 
+# Utility AI
+
 - type: mathCurve
   id: BaseUAIScore
   variables:

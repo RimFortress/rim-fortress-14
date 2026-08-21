@@ -18,7 +18,7 @@ public sealed partial class SayKey : BaseGoapAction<SayKey>
     /// Whether to hide message from chat window and logs.
     /// </summary>
     [DataField]
-    public bool Hidden;
+    public bool Hidden = true;
 }
 
 public sealed class SayKeySystem : GoapActionSystem<SayKey>

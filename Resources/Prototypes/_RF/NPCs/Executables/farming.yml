@@ -1,5 +1,6 @@
 - type: executableGoal
   id: BaseFarmingGoal
+  parent: BaseExecutableGoal
   abstract: true
   verbIcon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
   maxPerformers: 1

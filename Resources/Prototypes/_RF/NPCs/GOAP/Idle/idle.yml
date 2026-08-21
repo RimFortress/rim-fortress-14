@@ -20,6 +20,7 @@
   - proto: Eat
   - proto: Drink
   - proto: Conversation
+  - proto: MentalBreakdown
   # Crafting
   - proto: Building
   - proto: Workshop

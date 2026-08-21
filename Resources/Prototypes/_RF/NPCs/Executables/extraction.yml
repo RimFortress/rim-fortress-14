@@ -1,5 +1,6 @@
 - type: executableGoal
   id: Chop
+  parent: BaseExecutableGoal
   goal: Chop
   verbIcon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   targetKey: Query/ChopTarget
@@ -15,6 +16,7 @@
 
 - type: executableGoal
   id: Dig
+  parent: BaseExecutableGoal
   goal: Dig
   verbIcon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   targetKey: Query/DigTarget

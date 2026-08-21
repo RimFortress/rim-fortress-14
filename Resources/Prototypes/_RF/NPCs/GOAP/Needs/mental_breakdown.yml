@@ -1,0 +1,56 @@
+- type: goapCompound
+  id: MentalBreakdown
+  tasks:
+  - action: !type:AddMoodEffect
+      effect: MoodMentalBreakdown
+    effects:
+      MentalBreakdownStarted: true
+
+  - action: !type:SpeakDataset
+      dataset: MentalBreakdownPhrases
+    effects:
+      MentalBreakdownSpeak: true
+
+  - preconditions:
+    - Query/NearbyItem != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/NearbyItem
+    - !type:EntityCoords
+      targetKey: Query/NearbyItem
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/NearbyItem
+    - !type:PickAccessible
+      rangeKey: VisionRadius
+    - !type:ThrowAt
+    effects:
+      MentalBreakdownThrow: true
+
+  - preconditions:
+    - ActiveHandsFree == true
+    - Query/FrendlyAttackTarget||Query/NearbyDestructible != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/FrendlyAttackTarget||Query/NearbyDestructible
+    - !type:MoveTo
+      rangeKey: MeleeRange
+    - !type:Juke
+    - !type:Melee
+      targetKey: Query/FrendlyAttackTarget||Query/NearbyDestructible
+    effects:
+      MentalBreakdownAttack: true
+
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:PickAccessible
+      rangeKey: IdleRange
+    - !type:MoveTo
+      rangeKey: InteractRange
+      findPath: false
+    effects:
+      MentalBreakdownIdle: true

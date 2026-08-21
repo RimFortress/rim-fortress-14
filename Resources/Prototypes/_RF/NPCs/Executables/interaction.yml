@@ -1,5 +1,6 @@
 - type: executableGoal
   id: Drop
+  parent: BaseExecutableGoal
   goal: Drop
   verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   selfPerform: true
@@ -10,6 +11,7 @@
 
 - type: executableGoal
   id: Interact
+  parent: BaseExecutableGoal
   goal: Interact
   verbIcon: _RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
   maxPerformers: 1
@@ -23,6 +25,7 @@
 
 - type: executableGoal
   id: InventoryStorage
+  parent: BaseExecutableGoal
   goal: InventoryStorage
   verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   targetWhitelist:
@@ -31,6 +34,7 @@
 
 - type: executableGoal
   id: PickUp
+  parent: BaseExecutableGoal
   goal: PickUp
   verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
   targetKey: PickupTarget
@@ -41,6 +45,7 @@
 
 - type: executableGoal
   id: Pry
+  parent: BaseExecutableGoal
   goal: Pry
   verbIcon: _RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
   maxPerformers: 1
@@ -50,6 +55,7 @@
 
 - type: executableGoal
   id: TakeOwnership
+  parent: BaseExecutableGoal
   goal: TakeOwnership
   verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
   targetKey: Query/TakeOwnershipTarget

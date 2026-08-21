@@ -396,12 +396,13 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
             if (_net.IsClient && IgnoreGoalsList.Contains(proto))
                 continue;
 
-            if (type != null && !proto.GoalType.HasFlag(type))
+            if (type != null && !proto.GoalType.HasFlag(type.Value))
                 continue;
 
             if (proto.GoalType.HasFlag(ExecutableGoalType.Place)
                 && controllable != null
-                && controllable.Goals.Contains(proto))
+                && controllable.Goals.Contains(proto)
+                && Goap.CheckCondition(ent, proto.Conditions))
             {
                 zeroGoals ??= new();
                 zeroGoals.Add(proto);

@@ -1,5 +1,6 @@
 - type: executableGoal
   id: Construction
+  parent: BaseExecutableGoal
   goal: Construction
   verbIcon: _RF/Interface/hammer-solid.svg.192dpi.png
   targetKey: Query/Construction
@@ -11,6 +12,7 @@
 
 - type: executableGoal
   id: Deconstruct
+  parent: BaseExecutableGoal
   goal: Deconstruct
   verbIcon: _RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
   targetKey: Query/Deconstruct

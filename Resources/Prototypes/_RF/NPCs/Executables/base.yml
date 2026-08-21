@@ -1,0 +1,7 @@
+- type: executableGoal
+  id: BaseExecutableGoal
+  abstract: true
+  conditions:
+  - !type:HasMoodEffect
+    effect: MoodMentalBreakdown
+    invert: true
