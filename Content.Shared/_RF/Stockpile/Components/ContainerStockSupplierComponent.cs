@@ -16,6 +16,6 @@ public sealed partial class ContainerStockSupplierComponent : Component
     [DataField]
     public List<string> Containers = new();
 
-    [ViewVariables, AutoNetworkedField]
+    [DataField, AutoNetworkedField]
     public HashSet<EntityUid> Supplied = new();
 }

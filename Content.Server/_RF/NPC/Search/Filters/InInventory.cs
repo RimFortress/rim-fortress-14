@@ -32,8 +32,8 @@ public sealed class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
 
         SubscribeLocalEvent<SearchTrackedComponent, GotEquippedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
         SubscribeLocalEvent<SearchTrackedComponent, GotUnequippedEvent>((ent, ref _) => DirtyFilter(ent.Owner));
-        SubscribeLocalEvent<SearchTrackedComponent, EntGotInsertedIntoContainerMessage>((ent, ref _) => DirtyFilter(ent.Owner));
-        SubscribeLocalEvent<SearchTrackedComponent, EntGotRemovedFromContainerMessage>((ent, ref _) => DirtyFilter(ent.Owner));
+        SubscribeLocalEvent<EntGotInsertedIntoContainerMessage>(ev => DirtyFilter(ev.Entity));
+        SubscribeLocalEvent<EntGotRemovedFromContainerMessage>(ev => DirtyFilter(ev.Entity));
     }
 
     protected override bool Filter(GoapState state, EntityUid target, InInventory filter)

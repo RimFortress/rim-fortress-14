@@ -5,13 +5,8 @@
   - !type:Component
     components:
     - type: Sharp
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -24,13 +19,8 @@
   - !type:HasTags
     tags:
     - Hoe
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -43,13 +33,8 @@
   - !type:HasTags
     tags:
     - PlantSampleTaker
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -62,7 +47,6 @@
   - !type:Component
     components:
     - type: SolutionTransfer
-    - type: Item
   - !type:Or
     filters:
     - !type:DrainableSolution
@@ -70,13 +54,8 @@
     - !type:DrainableSolution
       reagent: Water
       onlyReagent: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:DrainableSolutionMaxVolume
     curves:
@@ -95,13 +74,8 @@
     - FireAxe
     - BotanyHatchet
     requireAll: false
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -114,13 +88,8 @@
   - !type:HasTags
     tags:
     - Pickaxe
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -132,13 +101,8 @@
   filters:
   - !type:ToolQuality
     quality: Prying
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:

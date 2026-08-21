@@ -4,8 +4,7 @@
   scoreCurves:
   - !type:SkillLevel
     skill: Cooking
-  - div:
-    - float: 3
+  - div: [float: 3]
   - add:
     - !type:WorkshopRecipesCount
       tables:
@@ -15,13 +14,11 @@
     - div:
       - !type:GoalPerformers
         goal: Cooking
-      - minus:
-        - float: 1
+      - minus: [float: 1]
       - clamp:
           min: 1
           max: 4
-    - mul:
-      - float: 0.50
+    - mul: [float: 0.50]
   incumbentBonus:
   - add: [float: 0.05]
   - mul: [float: 1.10]

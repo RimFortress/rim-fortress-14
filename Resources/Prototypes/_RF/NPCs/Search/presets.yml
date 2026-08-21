@@ -1,0 +1,23 @@
+- type: searchFiltersPreset
+  id: Item
+  filters:
+  - !type:Component
+    components:
+    - type: Item
+  - !type:InInventory
+    invert: true
+  - !type:InHands
+    invert: true
+  - !type:Captured
+    invert: true
+
+- type: searchFiltersPreset
+  id: Pullable
+  filters:
+  - !type:Component
+    components:
+    - type: Pullable
+  - !type:Pulled
+    invert: true
+  - !type:Captured
+    invert: true

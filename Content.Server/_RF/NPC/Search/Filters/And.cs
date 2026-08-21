@@ -18,13 +18,11 @@ public sealed partial class And : BaseSearchFilter<And>, ICompositeSearchFilter
 
 public sealed class AndSystem : NpcSearchFilterSystem<And>
 {
-    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
-
     protected override bool Filter(GoapState state, EntityUid target, And filter)
     {
         foreach (var fl in filter.Filters)
         {
-            if (!fl.Filter(state, target, _searcher))
+            if (!fl.Filter(state, target, Searcher))
                 return false;
         }
 

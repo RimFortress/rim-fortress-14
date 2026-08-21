@@ -80,20 +80,21 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private void OnInit(Entity<WorkshopComponent> ent, ref ComponentInit args)
     {
-        ent.Comp.ContentStorage = _container.EnsureContainer<Container>(ent, ent.Comp.ContentContainerId);
-        ent.Comp.ResultStorage = _container.EnsureContainer<Container>(ent, ent.Comp.ResultContainerId);
+        ent.Comp.ContentStorage = _container.EnsureContainer<Container>(ent, WorkshopComponent.ContentContainerId);
+        ent.Comp.ResultStorage = _container.EnsureContainer<Container>(ent, WorkshopComponent.ResultContainerId);
         UpdateAppearance(ent.Owner);
     }
 
     private void OnInsertAttempt(Entity<WorkshopComponent> ent, ref ContainerIsInsertingAttemptEvent args)
     {
-        if (args.Container.ID == ent.Comp.ResultContainerId && ent.Comp.ResultStorage.Count >= ent.Comp.ResultCapacity)
+        if (args.Container.ID == WorkshopComponent.ResultContainerId
+            && ent.Comp.ResultStorage.Count >= ent.Comp.ResultCapacity)
         {
             args.Cancel();
             return;
         }
 
-        if (args.Container.ID != ent.Comp.ContentContainerId)
+        if (args.Container.ID != WorkshopComponent.ContentContainerId)
             return;
 
         if (TryComp<ItemComponent>(args.EntityUid, out var item))
@@ -116,7 +117,7 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private void OnInserted(Entity<WorkshopComponent> ent, ref EntInsertedIntoContainerMessage args)
     {
-        if (args.Container.ID == ent.Comp.ContentContainerId)
+        if (args.Container.ID == WorkshopComponent.ContentContainerId)
         {
             var ev = new WorkshopIngredientInserted(ent, args.Entity);
             RaiseLocalEvent(ent, ref ev, true);
@@ -131,7 +132,7 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private void OnRemoved(Entity<WorkshopComponent> ent, ref EntRemovedFromContainerMessage args)
     {
-        if (args.Container.ID == ent.Comp.ContentContainerId)
+        if (args.Container.ID == WorkshopComponent.ContentContainerId)
         {
             if (ent.Comp.CraftingIngredients.Contains(args.Entity))
                 StopCrafting(ent.AsNullable());
@@ -184,12 +185,22 @@ public sealed partial class WorkshopSystem : EntitySystem
     private void OnCaptured(Entity<WorkshopComponent> ent, ref SearchResultCaptured args)
     {
         ent.Comp.User = args.User;
-        UpdateUi(ent.AsNullable());
+        var workshop = ent.AsNullable();
+
+        // We capture the ingredients so that other AIs don't try to take them while we're crafting.
+        if (_proto.TryIndex(GetCurrentRecipe(workshop), out var proto))
+        {
+            GetIngredientsEntities(workshop, proto, out var entities);
+            _searcher.CaptureResult(entities, args.User);
+        }
+
+        UpdateUi(workshop);
     }
 
     private void OnReleased(Entity<WorkshopComponent> ent, ref SearchResultReleased args)
     {
         ent.Comp.User = null;
+        _searcher.ReleaseCapturedResult(ent.Comp.ContentStorage.ContainedEntities, args.User);
         UpdateUi(ent.AsNullable());
     }
 
@@ -287,7 +298,8 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private void UpdateUserInterface(Entity<WorkshopComponent> ent, ref BoundUIOpenedEvent args)
     {
-        UpdateUi(ent.AsNullable());
+        if (_ownership.HasOwner(ent.Owner, args.Actor))
+            UpdateUi(ent.AsNullable());
     }
 
     #endregion
@@ -341,50 +353,6 @@ public sealed partial class WorkshopSystem : EntitySystem
     {
         if (Resolve(ent, ref ent.Comp) && _pointLight.TryGetLight(ent, out var light))
             _pointLight.SetEnabled(ent, ent.Comp.Crafting, light);
-    }
-
-    private void SpawnResult(Entity<WorkshopComponent?> ent, EntProtoId protoId)
-    {
-        if (!Resolve(ent, ref ent.Comp))
-            return;
-
-        var spawned = Spawn(protoId, Transform(ent).Coordinates);
-
-        if (ent.Comp.Queue.Entry?.CurrentPath is { } recipe
-            && _recipes.TryGetValue(protoId, out var recipes)
-            && recipes.Contains(recipe))
-            _container.Insert(spawned, ent.Comp.ContentStorage, force: true);
-        else
-            _container.Insert(spawned, ent.Comp.ResultStorage, force: true);
-
-        foreach (var owner in _ownership.GetOwners(ent))
-        {
-            _ownership.AddOwner(spawned, owner);
-        }
-    }
-
-    private void StopCrafting(Entity<WorkshopComponent?> ent)
-    {
-        if (!Resolve(ent, ref ent.Comp))
-            return;
-
-        ent.Comp.Queue.SetEndTime(null);
-        DirtyField(ent, nameof(WorkshopComponent.Queue));
-
-        if (TryGetUser(ent, out var user))
-            _searcher.ReleaseCapturedResult(ent.Comp.CraftingIngredients, user.Value);
-
-        _doAfter.Cancel(ent.Comp.CraftingDoAfter);
-        ent.Comp.CraftingDoAfter = null;
-        ent.Comp.CraftingIngredients.Clear();
-
-        if (ent.Comp.PlayingStream?.IsValid() == true)
-            _audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
-
-        UpdateAudioLoop(ent);
-        UpdateLight(ent);
-        UpdateAppearance(ent);
-        UpdateUi(ent);
     }
 
     private void UpdateUi(Entity<WorkshopComponent?> ent)

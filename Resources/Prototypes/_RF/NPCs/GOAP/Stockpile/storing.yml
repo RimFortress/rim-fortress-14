@@ -3,9 +3,9 @@
   tasks:
   # Base
   - preconditions:
-    - Query/NotStoredItem != null
+    - Query/NotStoredItem||Query/WorkshopResult != null
     action: !type:CaptureQuery
-      capture: Query/NotStoredItem
+      capture: Query/NotStoredItem||Query/WorkshopResult
       targetKey: StoringTarget
     effects:
       StoringType: Item

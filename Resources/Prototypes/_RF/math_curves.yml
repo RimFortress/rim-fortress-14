@@ -5,3 +5,10 @@
     saturation: 2
   - minus: [float: 1]
   - !type:Abs
+
+- type: mathCurve
+  id: InvNormalize
+  curves:
+  - !type:Normalize
+  - minus: [float: 1]
+  - !type:Abs

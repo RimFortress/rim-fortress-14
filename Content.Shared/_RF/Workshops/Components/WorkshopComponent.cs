@@ -60,8 +60,8 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// Workshop container ID.
     /// </summary>
-    [DataField]
-    public string ContentContainerId = "workshop_entity_container";
+    [ViewVariables]
+    public const string ContentContainerId = "workshop_entity_container";
 
     /// <summary>
     /// The maximum number of items that can be stored in the workshop.
@@ -78,8 +78,8 @@ public sealed partial class WorkshopComponent : Component
     /// <summary>
     /// Workshop crafting results container ID.
     /// </summary>
-    [DataField]
-    public string ResultContainerId = "workshop_result_container";
+    [ViewVariables]
+    public const string ResultContainerId = "workshop_result_container";
 
     /// <summary>
     /// The maximum number of items that can be stored in the crafting results container.
@@ -170,9 +170,9 @@ public sealed class WorkshopSuspendMessage(int index) : BoundUserInterfaceMessag
 }
 
 [Serializable, NetSerializable]
-public sealed class WorkshopSuppliedStockMessage(NetEntity stockId) : BoundUserInterfaceMessage
+public sealed class WorkshopSuppliedStockMessage(NetEntity? stockId) : BoundUserInterfaceMessage
 {
-    public NetEntity StockId = stockId;
+    public NetEntity? StockId = stockId;
 }
 
 [Serializable, NetSerializable]

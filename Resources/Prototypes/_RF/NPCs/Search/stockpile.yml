@@ -10,13 +10,8 @@
     components:
     - type: Item
   - !type:StockpileStorage
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -32,13 +27,10 @@
     invert: true
   - !type:Component
     components:
-    - type: Pullable
     - type: EntityStorage
   - !type:StockpileStorage
-  - !type:Pulled
-    invert: true
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Pullable
   considerations:
   - !type:TargetDistance
     curves:
@@ -87,13 +79,8 @@
   - !type:StockStoredOffset
     lessThan: 0.06
     invert: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -107,14 +94,11 @@
     components:
     - type: StockpileContent
     - type: EntityStorage
-    - type: Pullable
   - !type:StockStoredOffset
     lessThan: 0.06
     invert: true
-  - !type:Pulled
-    invert: true
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Pullable
   considerations:
   - !type:TargetDistance
     curves:
@@ -134,13 +118,8 @@
     invert: true
   - !type:StockpileStorage
     moveToContainer: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -157,13 +136,8 @@
     - type: Item
   - !type:StockpileStorage
     supplyingOnly: true
-  - !type:InInventory
-    invert: true
-  - !type:InHands
-    invert: true
-  #- !type:Accessible
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Item
   considerations:
   - !type:TargetDistance
     curves:
@@ -177,13 +151,10 @@
     components:
     - type: StockpileContent
     - type: EntityStorage
-    - type: Pullable
   - !type:StockpileStorage
     supplyingOnly: true
-  - !type:Pulled
-    invert: true
-  - !type:Captured
-    invert: true
+  - !type:Preset
+    proto: Pullable
   considerations:
   - !type:TargetDistance
     curves:
@@ -206,6 +177,4 @@
   # We give priority to stockpiles at the end of the supply chain.
   - !type:StockTotalSupplied
     curves:
-    - !type:Normalize
-    - minus: [float: 1]
-    - !type:Abs
+    - preset: InvNormalize

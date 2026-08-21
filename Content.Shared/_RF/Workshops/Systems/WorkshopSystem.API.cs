@@ -340,4 +340,56 @@ public sealed partial class WorkshopSystem
     [PublicAPI, Pure]
     public EntityUid? GetUser(Entity<WorkshopComponent?> ent)
         => !Resolve(ent, ref ent.Comp) ? null : ent.Comp.User;
+
+    /// <summary>
+    /// Spawn the entity into the workshop's result container.
+    /// </summary>
+    /// <param name="ent">Workshop entity.</param>
+    /// <param name="protoId">Entity prototype to spawn.</param>
+    [PublicAPI]
+    public void SpawnResult(Entity<WorkshopComponent?> ent, EntProtoId protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        var spawned = Spawn(protoId, Transform(ent).Coordinates);
+
+        if (ent.Comp.Queue.Entry?.CurrentPath is { } recipe
+            && _recipes.TryGetValue(protoId, out var recipes)
+            && recipes.Contains(recipe))
+            _container.Insert(spawned, ent.Comp.ContentStorage, force: true);
+        else
+            _container.Insert(spawned, ent.Comp.ResultStorage, force: true);
+
+        _ownership.AddOwners(spawned, _ownership.GetOwners(ent));
+    }
+
+    /// <summary>
+    /// Stops the crafting of the current recipe in the workshop.
+    /// </summary>
+    /// <param name="ent">Workshop entity.</param>
+    [PublicAPI]
+    public void StopCrafting(Entity<WorkshopComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        ent.Comp.Queue.SetEndTime(null);
+        DirtyField(ent, nameof(WorkshopComponent.Queue));
+
+        if (TryGetUser(ent, out var user))
+            _searcher.ReleaseCapturedResult(ent.Comp.CraftingIngredients, user.Value);
+
+        _doAfter.Cancel(ent.Comp.CraftingDoAfter);
+        ent.Comp.CraftingDoAfter = null;
+        ent.Comp.CraftingIngredients.Clear();
+
+        if (ent.Comp.PlayingStream?.IsValid() == true)
+            _audio.PlayPvs(ent.Comp.CraftingDoneSound, ent);
+
+        UpdateAudioLoop(ent);
+        UpdateLight(ent);
+        UpdateAppearance(ent);
+        UpdateUi(ent);
+    }
 }
