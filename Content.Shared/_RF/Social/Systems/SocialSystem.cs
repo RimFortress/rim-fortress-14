@@ -41,9 +41,10 @@ public sealed class SocialSystem : EntitySystem
         ent.Comp.MoodEffects = state.MoodEffects;
         var opinions = new Dictionary<EntityUid, Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?>>();
 
-        foreach (var (uid, value) in state.OpinionEffects)
+        foreach (var (netUid, value) in state.OpinionEffects)
         {
-            opinions[GetEntity(uid)] = value;
+            if (TryGetEntity(netUid, out var uid))
+                opinions[uid.Value] = value;
         }
 
         ent.Comp.OpinionEffects = opinions;
@@ -55,7 +56,8 @@ public sealed class SocialSystem : EntitySystem
 
         foreach (var (uid, value) in ent.Comp.OpinionEffects)
         {
-            opinions[GetNetEntity(uid)] = value;
+            if (TryGetNetEntity(uid, out var netUid))
+                opinions[netUid.Value] = value;
         }
 
         args.State = new SocialComponentState(ent.Comp.MoodEffects, opinions);

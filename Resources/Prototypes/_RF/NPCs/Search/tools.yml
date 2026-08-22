@@ -1,48 +1,30 @@
 - type: searchQuery
   id: Sharp
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
     - type: Sharp
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: Hoe
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:HasTags
     tags:
     - Hoe
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: PlantSampleTaker
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:HasTags
     tags:
     - PlantSampleTaker
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: Bucket
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
@@ -54,56 +36,33 @@
     - !type:DrainableSolution
       reagent: Water
       onlyReagent: true
-  - !type:Preset
-    proto: Item
   considerations:
   - !type:DrainableSolutionMaxVolume
     curves:
     - !type:Normalize
       saturation: [float: 3]
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: Axe
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:HasTags
     tags:
     - FireAxe
     - BotanyHatchet
     requireAll: false
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: Pickaxe
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:HasTags
     tags:
     - Pickaxe
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: Crowbar
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:ToolQuality
     quality: Prying
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance

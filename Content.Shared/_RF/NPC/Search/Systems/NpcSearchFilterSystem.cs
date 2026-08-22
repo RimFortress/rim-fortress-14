@@ -156,10 +156,10 @@ public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSear
         SearchTrackEntry track,
         int index)
     {
-        if (!Resolve(agent, ref agent.Comp, false))
+        if (!Resolve(agent, ref agent.Comp) || !Proto.Resolve(protoId, out var proto))
             return;
 
-        switch (filter.Filter(agent.Comp.State, target, Searcher))
+        switch (proto.Filters[index].Filter(agent.Comp.State, target, Searcher))
         {
             case true when track.FilterStage == index - 1:
                 Searcher.ReportDirty(agent, protoId, index, added: new() { target });

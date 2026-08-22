@@ -27,12 +27,6 @@
 
 - type: searchQuery
   id: NearbyItem
+  parent: BaseItemQuery
   query: !type:Nearby
     range: 7
-  filters:
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance

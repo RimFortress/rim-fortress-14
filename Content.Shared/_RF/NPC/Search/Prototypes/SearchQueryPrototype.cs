@@ -1,4 +1,5 @@
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
 namespace Content.Shared._RF.NPC.Search.Prototypes;
 
@@ -6,8 +7,16 @@ namespace Content.Shared._RF.NPC.Search.Prototypes;
 /// A prototype for entity search query.
 /// </summary>
 [Prototype]
-public sealed partial class SearchQueryPrototype : IPrototype
+public sealed partial class SearchQueryPrototype : IPrototype, IInheritingPrototype
 {
+    /// <inheritdoc />
+    [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<SearchQueryPrototype>))]
+    public string[]? Parents { get; private set; }
+
+    /// <inheritdoc />
+    [AbstractDataField, NeverPushInheritance]
+    public bool Abstract { get; private set; }
+
     /// <inheritdoc/>
     [IdDataField]
     public string ID { get; private set; } = default!;
@@ -21,12 +30,12 @@ public sealed partial class SearchQueryPrototype : IPrototype
     /// <summary>
     /// Search query filters.
     /// </summary>
-    [DataField(serverOnly: true)]
+    [DataField(serverOnly: true), AlwaysPushInheritance]
     public List<SearchFilter> Filters = new();
 
     /// <summary>
     /// Search query considerations.
     /// </summary>
-    [DataField(serverOnly: true)]
+    [DataField(serverOnly: true), AlwaysPushInheritance]
     public List<SearchConsideration> Considerations = new();
 }

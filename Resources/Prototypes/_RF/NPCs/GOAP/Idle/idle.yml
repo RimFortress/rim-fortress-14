@@ -6,6 +6,7 @@
   - proto: Chop
   - proto: Farming
   - proto: Storing
+  - proto: Healing
   # Executables
   - proto: MoveTo
   - proto: Pry

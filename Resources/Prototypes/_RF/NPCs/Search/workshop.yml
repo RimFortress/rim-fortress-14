@@ -1,55 +1,39 @@
 - type: searchQuery
   id: WorkshopMaterial
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:WorkshopMaterial
     targetKey: Workshop
   - !type:InWorkshop
     invert: true
-  - !type:Preset
-    proto: Item
   considerations:
   - !type:StackCount
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: WorkshopItem
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:WorkshopItem
     targetKey: Workshop
   - !type:InWorkshop
     invert: true
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: WorkshopReagent
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:WorkshopReagent
     targetKey: Workshop
   - !type:InWorkshop
     invert: true
-  - !type:Preset
-    proto: Item
   considerations:
   - !type:DrainableSolutionVolume
     curves:
     - !type:Normalize
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: WorkshopResult
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:ContainingContainer
     containerId: workshop_result_container
@@ -57,18 +41,12 @@
       components:
       - ContainerStockSupplier
   - !type:StockpileStorage
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 # Workshops
 
 - type: searchQuery
   id: KitchenWorkshop
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:WorkshopActiveRecipe
   - !type:WorkshopRecipe
@@ -76,12 +54,6 @@
     - AllKitchenRecipesTable
   - !type:WorkshopCanStartCraft
     invert: true
-  - !type:Captured
-    invert: true
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: KitchenWorkshopReady

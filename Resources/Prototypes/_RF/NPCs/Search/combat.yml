@@ -16,6 +16,7 @@
 
 - type: searchQuery
   id: NearbyMagazine
+  parent: BaseItemQuery
   query: !type:Nearby
     range: 7
   filters:
@@ -25,12 +26,7 @@
   - !type:KeyWhitelist
     targetKey: MagazineBlacklist
     invert: true
-  - !type:Preset
-    proto: Item
   considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
   - !type:Ammo
     curves:
     - !type:Quadratic
@@ -69,18 +65,14 @@
 
 - type: searchQuery
   id: NearbyGuns
+  parent: BaseItemQuery
   query: !type:Nearby
     range: 7
   filters:
   - !type:Component
     components:
     - type: Gun
-  - !type:Preset
-    proto: Item
   considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
   - !type:Ammo
     curves:
     - !type:Quadratic
@@ -103,6 +95,7 @@
 
 - type: searchQuery
   id: NearbyMelees
+  parent: BaseItemQuery
   query: !type:Nearby
     range: 7
   filters:
@@ -112,12 +105,7 @@
       damage:
         types:
           Slash: 0
-  - !type:Preset
-    proto: Item
   considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
   - !type:MeleeDamage
     curves:
     - !type:Normalize

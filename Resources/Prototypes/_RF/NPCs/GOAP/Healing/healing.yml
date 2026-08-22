@@ -1,0 +1,7 @@
+- type: goapCompound
+  id: Healing
+  tasks:
+  - proto: HealingBuckle
+  - proto: StopBleeding
+  - proto: RestoreBloodLevel
+  - proto: DamageHealing

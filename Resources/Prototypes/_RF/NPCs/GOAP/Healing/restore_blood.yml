@@ -1,0 +1,27 @@
+- type: goapCompound
+  id: RestoreBloodLevel
+  tasks:
+  - preconditions:
+    - Query/BloodLevelHealing != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/BloodLevelHealing
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/BloodLevelHealing
+    effects:
+      BloodLevelHealingPickedUp: true
+
+  - preconditions:
+    - Query/LowBloodLevelFriend != null
+    - BloodLevelHealingPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/LowBloodLevelFriend
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Query/LowBloodLevelFriend
+    effects:
+      BloodLevelRestored: true

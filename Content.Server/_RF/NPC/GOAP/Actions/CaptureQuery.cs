@@ -1,6 +1,7 @@
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions;
@@ -20,8 +21,8 @@ namespace Content.Server._RF.NPC.GOAP.Actions;
 /// </list>
 /// The captured entity will be released and the key deleted upon completion of the plan.
 /// </summary>
-/// <seealso cref="SharedNpcSearcherSystem.CaptureResult"/>
-/// <seealso cref="SharedNpcSearcherSystem.ReleaseCapturedResult"/>
+/// <seealso cref="SharedNpcSearcherSystem.CaptureResult(Entity{SearchTrackedComponent?}, EntityUid)"/>
+/// <seealso cref="SharedNpcSearcherSystem.ReleaseCapturedResult(Entity{SearchTrackedComponent?}, EntityUid)"/>
 public sealed partial class CaptureQuery : BaseGoapAction<CaptureQuery>
 {
     /// <summary>

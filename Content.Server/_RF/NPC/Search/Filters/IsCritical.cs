@@ -7,11 +7,11 @@ using Content.Shared.Mobs.Systems;
 namespace Content.Server._RF.NPC.Search.Filters;
 
 /// <summary>
-/// Filters alive entities.
+/// Filters critical entities.
 /// </summary>
-public sealed partial class IsAlive : BaseSearchFilter<IsAlive>;
+public sealed partial class IsCritical : BaseSearchFilter<IsCritical>;
 
-public sealed class IsAliveSystem : NpcSearchFilterSystem<IsAlive>
+public sealed class IsCriticalGoapActionSystem : NpcSearchFilterSystem<IsCritical>
 {
     [Dependency] private readonly MobStateSystem _mobState = default!;
 
@@ -22,6 +22,6 @@ public sealed class IsAliveSystem : NpcSearchFilterSystem<IsAlive>
         SubscribeLocalEvent<MobStateChangedEvent>(ev => DirtyFilter(ev.Target));
     }
 
-    protected override bool Filter(GoapState state, EntityUid target, IsAlive filter)
-        => _mobState.IsAlive(target);
+    protected override bool Filter(GoapState state, EntityUid target, IsCritical filter)
+        => _mobState.IsCritical(target);
 }

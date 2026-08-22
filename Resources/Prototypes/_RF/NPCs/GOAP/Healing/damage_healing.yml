@@ -1,0 +1,171 @@
+- type: goapCompound
+  id: DamageHealing
+  tasks:
+  # Damage types
+
+  - preconditions:
+    - Query/BluntHeal != null
+    - Query/BluntHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/BluntHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/BluntHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/CellularHeal != null
+    - Query/CellularHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/CellularHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/CellularHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/CausticHeal != null
+    - Query/CausticHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/CausticHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/CausticHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/ColdHeal != null
+    - Query/ColdHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/ColdHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/ColdHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/HeatHeal != null
+    - Query/HeatHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/HeatHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/HeatHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/PiercingHeal != null
+    - Query/PiercingHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/PiercingHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/PiercingHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/PoisonHeal != null
+    - Query/PoisonHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/PoisonHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/PoisonHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/RadiationHeal != null
+    - Query/RadiationHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/RadiationHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/RadiationHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/ShockHeal != null
+    - Query/ShockHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/ShockHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/ShockHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  - preconditions:
+    - Query/SlashHeal != null
+    - Query/SlashHealTarget != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/SlashHeal
+      targetKey: DamageHeal
+    - !type:CaptureQuery
+      capture: Query/SlashHealTarget
+      targetKey: DamageHealTarget
+    effects:
+      DamageHeal: true
+      DamageHealTarget: true
+
+  #
+
+  - preconditions:
+    - DamageHeal != null
+    actions:
+    - !type:EntityCoords
+      targetKey: DamageHeal
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: DamageHeal
+    effects:
+      DamageHealPickedUp: true
+
+  - preconditions:
+    - DamageHealPickedUp == true
+    - DamageHealTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: DamageHealTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: DamageHealTarget
+    effects:
+      DamageHealed: true

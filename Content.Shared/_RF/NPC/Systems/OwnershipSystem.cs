@@ -97,7 +97,7 @@ public sealed class OwnershipSystem : EntitySystem
     }
 
     /// <summary>
-    /// Do the two entities have at least one common owner
+    /// Do the two entities have at least one common owner.
     /// </summary>
     [Pure, PublicAPI]
     public bool HasSameOwner(Entity<OwnershipComponent?> ent1, Entity<OwnershipComponent?> ent2)
@@ -130,7 +130,7 @@ public sealed class OwnershipSystem : EntitySystem
         => owned != null && Resolve(ent, ref ent.Comp, false) && ent.Comp.Owned.Contains(owned.Value);
 
     /// <summary>
-    /// Adds the target entity the owner of the given
+    /// Adds the target entity the owner of the given.
     /// </summary>
     [PublicAPI]
     public bool AddOwner(EntityUid uid, EntityUid owner)
@@ -153,7 +153,7 @@ public sealed class OwnershipSystem : EntitySystem
     }
 
     /// <summary>
-    /// Makes the target entities the owners of the given
+    /// Makes the target entities the owners of the given.
     /// </summary>
     [PublicAPI]
     public void AddOwners(EntityUid uid, IEnumerable<EntityUid> owners)
@@ -179,8 +179,8 @@ public sealed class OwnershipSystem : EntitySystem
     /// <summary>
     /// Makes an entity the owner of another entity.
     /// </summary>
-    /// <param name="uid">An entity that will own another</param>
-    /// <param name="owned">An entity that will be owned by another entity</param>
+    /// <param name="uid">An entity that will own another.</param>
+    /// <param name="owned">An entity that will be owned by another entity.</param>
     [PublicAPI]
     public bool AddOwned(EntityUid uid, EntityUid owned)
     {
@@ -226,7 +226,7 @@ public sealed class OwnershipSystem : EntitySystem
     }
 
     /// <summary>
-    /// Removes the entity from the owners of a given entity
+    /// Removes the entity from the owners of a given entity.
     /// </summary>
     [PublicAPI]
     public bool RemoveOwner(Entity<OwnershipComponent?> ent, Entity<OwnershipComponent?> owner)
@@ -246,10 +246,10 @@ public sealed class OwnershipSystem : EntitySystem
     }
 
     /// <summary>
-    /// Removes multiple owners of this entity
+    /// Removes multiple owners of this entity.
     /// </summary>
-    /// <param name="ent">An entity whose owners must be removed</param>
-    /// <param name="owners">List of owners to be removed</param>
+    /// <param name="ent">An entity whose owners must be removed.</param>
+    /// <param name="owners">List of owners to be removed.</param>
     [PublicAPI]
     public void RemoveOwners(Entity<OwnershipComponent?> ent, IEnumerable<EntityUid> owners)
     {
@@ -327,14 +327,14 @@ public sealed class OwnershipSystem : EntitySystem
     }
 
     /// <summary>
-    /// Returns all owners of this entity
+    /// Returns all owners of this entity.
     /// </summary>
     [Pure, PublicAPI]
     public IReadOnlySet<EntityUid> GetOwners(EntityUid uid)
         => _ownedQuery.TryComp(uid, out var comp) ? comp.Owners : new();
 
     /// <summary>
-    /// Returns all entities owned by this
+    /// Returns all entities owned by this.
     /// </summary>
     [Pure, PublicAPI]
     public IReadOnlySet<EntityUid> GetOwned(EntityUid uid)

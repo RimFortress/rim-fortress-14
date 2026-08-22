@@ -1,25 +1,16 @@
 - type: searchQuery
   id: NotStoredItem
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
     - type: StockpileContent
     invert: true
-  - !type:Component
-    components:
-    - type: Item
   - !type:StockpileStorage
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: NotStoredCrate
-  query: !type:Owned
+  parent: BasePullableQuery
   filters:
   - !type:Component
     components:
@@ -29,12 +20,6 @@
     components:
     - type: EntityStorage
   - !type:StockpileStorage
-  - !type:Preset
-    proto: Pullable
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 
 - type: searchQuery
@@ -70,25 +55,18 @@
 
 - type: searchQuery
   id: OffsetStoredItem
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
     - type: StockpileContent
-    - type: Item
   - !type:StockStoredOffset
     lessThan: 0.06
     invert: true
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: OffsetStoredCrate
-  query: !type:Owned
+  parent: BasePullableQuery
   filters:
   - !type:Component
     components:
@@ -97,55 +75,35 @@
   - !type:StockStoredOffset
     lessThan: 0.06
     invert: true
-  - !type:Preset
-    proto: Pullable
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 
 - type: searchQuery
   id: StoredItemToContainer
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
     - type: StockpileContent
-    - type: Item
   - !type:StockpileStorage
     storedInContainer: true
     invert: true
   - !type:StockpileStorage
     moveToContainer: true
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 
 - type: searchQuery
   id: StoredItemSupply
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
     - type: StockpileContent
-    - type: Item
   - !type:StockpileStorage
     supplyingOnly: true
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 - type: searchQuery
   id: StoredCrateSupply
-  query: !type:Owned
+  parent: BasePullableQuery
   filters:
   - !type:Component
     components:
@@ -153,12 +111,6 @@
     - type: EntityStorage
   - !type:StockpileStorage
     supplyingOnly: true
-  - !type:Preset
-    proto: Pullable
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
 
 
 - type: searchQuery

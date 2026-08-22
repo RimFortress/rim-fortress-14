@@ -1,4 +1,6 @@
 using Content.Server._RF.Notifications.Components;
+using Content.Shared._RF.Notifications.Components;
+using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.UtilityAi;
 using Robust.Shared.Prototypes;
 
@@ -10,6 +12,7 @@ namespace Content.Server._RF.Notifications.Systems;
 public sealed class NotifyOnGoalGivenSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly OwnershipSystem _ownership = default!;
     [Dependency] private readonly NotificationsSystem _notifications = default!;
 
     /// <inheritdoc/>
@@ -25,6 +28,11 @@ public sealed class NotifyOnGoalGivenSystem : EntitySystem
             return;
 
         var desc = Loc.GetString(proto.DescId, ("target", _notifications.GetEntityString(ent)));
-        _notifications.SendNotification(ent.Owner, protoId, desc: desc);
+
+        foreach (var owner in _ownership.GetOwners(ent))
+        {
+            if (HasComp<NotificationComponent>(owner))
+                _notifications.SendNotification(ent.Owner, protoId, desc: desc);
+        }
     }
 }

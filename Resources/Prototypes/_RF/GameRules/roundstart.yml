@@ -31,6 +31,11 @@
     - SamplePlant
     - RemovePlant
     - WaterPlant
+    # Healing
+    - HealingBuckle
+    - StopBleeding
+    - RestoreBloodLevel
+    - DamageHealing
     # Crafting
     - Construction
     - Deconstruct

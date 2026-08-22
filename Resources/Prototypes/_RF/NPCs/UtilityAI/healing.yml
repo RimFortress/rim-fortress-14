@@ -1,0 +1,77 @@
+- type: utilityAiGoal
+  id: BaseHealingGoal
+  abstract: true
+  color: "#16C934"
+  incumbentBonus:
+  - add: [float: 0.10]
+  - mul: [float: 1.10]
+
+- type: utilityAiGoal
+  id: HealingBuckle
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: HealingBuckleTarget
+      performersCount:
+      - !type:GoalPerformers
+        goal: HealingBuckle
+  capture:
+  - Query/Bed
+  - Query/HealingBuckleTarget
+  goalState:
+    TargetBuckledToBed: true
+
+- type: utilityAiGoal
+  id: StopBleeding
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: BleedingFriend
+      performersCount:
+      - !type:GoalPerformers
+        goal: StopBleeding
+  capture:
+  - Query/HeatMelees
+  - Query/BleedHealing
+  - Query/BleedingFriend
+  goalState:
+    BleedingStopped: true
+
+- type: utilityAiGoal
+  id: RestoreBloodLevel
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: BleedingFriend
+      performersCount:
+      - !type:GoalPerformers
+        goal: RestoreBloodLevel
+  capture:
+  - Query/BloodLevelHealing
+  - Query/LowBloodLevelFriend
+  goalState:
+    BloodLevelRestored: true
+
+- type: utilityAiGoal
+  id: DamageHealing
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: DamageHealTarget
+      performersCount:
+      - !type:GoalPerformers
+        goal: DamageHealing
+  goalState:
+    DamageHealed: true

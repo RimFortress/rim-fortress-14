@@ -39,6 +39,7 @@
     - !type:Juke
     - !type:Melee
       targetKey: Query/FrendlyAttackTarget||Query/NearbyDestructible
+      oneHit: true
     effects:
       MentalBreakdownAttack: true
 

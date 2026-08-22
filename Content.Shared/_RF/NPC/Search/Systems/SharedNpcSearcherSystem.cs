@@ -123,15 +123,15 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 
     /// <inheritdoc cref="Filter(GoapState, EntityUid, SearchFilter)"/>
     [PublicAPI, Pure]
-    public bool Filter(GoapState state, EntityUid target, List<SearchFilter> filters)
+    public bool Filter(GoapState state, EntityUid target, IEnumerable<SearchFilter> filters)
     {
         foreach (var filter in filters)
         {
-            if (filter.Filter(state, target, this))
-                return true;
+            if (!filter.Filter(state, target, this))
+                return false;
         }
 
-        return false;
+        return true;
     }
 
     public float Score<T>(GoapState state, EntityUid target, T con) where T : BaseSearchConsideration<T>

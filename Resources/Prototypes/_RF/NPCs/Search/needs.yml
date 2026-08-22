@@ -14,16 +14,11 @@
 
 - type: searchQuery
   id: Food
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:IsAlive
     invert: true
-  - !type:Preset
-    proto: Item
   considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
   - !type:Ingestion
     nutrition: true
     curves:
@@ -34,16 +29,11 @@
 
 - type: searchQuery
   id: Drink
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:IsAlive
     invert: true
-  - !type:Preset
-    proto: Item
   considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance
   - !type:Ingestion
     hydration: true
     curves:
@@ -54,7 +44,7 @@
 
 - type: searchQuery
   id: Mug
-  query: !type:Owned
+  parent: BaseItemQuery
   filters:
   - !type:Component
     components:
@@ -67,9 +57,3 @@
     - !type:DrainableSolution
       reagent: Water
       onlyReagent: true
-  - !type:Preset
-    proto: Item
-  considerations:
-  - !type:TargetDistance
-    curves:
-    - preset: TargetDistance

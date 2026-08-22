@@ -24,6 +24,12 @@ public sealed partial class Melee : BaseGoapAction<Melee>
     /// </summary>
     [DataField]
     public MobState TargetState = MobState.Alive;
+
+    /// <summary>
+    /// If true, the agent will perform a single hit, after which the action will be finished.
+    /// </summary>
+    [DataField]
+    public bool OneHit;
 }
 
 public sealed class MeleeActionSystem : GoapActionSystem<Melee>
@@ -74,7 +80,7 @@ public sealed class MeleeActionSystem : GoapActionSystem<Melee>
         {
             case CombatStatus.TargetOutOfRange:
             case CombatStatus.Normal:
-                return GoapActionResult.Continuing;
+                return action.OneHit ? GoapActionResult.Finished : GoapActionResult.Continuing;
             default:
                 CreateDump(ent, action, $"NPCMeleeCombat returned status `{melee.Status}`");
                 return GoapActionResult.Failed;

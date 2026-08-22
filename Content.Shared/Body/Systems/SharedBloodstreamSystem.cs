@@ -484,8 +484,10 @@ public abstract class SharedBloodstreamSystem : EntitySystem
         if (!Resolve(ent, ref ent.Comp, logMissing: false))
             return false;
 
+        var old = ent.Comp.BleedAmount; // RimFortress
         ent.Comp.BleedAmount += amount;
         ent.Comp.BleedAmount = Math.Clamp(ent.Comp.BleedAmount, 0, ent.Comp.MaxBleedAmount);
+        RaiseLocalEvent(ent, new BleedModifiedEvent(old, ent.Comp.BleedAmount)); // RimFortress
 
         DirtyField(ent, ent.Comp, nameof(BloodstreamComponent.BleedAmount));
 
@@ -599,3 +601,12 @@ public abstract class SharedBloodstreamSystem : EntitySystem
         return bloodData;
     }
 }
+
+// RimFortress Start
+/// <summary>
+/// Event raised on an entity when its bleeding level changes.
+/// </summary>
+/// <param name="OldBleed">Old bleed level.</param>
+/// <param name="NewBleed">New bleed level.</param>
+public readonly record struct BleedModifiedEvent(float OldBleed, float NewBleed);
+// RimFortress End

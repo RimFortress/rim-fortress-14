@@ -1,0 +1,31 @@
+- type: goapCompound
+  id: HealingBuckle
+  tasks:
+  - preconditions:
+    - Query/HealingBuckleTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: &Target Query/HealingBuckleTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pull
+      targetKey: *Target
+    effects:
+      TargetPulled: true
+
+  - preconditions:
+    - TargetPulled == true
+    - Query/Bed != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Bed
+    - !type:MoveTo
+      rangeKey: InteractRange
+      removeKeyOnFinish: false
+    - !type:MovePulling
+    - !type:Buckle
+      targetKey: *Target
+      buckleTo: Query/Bed
+    - !type:UnPull
+    effects:
+      TargetBuckledToBed: true

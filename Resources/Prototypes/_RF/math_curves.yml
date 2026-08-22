@@ -74,3 +74,18 @@
       targetsCount: [var: targetsCount]
       performersCount: [var: performersCount]
       importance: [float: 0.50]
+
+- type: mathCurve
+  id: UAIScoreHealing
+  variables:
+    targetsCount: [float: 0]
+    performersCount: [float: 0]
+  curves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Healing
+      targetsCount: [var: targetsCount]
+      performersCount: [var: performersCount]
+      importance: [float: 0.55]

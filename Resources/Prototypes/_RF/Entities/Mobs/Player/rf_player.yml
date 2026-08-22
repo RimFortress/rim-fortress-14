@@ -90,6 +90,13 @@
       icon: _RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
       tasks:
       - Cooking
+    - name: npc-job-medicine-name
+      icon: _RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png
+      tasks:
+      - HealingBuckle
+      - StopBleeding
+      - RestoreBloodLevel
+      - DamageHealing
   - type: NpcFactionMember
     factions:
     - RimFortress
