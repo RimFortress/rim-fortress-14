@@ -364,6 +364,11 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     /// </summary>
     public static readonly StateKey<float> PullingMoveCloseRange = "PullingMoveCloseRange";
 
+    /// <summary>
+    /// The key used to store the participant in the situation against whom another participant is performing a check.
+    /// </summary>
+    public static readonly StateKey<EntityUid> EngagementParticipant = "EngagementParticipant";
+
     // Entity system defaults
 
     /// <summary>
