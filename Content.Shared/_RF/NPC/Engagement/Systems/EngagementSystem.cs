@@ -439,6 +439,14 @@ public sealed partial class EngagementSystem : EntitySystem
                 RaiseLocalEvent(actor, ev);
             }
         }
+
+        foreach (var invite in engagement.Comp.Invites.ToArray())
+        {
+            if (!_prototype.Resolve(invite.Role, out var role) || role.JoinAfterStart)
+                continue;
+
+            RemoveInvite(engagement.AsNullable(), invite.Uid, invite.Role);
+        }
     }
 
     public override void Update(float frameTime)

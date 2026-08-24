@@ -142,6 +142,9 @@ public partial class EngagementSystem
             || role.Force)
             return false;
 
+        if (!role.JoinAfterStart && engagement.Comp.Started)
+            return false;
+
         if (!CanSeat(engagement!, role, actor)
             || !MeetsForwardRequirements(engagement!, role, actor)
             || !MeetsReverseRequirements(engagement!, role, actor))
@@ -195,6 +198,9 @@ public partial class EngagementSystem
             || role.Force)
             return false;
 
+        if (!role.JoinAfterStart && engagement.Comp.Started)
+            return false;
+
         RemoveInvite(engagement, actor, ownInvite.Value.Role);
         SeatActor(engagement!, role, actor);
         return true;
@@ -230,12 +236,15 @@ public partial class EngagementSystem
     /// </summary>
     /// <param name="engagement">The situation the invite belongs to.</param>
     /// <param name="actor">The invited entity whose invite should be withdrawn.</param>
-    /// <param name="role"></param>
+    /// <param name="role">
+    /// Role, for which invitations need to be removed.
+    /// If this is null, all invitations to this event will be removed.
+    /// </param>
     [PublicAPI]
     public void RemoveInvite(
         Entity<EngagementComponent?> engagement,
         Entity<EngagementParticipantComponent?> actor,
-        string? role = null)
+        ProtoId<EngagementRolePrototype>? role = null)
     {
         if (!Resolve(engagement, ref engagement.Comp)
             || !Resolve(actor, ref actor.Comp))

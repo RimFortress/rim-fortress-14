@@ -106,4 +106,10 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     /// </summary>
     [DataField]
     public EntityEffect[] Effects = Array.Empty<EntityEffect>();
+
+    /// <summary>
+    /// If true, this role can be taken on and invites can be issued even after the situation has begun.
+    /// </summary>
+    [DataField]
+    public bool JoinAfterStart;
 }
