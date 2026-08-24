@@ -97,7 +97,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
         ent.Comp.NextPlanning = Timing.CurTime + ent.Comp.PlanCooldown;
     }
 
-    public void UpdateNPC(ref int count, int maxUpdates, float frameTime)
+    public void UpdateNpc(ref int count, int maxUpdates)
     {
         _planQueue.Process();
         var query = EntityQueryEnumerator<ActiveNPCComponent, GoapComponent>();

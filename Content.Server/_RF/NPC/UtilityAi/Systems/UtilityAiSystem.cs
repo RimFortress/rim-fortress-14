@@ -8,6 +8,7 @@ using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Content.Shared.Administration;
+using Content.Shared.NPC;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.UtilityAi.Systems;
@@ -16,6 +17,8 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
 {
     [Dependency] private readonly IAdminManager _admin = default!;
     [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
+
+    private readonly HashSet<ProtoId<UtilityAiGoalPrototype>> _cooldownsToRemove = new();
 
     public override void Initialize()
     {
@@ -172,5 +175,67 @@ public sealed class UtilityAiSystem : SharedUtilityAiSystem
                 ExecutableGoal: executables.Contains(proto),
                 InActiveBranch: inActiveBranch);
         }
+    }
+
+    public void UpdateNpc(ref int count, int maxUpdates)
+    {
+        var query = EntityQueryEnumerator<ActiveNPCComponent, UtilityAiComponent>();
+
+        // Move ahead "count" entries in the query.
+        // This is to ensure that if we didn't process all the npcs the first time,
+        // we get to the remaining ones instead of iterating over the beginning again.
+        for (var i = 0; i < count; i++)
+        {
+            query.MoveNext(out _, out _);
+        }
+
+        // the amount of updates we've processed during this iteration.
+        var updates = 0;
+        while (query.MoveNext(out var uid, out _, out var comp))
+        {
+            var ent = new Entity<UtilityAiComponent>(uid, comp);
+
+            // If we're over our max count or it's not MapInit then ignore the NPC.
+            if (updates >= maxUpdates)
+            {
+                // Intentional return. We don't want to go to the end logic and reset count.
+                return;
+            }
+
+            Update(ent);
+            count++;
+            updates++;
+        }
+
+        // only reset our counter back to 0 if we finish iterating.
+        // otherwise it lets us know where we left off.
+        count = 0;
+    }
+
+    private void Update(Entity<UtilityAiComponent> ent)
+    {
+        _cooldownsToRemove.Clear();
+
+        foreach (var (goal, time) in ent.Comp.Cooldowns)
+        {
+            if (time <= Timing.CurTime)
+                _cooldownsToRemove.Add(goal);
+        }
+
+        foreach (var goal in _cooldownsToRemove)
+        {
+            ent.Comp.Cooldowns.Remove(goal);
+        }
+
+        if (ent.Comp.NextCheck > Timing.CurTime)
+            return;
+
+        ent.Comp.NextCheck = Timing.CurTime + ent.Comp.BetterGoalCheckRate;
+
+        if (!TryGetGoal(ent.AsNullable(), out var newGoal)
+            || ent.Comp.CurrentGoal == newGoal)
+            return;
+
+        SetGoal(ent.Owner, newGoal.Value);
     }
 }

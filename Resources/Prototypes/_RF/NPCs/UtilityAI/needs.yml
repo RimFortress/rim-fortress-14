@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: Sleep
+  parent: BaseUtilityAiGoal
   scoreCurves:
   - preset: UAIScoreNeeds
     variables:
@@ -29,6 +30,7 @@
 
 - type: utilityAiGoal
   id: Eat
+  parent: BaseUtilityAiGoal
   scoreCurves:
   - preset: UAIScoreNeeds
     variables:
@@ -39,6 +41,7 @@
 
 - type: utilityAiGoal
   id: Drink
+  parent: BaseUtilityAiGoal
   scoreCurves:
   - preset: UAIScoreNeeds
     variables:

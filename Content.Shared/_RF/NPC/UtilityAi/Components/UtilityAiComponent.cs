@@ -24,6 +24,16 @@ public sealed partial class UtilityAiComponent : Component
     [ViewVariables, AutoNetworkedField]
     public ProtoId<UtilityAiGoalPrototype>? CurrentGoal;
 
+    /// <summary>
+    /// How often will the agent check to see if there is a
+    /// better goal than the one it is currently working on?
+    /// </summary>
+    [DataField]
+    public TimeSpan BetterGoalCheckRate = TimeSpan.FromSeconds(1);
+
+    [ViewVariables]
+    public TimeSpan NextCheck;
+
     [ViewVariables]
     public readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, TimeSpan> Cooldowns = new();
 

@@ -4,7 +4,7 @@
   - !type:MoodLevel
   - minus: [float: 1]
   - !type:Abs
-  - div: [float: 2]
+  - div: [float: 4]
   - pow: [float: 2]
   conditions:
   - !type:HasMoodEffect

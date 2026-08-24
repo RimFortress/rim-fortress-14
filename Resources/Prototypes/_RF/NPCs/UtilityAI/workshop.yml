@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: Cooking
+  parent: BaseUtilityAiGoal
   color: "#9D6280"
   scoreCurves:
   - preset: BaseUAIScore
@@ -15,8 +16,6 @@
       - !type:GoalPerformers
         goal: Cooking
       importance: [float: 0.50]
-  incumbentBonus:
-  - preset: BaseUAIBonus
   goalState:
     Workshop: Kitchen
     CraftingFinished: true

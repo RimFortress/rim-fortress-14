@@ -1,12 +1,16 @@
 - type: utilityAiGoal
   id: Drop
+  parent: BaseExecutableGoal
   color: "#00D5FF"
   goalState:
     TargetDroped: true
 
 - type: utilityAiGoal
   id: Interact
+  parent: BaseExecutableGoal
   color: "#00D5FF"
+  scoreCurves:
+  - float: 1
   goalState:
     TargetInteracted: true
 
@@ -18,12 +22,14 @@
 
 - type: utilityAiGoal
   id: PickUp
+  parent: BaseExecutableGoal
   color: "#00D5FF"
   goalState:
     TargetPickedUp: true
 
 - type: utilityAiGoal
   id: Pry
+  parent: BaseExecutableGoal
   color: "#00D5FF"
   goalState:
     TargetPry: true

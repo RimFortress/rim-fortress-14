@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: Storing
+  parent: BaseUtilityAiGoal
   color: "#A16C2B"
   scoreCurves:
   - preset: BaseUAIScore
@@ -29,7 +30,5 @@
       - !type:GoalPerformers
         goal: Storing
       importance: [float: 0.35]
-  incumbentBonus:
-  - preset: BaseUAIBonus
   goalState:
     TargetStored: true

@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: Construction
+  parent: BaseUtilityAiGoal
   color: "#FFFF00"
   scoreCurves:
   - preset: BaseUAIScore
@@ -14,8 +15,6 @@
       - !type:GoalPerformers
         goal: Construction
       importance: [float: 0.55]
-  incumbentBonus:
-  - preset: BaseUAIBonus
   goalState:
     TargetConstructed: true
 

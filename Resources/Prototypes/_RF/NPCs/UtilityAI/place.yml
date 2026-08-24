@@ -1,4 +1,6 @@
 - type: utilityAiGoal
   id: MoveTo
+  scoreCurves:
+  - float: 1
   goalState:
     NearTargetPlace: true

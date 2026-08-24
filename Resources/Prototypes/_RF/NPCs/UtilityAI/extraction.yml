@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: Chop
+  parent: BaseUtilityAiGoal
   color: "#A0522D"
   scoreCurves:
   - preset: BaseUAIScore
@@ -13,8 +14,6 @@
       performersCount:
       - !type:GoalPerformers
         goal: Chop
-  incumbentBonus:
-  - preset: BaseUAIBonus
   capture:
   - Query/Axe
   - Query/ChopTarget
@@ -23,6 +22,7 @@
 
 - type: utilityAiGoal
   id: Dig
+  parent: BaseUtilityAiGoal
   color: "#E36414"
   scoreCurves:
   - preset: BaseUAIScore
@@ -36,8 +36,6 @@
       performersCount:
       - !type:GoalPerformers
         goal: Dig
-  incumbentBonus:
-  - preset: BaseUAIBonus
   capture:
   - Query/Pickaxe
   - Query/DigTarget

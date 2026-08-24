@@ -1,0 +1,10 @@
+- type: utilityAiGoal
+  id: BaseUtilityAiGoal
+  incumbentBonus:
+  - add: [float: 0.05]
+  - mul: [float: 1.10]
+
+- type: utilityAiGoal
+  id: BaseExecutableGoal
+  scoreCurves:
+  - float: 1

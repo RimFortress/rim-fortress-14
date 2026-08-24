@@ -3,6 +3,7 @@
   abstract: true
   color: "#1a9927"
   incumbentBonus:
+  - add: [float: 0.05]
   - mul: [float: 1.10]
 
 - type: utilityAiGoal

@@ -7,7 +7,6 @@ using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using JetBrains.Annotations;
-using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -18,8 +17,7 @@ namespace Content.Shared._RF.NPC.UtilityAi.Systems;
 /// </summary>
 public abstract class SharedUtilityAiSystem : EntitySystem
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly INetManager _net = default!;
+    [Dependency] protected readonly IGameTiming Timing = default!;
     [Dependency] protected readonly IPrototypeManager Proto = default!;
     [Dependency] protected readonly SharedGoapSystem Goap = default!;
     [Dependency] protected readonly MathCurvesSystem Curves = default!;
@@ -145,7 +143,7 @@ public abstract class SharedUtilityAiSystem : EntitySystem
         switch (proto.FailPolicy)
         {
             case UtilityAiFailPolicy.Cooldown:
-                ent.Comp.Cooldowns[proto] = _timing.CurTime + proto.FailCooldown;
+                ent.Comp.Cooldowns[proto] = Timing.CurTime + proto.FailCooldown;
                 break;
             case UtilityAiFailPolicy.Penalty:
                 if (!ent.Comp.Penalties.TryAdd(proto, 1))
@@ -307,29 +305,4 @@ public abstract class SharedUtilityAiSystem : EntitySystem
         ProtoId<UtilityAiGoalPrototype> protoId)
         => Proto.Resolve(protoId, out var proto)
            && Goap.CheckCondition(ent, proto.Conditions);
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (!_net.IsServer)
-            return;
-
-        var enumerator = EntityQueryEnumerator<UtilityAiComponent>();
-        while (enumerator.MoveNext(out var comp))
-        {
-            var toRemove = new List<ProtoId<UtilityAiGoalPrototype>>();
-
-            foreach (var (goal, time) in comp.Cooldowns)
-            {
-                if (time <= _timing.CurTime)
-                    toRemove.Add(goal);
-            }
-
-            foreach (var goal in toRemove)
-            {
-                comp.Cooldowns.Remove(goal);
-            }
-        }
-    }
 }

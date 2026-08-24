@@ -44,12 +44,6 @@
     - mul: [var: importance]
 
 - type: mathCurve
-  id: BaseUAIBonus
-  curves:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
-
-- type: mathCurve
   id: UAIScoreNeeds
   variables:
     need: [float: 0]

@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: AcceptConversationInvite
+  parent: BaseUtilityAiGoal
   color: "#D3D3D3"
   conditions:
   - InConversation != true
@@ -26,6 +27,7 @@
 - type: utilityAiGoal
   id: StartConversation
   color: "#D3D3D3"
+  parent: BaseUtilityAiGoal
   conditions:
   - InConversation != true
   failPolicy: Cooldown

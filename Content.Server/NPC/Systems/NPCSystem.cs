@@ -16,6 +16,7 @@ using Robust.Shared.Player;
 // RimFortress Start
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Server._RF.NPC.GOAP.Systems;
+using Content.Server._RF.NPC.UtilityAi.Systems;
 using Content.Shared._RF.NPC.GOAP;
 // RimFortress End
 
@@ -33,7 +34,10 @@ namespace Content.Server.NPC.Systems
         [Dependency] private readonly IConfigurationManager _configurationManager = default!;
         [Dependency] private readonly HTNSystem _htn = default!;
         [Dependency] private readonly MobStateSystem _mobState = default!;
-        [Dependency] private readonly GoapSystem _goap = default!; // RimFortress
+        // RimFortress Start
+        [Dependency] private readonly GoapSystem _goap = default!;
+        [Dependency] private readonly UtilityAiSystem _utilityAi = default!;
+        // RimFortress End
 
         /// <summary>
         /// Whether any NPCs are allowed to run at all.
@@ -168,7 +172,10 @@ namespace Content.Server.NPC.Systems
 
             // Add your system here.
             _htn.UpdateNPC(ref _count, _maxUpdates, frameTime);
-            _goap.UpdateNPC(ref _count, _maxUpdates, frameTime); // RimFortress
+            // RimFortress Start
+            _goap.UpdateNpc(ref _count, _maxUpdates);
+            _utilityAi.UpdateNpc(ref _count, _maxUpdates);
+            // RimFortress End
 
             ActiveGauge.Set(Count<ActiveNPCComponent>());
         }

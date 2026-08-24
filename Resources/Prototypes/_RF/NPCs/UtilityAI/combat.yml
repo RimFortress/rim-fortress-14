@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: Attack
+  parent: BaseUtilityAiGoal
   color: "#FF0000"
   conditions:
   - !type:Or

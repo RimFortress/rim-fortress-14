@@ -4,7 +4,7 @@
   color: "#16C934"
   incumbentBonus:
   - add: [float: 0.10]
-  - mul: [float: 1.10]
+  - mul: [float: 1.15]
 
 - type: utilityAiGoal
   id: HealingBuckle
