@@ -64,7 +64,7 @@ public sealed partial class ConversationBasicOrderType : ConversationOrderType
     /// The order in which the actors should say their lines.
     /// </summary>
     [DataField(required: true)]
-    public List<string> Actors = new();
+    public List<ProtoId<EngagementRolePrototype>> Actors = new();
 
     /// <summary>
     /// The type of line in the conversation that will be spoken.
@@ -92,7 +92,7 @@ public sealed partial class ConversationCustomOrderType : ConversationOrderType
         /// The ID of the actor who will perform this part of the conversation.
         /// </summary>
         [DataField(required: true)]
-        public string Id = default!;
+        public ProtoId<EngagementRolePrototype> Id = default!;
 
         /// <summary>
         /// If true, the actor will say his line; otherwise, he will perform the other necessary actions.
@@ -117,7 +117,7 @@ public sealed partial class ConversationCustomOrderType : ConversationOrderType
         /// The actor's ID, the face of whom the character will be facing when saying the line.
         /// </summary>
         [DataField]
-        public string? FaceTo;
+        public ProtoId<EngagementRolePrototype>? FaceTo;
 
         /// <summary>
         /// The minimum and maximum durations of the pause after this.

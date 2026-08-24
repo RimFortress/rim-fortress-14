@@ -17,8 +17,8 @@
   engagement: BaseDialogEngagement
   order:
     actors:
-    - initiator
-    - responder
+    - BaseDialogInitiator
+    - BaseDialogResponder
     lines: 4
 
 - type: conversationScript
@@ -30,8 +30,8 @@
   parent: BaseDialog
   order:
     actors:
-    - initiator
-    - responder
+    - BaseDialogInitiator
+    - BaseDialogResponder
     lines: 6
 
 - type: conversationScript
@@ -43,8 +43,8 @@
   engagement: MorningGreeting
   order:
     actors:
-    - initiator
-    - responder
+    - MorningGreetingInitiator
+    - MorningGreetingResponder
     lines: 2
 
 # Bad mood
@@ -54,19 +54,29 @@
   engagement: SmalltalkRejected
   order:
     actors:
-    - initiator
-    - responder
+    - SmalltalkRejectedInitiator
+    - SmalltalkRejectedResponder
     lines: 2
 
 - type: conversationScript
   id: SmalltalkIgnored
   parent: BaseDialog
   engagement: SmalltalkIgnored
+  order:
+    actors:
+    - SmalltalkIgnoredInitiator
+    - SmalltalkIgnoredResponder
+    lines: 4
 
 - type: conversationScript
   id: SmalltalkRude
   parent: BaseDialog
   engagement: SmalltalkRude
+  order:
+    actors:
+    - SmalltalkRudeInitiator
+    - SmalltalkRudeResponder
+    lines: 4
 
 # Healing
 
@@ -74,8 +84,18 @@
   id: ThankForHealing
   parent: BaseDialog
   engagement: ThankForHealing
+  order:
+    actors:
+    - ThankForHealingInitiator
+    - BaseDialogResponder
+    lines: 4
 
 - type: conversationScript
   id: CheckOnPatient
   parent: BaseDialog
   engagement: CheckOnPatient
+  order:
+    actors:
+    - CheckOnPatientInitiator
+    - CheckOnPatientInitiator
+    lines: 4

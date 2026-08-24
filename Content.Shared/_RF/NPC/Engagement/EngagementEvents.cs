@@ -7,7 +7,7 @@ namespace Content.Shared._RF.NPC.Engagement;
 
 /// <summary>
 /// Raised on the situation entity and on every current participant once every role has
-/// reached its <see cref="EngagementRole.MinCount"/> for the first time.
+/// reached its <see cref="EngagementRolePrototype.MinCount"/> for the first time.
 /// </summary>
 /// <param name="Engagement">The situation entity.</param>
 /// <param name="Kind">The situation's prototype.</param>
@@ -27,7 +27,7 @@ public readonly record struct EngagementStarted(
 public readonly record struct EngagementRoleJoined(
     EntityUid Engagement,
     EntityUid Actor,
-    string Role);
+    ProtoId<EngagementRolePrototype> Role);
 
 /// <summary>
 /// Raised on the leaving actor and on the situation entity when a participant leaves a role,
@@ -41,7 +41,7 @@ public readonly record struct EngagementRoleJoined(
 public readonly record struct EngagementRoleLeft(
     EntityUid Engagement,
     EntityUid Actor,
-    string Role,
+    ProtoId<EngagementRolePrototype> Role,
     EngagementEndReason Reason);
 
 /// <summary>
@@ -67,7 +67,7 @@ public readonly record struct EngagementInviteSent(
     EntityUid Engagement,
     EntityUid Inviter,
     EntityUid Invited,
-    string Role);
+    ProtoId<EngagementRolePrototype> Role);
 
 /// <summary>
 /// Raised on the invited and inviter entity and on the situation entity when

@@ -21,7 +21,7 @@ public sealed partial class EngagementComponent : Component
     /// A list of the participants in the situation and their roles.
     /// </summary>
     [DataField]
-    public Dictionary<string, HashSet<EntityUid>> Actors = new();
+    public Dictionary<ProtoId<EngagementRolePrototype>, HashSet<EntityUid>> Actors = new();
 
     /// <summary>
     /// Initiator of this situation.
@@ -41,10 +41,10 @@ public sealed partial class EngagementComponent : Component
     /// Invitations in this situation that have not yet been accepted.
     /// </summary>
     [ViewVariables]
-    public readonly HashSet<(string Role, EntityUid Uid, TimeSpan ValidUntil)> Invites = new();
+    public readonly HashSet<(ProtoId<EngagementRolePrototype> Role, EntityUid Uid, TimeSpan ValidUntil)> Invites = new();
 
     /// <summary>
-    /// Schedules the next <see cref="EngagementRole.AlwaysConditionCheck"/> re-evaluation.
+    /// Schedules the next <see cref="EngagementRolePrototype.AlwaysConditionCheck"/> re-evaluation.
     /// </summary>
     [ViewVariables]
     public readonly Dictionary<EntityUid, TimeSpan> NextConditionCheck = new();

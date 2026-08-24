@@ -1,5 +1,6 @@
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
+using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
@@ -17,7 +18,7 @@ public sealed partial class AddOpinion : EntityEffectBase<AddOpinion>
     /// IDs of conversation participants, effect on opinion to which should be added.
     /// </summary>
     [DataField]
-    public List<string> Actors = new();
+    public List<ProtoId<EngagementRolePrototype>> Actors = new();
 
     /// <summary>
     /// Prototype of the effect.

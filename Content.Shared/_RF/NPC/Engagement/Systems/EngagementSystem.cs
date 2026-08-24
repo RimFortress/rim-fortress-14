@@ -20,7 +20,7 @@ namespace Content.Shared._RF.NPC.Engagement.Systems;
 /// <remarks>
 /// This system only tracks membership, consent and the GoapState side-effects of joining/leaving
 /// a role. It never decides how an agent should behave while engaged — that is entirely up to the
-/// agent's own GOAP/UAI configuration reacting to the state keys written by <see cref="EngagementRole.OnStart"/>.
+/// agent's own GOAP/UAI configuration reacting to the state keys written by <see cref="EngagementRolePrototype.OnStart"/>.
 /// </remarks>
 public sealed partial class EngagementSystem : EntitySystem
 {
@@ -87,7 +87,7 @@ public sealed partial class EngagementSystem : EntitySystem
 
     private void InviteToEngagementInternal(
         Entity<EngagementComponent> engagement,
-        string role,
+        ProtoId<EngagementRolePrototype> role,
         EntityUid actor,
         EntityUid inviter)
     {
@@ -107,31 +107,34 @@ public sealed partial class EngagementSystem : EntitySystem
     }
 
     /// <summary>
-    /// Finds a role assignment for <paramref name="candidates"/> that fills every non-<see cref="EngagementRole.InitiatorOnly"/>
-    /// role up to its <see cref="EngagementRole.MinCount"/>, satisfying every role's <see cref="EngagementRole.Conditions"/>
-    /// and the mutual <see cref="EngagementRole.ConditionsFor"/> constraints between roles in both
+    /// Finds a role assignment for <paramref name="candidates"/> that fills every non-<see cref="EngagementRolePrototype.InitiatorOnly"/>
+    /// role up to its <see cref="EngagementRolePrototype.MinCount"/>, satisfying every role's <see cref="EngagementRolePrototype.Conditions"/>
+    /// and the mutual <see cref="EngagementRolePrototype.ConditionsFor"/> constraints between roles in both
     /// directions, via DFS backtracking over the whole candidate pool at once.
     /// </summary>
     private bool TryAssignRoles(
         EngagementPrototype proto,
         EntityUid initiator,
         IEnumerable<EntityUid> candidates,
-        [NotNullWhen(true)] out Dictionary<string, List<EntityUid>>? assignment)
+        [NotNullWhen(true)] out Dictionary<ProtoId<EngagementRolePrototype>, List<EntityUid>>? assignment)
     {
         assignment = null;
 
         // Expand each role into one "slot" per required participant, e.g. a MinCount == 2 role
         // gets two slots. Roles with MinCount == 0 (grown dynamically later, e.g. combat's
         // Attacked role) and InitiatorOnly roles contribute no slots here.
-        var slots = new List<EngagementRole>();
+        var slots = new List<EngagementRolePrototype>();
 
-        foreach (var roleData in proto.Roles)
+        foreach (var roleId in proto.Roles)
         {
-            var count = Math.Min(roleData.MinCount, roleData.MaxCount);
+            if (!_prototype.Resolve(roleId, out var role))
+                continue;
+
+            var count = Math.Min(role.MinCount, role.MaxCount);
 
             for (var i = 0; i < count; i++)
             {
-                slots.Add(roleData);
+                slots.Add(role);
             }
         }
 
@@ -141,7 +144,7 @@ public sealed partial class EngagementSystem : EntitySystem
             return false;
 
         var used = new HashSet<EntityUid>();
-        var result = new Dictionary<string, List<EntityUid>>();
+        var result = new Dictionary<ProtoId<EngagementRolePrototype>, List<EntityUid>>();
 
         if (!Assign(0))
             return false;
@@ -176,8 +179,7 @@ public sealed partial class EngagementSystem : EntitySystem
                             candidate,
                             result.GetValueOrDefault)
                         || !MeetsReverseRequirements(
-                            proto,
-                            roleData.Id,
+                            roleData,
                             candidate,
                             result.SelectMany(x => x.Value.Select(u => (x.Key, u)))))
                         continue;
@@ -185,8 +187,8 @@ public sealed partial class EngagementSystem : EntitySystem
 
                 used.Add(candidate);
 
-                if (!result.TryGetValue(roleData.Id, out var assigned))
-                    result[roleData.Id] = assigned = new();
+                if (!result.TryGetValue(roleData, out var assigned))
+                    result[roleData] = assigned = new();
 
                 assigned.Add(candidate);
 
@@ -196,7 +198,7 @@ public sealed partial class EngagementSystem : EntitySystem
                 assigned.RemoveAt(assigned.Count - 1);
 
                 if (assigned.Count == 0)
-                    result.Remove(roleData.Id);
+                    result.Remove(roleData);
 
                 used.Remove(candidate);
             }
@@ -209,14 +211,14 @@ public sealed partial class EngagementSystem : EntitySystem
     /// Common capacity/InitiatorOnly/duplicate-membership checks shared by
     /// <see cref="TryJoinEngagement"/> and <see cref="InviteToEngagement"/>.
     /// </summary>
-    private bool CanSeat(Entity<EngagementComponent> engagement, string role, EngagementRole roleData, EntityUid actor)
+    private bool CanSeat(Entity<EngagementComponent> engagement, EngagementRolePrototype role, EntityUid actor)
     {
-        if (roleData.InitiatorOnly && actor != engagement.Comp.Initiator)
+        if (role.InitiatorOnly && actor != engagement.Comp.Initiator)
             return false;
 
         var current = engagement.Comp.Actors.TryGetValue(role, out var set) ? set.Count : 0;
 
-        if (current >= roleData.MaxCount)
+        if (current >= role.MaxCount)
             return false;
 
         // Already a participant of this exact situation (in this or another role).
@@ -229,15 +231,20 @@ public sealed partial class EngagementSystem : EntitySystem
     private void LeaveEngagementInternal(
         Entity<EngagementComponent> engagement,
         EntityUid actor,
-        string role,
+        ProtoId<EngagementRolePrototype> roleId,
         EngagementEndReason reason,
         bool cleanupParticipant)
     {
-        if (!engagement.Comp.Actors.TryGetValue(role, out var set) || !set.Remove(actor))
+        if (!_prototype.Resolve(roleId, out var role)
+            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
+            || !proto.Roles.Contains(role))
+            return;
+
+        if (!engagement.Comp.Actors.TryGetValue(roleId, out var set) || !set.Remove(actor))
             return;
 
         if (set.Count == 0)
-            engagement.Comp.Actors.Remove(role);
+            engagement.Comp.Actors.Remove(roleId);
 
         engagement.Comp.NextConditionCheck.Remove(actor);
 
@@ -249,14 +256,11 @@ public sealed partial class EngagementSystem : EntitySystem
                 RemComp<EngagementParticipantComponent>(actor);
         }
 
-        _prototype.TryIndex(engagement.Comp.Kind, out var proto);
-
-        if (proto?.Roles.FirstOrNull(x => x.Id == role) is { } roleData
-            && _goapQuery.TryComp(actor, out var goap))
+        if (_goapQuery.TryComp(actor, out var goap))
         {
-            goap.State.OverwriteFrom(roleData.OnFinish);
+            goap.State.OverwriteFrom(role.OnFinish);
 
-            foreach (var key in roleData.OnFinishRemove)
+            foreach (var key in role.OnFinishRemove)
             {
                 goap.State.Remove(key);
             }
@@ -266,28 +270,26 @@ public sealed partial class EngagementSystem : EntitySystem
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement.Owner, ev);
 
-        if (!engagement.Comp.Started
-            || proto is not { DissolveInvalid: true }
-            || proto.Roles.FirstOrNull(x => x.Id == role) is not { } rd)
+        if (!engagement.Comp.Started || !proto.DissolveInvalid)
             return;
 
         var remaining = engagement.Comp.Actors.TryGetValue(role, out var left) ? left.Count : 0;
 
-        if (remaining < rd.MinCount)
+        if (remaining < role.MinCount)
             EndEngagement(engagement.AsNullable(), EngagementEndReason.Dissolved);
     }
 
     /// <summary>
-    /// Checks <see cref="EngagementRole.Conditions"/> and forward <see cref="EngagementRole.ConditionsFor"/>
+    /// Checks <see cref="EngagementRolePrototype.Conditions"/> and forward <see cref="EngagementRolePrototype.ConditionsFor"/>
     /// (this role's requirements toward roles that already have occupants) for a candidate trying
     /// to take a non-forced role. <paramref name="getAssigned"/> abstracts over where "already
     /// occupied" comes from — the live <see cref="EngagementComponent.Actors"/>, or an in-progress
     /// batch assignment being built by <c>TryAssignRoles</c>.
     /// </summary>
     private bool MeetsForwardRequirements(
-        EngagementRole roleData,
+        EngagementRolePrototype roleData,
         EntityUid actor,
-        Func<string, IEnumerable<EntityUid>?> getAssigned)
+        Func<ProtoId<EngagementRolePrototype>, IEnumerable<EntityUid>?> getAssigned)
     {
         if (!_goapQuery.TryComp(actor, out var goap))
             return roleData.Conditions.Count == 0 && roleData.ConditionsFor.Count == 0;
@@ -319,32 +321,31 @@ public sealed partial class EngagementSystem : EntitySystem
     }
 
     /// <summary>
-    /// Overload of <see cref="MeetsForwardRequirements(EngagementRole, EntityUid, Func{string, IEnumerable{EntityUid}?})"/>
+    /// Overload of <see cref="MeetsForwardRequirements(EngagementRolePrototype, EntityUid, Func{ProtoId{EngagementRolePrototype}, IEnumerable{EntityUid}?})"/>
     /// that reads "already occupied" from the live situation.
     /// </summary>
     private bool MeetsForwardRequirements(
         Entity<EngagementComponent> engagement,
-        EngagementRole roleData,
+        EngagementRolePrototype roleData,
         EntityUid actor)
         => MeetsForwardRequirements(roleData, actor, r => engagement.Comp.Actors.GetValueOrDefault(r));
 
     /// <summary>
-    /// Checks whether roles that already have occupants declare <see cref="EngagementRole.ConditionsFor"/>
+    /// Checks whether roles that already have occupants declare <see cref="EngagementRolePrototype.ConditionsFor"/>
     /// entries pointing at <paramref name="role"/> — the reverse direction of
-    /// <see cref="MeetsForwardRequirements(EngagementRole, EntityUid, Func{string, IEnumerable{EntityUid}?})"/>.
+    /// <see cref="MeetsForwardRequirements(EngagementRolePrototype, EntityUid, Func{ProtoId{EngagementRolePrototype}, IEnumerable{EntityUid}?})"/>.
     /// For example, if Doctor.ConditionsFor["Patient"] is set, seating a new Patient must satisfy
     /// it against every current Doctor, even though Patient's own role might not reference Doctor at all.
     /// This was entirely missing before and let invalid one-sided assignments through.
     /// </summary>
     private bool MeetsReverseRequirements(
-        EngagementPrototype proto,
-        string role,
+        ProtoId<EngagementRolePrototype> role,
         EntityUid candidate,
-        IEnumerable<(string Role, EntityUid Uid)> assignedPairs)
+        IEnumerable<(ProtoId<EngagementRolePrototype> Role, EntityUid Uid)> assignedPairs)
     {
         foreach (var (otherRole, otherUid) in assignedPairs)
         {
-            if (proto.Roles.FirstOrNull(x => x.Id == otherRole) is not { } otherRoleData
+            if (!_prototype.Resolve(otherRole, out var otherRoleData)
                 || !otherRoleData.ConditionsFor.TryGetValue(role, out var conditions))
                 continue;
 
@@ -363,26 +364,24 @@ public sealed partial class EngagementSystem : EntitySystem
     }
 
     /// <summary>
-    /// Overload of <see cref="MeetsReverseRequirements(EngagementPrototype, string, EntityUid, IEnumerable{ValueTuple{string, EntityUid}})"/>
+    /// Overload of <see cref="MeetsReverseRequirements(ProtoId{EngagementRolePrototype}, EntityUid, IEnumerable{ValueTuple{ProtoId{EngagementRolePrototype}, EntityUid}})"/>
     /// that reads "already occupied" from the live situation.
     /// </summary>
     private bool MeetsReverseRequirements(
         Entity<EngagementComponent> engagement,
-        EngagementPrototype proto,
-        string role,
+        ProtoId<EngagementRolePrototype> role,
         EntityUid candidate)
         => MeetsReverseRequirements(
-            proto,
             role,
             candidate,
             engagement.Comp.Actors.SelectMany(x => x.Value.Select(u => (x.Key, u))));
 
     /// <summary>
-    /// Records the actor as occupying the role, applies <see cref="EngagementRole.OnStart"/>
+    /// Records the actor as occupying the role, applies <see cref="EngagementRolePrototype.OnStart"/>
     /// to its GoapState, fires <see cref="EngagementRoleJoined"/>, and checks whether the
-    /// situation has now met every role's <see cref="EngagementRole.MinCount"/>.
+    /// situation has now met every role's <see cref="EngagementRolePrototype.MinCount"/>.
     /// </summary>
-    private void SeatActor(Entity<EngagementComponent> engagement, string role, EngagementRole roleData, EntityUid actor)
+    private void SeatActor(Entity<EngagementComponent> engagement, EngagementRolePrototype role, EntityUid actor)
     {
         if (!engagement.Comp.Actors.TryGetValue(role, out var set))
             engagement.Comp.Actors[role] = set = new();
@@ -393,7 +392,7 @@ public sealed partial class EngagementSystem : EntitySystem
         participant.Membership[engagement.Owner] = role;
 
         if (engagement.Comp.Started && _goapQuery.TryComp(actor, out var goap))
-            goap.State.OverwriteFrom(roleData.OnStart);
+            goap.State.OverwriteFrom(role.OnStart);
 
         var ev = new EngagementRoleJoined(engagement.Owner, actor, role);
         RaiseLocalEvent(actor, ev);
@@ -404,7 +403,7 @@ public sealed partial class EngagementSystem : EntitySystem
 
     /// <summary>
     /// Marks the situation as <see cref="EngagementComponent.Started"/> once every role has
-    /// reached its <see cref="EngagementRole.MinCount"/>, and fires <see cref="EngagementStarted"/>.
+    /// reached its <see cref="EngagementRolePrototype.MinCount"/>, and fires <see cref="EngagementStarted"/>.
     /// No-ops if already started.
     /// </summary>
     private void CheckStarted(Entity<EngagementComponent> engagement)
@@ -412,11 +411,14 @@ public sealed partial class EngagementSystem : EntitySystem
         if (engagement.Comp.Started || !_prototype.TryIndex(engagement.Comp.Kind, out var proto))
             return;
 
-        foreach (var roleData in proto.Roles)
+        foreach (var roleId in proto.Roles)
         {
-            var count = engagement.Comp.Actors.TryGetValue(roleData.Id, out var set) ? set.Count : 0;
+            if (!_prototype.Resolve(roleId, out var role))
+                continue;
 
-            if (count < roleData.MinCount)
+            var count = engagement.Comp.Actors.TryGetValue(roleId, out var set) ? set.Count : 0;
+
+            if (count < role.MinCount)
                 return;
         }
 
@@ -424,13 +426,15 @@ public sealed partial class EngagementSystem : EntitySystem
         var ev = new EngagementStarted(engagement.Owner, engagement.Comp.Kind);
         RaiseLocalEvent(engagement.Owner, ev);
 
-        foreach (var (role, actors) in engagement.Comp.Actors)
+        foreach (var (roleId, actors) in engagement.Comp.Actors)
         {
+            if (!_prototype.Resolve(roleId, out var role))
+                continue;
+
             foreach (var actor in actors)
             {
-                if (proto.Roles.FirstOrNull(x => x.Id == role) is { } roleData
-                    && _goapQuery.TryComp(actor, out var goap))
-                    goap.State.OverwriteFrom(roleData.OnStart);
+                if (_goapQuery.TryComp(actor, out var goap))
+                    goap.State.OverwriteFrom(role.OnStart);
 
                 RaiseLocalEvent(actor, ev);
             }
@@ -445,9 +449,6 @@ public sealed partial class EngagementSystem : EntitySystem
 
         while (enumerator.MoveNext(out var uid, out var comp))
         {
-            if (!_prototype.TryIndex(comp.Kind, out var proto))
-                continue;
-
             // Expire invites nobody accepted in time.
             if (comp.Invites.Count > 0)
             {
@@ -461,9 +462,10 @@ public sealed partial class EngagementSystem : EntitySystem
             }
 
             // Re-check "stay-in" requirements for roles that opted into continuous validation.
-            foreach (var (role, actors) in comp.Actors.ToArray())
+            foreach (var (roleId, actors) in comp.Actors.ToArray())
             {
-                if (proto.Roles.FirstOrNull(x => x.Id == role) is not { AlwaysConditionCheck: true } roleData)
+                if (!_prototype.Resolve(roleId, out var role)
+                    || !role.AlwaysConditionCheck)
                     continue;
 
                 foreach (var actor in actors.ToArray())
@@ -471,10 +473,10 @@ public sealed partial class EngagementSystem : EntitySystem
                     if (comp.NextConditionCheck.TryGetValue(actor, out var next) && next > _timing.CurTime)
                         continue;
 
-                    comp.NextConditionCheck[actor] = _timing.CurTime + roleData.ConditionsCheckRate;
+                    comp.NextConditionCheck[actor] = _timing.CurTime + role.ConditionsCheckRate;
 
-                    if (!MeetsForwardRequirements((uid, comp), roleData, actor)
-                        || !MeetsReverseRequirements((uid, comp), proto, role, actor))
+                    if (!MeetsForwardRequirements((uid, comp), role, actor)
+                        || !MeetsReverseRequirements(new(uid, comp), role, actor))
                         LeaveEngagement((uid, comp), actor, EngagementEndReason.Dissolved);
                 }
             }
@@ -495,7 +497,7 @@ public enum EngagementEndReason : byte
 
     /// <summary>
     /// The role or situation was cut short because a role's required conditions stopped
-    /// holding, or a role's participant count dropped below its <see cref="EngagementRole.MinCount"/>.
+    /// holding, or a role's participant count dropped below its <see cref="EngagementRolePrototype.MinCount"/>.
     /// </summary>
     Dissolved,
 

@@ -157,7 +157,7 @@ public sealed class ConversationSystem : EntitySystem
         }
     }
 
-    private (int Index, string Actor, TimeSpan Delay, InGameICChatType SpeakType, bool Speak)? GetNextMessage(
+    private (int Index, ProtoId<EngagementRolePrototype> Actor, TimeSpan Delay, InGameICChatType SpeakType, bool Speak)? GetNextMessage(
         ConversationScriptPrototype script,
         int current = -1)
     {
@@ -201,7 +201,7 @@ public sealed class ConversationSystem : EntitySystem
                 if (msg.FaceTo == null)
                     return ConversationCenter(engage);
 
-                return Transform(engage.Actors[msg.FaceTo].First()).Coordinates.Position;
+                return Transform(engage.Actors[msg.FaceTo.Value].First()).Coordinates.Position;
             default:
                 throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
         }
@@ -233,7 +233,7 @@ public sealed class ConversationSystem : EntitySystem
     /// Same role assignment/consent rules as the other overloads apply to every candidate except
     /// <paramref name="initiator"/> itself: since it is the one calling this method, it is treated as
     /// having already consented and is seated immediately even if its assigned role isn't
-    /// <see cref="EngagementRole.Force"/> - its own invite, if any, is accepted on the spot.
+    /// <see cref="EngagementRolePrototype.Force"/> - its own invite, if any, is accepted on the spot.
     /// </remarks>
     /// <param name="protoId">Conversation script prototype.</param>
     /// <param name="initiator">The entity starting the conversation. Must be included in <paramref name="candidates"/>.</param>
@@ -247,7 +247,7 @@ public sealed class ConversationSystem : EntitySystem
         ProtoId<ConversationScriptPrototype> protoId,
         EntityUid initiator,
         HashSet<EntityUid> candidates,
-        [NotNullWhen(true)] out Dictionary<string, HashSet<EntityUid>>? actors)
+        [NotNullWhen(true)] out Dictionary<ProtoId<EngagementRolePrototype>, HashSet<EntityUid>>? actors)
     {
         actors = null;
 
@@ -367,7 +367,7 @@ public sealed class ConversationSystem : EntitySystem
     /// </summary>
     /// <param name="ent">Any current participant of the conversation.</param>
     /// <param name="applyEffects">
-    /// If true, applies each role's <see cref="EngagementPrototype.Effects"/> before tearing
+    /// If true, applies each role's <see cref="EngagementRolePrototype.Effects"/> before tearing
     /// down the situation, and reports <see cref="EngagementEndReason.Finished"/> instead of
     /// <see cref="EngagementEndReason.Interrupted"/>.
     /// </param>

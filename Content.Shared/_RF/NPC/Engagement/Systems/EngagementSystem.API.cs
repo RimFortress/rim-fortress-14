@@ -4,7 +4,6 @@ using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.Engagement.Systems;
 
@@ -19,7 +18,7 @@ public partial class EngagementSystem
     /// </summary>
     /// <param name="protoId">The kind of situation to create.</param>
     /// <param name="initiator">
-    /// The entity that caused this situation to exist. Used for <see cref="EngagementRole.InitiatorOnly"/> checks.
+    /// The entity that caused this situation to exist. Used for <see cref="EngagementRolePrototype.InitiatorOnly"/> checks.
     /// </param>
     /// <param name="engagement">The created situation entity, if successful.</param>
     /// <returns>True, if the situation was created.</returns>
@@ -45,7 +44,7 @@ public partial class EngagementSystem
 
     /// <summary>
     /// Creates a new situation and attempts to seat or invite entities from <paramref name="invited"/>
-    /// into roles according to <see cref="EngagementRole.Conditions"/>/<see cref="EngagementRole.ConditionsFor"/>.
+    /// into roles according to <see cref="EngagementRolePrototype.Conditions"/>/<see cref="EngagementRolePrototype.ConditionsFor"/>.
     /// </summary>
     /// <param name="protoId">The kind of situation to create.</param>
     /// <param name="initiator">The entity that caused this situation to exist.</param>
@@ -72,11 +71,12 @@ public partial class EngagementSystem
 
         foreach (var (roleId, actors) in assignment)
         {
-            var roleData = proto.Roles.FirstOrNull(x => x.Id == roleId)!.Value;
+            if (!_prototype.Resolve(roleId, out var role))
+                continue;
 
             foreach (var actor in actors)
             {
-                if (roleData.Force || actor == initiator)
+                if (role.Force || actor == initiator)
                     TryJoinEngagement(engagement.Value.AsNullable(), roleId, actor);
                 else
                     InviteToEngagementInternal(engagement.Value, roleId, actor, initiator);
@@ -91,29 +91,31 @@ public partial class EngagementSystem
     #region Join / Invite
 
     /// <summary>
-    /// Directly seats an actor into a <see cref="EngagementRole.Force"/> role, bypassing consent
+    /// Directly seats an actor into a <see cref="EngagementRolePrototype.Force"/> role, bypassing consent
     /// and the role's conditions entirely. Use this for situations the actor is dragged into
     /// regardless of what it wants — e.g. the victim of an attack.
     /// </summary>
     /// <param name="engagement">The situation to join.</param>
-    /// <param name="role">The role to occupy. Must have <see cref="EngagementRole.Force"/> set to true.</param>
+    /// <param name="roleId">The role to occupy. Must have <see cref="EngagementRolePrototype.Force"/> set to true.</param>
     /// <param name="actor">The entity to seat.</param>
     /// <returns>True, if the actor was seated.</returns>
     [PublicAPI]
-    public bool TryJoinEngagement(Entity<EngagementComponent?> engagement, string role, EntityUid actor)
+    public bool TryJoinEngagement(
+        Entity<EngagementComponent?> engagement,
+        ProtoId<EngagementRolePrototype> roleId,
+        EntityUid actor)
     {
         if (!Resolve(engagement, ref engagement.Comp)
-            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
-            || proto.Roles.FirstOrNull(x => x.Id == role) is not { } roleData)
+            || !_prototype.Resolve(roleId, out var role))
             return false;
 
-        if (!roleData.Force && actor != engagement.Comp.Initiator)
+        if (!role.Force && actor != engagement.Comp.Initiator)
             return false;
 
-        if (!CanSeat(engagement!, role, roleData, actor))
+        if (!CanSeat(engagement!, role, actor))
             return false;
 
-        SeatActor(engagement!, role, roleData, actor);
+        SeatActor(engagement!, role, actor);
         return true;
     }
 
@@ -123,30 +125,29 @@ public partial class EngagementSystem
     /// during <see cref="Update"/>.
     /// </summary>
     /// <param name="engagement">The situation to invite into.</param>
-    /// <param name="role">The role being offered. Must have <see cref="EngagementRole.Force"/> set to false.</param>
+    /// <param name="roleId">The role being offered. Must have <see cref="EngagementRolePrototype.Force"/> set to false.</param>
     /// <param name="actor">The entity being invited.</param>
     /// <param name="inviter">The inviter entity.</param>
     /// <returns>True, if the invite was sent.</returns>
     [PublicAPI]
     public bool InviteToEngagement(
         Entity<EngagementComponent?> engagement,
-        string role,
+        ProtoId<EngagementRolePrototype> roleId,
         EntityUid actor,
         EntityUid inviter)
     {
         if (!Resolve(engagement, ref engagement.Comp)
-            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
-            || proto.Roles.FirstOrNull(x => x.Id == role) is not { } roleData
+            || !_prototype.Resolve(roleId, out var role)
             || actor == inviter
-            || roleData.Force)
+            || role.Force)
             return false;
 
-        if (!CanSeat(engagement!, role, roleData, actor)
-            || !MeetsForwardRequirements(engagement!, roleData, actor)
-            || !MeetsReverseRequirements(engagement!, proto, role, actor))
+        if (!CanSeat(engagement!, role, actor)
+            || !MeetsForwardRequirements(engagement!, role, actor)
+            || !MeetsReverseRequirements(engagement!, role, actor))
             return false;
 
-        InviteToEngagementInternal(engagement!, role, actor, inviter);
+        InviteToEngagementInternal(engagement!, roleId, actor, inviter);
         return true;
     }
 
@@ -163,7 +164,7 @@ public partial class EngagementSystem
             || !_participantQuery.TryComp(actor, out var participant))
             return false;
 
-        (EntityUid EngageUid, EntityUid Inviter, string Role)? ownInvite = null;
+        (EntityUid EngageUid, EntityUid Inviter, ProtoId<EngagementRolePrototype> Role)? ownInvite = null;
 
         foreach (var entry in participant.Invites)
         {
@@ -177,7 +178,7 @@ public partial class EngagementSystem
         if (ownInvite == null)
             return false;
 
-        (string Role, EntityUid Uid, TimeSpan ValidUntil)? matched = null;
+        (ProtoId<EngagementRolePrototype> Role, EntityUid Uid, TimeSpan ValidUntil)? matched = null;
 
         foreach (var entry in engagement.Comp.Invites)
         {
@@ -190,12 +191,12 @@ public partial class EngagementSystem
 
         if (matched == null
             || matched.Value.ValidUntil < _timing.CurTime
-            || !_prototype.TryIndex(engagement.Comp.Kind, out var proto)
-            || proto.Roles.FirstOrNull(x => x.Id == matched.Value.Role) is not { Force: false } roleData)
+            || !_prototype.Resolve(matched.Value.Role, out var role)
+            || role.Force)
             return false;
 
         RemoveInvite(engagement, actor, ownInvite.Value.Role);
-        SeatActor(engagement!, matched.Value.Role, roleData, actor);
+        SeatActor(engagement!, role, actor);
         return true;
     }
 
@@ -263,9 +264,9 @@ public partial class EngagementSystem
     #region Leave / End
 
     /// <summary>
-    /// Removes a single actor from the situation, applying <see cref="EngagementRole.OnFinish"/>
-    /// and <see cref="EngagementRole.OnFinishRemove"/> to its GoapState. If this drops the actor's
-    /// role below <see cref="EngagementRole.MinCount"/> and <see cref="EngagementPrototype.DissolveInvalid"/>
+    /// Removes a single actor from the situation, applying <see cref="EngagementRolePrototype.OnFinish"/>
+    /// and <see cref="EngagementRolePrototype.OnFinishRemove"/> to its GoapState. If this drops the actor's
+    /// role below <see cref="EngagementRolePrototype.MinCount"/> and <see cref="EngagementPrototype.DissolveInvalid"/>
     /// is set, the whole situation is dissolved for every remaining participant.
     /// </summary>
     /// <param name="engagement">The situation to leave.</param>
@@ -284,27 +285,26 @@ public partial class EngagementSystem
 
     /// <summary>
     /// Dissolves the whole situation, removing every participant and applying each of their
-    /// roles' <see cref="EngagementRole.OnFinish"/>/<see cref="EngagementRole.OnFinishRemove"/>.
+    /// roles' <see cref="EngagementRolePrototype.OnFinish"/>/<see cref="EngagementRolePrototype.OnFinishRemove"/>.
     /// </summary>
     /// <param name="engagement">The situation to end.</param>
     /// <param name="reason">Why the situation ended.</param>
     [PublicAPI]
     public void EndEngagement(Entity<EngagementComponent?> engagement, EngagementEndReason reason)
     {
-        if (!Resolve(engagement, ref engagement.Comp)
-            || !_prototype.Resolve(engagement.Comp.Kind, out var proto))
+        if (!Resolve(engagement, ref engagement.Comp))
             return;
 
         if (reason == EngagementEndReason.Finished)
         {
-            foreach (var (role, entities) in engagement.Comp.Actors)
+            foreach (var (roleId, entities) in engagement.Comp.Actors)
             {
-                if (!proto.Effects.TryGetValue(role, out var effects))
+                if (!_prototype.Resolve(roleId, out var role))
                     continue;
 
                 foreach (var uid in entities)
                 {
-                    _entityEffects.ApplyEffects(uid, effects);
+                    _entityEffects.ApplyEffects(uid, role.Effects);
                 }
             }
         }
@@ -346,7 +346,7 @@ public partial class EngagementSystem
         Entity<EngagementParticipantComponent?> ent,
         ProtoId<EngagementPrototype> protoId,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement,
-        [NotNullWhen(true)] out string? roleId)
+        [NotNullWhen(true)] out ProtoId<EngagementRolePrototype>? roleId)
     {
         engagement = null;
         roleId = null;
@@ -380,7 +380,7 @@ public partial class EngagementSystem
     [PublicAPI, Pure]
     public bool TryFindEngagement(
         EntityUid actor,
-        string role,
+        ProtoId<EngagementRolePrototype> role,
         ProtoId<EngagementPrototype> protoId,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement)
     {
@@ -408,10 +408,15 @@ public partial class EngagementSystem
     public bool TryGetRole(
         Entity<EngagementParticipantComponent?> ent,
         EntityUid engagement,
-        [NotNullWhen(true)] out string? role)
+        [NotNullWhen(true)] out ProtoId<EngagementRolePrototype>? role)
     {
         role = null;
-        return Resolve(ent, ref ent.Comp, false) && ent.Comp.Membership.TryGetValue(engagement, out role);
+
+        if (!Resolve(ent, ref ent.Comp, false) || !ent.Comp.Membership.TryGetValue(engagement, out var roleId))
+            return false;
+
+        role = roleId;
+        return true;
     }
 
     /// <summary>
@@ -420,7 +425,7 @@ public partial class EngagementSystem
     [PublicAPI, Pure]
     public bool TryGetActors(
         Entity<EngagementComponent?> ent,
-        string role,
+        ProtoId<EngagementRolePrototype> role,
         [NotNullWhen(true)] out IReadOnlySet<EntityUid>? actors)
     {
         actors = null;

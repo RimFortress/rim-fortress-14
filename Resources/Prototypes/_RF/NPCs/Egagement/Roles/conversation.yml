@@ -1,0 +1,215 @@
+- type: engagementRole
+  id: BaseDialogRole
+  abstract: true
+  onStart:
+    InConversation: true
+  onFinishRemove:
+  - InConversation
+
+- type: engagementRole
+  id: BaseDialogInitiator
+  initiatorOnly: true
+  conditionsFor:
+    BaseDialogResponder:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -5
+  effects:
+  - !type:AddMood
+    proto: MoodPleasantConversation
+  - !type:AddOpinion
+    actors:
+    - BaseDialogResponder
+    proto: OpinionPoliteDialogue
+  - !type:ChangeNeed
+    need: Socialization
+    random:
+      min: 15
+      max: 30
+
+- type: engagementRole
+  id: BaseDialogResponder
+  parent: BaseDialogRole
+  conditionsFor:
+    BaseDialogInitiator:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -5
+  effects:
+  - !type:AddMood
+    proto: MoodPleasantConversation
+  - !type:AddOpinion
+    actors:
+    - BaseDialogInitiator
+    proto: OpinionPoliteDialogue
+  - !type:ChangeNeed
+    need: Socialization
+    random:
+      min: 15
+      max: 30
+
+# MorningGreeting
+
+- type: engagementRole
+  id: MorningGreetingInitiator
+  parent: BaseDialogRole
+  initiatorOnly: true
+  conditions:
+  - !type:DayHour
+    moreThan: 5
+    lessThan: 10
+  - !type:Mood
+    moreThan: -5
+  conditionsFor:
+    MorningGreetingResponder:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+
+- type: engagementRole
+  id: MorningGreetingResponder
+  parent: BaseDialogRole
+  conditions:
+  - !type:Mood
+    moreThan: -5
+  conditionsFor:
+    MorningGreetingInitiator:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -5
+
+# SmalltalkRejected
+
+- type: engagementRole
+  id: SmalltalkRejectedInitiator
+  parent: BaseDialogRole
+  initiatorOnly: true
+  conditions:
+  - !type:Mood
+    moreThan: -5
+  conditionsFor:
+    SmalltalkRejectedResponder:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -5
+  effects:
+  - !type:AddMood
+    proto: MoodUnpleasantConversation
+  - !type:ChangeNeed
+    need: Socialization
+    random:
+      min: 5
+      max: 10
+
+- type: engagementRole
+  id: SmalltalkRejectedResponder
+  parent: BaseDialogRole
+  conditions:
+  - !type:Mood
+    lessThan: -15
+  onStart:
+    InConversation: true
+  onFinishRemove:
+  - InConversation
+  effects:
+  - !type:AddMood
+    proto: MoodConversationIrritated
+
+# SmalltalkIgnored
+
+- type: engagementRole
+  id: SmalltalkIgnoredInitiator
+  parent: BaseDialogRole
+  initiatorOnly: true
+  conditions:
+  - !type:Mood
+    moreThan: -5
+  conditionsFor:
+    SmalltalkIgnoredResponder:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -5
+  effects:
+  - !type:AddMood
+    proto: MoodUnpleasantConversation
+
+- type: engagementRole
+  id: SmalltalkIgnoredResponder
+  parent: BaseDialogRole
+  conditions:
+  - !type:Mood
+    lessThan: -25
+  onStart:
+    InConversation: true
+  onFinishRemove:
+  - InConversation
+  effects:
+  - !type:AddMood
+    proto: MoodConversationIrritated
+
+# SmalltalkRude
+
+- type: engagementRole
+  id: SmalltalkRudeInitiator
+  parent: BaseDialogRole
+  initiatorOnly: true
+  conditions:
+  - !type:Mood
+    moreThan: -5
+  conditionsFor:
+    SmalltalkRudeResponder:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -5
+  effects:
+  - !type:AddMood
+    proto: MoodRudeConversation
+  - !type:AddOpinion
+    actors:
+    - SmalltalkRudeResponder
+    proto: OpinionRudeDialogue
+
+- type: engagementRole
+  id: SmalltalkRudeResponder
+  parent: BaseDialogRole
+  conditions:
+  - !type:Mood
+    lessThan: -30
+  onStart:
+    InConversation: true
+  onFinishRemove:
+  - InConversation
+  effects:
+  - !type:AddMood
+    proto: MoodConversationIrritated
+
+# ThankForHealing
+
+- type: engagementRole
+  id: ThankForHealingInitiator
+  parent: BaseDialogRole
+  initiatorOnly: true
+  conditionsFor:
+    BaseDialogResponder:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -1
+      hasEffects:
+      - OpinionHealed
+
+# CheckOnPatient
+
+- type: engagementRole
+  id: CheckOnPatientInitiator
+  parent: BaseDialogRole
+  initiatorOnly: true
+
+- type: engagementRole
+  id: CheckOnPatientResponder
+  parent: BaseDialogRole
+  conditionsFor:
+    CheckOnPatientInitiator:
+    - !type:Opinion
+      targetKey: EngagementParticipant
+      moreThan: -1
+      hasEffects:
+      - OpinionHealed
