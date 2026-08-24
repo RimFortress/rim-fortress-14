@@ -3,20 +3,20 @@
   tasks:
   # Search
   - preconditions:
-    - Query/InventoryGuns||Query/NearbyGuns != null
+    - Query/InventoryGuns || Query/NearbyGuns != null
     actions:
     - !type:CaptureQuery
-      capture: Query/InventoryGuns||Query/NearbyGuns
+      capture: Query/InventoryGuns || Query/NearbyGuns
       targetKey: WeaponTarget
     effects:
       GunFound: true
       WeaponTarget: true
 
   - preconditions:
-    - Query/InventoryMelees||Query/NearbyMelees != null
+    - Query/InventoryMelees || Query/NearbyMelees != null
     actions:
     - !type:CaptureQuery
-      capture: Query/InventoryMelees||Query/NearbyMelees
+      capture: Query/InventoryMelees || Query/NearbyMelees
       targetKey: WeaponTarget
       costMultiplier: 2
     effects:

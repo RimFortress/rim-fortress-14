@@ -2,14 +2,14 @@
   id: StopBleeding
   tasks:
   - preconditions:
-    - Query/BleedHealing||Query/HeatMelees != null
+    - Query/BleedHealing || Query/HeatMelees != null
     actions:
     - !type:EntityCoords
-      targetKey: Query/BleedHealing||Query/HeatMelees
+      targetKey: Query/BleedHealing || Query/HeatMelees
     - !type:MoveTo
       rangeKey: InteractRange
     - !type:Pickup
-      targetKey: Query/BleedHealing||Query/HeatMelees
+      targetKey: Query/BleedHealing || Query/HeatMelees
     effects:
       BleedHealingPickedUp: true
 

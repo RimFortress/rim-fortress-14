@@ -469,7 +469,8 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         if (!key.Id.Contains(OrKeySeparator, StringComparison.Ordinal))
             return Array.Empty<StateKey<T>>();
 
-        var parts = key.Id.Split(OrKeySeparator, StringSplitOptions.RemoveEmptyEntries);
+        var parts = key.Id.Split(OrKeySeparator,
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var keys = new StateKey<T>[parts.Length];
 
         for (var i = 0; i < parts.Length; i++)

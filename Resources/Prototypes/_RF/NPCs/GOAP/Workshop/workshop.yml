@@ -27,7 +27,7 @@
     - Workshop != null
     actions:
     - !type:CaptureQuery
-      capture: &WorkshopIngredient Query/WorkshopMaterial||Query/WorkshopItem||Query/WorkshopReagent
+      capture: &WorkshopIngredient Query/WorkshopMaterial || Query/WorkshopItem || Query/WorkshopReagent
     - !type:EntityCoords
       targetKey: *WorkshopIngredient
     - !type:MoveTo

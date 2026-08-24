@@ -30,15 +30,15 @@
 
   - preconditions:
     - ActiveHandsFree == true
-    - Query/FrendlyAttackTarget||Query/NearbyDestructible != null
+    - Query/FrendlyAttackTarget || Query/NearbyDestructible != null
     actions:
     - !type:EntityCoords
-      targetKey: Query/FrendlyAttackTarget||Query/NearbyDestructible
+      targetKey: Query/FrendlyAttackTarget || Query/NearbyDestructible
     - !type:MoveTo
       rangeKey: MeleeRange
     - !type:Juke
     - !type:Melee
-      targetKey: Query/FrendlyAttackTarget||Query/NearbyDestructible
+      targetKey: Query/FrendlyAttackTarget || Query/NearbyDestructible
       oneHit: true
     effects:
       MentalBreakdownAttack: true

@@ -3,9 +3,9 @@
   tasks:
   # Base
   - preconditions:
-    - Query/NotStoredItem||Query/WorkshopResult != null
+    - Query/NotStoredItem || Query/WorkshopResult != null
     action: !type:CaptureQuery
-      capture: Query/NotStoredItem||Query/WorkshopResult
+      capture: Query/NotStoredItem || Query/WorkshopResult
       targetKey: StoringTarget
     effects:
       StoringType: Item
@@ -20,18 +20,18 @@
 
   # Stored
   - preconditions:
-    - Query/OffsetStoredItem||Query/StoredItemToContainer||Query/StoredItemSupply != null
+    - Query/OffsetStoredItem || Query/StoredItemToContainer || Query/StoredItemSupply != null
     action: !type:CaptureQuery
-      capture: Query/OffsetStoredItem||Query/StoredItemToContainer||Query/StoredItemSupply
+      capture: Query/OffsetStoredItem || Query/StoredItemToContainer || Query/StoredItemSupply
       targetKey: StoringTarget
     effects:
       StoredRemoved: false
       StoringType: Item
 
   - preconditions:
-    - Query/OffsetStoredCrate||Query/StoredCrateSupply != null
+    - Query/OffsetStoredCrate || Query/StoredCrateSupply != null
     action: !type:CaptureQuery
-      capture: Query/OffsetStoredCrate||Query/StoredCrateSupply
+      capture: Query/OffsetStoredCrate || Query/StoredCrateSupply
       targetKey: StoringTarget
     effects:
       StoredRemoved: false
