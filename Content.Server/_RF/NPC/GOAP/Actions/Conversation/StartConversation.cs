@@ -120,8 +120,18 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
         return GoapActionResult.Failed;
     }
 
+    /// <summary>
+    /// If the plan is discarded while still waiting on invite responses, or after the situation
+    /// started but before the agent ever gets to run the <c>Conversation</c> action, the agent
+    /// (already seated/self-accepted at this point) would otherwise be left behind indefinitely.
+    /// A normal handoff to the next action in the same plan is <see cref="GoapPlanFinishReason.Finished"/>
+    /// and must NOT tear the conversation down - only abnormal termination does.
+    /// </summary>
     protected override void ActionPlanShutdown(Entity<GoapComponent> ent, StartConversation action, GoapPlanFinishReason reason)
     {
         ent.Comp.State.Remove(action.WaitInvitesAcceptKey);
+
+        if (reason != GoapPlanFinishReason.Finished)
+            _conversation.EndConversation(ent.Owner);
     }
 }

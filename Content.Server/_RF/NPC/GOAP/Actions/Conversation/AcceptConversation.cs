@@ -1,5 +1,6 @@
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
+using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -22,6 +23,7 @@ public sealed partial class AcceptConversation : BaseGoapAction<AcceptConversati
 
 public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConversation>
 {
+    [Dependency] private readonly ConversationSystem _conversation = default!;
     [Dependency] private readonly EngagementSystem _engagement = default!;
     [Dependency] private readonly NpcSearcherSystem _npcSearcher = default!;
 
@@ -52,5 +54,18 @@ public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConv
             CreateDump(ent, action, "no pending invite could be accepted");
 
         return accepted;
+    }
+
+    /// <summary>
+    /// If the plan is discarded before the agent ever gets to run the <c>Conversation</c> action
+    /// (e.g. interrupted by a higher-scoring goal winning mid-wait), the agent is left seated in
+    /// the situation with nobody ever advancing or leaving it. On a normal handoff to the next
+    /// action in the same plan this is <see cref="GoapPlanFinishReason.Finished"/> and must NOT
+    /// tear the conversation down - only abnormal termination does.
+    /// </summary>
+    protected override void ActionPlanShutdown(Entity<GoapComponent> ent, AcceptConversation action, GoapPlanFinishReason reason)
+    {
+        if (reason != GoapPlanFinishReason.Finished)
+            _conversation.EndConversation(ent.Owner);
     }
 }

@@ -131,7 +131,8 @@ public sealed class ConversationSystem : EntitySystem
         if (!_prototype.Resolve(ent.Comp.Script, out var script)
             || !_engagementQuery.TryComp(ent, out var comp)
             || GetNextMessage(script) is not { } first
-            || !_engagement.TryGetActors(ent.Owner, first.Actor, out var firstActors))
+            || !_engagement.TryGetActors(ent.Owner, first.Actor, out var firstActors)
+            || firstActors.Count == 0)
         {
             _engagement.EndEngagement(ent.Owner, EngagementEndReason.Dissolved);
             return;
@@ -341,6 +342,13 @@ public sealed class ConversationSystem : EntitySystem
         }
 
         comp.NextActors = conv.Value.Comp2.Actors[next.Actor];
+
+        if (comp.NextActors.Count == 0)
+        {
+            EndConversation(ent, true);
+            return;
+        }
+
         comp.NextDelay = next.Delay;
         comp.NextMessage = next.Index;
         comp.NextSpeakType = next.SpeakType;
