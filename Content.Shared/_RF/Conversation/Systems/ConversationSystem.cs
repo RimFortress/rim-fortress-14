@@ -2,21 +2,17 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.Conversation.Components;
+using Content.Shared._RF.NPC.Engagement;
+using Content.Shared._RF.NPC.Engagement.Components;
+using Content.Shared._RF.NPC.Engagement.Prototypes;
+using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared.Bed.Sleep;
 using Content.Shared.Chat;
-using Content.Shared.EntityEffects;
 using Content.Shared.Mobs;
-using Content.Shared.Mobs.Components;
-using Content.Shared.NPC;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
-using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Conversation.Systems;
@@ -24,46 +20,38 @@ namespace Content.Shared._RF.Conversation.Systems;
 /// <summary>
 /// A helper system for easily implementing advanced random conversations between NPCs.
 /// </summary>
-public sealed class ConversationSystem : EntitySystem, IConversationConditionChecker
+public sealed class ConversationSystem : EntitySystem
 {
-    [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly SharedGoapSystem _goap = default!;
-    [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
+    [Dependency] private readonly EngagementSystem _engagement = default!;
 
     [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
-
-    private readonly Dictionary<int, HashSet<ProtoId<ConversationScriptPrototype>>> _scriptsByActors = new();
+    [Dependency] private readonly EntityQuery<ConversationComponent> _conversationQuery = default!;
+    [Dependency] private readonly EntityQuery<EngagementComponent> _engagementQuery = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeLocalEvent<ConversationActorComponent, ComponentRemove>(OnRemove);
+        SubscribeLocalEvent<ConversationActorComponent, ComponentRemove>(OnActorRemove);
         SubscribeLocalEvent<ConversationActorComponent, MobStateChangedEvent>(OnMobStateChanged);
-
-        _prototype.PrototypesReloaded += args =>
-        {
-            if (args.WasModified<ConversationScriptPrototype>())
-                ReloadPrototypes();
-        };
-
-        ReloadPrototypes();
+        SubscribeLocalEvent<ConversationComponent, EngagementStarted>(OnEngagementStarted);
+        SubscribeLocalEvent<ConversationComponent, EngagementEnded>(OnEngagementEnded);
+        SubscribeLocalEvent<ConversationComponent, EngagementRoleJoined>(OnEngagementJoined);
+        SubscribeLocalEvent<ConversationComponent, EngagementRoleLeft>(OnEngagementLeft);
     }
 
-    private void OnRemove(Entity<ConversationActorComponent> ent, ref ComponentRemove args)
+    private void OnActorRemove(Entity<ConversationActorComponent> ent, ref ComponentRemove args)
     {
-        if (!TryComp(ent.Comp.Conversation, out ConversationComponent? conv))
+        if (!TryGetConversation(ent.AsNullable(), out var conv))
             return;
 
-        foreach (var (_, actor) in conv.Actors)
-        {
-            if (actor != ent.Owner)
-                RemComp<ConversationActorComponent>(actor);
-        }
+        // Leaving one role is enough - if the underlying EngagementPrototype has
+        // DissolveInvalid set (which every conversation kind should), the Engagement
+        // system itself cascades this into EndEngagement for the remaining actors.
+        _engagement.LeaveEngagement(conv.Value.Owner, ent, EngagementEndReason.Interrupted);
     }
 
     private void OnMobStateChanged(Entity<ConversationActorComponent> ent, ref MobStateChangedEvent args)
@@ -72,14 +60,100 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
             EndConversation(ent.AsNullable());
     }
 
-    private void ReloadPrototypes()
+    /// <summary>
+    /// Fires once every role of the underlying situation has reached its minimum participant
+    /// count - i.e. once every invited actor with a consent-required role has accepted.
+    /// Refreshes the cached role -&gt; actor mapping and kicks off the first line.
+    /// </summary>
+    private void OnEngagementStarted(Entity<ConversationComponent> ent, ref EngagementStarted args)
     {
-        _scriptsByActors.Clear();
+        SetupActors(ent);
+        StartConversation(ent);
+    }
 
-        foreach (var proto in _prototype.EnumeratePrototypes<ConversationScriptPrototype>())
+    /// <summary>
+    /// The situation ended (naturally via <see cref="EndConversation"/>, or dissolved/interrupted
+    /// by the Engagement system itself, e.g. one actor dying). Either way, only conversation-specific
+    /// actor state needs cleaning up here - membership and GoapState effects are already handled.
+    /// </summary>
+    private void OnEngagementEnded(Entity<ConversationComponent> ent, ref EngagementEnded args)
+    {
+        if (!_engagementQuery.TryComp(ent, out var comp))
+            return;
+
+        foreach (var (_, uids) in comp.Actors)
         {
-            if (!_scriptsByActors.TryAdd(proto.Actors.Count, new() { proto }))
-                _scriptsByActors[proto.Actors.Count].Add(proto);
+            foreach (var uid in uids)
+            {
+                RemComp<ConversationActorComponent>(uid);
+            }
+        }
+    }
+
+    private void OnEngagementJoined(Entity<ConversationComponent> ent, ref EngagementRoleJoined args)
+    {
+        var actor = EnsureComp<ConversationActorComponent>(args.Actor);
+        actor.Conversation = ent;
+        actor.Ready = false;
+        actor.TargetPos = ent.Comp.StartPosition;
+        actor.TargetRangeKey = GoapState.ConversationRange;
+    }
+
+    private void OnEngagementLeft(Entity<ConversationComponent> ent, ref EngagementRoleLeft args)
+    {
+        RemComp<ConversationActorComponent>(args.Actor);
+    }
+
+    private void SetupActors(Entity<ConversationComponent> ent)
+    {
+        if (!_engagementQuery.TryComp(ent, out var comp))
+            return;
+
+        foreach (var (_, uids) in comp.Actors)
+        {
+            foreach (var uid in uids)
+            {
+                var actor = EnsureComp<ConversationActorComponent>(uid);
+                actor.Conversation = ent;
+                actor.Ready = false;
+                actor.TargetPos = ent.Comp.StartPosition;
+                actor.TargetRangeKey = GoapState.ConversationRange;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Picks the first line and positions actors. Dissolves the situation if the script
+    /// has no lines, or its first speaker never ended up seated.
+    /// </summary>
+    private void StartConversation(Entity<ConversationComponent> ent)
+    {
+        if (!_prototype.Resolve(ent.Comp.Script, out var script)
+            || !_engagementQuery.TryComp(ent, out var comp)
+            || GetNextMessage(script) is not { } first
+            || !_engagement.TryGetActors(ent.Owner, first.Actor, out var firstActors))
+        {
+            _engagement.EndEngagement(ent.Owner, EngagementEndReason.Dissolved);
+            return;
+        }
+
+        ent.Comp.NextActors = firstActors.ToHashSet();
+        ent.Comp.NextMessage = first.Index;
+        ent.Comp.NextDelay = first.Delay;
+        ent.Comp.NextSpeakType = first.SpeakType;
+        ent.Comp.NextSpeak = first.Speak;
+
+        foreach (var (_, uids) in comp.Actors)
+        {
+            foreach (var uid in uids)
+            {
+                if (!_actorQuery.TryComp(uid, out var actor))
+                    continue;
+
+                actor.TargetFaceTo = firstActors.Contains(uid)
+                    ? GetRotatePosition(ent.Comp, comp)
+                    : ConversationCenter(comp);
+            }
         }
     }
 
@@ -95,7 +169,7 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
                 if (current >= seq.Lines - 1)
                     return null;
 
-                var actor = script.Actors[next % script.Actors.Count].Id;
+                var actor = seq.Actors[next % seq.Actors.Count];
                 var delay = TimeSpan.FromSeconds(_random.NextFloat(seq.Delay.Min, seq.Delay.Max));
                 return (next, actor, delay, seq.SpeakType, true);
             case ConversationCustomOrderType custom:
@@ -110,153 +184,90 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         }
     }
 
-    private Vector2 GetRotatePosition(ConversationComponent conv)
+    private Vector2 GetRotatePosition(ConversationComponent conv, EngagementComponent engage)
     {
         var script = _prototype.Index(conv.Script);
 
         switch (script.Order)
         {
             case ConversationBasicOrderType:
-                return ConversationCenter(conv);
+                return ConversationCenter(engage);
             case ConversationCustomOrderType custom:
                 var msg = custom.Custom[conv.NextMessage];
 
                 if (msg.FaceDir != null)
-                    return Transform(conv.NextActor).Coordinates.Position + msg.FaceDir.Value;
+                    return Transform(conv.NextActors.First()).Coordinates.Position + msg.FaceDir.Value;
 
                 if (msg.FaceTo == null)
-                    return ConversationCenter(conv);
+                    return ConversationCenter(engage);
 
-                return Transform(conv.Actors[msg.FaceTo]).Coordinates.Position;
+                return Transform(engage.Actors[msg.FaceTo].First()).Coordinates.Position;
             default:
                 throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
         }
     }
 
-    private Vector2 ConversationCenter(ConversationComponent conv)
+    private Vector2 ConversationCenter(EngagementComponent comp)
     {
         var pos = Vector2.Zero;
+        var count = 0;
 
-        foreach (var (_, uid) in conv.Actors)
+        foreach (var (_, uids) in comp.Actors)
         {
-            pos += Transform(uid).Coordinates.Position;
+            foreach (var uid in uids)
+            {
+                pos += Transform(uid).Coordinates.Position;
+                count++;
+            }
         }
 
-        pos /= conv.Actors.Count;
+        pos /= count;
         return pos;
     }
 
     /// <summary>
-    /// Start the conversation with the entities to whom the agent sent invites.
+    /// Starts a conversation with a pre-gathered set of candidate entities, on behalf of a specific
+    /// <paramref name="initiator"/>.
     /// </summary>
-    /// <param name="ent">GOAP agent.</param>
-    /// <param name="actors">Dictionary mapping roleId -> EntityUid, or null if no valid assignment exists.</param>
-    /// <returns>True, if the conversation has been successfully initiated.</returns>
     /// <remarks>
-    /// A conversation scenario is selected at random, in descending order of the number of actors in it
-    /// (first, random scenarios with N actors are selected; if none are suitable, then N - 1, and so on down to 1).
-    /// The actors for the conversation are taken from invites sent by the agent.
+    /// Same role assignment/consent rules as the other overloads apply to every candidate except
+    /// <paramref name="initiator"/> itself: since it is the one calling this method, it is treated as
+    /// having already consented and is seated immediately even if its assigned role isn't
+    /// <see cref="EngagementRole.Force"/> - its own invite, if any, is accepted on the spot.
     /// </remarks>
-    /// <seealso cref="InviteInConversation"/>
-    /// <seealso cref="GoapState.ConversationInvitesToOtherKey"/>
-    [PublicAPI]
-    public bool TryStartConversation(Entity<GoapComponent?> ent,
-        [NotNullWhen(true)] out Dictionary<string, EntityUid>? actors)
-    {
-        actors = null;
-
-        if (!Resolve(ent, ref ent.Comp)
-            || !_goap.TryGetValue(ent.Comp.State, GoapState.ConversationInvitesToOtherKey, out var invites))
-            return false;
-
-        var scripts = _prototype
-            .EnumeratePrototypes<ConversationScriptPrototype>()
-            .ToList();
-        var entities = invites
-            .Where(x => x.Value.ValidUntil >= _timing.CurTime && x.Value.Accespted)
-            .Select(x => x.Key)
-            .ToHashSet();
-        entities.Add(ent);
-
-        while (scripts.Count > 0)
-        {
-            if (TryStartConversation(_random.PickAndTake(scripts), entities, out actors))
-                return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Starts a conversation between entities.
-    /// </summary>
     /// <param name="protoId">Conversation script prototype.</param>
-    /// <param name="uids">List of entities that will participate in the conversation.</param>
-    /// <returns>True, if the conversation has been successfully initiated.</returns>
-    [PublicAPI]
-    public bool TryStartConversation(ProtoId<ConversationScriptPrototype> protoId, HashSet<EntityUid> uids)
-        => TryStartConversation(protoId, uids, out _);
-
-    /// <summary>
-    /// Starts a conversation between entities.
-    /// </summary>
-    /// <param name="protoId">Conversation script prototype.</param>
-    /// <param name="uids">List of entities that will participate in the conversation.</param>
-    /// <param name="actors">Dictionary mapping roleId -> EntityUid, or null if no valid assignment exists.</param>
-    /// <returns>True, if the conversation has been successfully initiated.</returns>
+    /// <param name="initiator">The entity starting the conversation. Must be included in <paramref name="candidates"/>.</param>
+    /// <param name="candidates">Candidate entities that may end up participating in the conversation.</param>
+    /// <param name="actors">
+    /// Role -&gt; entity mapping as it stands right after this call returns. May be incomplete if some
+    /// roles required consent that hasn't been given yet.
+    /// </param>
     [PublicAPI]
     public bool TryStartConversation(
         ProtoId<ConversationScriptPrototype> protoId,
-        HashSet<EntityUid> uids,
-        [NotNullWhen(true)] out Dictionary<string, EntityUid>? actors)
+        EntityUid initiator,
+        HashSet<EntityUid> candidates,
+        [NotNullWhen(true)] out Dictionary<string, HashSet<EntityUid>>? actors)
     {
         actors = null;
 
         if (!_prototype.TryIndex(protoId, out var script))
             return false;
 
-        uids = uids.Where(ValidateActor).ToHashSet();
+        DebugTools.Assert(candidates.Contains(initiator));
 
-        if (uids.Count < script.Actors.Count)
+        if (!_engagement.TryStartEngagement(script.Engagement, initiator, candidates, out var engagement))
             return false;
 
-        if (!TryFindRoles(script, uids, out actors)
-            || GetNextMessage(script) is not { } first)
-            return false;
-
-        var convEnt = Spawn();
+        var convEnt = engagement.Value.Owner;
         var convComp = EnsureComp<ConversationComponent>(convEnt);
         convComp.Script = protoId;
-        convComp.Actors = actors;
-        convComp.NextActor = actors[first.Actor];
-        convComp.NextMessage = first.Index;
-        convComp.NextDelay = first.Delay;
-        convComp.NextSpeakType = first.SpeakType;
-        convComp.NextSpeak = first.Speak;
+        convComp.NextActors = new();
         // TODO: I think the starting location for the conversation should be determined using a more advanced method
-        convComp.StartPosition = Transform(_random.Pick(uids)).Coordinates;
-
-        foreach (var (_, uid) in actors)
-        {
-            var comp = EnsureComp<ConversationActorComponent>(uid);
-            comp.Conversation = convEnt;
-            comp.Ready = false;
-            comp.TargetPos = convComp.StartPosition;
-            comp.TargetRangeKey = GoapState.ConversationRange;
-            comp.TargetFaceTo = uid == convComp.NextActor
-                ? GetRotatePosition(convComp)
-                : ConversationCenter(convComp);
-        }
-
+        convComp.StartPosition = Transform(initiator).Coordinates;
+        actors = engagement.Value.Comp.Actors;
+        SetupActors(new(convEnt, convComp));
         return true;
-
-        bool ValidateActor(EntityUid uid)
-        {
-            if (_actorQuery.HasComp(uid) || HasComp<SleepingComponent>(uid))
-                return false;
-
-            return TryComp(uid, out MobStateComponent? mobState) && mobState.CurrentState == MobState.Alive;
-        }
     }
 
     /// <summary>
@@ -274,28 +285,30 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         speakType = null;
 
         if (!TryGetConversation(ent, out var conv)
-            || conv.NextMessage < 0
-            || !conv.NextSpeak)
+            || conv.Value.Comp1.NextMessage < 0
+            || !conv.Value.Comp1.NextSpeak)
             return false;
 
-        line = Loc.GetString($"conversation-{conv.Script.Id.ToLowerInvariant()}-line-{Id()}");
-        delay = conv.NextDelay;
-        speakType = conv.NextSpeakType;
+        line = Loc.GetString($"conversation-{conv.Value.Comp1.Script.Id.ToLowerInvariant()}-line-{Id()}");
+        delay = conv.Value.Comp1.NextDelay;
+        speakType = conv.Value.Comp1.NextSpeakType;
         return true;
 
         int Id()
         {
-            if (!_prototype.Resolve(conv.Script, out var script))
-                return conv.NextMessage + 1;
+            var comp = conv.Value.Comp1;
+
+            if (!_prototype.Resolve(comp.Script, out var script))
+                return comp.NextMessage + 1;
 
             switch (script.Order)
             {
                 case ConversationBasicOrderType:
-                    return conv.NextMessage + 1;
+                    return comp.NextMessage + 1;
                 case ConversationCustomOrderType custom:
                     var id = 0;
 
-                    for (var i = 0; i <= conv.NextMessage; i++)
+                    for (var i = 0; i <= comp.NextMessage; i++)
                     {
                         if (custom.Custom[i].Speak)
                             id++;
@@ -315,59 +328,59 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     public void ContinueConversation(Entity<ConversationActorComponent?> ent)
     {
         if (!TryGetConversation(ent, out var conv)
-            || conv.NextActor != ent.Owner
-            || !_prototype.Resolve(conv.Script, out var script))
+            || !conv.Value.Comp1.NextActors.Contains(ent)
+            || !_prototype.Resolve(conv.Value.Comp1.Script, out var script))
             return;
 
-        if (GetNextMessage(script, conv.NextMessage) is not { } next)
+        var comp = conv.Value.Comp1;
+
+        if (GetNextMessage(script, comp.NextMessage) is not { } next)
         {
             EndConversation(ent, true);
             return;
         }
 
-        var nextActor = conv.Actors[next.Actor];
-        conv.NextActor = nextActor;
-        conv.NextDelay = next.Delay;
-        conv.NextMessage = next.Index;
-        conv.NextSpeakType = next.SpeakType;
-        conv.NextSpeak = next.Speak;
+        comp.NextActors = conv.Value.Comp2.Actors[next.Actor];
+        comp.NextDelay = next.Delay;
+        comp.NextMessage = next.Index;
+        comp.NextSpeakType = next.SpeakType;
+        comp.NextSpeak = next.Speak;
 
-        if (!_actorQuery.TryComp(conv.NextActor, out var actor))
-            return;
-
-        if (script.Order is ConversationCustomOrderType custom
-            && custom.Custom[conv.NextMessage].PosOffset is { } offset)
+        foreach (var uid in comp.NextActors)
         {
-            actor.TargetPos = new EntityCoordinates(conv.StartPosition.EntityId, conv.StartPosition.Position + offset);
-            actor.TargetRangeKey = GoapState.MovementRange;
-        }
+            if (!_actorQuery.TryComp(uid, out var actor))
+                return;
 
-        actor.TargetFaceTo = GetRotatePosition(conv);
+            if (script.Order is ConversationCustomOrderType custom
+                && custom.Custom[comp.NextMessage].PosOffset is { } offset)
+            {
+                actor.TargetPos = new EntityCoordinates(comp.StartPosition.EntityId, comp.StartPosition.Position + offset);
+                actor.TargetRangeKey = GoapState.MovementRange;
+            }
+
+            actor.TargetFaceTo = GetRotatePosition(comp, conv.Value.Comp2);
+        }
     }
 
     /// <summary>
-    /// Ends the conversation in which the entity participates.
+    /// Ends the conversation in which the entity participates, for every participant.
     /// </summary>
+    /// <param name="ent">Any current participant of the conversation.</param>
+    /// <param name="applyEffects">
+    /// If true, applies each role's <see cref="EngagementPrototype.Effects"/> before tearing
+    /// down the situation, and reports <see cref="EngagementEndReason.Finished"/> instead of
+    /// <see cref="EngagementEndReason.Interrupted"/>.
+    /// </param>
     [PublicAPI]
     public void EndConversation(Entity<ConversationActorComponent?> ent, bool applyEffects = false)
     {
         if (!Resolve(ent, ref ent.Comp, false)
-            || !TryGetConversation(ent, out var conv)
-            || !_prototype.TryIndex(conv.Script, out var proto))
+            || !TryGetConversation(ent, out var conv))
             return;
 
-        RemCompDeferred<ConversationActorComponent>(ent);
-        RemoveAllInvites(ent.Owner);
-
-        if (!applyEffects)
-            return;
-
-        foreach (var (id, uid) in conv.Actors)
-        {
-            // Apply conversation completion effects
-            if (proto.Effects.TryGetValue(id, out var effects))
-                _entityEffects.ApplyEffects(uid, effects);
-        }
+        _engagement.EndEngagement(
+            conv.Value.Owner,
+            applyEffects ? EngagementEndReason.Finished : EngagementEndReason.Interrupted);
     }
 
     /// <summary>
@@ -386,13 +399,17 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     [PublicAPI]
     public bool AllReady(Entity<ConversationActorComponent?> ent)
     {
-        if (!TryGetConversation(ent, out var conv))
+        if (!TryGetConversation(ent, out var conv)
+            || !_engagementQuery.TryComp(conv, out var engage))
             return false;
 
-        foreach (var (_, uid) in conv.Actors)
+        foreach (var (_, uids) in engage.Actors)
         {
-            if (!_actorQuery.TryComp(uid, out var actor) || !actor.Ready)
-                return false;
+            foreach (var uid in uids)
+            {
+                if (!_actorQuery.TryComp(uid, out var actor) || !actor.Ready)
+                    return false;
+            }
         }
 
         return true;
@@ -403,286 +420,28 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
     /// </summary>
     [PublicAPI, Pure]
     public bool IsNextInConversation(Entity<ConversationActorComponent?> ent)
-        => TryGetConversation(ent, out var conv) && conv.NextActor == ent.Owner;
+        => TryGetConversation(ent, out var conv)
+           && conv.Value.Comp2.Started
+           && conv.Value.Comp1.NextActors.Contains(ent);
 
     /// <summary>
-    /// Returns the conversation component in which the entity is participating.
+    /// Returns the conversation in which the entity is participating.
     /// </summary>
     [PublicAPI, Pure]
     public bool TryGetConversation(
         Entity<ConversationActorComponent?> ent,
-        [NotNullWhen(true)] out ConversationComponent? conversation)
+        [NotNullWhen(true)] out Entity<ConversationComponent, EngagementComponent>? conversation)
     {
         conversation = null;
-        return Resolve(ent, ref ent.Comp) && TryComp(ent.Comp.Conversation, out conversation);
-    }
 
-    /// <summary>
-    /// Attempts to assign conversation roles to entities according to all actor requirements.
-    /// </summary>
-    /// <param name="script">Conversation script prototype.</param>
-    /// <param name="uids">Potential participants in the conversation.</param>
-    /// <param name="roles">Dictionary mapping roleId -> EntityUid, or null if no valid assignment exists.</param>
-    [PublicAPI, Pure]
-    public bool TryFindRoles(
-        ConversationScriptPrototype script,
-        HashSet<EntityUid> uids,
-        [NotNullWhen(true)] out Dictionary<string, EntityUid>? roles)
-    {
-        roles = null;
-
-        if (uids.Count < script.Actors.Count)
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !_conversationQuery.TryComp(ent.Comp.Conversation, out var comp)
+            || !_engagementQuery.TryComp(ent.Comp.Conversation, out var engage))
             return false;
 
-        var roleList = script.Actors.Select(a => a.Id).ToList();
-        var actors = new Dictionary<string, EntityUid>();
-        var used = new HashSet<EntityUid>();
-
-        if (!Assign(0))
-            return false;
-
-        roles = actors;
-        return true;
-
-        bool CheckCommonRequirements(string role, EntityUid uid)
-        {
-            var data = script.Actors.FirstOrDefault(a => a.Id == role);
-            return data != null && CheckCondition(uid, null, data.Requirements);
-        }
-
-        // Checks the requirements defined by 'role' toward other already assigned roles.
-        // For example: RoleA.Requirements[RoleB] must hold for (uid -> RoleA, assigned[RoleB])
-        bool CheckRoleRequirements(
-            string role,
-            EntityUid uid,
-            Dictionary<string, EntityUid> assigned)
-        {
-            var roleData = script.Actors.FirstOrDefault(a => a.Id == role);
-
-            if (roleData == null)
-                return false;
-
-            foreach (var (otherRole, reqList) in roleData.RequirementsFor)
-            {
-                if (assigned.TryGetValue(otherRole, out var otherUid))
-                    return CheckCondition(uid, otherUid, reqList);
-            }
-
-            return true;
-        }
-
-        // Checks the requirements that already assigned roles have toward the new role.
-        // For example: If RoleB requires RoleA, then when assigning RoleA = uid,
-        // we must validate RoleB.Requirements[RoleA]
-        bool CheckReverseRequirements(
-            string role,
-            EntityUid uid,
-            Dictionary<string, EntityUid> assigned)
-        {
-            foreach (var (otherRole, otherUid) in assigned)
-            {
-                var otherData = script.Actors.FirstOrDefault(a => a.Id == otherRole);
-
-                if (otherData == null || !otherData.RequirementsFor.TryGetValue(role, out var reqList))
-                    continue;
-
-                return CheckCondition(otherUid, uid, reqList);
-            }
-
-            return true;
-        }
-
-        // Recursively assigns each role to one entity using DFS backtracking.
-        // Ensures all requirement constraints remain satisfied at each step
-        bool Assign(int index)
-        {
-            if (index >= roleList.Count)
-                return true;
-
-            var role = roleList[index];
-
-            foreach (var uid in uids)
-            {
-                if (used.Contains(uid)
-                    || !CheckCommonRequirements(role, uid)
-                    || !CheckRoleRequirements(role, uid, actors)
-                    || !CheckReverseRequirements(role, uid, actors))
-                    continue;
-
-                used.Add(uid);
-                actors[role] = uid;
-
-                if (Assign(index + 1))
-                    return true;
-
-                used.Remove(uid);
-                actors.Remove(role);
-            }
-
-            return false;
-        }
-    }
-
-    public bool CheckCondition<T>(EntityUid target, EntityUid? other, T condition) where T : BaseConversationCondition<T>
-    {
-        var ev = new ConversationConditionCheckEvent<T>(target, other, condition, false);
-        RaiseLocalEvent(target, ref ev);
-        return ev.Result;
-    }
-
-    [PublicAPI]
-    public bool CheckCondition(EntityUid target, EntityUid? other, ConversationCondition condition)
-        => condition.Check(target, other, this);
-
-    [PublicAPI]
-    public bool CheckCondition(EntityUid target, EntityUid? other, IEnumerable<ConversationCondition> conditions)
-    {
-        foreach (var condition in conditions)
-        {
-            if (!CheckCondition(target, other, condition))
-                return false;
-        }
-
+        conversation = (ent.Comp.Conversation, comp, engage);
         return true;
     }
-
-    /// <summary>
-    /// Invites another agent to join the conversation.
-    /// </summary>
-    /// <remarks>
-    /// The invitation is written to the GoapState of both the inviter and the invited,
-    /// and then they must be processed by the Utility AI.
-    /// </remarks>
-    /// <param name="inviter">An agent who initiates a conversation.</param>
-    /// <param name="invited">An agent invited to join the conversation.</param>
-    [PublicAPI]
-    public void InviteInConversation(Entity<GoapComponent?> inviter, Entity<GoapComponent?> invited)
-    {
-        if (!Resolve(inviter, ref inviter.Comp) || !Resolve(invited, ref invited.Comp))
-            return;
-
-        DebugTools.AssertNotEqual(inviter, invited);
-
-        var inviterState = inviter.Comp.State;
-        var invitedState = invited.Comp.State;
-        var invite = (_timing.CurTime + _goap.GetValue(inviterState, GoapState.ConversationInviteValidTimeKey), false);
-
-        if (_goap.TryGetValue(inviterState, GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
-        {
-            invitesToOthers[invited] = invite;
-            _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, invitesToOthers);
-        }
-        else
-            _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, new() { { invited, invite } });
-
-        if (_goap.TryGetValue(invitedState, GoapState.ConversationInvitesKey, out var invites))
-        {
-            invites[inviter] = invite;
-            _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, invites);
-        }
-        else
-            _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, new() { { inviter, invite } });
-
-        var ev = new ConversationInviteSent(inviter, invited);
-        RaiseLocalEvent(inviter, ev);
-        RaiseLocalEvent(invited, ev);
-    }
-
-    /// <summary>
-    /// Withdraws the invitation to the conversation.
-    /// </summary>
-    /// <param name="inviter">An agent who initiates a conversation.</param>
-    /// <param name="invited">An agent invited to join the conversation.</param>
-    [PublicAPI]
-    public void RemoveInvite(Entity<GoapComponent?> inviter, Entity<GoapComponent?> invited)
-    {
-        if (!Resolve(inviter, ref inviter.Comp) || !Resolve(invited, ref invited.Comp))
-            return;
-
-        DebugTools.AssertNotEqual(inviter, invited);
-
-        var inviterState = inviter.Comp.State;
-        var invitedState = invited.Comp.State;
-
-        if (_goap.TryGetValue(inviterState, GoapState.ConversationInvitesToOtherKey, out var invitesToOthers))
-        {
-            invitesToOthers.Remove(invited);
-            _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, invitesToOthers);
-        }
-
-        if (_goap.TryGetValue(invitedState, GoapState.ConversationInvitesKey, out var invites))
-        {
-            invites.Remove(inviter);
-            _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, invites);
-        }
-
-        var ev = new ConversationInviteRemoved(inviter, invited);
-        RaiseLocalEvent(inviter, ev);
-        RaiseLocalEvent(invited, ev);
-    }
-
-    /// <summary>
-    /// Accepts an invitation to a conversation from another agent.
-    /// </summary>
-    /// <param name="invited">An agent invited to join the conversation.</param>
-    /// <param name="inviter">An agent who initiates a conversation.</param>
-    [PublicAPI]
-    public bool AcceptInvite(Entity<GoapComponent?> invited, Entity<GoapComponent?> inviter)
-    {
-        if (!Resolve(inviter, ref inviter.Comp) || !Resolve(invited, ref invited.Comp))
-            return false;
-
-        DebugTools.AssertNotEqual(inviter, invited);
-
-        var inviterState = inviter.Comp.State;
-        var invitedState = invited.Comp.State;
-
-        if (!_goap.TryGetValue(inviterState, GoapState.ConversationInvitesToOtherKey, out var invitesToOthers)
-            || !invitesToOthers.ContainsKey(invited))
-            return false;
-
-        if (!_goap.TryGetValue(invitedState, GoapState.ConversationInvitesKey, out var invites)
-            || !invites.ContainsKey(inviter))
-            return false;
-
-        var newInvite = (_timing.CurTime + _goap.GetValue(inviterState, GoapState.ConversationInviteValidTimeKey), true);
-        invitesToOthers[invited] = newInvite;
-        invites[inviter] = newInvite;
-        _goap.SetValue(inviterState, GoapState.ConversationInvitesToOtherKey, invitesToOthers);
-        _goap.SetValue(invitedState, GoapState.ConversationInvitesKey, invites);
-        return true;
-    }
-
-    /// <summary>
-    /// Withdraws all invites to conversation from this agent.
-    /// </summary>
-    /// <param name="inviter">GOAP agent.</param>
-    [PublicAPI]
-    public void RemoveAllInvites(Entity<GoapComponent?> inviter)
-    {
-        if (!Resolve(inviter, ref inviter.Comp))
-            return;
-
-        if (!_goap.TryGetValue(inviter.Comp.State, GoapState.ConversationInvitesToOtherKey, out var invites))
-            return;
-
-        foreach (var (invited, _) in invites)
-        {
-            RemoveInvite(inviter, invited);
-        }
-    }
-
-    /// <summary>
-    /// Returns the number of valid invites to conversation for this agent.
-    /// </summary>
-    /// <param name="invited">GOAP agent.</param>
-    [PublicAPI]
-    public int InvitesCount(Entity<GoapComponent?> invited)
-        => Resolve(invited, ref invited.Comp)
-            ? _goap.TryGetValue(invited.Comp.State, GoapState.ConversationInvitesKey, out var invites)
-                ? invites.Count(x => x.Value.ValidUntil >= _timing.CurTime)
-                : 0
-            : 0;
 
     /// <summary>
     /// Checks whether all participants in the conversation are within a specified radius of the target location.
@@ -696,63 +455,19 @@ public sealed class ConversationSystem : EntitySystem, IConversationConditionChe
         EntityCoordinates targetCoords,
         float range)
     {
-        if (!TryGetConversation(ent, out var conv))
+        if (!TryGetConversation(ent, out var conv)
+            || !_engagementQuery.TryComp(conv, out var engage))
             return false;
 
-        foreach (var (_, uid) in conv.Actors)
+        foreach (var (_, uids) in engage.Actors)
         {
-            if (!_transform.InRange(Transform(uid).Coordinates, targetCoords, range))
-                return false;
+            foreach (var uid in uids)
+            {
+                if (!_transform.InRange(Transform(uid).Coordinates, targetCoords, range))
+                    return false;
+            }
         }
 
         return true;
     }
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (!_net.IsServer)
-            return;
-
-        // TODO: replace this with separate component for conversation invites
-        var enumerator = EntityQueryEnumerator<GoapComponent, ActiveNPCComponent>();
-        while (enumerator.MoveNext(out var uid, out var goap, out _))
-        {
-            if (!_goap.TryGetValue(goap.State, GoapState.ConversationInvitesKey, out var invites))
-                continue;
-
-            foreach (var (inviter, (validUntil, _)) in invites)
-            {
-                if (validUntil > _timing.CurTime)
-                    continue;
-
-                RemoveInvite(inviter, uid);
-                break;
-            }
-        }
-    }
 }
-
-public interface IConversationConditionChecker
-{
-    bool CheckCondition<T>(EntityUid target, EntityUid? other, T condition) where T : BaseConversationCondition<T>;
-}
-
-/// <summary>
-/// An event raised when an entity sends an invitation to join a conversation to another entity.
-/// Raised for both entities.
-/// </summary>
-/// <param name="Inviter">The entity that sent the invitations.</param>
-/// <param name="Invited">The entity to whom the invitation was sent.</param>
-[PublicAPI]
-public readonly record struct ConversationInviteSent(EntityUid Inviter, EntityUid Invited);
-
-/// <summary>
-/// An event raised when a conversation invitation is canceled or has expired.
-/// Raised for both entities.
-/// </summary>
-/// <param name="Inviter">The entity that sent the invitations.</param>
-/// <param name="Invited">The entity to whom the invitation was sent.</param>
-[PublicAPI]
-public readonly record struct ConversationInviteRemoved(EntityUid Inviter, EntityUid Invited);

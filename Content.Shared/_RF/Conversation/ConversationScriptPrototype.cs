@@ -1,7 +1,7 @@
 using System.Numerics;
 using Content.Shared._RF.MathHelpers;
+using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared.Chat;
-using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
@@ -26,16 +26,10 @@ public sealed partial class ConversationScriptPrototype : IPrototype, IInheritin
     public bool Abstract { get; private set; }
 
     /// <summary>
-    /// The actors in this conversation.
+    /// A situation that will be used to start a conversation.
     /// </summary>
-    [DataField]
-    public List<ConversationActorData> Actors = new();
-
-    /// <summary>
-    /// Effects that will be applied to conversation actors upon completion.
-    /// </summary>
-    [DataField]
-    public Dictionary<string, EntityEffect[]> Effects = new();
+    [DataField(required: true)]
+    public ProtoId<EngagementPrototype> Engagement;
 
     /// <summary>
     /// Settings for the order in which actors speak lines.
@@ -67,6 +61,12 @@ public sealed partial class ConversationBasicOrderType : ConversationOrderType
     public int Lines;
 
     /// <summary>
+    /// The order in which the actors should say their lines.
+    /// </summary>
+    [DataField(required: true)]
+    public List<string> Actors = new();
+
+    /// <summary>
     /// The type of line in the conversation that will be spoken.
     /// </summary>
     [DataField]
@@ -85,14 +85,14 @@ public sealed partial class ConversationCustomOrderType : ConversationOrderType
     [DataField(required: true)]
     public List<CustomOrderEntry> Custom = new();
 
-    [DataDefinition]
-    public sealed partial class CustomOrderEntry
+    [DataRecord]
+    public partial record struct CustomOrderEntry()
     {
         /// <summary>
         /// The ID of the actor who will perform this part of the conversation.
         /// </summary>
-        [DataField]
-        public string Id;
+        [DataField(required: true)]
+        public string Id = default!;
 
         /// <summary>
         /// If true, the actor will say his line; otherwise, he will perform the other necessary actions.
@@ -132,29 +132,4 @@ public sealed partial class ConversationCustomOrderType : ConversationOrderType
         [DataField]
         public InGameICChatType SpeakType = InGameICChatType.Speak;
     }
-}
-
-[DataDefinition]
-public sealed partial class ConversationActorData
-{
-    /// <summary>
-    /// Conversation actor identifier.
-    /// </summary>
-    [DataField(required: true)]
-    public string Id = string.Empty;
-
-    /// <summary>
-    /// Common requirements for the entity to take on this role.
-    /// </summary>
-    /// <remarks>
-    /// The null value will be passed to the actor parameter in these requirements.
-    /// </remarks>
-    [DataField("reqs")]
-    public List<ConversationCondition> Requirements = new();
-
-    /// <summary>
-    /// Requirements for other participants in the conversation to take up this role.
-    /// </summary>
-    [DataField("reqsFor")]
-    public Dictionary<string, List<ConversationCondition>> RequirementsFor = new();
 }

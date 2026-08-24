@@ -4,6 +4,7 @@ using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.Engagement.Systems;
 
@@ -43,9 +44,8 @@ public partial class EngagementSystem
     }
 
     /// <summary>
-    /// Creates a new situation and attempts to seat or invite every entity in <paramref name="invited"/>
-    /// into the first role they qualify for (skipping <see cref="EngagementRole.InitiatorOnly"/> roles
-    /// and roles that are already full).
+    /// Creates a new situation and attempts to seat or invite entities from <paramref name="invited"/>
+    /// into roles according to <see cref="EngagementRole.Conditions"/>/<see cref="EngagementRole.ConditionsFor"/>.
     /// </summary>
     /// <param name="protoId">The kind of situation to create.</param>
     /// <param name="initiator">The entity that caused this situation to exist.</param>
@@ -59,54 +59,31 @@ public partial class EngagementSystem
         IEnumerable<EntityUid> invited,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement)
     {
-        if (!TryStartEngagement(protoId, initiator, out engagement)
-            || !_prototype.TryIndex(protoId, out var proto))
-            return engagement != null;
+        engagement = null;
 
-        foreach (var actor in invited)
+        if (!_prototype.Resolve(protoId, out var proto))
+            return false;
+
+        if (!TryAssignRoles(proto, initiator, invited, out var assignment))
+            return false;
+
+        if (!TryStartEngagement(protoId, initiator, out engagement))
+            return false;
+
+        foreach (var (roleId, actors) in assignment)
         {
-            if (!TryFindRole(proto, engagement.Value, actor, out var role))
-                continue;
+            var roleData = proto.Roles.FirstOrNull(x => x.Id == roleId)!.Value;
 
-            if (proto.Roles[role].Force)
-                TryJoinEngagement(engagement.Value.AsNullable(), role, actor);
-            else
-                InviteToEngagement(engagement.Value.AsNullable(), role, actor);
+            foreach (var actor in actors)
+            {
+                if (roleData.Force || actor == initiator)
+                    TryJoinEngagement(engagement.Value.AsNullable(), roleId, actor);
+                else
+                    InviteToEngagementInternal(engagement.Value, roleId, actor, initiator);
+            }
         }
 
         return true;
-    }
-
-    /// <summary>
-    /// Picks the first role in <paramref name="proto"/> that <paramref name="actor"/> could take:
-    /// not <see cref="EngagementRole.InitiatorOnly"/>, has free capacity, and (for non-forced roles)
-    /// satisfies <see cref="EngagementRole.Conditions"/>/<see cref="EngagementRole.ConditionsFor"/>.
-    /// </summary>
-    private bool TryFindRole(
-        EngagementPrototype proto,
-        Entity<EngagementComponent> engagement,
-        EntityUid actor,
-        [NotNullWhen(true)] out string? role)
-    {
-        foreach (var (roleId, roleData) in proto.Roles)
-        {
-            if (roleData.InitiatorOnly)
-                continue;
-
-            var current = engagement.Comp.Actors.TryGetValue(roleId, out var set) ? set.Count : 0;
-
-            if (current >= roleData.MaxCount)
-                continue;
-
-            if (!roleData.Force && !MeetsRoleRequirements(engagement, roleData, actor))
-                continue;
-
-            role = roleId;
-            return true;
-        }
-
-        role = null;
-        return false;
     }
 
     #endregion
@@ -125,10 +102,12 @@ public partial class EngagementSystem
     [PublicAPI]
     public bool TryJoinEngagement(Entity<EngagementComponent?> engagement, string role, EntityUid actor)
     {
-        if (!Resolve(engagement, ref engagement.Comp, false)
-            || !_prototype.TryIndex(engagement.Comp.Kind, out var proto)
-            || !proto.Roles.TryGetValue(role, out var roleData)
-            || !roleData.Force)
+        if (!Resolve(engagement, ref engagement.Comp)
+            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
+            || proto.Roles.FirstOrNull(x => x.Id == role) is not { } roleData)
+            return false;
+
+        if (!roleData.Force && actor != engagement.Comp.Initiator)
             return false;
 
         if (!CanSeat(engagement!, role, roleData, actor))
@@ -139,35 +118,35 @@ public partial class EngagementSystem
     }
 
     /// <summary>
-    /// Sends an invitation for a non-forced role. The actor must call <see cref="AcceptInvite"/>
-    /// before <see cref="EngagementRole.InviteTime"/> elapses, or the invite expires on its own
+    /// Sends an invitation for a non-forced role. The actor must call <see cref="AcceptInvite(EntityUid, Entity{EngagementComponent?})"/>
+    /// before <see cref="EngagementPrototype.InviteTime"/> elapses, or the invite expires on its own
     /// during <see cref="Update"/>.
     /// </summary>
     /// <param name="engagement">The situation to invite into.</param>
     /// <param name="role">The role being offered. Must have <see cref="EngagementRole.Force"/> set to false.</param>
     /// <param name="actor">The entity being invited.</param>
+    /// <param name="inviter">The inviter entity.</param>
     /// <returns>True, if the invite was sent.</returns>
     [PublicAPI]
-    public bool InviteToEngagement(Entity<EngagementComponent?> engagement, string role, EntityUid actor)
+    public bool InviteToEngagement(
+        Entity<EngagementComponent?> engagement,
+        string role,
+        EntityUid actor,
+        EntityUid inviter)
     {
-        if (!Resolve(engagement, ref engagement.Comp, false)
-            || !_prototype.TryIndex(engagement.Comp.Kind, out var proto)
-            || !proto.Roles.TryGetValue(role, out var roleData)
+        if (!Resolve(engagement, ref engagement.Comp)
+            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
+            || proto.Roles.FirstOrNull(x => x.Id == role) is not { } roleData
+            || actor == inviter
             || roleData.Force)
             return false;
 
-        if (!CanSeat(engagement!, role, roleData, actor) || !MeetsRoleRequirements(engagement!, roleData, actor))
+        if (!CanSeat(engagement!, role, roleData, actor)
+            || !MeetsForwardRequirements(engagement!, roleData, actor)
+            || !MeetsReverseRequirements(engagement!, proto, role, actor))
             return false;
 
-        var validUntil = _timing.CurTime + roleData.InviteTime;
-        engagement.Comp.Invites.Add((role, actor, validUntil));
-
-        var participant = EnsureComp<EngagementParticipantComponent>(actor);
-        participant.Invites.Add((engagement.Owner, engagement.Comp.Initiator, role));
-
-        var ev = new EngagementInviteSent(engagement.Owner, actor, role);
-        RaiseLocalEvent(actor, ev);
-        RaiseLocalEvent(engagement.Owner, ev);
+        InviteToEngagementInternal(engagement!, role, actor, inviter);
         return true;
     }
 
@@ -180,7 +159,7 @@ public partial class EngagementSystem
     [PublicAPI]
     public bool AcceptInvite(EntityUid actor, Entity<EngagementComponent?> engagement)
     {
-        if (!Resolve(engagement, ref engagement.Comp, false)
+        if (!Resolve(engagement, ref engagement.Comp)
             || !_participantQuery.TryComp(actor, out var participant))
             return false;
 
@@ -209,16 +188,40 @@ public partial class EngagementSystem
             break;
         }
 
-        if (matched == null || matched.Value.ValidUntil < _timing.CurTime
+        if (matched == null
+            || matched.Value.ValidUntil < _timing.CurTime
             || !_prototype.TryIndex(engagement.Comp.Kind, out var proto)
-            || !proto.Roles.TryGetValue(matched.Value.Role, out var roleData))
+            || proto.Roles.FirstOrNull(x => x.Id == matched.Value.Role) is not { Force: false } roleData)
             return false;
 
-        engagement.Comp.Invites.Remove(matched.Value);
-        participant.Invites.Remove(ownInvite.Value);
-
+        RemoveInvite(engagement, actor, ownInvite.Value.Role);
         SeatActor(engagement!, matched.Value.Role, roleData, actor);
         return true;
+    }
+
+    /// <summary>
+    /// Accepts a pending invite by the entity that sent it, without needing to know which situation
+    /// entity the invite belongs to. Convenience overload for search-driven flows where it's more
+    /// natural to look candidates up by inviter than by the (otherwise invisible) session entity.
+    /// </summary>
+    /// <param name="actor">The entity accepting the invite.</param>
+    /// <param name="inviter">
+    /// The entity that initiated the situation the invite belongs to (i.e. <see cref="EngagementComponent.Initiator"/>).
+    /// </param>
+    /// <returns>True, if a matching, non-expired invite was found and accepted.</returns>
+    [PublicAPI]
+    public bool AcceptInvite(EntityUid actor, EntityUid inviter)
+    {
+        if (!_participantQuery.TryComp(actor, out var participant))
+            return false;
+
+        foreach (var entry in participant.Invites)
+        {
+            if (entry.Inviter == inviter)
+                return AcceptInvite(actor, new Entity<EngagementComponent?>(entry.EngageUid, null));
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -226,20 +229,33 @@ public partial class EngagementSystem
     /// </summary>
     /// <param name="engagement">The situation the invite belongs to.</param>
     /// <param name="actor">The invited entity whose invite should be withdrawn.</param>
+    /// <param name="role"></param>
     [PublicAPI]
-    public void RemoveInvite(Entity<EngagementComponent?> engagement, EntityUid actor)
+    public void RemoveInvite(
+        Entity<EngagementComponent?> engagement,
+        Entity<EngagementParticipantComponent?> actor,
+        string? role = null)
     {
-        if (!Resolve(engagement, ref engagement.Comp, false))
+        if (!Resolve(engagement, ref engagement.Comp)
+            || !Resolve(actor, ref actor.Comp))
             return;
 
-        engagement.Comp.Invites.RemoveWhere(x => x.Uid == actor);
+        engagement.Comp.Invites.RemoveWhere(x => x.Uid == actor.Owner && (role == null || x.Role == role));
 
-        if (_participantQuery.TryComp(actor, out var participant))
-            participant.Invites.RemoveWhere(x => x.EngageUid == engagement.Owner);
+        foreach (var invite in actor.Comp.Invites.ToArray())
+        {
+            if (invite.EngageUid != engagement.Owner)
+                continue;
 
-        var ev = new EngagementInviteRemoved(engagement.Owner, actor);
-        RaiseLocalEvent(actor, ev);
-        RaiseLocalEvent(engagement.Owner, ev);
+            if (role != null && invite.Role != role)
+                continue;
+
+            actor.Comp.Invites.Remove(invite);
+            var ev = new EngagementInviteRemoved(engagement.Owner, invite.Inviter, actor);
+            RaiseLocalEvent(actor, ev);
+            RaiseLocalEvent(engagement, ev);
+            RaiseLocalEvent(invite.Inviter, ev);
+        }
     }
 
     #endregion
@@ -258,60 +274,12 @@ public partial class EngagementSystem
     [PublicAPI]
     public void LeaveEngagement(Entity<EngagementComponent?> engagement, EntityUid actor, EngagementEndReason reason)
     {
-        if (!Resolve(engagement, ref engagement.Comp, false)
+        if (!Resolve(engagement, ref engagement.Comp)
             || !_participantQuery.TryComp(actor, out var participant)
             || !participant.Membership.TryGetValue(engagement.Owner, out var role))
             return;
 
         LeaveEngagementInternal(engagement!, actor, role, reason, cleanupParticipant: true);
-    }
-
-    private void LeaveEngagementInternal(
-        Entity<EngagementComponent> engagement,
-        EntityUid actor,
-        string role,
-        EngagementEndReason reason,
-        bool cleanupParticipant)
-    {
-        if (!engagement.Comp.Actors.TryGetValue(role, out var set) || !set.Remove(actor))
-            return;
-
-        if (set.Count == 0)
-            engagement.Comp.Actors.Remove(role);
-
-        engagement.Comp.NextConditionCheck.Remove(actor);
-
-        if (cleanupParticipant && _participantQuery.TryComp(actor, out var participant))
-        {
-            participant.Membership.Remove(engagement.Owner);
-
-            if (participant.Membership.Count == 0)
-                RemCompDeferred<EngagementParticipantComponent>(actor);
-        }
-
-        _prototype.TryIndex(engagement.Comp.Kind, out var proto);
-
-        if (proto != null && proto.Roles.TryGetValue(role, out var roleData) && _goapQuery.TryComp(actor, out var goap))
-        {
-            goap.State.OverwriteFrom(roleData.OnFinish);
-
-            foreach (var key in roleData.OnFinishRemove)
-            {
-                goap.State.Remove(key);
-            }
-        }
-
-        var ev = new EngagementRoleLeft(engagement.Owner, actor, role, reason);
-        RaiseLocalEvent(actor, ev);
-        RaiseLocalEvent(engagement.Owner, ev);
-
-        if (!engagement.Comp.Started || proto is not { DissolveInvalid: true } || !proto.Roles.TryGetValue(role, out var rd))
-            return;
-
-        var remaining = engagement.Comp.Actors.TryGetValue(role, out var left) ? left.Count : 0;
-
-        if (remaining < rd.MinCount)
-            EndEngagement(engagement.AsNullable(), EngagementEndReason.Dissolved);
     }
 
     /// <summary>
@@ -323,8 +291,23 @@ public partial class EngagementSystem
     [PublicAPI]
     public void EndEngagement(Entity<EngagementComponent?> engagement, EngagementEndReason reason)
     {
-        if (!Resolve(engagement, ref engagement.Comp, false))
+        if (!Resolve(engagement, ref engagement.Comp)
+            || !_prototype.Resolve(engagement.Comp.Kind, out var proto))
             return;
+
+        if (reason == EngagementEndReason.Finished)
+        {
+            foreach (var (role, entities) in engagement.Comp.Actors)
+            {
+                if (!proto.Effects.TryGetValue(role, out var effects))
+                    continue;
+
+                foreach (var uid in entities)
+                {
+                    _entityEffects.ApplyEffects(uid, effects);
+                }
+            }
+        }
 
         var copy = engagement.Comp.Actors
             .ToDictionary(x => x.Key, x => x.Value.ToArray());
@@ -337,10 +320,14 @@ public partial class EngagementSystem
             }
         }
 
+        foreach (var invite in engagement.Comp.Invites.ToArray())
+        {
+            RemoveInvite(engagement, invite.Uid);
+        }
+
         var ev = new EngagementEnded(engagement.Owner, reason);
         RaiseLocalEvent(engagement.Owner, ev);
-
-        QueueDel(engagement.Owner);
+        Del(engagement.Owner);
     }
 
     #endregion
@@ -425,6 +412,26 @@ public partial class EngagementSystem
     {
         role = null;
         return Resolve(ent, ref ent.Comp, false) && ent.Comp.Membership.TryGetValue(engagement, out role);
+    }
+
+    /// <summary>
+    /// Returns the entities that play a specific role in the situation.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool TryGetActors(
+        Entity<EngagementComponent?> ent,
+        string role,
+        [NotNullWhen(true)] out IReadOnlySet<EntityUid>? actors)
+    {
+        actors = null;
+
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !ent.Comp.Actors.TryGetValue(role, out var entities)
+            || entities.Count == 0)
+            return false;
+
+        actors = entities;
+        return true;
     }
 
     #endregion

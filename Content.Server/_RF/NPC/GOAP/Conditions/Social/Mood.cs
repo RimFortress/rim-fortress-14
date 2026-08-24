@@ -1,15 +1,16 @@
-using Content.Shared._RF.Conversation.Systems;
+using Content.Server._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Conversation.Requirements;
+namespace Content.Server._RF.NPC.GOAP.Conditions.Social;
 
 /// <summary>
 /// Checks the mood level of the entity.
 /// </summary>
-public sealed partial class Mood : BaseConversationCondition<Mood>
+public sealed partial class Mood : BaseGoapCondition<Mood>
 {
     /// <summary>
     /// Minimum mood level.
@@ -30,17 +31,22 @@ public sealed partial class Mood : BaseConversationCondition<Mood>
     public List<ProtoId<SocialEffectPrototype>> HasEffects = new();
 }
 
-public sealed class MoodConversationConditionSystem : ConversationConditionSystem<SocialComponent, Mood>
+public sealed class MoodGoapConditionSystem : GoapConditionSystem<Mood>
 {
     [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private readonly EntityQuery<SocialComponent> _query = default!;
 
-    protected override bool Check(Entity<SocialComponent> ent, EntityUid? other, Mood condition)
+    protected override bool ConditionCheck(EntityUid uid, GoapState state, Mood condition)
     {
-        var mood = _social.GetMood(ent.AsNullable());
+        if (!_query.TryComp(uid, out var comp))
+            return false;
+
+        var ent = new Entity<SocialComponent?>(uid, comp);
+        var mood = _social.GetMood(ent);
 
         foreach (var effect in condition.HasEffects)
         {
-            if (!_social.HasMoodEffect(ent.AsNullable(), effect))
+            if (!_social.HasMoodEffect(ent, effect))
                 return false;
         }
 

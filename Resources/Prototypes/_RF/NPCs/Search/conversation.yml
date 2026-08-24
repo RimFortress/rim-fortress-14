@@ -1,12 +1,9 @@
 - type: searchQuery
   id: ConversationInviter
-  query: !type:ConversationInvites
+  query: !type:EngagementInvites
+    dataset: BasicConversationEngagements
   filters:
   - !type:IsAlive
-  - !type:Component
-    components:
-    - type: ConversationActor
-    invert: true
   - !type:IsFriendly
   considerations:
   - !type:TargetDistance
@@ -19,12 +16,13 @@
   filters:
   - !type:Self
     invert: true
+  - !type:IsFriendly
   - !type:IsAlive
   - !type:Component
     components:
     - type: ConversationActor
+    - type: Sleeping
     invert: true
-  - !type:IsFriendly
   considerations:
   - !type:TargetDistance
     curves:

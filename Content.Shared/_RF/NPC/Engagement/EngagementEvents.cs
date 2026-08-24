@@ -12,7 +12,9 @@ namespace Content.Shared._RF.NPC.Engagement;
 /// <param name="Engagement">The situation entity.</param>
 /// <param name="Kind">The situation's prototype.</param>
 [PublicAPI]
-public readonly record struct EngagementStarted(EntityUid Engagement, ProtoId<EngagementPrototype> Kind);
+public readonly record struct EngagementStarted(
+    EntityUid Engagement,
+    ProtoId<EngagementPrototype> Kind);
 
 /// <summary>
 /// Raised on the joining actor and on the situation entity when a role is occupied,
@@ -22,7 +24,10 @@ public readonly record struct EngagementStarted(EntityUid Engagement, ProtoId<En
 /// <param name="Actor">The entity that joined.</param>
 /// <param name="Role">The role it now occupies.</param>
 [PublicAPI]
-public readonly record struct EngagementRoleJoined(EntityUid Engagement, EntityUid Actor, string Role);
+public readonly record struct EngagementRoleJoined(
+    EntityUid Engagement,
+    EntityUid Actor,
+    string Role);
 
 /// <summary>
 /// Raised on the leaving actor and on the situation entity when a participant leaves a role,
@@ -45,23 +50,34 @@ public readonly record struct EngagementRoleLeft(
 /// <param name="Engagement">The situation entity.</param>
 /// <param name="Reason">Why the situation ended.</param>
 [PublicAPI]
-public readonly record struct EngagementEnded(EntityUid Engagement, EngagementEndReason Reason);
+public readonly record struct EngagementEnded(
+    EntityUid Engagement,
+    EngagementEndReason Reason);
 
 /// <summary>
-/// Raised on the invited entity and on the situation entity when an invite is sent for a
-/// non-forced role.
+/// Raised on the invited and inviter entity and on the situation
+/// entity when an invite is sent for a non-forced role.
 /// </summary>
 /// <param name="Engagement">The situation entity.</param>
-/// <param name="Actor">The invited entity.</param>
+/// <param name="Inviter">The inviter entity.</param>
+/// <param name="Invited">The invited entity.</param>
 /// <param name="Role">The role being offered.</param>
 [PublicAPI]
-public readonly record struct EngagementInviteSent(EntityUid Engagement, EntityUid Actor, string Role);
+public readonly record struct EngagementInviteSent(
+    EntityUid Engagement,
+    EntityUid Inviter,
+    EntityUid Invited,
+    string Role);
 
 /// <summary>
-/// Raised on the invited entity and on the situation entity when a pending invite is withdrawn,
-/// whether by explicit cancellation or by expiring.
+/// Raised on the invited and inviter entity and on the situation entity when
+/// a pending invite is withdrawn, whether by explicit cancellation or by expiring.
 /// </summary>
 /// <param name="Engagement">The situation entity.</param>
-/// <param name="Actor">The entity whose invite was removed.</param>
+/// <param name="Inviter">The inviter entity.</param>
+/// <param name="Invited">The entity whose invite was removed.</param>
 [PublicAPI]
-public readonly record struct EngagementInviteRemoved(EntityUid Engagement, EntityUid Actor);
+public readonly record struct EngagementInviteRemoved(
+    EntityUid Engagement,
+    EntityUid Inviter,
+    EntityUid Invited);

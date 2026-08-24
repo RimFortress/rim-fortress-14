@@ -1,17 +1,22 @@
+using System.Linq;
 using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
+using Content.Shared._RF.Conversation;
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
+using Content.Shared.Dataset;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Conversation;
 
 /// <summary>
-/// The agent sends out invitations to a conversation and starts it.
+/// The agent picks a random conversation script from a dataset, sends out invitations
+/// according to it and starts the conversation once everyone required has accepted.
 /// </summary>
 public sealed partial class StartConversation : BaseGoapAction<StartConversation>
 {
@@ -22,6 +27,12 @@ public sealed partial class StartConversation : BaseGoapAction<StartConversation
     public ProtoId<SearchQueryPrototype> Query;
 
     /// <summary>
+    /// A dataset of conversation script IDs to pick randomly from every time this action starts up.
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<DatasetPrototype> Scripts;
+
+    /// <summary>
     /// Key where the invitation response wait timer will be stored.
     /// </summary>
     [DataField]
@@ -30,6 +41,8 @@ public sealed partial class StartConversation : BaseGoapAction<StartConversation
 
 public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartConversation>
 {
+    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly ConversationSystem _conversation = default!;
     [Dependency] private readonly NpcSearcherSystem _searcher = default!;
     [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
@@ -42,51 +55,68 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
             return false;
         }
 
-        var query = _searcher.GetResults(ent, action.Query);
-        CreateDump(ent, action, $"query '{action.Query}' return {query.Count} results");
-
-        foreach (var uid in query)
+        if (!_prototype.TryIndex(action.Scripts, out var dataset) || dataset.Values.Count == 0)
         {
-            _conversation.InviteInConversation(ent.Owner, uid);
-            CreateDump(ent, action, $"sent conversation invite to {ToPrettyString(uid)}");
+            CreateDump(ent, action, $"dataset '{action.Scripts}' is empty or missing");
+            return false;
         }
 
-        // Waiting until almost the very last moment before the invitation ends so that everyone has time to respond
-        var wait = Goap.GetValue(ent, GoapState.ConversationInviteValidTimeKey) - TimeSpan.FromSeconds(0.5f);
-        Set(ent, action, action.WaitInvitesAcceptKey, wait);
-        return true;
-    }
+        var query = _searcher.GetResults(ent, action.Query);
 
-    protected override void ActionShutdown(Entity<GoapComponent> ent, StartConversation action)
-    {
-        NpcTimingSystem.ClearQueue(ent);
+        if (query.Count == 0)
+        {
+            CreateDump(ent, action, $"query `{action.Query}` is empty`");
+            return false;
+        }
+
+        var candidates = new HashSet<EntityUid>(query) { ent };
+        var prototypes = dataset.Values
+            .Select(x => new ProtoId<ConversationScriptPrototype>(x))
+            .ToList();
+
+        while (prototypes.Count > 0)
+        {
+            var scriptId = _random.PickAndTake(prototypes);
+
+            if (!_prototype.Resolve(scriptId, out var script))
+            {
+                ProtoNotFound(ent, action, scriptId);
+                return false;
+            }
+
+            if (!_prototype.Resolve(script.Engagement, out var engagement))
+            {
+                ProtoNotFound(ent, action, script.Engagement);
+                return false;
+            }
+
+            if (!_conversation.TryStartConversation(scriptId, ent, candidates, out _))
+            {
+                CreateDump(ent, action, $"failed to start the conversation {scriptId}");
+                continue;
+            }
+
+            // Waiting until almost the very last moment before the invitation ends so that everyone has time to respond
+            Set(ent, action, action.WaitInvitesAcceptKey, engagement.InviteTime);
+            return true;
+        }
+
+        return false;
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, StartConversation action)
     {
+        if (_conversation.TryGetConversation(ent.Owner, out var conv)
+            && conv.Value.Comp2.Started)
+            return GoapActionResult.Finished;
+
         var waitResult = _npcTiming.Wait(ent, action, action.WaitInvitesAcceptKey);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
-#if TOOLS
-        if (TryGetValue(ent, action, GoapState.ConversationInvitesToOtherKey, out var invites))
-        {
-            foreach (var (target, invite) in invites)
-            {
-                CreateDump(ent,
-                    action,
-                    invite.Accespted
-                        ? $"{ToPrettyString(target)} accepted invite"
-                        : $"{ToPrettyString(target)} rejected/ignored invite");
-            }
-        }
-#endif
-
-        if (_conversation.TryStartConversation(ent.AsNullable(), out _))
-            return GoapActionResult.Finished;
-
-        CreateDump(ent, action, "failed to start conversation");
+        _conversation.EndConversation(ent.Owner);
+        CreateDump(ent, action, "not everyone accepted the invite in time");
         return GoapActionResult.Failed;
     }
 

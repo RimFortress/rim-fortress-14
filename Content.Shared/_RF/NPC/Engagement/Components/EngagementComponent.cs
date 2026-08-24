@@ -41,7 +41,7 @@ public sealed partial class EngagementComponent : Component
     /// Invitations in this situation that have not yet been accepted.
     /// </summary>
     [ViewVariables]
-    public HashSet<(string Role, EntityUid Uid, TimeSpan ValidUntil)> Invites = new();
+    public readonly HashSet<(string Role, EntityUid Uid, TimeSpan ValidUntil)> Invites = new();
 
     /// <summary>
     /// Schedules the next <see cref="EngagementRole.AlwaysConditionCheck"/> re-evaluation.

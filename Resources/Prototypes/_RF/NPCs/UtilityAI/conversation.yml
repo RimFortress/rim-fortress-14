@@ -2,7 +2,7 @@
   id: AcceptConversationInvite
   color: "#D3D3D3"
   conditions:
-  - InConversation == false
+  - InConversation != true
   scoreCurves:
   - preset: UAIScoreNeeds
     variables:
@@ -12,11 +12,12 @@
   - add: [float: 0.01]
   # If not invites: x * 0
   - mul:
-    - !type:ConversationInvites
+    - !type:EngagementInvites
+      dataset: BasicConversationEngagements
     - clamp: {max: 1}
   - div:
-    - !type:ConversationInvites
-      acceptedOnly: true
+    - !type:EngagementMembership
+      dataset: BasicConversationEngagements
     - add: [float: 1]
     - pow: [float: 2]
   goalState:
@@ -25,6 +26,8 @@
 - type: utilityAiGoal
   id: StartConversation
   color: "#D3D3D3"
+  conditions:
+  - InConversation != true
   failPolicy: Cooldown
   scoreCurves:
   - preset: UAIScoreNeeds
@@ -33,8 +36,11 @@
       - !type:NeedLevel
         need: Socialization
   - div:
-    - !type:ConversationInvites
-      acceptedOnly: true
+    - !type:EngagementMembership
+      dataset: BasicConversationEngagements
+    - add:
+      - !type:EngagementInvites
+        dataset: BasicConversationEngagements
     - add: [float: 1]
     - pow: [float: 2]
   goalState:

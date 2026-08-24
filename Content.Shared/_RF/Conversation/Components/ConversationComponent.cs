@@ -1,4 +1,3 @@
-using System.Numerics;
 using Content.Shared.Chat;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -18,16 +17,10 @@ public sealed partial class ConversationComponent : Component
     public ProtoId<ConversationScriptPrototype> Script;
 
     /// <summary>
-    /// All participants in the conversation with their identifiers.
-    /// </summary>
-    [ViewVariables]
-    public Dictionary<string, EntityUid> Actors = new();
-
-    /// <summary>
     /// Next participant in the conversation
     /// </summary>
     [ViewVariables]
-    public EntityUid NextActor;
+    public HashSet<EntityUid> NextActors;
 
     /// <summary>
     /// The next line spoken by this entity in the conversation.
