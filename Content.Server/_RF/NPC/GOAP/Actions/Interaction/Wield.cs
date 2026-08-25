@@ -15,7 +15,7 @@ public sealed partial class Wield : BaseGoapAction<Wield>
     /// Target entity.
     /// </summary>
     [DataField]
-    public StateKey<EntityUid> Target = GoapState.ActiveHandEntity;
+    public StateKey<EntityUid> TargetKey = GoapState.ActiveHandEntity;
 
     /// <summary>
     /// Target wield state. If null, the state will be switched to the opposite one.
@@ -36,7 +36,7 @@ public sealed class WieldActionSystem : GoapActionSystem<Wield>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Wield action)
     {
-        if (!TryGetValue(ent, action, action.Target, out var target))
+        if (!TryGetValue(ent, action, action.TargetKey, out var target))
             return false;
 
         if (!TryComp(target, out WieldableComponent? comp))

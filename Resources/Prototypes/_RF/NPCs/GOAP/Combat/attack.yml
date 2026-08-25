@@ -36,6 +36,8 @@
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: WeaponTarget
+    - !type:Wield
+      targetState: true
     effects:
       WeaponPickedUp: true
 

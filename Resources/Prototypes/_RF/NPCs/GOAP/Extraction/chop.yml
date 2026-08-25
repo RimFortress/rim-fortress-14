@@ -14,7 +14,6 @@
     - !type:Pickup
       targetKey: Query/Axe
     - !type:Wield
-      targetKey: Query/Axe
       targetState: true
     effects:
       AxePickedUp: true

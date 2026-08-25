@@ -42,7 +42,7 @@
     - StoredRemoved == false
     action: !type:RemoveFromStock
       targetKey: StoringTarget
-    effect:
+    effects:
       StoredRemoved: true
 
   - preconditions:

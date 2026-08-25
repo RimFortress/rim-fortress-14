@@ -35,7 +35,7 @@
         query: SharpHarvestPlant
       performersCount:
       - !type:GoalPerformers
-        goal: Plant
+        goal: Harvest
   capture:
   - Query/Sharp
   goalState:
@@ -91,7 +91,7 @@
           query: SharpDeadPlant
       performersCount:
       - !type:GoalPerformers
-        goal: DeadPlant
+        goal: RemovePlant
   capture:
   - Query/Sharp
   goalState:
@@ -108,7 +108,7 @@
         query: PlantWaterTarget
       performersCount:
       - !type:GoalPerformers
-        goal: PlantWaterTarget
+        goal: RemovePlant
   capture:
   - Query/Bucket
   - Query/WaterSource

@@ -84,15 +84,15 @@
       - WaterPlant
     - name: npc-job-storing-name
       icon: _RF/Interface/cubes-solid.svg.192dpi.png
-      tasks:
+      goals:
       - Storing
     - name: npc-job-cooking-name
       icon: _RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
-      tasks:
+      goals:
       - Cooking
     - name: npc-job-medicine-name
       icon: _RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png
-      tasks:
+      goals:
       - HealingBuckle
       - StopBleeding
       - RestoreBloodLevel

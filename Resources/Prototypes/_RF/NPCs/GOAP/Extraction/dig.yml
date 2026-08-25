@@ -27,7 +27,7 @@
     - !type:MarkOwnerInRange
       range: 3
       whitelist:
-        tags:
+        components:
         - Log
     effects:
       TargetDug: true

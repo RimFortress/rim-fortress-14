@@ -390,20 +390,27 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         params (string Param, Type Type)[] prototypes)
         where TOut : notnull
     {
-        var domainParts = GetDomainParts<TOut>(domains);
-        var indexes = Array.Empty<(int Index, string Param, Type Type)>();
-        Array.Resize(ref indexes, prototypes.Length);
+        var domainParts = GetDomainParts<TOut>(domains).Select(x => x.Id).ToArray();
+        var protoArray = Array.Empty<(int Index, string Param, Type Type)>();
+        var indexes = Array.Empty<int>();
+        Array.Resize(ref protoArray, prototypes.Length);
 
         for (var i = 0; i < prototypes.Length; i++)
         {
-            indexes[i] = (domainParts.IndexOf(prototypes[i].Param), prototypes[i].Param, prototypes[i].Type);
+            var index = domainParts.IndexOf(prototypes[i].Param);
+            protoArray[i] = (index, prototypes[i].Param, prototypes[i].Type);
+            Array.Resize(ref indexes, indexes.Length + 1);
+            indexes[^1] = index;
         }
 
         return (node, parts, dependencies) =>
         {
+            if (!DomainKey<TOut>.Matches(domainParts, indexes, parts))
+                return null;
+
             var protoMan = dependencies.Resolve<IPrototypeManager>();
 
-            foreach (var (index, param, type) in indexes)
+            foreach (var (index, param, type) in protoArray)
             {
                 if (index == -1 || index > parts.Length - 1)
                     return new ErrorNode(node, $"param `{param}` not present in domain key `{string.Join(KeyDomainSeparator, parts)}`");
@@ -466,25 +473,33 @@ public readonly record struct DomainKey<T> where T : notnull
     {
         DebugTools.Assert(outParams.Length == converters.Length);
         DebugTools.Assert(outParams.All(x => domains.IndexOf(x) != -1));
-        _paramIndices = outParams.Select(x => domains.IndexOf(x)).ToArray();
+        var paramIndices = outParams.Select(x => domains.IndexOf(x)).ToArray();
+        _paramIndices = paramIndices;
         _converters = converters;
-        Validator = validator ?? ((node, _, _) => new ValidatedValueNode(node));
+        Validator = validator ?? ((node, parts, _) => Matches(domains, paramIndices, parts) ? new ValidatedValueNode(node) : null);
         Domains = domains;
     }
 
-    private bool Matches<TOther>(StateKey<TOther>[]? other) where TOther : notnull
+    public static bool Matches<TOther>(
+        string[] domains,
+        int[] paramIndices,
+        StateKey<TOther>[]? other)
+        where TOther : notnull
     {
-        if (other == null || typeof(TOther) != typeof(T) || other.Length != Domains.Length)
+        if (other == null || typeof(TOther) != typeof(T) || other.Length != domains.Length)
             return false;
 
         for (var i = 0; i < other.Length; i++)
         {
-            if (Array.IndexOf(_paramIndices, i) < 0 && other[i] != Domains[i])
+            if (Array.IndexOf(paramIndices, i) < 0 && other[i] != domains[i])
                 return false;
         }
 
         return true;
     }
+
+    private bool Matches<TOther>(StateKey<TOther>[]? other) where TOther : notnull
+        => Matches(Domains, _paramIndices, other);
 
     public bool TryGetParams<TOther, TP1>(
         StateKey<TOther>[] domains,
