@@ -1,5 +1,3 @@
-using Content.Shared._RF.NPC.Search.Prototypes;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Serialization.Markdown;
@@ -24,34 +22,34 @@ public sealed class StateKeySerializer<T> : ITypeSerializer<StateKey<T>, ValueDa
 
     public ValidationNode Validate(ISerializationManager serializationManager, ValueDataNode node, IDependencyCollection dependencies, ISerializationContext? context = null)
     {
-        var proto = dependencies.Resolve<IPrototypeManager>();
         var parts = GoapState.GetOrParts<object>(node.Value);
 
-        if (parts.Length == 0)
-        {
-            if (!node.Value.StartsWith(GoapState.QueryKeyPrefix))
-                return new ValidatedValueNode(node);
-
-            ProtoId<SearchQueryPrototype> protoId = node.Value[GoapState.QueryKeyPrefix.Length..];
-
-            if (!proto.HasIndex(protoId))
-                return new ErrorNode(node, $"invalid SearchQuery ProtoId in default key: {protoId}");
-
-            return new ValidatedValueNode(node);
-        }
+        if (parts.Length == 0 && ValidateKey(node.Value) is { } validate)
+            return validate;
 
         foreach (var part in parts)
         {
-            if (!part.Id.StartsWith(GoapState.QueryKeyPrefix))
-                continue;
-
-            ProtoId<SearchQueryPrototype> protoId = part.Id[GoapState.QueryKeyPrefix.Length..];
-
-            if (!proto.HasIndex(protoId))
-                return new ErrorNode(node, $"invalid SearchQuery ProtoId in the key part: {protoId}");
+            if (ValidateKey(part) is { } validatePart)
+                return validatePart;
         }
 
         return new ValidatedValueNode(node);
+
+        ValidationNode? ValidateKey(StateKey<object> key)
+        {
+            var domains = GoapState.GetDomainParts(key);
+
+            if (domains.Length == 0)
+                return null;
+
+            return GoapState.QueryDomain.Validator(node, domains, dependencies)
+                   ?? GoapState.QueryAllDomain.Validator(node, domains, dependencies)
+                   ?? GoapState.InAnyEngagementDomain.Validator(node, domains, dependencies)
+                   ?? GoapState.InEngagementDomain.Validator(node, domains, dependencies)
+                   ?? GoapState.EngagementDomain.Validator(node, domains, dependencies)
+                   ?? GoapState.InEngagementRoleDomain.Validator(node, domains, dependencies)
+                   ?? GoapState.EngagementRoleDomain.Validator(node, domains, dependencies);
+        }
     }
 
     public DataNode Write(ISerializationManager serializationManager, StateKey<T> value, IDependencyCollection dependencies, bool alwaysWrite = false, ISerializationContext? context = null)

@@ -52,7 +52,7 @@ public sealed class GoapConditionSerializer : ITypeReader<GoapCondition, ValueDa
 public static class GoapConditionExpression
 {
     private static readonly Regex Expr = new(
-        @"^\s*(?<key>[A-Za-z_][A-Za-z0-9_./|]*)\s*(?<op>==|!=|>=|<=|>|<)\s*(?<value>.+?)\s*$",
+        @"^\s*(?<key>[A-Za-z_][A-Za-z0-9_./| ]*)\s*(?<op>==|!=|>=|<=|>|<)\s*(?<value>.+?)\s*$",
         RegexOptions.Compiled);
 
     public static bool TryParse(string text, out GoapCondition condition)
@@ -64,8 +64,8 @@ public static class GoapConditionExpression
             return false;
         }
 
-        var key = match.Groups["key"].Value;
-        var op = match.Groups["op"].Value;
+        var key = match.Groups["key"].Value.Trim();
+        var op = match.Groups["op"].Value.Trim();
         var rawValue = match.Groups["value"].Value.Trim();
 
         if (rawValue.ToLowerInvariant() == "null")

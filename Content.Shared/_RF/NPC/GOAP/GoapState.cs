@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared.Interaction;
 using JetBrains.Annotations;
-using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization.Markdown.Validation;
+using Robust.Shared.Serialization.Markdown.Value;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.GOAP;
@@ -290,140 +292,6 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
 
     #endregion
 
-    #region Defaults
-
-    /// <summary>
-    /// The entity to which GoapState belongs.
-    /// </summary>
-    public static readonly StateKey<EntityUid> Owner = "Owner";
-
-    /// <summary>
-    /// Can the NPC click open entities such as doors.
-    /// </summary>
-    public static readonly StateKey<bool> NavInteract = "NavInteract";
-
-    /// <summary>
-    /// Can the NPC pry open doors for steering.
-    /// </summary>
-    public static readonly StateKey<bool> NavPry = "NavPry";
-
-    /// <summary>
-    /// Can the NPC smash obstacles for steering.
-    /// </summary>
-    public static readonly StateKey<bool> NavSmash = "NavSmash";
-
-    /// <summary>
-    /// Can the NPC climb obstacles for steering.
-    /// </summary>
-    public static readonly StateKey<bool> NavClimb = "NavClimb";
-
-    public static readonly StateKey<float> RotateSpeed = "RotateSpeed";
-
-    public static readonly StateKey<float> MovementRange = "MovementRange";
-
-    public static readonly StateKey<float> InteractRange = "InteractRange";
-
-    public static readonly StateKey<float> MeleeRange = "MeleeRange";
-
-    public static readonly StateKey<float> VisionRange = "VisionRange";
-
-    /// <summary>
-    /// Default key for storing the action queue.
-    /// </summary>
-    public static readonly StateKey<List<(TimeSpan Time, Func<bool>? Act)>> WaitActionsQueue = "WaitActionsQueue";
-
-    /// <summary>
-    /// The maximum distance at which an agent can carry on a conversation.
-    /// </summary>
-    public static readonly StateKey<float> ConversationRange = "ConversationRange";
-
-    /// <summary>
-    /// The maximum distance to which an item pulled by an NPC can be moved
-    /// </summary>
-    public static readonly StateKey<float> PullerThrowDistance = "PullerThrowDistance";
-
-    /// <summary>
-    /// How close to a given coordinate should an NPC attempt to move an entity that is being pulled
-    /// </summary>
-    public static readonly StateKey<float> PullingMoveCloseRange = "PullingMoveCloseRange";
-
-    /// <summary>
-    /// The key used to store the participant in the situation against whom another participant is performing a check.
-    /// </summary>
-    public static readonly StateKey<EntityUid> EngagementParticipant = "EngagementParticipant";
-
-    // Entity system defaults
-
-    /// <summary>
-    /// GoapState owner's coordinates.
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<EntityCoordinates> OwnerCoordinates = "OwnerCoordinates";
-
-    /// <summary>
-    /// Stores the ID of the owner's currently active hand.
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<string> ActiveHand = "ActiveHand";
-
-    /// <summary>
-    /// Is the owner currently inside a container?
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<bool> InContainer = "InContainer";
-
-    /// <summary>
-    /// Is the owner's active hand free?
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<bool> ActiveHandFree = "ActiveHandFree";
-
-    /// <summary>
-    /// Stores the entity In the active hand.
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<EntityUid> ActiveHandEntity = "ActiveHandEntity";
-
-    /// <summary>
-    /// Stores whether the owner is buckled up.
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<bool> Buckled = "Buckled";
-
-    /// <summary>
-    /// Stores whether the owner is being pulled or not.
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<bool> Pulled = "Pulled";
-
-    /// <summary>
-    /// Stores information about how many free hands the owner has.
-    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
-    /// </summary>
-    public static readonly StateKey<int> FreeHandsCount = "FreeHandsCount";
-
-    /// <summary>
-    /// Global defaults for NPCs.
-    /// </summary>
-    private static readonly Dictionary<string, object> Defaults = new()
-    {
-        {RotateSpeed, float.MaxValue},
-        {"IdleRange", 7f},
-        {InteractRange, SharedInteractionSystem.InteractionRange - 0.15f },
-        {MovementRange, 0.333f},
-        {MeleeRange, 1f},
-        {VisionRange, 7f},
-        {ConversationRange, 2.5f},
-        {PullerThrowDistance, 2f},
-        {PullingMoveCloseRange, 0.05f},
-    };
-
-    /// <summary>
-    /// Prefix for dynamic keys exposing a SearchQueryPrototype's live best result through
-    /// <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/> — e.g. "Query/Drink".
-    /// </summary>
-    public const string QueryKeyPrefix = "Query/";
-
     /// <summary>
     /// A logical OR operator between keys that allows you to use
     /// <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>
@@ -432,44 +300,23 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
     public const string OrKeySeparator = "||";
 
     /// <summary>
-    /// List of all ECS state variables.
+    /// A character that separates the key into domains.
     /// </summary>
-    public static readonly HashSet<string> EntityDefaults = new()
-    {
-        OwnerCoordinates, ActiveHand, InContainer, ActiveHandFree,
-        ActiveHandEntity, Buckled, Pulled, FreeHandsCount,
-    };
-
-    /// <summary>
-    /// True if a key resolves without needing any task's effect to produce it
-    /// first — either a fixed entity default (<see cref="EntityDefaults"/>) or
-    /// a dynamic search-result key. Used by the planner's static graph builder
-    /// to exclude such keys from requiring a producing edge.
-    /// </summary>
-    [PublicAPI, Pure]
-    public static bool IsEntityDefault<T>(StateKey<T> key) where T : notnull
-    {
-        if (EntityDefaults.Contains(key) || key.Id.StartsWith(QueryKeyPrefix, StringComparison.Ordinal))
-            return true;
-
-        var parts = GetOrParts(key);
-
-        foreach (var part in parts)
-        {
-            if (EntityDefaults.Contains(part) || key.Id.StartsWith(QueryKeyPrefix, StringComparison.Ordinal))
-                return true;
-        }
-
-        return false;
-    }
+    public const string KeyDomainSeparator = "/";
 
     [PublicAPI, Pure]
-    public static StateKey<T>[] GetOrParts<T>(StateKey<T> key) where T : notnull
+    public static StateKey<T>[] GetOrParts<T>(StateKey<T> key) where T : notnull => GetParts(key, OrKeySeparator);
+
+    [PublicAPI, Pure]
+    public static StateKey<T>[] GetDomainParts<T>(StateKey<T> key) where T : notnull => GetParts(key, KeyDomainSeparator);
+
+    [PublicAPI, Pure]
+    public static StateKey<T>[] GetParts<T>(StateKey<T> key, string separator) where T : notnull
     {
-        if (!key.Id.Contains(OrKeySeparator, StringComparison.Ordinal))
+        if (!key.Id.Contains(separator, StringComparison.Ordinal))
             return Array.Empty<StateKey<T>>();
 
-        var parts = key.Id.Split(OrKeySeparator,
+        var parts = key.Id.Split(separator,
             StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var keys = new StateKey<T>[parts.Length];
 
@@ -481,7 +328,96 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return keys;
     }
 
-    #endregion
+    private static DomainKey<T> Domain<T>(
+        string domains,
+        DomainKey<T>.DomainKeyValidator? validator = null) where T : notnull
+        => new(Array.Empty<string>(),
+            Array.Empty<Func<string, object>>(),
+            validator,
+            domains.Split(KeyDomainSeparator,
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    private static DomainKey<TOut> Domain<TP1, TOut>(
+        string param,
+        Func<string, TP1> conv,
+        string domains,
+        DomainKey<TOut>.DomainKeyValidator? validator = null)
+        where TP1 : notnull
+        where TOut : notnull
+        => new(new[] { param },
+            new[] { (Func<string, object>)(x => conv(x)) },
+            validator,
+            domains.Split(KeyDomainSeparator,
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    private static DomainKey<TOut> Domain<TP1, TP2, TOut>(
+        (string, Func<string, TP1>) param1,
+        (string, Func<string, TP2>) param2,
+        string domains,
+        DomainKey<TOut>.DomainKeyValidator? validator = null)
+        where TP1 : notnull
+        where TP2 : notnull
+        where TOut : notnull
+        => new(new[] { param1.Item1, param2.Item1 },
+            new[] { (Func<string, object>)(x => param1.Item2(x)), (Func<string, object>)(x => param2.Item2(x)) },
+            validator,
+            domains.Split(KeyDomainSeparator,
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    private static DomainKey<TOut> ProtoDomain<TP1, TOut>(string param, string domains)
+        where TP1 : class, IPrototype
+        where TOut : notnull
+        => Domain<ProtoId<TP1>, TOut>(param,
+            x => new ProtoId<TP1>(x),
+            domains,
+            validator: ProtoValidator<TOut>(domains, (param, typeof(TP1))));
+
+    private static DomainKey<TOut> ProtoDomain<TP1, TP2, TOut>(
+        string param1,
+        string param2,
+        string domains)
+        where TP1 : class, IPrototype
+        where TP2 : class, IPrototype
+        where TOut : notnull
+        => Domain<ProtoId<TP1>, ProtoId<TP2>, TOut>(
+            (param1, x => new ProtoId<TP1>(x)),
+            (param2, x => new ProtoId<TP2>(x)),
+            domains,
+            validator: ProtoValidator<TOut>(domains, (param1, typeof(TP1)), (param2, typeof(TP2))));
+
+    private static DomainKey<TOut>.DomainKeyValidator ProtoValidator<TOut>(
+        string domains,
+        params (string Param, Type Type)[] prototypes)
+        where TOut : notnull
+    {
+        var domainParts = GetDomainParts<TOut>(domains);
+        var indexes = Array.Empty<(int Index, string Param, Type Type)>();
+        Array.Resize(ref indexes, prototypes.Length);
+
+        for (var i = 0; i < prototypes.Length; i++)
+        {
+            indexes[i] = (domainParts.IndexOf(prototypes[i].Param), prototypes[i].Param, prototypes[i].Type);
+        }
+
+        return (node, parts, dependencies) =>
+        {
+            var protoMan = dependencies.Resolve<IPrototypeManager>();
+
+            foreach (var (index, param, type) in indexes)
+            {
+                if (index == -1 || index > parts.Length - 1)
+                    return new ErrorNode(node, $"param `{param}` not present in domain key `{string.Join(KeyDomainSeparator, parts)}`");
+
+                if (!protoMan.TryIndex(type, parts[index], out _))
+                {
+                    return new ErrorNode(node,
+                        $"invalid param `{parts[index]}` of type {type} in domain `{string.Join(KeyDomainSeparator, parts)}");
+                }
+            }
+
+            return null;
+        };
+    }
 }
 
 /// <summary>
@@ -508,4 +444,76 @@ public readonly record struct StateKey<T>(string Id) :
         => string.Compare(Id, other.Id, StringComparison.Ordinal);
 
     public override string ToString() => Id ?? string.Empty;
+}
+
+public readonly record struct DomainKey<T> where T : notnull
+{
+    public delegate ValidationNode? DomainKeyValidator(
+        ValueDataNode node,
+        StateKey<object>[] parts,
+        IDependencyCollection dependencies);
+
+    public readonly string[] Domains;
+    public readonly DomainKeyValidator Validator;
+    private readonly int[] _paramIndices;
+    private readonly Func<string, object>[] _converters;
+
+    public DomainKey(
+        string[] outParams,
+        Func<string, object>[] converters,
+        DomainKeyValidator? validator,
+        params string[] domains)
+    {
+        DebugTools.Assert(outParams.Length == converters.Length);
+        DebugTools.Assert(outParams.All(x => domains.IndexOf(x) != -1));
+        _paramIndices = outParams.Select(x => domains.IndexOf(x)).ToArray();
+        _converters = converters;
+        Validator = validator ?? ((node, _, _) => new ValidatedValueNode(node));
+        Domains = domains;
+    }
+
+    private bool Matches<TOther>(StateKey<TOther>[]? other) where TOther : notnull
+    {
+        if (other == null || typeof(TOther) != typeof(T) || other.Length != Domains.Length)
+            return false;
+
+        for (var i = 0; i < other.Length; i++)
+        {
+            if (Array.IndexOf(_paramIndices, i) < 0 && other[i] != Domains[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    public bool TryGetParams<TOther, TP1>(
+        StateKey<TOther>[] domains,
+        [NotNullWhen(true)] out TP1? p1)
+        where TOther : notnull
+    {
+        p1 = default;
+
+        if (!Matches(domains))
+            return false;
+
+        p1 = (TP1)_converters[0](domains[_paramIndices[0]]);
+        return true;
+    }
+
+    public bool TryGetParams<TOther, TP1, TP2>(
+        StateKey<TOther>[] domains,
+        [NotNullWhen(true)] out TP1? p1,
+        [NotNullWhen(true)] out TP2? p2)
+        where TOther : notnull
+    {
+        p1 = default;
+        p2 = default;
+
+        if (!Matches(domains))
+            return false;
+
+        p1 = (TP1)_converters[0](domains[_paramIndices[0]]);
+        p2 = (TP2)_converters[1](domains[_paramIndices[1]]);
+        return true;
+    }
 }

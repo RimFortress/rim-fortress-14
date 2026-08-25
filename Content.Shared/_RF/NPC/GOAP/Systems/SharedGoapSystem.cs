@@ -1,5 +1,7 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
+using Content.Shared._RF.NPC.Engagement.Components;
+using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
@@ -530,7 +532,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (!state.UseEntityDefaults)
             return false;
 
-        var owner = state.GetValue(GoapState.Owner);
+        var owner = Owner(state);
 
         if (key.Equals(GoapState.OwnerCoordinates))
         {
@@ -586,17 +588,147 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
             return true;
         }
 
-        // Search query results: "Query:<ProtoId>"
-        if (key.Id.StartsWith(GoapState.QueryKeyPrefix, StringComparison.Ordinal))
-        {
-            ProtoId<SearchQueryPrototype> protoId = key.Id[GoapState.QueryKeyPrefix.Length..];
+        if (TryGetStateDomain(state, key, out value))
+            return true;
 
-            if (!_proto.HasIndex(protoId)
-                || !_searcher.TryGetBestResult(owner, state, protoId, out var result))
+        return false;
+    }
+
+    private bool TryGetStateDomain<T>(GoapState state, StateKey<T> key, [NotNullWhen(true)] out object? value)
+        where T : notnull
+    {
+        value = null;
+        var owner = Owner(state);
+        var domains = GoapState.GetDomainParts(key);
+
+        if (domains.Length < 2)
+            return false;
+
+        if (GoapState.QueryDomain.TryGetParams(domains, out ProtoId<SearchQueryPrototype>? query))
+        {
+            if (!_proto.HasIndex(query)
+                || !_searcher.TryGetBestResult(owner, state, query.Value, out var result))
                 return false;
 
             value = result.Value;
             return true;
+        }
+
+        if (GoapState.QueryAllDomain.TryGetParams(domains, out query))
+        {
+            if (!_proto.HasIndex(query))
+                return false;
+
+            var results = _searcher.GetResults(owner, state, query.Value);
+
+            if (results.Count == 0)
+                return false;
+
+            value = (T)results;
+            return true;
+        }
+
+        if (GoapState.InAnyEngagementDomain.Equals(domains))
+        {
+            if (!TryComp(owner, out EngagementParticipantComponent? participant))
+            {
+                value = true;
+                return true;
+            }
+
+            value = participant.Membership.Count > 0;
+            return true;
+        }
+
+        if (GoapState.InEngagementDomain.TryGetParams(domains, out ProtoId<EngagementPrototype>? engagement))
+        {
+            if (!_proto.HasIndex(engagement))
+                return false;
+
+            if (!TryComp(owner, out EngagementParticipantComponent? participant))
+            {
+                value = false;
+                return true;
+            }
+
+            foreach (var (uid, _) in participant.Membership)
+            {
+                if (!TryComp(uid, out EngagementComponent? engage)
+                    || engage.Kind != engagement)
+                    continue;
+
+                value = true;
+                return true;
+            }
+
+            value = false;
+            return true;
+        }
+
+        if (GoapState.EngagementDomain.TryGetParams(domains, out engagement))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !TryComp(owner, out EngagementParticipantComponent? participant))
+                return false;
+
+            foreach (var (uid, _) in participant.Membership)
+            {
+                if (!TryComp(uid, out EngagementComponent? engage)
+                    || engage.Kind != engagement)
+                    continue;
+
+                value = uid;
+                return true;
+            }
+
+            return false;
+        }
+
+        if (GoapState.InEngagementRoleDomain.TryGetParams(domains, out engagement, out ProtoId<EngagementRolePrototype>? role))
+        {
+            if (!_proto.HasIndex(engagement) || !_proto.HasIndex(role))
+                return false;
+
+            if (!TryComp(owner, out EngagementParticipantComponent? participant))
+            {
+                value = false;
+                return true;
+            }
+
+            foreach (var (uid, roleId) in participant.Membership)
+            {
+                if (!TryComp(uid, out EngagementComponent? engage)
+                    || engage.Kind != engagement
+                    || roleId != role)
+                    continue;
+
+                value = true;
+                return true;
+            }
+
+            value = false;
+            return true;
+        }
+
+        if (GoapState.EngagementRoleDomain.TryGetParams(domains, out engagement, out role))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_proto.HasIndex(role)
+                || !TryComp(owner, out EngagementParticipantComponent? participant))
+                return false;
+
+            foreach (var (uid, roleId) in participant.Membership)
+            {
+                if (!TryComp(uid, out EngagementComponent? engage)
+                    || engage.Kind != engagement
+                    || roleId != role)
+                    continue;
+
+                value = uid;
+                return true;
+            }
+
+            return false;
         }
 
         return false;
