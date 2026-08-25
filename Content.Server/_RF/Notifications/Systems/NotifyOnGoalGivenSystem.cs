@@ -32,7 +32,7 @@ public sealed class NotifyOnGoalGivenSystem : EntitySystem
         foreach (var owner in _ownership.GetOwners(ent))
         {
             if (HasComp<NotificationComponent>(owner))
-                _notifications.SendNotification(ent.Owner, protoId, desc: desc);
+                _notifications.SendNotification(owner, protoId, desc: desc);
         }
     }
 }

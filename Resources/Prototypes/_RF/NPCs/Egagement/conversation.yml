@@ -49,4 +49,4 @@
   id: CheckOnPatient
   roles:
   - CheckOnPatientInitiator
-  - CheckOnPatientInitiator
+  - CheckOnPatientResponder

@@ -226,6 +226,48 @@ public sealed class ConversationSystem : EntitySystem
         return pos;
     }
 
+    private bool ValidateConversation(Entity<ConversationComponent, EngagementComponent> ent)
+    {
+        if (!_prototype.HasIndex(ent.Comp1.Script)
+            || ent.Comp2.Started && ent.Comp1.NextActors.Count == 0)
+        {
+            Invalid();
+            return false;
+        }
+
+        foreach (var uid in ent.Comp1.NextActors)
+        {
+            if (_actorQuery.TryComp(uid, out var actor)
+                && actor.Conversation == ent.Owner
+                && _engagement.IsMember(ent.Owner, uid))
+                continue;
+
+            Invalid();
+            return false;
+        }
+
+        foreach (var (_, uids) in ent.Comp2.Actors)
+        {
+            foreach (var uid in uids)
+            {
+                if (_actorQuery.TryComp(uid, out var actor)
+                    && actor.Conversation == ent.Owner)
+                    continue;
+
+                Invalid();
+                return false;
+            }
+        }
+
+        return true;
+
+        void Invalid()
+        {
+            Log.Debug($"terminating invalid conversation {ToPrettyString(ent)}");
+            _engagement.EndEngagement(new(ent, ent.Comp2), EngagementEndReason.Dissolved);
+        }
+    }
+
     /// <summary>
     /// Starts a conversation with a pre-gathered set of candidate entities, on behalf of a specific
     /// <paramref name="initiator"/>.
@@ -341,14 +383,13 @@ public sealed class ConversationSystem : EntitySystem
             return;
         }
 
-        comp.NextActors = conv.Value.Comp2.Actors[next.Actor];
-
-        if (comp.NextActors.Count == 0)
+        if (!_engagement.TryGetActors(conv.Value.Owner, next.Actor, out var nextActors))
         {
-            EndConversation(ent, true);
+            EndConversation(ent);
             return;
         }
 
+        comp.NextActors = nextActors.ToHashSet();
         comp.NextDelay = next.Delay;
         comp.NextMessage = next.Index;
         comp.NextSpeakType = next.SpeakType;
@@ -448,7 +489,7 @@ public sealed class ConversationSystem : EntitySystem
             return false;
 
         conversation = (ent.Comp.Conversation, comp, engage);
-        return true;
+        return ValidateConversation(conversation.Value);
     }
 
     /// <summary>

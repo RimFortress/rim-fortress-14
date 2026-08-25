@@ -448,5 +448,17 @@ public partial class EngagementSystem
         return true;
     }
 
+    /// <summary>
+    /// Checks whether the target entity is engaged in the situation.
+    /// </summary>
+    /// <param name="ent">Engagement component.</param>
+    /// <param name="member">Target entity.</param>
+    public bool IsMember(
+        Entity<EngagementComponent?> ent,
+        Entity<EngagementParticipantComponent?> member)
+        => Resolve(ent, ref ent.Comp, false)
+           && Resolve(member, ref member.Comp, false)
+           && member.Comp.Membership.ContainsKey(ent);
+
     #endregion
 }
