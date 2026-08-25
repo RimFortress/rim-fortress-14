@@ -42,13 +42,13 @@ public sealed class StateKeySerializer<T> : ITypeSerializer<StateKey<T>, ValueDa
             if (domains.Length == 0)
                 return null;
 
-            return GoapState.QueryDomain.Validator(node, domains, dependencies)
-                   ?? GoapState.QueryAllDomain.Validator(node, domains, dependencies)
-                   ?? GoapState.InAnyEngagementDomain.Validator(node, domains, dependencies)
-                   ?? GoapState.InEngagementDomain.Validator(node, domains, dependencies)
-                   ?? GoapState.EngagementDomain.Validator(node, domains, dependencies)
-                   ?? GoapState.InEngagementRoleDomain.Validator(node, domains, dependencies)
-                   ?? GoapState.EngagementRoleDomain.Validator(node, domains, dependencies);
+            foreach (var domain in GoapState.DomainKeys)
+            {
+                if (domain.Validator(node, domains, dependencies) is { } valid)
+                    return valid;
+            }
+
+            return null;
         }
     }
 

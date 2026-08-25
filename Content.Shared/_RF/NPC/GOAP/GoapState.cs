@@ -328,93 +328,94 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         return keys;
     }
 
-    private static DomainKey<T> Domain<T>(
+    private static DomainKey Domain(
         string domains,
-        DomainKey<T>.DomainKeyValidator? validator = null) where T : notnull
-        => new(Array.Empty<string>(),
+        DomainKey.DomainKeyValidator? validator = null)
+        => RegisterDomain(new(Array.Empty<string>(),
             Array.Empty<Func<string, object>>(),
             validator,
             domains.Split(KeyDomainSeparator,
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)));
 
-    private static DomainKey<TOut> Domain<TP1, TOut>(
+    private static DomainKey Domain<TP1>(
         string param,
         Func<string, TP1> conv,
         string domains,
-        DomainKey<TOut>.DomainKeyValidator? validator = null)
+        DomainKey.DomainKeyValidator? validator = null)
         where TP1 : notnull
-        where TOut : notnull
-        => new(new[] { param },
+        => RegisterDomain(new(new[] { param },
             new[] { (Func<string, object>)(x => conv(x)) },
             validator,
             domains.Split(KeyDomainSeparator,
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)));
 
-    private static DomainKey<TOut> Domain<TP1, TP2, TOut>(
+    private static DomainKey Domain<TP1, TP2>(
         (string, Func<string, TP1>) param1,
         (string, Func<string, TP2>) param2,
         string domains,
-        DomainKey<TOut>.DomainKeyValidator? validator = null)
+        DomainKey.DomainKeyValidator? validator = null)
         where TP1 : notnull
         where TP2 : notnull
-        where TOut : notnull
-        => new(new[] { param1.Item1, param2.Item1 },
+        => RegisterDomain(new(new[] { param1.Item1, param2.Item1 },
             new[] { (Func<string, object>)(x => param1.Item2(x)), (Func<string, object>)(x => param2.Item2(x)) },
             validator,
             domains.Split(KeyDomainSeparator,
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)));
 
-    private static DomainKey<TOut> ProtoDomain<TP1, TOut>(string param, string domains)
+    private static DomainKey ProtoDomain<TP1>(string param, string domains)
         where TP1 : class, IPrototype
-        where TOut : notnull
-        => Domain<ProtoId<TP1>, TOut>(param,
+        => Domain<ProtoId<TP1>>(param,
             x => new ProtoId<TP1>(x),
             domains,
-            validator: ProtoValidator<TOut>(domains, (param, typeof(TP1))));
+            validator: ProtoValidator(domains, (param, typeof(TP1))));
 
-    private static DomainKey<TOut> ProtoDomain<TP1, TP2, TOut>(
+    private static DomainKey ProtoDomain<TP1, TP2>(
         string param1,
         string param2,
         string domains)
         where TP1 : class, IPrototype
         where TP2 : class, IPrototype
-        where TOut : notnull
-        => Domain<ProtoId<TP1>, ProtoId<TP2>, TOut>(
+        => Domain<ProtoId<TP1>, ProtoId<TP2>>(
             (param1, x => new ProtoId<TP1>(x)),
             (param2, x => new ProtoId<TP2>(x)),
             domains,
-            validator: ProtoValidator<TOut>(domains, (param1, typeof(TP1)), (param2, typeof(TP2))));
+            validator: ProtoValidator(domains, (param1, typeof(TP1)), (param2, typeof(TP2))));
 
-    private static DomainKey<TOut>.DomainKeyValidator ProtoValidator<TOut>(
+    /// <summary>
+    /// Builds a YAML validator that checks whether the values at parameter positions
+    /// are valid IDs of prototypes for the specified types.
+    /// The validator does not check structural compliance with the domain
+    /// (length, literal segments) itself—this is done by <see cref="DomainKey.Matches{TOther}"/>.
+    /// </summary>
+    private static DomainKey.DomainKeyValidator ProtoValidator(
         string domains,
         params (string Param, Type Type)[] prototypes)
-        where TOut : notnull
     {
-        var domainParts = GetDomainParts<TOut>(domains).Select(x => x.Id).ToArray();
-        var protoArray = Array.Empty<(int Index, string Param, Type Type)>();
-        var indexes = Array.Empty<int>();
+        var domainParts = GetDomainParts<object>(domains).Select(x => x.Id).ToArray();
+
+        var protoArray = Array.Empty<(int Index, Type Type)>();
         Array.Resize(ref protoArray, prototypes.Length);
+
+        var indexes = Array.Empty<bool>();
+        Array.Resize(ref indexes, prototypes.Length);
+        Array.Fill(indexes, false);
 
         for (var i = 0; i < prototypes.Length; i++)
         {
             var index = domainParts.IndexOf(prototypes[i].Param);
-            protoArray[i] = (index, prototypes[i].Param, prototypes[i].Type);
-            Array.Resize(ref indexes, indexes.Length + 1);
-            indexes[^1] = index;
+            protoArray[i] = (index, prototypes[i].Type);
+            indexes[index] = true;
         }
 
         return (node, parts, dependencies) =>
         {
-            if (!DomainKey<TOut>.Matches(domainParts, indexes, parts))
+            if (!DomainKey.Matches(domainParts, indexes, parts))
                 return null;
 
             var protoMan = dependencies.Resolve<IPrototypeManager>();
 
-            foreach (var (index, param, type) in protoArray)
+            foreach (var (index, type) in protoArray)
             {
-                if (index == -1 || index > parts.Length - 1)
-                    return new ErrorNode(node, $"param `{param}` not present in domain key `{string.Join(KeyDomainSeparator, parts)}`");
-
                 if (!protoMan.TryIndex(type, parts[index], out _))
                 {
                     return new ErrorNode(node,
@@ -453,7 +454,7 @@ public readonly record struct StateKey<T>(string Id) :
     public override string ToString() => Id ?? string.Empty;
 }
 
-public readonly record struct DomainKey<T> where T : notnull
+public readonly record struct DomainKey
 {
     public delegate ValidationNode? DomainKeyValidator(
         ValueDataNode node,
@@ -463,6 +464,7 @@ public readonly record struct DomainKey<T> where T : notnull
     public readonly string[] Domains;
     public readonly DomainKeyValidator Validator;
     private readonly int[] _paramIndices;
+    private readonly bool[] _isParamIndex;
     private readonly Func<string, object>[] _converters;
 
     public DomainKey(
@@ -476,22 +478,31 @@ public readonly record struct DomainKey<T> where T : notnull
         var paramIndices = outParams.Select(x => domains.IndexOf(x)).ToArray();
         _paramIndices = paramIndices;
         _converters = converters;
-        Validator = validator ?? ((node, parts, _) => Matches(domains, paramIndices, parts) ? new ValidatedValueNode(node) : null);
+
+        _isParamIndex = new bool[domains.Length];
+        foreach (var index in _paramIndices)
+        {
+            _isParamIndex[index] = true;
+        }
+
+        var isParam = _isParamIndex.ToArray();
+
+        Validator = validator ?? ((node, parts, _) => Matches(domains, isParam, parts) ? new ValidatedValueNode(node) : null);
         Domains = domains;
     }
 
     public static bool Matches<TOther>(
         string[] domains,
-        int[] paramIndices,
+        bool[] isParam,
         StateKey<TOther>[]? other)
         where TOther : notnull
     {
-        if (other == null || typeof(TOther) != typeof(T) || other.Length != domains.Length)
+        if (other?.Length != domains.Length)
             return false;
 
         for (var i = 0; i < other.Length; i++)
         {
-            if (Array.IndexOf(paramIndices, i) < 0 && other[i] != domains[i])
+            if (isParam[i] && other[i] != domains[i])
                 return false;
         }
 
@@ -499,7 +510,7 @@ public readonly record struct DomainKey<T> where T : notnull
     }
 
     private bool Matches<TOther>(StateKey<TOther>[]? other) where TOther : notnull
-        => Matches(Domains, _paramIndices, other);
+        => Matches(Domains, _isParamIndex, other);
 
     public bool TryGetParams<TOther, TP1>(
         StateKey<TOther>[] domains,
