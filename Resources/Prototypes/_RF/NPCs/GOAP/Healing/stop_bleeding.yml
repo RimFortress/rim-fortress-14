@@ -41,7 +41,7 @@
     - NearBleedingFriend == true
     action: !type:Melee
       targetKey: Query/BleedingFriend
-      oneHit: true
+      maxHits: 1
     effects:
       BleedingStopped: true
 

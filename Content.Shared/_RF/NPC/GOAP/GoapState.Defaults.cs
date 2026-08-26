@@ -140,6 +140,8 @@ public partial class GoapState
     /// </summary>
     public static readonly StateKey<EntityUid> EngagementParticipant = "EngagementParticipant";
 
+    public static readonly StateKey<float> TargetMeleeLostRange = RegisterDefault("TargetMeleeLostRange", 14f);
+
     #endregion
 
     #region ECS Defaults
