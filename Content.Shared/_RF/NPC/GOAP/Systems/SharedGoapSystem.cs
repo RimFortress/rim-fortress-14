@@ -1,7 +1,9 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
+using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
@@ -31,6 +33,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
     [Dependency] private readonly PullingSystem _pulling = default!;
+    [Dependency] private readonly EngagementSystem _engagement = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
     protected readonly Dictionary<EntityUid, HashSet<ICommonSession>> DebugSubscriptions = new();
@@ -630,13 +633,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
 
         if (GoapState.InAnyEngagementDomain.Equals(domains))
         {
-            if (!TryComp(owner, out EngagementParticipantComponent? participant))
-            {
-                value = true;
-                return true;
-            }
-
-            value = participant.Membership.Count > 0;
+            value = TryComp(owner, out EngagementParticipantComponent? participant) && participant.Membership.Count > 0;
             return true;
         }
 
@@ -645,43 +642,18 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
             if (!_proto.HasIndex(engagement))
                 return false;
 
-            if (!TryComp(owner, out EngagementParticipantComponent? participant))
-            {
-                value = false;
-                return true;
-            }
-
-            foreach (var (uid, _) in participant.Membership)
-            {
-                if (!TryComp(uid, out EngagementComponent? engage)
-                    || engage.Kind != engagement)
-                    continue;
-
-                value = true;
-                return true;
-            }
-
-            value = false;
+            value = _engagement.TryGetEngagement(owner, engagement.Value, out _, out _);
             return true;
         }
 
         if (GoapState.EngagementDomain.TryGetParams(domains, out engagement))
         {
             if (!_proto.HasIndex(engagement)
-                || !TryComp(owner, out EngagementParticipantComponent? participant))
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
                 return false;
 
-            foreach (var (uid, _) in participant.Membership)
-            {
-                if (!TryComp(uid, out EngagementComponent? engage)
-                    || engage.Kind != engagement)
-                    continue;
-
-                value = uid;
-                return true;
-            }
-
-            return false;
+            value = ent.Value.Owner;
+            return true;
         }
 
         if (GoapState.InEngagementRoleDomain.TryGetParams(domains, out engagement, out ProtoId<EngagementRolePrototype>? role))
@@ -689,24 +661,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
             if (!_proto.HasIndex(engagement) || !_proto.HasIndex(role))
                 return false;
 
-            if (!TryComp(owner, out EngagementParticipantComponent? participant))
-            {
-                value = false;
-                return true;
-            }
-
-            foreach (var (uid, roleId) in participant.Membership)
-            {
-                if (!TryComp(uid, out EngagementComponent? engage)
-                    || engage.Kind != engagement
-                    || roleId != role)
-                    continue;
-
-                value = true;
-                return true;
-            }
-
-            value = false;
+            value = _engagement.TryFindEngagement(owner, role.Value, engagement.Value, out _);
             return true;
         }
 
@@ -714,21 +669,53 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         {
             if (!_proto.HasIndex(engagement)
                 || !_proto.HasIndex(role)
-                || !TryComp(owner, out EngagementParticipantComponent? participant))
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
+                || !_engagement.TryGetActors(ent.Value.AsNullable(), role.Value, out var actors)
+                || actors.Count == 0)
                 return false;
 
-            foreach (var (uid, roleId) in participant.Membership)
-            {
-                if (!TryComp(uid, out EngagementComponent? engage)
-                    || engage.Kind != engagement
-                    || roleId != role)
-                    continue;
+            value = actors.First();
+            return true;
+        }
 
-                value = uid;
-                return true;
-            }
+        if (GoapState.EngagementInvitedDomain.TryGetParams(domains, out engagement))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetInviteEngagement(owner, engagement.Value, out var ent))
+                return false;
 
-            return false;
+            value = ent.Value.Owner;
+            return true;
+        }
+
+        if (GoapState.EngagementInvitedInviterDomain.TryGetParams(domains, out engagement))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetInviteInviter(owner, engagement.Value, out var ent))
+                return false;
+
+            value = ent.Value;
+            return true;
+        }
+
+        if (GoapState.EngagementInvitedRoleDomain.TryGetParams(domains, out engagement, out role))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetInviteEngagement(owner, engagement.Value, out var ent, role))
+                return false;
+
+            value = ent.Value.Owner;
+            return true;
+        }
+
+        if (GoapState.EngagementInvitedRoleInviterDomain.TryGetParams(domains, out engagement, out role))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetInviteInviter(owner, engagement.Value, out var ent, role))
+                return false;
+
+            value = ent.Value;
+            return true;
         }
 
         return false;

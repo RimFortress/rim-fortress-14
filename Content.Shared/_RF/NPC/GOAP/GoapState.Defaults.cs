@@ -244,5 +244,35 @@ public partial class GoapState
             "RoleId",
             "Engagement/ProtoId/Role/RoleId");
 
+    /// <summary>
+    /// Returns the situation entity of the target type to which the agent has been invited.
+    /// </summary>
+    public static readonly DomainKey EngagementInvitedDomain
+        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/Invited/ProtoId");
+
+    /// <summary>
+    /// Returns the entity that invited the agent into a situation of the target type.
+    /// </summary>
+    public static readonly DomainKey EngagementInvitedInviterDomain
+        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/Invited/ProtoId/Inviter");
+
+    /// <summary>
+    /// Returns the situation entity of the target type to which the agent has been invited to a specific role.
+    /// </summary>
+    public static readonly DomainKey EngagementInvitedRoleDomain
+        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+        "ProtoId",
+            "RoleId",
+            "Engagement/Invited/ProtoId/Role/RoleId");
+
+    /// <summary>
+    /// Returns the entity that invited the agent into a situation of the target type to a specific role.
+    /// </summary>
+    public static readonly DomainKey EngagementInvitedRoleInviterDomain
+        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+            "ProtoId",
+            "RoleId",
+            "Engagement/Invited/ProtoId/Role/RoleId/Inviter");
+
     #endregion
 }

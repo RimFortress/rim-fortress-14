@@ -492,10 +492,81 @@ public partial class EngagementSystem
     }
 
     /// <summary>
+    /// Returns the situation in which the agent was invited.
+    /// </summary>
+    /// <param name="ent">Invited agent entity.</param>
+    /// <param name="protoId">A prototype of a situation, an invitation to which should be found.</param>
+    /// <param name="engagement">Found situation entity.</param>
+    /// <param name="role">A prototype of a role, an invitation to which should be found.</param>
+    /// <returns>True, if the situation is found.</returns>
+    [PublicAPI, Pure]
+    public bool TryGetInviteEngagement(
+        Entity<EngagementParticipantComponent?> ent,
+        ProtoId<EngagementPrototype> protoId,
+        [NotNullWhen(true)] out Entity<EngagementComponent>? engagement,
+        ProtoId<EngagementRolePrototype>? role = null)
+    {
+        engagement = null;
+
+        if (!Resolve(ent, ref ent.Comp, false))
+            return false;
+
+        foreach (var invite in ent.Comp.Invites)
+        {
+            if (!_engagementQuery.TryComp(invite.EngageUid, out var comp)
+                || comp.Kind != protoId)
+                continue;
+
+            if (role != null && invite.Role != role)
+                continue;
+
+            engagement = new(invite.EngageUid, comp);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns the agent's inviter to the situation.
+    /// </summary>
+    /// <param name="ent">Invited agent entity.</param>
+    /// <param name="protoId">A prototype of a situation, an invitation to which should be found.</param>
+    /// <param name="inviter">Found inviter entity.</param>
+    /// <param name="role">A prototype of a role, an invitation to which should be found.</param>
+    /// <returns>True, if the inviter is found.</returns>
+    [PublicAPI, Pure]
+    public bool TryGetInviteInviter(
+        Entity<EngagementParticipantComponent?> ent,
+        ProtoId<EngagementPrototype> protoId,
+        [NotNullWhen(true)] out EntityUid? inviter,
+        ProtoId<EngagementRolePrototype>? role = null)
+    {
+        inviter = null;
+
+        if (!Resolve(ent, ref ent.Comp, false))
+            return false;
+
+        foreach (var invite in ent.Comp.Invites)
+        {
+            if (!_engagementQuery.TryComp(invite.EngageUid, out var comp)
+                || comp.Kind != protoId)
+                continue;
+
+            if (role != null && invite.Role != role)
+                continue;
+
+            inviter = invite.Inviter;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Checks whether the target entity is engaged in the situation.
     /// </summary>
     /// <param name="ent">Engagement component.</param>
     /// <param name="member">Target entity.</param>
+    [PublicAPI, Pure]
     public bool IsMember(
         Entity<EngagementComponent?> ent,
         Entity<EngagementParticipantComponent?> member)
