@@ -120,9 +120,9 @@ public partial class EngagementSystem
     }
 
     /// <summary>
-    /// Sends an invitation for a non-forced role. The actor must call <see cref="AcceptInvite(EntityUid, Entity{EngagementComponent?})"/>
-    /// before <see cref="EngagementPrototype.InviteTime"/> elapses, or the invite expires on its own
-    /// during <see cref="Update"/>.
+    /// Sends an invitation for a non-forced role.
+    /// The actor must call <see cref="AcceptInvite(EntityUid, Entity{EngagementComponent?}, ProtoId{EngagementRolePrototype}?)"/>
+    /// before <see cref="EngagementPrototype.InviteTime"/> elapses, or the invite expires on its own during <see cref="Update"/>.
     /// </summary>
     /// <param name="engagement">The situation to invite into.</param>
     /// <param name="roleId">The role being offered. Must have <see cref="EngagementRolePrototype.Force"/> set to false.</param>
@@ -155,13 +155,45 @@ public partial class EngagementSystem
     }
 
     /// <summary>
+    /// Combines the functionality of <see cref="InviteToEngagement"/> and <see cref="TryJoinEngagement"/>.
+    /// If the <see cref="EngagementRolePrototype.Force"/> of the target role is true,
+    /// the actor joins the situation; otherwise, an invitation is sent to the actor.
+    /// </summary>
+    /// <param name="engagement">The situation to invite/join into.</param>
+    /// <param name="roleId">The role being offered.</param>
+    /// <param name="actor">The entity being invited.</param>
+    /// <param name="inviter">The inviter entity.</param>
+    /// <returns>True, if the actor joined the situation or received an invitation.</returns>
+    [PublicAPI]
+    public bool InviteOrJoinToEngagement(
+        Entity<EngagementComponent?> engagement,
+        ProtoId<EngagementRolePrototype> roleId,
+        EntityUid actor,
+        EntityUid inviter)
+    {
+        if (!_prototype.Resolve(roleId, out var role))
+            return false;
+
+        return role.Force
+            ? TryJoinEngagement(engagement, roleId, actor)
+            : InviteToEngagement(engagement, roleId, actor, inviter);
+    }
+
+    /// <summary>
     /// Accepts a pending invite to a situation, seating the actor into the offered role.
     /// </summary>
     /// <param name="actor">The entity accepting the invite.</param>
     /// <param name="engagement">The situation being joined.</param>
+    /// <param name="roleId">
+    /// The role for which an invitation must be accepted;
+    /// if null, the first available invitation will be accepted.
+    /// </param>
     /// <returns>True, if a valid, non-expired invite was found and accepted.</returns>
     [PublicAPI]
-    public bool AcceptInvite(EntityUid actor, Entity<EngagementComponent?> engagement)
+    public bool AcceptInvite(
+        EntityUid actor,
+        Entity<EngagementComponent?> engagement,
+        ProtoId<EngagementRolePrototype>? roleId = null)
     {
         if (!Resolve(engagement, ref engagement.Comp)
             || !_participantQuery.TryComp(actor, out var participant))
@@ -215,9 +247,16 @@ public partial class EngagementSystem
     /// <param name="inviter">
     /// The entity that initiated the situation the invite belongs to (i.e. <see cref="EngagementComponent.Initiator"/>).
     /// </param>
+    /// <param name="roleId">
+    /// The role for which an invitation must be accepted;
+    /// if null, the first available invitation will be accepted.
+    /// </param>
     /// <returns>True, if a matching, non-expired invite was found and accepted.</returns>
     [PublicAPI]
-    public bool AcceptInvite(EntityUid actor, EntityUid inviter)
+    public bool AcceptActorInvite(
+        EntityUid actor,
+        EntityUid inviter,
+        ProtoId<EngagementRolePrototype>? roleId = null)
     {
         if (!_participantQuery.TryComp(actor, out var participant))
             return false;
@@ -225,7 +264,7 @@ public partial class EngagementSystem
         foreach (var entry in participant.Invites)
         {
             if (entry.Inviter == inviter)
-                return AcceptInvite(actor, new Entity<EngagementComponent?>(entry.EngageUid, null));
+                return AcceptInvite(actor, new(entry.EngageUid, null), roleId);
         }
 
         return false;
@@ -282,14 +321,18 @@ public partial class EngagementSystem
     /// <param name="actor">The entity leaving.</param>
     /// <param name="reason">Why the actor is leaving.</param>
     [PublicAPI]
-    public void LeaveEngagement(Entity<EngagementComponent?> engagement, EntityUid actor, EngagementEndReason reason)
+    public bool LeaveEngagement(
+        Entity<EngagementComponent?> engagement,
+        Entity<EngagementParticipantComponent?> actor,
+        EngagementEndReason reason)
     {
         if (!Resolve(engagement, ref engagement.Comp)
-            || !_participantQuery.TryComp(actor, out var participant)
-            || !participant.Membership.TryGetValue(engagement.Owner, out var role))
-            return;
+            || !_participantQuery.Resolve(actor, ref actor.Comp)
+            || !actor.Comp.Membership.TryGetValue(engagement.Owner, out var role))
+            return false;
 
         LeaveEngagementInternal(engagement!, actor, role, reason, cleanupParticipant: true);
+        return true;
     }
 
     /// <summary>
@@ -403,7 +446,7 @@ public partial class EngagementSystem
             if (actorRole != role || !_engagementQuery.TryComp(uid, out var comp) || comp.Kind != protoId)
                 continue;
 
-            engagement = (uid, comp);
+            engagement = new(uid, comp);
             return true;
         }
 

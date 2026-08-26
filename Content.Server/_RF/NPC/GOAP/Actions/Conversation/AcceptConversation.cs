@@ -43,7 +43,7 @@ public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConv
         {
             // Resolves the underlying situation entity by inviter, so the search query keeps
             // targeting agents rather than the (otherwise invisible) Engagement session entities.
-            if (!_engagement.AcceptInvite(ent.Owner, inviter))
+            if (!_engagement.AcceptActorInvite(ent.Owner, inviter))
                 continue;
 
             accepted = true;
