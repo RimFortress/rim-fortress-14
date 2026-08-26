@@ -1,10 +1,9 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Checks whether the target entity has a mood effect.
@@ -29,6 +28,6 @@ public sealed class HasMoodEffectGoapConditionSystem : GoapConditionSystem<HasMo
     [Dependency] private readonly SocialSystem _social = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, HasMoodEffect condition)
-        => TryGetValue(state, condition, condition.TargetKey, out var target)
+        => TryGet(state, condition.TargetKey, out var target)
            && _social.HasMoodEffect(target, condition.Effect);
 }

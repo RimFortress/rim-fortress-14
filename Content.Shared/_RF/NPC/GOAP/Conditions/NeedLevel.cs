@@ -1,10 +1,9 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Needs;
 using Content.Shared._RF.Needs.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Checks the agent's need level.
@@ -38,22 +37,22 @@ public sealed class NeedLevelSystem : GoapConditionSystem<NeedLevel>
     {
         if (condition.MinKey == null && condition.MaxKey == null)
         {
-            CreateDump(state, condition, "warn: MinKey and MaxKey is null");
+            CreateDump("warn: MinKey and MaxKey is null");
             return true;
         }
 
         var level = _needs.GetValue(uid, condition.Need);
-        CreateDump(state, condition, $"'{condition.Need}' level == {level}");
+        CreateDump($"'{condition.Need}' level == {level}");
 
         if (condition.MinKey is { } minKey)
         {
-            if (!TryGetValue(state, condition, minKey, out var min) || level < min)
+            if (!TryGet(state, minKey, out var min) || level < min)
                 return false;
         }
 
         if (condition.MaxKey is { } maxKey)
         {
-            if (!TryGetValue(state, condition, maxKey, out var max) || level > max)
+            if (!TryGet(state, maxKey, out var max) || level > max)
                 return false;
         }
 

@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Pathfinding;
 using Content.Server.NPC.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using JetBrains.Annotations;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
@@ -39,7 +39,7 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
     /// Where the pathfinding result will be stored (if applicable). This gets removed after execution.
     /// </summary>
     [DataField]
-    public StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
+    public StateKey<PathResultEvent> PathfindKey = MoveToActionSystem.PathfindKey;
 
     /// <summary>
     /// How close we need to get before considering movement finished.
@@ -69,15 +69,15 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     /// The base key for storing the path that the agent must follow.
     /// </summary>
     [PublicAPI]
-    public static StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
+    public static readonly StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
 
     private readonly Dictionary<EntityUid, Task<PathResultEvent>> _pendingPaths = new();
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, MoveTo action) => 2f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, MoveTo action)
-        => TryGetValue(ent, action, action.TargetKey, out var targetCoords) && StartupMovement(ent,
-            action,
+        => TryGet(ent, action.TargetKey, out var targetCoords) && StartupMovement(ent,
+            this,
             targetCoords,
             action.FindPath,
             action.PathfindKey,
@@ -85,22 +85,23 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
             action.StopOnLineOfSight);
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, MoveTo action)
-        => !TryGetValue(ent, action, action.TargetKey, out var targetCoords)
-            ? GoapActionResult.Failed
-            : UpdateMovement(ent, action, targetCoords, action.PathfindKey, action.RangeKey, action.StopOnLineOfSight);
+        => TryGet(ent, action.TargetKey, out var targetCoords)
+            ? UpdateMovement(ent, this, targetCoords, action.PathfindKey, action.RangeKey, action.StopOnLineOfSight)
+            : GoapActionResult.Failed;
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, MoveTo action)
     {
         if (action.RemoveKeyOnFinish)
-            ent.Comp.State.Remove(action.TargetKey);
-        ShutdownMovement(ent, action.PathfindKey);
+            Remove(ent, action.TargetKey);
+
+        ShutdownMovement(ent, this, action.PathfindKey);
     }
 
     /// <summary>
     /// Initializes the pathfinding for AI movement.
     /// </summary>
     /// <param name="ent">AI entity.</param>
-    /// <param name="action">GOAP action.</param>
+    /// <param name="handler"></param>
     /// <param name="targetCoordinates">Target Coordinates to move to.</param>
     /// <param name="findPath">Should we search for a path to the target, or use the existing one?</param>
     /// <param name="pathfindKey">Where the pathfinding result will be stored (if applicable).</param>
@@ -110,19 +111,19 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     [PublicAPI]
     public bool StartupMovement(
         Entity<GoapComponent> ent,
-        GoapAction action,
+        GoapDebugDumpSystem handler,
         EntityCoordinates targetCoordinates,
         bool findPath,
         StateKey<PathResultEvent> pathfindKey,
         StateKey<float> rangeKey,
         bool stopOnLineOfSight = false)
-        => TryGetValue(ent, action, rangeKey, out var range)
-           && StartupMovement(ent, action, targetCoordinates, findPath, pathfindKey, range, stopOnLineOfSight);
+        => TryGet(ent, rangeKey, out var range)
+           && StartupMovement(ent, handler, targetCoordinates, findPath, pathfindKey, range, stopOnLineOfSight);
 
     [PublicAPI]
     public bool StartupMovement(
         Entity<GoapComponent> ent,
-        GoapAction action,
+        GoapDebugDumpSystem handler,
         EntityCoordinates targetCoordinates,
         bool findPath,
         StateKey<PathResultEvent> pathfindKey,
@@ -137,10 +138,10 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
         // If there's no need to search for a path, we'll use the existing one.
         if (!findPath)
         {
-            if (!TryGetValue(ent, action, pathfindKey, out var path))
+            if (!handler.TryGet(ent, pathfindKey, out var path))
                 return false;
 
-            var mapCoords = _transform.ToMapCoordinates(Goap.GetValue(ent.Comp.State, GoapState.OwnerCoordinates));
+            var mapCoords = _transform.ToMapCoordinates(Get(ent, GoapState.OwnerCoordinates));
             _steering.PrunePath(ent, mapCoords, _transform.ToMapCoordinates(targetCoordinates).Position - mapCoords.Position, path.Path);
             _steering.Register(ent, targetCoordinates).ArriveOnLineOfSight = stopOnLineOfSight;
             return true;
@@ -155,7 +156,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
             default,
             flags: _pathfinding.GetFlags(ent.Comp.State));
 
-        CreateDump(ent, action, $"path search started at {_timing.CurTime}. Target coordinates: {targetCoordinates}, Range: {range}");
+        handler.CreateDump($"path search started at {_timing.CurTime}. Target coordinates: {targetCoordinates}, Range: {range}");
         return true;
     }
 
@@ -163,7 +164,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     /// Updates the AI movement.
     /// </summary>
     /// <param name="ent">AI entity.</param>
-    /// <param name="action">GOAP action.</param>
+    /// <param name="handler"></param>
     /// <param name="targetCoordinates">Target Coordinates to move to.</param>
     /// <param name="pathfindKey">Where the pathfinding result will be stored (if applicable).</param>
     /// <param name="rangeKey">How close we need to get before considering movement finished.</param>
@@ -176,19 +177,19 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     [PublicAPI]
     public GoapActionResult UpdateMovement(
         Entity<GoapComponent> ent,
-        GoapAction action,
+        GoapDebugDumpSystem handler,
         EntityCoordinates targetCoordinates,
         StateKey<PathResultEvent> pathfindKey,
         StateKey<float> rangeKey,
         bool stopOnLineOfSight = false)
-        => TryGetValue(ent, action, rangeKey, out var range)
-            ? UpdateMovement(ent, action, targetCoordinates, pathfindKey, range, stopOnLineOfSight)
+        => TryGet(ent, rangeKey, out var range)
+            ? UpdateMovement(ent, handler, targetCoordinates, pathfindKey, range, stopOnLineOfSight)
             : GoapActionResult.Failed;
 
     [PublicAPI]
     public GoapActionResult UpdateMovement(
         Entity<GoapComponent> ent,
-        GoapAction action,
+        GoapDebugDumpSystem handler,
         EntityCoordinates targetCoordinates,
         StateKey<PathResultEvent> pathfindKey,
         float range,
@@ -204,16 +205,16 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
 
             if (!pathTask.IsCompletedSuccessfully)
             {
-                CreateDump(ent, action, "background async pathfinding failed");
+                handler.CreateDump("background async pathfinding failed");
                 return GoapActionResult.Failed;
             }
 
             var path = pathTask.GetAwaiter().GetResult();
-            CreateDump(ent, action, $"pathfinding finished at {_timing.CurTime}");
+            handler.CreateDump($"pathfinding finished at {_timing.CurTime}");
 
             if (path.Result != PathResult.Path)
             {
-                CreateDump(ent, action, $"pathfinding returned {path.Result}");
+                handler.CreateDump($"pathfinding returned {path.Result}");
                 return GoapActionResult.Failed;
             }
 
@@ -224,7 +225,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
             steering.CurrentPath = new Queue<PathPoly>(path.Path);
 
             // Launch steering along the found path.
-            if (TryGetValue(ent, action, GoapState.OwnerCoordinates, out var coords))
+            if (handler.TryGet(ent, GoapState.OwnerCoordinates, out var coords))
             {
                 var mapCoords = _transform.ToMapCoordinates(coords);
                 _steering.PrunePath(
@@ -234,7 +235,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
                     path.Path);
             }
 
-            CreateDump(ent, action, "path found and steering initialized");
+            handler.CreateDump("path found and steering initialized");
             return GoapActionResult.Continuing;
         }
 
@@ -244,19 +245,19 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
 
         if (!_steeringQuery.TryComp(ent, out var steeringComp))
         {
-            ComponentNotFound<NPCSteeringComponent>(ent, action);
+            ComponentNotFound<NPCSteeringComponent>();
             return GoapActionResult.Failed;
         }
 
         switch (steeringComp.Status)
         {
             case SteeringStatus.InRange:
-                CreateDump(ent, action, $"steering finished with result: '{steeringComp.Status}'");
+                handler.CreateDump($"steering finished with result: '{steeringComp.Status}'");
                 return GoapActionResult.Finished;
             case SteeringStatus.Moving:
                 return GoapActionResult.Continuing;
             case SteeringStatus.NoPath:
-                CreateDump(ent, action, $"steering finished with result: '{steeringComp.Status}'");
+                handler.CreateDump($"steering finished with result: '{steeringComp.Status}'");
                 return GoapActionResult.Failed;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -267,16 +268,18 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     /// Finishes the AI's movement and performs the necessary state cleanup.
     /// </summary>
     /// <param name="ent">AI entity.</param>
+    /// <param name="handler"></param>
     /// <param name="pathfindKey">Where the pathfinding result will be stored (if applicable).</param>
     /// <param name="unregisterSteering"><see cref="NPCSteeringSystem.Unregister"/></param>
     [PublicAPI]
     public void ShutdownMovement(
         Entity<GoapComponent> ent,
+        GoapDebugDumpSystem handler,
         StateKey<PathResultEvent> pathfindKey,
         bool unregisterSteering = true)
     {
         _pendingPaths.Remove(ent);
-        ent.Comp.State.Remove(pathfindKey);
+        handler.Remove(ent, pathfindKey);
         if (unregisterSteering)
             _steering.Unregister(ent);
     }
@@ -295,7 +298,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
     [PublicAPI]
     public GoapActionResult Move(
         Entity<GoapComponent> ent,
-        GoapAction action,
+        GoapDebugDumpSystem handler,
         EntityCoordinates targetCoordinates,
         StateKey<float> rangeKey,
         StateKey<PathResultEvent>? pathfindKey = null,
@@ -304,7 +307,7 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
         bool unregisterSteering = true)
     {
         if (!targetCoordinates.TryDistance(EntityManager, _transform, Transform(ent).Coordinates, out var dist)
-            || !TryGetValue(ent, action, rangeKey, out var range))
+            || !handler.TryGet(ent, rangeKey, out var range))
             return GoapActionResult.Failed;
 
         pathfindKey ??= PathfindKey;
@@ -312,16 +315,16 @@ public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
         if (dist > range)
         {
             if (!StartedUp(ent))
-                StartupMovement(ent, action, targetCoordinates, true, pathfindKey.Value, rangeKey);
+                StartupMovement(ent, handler, targetCoordinates, true, pathfindKey.Value, rangeKey);
 
-            var result = UpdateMovement(ent, action, targetCoordinates, pathfindKey.Value, rangeKey);
+            var result = UpdateMovement(ent, handler, targetCoordinates, pathfindKey.Value, rangeKey);
 
             if (result != GoapActionResult.Finished)
                 return result;
         }
 
         if (StartedUp(ent))
-            ShutdownMovement(ent, pathfindKey.Value, unregisterSteering: unregisterSteering);
+            ShutdownMovement(ent, handler, pathfindKey.Value, unregisterSteering: unregisterSteering);
 
         return GoapActionResult.Finished;
     }

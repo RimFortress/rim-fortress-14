@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Storage.EntitySystems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Inventory;
 using Content.Shared.Storage;
 
@@ -26,7 +26,7 @@ public sealed class StorageActionSystem : GoapActionSystem<Storage>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Storage action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var heldEntity))
+        if (!TryGet(ent, action.TargetKey, out var heldEntity))
             return false;
 
         foreach (var entity in _inventory.GetHandOrInventoryEntities(ent.Owner))

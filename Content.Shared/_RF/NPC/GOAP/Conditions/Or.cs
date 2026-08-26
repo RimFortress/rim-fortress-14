@@ -1,7 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 public sealed partial class Or : BaseGoapCondition<Or>
 {
@@ -18,7 +17,7 @@ public sealed class OrConditionSystem : GoapConditionSystem<Or>
             if (!con.Check(uid, state, Goap, out var dump))
                 continue;
 
-            CreateDump(state, condition, dump?.Dump);
+            CreateDump(dump?.Dump ?? "");
             return true;
         }
 

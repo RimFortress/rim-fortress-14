@@ -1,8 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Mobs.Components;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Checks the current state of the target entity.
@@ -28,16 +27,16 @@ public sealed class MobStateConditionSystem : GoapConditionSystem<MobState>
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, MobState condition)
     {
-        if (!TryGetValue(state, condition, condition.TargetKey, out var target))
+        if (!TryGet(state, condition.TargetKey, out var target))
             return false;
 
         if (!_mobStateQuery.TryComp(target, out var comp))
         {
-            ComponentNotFound<MobStateComponent>(state, condition, target);
+            ComponentNotFound<MobStateComponent>(target);
             return false;
         }
 
-        CreateDump(state, condition, $"mob state: '{comp.CurrentState}'");
+        CreateDump($"mob state: '{comp.CurrentState}'");
         return comp.CurrentState == condition.TargetState;
     }
 }

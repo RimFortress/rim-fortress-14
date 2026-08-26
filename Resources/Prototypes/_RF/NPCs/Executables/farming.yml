@@ -63,10 +63,22 @@
   id: RemovePlant
   parent: BaseFarmingGoal
   goal: RemovePlant
-  targetKey: Query/RemovePlant
+  targetKey: Query/DeadPlant
   conditions:
   - !type:PlantHolder
-    targetKey: Query/RemovePlant
+    targetKey: Query/DeadPlant
+    needSharp: false
+    dead: true
+
+- type: executableGoal
+  id: RemovePlantSharp
+  parent: BaseFarmingGoal
+  goal: RemovePlant
+  targetKey: Query/SharpDeadPlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: Query/SharpDeadPlant
+    needSharp: true
     dead: true
 
 - type: executableGoal

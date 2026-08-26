@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.NPC.Pathfinding;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
@@ -38,7 +38,7 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, PickAccessible action)
     {
-        TryGetValue(ent, action, action.RangeKey, out var maxRange);
+        TryGet(ent, action.RangeKey, out var maxRange);
 
         if (maxRange == 0f)
             maxRange = 7f;
@@ -49,7 +49,7 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
             default,
             flags: _pathfinding.GetFlags(ent.Comp.State));
 
-        CreateDump(ent, action, $"random path search started at {_timing.CurTime}. MaxRange: {maxRange}");
+        CreateDump($"random path search started at {_timing.CurTime}. MaxRange: {maxRange}");
         return true;
     }
 
@@ -57,7 +57,7 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
     {
         if (!_pendingPaths.TryGetValue(ent, out var task))
         {
-            CreateDump(ent, action, $"pathfinding task not found");
+            CreateDump($"pathfinding task not found");
             return GoapActionResult.Failed;
         }
 
@@ -69,22 +69,22 @@ public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
 
         if (!task.IsCompletedSuccessfully)
         {
-            CreateDump(ent, action, "background async pathfinding failed");
+            CreateDump("background async pathfinding failed");
             return GoapActionResult.Failed;
         }
 
         var path = task.GetAwaiter().GetResult();
-        CreateDump(ent, action, $"pathfinding finished at {_timing.CurTime}");
+        CreateDump($"pathfinding finished at {_timing.CurTime}");
 
         if (path.Result != PathResult.Path)
         {
-            CreateDump(ent, action, $"pathfinding returned {path.Result}");
+            CreateDump($"pathfinding returned {path.Result}");
             return GoapActionResult.Failed;
         }
 
         var target = path.Path.Last().Coordinates;
-        Set(ent, action, action.TargetCoordinates, target);
-        Set(ent, action, action.PathfindKey, path);
+        Set(ent, action.TargetCoordinates, target);
+        Set(ent, action.PathfindKey, path);
         return GoapActionResult.Finished;
     }
 }

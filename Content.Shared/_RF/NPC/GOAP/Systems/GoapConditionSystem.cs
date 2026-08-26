@@ -1,12 +1,11 @@
-using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 
-namespace Content.Server._RF.NPC.GOAP.Systems;
+namespace Content.Shared._RF.NPC.GOAP.Systems;
 
 /// <summary>
 /// An entity system that implements GOAP condition check.
 /// </summary>
-/// <typeparam name="T">GOAP condtition type.</typeparam>
+/// <typeparam name="T">GOAP condition type.</typeparam>
 public abstract class GoapConditionSystem<T> : GoapDebugDumpSystem where T : BaseGoapCondition<T>
 {
     public override void Initialize()
@@ -18,7 +17,9 @@ public abstract class GoapConditionSystem<T> : GoapDebugDumpSystem where T : Bas
 
     private void OnConditionCheck(Entity<GoapComponent> ent, ref GoapConditionCheck<T> args)
     {
+        EnterContext(args.State, args.Condition);
         args.Result = ConditionCheck(ent, args.State, args.Condition);
+        ClearContext();
     }
 
     /// <summary>

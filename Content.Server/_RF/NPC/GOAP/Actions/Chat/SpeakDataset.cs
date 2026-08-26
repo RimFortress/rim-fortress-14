@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Chat.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Chat;
 using Content.Shared.Dataset;
 using Robust.Shared.Prototypes;
@@ -37,7 +37,7 @@ public sealed class SpeakDatasetGoapActionSystem : GoapActionSystem<SpeakDataset
     {
         if (!_proto.Resolve(action.Dataset, out var proto))
         {
-            ProtoNotFound(ent, action, action.Dataset);
+            ProtoNotFound(action.Dataset);
             return false;
         }
 

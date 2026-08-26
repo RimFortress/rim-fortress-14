@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 
@@ -46,17 +46,17 @@ public sealed class CaptureQueryGoapActionSystem : GoapActionSystem<CaptureQuery
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, CaptureQuery action)
     {
-        if (!TryGetValue(ent, action, action.Capture, out var result)
+        if (!TryGet(ent, action.Capture, out var result)
             || !_searcher.CaptureResult(result, ent))
             return false;
 
-        Set(ent, action, action.TargetKey ?? action.Capture, result);
+        Set(ent, action.TargetKey ?? action.Capture, result);
         return true;
     }
 
     protected override void ActionPlanShutdown(Entity<GoapComponent> ent, CaptureQuery action, GoapPlanFinishReason reason)
     {
-        if (Remove(ent, action, action.TargetKey ?? action.Capture, out var uid))
+        if (Remove(ent, action.TargetKey ?? action.Capture, out var uid))
             _searcher.ReleaseCapturedResult(uid, ent);
     }
 }

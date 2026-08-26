@@ -1,6 +1,5 @@
 using Content.Server._RF.NPC.GOAP.Actions.Interaction;
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
@@ -8,6 +7,7 @@ using Content.Server.Interaction;
 using Content.Server.NPC.Pathfinding;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
@@ -74,18 +74,18 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, StoringItem action)
     {
-        Remove(ent, action, action.StoringCoordinatesKey);
-        Remove(ent, action, action.StoringCrateKey);
-        Remove(ent, action, action.PathfindKey);
+        Remove(ent, action.StoringCoordinatesKey);
+        Remove(ent, action.StoringCrateKey);
+        Remove(ent, action.PathfindKey);
 
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         _searcher.TryGetBestResult(ent, action.StockQuery, out var result);
 
         if (!_stockpile.TryGetStock(result, out var stock))
         {
-            CreateDump(ent, action, $"stockpile from query '{action.StockQuery}' not found");
+            CreateDump($"stockpile from query '{action.StockQuery}' not found");
             return false;
         }
 
@@ -95,66 +95,62 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
         {
             if (!_stockpile.ReserveEntity(stock.Value, container.Value, ent))
             {
-                CreateDump(ent,
-                    action,
-                    $"failed to reserve entity {ToPrettyString(container)} in stock {ToPrettyString(stock)}");
+                CreateDump($"failed to reserve entity {ToPrettyString(container)} in stock {ToPrettyString(stock)}");
                 return false;
             }
 
-            Set(ent, action, action.StockpileKey, result.Value);
-            Set(ent, action, action.StoringCrateKey, container.Value);
+            Set(ent, action.StockpileKey, result.Value);
+            Set(ent, action.StoringCrateKey, container.Value);
             return true;
         }
 
-        CreateDump(ent, action, $"free entity storage not found in stockpile '{ToPrettyString(stock)}'");
+        CreateDump($"free entity storage not found in stockpile '{ToPrettyString(stock)}'");
 
         if (!_stockpile.TryFindClosestTile(stock.Value, ownerCoords, out var ind, out var tileCoords))
         {
-            CreateDump(ent, action, $"free tile not found in stockpile '{ToPrettyString(stock)}'");
+            CreateDump($"free tile not found in stockpile '{ToPrettyString(stock)}'");
             return false;
         }
 
         if (!_stockpile.ReserveTile(stock.Value, ind.Value, ent))
         {
-            CreateDump(ent,
-                action,
-                $"failed to reserve tile {ind} in stock {ToPrettyString(stock)}");
+            CreateDump($"failed to reserve tile {ind} in stock {ToPrettyString(stock)}");
             return false;
         }
 
-        Set(ent, action, action.StockpileKey, result.Value);
-        Set(ent, action, action.StoringCoordinatesKey, tileCoords.Value);
+        Set(ent, action.StockpileKey, result.Value);
+        Set(ent, action.StoringCoordinatesKey, tileCoords.Value);
         return true;
     }
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, StoringItem action)
     {
-        if (Remove(ent, action, action.StockpileKey, out var uid)
+        if (Remove(ent, action.StockpileKey, out var uid)
             && _stockpile.TryGetStock(uid, out var stock))
             StockpileSystem.ClearReserve(stock.Value, ent);
 
-        Remove(ent, action, action.StoringCoordinatesKey);
-        Remove(ent, action, action.StoringCrateKey);
-        Remove(ent, action, action.PathfindKey);
+        Remove(ent, action.StoringCoordinatesKey);
+        Remove(ent, action.StoringCrateKey);
+        Remove(ent, action.PathfindKey);
         NpcTimingSystem.ClearQueue(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, StoringItem action)
     {
-        var waitResult = _npcTiming.WaitQueue(ent, action);
+        var waitResult = _npcTiming.WaitQueue(ent, this);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
-        if (!TryGetValue(ent, action, action.TargetKey, out var item))
+        if (!TryGet(ent, action.TargetKey, out var item))
             return GoapActionResult.Failed;
 
         if (_contentQuery.HasComp(item))
             return GoapActionResult.Finished;
 
-        if (!TryGetValue(ent, action, GoapState.ActiveHandEntity, out var held) || held != item)
+        if (!TryGet(ent, GoapState.ActiveHandEntity, out var held) || held != item)
         {
-            var move = _moveTo.Move(ent, action, Transform(item).Coordinates, GoapState.InteractRange);
+            var move = _moveTo.Move(ent, this, Transform(item).Coordinates, GoapState.InteractRange);
 
             if (move != GoapActionResult.Finished)
                 return move;
@@ -163,26 +159,26 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
                 return GoapActionResult.Failed;
         }
 
-        if (TryGetValue(ent, action, action.StoringCrateKey, out var crate))
-            return CrateUpdate(ent, action, item, crate);
+        if (TryGet(ent, action.StoringCrateKey, out var crate))
+            return CrateUpdate(ent, item, crate);
 
-        if (TryGetValue(ent, action, action.StoringCoordinatesKey, out var coords))
-            return TileUpdate(ent, action, item, coords);
+        if (TryGet(ent, action.StoringCoordinatesKey, out var coords))
+            return TileUpdate(ent, item, coords);
 
         return GoapActionResult.Failed;
     }
 
-    private GoapActionResult CrateUpdate(Entity<GoapComponent> ent, StoringItem action, EntityUid item, EntityUid crate)
+    private GoapActionResult CrateUpdate(Entity<GoapComponent> ent, EntityUid item, EntityUid crate)
     {
         if (!_storageQuery.TryComp(crate, out var comp))
         {
-            ComponentNotFound<EntityStorageComponent>(ent, action, crate);
+            ComponentNotFound<EntityStorageComponent>(crate);
             return GoapActionResult.Failed;
         }
 
         var coords = Transform(crate).Coordinates;
 
-        var result = _moveTo.Move(ent, action, coords, GoapState.InteractRange);
+        var result = _moveTo.Move(ent, this, coords, GoapState.InteractRange);
 
         if (result != GoapActionResult.Finished)
             return result;
@@ -191,7 +187,7 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
         if (!comp.Open)
         {
             _npcTiming.EnqueueWait(ent,
-                action,
+                this,
                 (0.33f, 1f),
                 onFinish: () =>
                 {
@@ -200,25 +196,25 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
                     if (comp.Open)
                         return true;
 
-                    CreateDump(ent, action, $"failed to open {ToPrettyString(crate)}");
+                    CreateDump($"failed to open {ToPrettyString(crate)}");
                     return false;
                 });
         }
 
         _npcTiming.EnqueueWait(ent,
-            action,
+            this,
             (0.33f, 1f),
             onFinish: () =>
             {
                 if (_hands.TryDrop(ent.Owner, coords))
                     return true;
 
-                CreateDump(ent, action, $"failed to drop {ToPrettyString(item)} in {ToPrettyString(crate)}");
+                CreateDump($"failed to drop {ToPrettyString(item)} in {ToPrettyString(crate)}");
                 return false;
             });
 
         _npcTiming.EnqueueWait(ent,
-            action,
+            this,
             (0.33f, 1f),
             onFinish: () =>
             {
@@ -227,7 +223,7 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
                 if (!comp.Open)
                     return true;
 
-                CreateDump(ent, action, $"failed to close {ToPrettyString(crate)}");
+                CreateDump($"failed to close {ToPrettyString(crate)}");
                 return false;
             });
 
@@ -236,11 +232,10 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
 
     private GoapActionResult TileUpdate(
         Entity<GoapComponent> ent,
-        StoringItem action,
         EntityUid item,
         EntityCoordinates coords)
     {
-        var result = _moveTo.Move(ent, action, coords, GoapState.InteractRange);
+        var result = _moveTo.Move(ent, this, coords, GoapState.InteractRange);
 
         if (result != GoapActionResult.Finished)
             return result;
@@ -248,7 +243,7 @@ public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
         if (_hands.TryDrop(ent.Owner, coords))
             return GoapActionResult.Finished;
 
-        CreateDump(ent, action, $"failed to drop {ToPrettyString(item)} at {coords}");
+        CreateDump($"failed to drop {ToPrettyString(item)} at {coords}");
         return GoapActionResult.Failed;
     }
 }

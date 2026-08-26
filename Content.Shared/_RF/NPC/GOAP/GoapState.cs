@@ -396,20 +396,20 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
         var protoArray = Array.Empty<(int Index, Type Type)>();
         Array.Resize(ref protoArray, prototypes.Length);
 
-        var indexes = Array.Empty<bool>();
-        Array.Resize(ref indexes, prototypes.Length);
-        Array.Fill(indexes, false);
+        var isParam = Array.Empty<bool>();
+        Array.Resize(ref isParam, domainParts.Length);
+        Array.Fill(isParam, false);
 
         for (var i = 0; i < prototypes.Length; i++)
         {
             var index = domainParts.IndexOf(prototypes[i].Param);
             protoArray[i] = (index, prototypes[i].Type);
-            indexes[index] = true;
+            isParam[index] = true;
         }
 
         return (node, parts, dependencies) =>
         {
-            if (!DomainKey.Matches(domainParts, indexes, parts))
+            if (!DomainKey.Matches(domainParts, isParam, parts))
                 return null;
 
             var protoMan = dependencies.Resolve<IPrototypeManager>();
@@ -502,7 +502,7 @@ public readonly record struct DomainKey
 
         for (var i = 0; i < other.Length; i++)
         {
-            if (isParam[i] && other[i] != domains[i])
+            if (!isParam[i] && other[i] != domains[i])
                 return false;
         }
 

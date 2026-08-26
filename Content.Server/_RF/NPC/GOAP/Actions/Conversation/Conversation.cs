@@ -1,5 +1,4 @@
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Chat.Systems;
 using Content.Server.NPC.Pathfinding;
@@ -7,6 +6,7 @@ using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Interaction;
 using Robust.Shared.Map;
 
@@ -46,14 +46,14 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
     {
         if (!_actorQuery.HasComp(ent))
         {
-            ComponentNotFound<ConversationActorComponent>(ent, action);
+            ComponentNotFound<ConversationActorComponent>();
             return false;
         }
 
         if (!_conversation.TryGetConversation(ent.Owner, out var conv)
             || !conv.Value.Comp2.Started)
         {
-            CreateDump(ent, action, "conversation engagement not started");
+            CreateDump("conversation engagement not started");
             return false;
         }
 
@@ -78,44 +78,30 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
             return GoapActionResult.Finished;
 
         var actor = new Entity<ConversationActorComponent?>(ent, comp);
+        var result = _moveTo.Move(ent, this, comp.TargetPos, comp.TargetRangeKey, action.PathfindKey);
 
-        if (!TryGetValue(ent, action, comp.TargetRangeKey, out var targetRange)
-            || !comp.TargetPos.TryDistance(EntityManager, Transform(ent).Coordinates, out var dist) )
-            return GoapActionResult.Failed;
-
-        if (dist > targetRange)
+        if (result != GoapActionResult.Finished)
         {
             _conversation.SetReady(actor, false);
-
-            if (!_moveTo.StartedUp(ent)
-                && !_moveTo.StartupMovement(ent, action, comp.TargetPos, true, action.PathfindKey, targetRange))
-                return GoapActionResult.Failed;
-
-            var result = _moveTo.UpdateMovement(ent, action, comp.TargetPos, action.PathfindKey, targetRange);
-
-            if (result != GoapActionResult.Finished)
-                return result;
-
-            if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
-            {
-                CreateDump(ent, action, "failed to face to the target coordinates");
-                return GoapActionResult.Failed;
-            }
+            return result;
         }
 
-        if (_moveTo.StartedUp(ent))
-            _moveTo.ShutdownMovement(ent, action.PathfindKey);
+        if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
+        {
+            CreateDump("failed to face to the target coordinates");
+            return GoapActionResult.Failed;
+        }
 
         _conversation.SetReady(actor, true);
 
-        var waitResult = _npcTiming.WaitQueue(ent, action);
+        var waitResult = _npcTiming.WaitQueue(ent, this);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
         if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {
-            CreateDump(ent, action, "failed to face to the target coordinates");
+            CreateDump("failed to face to the target coordinates");
             return GoapActionResult.Failed;
         }
 
@@ -129,8 +115,8 @@ public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation
             return GoapActionResult.Continuing;
         }
 
-        return _npcTiming.EnqueueWait(ent,
-            action,
+        return NpcTimingSystem.EnqueueWait(ent,
+            this,
             delay.Value,
             onFinish: () =>
             {

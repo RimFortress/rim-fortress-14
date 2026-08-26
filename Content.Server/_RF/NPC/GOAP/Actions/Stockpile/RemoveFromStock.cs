@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
 
@@ -25,18 +25,18 @@ public sealed class RemoveFromStockGoapAction : GoapActionSystem<RemoveFromStock
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, RemoveFromStock action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (!_query.TryComp(target, out var comp))
         {
-            ComponentNotFound<StockpileContentComponent>(ent, action, target);
+            ComponentNotFound<StockpileContentComponent>(target);
             return false;
         }
 
         if (!_stockpile.TryGetStock(comp.Stock, out var stock))
         {
-            CreateDump(ent, action, "stockpile not found");
+            CreateDump("stockpile not found");
             return false;
         }
 

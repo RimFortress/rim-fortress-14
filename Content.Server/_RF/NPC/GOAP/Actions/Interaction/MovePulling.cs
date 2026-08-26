@@ -1,9 +1,9 @@
 using System.Numerics;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Interaction;
 using Content.Server.Movement.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Movement.Pulling.Components;
 using JetBrains.Annotations;
 using Robust.Server.GameObjects;
@@ -33,15 +33,15 @@ public sealed class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
     [Dependency] private readonly EntityQuery<PullerComponent> _pullerQuery = default!;
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, MovePulling action)
-        => TryGetValue(ent, action, action.TargetCoordinatesKey, out var targetCoords)
-            ? UpdatePulling(ent, action, targetCoords)
+        => TryGet(ent, action.TargetCoordinatesKey, out var targetCoords)
+            ? UpdatePulling(ent, this, targetCoords)
             : GoapActionResult.Failed;
 
     /// <summary>
     /// Updates the movement of the pulled object until it reaches the target coordinates.
     /// </summary>
     /// <param name="ent">GOAP agent.</param>
-    /// <param name="action">GOAP action.</param>
+    /// <param name="handler"></param>
     /// <param name="targetCoords">Target coordinates.</param>
     /// <param name="maxRangeKey">
     /// A key that stores the maximum possible radius
@@ -55,24 +55,24 @@ public sealed class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
     [PublicAPI]
     public GoapActionResult UpdatePulling(
         Entity<GoapComponent> ent,
-        GoapAction action,
+        GoapDebugDumpSystem handler,
         EntityCoordinates targetCoords,
         StateKey<float>? maxRangeKey = null,
         StateKey<float>? closeRangeKey = null)
     {
         if (!_pullerQuery.TryComp(ent, out var puller))
         {
-            ComponentNotFound<PullerComponent>(ent, action);
+            ComponentNotFound<PullerComponent>();
             return GoapActionResult.Failed;
         }
 
         if (!_pullableQuery.TryComp(puller.Pulling, out var pullable))
         {
-            ComponentNotFound<PullableComponent>(ent, action, puller.Pulling);
+            ComponentNotFound<PullableComponent>(puller.Pulling);
             return GoapActionResult.Failed;
         }
 
-        if (!TryGetValue(ent, action, maxRangeKey ?? GoapState.PullerThrowDistance, out var maxRange))
+        if (!handler.TryGet(ent, maxRangeKey ?? GoapState.PullerThrowDistance, out var maxRange))
             return GoapActionResult.Failed;
 
         var fromUserCoords = _xform.WithEntityId(targetCoords, ent);
@@ -94,7 +94,7 @@ public sealed class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
 
         if (!_interaction.InRangeUnobstructed(ent, targetCoords, maxRange))
         {
-            CreateDump(ent, action, $"something is blocking the ({ToPrettyString(puller.Pulling)}) movement");
+            handler.CreateDump($"something is blocking the ({ToPrettyString(puller.Pulling)}) movement");
             return  GoapActionResult.Failed;
         }
 
@@ -102,7 +102,7 @@ public sealed class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
         moving.MovingTo = targetCoords;
 
         if (!targetCoords.TryDistance(EntityManager, Transform(puller.Pulling.Value).Coordinates, out var distance)
-            || !TryGetValue(ent, action, closeRangeKey ?? GoapState.PullingMoveCloseRange, out var closeRange))
+            || !handler.TryGet(ent, closeRangeKey ?? GoapState.PullingMoveCloseRange, out var closeRange))
             return GoapActionResult.Failed;
 
         return distance <= closeRange ? GoapActionResult.Finished : GoapActionResult.Continuing;

@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
 using Robust.Shared.Prototypes;
@@ -39,12 +39,12 @@ public sealed class AddMoodEffectSystem : GoapActionSystem<AddMoodEffect>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, AddMoodEffect action)
     {
-        if (!TryGetValue(ent.Comp.State, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (!action.Multiply && _social.HasMoodEffect(target, action.Effect))
         {
-            CreateDump(ent, action, $"target already have effect '{action.Effect}'");
+            CreateDump($"target already have effect '{action.Effect}'");
             return true;
         }
 

@@ -1,8 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Nutrition.EntitySystems;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Returns true if the entity both has OpenableComponent and is not opened.
@@ -21,6 +20,6 @@ public sealed class ItemClosedGoapConditionSystem : GoapConditionSystem<ItemClos
     [Dependency] private readonly OpenableSystem _openable = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, ItemClosed condition)
-        => TryGetValue(state, condition, condition.TargetKey, out var target)
+        => TryGet(state, condition.TargetKey, out var target)
            && _openable.IsClosed(target);
 }

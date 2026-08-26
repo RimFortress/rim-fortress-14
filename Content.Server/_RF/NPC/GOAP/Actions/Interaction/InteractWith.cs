@@ -1,9 +1,9 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.CombatMode;
 using Content.Server.DoAfter;
 using Content.Server.Interaction;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.CombatMode;
 using Content.Shared.DoAfter;
 using Content.Shared.Timing;
@@ -49,18 +49,6 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
 
     [Dependency] private readonly EntityQuery<DoAfterComponent> _doAfterQuery = default!;
 
-    /// <summary>
-    /// How many ticks to keep waiting for <c>doAfter.NextId</c> to change after calling
-    /// <see cref="Content.Server.Interaction.InteractionSystem.UserInteraction"/>, before
-    /// concluding a doAfter genuinely never started. Some interaction handlers (notably
-    /// <c>ConstructionSystem</c>, which validates and applies interactions through an internal
-    /// queue rather than synchronously) don't actually start their doAfter until a tick or
-    /// more after <c>UserInteraction</c> returns, so checking <c>NextId</c> only once,
-    /// immediately, produces false "expected doAfter, but not started" failures for
-    /// interactions that DID start, just not instantly.
-    /// </summary>
-    private const uint DoAfterDetectionGraceTicks = 5;
-
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, InteractWith action) => 1f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, InteractWith action)
@@ -75,7 +63,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, InteractWith action)
-        => !TryGetValue(ent, action, action.TargetKey, out var target)
+        => !TryGet(ent, action.TargetKey, out var target)
             ? GoapActionResult.Failed
             : DoInteraction(ent, action, target, action.CurrentDoAfter, action.ExpectDoAfter);
 
@@ -104,7 +92,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
     {
         if (Deleted(target))
         {
-            CreateDump(ent, action, $"{ToPrettyString(target)} deleted");
+            CreateDump($"{ToPrettyString(target)} deleted");
             return GoapActionResult.Failed;
         }
 
@@ -117,17 +105,17 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
             _combatMode.SetInCombatMode(ent, false, combatMode);
 
 #if TOOLS
-        var handEnt = Goap.TryGetValue(ent.Comp.State, GoapState.ActiveHandEntity, out var hand)
+        var handEnt = TryGet(ent, GoapState.ActiveHandEntity, out var hand)
             ? ToPrettyString(hand)
             : "hand";
-        CreateDump(ent, action, $"interacted with {ToPrettyString(target)} using {handEnt}");
+        CreateDump($"interacted with {ToPrettyString(target)} using {handEnt}");
 #endif
         _interaction.UserInteraction(ent, Transform(target).Coordinates, target);
 
         // Detect doAfter, save it, and don't exit from this operator
         if (_doAfterQuery.TryComp(ent, out var doAfter) && nextId != doAfter.NextId)
         {
-            CreateDump(ent, action, $"started doAfter {nextId} at {_timing.CurTime}");
+            CreateDump($"started doAfter {nextId} at {_timing.CurTime}");
             ent.Comp.State.SetValue(currentDoAfter, nextId);
             return GoapActionResult.Continuing;
         }
@@ -136,7 +124,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
         if (!expectDoAfter)
             return GoapActionResult.Finished;
 
-        CreateDump(ent, action, "expected doAfter, but not started");
+        CreateDump("expected doAfter, but not started");
         return GoapActionResult.Failed;
     }
 
@@ -153,7 +141,7 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
         if (_doAfterQuery.TryComp(ent, out var doAfter))
         {
             // if currentDoAfter contains something, we have an active doAfter
-            if (TryGetValue(ent, action, currentDoAfter, out var doAfterId))
+            if (TryGet(ent, currentDoAfter, out var doAfterId))
             {
                 var status = _doAfterSystem.GetStatus(ent, doAfterId);
                 switch (status)
@@ -161,11 +149,11 @@ public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
                     case DoAfterStatus.Running:
                         return GoapActionResult.Continuing;
                     case DoAfterStatus.Finished:
-                        CreateDump(ent, action, $"doAfter returned status '{status}' at {_timing.CurTime}");
+                        CreateDump($"doAfter returned status '{status}' at {_timing.CurTime}");
                         ent.Comp.State.Remove(currentDoAfter);
                         return GoapActionResult.Finished;
                     default:
-                        CreateDump(ent, action, $"doAfter returned status '{status}' at {_timing.CurTime}");
+                        CreateDump($"doAfter returned status '{status}' at {_timing.CurTime}");
                         return GoapActionResult.Failed;
                 }
             }

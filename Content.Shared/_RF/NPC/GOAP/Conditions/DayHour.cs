@@ -1,8 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.World;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Checks the current hour of the day.

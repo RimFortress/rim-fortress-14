@@ -1,11 +1,10 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions.Social;
+namespace Content.Shared._RF.NPC.GOAP.Conditions.Social;
 
 /// <summary>
 /// Checks the mood level of the entity.

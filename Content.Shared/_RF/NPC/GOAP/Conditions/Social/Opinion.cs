@@ -1,11 +1,10 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions.Social;
+namespace Content.Shared._RF.NPC.GOAP.Conditions.Social;
 
 /// <summary>
 /// Check for one entity's opinion of the target.
@@ -45,7 +44,7 @@ public sealed class OpinionGoapConditionSystem : GoapConditionSystem<Opinion>
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Opinion condition)
     {
         if (!_query.TryComp(uid, out var comp)
-            || !TryGetValue(state, condition, condition.TargetKey, out var target))
+            || !TryGet(state, condition.TargetKey, out var target))
             return false;
 
         var ent = new Entity<SocialComponent?>(uid, comp);

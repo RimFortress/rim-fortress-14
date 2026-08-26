@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Movement.Pulling.Components;
 using Content.Shared.Movement.Pulling.Systems;
@@ -23,13 +23,13 @@ public sealed class UnPullActionSystem : GoapActionSystem<UnPull>
     {
         if (!_pullableQuery.TryComp(ent, out var pullable))
         {
-            ComponentNotFound<PullableComponent>(ent, action);
+            ComponentNotFound<PullableComponent>();
             return false;
         }
 
         if (!_actionBlocker.CanInteract(ent, ent))
         {
-            CreateDump(ent, action, "interaction blocked by ActionBlockerSystem");
+            CreateDump("interaction blocked by ActionBlockerSystem");
             return false;
         }
 

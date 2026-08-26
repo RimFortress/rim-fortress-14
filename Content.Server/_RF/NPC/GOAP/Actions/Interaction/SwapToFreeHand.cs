@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Hands.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
@@ -20,10 +20,10 @@ public sealed class SwapToFreeHandSystem : GoapActionSystem<SwapToFreeHand>
     {
         if (!_hands.IsHolding(ent.Owner, null))
         {
-            CreateDump(ent, action, "active entity hand was empty");
+            CreateDump("active entity hand was empty");
             return true;
         }
 
-        return _hands.TrySelectEmptyHand(Goap.GetValue(ent, GoapState.Owner));
+        return _hands.TrySelectEmptyHand(Get(ent, GoapState.Owner));
     }
 }

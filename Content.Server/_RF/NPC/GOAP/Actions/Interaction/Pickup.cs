@@ -1,9 +1,9 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Hands.Systems;
 using Content.Server.Interaction;
 using Content.Server.Storage.EntitySystems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Inventory;
 using Content.Shared.Item;
 using Content.Shared.Storage;
@@ -34,7 +34,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
     [Dependency] private readonly InteractionSystem _interaction = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Pickup action)
-        => TryGetValue(ent, action, action.TargetKey, out var target)
+        => TryGet(ent, action.TargetKey, out var target)
            && Pickup(ent, target, action);
 
     /// <summary>
@@ -49,7 +49,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
     {
         if (!HasComp<ItemComponent>(target))
         {
-            ComponentNotFound<ItemComponent>(ent, action, target);
+            ComponentNotFound<ItemComponent>(target);
             return false;
         }
 
@@ -57,32 +57,30 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
         {
             if (container.Owner != ent.Owner && _hands.TryGetHand(container.Owner, container.ID, out _))
             {
-                CreateDump(ent,
-                    action,
-                    $"{ToPrettyString(target)} currently in hands of {ToPrettyString(container.Owner)}");
+                CreateDump($"{ToPrettyString(target)} currently in hands of {ToPrettyString(container.Owner)}");
                 return false;
             }
         }
 
         var coords = Transform(target).Coordinates;
-        var ownerCoords = Goap.GetValue(ent.Comp.State, GoapState.OwnerCoordinates);
-        var interactRange = Goap.GetValue(ent.Comp.State, GoapState.InteractRange);
+        var ownerCoords = Get(ent, GoapState.OwnerCoordinates);
+        var interactRange = Get(ent, GoapState.InteractRange);
 
         if (!coords.TryDistance(EntityManager, ownerCoords, out var dist) || dist > interactRange)
         {
-            CreateDump(ent, action, $"{ToPrettyString(target)} not in interact range: {interactRange}");
+            CreateDump($"{ToPrettyString(target)} not in interact range: {interactRange}");
             return false;
         }
 
         // If we have an item in hands, we put it away in inventory
-        if (TryGetValue(ent, action, GoapState.ActiveHandEntity, out var handItem) && handItem != target)
+        if (TryGet(ent, GoapState.ActiveHandEntity, out var handItem) && handItem != target)
         {
             // If the welder is turned on in hands, turn it off first
             if (TryComp(handItem, out WelderComponent? welder)
                 && TryComp(handItem, out TransformComponent? itemForm)
                 && welder.Enabled)
             {
-                CreateDump(ent, action, "turning off welder");
+                CreateDump("turning off welder");
                 _interaction.UserInteraction(ent, itemForm.Coordinates, handItem);
             }
 
@@ -96,7 +94,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
                         || !_storage.Insert(entity, handItem, out _, storageComp: storage))
                         continue;
 
-                    CreateDump(ent, action, $"{ToPrettyString(handItem)} stored in {ToPrettyString(entity)}");
+                    CreateDump($"{ToPrettyString(handItem)} stored in {ToPrettyString(entity)}");
                     stored = true;
                     break;
                 }
@@ -106,11 +104,11 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
                 {
                     if (!_hands.TryDrop(ent.Owner))
                     {
-                        CreateDump(ent, action, $"failed to drop {ToPrettyString(handItem)} from the hands");
+                        CreateDump($"failed to drop {ToPrettyString(handItem)} from the hands");
                         return false;
                     }
 
-                    CreateDump(ent, action, $"{ToPrettyString(handItem)} was thrown from the hands");
+                    CreateDump($"{ToPrettyString(handItem)} was thrown from the hands");
                 }
             }
         }
@@ -118,7 +116,7 @@ public sealed class PickupActionSystem : GoapActionSystem<Pickup>
         // Pick up the item
         if (handItem != target && !_hands.TryPickup(ent, target))
         {
-            CreateDump(ent, action, $"failed to pick up {ToPrettyString(target)}");
+            CreateDump($"failed to pick up {ToPrettyString(target)}");
             return false;
         }
 

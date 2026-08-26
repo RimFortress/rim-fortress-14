@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Basic;
 
@@ -28,10 +28,10 @@ public sealed class CopyToSystem : GoapActionSystem<CopyTo>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, CopyTo action)
     {
-        if (!TryGetValue(ent, action, action.From, out var from))
+        if (!TryGet(ent, action.From, out var from))
             return false;
 
-        Goap.SetValue(ent, action.To, from);
+        Set(ent, action.To, from);
         return true;
     }
 }

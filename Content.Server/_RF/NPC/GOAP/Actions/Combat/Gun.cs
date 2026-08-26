@@ -1,6 +1,5 @@
 using System.Numerics;
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
@@ -9,6 +8,7 @@ using Content.Server.NPC.Pathfinding;
 using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared.CombatMode;
 using Content.Shared.Containers.ItemSlots;
@@ -154,7 +154,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Gun action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (_mobStateQuery.TryComp(target, out var mobState) && mobState.CurrentState > action.TargetState)
@@ -190,7 +190,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Gun action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return GoapActionResult.Failed;
 
         // Success
@@ -198,20 +198,20 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             || _mobStateQuery.TryComp(target, out var mobState) && mobState.CurrentState > action.TargetState)
             return GoapActionResult.Finished;
 
-        var waitResult = _npcTiming.WaitQueue(ent, action);
+        var waitResult = _npcTiming.WaitQueue(ent, this);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
         var state = ent.Comp.State;
 
-        if (Goap.GetValue(state, Gun.MovingToMagazineKey))
+        if (Get(state, Gun.MovingToMagazineKey))
         {
-            if (!TryGetValue(ent, action, Gun.NearbyMagazineKey, out var ammoUid))
+            if (!TryGet(ent, Gun.NearbyMagazineKey, out var ammoUid))
                 return GoapActionResult.Failed;
 
             var result = _moveTo.UpdateMovement(ent,
-                action,
+                this,
                 Transform(ammoUid).Coordinates,
                 Gun.PathfindKey,
                 GoapState.InteractRange);
@@ -219,34 +219,34 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             if (result != GoapActionResult.Finished)
                 return result;
 
-            _moveTo.ShutdownMovement(ent, Gun.PathfindKey);
-            Set(ent, action, Gun.MovingToMagazineKey, false);
+            _moveTo.ShutdownMovement(ent, this, Gun.PathfindKey);
+            Set(ent, Gun.MovingToMagazineKey, false);
 
-            if (TryGetValue(ent, action, Gun.PreviousJukeTypeKey, out var type))
+            if (TryGet(ent, Gun.PreviousJukeTypeKey, out var type))
                 EnsureComp<NPCJukeComponent>(ent).JukeType = type;
 
-            Remove(ent, action, Gun.PreviousJukeTypeKey);
-            return ReplaceMagazine(ent, action, ammoUid);
+            Remove(ent, Gun.PreviousJukeTypeKey);
+            return ReplaceMagazine(ent, ammoUid);
         }
 
-        if (!TryGetValue(ent, action, Gun.NextLosCheckKey, out var nextLosCheck))
+        if (!TryGet(ent, Gun.NextLosCheckKey, out var nextLosCheck))
             return GoapActionResult.Failed;
 
         if (_steeringQuery.TryComp(ent, out var steering) && steering.Status == SteeringStatus.NoPath)
         {
-            CreateDump(ent, action, "target unreachable: no path");
+            CreateDump("target unreachable: no path");
             return GoapActionResult.Failed;
         }
 
         if (!_xformQuery.TryComp(target, out var targetXform))
         {
-            ComponentNotFound<TransformComponent>(ent, action, target);
+            ComponentNotFound<TransformComponent>(target);
             return GoapActionResult.Failed;
         }
 
         if (!_physicsQuery.TryComp(target, out var targetBody))
         {
-            ComponentNotFound<PhysicsComponent>(ent, action, target);
+            ComponentNotFound<PhysicsComponent>(target);
             return GoapActionResult.Failed;
         }
 
@@ -254,13 +254,13 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
         if (targetXform.MapID != xform.MapID)
         {
-            CreateDump(ent, action, "target is on a different map");
+            CreateDump("target is on a different map");
             return GoapActionResult.Failed;
         }
 
         if (!_gun.TryGetGun(ent, out var gun))
         {
-            CreateDump(ent, action, "no gun equipped");
+            CreateDump("no gun equipped");
             return GoapActionResult.Failed;
         }
 
@@ -269,13 +269,13 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         {
             if (!_wieldQuery.TryComp(gun, out var wield))
             {
-                ComponentNotFound<WieldableComponent>(ent, action, gun);
+                ComponentNotFound<WieldableComponent>(gun);
                 return GoapActionResult.Failed;
             }
 
             if (!wield.Wielded && _wield.TryWield(gun, wield, ent))
             {
-                CreateDump(ent, action, $"failed to wield gun `{ToPrettyString(gun)}` with GunRequiresWieldComponent");
+                CreateDump($"failed to wield gun `{ToPrettyString(gun)}` with GunRequiresWieldComponent");
                 return GoapActionResult.Failed;
             }
         }
@@ -289,8 +289,8 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         if (_chamberQuery.TryComp(gun, out var chamber) && chamber.BoltClosed == true)
         {
             return _npcTiming.EnqueueWait(ent,
-                action,
-                _random.NextFloat(0.05f, 0.33f),
+                this,
+                (0.05f, 0.33f),
                 onFinish: () => _gun.SetBoltClosed(gun, chamber, false, ent));
         }
 
@@ -302,40 +302,40 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             && ammoEv.Count > 0)
         {
             return _npcTiming.EnqueueWait(ent,
-                action,
-                _random.NextFloat(0.05f, 0.33f),
+                this,
+                (0.05f, 0.33f),
                 onFinish: () => _interaction.UseInHandInteraction(ent, gun));
         }
 
         if (ammoEv.Count == 0)
-            return HandleEmptyAmmo(ent, action, gun);
+            return HandleEmptyAmmo(ent, gun);
 
         // --- LOS ---
         var worldPos = _transform.GetWorldPosition(xform);
         var targetPos = _transform.GetWorldPosition(targetXform);
         var distance = (targetPos - worldPos).Length();
 
-        var targetInLos = Goap.GetValue(state, Gun.TargetInLosKey);
+        var targetInLos = Get(state, Gun.TargetInLosKey);
 
         if (_timing.CurTime >= nextLosCheck)
         {
-            Set(ent, action, Gun.NextLosCheckKey, _timing.CurTime + TimeSpan.FromSeconds(UnoccludedCooldown));
+            Set(ent, Gun.NextLosCheckKey, _timing.CurTime + TimeSpan.FromSeconds(UnoccludedCooldown));
 
             var oldInLos = targetInLos;
             var collisionGroup = action.UseOpaqueForLosChecks
                 ? CollisionGroup.Opaque
                 : CollisionGroup.Impassable | CollisionGroup.InteractImpassable;
             targetInLos = _interaction.InRangeUnobstructed(ent.Owner, target, distance + 0.1f, collisionGroup);
-            Set(ent, action, Gun.TargetInLosKey, targetInLos);
+            Set(ent, Gun.TargetInLosKey, targetInLos);
 
-            if (!oldInLos && targetInLos && TryGetValue(ent, action, Gun.SoundTargetInLos, out var sound))
+            if (!oldInLos && targetInLos && TryGet(ent, Gun.SoundTargetInLos, out var sound))
                 _audio.PlayPvs(sound, ent);
         }
 
         if (!targetInLos)
         {
             // Re-arm the shoot delay so returning into LOS requires "re-aiming".
-            Set(ent, action, Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
+            Set(ent, Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
 
             if (steering != null)
                 steering.ForceMove = true;
@@ -343,14 +343,14 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return action.RequireLos ? GoapActionResult.Failed : GoapActionResult.Continuing;
         }
 
-        if (_timing.CurTime < Goap.GetValue(state, Gun.ShootReadyAtKey))
+        if (_timing.CurTime < Get(state, Gun.ShootReadyAtKey))
             return GoapActionResult.Continuing;
 
         // --- Aim & shoot ---
         var mapVelocity = targetBody.LinearVelocity;
         var targetSpot = targetPos + mapVelocity * distance / ShootSpeed;
         var goalRotation = (targetSpot - worldPos).ToWorldAngle();
-        var rotationSpeed = TryGetValue(ent, action, GoapState.RotateSpeed, out var rs) ? new Angle(rs) : (Angle?)null;
+        var rotationSpeed = TryGet(ent, GoapState.RotateSpeed, out var rs) ? new Angle(rs) : (Angle?)null;
         var frameTime = (float)_timing.FrameTime.TotalSeconds;
 
         if (!_rotate.TryRotateTo(ent,
@@ -398,71 +398,66 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         }
     }
 
-    private GoapActionResult HandleEmptyAmmo(
-        Entity<GoapComponent> ent,
-        Gun action,
-        Entity<GunComponent> gun)
+    private GoapActionResult HandleEmptyAmmo(Entity<GoapComponent> ent, Entity<GunComponent> gun)
     {
         if (_rechargeQuery.HasComp(gun.Owner))
             return GoapActionResult.Continuing;
 
         if (!_slotsQuery.TryComp(gun, out var itemSlots))
         {
-            ComponentNotFound<ItemSlotsComponent>(ent, action, gun);
+            ComponentNotFound<ItemSlotsComponent>(gun);
             return GoapActionResult.Failed;
         }
 
         if (!_slots.TryGetSlot(gun, SharedGunSystem.MagazineSlot, out var slot, itemSlots))
         {
-            CreateDump(ent,
-                action,
-                $"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
+            CreateDump($"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
             return GoapActionResult.Failed;
         }
 
         // Searching for an ammo
         if (slot.Whitelist != null)
-            Set(ent, action, MagazineWhitelistKey, slot.Whitelist);
+            Set(ent, MagazineWhitelistKey, slot.Whitelist);
 
         if (slot.Blacklist != null)
-            Set(ent, action, MagazineBlacklistKey, slot.Blacklist);
+            Set(ent, MagazineBlacklistKey, slot.Blacklist);
 
         _searcher.TryGetBestResult(ent, InventoryMagazineQuery, out var ammoUid);
-        CreateDump(ent, action, $"query `{InventoryMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
+        CreateDump($"query `{InventoryMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
 
         if (ammoUid == null)
         {
             _searcher.TryGetBestResult(ent, NearbyMagazineQuery, out ammoUid);
-            CreateDump(ent, action, $"query `{NearbyMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
-            Set(ent, action, Gun.MovingToMagazineKey, ammoUid != null);
+            CreateDump($"query `{NearbyMagazineQuery}` returned: {ToPrettyString(ammoUid)}");
+            Set(ent, Gun.MovingToMagazineKey, ammoUid != null);
         }
 
-        Remove(ent, action, MagazineWhitelistKey);
-        Remove(ent, action, MagazineBlacklistKey);
+        Remove(ent, MagazineWhitelistKey);
+        Remove(ent, MagazineBlacklistKey);
 
         if (ammoUid == null)
         {
-            CreateDump(ent, action, "out of ammo, no spare magazine/speedloader found");
+            CreateDump("out of ammo, no spare magazine/speedloader found");
             return GoapActionResult.Failed;
         }
 
         // If the magazine is within arm's reach, we change it right away
-        if (!Goap.GetValue(ent.Comp.State, Gun.MovingToMagazineKey))
-            return ReplaceMagazine(ent, action, ammoUid.Value, gun: gun, slot: slot);
+        if (!Get(ent.Comp.State, Gun.MovingToMagazineKey))
+            return ReplaceMagazine(ent, ammoUid.Value, gun: gun, slot: slot);
 
         // Else, going to the magazine
-        Set(ent, action, Gun.MovingToMagazineKey, true);
-        Set(ent, action, Gun.NearbyMagazineKey, ammoUid.Value);
+        Set(ent, Gun.MovingToMagazineKey, true);
+        Set(ent, Gun.NearbyMagazineKey, ammoUid.Value);
 
         if (_jukeQuery.TryComp(ent, out var juke))
         {
-            Set(ent, action, Gun.PreviousJukeTypeKey, juke.JukeType);
+            Set(ent, Gun.PreviousJukeTypeKey, juke.JukeType);
             RemComp(ent, juke);
         }
 
         if (!_moveTo.StartupMovement(
                 ent,
-                action,
+                this,
                 Transform(ammoUid.Value).Coordinates,
                 true,
                 Gun.PathfindKey,
@@ -474,7 +469,6 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
     private GoapActionResult ReplaceMagazine(
         Entity<GoapComponent> ent,
-        Gun action,
         EntityUid ammoUid,
         Entity<GunComponent>? gun = null,
         ItemSlot? slot = null)
@@ -483,7 +477,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         {
             if (!_gun.TryGetGun(ent, out var g))
             {
-                CreateDump(ent, action, "no gun equipped");
+                CreateDump("no gun equipped");
                 return GoapActionResult.Failed;
             }
 
@@ -494,15 +488,13 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         {
             if (!_slotsQuery.TryComp(gun, out var itemSlots))
             {
-                ComponentNotFound<ItemSlotsComponent>(ent, action, gun);
+                ComponentNotFound<ItemSlotsComponent>(gun);
                 return GoapActionResult.Failed;
             }
 
             if (!_slots.TryGetSlot(gun.Value, SharedGunSystem.MagazineSlot, out slot, itemSlots))
             {
-                CreateDump(ent,
-                    action,
-                    $"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
+                CreateDump($"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
                 return GoapActionResult.Failed;
             }
         }
@@ -513,15 +505,15 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         if (wield is { Wielded: true })
         {
             _npcTiming.EnqueueWait(ent,
-                action,
-                _random.NextFloat(0.15f, 0.33f),
+                this,
+                (0.15f, 0.33f),
                 onFinish: () => _wield.TryUnwield(gun.Value, wield, ent));
         }
 
         // Remove the old magazine
         _npcTiming.EnqueueWait(ent,
-            action,
-            _random.NextFloat(0.33f, 0.5f),
+            this,
+            (0.33f, 0.5f),
             onFinish: () =>
             {
                 if (_slots.TryEject(gun.Value, slot, ent, out var eject))
@@ -537,21 +529,19 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
         // Pickup and insert new magazine
         _npcTiming.EnqueueWait(ent,
-            action,
-            _random.NextFloat(0.33f, 0.55f),
+            this,
+            (0.33f, 0.55f),
             onFinish: () =>
             {
                 if (!_hands.TryPickupAnyHand(ent, ammoUid))
                 {
-                    CreateDump(ent, action, $"failed to pickup {ToPrettyString(ammoUid)}");
+                    CreateDump($"failed to pickup {ToPrettyString(ammoUid)}");
                     return false;
                 }
 
                 if (!_slots.TryInsert(gun.Value, slot, ammoUid, ent))
                 {
-                    CreateDump(ent,
-                        action,
-                        $"failed to insert magazine `{ToPrettyString(ammoUid)}` in gun `{ToPrettyString(gun)}`");
+                    CreateDump($"failed to insert magazine `{ToPrettyString(ammoUid)}` in gun `{ToPrettyString(gun)}`");
                     return false;
                 }
 
@@ -560,14 +550,14 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
         // Taking up the weapon again with both hands
         _npcTiming.EnqueueWait(ent,
-            action,
-            0.05f,
+            this,
+            (0.05f, 0.15f),
             onFinish: () =>
             {
                 if (wield != null)
                     _wield.TryWield(gun.Value, wield, ent);
 
-                CreateDump(ent, action, "gun reloaded");
+                CreateDump("gun reloaded");
             });
 
         return GoapActionResult.Continuing;

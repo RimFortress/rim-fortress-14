@@ -71,7 +71,7 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     /// While these conditions are being checked, the participant being checked
     /// is stored in the agent state in the <see cref="GoapState.EngagementParticipant"/> key.
     /// </remarks>
-    [DataField(serverOnly: true)]
+    [DataField]
     public Dictionary<string, List<GoapCondition>> ConditionsFor = new();
 
     /// <summary>

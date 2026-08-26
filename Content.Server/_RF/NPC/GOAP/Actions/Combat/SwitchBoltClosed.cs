@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Weapons.Ranged.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Weapons.Ranged.Components;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Combat;
@@ -39,18 +39,18 @@ public sealed class SwitchBoltClosedActionSystem : GoapActionSystem<SwitchBoltCl
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, SwitchBoltClosed action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (!_chamberQuery.TryComp(target, out var comp))
         {
-            ComponentNotFound<ChamberMagazineAmmoProviderComponent>(ent, action);
+            ComponentNotFound<ChamberMagazineAmmoProviderComponent>();
             return false;
         }
 
         if (comp.BoltClosed == null)
         {
-            CreateDump(ent, action, $"{ToPrettyString(target)} has no bolt");
+            CreateDump($"{ToPrettyString(target)} has no bolt");
             return !action.FailIfNoChamber;
         }
 

@@ -1,5 +1,4 @@
 using System.Linq;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.Conversation;
@@ -7,6 +6,7 @@ using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared.Dataset;
 using Robust.Shared.Prototypes;
@@ -51,13 +51,13 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
     {
         if (HasComp<ConversationActorComponent>(ent))
         {
-            CreateDump(ent, action, "agent already in conversation");
+            CreateDump("agent already in conversation");
             return false;
         }
 
         if (!_prototype.TryIndex(action.Scripts, out var dataset) || dataset.Values.Count == 0)
         {
-            CreateDump(ent, action, $"dataset '{action.Scripts}' is empty or missing");
+            CreateDump($"dataset '{action.Scripts}' is empty or missing");
             return false;
         }
 
@@ -65,7 +65,7 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
 
         if (query.Count == 0)
         {
-            CreateDump(ent, action, $"query `{action.Query}` is empty`");
+            CreateDump($"query `{action.Query}` is empty`");
             return false;
         }
 
@@ -80,24 +80,24 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
 
             if (!_prototype.Resolve(scriptId, out var script))
             {
-                ProtoNotFound(ent, action, scriptId);
+                ProtoNotFound(scriptId);
                 return false;
             }
 
             if (!_prototype.Resolve(script.Engagement, out var engagement))
             {
-                ProtoNotFound(ent, action, script.Engagement);
+                ProtoNotFound(script.Engagement);
                 return false;
             }
 
             if (!_conversation.TryStartConversation(scriptId, ent, candidates, out _))
             {
-                CreateDump(ent, action, $"failed to start the conversation {scriptId}");
+                CreateDump($"failed to start the conversation {scriptId}");
                 continue;
             }
 
             // Waiting until almost the very last moment before the invitation ends so that everyone has time to respond
-            Set(ent, action, action.WaitInvitesAcceptKey, engagement.InviteTime);
+            Set(ent, action.WaitInvitesAcceptKey, engagement.InviteTime);
             return true;
         }
 
@@ -110,13 +110,13 @@ public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartCo
             && conv.Value.Comp2.Started)
             return GoapActionResult.Finished;
 
-        var waitResult = _npcTiming.Wait(ent, action, action.WaitInvitesAcceptKey);
+        var waitResult = _npcTiming.Wait(ent, this, action.WaitInvitesAcceptKey);
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
         _conversation.EndConversation(ent.Owner);
-        CreateDump(ent, action, "not everyone accepted the invite in time");
+        CreateDump("not everyone accepted the invite in time");
         return GoapActionResult.Failed;
     }
 

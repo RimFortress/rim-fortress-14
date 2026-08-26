@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Hands.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
@@ -15,5 +15,5 @@ public sealed class DropSystem : GoapActionSystem<Drop>
     [Dependency] private readonly HandsSystem _hands = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Drop action)
-        => TryGetValue(ent, action, GoapState.ActiveHand, out _) && _hands.TryDrop(ent.Owner);
+        => TryGet(ent, GoapState.ActiveHand, out _) && _hands.TryDrop(ent.Owner);
 }

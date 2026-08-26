@@ -57,6 +57,7 @@
     - RemoveWeed
     - SamplePlant
     - RemovePlant
+    - RemovePlantSharp
     - WaterPlant
   - type: NpcJobs
     jobs:

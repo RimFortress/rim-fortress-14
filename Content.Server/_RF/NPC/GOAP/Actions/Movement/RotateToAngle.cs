@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Interaction;
 using Robust.Shared.Timing;
 
@@ -37,8 +37,8 @@ public sealed class RotateToAngleSystem : GoapActionSystem<RotateToAngle>
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, RotateToAngle action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var angle)
-            || !TryGetValue(ent, action, action.RotationSpeedKey, out var speed))
+        if (!TryGet(ent, action.TargetKey, out var angle)
+            || !TryGet(ent, action.RotationSpeedKey, out var speed))
             return GoapActionResult.Failed;
 
         if (_rotate.TryRotateTo(ent, angle, _timing.FrameTime.Seconds, action.Tolerance, speed))

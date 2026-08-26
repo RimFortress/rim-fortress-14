@@ -1,8 +1,10 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Botany.Components;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Conditions;
+
+// TODO: move to shared
 
 /// <summary>
 /// Filters plant holders based on specified parameters.
@@ -45,7 +47,7 @@ public sealed class PlantHolderConditionSystem : GoapConditionSystem<PlantHolder
     [Dependency] private readonly EntityQuery<PlantHolderComponent> _query = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, PlantHolder condition)
-        => TryGetValue(state, condition, condition.TargetKey, out var target)
+        => TryGet(state, condition.TargetKey, out var target)
            && _query.TryComp(target, out var comp)
            && (condition.Harvest == null || condition.Harvest == comp.Harvest)
            && (condition.Dead == null || condition.Dead == comp.Dead)

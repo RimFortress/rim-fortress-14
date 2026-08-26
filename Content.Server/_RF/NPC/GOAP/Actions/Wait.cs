@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Timing;
 
 namespace Content.Server._RF.NPC.GOAP.Actions;
@@ -28,18 +28,18 @@ public sealed class WaitActionSystem : GoapActionSystem<Wait>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Wait action)
     {
-        if (!TryGetValue(ent, action, action.TimeKey, out var time))
+        if (!TryGet(ent, action.TimeKey, out var time))
             return false;
 
-        CreateDump(ent, action, $"waiting {time}. CurTime: {_timing.CurTime}");
+        CreateDump($"waiting {time}. CurTime: {_timing.CurTime}");
         return true;
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Wait action)
-        => _npcTiming.Wait(ent, action, action.TimeKey);
+        => _npcTiming.Wait(ent, this, action.TimeKey);
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Wait action)
     {
-        CreateDump(ent, action, $"waiting finished. CurTime: {_timing.CurTime}");
+        CreateDump($"waiting finished. CurTime: {_timing.CurTime}");
     }
 }

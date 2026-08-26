@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Ownership;
 
@@ -25,12 +25,12 @@ public sealed class MarkOwnerActionSystem : GoapActionSystem<MarkOwner>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, MarkOwner action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         var owners = _ownership.GetOwners(ent);
         _ownership.AddOwners(target, owners);
-        CreateDump(ent, action, $"added owners. Target: {ToPrettyString(target)}. Owners: {string.Join(", ", owners)}");
+        CreateDump($"added owners. Target: {ToPrettyString(target)}. Owners: {string.Join(", ", owners)}");
         return true;
     }
 }

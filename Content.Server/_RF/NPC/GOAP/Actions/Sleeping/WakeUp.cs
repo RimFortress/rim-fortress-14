@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Bed.Sleep;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Sleeping;
@@ -20,13 +20,10 @@ public sealed class WakeUpActionSystem : GoapActionSystem<WakeUp>
     {
         if (!HasComp<SleepingComponent>(ent))
         {
-            CreateDump(ent, action, "agent isn't sleeping");
+            CreateDump("agent isn't sleeping");
             return true;
         }
 
-        if (_sleeping.TryWaking(ent.Owner))
-            return true;
-
-        return false;
+        return _sleeping.TryWaking(ent.Owner);
     }
 }

@@ -1,9 +1,9 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Robust.Shared.Prototypes;
 
@@ -33,7 +33,7 @@ public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConv
 
         if (results.Count == 0)
         {
-            CreateDump(ent, action, "query was empty");
+            CreateDump("query was empty");
             return false;
         }
 
@@ -47,11 +47,11 @@ public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConv
                 continue;
 
             accepted = true;
-            CreateDump(ent, action, $"accepted invite from {ToPrettyString(inviter)}");
+            CreateDump($"accepted invite from {ToPrettyString(inviter)}");
         }
 
         if (!accepted)
-            CreateDump(ent, action, "no pending invite could be accepted");
+            CreateDump("no pending invite could be accepted");
 
         return accepted;
     }

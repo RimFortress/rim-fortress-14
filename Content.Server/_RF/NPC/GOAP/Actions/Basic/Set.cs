@@ -1,13 +1,13 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Basic;
 
 public abstract partial class SetAction<T> : BaseGoapAction<SetAction<T>> where T : notnull
 {
     [DataField(required: true)]
-    public StateKey<T> Key = default!;
+    public StateKey<T> Key;
 
     [DataField(required: true)]
     public T Value;
@@ -21,7 +21,7 @@ public abstract class SetActionSystem<T1, T2> : GoapActionSystem<T1>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, T1 action)
     {
-        ent.Comp.State.SetValue(action.Key, action.Value);
+        Set(ent, action.Key, action.Value);
         return true;
     }
 }

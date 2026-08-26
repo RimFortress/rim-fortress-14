@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.Workshops.Components;
 using Content.Shared._RF.Workshops.Systems;
 using Robust.Shared.Map;
@@ -31,16 +31,16 @@ public sealed class WorkshopCraftingCoordsGoapActionSystem : GoapActionSystem<Wo
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, WorkshopCraftingCoords action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (!TryComp(target, out WorkshopComponent? comp))
         {
-            ComponentNotFound<WorkshopComponent>(ent, action, target);
+            ComponentNotFound<WorkshopComponent>(target);
             return false;
         }
 
-        Set(ent, action, action.ResultKey, _workshop.GetCraftingPlace(new(target, comp)));
+        Set(ent, action.ResultKey, _workshop.GetCraftingPlace(new(target, comp)));
         return true;
     }
 }

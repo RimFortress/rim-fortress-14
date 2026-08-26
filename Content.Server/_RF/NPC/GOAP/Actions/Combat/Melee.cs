@@ -1,8 +1,8 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.CombatMode;
 using Content.Server.NPC.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 
@@ -38,15 +38,13 @@ public sealed class MeleeActionSystem : GoapActionSystem<Melee>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Melee action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (TryComp(target, out MobStateComponent? mobState)
             && mobState.CurrentState > action.TargetState)
         {
-            CreateDump(ent,
-                action,
-                $"target.CurrentState: {mobState.CurrentState} > action.TargetState: {action.TargetState}");
+            CreateDump($"target.CurrentState: {mobState.CurrentState} > action.TargetState: {action.TargetState}");
             return false;
         }
 
@@ -65,11 +63,11 @@ public sealed class MeleeActionSystem : GoapActionSystem<Melee>
     {
         if (!TryComp(ent, out NPCMeleeCombatComponent? melee))
         {
-            ComponentNotFound<NPCMeleeCombatComponent>(ent, action);
+            ComponentNotFound<NPCMeleeCombatComponent>();
             return GoapActionResult.Failed;
         }
 
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return GoapActionResult.Failed;
 
         if (Deleted(target) || TryComp(target, out MobStateComponent? mobState)
@@ -82,7 +80,7 @@ public sealed class MeleeActionSystem : GoapActionSystem<Melee>
             case CombatStatus.Normal:
                 return action.OneHit ? GoapActionResult.Finished : GoapActionResult.Continuing;
             default:
-                CreateDump(ent, action, $"NPCMeleeCombat returned status `{melee.Status}`");
+                CreateDump($"NPCMeleeCombat returned status `{melee.Status}`");
                 return GoapActionResult.Failed;
         }
     }

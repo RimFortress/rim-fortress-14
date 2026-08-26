@@ -9,6 +9,71 @@ namespace Content.Shared._RF.NPC.GOAP;
 
 public partial class GoapState
 {
+    /// <summary>
+    /// Global defaults for NPCs.
+    /// </summary>
+    private static readonly Dictionary<string, object> Defaults = new();
+
+    /// <summary>
+    /// List of all ECS state variables.
+    /// </summary>
+    private static readonly HashSet<string> EntityDefaults = new();
+
+    /// <summary>
+    /// A registry of all registered domain keys. It is used by the serializer to determine
+    /// which domain a given key from YAML belongs to, without knowing its output
+    /// type during the validation phase.
+    /// </summary>
+    /// <remarks>
+    /// It is populated automatically when domains are declared via
+    /// `Domain/ProtoDomain` — there is no need to add entries here manually.
+    /// </remarks>
+    [Access(Other = AccessPermissions.Read)]
+    public static readonly HashSet<DomainKey> DomainKeys = new();
+
+    private static StateKey<T> RegisterDefault<T>(string id, T @default) where T : notnull
+    {
+        var key = new StateKey<T>(id);
+        Defaults.Add(id, @default);
+        return key;
+    }
+
+    private static StateKey<T> RegisterEcsDefault<T>(string id) where T : notnull
+    {
+        var key = new StateKey<T>(id);
+        EntityDefaults.Add(id);
+        return key;
+    }
+
+    private static DomainKey RegisterDomain(DomainKey key)
+    {
+        DomainKeys.Add(key);
+        return key;
+    }
+
+    /// <summary>
+    /// True if a key resolves without needing any task's effect to produce it
+    /// first — either a fixed entity default (<see cref="EntityDefaults"/>) or
+    /// a dynamic search-result key. Used by the planner's static graph builder
+    /// to exclude such keys from requiring a producing edge.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static bool IsEntityDefault<T>(StateKey<T> key) where T : notnull
+    {
+        if (EntityDefaults.Contains(key) || key.Id.Contains(KeyDomainSeparator))
+            return true;
+
+        var parts = GetOrParts(key);
+
+        foreach (var part in parts)
+        {
+            if (EntityDefaults.Contains(part) || key.Id.Contains(KeyDomainSeparator))
+                return true;
+        }
+
+        return false;
+    }
+
     #region Defaults
 
     /// <summary>
@@ -180,69 +245,4 @@ public partial class GoapState
             "Engagement/ProtoId/Role/RoleId");
 
     #endregion
-
-    /// <summary>
-    /// Global defaults for NPCs.
-    /// </summary>
-    private static readonly Dictionary<string, object> Defaults = new();
-
-    /// <summary>
-    /// List of all ECS state variables.
-    /// </summary>
-    private static readonly HashSet<string> EntityDefaults = new();
-
-    /// <summary>
-    /// A registry of all registered domain keys. It is used by the serializer to determine
-    /// which domain a given key from YAML belongs to, without knowing its output
-    /// type during the validation phase.
-    /// </summary>
-    /// <remarks>
-    /// It is populated automatically when domains are declared via
-    /// `Domain/ProtoDomain` — there is no need to add entries here manually.
-    /// </remarks>
-    [Access(Other = AccessPermissions.Read)]
-    public static readonly HashSet<DomainKey> DomainKeys = new();
-
-    private static StateKey<T> RegisterDefault<T>(string id, T @default) where T : notnull
-    {
-        var key = new StateKey<T>(id);
-        Defaults.Add(id, @default);
-        return key;
-    }
-
-    private static StateKey<T> RegisterEcsDefault<T>(string id) where T : notnull
-    {
-        var key = new StateKey<T>(id);
-        EntityDefaults.Add(id);
-        return key;
-    }
-
-    private static DomainKey RegisterDomain(DomainKey key)
-    {
-        DomainKeys.Add(key);
-        return key;
-    }
-
-    /// <summary>
-    /// True if a key resolves without needing any task's effect to produce it
-    /// first — either a fixed entity default (<see cref="EntityDefaults"/>) or
-    /// a dynamic search-result key. Used by the planner's static graph builder
-    /// to exclude such keys from requiring a producing edge.
-    /// </summary>
-    [PublicAPI, Pure]
-    public static bool IsEntityDefault<T>(StateKey<T> key) where T : notnull
-    {
-        if (EntityDefaults.Contains(key) || key.Id.Contains(KeyDomainSeparator))
-            return true;
-
-        var parts = GetOrParts(key);
-
-        foreach (var part in parts)
-        {
-            if (EntityDefaults.Contains(part) || key.Id.Contains(KeyDomainSeparator))
-                return true;
-        }
-
-        return false;
-    }
 }

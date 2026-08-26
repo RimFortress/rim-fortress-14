@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Map;
 
 namespace Content.Server._RF.NPC.GOAP.Actions;
@@ -23,7 +23,7 @@ public sealed class EntityCoordsSystem : GoapActionSystem<EntityCoords>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, EntityCoords action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var uid))
+        if (!TryGet(ent, action.TargetKey, out var uid))
             return false;
 
         ent.Comp.State.SetValue(action.CoordinatesKey, Transform(uid).Coordinates);

@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Buckle.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
@@ -24,6 +24,6 @@ public sealed class UnbuckleSystem : GoapActionSystem<Unbuckle>
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Unbuckle action) => 0.5f;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Unbuckle action)
-        => TryGetValue(ent.Comp.State, action, action.TargetKey, out var target)
+        => TryGet(ent, action.TargetKey, out var target)
            && _buckle.TryUnbuckle(target, ent, false);
 }

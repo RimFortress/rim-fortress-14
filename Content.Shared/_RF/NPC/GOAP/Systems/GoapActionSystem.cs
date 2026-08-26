@@ -1,7 +1,6 @@
-using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 
-namespace Content.Server._RF.NPC.GOAP.Systems;
+namespace Content.Shared._RF.NPC.GOAP.Systems;
 
 /// <summary>
 /// An entity system that provides GOAP action functionality.
@@ -22,27 +21,37 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
 
     private void OnActionCost(Entity<GoapComponent> ent, ref GoapActionCost<T> args)
     {
+        EnterContext(args.State, args.Action);
         args.Cost = ActionCost(ent, args.State, args.Action);
+        ClearContext();
     }
 
     private void OnActionUpdate(Entity<GoapComponent> ent, ref GoapActionUpdate<T> args)
     {
+        EnterContext(ent.Comp.State, args.Action);
         args.Result = ActionUpdate(ent, args.Action);
+        ClearContext();
     }
 
     private void OnActionStartup(Entity<GoapComponent> ent, ref GoapActionStartup<T> args)
     {
+        EnterContext(ent.Comp.State, args.Action);
         args.Success = ActionStartup(ent, args.Action);
+        ClearContext();
     }
 
     private void OnActionShutdown(Entity<GoapComponent> ent, ref GoapActionShutdown<T> args)
     {
+        EnterContext(ent.Comp.State, args.Action);
         ActionShutdown(ent, args.Action);
+        ClearContext();
     }
 
     private void OnActionPlanShutdown(Entity<GoapComponent> ent, ref GoapActionPlanShutdown<T> args)
     {
+        EnterContext(ent.Comp.State, args.Action);
         ActionPlanShutdown(ent, args.Action, args.Reason);
+        ClearContext();
     }
 
     /// <summary>

@@ -1,8 +1,8 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Construction;
 
@@ -24,12 +24,12 @@ public sealed class StartDeconstructionAction : GoapActionSystem<StartDeconstruc
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, StartDeconstruction action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (!TryComp(ent, out ConstructionComponent? comp))
         {
-            ComponentNotFound<ConstructionComponent>(ent, action);
+            ComponentNotFound<ConstructionComponent>();
             return false;
         }
 
@@ -39,7 +39,7 @@ public sealed class StartDeconstructionAction : GoapActionSystem<StartDeconstruc
 
         if (!_construction.SetPathfindingTarget(target, comp.DeconstructionNode, comp))
         {
-            CreateDump(ent, action, $"failed to set pathfinding to node `{comp.DeconstructionNode}`");
+            CreateDump($"failed to set pathfinding to node `{comp.DeconstructionNode}`");
             return false;
         }
 

@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Random;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Basic;
@@ -31,8 +31,7 @@ public sealed class RandomFloatSystem : GoapActionSystem<RandomFloat>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, RandomFloat action)
     {
-        var value = _random.NextFloat(action.Min, action.Max);
-        ent.Comp.State.SetValue(action.Key, value);
+        Set(ent, action.Key, _random.NextFloat(action.Min, action.Max));
         return true;
     }
 }

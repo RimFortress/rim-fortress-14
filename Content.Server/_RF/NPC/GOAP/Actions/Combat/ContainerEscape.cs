@@ -1,9 +1,9 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.CombatMode;
 using Content.Server.NPC.Components;
 using Content.Server.Storage.EntitySystems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Server.Containers;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Combat;
@@ -17,7 +17,7 @@ public sealed partial class ContainerEscape : BaseGoapAction<ContainerEscape>
     /// A key that stores the container entity.
     /// </summary>
     [DataField(required: true)]
-    public StateKey<EntityUid> TargetKey = default!;
+    public StateKey<EntityUid> TargetKey;
 }
 
 public sealed class EscapeSystem : GoapActionSystem<ContainerEscape>
@@ -28,7 +28,7 @@ public sealed class EscapeSystem : GoapActionSystem<ContainerEscape>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, ContainerEscape action)
     {
-        if (!TryGetValue(ent.Comp.State, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (_entityStorage.TryOpenStorage(ent, target))
@@ -49,12 +49,12 @@ public sealed class EscapeSystem : GoapActionSystem<ContainerEscape>
         if (!_container.IsEntityInContainer(ent))
             return GoapActionResult.Finished;
 
-        if (!TryGetValue(ent.Comp.State, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out _))
             return GoapActionResult.Failed;
 
         if (!TryComp(ent, out NPCMeleeCombatComponent? comp))
         {
-            ComponentNotFound<NPCMeleeCombatComponent>(ent, action);
+            ComponentNotFound<NPCMeleeCombatComponent>();
             return GoapActionResult.Failed;
         }
 
@@ -64,7 +64,7 @@ public sealed class EscapeSystem : GoapActionSystem<ContainerEscape>
             case CombatStatus.Normal:
                 return GoapActionResult.Continuing;
             default:
-                CreateDump(ent, action, $"NPCMeleeCombat returned status '{comp.Status}'");
+                CreateDump($"NPCMeleeCombat returned status '{comp.Status}'");
                 return GoapActionResult.Failed;
         }
     }

@@ -1,9 +1,8 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Tag;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Checks the tags of the target entity.
@@ -35,7 +34,7 @@ public sealed class HasTagsSystem : GoapConditionSystem<HasTags>
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, HasTags condition)
     {
-        if (!TryGetValue(state, condition, condition.Target, out var target))
+        if (!TryGet(state, condition.Target, out var target))
             return false;
 
         return condition.RequireAll

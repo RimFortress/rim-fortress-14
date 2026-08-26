@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Random;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Basic;
@@ -32,7 +32,7 @@ public sealed class RandomTimeSystem : GoapActionSystem<RandomTime>
     protected override bool ActionStartup(Entity<GoapComponent> ent, RandomTime action)
     {
         var time = TimeSpan.FromSeconds(_random.NextFloat(action.MinSec, action.MaxSec));
-        ent.Comp.State.SetValue(action.Key, time);
+        Set(ent, action.Key, time);
         return true;
     }
 }

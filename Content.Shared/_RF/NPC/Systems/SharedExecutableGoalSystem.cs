@@ -18,7 +18,6 @@ using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
-using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
@@ -49,7 +48,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
     protected readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, HashSet<ProtoId<ExecutableGoalPrototype>>>
         Executables = new();
-    protected HashSet<ProtoId<ExecutableGoalPrototype>> IgnoreGoalsList = new();
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -58,7 +56,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeLocalEvent<ControllableNpcComponent, BeforeUtilityAiGoalFinished>(OnUtilityAiGoalFinished);
-        SubscribeLocalEvent<NpcControllerComponent, PlayerAttachedEvent>(OnPlayerAttachedEvent);
 
         SubscribeAllEvent<SetGoalRequest>(OnGoalRequest);
         SubscribeAllEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
@@ -66,13 +63,8 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         SubscribeAllEvent<ForceGoalExecutionMessage>(OnForceGoalExecutionMessage);
         SubscribeAllEvent<SetGoalMessage>(OnSetGoalMessage);
         SubscribeNetworkEvent<GoalTargetsClearedMessage>(OnGoalTargetsCleared);
-        SubscribeNetworkEvent<GoalsIgnoreMessage>(OnGoalsIgnoreMessage);
 
-        Proto.PrototypesReloaded += args =>
-        {
-            if (args.WasModified<ExecutableGoalPrototype>())
-                ReloadPrototypes();
-        };
+        Subs.ProtoReload<ExecutableGoalPrototype>(Proto, ReloadPrototypes);
 
         ReloadPrototypes();
     }
@@ -82,22 +74,12 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     private void ReloadPrototypes()
     {
         Executables.Clear();
-        IgnoreGoalsList.Clear();
 
         foreach (var proto in Proto.EnumeratePrototypes<ExecutableGoalPrototype>())
         {
             if (!Executables.TryAdd(proto.Goal, new() { proto }))
                 Executables[proto.Goal].Add(proto);
-
-            if (proto.Conditions.Count > 0)
-                IgnoreGoalsList.Add(proto);
-
-            if (Proto.Resolve(proto.Goal, out var goal) && goal.Conditions.Count > 0)
-                IgnoreGoalsList.Add(proto);
         }
-
-        if (_net.IsServer)
-            RaiseNetworkEvent(new GoalsIgnoreMessage(IgnoreGoalsList));
     }
 
     private void OnGetVerbs(GetVerbsEvent<Verb> ev)
@@ -229,12 +211,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         DirtyField(ent.AsNullable(), nameof(ControllableNpcComponent.Queue));
     }
 
-    private void OnPlayerAttachedEvent(EntityUid uid, NpcControllerComponent component, PlayerAttachedEvent ev)
-    {
-        if (_net.IsServer)
-            RaiseNetworkEvent(new GoalsIgnoreMessage(IgnoreGoalsList), ev.Player);
-    }
-
     private void OnGoalTargetsCleared(GoalTargetsClearedMessage msg, EntitySessionEventArgs args)
     {
         var uid = GetEntity(msg.Agent);
@@ -245,12 +221,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
         Goap.RemoveKey(comp.State, goal.TargetCoordinatesKey);
         Goap.RemoveKey(comp.State, goal.TargetKey);
-    }
-
-    private void OnGoalsIgnoreMessage(GoalsIgnoreMessage msg, EntitySessionEventArgs args)
-    {
-        if (_net.IsClient)
-            IgnoreGoalsList = msg.Goals;
     }
 
     private void OnGoalRequest(SetGoalRequest request, EntitySessionEventArgs args)
@@ -392,10 +362,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
         foreach (var proto in goals)
         {
-            // The client should not handle the logic of goals with conditions
-            if (_net.IsClient && IgnoreGoalsList.Contains(proto))
-                continue;
-
             if (type != null && !proto.GoalType.HasFlag(type.Value))
                 continue;
 
@@ -592,15 +558,6 @@ public sealed class GoalTargetsClearedMessage : EntityEventArgs
     public ProtoId<ExecutableGoalPrototype> Goal;
     public NetEntity? Target;
     public NetCoordinates? TargetCoordinates;
-}
-
-/// <summary>
-/// Sent to the client for notification; the logic determines which goals it should ignore.
-/// </summary>
-[Serializable, NetSerializable]
-public sealed class GoalsIgnoreMessage(HashSet<ProtoId<ExecutableGoalPrototype>> goals) : EntityEventArgs
-{
-    public HashSet<ProtoId<ExecutableGoalPrototype>> Goals = goals;
 }
 
 /// <summary>

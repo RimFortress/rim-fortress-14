@@ -67,6 +67,7 @@
     - RemoveWeed
     - SamplePlant
     - RemovePlant
+    - RemovePlantSharp
     - WaterPlant
   - type: FogOfWarClearer
   - type: NotifyOnStateChanged

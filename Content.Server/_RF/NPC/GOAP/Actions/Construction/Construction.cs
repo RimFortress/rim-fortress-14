@@ -1,7 +1,6 @@
 using System.Linq;
 using Content.Server._RF.NPC.GOAP.Actions.Interaction;
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Construction;
 using Content.Server.Construction.Components;
@@ -12,6 +11,7 @@ using Content.Server.Tools;
 using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Construction;
 using Content.Shared.Construction.Steps;
 using Content.Shared.DoAfter;
@@ -88,23 +88,23 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Construction action)
     {
-        ent.Comp.State.Remove(action.CurrentDoAfter);
-        ent.Comp.State.Remove(action.CurrentItemKey);
+        Remove(ent, action.CurrentDoAfter);
+        Remove(ent, action.CurrentItemKey);
         NpcTimingSystem.ClearQueue(ent);
         return true;
     }
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Construction action)
     {
-        ent.Comp.State.Remove(action.CurrentDoAfter);
-        ent.Comp.State.Remove(action.CurrentItemKey);
+        Remove(ent, action.CurrentDoAfter);
+        Remove(ent, action.CurrentItemKey);
         NpcTimingSystem.ClearQueue(ent);
-        _moveTo.ShutdownMovement(ent, action.PathfindKey);
+        _moveTo.ShutdownMovement(ent, this, action.PathfindKey);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Construction action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return GoapActionResult.Failed;
 
         var waitResult = _interactWith.Wait(ent, action, action.CurrentDoAfter, out _);
@@ -112,7 +112,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
-        var queuerResult = _npcTiming.WaitQueue(ent, action);
+        var queuerResult = _npcTiming.WaitQueue(ent, this);
 
         if (queuerResult != GoapActionResult.Finished)
             return queuerResult;
@@ -124,9 +124,9 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
 
         // No item locked in yet for this round - figure out fresh, from the target's
         // current construction state, what's needed next.
-        if (!TryGetValue(ent, action, action.CurrentItemKey, out var item))
+        if (!TryGet(ent, action.CurrentItemKey, out var item))
         {
-            switch (FindNextItem(ent, action, target, out var found))
+            switch (FindNextItem(ent, target, out var found))
             {
                 case NeedResult.Done:
                     return GoapActionResult.Finished;
@@ -143,18 +143,18 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         // we're about to walk to it / pick it up.
         if (Deleted(item))
         {
-            CreateDump(ent, action, $"{ToPrettyString(item)} not exist");
+            CreateDump($"{ToPrettyString(item)} not exist");
             return GoapActionResult.Failed;
         }
 
         var itemCoords = Transform(item).Coordinates;
-        var ownerCoords = Goap.GetValue(ent.Comp.State, GoapState.OwnerCoordinates);
+        var ownerCoords = Get(ent.Comp.State, GoapState.OwnerCoordinates);
         var targetCoords = Transform(target).Coordinates;
         float distance;
 
-        if (!TryGetValue(ent, action, GoapState.ActiveHandEntity, out var heldEnt) || heldEnt != item)
+        if (!TryGet(ent, GoapState.ActiveHandEntity, out var heldEnt) || heldEnt != item)
         {
-            if (!TryGetValue(ent, action, action.RangeKey, out var range)
+            if (!TryGet(ent, action.RangeKey, out var range)
                 || !ownerCoords.TryDistance(EntityManager, itemCoords, out distance))
                 return GoapActionResult.Failed;
 
@@ -163,20 +163,20 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             {
                 if (!_moveTo.StartedUp(ent))
                 {
-                    CreateDump(ent, action, $"started moving toward the item: {ToPrettyString(item)}");
-                    _moveTo.StartupMovement(ent, action, itemCoords, true, action.PathfindKey, action.RangeKey, false);
+                    CreateDump($"started moving toward the item: {ToPrettyString(item)}");
+                    _moveTo.StartupMovement(ent, this, itemCoords, true, action.PathfindKey, action.RangeKey);
                 }
 
-                var result = _moveTo.UpdateMovement(ent, action, itemCoords, action.PathfindKey, action.RangeKey, false);
+                var result = _moveTo.UpdateMovement(ent, this, itemCoords, action.PathfindKey, action.RangeKey);
 
                 if (result != GoapActionResult.Finished)
                     return result;
             }
             else if (_moveTo.StartedUp(ent))
-                _moveTo.ShutdownMovement(ent, action.PathfindKey);
+                _moveTo.ShutdownMovement(ent, this, action.PathfindKey);
 
             return _npcTiming.EnqueueWait(ent,
-                action,
+                this,
                 (0.33f, 0.66f),
                 onFinish:() =>
                 {
@@ -184,12 +184,12 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
                     if (!_pickup.Pickup(ent, item, action))
                         return false;
 
-                    CreateDump(ent, action, $"{ToPrettyString(item)} picked up");
+                    CreateDump($"{ToPrettyString(item)} picked up");
 
                     // Turn on welder
                     if (TryComp(item, out WelderComponent? welder) && !welder.Enabled)
                     {
-                        CreateDump(ent, action, "turning on welder");
+                        CreateDump("turning on welder");
                         _interaction.UserInteraction(ent, Transform(item).Coordinates, item);
                     }
 
@@ -198,24 +198,24 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         }
 
         if (ownerCoords.TryDistance(EntityManager, targetCoords, out distance)
-            && distance > Goap.GetValue(ent.Comp.State, GoapState.InteractRange))
+            && distance > Get(ent.Comp.State, GoapState.InteractRange))
         {
             if (!_moveTo.StartedUp(ent))
             {
-                CreateDump(ent, action, $"started moving toward the target: {ToPrettyString(target)}");
-                _moveTo.StartupMovement(ent, action, targetCoords, true, action.PathfindKey, action.RangeKey, false);
+                CreateDump($"started moving toward the target: {ToPrettyString(target)}");
+                _moveTo.StartupMovement(ent, this, targetCoords, true, action.PathfindKey, action.RangeKey);
             }
 
-            var result = _moveTo.UpdateMovement(ent, action, targetCoords, action.PathfindKey, action.RangeKey, false);
+            var result = _moveTo.UpdateMovement(ent, this, targetCoords, action.PathfindKey, action.RangeKey);
 
             if (result != GoapActionResult.Finished)
                 return result;
         }
         else if (_moveTo.StartedUp(ent))
-            _moveTo.ShutdownMovement(ent, action.PathfindKey);
+            _moveTo.ShutdownMovement(ent, this, action.PathfindKey);
 
         return _npcTiming.EnqueueWait(ent,
-            action,
+            this,
             (0.33f, 0.66f),
             onFinish:() =>
             {
@@ -232,8 +232,8 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     /// </summary>
     private void AdvanceToNextItem(Entity<GoapComponent> ent, Construction action)
     {
-        ent.Comp.State.Remove(action.CurrentDoAfter);
-        ent.Comp.State.Remove(action.CurrentItemKey);
+        Remove(ent, action.CurrentDoAfter);
+        Remove(ent, action.CurrentItemKey);
     }
 
     private enum NeedResult
@@ -271,12 +271,11 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     /// wasn't actually waiting on yet.
     /// </remarks>
     private NeedResult FindNextItem(Entity<GoapComponent> ent,
-        Construction action,
         EntityUid target,
         out EntityUid item)
         => TryComp(target, out ConstructionComponent? construct)
-            ? FindNextItemForStructure(ent, action, target, construct, out item)
-            : FindNextItemForGhost(ent, action, target, out item);
+            ? FindNextItemForStructure(ent, target, construct, out item)
+            : FindNextItemForGhost(ent, target, out item);
 
     /// <summary>
     /// Finds the next need for an entity that already has a live <see cref="ConstructionComponent"/>,
@@ -285,7 +284,6 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     /// </summary>
     private NeedResult FindNextItemForStructure(
         Entity<GoapComponent> ent,
-        Construction action,
         EntityUid target,
         ConstructionComponent construct,
         out EntityUid item)
@@ -327,7 +325,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             if (condition.Condition(target, EntityManager))
                 continue;
 
-            if (ConditionQuery(ent, action, query, condition, target) is not { } conditionUid)
+            if (ConditionQuery(query, condition, target) is not { } conditionUid)
                 return NeedResult.NotFound;
 
             item = conditionUid;
@@ -336,7 +334,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
 
         for (;stepIndex < edge.Steps.Count;)
         {
-            if (StepQuery(ent, action, query, edge.Steps[stepIndex]) is not { } stepUid)
+            if (StepQuery(query, edge.Steps[stepIndex]) is not { } stepUid)
                 return NeedResult.NotFound;
 
             item = stepUid;
@@ -352,7 +350,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     /// yet - the whole start-to-target path is still ahead of us, so we walk it from the
     /// beginning using the ghost's static prototype data.
     /// </summary>
-    private NeedResult FindNextItemForGhost(Entity<GoapComponent> ent, Construction action, EntityUid target, out EntityUid item)
+    private NeedResult FindNextItemForGhost(Entity<GoapComponent> ent, EntityUid target, out EntityUid item)
     {
         item = default;
 
@@ -380,7 +378,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
                 if (condition.Condition(target, EntityManager))
                     continue;
 
-                if (ConditionQuery(ent, action, query, condition, target) is not { } conditionUid)
+                if (ConditionQuery(query, condition, target) is not { } conditionUid)
                     return NeedResult.NotFound;
 
                 item = conditionUid;
@@ -391,7 +389,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             // always begin at step 0 of the first edge with an unmet need.
             foreach (var step in edge.Steps)
             {
-                if (StepQuery(ent, action, query, step) is not { } stepUid)
+                if (StepQuery(query, step) is not { } stepUid)
                     return NeedResult.NotFound;
 
                 item = stepUid;
@@ -402,12 +400,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         return NeedResult.Done;
     }
 
-    private EntityUid? ConditionQuery(
-        Entity<GoapComponent> ent,
-        Construction action,
-        List<EntityUid> query,
-        IGraphCondition condition,
-        EntityUid target)
+    private EntityUid? ConditionQuery(List<EntityUid> query, IGraphCondition condition, EntityUid target)
     {
         var conditions = new Queue<IGraphCondition>();
         conditions.Enqueue(condition);
@@ -447,42 +440,42 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
                     }
                     break;
                 case EntityAnchored:
-                    return ToolQuery(ent, action, query, AnchoringQuality);
+                    return ToolQuery(query, AnchoringQuality);
                 case DoorWelded:
                 case StorageWelded:
-                    return ToolQuery(ent, action, query, WeldingQuality);
+                    return ToolQuery(query, WeldingQuality);
                 case WirePanel:
-                    return ToolQuery(ent, action, query, ScrewingQuality);
+                    return ToolQuery(query, ScrewingQuality);
                 case HasTag tag:
-                    return TagQuery(ent, action, query, new() { tag.Tag }, true);
+                    return TagQuery(query, new() { tag.Tag }, true);
                 case MachineFrameComplete:
                     if (!TryComp(target, out MachineFrameComponent? frame))
                     {
-                        ComponentNotFound<MachineFrameComponent>(ent, action, target);
+                        ComponentNotFound<MachineFrameComponent>(target);
                         return null;
                     }
 
                     foreach (var (type, amount) in frame.MaterialRequirements)
                     {
                         if (!frame.MaterialProgress.TryGetValue(type, out var current) || current < amount)
-                            return MaterialQuery(ent, action, query, type, amount);
+                            return MaterialQuery(query, type, amount);
                     }
 
                     foreach (var (compName, info) in frame.ComponentRequirements)
                     {
                         if (!frame.ComponentProgress.TryGetValue(compName, out var current) || current < info.Amount)
-                            return ComponentQuery(ent, action, query, compName);
+                            return ComponentQuery(query, compName);
                     }
 
                     foreach (var (tagName, info) in frame.TagRequirements)
                     {
                         if (!frame.TagProgress.TryGetValue(tagName, out var current) || current < info.Amount)
-                            return TagQuery(ent, action, query, new() { tagName }, true);
+                            return TagQuery(query, new() { tagName }, true);
                     }
 
                     break;
                 default:
-                    CreateDump(ent, action, $"unsupported construction condition: {con}");
+                    CreateDump($"unsupported construction condition: {con}");
                     break;
             }
         }
@@ -490,35 +483,31 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
         return null;
     }
 
-    private EntityUid? StepQuery(
-        Entity<GoapComponent> ent,
-        Construction action,
-        List<EntityUid> query,
-        ConstructionGraphStep step)
+    private EntityUid? StepQuery(List<EntityUid> query, ConstructionGraphStep step)
     {
         switch (step)
         {
             case MaterialConstructionGraphStep insertMaterial:
-                return MaterialQuery(ent, action, query, insertMaterial.MaterialPrototypeId, insertMaterial.Amount);
+                return MaterialQuery(query, insertMaterial.MaterialPrototypeId, insertMaterial.Amount);
             case TagConstructionGraphStep insertTag:
                 if (insertTag.Tag != null)
-                    return TagQuery(ent, action, query, new() { insertTag.Tag }, true);
+                    return TagQuery(query, new() { insertTag.Tag }, true);
 
                 break;
             case MultipleTagsConstructionGraphStep insertMultipleTags:
                 if (insertMultipleTags.AnyTag != null)
-                    return TagQuery(ent, action, query, insertMultipleTags.AnyTag, false);
+                    return TagQuery(query, insertMultipleTags.AnyTag, false);
 
                 if (insertMultipleTags.AllTag != null)
-                    return TagQuery(ent, action, query, insertMultipleTags.AllTag, true);
+                    return TagQuery(query, insertMultipleTags.AllTag, true);
 
                 break;
             case ToolConstructionGraphStep insertTool:
-                return ToolQuery(ent, action, query, insertTool.Tool);
+                return ToolQuery(query, insertTool.Tool);
             case ComponentConstructionGraphStep insertComponent:
-                return ComponentQuery(ent, action, query, insertComponent.Component);
+                return ComponentQuery(query, insertComponent.Component);
             default:
-                CreateDump(ent, action, $"unsupported construction step: {step}");
+                CreateDump($"unsupported construction step: {step}");
                 break;
         }
 
@@ -526,8 +515,6 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
     }
 
     private EntityUid? TagQuery(
-        Entity<GoapComponent> ent,
-        Construction action,
         List<EntityUid> query,
         List<ProtoId<TagPrototype>> tags,
         bool requireAll)
@@ -544,15 +531,11 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             return uid;
         }
 
-        CreateDump(ent, action, $"entity with tags `{string.Join(", ", tags)} (requireAll: {requireAll}) not found`");
+        CreateDump($"entity with tags `{string.Join(", ", tags)} (requireAll: {requireAll}) not found`");
         return null;
     }
 
-    private EntityUid? ToolQuery(
-        Entity<GoapComponent> ent,
-        Construction action,
-        List<EntityUid> query,
-        ProtoId<ToolQualityPrototype> quality)
+    private EntityUid? ToolQuery(List<EntityUid> query, ProtoId<ToolQualityPrototype> quality)
     {
         for (var i = 0; i < query.Count; i++)
         {
@@ -565,15 +548,11 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             return uid;
         }
 
-        CreateDump(ent, action, $"tool `{quality}` not found");
+        CreateDump($"tool `{quality}` not found");
         return null;
     }
 
-    private EntityUid? ComponentQuery(
-        Entity<GoapComponent> ent,
-        Construction action,
-        List<EntityUid> query,
-        string component)
+    private EntityUid? ComponentQuery(List<EntityUid> query, string component)
     {
         var type = Factory.GetComponent(component).GetType();
 
@@ -588,16 +567,11 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             return uid;
         }
 
-        CreateDump(ent, action, $"entity with component `{component}` not found");
+        CreateDump($"entity with component `{component}` not found");
         return null;
     }
 
-    private EntityUid? MaterialQuery(
-        Entity<GoapComponent> ent,
-        Construction action,
-        List<EntityUid> query,
-        ProtoId<StackPrototype> stack,
-        int amount)
+    private EntityUid? MaterialQuery(List<EntityUid> query, ProtoId<StackPrototype> stack, int amount)
     {
         for (var i = 0; i < query.Count; i++)
         {
@@ -612,7 +586,7 @@ public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
             return uid;
         }
 
-        CreateDump(ent, action, $"material `{stack}`, amount: {amount}, not found");
+        CreateDump($"material `{stack}`, amount: {amount}, not found");
         return null;
     }
 }

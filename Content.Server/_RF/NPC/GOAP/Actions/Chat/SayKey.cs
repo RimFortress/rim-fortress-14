@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Chat.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Chat;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Chat;
@@ -29,13 +29,13 @@ public sealed class SayKeySystem : GoapActionSystem<SayKey>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, SayKey action)
     {
-        if (!TryGetValue(ent, action, action.Key, out var value))
+        if (!TryGet(ent, action.Key, out var value))
             return false;
 
         var @string = value.ToString();
         if (@string is not { })
         {
-            CreateDump(ent, action, $"value of key '{action.Key}' is null");
+            CreateDump($"value of key '{action.Key}' is null");
             return false;
         }
 

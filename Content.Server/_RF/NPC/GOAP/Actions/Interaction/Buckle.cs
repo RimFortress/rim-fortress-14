@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Buckle.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 
@@ -28,7 +28,7 @@ public sealed class BuckleGoapActionSystem : GoapActionSystem<Buckle>
     [Dependency] private readonly BuckleSystem _buckle = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Buckle action)
-        => TryGetValue(ent, action, action.TargetKey, out var target)
-           && TryGetValue(ent, action, action.BuckleTo, out var buckleTo)
+        => TryGet(ent, action.TargetKey, out var target)
+           && TryGet(ent, action.BuckleTo, out var buckleTo)
            && _buckle.TryBuckle(target, ent, buckleTo);
 }

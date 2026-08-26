@@ -1,5 +1,6 @@
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -41,7 +42,7 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// The conditions required to achieve this goal.
     /// If these conditions are not met, the score will not even be calculated.
     /// </summary>
-    [DataField(serverOnly: true)]
+    [DataField]
     public List<GoapCondition> Conditions = new();
 
     /// <summary>
@@ -105,8 +106,8 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// If the value of any key is not found, or if it cannot be captured,
     /// the goal will still start if the <see cref="Conditions"/> are met.
     /// </summary>
-    /// <seealso cref="SharedNpcSearcherSystem.CaptureResult"/>
-    /// <seealso cref="SharedNpcSearcherSystem.ReleaseCapturedResult"/>
+    /// <seealso cref="SharedNpcSearcherSystem.CaptureResult(Entity{SearchTrackedComponent?}, EntityUid)"/>
+    /// <seealso cref="SharedNpcSearcherSystem.ReleaseCapturedResult(Entity{SearchTrackedComponent?}, EntityUid)"/>
     [DataField]
     public HashSet<StateKey<EntityUid>> Capture = new();
 }

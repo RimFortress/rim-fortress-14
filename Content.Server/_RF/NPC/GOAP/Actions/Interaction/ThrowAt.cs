@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Hands.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Map;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
@@ -23,6 +23,6 @@ public sealed class ThrowAtGoapActionSystem : GoapActionSystem<ThrowAt>
     [Dependency] private readonly HandsSystem _hands = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, ThrowAt action)
-        => TryGetValue(ent, action, action.TargetCoordinatesKey, out var coords)
+        => TryGet(ent, action.TargetCoordinatesKey, out var coords)
            && _hands.ThrowHeldItem(ent, coords);
 }

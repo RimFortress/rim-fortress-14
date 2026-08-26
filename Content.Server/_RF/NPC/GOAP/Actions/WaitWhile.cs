@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions;
 
@@ -25,7 +25,7 @@ public sealed class WaitWhileSystem : GoapActionSystem<WaitWhile>
     {
         if (action.Conditions.Count == 0)
         {
-            CreateDump(ent, action, "warn: conditions list are empty");
+            CreateDump("warn: conditions list are empty");
             return GoapActionResult.Finished;
         }
 
@@ -33,11 +33,9 @@ public sealed class WaitWhileSystem : GoapActionSystem<WaitWhile>
         {
             var check = Goap.CheckCondition(ent, ent.Comp.State, con, out var dump);
 
-            CreateDump(ent,
-                action,
-                dump?.Dump != null
-                    ? $"{con.GetType().Name}: {check} ({dump?.Dump})"
-                    : $"{con.GetType().Name}: {check}");
+            CreateDump(dump?.Dump != null
+                ? $"{con.GetType().Name}: {check} ({dump?.Dump})"
+                : $"{con.GetType().Name}: {check}");
 
             if (!check)
                 return GoapActionResult.Finished;

@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Random;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Movement;
@@ -22,7 +22,7 @@ public sealed class PickRandomAngleSystem : GoapActionSystem<PickRandomAngle>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, PickRandomAngle action)
     {
-        ent.Comp.State.SetValue(action.TargetKey, _random.NextAngle());
+        Set(ent, action.TargetKey, _random.NextAngle());
         return true;
     }
 }

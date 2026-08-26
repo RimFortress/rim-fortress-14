@@ -1,6 +1,6 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Server.Containers;
 
 namespace Content.Server._RF.NPC.GOAP.Actions;
@@ -28,7 +28,7 @@ public sealed class ContainerActionSystem : GoapActionSystem<Container>
         if (!_container.TryGetOuterContainer(ent, Transform(ent), out var container))
             return false;
 
-        ent.Comp.State.SetValue(action.ResultKey, container.Owner);
+        Set(ent, action.ResultKey, container.Owner);
         return true;
     }
 }

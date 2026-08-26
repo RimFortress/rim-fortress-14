@@ -1,7 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Wieldable.Components;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
@@ -36,12 +36,12 @@ public sealed class WieldActionSystem : GoapActionSystem<Wield>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Wield action)
     {
-        if (!TryGetValue(ent, action, action.TargetKey, out var target))
+        if (!TryGet(ent, action.TargetKey, out var target))
             return false;
 
         if (!TryComp(target, out WieldableComponent? comp))
         {
-            ComponentNotFound<WieldableComponent>(ent, action);
+            ComponentNotFound<WieldableComponent>();
             return !action.FailIfNoComp;
         }
 

@@ -1,8 +1,7 @@
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
 /// <summary>
 /// Checks whether the target entity has the specified components.
@@ -23,7 +22,7 @@ public sealed class HasComponentSystem : GoapConditionSystem<HasComponent>
 {
     protected override bool ConditionCheck(EntityUid uid, GoapState state, HasComponent condition)
     {
-        if (!TryGetValue(state, condition, condition.TargetKey, out var target))
+        if (!TryGet(state, condition.TargetKey, out var target))
             return false;
 
         foreach (var comp in condition.Components)
@@ -32,7 +31,7 @@ public sealed class HasComponentSystem : GoapConditionSystem<HasComponent>
 
             if (!HasComp(target, type))
             {
-                ComponentNotFound(state, condition, target, type);
+                ComponentNotFound(target, type);
                 return false;
             }
         }
