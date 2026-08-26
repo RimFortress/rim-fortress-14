@@ -41,5 +41,6 @@ utility-ai-goal-mentalbreakdownidle-name = Mental breakdown
 
 utility-ai-goal-healingbuckle-name = Put patient on the bed
 utility-ai-goal-stopbleeding-name = Stop the bleeding
-utility-ai-goal-restorebloodlevel-name = Heal
+utility-ai-goal-restorebloodlevel-name = Replace blood loss
 utility-ai-goal-damagehealing-name = Heal
+utility-ai-goal-patientwaiting-name = Undergoing treatment

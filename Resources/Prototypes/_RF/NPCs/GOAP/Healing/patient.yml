@@ -1,0 +1,8 @@
+- type: goapCompound
+  id: Patient
+  tasks:
+  - action: !type:WaitWhile
+      conditions:
+      - Engagement/Healing/In == true
+    effects:
+      PatientWaiting: true

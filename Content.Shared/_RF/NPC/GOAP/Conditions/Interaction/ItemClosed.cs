@@ -1,7 +1,7 @@
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Nutrition.EntitySystems;
 
-namespace Content.Shared._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions.Interaction;
 
 /// <summary>
 /// Returns true if the entity both has OpenableComponent and is not opened.

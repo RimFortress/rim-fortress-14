@@ -1,0 +1,15 @@
+- type: engagementRole
+  id: Doctor
+  initiatorOnly: true
+
+- type: engagementRole
+  id: HealedFriened
+  force: true
+  conditionsFor:
+    Doctor:
+    - !type:IsFriend
+      targetKey: EngagementParticipant
+  effects:
+  - !type:AddOpinion
+    actors: [Doctor]
+    proto: OpinionHealed

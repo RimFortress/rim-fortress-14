@@ -158,13 +158,31 @@
       DamageHealPickedUp: true
 
   - preconditions:
-    - DamageHealPickedUp == true
     - DamageHealTarget != null
+    - Engagement/Healing/In == true
+    actions:
+    - !type:InviteEngagement
+      engageKey: Engagement/Healing
+      targetKey: DamageHealTarget
+      roles: [ HealedFriened ]
+    effects:
+      DamageHealTargetEngaged: true
+
+  - preconditions:
+    - DamageHealPickedUp == true
+    - DamageHealTargetEngaged == true
     actions:
     - !type:EntityCoords
       targetKey: DamageHealTarget
     - !type:MoveTo
       rangeKey: InteractRange
+    - !type:StartEngagement
+      proto: Healing
+      joinAs: Doctor
+    - !type:InviteEngagement
+      engageKey: Engagement/Healing
+      targetKey: DamageHealTarget
+      roles: [HealedFriened]
     - !type:InteractWith
       targetKey: DamageHealTarget
     effects:

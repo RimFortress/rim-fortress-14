@@ -14,6 +14,18 @@
       TargetPulled: true
 
   - preconditions:
+    - Query/HealingBuckleTarget != null
+    - Engagement/Healing/In == true
+    actions:
+    - !type:InviteEngagement
+      engageKey: Engagement/Healing
+      targetKey: Query/HealingBuckleTarget
+      roles: [ HealedFriened ]
+    effects:
+      HealingBuckleTargetEngaged: true
+
+  - preconditions:
+    - HealingBuckleTargetEngaged == true
     - TargetPulled == true
     - Query/Bed != null
     actions:

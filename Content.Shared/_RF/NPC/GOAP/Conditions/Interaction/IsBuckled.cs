@@ -1,7 +1,7 @@
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared.Buckle;
 
-namespace Content.Shared._RF.NPC.GOAP.Conditions;
+namespace Content.Shared._RF.NPC.GOAP.Conditions.Interaction;
 
 /// <summary>
 /// True if the agent is buckled, false otherwise.

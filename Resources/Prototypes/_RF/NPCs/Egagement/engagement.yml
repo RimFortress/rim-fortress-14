@@ -9,6 +9,8 @@
   - ThankForHealing
   - CheckOnPatient
 
+# Conversations
+
 - type: engagement
   id: BaseDialogEngagement
   roles:
@@ -50,3 +52,11 @@
   roles:
   - CheckOnPatientInitiator
   - CheckOnPatientResponder
+
+# Healing
+
+- type: engagement
+  id: Healing
+  roles:
+  - Doctor
+  - HealedFriened

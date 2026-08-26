@@ -112,7 +112,9 @@ public partial class EngagementSystem
         if (!role.Force && actor != engagement.Comp.Initiator)
             return false;
 
-        if (!CanSeat(engagement!, role, actor))
+        if (!CanSeat(engagement!, role, actor)
+            || !MeetsForwardRequirements(engagement!, role, actor)
+            || !MeetsReverseRequirements(engagement!, role, actor))
             return false;
 
         SeatActor(engagement!, role, actor);
@@ -171,12 +173,30 @@ public partial class EngagementSystem
         EntityUid actor,
         EntityUid inviter)
     {
-        if (!_prototype.Resolve(roleId, out var role))
+        if (!Resolve(engagement, ref engagement.Comp)
+            || !_prototype.Resolve(roleId, out var role))
             return false;
 
-        return role.Force
+        return role.Force || engagement.Comp.Initiator == actor
             ? TryJoinEngagement(engagement, roleId, actor)
             : InviteToEngagement(engagement, roleId, actor, inviter);
+    }
+
+    /// <inheritdoc cref="InviteOrJoinToEngagement(Entity{EngagementComponent?}, ProtoId{EngagementRolePrototype}, EntityUid, EntityUid)"/>
+    [PublicAPI]
+    public bool InviteOrJoinToEngagement(
+        Entity<EngagementComponent?> engagement,
+        List<ProtoId<EngagementRolePrototype>> roles,
+        EntityUid actor,
+        EntityUid inviter)
+    {
+        foreach (var role in roles)
+        {
+            if (InviteOrJoinToEngagement(engagement, role, actor, inviter))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

@@ -25,6 +25,18 @@
       NearBleedingFriend: true
 
   - preconditions:
+    - Query/BleedingFriend != null
+    - Engagement/Healing/In == true
+    actions:
+    - !type:InviteEngagement
+      engageKey: Engagement/Healing
+      targetKey: Query/BleedingFriend
+      roles: [ HealedFriened ]
+    effects:
+      BleedingFriendEngaged: true
+
+  - preconditions:
+    - BleedingFriendEngaged == true
     - Query/HeatMelees != null
     - NearBleedingFriend == true
     action: !type:Melee
@@ -34,6 +46,7 @@
       BleedingStopped: true
 
   - preconditions:
+    - BleedingFriendEngaged == true
     - Query/BleedHealing != null
     - NearBleedingFriend == true
     action: !type:InteractWith

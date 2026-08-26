@@ -51,7 +51,7 @@ public sealed class ConversationSystem : EntitySystem
         // Leaving one role is enough - if the underlying EngagementPrototype has
         // DissolveInvalid set (which every conversation kind should), the Engagement
         // system itself cascades this into EndEngagement for the remaining actors.
-        _engagement.LeaveEngagement(conv.Value.Owner, ent, EngagementEndReason.Interrupted);
+        _engagement.LeaveEngagement(conv.Value.Owner, ent.Owner, EngagementEndReason.Interrupted);
     }
 
     private void OnMobStateChanged(Entity<ConversationActorComponent> ent, ref MobStateChangedEvent args)

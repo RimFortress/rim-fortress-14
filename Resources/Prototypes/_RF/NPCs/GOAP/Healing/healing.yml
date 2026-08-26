@@ -5,3 +5,5 @@
   - proto: StopBleeding
   - proto: RestoreBloodLevel
   - proto: DamageHealing
+  - proto: Patient
+  - proto: HealingEgagements

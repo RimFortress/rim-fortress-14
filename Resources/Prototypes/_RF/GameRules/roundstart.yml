@@ -36,6 +36,8 @@
     - StopBleeding
     - RestoreBloodLevel
     - DamageHealing
+    - FinishHealing
+    - PatientWaiting
     # Crafting
     - Construction
     - Deconstruct

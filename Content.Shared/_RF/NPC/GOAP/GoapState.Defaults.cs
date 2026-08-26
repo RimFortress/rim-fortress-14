@@ -1,6 +1,7 @@
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
+using Content.Shared.Dataset;
 using Content.Shared.Interaction;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
@@ -209,6 +210,8 @@ public partial class GoapState
     public static readonly DomainKey QueryAllDomain
         = ProtoDomain<SearchQueryPrototype>("ProtoId", "Query/ProtoId/All");
 
+    // Engagements
+
     /// <summary>
     /// Returns true if the agent is engaged in any situation.
     /// </summary>
@@ -234,6 +237,12 @@ public partial class GoapState
     /// </summary>
     public static readonly DomainKey EngagementDomain
         = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/ProtoId");
+
+    /// <summary>
+    /// Returns the started situation of the target type in which the agent is engaged.
+    /// </summary>
+    public static readonly DomainKey EngagementStartedDomain
+        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/ProtoId/Started");
 
     /// <summary>
     /// Returns the entity that plays a target role in the situation in which the agent consists.
@@ -273,6 +282,41 @@ public partial class GoapState
             "ProtoId",
             "RoleId",
             "Engagement/Invited/ProtoId/Role/RoleId/Inviter");
+
+    /// <summary>
+    /// Returns an entity that has been invited into a situation of a specific type to perform a target role.
+    /// </summary>
+    public static readonly DomainKey EngagementInvitesRoleInvitedDomain
+        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+            "ProtoId",
+            "RoleId",
+            "Engagement/Invites/ProtoId/Role/RoleId/Invited");
+
+    // Datasets
+
+    /// <summary>
+    /// Returns all values in the dataset.
+    /// </summary>
+    public static readonly DomainKey DatasetAllDomain
+        = ProtoDomain<DatasetPrototype>("ProtoId", "Dataset/ProtoId/All");
+
+    /// <summary>
+    /// Returns random value from dataset,
+    /// </summary>
+    public static readonly DomainKey DatasetRandomDomain
+        = ProtoDomain<DatasetPrototype>("ProtoId", "Dataset/ProtoId/Random");
+
+    /// <summary>
+    /// Returns all values in the localized dataset.
+    /// </summary>
+    public static readonly DomainKey LocalizedDatasetAllDomain
+        = ProtoDomain<LocalizedDatasetPrototype>("ProtoId", "LocalizedDataset/ProtoId/All");
+
+    /// <summary>
+    /// Returns random value from localized dataset,
+    /// </summary>
+    public static readonly DomainKey LocalizedDatasetRandomDomain
+        = ProtoDomain<LocalizedDatasetPrototype>("ProtoId", "LocalizedDataset/ProtoId/Random");
 
     #endregion
 }

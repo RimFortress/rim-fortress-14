@@ -182,8 +182,6 @@
   - type: Social
   - type: TriggerOnDamage
     keyOut: onDamage
-  - type: TriggerOnHeal
-    keyOut: onHeal
   - type: TriggerMappings
     addComponents:
       onDamage:
@@ -191,11 +189,6 @@
         effect: OpinionAttacked
         keysIn:
         - onDamage
-      onHeal:
-      - type: ChangeOpinionOnTrigger
-        effect: OpinionHealed
-        keysIn:
-        - onHeal
   - type: ChangeMoodOnHunger
     effects:
       Overfed: [MoodOverfed]

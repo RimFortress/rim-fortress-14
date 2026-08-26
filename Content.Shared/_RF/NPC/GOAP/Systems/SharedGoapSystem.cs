@@ -9,12 +9,14 @@ using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Buckle;
+using Content.Shared.Dataset;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Movement.Pulling.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -27,6 +29,7 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
 {
     [Dependency] protected readonly IGameTiming Timing = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
@@ -631,6 +634,8 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
             return true;
         }
 
+        // Engagements
+
         if (GoapState.InAnyEngagementDomain.Equals(domains))
         {
             value = TryComp(owner, out EngagementParticipantComponent? participant) && participant.Membership.Count > 0;
@@ -650,6 +655,17 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         {
             if (!_proto.HasIndex(engagement)
                 || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
+                return false;
+
+            value = ent.Value.Owner;
+            return true;
+        }
+
+        if (GoapState.EngagementStartedDomain.TryGetParams(domains, out engagement))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
+                || !ent.Value.Comp.Started)
                 return false;
 
             value = ent.Value.Owner;
@@ -701,6 +717,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (GoapState.EngagementInvitedRoleDomain.TryGetParams(domains, out engagement, out role))
         {
             if (!_proto.HasIndex(engagement)
+                || !_proto.HasIndex(role)
                 || !_engagement.TryGetInviteEngagement(owner, engagement.Value, out var ent, role))
                 return false;
 
@@ -711,11 +728,65 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (GoapState.EngagementInvitedRoleInviterDomain.TryGetParams(domains, out engagement, out role))
         {
             if (!_proto.HasIndex(engagement)
+                || !_proto.HasIndex(role)
                 || !_engagement.TryGetInviteInviter(owner, engagement.Value, out var ent, role))
                 return false;
 
             value = ent.Value;
             return true;
+        }
+
+        if (GoapState.EngagementInvitesRoleInvitedDomain.TryGetParams(domains, out engagement, out role))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_proto.HasIndex(role)
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
+                return false;
+
+            foreach (var invite in ent.Value.Comp.Invites)
+            {
+                if (invite.Role != role)
+                    continue;
+
+                value = invite.Uid;
+                return true;
+            }
+
+            return false;
+        }
+
+        // Datasets
+
+        if (GoapState.DatasetAllDomain.TryGetParams(domains, out ProtoId<DatasetPrototype>? dataset))
+        {
+            if (!_proto.TryIndex(dataset, out var proto))
+                return false;
+
+            value = proto.Values;
+        }
+
+        if (GoapState.DatasetRandomDomain.TryGetParams(domains, out dataset))
+        {
+            if (!_proto.TryIndex(dataset, out var proto))
+                return false;
+
+            value = _random.Pick(proto.Values);
+        }
+
+        if (GoapState.LocalizedDatasetAllDomain.TryGetParams(domains, out ProtoId<LocalizedDatasetPrototype>? localeDataset))
+        {
+            if (!_proto.TryIndex(localeDataset, out var proto))
+                return false;
+
+            value = proto.Values;
+        }
+
+        if (GoapState.LocalizedDatasetRandomDomain.TryGetParams(domains, out localeDataset))
+        {
+            if (!_proto.TryIndex(localeDataset, out var proto))
+                return false;
+
+            value = _random.Pick(proto.Values);
         }
 
         return false;

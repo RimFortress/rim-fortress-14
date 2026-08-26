@@ -15,6 +15,17 @@
 
   - preconditions:
     - Query/LowBloodLevelFriend != null
+    - Engagement/Healing/In == true
+    actions:
+    - !type:InviteEngagement
+      engageKey: Engagement/Healing
+      targetKey: Query/LowBloodLevelFriend
+      roles: [ HealedFriened ]
+    effects:
+      LowBloodLevelFriendEngaged: true
+
+  - preconditions:
+    - LowBloodLevelFriendEngaged == true
     - BloodLevelHealingPickedUp == true
     actions:
     - !type:EntityCoords

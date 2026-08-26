@@ -7,8 +7,9 @@
   - div: [float: 4]
   - pow: [float: 2]
   conditions:
-  - !type:HasMoodEffect
-    effect: MoodMentalBreakdown
+  - !type:Mood
+    hasEffects:
+    - MoodMentalBreakdown
     invert: true
   - !type:Random
     chance: 0.1
@@ -20,8 +21,9 @@
   scoreCurves:
   - float: 0.92
   conditions:
-  - !type:HasMoodEffect
-    effect: MoodMentalBreakdown
+  - !type:Mood
+    hasEffects:
+    - MoodMentalBreakdown
   - !type:Random
     chance: 0.1
   goalState:
@@ -32,8 +34,9 @@
   scoreCurves:
   - float: 0.92
   conditions:
-  - !type:HasMoodEffect
-    effect: MoodMentalBreakdown
+  - !type:Mood
+    hasEffects:
+    - MoodMentalBreakdown
   - !type:Random
     chance: 0.33
   goalState:
@@ -44,8 +47,9 @@
   scoreCurves:
   - float: 0.92
   conditions:
-  - !type:HasMoodEffect
-    effect: MoodMentalBreakdown
+  - !type:Mood
+    hasEffects:
+    - MoodMentalBreakdown
   - !type:Random
     chance: 0.33
   goalState:
@@ -56,7 +60,8 @@
   scoreCurves:
   - float: 0.91
   conditions:
-  - !type:HasMoodEffect
-    effect: MoodMentalBreakdown
+  - !type:Mood
+    hasEffects:
+    - MoodMentalBreakdown
   goalState:
     MentalBreakdownIdle: true

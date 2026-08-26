@@ -2,6 +2,8 @@
   id: BaseHealingGoal
   abstract: true
   color: "#16C934"
+  fallbacks:
+  - InterruptHealing
   incumbentBonus:
   - add: [float: 0.10]
   - mul: [float: 1.15]
@@ -75,3 +77,34 @@
         goal: DamageHealing
   goalState:
     DamageHealed: true
+
+# Engagements
+
+- type: utilityAiGoal
+  id: FinishHealing
+  conditions:
+  - Engagement/Healing/Role/Doctor/In == true
+  - Query/BleedingFriend == null
+  - Query/LowBloodLevelFriend == null
+  - Query/DamageHealTarget == null
+  - Query/HealingBuckleTarget == null
+  scoreCurves:
+  - float: 1
+  goalState:
+    HealingEngagementFinished: true
+
+- type: utilityAiGoal
+  id: InterruptHealing
+  conditions:
+  - Engagement/Healing/In == true
+  goalState:
+    HealingEngagementInterrupted: true
+
+- type: utilityAiGoal
+  id: PatientWaiting
+  conditions:
+  - Engagement/Healing/Role/HealedFriened/In == true
+  scoreCurves:
+  - float: 1
+  goalState:
+    PatientWaiting: true

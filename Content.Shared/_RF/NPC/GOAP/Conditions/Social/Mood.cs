@@ -12,6 +12,12 @@ namespace Content.Shared._RF.NPC.GOAP.Conditions.Social;
 public sealed partial class Mood : BaseGoapCondition<Mood>
 {
     /// <summary>
+    /// Target entity.
+    /// </summary>
+    [DataField]
+    public StateKey<EntityUid> TargetKey = GoapState.Owner;
+
+    /// <summary>
     /// Minimum mood level.
     /// </summary>
     [DataField]
@@ -37,10 +43,11 @@ public sealed class MoodGoapConditionSystem : GoapConditionSystem<Mood>
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Mood condition)
     {
-        if (!_query.TryComp(uid, out var comp))
+        if (!TryGet(state, condition.TargetKey, out var target)
+            || !_query.TryComp(target, out var comp))
             return false;
 
-        var ent = new Entity<SocialComponent?>(uid, comp);
+        var ent = new Entity<SocialComponent?>(target, comp);
         var mood = _social.GetMood(ent);
 
         foreach (var effect in condition.HasEffects)

@@ -25,10 +25,10 @@ public sealed partial class InviteEngagement : BaseGoapAction<InviteEngagement>
     public StateKey<EntityUid> TargetKey;
 
     /// <summary>
-    /// The role to which the invitation will be sent.
+    /// The invitation will be sent to the first available role on the list.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementRolePrototype> Role;
+    public List<ProtoId<EngagementRolePrototype>> Roles = new();
 }
 
 public sealed class InviteEngagementGoapActionSystem : GoapActionSystem<InviteEngagement>
@@ -38,5 +38,6 @@ public sealed class InviteEngagementGoapActionSystem : GoapActionSystem<InviteEn
     protected override bool ActionStartup(Entity<GoapComponent> ent, InviteEngagement action)
         => TryGet(ent, action.EngageKey, out var engagement)
            && TryGet(ent, action.TargetKey, out var target)
-           && _engagement.InviteOrJoinToEngagement(engagement, action.Role, target, ent);
+           && (_engagement.IsMember(engagement, target) ||
+               _engagement.InviteOrJoinToEngagement(engagement, action.Roles, target, ent));
 }

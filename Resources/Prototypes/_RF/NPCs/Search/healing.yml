@@ -44,7 +44,11 @@
   - !type:Captured
     invert: true
   considerations:
+  - !type:ConditionCurve
   - !type:Bleed
+    curves:
+    - lessThan: 0.15
+      value: [float: 0]
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
@@ -63,7 +67,7 @@
     curves:
     - minus: [float: 1]
     - !type:Abs
-    - lessThan: 0.15
+    - lessThan: 0.30
       value: [float: 0]
   - !type:TargetDistance
     curves:
@@ -97,6 +101,8 @@
     curves:
     - !type:Normalize
       saturation: [float: 3]
+    - lessThan: 0.40
+      value: [float: 0]
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
@@ -130,6 +136,14 @@
     curves:
     - preset: TargetDistance
 
+- type: mathCurve
+  id: HealingTargetDamage
+  curves:
+  - !type:Normalize
+    saturation: [float: 3]
+  - lessThan: 0.40
+    value: [float: 0]
+
 # Do we need to heal Asphyxiation?
 
 # Blunt
@@ -156,8 +170,7 @@
     damageTypes:
     - Blunt
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Cellular
 
@@ -183,8 +196,7 @@
     damageTypes:
     - Cellular
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Caustic
 
@@ -210,8 +222,7 @@
     damageTypes:
     - Caustic
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Cold
 
@@ -237,8 +248,7 @@
     damageTypes:
     - Cold
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Heat
 
@@ -264,8 +274,7 @@
     damageTypes:
     - Heat
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Piercing
 
@@ -291,8 +300,7 @@
     damageTypes:
     - Piercing
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Poison
 
@@ -318,8 +326,7 @@
     damageTypes:
     - Poison
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Radiation
 
@@ -345,8 +352,7 @@
     damageTypes:
     - Radiation
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Shock
 
@@ -372,8 +378,7 @@
     damageTypes:
     - Shock
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage
 
 # Slash
 
@@ -399,5 +404,4 @@
     damageTypes:
     - Slash
     curves:
-    - !type:Normalize
-      saturation: [float: 3]
+    - preset: HealingTargetDamage

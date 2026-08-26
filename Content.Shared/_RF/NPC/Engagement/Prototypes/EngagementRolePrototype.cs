@@ -57,7 +57,6 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
 
     /// <summary>
     /// The requirements an agent must satisfy to take on this role.
-    /// Ignored if <see cref="Force"/> is <c>true</c>.
     /// </summary>
     [DataField(serverOnly: true)]
     public List<GoapCondition> Conditions = new();
@@ -65,7 +64,6 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     /// <summary>
     /// Conditions regarding other participants in the situation
     /// that must be met in order for the agent to take on this role.
-    /// Ignored if <see cref="Force"/> is <c>true</c>.
     /// </summary>
     /// <remarks>
     /// While these conditions are being checked, the participant being checked

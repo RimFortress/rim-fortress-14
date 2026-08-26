@@ -28,7 +28,7 @@ public sealed partial class StartEngagement : BaseGoapAction<StartEngagement>
     /// If true, the situation will be finished along with the plan.
     /// </summary>
     [DataField]
-    public bool EndOnPlanFinish = true;
+    public bool EndOnPlanFinish;
 
     /// <summary>
     /// Reasons for plan completion, under which the situation will
@@ -37,6 +37,12 @@ public sealed partial class StartEngagement : BaseGoapAction<StartEngagement>
     /// </summary>
     [DataField]
     public HashSet<GoapPlanFinishReason> EndConditions = new();
+
+    /// <summary>
+    /// The reason why the situation will be finished.
+    /// </summary>
+    [DataField]
+    public EngagementEndReason EndReason = EngagementEndReason.Finished;
 }
 
 public sealed class StartEngagementGoapAction : GoapActionSystem<StartEngagement>
@@ -75,7 +81,7 @@ public sealed class StartEngagementGoapAction : GoapActionSystem<StartEngagement
             return;
         }
 
-        _engagement.EndEngagement(engage.Value.AsNullable(), EngagementEndReason.Interrupted);
+        _engagement.EndEngagement(engage.Value.AsNullable(), action.EndReason);
     }
 }
 
