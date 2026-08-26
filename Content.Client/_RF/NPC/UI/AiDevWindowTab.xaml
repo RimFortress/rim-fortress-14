@@ -10,7 +10,9 @@
                                        HorizontalExpand="True"
                                        VerticalExpand="True"
                                        HScrollBarHidden="True"
-                                       VScrollBarHidden="True">
+                                       VScrollBarHidden="True"
+                                       HScroll="1000"
+                                       VScroll="1000">
         <LayoutContainer Name="GraphRoot" Margin="1000"/>
         <controls:GraphEdgeOverlay Name="EdgeOverlay" Margin="1000"/>
     </controls:DraggableScrollContainer>

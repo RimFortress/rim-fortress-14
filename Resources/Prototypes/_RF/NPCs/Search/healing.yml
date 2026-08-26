@@ -44,7 +44,6 @@
   - !type:Captured
     invert: true
   considerations:
-  - !type:ConditionCurve
   - !type:Bleed
     curves:
     - lessThan: 0.15
