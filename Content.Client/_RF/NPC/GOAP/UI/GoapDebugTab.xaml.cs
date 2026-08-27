@@ -154,6 +154,9 @@ public sealed partial class GoapDebugTab : AiDevWindowTab
 
     public void Update(GoapStaticGraphDebug graphDebug, GoapPlanDebugInfo? plan)
     {
+        UnExpandNode();
+
+        var firstUpdate = Layout == null;
         _graph = graphDebug;
         _plan = plan;
         NodeControls.Clear();
@@ -197,6 +200,9 @@ public sealed partial class GoapDebugTab : AiDevWindowTab
 
         UpdateLayout();
 
+        if (firstUpdate)
+            ScrollContainer.SetScrollValue(Layout.Value.TotalSize / 2);
+
         // BreakpointsPanel
         if (NodeId.ItemCount != graphDebug.Nodes.Count + 1)
         {
@@ -229,8 +235,6 @@ public sealed partial class GoapDebugTab : AiDevWindowTab
                                => plan.Value.Actions.Any(y
                                    => y.NodeIndex == x.Id))
                            + "[/bold]";
-        EffectsApplied.Text = $"[bold]Effects Applied: {plan.Value.EffectsApplied}[/bold]";
-        SkippedExpensiveNodes.Text = $"[bold]Skipped Expensive Nodes: {plan.Value.SkippedExpensiveNodes}[/bold]";
         NodesExpanded.Text = $"[bold]Nodes Expanded: {plan.Value.NodesExpanded}[/bold]";
         Planning.Text = plan.Value.Success
             ? $"[bold]Planning: [color={StyleFortress.LightGood.ToHex()}]Success[/color][/bold]"

@@ -44,3 +44,5 @@ utility-ai-goal-stopbleeding-name = Stop the bleeding
 utility-ai-goal-restorebloodlevel-name = Replace blood loss
 utility-ai-goal-damagehealing-name = Heal
 utility-ai-goal-patientwaiting-name = Undergoing treatment
+utility-ai-goal-interrupthealing-name = Heal
+utility-ai-goal-finishhealing-name = Heal

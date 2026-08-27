@@ -70,8 +70,6 @@ public readonly record struct GoapPreconditionDebugDump(GoapDebugDump Dump, bool
 /// <param name="Success">Whether a plan was found.</param>
 /// <param name="NodesExpanded">Expanded node count.</param>
 /// <param name="ConditionsChecked">Preconditions check count.</param>
-/// <param name="EffectsApplied">Applied effects count.</param>
-/// <param name="SkippedExpensiveNodes">Expensive node skip count.</param>
 /// <param name="ElapsedTime">Planning elapsed time.</param>
 /// <param name="Nodes">Step-by-step log of node expansions.</param>
 /// <param name="Actions">Debug information for each action in the plan.</param>
@@ -83,8 +81,6 @@ public record struct GoapPlanDebugInfo(
     bool Success,
     int NodesExpanded,
     int ConditionsChecked,
-    int EffectsApplied,
-    int SkippedExpensiveNodes,
     TimeSpan ElapsedTime,
     List<GoapNodeDebugEntry> Nodes,
     List<GoapActionDebugInfo> Actions);

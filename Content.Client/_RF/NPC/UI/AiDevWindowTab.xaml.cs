@@ -71,8 +71,7 @@ public partial class AiDevWindowTab : Control
                 .Select(x => x.Key)
                 .ToHashSet());
 
-            if (nodes.Count == 1)
-                CenterOnNode(nodes[0].Value);
+            CenterOnNodes(nodes.Select(x => x.Value).ToList());
         };
     }
 
@@ -208,9 +207,40 @@ public partial class AiDevWindowTab : Control
         UserInterfaceManager.GrabKeyboardFocus(Search);
     }
 
+    protected void CenterOnNodes(IReadOnlyCollection<Control> nodes)
+    {
+        if (nodes.Count == 0)
+            return;
+
+        if (nodes.Count == 1)
+        {
+            CenterOnNode(nodes.First());
+            return;
+        }
+
+        var graphRootOffset = GraphRoot.Position + ScrollContainer.GetScrollValue();
+
+        var min = new Vector2(float.MaxValue, float.MaxValue);
+        var max = new Vector2(float.MinValue, float.MinValue);
+
+        foreach (var node in nodes)
+        {
+            var topLeft = graphRootOffset + node.Position;
+            var bottomRight = topLeft + node.Size;
+
+            min = Vector2.Min(min, topLeft);
+            max = Vector2.Max(max, bottomRight);
+        }
+
+        var boundsCenter = (min + max) / 2f;
+        var targetOffset = boundsCenter - ScrollContainer.Size / 2f;
+        ScrollContainer.SetScrollValue(targetOffset);
+    }
+
     protected void CenterOnNode(Control node)
     {
-        var nodeCenter = node.Position + node.Size / 2f;
+        var graphRootOffset = GraphRoot.Position + ScrollContainer.GetScrollValue();
+        var nodeCenter = graphRootOffset + node.Position + node.Size / 2f;
         var targetOffset = nodeCenter - ScrollContainer.Size / 2f;
         ScrollContainer.SetScrollValue(targetOffset);
     }

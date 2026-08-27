@@ -17,6 +17,8 @@ public sealed partial class SearcherDebugTab : AiDevWindowTab
 
     public void Update(NpcSearchGraph graph)
     {
+        var firstUpdate = Layout == null;
+        UnExpandNode();
         NodeControls.Clear();
 
         GraphRoot.RemoveAllChildren();
@@ -36,6 +38,9 @@ public sealed partial class SearcherDebugTab : AiDevWindowTab
         }
 
         UpdateLayout();
+
+        if (firstUpdate)
+            ScrollContainer.SetScrollValue(Layout.Value.TotalSize / 2);
     }
 }
 

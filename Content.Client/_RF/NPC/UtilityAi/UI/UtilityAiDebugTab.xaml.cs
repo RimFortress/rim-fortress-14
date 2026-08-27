@@ -21,6 +21,8 @@ public sealed partial class UtilityAiDebugTab : AiDevWindowTab
 
     public void Update(UtilityAiDebugInfo info)
     {
+        var firstUpdate = Layout == null;
+        UnExpandNode();
         NodeControls.Clear();
         _info = info;
 
@@ -41,6 +43,9 @@ public sealed partial class UtilityAiDebugTab : AiDevWindowTab
         }
 
         UpdateLayout();
+
+        if (firstUpdate)
+            ScrollContainer.SetScrollValue(Layout.Value.TotalSize / 2);
     }
 
     protected override void OnUpdateLayout(GraphLayout layout)

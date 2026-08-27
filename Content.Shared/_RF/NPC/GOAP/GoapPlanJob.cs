@@ -170,8 +170,6 @@ public sealed class GoapPlanJob(
     private float _bestCost = float.PositiveInfinity;
 
     private int _stepsSinceYield;
-    private int _conditionsChecked;
-    private int _nodesExpanded;
 
 #if TOOLS // Debug
     /// <summary>
@@ -206,6 +204,9 @@ public sealed class GoapPlanJob(
     /// branches; this keeps the debug log to one entry per distinct attempt.
     /// </summary>
     private readonly HashSet<(int OwnerTaskId, int CandidateTaskId, GoapState State)> _loggedCandidates = new();
+
+    private int _conditionsChecked;
+    private int _nodesExpanded;
 #endif
 
     /// <summary>
@@ -220,8 +221,6 @@ public sealed class GoapPlanJob(
         _resolveCache.Clear();
         _bestPlan = null;
         _bestCost = float.PositiveInfinity;
-        _conditionsChecked = 0;
-        _nodesExpanded = 0;
 
 #if TOOLS // Debug
         var debugInfo = new GoapPlanDebugInfo
@@ -235,6 +234,8 @@ public sealed class GoapPlanJob(
         _debugNodes = collectDebug ? debugInfo.Nodes : null;
         _loggedTrivial.Clear();
         _loggedCandidates.Clear();
+        _conditionsChecked = 0;
+        _nodesExpanded = 0;
 #endif
 
         // An empty goal is trivially "already satisfied" but has no plan to offer; an empty
@@ -439,7 +440,9 @@ public sealed class GoapPlanJob(
             return (null, float.PositiveInfinity);
 
         await MaybeYield();
+#if TOOLS
         _nodesExpanded++;
+#endif
 
         // Trivial case: nothing to resolve, this task can run right now at zero extra cost.
         if (AllConditionsMet(task, state))
@@ -701,7 +704,9 @@ public sealed class GoapPlanJob(
         var result = goap.CheckCondition(target, state, condition, out var dump);
         cached = new ConditionCacheEntry(result, dump);
         _conditionCache[key] = cached;
+#if TOOLS
         _conditionsChecked++;
+#endif
         return cached;
     }
 

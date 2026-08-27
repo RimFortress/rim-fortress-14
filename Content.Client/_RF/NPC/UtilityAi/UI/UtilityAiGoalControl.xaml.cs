@@ -94,7 +94,13 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
             AiUiHelper.AddLabel(CommonTab, "Fail Penalty:", $"{proto.FailPenalty}");
 
         if (proto.Fallbacks.Count > 0)
-            AiUiHelper.AddLabel(CommonTab, "Fallbacks:", string.Join(',', proto.Fallbacks));
+            AiUiHelper.AddLabel(CommonTab, "Fallbacks:", string.Join(", ", proto.Fallbacks));
+
+        if (proto.Capture.Count > 0)
+            AiUiHelper.AddLabel(CommonTab, "Capture:", string.Join(", ", proto.Capture));
+        
+        if (proto.TempKeys.Count > 0)
+            AiUiHelper.AddLabel(CommonTab, "TempKeys:", string.Join(", ", proto.TempKeys));
 
         if (info.Cooldown > TimeSpan.Zero)
             AiUiHelper.AddLabel(CommonTab, "Cooldown:", $"{(info.Cooldown - _timing.CurTime).Seconds}s");
