@@ -62,7 +62,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (ghost == null)
             return;
 
-        _ownership.AddOwner(ghost.Value, user);
+        _ownership.AddOwnership(ghost.Value, owned: user);
     }
 
     private void OnClearRequest(ConstructionGhostClearRequest request)
@@ -77,7 +77,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (!HasComp<ConstructionComponent>(args.New))
             return;
 
-        _ownership.AddOwners(args.New, component.Owners);
+        _ownership.AddOwnership(args.New, owners: component.Owners);
     }
 
     // Code taken from ConstructionSystem.Initial.cs

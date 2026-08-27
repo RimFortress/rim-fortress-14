@@ -12,17 +12,33 @@ public sealed class OwnershipCommand : SystemCommand<OwnershipSystem>
 {
     [CommandImplementation("add_owned")]
     public IEnumerable<EntityUid> AddOwned([PipedArgument] IEnumerable<EntityUid> uids, EntityUid owned)
-        => uids.Where(uid => System.AddOwned(uid, owned));
+        => uids.Where(uid =>
+        {
+            System.AddOwnership(uid, owned: owned);
+            return true;
+        });
 
     [CommandImplementation("add_owner")]
     public IEnumerable<EntityUid> AddOwner([PipedArgument] IEnumerable<EntityUid> uids, EntityUid owner)
-        => uids.Where(uid => System.AddOwner(uid, owner));
+        => uids.Where(uid =>
+        {
+            System.AddOwnership(uid, owner: owner);
+            return true;
+        });
 
     [CommandImplementation("remove_owned")]
     public IEnumerable<EntityUid> RemoveOwned([PipedArgument] IEnumerable<EntityUid> uids, EntityUid owned)
-        => uids.Where(uid => System.RemoveOwned(uid, owned));
+        => uids.Where(uid =>
+        {
+            System.RemoveOwnership(uid, owned: owned);
+            return true;
+        });
 
     [CommandImplementation("remove_owner")]
     public IEnumerable<EntityUid> RemoveOwner([PipedArgument] IEnumerable<EntityUid> uids, EntityUid owner)
-        => uids.Where(uid => System.RemoveOwner(uid, owner));
+        => uids.Where(uid =>
+        {
+            System.RemoveOwnership(uid, owner: owner);
+            return true;
+        });
 }

@@ -45,7 +45,7 @@ public partial class StockpileSystem
         var uid = Spawn(StockProto, new EntityCoordinates(gridUid, tilesList.First().GridIndices));
         var ent = new Entity<StockpileComponent>(uid, EnsureComp<StockpileComponent>(uid));
 
-        _ownership.AddOwner(uid, owner);
+        _ownership.AddOwnership(uid, owner: owner);
         _meta.SetEntityName(uid, $"{Loc.GetString(DefaultStockName)} #{uid.Id}");
         AddTiles(ent, tilesList);
         _physics.WakeBody(uid, force: true);

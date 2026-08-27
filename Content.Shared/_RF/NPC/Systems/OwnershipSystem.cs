@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared.Administration.Managers;
 using Content.Shared.Polymorph;
@@ -13,7 +12,7 @@ namespace Content.Shared._RF.NPC.Systems;
 public sealed class OwnershipSystem : EntitySystem
 {
     [Dependency] private readonly ISharedAdminManager _admin = default!;
-    [Dependency] private readonly EntityQuery<OwnershipComponent> _ownedQuery = default!;
+    [Dependency] private readonly EntityQuery<OwnershipComponent> _ownershipQuery = default!;
 
     public override void Initialize()
     {
@@ -66,18 +65,37 @@ public sealed class OwnershipSystem : EntitySystem
         args.State = new OwnershipComponentState(owners, owned);
     }
 
-    private void OnComponentRemove(EntityUid uid, OwnershipComponent component, ComponentRemove args)
+    private void OnComponentRemove(Entity<OwnershipComponent> ent, ref ComponentRemove args)
     {
-        RemoveOwners(new(uid, component), component.Owners.ToArray());
-        RemoveOwned(new(uid, component), component.Owned.ToArray());
+        foreach (var owned in ent.Comp.Owned)
+        {
+            if (!_ownershipQuery.TryComp(owned, out var comp)
+                || !comp.Owners.Remove(ent))
+                continue;
+
+            var ev = new OwnershipRemovedEvent(ent, owned);
+            RaiseLocalEvent(ent, ev);
+            RaiseLocalEvent(owned, ev);
+            Dirty(owned, comp);
+        }
+
+        foreach (var owner in ent.Comp.Owners)
+        {
+            if (!_ownershipQuery.TryComp(owner, out var comp)
+                || !comp.Owned.Remove(ent))
+                continue;
+
+            var ev = new OwnershipRemovedEvent(owner, ent);
+            RaiseLocalEvent(ent, ev);
+            RaiseLocalEvent(owner, ev);
+            Dirty(owner, comp);
+        }
     }
 
     private void OnPolymorphed(Entity<OwnershipComponent> ent, ref PolymorphedEvent args)
     {
-        AddOwners(args.NewEntity, ent.Comp.Owners);
-        AddOwned(args.NewEntity, ent.Comp.Owned);
-        RemoveOwners(ent.Owner, ent.Comp.Owners);
-        RemoveOwned(ent.Owner, ent.Comp.Owned);
+        AddOwnership(args.NewEntity, owned: ent.Comp.Owned, owners: ent.Comp.Owners);
+        RemoveOwnership(args.OldEntity, owned: ent.Comp.Owned, owners: ent.Comp.Owners);
     }
 
     private void OnGetVerbs(GetVerbsEvent<Verb> args)
@@ -88,7 +106,7 @@ public sealed class OwnershipSystem : EntitySystem
         args.Verbs.Add(new Verb
         {
             Category = VerbCategory.Admin,
-            Act = () => AddOwner(args.Target, args.User),
+            Act = () => AddOwnership(args.Target, owner: args.User),
             Text = Loc.GetString("ownership-verb-add-owner"),
             Icon = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png")),
         });
@@ -128,197 +146,200 @@ public sealed class OwnershipSystem : EntitySystem
         => owned != null && Resolve(ent, ref ent.Comp, false) && ent.Comp.Owned.Contains(owned.Value);
 
     /// <summary>
-    /// Adds the target entity the owner of the given.
+    /// Creates an ownership relationship between the target entity and others.
     /// </summary>
+    /// <param name="uid">Target entity.</param>
+    /// <param name="owned">Entity that will become the owned by target.</param>
+    /// <param name="owner">Entity that will become the owner of the target.</param>
     [PublicAPI]
-    public bool AddOwner(EntityUid uid, EntityUid owner)
+    public void AddOwnership(
+        EntityUid uid,
+        EntityUid? owned = null,
+        EntityUid? owner = null)
     {
-        var ownerComp = EnsureComp<OwnershipComponent>(owner);
-        ownerComp.Owned.Add(uid);
+        DebugTools.Assert(owned != null || owner != null);
+        DebugTools.Assert(owned != owner);
+        DebugTools.Assert(uid != owner);
 
         var comp = EnsureComp<OwnershipComponent>(uid);
 
-        if (!comp.Owners.Add(owner))
-            return false;
-
-        var ev = new OwnershipAddedEvent(owner, uid);
-        RaiseLocalEvent(uid, ev);
-        RaiseLocalEvent(owner, ev);
-
-        Dirty(owner, ownerComp);
-        Dirty(uid, comp);
-        return true;
-    }
-
-    /// <summary>
-    /// Makes the target entities the owners of the given.
-    /// </summary>
-    [PublicAPI]
-    public void AddOwners(EntityUid uid, IEnumerable<EntityUid> owners)
-    {
-        var comp = EnsureComp<OwnershipComponent>(uid);
-
-        foreach (var owner in owners)
+        if (owned != null)
         {
-            var ownerComp = EnsureComp<OwnershipComponent>(owner);
-            ownerComp.Owned.Add(uid);
-            comp.Owners.Add(owner);
+            var ownedComp = EnsureComp<OwnershipComponent>(owned.Value);
 
-            var ev = new OwnershipAddedEvent(owner, uid);
-            RaiseLocalEvent(uid, ev);
-            RaiseLocalEvent(owner, ev);
-
-            Dirty(owner, ownerComp);
-        }
-
-        Dirty(uid, comp);
-    }
-
-    /// <summary>
-    /// Makes an entity the owner of another entity.
-    /// </summary>
-    /// <param name="uid">An entity that will own another.</param>
-    /// <param name="owned">An entity that will be owned by another entity.</param>
-    [PublicAPI]
-    public bool AddOwned(EntityUid uid, EntityUid owned)
-    {
-        var ownedComp = EnsureComp<OwnershipComponent>(owned);
-        ownedComp.Owners.Add(uid);
-
-        var comp = EnsureComp<OwnershipComponent>(uid);
-        comp.Owned.Add(owned);
-
-        var ev = new OwnershipAddedEvent(uid, owned);
-        RaiseLocalEvent(uid, ev);
-        RaiseLocalEvent(owned, ev);
-
-        Dirty(owned, ownedComp);
-        Dirty(uid, comp);
-        return true;
-    }
-
-    /// <summary>
-    /// Makes the entity the owner of a list of other entities.
-    /// </summary>
-    /// <param name="uid">An entity that will own others</param>
-    /// <param name="owned">A list of entities that another entity will own</param>
-    [PublicAPI]
-    public void AddOwned(EntityUid uid, IEnumerable<EntityUid> owned)
-    {
-        var comp = EnsureComp<OwnershipComponent>(uid);
-
-        foreach (var ownedUid in owned)
-        {
-            var ownedComp = EnsureComp<OwnershipComponent>(ownedUid);
-            ownedComp.Owners.Add(uid);
-            comp.Owned.Add(ownedUid);
-
-            var ev = new OwnershipAddedEvent(uid, ownedUid);
-            RaiseLocalEvent(uid, ev);
-            RaiseLocalEvent(ownedUid, ev);
-
-            Dirty(ownedUid, ownedComp);
-        }
-
-        Dirty(uid, comp);
-    }
-
-    /// <summary>
-    /// Removes the entity from the owners of a given entity.
-    /// </summary>
-    [PublicAPI]
-    public bool RemoveOwner(Entity<OwnershipComponent?> ent, Entity<OwnershipComponent?> owner)
-    {
-        if (!Resolve(ent, ref ent.Comp, false)
-            || !Resolve(owner, ref owner.Comp, false)
-            || !ent.Comp.Owners.Remove(owner) && !owner.Comp.Owned.Remove(ent))
-            return false;
-
-        var ev = new OwnershipRemovedEvent(owner, ent);
-        RaiseLocalEvent(ent, ev);
-        RaiseLocalEvent(owner, ev);
-
-        Dirty(ent);
-        Dirty(owner);
-        return true;
-    }
-
-    /// <summary>
-    /// Removes multiple owners of this entity.
-    /// </summary>
-    /// <param name="ent">An entity whose owners must be removed.</param>
-    /// <param name="owners">List of owners to be removed.</param>
-    [PublicAPI]
-    public void RemoveOwners(Entity<OwnershipComponent?> ent, IEnumerable<EntityUid> owners)
-    {
-        if (!Resolve(ent, ref ent.Comp, false))
-            return;
-
-        foreach (var owner in owners)
-        {
-            ent.Comp.Owners.Remove(owner);
-
-            if (_ownedQuery.TryComp(owner, out var comp))
+            if (comp.Owned.Add(owned.Value) || ownedComp.Owners.Add(uid))
             {
-                comp.Owned.Remove(ent);
-                Dirty(owner, comp);
+                var ev = new OwnershipAddedEvent(uid, owned.Value);
+                RaiseLocalEvent(uid, ev);
+                RaiseLocalEvent(owned.Value, ev);
             }
 
-            var ev = new OwnershipRemovedEvent(owner, ent);
-            RaiseLocalEvent(ent, ev);
-            RaiseLocalEvent(owner, ev);
+            Dirty(owned.Value, ownedComp);
+        }
+
+        if (owner != null)
+        {
+            var ownerComp = EnsureComp<OwnershipComponent>(owner.Value);
+
+            if (comp.Owners.Add(owner.Value) || ownerComp.Owned.Add(uid))
+            {
+                var ev = new OwnershipAddedEvent(owner.Value, uid);
+                RaiseLocalEvent(uid, ev);
+                RaiseLocalEvent(owner.Value, ev);
+            }
+
+            Dirty(owner.Value, ownerComp);
+        }
+
+        Dirty(uid, comp);
+    }
+
+    /// <summary>
+    /// Creates an ownership relationship between the target entity and others.
+    /// </summary>
+    /// <param name="uid">Target entity.</param>
+    /// <param name="owned">Entities that will become the owned by target.</param>
+    /// <param name="owners">Entities that will become the owner of the target.</param>
+    [PublicAPI]
+    public void AddOwnership(EntityUid uid,
+        IEnumerable<EntityUid>? owners = null,
+        IEnumerable<EntityUid>? owned = null)
+    {
+        DebugTools.Assert(owned != null || owners != null);
+        var comp = EnsureComp<OwnershipComponent>(uid);
+
+        if (owners != null)
+        {
+            foreach (var owner in owners)
+            {
+                var ownerComp = EnsureComp<OwnershipComponent>(owner);
+
+                if (!ownerComp.Owned.Add(uid) && !comp.Owners.Add(owner))
+                    continue;
+
+                var ev = new OwnershipAddedEvent(owner, uid);
+                RaiseLocalEvent(uid, ev);
+                RaiseLocalEvent(owner, ev);
+
+                Dirty(owner, ownerComp);
+            }
+        }
+
+        if (owned != null)
+        {
+            foreach (var ent in owned)
+            {
+                var ownedComp = EnsureComp<OwnershipComponent>(ent);
+
+                if (!ownedComp.Owners.Add(uid) && !comp.Owned.Add(ent))
+                    continue;
+
+                var ev = new OwnershipAddedEvent(ent, uid);
+                RaiseLocalEvent(uid, ev);
+                RaiseLocalEvent(ent, ev);
+
+                Dirty(ent, ownedComp);
+            }
+        }
+
+        Dirty(uid, comp);
+    }
+
+    /// <summary>
+    /// Removes the ownership relationship between the target entity and others.
+    /// </summary>
+    /// <param name="ent">Target entity.</param>
+    /// <param name="owned">Entity that will no longer be owned by the target.</param>
+    /// <param name="owner">Entity that will no longer be the owner of the target.</param>
+    [PublicAPI]
+    public void RemoveOwnership(
+        Entity<OwnershipComponent?> ent,
+        EntityUid? owned = null,
+        EntityUid? owner = null)
+    {
+        DebugTools.Assert(owned != null || owner != null);
+        DebugTools.Assert(owned != owner);
+        DebugTools.Assert(ent != owner);
+
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        if (TryComp(owned, out OwnershipComponent? ownedComp))
+        {
+            if (ent.Comp.Owned.Remove(owned.Value) || ownedComp.Owners.Remove(ent))
+            {
+                var ev = new OwnershipRemovedEvent(ent, owned.Value);
+                RaiseLocalEvent(ent, ev);
+                RaiseLocalEvent(owned.Value, ev);
+                Dirty(owned.Value, ownedComp);
+            }
+        }
+
+        if (TryComp(owner, out OwnershipComponent? ownerComp))
+        {
+            if (ent.Comp.Owners.Remove(owner.Value) || ownerComp.Owned.Remove(ent))
+            {
+                var ev = new OwnershipRemovedEvent(owner.Value, ent);
+                RaiseLocalEvent(ent, ev);
+                RaiseLocalEvent(owner.Value, ev);
+                Dirty(owner.Value, ownerComp);
+            }
         }
 
         Dirty(ent);
     }
 
     /// <summary>
-    /// Removes the entity from the list of entities owned by this.
+    /// Removes the ownership relationship between the target entity and others.
     /// </summary>
-    /// <param name="ent">From the list of entities owned by this entity, the target entity will be removed.</param>
-    /// <param name="owned">The entity to be removed from the ownership list.</param>
-    /// <returns>True if the entity has been successfully deleted.</returns>
+    /// <param name="ent">Target entity.</param>
+    /// <param name="owned">Entities that will no longer be owned by the target.</param>
+    /// <param name="owners">Entities that will no longer be the owner of the target.</param>
     [PublicAPI]
-    public bool RemoveOwned(Entity<OwnershipComponent?> ent, Entity<OwnershipComponent?> owned)
+    public void RemoveOwnership(
+        Entity<OwnershipComponent?> ent,
+        IEnumerable<EntityUid>? owners = null,
+        IEnumerable<EntityUid>? owned = null)
     {
-        if (!Resolve(ent, ref ent.Comp, false)
-            || !Resolve(owned, ref owned.Comp, false)
-            || !ent.Comp.Owned.Remove(owned) && !owned.Comp.Owners.Remove(ent))
-            return false;
+        DebugTools.Assert(owned != null || owners != null);
 
-        var ev = new OwnershipRemovedEvent(ent, owned);
-        RaiseLocalEvent(ent, ev);
-        RaiseLocalEvent(owned, ev);
-
-        Dirty(ent);
-        Dirty(owned);
-        return true;
-    }
-
-    /// <summary>
-    /// Removes the entities from the list of entities owned by this.
-    /// </summary>
-    /// <param name="ent">From the list of entities owned by this entity, the target entities will be removed.</param>
-    /// <param name="owned">List of entities to be removed from the ownership list.</param>
-    [PublicAPI]
-    public void RemoveOwned(Entity<OwnershipComponent?> ent, IEnumerable<EntityUid> owned)
-    {
-        if (!Resolve(ent, ref ent.Comp, false))
+        if (!Resolve(ent, ref ent.Comp))
             return;
 
-        foreach (var uid in owned)
+        if (owners != null)
         {
-            ent.Comp.Owned.Remove(uid);
-
-            if (_ownedQuery.TryComp(uid, out var comp))
+            foreach (var owner in owners)
             {
-                comp.Owners.Remove(ent);
-                Dirty(uid, comp);
-            }
+                if (!_ownershipQuery.TryComp(owner, out var ownerComp))
+                    continue;
 
-            var ev = new OwnershipRemovedEvent(ent, uid);
-            RaiseLocalEvent(ent, ev);
-            RaiseLocalEvent(uid, ev);
+                if (!ownerComp.Owned.Remove(ent) && !ent.Comp.Owners.Remove(owner))
+                    continue;
+
+                var ev = new OwnershipRemovedEvent(owner, ent);
+                RaiseLocalEvent(ent, ev);
+                RaiseLocalEvent(owner, ev);
+
+                Dirty(owner, ownerComp);
+            }
+        }
+
+        if (owned != null)
+        {
+            foreach (var uid in owned)
+            {
+                if (!_ownershipQuery.TryComp(uid, out var ownedComp))
+                    continue;
+
+                if (!ownedComp.Owners.Remove(ent) && !ent.Comp.Owned.Remove(uid))
+                    continue;
+
+                var ev = new OwnershipRemovedEvent(ent, uid);
+                RaiseLocalEvent(uid, ev);
+                RaiseLocalEvent(ent, ev);
+
+                Dirty(uid, ownedComp);
+            }
         }
 
         Dirty(ent);
@@ -329,14 +350,14 @@ public sealed class OwnershipSystem : EntitySystem
     /// </summary>
     [Pure, PublicAPI]
     public IReadOnlySet<EntityUid> GetOwners(EntityUid uid)
-        => _ownedQuery.TryComp(uid, out var comp) ? comp.Owners : new();
+        => _ownershipQuery.TryComp(uid, out var comp) ? comp.Owners : new();
 
     /// <summary>
     /// Returns all entities owned by this.
     /// </summary>
     [Pure, PublicAPI]
     public IReadOnlySet<EntityUid> GetOwned(EntityUid uid)
-        => _ownedQuery.TryComp(uid, out var comp) ? comp.Owned : new();
+        => _ownershipQuery.TryComp(uid, out var comp) ? comp.Owned : new();
 
     /// <summary>
     /// Returns all entities that have at least one owner in common with the target entity.
@@ -352,7 +373,7 @@ public sealed class OwnershipSystem : EntitySystem
 
         foreach (var uid in ent.Comp.Owners)
         {
-            if (!_ownedQuery.TryComp(uid, out var comp) || comp.Owned.Count == 0)
+            if (!_ownershipQuery.TryComp(uid, out var comp) || comp.Owned.Count == 0)
                 continue;
 
             entities.Add(comp.Owned);
@@ -378,7 +399,7 @@ public sealed class OwnershipSystem : EntitySystem
 
         foreach (var uid in ent.Comp.Owners)
         {
-            if (!_ownedQuery.TryComp(uid, out var comp) || comp.Owned.Count == 0)
+            if (!_ownershipQuery.TryComp(uid, out var comp) || comp.Owned.Count == 0)
                 continue;
 
             entities.Add(comp.Owned);
@@ -406,7 +427,7 @@ public sealed class OwnershipSystem : EntitySystem
 
         foreach (var uid in ent.Comp.Owners)
         {
-            if (!_ownedQuery.TryComp(uid, out var comp) || comp.Owned.Count == 0)
+            if (!_ownershipQuery.TryComp(uid, out var comp) || comp.Owned.Count == 0)
                 continue;
 
             entities.Add(comp.Owned);

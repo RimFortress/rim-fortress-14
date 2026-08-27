@@ -29,7 +29,7 @@ public sealed class MarkOwnerActionSystem : GoapActionSystem<MarkOwner>
             return false;
 
         var owners = _ownership.GetOwners(ent);
-        _ownership.AddOwners(target, owners);
+        _ownership.AddOwnership(target, owners: owners);
         CreateDump($"added owners. Target: {ToPrettyString(target)}. Owners: {string.Join(", ", owners)}");
         return true;
     }

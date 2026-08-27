@@ -47,7 +47,7 @@ public sealed class MarkOwnerInRangeActionSystem : GoapActionSystem<MarkOwnerInR
         foreach (var entity in entities)
         {
             if (_whitelist.IsWhitelistPassOrNull(action.Whitelist, entity))
-                _ownership.AddOwners(entity, owners);
+                _ownership.AddOwnership(entity, owners: owners);
         }
 
         CreateDump($"added owners ({string.Join(", ", owners)}) to the targets ({string.Join(", ", entities)})");

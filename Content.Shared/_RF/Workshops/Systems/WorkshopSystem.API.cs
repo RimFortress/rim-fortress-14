@@ -361,7 +361,7 @@ public sealed partial class WorkshopSystem
         else
             _container.Insert(spawned, ent.Comp.ResultStorage, force: true);
 
-        _ownership.AddOwners(spawned, _ownership.GetOwners(ent));
+        _ownership.AddOwnership(spawned, owners: _ownership.GetOwners(ent));
     }
 
     /// <summary>

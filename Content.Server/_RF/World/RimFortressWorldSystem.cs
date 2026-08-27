@@ -138,7 +138,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
             beacon.Text = MetaData(pop).EntityName;
 
             _faw.AddFogClearer(pop, player);
-            _ownership.AddOwner(pop, player);
+            _ownership.AddOwnership(pop, owner: player);
         }
 
         player.Comp.Pops.AddRange(pops);
@@ -160,7 +160,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         beacon.Text = MetaData(pop).EntityName;
 
         _faw.AddFogClearer(pop, player);
-        _ownership.AddOwner(pop, player);
+        _ownership.AddOwnership(pop, owner: player);
 
         player.Comp.Pops.Add(pop);
         Dirty(player);
@@ -237,7 +237,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
                     var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
                     var equip = Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
 
-                    _ownership.AddOwner(equip, player);
+                    _ownership.AddOwnership(equip, owner: player);
                 }
             }
         }
