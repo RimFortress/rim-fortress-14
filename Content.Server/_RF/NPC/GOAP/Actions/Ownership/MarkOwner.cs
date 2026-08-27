@@ -1,7 +1,7 @@
-using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.Systems;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Ownership;
 

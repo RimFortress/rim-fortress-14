@@ -1,6 +1,6 @@
 using Content.Server._RF.Notifications.Components;
 using Content.Shared._RF.Notifications.Components;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.NPC.UtilityAi;
 using Robust.Shared.Prototypes;
 

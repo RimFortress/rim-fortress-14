@@ -1,5 +1,5 @@
 using Content.Shared._RF.Notifications.Components;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared.Mobs;
 using Robust.Shared.Prototypes;
 

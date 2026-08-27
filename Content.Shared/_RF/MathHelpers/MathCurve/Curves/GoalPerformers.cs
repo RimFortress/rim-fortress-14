@@ -1,5 +1,5 @@
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Prototypes;

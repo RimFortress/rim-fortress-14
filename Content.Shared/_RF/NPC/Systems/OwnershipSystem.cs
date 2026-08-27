@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Shared._RF.NPC.Components;
 using Content.Shared.Administration.Managers;
 using Content.Shared.Polymorph;
 using Content.Shared.Verbs;
@@ -7,13 +8,12 @@ using JetBrains.Annotations;
 using Robust.Shared.GameStates;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.NPC;
+namespace Content.Shared._RF.NPC.Systems;
 
 public sealed class OwnershipSystem : EntitySystem
 {
     [Dependency] private readonly ISharedAdminManager _admin = default!;
-
-    private EntityQuery<OwnershipComponent> _ownedQuery;
+    [Dependency] private readonly EntityQuery<OwnershipComponent> _ownedQuery = default!;
 
     public override void Initialize()
     {
@@ -23,8 +23,6 @@ public sealed class OwnershipSystem : EntitySystem
         SubscribeLocalEvent<OwnershipComponent, ComponentRemove>(OnComponentRemove);
         SubscribeLocalEvent<OwnershipComponent, PolymorphedEvent>(OnPolymorphed);
         SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
-
-        _ownedQuery = GetEntityQuery<OwnershipComponent>();
     }
 
     private void OnHandleState(Entity<OwnershipComponent> ent, ref ComponentHandleState args)

@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared.Storage.Components;
 using JetBrains.Annotations;

@@ -1,7 +1,8 @@
+using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization;
 
-namespace Content.Shared._RF.NPC;
+namespace Content.Shared._RF.NPC.Components;
 
 /// <summary>
 /// This is used to indicate ownership relationships between entities.

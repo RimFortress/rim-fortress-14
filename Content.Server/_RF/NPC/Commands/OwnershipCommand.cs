@@ -1,6 +1,6 @@
 using System.Linq;
 using Content.Server.Administration;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Toolshed;
 using Content.Shared.Administration;
 using Robust.Shared.Toolshed;

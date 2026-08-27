@@ -1,6 +1,6 @@
 using System.Numerics;
 using Content.Client._RF.UserInterface.Controllers;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
 using Robust.Client.Graphics;

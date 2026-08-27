@@ -1,4 +1,5 @@
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.Systems;
 
 namespace Content.Shared._RF.NPC.GOAP.Conditions;
 
