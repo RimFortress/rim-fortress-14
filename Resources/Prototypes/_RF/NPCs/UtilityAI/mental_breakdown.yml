@@ -1,7 +1,5 @@
 - type: utilityAiGoal
   id: MentalBreakdownStart
-  conditions:
-  - CombatMode == false
   scoreCurves:
   - !type:MoodLevel
   - minus: [float: 1]
@@ -9,6 +7,7 @@
   - div: [float: 4]
   - pow: [float: 2]
   conditions:
+  - CombatMode == false
   - !type:Mood
     hasEffects:
     - MoodMentalBreakdown
@@ -20,8 +19,6 @@
 
 - type: utilityAiGoal
   id: MentalBreakdownSpeak
-  conditions:
-  - CombatMode == false
   scoreCurves:
   - float: 0.92
   conditions:
@@ -35,8 +32,6 @@
 
 - type: utilityAiGoal
   id: MentalBreakdownThrow
-  conditions:
-  - CombatMode == false
   scoreCurves:
   - float: 0.92
   conditions:
@@ -50,8 +45,6 @@
 
 - type: utilityAiGoal
   id: MentalBreakdownAttack
-  conditions:
-  - CombatMode == false
   scoreCurves:
   - float: 0.92
   conditions:
@@ -65,8 +58,6 @@
 
 - type: utilityAiGoal
   id: MentalBreakdownIdle
-  conditions:
-  - CombatMode == false
   scoreCurves:
   - float: 0.91
   conditions:
