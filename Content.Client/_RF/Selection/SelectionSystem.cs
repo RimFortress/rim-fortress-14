@@ -199,8 +199,11 @@ public sealed class SelectionSystem : SharedSelectionSystem
     [PublicAPI]
     public void ClearSelection()
     {
-        if (TryComp(_player.LocalEntity, out SelectionComponent? comp))
-            ClearSelection(new(_player.LocalEntity.Value, comp));
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+            return;
+
+        ClearSelection(new(_player.LocalEntity.Value, comp));
+        OnSelectedChanged?.Invoke();
     }
 
     /// <summary>

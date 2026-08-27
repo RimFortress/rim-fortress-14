@@ -1,6 +1,6 @@
 - type: executableGoal
   id: MoveTo
-  parent: BaseExecutableGoal
+  parent: BaseCombatGoal
   goal: MoveTo
   goalType:
   - Place

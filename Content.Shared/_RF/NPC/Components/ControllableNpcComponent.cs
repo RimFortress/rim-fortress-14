@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.GameStates;
@@ -19,6 +20,12 @@ public sealed partial class ControllableNpcComponent : Component
     /// </summary>
     [ViewVariables, AutoNetworkedField]
     public readonly HashSet<EntityUid> CanControl = new();
+
+    /// <summary>
+    /// Conditions that must be met in order for the controller to change an entity's combat mode.
+    /// </summary>
+    [DataField]
+    public List<GoapCondition> CombatConditions = new();
 
     /// <summary>
     /// Goals that can be assigned to this entity.

@@ -1,5 +1,7 @@
 - type: utilityAiGoal
   id: Idle
+  conditions:
+  - CombatMode == false
   scoreCurves:
   - float: 0.10
   goalState:

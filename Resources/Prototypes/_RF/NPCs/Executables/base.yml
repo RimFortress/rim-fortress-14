@@ -6,3 +6,10 @@
     hasEffects:
     - MoodMentalBreakdown
     invert: true
+
+- type: executableGoal
+  id: BaseCombatGoal
+  parent: BaseExecutableGoal
+  abstract: true
+  conditions:
+  - CombatMode == true

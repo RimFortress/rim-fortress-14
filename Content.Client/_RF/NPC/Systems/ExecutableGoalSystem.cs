@@ -3,6 +3,7 @@ using Content.Client._RF.Selection;
 using Content.Client.Verbs.UI;
 using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.Systems;
+using Content.Shared.CombatMode;
 using Content.Shared.Input;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
@@ -54,6 +55,22 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
     protected override bool NeedForceGoalExecution()
         => !_input.DownKeyFunctions.Contains(ContentKeyFunctions.NpcGoalAddToQueue);
+
+    public void SetCombatMode(bool combatMode)
+    {
+        if (!ControllerQuery.TryComp(_player.LocalEntity, out var comp))
+            return;
+
+        var selected = _selection
+            .SelectedEntities()
+            .Where(HasComp<CombatModeComponent>)
+            .ToList();
+
+        if (selected.Count == 0)
+            selected = comp.CanControl.ToList();
+
+        SetCombatMode(_player.LocalEntity.Value, selected, combatMode);
+    }
 
     #region Selection
 

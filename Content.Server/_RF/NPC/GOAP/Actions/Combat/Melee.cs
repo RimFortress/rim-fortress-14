@@ -41,6 +41,12 @@ public sealed partial class Melee : BaseGoapAction<Melee>
     /// </summary>
     [DataField]
     public StateKey<int> MaxHitsKey = "MeleeMaxHits";
+
+    /// <summary>
+    /// If true, combat mode will be disabled when the action is finished.
+    /// </summary>
+    [DataField]
+    public bool RemoveCombatMode = true;
 }
 
 public sealed class MeleeActionSystem : GoapActionSystem<Melee>
@@ -64,13 +70,17 @@ public sealed class MeleeActionSystem : GoapActionSystem<Melee>
             return false;
         }
 
+        _combatMode.SetInCombatMode(ent, true);
         return true;
     }
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Melee action)
     {
         Remove(ent, action.MaxHitsKey);
-        _combatMode.SetInCombatMode(ent, false);
+
+        if (action.RemoveCombatMode)
+            _combatMode.SetInCombatMode(ent, false);
+
         _steering.Unregister(ent);
     }
 

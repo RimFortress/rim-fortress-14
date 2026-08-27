@@ -50,6 +50,15 @@
     - RimFortress
   - type: NpcJobSettings
   - type: ControllableNpc
+    combatConditions:
+    - !type:Mood
+      hasEffects:
+      - MoodMentalBreakdown
+      invert: true
+    - !type:HasComponent
+      components:
+      - type: Sleeping
+      invert: true
     goals:
     - MoveTo
     - Attack

@@ -70,6 +70,12 @@ public sealed partial class Gun : BaseGoapAction<Gun>
     [DataField]
     public float ReloadRetryDelay = 1f;
 
+    /// <summary>
+    /// If true, combat mode will be disabled when the action is finished.
+    /// </summary>
+    [DataField]
+    public bool RemoveCombatMode = true;
+
     [ViewVariables]
     public static readonly StateKey<SoundSpecifier> SoundTargetInLos = "SoundTargetInLos";
 
@@ -162,13 +168,12 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
         _combatMode.SetInCombatMode(ent, true);
 
-        var state = ent.Comp.State;
-        state.SetValue(Gun.NextLosCheckKey, TimeSpan.Zero);
-        state.SetValue(Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
-        state.SetValue(Gun.TargetInLosKey, false);
-        state.SetValue(Gun.MovingToMagazineKey, false);
-        state.Remove(Gun.NearbyMagazineKey);
-        state.Remove(Gun.PreviousJukeTypeKey);
+        Set(ent, Gun.NextLosCheckKey, TimeSpan.Zero);
+        Set(ent, Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
+        Set(ent, Gun.TargetInLosKey, false);
+        Set(ent, Gun.MovingToMagazineKey, false);
+        Remove(ent, Gun.NearbyMagazineKey);
+        Remove(ent, Gun.PreviousJukeTypeKey);
         NpcTimingSystem.ClearQueue(ent);
 
         return true;
@@ -176,15 +181,15 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Gun action)
     {
-        _combatMode.SetInCombatMode(ent, false);
+        if (action.RemoveCombatMode)
+            _combatMode.SetInCombatMode(ent, false);
 
-        var state = ent.Comp.State;
-        state.Remove(Gun.NextLosCheckKey);
-        state.Remove(Gun.ShootReadyAtKey);
-        state.Remove(Gun.TargetInLosKey);
-        state.Remove(Gun.MovingToMagazineKey);
-        state.Remove(Gun.NearbyMagazineKey);
-        state.Remove(Gun.PreviousJukeTypeKey);
+        Remove(ent, Gun.NextLosCheckKey);
+        Remove(ent, Gun.ShootReadyAtKey);
+        Remove(ent, Gun.TargetInLosKey);
+        Remove(ent, Gun.MovingToMagazineKey);
+        Remove(ent, Gun.NearbyMagazineKey);
+        Remove(ent, Gun.PreviousJukeTypeKey);
         NpcTimingSystem.ClearQueue(ent);
     }
 

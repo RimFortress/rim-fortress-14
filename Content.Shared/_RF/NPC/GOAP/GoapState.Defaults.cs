@@ -195,6 +195,12 @@ public partial class GoapState
     /// </summary>
     public static readonly StateKey<int> FreeHandsCount = RegisterEcsDefault<int>("FreeHandsCount");
 
+    /// <summary>
+    /// Returns true if the agent is in combat mode.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<bool> CombatMode = RegisterEcsDefault<bool>("CombatMode");
+
     #endregion
 
     #region Domains

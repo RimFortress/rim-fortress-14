@@ -9,6 +9,7 @@ using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Content.Shared._RF.Selection.Systems;
+using Content.Shared.CombatMode;
 using Content.Shared.Maps;
 using Content.Shared.NPC;
 using Content.Shared.Physics;
@@ -39,6 +40,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
     [Dependency] private readonly SharedSelectionSystem _selection = default!;
+    [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
 
     [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
     [Dependency] protected readonly EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
@@ -62,6 +64,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         SubscribeAllEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
         SubscribeAllEvent<ForceGoalExecutionMessage>(OnForceGoalExecutionMessage);
         SubscribeAllEvent<SetGoalMessage>(OnSetGoalMessage);
+        SubscribeNetworkEvent<SetCombatModeMessage>(OnSetCombatModeMessage);
         SubscribeNetworkEvent<GoalTargetsClearedMessage>(OnGoalTargetsCleared);
 
         Subs.ProtoReload<ExecutableGoalPrototype>(Proto, ReloadPrototypes);
@@ -339,6 +342,19 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
             comp.State.SetValue(goal.TargetCoordinatesKey, coords);
     }
 
+    private void OnSetCombatModeMessage(SetCombatModeMessage msg, EntitySessionEventArgs args)
+    {
+        if (args.SenderSession.AttachedEntity is not { } player)
+            return;
+
+        var entities = GetEntityList(msg.Entities);
+
+        foreach (var uid in entities)
+        {
+            TrySetCombatMode(player, uid, msg.Combat);
+        }
+    }
+
     #endregion
 
     protected virtual bool NeedForceGoalExecution() => false;
@@ -568,4 +584,11 @@ public sealed class GoalTargetsClearedMessage : EntityEventArgs
 public sealed class ForceGoalExecutionMessage(NetEntity agent) : EntityEventArgs
 {
     public NetEntity Agent = agent;
+}
+
+[Serializable, NetSerializable]
+public sealed class SetCombatModeMessage(List<NetEntity> entities, bool combat) : EntityEventArgs
+{
+    public List<NetEntity> Entities = entities;
+    public bool Combat = combat;
 }

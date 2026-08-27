@@ -168,7 +168,7 @@ public abstract class SharedSelectionSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp)
             || ent.Comp.Mode != SelectionMode.Entity
-            || ent.Comp.Selected.Remove(uid))
+            || !ent.Comp.Selected.Remove(uid))
             return false;
 
         if (ent.Comp.NetSync)

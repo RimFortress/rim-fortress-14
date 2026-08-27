@@ -1,5 +1,7 @@
 - type: utilityAiGoal
   id: BaseUtilityAiGoal
+  conditions:
+  - CombatMode == false
   incumbentBonus:
   - add: [float: 0.05]
   - mul: [float: 1.10]

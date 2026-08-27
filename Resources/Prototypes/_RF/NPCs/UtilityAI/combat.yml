@@ -3,6 +3,7 @@
   parent: BaseUtilityAiGoal
   color: "#FF0000"
   conditions:
+  - CombatMode == true
   - !type:Or
     conditions:
     - AttackTarget == null

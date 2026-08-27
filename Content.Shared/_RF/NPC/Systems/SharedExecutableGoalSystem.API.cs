@@ -368,4 +368,43 @@ public partial class SharedExecutableGoalSystem
 
         return false;
     }
+
+    /// <summary>
+    /// Changes the combat mode of controlled entities.
+    /// </summary>
+    [PublicAPI]
+    public bool TrySetCombatMode(
+        Entity<NpcControllerComponent?> player,
+        Entity<ControllableNpcComponent?> ent,
+        bool mode)
+    {
+        if (!Resolve(player, ref player.Comp, false)
+            || !Resolve(ent, ref ent.Comp, false)
+            || !CanControl(player, ent)
+            || !Goap.CheckCondition(ent.Owner, ent.Comp.CombatConditions))
+            return false;
+
+        _combatMode.SetInCombatMode(ent, mode);
+        return false;
+    }
+
+    /// <summary>
+    /// Changes the combat mode of controlled entities.
+    /// </summary>
+    [PublicAPI]
+    public void SetCombatMode(
+        Entity<NpcControllerComponent?> player,
+        IReadOnlyList<EntityUid> entities,
+        bool mode)
+    {
+        foreach (var uid in entities)
+        {
+            TrySetCombatMode(player, uid, mode);
+        }
+
+        if (!_net.IsClient)
+            return;
+
+        RaiseNetworkEvent(new SetCombatModeMessage(GetNetEntityList(entities), mode));
+    }
 }

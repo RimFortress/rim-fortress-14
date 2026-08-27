@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: BaseHealingGoal
+  parent: BaseUtilityAiGoal
   abstract: true
   color: "#16C934"
   fallbacks:

@@ -1,6 +1,6 @@
 - type: executableGoal
   id: Attack
-  parent: BaseExecutableGoal
+  parent: BaseCombatGoal
   goal: Attack
   verbIcon: _RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
   targetKey: Query/AttackTarget

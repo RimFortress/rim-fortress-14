@@ -9,6 +9,7 @@ using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Buckle;
+using Content.Shared.CombatMode;
 using Content.Shared.Dataset;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Movement.Pulling.Systems;
@@ -37,6 +38,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     [Dependency] private readonly SharedBuckleSystem _buckle = default!;
     [Dependency] private readonly PullingSystem _pulling = default!;
     [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
     protected readonly Dictionary<EntityUid, HashSet<ICommonSession>> DebugSubscriptions = new();
@@ -591,6 +593,12 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
         if (key.Equals(GoapState.FreeHandsCount))
         {
             value = _hands.CountFreeHands(owner);
+            return true;
+        }
+
+        if (key.Equals(GoapState.CombatMode))
+        {
+            value = _combatMode.IsInCombatMode(owner);
             return true;
         }
 
