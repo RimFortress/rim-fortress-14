@@ -1,8 +1,8 @@
 using System.Linq;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration.Managers;
+using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;

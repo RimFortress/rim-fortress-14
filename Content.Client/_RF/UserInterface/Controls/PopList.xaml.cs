@@ -1,4 +1,4 @@
-using Content.Client._RF.NPC.Systems;
+using Content.Client._RF.NPC.Executable.Systems;
 using Content.Client._RF.Selection;
 using Content.Client.CombatMode;
 using Content.Shared._RF.World;

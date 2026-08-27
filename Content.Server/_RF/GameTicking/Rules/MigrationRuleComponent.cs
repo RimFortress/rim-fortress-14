@@ -1,4 +1,4 @@
-using Content.Shared._RF.NPC.Prototypes;
+using Content.Shared._RF.NPC.Executable.Prototypes;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.GameTicking.Rules;

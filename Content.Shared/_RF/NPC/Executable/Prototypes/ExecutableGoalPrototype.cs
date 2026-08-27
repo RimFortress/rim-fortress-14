@@ -1,4 +1,4 @@
-using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.Executable.Components;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared.Whitelist;
@@ -8,7 +8,7 @@ using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.NPC.Prototypes;
+namespace Content.Shared._RF.NPC.Executable.Prototypes;
 
 /// <summary>
 /// A prototype for the Utility AI goal, allowing the player to manually assign it to an NPC.

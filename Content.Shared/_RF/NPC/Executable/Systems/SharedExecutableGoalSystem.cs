@@ -1,9 +1,9 @@
 using System.Linq;
-using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.Executable.Components;
+using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
@@ -24,7 +24,7 @@ using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.NPC.Systems;
+namespace Content.Shared._RF.NPC.Executable.Systems;
 
 /// <summary>
 /// A system that allows the player to set Utility AI goals for NPCs.

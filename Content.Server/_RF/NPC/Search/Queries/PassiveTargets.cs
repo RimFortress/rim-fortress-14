@@ -1,12 +1,12 @@
-using Content.Server._RF.NPC.Systems;
-using Content.Shared._RF.NPC.Components;
+using Content.Server._RF.NPC.Executable.Systems;
+using Content.Shared._RF.NPC.Executable.Components;
+using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
-using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Search.Queries;

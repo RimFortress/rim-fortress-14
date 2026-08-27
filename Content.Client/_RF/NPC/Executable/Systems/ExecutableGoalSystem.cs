@@ -1,8 +1,8 @@
 using System.Linq;
 using Content.Client._RF.Selection;
 using Content.Client.Verbs.UI;
-using Content.Shared._RF.NPC.Prototypes;
-using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared.CombatMode;
 using Content.Shared.Input;
 using Robust.Client.Graphics;
@@ -13,7 +13,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-namespace Content.Client._RF.NPC.Systems;
+namespace Content.Client._RF.NPC.Executable.Systems;
 
 public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 {

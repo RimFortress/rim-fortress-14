@@ -1,7 +1,7 @@
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
-using Content.Shared._RF.NPC.Components;
-using Content.Shared._RF.NPC.Prototypes;
-using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.NPC.Executable.Components;
+using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.NPC.Executable.Systems;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.MathHelpers.MathCurve.Curves;

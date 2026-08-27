@@ -1,7 +1,7 @@
 using System.Numerics;
-using Content.Client._RF.NPC.Systems;
+using Content.Client._RF.NPC.Executable.Systems;
 using Content.Client._RF.Selection;
-using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.Executable.Components;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;

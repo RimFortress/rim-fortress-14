@@ -1,14 +1,14 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.Executable.Components;
+using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.NPC.Systems;
+namespace Content.Shared._RF.NPC.Executable.Systems;
 
 public partial class SharedExecutableGoalSystem
 {

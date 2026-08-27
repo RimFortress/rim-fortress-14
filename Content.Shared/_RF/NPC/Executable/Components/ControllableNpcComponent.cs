@@ -1,12 +1,12 @@
+using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.Prototypes;
-using Content.Shared._RF.NPC.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
-namespace Content.Shared._RF.NPC.Components;
+namespace Content.Shared._RF.NPC.Executable.Components;
 
 /// <summary>
 /// Npc that can be controlled by the player

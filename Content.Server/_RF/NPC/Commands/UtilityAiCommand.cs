@@ -1,7 +1,7 @@
 using System.Linq;
-using Content.Server._RF.NPC.Systems;
+using Content.Server._RF.NPC.Executable.Systems;
 using Content.Server.Administration;
-using Content.Shared._RF.NPC.Prototypes;
+using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Content.Shared._RF.Toolshed;

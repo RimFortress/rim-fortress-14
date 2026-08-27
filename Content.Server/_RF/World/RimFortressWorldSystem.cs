@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
-using Content.Server._RF.NPC.Systems;
+using Content.Server._RF.NPC.Executable.Systems;
 using Content.Server._RF.Parallax.Fog;
 using Content.Server.Administration.Managers;
 using Content.Server.Mind;
