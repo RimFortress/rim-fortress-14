@@ -56,6 +56,7 @@
       jukeType: Away
     - !type:Gun
       targetKey: Query/AttackTarget
+      removeCombatMode: false
     effects:
       TargetAttacked: true
 
@@ -74,6 +75,7 @@
     - !type:Juke
     - !type:Melee
       targetKey: Query/AttackTarget
+      removeCombatMode: false
       costMultiplier: 4
     effects:
       TargetAttacked: true
@@ -90,6 +92,7 @@
     - !type:Juke
     - !type:Melee
       targetKey: Query/AttackTarget
+      removeCombatMode: false
       costMultiplier: 100 # A fistfight is the least desirable option
     effects:
       TargetAttacked: true
