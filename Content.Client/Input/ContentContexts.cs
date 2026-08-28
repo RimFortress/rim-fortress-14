@@ -129,6 +129,7 @@ namespace Content.Client.Input
             ghost.AddFunction(ContentKeyFunctions.DragMove);
             ghost.AddFunction(ContentKeyFunctions.NpcGoalAddToQueue);
             ghost.AddFunction(ContentKeyFunctions.NpcVerbGoalAddToQueue);
+            ghost.AddFunction(ContentKeyFunctions.NpcCombatModeToggle);
             // RimFortress End
 
             common.AddFunction(ContentKeyFunctions.OpenEntitySpawnWindow);

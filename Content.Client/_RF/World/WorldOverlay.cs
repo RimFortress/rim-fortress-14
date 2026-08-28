@@ -30,7 +30,7 @@ public sealed class WorldOverlay : Overlay
 
         var handle = args.ScreenHandle;
 
-        foreach (var (player, coords) in _world.Settlemets)
+        foreach (var (player, coords) in _world.Settlements)
         {
             if (!_player.TryGetSessionByEntity(player, out var session))
                 continue;

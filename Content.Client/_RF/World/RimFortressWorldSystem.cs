@@ -9,16 +9,18 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
     [Dependency] private readonly IOverlayManager _overlay = default!;
 
-    public Dictionary<EntityUid, List<EntityCoordinates>> Settlemets { get; private set; } = new();
+    public Dictionary<EntityUid, List<EntityCoordinates>> Settlements { get; private set; } = new();
+
+    public event Action<Entity<RimFortressPlayerComponent>>? OnPlayerUpdate;
 
     public bool EnableOverlay
     {
-        get => _enableOverlay;
+        get;
         set
         {
-            _enableOverlay = value;
+            field = value;
 
-            if (_enableOverlay)
+            if (field)
                 _overlay.AddOverlay(new WorldOverlay());
             else
                 _overlay.RemoveOverlay<WorldOverlay>();
@@ -27,17 +29,21 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         }
     }
 
-    private bool _enableOverlay;
-
     public override void Initialize()
     {
         base.Initialize();
         SubscribeNetworkEvent<SettlementCoordinatesMessage>(OnSettlementCoordinates);
+        SubscribeLocalEvent<RimFortressPlayerComponent, AfterAutoHandleStateEvent>(OnPlayerHandleState);
+    }
+
+    private void OnPlayerHandleState(Entity<RimFortressPlayerComponent> ent, ref AfterAutoHandleStateEvent args)
+    {
+        OnPlayerUpdate?.Invoke(ent);
     }
 
     private void OnSettlementCoordinates(SettlementCoordinatesMessage msg)
     {
-        Settlemets = msg.Coords
+        Settlements = msg.Coords
             .Select(x =>
                 (GetEntity(x.Key), x.Value.Select(GetCoordinates).ToList()))
             .ToDictionary();

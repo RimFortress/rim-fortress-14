@@ -9,6 +9,8 @@ using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
+using Robust.Shared.Input.Binding;
+using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
@@ -37,9 +39,13 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     {
         base.Initialize();
 
+        _overlay.AddOverlay(new NpcControlOverlay());
+
         SubscribeLocalEvent<PlayerAttachedEvent>(OnPlayerAttached);
 
-        _overlay.AddOverlay(new NpcControlOverlay());
+        CommandBinds.Builder
+            .Bind(ContentKeyFunctions.NpcCombatModeToggle, new PointerInputCmdHandler(OnCombatToggle))
+            .Register<ExecutableGoalSystem>();
     }
 
     public override void Shutdown()
@@ -51,6 +57,25 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     private void OnPlayerAttached(PlayerAttachedEvent args)
     {
         DefaultSelection();
+    }
+
+    private bool OnCombatToggle(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    {
+        if (!ControllerQuery.TryComp(player?.AttachedEntity, out var comp))
+            return false;
+
+        var selected = _selection
+            .SelectedEntities()
+            .Where(HasComp<CombatModeComponent>)
+            .Select(x => new Entity<CombatModeComponent>(x, Comp<CombatModeComponent>(x)))
+            .ToList();
+
+        if (selected.Count == 0)
+            return false;
+
+        var mode = selected.Count(x => x.Comp.IsInCombatMode) > selected.Count / 2;
+        SetCombatMode(!mode);
+        return true;
     }
 
     protected override bool NeedForceGoalExecution()

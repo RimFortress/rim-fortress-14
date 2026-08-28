@@ -152,6 +152,11 @@ namespace Content.Shared.Input
         /// Used for searching within the text.
         /// </summary>
         public static readonly BoundKeyFunction TextFind = "TextFind";
+
+        /// <summary>
+        /// A button that, when pressed, switches the combat mode of the selected AIs.
+        /// </summary>
+        public static readonly BoundKeyFunction NpcCombatModeToggle = "NpcCombatModeToggle";
         // RimFortress End
     }
 }

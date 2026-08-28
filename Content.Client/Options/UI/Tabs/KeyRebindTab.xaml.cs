@@ -195,6 +195,11 @@ namespace Content.Client.Options.UI.Tabs
             AddButton(ContentKeyFunctions.RotateStoredItem);
             AddButton(ContentKeyFunctions.SaveItemLocation);
 
+            // RimFortress Start
+            AddHeader("ui-options-header-ai-interaction");
+            AddButton(ContentKeyFunctions.NpcCombatModeToggle);
+            // RimFortress End
+
             AddHeader("ui-options-header-interaction-adv");
             AddButton(ContentKeyFunctions.SmartEquipBackpack);
             AddButton(ContentKeyFunctions.SmartEquipBelt);

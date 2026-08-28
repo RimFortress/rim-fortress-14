@@ -4,7 +4,7 @@
   - !type:MoodLevel
   - minus: [float: 1]
   - !type:Abs
-  - div: [float: 4]
+  - div: [float: 6]
   - pow: [float: 2]
   conditions:
   - CombatMode == false

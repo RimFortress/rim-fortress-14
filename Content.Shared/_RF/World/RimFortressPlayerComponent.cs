@@ -5,7 +5,7 @@ namespace Content.Shared._RF.World;
 /// <summary>
 /// Represents the entity of the RimFortress player
 /// </summary>
-[NetworkedComponent, AutoGenerateComponentState, RegisterComponent]
+[NetworkedComponent, AutoGenerateComponentState(raiseAfterAutoHandleState: true), RegisterComponent]
 public sealed partial class RimFortressPlayerComponent : Component
 {
     /// <summary>

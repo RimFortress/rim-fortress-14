@@ -666,4 +666,7 @@ binds:
   type: State
   key: F
   mod1: Control
+- function: NpcCombatModeToggle
+  type: State
+  key: Z
 # RimFortress End
