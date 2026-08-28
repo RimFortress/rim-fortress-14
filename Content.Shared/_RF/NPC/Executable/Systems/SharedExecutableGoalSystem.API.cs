@@ -46,7 +46,9 @@ public partial class SharedExecutableGoalSystem
             return false;
 
         ent.Comp2.Queue.Enqueue(entry);
-        DirtyField(ent, ent.Comp2, nameof(ControllableNpcComponent.Queue));
+
+        if (_net.IsServer)
+            DirtyField(ent, ent.Comp2, nameof(ControllableNpcComponent.Queue));
         return true;
     }
 
@@ -60,7 +62,8 @@ public partial class SharedExecutableGoalSystem
             return;
 
         ent.Comp.Queue.Clear();
-        DirtyField(ent, nameof(ControllableNpcComponent.Queue));
+        if (_net.IsServer)
+            DirtyField(ent, nameof(ControllableNpcComponent.Queue));
     }
 
 

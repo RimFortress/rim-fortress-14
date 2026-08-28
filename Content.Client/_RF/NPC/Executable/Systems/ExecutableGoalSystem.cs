@@ -1,16 +1,19 @@
 using System.Linq;
 using Content.Client._RF.Selection;
 using Content.Client.Verbs.UI;
+using Content.Shared._RF.NPC.Executable.Components;
 using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared.CombatMode;
 using Content.Shared.Input;
+using Robust.Client.GameStates;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
+using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
@@ -24,6 +27,8 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly SelectionSystem _selection = default!;
+    [Dependency] private readonly IClientNetManager _net = default!;
+    [Dependency] private readonly IClientGameStateManager _state = default!;
 
     private static readonly SpriteSpecifier EraseIcon
         = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
@@ -61,7 +66,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
     private bool OnCombatToggle(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (!ControllerQuery.TryComp(player?.AttachedEntity, out var comp))
+        if (!ControllerQuery.HasComp(player?.AttachedEntity))
             return false;
 
         var selected = _selection

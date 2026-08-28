@@ -404,9 +404,13 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         ent.Comp3.CurrentGoal = proto;
         ent.Comp3.CurrentTarget = target;
         ent.Comp3.CurrentTargetCoordinates = coords;
-        DirtyField(ent, ent.Comp3, nameof(ControllableNpcComponent.CurrentGoal));
-        DirtyField(ent, ent.Comp3, nameof(ControllableNpcComponent.CurrentTarget));
-        DirtyField(ent, ent.Comp3, nameof(ControllableNpcComponent.CurrentTargetCoordinates));
+
+        if (_net.IsServer)
+        {
+            DirtyField(ent, ent.Comp3, nameof(ControllableNpcComponent.CurrentGoal));
+            DirtyField(ent, ent.Comp3, nameof(ControllableNpcComponent.CurrentTarget));
+            DirtyField(ent, ent.Comp3, nameof(ControllableNpcComponent.CurrentTargetCoordinates));
+        }
 
         if (additionalKeys != null)
         {
