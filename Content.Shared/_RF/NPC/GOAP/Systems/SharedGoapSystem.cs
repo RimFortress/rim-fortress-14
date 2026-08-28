@@ -408,7 +408,7 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
             }
         }
 #else
-        action.PlanShutdown(target, this, out _);
+        action.PlanShutdown(target, this, reason, out _);
 #endif
     }
 
@@ -829,6 +829,21 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
 
         ent.Comp.Plan = null;
         RaiseLocalEvent(ent, new GoapPlanFinished(reason, ent.Comp.GoalState));
+    }
+
+    /// <summary>
+    /// Cancels the current planning.
+    /// </summary>
+    [PublicAPI]
+    public static void CancelPlanning(Entity<GoapComponent> ent)
+    {
+        DebugTools.Assert(ent.Comp.PlanningJob != null);
+
+        if (!ent.Comp.Planning)
+            return;
+
+        ent.Comp.PlanningToken!.Cancel();
+        ent.Comp.PlanningJob = null;
     }
 
     /// <summary>

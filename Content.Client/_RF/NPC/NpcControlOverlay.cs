@@ -1,8 +1,6 @@
 using System.Numerics;
-using Content.Client._RF.NPC.Executable.Systems;
 using Content.Client._RF.Selection;
 using Content.Shared._RF.NPC.Executable.Components;
-using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Shared.Enums;
@@ -20,8 +18,6 @@ public sealed class NpcControlOverlay : Overlay
     private static readonly ProtoId<ShaderPrototype> PointCircleShader = "DottedCircle";
     private static readonly ProtoId<ShaderPrototype> PointLineShader = "DottedLine";
 
-    private readonly ExecutableGoalSystem _executable;
-    private readonly SharedUtilityAiSystem _utilityAi;
     private readonly SelectionSystem _selection;
     private readonly SharedTransformSystem _transform;
     private readonly SpriteSystem _sprite;
@@ -38,8 +34,6 @@ public sealed class NpcControlOverlay : Overlay
     {
         IoCManager.InjectDependencies(this);
 
-        _executable = _entityManager.System<ExecutableGoalSystem>();
-        _utilityAi = _entityManager.System<SharedUtilityAiSystem>();
         _selection = _entityManager.System<SelectionSystem>();
         _transform = _entityManager.System<SharedTransformSystem>();
         _sprite = _entityManager.System<SpriteSystem>();
@@ -62,20 +56,20 @@ public sealed class NpcControlOverlay : Overlay
         foreach (var entity in _selection.SelectedEntities())
         {
             if (!_controllableQuery.TryComp(entity, out var controllable)
-                || !_utilityAi.TryGetCurrentGoal(entity, out var goal)
-                || !_prototype.Resolve(goal, out var proto))
+                || !_prototype.TryIndex(controllable.CurrentGoal, out var exec)
+                || !_prototype.Resolve(exec.Goal, out var proto))
                 continue;
 
             MapCoordinates lastPos;
 
-            if (_executable.TryGetTargetCoordinates(entity, out var coords))
+            if (controllable.CurrentTargetCoordinates is { } coords)
             {
                 var start = _transform.GetMapCoordinates(entity);
-                var end = _transform.ToMapCoordinates(coords.Value);
+                var end = _transform.ToMapCoordinates(coords);
                 var dist = (end.Position - start.Position).Length();
 
-                if (_executable.TryGetTarget(entity, out var uid))
-                    SetShader(uid.Value, proto.Color);
+                if (controllable.CurrentTarget is { } uid)
+                    SetShader(uid, proto.Color);
                 else if (dist > 0.5f)
                     DrawPointCircle(args, end, proto.Color);
 

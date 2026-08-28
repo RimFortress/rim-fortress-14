@@ -56,7 +56,7 @@ public partial class SharedExecutableGoalSystem
     [PublicAPI]
     public void ClearQueue(Entity<ControllableNpcComponent?> ent)
     {
-        if (!Resolve(ent, ref ent.Comp))
+        if (!Resolve(ent, ref ent.Comp) || ent.Comp.Queue.Count == 0)
             return;
 
         ent.Comp.Queue.Clear();
@@ -97,10 +97,9 @@ public partial class SharedExecutableGoalSystem
         }
         else
         {
-            // Place goals have no target entity to validate via CheckGoalStart, but the NPC
-            // still needs to actually be allowed to perform this specific goal - previously
-            // this check was skipped entirely for place goals.
-            if (targetCoords == null || !ent.Comp3.Goals.Contains(proto))
+            if (targetCoords == null
+                || !ent.Comp3.Goals.Contains(proto)
+                || !Goap.CheckCondition(ent, proto.Conditions))
                 return false;
         }
 
@@ -323,47 +322,6 @@ public partial class SharedExecutableGoalSystem
 
             target = uid;
             return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Returns the current target coordinates of the Utility AI goal, if any.
-    /// </summary>
-    [PublicAPI, Pure]
-    public bool TryGetTargetCoordinates(
-        Entity<UtilityAiComponent?> ent,
-        [NotNullWhen(true)] out EntityCoordinates? coords)
-    {
-        coords = null;
-
-        if (!_utilityAi.TryGetCurrentGoal(ent, out var current)
-            || !Executables.TryGetValue(current.Value, out var goals)
-            || !GoapQuery.TryComp(ent, out var goap))
-            return false;
-
-        foreach (var goal in goals)
-        {
-            if (!Proto.Resolve(goal, out var proto))
-                continue;
-
-            if (proto.GoalType.HasFlag(ExecutableGoalType.Place))
-            {
-                if (Goap.TryGetValue(goap.State, proto.TargetCoordinatesKey, out var result))
-                {
-                    coords = result;
-                    return true;
-                }
-
-                continue;
-            }
-
-            if (Goap.TryGetValue(goap.State, proto.TargetKey, out var uid))
-            {
-                coords = Transform(uid).Coordinates;
-                return true;
-            }
         }
 
         return false;

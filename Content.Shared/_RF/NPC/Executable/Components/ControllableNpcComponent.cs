@@ -34,12 +34,6 @@ public sealed partial class ControllableNpcComponent : Component
     public List<ProtoId<ExecutableGoalPrototype>> Goals = new();
 
     /// <summary>
-    /// A queue of goals for the agent to complete.
-    /// </summary>
-    [ViewVariables, AutoNetworkedField]
-    public Queue<ExecutableGoalQueueEntry> Queue = new();
-
-    /// <summary>
     /// Will the queue be cleared if even one of the goals fails?
     /// </summary>
     [DataField]
@@ -47,6 +41,21 @@ public sealed partial class ControllableNpcComponent : Component
 
     [DataField]
     public int QueueMaxCapacity = int.MaxValue;
+
+    /// <summary>
+    /// A queue of goals for the agent to complete.
+    /// </summary>
+    [ViewVariables, AutoNetworkedField]
+    public Queue<ExecutableGoalQueueEntry> Queue = new();
+
+    [ViewVariables, AutoNetworkedField]
+    public ProtoId<ExecutableGoalPrototype>? CurrentGoal;
+
+    [ViewVariables, AutoNetworkedField]
+    public EntityUid? CurrentTarget;
+
+    [ViewVariables, AutoNetworkedField]
+    public EntityCoordinates? CurrentTargetCoordinates;
 }
 
 /// <summary>

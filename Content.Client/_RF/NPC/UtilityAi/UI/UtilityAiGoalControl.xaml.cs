@@ -98,7 +98,7 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
 
         if (proto.Capture.Count > 0)
             AiUiHelper.AddLabel(CommonTab, "Capture:", string.Join(", ", proto.Capture));
-        
+
         if (proto.TempKeys.Count > 0)
             AiUiHelper.AddLabel(CommonTab, "TempKeys:", string.Join(", ", proto.TempKeys));
 
@@ -117,7 +117,7 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
 
         if (info.IncumbentBonus.Length > 0)
         {
-            var incumbentBox = AiUiHelper.AddBox(CurvesTab, "Incumbent Bonus", $"{info.IncumbentBonus[-1].Output:F3}");
+            var incumbentBox = AiUiHelper.AddBox(CurvesTab, "Incumbent Bonus", $"{info.IncumbentBonus[^1].Output:F3}");
 
             foreach (var curve in info.IncumbentBonus)
             {

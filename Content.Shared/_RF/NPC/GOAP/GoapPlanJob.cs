@@ -216,6 +216,11 @@ public sealed class GoapPlanJob(
     /// </summary>
     protected override async Task<(GoapPlan? Plan, GoapPlanDebugInfo? Debug)> Process()
     {
+        if (collectDebug)
+        {
+            // It's necessary to avoid the error: "Primary constructor parameter 'collectDebug' is never accessed"
+        }
+
         _conditionCache.Clear();
         _chain.Clear();
         _resolveCache.Clear();
