@@ -1,11 +1,17 @@
+using Content.IntegrationTests.Fixtures;
+using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Server._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
-using Content.Tests;
+using Content.Shared._RF.NPC.GOAP.Components;
+using Robust.Shared.Map;
 
 namespace Content.IntegrationTests.Tests._RF.NPC.GOAP;
 
 [TestFixture]
-public sealed class GoapStateTests : ContentUnitTest
+public sealed class GoapStateTests : GameTest
 {
+    [SidedDependency(Side.Server)] private readonly GoapSystem _goap = default!;
+
     private static readonly StateKey<int> KeyA = "A";
     private static readonly StateKey<bool> KeyB = "B";
     private static readonly StateKey<int> CountKey = "Count";
@@ -65,6 +71,26 @@ public sealed class GoapStateTests : ContentUnitTest
             Assert.That(dump.State[CountKey].Value, Is.EqualTo("3"));
             Assert.That(dump.State[FlagKey].Type, Does.Contain("Boolean"));
             Assert.That(dump.State[FlagKey].Value, Is.EqualTo("True"));
+        }
+    }
+
+    [Test]
+    [RunOnSide(Side.Server)]
+    public void GoapStateEcsDefaultsTest()
+    {
+        var agent = SSpawn(null);
+        var comp = SEntMan.EnsureComponent<GoapComponent>(agent);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_goap.TryGetValue(comp.State, GoapState.Owner, out var owner), Is.True);
+            Assert.That(owner, Is.EqualTo(agent));
+        }
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_goap.TryGetValue(comp.State, GoapState.OwnerCoordinates, out var ownerCoords), Is.True);
+            Assert.That(ownerCoords, Is.EqualTo(EntityCoordinates.Invalid));
         }
     }
 }

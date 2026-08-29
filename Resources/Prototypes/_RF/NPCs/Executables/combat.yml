@@ -2,7 +2,9 @@
   id: Attack
   parent: BaseCombatGoal
   goal: Attack
-  verbIcon: _RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: skull_crossbones_solid
   targetKey: Query/AttackTarget
   goalType:
   - Verb

@@ -102,3 +102,7 @@
     factions:
     - RimFortress
   - type: Notification
+  - type: UserInterface
+    interfaces:
+      enum.NpcControllerUiKey.Key:
+        type: ControllableNpcBoundUserInterface

@@ -1,8 +1,8 @@
+using Content.IntegrationTests.Fixtures;
+using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Conditions;
 using Content.Shared._RF.NPC.GOAP.Serializers;
-using Content.Tests;
-using Robust.Shared.IoC;
 using Robust.Shared.Serialization.Manager;
 
 namespace Content.IntegrationTests.Tests._RF.NPC.GOAP;
@@ -11,22 +11,31 @@ namespace Content.IntegrationTests.Tests._RF.NPC.GOAP;
 [TestOf(typeof(GoapStateSerializer))]
 [TestOf(typeof(GoapConditionSerializer))]
 [TestOf(typeof(GoapConditionExpression))]
-public sealed class GoapSerializationTest : ContentUnitTest
+public sealed class GoapSerializationTest : GameTest
 {
-    private ISerializationManager _serializationManager = default!;
+    [SidedDependency(Side.Server)] private readonly ISerializationManager _serializationManager = default!;
 
-    [OneTimeSetUp]
-    public void OneTimeSetup()
-    {
-        _serializationManager = IoCManager.Resolve<ISerializationManager>();
-        _serializationManager.Initialize();
-    }
-
+    [Test]
+    [TestCase("Count == true", typeof(EqualsBool))]
     [TestCase("Count == 1", typeof(EqualsInt))]
     [TestCase("Count == 1.0", typeof(EqualsFloat))]
     [TestCase("Count == -1", typeof(EqualsInt))]
     [TestCase("Count == -1.5", typeof(EqualsFloat))]
     [TestCase("Count == Number", typeof(EqualsString))]
+    [TestCase("Count == null", typeof(KeyNotExist))]
+    [TestCase("Count != true", typeof(NotEqualsBool))]
+    [TestCase("Count != 1", typeof(NotEqualsInt))]
+    [TestCase("Count != 1.0", typeof(NotEqualsFloat))]
+    [TestCase("Count != Number", typeof(NotEqualsString))]
+    [TestCase("Count != null", typeof(KeyExist))]
+    [TestCase("Count > 1", typeof(MoreThanInt))]
+    [TestCase("Count > 1.0", typeof(MoreThanFloat))]
+    [TestCase("Count >= 1", typeof(MoreThanOrEqualInt))]
+    [TestCase("Count >= 1.0", typeof(MoreThanOrEqualFloat))]
+    [TestCase("Count < 1", typeof(LessThanInt))]
+    [TestCase("Count < 1.0", typeof(LessThanFloat))]
+    [TestCase("Count <= 1", typeof(LessThanOrEqualInt))]
+    [TestCase("Count <= 1.0", typeof(LessThanOrEqualFloat))]
     public void TryParse_SelectsExpectedNumericType(string text, Type expectedType)
     {
         using (Assert.EnterMultipleScope())
@@ -45,6 +54,7 @@ public sealed class GoapSerializationTest : ContentUnitTest
     }
 
     [Test]
+    [RunOnSide(Side.Server)]
     public void GoapStateSerializer_CopyTo_CopiesAllValues()
     {
         var serializer = new GoapStateSerializer();

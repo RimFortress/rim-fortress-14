@@ -2,7 +2,9 @@
   id: Chop
   parent: BaseExecutableGoal
   goal: Chop
-  verbIcon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: tree_solid
   targetKey: Query/ChopTarget
   maxPerformers: 1
   conditions:
@@ -18,7 +20,9 @@
   id: Dig
   parent: BaseExecutableGoal
   goal: Dig
-  verbIcon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: person_digging_solid
   targetKey: Query/DigTarget
   maxPerformers: 1
   conditions:

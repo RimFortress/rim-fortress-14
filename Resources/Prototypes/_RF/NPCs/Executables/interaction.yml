@@ -2,7 +2,9 @@
   id: Drop
   parent: BaseExecutableGoal
   goal: Drop
-  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_solid
   selfPerform: true
   conditions:
   - !type:KeyEqual
@@ -13,7 +15,9 @@
   id: Interact
   parent: BaseExecutableGoal
   goal: Interact
-  verbIcon: _RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_pointer_solid
   maxPerformers: 1
   targetWhitelist:
     requireAll: false
@@ -27,7 +31,9 @@
   id: InventoryStorage
   parent: BaseExecutableGoal
   goal: InventoryStorage
-  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_solid
   targetWhitelist:
     components:
     - Item
@@ -36,7 +42,9 @@
   id: PickUp
   parent: BaseExecutableGoal
   goal: PickUp
-  verbIcon: _RF/Interface/VerbIcons/hand-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_solid
   targetKey: PickupTarget
   maxPerformers: 1
   targetWhitelist:
@@ -47,7 +55,9 @@
   id: Pry
   parent: BaseExecutableGoal
   goal: Pry
-  verbIcon: _RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: left_right_solid
   maxPerformers: 1
   targetWhitelist:
     components:
@@ -57,7 +67,9 @@
   id: TakeOwnership
   parent: BaseExecutableGoal
   goal: TakeOwnership
-  verbIcon: _RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: house_flag_solid_full
   targetKey: Query/TakeOwnershipTarget
   maxPerformers: 1
   conditions:

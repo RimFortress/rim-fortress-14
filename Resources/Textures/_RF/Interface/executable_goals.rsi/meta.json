@@ -1,0 +1,53 @@
+{
+    "version": 1,
+    "size": {
+        "x": 64,
+        "y": 64
+    },
+    "license": "CC-BY-SA-3.0",
+    "copyright": "Font Awesome by Dave Gandy - http://fontawesome.io, edited by poeMota (GitHub)",
+    "states": [
+        {
+            "name": "cubes_solid"
+        },
+        {
+            "name": "hammer_solid"
+        },
+        {
+            "name": "trowel_bricks_solid"
+        },
+        {
+            "name": "hand_fist_solid_full"
+        },
+        {
+            "name": "hand_holding_medical_solid"
+        },
+        {
+            "name": "hand_pointer_solid"
+        },
+        {
+            "name": "hand_solid"
+        },
+        {
+            "name": "house_flag_solid_full"
+        },
+        {
+            "name": "person_digging_solid"
+        },
+        {
+            "name": "seedling_solid"
+        },
+        {
+            "name": "skull_crossbones_solid"
+        },
+        {
+            "name": "tree_solid"
+        },
+        {
+            "name": "utensils_solid_full"
+        },
+        {
+            "name": "left_right_solid"
+        }
+    ]
+}

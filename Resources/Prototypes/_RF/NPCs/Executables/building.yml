@@ -2,7 +2,9 @@
   id: Construction
   parent: BaseExecutableGoal
   goal: Construction
-  verbIcon: _RF/Interface/hammer-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hammer_solid
   targetKey: Query/Construction
   maxPerformers: 1
   targetWhitelist:
@@ -14,7 +16,9 @@
   id: Deconstruct
   parent: BaseExecutableGoal
   goal: Deconstruct
-  verbIcon: _RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: trowel_bricks_solid
   targetKey: Query/Deconstruct
   maxPerformers: 1
   goalType:

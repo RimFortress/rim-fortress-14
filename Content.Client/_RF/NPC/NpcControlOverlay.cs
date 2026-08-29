@@ -185,10 +185,10 @@ public sealed class NpcControlOverlay : Overlay
         {
             var proto = _prototype.Index(comp.Goal);
 
-            if (proto.VerbIcon == null)
+            if (proto.Icon == null)
                 continue;
 
-            var icon = _sprite.Frame0(proto.VerbIcon);
+            var icon = _sprite.Frame0(proto.Icon);
             var box = Box2.CenteredAround(xform.Coordinates.Position, new Vector2(0.5f));
             var color = _prototype.Index(proto.Goal).Color.WithAlpha(0.6f);
 

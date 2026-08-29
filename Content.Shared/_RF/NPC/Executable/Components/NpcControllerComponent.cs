@@ -2,6 +2,7 @@ using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.Executable.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.NPC.Executable.Components;
 
@@ -24,4 +25,10 @@ public sealed partial class NpcControllerComponent : Component
     /// </summary>
     [AutoNetworkedField]
     public readonly HashSet<EntityUid> CanControl = new();
+}
+
+[Serializable, NetSerializable]
+public enum NpcControllerUiKey : byte
+{
+    Key,
 }

@@ -8,12 +8,10 @@ using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
-using Content.Shared._RF.Selection.Systems;
 using Content.Shared.CombatMode;
 using Content.Shared.Maps;
 using Content.Shared.NPC;
 using Content.Shared.Physics;
-using Content.Shared.Verbs;
 using Content.Shared.Whitelist;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
@@ -39,7 +37,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     [Dependency] private readonly TurfSystem _turf = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
-    [Dependency] private readonly SharedSelectionSystem _selection = default!;
     [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
 
     [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
@@ -56,7 +53,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
         SubscribeLocalEvent<ControllableNpcComponent, BeforeUtilityAiGoalFinished>(OnUtilityAiGoalFinished);
 
         SubscribeAllEvent<SetGoalRequest>(OnGoalRequest);
@@ -80,53 +76,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         {
             if (!Executables.TryAdd(proto.Goal, new() { proto }))
                 Executables[proto.Goal].Add(proto);
-        }
-    }
-
-    private void OnGetVerbs(GetVerbsEvent<Verb> ev)
-    {
-        if (!TryComp(ev.User, out NpcControllerComponent? control))
-            return;
-
-        var tasks = new Dictionary<ExecutableGoalPrototype, List<EntityUid>>();
-        var prototypes = control.Goals.Select(Proto.Index).ToList();
-
-        foreach (var entity in _selection.SelectedEntities(ev.User))
-        {
-            if (!CanControl(ev.User, entity)
-                || FindSatisfiedGoals(entity, ev.Target, prototypes, ExecutableGoalType.Verb) is not { } suitable)
-                continue;
-
-            foreach (var task in suitable)
-            {
-                if (!tasks.TryAdd(task, new()))
-                    tasks[task].Add(entity);
-                else
-                    tasks[task] = new() { entity };
-            }
-        }
-
-        foreach (var (goal, entities) in tasks)
-        {
-            ev.Verbs.Add(new()
-            {
-                Text = Loc.GetString(Proto.Index(goal.Goal).Name),
-                Icon = goal.VerbIcon,
-                Category = VerbCategory.NpcTask,
-                CloseMenu = true,
-                ClientExclusive = true,
-                Act = () =>
-                {
-                    if (!Timing.IsFirstTimePredicted)
-                        return;
-
-                    RaisePredictiveEvent(new SetVerbGoalRequest(
-                        entities.Select(x => GetNetEntity(x)).ToList(),
-                        goal.ID,
-                        GetNetEntity(ev.Target),
-                        NeedForceGoalExecution()));
-                },
-            });
         }
     }
 
@@ -310,49 +259,6 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     #endregion
 
     protected virtual bool NeedForceGoalExecution() => false;
-
-    /// <summary>
-    /// Finds the suitable goals for the target from the goals list.
-    /// </summary>
-    protected List<ExecutableGoalPrototype>? FindSatisfiedGoals(
-        Entity<GoapComponent?> ent,
-        EntityUid? target,
-        List<ExecutableGoalPrototype> goals,
-        ExecutableGoalType? type = null)
-    {
-        List<ExecutableGoalPrototype>? zeroGoals = null;
-        List<ExecutableGoalPrototype>? satisfied = null;
-
-        // Needed below to check whether this specific NPC is allowed to perform a place
-        // goal at all - CheckGoalStart does the same check for targeted goals, but place
-        // goals have no target to run CheckGoalStart against.
-        ControllableQuery.TryComp(ent, out var controllable);
-
-        foreach (var proto in goals)
-        {
-            if (type != null && !proto.GoalType.HasFlag(type.Value))
-                continue;
-
-            if (proto.GoalType.HasFlag(ExecutableGoalType.Place)
-                && controllable != null
-                && controllable.Goals.Contains(proto)
-                && Goap.CheckCondition(ent, proto.Conditions))
-            {
-                zeroGoals ??= new();
-                zeroGoals.Add(proto);
-            }
-
-            if (target == null
-                || ent == target && !proto.SelfPerform
-                || !CheckGoalStart(ent, proto, target.Value))
-                continue;
-
-            satisfied ??= new();
-            satisfied.Add(proto);
-        }
-
-        return satisfied ?? zeroGoals;
-    }
 
     private bool CheckGoalStart(
         Entity<GoapComponent?, ControllableNpcComponent?> ent,

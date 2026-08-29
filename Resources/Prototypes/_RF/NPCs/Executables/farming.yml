@@ -2,7 +2,9 @@
   id: BaseFarmingGoal
   parent: BaseExecutableGoal
   abstract: true
-  verbIcon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: seedling_solid
   maxPerformers: 1
   targetWhitelist:
     components:

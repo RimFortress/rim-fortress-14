@@ -116,6 +116,50 @@ public partial class SharedExecutableGoalSystem
     }
 
     /// <summary>
+    /// Finds the suitable goals for the target from the goals list.
+    /// </summary>
+    [PublicAPI, Pure]
+    public List<ExecutableGoalPrototype>? FindSatisfiedGoals(
+        Entity<GoapComponent?> ent,
+        EntityUid? target,
+        List<ExecutableGoalPrototype> goals,
+        ExecutableGoalType? type = null)
+    {
+        List<ExecutableGoalPrototype>? zeroGoals = null;
+        List<ExecutableGoalPrototype>? satisfied = null;
+
+        // Needed below to check whether this specific NPC is allowed to perform a place
+        // goal at all - CheckGoalStart does the same check for targeted goals, but place
+        // goals have no target to run CheckGoalStart against.
+        ControllableQuery.TryComp(ent, out var controllable);
+
+        foreach (var proto in goals)
+        {
+            if (type != null && !proto.GoalType.HasFlag(type.Value))
+                continue;
+
+            if (proto.GoalType.HasFlag(ExecutableGoalType.Place)
+                && controllable != null
+                && controllable.Goals.Contains(proto)
+                && Goap.CheckCondition(ent, proto.Conditions))
+            {
+                zeroGoals ??= new();
+                zeroGoals.Add(proto);
+            }
+
+            if (target == null
+                || ent == target && !proto.SelfPerform
+                || !CheckGoalStart(ent, proto, target.Value))
+                continue;
+
+            satisfied ??= new();
+            satisfied.Add(proto);
+        }
+
+        return satisfied ?? zeroGoals;
+    }
+
+    /// <summary>
     /// Checks if the user can control this NPC
     /// </summary>
     /// <param name="user">NPC controller entity.</param>

@@ -1,19 +1,17 @@
 using System.Linq;
+using Content.Client._RF.NPC.Executable.UI;
 using Content.Client._RF.Selection;
-using Content.Client.Verbs.UI;
 using Content.Shared._RF.NPC.Executable.Components;
 using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared.CombatMode;
 using Content.Shared.Input;
-using Robust.Client.GameStates;
+using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.Player;
-using Robust.Client.UserInterface;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
-using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
@@ -22,13 +20,11 @@ namespace Content.Client._RF.NPC.Executable.Systems;
 
 public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 {
-    [Dependency] private readonly IUserInterfaceManager _ui = default!;
     [Dependency] private readonly IOverlayManager _overlay = default!;
     [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly SelectionSystem _selection = default!;
-    [Dependency] private readonly IClientNetManager _net = default!;
-    [Dependency] private readonly IClientGameStateManager _state = default!;
+    [Dependency] private readonly UserInterfaceSystem _uiSystem = default!;
 
     private static readonly SpriteSpecifier EraseIcon
         = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
@@ -39,6 +35,9 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     public ProtoId<ExecutableGoalPrototype>? SelectedTask { get; private set; }
 
     public bool Eraser { get; private set; }
+
+    [Access(typeof(ControllableNpcBoundUserInterface))]
+    public EntityUid? UiTarget;
 
     public override void Initialize()
     {
@@ -129,9 +128,8 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                 },
                 filter: NpcTaskFilter,
                 color: goal.Color,
-                icon: proto.VerbIcon,
-                iconColor: goal.Color,
-                netSync: true);
+                icon: proto.Icon,
+                iconColor: goal.Color);
         }
         else
             DefaultSelection();
@@ -161,8 +159,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                         entities.Select(x => GetNetEntity(x)).ToList()));
                     _selection.ClearSelection();
                 },
-                icon: EraseIcon,
-                netSync: true);
+                icon: EraseIcon);
         }
         else
             DefaultSelection();
@@ -185,7 +182,10 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
                 if (args.ActUid is { } uid)
                 {
-                    _ui.GetUIController<VerbMenuUIController>().OpenVerbMenu(uid);
+                    if (_player.LocalEntity is { } playerUid
+                        && _uiSystem.TryOpenUi(playerUid, NpcControllerUiKey.Key, playerUid, true))
+                        UiTarget = uid;
+
                     return;
                 }
 
@@ -199,8 +199,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
                     AddToQueue = !NeedForceGoalExecution(),
                 });
             },
-            filter: NpcFilter,
-            netSync: true);
+            filter: NpcFilter);
     }
 
     #endregion

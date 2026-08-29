@@ -81,7 +81,7 @@ public sealed partial class ActionsHotbarWidget : UIWidget
             {
                 ToolTip = Loc.GetString(_proto.Index(proto.Goal).Name),
                 ToggleMode = true,
-                Texture = proto.VerbIcon != null ? _sprite.Frame0(proto.VerbIcon) : null,
+                Texture = proto.Icon != null ? _sprite.Frame0(proto.Icon) : null,
             };
 
             button.OnToggled += args =>
