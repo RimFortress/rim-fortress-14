@@ -109,28 +109,34 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
     private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref BeforeUtilityAiGoalFinished args)
     {
-        if (ent.Comp.CurrentGoal is { } exec
-            && TryComp(ent, out GoapComponent? goap)
-            && Proto.Resolve(exec, out var proto))
+        if (Executables.TryGetValue(args.Goal, out var execs)
+            && TryComp(ent, out GoapComponent? goap))
         {
-            // Remove passive target when the goal successfully finished.
-            if (args.Reason == UtilityAiGoalFinishReason.Finished
-                && proto.GoalType.HasFlag(ExecutableGoalType.Passive)
-                && SharedGoapSystem.TryGetValueNoEcsDefaults(goap.State, proto.TargetKey, out var target)
-                && PassiveGoalQuery.TryComp(target, out var passive)
-                && passive.Goal == exec)
-                RemovePassiveTarget(target);
+            foreach (var exec in execs)
+            {
+                if (!Proto.Resolve(exec, out var proto))
+                    continue;
 
-            _utilityAi.ReleaseCaptured(ent.Owner);
-            Goap.RemoveKey(goap.State, proto.TargetCoordinatesKey);
-            Goap.RemoveKey(goap.State, proto.TargetKey);
+                // Remove passive target when the goal successfully finished.
+                if (args.Reason == UtilityAiGoalFinishReason.Finished
+                    && proto.GoalType.HasFlag(ExecutableGoalType.Passive)
+                    && SharedGoapSystem.TryGetValueNoEcsDefaults(goap.State, proto.TargetKey, out var target)
+                    && PassiveGoalQuery.TryComp(target, out var passive)
+                    && passive.Goal == exec)
+                    RemovePassiveTarget(target);
 
-            ent.Comp.CurrentGoal = null;
-            ent.Comp.CurrentTarget = null;
-            ent.Comp.CurrentTargetCoordinates = null;
-            DirtyField(ent, ent.Comp, nameof(ControllableNpcComponent.CurrentGoal));
-            DirtyField(ent, ent.Comp, nameof(ControllableNpcComponent.CurrentTarget));
-            DirtyField(ent, ent.Comp, nameof(ControllableNpcComponent.CurrentTargetCoordinates));
+                _utilityAi.ReleaseCaptured(ent.Owner);
+                Goap.RemoveKey(goap.State, proto.TargetCoordinatesKey);
+                Goap.RemoveKey(goap.State, proto.TargetKey);
+
+                ent.Comp.CurrentGoal = null;
+                ent.Comp.CurrentTarget = null;
+                ent.Comp.CurrentTargetCoordinates = null;
+                DirtyField(ent, ent.Comp, nameof(ControllableNpcComponent.CurrentGoal));
+                DirtyField(ent, ent.Comp, nameof(ControllableNpcComponent.CurrentTarget));
+                DirtyField(ent, ent.Comp, nameof(ControllableNpcComponent.CurrentTargetCoordinates));
+                break;
+            }
         }
 
         if (args.Handled || ent.Comp.Queue.Count == 0)
@@ -309,7 +315,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
 
         ent.Comp3.CurrentGoal = proto;
         ent.Comp3.CurrentTarget = target;
-        ent.Comp3.CurrentTargetCoordinates = coords;
+        ent.Comp3.CurrentTargetCoordinates = coords ?? (target != null ? Transform(target.Value).Coordinates : null);
 
         if (_net.IsServer)
         {
