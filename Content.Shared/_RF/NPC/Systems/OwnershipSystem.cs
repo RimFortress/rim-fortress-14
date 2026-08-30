@@ -366,7 +366,7 @@ public sealed class OwnershipSystem : EntitySystem
     [PublicAPI]
     public SameOwnerEntitiesEnumerator GetEntitiesEnumerator(Entity<OwnershipComponent?> ent)
     {
-        if (!Resolve(ent, ref ent.Comp))
+        if (!Resolve(ent, ref ent.Comp, false))
             return new(new());
 
         var entities = new List<HashSet<EntityUid>>();
@@ -392,7 +392,7 @@ public sealed class OwnershipSystem : EntitySystem
     {
         var query = GetEntityQuery<TComp>();
 
-        if (!Resolve(ent, ref ent.Comp))
+        if (!Resolve(ent, ref ent.Comp, false))
             return new(new(), query);
 
         var entities = new List<HashSet<EntityUid>>();
@@ -420,7 +420,7 @@ public sealed class OwnershipSystem : EntitySystem
         var query1 = GetEntityQuery<TComp1>();
         var query2 = GetEntityQuery<TComp2>();
 
-        if (!Resolve(ent, ref ent.Comp))
+        if (!Resolve(ent, ref ent.Comp, false))
             return new(new(), query1, query2);
 
         var entities = new List<HashSet<EntityUid>>();

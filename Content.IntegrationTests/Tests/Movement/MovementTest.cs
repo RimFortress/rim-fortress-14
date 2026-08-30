@@ -1,7 +1,6 @@
 #nullable enable
 using System.Numerics;
 using Content.IntegrationTests.Tests.Interaction;
-using Content.Shared._RF.Needs.Systems; // RimFortress
 using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -57,8 +56,6 @@ public abstract class MovementTest : InteractionTest
             WallLeft = SEntMan.GetNetEntity(sWallLeft);
             WallRight = SEntMan.GetNetEntity(sWallRight);
         }
-
-        SEntMan.System<NeedsSystem>().SetAllNeedsMax(SEntMan.GetEntity(Player)); // RimFortress: needs can slow down entities
 
         await AddGravity();
         await AddAtmosphere();

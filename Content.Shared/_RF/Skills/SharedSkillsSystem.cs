@@ -143,7 +143,7 @@ public abstract class SharedSkillsSystem : EntitySystem
     [PublicAPI]
     public int GetLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
-        if (!Resolve(ent, ref ent.Comp)
+        if (!Resolve(ent, ref ent.Comp, false)
             || ent.Comp.Skills.FirstOrDefault(x => x.Id == skill) is not { } data)
             return 0;
 
@@ -224,7 +224,8 @@ public abstract class SharedSkillsSystem : EntitySystem
     {
         data = null;
 
-        if (!Resolve(ent, ref ent.Comp) || ent.Comp.Skills.FirstOrDefault(x => x.Id == skill) is not { } skillData)
+        if (!Resolve(ent, ref ent.Comp, false)
+            || ent.Comp.Skills.FirstOrDefault(x => x.Id == skill) is not { } skillData)
             return false;
 
         data = skillData;

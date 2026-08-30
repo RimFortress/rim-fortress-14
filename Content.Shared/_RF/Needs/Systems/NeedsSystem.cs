@@ -123,7 +123,9 @@ public sealed class NeedsSystem : EntitySystem
     {
         thresholdId = null;
 
-        if (!_prototype.Resolve(protoId, out var proto) || proto.Thresholds.Count == 0)
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !_prototype.Resolve(protoId, out var proto)
+            || proto.Thresholds.Count == 0)
             return false;
 
         needValue ??= GetValue(ent, protoId);

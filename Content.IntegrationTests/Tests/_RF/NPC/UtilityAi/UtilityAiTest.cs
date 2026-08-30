@@ -1,244 +1,257 @@
 #nullable enable
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
-using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.UtilityAi;
+using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Prototypes;
-using static NUnit.Framework.Assert;
 
 namespace Content.IntegrationTests.Tests._RF.NPC.UtilityAi;
 
-[TestOf(typeof(UtilityAiGoalPrototype))]
-public sealed class UtilityAiTest : GameTest
+[TestOf(typeof(SharedUtilityAiSystem))]
+public sealed class UtilityTest : GameTest
 {
     [TestPrototypes]
     private const string Prototypes = @"
 - type: goapCompound
-  id: TestUaiInheritRootCompound
+  id: TestUaiScoringRootCompound
   tasks:
   - preconditions: []
     action: !type:MoveTo
     effects:
       Noop: true
 
-- type: entity
-  id: TestUaiInheritAgent
-  name: uai inherit test agent
-  components:
-  - type: Goap
-    rootTask: TestUaiInheritRootCompound
-  - type: UtilityAi
-
-- type: entity
-  id: TestUaiInheritDeconstructAgent
-  name: uai deconstruct test agent
-  components:
-  - type: Goap
-    rootTask: TestUaiInheritRootCompound
-  - type: UtilityAi
-    goals:
-    - TestDeconstruct
+- type: utilityAiGoal
+  id: TestUaiScoreLow
+  scoreCurves:
+  - float: 0.30
 
 - type: utilityAiGoal
-  id: TestBaseUtilityAiGoal
-  conditions:
-  - CombatMode == false
+  id: TestUaiScoreHigh
+  scoreCurves:
+  - float: 0.90
+
+- type: utilityAiGoal
+  id: TestUaiScoreNearMax
+  scoreCurves:
+  - float: 0.99
+
+- type: utilityAiGoal
+  id: TestUaiScoreIncumbentBoost
+  scoreCurves:
+  - float: 0.90
   incumbentBonus:
   - add: [float: 0.05]
   - mul: [float: 1.10]
 
 - type: utilityAiGoal
-  id: TestBaseExecutableGoal
+  id: TestUaiParentGoal
+  failPenalty: 0.5
   scoreCurves:
-  - float: 1
+  - float: 0.42
 
 - type: utilityAiGoal
-  id: TestAttack
-  parent: TestBaseUtilityAiGoal
-  color: ""#FF0000""
-  conditions:
-  - CombatMode == true
-  - !type:Or
-    conditions:
-    - AttackTarget == null
-    - !type:MobState
-      targetKey: AttackTarget
-      targetState: Dead
-      invert: true
-  scoreCurves:
-  - float: 0.90
-  capture:
-  - Query/AttackTarget
-  goalState:
-    TargetAttacked: true
+  id: TestUaiChildInherits
+  parent: TestUaiParentGoal
 
 - type: utilityAiGoal
-  id: TestConstruction
-  parent: TestBaseUtilityAiGoal
-  color: ""#FFFF00""
+  id: TestUaiChildOverrides
+  parent: TestUaiParentGoal
   scoreCurves:
-  - preset: BaseUAIScore
-    variables:
-      skill:
-      - !type:SkillLevel
-        skill: Construction
-      targetsCount:
-      - !type:SearchQueryCount
-        query: Construction
-      performersCount:
-      - !type:GoalPerformers
-        goal: Construction
-      importance: [float: 0.55]
-  goalState:
-    TargetConstructed: true
+  - float: 0.77
 
-- type: utilityAiGoal
-  id: TestDeconstruct
-  color: ""#945A1C""
-  scoreCurves:
-  - float: 1
-  goalState:
-    TargetDeconstruct: true
+- type: entity
+  id: TestUaiScoringAgentPlain
+  name: uai scoring test agent (plain)
+  components:
+  - type: Goap
+    rootTask: TestUaiScoringRootCompound
+  - type: UtilityAi
+
+- type: entity
+  id: TestUaiScoringAgentTwoGoals
+  name: uai scoring test agent (two goals, different scores)
+  components:
+  - type: Goap
+    rootTask: TestUaiScoringRootCompound
+  - type: UtilityAi
+    goals:
+    - TestUaiScoreLow
+    - TestUaiScoreHigh
+
+- type: entity
+  id: TestUaiScoringAgentIncumbentVsChallenger
+  name: uai scoring test agent (incumbent vs challenger)
+  components:
+  - type: Goap
+    rootTask: TestUaiScoringRootCompound
+  - type: UtilityAi
+    goals:
+    - TestUaiScoreIncumbentBoost
+    - TestUaiScoreNearMax
 ";
 
-    private static readonly ProtoId<UtilityAiGoalPrototype> Attack = "TestAttack";
-    private static readonly ProtoId<UtilityAiGoalPrototype> Construction = "TestConstruction";
-    private static readonly ProtoId<UtilityAiGoalPrototype> Deconstruct = "TestDeconstruct";
-
-    [SidedDependency(Side.Server)] private readonly SharedUtilityAiSystem _uai = null!;
+    [SidedDependency(Side.Server)] private readonly SharedUtilityAiSystem _uai = default!;
+    [SidedDependency(Side.Server)] private readonly UaiScoreModifierTestSystem _scoreModifier = default!;
 
     /// <summary>
-    /// A child prototype that redeclares <c>conditions:</c> must fully replace the parent's
-    /// list, not append to it - <c>Attack</c> declares 2 conditions of its own
-    /// ("CombatMode == true" plus the Or-clause), which directly contradicts the parent's
-    /// single "CombatMode == false" condition, so a merge would be nonsensical content-wise.
+    /// A bare <c>scoreCurves: [float: X]</c> goal, when it is NOT the agent's current goal,
+    /// must score exactly X - the incumbent-bonus branch in <c>GetScore</c> must not fire for
+    /// goals the agent isn't already running.
     /// </summary>
     [Test]
     [RunOnSide(Side.Server)]
-    public void TestChildOverridesConditionsListInsteadOfMerging()
+    public void TestGetScoreReturnsRawCurveValueWhenNotIncumbent()
     {
-        var attack = SProtoMan.Index(Attack);
+        var ent = SSpawn("TestUaiScoringAgentPlain");
 
-        That(attack.Conditions, Has.Count.EqualTo(2));
+        Assert.That(_uai.GetScore(ent, "TestUaiScoreHigh"), Is.EqualTo(0.90f).Within(0.0001f));
     }
 
     /// <summary>
-    /// Each goal's <c>goalState:</c> must parse into a <c>GoapState</c> with exactly the
-    /// declared key set to <c>true</c> - one key per goal here, but three different goals, so
-    /// this also guards against state leaking or being shared between prototype instances.
+    /// Once a goal is set as the agent's current goal, <c>GetScore</c> must run the score
+    /// through <c>IncumbentBonus</c> instead of returning the raw curve value.
+    /// <c>base.yml</c>'s <c>incumbentBonus: [add: 0.05, mul: 1.10]</c> pattern is a sequential
+    /// chain (each curve consumes the previous result), so for a base score of 0.90 the
+    /// expected value is <c>(0.90 + 0.05) * 1.10 == 1.045</c>, which then gets clamped down to
+    /// 1 by <c>GetScore</c>'s final <c>Math.Clamp</c>. Getting either the chain order or the
+    /// clamp wrong would silently make an incumbent goal look worse (or artificially perfect)
+    /// without ever throwing.
     /// </summary>
     [Test]
     [RunOnSide(Side.Server)]
-    public void TestGoalStateParsesDistinctPerPrototype()
+    public void TestGetScoreAppliesIncumbentBonusChainAndClamps()
     {
-        var attack = SProtoMan.Index(Attack);
-        var construction = SProtoMan.Index(Construction);
-        var deconstruct = SProtoMan.Index(Deconstruct);
+        var ent = SSpawn("TestUaiScoringAgentPlain");
+        _uai.SetGoal(ent, "TestUaiScoreIncumbentBoost");
 
-        using (EnterMultipleScope())
+        Assert.That(_uai.GetScore(ent, "TestUaiScoreIncumbentBoost"), Is.EqualTo(1f));
+    }
+
+    /// <summary>
+    /// <c>TryGetGoal</c> must return the goal with the strictly higher score regardless of
+    /// which order the two candidates happen to be visited in (<c>Goals</c> is a
+    /// <c>HashSet</c>, so iteration order isn't something the caller controls). This is the
+    /// core max-selection contract (<c>max.Value.Score &lt; score</c>), exercised with two
+    /// curve values whose relative ordering is unambiguous.
+    /// </summary>
+    [Test]
+    [RunOnSide(Side.Server)]
+    public void TestTryGetGoalPicksHigherScoringCandidate()
+    {
+        var ent = SSpawn("TestUaiScoringAgentTwoGoals");
+
+        Assert.That(_uai.TryGetGoal(ent, out var protoId), Is.True);
+
+        ProtoId<UtilityAiGoalPrototype> expected = "TestUaiScoreHigh";
+        Assert.That(protoId, Is.EqualTo(expected));
+    }
+
+    /// <summary>
+    /// An incumbent goal whose boosted score (1.0, from the previous test's math) beats a
+    /// non-incumbent challenger's higher *raw* curve value (0.99) must still win. This proves
+    /// the incumbent bonus is actually wired into <c>TryGetGoal</c>'s comparison loop, not
+    /// just observable in isolation via <c>GetScore</c>.
+    /// </summary>
+    [Test]
+    [RunOnSide(Side.Server)]
+    public void TestTryGetGoalPrefersBoostedIncumbentOverHigherRawChallenger()
+    {
+        var ent = SSpawn("TestUaiScoringAgentIncumbentVsChallenger");
+        _uai.SetGoal(ent, "TestUaiScoreIncumbentBoost");
+
+        Assert.That(_uai.TryGetGoal(ent, out var protoId), Is.True);
+
+        ProtoId<UtilityAiGoalPrototype> expected = "TestUaiScoreIncumbentBoost";
+        Assert.That(protoId, Is.EqualTo(expected));
+    }
+
+    /// <summary>
+    /// <see cref="UtilityAiGoalScoreModify"/> subscribers can push the score arbitrarily far
+    /// out of range, and <c>GetScore</c> must still clamp the final result to [0, 1] in both
+    /// directions. This is the only test in this file that depends on a locally-defined
+    /// <see cref="UaiScoreModifierTestSystem"/> subscribing to the event - Robust's
+    /// entity-system manager auto-discovers and initializes any public non-abstract
+    /// <c>EntitySystem</c> in a loaded assembly, which includes the test assembly itself.
+    /// </summary>
+    [Test]
+    [RunOnSide(Side.Server)]
+    public void TestGetScoreClampsAfterEventModification()
+    {
+        var ent = SSpawn("TestUaiScoringAgentPlain");
+
+        try
         {
-            That(attack.GoalState, Has.Count.EqualTo(1));
-            That(attack.GoalState.GetValue(new StateKey<bool>("TargetAttacked")), Is.True);
+            _scoreModifier.Delta = 10f;
+            Assert.That(_uai.GetScore(ent, "TestUaiScoreHigh"), Is.EqualTo(1f));
 
-            That(construction.GoalState, Has.Count.EqualTo(1));
-            That(construction.GoalState.GetValue(new StateKey<bool>("TargetConstructed")), Is.True);
-
-            That(deconstruct.GoalState, Has.Count.EqualTo(1));
-            That(deconstruct.GoalState.GetValue(new StateKey<bool>("TargetDeconstruct")), Is.True);
+            _scoreModifier.Delta = -10f;
+            Assert.That(_uai.GetScore(ent, "TestUaiScoreHigh"), Is.Zero);
+        }
+        finally
+        {
+            // Reset so this doesn't leak into another test sharing the pooled server.
+            _scoreModifier.Delta = 0f;
         }
     }
 
     /// <summary>
-    /// <c>Attack</c>'s single <c>capture:</c> entry must parse to exactly the one declared
-    /// key.
+    /// A child goal prototype that doesn't declare its own <c>scoreCurves</c>/<c>failPenalty</c>
+    /// must inherit the parent's values rather than falling back to the type's own C# defaults
+    /// (<c>FailPenalty = 0.2f</c>, empty <c>ScoreCurves</c>). Asserting against the parent's
+    /// deliberately-non-default values (0.5 vs the 0.2 default, 0.42 vs an empty curve list)
+    /// is what makes this a real inheritance check rather than a coincidental default match.
     /// </summary>
     [Test]
     [RunOnSide(Side.Server)]
-    public void TestCaptureKeyParsesForAttack()
+    public void TestChildGoalInheritsUnsetFieldsFromParent()
     {
-        var attack = SProtoMan.Index(Attack);
+        var ent = SSpawn("TestUaiScoringAgentPlain");
+        var protoId = new ProtoId<UtilityAiGoalPrototype>("TestUaiChildInherits");
+        var proto = SProtoMan.Index(protoId);
 
-        using (EnterMultipleScope())
+        using (Assert.EnterMultipleScope())
         {
-            That(attack.Capture, Has.Count.EqualTo(1));
-            That(attack.Capture, Does.Contain(new StateKey<EntityUid>("Query/AttackTarget")));
+            Assert.That(proto.FailPenalty, Is.EqualTo(0.5f));
+            Assert.That(_uai.GetScore(ent, "TestUaiChildInherits"), Is.EqualTo(0.42f).Within(0.0001f));
         }
     }
 
     /// <summary>
-    /// Every <c>scoreCurves:</c> declared here is a single top-level list entry, regardless of
-    /// how much internal complexity that one entry carries (a plain constant, or - for
-    /// <c>Construction</c> - a preset curve with nested per-variable sub-curve lists). This is
-    /// purely a count of top-level list items, so it doesn't depend on knowing what any of the
-    /// curve types actually compute.
+    /// A child goal prototype that DOES declare its own <c>scoreCurves</c> must use its own
+    /// value, not the parent's - inheritance must not leave a stale/merged value behind for a
+    /// field the child explicitly overrode.
     /// </summary>
     [Test]
     [RunOnSide(Side.Server)]
-    public void TestScoreCurvesTopLevelCountIsOnePerGoal()
+    public void TestChildGoalOverridesParentField()
     {
-        var attack = SProtoMan.Index(Attack);
-        var construction = SProtoMan.Index(Construction);
-        var deconstruct = SProtoMan.Index(Deconstruct);
+        var ent = SSpawn("TestUaiScoringAgentPlain");
 
-        using (EnterMultipleScope())
-        {
-            That(attack.ScoreCurves, Has.Count.EqualTo(1));
-            That(construction.ScoreCurves, Has.Count.EqualTo(1));
-            That(deconstruct.ScoreCurves, Has.Count.EqualTo(1));
-        }
+        Assert.That(_uai.GetScore(ent, "TestUaiChildOverrides"), Is.EqualTo(0.77f).Within(0.0001f));
+    }
+}
+
+/// <summary>
+/// Test-only system that lets a test control exactly how <see cref="UtilityAiGoalScoreModify"/>
+/// perturbs a score, without needing to know anything about real gameplay systems that would
+/// normally subscribe to it.
+/// </summary>
+public sealed class UaiScoreModifierTestSystem : EntitySystem
+{
+    public float Delta;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<UtilityAiComponent, UtilityAiGoalScoreModify>(OnScoreModify);
     }
 
-    /// <summary>
-    /// <c>Attack</c>'s conditions must be reported as unmet on a fresh, non-combat entity -
-    /// via the very first condition ("CombatMode == true") already failing. Relies on the
-    /// short-circuit-AND assumption documented on the class: if conditions were ANDed lazily,
-    /// this never touches the nested Or/MobState clause at all.
-    /// </summary>
-    [Test]
-    [RunOnSide(Side.Server)]
-    public void TestAttackConditionsNotMetOutsideCombatMode()
+    private void OnScoreModify(Entity<UtilityAiComponent> ent, ref UtilityAiGoalScoreModify args)
     {
-        var ent = SSpawn("TestUaiInheritAgent");
-        SEntMan.GetComponent<GoapComponent>(ent).State.SetValue(GoapState.Owner, ent);
-
-        That(_uai.ConditionsMet(ent, Attack), Is.False);
-    }
-
-    /// <summary>
-    /// <c>BaseUtilityAiGoal</c>'s own single condition ("CombatMode == false") must be
-    /// reported as met on a fresh, non-combat entity.
-    /// </summary>
-    [Test]
-    [RunOnSide(Side.Server)]
-    public void TestBaseGoalConditionsMetOutsideCombatMode()
-    {
-        var ent = SSpawn("TestUaiInheritAgent");
-        SEntMan.GetComponent<GoapComponent>(ent).State.SetValue(GoapState.Owner, ent);
-
-        That(_uai.ConditionsMet(ent, "BaseUtilityAiGoal"), Is.True);
-    }
-
-    /// <summary>
-    /// End-to-end scoring case: with only <c>Deconstruct</c> in the goal set (no conditions,
-    /// <c>scoreCurves: [float: 1]</c>, no prior goal/penalty history), <c>GetScore</c> should
-    /// compute exactly 1.0 with no incumbent bonus and no penalty applied, hitting
-    /// <c>TryGetGoal</c>'s "score == 1f" immediate-return path. Relies on the "float: X is a
-    /// constant curve" assumption documented on the class.
-    /// </summary>
-    [Test]
-    [RunOnSide(Side.Server)]
-    public void TestDeconstructScoresMaximumAndWinsTryGetGoal()
-    {
-        var ent = SSpawn("TestUaiInheritDeconstructAgent");
-        SEntMan.GetComponent<GoapComponent>(ent).State.SetValue(GoapState.Owner, ent);
-
-        using (EnterMultipleScope())
-        {
-            That(_uai.TryGetGoal(ent, out var protoId), Is.True);
-            That(protoId, Is.EqualTo(Deconstruct));
-        }
+        args.Score += Delta;
     }
 }

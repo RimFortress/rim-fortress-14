@@ -50,10 +50,10 @@ public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IG
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GoapComponent, ComponentAdd>(OnGoapAdded);
+        SubscribeLocalEvent<GoapComponent, ComponentInit>(OnGoapInit);
     }
 
-    private static void OnGoapAdded(Entity<GoapComponent> ent, ref ComponentAdd ev)
+    private static void OnGoapInit(Entity<GoapComponent> ent, ref ComponentInit args)
     {
         ent.Comp.State.SetValue(GoapState.Owner, ent.Owner);
     }
