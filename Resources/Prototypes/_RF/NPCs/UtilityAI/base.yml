@@ -1,5 +1,6 @@
 - type: utilityAiGoal
   id: BaseUtilityAiGoal
+  abstract: true
   conditions:
   - CombatMode == false
   incumbentBonus:
@@ -8,5 +9,6 @@
 
 - type: utilityAiGoal
   id: BaseExecutableGoal
+  abstract: true
   scoreCurves:
   - float: 1

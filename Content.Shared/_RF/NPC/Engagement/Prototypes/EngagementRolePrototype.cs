@@ -70,7 +70,7 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     /// is stored in the agent state in the <see cref="GoapState.EngagementParticipant"/> key.
     /// </remarks>
     [DataField]
-    public Dictionary<string, List<GoapCondition>> ConditionsFor = new();
+    public Dictionary<ProtoId<EngagementRolePrototype>, List<GoapCondition>> ConditionsFor = new();
 
     /// <summary>
     /// Values that will be written to the agent's state when a situation begins

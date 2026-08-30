@@ -1,10 +1,8 @@
 - type: utilityAiGoal
   id: BaseFarmingGoal
+  parent: BaseUtilityAiGoal
   abstract: true
   color: "#1a9927"
-  incumbentBonus:
-  - add: [float: 0.05]
-  - mul: [float: 1.10]
 
 - type: utilityAiGoal
   id: Plant
@@ -108,7 +106,7 @@
         query: PlantWaterTarget
       performersCount:
       - !type:GoalPerformers
-        goal: RemovePlant
+        goal: WaterPlant
   capture:
   - Query/Bucket
   - Query/WaterSource
