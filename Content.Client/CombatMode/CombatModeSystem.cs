@@ -21,6 +21,13 @@ public sealed class CombatModeSystem : SharedCombatModeSystem
     /// </summary>
     public event Action<bool>? LocalPlayerCombatModeUpdated;
 
+    // RimFortress Start
+    /// <summary>
+    /// Raised whenever the combat mode of any entity changes.
+    /// </summary>
+    public event Action<Entity<CombatModeComponent>>? CombatModeChanged;
+    // RimFortress End
+
     public override void Initialize()
     {
         base.Initialize();
@@ -32,6 +39,7 @@ public sealed class CombatModeSystem : SharedCombatModeSystem
 
     private void OnHandleState(EntityUid uid, CombatModeComponent component, ref AfterAutoHandleStateEvent args)
     {
+        CombatModeChanged?.Invoke(new(uid, component)); // RimFortress
         UpdateHud(uid);
     }
 

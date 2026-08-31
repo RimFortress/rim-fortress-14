@@ -1,0 +1,22 @@
+- type: goapCompound
+  id: HealingEgagements
+  tasks:
+  - preconditions:
+    - Engagement/Healing/In != true
+    actions:
+    - !type:StartEngagement
+      proto: Healing
+      joinAs: Doctor
+    effects:
+      Engagement/Healing/In: true
+
+  - action: !type:EndEngagement
+      targetKey: Engagement/Healing
+    effects:
+      HealingEngagementFinished: true
+
+  - action: !type:EndEngagement
+      targetKey: Engagement/Healing
+      reason: Interrupted
+    effects:
+      HealingEngagementInterrupted: true

@@ -53,6 +53,11 @@
   # RimFortress Start
   - type: StockpileCategory
     category: Gun
+  - type: SkillInteraction
+    skill: Gun
+    targetLevel: 8
+    experience: 25
+    resultFactor: 0.2
   # RimFortress End
 
 - type: entity

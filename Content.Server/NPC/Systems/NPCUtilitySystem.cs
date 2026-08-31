@@ -35,11 +35,6 @@ using Content.Shared.Temperature.Components;
 using Content.Shared.Stealth;
 using Content.Shared.Stealth.Components;
 
-// RimFortress Start
-using Content.Server._RF.NPC.Queries.Considerations;
-using Content.Server._RF.NPC.Queries;
-// RimFortress End
-
 namespace Content.Server.NPC.Systems;
 
 /// <summary>
@@ -82,43 +77,7 @@ public sealed class NPCUtilitySystem : EntitySystem
         base.Initialize();
         _puddleQuery = GetEntityQuery<PuddleComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
-
-        // RimFortress Start
-        _proto.PrototypesReloaded += args =>
-        {
-            if (args.WasModified<UtilityQueryPrototype>())
-                ReloadPrototypes();
-        };
-        ReloadPrototypes();
-        // RimFortress End
     }
-
-    // RimFortress Start
-    private void ReloadPrototypes()
-    {
-        foreach (var proto in _proto.EnumeratePrototypes<UtilityQueryPrototype>())
-        {
-            foreach (var query in proto.Query)
-            {
-                switch (query)
-                {
-                    case RfUtilityQuery rfQuery:
-                        rfQuery.Initialize(EntityManager);
-                        break;
-                    case RfUtilityQueryFilter rfFilter:
-                        rfFilter.Initialize(EntityManager);
-                        break;
-                }
-            }
-
-            foreach (var con in proto.Considerations)
-            {
-                if (con is RfUtilityConsideration rfConsideration)
-                    rfConsideration.Initialize();
-            }
-        }
-    }
-    // RimFortress End
 
     /// <summary>
     /// Runs the UtilityQueryPrototype and returns the best-matching entities.
@@ -139,10 +98,6 @@ public sealed class NPCUtilitySystem : EntitySystem
             switch (query)
             {
                 case UtilityQueryFilter filter:
-                    // RimFortress Start
-                    if (filter is RfUtilityQueryFilter rfFilter && !rfFilter.Startup(blackboard))
-                        return UtilityResult.Empty;
-                    // RimFortress End
                     Filter(blackboard, ents, filter);
                     break;
                 default:
@@ -209,10 +164,6 @@ public sealed class NPCUtilitySystem : EntitySystem
                 return GetScore(_proto.Index<UtilityCurvePresetPrototype>(presetCurve.Preset).Curve, conScore);
             case QuadraticCurve quadraticCurve:
                 return Math.Clamp(quadraticCurve.Slope * MathF.Pow(conScore - quadraticCurve.XOffset, quadraticCurve.Exponent) + quadraticCurve.YOffset, 0f, 1f);
-            // RimFortress Start
-            case RfUtilityCurve rf:
-                return Math.Clamp(rf.Curve(conScore), 0f, 1f);
-            // RimFortress End
             default:
                 throw new NotImplementedException();
         }
@@ -225,16 +176,9 @@ public sealed class NPCUtilitySystem : EntitySystem
         {
             case FoodValueCon:
             {
-                // RimFortress Start
-                if (!_ingestion.HasMouthAvailable(owner, targetUid))
-                    return 0f;
-                // RimFortress End
-
-                /* RimFortress
                 // do we have a mouth available? Is the food item opened?
                 if (!_ingestion.CanConsume(owner, targetUid))
                     return 0f;
-                RimFortress */
 
                 var avoidBadFood = !HasComp<IgnoreBadFoodComponent>(owner);
 
@@ -254,16 +198,9 @@ public sealed class NPCUtilitySystem : EntitySystem
             }
             case DrinkValueCon:
             {
-                // RimFortress Start
-                if (!_ingestion.HasMouthAvailable(owner, targetUid))
-                    return 0f;
-                // RimFortress End
-
-                /* RimFortress
                 // can't drink closed drinks and can't drink with a mask on...
                 if (!_ingestion.CanConsume(owner, targetUid))
                     return 0f;
-                RimFortress */
 
                 // only drink when thirsty
                 if (TryComp<ThirstComponent>(owner, out var thirst) && thirst.CurrentThirstThreshold > ThirstThreshold.Okay)
@@ -352,10 +289,6 @@ public sealed class NPCUtilitySystem : EntitySystem
 
                 return Math.Clamp(distance / radius, 0f, 1f);
             }
-            // RimFortress Start
-            case RfUtilityConsideration rf:
-                return Math.Clamp(rf.GetScore(blackboard, targetUid), 0f, 1f);
-            // RimFortress End
             case TargetIsVisibleCon:
             {
                 if (!TryComp(targetUid, out StealthComponent? stealth))
@@ -566,11 +499,6 @@ public sealed class NPCUtilitySystem : EntitySystem
                 }
                 break;
             }
-            // RimFortress Start
-            case RfUtilityQuery rfQuery:
-                entities.UnionWith(rfQuery.Query(blackboard));
-                break;
-            // RimFortress End
             default:
                 throw new NotImplementedException();
         }
@@ -658,25 +586,6 @@ public sealed class NPCUtilitySystem : EntitySystem
 
                 break;
             }
-            // RimFortress Start
-            case RfUtilityQueryFilter rfFilter:
-                _entityList.Clear();
-
-                foreach (var ent in entities)
-                {
-                    var filtered = rfFilter.Filter(ent, blackboard);
-
-                    if (rfFilter.Invert ? !filtered : filtered)
-                        _entityList.Add(ent);
-                }
-
-                foreach (var ent in _entityList)
-                {
-                    entities.Remove(ent);
-                }
-
-                break;
-            // RimFortress End
             default:
                 throw new NotImplementedException();
         }

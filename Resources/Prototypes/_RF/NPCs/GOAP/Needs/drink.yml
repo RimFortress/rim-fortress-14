@@ -1,0 +1,94 @@
+- type: goapCompound
+  id: Drink
+  tasks:
+  - preconditions:
+    - Query/Drink != null
+    - !type:ItemClosed
+      targetKey: Query/Drink
+      invert: true
+    action: !type:CaptureQuery
+      capture: Query/Drink
+      targetKey: Drink
+    effects:
+      Drink: true
+      DrinkFilled: true
+      DrinkOpened: true
+
+  - preconditions:
+    - !type:ItemClosed
+      targetKey: Query/Mug
+    action: !type:CaptureQuery
+      capture: Query/Mug
+      targetKey: Drink
+    effects:
+      Drink: true
+      DrinkFilled: true
+      DrinkOpened: false
+
+  - preconditions:
+    - Query/Mug != null
+    - !type:ItemClosed
+      targetKey: Query/Mug
+      invert: true
+    action: !type:CaptureQuery
+      capture: Query/Mug
+      targetKey: Drink
+    effects:
+      Drink: true
+      DrinkFilled: false
+      DrinkOpened: true
+
+  - preconditions:
+    - !type:ItemClosed
+      targetKey: Query/Mug
+    action: !type:CaptureQuery
+      capture: Query/Mug
+      targetKey: Drink
+    effects:
+      Drink: true
+      DrinkFilled: false
+      DrinkOpened: false
+
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Drink != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Drink
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Drink
+    effects:
+      DrinkPickedUp: true
+
+  - preconditions:
+    - DrinkPickedUp == true
+    action: !type:InteractWith
+      targetKey: Drink
+    effects:
+      DrinkOpened: true
+
+  - preconditions:
+    - DrinkOpened == true
+    - Query/WaterSource != null # TODO: replace water with any reagent that will quench the thirst.
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/WaterSource
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Query/WaterSource
+    effects:
+      DrinkFilled: true
+
+  - preconditions:
+    - DrinkPickedUp == true
+    - DrinkOpened == true
+    - DrinkFilled == true
+    action: !type:InteractWith
+      targetKey: Drink
+    effects:
+      DrinkDrunk: true

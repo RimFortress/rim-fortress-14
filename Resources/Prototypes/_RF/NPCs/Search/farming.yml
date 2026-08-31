@@ -1,0 +1,136 @@
+- type: searchQuery
+  id: Seed
+  parent: BaseItemQuery
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Seed
+      seedId: wheat
+
+- type: searchQuery
+  id: BasePlantHolderQuery
+  abstract: true
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: PlantHolder
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: EmptyPlantHolder
+  parent: BasePlantHolderQuery
+  filters:
+  - !type:PlantHolder
+    filled: false
+
+- type: searchQuery
+  id: HarvestPlant
+  parent: BasePlantHolderQuery
+  filters:
+  - !type:PlantHolder
+    harvest: true
+    dead: false
+    needSharp: false
+  considerations:
+  - !type:SamePlantCount
+    curves:
+    - lessThan: 4
+      value:
+      - mul: [float: 0] # We don't harvest if we have fewer than 4 seeds left, so we don't run out
+    - !type:Normalize
+
+- type: searchQuery
+  id: SamplePlant
+  parent: BasePlantHolderQuery
+  filters:
+  - !type:PlantHolder
+    harvest: true
+    dead: false
+    sampled: false
+  considerations:
+  - !type:SamePlantCount
+    curves:
+    - !type:Normalize
+    - minus: [float: 1]
+    - !type:Abs # More points for the plants that have the fewest
+    - pow: [float: 2]
+
+- type: searchQuery
+  id: SharpHarvestPlant
+  parent: BasePlantHolderQuery
+  filters:
+  - !type:PlantHolder
+    harvest: true
+    dead: false
+    needSharp: true
+
+- type: searchQuery
+  id: DeadPlant
+  parent: BasePlantHolderQuery
+  filters:
+  - !type:PlantHolder
+    filled: true
+    dead: true
+    needSharp: false
+
+- type: searchQuery
+  id: SharpDeadPlant
+  parent: BasePlantHolderQuery
+  filters:
+  - !type:PlantHolder
+    filled: true
+    dead: true
+    needSharp: true
+
+- type: searchQuery
+  id: WeedPlantHolder
+  query: !type:Owned
+  filters:
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:Weed
+    curves:
+    - minus: [float: 0.40]
+    - clamp:
+        min: 0
+        max: 1
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: WaterSource
+  query: !type:Nearby # TODO: zones
+    whitelist:
+      components:
+      - DrainableSolution
+    range: 15
+  filters:
+  - !type:DrainableSolution
+    reagent: Water
+    reagentMoreThan: 80.0
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: PlantWaterTarget
+  parent: BasePlantHolderQuery
+  considerations:
+  - !type:PlantHolderWater
+    curves:
+    - minus: [float: 1]
+    - !type:Abs
+    - minus: [float: 0.4]
+    - clamp:
+        min: 0
+        max: 1

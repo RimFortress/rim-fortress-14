@@ -1,0 +1,27 @@
+- type: goapCompound
+  id: RemoveWeed
+  tasks:
+  - preconditions:
+    - Query/Hoe != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Hoe
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Hoe
+    effects:
+      HoePickedUp: true
+
+  - preconditions:
+    - Query/WeedPlantHolder != null
+    - HoePickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/WeedPlantHolder
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Query/WeedPlantHolder
+    effects:
+      WeedRemoved: true

@@ -8,6 +8,7 @@ using Content.IntegrationTests.Pair;
 using Content.Server.Hands.Systems;
 using Content.Server.Stack;
 using Content.Server.Tools;
+using Content.Shared._RF.Needs.Components; // RimFortress
 using Content.Shared.CombatMode;
 using Content.Shared.DoAfter;
 using Content.Shared.Hands.Components;
@@ -244,6 +245,7 @@ public abstract partial class InteractionTest
             Server.PlayerMan.SetAttachedEntity(ServerSession, SPlayer);
             Hands = SEntMan.GetComponentOrNull<HandsComponent>(SPlayer);
             DoAfters = SEntMan.GetComponentOrNull<DoAfterComponent>(SPlayer);
+            SEntMan.RemoveComponent<ModifySpeedOnNeedComponent>(SEntMan.GetEntity(Player)); // RimFortress: needs can slow down entities
         });
 
         // Check player got attached.

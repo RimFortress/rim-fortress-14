@@ -1,0 +1,111 @@
+- type: utilityAiGoal
+  id: BaseHealingGoal
+  parent: BaseUtilityAiGoal
+  abstract: true
+  color: "#16C934"
+  fallbacks:
+  - InterruptHealing
+  incumbentBonus:
+  - add: [float: 0.10]
+  - mul: [float: 1.15]
+
+- type: utilityAiGoal
+  id: HealingBuckle
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: HealingBuckleTarget
+      performersCount:
+      - !type:GoalPerformers
+        goal: HealingBuckle
+  capture:
+  - Query/Bed
+  - Query/HealingBuckleTarget
+  goalState:
+    TargetBuckledToBed: true
+
+- type: utilityAiGoal
+  id: StopBleeding
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: BleedingFriend
+      performersCount:
+      - !type:GoalPerformers
+        goal: StopBleeding
+  capture:
+  - Query/HeatMelees
+  - Query/BleedHealing
+  - Query/BleedingFriend
+  goalState:
+    BleedingStopped: true
+
+- type: utilityAiGoal
+  id: RestoreBloodLevel
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: BleedingFriend
+      performersCount:
+      - !type:GoalPerformers
+        goal: RestoreBloodLevel
+  capture:
+  - Query/BloodLevelHealing
+  - Query/LowBloodLevelFriend
+  goalState:
+    BloodLevelRestored: true
+
+- type: utilityAiGoal
+  id: DamageHealing
+  parent: BaseHealingGoal
+  scoreCurves:
+  - preset: UAIScoreHealing
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: DamageHealTarget
+      performersCount:
+      - !type:GoalPerformers
+        goal: DamageHealing
+  goalState:
+    DamageHealed: true
+
+# Engagements
+
+- type: utilityAiGoal
+  id: FinishHealing
+  conditions:
+  - Engagement/Healing/Role/Doctor/In == true
+  - Query/BleedingFriend == null
+  - Query/LowBloodLevelFriend == null
+  - Query/DamageHealTarget == null
+  - Query/HealingBuckleTarget == null
+  scoreCurves:
+  - float: 1
+  goalState:
+    HealingEngagementFinished: true
+
+- type: utilityAiGoal
+  id: InterruptHealing
+  conditions:
+  - Engagement/Healing/In == true
+  goalState:
+    HealingEngagementInterrupted: true
+
+- type: utilityAiGoal
+  id: PatientWaiting
+  conditions:
+  - Engagement/Healing/Role/HealedFriened/In == true
+  scoreCurves:
+  - float: 1
+  goalState:
+    PatientWaiting: true

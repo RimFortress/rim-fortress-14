@@ -1,0 +1,406 @@
+- type: searchQuery
+  id: HealingBuckleTarget
+  parent: BasePullableQuery
+  filters:
+  - !type:IsFriendly
+  - !type:IsCritical
+  considerations:
+  - !type:Damage
+    curves:
+    - !type:Normalize
+      saturation: [float: 3]
+
+# Bleeding
+
+- type: searchQuery
+  id: HeatMelees
+  parent: BaseItemQuery
+  considerations:
+  - !type:MeleeDamage
+    damageTypes:
+    - Heat
+    curves:
+    - !type:Normalize
+    - !type:Quadratic
+
+- type: searchQuery
+  id: BleedHealing
+  parent: BaseItemQuery
+  considerations:
+  - !type:BleedHealing
+    curves:
+    - mul: [float: -1] # A negative value means healing
+    - !type:Normalize
+  - !type:StackCount
+    curves:
+    - lessThan: 0.001
+      value: [float: 1] # This item is not a stack, which means it is not limited
+
+- type: searchQuery
+  id: BleedingFriend
+  query: !type:Owned
+  filters:
+  - !type:IsFriendly
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:Bleed
+    curves:
+    - lessThan: 0.15
+      value: [float: 0]
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+# Blood level
+
+- type: searchQuery
+  id: LowBloodLevelFriend
+  query: !type:Owned
+  filters:
+  - !type:IsFriendly
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:BloodLevel
+    curves:
+    - minus: [float: 1]
+    - !type:Abs
+    - lessThan: 0.30
+      value: [float: 0]
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: BloodLevelHealing
+  parent: BaseItemQuery
+  considerations:
+  - !type:BloodLevelHealing
+    curves:
+    - !type:Normalize
+  - !type:StackCount
+    curves:
+    - lessThan: 0.001
+      value: [float: 1]
+
+# Damage heal
+
+- type: searchQuery
+  id: DamageHealTarget
+  query: !type:Owned
+  filters:
+  - !type:IsFriendly
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    curves:
+    - !type:Normalize
+      saturation: [float: 3]
+    - lessThan: 0.40
+      value: [float: 0]
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+# We can't just pick a random patient and a random treatment,
+# nor can we look for a treatment for the largest type of damage,
+# since there might not be a treatment for it;
+# that's why we set treatment goals for each individual type of damage
+# ... but is this really the best solution?
+
+- type: searchQuery
+  id: BaseHealingQuery
+  parent: BaseItemQuery
+  abstract: true
+  considerations:
+  - !type:StackCount
+    curves:
+    - lessThan: 0.001
+      value: [float: 1]
+
+- type: searchQuery
+  id: BaseHealingTargetQuery
+  abstract: true
+  query: !type:Owned
+  filters:
+  - !type:IsFriendly
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: mathCurve
+  id: HealingTargetDamage
+  curves:
+  - !type:Normalize
+    saturation: [float: 3]
+  - lessThan: 0.40
+    value: [float: 0]
+
+# Do we need to heal Asphyxiation?
+
+# Blunt
+
+- type: searchQuery
+  id: BluntHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Blunt
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: BluntHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Blunt
+    curves:
+    - preset: HealingTargetDamage
+
+# Cellular
+
+- type: searchQuery
+  id: CellularHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Cellular
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: CellularHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Cellular
+    curves:
+    - preset: HealingTargetDamage
+
+# Caustic
+
+- type: searchQuery
+  id: CausticHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Caustic
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: CausticHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Caustic
+    curves:
+    - preset: HealingTargetDamage
+
+# Cold
+
+- type: searchQuery
+  id: ColdHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Cold
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: ColdHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Cold
+    curves:
+    - preset: HealingTargetDamage
+
+# Heat
+
+- type: searchQuery
+  id: HeatHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Heat
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: HeatHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Heat
+    curves:
+    - preset: HealingTargetDamage
+
+# Piercing
+
+- type: searchQuery
+  id: PiercingHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Piercing
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: PiercingHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Piercing
+    curves:
+    - preset: HealingTargetDamage
+
+# Poison
+
+- type: searchQuery
+  id: PoisonHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Poison
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: PoisonHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Poison
+    curves:
+    - preset: HealingTargetDamage
+
+# Radiation
+
+- type: searchQuery
+  id: RadiationHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Radiation
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: RadiationHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Radiation
+    curves:
+    - preset: HealingTargetDamage
+
+# Shock
+
+- type: searchQuery
+  id: ShockHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Shock
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: ShockHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Shock
+    curves:
+    - preset: HealingTargetDamage
+
+# Slash
+
+- type: searchQuery
+  id: SlashHeal
+  parent: BaseHealingQuery
+  considerations:
+  - !type:HealingDamage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Slash
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: SlashHealTarget
+  parent: BaseHealingTargetQuery
+  considerations:
+  - !type:Damage
+    damageContainers:
+    - Biological
+    damageTypes:
+    - Slash
+    curves:
+    - preset: HealingTargetDamage

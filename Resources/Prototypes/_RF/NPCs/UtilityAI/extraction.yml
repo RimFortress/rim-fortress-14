@@ -1,0 +1,43 @@
+- type: utilityAiGoal
+  id: Chop
+  parent: BaseUtilityAiGoal
+  color: "#A0522D"
+  scoreCurves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Woodcutting
+      targetsCount:
+      - !type:PassiveTargets
+        goal: Chop
+      performersCount:
+      - !type:GoalPerformers
+        goal: Chop
+  capture:
+  - Query/Axe
+  - Query/ChopTarget
+  goalState:
+    TargetChopDown: true
+
+- type: utilityAiGoal
+  id: Dig
+  parent: BaseUtilityAiGoal
+  color: "#E36414"
+  scoreCurves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Mining
+      targetsCount:
+      - !type:PassiveTargets
+        goal: Dig
+      performersCount:
+      - !type:GoalPerformers
+        goal: Dig
+  capture:
+  - Query/Pickaxe
+  - Query/DigTarget
+  goalState:
+    TargetDug: true

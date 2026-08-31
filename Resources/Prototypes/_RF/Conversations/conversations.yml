@@ -1,0 +1,101 @@
+- type: dataset
+  id: BasicConversations
+  values:
+  - Smalltalk01
+  - Smalltalk02
+  - GreetingCasual
+  - MorningGreeting
+  - SmalltalkRejected
+  - SmalltalkIgnored
+  - SmalltalkRude
+  - ThankForHealing
+  - CheckOnPatient
+
+- type: conversationScript
+  id: BaseDialog
+  abstract: true
+  engagement: BaseDialogEngagement
+  order:
+    actors:
+    - BaseDialogInitiator
+    - BaseDialogResponder
+    lines: 4
+
+- type: conversationScript
+  id: Smalltalk01
+  parent: BaseDialog
+
+- type: conversationScript
+  id: Smalltalk02
+  parent: BaseDialog
+  order:
+    actors:
+    - BaseDialogInitiator
+    - BaseDialogResponder
+    lines: 6
+
+- type: conversationScript
+  id: GreetingCasual
+  parent: BaseDialog
+
+- type: conversationScript
+  id: MorningGreeting
+  engagement: MorningGreeting
+  order:
+    actors:
+    - MorningGreetingInitiator
+    - MorningGreetingResponder
+    lines: 2
+
+# Bad mood
+
+- type: conversationScript
+  id: SmalltalkRejected
+  engagement: SmalltalkRejected
+  order:
+    actors:
+    - SmalltalkRejectedInitiator
+    - SmalltalkRejectedResponder
+    lines: 2
+
+- type: conversationScript
+  id: SmalltalkIgnored
+  parent: BaseDialog
+  engagement: SmalltalkIgnored
+  order:
+    actors:
+    - SmalltalkIgnoredInitiator
+    - SmalltalkIgnoredResponder
+    lines: 4
+
+- type: conversationScript
+  id: SmalltalkRude
+  parent: BaseDialog
+  engagement: SmalltalkRude
+  order:
+    actors:
+    - SmalltalkRudeInitiator
+    - SmalltalkRudeResponder
+    lines: 4
+
+# Healing
+
+- type: conversationScript
+  id: ThankForHealing
+  parent: BaseDialog
+  engagement: ThankForHealing
+  order:
+    actors:
+    - ThankForHealingInitiator
+    - BaseDialogResponder
+    lines: 4
+
+- type: conversationScript
+  id: CheckOnPatient
+  parent: BaseDialog
+  engagement: CheckOnPatient
+  order:
+    actors:
+    - CheckOnPatientInitiator
+    - CheckOnPatientInitiator
+    lines: 4

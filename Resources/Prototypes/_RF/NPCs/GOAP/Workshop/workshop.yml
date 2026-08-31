@@ -1,0 +1,49 @@
+- type: goapCompound
+  id: Workshop
+  tasks:
+  # Add your workshops here
+
+  - preconditions:
+    - Workshop == null
+    action: !type:CaptureQuery
+      capture: Query/KitchenWorkshop
+      targetKey: Workshop
+    effects:
+      Workshop: Kitchen
+
+  - preconditions:
+    - Workshop == null
+    - Query/KitchenWorkshopReady != null
+    action: !type:CaptureQuery
+      capture: Query/KitchenWorkshopReady
+      targetKey: Workshop
+    effects:
+      IngredientPickedUp: true
+      Workshop: Kitchen
+
+  #
+
+  - preconditions:
+    - Workshop != null
+    actions:
+    - !type:CaptureQuery
+      capture: &WorkshopIngredient Query/WorkshopMaterial || Query/WorkshopItem || Query/WorkshopReagent
+    - !type:EntityCoords
+      targetKey: *WorkshopIngredient
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: *WorkshopIngredient
+    effects:
+      IngredientPickedUp: true
+
+  - preconditions:
+    - IngredientPickedUp == true
+    actions:
+    - !type:WorkshopCraftingCoords
+      targetKey: Workshop
+    - !type:MoveTo
+    - !type:InteractWith
+      targetKey: Workshop
+    effects:
+      CraftingFinished: true

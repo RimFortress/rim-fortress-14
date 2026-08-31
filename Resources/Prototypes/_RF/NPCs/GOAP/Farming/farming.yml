@@ -1,0 +1,9 @@
+- type: goapCompound
+  id: Farming
+  tasks:
+  - proto: Planting
+  - proto: Harvest
+  - proto: RemoveWeed
+  - proto: SamplePlant
+  - proto: RemovePlant
+  - proto: WaterPlant

@@ -37,20 +37,72 @@
   - type: NoRotateOnInteract
   - type: NoRotateOnMove
   - type: MouseDragMove
-  - type: NpcControl
-    tasks:
+  - type: NpcController
+    goals:
     - MoveTo
     - Attack
     - PickUp
     - TakeOwnership
     - Pry
+    - Construction
     - Deconstruct
     - Dig
-    - FreeHandInteract
-    - Heal
+    - Interact
+    #- Heal
     - Chop
-    - Cook
+    - InventoryStorage
+    - Drop
+    - Plant
+    - Harvest
+    - RemoveWeed
+    - SamplePlant
+    - RemovePlant
+    - RemovePlantSharp
+    - WaterPlant
+  - type: NpcJobs
+    jobs:
+    - name: npc-job-construction-name
+      icon: _RF/Interface/hammer-solid.svg.192dpi.png
+      goals:
+      - Construction
+      - Deconstruct
+    - name: npc-job-mining-name
+      icon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
+      goals:
+      - Dig
+    - name: npc-job-woodcutting-name
+      icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
+      goals:
+      - Chop
+    - name: npc-job-farming-name
+      icon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
+      goals:
+      - Plant
+      - Harvest
+      - RemoveWeed
+      - SamplePlant
+      - RemovePlant
+      - WaterPlant
+    - name: npc-job-storing-name
+      icon: _RF/Interface/cubes-solid.svg.192dpi.png
+      goals:
+      - Storing
+    - name: npc-job-cooking-name
+      icon: _RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
+      goals:
+      - Cooking
+    - name: npc-job-medicine-name
+      icon: _RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png
+      goals:
+      - HealingBuckle
+      - StopBleeding
+      - RestoreBloodLevel
+      - DamageHealing
   - type: NpcFactionMember
     factions:
     - RimFortress
   - type: Notification
+  - type: UserInterface
+    interfaces:
+      enum.NpcControllerUiKey.Key:
+        type: ControllableNpcBoundUserInterface

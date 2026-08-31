@@ -1,0 +1,10 @@
+<controls:UtilityAiGoalControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.UtilityAi.UI">
+    <TabContainer Name="TabContainer" VerticalExpand="True"
+                  HorizontalExpand="True">
+        <BoxContainer Name="CommonTab" Orientation="Vertical"/>
+        <BoxContainer Name="CurvesTab" Orientation="Vertical"/>
+        <BoxContainer Name="ConditionsTab" Orientation="Vertical"/>
+    </TabContainer>
+</controls:UtilityAiGoalControl>

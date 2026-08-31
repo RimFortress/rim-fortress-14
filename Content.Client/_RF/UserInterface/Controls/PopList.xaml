@@ -1,5 +1,10 @@
 <rf:PopList
     xmlns="https://spacestation14.io"
     xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls">
-    <GridContainer Name="Icons" Access="Protected" Columns="8"/>
+    <BoxContainer>
+        <TextureButton Name="CombatButton" ToggleMode="True"
+                       ToolTip="{Loc 'pop-list-combat-mode-tooltip'}"
+                       Margin="5 0" SetSize="40 40" VerticalAlignment="Bottom"/>
+        <GridContainer Name="Icons" Access="Protected" Columns="8"/>
+    </BoxContainer>
 </rf:PopList>

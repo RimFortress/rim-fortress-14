@@ -1,0 +1,1 @@
+pop-list-combat-mode-tooltip = Toggle combat mode

@@ -1,0 +1,5 @@
+- type: goapCompound
+  id: Building
+  tasks:
+  - proto: Construction
+  - proto: Deconstruct

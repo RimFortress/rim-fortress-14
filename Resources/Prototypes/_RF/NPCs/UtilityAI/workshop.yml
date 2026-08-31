@@ -1,0 +1,21 @@
+- type: utilityAiGoal
+  id: Cooking
+  parent: BaseUtilityAiGoal
+  color: "#9D6280"
+  scoreCurves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Cooking
+      targetsCount:
+      - !type:WorkshopRecipesCount
+        tables:
+        - AllKitchenRecipesTable
+      performersCount:
+      - !type:GoalPerformers
+        goal: Cooking
+      importance: [float: 0.50]
+  goalState:
+    Workshop: Kitchen
+    CraftingFinished: true

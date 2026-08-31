@@ -1,0 +1,35 @@
+- type: executableGoal
+  id: Chop
+  parent: BaseExecutableGoal
+  goal: Chop
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: tree_solid
+  targetKey: Query/ChopTarget
+  maxPerformers: 1
+  conditions:
+  - Query/Axe != null
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    tags:
+    - Tree
+
+- type: executableGoal
+  id: Dig
+  parent: BaseExecutableGoal
+  goal: Dig
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: person_digging_solid
+  targetKey: Query/DigTarget
+  maxPerformers: 1
+  conditions:
+  - Query/Pickaxe != null
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    tags:
+    - Diggable

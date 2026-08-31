@@ -1,0 +1,14 @@
+- type: executableGoal
+  id: Attack
+  parent: BaseCombatGoal
+  goal: Attack
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: skull_crossbones_solid
+  targetKey: Query/AttackTarget
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - MobState

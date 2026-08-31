@@ -1,0 +1,15 @@
+- type: goapCompound
+  id: Construction
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Construction != null
+    actions:
+    - !type:CaptureQuery
+      capture: Construction
+    - !type:Construction
+      targetKey: Query/Construction
+    effects:
+      TargetConstructed: true

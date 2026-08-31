@@ -1,0 +1,64 @@
+- type: goapCompound
+  id: Sleep
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Bed != null
+    actions:
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:SwapToFreeHand
+    - !type:InteractWith
+      targetKey: Query/Bed
+    effects:
+      ReadyForSleep: true
+
+  - preconditions:
+    - Query/Bed == null
+    actions:
+    - !type:PickAccessible
+      rangeKey: IdleRange
+    - !type:MoveTo
+      findPath: false
+    effects:
+      ReadyForSleep: true
+
+  - preconditions:
+    - ReadyForSleep == true
+    action: !type:Sleep
+    effects:
+      Sleeping: true
+
+  - preconditions:
+    - Sleeping == true
+    actions:
+    - !type:RandomFloat
+      key: TargetSleepLevel
+      min: 70
+      max: 90
+    - !type:WaitWhile
+      conditions:
+      - !type:NeedLevel
+        need: Sleep
+        maxKey: TargetSleepLevel
+    effects:
+      Rested: true
+
+  - preconditions:
+    - Query/Bed != null
+    actions:
+    - !type:WakeUp
+    - !type:Unbuckle
+    effects:
+      WokeUp: true
+
+  - preconditions:
+    - Query/Bed == null
+    actions:
+    - !type:WakeUp
+    - !type:AddMoodEffect
+      effect: MoodSleptOnFloor
+    effects:
+      WokeUp: true

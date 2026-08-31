@@ -1,5 +1,6 @@
+using System.Numerics;
+using Content.Shared._RF.NPC.GOAP;
 using Robust.Shared.Map;
-using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Conversation.Components;
 
@@ -10,39 +11,34 @@ namespace Content.Shared._RF.Conversation.Components;
 public sealed partial class ConversationActorComponent : Component
 {
     /// <summary>
-    /// Conversation script prototype
+    /// An entity that stores the current state of the conversation.
     /// </summary>
-    [DataField, ViewVariables]
-    public ProtoId<ConversationScriptPrototype> Script;
+    /// <seealso cref="ConversationComponent"/>
+    [ViewVariables]
+    public EntityUid Conversation;
 
     /// <summary>
-    /// All participants in the conversation with their identifiers
+    /// Is the actor ready to start/continue the conversation?
     /// </summary>
-    [DataField, ViewVariables]
-    public Dictionary<string, EntityUid> Actors = new();
+    [ViewVariables]
+    public bool Ready;
 
     /// <summary>
-    /// Identifier of the conversation participant for this entity
+    /// Stores the position from which the next actor should speak the line.
     /// </summary>
-    [DataField, ViewVariables]
-    public string ActorId;
+    [ViewVariables]
+    public EntityCoordinates TargetPos;
 
     /// <summary>
-    /// Next participant in the conversation
+    /// The maximum radius from the target position within which the next actor can be located.
     /// </summary>
-    [DataField, ViewVariables]
-    public EntityUid NextActor = EntityUid.Invalid;
+    [ViewVariables]
+    public StateKey<float> TargetRangeKey;
 
     /// <summary>
-    /// The next line spoken by this entity in the conversation,
-    /// if next in conversation
+    /// The coordinates in the direction the next actor should be facing.
     /// </summary>
-    [DataField, ViewVariables]
-    public LocId? NextMessage;
+    [ViewVariables]
+    public Vector2 TargetFaceTo;
 
-    /// <summary>
-    /// The coordinates where the conversation takes place
-    /// </summary>
-    [DataField, ViewVariables]
-    public EntityCoordinates ConversationCoords;
 }

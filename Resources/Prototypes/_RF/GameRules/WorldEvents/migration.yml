@@ -297,6 +297,6 @@
   - type: MigrationRule
     spawn:
       Raider: 45
-    task: Raid
+    #task: Raid TODO
   - type: NotificationRule
     proto: Raid

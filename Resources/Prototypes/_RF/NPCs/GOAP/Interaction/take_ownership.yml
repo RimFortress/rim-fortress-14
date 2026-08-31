@@ -1,0 +1,17 @@
+- type: goapCompound
+  id: TakeOwnership
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/TakeOwnershipTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/TakeOwnershipTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:MarkOwner
+      targetKey: Query/TakeOwnershipTarget
+    effects:
+      TargetOwned: true

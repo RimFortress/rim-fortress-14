@@ -1,0 +1,33 @@
+- type: goapCompound
+  id: Dig
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Pickaxe == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Pickaxe
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Pickaxe
+    - !type:Wield
+      targetState: true
+    effects:
+      PickaxePickedUp: true
+
+  - preconditions:
+    - Query/DigTarget != null
+    - PickaxePickedUp == true
+    actions:
+    - !type:Melee
+      targetKey: Query/DigTarget
+    - !type:MarkOwnerInRange
+      range: 3
+      whitelist:
+        components:
+        - Log
+    effects:
+      TargetDug: true

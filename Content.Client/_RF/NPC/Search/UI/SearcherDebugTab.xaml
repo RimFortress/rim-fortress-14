@@ -1,0 +1,4 @@
+<controls:SearcherDebugTab
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.NPC.Search.UI">
+</controls:SearcherDebugTab>

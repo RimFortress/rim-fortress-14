@@ -474,6 +474,7 @@ public enum ChatTransmitRange : byte
 /// InGame IC chat is for chat that is specifically ingame (not lobby) but is also in character, i.e. speaking.
 /// </summary>
 // ReSharper disable once InconsistentNaming
+[Serializable] // RimFortress
 public enum InGameICChatType : byte
 {
     Speak,

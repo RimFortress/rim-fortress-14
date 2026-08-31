@@ -1,0 +1,59 @@
+- type: utilityAiGoal
+  id: AcceptConversationInvite
+  parent: BaseUtilityAiGoal
+  color: "#D3D3D3"
+  conditions:
+  - InConversation != true
+  scoreCurves:
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:NeedLevel
+        need: Socialization
+  - add: [float: 0.01]
+  # If not invites: x * 0
+  - mul:
+    - !type:EngagementInvites
+      dataset: BasicConversationEngagements
+    - clamp: {max: 1}
+  - div:
+    - !type:EngagementMembership
+      dataset: BasicConversationEngagements
+    - add: [float: 1]
+    - pow: [float: 2]
+  goalState:
+    ConversationInviteAccepted: true
+
+- type: utilityAiGoal
+  id: StartConversation
+  color: "#D3D3D3"
+  parent: BaseUtilityAiGoal
+  conditions:
+  - InConversation != true
+  failPolicy: Cooldown
+  scoreCurves:
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:NeedLevel
+        need: Socialization
+  - div:
+    - !type:EngagementMembership
+      dataset: BasicConversationEngagements
+    - add:
+      - !type:EngagementInvites
+        dataset: BasicConversationEngagements
+    - add: [float: 1]
+    - pow: [float: 2]
+  goalState:
+    ConversationFinished: true
+
+- type: utilityAiGoal
+  id: Conversation
+  color: "#D3D3D3"
+  conditions:
+  - InConversation == true
+  scoreCurves:
+  - float: 1
+  goalState:
+    ConversationFinished: true

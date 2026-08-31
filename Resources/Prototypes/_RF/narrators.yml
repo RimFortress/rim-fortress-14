@@ -3,56 +3,48 @@
   constructionCostMod: 0.5
   eventWaitFactor: 0.016 # ~1 point per minute
   wealthCurves:
-    - !type:ConditionCurve
-      moreThan: 40000
-      value:
-        - !type:IncreaseCurve
-          value:
-            - !type:ValueCurve
-              value: 10000
-    - !type:MultiplyCurve
-      multiplier:
-        # 19999 => 0
-        - !type:ValueCurve
-          value: 0
-        # 20000 => 100
-        - !type:ConditionCurve
-          moreThan: 20000
-          lessThan: 40000
-          value:
-            - !type:ValueCurve
-              value: 0.005
-        # 90000 => 400
-        - !type:ConditionCurve
-          moreThan: 40000
-          value:
-            - !type:ValueCurve
-              value: 0.004
-    - !type:ClampCurve
-      min: 0
+  - moreThan: 40000
+    value:
+    - add:
+      - float: 10000
+  # 19999 => 0
+  - lessThan: 2000
+    value:
+    - mul:
+      - float: 0
+  # 20000 => 100
+  - moreThan: 20000
+    lessThan: 40000
+    value:
+    - mul:
+      - float: 0.005
+  # 90000 => 400
+  - moreThan: 40000
+    value:
+    - mul:
+      - float: 0.004
+  - clamp:
       max: 400
   # +0.24 per 10 minutes
   moodCurves:
-    - !type:ValueCurve
-      value: 1
-    - !type:RoundTimeIncreaseCurve
-      timeMod: 0.0004
+  - float: 1
+  - add:
+    - !type:RoundTimeSeconds
+    - mul:
+      - float: 0.0004
   # |points / 20 * sin(points)|
   eventChanceCurves:
-    - !type:SinCurve
-    - !type:MultiplyCurve
-      multiplier:
-        - !type:ValueCurve
-          value: 1
-        - !type:RoundTimeIncreaseCurve
-          timeMod: 0.0004
-        - !type:MultiplyCurve
-          multiplier:
-            - !type:ValueCurve
-              value: 0.05
-    - !type:AbsCurve
-    - !type:ClampCurve
-      min: 0
+  - !type:Sin
+  - mul:
+    - float: 1
+    - add:
+      - !type:RoundTimeSeconds
+      - mul:
+        - float: 0.0004
+    - mul:
+      - float: 0.05
+  - !type:Abs
+  - clamp:
       max: 1
 
 - type: narrator
@@ -60,26 +52,19 @@
   constructionCostMod: 1
   eventWaitFactor: 0.016 # ~1 point per minute
   wealthCurves:
-    - !type:ConditionCurve
-      lessThan: 20000
-      value:
-        - !type:MultiplyCurve
-          multiplier:
-            - !type:ValueCurve
-              value: 0
-    - !type:MultiplyCurve
-      multiplier:
-        - !type:ValueCurve
-          value: 0.005 # 20000 => 100
-    - !type:MultiplyRandomCurve
-      min: 0
-      max: 2
+  - lessThan: 20000
+    value:
+    - mul:
+      - float: 0
+  - mul:
+    - float: 0.005 # 20000 => 100
+  - mul:
+    - random:
+        max: 2
   moodCurves:
-    - !type:RandomValueCurve
-      min: 0
+  - random:
       max: 10
   # Absolute random
   eventChanceCurves:
-    - !type:RandomValueCurve
-      min: 0
+  - random:
       max: 1

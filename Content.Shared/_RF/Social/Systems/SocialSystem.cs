@@ -41,9 +41,10 @@ public sealed class SocialSystem : EntitySystem
         ent.Comp.MoodEffects = state.MoodEffects;
         var opinions = new Dictionary<EntityUid, Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?>>();
 
-        foreach (var (uid, value) in state.OpinionEffects)
+        foreach (var (netUid, value) in state.OpinionEffects)
         {
-            opinions[GetEntity(uid)] = value;
+            if (TryGetEntity(netUid, out var uid))
+                opinions[uid.Value] = value;
         }
 
         ent.Comp.OpinionEffects = opinions;
@@ -55,7 +56,8 @@ public sealed class SocialSystem : EntitySystem
 
         foreach (var (uid, value) in ent.Comp.OpinionEffects)
         {
-            opinions[GetNetEntity(uid)] = value;
+            if (TryGetNetEntity(uid, out var netUid))
+                opinions[netUid.Value] = value;
         }
 
         args.State = new SocialComponentState(ent.Comp.MoodEffects, opinions);
@@ -227,10 +229,10 @@ public sealed class SocialSystem : EntitySystem
     /// Returns the entity's mood level
     /// </summary>
     public int GetMood(Entity<SocialComponent?> ent)
-        => Resolve(ent, ref ent.Comp) ? Math.Clamp(GetEffect(ent.Comp.MoodEffects), MinMood, MaxMood) : 0;
+        => Resolve(ent, ref ent.Comp, false) ? Math.Clamp(GetEffect(ent.Comp.MoodEffects), MinMood, MaxMood) : 0;
 
     public bool HasMoodEffect(Entity<SocialComponent?> ent, ProtoId<SocialEffectPrototype> protoId)
-        => Resolve(ent, ref ent.Comp) && ent.Comp.MoodEffects.Any(e => e.Key == protoId);
+        => Resolve(ent, ref ent.Comp, false) && ent.Comp.MoodEffects.Any(e => e.Key == protoId);
 
     #endregion
 
@@ -331,7 +333,7 @@ public sealed class SocialSystem : EntitySystem
     /// Returns the opinion level of one entity to another
     /// </summary>
     public int GetOpinion(Entity<SocialComponent?> ent, EntityUid other)
-        => Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
+        => Resolve(ent, ref ent.Comp, false) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects)
             ? Math.Clamp(GetEffect(effects), MinOpinion, MaxOpinion)
             : 0;
 
@@ -339,7 +341,7 @@ public sealed class SocialSystem : EntitySystem
         Entity<SocialComponent?> ent,
         EntityUid other)
     {
-        if (Resolve(ent, ref ent.Comp) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects))
+        if (Resolve(ent, ref ent.Comp, false) && ent.Comp.OpinionEffects.TryGetValue(other, out var effects))
             return effects;
 
         return new();
@@ -349,7 +351,7 @@ public sealed class SocialSystem : EntitySystem
         Entity<SocialComponent?> ent,
         EntityUid other,
         ProtoId<SocialEffectPrototype> protoId)
-        => Resolve(ent, ref ent.Comp)
+        => Resolve(ent, ref ent.Comp, false)
            && ent.Comp.OpinionEffects.TryGetValue(other, out var effect)
            && effect.Any(x => x.Key == protoId);
 

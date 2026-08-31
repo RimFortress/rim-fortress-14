@@ -1,0 +1,9 @@
+- type: goapCompound
+  id: Deconstruct
+  tasks:
+  - preconditions:
+    - Query/Deconstruct != null
+    action: !type:StartDeconstruction
+      targetKey: Query/Deconstruct
+    effects:
+      TargetDeconstruct: true

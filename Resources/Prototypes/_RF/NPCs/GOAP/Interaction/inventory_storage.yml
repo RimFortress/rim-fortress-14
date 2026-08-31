@@ -1,0 +1,18 @@
+- type: goapCompound
+  id: InventoryStorage
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:EntityCoords
+      targetKey: Target
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Storage
+      targetKey: Target
+    - !type:MarkOwner
+      targetKey: Target
+    effects:
+      TargetStoredInInventory: true

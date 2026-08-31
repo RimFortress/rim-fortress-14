@@ -1,0 +1,55 @@
+- type: goapCompound
+  id: StopBleeding
+  tasks:
+  - preconditions:
+    - Query/BleedHealing || Query/HeatMelees != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/BleedHealing || Query/HeatMelees
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/BleedHealing || Query/HeatMelees
+    effects:
+      BleedHealingPickedUp: true
+
+  - preconditions:
+    - Query/BleedingFriend != null
+    - BleedHealingPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/BleedingFriend
+    - !type:MoveTo
+      rangeKey: InteractRange
+    effects:
+      NearBleedingFriend: true
+
+  - preconditions:
+    - Query/BleedingFriend != null
+    - Engagement/Healing/In == true
+    actions:
+    - !type:InviteEngagement
+      engageKey: Engagement/Healing
+      targetKey: Query/BleedingFriend
+      roles: [ HealedFriened ]
+    effects:
+      BleedingFriendEngaged: true
+
+  - preconditions:
+    - BleedingFriendEngaged == true
+    - Query/HeatMelees != null
+    - NearBleedingFriend == true
+    action: !type:Melee
+      targetKey: Query/BleedingFriend
+      maxHits: 1
+    effects:
+      BleedingStopped: true
+
+  - preconditions:
+    - BleedingFriendEngaged == true
+    - Query/BleedHealing != null
+    - NearBleedingFriend == true
+    action: !type:InteractWith
+      targetKey: Query/BleedingFriend
+    effects:
+      BleedingStopped: true

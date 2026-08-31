@@ -1,0 +1,37 @@
+- type: goapCompound
+  id: Chop
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Axe != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Axe
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Axe
+    - !type:Wield
+      targetState: true
+    effects:
+      AxePickedUp: true
+
+  - preconditions:
+    - AxePickedUp == true
+    - Query/ChopTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/ChopTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Melee
+      targetKey: Query/ChopTarget
+    - !type:MarkOwnerInRange
+      range: 3
+      whitelist:
+        components:
+        - Log
+    effects:
+      TargetChopDown: true

@@ -1,5 +1,5 @@
 using Content.Server._RF.Narrator;
-using Content.Server._RF.NPC.Systems;
+using Content.Server._RF.NPC.Executable.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
@@ -12,7 +12,7 @@ namespace Content.Server._RF.GameTicking.Rules;
 public sealed class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent>
 {
     [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly NpcControlSystem _control = default!;
+    [Dependency] private readonly ExecutableGoalSystem _executable = default!;
     [Dependency] private readonly NarratorSystem _narrator = default!;
 
     protected override void Started(EntityUid uid, MigrationRuleComponent component, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
@@ -52,12 +52,12 @@ public sealed class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent
         if (component.AddToPops)
             World.AddPops(args.Target, pops);
 
-        if (!_prototype.TryIndex(component.Task, out var task))
+        if (!_prototype.Resolve(component.Goal, out var task))
             return;
 
         foreach (var pop in pops)
         {
-            _control.TrySetTask(pop, task, args.TargetCoordinates);
+            _executable.TrySetGoal(pop, task, targetCoords: args.TargetCoordinates);
         }
     }
 }

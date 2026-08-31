@@ -1,0 +1,32 @@
+- type: searchQuery
+  id: FrendlyAttackTarget
+  query: !type:Nearby
+    whitelist:
+      components:
+      - MobState
+    range: 10
+  filters:
+  - !type:IsAlive
+  - !type:IsFriendly
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: NearbyDestructible
+  query: !type:Nearby
+    whitelist:
+      components:
+      - Destructible
+    range: 10
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: NearbyItem
+  parent: BaseItemQuery
+  query: !type:Nearby
+    range: 7

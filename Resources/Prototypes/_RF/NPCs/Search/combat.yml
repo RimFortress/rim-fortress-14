@@ -1,0 +1,112 @@
+# Used by Gun action
+- type: searchQuery
+  id: InventoryMagazine
+  query: !type:Inventory
+  filters:
+  - !type:KeyWhitelist
+    targetKey: MagazineWhitelist
+    passWhenNull: true
+  - !type:KeyWhitelist
+    targetKey: MagazineBlacklist
+    invert: true
+  considerations:
+  - !type:Ammo
+    curves:
+    - !type:Quadratic
+
+- type: searchQuery
+  id: NearbyMagazine
+  parent: BaseItemQuery
+  query: !type:Nearby
+    range: 7
+  filters:
+  - !type:KeyWhitelist
+    targetKey: MagazineWhitelist
+    passWhenNull: true
+  - !type:KeyWhitelist
+    targetKey: MagazineBlacklist
+    invert: true
+  considerations:
+  - !type:Ammo
+    curves:
+    - !type:Quadratic
+
+- type: searchQuery
+  id: AttackTarget
+  query: !type:PassiveTargets
+    goals:
+    - Attack
+  considerations:
+  - !type:Damage
+    curves:
+    - !type:Normalize
+    - mul:
+      - !type:PassiveTargets
+        goal: Attack
+      - clamp:
+          min: 1
+          max: 10
+      - !type:Normalize
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: InventoryGuns
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: Gun
+  considerations:
+  - !type:Ammo
+    curves:
+    - !type:Quadratic
+
+- type: searchQuery
+  id: NearbyGuns
+  parent: BaseItemQuery
+  query: !type:Nearby
+    range: 7
+  filters:
+  - !type:Component
+    components:
+    - type: Gun
+  considerations:
+  - !type:Ammo
+    curves:
+    - !type:Quadratic
+
+- type: searchQuery
+  id: InventoryMelees
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: MeleeWeapon
+      damage:
+        types:
+          Slash: 0
+  considerations:
+  - !type:MeleeDamage
+    curves:
+    - !type:Normalize
+    - !type:Quadratic
+
+- type: searchQuery
+  id: NearbyMelees
+  parent: BaseItemQuery
+  query: !type:Nearby
+    range: 7
+  filters:
+  - !type:Component
+    components:
+    - type: MeleeWeapon
+      damage:
+        types:
+          Slash: 0
+  considerations:
+  - !type:MeleeDamage
+    curves:
+    - !type:Normalize
+    - !type:Quadratic

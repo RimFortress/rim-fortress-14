@@ -1,5 +1,8 @@
+using System.Collections;
 using System.Linq;
+using System.Reflection;
 using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
 using Content.Shared.Hands.Components;
@@ -129,4 +132,135 @@ public sealed class NpcHelperSystem : EntitySystem
             ("reagent", proto.LocalizedName),
             ("amount", amount.ToString()));
     }
+
+    #region Debug
+
+    /// <summary>
+    /// Returns the object's debug reflection.
+    /// </summary>
+    [PublicAPI]
+    public ObjectDebugReflection GetReflection(object obj, string? name = null)
+    {
+        var type = obj.GetType();
+        var node = new ObjectDebugReflection
+        {
+            Name = name ?? type.Name,
+            TypeName = GetFriendlyTypeName(type),
+        };
+
+        var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            //.Where(f => !f.IsStatic && f.IsDefined(typeof(DataFieldAttribute), inherit: true));
+
+        foreach (var fieldInfo in fields)
+        {
+            try
+            {
+                var value = fieldInfo.GetValue(obj);
+                var fieldType = fieldInfo.FieldType;
+
+                if (value == null)
+                {
+                    node.Fields[fieldInfo.Name] = (GetFriendlyTypeName(fieldType), "null");
+                    continue;
+                }
+
+                if (IsCollection(fieldType))
+                {
+                    var collectionNode = BuildCollectionNode(fieldInfo.Name, fieldType, (IEnumerable)value);
+                    node.Children.Add(collectionNode);
+                    continue;
+                }
+
+                /*
+                if (IsComplexObject(fieldType))
+                {
+                    var childNode = GetReflection(value, fieldInfo.Name);
+                    node.Children.Add(childNode);
+                    continue;
+                }
+                */
+
+                node.Fields[fieldInfo.Name] = (GetFriendlyTypeName(fieldType), value.ToString() ?? "null");
+            }
+            catch (Exception e)
+            {
+                node.Fields[fieldInfo.Name] = ("error", $"<error: {e.GetType().Name}, {e.Message}>");
+            }
+        }
+
+        return node;
+    }
+
+    private string GetFriendlyTypeName(Type type)
+    {
+        if (!type.IsGenericType)
+            return type.Name;
+
+        if (type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            var innerType = type.GetGenericArguments()[0];
+            return $"{innerType.Name}?";
+        }
+
+        var baseName = type.Name;
+        var backtickIndex = baseName.IndexOf('`');
+        if (backtickIndex > 0)
+            baseName = baseName[..backtickIndex];
+
+        var args = string.Join(", ", type.GetGenericArguments().Select(GetFriendlyTypeName));
+        return $"{baseName}<{args}>";
+
+    }
+
+    private static bool IsCollection(Type type)
+        => type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
+
+    private static bool IsComplexObject(Type type)
+    {
+        if (type.IsPrimitive
+            || type.IsEnum
+            || type == typeof(string)
+            || type == typeof(EntityUid)
+            || type == typeof(ProtoId<>)
+            || type == typeof(TimeSpan))
+            return false;
+
+        return true;
+    }
+
+    private ObjectDebugReflection BuildCollectionNode(string name, Type collectionType, IEnumerable collection)
+    {
+        var node = new ObjectDebugReflection
+        {
+            Name = name,
+            TypeName = GetFriendlyTypeName(collectionType)
+        };
+
+        var index = 0;
+        foreach (var item in collection)
+        {
+            if (item == null)
+            {
+                node.Fields[$"[{index}]"] = ("???", "null");
+            }
+            else
+            {
+                var itemType = item.GetType();
+                if (IsComplexObject(itemType))
+                {
+                    var child = GetReflection(item, $"[{index}]");
+                    node.Children.Add(child);
+                }
+                else
+                {
+                    node.Fields[$"[{index}]"] = (GetFriendlyTypeName(itemType), item.ToString() ?? "null");
+                }
+            }
+            index++;
+        }
+
+        return node;
+    }
+
+    #endregion
 }

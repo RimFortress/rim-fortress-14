@@ -2,7 +2,7 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.Stockpile;
+namespace Content.Shared._RF.Stockpile.Systems;
 
 /// <summary>
 /// Prototype category for customizing storage items in the stockpile

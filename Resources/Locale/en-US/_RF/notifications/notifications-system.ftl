@@ -8,3 +8,4 @@ notification-start-time = [color=#a8a8a8]{TIMESHORT($time)}[/color]
 notification-name-tooltip = [color=#B07D2B][keybind="UseSecondary"] to hide[/color]
 notification-focus-tooltip = Go to location
 notifications-panel-label = Notifications
+notification-settings-tooltip = Settings

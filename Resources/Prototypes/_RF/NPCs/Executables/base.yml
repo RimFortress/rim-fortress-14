@@ -1,0 +1,15 @@
+- type: executableGoal
+  id: BaseExecutableGoal
+  abstract: true
+  conditions:
+  - !type:Mood
+    hasEffects:
+    - MoodMentalBreakdown
+    invert: true
+
+- type: executableGoal
+  id: BaseCombatGoal
+  parent: BaseExecutableGoal
+  abstract: true
+  conditions:
+  - CombatMode == true

@@ -1,0 +1,29 @@
+- type: searchQuery
+  id: Construction
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: CommonConstructionGhost
+    - type: Construction
+      graph: FloorBananium
+      node: BananiumFloor
+    requireAll: false
+  - !type:Constructed
+    invert: true
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Deconstruct
+  query: !type:PassiveTargets
+    goals:
+    - Deconstruct
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

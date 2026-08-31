@@ -21,6 +21,9 @@ skill-mining-profession = Miner
 skill-melee-name = Close combat
 skill-melee-profession = Warrior
 
+skill-gun-name = Long-Range Combat
+skill-gun-profession = Shooter
+
 skill-farming-name = Farming
 skill-farming-profession = Farmer
 

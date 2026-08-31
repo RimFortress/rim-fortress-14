@@ -1,0 +1,71 @@
+- type: searchQuery
+  id: WorkshopMaterial
+  parent: BaseItemQuery
+  filters:
+  - !type:WorkshopMaterial
+    targetKey: Workshop
+  - !type:InWorkshop
+    invert: true
+  considerations:
+  - !type:StackCount
+
+- type: searchQuery
+  id: WorkshopItem
+  parent: BaseItemQuery
+  filters:
+  - !type:WorkshopItem
+    targetKey: Workshop
+  - !type:InWorkshop
+    invert: true
+
+- type: searchQuery
+  id: WorkshopReagent
+  parent: BaseItemQuery
+  filters:
+  - !type:WorkshopReagent
+    targetKey: Workshop
+  - !type:InWorkshop
+    invert: true
+  considerations:
+  - !type:DrainableSolutionVolume
+    curves:
+    - !type:Normalize
+
+- type: searchQuery
+  id: WorkshopResult
+  parent: BaseItemQuery
+  filters:
+  - !type:ContainingContainer
+    containerId: workshop_result_container
+    whitelist:
+      components:
+      - ContainerStockSupplier
+  - !type:StockpileStorage
+
+# Workshops
+
+- type: searchQuery
+  id: KitchenWorkshop
+  parent: BaseItemQuery
+  filters:
+  - !type:WorkshopActiveRecipe
+  - !type:WorkshopRecipe
+    tables:
+    - AllKitchenRecipesTable
+  - !type:WorkshopCanStartCraft
+    invert: true
+
+- type: searchQuery
+  id: KitchenWorkshopReady
+  query: !type:Owned
+  filters:
+  - !type:WorkshopRecipe
+    tables:
+    - AllKitchenRecipesTable
+  - !type:WorkshopCanStartCraft
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

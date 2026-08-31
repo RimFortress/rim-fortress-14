@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Numerics;
 using Content.Server._RF.Equipment;
-using Content.Server._RF.NPC.Systems;
+using Content.Server._RF.NPC.Executable.Systems;
 using Content.Server._RF.Parallax.Fog;
 using Content.Server.Administration.Managers;
 using Content.Server.Mind;
@@ -11,12 +11,11 @@ using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
-using Content.Shared.Preferences;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
 using Robust.Shared.Configuration;
@@ -45,7 +44,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly IConfigurationManager _cvar = default!;
     [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
-    [Dependency] private readonly NpcControlSystem _npc = default!;
+    [Dependency] private readonly ExecutableGoalSystem _executable = default!;
     [Dependency] private readonly FogOfWarSystem _faw = default!;
     [Dependency] private readonly OwnershipSystem _ownership = default!;
 
@@ -132,14 +131,14 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
 
         foreach (var pop in pops)
         {
-            _npc.AddNpcControl(player.Owner, pop);
+            _executable.AddController(player.Owner, pop);
 
             var beacon = EnsureComp<NavMapBeaconComponent>(pop);
             beacon.Color = player.Comp.FactionColor;
             beacon.Text = MetaData(pop).EntityName;
 
             _faw.AddFogClearer(pop, player);
-            _ownership.AddOwner(pop, player);
+            _ownership.AddOwnership(pop, owner: player);
         }
 
         player.Comp.Pops.AddRange(pops);
@@ -154,14 +153,14 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (!Resolve(player.Owner, ref player.Comp))
             return;
 
-        _npc.AddNpcControl(player.Owner, pop);
+        _executable.AddController(player.Owner, pop);
 
         var beacon = EnsureComp<NavMapBeaconComponent>(pop);
         beacon.Color = player.Comp.FactionColor;
         beacon.Text = MetaData(pop).EntityName;
 
         _faw.AddFogClearer(pop, player);
-        _ownership.AddOwner(pop, player);
+        _ownership.AddOwnership(pop, owner: player);
 
         player.Comp.Pops.Add(pop);
         Dirty(player);
@@ -184,7 +183,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         if (!player.Comp.Pops.Remove(pop))
             return false;
 
-        _npc.RemoveNpcControl(player.Owner, pop);
+        _executable.RemoveController(player.Owner, pop);
         RemComp<NavMapBeaconComponent>(pop);
 
         _faw.RemoveFogClearer(pop, player);
@@ -238,7 +237,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
                     var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
                     var equip = Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
 
-                    _ownership.AddOwner(equip, player);
+                    _ownership.AddOwnership(equip, owner: player);
                 }
             }
         }

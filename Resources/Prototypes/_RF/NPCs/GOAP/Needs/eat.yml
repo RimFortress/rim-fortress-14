@@ -1,0 +1,49 @@
+- type: goapCompound
+  id: Eat
+  tasks:
+  - preconditions:
+    - !type:ItemClosed
+      targetKey: Query/Food
+      invert: true
+    action: !type:CaptureQuery
+      capture: Query/Food
+    effects:
+      FoodOpened: true
+
+  - preconditions:
+    - !type:ItemClosed
+      targetKey: Query/Food
+    action: !type:CaptureQuery
+      capture: Query/Food
+    effects:
+      FoodOpened: false
+
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Food != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Food
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Food
+    effects:
+      FoodPickedUp: true
+
+  - preconditions:
+    - FoodPickedUp == true
+    action: !type:InteractWith
+      targetKey: Query/Food
+    effects:
+      FoodOpened: true
+
+  - preconditions:
+    - FoodPickedUp == true
+    - FoodOpened == true
+    action: !type:InteractWith
+      targetKey: Query/Food
+    effects:
+      FoodEaten: true

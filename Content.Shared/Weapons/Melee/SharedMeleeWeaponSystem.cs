@@ -508,7 +508,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         if (Deleted(target) ||
             !HasComp<DamageableComponent>(target) ||
             !TryComp(target, out TransformComponent? targetXform) ||
-            _skills.DoInteractionCheck(meleeUid, user, GetEntity(ev.Target)) == SkillCheckResult.Fail ||
+            _skills.DoInteractionCheck(meleeUid, user, GetEntity(ev.Target)) == SkillCheckResult.Fail || // RimFortress
             // Not in LOS.
             !InRange(user, target.Value, component.Range, session))
         {

@@ -1,0 +1,51 @@
+- type: utilityAiGoal
+  id: Sleep
+  parent: BaseUtilityAiGoal
+  scoreCurves:
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:NeedLevel
+        need: Sleep
+      pow: [float: 4]
+  capture:
+  - Query/Bed
+  tempKeys:
+  - TargetSleepLevel
+  goalState:
+    Rested: true
+    WokeUp: true
+  fallbacks:
+  - WakeUp
+
+- type: utilityAiGoal
+  id: WakeUp
+  conditions:
+  - !type:Or
+    conditions:
+    - !type:IsBuckled
+    - !type:Sleeping
+  goalState:
+    WokeUp: true
+
+- type: utilityAiGoal
+  id: Eat
+  parent: BaseUtilityAiGoal
+  scoreCurves:
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:HungerLevel
+  goalState:
+    FoodEaten: true
+
+- type: utilityAiGoal
+  id: Drink
+  parent: BaseUtilityAiGoal
+  scoreCurves:
+  - preset: UAIScoreNeeds
+    variables:
+      need:
+      - !type:ThirstLevel
+  goalState:
+    DrinkDrunk: true

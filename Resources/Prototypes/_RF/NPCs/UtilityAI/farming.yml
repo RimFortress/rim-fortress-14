@@ -1,0 +1,115 @@
+- type: utilityAiGoal
+  id: BaseFarmingGoal
+  parent: BaseUtilityAiGoal
+  abstract: true
+  color: "#1a9927"
+
+- type: utilityAiGoal
+  id: Plant
+  parent: BaseFarmingGoal
+  scoreCurves:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: EmptyPlantHolder
+      performersCount:
+      - !type:GoalPerformers
+        goal: Plant
+  capture:
+  - Query/Seed
+  - Query/EmptyPlantHolder
+  goalState:
+    SeedPlanted: true
+
+- type: utilityAiGoal
+  id: Harvest
+  parent: BaseFarmingGoal
+  scoreCurves:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: SharpHarvestPlant
+      performersCount:
+      - !type:GoalPerformers
+        goal: Harvest
+  capture:
+  - Query/Sharp
+  goalState:
+    PlantHarvested: true
+
+- type: utilityAiGoal
+  id: RemoveWeed
+  parent: BaseFarmingGoal
+  scoreCurves:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: WeedPlantHolder
+      performersCount:
+      - !type:GoalPerformers
+        goal: RemoveWeed
+  capture:
+  - Query/Hoe
+  - Query/WeedPlantHolder
+  goalState:
+    WeedRemoved: true
+
+- type: utilityAiGoal
+  id: SamplePlant
+  parent: BaseFarmingGoal
+  scoreCurves:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: SamplePlant
+      performersCount:
+      - !type:GoalPerformers
+        goal: SamplePlant
+  capture:
+  - Query/SamplePlant
+  - Query/PlantSampleTaker
+  goalState:
+    SampleTaken: true
+
+- type: utilityAiGoal
+  id: RemovePlant
+  parent: BaseFarmingGoal
+  scoreCurves:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: DeadPlant
+      - add:
+        - !type:SearchQueryCount
+          query: SharpDeadPlant
+      performersCount:
+      - !type:GoalPerformers
+        goal: RemovePlant
+  capture:
+  - Query/Sharp
+  goalState:
+    PlantRemoved: true
+
+- type: utilityAiGoal
+  id: WaterPlant
+  parent: BaseFarmingGoal
+  scoreCurves:
+  - preset: UAIScoreFarming
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: PlantWaterTarget
+      performersCount:
+      - !type:GoalPerformers
+        goal: WaterPlant
+  capture:
+  - Query/Bucket
+  - Query/WaterSource
+  - Query/PlantWaterTarget
+  goalState:
+    PlantWaterFilled: true

@@ -1,0 +1,46 @@
+- type: goapCompound
+  id: Idle
+  tasks:
+  - proto: Utility
+  - proto: Dig
+  - proto: Chop
+  - proto: Farming
+  - proto: Storing
+  - proto: Healing
+  # Executables
+  - proto: MoveTo
+  - proto: Pry
+  - proto: Pickup
+  - proto: TakeOwnership
+  - proto: Interact
+  - proto: Combat
+  - proto: InventoryStorage
+  - proto: Drop
+  # Needs
+  - proto: Sleep
+  - proto: Eat
+  - proto: Drink
+  - proto: Conversation
+  - proto: MentalBreakdown
+  # Crafting
+  - proto: Building
+  - proto: Workshop
+
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:PickAccessible
+      rangeKey: IdleRange
+    - !type:MoveTo
+      rangeKey: InteractRange
+      findPath: false
+    - !type:RandomTime
+      key: IdleTime
+      minSec: 2
+      maxSec: 7
+    - !type:Wait
+      timeKey: IdleTime
+    effects:
+      Idle: true

@@ -41,6 +41,7 @@ namespace Content.Client.Input
             common.AddFunction(ContentKeyFunctions.InspectServerComponent);
             common.AddFunction(ContentKeyFunctions.InspectClientComponent);
             common.AddFunction(ContentKeyFunctions.ToggleRoundEndSummaryWindow);
+            common.AddFunction(ContentKeyFunctions.TextFind); // RimFortress
 
             // Not in engine, because engine cannot check for sanbox/admin status before starting placement.
             common.AddFunction(ContentKeyFunctions.EditorCopyObject);
@@ -126,6 +127,9 @@ namespace Content.Client.Input
             ghost.AddFunction(EngineKeyFunctions.Walk);
             // RimFortress Start
             ghost.AddFunction(ContentKeyFunctions.DragMove);
+            ghost.AddFunction(ContentKeyFunctions.NpcGoalAddToQueue);
+            ghost.AddFunction(ContentKeyFunctions.NpcVerbGoalAddToQueue);
+            ghost.AddFunction(ContentKeyFunctions.NpcCombatModeToggle);
             // RimFortress End
 
             common.AddFunction(ContentKeyFunctions.OpenEntitySpawnWindow);

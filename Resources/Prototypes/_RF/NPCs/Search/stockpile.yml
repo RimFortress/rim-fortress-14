@@ -1,0 +1,132 @@
+- type: searchQuery
+  id: NotStoredItem
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    invert: true
+  - !type:StockpileStorage
+
+- type: searchQuery
+  id: NotStoredCrate
+  parent: BasePullableQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    invert: true
+  - !type:Component
+    components:
+    - type: EntityStorage
+  - !type:StockpileStorage
+
+
+- type: searchQuery
+  id: StoredItem
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: Item
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: StoredCrate
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: EntityStorage
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+
+- type: searchQuery
+  id: OffsetStoredItem
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+  - !type:StockStoredOffset
+    lessThan: 0.06
+    invert: true
+
+- type: searchQuery
+  id: OffsetStoredCrate
+  parent: BasePullableQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: EntityStorage
+  - !type:StockStoredOffset
+    lessThan: 0.06
+    invert: true
+
+
+- type: searchQuery
+  id: StoredItemToContainer
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+  - !type:StockpileStorage
+    storedInContainer: true
+    invert: true
+  - !type:StockpileStorage
+    moveToContainer: true
+
+
+- type: searchQuery
+  id: StoredItemSupply
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+  - !type:StockpileStorage
+    supplyingOnly: true
+
+- type: searchQuery
+  id: StoredCrateSupply
+  parent: BasePullableQuery
+  filters:
+  - !type:Component
+    components:
+    - type: StockpileContent
+    - type: EntityStorage
+  - !type:StockpileStorage
+    supplyingOnly: true
+
+
+- type: searchQuery
+  id: StockpileToStore
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Stockpile
+  - !type:StockCanInsert
+    targetKey: StoringTarget
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+  # We give priority to stockpiles at the end of the supply chain.
+  - !type:StockTotalSupplied
+    curves:
+    - preset: InvNormalize

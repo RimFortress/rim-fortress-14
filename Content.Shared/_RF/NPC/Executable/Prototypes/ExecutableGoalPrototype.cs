@@ -1,0 +1,121 @@
+using Content.Shared._RF.NPC.Executable.Components;
+using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.UtilityAi.Prototypes;
+using Content.Shared.Whitelist;
+using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
+using Robust.Shared.Utility;
+
+namespace Content.Shared._RF.NPC.Executable.Prototypes;
+
+/// <summary>
+/// A prototype for the Utility AI goal, allowing the player to manually assign it to an NPC.
+/// </summary>
+[Prototype]
+public sealed partial class ExecutableGoalPrototype : IPrototype, IInheritingPrototype
+{
+    /// <inheritdoc />
+    [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<ExecutableGoalPrototype>))]
+    public string[]? Parents { get; private set; }
+
+    /// <inheritdoc />
+    [AbstractDataField, NeverPushInheritance]
+    public bool Abstract { get; private set; }
+
+    /// <inheritdoc/>
+    [IdDataField]
+    public string ID { get; private set; } = default!;
+
+    /// <summary>
+    /// The UAI goal that will be issued.
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<UtilityAiGoalPrototype> Goal;
+
+    /// <summary>
+    /// Type of this goal.
+    /// </summary>
+    [DataField]
+    public ExecutableGoalType GoalType = ExecutableGoalType.Verb;
+
+    /// <summary>
+    /// Conditions that must be met for a goal to be issued and displayed in the Verb menu.
+    /// </summary>
+    [DataField, AlwaysPushInheritance]
+    public List<GoapCondition> Conditions = new();
+
+    /// <summary>
+    /// The counter of goal performers will also include the performers of the specified goals on the same target.
+    /// </summary>
+    [DataField]
+    public List<ProtoId<UtilityAiGoalPrototype>> UnionPerformersWith = new();
+
+    /// <summary>
+    /// An icon to display the goal in the context menu.
+    /// If <see cref="GoalType"/> is <see cref="ExecutableGoalType.Verb"/>.
+    /// </summary>
+    [DataField]
+    public SpriteSpecifier? Icon;
+
+    /// <summary>
+    /// Filter for the goal target entity.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// </summary>
+    [DataField]
+    public EntityWhitelist? TargetWhitelist;
+
+    /// <summary>
+    /// Could the target of this goal be the entity that performs it.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// </summary>
+    [DataField]
+    public bool SelfPerform;
+
+    /// <summary>
+    /// Maximum number of entities that can perform this goal on a one target.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// </summary>
+    [DataField]
+    public int MaxPerformers = int.MaxValue;
+
+    /// <summary>
+    /// The key to store the goal target to the <see cref="GoapState"/>.
+    /// If <see cref="GoalType"/> is not <see cref="ExecutableGoalType.Place"/>.
+    /// </summary>
+    [DataField]
+    public StateKey<EntityUid> TargetKey = "Target";
+
+    /// <summary>
+    /// The key to store the coordinates of the goal target in the <see cref="GoapState"/>.
+    /// If <see cref="GoalType"/> is <see cref="ExecutableGoalType.Place"/>.
+    /// </summary>
+    [DataField]
+    public StateKey<EntityCoordinates> TargetCoordinatesKey = "TargetCoordinates";
+}
+
+[Flags]
+[Serializable, NetSerializable]
+public enum ExecutableGoalType : byte
+{
+    None = 0,
+
+    /// <summary>
+    /// The goal can be issued via the target context menu.
+    /// </summary>
+    Verb = 1 << 0,
+
+    /// <summary>
+    /// The goal can only have target coordinates.
+    /// </summary>
+    Place = 1 << 1,
+
+    /// <summary>
+    /// Passive targets can be assigned for this goal.
+    /// <see cref="PassiveGoalTargetComponent"/>
+    /// </summary>
+    Passive = 1 << 2,
+
+    All = Verb |  Place | Passive,
+}

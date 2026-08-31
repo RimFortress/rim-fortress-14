@@ -1,0 +1,84 @@
+- type: executableGoal
+  id: Drop
+  parent: BaseExecutableGoal
+  goal: Drop
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_solid
+  selfPerform: true
+  conditions:
+  - !type:KeyEqual
+    key1: Target
+    key2: Owner
+
+- type: executableGoal
+  id: Interact
+  parent: BaseExecutableGoal
+  goal: Interact
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_pointer_solid
+  maxPerformers: 1
+  targetWhitelist:
+    requireAll: false
+    components:
+    - Strap
+    - Door
+    tags:
+    - HandGatherable
+
+- type: executableGoal
+  id: InventoryStorage
+  parent: BaseExecutableGoal
+  goal: InventoryStorage
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_solid
+  targetWhitelist:
+    components:
+    - Item
+
+- type: executableGoal
+  id: PickUp
+  parent: BaseExecutableGoal
+  goal: PickUp
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hand_solid
+  targetKey: PickupTarget
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Item
+
+- type: executableGoal
+  id: Pry
+  parent: BaseExecutableGoal
+  goal: Pry
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: left_right_solid
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - Door
+
+- type: executableGoal
+  id: TakeOwnership
+  parent: BaseExecutableGoal
+  goal: TakeOwnership
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: house_flag_solid_full
+  targetKey: Query/TakeOwnershipTarget
+  maxPerformers: 1
+  conditions:
+  - !type:HasSameOwner
+    targetKey: Query/TakeOwnershipTarget
+    invert: true
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - Item

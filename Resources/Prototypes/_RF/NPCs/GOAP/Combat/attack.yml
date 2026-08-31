@@ -1,0 +1,98 @@
+- type: goapCompound
+  id: Combat
+  tasks:
+  # Search
+  - preconditions:
+    - Query/InventoryGuns || Query/NearbyGuns != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/InventoryGuns || Query/NearbyGuns
+      targetKey: WeaponTarget
+    effects:
+      GunFound: true
+      WeaponTarget: true
+
+  - preconditions:
+    - Query/InventoryMelees || Query/NearbyMelees != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/InventoryMelees || Query/NearbyMelees
+      targetKey: WeaponTarget
+      costMultiplier: 2
+    effects:
+      MeleeFound: true
+      WeaponTarget: true
+
+  # Pickup
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - WeaponTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: WeaponTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: WeaponTarget
+    - !type:Wield
+      targetState: true
+    effects:
+      WeaponPickedUp: true
+
+  # Gun
+  - preconditions:
+    - GunFound == true
+    - WeaponPickedUp == true
+    - Query/AttackTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/AttackTarget
+    - !type:MoveTo
+      rangeKey: MeleeRange
+      stopOnLineOfSight: true
+    - !type:Juke
+      jukeType: Away
+    - !type:Gun
+      targetKey: Query/AttackTarget
+      removeCombatMode: false
+    effects:
+      TargetAttacked: true
+
+  # Melee
+  - preconditions:
+    - MeleeFound == true
+    - WeaponPickedUp == true
+    - Query/AttackTarget != null
+    actions:
+    - !type:Wield
+      targetState: true
+    - !type:EntityCoords
+      targetKey: Query/AttackTarget
+    - !type:MoveTo
+      rangeKey: MeleeRange
+    - !type:Juke
+    - !type:Melee
+      targetKey: Query/AttackTarget
+      removeCombatMode: false
+      costMultiplier: 4
+    effects:
+      TargetAttacked: true
+
+  # Fistfight
+  - preconditions:
+    - WeaponTarget == null
+    - Query/AttackTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/AttackTarget
+    - !type:MoveTo
+      rangeKey: MeleeRange
+    - !type:Juke
+    - !type:Melee
+      targetKey: Query/AttackTarget
+      removeCombatMode: false
+      costMultiplier: 100 # A fistfight is the least desirable option
+    effects:
+      TargetAttacked: true

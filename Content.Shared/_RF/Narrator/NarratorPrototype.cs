@@ -1,3 +1,4 @@
+using Content.Shared._RF.MathHelpers.MathCurve;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Narrator;

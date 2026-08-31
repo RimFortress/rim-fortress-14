@@ -1,0 +1,59 @@
+- type: searchQuery
+  id: Bed
+  query: !type:Owned
+  filters:
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:BuckleHealing
+    curves:
+    - !type:Normalize
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: Food
+  parent: BaseItemQuery
+  filters:
+  - !type:IsAlive
+    invert: true
+  considerations:
+  - !type:Ingestion
+    nutrition: true
+    curves:
+    - !type:Normalize
+    - !type:Quadratic
+      slope: 1
+      exponent: 0.4
+
+- type: searchQuery
+  id: Drink
+  parent: BaseItemQuery
+  filters:
+  - !type:IsAlive
+    invert: true
+  considerations:
+  - !type:Ingestion
+    hydration: true
+    curves:
+    - !type:Normalize
+    - !type:Quadratic
+      slope: 1
+      exponent: 0.4
+
+- type: searchQuery
+  id: Mug
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: SolutionTransfer
+    - type: Item
+  - !type:Or
+    filters:
+    - !type:DrainableSolution
+      solutionEmpty: true
+    - !type:DrainableSolution
+      reagent: Water
+      onlyReagent: true

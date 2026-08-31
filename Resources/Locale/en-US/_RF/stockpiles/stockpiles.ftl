@@ -1,0 +1,1 @@
+stockpile-name-default = Stockpile

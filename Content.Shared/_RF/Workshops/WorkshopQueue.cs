@@ -35,11 +35,6 @@ public sealed partial class WorkshopQueue
     public ProtoId<WorkshopRecipePrototype>? Recipe => Entry?.Current;
 
     /// <summary>
-    /// Returns <c>true</c> when the active queue entry is actively crafting.
-    /// </summary>
-    public bool Crafting => Entry is { CraftingEndTime: not null, Suspended: false };
-
-    /// <summary>
     /// Advances the queue by one logical step.
     /// If the current entry still has path steps remaining, advances its path.
     /// If the current recipe is finished, removes it unless it is repeatable.
@@ -73,15 +68,6 @@ public sealed partial class WorkshopQueue
         entry.ResetPath();
 
         Index = ValidateIndex(Index + 1);
-    }
-
-    /// <summary>
-    /// Stops execution of the currently selected entry without removing it from the queue.
-    /// </summary>
-    public void StopCurrent()
-    {
-        if (Entry != null)
-            Queue[Index].CraftingEndTime = null;
     }
 
     /// <summary>

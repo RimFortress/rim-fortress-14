@@ -1,0 +1,29 @@
+- type: goapCompound
+  id: Pry
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Crowbar != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Crowbar
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Crowbar
+    effects:
+      CrowbarPickedUp: true
+
+  - preconditions:
+    - CrowbarPickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Target
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Target
+    effects:
+      TargetPry: true

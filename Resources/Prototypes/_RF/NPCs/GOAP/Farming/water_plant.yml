@@ -1,0 +1,40 @@
+- type: goapCompound
+  id: WaterPlant
+  tasks:
+  - preconditions:
+    - Query/Bucket != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/Bucket
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Bucket
+    effects:
+      BucketPickedUp: true
+
+  - preconditions:
+    - BucketPickedUp == true
+    - Query/WaterSource != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/WaterSource
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Query/WaterSource
+    effects:
+      BuckedFilled: true
+
+  - preconditions:
+    - BuckedFilled == true
+    - Query/PlantWaterTarget != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/PlantWaterTarget
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Query/PlantWaterTarget
+    effects:
+      PlantWaterFilled: true

@@ -1,0 +1,29 @@
+- type: searchQuery
+  id: ConversationInviter
+  query: !type:EngagementInvites
+    dataset: BasicConversationEngagements
+  filters:
+  - !type:IsAlive
+  - !type:IsFriendly
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: ConversationTarget
+  query: !type:Owned
+  filters:
+  - !type:Self
+    invert: true
+  - !type:IsFriendly
+  - !type:IsAlive
+  - !type:Component
+    components:
+    - type: ConversationActor
+    - type: Sleeping
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

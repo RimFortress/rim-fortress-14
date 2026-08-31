@@ -1,11 +1,11 @@
 using System.Numerics;
 using Content.Client.Stylesheets;
+using Content.Shared._RF.Selection.Components;
 using Content.Shared.Maps;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
-using Robust.Client.ResourceManagement;
-using Robust.Client.Utility;
+using Robust.Client.Player;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -17,18 +17,16 @@ public sealed class SelectionOverlay : Overlay
 {
     [Dependency] private readonly IEntityManager _entityManager = default!;
     [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IResourceCache _resourceCache = default!;
+    [Dependency] private readonly IPlayerManager _player = default!;
     [Dependency] private readonly IInputManager _input = default!;
     [Dependency] private readonly IEyeManager _eye = default!;
 
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string SelectShader = "DottedOutline";
-    [ValidatePrototypeId<ShaderPrototype>]
-    private const string SelectAreaShader = "DottedSquareOutline";
+    private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
+    private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";
 
-    private readonly SelectionSystem _selection;
     private readonly TurfSystem _turf;
     private readonly TransformSystem _transform;
+    private readonly SpriteSystem _sprite;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
@@ -40,9 +38,9 @@ public sealed class SelectionOverlay : Overlay
     {
         IoCManager.InjectDependencies(this);
 
-        _selection = _entityManager.System<SelectionSystem>();
         _turf = _entityManager.System<TurfSystem>();
         _transform = _entityManager.System<TransformSystem>();
+        _sprite = _entityManager.System<SpriteSystem>();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -55,25 +53,28 @@ public sealed class SelectionOverlay : Overlay
 
         _highlightedSprites.Clear();
 
-        foreach (var entity in _selection.Selected)
+        if (!_entityManager.TryGetComponent(_player.LocalEntity, out SelectionComponent? selection))
+            return;
+
+        foreach (var entity in selection.Selected)
         {
-            SetShader(entity, _selection.SelectionColor);
+            SetShader(entity, selection.SelectionColor);
         }
 
-        foreach (var tileRef in _selection.SelectedTiles)
+        foreach (var tileRef in selection.SelectedTiles)
         {
             var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
             var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
             var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
 
-            DrawSelectArea(args, start, end);
+            DrawSelectArea(args, start, end, selection.SelectionColor);
         }
 
-        if (_selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
-            DrawSelectArea(args, startPoint, endPoint);
+        if (selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
+            DrawSelectArea(args, startPoint, endPoint, selection.SelectionColor);
 
-        if (_selection.IconPath != null)
-            DrawMouseIcon(args, _selection.IconPath, _selection.IconColor);
+        if (selection.Icon != null)
+            DrawMouseIcon(args, selection.Icon, selection.IconColor);
     }
 
     private void SetShader(EntityUid entity, Color color)
@@ -83,7 +84,7 @@ public sealed class SelectionOverlay : Overlay
             || !sprite.Visible)
             return;
 
-        var shader = _prototype.Index<ShaderPrototype>(SelectShader).InstanceUnique();
+        var shader = _prototype.Index(SelectShader).InstanceUnique();
         _highlightedSprites.Add(sprite);
         shader.SetParameter("color", color);
 
@@ -91,10 +92,14 @@ public sealed class SelectionOverlay : Overlay
         sprite.RenderOrder = _entityManager.CurrentTick.Value;
     }
 
-    private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end)
+    private void DrawSelectArea(in OverlayDrawArgs args, MapCoordinates start, MapCoordinates end, Color color)
     {
-        var shader = _prototype.Index<ShaderPrototype>(SelectAreaShader).InstanceUnique();
-        var area = new Box2(start.Position, end.Position);
+        var shader = _prototype.Index(SelectAreaShader).InstanceUnique();
+        var area = new Box2(
+            Math.Min(start.X, end.X),
+            Math.Min(start.Y, end.Y),
+            Math.Max(start.X, end.X),
+            Math.Max(start.Y, end.Y));
         var prevShader = args.WorldHandle.GetShader();
 
         var bottomLeft = args.Viewport.WorldToLocal(area.BottomLeft);
@@ -107,18 +112,20 @@ public sealed class SelectionOverlay : Overlay
         var topRight = args.Viewport.WorldToLocal(area.TopRight);
         topRight.Y = args.Viewport.Size.Y - topRight.Y;
 
-        shader.SetParameter("color", _selection.SelectionColor);
+        shader.SetParameter("color", color);
         shader.SetParameter("point1", bottomLeft);
         shader.SetParameter("point2", bottomRight);
         shader.SetParameter("point3", topLeft);
         shader.SetParameter("point4", topRight);
+
+        area = area.Enlarged(1f);
 
         args.WorldHandle.UseShader(shader);
         args.WorldHandle.DrawRect(area, Color.White);
         args.WorldHandle.UseShader(prevShader);
     }
 
-    private void DrawMouseIcon(in OverlayDrawArgs args, string path, Color color)
+    private void DrawMouseIcon(in OverlayDrawArgs args, SpriteSpecifier sprite, Color color)
     {
         if (_input.MouseScreenPosition is not { IsValid: true } mousePos)
             return;
@@ -129,7 +136,7 @@ public sealed class SelectionOverlay : Overlay
         if (mapPos.Position == Vector2.Zero)
             return;
 
-        var icon = new SpriteSpecifier.Texture(new ResPath(path)).GetTexture(_resourceCache);
+        var icon = _sprite.Frame0(sprite);
         var box = new Box2(new Vector2(mapPos.X, mapPos.Y - size), new Vector2(mapPos.X + size, mapPos.Y));
 
         args.WorldHandle.DrawRect(box, StyleNano.PanelDark.WithAlpha(0.6f));

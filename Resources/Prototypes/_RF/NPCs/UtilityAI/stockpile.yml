@@ -1,0 +1,34 @@
+- type: utilityAiGoal
+  id: Storing
+  parent: BaseUtilityAiGoal
+  color: "#A16C2B"
+  scoreCurves:
+  - preset: BaseUAIScore
+    variables:
+      targetsCount:
+      - !type:SearchQueryCount
+        query: NotStoredItem
+      - add:
+        - !type:SearchQueryCount
+          query: NotStoredCrate
+      - add:
+        - !type:SearchQueryCount
+          query: OffsetStoredItem
+      - add:
+        - !type:SearchQueryCount
+          query: OffsetStoredCrate
+      - add:
+        - !type:SearchQueryCount
+          query: StoredItemToContainer
+      - add:
+        - !type:SearchQueryCount
+          query: StoredItemSupply
+      - add:
+        - !type:SearchQueryCount
+          query: StoredCrateSupply
+      performersCount:
+      - !type:GoalPerformers
+        goal: Storing
+      importance: [float: 0.35]
+  goalState:
+    TargetStored: true

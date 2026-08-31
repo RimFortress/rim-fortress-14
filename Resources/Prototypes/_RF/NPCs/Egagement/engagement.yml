@@ -1,0 +1,62 @@
+- type: dataset
+  id: BasicConversationEngagements
+  values:
+  - BaseDialogEngagement
+  - MorningGreeting
+  - SmalltalkRejected
+  - SmalltalkIgnored
+  - SmalltalkRude
+  - ThankForHealing
+  - CheckOnPatient
+
+# Conversations
+
+- type: engagement
+  id: BaseDialogEngagement
+  roles:
+  - BaseDialogInitiator
+  - BaseDialogResponder
+
+- type: engagement
+  id: MorningGreeting
+  roles:
+  - MorningGreetingInitiator
+  - MorningGreetingResponder
+
+- type: engagement
+  id: SmalltalkRejected
+  roles:
+  - SmalltalkRejectedInitiator
+  - SmalltalkRejectedResponder
+
+- type: engagement
+  id: SmalltalkIgnored
+  roles:
+  - SmalltalkIgnoredInitiator
+  - SmalltalkIgnoredResponder
+
+- type: engagement
+  id: SmalltalkRude
+  roles:
+  - SmalltalkRudeInitiator
+  - SmalltalkRudeResponder
+
+- type: engagement
+  id: ThankForHealing
+  roles:
+  - ThankForHealingInitiator
+  - BaseDialogResponder
+
+- type: engagement
+  id: CheckOnPatient
+  roles:
+  - CheckOnPatientInitiator
+  - CheckOnPatientResponder
+
+# Healing
+
+- type: engagement
+  id: Healing
+  roles:
+  - Doctor
+  - HealedFriened

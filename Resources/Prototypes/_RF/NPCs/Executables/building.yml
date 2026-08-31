@@ -1,0 +1,29 @@
+- type: executableGoal
+  id: Construction
+  parent: BaseExecutableGoal
+  goal: Construction
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: hammer_solid
+  targetKey: Query/Construction
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - CommonConstructionGhost
+    - Construction
+
+- type: executableGoal
+  id: Deconstruct
+  parent: BaseExecutableGoal
+  goal: Deconstruct
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: trowel_bricks_solid
+  targetKey: Query/Deconstruct
+  maxPerformers: 1
+  goalType:
+  - Verb
+  - Passive
+  targetWhitelist:
+    components:
+    - Construction

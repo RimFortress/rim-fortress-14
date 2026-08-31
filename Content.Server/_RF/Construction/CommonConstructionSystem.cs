@@ -2,7 +2,8 @@ using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Popups;
 using Content.Shared._RF.Construction;
-using Content.Shared._RF.NPC;
+using Content.Shared._RF.NPC.Components;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Construction.EntitySystems;
 using Content.Shared.Construction.Steps;
@@ -61,7 +62,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (ghost == null)
             return;
 
-        _ownership.AddOwner(ghost.Value, user);
+        _ownership.AddOwnership(ghost.Value, owned: user);
     }
 
     private void OnClearRequest(ConstructionGhostClearRequest request)
@@ -76,7 +77,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         if (!HasComp<ConstructionComponent>(args.New))
             return;
 
-        _ownership.AddOwners(args.New, component.Owners);
+        _ownership.AddOwnership(args.New, owners: component.Owners);
     }
 
     // Code taken from ConstructionSystem.Initial.cs

@@ -13,8 +13,6 @@
       map: ["enum.WorkshopLayers.Base"]
     - map: ["enum.WorkshopLayers.Items"]
       visible: false
-  - type: WorkshopTaskSource
-    task: Cook
   - type: Workshop
     recipes: AllKitchenRecipesTable
     craftingFailResult: FoodBadRecipe

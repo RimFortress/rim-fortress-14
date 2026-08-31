@@ -1,0 +1,27 @@
+- type: utilityAiGoal
+  id: Construction
+  parent: BaseUtilityAiGoal
+  color: "#FFFF00"
+  scoreCurves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Construction
+      targetsCount:
+      - !type:SearchQueryCount
+        query: Construction
+      performersCount:
+      - !type:GoalPerformers
+        goal: Construction
+      importance: [float: 0.55]
+  goalState:
+    TargetConstructed: true
+
+- type: utilityAiGoal
+  id: Deconstruct
+  color: "#945A1C"
+  scoreCurves:
+  - float: 1
+  goalState:
+    TargetDeconstruct: true

@@ -1,0 +1,25 @@
+- type: searchQuery
+  id: ChopTarget
+  query: !type:PassiveTargets
+    goals:
+    - Chop
+  filters:
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: DigTarget
+  query: !type:PassiveTargets
+    goals:
+    - Dig
+  filters:
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

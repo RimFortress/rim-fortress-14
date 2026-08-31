@@ -303,6 +303,7 @@ namespace Content.Server.Construction
                             BreakOnDamage = false,
                             BreakOnMove = true,
                             NeedHand = true,
+                            MovementThreshold = 1f, // RimFortress
                         };
 
                         doAfterEventArgs.Delay = _skills.GetDelay(uid, interactUsing.User, doAfterEventArgs.Delay); // RimFortress

@@ -2,32 +2,93 @@
   id: PopsComponentsOverride
   categories: [ HideSpawnMenu ]
   components:
-  - type: HTN
-    rootTask:
-      task: RfIdleCompound
+  - type: Goap
+    rootTask: Idle
+  - type: UtilityAi
+    goals:
+    # Needs
+    - Sleep
+    - Eat
+    - Drink
+    # Social
+    - StartConversation
+    - AcceptConversationInvite
+    - Conversation
+    - MentalBreakdownStart
+    - MentalBreakdownSpeak
+    - MentalBreakdownThrow
+    - MentalBreakdownAttack
+    - MentalBreakdownIdle
+    # Executables
+    - Dig
+    - Chop
+    - TakeOwnership
+    - Attack
+    # Farming
+    - Plant
+    - Harvest
+    - RemoveWeed
+    - SamplePlant
+    - RemovePlant
+    - WaterPlant
+    # Healing
+    - HealingBuckle
+    - StopBleeding
+    - RestoreBloodLevel
+    - DamageHealing
+    - FinishHealing
+    - PatientWaiting
+    # Crafting
+    - Construction
+    - Deconstruct
+    - Cooking
+    # Other
+    - Idle
+    - Storing
   - type: NpcFactionMember
     factions:
     - RimFortress
-  - type: FogOfWarClearer
-  - type: RoutineNpcTasks
-    presetJobs:
+  - type: NpcJobSettings
+  - type: ControllableNpc
+    combatConditions:
+    - !type:Mood
+      hasEffects:
+      - MoodMentalBreakdown
+      invert: true
+    - !type:HasComponent
+      components:
+      - type: Sleeping
+      invert: true
+    goals:
+    - MoveTo
+    - Attack
+    - PickUp
+    - TakeOwnership
+    - Pry
     - Construction
+    - Deconstruct
     - Dig
+    - Interact
+    #- Heal
     - Chop
-    - Medicine
-    - Farming
-    - Storing
-    - Cooking
-    - Other
-    - Social
+    - InventoryStorage
+    - Drop
+    - Plant
+    - Harvest
+    - RemoveWeed
+    - SamplePlant
+    - RemovePlant
+    - RemovePlantSharp
+    - WaterPlant
+  - type: FogOfWarClearer
   - type: NotifyOnStateChanged
     notifications:
       Critical: ColonistCriticalEvent
       Dead: ColonistDeathEvent
-  - type: NotifyOnTaskGiven
+  - type: NotifyOnGoalGiven
     notifications:
-      MentalBreakdown: MentalBreakdown
-      LeaveSettlement: LeaveSettlement
+      MentalBreakdownStart: MentalBreakdown
+    #  LeaveSettlement: LeaveSettlement
 
 - type: entity
   id: RimFortress

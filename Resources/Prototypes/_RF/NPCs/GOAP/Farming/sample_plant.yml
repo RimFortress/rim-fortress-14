@@ -1,0 +1,31 @@
+- type: goapCompound
+  id: SamplePlant
+  tasks:
+  - preconditions:
+    - Query/PlantSampleTaker != null
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/PlantSampleTaker
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/PlantSampleTaker
+    effects:
+      PlantSamplePickedUp: true
+
+  - preconditions:
+    - Query/SamplePlant != null
+    - PlantSamplePickedUp == true
+    actions:
+    - !type:EntityCoords
+      targetKey: Query/SamplePlant
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Query/SamplePlant
+    - !type:MarkOwnerInRange
+      whitelist:
+        components:
+        - Seed
+    effects:
+      SampleTaken: true

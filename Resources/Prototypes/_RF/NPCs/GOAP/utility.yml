@@ -1,0 +1,31 @@
+- type: goapCompound
+  id: Utility
+  tasks:
+  - actions:
+    - !type:Container
+      resultKey: Container
+    - !type:ContainerEscape
+      targetKey: Container
+    effects:
+      InContainer: false
+
+  - actions:
+    - !type:UnPull
+    effects:
+      Pulled: false
+
+  - actions:
+    - !type:Unbuckle
+    effects:
+      Buckled: false
+
+  - preconditions:
+    - FreeHandsCount > 0
+    action: !type:SwapToFreeHand
+    effects:
+      ActiveHandFree: true
+
+  - action: !type:Drop
+      costMultiplier: 2
+    effects:
+      ActiveHandFree: true

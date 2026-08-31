@@ -1,0 +1,68 @@
+- type: searchQuery
+  id: Sharp
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: Sharp
+
+- type: searchQuery
+  id: Hoe
+  parent: BaseItemQuery
+  filters:
+  - !type:HasTags
+    tags:
+    - Hoe
+
+- type: searchQuery
+  id: PlantSampleTaker
+  parent: BaseItemQuery
+  filters:
+  - !type:HasTags
+    tags:
+    - PlantSampleTaker
+
+- type: searchQuery
+  id: Bucket
+  parent: BaseItemQuery
+  filters:
+  - !type:Component
+    components:
+    - type: SolutionTransfer
+  - !type:Or
+    filters:
+    - !type:DrainableSolution
+      solutionEmpty: true
+    - !type:DrainableSolution
+      reagent: Water
+      onlyReagent: true
+  considerations:
+  - !type:DrainableSolutionMaxVolume
+    curves:
+    - !type:Normalize
+      saturation: [float: 3]
+
+- type: searchQuery
+  id: Axe
+  parent: BaseItemQuery
+  filters:
+  - !type:HasTags
+    tags:
+    - FireAxe
+    - BotanyHatchet
+    requireAll: false
+
+- type: searchQuery
+  id: Pickaxe
+  parent: BaseItemQuery
+  filters:
+  - !type:HasTags
+    tags:
+    - Pickaxe
+
+- type: searchQuery
+  id: Crowbar
+  parent: BaseItemQuery
+  filters:
+  - !type:ToolQuality
+    quality: Prying

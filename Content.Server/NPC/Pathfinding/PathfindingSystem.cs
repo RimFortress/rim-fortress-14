@@ -27,6 +27,9 @@ using Robust.Shared.Utility;
 using Content.Server.Parallax;
 using Robust.Shared.Prototypes;
 using Content.Server._RF.NPC.Components;
+using Content.Server._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Components;
 // RimFortress End
 
 namespace Content.Server.NPC.Pathfinding
@@ -62,6 +65,7 @@ namespace Content.Server.NPC.Pathfinding
         [Dependency] private readonly BiomeSystem _biome = default!;
         [Dependency] private readonly IPrototypeManager _prototype = default!;
         [Dependency] private readonly ITileDefinitionManager _tileDef = default!;
+        [Dependency] private readonly GoapSystem _goap = default!;
         // RimFortress End
 
         private readonly Dictionary<ICommonSession, PathfindingDebugMode> _subscribedSessions = new();
@@ -453,6 +457,11 @@ namespace Content.Server.NPC.Pathfinding
 
         public PathFlags GetFlags(EntityUid uid)
         {
+            // RimFortress Start
+            if (TryComp(uid, out GoapComponent? goap))
+                return GetFlags(goap.State);
+            // RimFortress End
+
             if (!_npc.TryGetNpc(uid, out var npc))
             {
                 return PathFlags.None;
@@ -487,6 +496,27 @@ namespace Content.Server.NPC.Pathfinding
 
             return flags;
         }
+
+        // RimFortress Start
+        public PathFlags GetFlags(GoapState state)
+        {
+            var flags = PathFlags.None;
+
+            if (_goap.TryGetValue(state, GoapState.NavPry, out var pry) && pry)
+                flags |= PathFlags.Prying;
+
+            if (_goap.TryGetValue(state, GoapState.NavSmash, out var smash) && smash)
+                flags |= PathFlags.Smashing;
+
+            if (_goap.TryGetValue(state, GoapState.NavClimb, out var climb) && climb)
+                flags |= PathFlags.Climbing;
+
+            if (_goap.TryGetValue(state, GoapState.NavInteract, out var interact) && interact)
+                flags |= PathFlags.Interact;
+
+            return flags;
+        }
+        // RimFortress End
 
         private async Task<PathResultEvent> GetPath(
             PathRequest request, bool safe = false)

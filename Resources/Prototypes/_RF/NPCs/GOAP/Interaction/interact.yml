@@ -1,0 +1,17 @@
+- type: goapCompound
+  id: Interact
+  tasks:
+  - preconditions:
+    - ActiveHandFree == true
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:EntityCoords
+      targetKey: Target
+    - !type:MoveTo
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: Target
+    effects:
+      TargetInteracted: true

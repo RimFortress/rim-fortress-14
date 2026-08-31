@@ -1,0 +1,94 @@
+- type: executableGoal
+  id: BaseFarmingGoal
+  parent: BaseExecutableGoal
+  abstract: true
+  icon:
+    sprite: _RF/Interface/executable_goals.rsi
+    state: seedling_solid
+  maxPerformers: 1
+  targetWhitelist:
+    components:
+    - PlantHolder
+  unionPerformersWith:
+  - Plant
+  - Harvest
+  - RemoveWeed
+  - SamplePlant
+  - RemovePlant
+  - WaterPlant
+
+- type: executableGoal
+  id: Plant
+  parent: BaseFarmingGoal
+  goal: Plant
+  targetKey: Query/EmptyPlantHolder
+  conditions:
+  - Query/Seed != null
+  - !type:PlantHolder
+    targetKey: Query/EmptyPlantHolder
+    filled: false
+
+- type: executableGoal
+  id: Harvest
+  parent: BaseFarmingGoal
+  goal: Harvest
+  targetKey: HarvestPlant
+  conditions:
+  - Query/Sharp != null
+  - !type:PlantHolder
+    targetKey: Query/HarvestPlant
+    harvest: true
+
+- type: executableGoal
+  id: RemoveWeed
+  parent: BaseFarmingGoal
+  goal: RemoveWeed
+  targetKey: Query/WeedPlantHolder
+  conditions:
+  - !type:PlantHolder
+    targetKey: Query/WeedPlantHolder
+    hasWeed: true
+
+- type: executableGoal
+  id: SamplePlant
+  parent: BaseFarmingGoal
+  goal: SamplePlant
+  targetKey: Query/SamplePlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: Query/SamplePlant
+    filled: true
+    sampled: false
+    dead: false
+
+- type: executableGoal
+  id: RemovePlant
+  parent: BaseFarmingGoal
+  goal: RemovePlant
+  targetKey: Query/DeadPlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: Query/DeadPlant
+    needSharp: false
+    dead: true
+
+- type: executableGoal
+  id: RemovePlantSharp
+  parent: BaseFarmingGoal
+  goal: RemovePlant
+  targetKey: Query/SharpDeadPlant
+  conditions:
+  - !type:PlantHolder
+    targetKey: Query/SharpDeadPlant
+    needSharp: true
+    dead: true
+
+- type: executableGoal
+  id: WaterPlant
+  parent: BaseFarmingGoal
+  goal: WaterPlant
+  targetKey: Query/PlantWaterTarget
+  conditions:
+  - !type:PlantHolder
+    targetKey: Query/PlantWaterTarget
+    waterLessThan: 50

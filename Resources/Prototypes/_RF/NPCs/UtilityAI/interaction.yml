@@ -1,0 +1,47 @@
+- type: utilityAiGoal
+  id: Drop
+  parent: BaseExecutableGoal
+  color: "#00D5FF"
+  goalState:
+    TargetDroped: true
+
+- type: utilityAiGoal
+  id: Interact
+  parent: BaseExecutableGoal
+  color: "#00D5FF"
+  scoreCurves:
+  - float: 1
+  goalState:
+    TargetInteracted: true
+
+- type: utilityAiGoal
+  id: InventoryStorage
+  color: "#00D5FF"
+  goalState:
+    TargetStoredInInventory: true
+
+- type: utilityAiGoal
+  id: PickUp
+  parent: BaseExecutableGoal
+  color: "#00D5FF"
+  goalState:
+    TargetPickedUp: true
+
+- type: utilityAiGoal
+  id: Pry
+  parent: BaseExecutableGoal
+  color: "#00D5FF"
+  goalState:
+    TargetPry: true
+  capture:
+  - Query/Crowbar
+
+- type: utilityAiGoal
+  id: TakeOwnership
+  color: "#075967"
+  scoreCurves:
+  - float: 0.8
+  goalState:
+    TargetOwned: true
+  capture:
+  - Query/TakeOwnershipTarget

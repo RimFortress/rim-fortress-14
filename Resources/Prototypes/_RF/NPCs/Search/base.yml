@@ -1,0 +1,35 @@
+- type: searchQuery
+  id: BaseItemQuery
+  abstract: true
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Item
+  - !type:InInventory
+    invert: true
+  - !type:InHands
+    invert: true
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+- type: searchQuery
+  id: BasePullableQuery
+  abstract: true
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Pullable
+  - !type:Pulled
+    invert: true
+  - !type:Captured
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

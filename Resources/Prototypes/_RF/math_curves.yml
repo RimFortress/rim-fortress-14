@@ -1,0 +1,85 @@
+- type: mathCurve
+  id: TargetDistance
+  curves:
+  - preset: InvNormalize
+    variables:
+      saturation: [float: 2]
+
+- type: mathCurve
+  id: InvNormalize
+  variables:
+    saturation: [float: 1]
+  curves:
+  - !type:Normalize
+    saturation: [var: saturation]
+  - minus: [float: 1]
+  - !type:Abs
+
+# Utility AI
+
+- type: mathCurve
+  id: BaseUAIScore
+  variables:
+    skill: [float: 0]
+    skillFactor: [float: 3]
+    targetsCount: [float: 0]
+    targetsSaturation: [float: 2]
+    performersCount: [float: 0]
+    importance: [float: 0.45]
+  curves:
+  - var: skill
+  - div: [var: skillFactor]
+  - add:
+    - var: targetsCount
+    - !type:Normalize
+      saturation: [var: targetsSaturation]
+    - pow: [float: 2]
+    - div:
+      - var: performersCount
+      - minus:
+        - float: 1
+      - clamp:
+          min: 1
+          max: 10
+    - mul: [var: importance]
+
+- type: mathCurve
+  id: UAIScoreNeeds
+  variables:
+    need: [float: 0]
+    pow: [float: 2]
+  curves:
+  - var: need
+  - minus: [float: 1]
+  - !type:Abs # In case the power is odd
+  - pow: [var: pow]
+
+- type: mathCurve
+  id: UAIScoreFarming
+  variables:
+    targetsCount: [float: 0]
+    performersCount: [float: 0]
+  curves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Farming
+      targetsCount: [var: targetsCount]
+      performersCount: [var: performersCount]
+      importance: [float: 0.50]
+
+- type: mathCurve
+  id: UAIScoreHealing
+  variables:
+    targetsCount: [float: 0]
+    performersCount: [float: 0]
+  curves:
+  - preset: BaseUAIScore
+    variables:
+      skill:
+      - !type:SkillLevel
+        skill: Healing
+      targetsCount: [var: targetsCount]
+      performersCount: [var: performersCount]
+      importance: [float: 0.55]

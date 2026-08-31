@@ -1,0 +1,151 @@
+using JetBrains.Annotations;
+using Robust.Shared.Serialization;
+
+namespace Content.Shared._RF.NPC.GOAP;
+
+/// <summary>
+/// An event raised to get the result of a condition check.
+/// </summary>
+/// <typeparam name="T">GOAP condition type.</typeparam>
+/// <param name="Condition">GOAP condition.</param>
+/// <param name="State">
+/// The state against which the check should be performed.
+/// It may differ from the agent's actual state.
+/// </param>
+/// <param name="Result">Check result.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapConditionCheck<T>(T Condition, GoapState State, bool Result) where T : BaseGoapCondition<T>;
+
+/// <summary>
+/// Event raised to update a GOAP action.
+/// </summary>
+/// <typeparam name="T">GOAP action type.</typeparam>
+/// <param name="Action">GOAP action.</param>
+/// <param name="Result">Action execution result.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapActionUpdate<T>(T Action, GoapActionResult Result) where T : GoapAction;
+
+/// <summary>
+/// Event raised to get GOAP action cost.
+/// </summary>
+/// <typeparam name="T">GOAP action type.</typeparam>
+/// <param name="Action">GOAP action.</param>
+/// <param name="State">
+/// The state against which the check should be performed.
+/// It may differ from the agent's actual state.
+/// </param>
+/// <param name="Cost">Action execution cost.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapActionCost<T>(T Action, GoapState State, float Cost) where T : GoapAction;
+
+/// <summary>
+/// Event raised to startup GOAP action.
+/// </summary>
+/// <typeparam name="T">GOAP action type.</typeparam>
+/// <param name="Action">GOAP action.</param>
+/// <param name="Success">Was the action startup successful?</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapActionStartup<T>(T Action, bool Success) where T : GoapAction;
+
+/// <summary>
+/// Event raised to shutdown GOAP action.
+/// </summary>
+/// <typeparam name="T">GOAP action type.</typeparam>
+/// <param name="Action">GOAP action.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapActionShutdown<T>(T Action) where T : GoapAction;
+
+/// <summary>
+/// Event raised when the plan in which the action is contained has finished.
+/// </summary>
+/// <typeparam name="T">GOAP action type.</typeparam>
+/// <param name="Action">GOAP action.</param>
+/// <param name="Reason">The reason the plan was finished.</param>
+[PublicAPI, ByRefEvent]
+public record struct GoapActionPlanShutdown<T>(T Action, GoapPlanFinishReason Reason) where T : GoapAction;
+
+/// <summary>
+/// Event raised when GOAP planning fails.
+/// </summary>
+/// <param name="GoalState">State that was the goal for the failed plan.</param>
+[PublicAPI]
+public readonly record struct GoapPlaningFailed(GoapState GoalState);
+
+/// <summary>
+/// Event raised when GOAP plan finished.
+/// </summary>
+/// <param name="Reason">The reason why the plan was finished.</param>
+/// <param name="GoalState">State that was the goal for the finished plan.</param>
+[PublicAPI]
+public readonly record struct GoapPlanFinished(GoapPlanFinishReason Reason, GoapState GoalState);
+
+// State events
+
+/// <summary>
+/// An event raised when the value in an agent's GOAP state changes.
+/// </summary>
+/// <param name="Agent">GOAP agent entity.</param>
+/// <param name="Key">A key whose value has been changed.</param>
+/// <param name="Value">New key value.</param>
+/// <typeparam name="T">Key value type.</typeparam>
+[PublicAPI, ByRefEvent]
+public readonly record struct GoapStateValueSet<T>(EntityUid Agent, StateKey<T> Key, T Value) where T : notnull;
+
+/// <summary>
+/// An event raised when a value is removed from an agent's GOAP state.
+/// </summary>
+/// <param name="Agent">GOAP agent entity.</param>
+/// <param name="Key">A key whose value has been deleted.</param>
+/// <param name="Value">The value of the removed key.</param>
+/// <typeparam name="T">Key value type.</typeparam>
+[PublicAPI, ByRefEvent]
+public readonly record struct GoapStateValueRemove<T>(EntityUid Agent, StateKey<T> Key, T Value) where T : notnull;
+
+// Net messages
+
+[Serializable, NetSerializable]
+public sealed class GoapDebugInfoRequest(NetEntity target) : EntityEventArgs
+{
+    public NetEntity Target = target;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapDebugInfoMessage(
+    NetEntity target,
+    GoapPlanDebugInfo? plan,
+    GoapStaticGraphDebug graphDebug) : EntityEventArgs
+{
+    public NetEntity Target = target;
+    public GoapPlanDebugInfo? Plan = plan;
+    public GoapStaticGraphDebug GraphDebug = graphDebug;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapBreakpointMessage(GoapBreakpoint point) : EntityEventArgs
+{
+    public readonly GoapBreakpoint Point = point;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapBreakpointRemoveMessage(GoapBreakpoint point) : EntityEventArgs
+{
+    public readonly GoapBreakpoint Point = point;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapBreakpointHitMessage(
+    GoapBreakpoint point,
+    GoapPlanDebugInfo plan) : EntityEventArgs
+{
+    public readonly GoapBreakpoint Point = point;
+    public readonly GoapPlanDebugInfo Plan = plan;
+}
+
+[Serializable, NetSerializable]
+public sealed class GoapDebugInfoSubscriptionMessage(
+    NetEntity target,
+    bool subscription) : EntityEventArgs
+{
+    public NetEntity Target = target;
+    public readonly bool Subscription = subscription;
+}

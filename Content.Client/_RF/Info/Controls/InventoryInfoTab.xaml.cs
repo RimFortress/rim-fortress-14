@@ -9,7 +9,6 @@ using Content.Client.UserInterface.Controls;
 using Content.Client.UserInterface.Systems.Hands.Controls;
 using Content.Client.Verbs.UI;
 using Content.Shared.Cuffs;
-using Content.Shared.Cuffs.Components;
 using Content.Shared.Hands.Components;
 using Content.Shared.Input;
 using Content.Shared.Inventory;
@@ -127,6 +126,15 @@ public sealed partial class InventoryInfoTab : Control, IInfoTab
         _strippable.OnUiNeedsUpdate += UpdateInfo;
 
         _setup = true;
+    }
+
+    protected override void ExitedTree()
+    {
+        if (!_setup)
+            return;
+
+        _strippable.OnUiNeedsUpdate -= UpdateInfo;
+        _setup = false;
     }
 
     private void ClearButtons()
