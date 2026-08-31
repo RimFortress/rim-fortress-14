@@ -1,0 +1,78 @@
+- type: !PartialOnly entity
+  id: FoodSnackBase
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - LavishMealVox
+  - type: StockpileCategory
+    category: Snacks
+
+- type: !PartialOnly entity
+  id: FoodSnackChocolate
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackChocolateBar
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackPistachios
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackRaisins
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackSus
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackNutribrick
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackNutribrickOpen
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackMREBrownie
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSnackSwirlLollipop
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPacketTrash
+  components:
+  - type: StockpileCategory
+    category: Trash

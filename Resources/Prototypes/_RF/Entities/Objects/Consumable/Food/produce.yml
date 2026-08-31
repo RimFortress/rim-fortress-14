@@ -1,0 +1,462 @@
+- type: !PartialOnly entity
+  id: ProduceBase
+  components:
+  - type: StockpileCategory
+    category: Produce
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: ProduceBaseRuminant
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: WheatBushel
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodLaughinPeaPod
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: Log
+  components:
+  - type: StockpileCategory
+    category: Material
+
+- type: !PartialOnly entity
+  id: SteelLog
+  components:
+  - type: StockpileCategory
+    category: Material
+
+- type: !PartialOnly entity
+  id: FoodMimana
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: TrashBananaPeel
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+  - type: StockpileCategory
+    category: Trash
+
+- type: !PartialOnly entity
+  id: FoodCarrot
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodCabbage
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodGarlic
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodLemon
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodLemoon
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodLime
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodOrange
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodExtradimensionalOrange
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPineapple
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPotato
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodTomato
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBlueTomato
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBloodTomato
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodEggplant
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodApple
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodGoldenApple
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodCocoaPod
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodCorn
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodCornTrash
+  components:
+  - type: StockpileCategory
+    category: Trash
+
+- type: !PartialOnly entity
+  id: FoodOnion
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodOnionRed
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodMushroom
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: ProduceSliceBase
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPineappleSlice
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodOnionSlice
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodOnionRedSlice
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodChiliPepper
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodAloe
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPoppy
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodLily
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodLingzhi
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodAmbrosiaVulgaris
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodAmbrosiaDeus
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodGalaxythistle
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodGlasstle
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodFlyAmanita
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodGatfruit
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodRealCapfruit
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSoybeans
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSpacemansTrumpet
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodKoibean
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodWatermelon
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodWatermelonSlice
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodHolymelon
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodHolymelonSlice
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodGrape
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBerries
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBungo
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPeaPod
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodWorldPeas
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodPumpkin
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBluePumpkin
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: CottonBol
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: PyrottonBol
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: FoodCherry
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: TrashCherryPit
+  components:
+  - type: StockpileCategory
+    category: Trash
+
+- type: !PartialOnly entity
+  id: FoodAnomalyBerry
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBloonion
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal

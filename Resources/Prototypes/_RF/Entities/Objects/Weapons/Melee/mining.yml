@@ -1,0 +1,73 @@
+- type: !PartialOnly entity
+  id: Pickaxe
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 5
+    experience: 10
+    doAfterFactor: 0.01
+    resultFactor: 0.1 # I don't want skilled miners destroying everything and everyone with their pickaxes.
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
+
+- type: !PartialOnly entity
+  id: MiningDrill
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 7
+    experience: 15
+    doAfterFactor: 0.01
+    resultFactor: 0.1
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3
+
+- type: !PartialOnly entity
+  id: BaseWeaponCrusher
+  components:
+  - type: StockpileCategory
+    category: Melee
+
+- type: !PartialOnly entity
+  id: WeaponCrusher
+  components:
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 7
+    experience: 15
+    doAfterFactor: 0.01
+    resultFactor: 0.1
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.
+
+- type: !PartialOnly entity
+  id: WeaponCrusherGlaive
+  components:
+  - type: SkillInteraction
+    skill: Mining
+    targetLevel: 7
+    experience: 20
+    doAfterFactor: 0.01
+    resultFactor: 0.1
+    successEffects:
+    - !type:ResetMeleeCooldown
+      probability: 0.8
+    failUserEffects:
+    - !type:SelfAttack
+      probability: 0.3

@@ -1,0 +1,3 @@
+- type: !PartialOnly tile
+  id: FloorPlanetDirt
+  navMapColor: "#45301F"

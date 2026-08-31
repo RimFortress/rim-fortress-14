@@ -1,0 +1,11 @@
+- type: !PartialOnly entity
+  id: Hypospray
+  components:
+  - type: StockpileCategory
+    category: Medical
+
+- type: !PartialOnly entity
+  id: ChemicalMedipen
+  components:
+  - type: StockpileCategory
+    category: Medipen

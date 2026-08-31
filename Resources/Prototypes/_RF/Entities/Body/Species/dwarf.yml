@@ -1,0 +1,24 @@
+- type: !PartialOnly entity
+  id: MobDwarf
+  components:
+  - type: SkillExpModificator
+    multipliers:
+      Woodcutting: 1.15
+      Mining: 1.25
+      Healing: 0.85
+      Farming: 0.75
+      Cooking: 1.10
+  - type: HungerOverride
+    thresholdDecayTime:
+      Overfed: 90m
+      Okay: 4h
+      Peckish: 3h
+      Starving: 4h
+    randomizeValue:
+      min: 110
+      max: 160
+  - type: ThirstOverride
+    fullDecayTime: 6h
+    randomizeValue:
+      min: 310
+      max: 460

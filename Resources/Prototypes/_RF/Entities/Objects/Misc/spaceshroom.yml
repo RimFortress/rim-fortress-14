@@ -1,0 +1,6 @@
+- type: !PartialOnly entity
+  id: Spaceshroom
+  components:
+  - type: Tag
+    tags:
+    - HandGatherable

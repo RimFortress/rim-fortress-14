@@ -1,0 +1,6 @@
+- type: !PartialOnly entity
+  id: FoodBreakfastBase
+  components:
+  - type: Tag
+    tags:
+    - FineMeal

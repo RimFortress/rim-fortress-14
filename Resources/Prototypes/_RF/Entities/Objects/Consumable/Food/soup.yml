@@ -1,0 +1,280 @@
+- type: !PartialOnly entity
+  id: FoodBowlBase
+  components:
+  - type: StockpileCategory
+    category: Bowl
+
+- type: !PartialOnly entity
+  id: FoodSoupPea
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSaladAesir
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDiona
+
+- type: !PartialOnly entity
+  id: FoodSaladHerb
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDiona
+    - AwfulMealReptile
+
+- type: !PartialOnly entity
+  id: FoodSaladValid
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSaladCaesar
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSaladKimchi
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSaladFruit
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDiona
+
+- type: !PartialOnly entity
+  id: FoodSaladJungle
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDiona
+
+- type: !PartialOnly entity
+  id: FoodSaladCitrus
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSaladEden
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodRicePudding
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodRiceGumbo
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodOatmeal
+  components:
+  - type: Tag
+    tags:
+    - FineMealDwarf
+
+- type: !PartialOnly entity
+  id: FoodJellyDuff
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodJellyAmanita
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupMeatball
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDwarf
+
+- type: !PartialOnly entity
+  id: FoodSoupSlime
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupTomatoBlood
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupWingFangChu
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealReptile
+
+- type: !PartialOnly entity
+  id: FoodSoupClown
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupVegetable
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealDiona
+
+- type: !PartialOnly entity
+  id: FoodSoupNettle
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealDiona
+
+- type: !PartialOnly entity
+  id: FoodSoupMystery
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodSoupChiliHot
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodSoupMonkey
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSoupTomato
+  components:
+  - type: Tag
+    tags:
+    - FineMealDiona
+    - RubbishMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupEyeball
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - LavishMealReptile
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupMiso
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSoupMushroom
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - AwfulMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupBeet
+  components:
+  - type: Tag
+    tags:
+    - FineMealDiona
+    - AwfulMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupBeetRed
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodSoupStew
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDwarf
+
+- type: !PartialOnly entity
+  id: FoodSoupBisque
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodSoupElectron
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodSoupBungo
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealDiona
+    - LavishMealReptile
+
+- type: !PartialOnly entity
+  id: FoodSoupEscargot
+  components:
+  - type: Tag
+    tags:
+    - FineMeal

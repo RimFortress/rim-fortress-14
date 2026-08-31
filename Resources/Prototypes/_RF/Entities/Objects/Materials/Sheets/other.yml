@@ -1,0 +1,17 @@
+- type: !PartialOnly entity
+  id: SheetOtherBase
+  components:
+  - type: StockpileCategory
+    category: Material
+
+- type: !PartialOnly entity
+  id: SheetPlasma10
+  components:
+  - type: StockpileCategory
+    category: null
+
+- type: !PartialOnly entity
+  id: SheetPlastic10
+  components:
+  - type: StockpileCategory
+    category: null

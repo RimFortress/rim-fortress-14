@@ -3,7 +3,7 @@
 
 - type: entity
   abstract: true
-  parent: FoodInjectableBase
+  parent: [SolutionSmall, FoodInjectableBase]
   id: FoodNoodlesBase
   description: Now that's a nice pasta!
   components:
@@ -12,17 +12,11 @@
     - 0,0,1,0
   - type: Sprite
     sprite: Objects/Consumable/Food/noodles.rsi
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 25
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 20
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Noodles
-  # RimFortress End
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 30
 
 # Noodles
 
@@ -39,12 +33,6 @@
       - pasta
   - type: Sprite
     state: boiled
-  # RimFortress Start
-  - type: Tag
-    tags:
-    - AwfulMeal
-    - FineMealVox
-  # RimFortress End
 # Tastes like pasta.
 
 - type: entity
@@ -61,24 +49,20 @@
       - tomato
   - type: Sprite
     state: tomato
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 40
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 35
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 45
+      - ReagentId: Vitamin
+        Quantity: 5
   - type: Tag
     tags:
-    - Fruit
-    # RimFortress Start
-    - FineMeal
-    - AwfulMealVox
-    # RimFortress End
+    - Fruit # ???
 # Tastes like pasta, tomato.
 
 - type: entity
-  parent: FoodNoodlesBase
+  parent: [SolutionNormal, FoodNoodlesBase]
   id: FoodNoodlesCopy
   name: copypasta
   description: You probably shouldn't try this, you always hear people talking about how bad it is...
@@ -96,13 +80,13 @@
       - copypasta
   - type: Sprite
     state: copypasta
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 80
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 70
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 90
+      - ReagentId: Vitamin
+        Quantity: 10
 # Tastes like pasta, bad humor.
 
 - type: entity
@@ -119,22 +103,16 @@
       - meaty
   - type: Sprite
     state: meatball
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 25
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 15
-        - ReagentId: Protein
-          Quantity: 6
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 40
+      - ReagentId: Protein
+        Quantity: 5
   - type: Tag
     tags:
     - Meat
-    # RimFortress Start
-    - LavishMeal
-    - AwfulMealVox
-    # RimFortress End
 # Tastes like pasta, meat.
 
 - type: entity
@@ -151,15 +129,6 @@
       - meaty
   - type: Sprite
     state: spesslaw
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 15
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 8
-        - ReagentId: Vitamin
-          Quantity: 6
 # Tastes like pasta, meat.
 
 - type: entity
@@ -176,23 +145,13 @@
       - carrot
   - type: Sprite
     state: chowmein
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 50
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 20
-        - ReagentId: Protein
-          Quantity: 6
-        - ReagentId: Vitamin
-          Quantity: 20
-  # RimFortress Start
-  - type: Tag
-    tags:
-    - LavishMeal
-    - AwfulMealVox
-  # RimFortress End
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 45
+      - ReagentId: Vitamin
+        Quantity: 12
 # Tastes like pasta, tomato.
 
 - type: entity
@@ -209,16 +168,11 @@
       - butter
   - type: Sprite
     state: butter
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 25
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 23
-  # RimFortress Start
-  - type: Tag
-    tags:
-    - AwfulMealReptile
-  # RimFortress End
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 30
+      - ReagentId: Butter
+        Quantity: 5
 # Tastes like pasta, butter.

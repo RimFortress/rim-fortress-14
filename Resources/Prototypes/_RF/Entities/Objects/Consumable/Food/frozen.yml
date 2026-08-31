@@ -1,0 +1,27 @@
+- type: !PartialOnly entity
+  id: FoodFrozenBase
+  components:
+  - type: StockpileCategory
+    category: FrozenFood
+  - type: Tag
+    tags:
+    - FineMeal
+    - AwfulMealReptile
+
+- type: !PartialOnly entity
+  id: FoodFrozenCornuto
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+    - AwfulMealVox
+
+- type: !PartialOnly entity
+  id: FoodFrozenPopsicleJumbo
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+    - AwfulMealVox

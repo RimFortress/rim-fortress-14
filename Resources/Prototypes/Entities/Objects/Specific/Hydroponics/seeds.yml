@@ -3,7 +3,6 @@
   id: SeedBase
   abstract: true
   components:
-    - type: SolutionContainerManager
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/seeds.rsi
       layers:
@@ -35,7 +34,7 @@
   id: WheatSeeds
   components:
     - type: Seed
-      seedId: wheat
+      plantId: WheatPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/wheat.rsi
 
@@ -46,7 +45,7 @@
   id: MeatwheatSeeds
   components:
     - type: Seed
-      seedId: meatwheat
+      plantId: MeatWheatPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/meatwheat.rsi
 
@@ -56,7 +55,7 @@
   id: OatSeeds
   components:
     - type: Seed
-      seedId: oat
+      plantId: OatPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/oat.rsi
 
@@ -66,7 +65,7 @@
   id: BananaSeeds
   components:
     - type: Seed
-      seedId: banana
+      plantId: BananaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/banana.rsi
 
@@ -76,7 +75,7 @@
   id: MimanaSeeds
   components:
     - type: Seed
-      seedId: mimana
+      plantId: MimanaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/mimana.rsi
 
@@ -86,7 +85,7 @@
   id: CarrotSeeds
   components:
     - type: Seed
-      seedId: carrots
+      plantId: CarrotPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/carrot.rsi
 
@@ -96,7 +95,7 @@
   id: CabbageSeeds
   components:
     - type: Seed
-      seedId: cabbage
+      plantId: CabbagePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/cabbage.rsi
 
@@ -106,7 +105,7 @@
   id: GarlicSeeds
   components:
     - type: Seed
-      seedId: garlic
+      plantId: GarlicPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/garlic.rsi
 
@@ -117,7 +116,7 @@
   description: "These seeds give off a very soft purple glow.. they should grow into Laughin' Peas."
   components:
     - type: Seed
-      seedId: laughinPea
+      plantId: LaughinPeaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/laughin_pea.rsi
 
@@ -127,7 +126,7 @@
   id: LemonSeeds
   components:
     - type: Seed
-      seedId: lemon
+      plantId: LemonPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/lemon.rsi
 
@@ -137,7 +136,7 @@
   id: LemoonSeeds
   components:
     - type: Seed
-      seedId: lemoon
+      plantId: LemoonPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/lemoon.rsi
 
@@ -147,7 +146,7 @@
   id: LimeSeeds
   components:
     - type: Seed
-      seedId: lime
+      plantId: LimePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/lime.rsi
 
@@ -157,7 +156,7 @@
   id: OrangeSeeds
   components:
     - type: Seed
-      seedId: orange
+      plantId: OrangePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/orange.rsi
 
@@ -168,7 +167,7 @@
   id: ExtradimensionalOrangeSeeds
   components:
     - type: Seed
-      seedId: extradimensionalOrange
+      plantId: ExtradimensionalOrangePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/extradimensional_orange.rsi
 
@@ -178,7 +177,7 @@
   id: PineappleSeeds
   components:
     - type: Seed
-      seedId: pineapple
+      plantId: PineapplePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/pineapple.rsi
 
@@ -188,7 +187,7 @@
   id: PotatoSeeds
   components:
     - type: Seed
-      seedId: potato
+      plantId: PotatoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/potato.rsi
 
@@ -198,7 +197,7 @@
   id: SugarcaneSeeds
   components:
     - type: Seed
-      seedId: sugarcane
+      plantId: SugarcanePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/sugarcane.rsi
 
@@ -208,7 +207,7 @@
   id: TeaPlantSeeds
   components:
     - type: Seed
-      seedId: teaPlant
+      plantId: TeaPlantPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/tea_plant.rsi
 
@@ -218,7 +217,7 @@
   id: PapercaneSeeds
   components:
     - type: Seed
-      seedId: papercane
+      plantId: PapercanePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/papercane.rsi
 
@@ -228,7 +227,7 @@
   id: TowercapSeeds
   components:
     - type: Seed
-      seedId: towercap
+      plantId: TowercapPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/towercap.rsi
 
@@ -238,7 +237,7 @@
   id: SteelcapSeeds
   components:
     - type: Seed
-      seedId: steelcap
+      plantId: SteelcapPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/steelcap.rsi
 
@@ -248,7 +247,7 @@
   id: TomatoSeeds
   components:
     - type: Seed
-      seedId: tomato
+      plantId: TomatoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/tomato.rsi
 
@@ -258,7 +257,7 @@
   id: BlueTomatoSeeds
   components:
     - type: Seed
-      seedId: blueTomato
+      plantId: BlueTomatoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/blue_tomato.rsi
 
@@ -268,7 +267,7 @@
   id: BloodTomatoSeeds
   components:
     - type: Seed
-      seedId: bloodTomato
+      plantId: BloodTomatoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/blood_tomato.rsi
 
@@ -278,7 +277,7 @@
   id: KillerTomatoSeeds
   components:
     - type: Seed
-      seedId: killerTomato
+      plantId: KillerTomatoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/tomatokiller.rsi
 
@@ -288,7 +287,7 @@
   id: EggplantSeeds
   components:
     - type: Seed
-      seedId: eggplant
+      plantId: EggplantPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/eggplant.rsi
 
@@ -298,7 +297,7 @@
   id: AppleSeeds
   components:
     - type: Seed
-      seedId: apple
+      plantId: ApplePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/apple.rsi
 
@@ -308,7 +307,7 @@
   id: GoldenAppleSeeds
   components:
     - type: Seed
-      seedId: goldenApple
+      plantId: GoldenApplePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/golden_apple.rsi
 
@@ -318,7 +317,7 @@
   id: CornSeeds
   components:
     - type: Seed
-      seedId: corn
+      plantId: CornPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/corn.rsi
 
@@ -328,7 +327,7 @@
   id: ChanterelleSeeds
   components:
     - type: Seed
-      seedId: chanterelle
+      plantId: ChanterellePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/chanterelle.rsi
 
@@ -338,7 +337,7 @@
   id: EggySeeds
   components:
     - type: Seed
-      seedId: eggy
+      plantId: EggyPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/eggy.rsi
 
@@ -349,7 +348,7 @@
   id: TobaccoSeeds
   components:
     - type: Seed
-      seedId: tobacco
+      plantId: TobaccoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/tobacco.rsi
 
@@ -360,7 +359,7 @@
   id: CannabisSeeds
   components:
     - type: Seed
-      seedId: cannabis
+      plantId: CannabisPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/cannabis.rsi
 
@@ -371,7 +370,7 @@
   id: RainbowCannabisSeeds
   components:
     - type: Seed
-      seedId: rainbowCannabis
+      plantId: RainbowCannabisPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/rainbow_cannabis.rsi
 
@@ -382,7 +381,7 @@
   id: NettleSeeds
   components:
     - type: Seed
-      seedId: nettle
+      plantId: NettlePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/nettle.rsi
 
@@ -393,7 +392,7 @@
   id: DeathNettleSeeds
   components:
     - type: Seed
-      seedId: deathNettle
+      plantId: DeathNettlePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/death_nettle.rsi
 
@@ -404,7 +403,7 @@
   id: ChiliSeeds
   components:
     - type: Seed
-      seedId: chili
+      plantId: ChiliPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/chili.rsi
 
@@ -415,7 +414,7 @@
   id: ChillySeeds
   components:
     - type: Seed
-      seedId: chilly
+      plantId: ChillyPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/chilly.rsi
 
@@ -426,7 +425,7 @@
   id: AloeSeeds
   components:
     - type: Seed
-      seedId: aloe
+      plantId: AloePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/aloe.rsi
 
@@ -437,7 +436,7 @@
   id: PoppySeeds
   components:
     - type: Seed
-      seedId: poppy
+      plantId: PoppyPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/poppy.rsi
 
@@ -448,7 +447,7 @@
   id: LilySeeds
   components:
     - type: Seed
-      seedId: lily
+      plantId: LilyPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/lily.rsi
 
@@ -459,7 +458,7 @@
   id: LingzhiSeeds
   components:
     - type: Seed
-      seedId: lingzhi
+      plantId: LingzhiPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/lingzhi.rsi
 
@@ -470,7 +469,7 @@
   id: AmbrosiaVulgarisSeeds
   components:
     - type: Seed
-      seedId: ambrosiaVulgaris
+      plantId: AmbrosiaVulgarisPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/ambrosia_vulgaris.rsi
 
@@ -481,7 +480,7 @@
   id: AmbrosiaDeusSeeds
   components:
     - type: Seed
-      seedId: ambrosiaDeus
+      plantId: AmbrosiaDeusPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/ambrosia_deus.rsi
 
@@ -492,7 +491,7 @@
   id: GalaxythistleSeeds
   components:
     - type: Seed
-      seedId: galaxythistle
+      plantId: GalaxythistlePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/galaxythistle.rsi
 
@@ -503,7 +502,7 @@
   id: GlasstleSeeds
   components:
     - type: Seed
-      seedId: glasstle
+      plantId: GlasstlePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/glasstle.rsi
 
@@ -514,7 +513,7 @@
   id: FlyAmanitaSeeds
   components:
     - type: Seed
-      seedId: flyAmanita
+      plantId: FlyAmanitaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/fly_amanita.rsi
 
@@ -525,7 +524,7 @@
   id: GatfruitSeeds
   components:
     - type: Seed
-      seedId: gatfruit
+      plantId: GatfruitPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/gatfruit.rsi
 
@@ -536,7 +535,7 @@
   id: OnionSeeds
   components:
     - type: Seed
-      seedId: onion
+      plantId: OnionPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/onion.rsi
 
@@ -546,7 +545,7 @@
   id: RiceSeeds
   components:
     - type: Seed
-      seedId: rice
+      plantId: RicePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/rice.rsi
 
@@ -556,7 +555,7 @@
   id: SoybeanSeeds
   components:
     - type: Seed
-      seedId: soybeans
+      plantId: SoybeanPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/soybeans.rsi
 
@@ -566,7 +565,7 @@
   id: SpacemansTrumpetSeeds
   components:
     - type: Seed
-      seedId: spacemansTrumpet
+      plantId: SpacemansTrumpetPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/spacemans_trumpet.rsi
 
@@ -576,7 +575,7 @@
   id: KoibeanSeeds
   components:
     - type: Seed
-      seedId: koibean
+      plantId: KoibeanPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/koibean.rsi
 
@@ -587,7 +586,7 @@
   id: OnionRedSeeds
   components:
     - type: Seed
-      seedId: onionred
+      plantId: OnionRedPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/onion_red.rsi
 
@@ -597,7 +596,7 @@
   id: WatermelonSeeds
   components:
     - type: Seed
-      seedId: watermelon
+      plantId: WatermelonPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/watermelon.rsi
 
@@ -607,7 +606,7 @@
   id: HolymelonSeeds
   components:
     - type: Seed
-      seedId: holymelon
+      plantId: HolymelonPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/holymelon.rsi
 
@@ -617,7 +616,7 @@
   id: GrapeSeeds
   components:
     - type: Seed
-      seedId: grape
+      plantId: GrapePlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/grape.rsi
 
@@ -627,7 +626,7 @@
   id: CocoaSeeds
   components:
     - type: Seed
-      seedId: cocoa
+      plantId: CocoaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/cocoa.rsi
 
@@ -637,7 +636,7 @@
   id: BerrySeeds
   components:
     - type: Seed
-      seedId: berries
+      plantId: BerryPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/berries.rsi
 
@@ -648,7 +647,7 @@
   id: BungoSeeds
   components:
     - type: Seed
-      seedId: bungo
+      plantId: BungoPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/bungo.rsi
 
@@ -659,7 +658,7 @@
   description: "These humble plants were once a vital part in the study of genetics."
   components:
     - type: Seed
-      seedId: pea
+      plantId: PeaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/pea.rsi
 
@@ -670,7 +669,7 @@
   description: "These rather large seeds give off a soothing blue glow."
   components:
     - type: Seed
-      seedId: worldPea
+      plantId: WorldPeaPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/world_pea.rsi
 
@@ -680,7 +679,7 @@
   id: PumpkinSeeds
   components:
     - type: Seed
-      seedId: pumpkin
+      plantId: PumpkinPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/pumpkin.rsi
 
@@ -690,7 +689,7 @@
   id: BluePumpkinSeeds
   components:
     - type: Seed
-      seedId: bluePumpkin
+      plantId: BluePumpkinPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/blue_pumpkin.rsi
 
@@ -700,7 +699,7 @@
   id: CottonSeeds
   components:
     - type: Seed
-      seedId: cotton
+      plantId: CottonPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/cotton.rsi
 
@@ -710,7 +709,7 @@
   id: PyrottonSeeds
   components:
     - type: Seed
-      seedId: pyrotton
+      plantId: PyrottonPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/pyrotton.rsi
 
@@ -721,7 +720,7 @@
   description: "Is it real, or is it fake?"
   components:
     - type: Seed
-      seedId: realCapfruit
+      plantId: RealCapfruitPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/capfruit.rsi
 
@@ -731,7 +730,7 @@
   suffix: Fake
   components:
     - type: Seed
-      seedId: fakeCapfruit
+      plantId: FakeCapfruitPlants
 
 - type: entity
   parent: SeedBase
@@ -739,7 +738,7 @@
   id: CherrySeeds
   components:
     - type: Seed
-      seedId: cherry
+      plantId: CherryPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/cherry.rsi
 
@@ -749,7 +748,7 @@
   id: AnomalyBerrySeeds
   components:
     - type: Seed
-      seedId: anomalyBerry
+      plantId: AnomalyBerryPlants
     - type: Sprite
       sprite: Objects/Specific/Hydroponics/anomaly_berry.rsi
 
@@ -758,7 +757,7 @@
   name: packet of bloonion seeds
   id: BloonionSeeds
   components:
-  - type: Seed
-    seedId: bloonion
-  - type: Sprite
-    sprite: Objects/Specific/Hydroponics/bloonion.rsi
+    - type: Seed
+      plantId: BloonionPlants
+    - type: Sprite
+      sprite: Objects/Specific/Hydroponics/bloonion.rsi

@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: FoodDonutBase
+  components:
+  - type: StockpileCategory
+    category: Donut

@@ -1,0 +1,32 @@
+- type: !PartialOnly entity
+  id: ReagentContainerBase
+  components:
+  - type: StockpileCategory
+    category: Ingredients
+
+- type: !PartialOnly entity
+  id: FoodBakingBase
+  components:
+  - type: StockpileCategory
+    category: Ingredients
+
+- type: !PartialOnly entity
+  id: FoodDoughCotton
+  components:
+  - type: Tag
+    tags:
+    - FineMealMoth
+
+- type: !PartialOnly entity
+  id: FoodDoughCottonSlice
+  components:
+  - type: Tag
+    tags:
+    - FineMealMoth
+
+- type: !PartialOnly entity
+  id: FoodDoughCottonRope
+  components:
+  - type: Tag
+    tags:
+    - FineMealMoth

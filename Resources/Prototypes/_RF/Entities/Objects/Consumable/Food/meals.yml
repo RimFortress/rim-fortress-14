@@ -1,0 +1,134 @@
+- type: !PartialOnly entity
+  id: FoodMealBase
+  components:
+  - type: StockpileCategory
+    category: Meals
+
+- type: !PartialOnly entity
+  id: FoodMealPotatoLoaded
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealFries
+  components:
+  - type: Tag
+    tags:
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodMealFriesCheesy
+  components:
+  - type: Tag
+    tags:
+    - FineMealReptile
+
+- type: !PartialOnly entity
+  id: FoodMealNachosCheesy
+  components:
+  - type: Tag
+    tags:
+    - FineMealDwarf
+
+- type: !PartialOnly entity
+  id: FoodMealNachosCuban
+  components:
+  - type: Tag
+    tags:
+    - FineMealDwarf
+
+- type: !PartialOnly entity
+  id: FoodMealMint
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodMealEggplantParm
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealPotatoYaki
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealCubancarp
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodMealCornedbeef
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealBearsteak
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealPigblanket
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodMealRibs
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealEggsbenedict
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodMealMilkape
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+
+- type: !PartialOnly entity
+  id: FoodMealMilkape
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealReptile
+
+- type: !PartialOnly entity
+  id: FoodMealMemoryleek
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: DisgustingSweptSoup
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - LavishMealVox

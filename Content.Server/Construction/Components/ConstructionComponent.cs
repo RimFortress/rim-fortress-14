@@ -1,6 +1,6 @@
 using Content.Shared.Construction.Prototypes;
 using Content.Shared.DoAfter;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
+using Robust.Shared.Prototypes;
 
 using Content.Server._RF.Construction; // RimFortress
 
@@ -9,32 +9,32 @@ namespace Content.Server.Construction.Components
     [RegisterComponent, Access(typeof(ConstructionSystem), typeof(CommonConstructionSystem))] // RimFortress: Access
     public sealed partial class ConstructionComponent : Component
     {
-        [DataField("graph", required:true, customTypeSerializer:typeof(PrototypeIdSerializer<ConstructionGraphPrototype>))]
-        public string Graph { get; set; } = string.Empty;
+        [DataField(required: true)]
+        public ProtoId<ConstructionGraphPrototype> Graph;
 
-        [DataField("node", required:true)]
-        public string Node { get; set; } = default!;
+        [DataField(required: true)]
+        public string Node = string.Empty;
 
         [DataField("edge")]
-        public int? EdgeIndex { get; set; } = null;
+        public int? EdgeIndex;
 
         [DataField("step")]
-        public int StepIndex { get; set; } = 0;
+        public int StepIndex;
 
-        [DataField("containers")]
-        public HashSet<string> Containers { get; set; } = new();
+        [DataField]
+        public HashSet<string> Containers = new();
 
         [DataField("defaultTarget")]
-        public string? TargetNode { get; set; } = null;
+        public string? TargetNode;
 
         [ViewVariables]
-        public int? TargetEdgeIndex { get; set; } = null;
+        public int? TargetEdgeIndex;
 
         [ViewVariables]
-        public Queue<string>? NodePathfinding { get; set; } = null;
+        public Queue<string>? NodePathfinding;
 
         [DataField("deconstructionTarget")]
-        public string? DeconstructionNode { get; set; } = "start";
+        public string? DeconstructionNode = "start";
 
         [ViewVariables]
         // TODO Force flush interaction queue before serializing to YAML.

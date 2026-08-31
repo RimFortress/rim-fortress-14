@@ -1,0 +1,71 @@
+- type: !PartialOnly entity
+  id: Haycutters
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: Moodriver
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: Wronch
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: Cowbar
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: Mooltitool
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: Cowelder
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: Milkalyzer
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3
+
+- type: !PartialOnly entity
+  id: CowToolbox
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 3

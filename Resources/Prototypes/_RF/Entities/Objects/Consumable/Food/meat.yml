@@ -1,0 +1,251 @@
+- type: !PartialOnly entity
+  id: FoodMeatRawBase
+  components:
+  - type: StockpileCategory
+    category: RawMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatRotten
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+  - type: StockpileCategory
+    category: Trash
+
+- type: !PartialOnly entity
+  id: FoodMeatXeno
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodMeatAnomaly
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: MaterialSmileExtract
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodMeatCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatBaconCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatBearCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatPenguinCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatChickenCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatChickenFried
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatDuckCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatCrabCooked
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatGoliathCooked
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatRounyCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatLizardCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatSpiderlegCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatMeatballCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatSnailCooked
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatDragonCooked
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatCutlet
+  components:
+  - type: StockpileCategory
+    category: CookedMeat
+
+- type: !PartialOnly entity
+  id: FoodMeatCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatPenguinCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatChickenCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatDuckCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatLizardCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatSpiderCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatXenoCutlet
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatTomatoCutlet
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatSalamiSlice
+  components:
+  - type: StockpileCategory
+    category: RawCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatBearCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatPenguinCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatChickenCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatChickenCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatLizardCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatSpiderCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatXenoCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet
+
+- type: !PartialOnly entity
+  id: FoodMeatDragonCutletCooked
+  components:
+  - type: StockpileCategory
+    category: CookedCutlet

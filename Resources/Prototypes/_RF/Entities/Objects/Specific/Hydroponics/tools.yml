@@ -1,0 +1,35 @@
+- type: !PartialOnly entity
+  id: HydroponicsToolMiniHoe
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: HydroponicsToolClippers
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: HydroponicsToolScythe
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: HydroponicsToolHatchet
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: HydroponicsToolSpade
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: PlantBag
+  components:
+  - type: StockpileCategory
+    category: Tool

@@ -1,0 +1,13 @@
+- type: !PartialOnly entity
+  id: FoodBakedChevreChaudCotton
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: FoodBakedCroissantCotton
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
