@@ -108,7 +108,7 @@ public sealed partial class NpcJobsSettingsWindow : FancyWindow
             || !_npcJobs.TryGetJob(button.JobId, out var job))
             return;
 
-        var goals = button.Goals ?? job.Goals ?? new();
+        var goals = button.Goals ?? job.Goals;
         var sortedTasks = comp.AccessibleGoals
             .Select(x => _proto.Index(x))
             .OrderBy(x => x.Name);

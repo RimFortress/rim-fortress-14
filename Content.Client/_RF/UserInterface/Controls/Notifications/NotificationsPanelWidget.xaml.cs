@@ -59,6 +59,7 @@ public sealed partial class NotificationsPanelWidget : UIWidget
         Notifications.AddChild(button);
 
         Header.Visible = Notifications.ChildCount > 0;
+        Scroll.Visible = Notifications.ChildCount > 0;
     }
 
     private void RemoveNotification(Notification notification)
@@ -69,5 +70,6 @@ public sealed partial class NotificationsPanelWidget : UIWidget
         Notifications.RemoveChild(button);
 
         Header.Visible = Notifications.ChildCount > 0;
+        Scroll.Visible = Notifications.ChildCount > 0;
     }
 }

@@ -9,7 +9,7 @@ namespace Content.Shared._RF.NPC.UtilityAi.Components;
 /// A component that allows the use of Utility Ai to find the GOAP goal state.
 /// </summary>
 [Access(typeof(SharedUtilityAiSystem))]
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(raiseAfterAutoHandleState: true)]
 public sealed partial class UtilityAiComponent : Component
 {
     /// <summary>

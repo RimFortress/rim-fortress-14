@@ -24,9 +24,11 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
     private ExecutableGoalSystem _executable = default!;
     private SpriteSystem _sprite = default!;
+    private SelectionSystem _selection = default!;
 
     private readonly Dictionary<ProtoId<ExecutableGoalPrototype>, TreeMenuButton> _taskButtons = new();
     private TreeMenuButton? _taskEraseButton;
+    private bool _setup;
 
     public ActionsHotbarWidget()
     {
@@ -44,12 +46,30 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
     public void EnsureSetup()
     {
+        if (_setup)
+            return;
+
+        _setup = true;
         _executable = _entity.System<ExecutableGoalSystem>();
         _sprite = _entity.System<SpriteSystem>();
+        _selection = _entity.System<SelectionSystem>();
 
-        _entity.System<SelectionSystem>().OnUpdateSelection += UpdateButtons;
+        _selection.OnUpdateSelection += UpdateButtons;
+        _executable.OnControllerAttached += UpdateList;
 
         UpdateList();
+    }
+
+    protected override void ExitedTree()
+    {
+        base.ExitedTree();
+
+        if (!_setup)
+            return;
+
+        _setup = false;
+        _selection.OnUpdateSelection -= UpdateButtons;
+        _executable.OnControllerAttached -= UpdateList;
     }
 
     private void UpdateList()

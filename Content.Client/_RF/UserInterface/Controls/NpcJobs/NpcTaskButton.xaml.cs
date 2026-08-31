@@ -19,7 +19,7 @@ public sealed partial class NpcTaskButton : Control
         RobustXamlLoader.Load(this);
         var proto = IoCManager.Resolve<IPrototypeManager>().Index(protoId);
 
-        Label.Text = proto.Name;
+        Label.Text = Loc.GetString(proto.Name);
         Label.ModulateSelfOverride = proto.Color;
     }
 }

@@ -5,6 +5,7 @@ using Content.Shared._RF.NPC.Search.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.UtilityAi.Prototypes;
 
@@ -30,7 +31,7 @@ public sealed partial class UtilityAiGoalPrototype : IPrototype, IInheritingProt
     /// Human-readable goal name.
     /// </summary>
     [ViewVariables]
-    public LocId Name => $"utility-ai-goal-{ID.ToLowerInvariant()}-name";
+    public LocId Name => $"utility-ai-goal-{CaseConversion.PascalToKebab(ID)}-name";
 
     /// <summary>
     /// The color associated with this goal for display in the UI.

@@ -39,13 +39,15 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     [Access(typeof(ControllableNpcBoundUserInterface))]
     public EntityUid? UiTarget;
 
+    public event Action? OnControllerAttached;
+
     public override void Initialize()
     {
         base.Initialize();
 
         _overlay.AddOverlay(new NpcControlOverlay());
 
-        SubscribeLocalEvent<PlayerAttachedEvent>(OnPlayerAttached);
+        SubscribeLocalEvent<NpcControllerComponent, PlayerAttachedEvent>(OnPlayerAttached);
 
         CommandBinds.Builder
             .Bind(ContentKeyFunctions.NpcCombatModeToggle, new PointerInputCmdHandler(OnCombatToggle))
@@ -58,9 +60,10 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         _overlay.RemoveOverlay<NpcControlOverlay>();
     }
 
-    private void OnPlayerAttached(PlayerAttachedEvent args)
+    private void OnPlayerAttached(Entity<NpcControllerComponent> ent, ref PlayerAttachedEvent args)
     {
         DefaultSelection();
+        OnControllerAttached?.Invoke();
     }
 
     private bool OnCombatToggle(ICommonSession? player, EntityCoordinates coords, EntityUid uid)

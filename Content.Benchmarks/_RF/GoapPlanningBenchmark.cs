@@ -50,6 +50,7 @@ public class GoapPlanningBenchmark
         "MoveTo",
         "Eat",
         "Drink",
+        "Plant",
     };
 
     [ParamsSource(nameof(GoalSource))]

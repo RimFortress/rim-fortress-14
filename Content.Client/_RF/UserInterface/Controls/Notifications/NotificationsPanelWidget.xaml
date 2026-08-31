@@ -15,7 +15,8 @@
                                      TexturePath="/Textures/_RF/Interface/gear-solid-full.svg.192dpi.png"/>
             </BoxContainer>
         </PanelContainer>
-        <ScrollContainer HorizontalExpand="True" VerticalExpand="True" HScrollEnabled="False">
+        <ScrollContainer Name="Scroll" HScrollEnabled="False" Visible="False"
+                         HorizontalExpand="True" VerticalExpand="True">
             <BoxContainer Orientation="Vertical" Name="Notifications" SeparationOverride="3"/>
         </ScrollContainer>
     </BoxContainer>

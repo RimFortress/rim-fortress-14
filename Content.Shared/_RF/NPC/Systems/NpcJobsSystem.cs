@@ -24,7 +24,7 @@ public sealed class NpcJobsSystem : EntitySystem
     /// <summary>
     /// An event that notifies of a change in an NPC's jobs. Invoked only on the client.
     /// </summary>
-    public Action<int>? OnJobChanged;
+    public event Action<int>? OnJobChanged;
 
     public override void Initialize()
     {
@@ -140,10 +140,15 @@ public sealed class NpcJobsSystem : EntitySystem
 
         priority = Math.Clamp(priority, 0, comp.MaxPriority);
         ent.Comp.Jobs[jobId] = priority;
-        Dirty(ent);
 
-        if (_net.IsClient)
-            RaiseNetworkEvent(new NpcJobPriority(jobId, GetNetEntity(ent), priority));
+        if (!_net.IsClient)
+        {
+            Dirty(ent);
+            return;
+        }
+
+        RaiseNetworkEvent(new NpcJobPriority(jobId, GetNetEntity(ent), priority));
+        OnJobChanged?.Invoke(jobId);
     }
 
     /// <summary>

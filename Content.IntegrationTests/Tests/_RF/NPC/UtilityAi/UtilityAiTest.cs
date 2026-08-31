@@ -1,4 +1,5 @@
 #nullable enable
+using System.Linq;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Shared._RF.NPC.UtilityAi;
@@ -6,6 +7,7 @@ using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using Robust.Shared.GameObjects;
+using Robust.Shared.Localization;
 using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests._RF.NPC.UtilityAi;
@@ -93,6 +95,8 @@ public sealed class UtilityTest : GameTest
     - TestUaiScoreNearMax
 ";
 
+    [SidedDependency(Side.Client)] private readonly IPrototypeManager _proto = default!;
+    [SidedDependency(Side.Client)] private readonly ILocalizationManager _loc = default!;
     [SidedDependency(Side.Server)] private readonly SharedUtilityAiSystem _uai = default!;
     [SidedDependency(Side.Server)] private readonly UaiScoreModifierTestSystem _scoreModifier = default!;
 
@@ -231,6 +235,20 @@ public sealed class UtilityTest : GameTest
         var ent = SSpawn("TestUaiScoringAgentPlain");
 
         Assert.That(_uai.GetScore(ent, "TestUaiChildOverrides"), Is.EqualTo(0.77f).Within(0.0001f));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void TestUtilityAiGoalsLocalization()
+    {
+        var prototypes = _proto.EnumeratePrototypes<UtilityAiGoalPrototype>()
+            .Where(x => !Pair.IsTestPrototype(x))
+            .ToList();
+
+        foreach (var proto in prototypes)
+        {
+            Assert.That(_loc.TryGetString(proto.Name, out _), Is.True, $"Locale key: {proto.Name} not found");
+        }
     }
 }
 
