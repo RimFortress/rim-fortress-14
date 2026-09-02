@@ -1,3 +1,4 @@
+using Content.Shared._RF.Needs.Prototypes;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -30,45 +31,45 @@ public sealed partial class NeedData
     /// The need value as authoritatively set by the server as of <see cref="LastAuthoritativeChangeTime"/>.
     /// This value should be updated relatively infrequently.
     /// </summary>
-    [DataField, ViewVariables(VVAccess.ReadOnly)]
+    [DataField]
     public float LastAuthoritativeValue;
 
     /// <summary>
     /// The time at which <see cref="LastAuthoritativeValue"/> was last updated.
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public TimeSpan LastAuthoritativeChangeTime;
 
     /// <summary>
     /// The actual amount at which <see cref="LastAuthoritativeValue"/> decays.
     /// Affected by <seealso cref="CurrentThreshold"/>
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public float ActualDecayRate;
 
     /// <summary>
     /// The last threshold this entity was at.
     /// Stored in order to prevent recalculating
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public string LastThreshold = string.Empty;
 
     /// <summary>
     /// The time when the threshold will update next
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public TimeSpan NextThresholdUpdateTime;
 
     /// <summary>
     /// The current level of satisfaction threshold the entity is at
     /// </summary>
-    [DataField, ViewVariables]
+    [DataField]
     public string CurrentThreshold = string.Empty;
 
     /// <summary>
     /// Multipliers of the decline of the satisfaction value for each threshold.
-    /// Calculated based on <see cref="NeedPrototype.ThresholdDecayTime"/>
+    /// Calculated based on <see cref="NeedThreshold.DecayTime"/>
     /// </summary>
     [DataField]
-    public Dictionary<string, float> ThresholdDecayModifiers = new();
+    public Dictionary<ProtoId<NeedThresholdPrototype>, float> ThresholdDecayModifiers = new();
 }

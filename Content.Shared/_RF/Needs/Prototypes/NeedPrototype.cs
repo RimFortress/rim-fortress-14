@@ -3,7 +3,7 @@ using Content.Shared.Destructible.Thresholds;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.Needs;
+namespace Content.Shared._RF.Needs.Prototypes;
 
 /// <summary>
 /// This is a prototype for an entity's need
@@ -16,25 +16,31 @@ public sealed partial class NeedPrototype : IPrototype
     public string ID { get; private set; } = default!;
 
     /// <summary>
-    /// A dictionary with threshold values of satisfaction of a need and their IDs
+    /// Need category.
+    /// </summary>
+    [DataField]
+    public ProtoId<NeedCategoryPrototype> Category;
+
+    /// <summary>
+    /// A dictionary with threshold values of satisfaction of a need and their IDs.
     /// </summary>
     [DataField]
     public List<NeedThreshold> Thresholds = new();
 
     /// <summary>
-    /// Alert category prototype
+    /// Alert category prototype.
     /// </summary>
     [DataField]
     public ProtoId<AlertCategoryPrototype>? AlertCategory;
 
     /// <summary>
-    /// The time between each threshold update
+    /// The time between each threshold update.
     /// </summary>
     [DataField]
     public TimeSpan ThresholdUpdateRate = TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// Minimum and maximum values for randomizing the initial value of satisfaction of a need
+    /// Minimum and maximum values for randomizing the initial value of satisfaction of a need.
     /// </summary>
     [DataField]
     public MinMax? RoundstartRandomize;
@@ -44,7 +50,7 @@ public sealed partial class NeedPrototype : IPrototype
 public sealed partial class NeedThreshold
 {
     [DataField(required: true)]
-    public string Id;
+    public ProtoId<NeedThresholdPrototype> Id;
 
     [DataField(required: true)]
     public float Value;

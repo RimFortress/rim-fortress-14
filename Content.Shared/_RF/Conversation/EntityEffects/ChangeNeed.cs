@@ -1,6 +1,7 @@
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.MathHelpers;
 using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.Needs.Systems;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
@@ -32,7 +33,7 @@ public sealed partial class ChangeNeed : EntityEffectBase<ChangeNeed>
     public MinMaxFloat? Random;
 }
 
-public sealed class ChangeNeedEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, ChangeNeed>
+public sealed partial class ChangeNeedEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, ChangeNeed>
 {
     [Dependency] private NeedsSystem _needs = default!;
     [Dependency] private IRobustRandom _random = default!;

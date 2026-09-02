@@ -1,3 +1,4 @@
+using Content.Shared._RF.Needs.Prototypes;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Needs.Components;
@@ -9,8 +10,8 @@ namespace Content.Shared._RF.Needs.Components;
 public sealed partial class ModifySpeedOnNeedComponent : Component
 {
     /// <summary>
-    /// Speed multipliers for each threshold of each need
+    /// Speed multipliers for each threshold of each need category.
     /// </summary>
     [DataField]
-    public Dictionary<ProtoId<NeedPrototype>, Dictionary<string, float>> Modifiers = new();
+    public Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdPrototype>, float>> Modifiers = new();
 }

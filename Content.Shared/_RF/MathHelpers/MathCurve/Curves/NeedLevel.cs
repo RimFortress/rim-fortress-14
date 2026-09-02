@@ -1,5 +1,5 @@
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
-using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.Needs.Systems;
 using Robust.Shared.Prototypes;
 

@@ -6,40 +6,35 @@ namespace Content.Shared._RF.Needs.Systems;
 /// <summary>
 /// Manages <see cref="ModifySpeedOnNeedComponent"/>
 /// </summary>
-public sealed class ModifySpeedOnNeedSystem : EntitySystem
+public sealed partial class ModifySpeedOnNeedSystem : EntitySystem
 {
     [Dependency] private NeedsSystem _needs = default!;
     [Dependency] private MovementSpeedModifierSystem _movement = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<ModifySpeedOnNeedComponent, RefreshMovementSpeedModifiersEvent>(OnRefreshModifiers);
-        SubscribeLocalEvent<ModifySpeedOnNeedComponent, ComponentInit>(OnInit);
-        SubscribeLocalEvent<ModifySpeedOnNeedComponent, ComponentRemove>(OnRemoved);
-        SubscribeLocalEvent<ModifySpeedOnNeedComponent, NeedThresholdChangedEvent>(OnThresholdChanged);
-    }
-
+    [SubscribeLocalEvent]
     private void OnRefreshModifiers(Entity<ModifySpeedOnNeedComponent> ent, ref RefreshMovementSpeedModifiersEvent args)
     {
-        foreach (var (proto, modifiers) in ent.Comp.Modifiers)
+        foreach (var (category, modifiers) in ent.Comp.Modifiers)
         {
-            if (_needs.TryGetThreshold(ent.Owner, proto, out var threshold)
-                && modifiers.TryGetValue(threshold, out var modifier))
+            if (_needs.TryGetThreshold(ent.Owner, category, out var threshold, out _)
+                && modifiers.TryGetValue(threshold.Value, out var modifier))
                 args.ModifySpeed(modifier);
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnInit(Entity<ModifySpeedOnNeedComponent> ent, ref ComponentInit args)
     {
         _movement.RefreshMovementSpeedModifiers(ent.Owner);
     }
 
+    [SubscribeLocalEvent]
     private void OnRemoved(Entity<ModifySpeedOnNeedComponent> ent, ref ComponentRemove args)
     {
         _movement.RefreshMovementSpeedModifiers(ent.Owner);
     }
 
+    [SubscribeLocalEvent]
     private void OnThresholdChanged(Entity<ModifySpeedOnNeedComponent> ent, ref NeedThresholdChangedEvent args)
     {
         _movement.RefreshMovementSpeedModifiers(ent.Owner);

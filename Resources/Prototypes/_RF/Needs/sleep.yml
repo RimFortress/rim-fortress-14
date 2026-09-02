@@ -1,5 +1,21 @@
+- type: needCategory
+  id: Sleep
+
+- type: needThreshold
+  id: Overslept
+
+- type: needThreshold
+  id: Rested
+
+- type: needThreshold
+  id: Tired
+
+- type: needThreshold
+  id: Exhausted
+
 - type: need
   id: Sleep
+  category: Sleep
   thresholds:
   - id: Overslept
     value: 100
@@ -29,22 +45,3 @@
   roundstartRandomize:
     min: 70
     max: 85
-
-- type: need
-  id: Socialization
-  thresholds:
-  - id: Overstimulated
-    value: 100
-    decayTime: 2h
-  - id: Socialized
-    value: 80
-    decayTime: 4h
-  - id: Lonely
-    value: 40
-    decayTime: 2h
-  - id: Isolated
-    value: 20
-    decayTime: 4h
-  roundstartRandomize:
-    min: 70
-    max: 80

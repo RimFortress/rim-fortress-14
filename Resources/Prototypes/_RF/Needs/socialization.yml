@@ -1,0 +1,33 @@
+- type: needCategory
+  id: Socialization
+
+- type: needThreshold
+  id: Overstimulated
+
+- type: needThreshold
+  id: Socialized
+
+- type: needThreshold
+  id: Lonely
+
+- type: needThreshold
+  id: Isolated
+
+- type: need
+  id: Socialization
+  thresholds:
+  - id: Overstimulated
+    value: 100
+    decayTime: 2h
+  - id: Socialized
+    value: 80
+    decayTime: 4h
+  - id: Lonely
+    value: 40
+    decayTime: 2h
+  - id: Isolated
+    value: 20
+    decayTime: 4h
+  roundstartRandomize:
+    min: 70
+    max: 80

@@ -1,4 +1,4 @@
-using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.Needs.Systems;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Prototypes;

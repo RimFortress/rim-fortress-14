@@ -7,7 +7,7 @@ namespace Content.Shared._RF.Needs.Systems;
 /// <summary>
 /// Manages <see cref="ModifyNeedOnSleepComponent"/>
 /// </summary>
-public sealed class ModifyNeedOnSleepSystem : EntitySystem
+public sealed partial class ModifyNeedOnSleepSystem : EntitySystem
 {
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private NeedsSystem _needs = default!;
@@ -24,11 +24,11 @@ public sealed class ModifyNeedOnSleepSystem : EntitySystem
 
             comp.NextUpdate = _timing.CurTime + comp.UpdateRate;
 
-            foreach (var (need, modifiers) in comp.Modifiers)
+            foreach (var (category, modifiers) in comp.Modifiers)
             {
-                if (_needs.TryGetThreshold(uid, need, out var threshold)
-                    && modifiers.TryGetValue(threshold, out var modifier))
-                    _needs.AddValue(uid, need, modifier);
+                if (_needs.TryGetThreshold(uid, category, out var threshold, out var need)
+                    && modifiers.TryGetValue(threshold.Value, out var modifier))
+                    _needs.AddValue(uid, need.Value, modifier);
             }
         }
     }

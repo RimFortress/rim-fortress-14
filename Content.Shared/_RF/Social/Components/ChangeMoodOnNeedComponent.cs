@@ -1,4 +1,5 @@
 using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Prototypes;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Social.Components;
