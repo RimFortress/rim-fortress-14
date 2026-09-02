@@ -56,7 +56,7 @@ public sealed class FogOfWarTilesOverlay : Overlay
 
         args.WorldHandle.SetTransform(worldMatrix);
 
-        var enumerator = _map.GetTilesEnumerator(args.MapUid, grid, args.WorldBounds, false);
+        var enumerator = _map.GetTilesIntersecting(args.MapUid, grid, args.WorldBounds, false);
         while (enumerator.MoveNext(out var tileRef))
         {
             var chunk = tileRef.GridIndices / SharedBiomeSystem.ChunkSize;

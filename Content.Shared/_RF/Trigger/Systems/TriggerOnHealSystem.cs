@@ -5,17 +5,11 @@ using Content.Shared.Trigger.Systems;
 
 namespace Content.Shared._RF.Trigger.Systems;
 
-public sealed class TriggerOnHealSystem : EntitySystem
+public sealed partial class TriggerOnHealSystem : EntitySystem
 {
-    [Dependency] private readonly TriggerSystem _trigger = default!;
+    [Dependency] private TriggerSystem _trigger = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<TriggerOnHealComponent, HealingDoAfterEvent>(OnDoAfter,
-            after: new[] { typeof(HealingSystem) });
-    }
-
+    [SubscribeLocalEvent(after: new[] { typeof(HealingSystem) })]
     private void OnDoAfter(Entity<TriggerOnHealComponent> ent, ref HealingDoAfterEvent args)
     {
         if (args.Cancelled || !args.Handled)

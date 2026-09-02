@@ -11,21 +11,15 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Construction;
 
-public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
+public sealed partial class CommonConstructionSystem : SharedCommonConstructionSystem
 {
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly SpriteSystem _sprite = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private SpriteSystem _sprite = default!;
 
     private readonly Dictionary<EntityCoordinates, EntityUid> _predictGhosts = new();
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeNetworkEvent<ConstructionGhostSpawnMessage>(OnSpawn);
-    }
-
+    [SubscribeNetworkEvent]
     private void OnSpawn(ConstructionGhostSpawnMessage message)
     {
         var entity = GetEntity(message.Entity);
@@ -70,7 +64,7 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
             || !_prototype.TryIndex(targetProtoId, out var targetProto))
             return;
 
-        if (targetProto.TryGetComponent(out IconComponent? icon, EntityManager.ComponentFactory))
+        if (targetProto.TryComp(out IconComponent? icon, EntityManager.ComponentFactory))
         {
             _sprite.AddBlankLayer(new(uid, sprite), 0);
             _sprite.LayerSetSprite(new(uid, sprite), 0, icon.Icon);

@@ -29,9 +29,9 @@ public sealed partial class AddOpinion : EntityEffectBase<AddOpinion>
 
 public sealed class AddOpinionEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, AddOpinion>
 {
-    [Dependency] private readonly ConversationSystem _conversation = default!;
-    [Dependency] private readonly EngagementSystem _engagement = default!;
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private ConversationSystem _conversation = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
+    [Dependency] private SocialSystem _social = default!;
 
     protected override void Effect(Entity<ConversationActorComponent> ent, ref EntityEffectEvent<AddOpinion> args)
     {

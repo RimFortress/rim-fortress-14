@@ -25,10 +25,10 @@ public sealed partial class MovePulling : BaseGoapAction<MovePulling>
     public StateKey<EntityCoordinates> TargetCoordinatesKey = "TargetCoordinates";
 }
 
-public sealed class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
+public sealed partial class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
 {
-    [Dependency] private readonly TransformSystem _xform = default!;
-    [Dependency] private readonly InteractionSystem _interaction = default!;
+    [Dependency] private TransformSystem _xform = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
     [Dependency] private readonly EntityQuery<PullableComponent> _pullableQuery = default!;
     [Dependency] private readonly EntityQuery<PullerComponent> _pullerQuery = default!;
 

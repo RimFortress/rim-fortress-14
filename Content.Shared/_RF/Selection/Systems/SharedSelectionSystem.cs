@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Shared._RF.Selection.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
@@ -5,10 +6,10 @@ using Robust.Shared.Map.Components;
 
 namespace Content.Shared._RF.Selection.Systems;
 
-public abstract class SharedSelectionSystem : EntitySystem
+public abstract partial class SharedSelectionSystem : EntitySystem
 {
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
+    [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private SharedMapSystem _map = default!;
 
     public override void Initialize()
     {
@@ -59,13 +60,17 @@ public abstract class SharedSelectionSystem : EntitySystem
     protected HashSet<EntityUid> EntitiesInSelect(Entity<SelectionComponent?> ent)
     {
         if (!Resolve(ent, ref ent.Comp)
-            || ent.Comp.StartPoint is not { } start
-            || ent.Comp.EndPoint is not { } end
-            || start.MapId != end.MapId)
+            || ent.Comp.StartPoint == null
+            || ent.Comp.EndPoint == null
+            || ent.Comp.StartPoint.Value.MapId != ent.Comp.EndPoint.Value.MapId)
             return new();
 
-        var area = new Box2(start.Position, end.Position);
-        var entities = _lookup.GetEntitiesIntersecting(start.MapId,
+        var start = Vector2.Min(ent.Comp.StartPoint.Value.Position, ent.Comp.EndPoint.Value.Position);
+        var end = Vector2.Max(ent.Comp.StartPoint.Value.Position, ent.Comp.EndPoint.Value.Position);
+        var area = new Box2(start, end);
+
+        var entities = _lookup.GetEntitiesIntersecting(
+            ent.Comp.StartPoint.Value.MapId,
             area,
             flags: LookupFlags.Uncontained | LookupFlags.Dynamic | LookupFlags.Static);
 
@@ -95,7 +100,7 @@ public abstract class SharedSelectionSystem : EntitySystem
         var tiles = new HashSet<TileRef>();
         var map = _map.GetMap(start.MapId);
         var area = new Box2(start.Position, end.Position);
-        var enumerator = _map.GetTilesEnumerator(map, Comp<MapGridComponent>(map), area);
+        var enumerator = _map.GetTilesIntersecting(map, Comp<MapGridComponent>(map), area);
 
         while (enumerator.MoveNext(out var tile))
         {

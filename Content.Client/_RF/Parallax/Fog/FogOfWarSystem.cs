@@ -7,10 +7,10 @@ using Robust.Shared.Map.Enumerators;
 
 namespace Content.Client._RF.Parallax.Fog;
 
-public sealed class FogOfWarSystem : SharedFogOfWarSystem
+public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
 {
-    [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly IOverlayManager _overlay = default!;
+    [Dependency] private TransformSystem _transform = default!;
+    [Dependency] private IOverlayManager _overlay = default!;
 
     /// <inheritdoc/>
     public override void Initialize()

@@ -5,9 +5,9 @@ using Robust.Shared.Map;
 
 namespace Content.Client._RF.World;
 
-public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
+public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
-    [Dependency] private readonly IOverlayManager _overlay = default!;
+    [Dependency] private IOverlayManager _overlay = default!;
 
     public Dictionary<EntityUid, List<EntityCoordinates>> Settlements { get; private set; } = new();
 
@@ -29,18 +29,13 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         }
     }
 
-    public override void Initialize()
-    {
-        base.Initialize();
-        SubscribeNetworkEvent<SettlementCoordinatesMessage>(OnSettlementCoordinates);
-        SubscribeLocalEvent<RimFortressPlayerComponent, AfterAutoHandleStateEvent>(OnPlayerHandleState);
-    }
-
+    [SubscribeLocalEvent]
     private void OnPlayerHandleState(Entity<RimFortressPlayerComponent> ent, ref AfterAutoHandleStateEvent args)
     {
         OnPlayerUpdate?.Invoke(ent);
     }
 
+    [SubscribeNetworkEvent]
     private void OnSettlementCoordinates(SettlementCoordinatesMessage msg)
     {
         Settlements = msg.Coords

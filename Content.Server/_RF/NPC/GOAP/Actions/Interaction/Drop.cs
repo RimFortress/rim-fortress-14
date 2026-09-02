@@ -10,9 +10,9 @@ namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 /// </summary>
 public sealed partial class Drop : BaseGoapAction<Drop>;
 
-public sealed class DropSystem : GoapActionSystem<Drop>
+public sealed partial class DropSystem : GoapActionSystem<Drop>
 {
-    [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private HandsSystem _hands = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Drop action)
         => TryGet(ent, GoapState.ActiveHand, out _) && _hands.TryDrop(ent.Owner);

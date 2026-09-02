@@ -98,22 +98,6 @@
     spawned:
     - id: FoodMeatHuman
       amount: 5
-  # RimFortress Start
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 4h
-      Peckish: 3h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 6h
-    randomizeValue:
-      min: 310
-      max: 460
-  # RimFortress End
 
 - type: entity
   parent: OrganBaseOrganic

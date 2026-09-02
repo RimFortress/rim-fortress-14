@@ -18,9 +18,9 @@ public sealed partial class WorkshopRecipesCount : BaseMathCurve<WorkshopRecipes
     public HashSet<ProtoId<WorkshopRecipeTablePrototype>> Tables = new();
 }
 
-public sealed class WorkshopRecipesCountMathCurveSystem : MathCurveSystem<WorkshopRecipesCount>
+public sealed partial class WorkshopRecipesCountMathCurveSystem : MathCurveSystem<WorkshopRecipesCount>
 {
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     protected override float Curve(WorkshopRecipesCount curve, float input, MathCurveContext ctx)
     {

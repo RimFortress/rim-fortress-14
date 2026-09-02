@@ -28,9 +28,9 @@ public sealed partial class HasTags : BaseGoapCondition<HasTags>
     public bool RequireAll;
 }
 
-public sealed class HasTagsSystem : GoapConditionSystem<HasTags>
+public sealed partial class HasTagsSystem : GoapConditionSystem<HasTags>
 {
-    [Dependency] private readonly TagSystem _tag = default!;
+    [Dependency] private TagSystem _tag = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, HasTags condition)
     {

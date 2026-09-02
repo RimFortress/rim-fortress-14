@@ -22,18 +22,18 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manages <see cref="RimFortressRuleComponent"/>
 /// </summary>
-public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
+public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
 {
-    [Dependency] private readonly RimFortressWorldSystem _world = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly EntityTableSystem _table = default!;
-    [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly BiomeSystem _biome = default!;
-    [Dependency] private readonly MapSystem _map = default!;
-    [Dependency] private readonly IAdminLogManager _adminLogger = default!;
-    [Dependency] private readonly IChatManager _chat = default!;
+    [Dependency] private RimFortressWorldSystem _world = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private EntityTableSystem _table = default!;
+    [Dependency] private TransformSystem _transform = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private BiomeSystem _biome = default!;
+    [Dependency] private MapSystem _map = default!;
+    [Dependency] private IAdminLogManager _adminLogger = default!;
+    [Dependency] private IChatManager _chat = default!;
 
     private ISawmill _sawmill = default!;
 
@@ -82,7 +82,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             {
                 var proto = _prototype.Index(spawn);
 
-                if (!proto.TryGetComponent(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
+                if (!proto.TryComp(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
                     || GameTicker.RoundDuration() < worldRule.StartOffset)
                     continue;
 

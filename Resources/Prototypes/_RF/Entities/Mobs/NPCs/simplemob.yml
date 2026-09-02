@@ -1,0 +1,11 @@
+#- type: !PartialOnly entity
+#  id: SimpleMobBase
+#  components:
+#  - type: HungerOverride
+#    thresholdDecayTime:
+#      Overfed: 3h
+#      Okay: 6h
+#      Peckish: 4h
+#      Starving: 5h
+#  - type: ThirstOverride
+#    fullDecayTime: 10h

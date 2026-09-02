@@ -33,13 +33,13 @@ public sealed partial class Conversation : BaseGoapAction<Conversation>
     public StateKey<PathResultEvent> PathfindKey = "ConversationMovementPathfinding";
 }
 
-public sealed class ConversationGoapActionSystem : GoapActionSystem<Conversation>
+public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conversation>
 {
-    [Dependency] private readonly ConversationSystem _conversation = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
-    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
-    [Dependency] private readonly RotateToFaceSystem _rotate = default!;
-    [Dependency] private readonly ChatSystem _chat = default!;
+    [Dependency] private ConversationSystem _conversation = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
+    [Dependency] private RotateToFaceSystem _rotate = default!;
+    [Dependency] private ChatSystem _chat = default!;
     [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Conversation action)

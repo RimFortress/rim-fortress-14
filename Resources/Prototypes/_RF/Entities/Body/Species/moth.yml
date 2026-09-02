@@ -1,0 +1,24 @@
+- type: !PartialOnly entity
+  id: MobMoth
+  components:
+  - type: SkillExpModificator
+    multipliers:
+      Woodcutting: 0.85
+      Mining: 0.75
+      Healing: 1.25
+      Farming: 1.10
+      Melee: 0.90
+  #- type: HungerOverride
+  #  thresholdDecayTime:
+  #    Overfed: 90m
+  #    Okay: 5h
+  #    Peckish: 4h
+  #    Starving: 4h
+  #  randomizeValue:
+  #    min: 110
+  #    max: 160
+  #- type: ThirstOverride
+  #  fullDecayTime: 7h
+  #  randomizeValue:
+  #    min: 310
+  #    max: 460

@@ -25,9 +25,9 @@ public sealed partial class WorkshopCraftingCoords : BaseGoapAction<WorkshopCraf
     public StateKey<EntityCoordinates> ResultKey = "TargetCoordinates";
 }
 
-public sealed class WorkshopCraftingCoordsGoapActionSystem : GoapActionSystem<WorkshopCraftingCoords>
+public sealed partial class WorkshopCraftingCoordsGoapActionSystem : GoapActionSystem<WorkshopCraftingCoords>
 {
-    [Dependency] private readonly WorkshopSystem _workshop = default!;
+    [Dependency] private WorkshopSystem _workshop = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, WorkshopCraftingCoords action)
     {

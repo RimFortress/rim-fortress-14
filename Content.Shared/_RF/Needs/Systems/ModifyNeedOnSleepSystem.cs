@@ -9,8 +9,8 @@ namespace Content.Shared._RF.Needs.Systems;
 /// </summary>
 public sealed class ModifyNeedOnSleepSystem : EntitySystem
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly NeedsSystem _needs = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private NeedsSystem _needs = default!;
 
     public override void Update(float frameTime)
     {

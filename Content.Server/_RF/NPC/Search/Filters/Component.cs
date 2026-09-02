@@ -14,7 +14,7 @@ public sealed partial class Component : BaseSearchFilter<Component>
     public bool RequireAll = true;
 }
 
-public sealed class ComponentFilterSystem : NpcSearchFilterSystem<Component>
+public sealed partial class ComponentFilterSystem : NpcSearchFilterSystem<Component>
 {
     public override void Initialize()
     {

@@ -23,19 +23,12 @@ public sealed partial class EngagementInvites : BaseSearchQuery<EngagementInvite
     public ProtoId<DatasetPrototype>? Dataset;
 }
 
-public sealed class EngagementInvitesSearchQuerySystem : NpcSearchQuerySystem<EngagementInvites>
+public sealed partial class EngagementInvitesSearchQuerySystem : NpcSearchQuerySystem<EngagementInvites>
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
     [Dependency] private readonly EntityQuery<EngagementComponent> _query = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NpcSearcherComponent, EngagementInviteSent>(OnInviteSent);
-        SubscribeLocalEvent<NpcSearcherComponent, EngagementInviteRemoved>(OnInviteRemoved);
-    }
-
+    [SubscribeLocalEvent]
     private void OnInviteSent(Entity<NpcSearcherComponent> ent, ref EngagementInviteSent ev)
     {
         if (ent.Owner != ev.Invited || !_query.TryComp(ev.Engagement, out var comp))
@@ -54,6 +47,7 @@ public sealed class EngagementInvitesSearchQuerySystem : NpcSearchQuerySystem<En
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnInviteRemoved(Entity<NpcSearcherComponent> ent, ref EngagementInviteRemoved ev)
     {
         if (ent.Owner != ev.Invited || !_query.TryComp(ev.Engagement, out var comp))

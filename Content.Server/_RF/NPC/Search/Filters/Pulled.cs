@@ -12,24 +12,18 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// </summary>
 public sealed partial class Pulled : BaseSearchFilter<Pulled>;
 
-public sealed class PulledSearchFilterSystem : NpcSearchFilterSystem<Pulled>
+public sealed partial class PulledSearchFilterSystem : NpcSearchFilterSystem<Pulled>
 {
     [Dependency] private readonly EntityQuery<PullableComponent> _query = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<SearchTrackedComponent, PullStartedMessage>(OnPullStarted);
-        SubscribeLocalEvent<SearchTrackedComponent, PullStoppedMessage>(OnPullStopped);
-    }
-
+    [SubscribeLocalEvent]
     private void OnPullStarted(Entity<SearchTrackedComponent> ent, ref PullStartedMessage ev)
     {
         if (ev.PulledUid == ent.Owner)
             DirtyFilter(ent.AsNullable());
     }
 
+    [SubscribeLocalEvent]
     private void OnPullStopped(Entity<SearchTrackedComponent> ent, ref PullStoppedMessage ev)
     {
         if (ev.PulledUid == ent.Owner)

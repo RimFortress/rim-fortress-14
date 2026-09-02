@@ -21,6 +21,7 @@ public sealed partial class MainMenuControl : Control
 
     private static readonly ProtoId<ParallaxPrototype>[] Parallaxes =
     [
+        /* RimFortress
         "Wizard",
         "TrainStation",
         "PlasmaStation",
@@ -29,11 +30,14 @@ public sealed partial class MainMenuControl : Control
         "AspidParallax",
         "OriginStation",
         "Default",
+        RimFortress */
         "Sky",
+        /* RimFortress
         "KettleStation",
         "BagelStation",
         "ExoStation",
         "SnowballStation"
+        RimFortress */
     ];
 
     public MainMenuControl(IResourceCache resCache, IConfigurationManager configMan)

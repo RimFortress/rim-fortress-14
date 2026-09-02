@@ -27,15 +27,15 @@ public sealed partial class RefillableReagent : BaseSearchConsideration<Refillab
     public bool Normalize = true;
 }
 
-public sealed class RefillableReagentConsiderationSystem : NpcSearchConsiderationSystem<RefillableReagent>
+public sealed partial class RefillableReagentConsiderationSystem : NpcSearchConsiderationSystem<RefillableReagent>
 {
-    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
+    [Dependency] private SharedSolutionContainerSystem _solution = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeRescoreEvent<RefillableSolutionComponent, SolutionContainerChangedEvent>();
+        SubscribeRescoreEvent<RefillableSolutionComponent, SolutionChangedEvent>();
     }
 
     protected override float GetScore(GoapState state, EntityUid target, RefillableReagent con)

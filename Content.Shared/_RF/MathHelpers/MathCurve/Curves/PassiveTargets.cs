@@ -25,9 +25,9 @@ public sealed partial class PassiveTargets : BaseMathCurve<PassiveTargets>
     public bool CanControlOnly = true;
 }
 
-public sealed class PassiveTargetsCurveSystem : MathCurveSystem<PassiveTargets>
+public sealed partial class PassiveTargetsCurveSystem : MathCurveSystem<PassiveTargets>
 {
-    [Dependency] private readonly SharedExecutableGoalSystem _executable = default!;
+    [Dependency] private SharedExecutableGoalSystem _executable = default!;
 
     protected override float Curve(PassiveTargets curve, float input, MathCurveContext ctx)
     {

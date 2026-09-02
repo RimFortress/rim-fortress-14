@@ -228,29 +228,6 @@
       types:
         Slash: 5 # Reduce?
   - type: Wagging
-  # RimFortress Start
-  - type: SkillExpModificator
-    multipliers:
-      Woodcutting: 1.15
-      Mining: 1.15
-      Construction: 1.25
-      Healing: 0.75
-      Farming: 0.75
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 5h
-      Peckish: 4h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 7h
-    randomizeValue:
-      min: 310
-      max: 460
-  # RimFortress End
 
 - type: entity
   parent: OrganBaseOrganic

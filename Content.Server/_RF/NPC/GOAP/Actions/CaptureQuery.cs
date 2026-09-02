@@ -40,9 +40,9 @@ public sealed partial class CaptureQuery : BaseGoapAction<CaptureQuery>
     public StateKey<EntityUid>? TargetKey;
 }
 
-public sealed class CaptureQueryGoapActionSystem : GoapActionSystem<CaptureQuery>
+public sealed partial class CaptureQueryGoapActionSystem : GoapActionSystem<CaptureQuery>
 {
-    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
+    [Dependency] private SharedNpcSearcherSystem _searcher = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, CaptureQuery action)
     {

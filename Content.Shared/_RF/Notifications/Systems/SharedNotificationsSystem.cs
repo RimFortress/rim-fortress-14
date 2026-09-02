@@ -1,5 +1,4 @@
 using Content.Shared._RF.Notifications.Components;
-using Content.Shared.Body;
 using Content.Shared.Humanoid;
 using JetBrains.Annotations;
 using Robust.Shared.GameStates;
@@ -16,8 +15,8 @@ namespace Content.Shared._RF.Notifications.Systems;
 /// </summary>
 public abstract class SharedNotificationsSystem : EntitySystem
 {
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] private IGameTiming _timing = default!;
 
     private static readonly LocId EntityNameWrapper = "notification-entity-name-wrapper";
 
@@ -318,20 +317,17 @@ public abstract class SharedNotificationsSystem : EntitySystem
 [Serializable, NetSerializable]
 public sealed class RemoveNotificationRequest(int id) : EntityEventArgs
 {
-    [DataField]
     public int Id = id;
 }
 
 [Serializable, NetSerializable]
 public sealed class RemoveNotificationsRequest(List<int> ids) : EntityEventArgs
 {
-    [DataField]
     public List<int> Ids = ids;
 }
 
 [Serializable, NetSerializable]
 public sealed class FocusToNotificationRequest(int id) : EntityEventArgs
 {
-    [DataField]
     public int Id = id;
 }

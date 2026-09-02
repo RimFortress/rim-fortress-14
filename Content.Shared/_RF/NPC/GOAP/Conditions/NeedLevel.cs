@@ -29,9 +29,9 @@ public sealed partial class NeedLevel : BaseGoapCondition<NeedLevel>
     public StateKey<float>? MaxKey;
 }
 
-public sealed class NeedLevelSystem : GoapConditionSystem<NeedLevel>
+public sealed partial class NeedLevelSystem : GoapConditionSystem<NeedLevel>
 {
-    [Dependency] private readonly NeedsSystem _needs = default!;
+    [Dependency] private NeedsSystem _needs = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, NeedLevel condition)
     {

@@ -37,10 +37,10 @@ public sealed partial class ContainingContainer : BaseSearchFilter<ContainingCon
     public string? ContainerId;
 }
 
-public sealed class ContainingContainerSearchFilterSystem : NpcSearchFilterSystem<ContainingContainer>
+public sealed partial class ContainingContainerSearchFilterSystem : NpcSearchFilterSystem<ContainingContainer>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private EntityWhitelistSystem _whitelist = default!;
 
     public override void Initialize()
     {

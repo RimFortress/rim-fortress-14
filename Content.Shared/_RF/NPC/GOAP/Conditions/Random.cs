@@ -15,9 +15,9 @@ public sealed partial class Random : BaseGoapCondition<Random>
     public float Chance;
 }
 
-public sealed class RandomGoapConditionSystem : GoapConditionSystem<Random>
+public sealed partial class RandomGoapConditionSystem : GoapConditionSystem<Random>
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Random condition)
         => _random.NextFloat() < condition.Chance;

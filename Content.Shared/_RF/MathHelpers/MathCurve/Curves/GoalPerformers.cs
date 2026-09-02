@@ -24,9 +24,9 @@ public sealed partial class GoalPerformers : BaseMathCurve<GoalPerformers>
     public bool SameOwnerOnly = true;
 }
 
-public sealed class GoalPerformersCurveSystem : MathCurveSystem<GoalPerformers>
+public sealed partial class GoalPerformersCurveSystem : MathCurveSystem<GoalPerformers>
 {
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     protected override float Curve(GoalPerformers curve, float input, MathCurveContext ctx)
     {

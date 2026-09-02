@@ -12,10 +12,10 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// </summary>
 public sealed partial class SelfAttack : EntityEffectBase<SelfAttack>;
 
-public sealed class SelfAttackEntityEffectSystem : EntityEffectSystem<HandsComponent, SelfAttack>
+public sealed partial class SelfAttackEntityEffectSystem : EntityEffectSystem<HandsComponent, SelfAttack>
 {
-    [Dependency] private readonly MeleeWeaponSystem _melee = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private MeleeWeaponSystem _melee = default!;
+    [Dependency] private HandsSystem _hands = default!;
 
     protected override void Effect(Entity<HandsComponent> entity, ref EntityEffectEvent<SelfAttack> args)
     {

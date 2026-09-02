@@ -9,21 +9,12 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.Systems;
 
-public sealed class OwnershipSystem : EntitySystem
+public sealed partial class OwnershipSystem : EntitySystem
 {
-    [Dependency] private readonly ISharedAdminManager _admin = default!;
+    [Dependency] private ISharedAdminManager _admin = default!;
     [Dependency] private readonly EntityQuery<OwnershipComponent> _ownershipQuery = default!;
 
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<OwnershipComponent, ComponentHandleState>(OnHandleState);
-        SubscribeLocalEvent<OwnershipComponent, ComponentGetState>(OnGetState);
-
-        SubscribeLocalEvent<OwnershipComponent, ComponentRemove>(OnComponentRemove);
-        SubscribeLocalEvent<OwnershipComponent, PolymorphedEvent>(OnPolymorphed);
-        SubscribeLocalEvent<GetVerbsEvent<Verb>>(OnGetVerbs);
-    }
-
+    [SubscribeLocalEvent]
     private void OnHandleState(Entity<OwnershipComponent> ent, ref ComponentHandleState args)
     {
         if (args.Current is not OwnershipComponentState state)
@@ -45,6 +36,7 @@ public sealed class OwnershipSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnGetState(Entity<OwnershipComponent> ent, ref ComponentGetState args)
     {
         var owners = new HashSet<NetEntity>();
@@ -65,6 +57,7 @@ public sealed class OwnershipSystem : EntitySystem
         args.State = new OwnershipComponentState(owners, owned);
     }
 
+    [SubscribeLocalEvent]
     private void OnComponentRemove(Entity<OwnershipComponent> ent, ref ComponentRemove args)
     {
         foreach (var owned in ent.Comp.Owned)
@@ -92,12 +85,14 @@ public sealed class OwnershipSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnPolymorphed(Entity<OwnershipComponent> ent, ref PolymorphedEvent args)
     {
         AddOwnership(args.NewEntity, owned: ent.Comp.Owned, owners: ent.Comp.Owners);
         RemoveOwnership(args.OldEntity, owned: ent.Comp.Owned, owners: ent.Comp.Owners);
     }
 
+    [SubscribeLocalEvent]
     private void OnGetVerbs(GetVerbsEvent<Verb> args)
     {
         if (!_admin.IsAdmin(args.User) || HasOwner(args.Target, args.User))

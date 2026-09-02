@@ -31,9 +31,9 @@ public sealed partial class InviteEngagement : BaseGoapAction<InviteEngagement>
     public List<ProtoId<EngagementRolePrototype>> Roles = new();
 }
 
-public sealed class InviteEngagementGoapActionSystem : GoapActionSystem<InviteEngagement>
+public sealed partial class InviteEngagementGoapActionSystem : GoapActionSystem<InviteEngagement>
 {
-    [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, InviteEngagement action)
         => TryGet(ent, action.EngageKey, out var engagement)

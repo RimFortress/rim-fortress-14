@@ -10,9 +10,9 @@ namespace Content.Server._RF.EntityEffects.Effects;
 /// </summary>
 public sealed partial class ResetMeleeCooldown : EntityEffectBase<ResetMeleeCooldown>;
 
-public sealed class ResetMeleeCooldownEntityEffectSystem : EntityEffectSystem<MeleeWeaponComponent, GenerateProduct>
+public sealed partial class ResetMeleeCooldownEntityEffectSystem : EntityEffectSystem<MeleeWeaponComponent, GenerateProduct>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private IGameTiming _timing = default!;
 
     protected override void Effect(Entity<MeleeWeaponComponent> entity, ref EntityEffectEvent<GenerateProduct> args)
     {

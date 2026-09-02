@@ -15,9 +15,9 @@ public sealed partial class ItemClosed : BaseGoapCondition<ItemClosed>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class ItemClosedGoapConditionSystem : GoapConditionSystem<ItemClosed>
+public sealed partial class ItemClosedGoapConditionSystem : GoapConditionSystem<ItemClosed>
 {
-    [Dependency] private readonly OpenableSystem _openable = default!;
+    [Dependency] private OpenableSystem _openable = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, ItemClosed condition)
         => TryGet(state, condition.TargetKey, out var target)

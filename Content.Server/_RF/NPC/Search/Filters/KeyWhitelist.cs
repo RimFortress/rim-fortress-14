@@ -23,9 +23,9 @@ public sealed partial class KeyWhitelist : BaseSearchFilter<KeyWhitelist>
     public bool PassWhenNull;
 }
 
-public sealed class KeyWhitelistFilterSystem : NpcSearchGoapKeyFilterSystem<KeyWhitelist, EntityWhitelist>
+public sealed partial class KeyWhitelistFilterSystem : NpcSearchGoapKeyFilterSystem<KeyWhitelist, EntityWhitelist>
 {
-    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private EntityWhitelistSystem _whitelist = default!;
 
     protected override HashSet<StateKey<EntityWhitelist>> GetSubscribeKeys(KeyWhitelist filter)
         => new() { filter.TargetKey };

@@ -14,38 +14,27 @@ namespace Content.Server._RF.NPC.Search.Considerations.Healing;
 public sealed partial class Damage : BaseSearchConsideration<Damage>
 {
     /// <summary>
-    /// Only entities that heal at least one of these containers will be included in the count.
-    /// </summary>
-    [DataField]
-    public HashSet<ProtoId<DamageContainerPrototype>> DamageContainers = new();
-
-    /// <summary>
     /// Damage types to be counted; if empty, total damage will be counted.
     /// </summary>
     [DataField]
     public HashSet<ProtoId<DamageTypePrototype>> DamageTypes = new();
 }
 
-public sealed class DamageConsiderationSystem : NpcSearchConsiderationSystem<Damage>
+public sealed partial class DamageConsiderationSystem : NpcSearchConsiderationSystem<Damage>
 {
-    [Dependency] private readonly DamageableSystem _damageable = default!;
+    [Dependency] private DamageableSystem _damageable = default!;
     [Dependency] private readonly EntityQuery<DamageableComponent> _query = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeRescoreEvent<DamageChangedEvent>();
+        SubscribeRescoreEvent<DamageDealtEvent>();
     }
 
     protected override float GetScore(GoapState state, EntityUid target, Damage con)
     {
         if (!_query.TryComp(target, out var comp))
-            return 0f;
-
-        if (con.DamageContainers.Count != 0
-            && comp.DamageContainerID != null
-            && !con.DamageContainers.Contains(comp.DamageContainerID.Value))
             return 0f;
 
         if (con.DamageTypes.Count == 0)

@@ -8,7 +8,7 @@ public sealed partial class Or : BaseGoapCondition<Or>
     public List<GoapCondition> Conditions = new();
 }
 
-public sealed class OrConditionSystem : GoapConditionSystem<Or>
+public sealed partial class OrConditionSystem : GoapConditionSystem<Or>
 {
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Or condition)
     {

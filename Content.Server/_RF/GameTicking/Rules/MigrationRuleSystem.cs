@@ -9,29 +9,29 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manages <see cref="MigrationRuleComponent"/>
 /// </summary>
-public sealed class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent>
+public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent>
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly ExecutableGoalSystem _executable = default!;
-    [Dependency] private readonly NarratorSystem _narrator = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private ExecutableGoalSystem _executable = default!;
+    [Dependency] private NarratorSystem _narrator = default!;
 
-    protected override void Started(EntityUid uid, MigrationRuleComponent component, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
+    protected override void Started(Entity<MigrationRuleComponent> ent, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
     {
         if (Rule.GetRule() is not { } rule)
             return;
 
         // We spawn one entity anyway, regardless of points, so as not to trigger the event for nothing
-        var spawn = new List<EntProtoId> { Random.Pick(component.Spawn.Keys) };
+        var spawn = new List<EntProtoId> { Random.Pick(ent.Comp.Spawn.Keys) };
         var points = _narrator.EventPoints(args.Target, rule.Narrator, args.TargetCoordinates) - worldRule.Cost;
 
         while (true)
         {
-            if (component.MaxSpawn != 0 && spawn.Count >= component.MaxSpawn)
+            if (ent.Comp.MaxSpawn != 0 && spawn.Count >= ent.Comp.MaxSpawn)
                 break;
 
             var available = new List<EntProtoId>();
 
-            foreach (var (proto, cost) in component.Spawn)
+            foreach (var (proto, cost) in ent.Comp.Spawn)
             {
                 if (cost > points)
                     continue;
@@ -44,15 +44,15 @@ public sealed class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent
 
             var entProto = Random.Pick(available);
             spawn.Add(entProto);
-            points -= component.Spawn[entProto];
+            points -= ent.Comp.Spawn[entProto];
         }
 
-        var pops = World.SpawnPop(args.TargetCoordinates, spawn, component.RadiusFromSettlement);
+        var pops = World.SpawnPop(args.TargetCoordinates, spawn, ent.Comp.RadiusFromSettlement);
 
-        if (component.AddToPops)
+        if (ent.Comp.AddToPops)
             World.AddPops(args.Target, pops);
 
-        if (!_prototype.Resolve(component.Goal, out var task))
+        if (!_prototype.Resolve(ent.Comp.Goal, out var task))
             return;
 
         foreach (var pop in pops)

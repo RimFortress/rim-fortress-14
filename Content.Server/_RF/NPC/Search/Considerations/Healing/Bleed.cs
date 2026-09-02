@@ -3,7 +3,6 @@ using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Body.Components;
-using Content.Shared.Body.Events;
 using Content.Shared.Body.Systems;
 
 namespace Content.Server._RF.NPC.Search.Considerations.Healing;
@@ -20,7 +19,7 @@ public sealed partial class Bleed : BaseSearchConsideration<Bleed>
     public bool Normalize = true;
 }
 
-public sealed class BleedSearchConsiderationSystem : NpcSearchConsiderationSystem<Bleed>
+public sealed partial class BleedSearchConsiderationSystem : NpcSearchConsiderationSystem<Bleed>
 {
     [Dependency] private readonly EntityQuery<BloodstreamComponent> _query = default!;
 

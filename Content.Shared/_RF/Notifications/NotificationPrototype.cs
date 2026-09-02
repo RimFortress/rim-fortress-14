@@ -55,8 +55,8 @@ public sealed partial class NotificationPrototype : IPrototype, IInheritingProto
     public string? Style;
 }
 
-[Serializable, NetSerializable]
-public sealed class Notification(
+[DataDefinition, Serializable, NetSerializable]
+public sealed partial class Notification(
     int id,
     ProtoId<NotificationPrototype> protoId,
     string description,

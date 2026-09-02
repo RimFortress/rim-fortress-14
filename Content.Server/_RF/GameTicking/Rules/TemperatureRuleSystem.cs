@@ -6,11 +6,11 @@ using Content.Shared.GameTicking.Components;
 
 namespace Content.Server._RF.GameTicking.Rules;
 
-public sealed class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleComponent>
+public sealed partial class TemperatureRuleSystem : GameRuleSystem<TemperatureRuleComponent>
 {
-    [Dependency] private readonly RimFortressRuleSystem _rule = default!;
-    [Dependency] private readonly AtmosphereSystem _atmos = default!;
-    [Dependency] private readonly GlobalWorldRuleSystem _globalRule = default!;
+    [Dependency] private RimFortressRuleSystem _rule = default!;
+    [Dependency] private AtmosphereSystem _atmos = default!;
+    [Dependency] private GlobalWorldRuleSystem _globalRule = default!;
 
     protected override void Started(EntityUid uid, TemperatureRuleComponent component, GameRuleComponent gameRule, GameRuleStartedEvent args)
     {

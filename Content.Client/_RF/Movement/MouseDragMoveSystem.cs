@@ -12,26 +12,19 @@ namespace Content.Client._RF.Movement;
 /// <summary>
 /// This handles entities with <see cref="MouseDragMoveComponent"/>
 /// </summary>
-public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
+public sealed partial class MouseDragMoveSystem : SharedMouseDragMoveSystem
 {
-    [Dependency] private readonly IGameTiming _gameTiming = default!;
-    [Dependency] private readonly InputSystem _inputSystem = default!;
-    [Dependency] private readonly IEyeManager _eyeManager = default!;
-    [Dependency] private readonly IInputManager _inputManager = default!;
-    [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
+    [Dependency] private IGameTiming _gameTiming = default!;
+    [Dependency] private InputSystem _inputSystem = default!;
+    [Dependency] private IEyeManager _eyeManager = default!;
+    [Dependency] private IInputManager _inputManager = default!;
+    [Dependency] private SharedTransformSystem _transformSystem = default!;
 
     private bool Enabled { get; set; }
 
     private EntityUid? _dragging;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeNetworkEvent<MouseDragToggleMessage>(OnToggle);
-    }
-
+    [SubscribeNetworkEvent]
     private void OnToggle(MouseDragToggleMessage msg, EntitySessionEventArgs args)
     {
         Enabled = msg.Enabled;

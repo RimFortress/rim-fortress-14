@@ -12,10 +12,10 @@ namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 /// </summary>
 public sealed partial class UnPull : BaseGoapAction<UnPull>;
 
-public sealed class UnPullActionSystem : GoapActionSystem<UnPull>
+public sealed partial class UnPullActionSystem : GoapActionSystem<UnPull>
 {
-    [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
-    [Dependency] private readonly PullingSystem _pulling = default!;
+    [Dependency] private ActionBlockerSystem _actionBlocker = default!;
+    [Dependency] private PullingSystem _pulling = default!;
 
     [Dependency] private readonly EntityQuery<PullableComponent> _pullableQuery = default!;
 

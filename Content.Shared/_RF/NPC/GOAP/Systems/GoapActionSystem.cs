@@ -6,19 +6,9 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// An entity system that provides GOAP action functionality.
 /// </summary>
 /// <typeparam name="T">GOAP action type.</typeparam>
-public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAction
+public abstract partial class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAction
 {
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<GoapComponent, GoapActionCost<T>>(OnActionCost);
-        SubscribeLocalEvent<GoapComponent, GoapActionUpdate<T>>(OnActionUpdate);
-        SubscribeLocalEvent<GoapComponent, GoapActionStartup<T>>(OnActionStartup);
-        SubscribeLocalEvent<GoapComponent, GoapActionShutdown<T>>(OnActionShutdown);
-        SubscribeLocalEvent<GoapComponent, GoapActionPlanShutdown<T>>(OnActionPlanShutdown);
-    }
-
+    [SubscribeLocalEvent]
     private void OnActionCost(Entity<GoapComponent> ent, ref GoapActionCost<T> args)
     {
         EnterContext(args.State, args.Action);
@@ -26,6 +16,7 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
         ClearContext();
     }
 
+    [SubscribeLocalEvent]
     private void OnActionUpdate(Entity<GoapComponent> ent, ref GoapActionUpdate<T> args)
     {
         EnterContext(ent.Comp.State, args.Action);
@@ -33,6 +24,7 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
         ClearContext();
     }
 
+    [SubscribeLocalEvent]
     private void OnActionStartup(Entity<GoapComponent> ent, ref GoapActionStartup<T> args)
     {
         EnterContext(ent.Comp.State, args.Action);
@@ -40,6 +32,7 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
         ClearContext();
     }
 
+    [SubscribeLocalEvent]
     private void OnActionShutdown(Entity<GoapComponent> ent, ref GoapActionShutdown<T> args)
     {
         EnterContext(ent.Comp.State, args.Action);
@@ -47,6 +40,7 @@ public abstract class GoapActionSystem<T> : GoapDebugDumpSystem where T : GoapAc
         ClearContext();
     }
 
+    [SubscribeLocalEvent]
     private void OnActionPlanShutdown(Entity<GoapComponent> ent, ref GoapActionPlanShutdown<T> args)
     {
         EnterContext(ent.Comp.State, args.Action);

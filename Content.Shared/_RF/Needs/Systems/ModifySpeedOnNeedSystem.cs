@@ -8,8 +8,8 @@ namespace Content.Shared._RF.Needs.Systems;
 /// </summary>
 public sealed class ModifySpeedOnNeedSystem : EntitySystem
 {
-    [Dependency] private readonly NeedsSystem _needs = default!;
-    [Dependency] private readonly MovementSpeedModifierSystem _movement = default!;
+    [Dependency] private NeedsSystem _needs = default!;
+    [Dependency] private MovementSpeedModifierSystem _movement = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -32,16 +32,16 @@ public sealed class ModifySpeedOnNeedSystem : EntitySystem
 
     private void OnInit(Entity<ModifySpeedOnNeedComponent> ent, ref ComponentInit args)
     {
-        _movement.RefreshMovementSpeedModifiers(ent);
+        _movement.RefreshMovementSpeedModifiers(ent.Owner);
     }
 
     private void OnRemoved(Entity<ModifySpeedOnNeedComponent> ent, ref ComponentRemove args)
     {
-        _movement.RefreshMovementSpeedModifiers(ent);
+        _movement.RefreshMovementSpeedModifiers(ent.Owner);
     }
 
     private void OnThresholdChanged(Entity<ModifySpeedOnNeedComponent> ent, ref NeedThresholdChangedEvent args)
     {
-        _movement.RefreshMovementSpeedModifiers(ent);
+        _movement.RefreshMovementSpeedModifiers(ent.Owner);
     }
 }

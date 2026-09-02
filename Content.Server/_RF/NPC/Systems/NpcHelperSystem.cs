@@ -17,12 +17,12 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Systems;
 
-public sealed class NpcHelperSystem : EntitySystem
+public sealed partial class NpcHelperSystem : EntitySystem
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly InventorySystem _inventory = default!;
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private InventorySystem _inventory = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     /// <summary>
     /// Returns all items from the entity's inventory, including those in containers

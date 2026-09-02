@@ -34,8 +34,8 @@ public sealed partial class ChangeNeed : EntityEffectBase<ChangeNeed>
 
 public sealed class ChangeNeedEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, ChangeNeed>
 {
-    [Dependency] private readonly NeedsSystem _needs = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private NeedsSystem _needs = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     protected override void Effect(Entity<ConversationActorComponent> ent, ref EntityEffectEvent<ChangeNeed> args)
     {

@@ -59,15 +59,15 @@ public sealed partial class StoringItem : BaseGoapAction<StoringItem>
     public StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
 }
 
-public sealed class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
+public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
 {
-    [Dependency] private readonly InteractionSystem _interaction = default!;
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
-    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
-    [Dependency] private readonly PickupActionSystem _pickup = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
+    [Dependency] private NpcSearcherSystem _searcher = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
+    [Dependency] private PickupActionSystem _pickup = default!;
+    [Dependency] private HandsSystem _hands = default!;
 
     [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
     [Dependency] private readonly EntityQuery<StockpileContentComponent> _contentQuery = default!;

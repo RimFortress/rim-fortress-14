@@ -15,7 +15,7 @@ public sealed partial class WorkshopCrafting : BaseGoapCondition<WorkshopCraftin
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class WorkshopCraftingGoapConditionSystem : GoapConditionSystem<WorkshopCrafting>
+public sealed partial class WorkshopCraftingGoapConditionSystem : GoapConditionSystem<WorkshopCrafting>
 {
     [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
 

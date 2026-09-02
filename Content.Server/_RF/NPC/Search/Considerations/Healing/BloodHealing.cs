@@ -10,7 +10,7 @@ namespace Content.Server._RF.NPC.Search.Considerations.Healing;
 /// </summary>
 public sealed partial class BloodLevelHealing : BaseSearchConsideration<BloodLevelHealing>;
 
-public sealed class BloodLevelHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BloodLevelHealing>
+public sealed partial class BloodLevelHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BloodLevelHealing>
 {
     [Dependency] private readonly EntityQuery<HealingComponent> _query = default!;
 

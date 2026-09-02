@@ -15,22 +15,13 @@ namespace Content.Server._RF.NPC.Search.Queries;
 /// </summary>
 public sealed partial class Inventory : BaseSearchQuery<Inventory>;
 
-public sealed class InventoryQuerySystem : NpcSearchQuerySystem<Inventory>
+public sealed partial class InventoryQuerySystem : NpcSearchQuerySystem<Inventory>
 {
-    [Dependency] private readonly InventorySystem _inventory = default!;
-    [Dependency] private readonly SharedContainerSystem _container = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private InventorySystem _inventory = default!;
+    [Dependency] private SharedContainerSystem _container = default!;
+    [Dependency] private HandsSystem _hands = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NpcSearcherComponent, DidEquipEvent>(OnSearcherDidEquip);
-        SubscribeLocalEvent<NpcSearcherComponent, DidUnequipEvent>(OnSearcherDidUnequip);
-        SubscribeLocalEvent<SearchTrackedComponent, EntInsertedIntoContainerMessage>(OnTrackedInserted);
-        SubscribeLocalEvent<SearchTrackedComponent, EntRemovedFromContainerMessage>(OnTrackedRemoved);
-    }
-
+    [SubscribeLocalEvent]
     private void OnSearcherDidEquip(Entity<NpcSearcherComponent> ent, ref DidEquipEvent ev)
     {
         Query.Clear();
@@ -45,6 +36,7 @@ public sealed class InventoryQuerySystem : NpcSearchQuerySystem<Inventory>
         Query.Clear();
     }
 
+    [SubscribeLocalEvent]
     private void OnSearcherDidUnequip(Entity<NpcSearcherComponent> ent, ref DidUnequipEvent ev)
     {
         Query.Clear();
@@ -59,6 +51,7 @@ public sealed class InventoryQuerySystem : NpcSearchQuerySystem<Inventory>
         Query.Clear();
     }
 
+    [SubscribeLocalEvent]
     private void OnTrackedInserted(Entity<SearchTrackedComponent> ent, ref EntInsertedIntoContainerMessage ev)
     {
         if (!HasComp<InventoryComponent>(ent)
@@ -79,6 +72,7 @@ public sealed class InventoryQuerySystem : NpcSearchQuerySystem<Inventory>
         Query.Clear();
     }
 
+    [SubscribeLocalEvent]
     private void OnTrackedRemoved(Entity<SearchTrackedComponent> ent, ref EntRemovedFromContainerMessage ev)
     {
         if (!HasComp<InventoryComponent>(ent)

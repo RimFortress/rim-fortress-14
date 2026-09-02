@@ -4,21 +4,14 @@ using Content.Shared.Whitelist;
 
 namespace Content.Shared._RF.Social.Systems;
 
-public sealed class ChangeMoodOnAteSystem : EntitySystem
+public sealed partial class ChangeMoodOnAteSystem : EntitySystem
 {
-    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private SocialSystem _social = default!;
 
-    private EntityQuery<ChangeMoodOnAteComponent> _query;
+    [Dependency] private readonly EntityQuery<ChangeMoodOnAteComponent> _query = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<MetaDataComponent, FullyEatenEvent>(OnFullyEaten);
-
-        _query = GetEntityQuery<ChangeMoodOnAteComponent>();
-    }
-
+    [SubscribeLocalEvent]
     private void OnFullyEaten(Entity<MetaDataComponent> ent, ref FullyEatenEvent args)
     {
         if (!_query.TryComp(args.User, out var comp))

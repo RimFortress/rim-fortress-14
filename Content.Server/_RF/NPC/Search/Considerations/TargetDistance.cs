@@ -10,7 +10,7 @@ namespace Content.Server._RF.NPC.Search.Considerations;
 /// </summary>
 public sealed partial class TargetDistance : BaseSearchConsideration<TargetDistance>;
 
-public sealed class TargetDistanceConsiderationSystem : NpcSearchConsiderationSystem<TargetDistance>
+public sealed partial class TargetDistanceConsiderationSystem : NpcSearchConsiderationSystem<TargetDistance>
 {
     [Dependency] private readonly TransformSystem _transform = default!;
 

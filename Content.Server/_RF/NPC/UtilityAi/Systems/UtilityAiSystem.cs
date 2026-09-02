@@ -13,10 +13,10 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.UtilityAi.Systems;
 
-public sealed class UtilityAiSystem : SharedUtilityAiSystem
+public sealed partial class UtilityAiSystem : SharedUtilityAiSystem
 {
-    [Dependency] private readonly IAdminManager _admin = default!;
-    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
+    [Dependency] private IAdminManager _admin = default!;
+    [Dependency] private NpcHelperSystem _npcHelper = default!;
 
     private readonly HashSet<ProtoId<UtilityAiGoalPrototype>> _cooldownsToRemove = new();
 

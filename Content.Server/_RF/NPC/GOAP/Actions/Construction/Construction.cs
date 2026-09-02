@@ -64,18 +64,18 @@ public sealed partial class Construction : BaseGoapAction<Construction>
     public readonly StateKey<ushort> CurrentDoAfter = "CurrentConstructionInteractDoAfter";
 }
 
-public sealed class NpcConstructionSystem : GoapActionSystem<Construction>
+public sealed partial class NpcConstructionSystem : GoapActionSystem<Construction>
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly TagSystem _tag = default!;
-    [Dependency] private readonly ToolSystem _tool = default!;
-    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
-    [Dependency] private readonly InteractionSystem _interaction = default!;
-    [Dependency] private readonly InteractWithSystem _interactWith = default!;
-    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
-    [Dependency] private readonly PickupActionSystem _pickup = default!;
-    [Dependency] private readonly ConstructionSystem _construction = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private TagSystem _tag = default!;
+    [Dependency] private ToolSystem _tool = default!;
+    [Dependency] private NpcHelperSystem _npcHelper = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
+    [Dependency] private InteractWithSystem _interactWith = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
+    [Dependency] private PickupActionSystem _pickup = default!;
+    [Dependency] private ConstructionSystem _construction = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
 
     [Dependency] private readonly EntityQuery<ActiveDoAfterComponent> _activeDoAfterQuery = default!;
     [Dependency] private readonly EntityQuery<ConstructionComponent> _constructionQuery = default!;

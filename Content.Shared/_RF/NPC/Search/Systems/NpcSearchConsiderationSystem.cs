@@ -11,22 +11,21 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// A system that handles search query considerations.
 /// </summary>
 /// <typeparam name="T">Search considerations type.</typeparam>
-public abstract class NpcSearchConsiderationSystem<T> : EntitySystem where T : BaseSearchConsideration<T>
+public abstract partial class NpcSearchConsiderationSystem<T> : EntitySystem where T : BaseSearchConsideration<T>
 {
-    [Dependency] protected readonly SharedGoapSystem Goap = default!;
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly SharedNpcSearcherSystem Searcher = default!;
+    [Dependency] protected SharedGoapSystem Goap = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] protected SharedNpcSearcherSystem Searcher = default!;
 
-    private readonly Dictionary<ProtoId<SearchQueryPrototype>, HashSet<(int Index, T Obj)>> _considerationPrototypes = new();
+    private readonly Dictionary<ProtoId<SearchQueryPrototype>, HashSet<(int Index, T Obj)>>
+        _considerationPrototypes = new();
 
-    protected IReadOnlyDictionary<ProtoId<SearchQueryPrototype>, HashSet<(int Index, T Obj)>> ConsiderationPrototypes =>
-        _considerationPrototypes;
+    protected IReadOnlyDictionary<ProtoId<SearchQueryPrototype>, HashSet<(int Index, T Obj)>>
+        ConsiderationPrototypes => _considerationPrototypes;
 
     public override void Initialize()
     {
         base.Initialize();
-
-        SubscribeLocalEvent<NpcSearcherComponent, GetSearchScore<T>>(OnGetSearchScore);
 
         Proto.PrototypesReloaded += args =>
         {
@@ -56,6 +55,7 @@ public abstract class NpcSearchConsiderationSystem<T> : EntitySystem where T : B
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnGetSearchScore(Entity<NpcSearcherComponent> ent, ref GetSearchScore<T> ev)
     {
         ev.Result = GetScore(ev.State, ev.Target, ev.Con);

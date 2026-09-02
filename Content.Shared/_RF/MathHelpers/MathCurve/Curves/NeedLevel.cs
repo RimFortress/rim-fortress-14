@@ -25,7 +25,7 @@ public sealed partial class NeedLevel : BaseMathCurve<NeedLevel>
 
 public sealed partial class NeedLevelSystem : MathCurveSystem<NeedLevel>
 {
-    [Dependency] private readonly NeedsSystem _needs = default!;
+    [Dependency] private NeedsSystem _needs = default!;
 
     protected override float Curve(NeedLevel curve, float input, MathCurveContext ctx)
     {

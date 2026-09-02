@@ -21,22 +21,22 @@ namespace Content.Shared._RF.World;
 
 public abstract partial class SharedRimFortressWorldSystem : EntitySystem
 {
-    [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] protected readonly TurfSystem Turf = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly IConfigurationManager _cvar = default!;
-    [Dependency] private readonly SharedBiomeSystem _biome = default!;
-    [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly SharedGameTicker _ticker = default!;
+    [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] protected TurfSystem Turf = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private IConfigurationManager _cvar = default!;
+    [Dependency] private SharedBiomeSystem _biome = default!;
+    [Dependency] private INetManager _net = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private SharedGameTicker _ticker = default!;
 
     protected RimFortressRuleComponent? Rule;
 
     protected const byte ChunkSize = SharedBiomeSystem.ChunkSize;
 
-    protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
-    private EntityQuery<TransformComponent> _xformQuery;
+    [Dependency] protected readonly EntityQuery<RimFortressPlayerComponent> PlayerQuery = default!;
+    [Dependency] private readonly EntityQuery<TransformComponent> _xformQuery = default!;
 
     private int _maxSettlementRadius = 100;
     private int _minSettlementMembers = 2;
@@ -47,8 +47,6 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     public override void Initialize()
     {
         base.Initialize();
-        PlayerQuery = GetEntityQuery<RimFortressPlayerComponent>();
-        _xformQuery = GetEntityQuery<TransformComponent>();
 
         Subs.CVar(_cvar, RfVars.MaxSettlementRadius, value => _maxSettlementRadius = value, true);
         Subs.CVar(_cvar, RfVars.MinSettlementMembers, value => _minSettlementMembers = value, true);

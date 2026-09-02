@@ -23,9 +23,9 @@ public sealed partial class RandomFloat : BaseGoapAction<RandomFloat>
     public float Max;
 }
 
-public sealed class RandomFloatSystem : GoapActionSystem<RandomFloat>
+public sealed partial class RandomFloatSystem : GoapActionSystem<RandomFloat>
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, RandomFloat action) => 0f;
 

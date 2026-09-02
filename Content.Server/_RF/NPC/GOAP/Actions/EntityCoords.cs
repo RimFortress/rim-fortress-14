@@ -17,7 +17,7 @@ public sealed partial class EntityCoords : BaseGoapAction<EntityCoords>
     public StateKey<EntityCoordinates> CoordinatesKey = "TargetCoordinates";
 }
 
-public sealed class EntityCoordsSystem : GoapActionSystem<EntityCoords>
+public sealed partial class EntityCoordsSystem : GoapActionSystem<EntityCoords>
 {
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, EntityCoords action) => 0f;
 

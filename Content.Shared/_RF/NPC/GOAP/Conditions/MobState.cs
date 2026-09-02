@@ -21,7 +21,7 @@ public sealed partial class MobState : BaseGoapCondition<MobState>
     public Shared.Mobs.MobState TargetState;
 }
 
-public sealed class MobStateConditionSystem : GoapConditionSystem<MobState>
+public sealed partial class MobStateConditionSystem : GoapConditionSystem<MobState>
 {
     [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
 

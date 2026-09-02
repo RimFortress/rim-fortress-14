@@ -7,9 +7,9 @@ namespace Content.Shared._RF.Notifications.Systems;
 
 public sealed class NotifyOnStateChangedSystem : EntitySystem
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly SharedNotificationsSystem _notifications = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private SharedNotificationsSystem _notifications = default!;
 
     /// <inheritdoc/>
     public override void Initialize()

@@ -19,10 +19,10 @@ public sealed partial class Wait : BaseGoapAction<Wait>
     public StateKey<TimeSpan> TimeKey;
 }
 
-public sealed class WaitActionSystem : GoapActionSystem<Wait>
+public sealed partial class WaitActionSystem : GoapActionSystem<Wait>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Wait action) => 1.5f;
 

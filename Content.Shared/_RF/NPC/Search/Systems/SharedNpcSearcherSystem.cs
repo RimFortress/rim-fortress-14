@@ -33,11 +33,12 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// Everything about *when* to report a change (movement, component changes,
 /// whatever) is entirely up to the Query/Filter/Consideration systems themselves.
 /// </summary>
-public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
+public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 {
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] private INetManager _net = default!;
+    [Dependency] private MathCurvesSystem _mathCurves = default!;
+
     [Dependency] private readonly EntityQuery<SearchTrackedComponent> _trackedQuery = default!;
     [Dependency] private readonly EntityQuery<NpcSearcherComponent> _searcherQuery = default!;
 
@@ -51,14 +52,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
     /// </summary>
     private readonly Dictionary<ProtoId<SearchQueryPrototype>, HashSet<EntityUid>> _activeAgents = new();
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NpcSearcherComponent, ComponentShutdown>(OnSearcherShutdown);
-        SubscribeLocalEvent<SearchTrackedComponent, ComponentShutdown>(OnTrackedShutdown);
-    }
-
+    [SubscribeLocalEvent]
     private void OnSearcherShutdown(Entity<NpcSearcherComponent> ent, ref ComponentShutdown args)
     {
         foreach (var (protoId, live) in ent.Comp.Queries)
@@ -72,6 +66,7 @@ public abstract class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnTrackedShutdown(Entity<SearchTrackedComponent> ent, ref ComponentShutdown args)
     {
         foreach (var ((agent, protoId), _) in ent.Comp.Tracking)

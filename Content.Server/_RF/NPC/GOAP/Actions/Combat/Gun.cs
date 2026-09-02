@@ -110,7 +110,7 @@ public sealed partial class Gun : BaseGoapAction<Gun>
     public static readonly StateKey<JukeType> PreviousJukeTypeKey = "PreviousJukeType";
 }
 
-public sealed class GunActionSystem : GoapActionSystem<Gun>
+public sealed partial class GunActionSystem : GoapActionSystem<Gun>
 {
     [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
     [Dependency] private readonly SharedGunSystem _gun = default!;
@@ -119,7 +119,6 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly RotateToFaceSystem _rotate = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly IMapManager _mapManager = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly ItemSlotsSystem _slots = default!;
@@ -278,7 +277,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 return GoapActionResult.Failed;
             }
 
-            if (!wield.Wielded && _wield.TryWield(gun, wield, ent))
+            if (!wield.Wielded && _wield.TryWield(new(gun, wield), ent))
             {
                 CreateDump($"failed to wield gun `{ToPrettyString(gun)}` with GunRequiresWieldComponent");
                 return GoapActionResult.Failed;
@@ -287,7 +286,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         else
         {
             if (_wieldQuery.TryComp(gun, out var wield))
-                _wield.TryWield(gun, wield, ent);
+                _wield.TryWield(new(gun, wield), ent);
         }
 
         // Chamber
@@ -302,7 +301,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         var ammoEv = new GetAmmoCountEvent();
         RaiseLocalEvent(gun, ref ammoEv);
 
-        if (_slots.TryGetSlot(gun, SharedGunSystem.ChamberSlot, out var chamberSlot)
+        if (_slots.TryGetSlot(gun.Owner, SharedGunSystem.ChamberSlot, out var chamberSlot)
             && !chamberSlot.HasItem
             && ammoEv.Count > 0)
         {
@@ -375,7 +374,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         // Returns the coordinates for firing at a target, taking into account the required spread
         EntityCoordinates ShootCoords()
         {
-            var coords = _mapManager.TryFindGridAt(xform.MapID, targetPos, out var gridUid, out var mapGrid)
+            var coords = _map.TryFindGridAt(xform.MapID, targetPos, out var gridUid, out var mapGrid)
                 ? new EntityCoordinates(gridUid, _map.WorldToLocal(gridUid, mapGrid, targetSpot))
                 : new EntityCoordinates(xform.MapUid!.Value, targetSpot);
 
@@ -414,7 +413,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return GoapActionResult.Failed;
         }
 
-        if (!_slots.TryGetSlot(gun, SharedGunSystem.MagazineSlot, out var slot, itemSlots))
+        if (!_slots.TryGetSlot(new(gun, itemSlots), SharedGunSystem.MagazineSlot, out var slot))
         {
             CreateDump($"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
             return GoapActionResult.Failed;
@@ -497,7 +496,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 return GoapActionResult.Failed;
             }
 
-            if (!_slots.TryGetSlot(gun.Value, SharedGunSystem.MagazineSlot, out slot, itemSlots))
+            if (!_slots.TryGetSlot(new(gun.Value, itemSlots), SharedGunSystem.MagazineSlot, out slot))
             {
                 CreateDump($"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
                 return GoapActionResult.Failed;
@@ -512,7 +511,10 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             _npcTiming.EnqueueWait(ent,
                 this,
                 (0.15f, 0.33f),
-                onFinish: () => _wield.TryUnwield(gun.Value, wield, ent));
+                onFinish: () =>
+                {
+                    _wield.TryUnwield(new(gun.Value, wield), ent);
+                });
         }
 
         // Remove the old magazine
@@ -560,7 +562,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             onFinish: () =>
             {
                 if (wield != null)
-                    _wield.TryWield(gun.Value, wield, ent);
+                    _wield.TryWield(new(gun.Value, wield), ent);
 
                 CreateDump("gun reloaded");
             });

@@ -39,13 +39,13 @@ public sealed partial class InteractWith : BaseGoapAction<InteractWith>
 /// Manages the <see cref="InteractWith"/> operator and also provides
 /// out-of-the-box logic for AI interaction with objects for other operators.
 /// </summary>
-public sealed class InteractWithSystem : GoapActionSystem<InteractWith>
+public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly DoAfterSystem _doAfterSystem = default!;
-    [Dependency] private readonly UseDelaySystem _useDelay = default!;
-    [Dependency] private readonly CombatModeSystem _combatMode = default!;
-    [Dependency] private readonly InteractionSystem _interaction = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private DoAfterSystem _doAfterSystem = default!;
+    [Dependency] private UseDelaySystem _useDelay = default!;
+    [Dependency] private CombatModeSystem _combatMode = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
 
     [Dependency] private readonly EntityQuery<DoAfterComponent> _doAfterQuery = default!;
 

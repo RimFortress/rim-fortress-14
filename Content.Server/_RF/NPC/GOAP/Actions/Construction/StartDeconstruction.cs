@@ -18,9 +18,9 @@ public sealed partial class StartDeconstruction : BaseGoapAction<StartDeconstruc
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class StartDeconstructionAction : GoapActionSystem<StartDeconstruction>
+public sealed partial class StartDeconstructionAction : GoapActionSystem<StartDeconstruction>
 {
-    [Dependency] private readonly ConstructionSystem _construction = default!;
+    [Dependency] private ConstructionSystem _construction = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, StartDeconstruction action)
     {

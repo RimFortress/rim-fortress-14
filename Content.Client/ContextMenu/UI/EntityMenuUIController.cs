@@ -101,6 +101,9 @@ namespace Content.Client.ContextMenu.UI
             CommandBinds.Builder
                 .Bind(EngineKeyFunctions.UseSecondary,  new PointerInputCmdHandler(HandleOpenEntityMenu, outsidePrediction: true))
                 .Register<EntityMenuUIController>();
+
+            _xformQuery = _entityManager.GetEntityQuery<TransformComponent>();
+            _spriteQuery = _entityManager.GetEntityQuery<SpriteComponent>();
         }
 
         public void OnStateExited(RimFortressState state)

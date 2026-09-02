@@ -8,7 +8,7 @@ namespace Content.Shared._RF.NPC.GOAP.Conditions;
 /// </summary>
 public sealed partial class Sleeping : BaseGoapCondition<Sleeping>;
 
-public sealed class SleepingConditionSystem : GoapConditionSystem<Sleeping>
+public sealed partial class SleepingConditionSystem : GoapConditionSystem<Sleeping>
 {
     [Dependency] private readonly EntityQuery<SleepingComponent> _query = default!;
 

@@ -30,9 +30,9 @@ public sealed partial class Wield : BaseGoapAction<Wield>
     public bool FailIfNoComp;
 }
 
-public sealed class WieldActionSystem : GoapActionSystem<Wield>
+public sealed partial class WieldActionSystem : GoapActionSystem<Wield>
 {
-    [Dependency] private readonly WieldableSystem _wield = default!;
+    [Dependency] private WieldableSystem _wield = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Wield action)
     {
@@ -50,12 +50,12 @@ public sealed class WieldActionSystem : GoapActionSystem<Wield>
 
         if (comp.Wielded
             && action.TargetState != true
-            && !_wield.TryUnwield(target, comp, ent))
+            && !_wield.TryUnwield(new(target, comp), ent))
             return false;
 
         if (!comp.Wielded
             && action.TargetState != false
-            && !_wield.TryWield(target, comp, ent))
+            && !_wield.TryWield(new(target, comp), ent))
             return false;
 
         return true;

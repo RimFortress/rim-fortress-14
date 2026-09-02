@@ -21,9 +21,9 @@ public sealed partial class InHands : BaseSearchFilter<InHands>
     public bool ExcludeSelf = true;
 }
 
-public sealed class InHandsSystem : NpcSearchFilterSystem<InHands>
+public sealed partial class InHandsSystem : NpcSearchFilterSystem<InHands>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
+    [Dependency] private ContainerSystem _container = default!;
     [Dependency] private readonly EntityQuery<HandsComponent> _handsQuery = default!;
 
     public override void Initialize()

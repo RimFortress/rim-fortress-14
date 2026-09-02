@@ -4,7 +4,7 @@ using Robust.Client.GameObjects;
 
 namespace Content.Client._RF.Workshops.Systems;
 
-public sealed class WorkshopVisualizerSystem : VisualizerSystem<WorkshopVisualsComponent>
+public sealed partial class WorkshopVisualizerSystem : VisualizerSystem<WorkshopVisualsComponent>
 {
     protected override void OnAppearanceChange(EntityUid uid, WorkshopVisualsComponent comp, ref AppearanceChangeEvent args)
     {

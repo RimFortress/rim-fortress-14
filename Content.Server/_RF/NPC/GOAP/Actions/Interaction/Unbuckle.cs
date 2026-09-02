@@ -17,9 +17,9 @@ public sealed partial class Unbuckle : BaseGoapAction<Unbuckle>
     public StateKey<EntityUid> TargetKey = GoapState.Owner;
 }
 
-public sealed class UnbuckleSystem : GoapActionSystem<Unbuckle>
+public sealed partial class UnbuckleSystem : GoapActionSystem<Unbuckle>
 {
-    [Dependency] private readonly BuckleSystem _buckle = default!;
+    [Dependency] private BuckleSystem _buckle = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Unbuckle action) => 0.5f;
 

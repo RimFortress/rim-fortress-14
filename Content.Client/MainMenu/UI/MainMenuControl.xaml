@@ -2,9 +2,8 @@
          xmlns:pllax="clr-namespace:Content.Client.Parallax"
          xmlns:clog="clr-namespace:Content.Client.Changelog"
          xmlns:system="clr-namespace:System;assembly=System.Runtime">
-    <!-- RimFortress: Parallax -->
     <pllax:ParallaxControl
-        Name="Sky"
+        Name="BackgroundParallax"
         SpeedX="5"
         SpeedY="20"
         ScaleX="3"

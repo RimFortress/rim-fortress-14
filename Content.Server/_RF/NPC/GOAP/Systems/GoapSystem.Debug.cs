@@ -13,10 +13,12 @@ public partial class GoapSystem
 {
     private void InitializeDebug()
     {
+#if TOOLS
         SubscribeNetworkEvent<GoapDebugInfoRequest>(OnDebugInfoRequest);
         SubscribeNetworkEvent<GoapDebugInfoSubscriptionMessage>(OnGoapDebugInfoSubscriptionMessage);
         SubscribeNetworkEvent<GoapBreakpointMessage>(OnBreakpoint);
         SubscribeNetworkEvent<GoapBreakpointRemoveMessage>(OnRemoveBreakpoint);
+#endif
     }
 
     private void OnDebugInfoRequest(GoapDebugInfoRequest request, EntitySessionEventArgs args)

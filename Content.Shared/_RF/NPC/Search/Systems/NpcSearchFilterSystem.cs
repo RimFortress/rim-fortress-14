@@ -12,11 +12,12 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// A system that handles search query filters.
 /// </summary>
 /// <typeparam name="T">Search filter type.</typeparam>
-public abstract class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSearchFilter<T>
+public abstract partial class NpcSearchFilterSystem<T> : EntitySystem where T : BaseSearchFilter<T>
 {
-    [Dependency] protected readonly SharedGoapSystem Goap = default!;
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly SharedNpcSearcherSystem Searcher = default!;
+    [Dependency] protected SharedGoapSystem Goap = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] protected SharedNpcSearcherSystem Searcher = default!;
+
     [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
     [Dependency] protected readonly EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
 

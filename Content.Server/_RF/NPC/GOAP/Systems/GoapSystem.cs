@@ -18,10 +18,10 @@ namespace Content.Server._RF.NPC.GOAP.Systems;
 
 public sealed partial class GoapSystem : SharedGoapSystem
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IAdminManager _admin = default!;
-    [Dependency] private readonly NPCSystem _npc = default!;
-    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IAdminManager _admin = default!;
+    [Dependency] private NPCSystem _npc = default!;
+    [Dependency] private NpcHelperSystem _npcHelper = default!;
 
     private static readonly ProtoId<GoapCompoundPrototype> DummyCompound = "Empty";
 
@@ -32,8 +32,6 @@ public sealed partial class GoapSystem : SharedGoapSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<GoapComponent, MapInitEvent>(OnMapInit);
-        SubscribeLocalEvent<GoapComponent, ComponentShutdown>(OnGoapShutdown);
         SubscribeLocalEvent<GoapComponent, MobStateChangedEvent>(_npc.OnMobStateChange);
         SubscribeLocalEvent<GoapComponent, PlayerAttachedEvent>(_npc.OnPlayerNPCAttach);
         SubscribeLocalEvent<GoapComponent, PlayerDetachedEvent>(_npc.OnPlayerNPCDetach);
@@ -51,6 +49,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
         _queueGraphsBuild = true;
     }
 
+    [SubscribeLocalEvent]
     private void OnMapInit(Entity<GoapComponent> ent, ref MapInitEvent args)
     {
 #if TOOLS
@@ -59,6 +58,7 @@ public sealed partial class GoapSystem : SharedGoapSystem
         _npc.OnNPCMapInit(ent, ent.Comp, args);
     }
 
+    [SubscribeLocalEvent]
     private void OnGoapShutdown(Entity<GoapComponent> ent, ref ComponentShutdown args)
     {
         _npc.SleepNPC(ent);

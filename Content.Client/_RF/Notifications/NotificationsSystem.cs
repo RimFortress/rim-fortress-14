@@ -5,7 +5,7 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Notifications;
 
-public sealed class NotificationsSystem : SharedNotificationsSystem
+public sealed partial class NotificationsSystem : SharedNotificationsSystem
 {
     public override bool RemoveNotification(Entity<NotificationComponent?> ent, int id, bool dirty = true)
     {

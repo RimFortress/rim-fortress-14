@@ -7,22 +7,15 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Notifications.Systems;
 
-public sealed class NotificationsSystem : SharedNotificationsSystem
+public sealed partial class NotificationsSystem : SharedNotificationsSystem
 {
-    [Dependency] private readonly FollowerSystem _follower = default!;
-    [Dependency] private readonly TransformSystem _xform = default!;
+    [Dependency] private FollowerSystem _follower = default!;
+    [Dependency] private TransformSystem _xform = default!;
 
     private static readonly ProtoId<NotificationPrototype> TaskSuspendedNotify = "TaskSuspended";
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        //SubscribeLocalEvent<ControllableNpcComponent, GoapPlanFinished>(OnGoapPlanFinished);
-        SubscribeNetworkEvent<FocusToNotificationRequest>(OnFocusToNotificationRequest);
-    }
-
     /* TODO
+    [SubscribeLocalEvent]
     private void OnGoapPlanFinished(Entity<ControllableNpcComponent> ent, ref GoapPlanFinished args)
     {
         if (args.Status != TaskFinishStatus.Failed
@@ -47,6 +40,7 @@ public sealed class NotificationsSystem : SharedNotificationsSystem
     }
     */
 
+    [SubscribeNetworkEvent]
     private void OnFocusToNotificationRequest(FocusToNotificationRequest request, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity is { } uid)

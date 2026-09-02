@@ -18,7 +18,7 @@ public sealed partial class StackCount : BaseSearchConsideration<StackCount>
     public bool Normalize = true;
 }
 
-public sealed class StackCountSearchConsiderationSystem : NpcSearchConsiderationSystem<StackCount>
+public sealed partial class StackCountSearchConsiderationSystem : NpcSearchConsiderationSystem<StackCount>
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly EntityQuery<StackComponent> _query = default!;

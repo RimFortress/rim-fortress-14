@@ -28,10 +28,10 @@ public sealed partial class RotateToAngle : BaseGoapAction<RotateToAngle>
     public Angle Tolerance = Angle.FromDegrees(1);
 }
 
-public sealed class RotateToAngleSystem : GoapActionSystem<RotateToAngle>
+public sealed partial class RotateToAngleSystem : GoapActionSystem<RotateToAngle>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly RotateToFaceSystem _rotate = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private RotateToFaceSystem _rotate = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, RotateToAngle action) => 0.5f;
 
@@ -44,6 +44,7 @@ public sealed class RotateToAngleSystem : GoapActionSystem<RotateToAngle>
         if (_rotate.TryRotateTo(ent, angle, _timing.FrameTime.Seconds, action.Tolerance, speed))
             return GoapActionResult.Finished;
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         return speed == float.MaxValue ? GoapActionResult.Failed : GoapActionResult.Continuing;
     }
 }

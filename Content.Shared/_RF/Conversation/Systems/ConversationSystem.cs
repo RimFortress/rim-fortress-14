@@ -22,10 +22,10 @@ namespace Content.Shared._RF.Conversation.Systems;
 /// </summary>
 public sealed class ConversationSystem : EntitySystem
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
 
     [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
     [Dependency] private readonly EntityQuery<ConversationComponent> _conversationQuery = default!;

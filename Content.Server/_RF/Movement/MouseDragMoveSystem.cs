@@ -8,15 +8,13 @@ using Robust.Shared.Player;
 
 namespace Content.Server._RF.Movement;
 
-public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
+public sealed partial class MouseDragMoveSystem : SharedMouseDragMoveSystem
 {
-    [Dependency] private readonly SharedPhysicsSystem _physics = default!;
+    [Dependency] private SharedPhysicsSystem _physics = default!;
 
     public override void Initialize()
     {
         base.Initialize();
-
-        SubscribeNetworkEvent<MouseDragVelocityRequest>(OnDragVelocityRequest);
 
         CommandBinds.Builder
             .Bind(ContentKeyFunctions.DragMove, new PointerStateInputCmdHandler(OnDragEnabled, OnDragDisabled))
@@ -44,6 +42,7 @@ public sealed class MouseDragMoveSystem : SharedMouseDragMoveSystem
         return true;
     }
 
+    [SubscribeNetworkEvent]
     private void OnDragVelocityRequest(MouseDragVelocityRequest ev, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity is not { Valid: true } player

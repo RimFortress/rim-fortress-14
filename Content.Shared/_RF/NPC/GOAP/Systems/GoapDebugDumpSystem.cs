@@ -12,7 +12,7 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// </summary>
 public abstract class GoapDebugDumpSystem : EntitySystem
 {
-    [Robust.Shared.IoC.Dependency] protected readonly SharedGoapSystem Goap = default!;
+    [Robust.Shared.IoC.Dependency] protected SharedGoapSystem Goap = default!;
 
     protected GoapDebugContext? DebugContext;
 

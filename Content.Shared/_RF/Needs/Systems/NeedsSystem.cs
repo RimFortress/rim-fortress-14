@@ -17,11 +17,11 @@ namespace Content.Shared._RF.Needs.Systems;
 /// </summary>
 public sealed class NeedsSystem : EntitySystem
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly AlertsSystem _alerts = default!;
-    [Dependency] private readonly SharedRimFortressWorldSystem _world = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private AlertsSystem _alerts = default!;
+    [Dependency] private SharedRimFortressWorldSystem _world = default!;
 
     /// <inheritdoc/>
     public override void Initialize()

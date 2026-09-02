@@ -12,9 +12,9 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// </summary>
 public sealed partial class IsClosed : BaseSearchFilter<IsClosed>;
 
-public sealed class IsClosedSystem : NpcSearchFilterSystem<IsClosed>
+public sealed partial class IsClosedSystem : NpcSearchFilterSystem<IsClosed>
 {
-    [Dependency] private readonly OpenableSystem _openable = default!;
+    [Dependency] private OpenableSystem _openable = default!;
 
     public override void Initialize()
     {

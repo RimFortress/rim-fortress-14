@@ -1,5 +1,5 @@
-using Content.Server.Botany.Components;
-using Content.Server.Botany.Systems;
+using Content.Shared.Botany.Components;
+using Content.Shared.Botany.Systems;
 using Content.Shared.EntityEffects;
 
 namespace Content.Server._RF.EntityEffects.Effects;
@@ -16,13 +16,12 @@ public sealed partial class ChangePlantHolder : EntityEffectBase<ChangePlantHold
     public int Health;
 }
 
-public sealed class ChangePlantHolderEntityEffectSystem : EntityEffectSystem<PlantHolderComponent, ChangePlantHolder>
+public sealed partial class ChangePlantHolderEntityEffectSystem : EntityEffectSystem<PlantHolderComponent, ChangePlantHolder>
 {
-    [Dependency] private readonly PlantHolderSystem _plantHolder = default!;
+    [Dependency] private PlantHolderSystem _plantHolder = default!;
 
     protected override void Effect(Entity<PlantHolderComponent> entity, ref EntityEffectEvent<ChangePlantHolder> args)
     {
-        entity.Comp.Health += args.Effect.Health;
-        _plantHolder.CheckLevelSanity(entity, entity.Comp);
+        _plantHolder.AdjustsHealth(entity.AsNullable(), args.Effect.Health);
     }
 }

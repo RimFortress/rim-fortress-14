@@ -18,7 +18,7 @@ public sealed partial class HasComponent : BaseGoapCondition<HasComponent>
     public ComponentRegistry Components = new();
 }
 
-public sealed class HasComponentSystem : GoapConditionSystem<HasComponent>
+public sealed partial class HasComponentSystem : GoapConditionSystem<HasComponent>
 {
     protected override bool ConditionCheck(EntityUid uid, GoapState state, HasComponent condition)
     {

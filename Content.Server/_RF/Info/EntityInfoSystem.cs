@@ -5,18 +5,11 @@ using Content.Shared.Temperature.Components;
 
 namespace Content.Server._RF.Info;
 
-public sealed class EntityInfoSystem : EntitySystem
+public sealed partial class EntityInfoSystem : EntitySystem
 {
-    [Dependency] private readonly SharedSolutionContainerSystem _solutionContainer = default!;
+    [Dependency] private SharedSolutionContainerSystem _solutionContainer = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeNetworkEvent<EntityHealthInfoRequest>(OnHealthInfoRequest);
-    }
-
+    [SubscribeNetworkEvent]
     private void OnHealthInfoRequest(EntityHealthInfoRequest msg, EntitySessionEventArgs args)
     {
         var uid = GetEntity(msg.Uid);
@@ -25,7 +18,7 @@ public sealed class EntityInfoSystem : EntitySystem
         var bleeding = false;
 
         if (TryComp(uid, out TemperatureComponent? temp))
-            temperature = temp.CurrentTemperature;
+            temperature = temp.Temperature;
 
         if (TryComp<BloodstreamComponent>(uid, out var bloodstream) &&
             _solutionContainer.ResolveSolution(uid, bloodstream.BloodSolutionName, ref bloodstream.BloodSolution, out var bloodSolution))

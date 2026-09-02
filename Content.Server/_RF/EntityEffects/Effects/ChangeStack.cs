@@ -17,9 +17,9 @@ public sealed partial class ChangeStack : EntityEffectBase<ChangeStack>
     public int Amount;
 }
 
-public sealed class ChangeStackEntityEffectSystem : EntityEffectSystem<StackComponent, ChangeStack>
+public sealed partial class ChangeStackEntityEffectSystem : EntityEffectSystem<StackComponent, ChangeStack>
 {
-    [Dependency] private readonly StackSystem _stack = default!;
+    [Dependency] private StackSystem _stack = default!;
 
     protected override void Effect(Entity<StackComponent> entity, ref EntityEffectEvent<ChangeStack> args)
     {

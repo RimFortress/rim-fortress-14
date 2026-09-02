@@ -20,9 +20,9 @@ public sealed partial class ToolQuality : BaseSearchFilter<ToolQuality>
     public ProtoId<ToolQualityPrototype> Quality;
 }
 
-public sealed class ToolQualityFilterSystem : NpcSearchFilterSystem<ToolQuality>
+public sealed partial class ToolQualityFilterSystem : NpcSearchFilterSystem<ToolQuality>
 {
-    [Dependency] private readonly ToolSystem _tool = default!;
+    [Dependency] private ToolSystem _tool = default!;
 
     public override void Initialize()
     {

@@ -57,9 +57,9 @@ public sealed partial class DrainableSolution : BaseSearchFilter<DrainableSoluti
     public bool? SolutionEmpty;
 }
 
-public sealed class DrainableSolutionFilterSystem : NpcSearchFilterSystem<DrainableSolution>
+public sealed partial class DrainableSolutionFilterSystem : NpcSearchFilterSystem<DrainableSolution>
 {
-    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
+    [Dependency] private SharedSolutionContainerSystem _solution = default!;
 
     public override void Initialize()
     {

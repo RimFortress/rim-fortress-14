@@ -12,9 +12,9 @@ namespace Content.Server._RF.NPC.Search.Filters.Workshop;
 /// </summary>
 public sealed partial class WorkshopActiveRecipe : BaseSearchFilter<WorkshopActiveRecipe>;
 
-public sealed class WorkshopActiveRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopActiveRecipe>
+public sealed partial class WorkshopActiveRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopActiveRecipe>
 {
-    [Dependency] private readonly WorkshopSystem _workshop = default!;
+    [Dependency] private WorkshopSystem _workshop = default!;
     [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
 
     public override void Initialize()

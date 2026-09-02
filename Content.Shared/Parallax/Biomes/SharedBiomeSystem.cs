@@ -374,14 +374,16 @@ public abstract partial class SharedBiomeSystem : EntitySystem
         if (!Resolve(grid, ref grid.Comp1) || !Resolve(grid, ref grid.Comp2))
             return false;
 
+        var ent = new Entity<MapGridComponent>(grid, grid.Comp2);
+
         foreach (var layer in grid.Comp1.Layers)
         {
             if (layer is not BiomeMetaLayer meta)
                 continue;
 
-            var template = ProtoManager.Index<BiomeTemplatePrototype>(meta.Template);
+            var template = ProtoMan.Index(meta.Template);
 
-            if (!TryGetBiomeTile(indices, template.Layers, grid.Comp1.Seed, grid, out _))
+            if (!TryGetBiomeTile(indices, template.Layers, grid.Comp1.Seed, ent, out _))
                 continue;
 
             biome = template;
@@ -392,7 +394,7 @@ public abstract partial class SharedBiomeSystem : EntitySystem
         if (grid.Comp1.Template == null)
             return false;
 
-        biome = ProtoManager.Index<BiomeTemplatePrototype>(grid.Comp1.Template);
+        biome = ProtoMan.Index<BiomeTemplatePrototype>(grid.Comp1.Template);
         return true;
     }
     // RimFortress End

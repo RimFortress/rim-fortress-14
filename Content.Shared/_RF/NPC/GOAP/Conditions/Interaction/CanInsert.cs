@@ -10,10 +10,10 @@ namespace Content.Shared._RF.NPC.GOAP.Conditions.Interaction;
 /// </summary>
 public sealed partial class CanInsert : BaseGoapCondition<CanInsert>;
 
-public sealed class CanInsertSystem : GoapConditionSystem<CanInsert>
+public sealed partial class CanInsertSystem : GoapConditionSystem<CanInsert>
 {
-    [Dependency] private readonly InventorySystem _inventory = default!;
-    [Dependency] private readonly SharedStorageSystem _storage = default!;
+    [Dependency] private InventorySystem _inventory = default!;
+    [Dependency] private SharedStorageSystem _storage = default!;
     [Dependency] private readonly EntityQuery<StorageComponent> _storageQuery = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, CanInsert condition)

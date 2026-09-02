@@ -29,16 +29,16 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// </summary>
 public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
 {
-    [Dependency] protected readonly IGameTiming Timing = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly SharedHandsSystem _hands = default!;
-    [Dependency] private readonly SharedContainerSystem _container = default!;
-    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
-    [Dependency] private readonly SharedBuckleSystem _buckle = default!;
-    [Dependency] private readonly PullingSystem _pulling = default!;
-    [Dependency] private readonly EngagementSystem _engagement = default!;
-    [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
+    [Dependency] protected IGameTiming Timing = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private SharedHandsSystem _hands = default!;
+    [Dependency] private SharedContainerSystem _container = default!;
+    [Dependency] private SharedNpcSearcherSystem _searcher = default!;
+    [Dependency] private SharedBuckleSystem _buckle = default!;
+    [Dependency] private PullingSystem _pulling = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
+    [Dependency] private SharedCombatModeSystem _combatMode = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
     protected readonly Dictionary<EntityUid, HashSet<ICommonSession>> DebugSubscriptions = new();

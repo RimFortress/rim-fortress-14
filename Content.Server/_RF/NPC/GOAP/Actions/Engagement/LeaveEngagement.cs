@@ -17,9 +17,9 @@ public sealed partial class LeaveEngagement : BaseGoapAction<LeaveEngagement>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class LeaveEngagementGoapActionSystem : GoapActionSystem<LeaveEngagement>
+public sealed partial class LeaveEngagementGoapActionSystem : GoapActionSystem<LeaveEngagement>
 {
-    [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, LeaveEngagement action)
         => TryGet(ent, action.TargetKey, out var engagement)

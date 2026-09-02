@@ -10,9 +10,9 @@ namespace Content.Server._RF.NPC.GOAP.Actions.Interaction;
 /// </summary>
 public sealed partial class SwapToFreeHand : BaseGoapAction<SwapToFreeHand>;
 
-public sealed class SwapToFreeHandSystem : GoapActionSystem<SwapToFreeHand>
+public sealed partial class SwapToFreeHandSystem : GoapActionSystem<SwapToFreeHand>
 {
-    [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private HandsSystem _hands = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, SwapToFreeHand action) => 0f;
 

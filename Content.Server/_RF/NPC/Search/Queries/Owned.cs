@@ -13,18 +13,11 @@ namespace Content.Server._RF.NPC.Search.Queries;
 /// </summary>
 public sealed partial class Owned : BaseSearchQuery<Owned>;
 
-public sealed class OwnedQuerySystem : NpcSearchQuerySystem<Owned>
+public sealed partial class OwnedQuerySystem : NpcSearchQuerySystem<Owned>
 {
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<OwnershipComponent, OwnershipAddedEvent>(OnOwnershipAdded);
-        SubscribeLocalEvent<SearchTrackedComponent, OwnershipRemovedEvent>(OnOwnershipRemoved);
-    }
-
+    [SubscribeLocalEvent]
     private void OnOwnershipAdded(Entity<OwnershipComponent> ent, ref OwnershipAddedEvent ev)
     {
         if (ev.Owner != ent.Owner)
@@ -43,6 +36,7 @@ public sealed class OwnedQuerySystem : NpcSearchQuerySystem<Owned>
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnOwnershipRemoved(Entity<SearchTrackedComponent> ent, ref OwnershipRemovedEvent ev)
     {
         if (ev.Owner != ent.Owner)

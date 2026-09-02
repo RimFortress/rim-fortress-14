@@ -15,28 +15,22 @@ namespace Content.Shared._RF.NPC.UtilityAi.Systems;
 /// <summary>
 /// A system that manages GOAP NPCs using Utility AI to find a goal state.
 /// </summary>
-public abstract class SharedUtilityAiSystem : EntitySystem
+public abstract partial class SharedUtilityAiSystem : EntitySystem
 {
-    [Dependency] protected readonly IGameTiming Timing = default!;
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly SharedGoapSystem Goap = default!;
-    [Dependency] protected readonly MathCurvesSystem Curves = default!;
-    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
+    [Dependency] protected IGameTiming Timing = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] protected SharedGoapSystem Goap = default!;
+    [Dependency] protected MathCurvesSystem Curves = default!;
+    [Dependency] private SharedNpcSearcherSystem _searcher = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<UtilityAiComponent, GoapPlaningFailed>(OnGoapPlaningFailed);
-        SubscribeLocalEvent<UtilityAiComponent, GoapPlanFinished>(OnGoapPlanFinished);
-    }
-
+    [SubscribeLocalEvent]
     private void OnGoapPlaningFailed(Entity<UtilityAiComponent> ent, ref GoapPlaningFailed args)
     {
         ReleaseCaptured(ent.Owner);
         DoGoalFail(ent);
     }
 
+    [SubscribeLocalEvent]
     private void OnGoapPlanFinished(Entity<UtilityAiComponent> ent, ref GoapPlanFinished args)
     {
         // Removing temp keys

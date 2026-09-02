@@ -22,7 +22,7 @@ public sealed partial class CopyTo : BaseGoapAction<CopyTo>
     public StateKey<object> To;
 }
 
-public sealed class CopyToSystem : GoapActionSystem<CopyTo>
+public sealed partial class CopyToSystem : GoapActionSystem<CopyTo>
 {
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, CopyTo action) => 0f;
 

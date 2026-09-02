@@ -20,7 +20,7 @@ public sealed partial class WorkshopRecipe : BaseSearchFilter<WorkshopRecipe>
     public HashSet<ProtoId<WorkshopRecipeTablePrototype>> Tables = new();
 }
 
-public sealed class WorkshopRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopRecipe>
+public sealed partial class WorkshopRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopRecipe>
 {
     [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
 

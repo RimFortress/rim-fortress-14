@@ -9,10 +9,10 @@ using Content.Shared.Administration;
 
 namespace Content.Server._RF.NPC.Search.Systems;
 
-public sealed class NpcSearcherSystem : SharedNpcSearcherSystem
+public sealed partial class NpcSearcherSystem : SharedNpcSearcherSystem
 {
-    [Dependency] private readonly IAdminManager _admin = default!;
-    [Dependency] private readonly NpcHelperSystem _npcHelper = default!;
+    [Dependency] private IAdminManager _admin = default!;
+    [Dependency] private NpcHelperSystem _npcHelper = default!;
 
     public override void Initialize()
     {

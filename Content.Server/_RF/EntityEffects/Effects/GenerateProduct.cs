@@ -1,8 +1,7 @@
-using Content.Server.Botany.Components;
-using Content.Server.Botany.Systems;
+using Content.Shared.Botany.Components;
+using Content.Shared.Botany.Systems;
 using Content.Shared.EntityEffects;
 using Content.Shared.Random;
-using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.EntityEffects.Effects;
 
@@ -18,19 +17,17 @@ public sealed partial class GenerateProduct : EntityEffectBase<GenerateProduct>
     public int YieldMod = 1;
 }
 
-public sealed class GenerateProductEntityEffectSystem : EntityEffectSystem<PlantHolderComponent, GenerateProduct>
+public sealed partial class GenerateProductEntityEffectSystem : EntityEffectSystem<PlantTrayComponent, GenerateProduct>
 {
-    [Dependency] private readonly BotanySystem _botany = default!;
-    [Dependency] private readonly RandomHelperSystem _randomHelper = default!;
+    [Dependency] private PlantTraySystem _plantTray = default!;
+    [Dependency] private BotanySystem _botany = default!;
+    [Dependency] private RandomHelperSystem _randomHelper = default!;
 
-    protected override void Effect(Entity<PlantHolderComponent> entity, ref EntityEffectEvent<GenerateProduct> args)
+    protected override void Effect(Entity<PlantTrayComponent> entity, ref EntityEffectEvent<GenerateProduct> args)
     {
-        if (entity.Comp.Seed == null)
+        if (!_plantTray.TryGetPlant(entity.AsNullable(), out var plant))
             return;
 
-        foreach (var uid in _botany.GenerateProduct(entity.Comp.Seed, Transform(entity).Coordinates, args.Effect.YieldMod))
-        {
-            _randomHelper.RandomOffset(uid, 0.25f);
-        }
+        _botany.SpawnProduce(plant.Value, Transform(entity).Coordinates, args.Effect.YieldMod);
     }
 }

@@ -20,7 +20,7 @@ public sealed partial class AddMood : EntityEffectBase<AddMood>
 
 public sealed class AddMoodEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, AddMood>
 {
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private SocialSystem _social = default!;
 
     protected override void Effect(Entity<ConversationActorComponent> ent, ref EntityEffectEvent<AddMood> args)
     {

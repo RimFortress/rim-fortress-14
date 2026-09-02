@@ -21,10 +21,10 @@ public sealed partial class WorkshopItem : BaseSearchFilter<WorkshopItem>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class WorkshopItemSearchFilterSystem : NpcSearchGoapKeyFilterSystem<WorkshopItem, EntityUid>
+public sealed partial class WorkshopItemSearchFilterSystem : NpcSearchGoapKeyFilterSystem<WorkshopItem, EntityUid>
 {
-    [Dependency] private readonly ItemSystem _item = default!;
-    [Dependency] private readonly WorkshopSystem _workshop = default!;
+    [Dependency] private ItemSystem _item = default!;
+    [Dependency] private WorkshopSystem _workshop = default!;
     [Dependency] private readonly EntityQuery<WorkshopComponent> _workshopQuery = default!;
     [Dependency] private readonly EntityQuery<ItemComponent> _itemQuery = default!;
 

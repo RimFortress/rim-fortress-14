@@ -30,9 +30,9 @@ public sealed partial class SwitchBoltClosed : BaseGoapAction<SwitchBoltClosed>
     public bool FailIfNoChamber;
 }
 
-public sealed class SwitchBoltClosedActionSystem : GoapActionSystem<SwitchBoltClosed>
+public sealed partial class SwitchBoltClosedActionSystem : GoapActionSystem<SwitchBoltClosed>
 {
-    [Dependency] private readonly GunSystem _gun = default!;
+    [Dependency] private GunSystem _gun = default!;
     [Dependency] private readonly EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, SwitchBoltClosed action) => 0f;

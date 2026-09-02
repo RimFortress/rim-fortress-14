@@ -36,9 +36,9 @@ public sealed partial class Mood : BaseGoapCondition<Mood>
     public List<ProtoId<SocialEffectPrototype>> HasEffects = new();
 }
 
-public sealed class MoodGoapConditionSystem : GoapConditionSystem<Mood>
+public sealed partial class MoodGoapConditionSystem : GoapConditionSystem<Mood>
 {
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private SocialSystem _social = default!;
     [Dependency] private readonly EntityQuery<SocialComponent> _query = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Mood condition)

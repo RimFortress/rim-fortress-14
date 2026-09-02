@@ -23,9 +23,9 @@ public sealed partial class RandomTime : BaseGoapAction<RandomTime>
     public float MaxSec;
 }
 
-public sealed class RandomTimeSystem : GoapActionSystem<RandomTime>
+public sealed partial class RandomTimeSystem : GoapActionSystem<RandomTime>
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, RandomTime action) => 0f;
 

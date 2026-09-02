@@ -10,9 +10,9 @@ namespace Content.Server._RF.NPC.Search.Considerations.Chemistry;
 /// </summary>
 public sealed partial class DrainableSolutionVolume : BaseSearchConsideration<DrainableSolutionVolume>;
 
-public sealed class DrainableSolutionVolumeConsiderationSystem : NpcSearchConsiderationSystem<DrainableSolutionVolume>
+public sealed partial class DrainableSolutionVolumeConsiderationSystem : NpcSearchConsiderationSystem<DrainableSolutionVolume>
 {
-    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
+    [Dependency] private SharedSolutionContainerSystem _solution = default!;
 
     protected override float GetScore(GoapState state, EntityUid target, DrainableSolutionVolume con)
         => _solution.TryGetDrainableSolution(target, out _, out var sol) ? sol.Volume.Float() : 0f;

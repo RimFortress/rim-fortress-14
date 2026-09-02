@@ -11,9 +11,9 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// </summary>
 public sealed partial class IsAlive : BaseSearchFilter<IsAlive>;
 
-public sealed class IsAliveSystem : NpcSearchFilterSystem<IsAlive>
+public sealed partial class IsAliveSystem : NpcSearchFilterSystem<IsAlive>
 {
-    [Dependency] private readonly MobStateSystem _mobState = default!;
+    [Dependency] private MobStateSystem _mobState = default!;
 
     public override void Initialize()
     {

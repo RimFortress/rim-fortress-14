@@ -81,7 +81,7 @@
   components:
   - type: Tag
     tags:
-    - FoodBurgerChicken
+    - FineMeal
 
 - type: !PartialOnly entity
   id: FoodBurgerClown

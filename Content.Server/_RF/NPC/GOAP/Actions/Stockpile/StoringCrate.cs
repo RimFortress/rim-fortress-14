@@ -46,15 +46,15 @@ public sealed partial class StoringCrate : BaseGoapAction<StoringCrate>
     public StateKey<EntityCoordinates> StoringCoordinatesKey = "StoringCoordinates";
 }
 
-public sealed class StoringCrateGoapActionSystem : GoapActionSystem<StoringCrate>
+public sealed partial class StoringCrateGoapActionSystem : GoapActionSystem<StoringCrate>
 {
-    [Dependency] private readonly InteractionSystem _interaction = default!;
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
-    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
-    [Dependency] private readonly PullingSystem _pulling = default!;
-    [Dependency] private readonly MovePullingGoapActionSystem _movePulling = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
+    [Dependency] private NpcSearcherSystem _searcher = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
+    [Dependency] private PullingSystem _pulling = default!;
+    [Dependency] private MovePullingGoapActionSystem _movePulling = default!;
 
     [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
     [Dependency] private readonly EntityQuery<PullerComponent> _pullerQuery = default!;

@@ -17,9 +17,9 @@ public sealed partial class Container : BaseGoapAction<Container>
     public StateKey<EntityUid> ResultKey;
 }
 
-public sealed class ContainerActionSystem : GoapActionSystem<Container>
+public sealed partial class ContainerActionSystem : GoapActionSystem<Container>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
+    [Dependency] private ContainerSystem _container = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Container action) => 0;
 

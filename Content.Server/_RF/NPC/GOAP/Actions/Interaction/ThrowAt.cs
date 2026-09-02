@@ -18,9 +18,9 @@ public sealed partial class ThrowAt : BaseGoapAction<ThrowAt>
     public StateKey<EntityCoordinates> TargetCoordinatesKey = "TargetCoordinates";
 }
 
-public sealed class ThrowAtGoapActionSystem : GoapActionSystem<ThrowAt>
+public sealed partial class ThrowAtGoapActionSystem : GoapActionSystem<ThrowAt>
 {
-    [Dependency] private readonly HandsSystem _hands = default!;
+    [Dependency] private HandsSystem _hands = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, ThrowAt action)
         => TryGet(ent, action.TargetCoordinatesKey, out var coords)
