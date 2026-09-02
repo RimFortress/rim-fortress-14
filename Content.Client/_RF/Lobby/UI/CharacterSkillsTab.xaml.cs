@@ -14,9 +14,9 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class CharacterSkillsTab : Control
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
 
     private readonly RfLobbyUIController _controller;
 
@@ -48,7 +48,7 @@ public sealed partial class CharacterSkillsTab : Control
 
         if (_prototype.TryIndex(profile.Species, out var species)
             && _prototype.TryIndex(species.Prototype, out var entProto))
-            entProto.TryGetComponent(out comp, _entity.ComponentFactory);
+            entProto.TryComp(out comp, _entity.ComponentFactory);
 
         foreach (var proto in _prototype.EnumeratePrototypes<SkillPrototype>())
         {

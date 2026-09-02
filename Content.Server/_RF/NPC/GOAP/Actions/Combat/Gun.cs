@@ -112,33 +112,33 @@ public sealed partial class Gun : BaseGoapAction<Gun>
 
 public sealed partial class GunActionSystem : GoapActionSystem<Gun>
 {
-    [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
-    [Dependency] private readonly SharedGunSystem _gun = default!;
-    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly RotateToFaceSystem _rotate = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly SharedAudioSystem _audio = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly ItemSlotsSystem _slots = default!;
-    [Dependency] private readonly WieldableSystem _wield = default!;
-    [Dependency] private readonly ThrowingSystem _throw = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
-    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
+    [Dependency] private SharedCombatModeSystem _combatMode = default!;
+    [Dependency] private SharedGunSystem _gun = default!;
+    [Dependency] private SharedInteractionSystem _interaction = default!;
+    [Dependency] private NpcSearcherSystem _searcher = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private RotateToFaceSystem _rotate = default!;
+    [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private ItemSlotsSystem _slots = default!;
+    [Dependency] private WieldableSystem _wield = default!;
+    [Dependency] private ThrowingSystem _throw = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private HandsSystem _hands = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
 
-    [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
-    [Dependency] private readonly EntityQuery<PhysicsComponent> _physicsQuery = default!;
-    [Dependency] private readonly EntityQuery<TransformComponent> _xformQuery = default!;
-    [Dependency] private readonly EntityQuery<RechargeBasicEntityAmmoComponent> _rechargeQuery = default!;
-    [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery = default!;
-    [Dependency] private readonly EntityQuery<ItemSlotsComponent> _slotsQuery = default!;
-    [Dependency] private readonly EntityQuery<WieldableComponent> _wieldQuery = default!;
-    [Dependency] private readonly EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery = default!;
-    [Dependency] private readonly EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery = default!;
-    [Dependency] private readonly EntityQuery<NPCJukeComponent> _jukeQuery = default!;
+    [Dependency] private EntityQuery<MobStateComponent> _mobStateQuery;
+    [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
+    [Dependency] private EntityQuery<TransformComponent> _xformQuery;
+    [Dependency] private EntityQuery<RechargeBasicEntityAmmoComponent> _rechargeQuery;
+    [Dependency] private EntityQuery<NPCSteeringComponent> _steeringQuery;
+    [Dependency] private EntityQuery<ItemSlotsComponent> _slotsQuery;
+    [Dependency] private EntityQuery<WieldableComponent> _wieldQuery;
+    [Dependency] private EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery;
+    [Dependency] private EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery;
+    [Dependency] private EntityQuery<NPCJukeComponent> _jukeQuery;
 
     private static readonly ProtoId<SearchQueryPrototype> InventoryMagazineQuery = "InventoryMagazine";
     private static readonly ProtoId<SearchQueryPrototype> NearbyMagazineQuery = "NearbyMagazine";

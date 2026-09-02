@@ -12,18 +12,17 @@ public sealed partial class ExpeditionItemButton : Control
 
     public event Action<(int Old, int New)>? OnPointsSet;
 
-    private int _count;
-
     public int Count
     {
-        get => _count;
+        get;
         set
         {
-            _count = value;
+            field = value;
             CountLine.Text = $"{Count}";
             Minus.Disabled = Count <= 0;
         }
     }
+
     public int Cost { get; private set; }
 
     public ExpeditionItemButton(EntProtoId protoId, int cost, int count)

@@ -11,12 +11,11 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class RfExpeditionEquipmentEditor : Control
 {
-    [Dependency] private readonly IPrototypeManager _protoManager = default!;
-    [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
+    [Dependency] private IPrototypeManager _protoManager = default!;
+    [Dependency] private IPlayerEquipmentManager _equipment = default!;
 
     private readonly RfLobbyUIController _lobby;
 
-    private bool _isDirty;
     private int _leftPoints;
     private ExpeditionEquipmentPrototype? _selectedCategory;
     private Dictionary<EntProtoId, int> _itemsSelected = new();
@@ -25,10 +24,10 @@ public sealed partial class RfExpeditionEquipmentEditor : Control
 
     public bool IsDirty
     {
-        get => _isDirty;
+        get;
         private set
         {
-            _isDirty = value;
+            field = value;
 
             SaveButton.Disabled = !value;
             ResetButton.Disabled = !value;
