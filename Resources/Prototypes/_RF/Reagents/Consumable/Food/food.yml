@@ -1,0 +1,51 @@
+# End points - the eventual goal is that almost all foods and drinks metabolize into either these, or reagents that build up (e.g. theobromine, caffeine,... )
+- type: reagent
+  id: !PartialOnly Nutriment #Anything that isn't better suited to vitamin, protein, or sugar. we aren't doing a super in-depth simulator.
+  metabolisms:
+    Metabolites:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+
+- type: reagent
+  id: !PartialOnly Vitamin #Anything "healthy"
+  metabolisms:
+    Metabolites: #This makes it not compete with medicines, a large bonus for something that can heal
+      effects: !Clear
+      - !type:EvenHealthChange
+        probability: 0.5
+        damage:
+          Brute: -0.5
+          Burn: -0.5
+      # Helps you stop bleeding to an extent.
+      - !type:ModifyBleed
+        amount: -0.25
+      - !type:ChangeNeed #Numbers are balanced with this in mind + it helps limit how much healing you can get from food
+        need: Hunger
+
+- type: reagent
+  id: !PartialOnly Protein #Meat and beans
+  metabolisms:
+    Metabolites:
+      effects: !Clear
+      - !type:EvenHealthChange
+        probability: 0.5
+        damage:
+          Brute: -0.4
+      - !type:ModifyBloodLevel
+        amount: 1 # weaker than iron but pretty good all things considered
+      - !type:ChangeNeed
+        need: Hunger
+
+- type: reagent
+  id: !PartialOnly Sugar #Candy and grains
+  metabolisms:
+    Metabolites:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        conditions:
+        - !type:ReagentCondition #Only satiates when eaten with nutriment
+          reagent: Nutriment
+          min: 0.1
+        amount: 1

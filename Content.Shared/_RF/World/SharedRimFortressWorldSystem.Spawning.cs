@@ -207,7 +207,7 @@ public partial class SharedRimFortressWorldSystem
         if (!Resolve(grid, ref grid.Comp1) || !Resolve(grid, ref grid.Comp2))
             return new();
 
-        var tileEnumerator = _map.GetTilesEnumerator(grid, grid.Comp1, area, ignoreEmpty: false);
+        var tileEnumerator = _map.GetTilesIntersecting(grid, grid.Comp1, area, ignoreEmpty: false);
         var freeTiles = new HashSet<TileRef>();
 
         // Find all free tiles in the specified area

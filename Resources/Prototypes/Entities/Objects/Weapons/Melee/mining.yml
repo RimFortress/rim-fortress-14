@@ -25,7 +25,7 @@
     damage:
       types:
         Piercing: 10
-        Structural: 30
+        Structural: 9
   - type: Item
     size: Normal
     shape:
@@ -38,22 +38,6 @@
     materialComposition:
       Steel: 100
       Wood: 100
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Tool
-  - type: SkillInteraction
-    skill: Mining
-    targetLevel: 5
-    experience: 10
-    doAfterFactor: 0.01
-    resultFactor: 0.1 # I don't want skilled miners destroying everything and everyone with their pickaxes.
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.8
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.3
-  # RimFortress End
 
 - type: entity
   name: mining drill
@@ -79,23 +63,7 @@
     damage:
       types:
         Piercing: 3
-        Structural: 15
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Tool
-  - type: SkillInteraction
-    skill: Mining
-    targetLevel: 7
-    experience: 15
-    doAfterFactor: 0.01
-    resultFactor: 0.1
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.8
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.3
-  # RimFortress End
+        Structural: 6
 
 - type: entity
   name: diamond tipped mining drill
@@ -107,17 +75,10 @@
     sprite: Objects/Tools/handdrilldiamond.rsi
     state: handdrill
   - type: MeleeWeapon
-    autoAttack: true
-    angle: 0
-    wideAnimationRotation: -90
-    soundHit:
-      path: "/Audio/Items/drill_hit.ogg"
-    attackRate: 4
     damage:
       types:
-        Piercing: 6
-        Structural: 30
-
+        Piercing: 5
+        Structural: 12
 
 - type: entity
   abstract: true
@@ -126,7 +87,9 @@
   name: crusher
   description: An early design of the proto-kinetic accelerator.
   components:
-  - type: Sharp
+  - type: Tool
+    qualities:
+    - Slicing
   - type: Execution
     doAfterDuration: 4.0
   - type: UnpoweredFlashlight
@@ -134,10 +97,6 @@
     color: "#ffeead"
     enabled: false
     radius: 4
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Melee
-  # RimFortress End
 
 # Very high burst damage if you land a mark, while also providing a small amount of healing.
 - type: entity
@@ -152,6 +111,9 @@
     state: icon
   - type: Item
     size: Ginormous
+    shape:
+    - 0,0,3,6
+    storedRotation: -45
     sprite: Objects/Weapons/Melee/crusher-inhands.rsi
   - type: Clothing
     sprite: Objects/Weapons/Melee/crusher.rsi
@@ -196,24 +158,10 @@
       types:
         Blunt: 6
         Slash: 2
-        Structural: 30
+        Structural: 12
   - type: GunRequiresWield
   - type: DisarmMalus
   - type: Prying
-  # RimFortress Start
-  - type: SkillInteraction
-    skill: Mining
-    targetLevel: 7
-    experience: 15
-    doAfterFactor: 0.01
-    resultFactor: 0.1
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.8
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.3
-  # RimFortress End
 
 # No mark ability in exchange for wideswing, autoattack, and being one-handed
 - type: entity
@@ -272,6 +220,9 @@
     state: icon
   - type: Item
     size: Ginormous
+    shape:
+    - 0,0,3,6
+    storedRotation: -45
     sprite: Objects/Weapons/Melee/crusher_glaive-inhands.rsi
   - type: Clothing
     sprite: Objects/Weapons/Melee/crusher_glaive.rsi
@@ -306,18 +257,4 @@
       types:
         Blunt: 2
         Slash: 6
-        Structural: 20
-  # RimFortress Start
-  - type: SkillInteraction
-    skill: Mining
-    targetLevel: 7
-    experience: 20
-    doAfterFactor: 0.01
-    resultFactor: 0.1
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.8
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.3
-  # RimFortress End
+        Structural: 12

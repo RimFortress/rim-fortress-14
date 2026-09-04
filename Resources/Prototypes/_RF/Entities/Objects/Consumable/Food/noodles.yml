@@ -1,0 +1,44 @@
+- type: !PartialOnly entity
+  id: FoodNoodlesBase
+  components:
+  - type: StockpileCategory
+    category: Noodles
+
+- type: !PartialOnly entity
+  id: FoodNoodlesBoiled
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodNoodles
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - AwfulMealVox
+
+- type: !PartialOnly entity
+  id: FoodNoodlesMeatball
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealVox
+
+- type: !PartialOnly entity
+  id: FoodNoodlesChowmein
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+    - AwfulMealVox
+
+- type: !PartialOnly entity
+  id: FoodNoodlesButter
+  components:
+  - type: Tag
+    tags:
+    - AwfulMealReptile

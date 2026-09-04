@@ -15,8 +15,8 @@ namespace Content.Client._RF.Workshops.UI;
 [GenerateTypedNameReferences]
 public sealed partial class WorkshopMenu : FancyWindow
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
 
     private ProtoId<WorkshopRecipeTablePrototype>? _table;
     private ProtoId<WorkshopRecipeGroupPrototype>? _group;

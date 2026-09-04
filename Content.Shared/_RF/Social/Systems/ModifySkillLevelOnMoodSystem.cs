@@ -3,16 +3,11 @@ using Content.Shared._RF.Social.Components;
 
 namespace Content.Shared._RF.Social.Systems;
 
-public sealed class ModifySkillLevelOnMoodSystem : EntitySystem
+public sealed partial class ModifySkillLevelOnMoodSystem : EntitySystem
 {
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private SocialSystem _social = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<ModifySkillLevelOnMoodComponent, GetSkillLevelModifierEvent>(OnGetSkillLevelModifier);
-    }
-
+    [SubscribeLocalEvent]
     private void OnGetSkillLevelModifier(
         Entity<ModifySkillLevelOnMoodComponent> ent,
         ref GetSkillLevelModifierEvent args)

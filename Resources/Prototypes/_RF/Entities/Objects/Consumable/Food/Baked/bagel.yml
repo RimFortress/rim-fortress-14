@@ -1,0 +1,15 @@
+- type: !PartialOnly entity
+  id: FoodBagelBase
+  components:
+  - type: StockpileCategory
+    category: Bagel
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBagelCotton
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth

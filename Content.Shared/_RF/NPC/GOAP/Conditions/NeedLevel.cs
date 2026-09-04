@@ -1,4 +1,4 @@
-using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.Needs.Systems;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Robust.Shared.Prototypes;
@@ -14,7 +14,7 @@ public sealed partial class NeedLevel : BaseGoapCondition<NeedLevel>
     /// Need prototype.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<NeedPrototype> Need;
+    public ProtoId<NeedCategoryPrototype> Need;
 
     /// <summary>
     /// The minimum required need value.
@@ -29,9 +29,9 @@ public sealed partial class NeedLevel : BaseGoapCondition<NeedLevel>
     public StateKey<float>? MaxKey;
 }
 
-public sealed class NeedLevelSystem : GoapConditionSystem<NeedLevel>
+public sealed partial class NeedLevelSystem : GoapConditionSystem<NeedLevel>
 {
-    [Dependency] private readonly NeedsSystem _needs = default!;
+    [Dependency] private NeedsSystem _needs = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, NeedLevel condition)
     {

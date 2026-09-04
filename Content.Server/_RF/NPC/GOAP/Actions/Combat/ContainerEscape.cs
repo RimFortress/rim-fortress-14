@@ -20,11 +20,11 @@ public sealed partial class ContainerEscape : BaseGoapAction<ContainerEscape>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class EscapeSystem : GoapActionSystem<ContainerEscape>
+public sealed partial class EscapeSystem : GoapActionSystem<ContainerEscape>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly EntityStorageSystem _entityStorage = default!;
-    [Dependency] private readonly CombatModeSystem _combatMode = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private EntityStorageSystem _entityStorage = default!;
+    [Dependency] private CombatModeSystem _combatMode = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, ContainerEscape action)
     {

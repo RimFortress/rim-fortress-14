@@ -1,0 +1,37 @@
+- type: need
+  id: HamsterHunger
+  category: Hunger
+  thresholds:
+  - HamsterOverfed
+  - HamsterSated
+  - HamsterHungry
+  - HamsterStarving
+  - HamsterStarvingCritical
+  roundstartRandomize:
+    min: 40
+    max: 80
+
+- type: needThreshold
+  id: HamsterOverfed
+  parent: SimpleMobOverfed
+  decayTime: 30m
+
+- type: needThreshold
+  id: HamsterSated
+  parent: SimpleMobSated
+  decayTime: 2h
+
+- type: needThreshold
+  id: HamsterHungry
+  parent: SimpleMobHungry
+  decayTime: 90m
+
+- type: needThreshold
+  id: HamsterStarving
+  parent: SimpleMobStarving
+  decayTime: 3h
+
+- type: needThreshold
+  id: HamsterStarvingCritical
+  parent: SimpleMobStarvingCritical
+  decayTime: 2h

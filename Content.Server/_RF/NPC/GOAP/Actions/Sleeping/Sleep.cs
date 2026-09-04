@@ -10,9 +10,9 @@ namespace Content.Server._RF.NPC.GOAP.Actions.Sleeping;
 /// </summary>
 public sealed partial class Sleep : BaseGoapAction<Sleep>;
 
-public sealed class SleepActionSystem : GoapActionSystem<Sleep>
+public sealed partial class SleepActionSystem : GoapActionSystem<Sleep>
 {
-    [Dependency] private readonly SleepingSystem _sleeping = default!;
+    [Dependency] private SleepingSystem _sleeping = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Sleep action) => 2f;
 

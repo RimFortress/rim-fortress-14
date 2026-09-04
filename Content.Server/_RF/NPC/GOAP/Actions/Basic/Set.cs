@@ -9,11 +9,10 @@ public abstract partial class SetAction<T> : BaseGoapAction<SetAction<T>> where 
     [DataField(required: true)]
     public StateKey<T> Key;
 
-    [DataField(required: true)]
-    public T Value;
+    public abstract T SetValue { get; }
 }
 
-public abstract class SetActionSystem<T1, T2> : GoapActionSystem<T1>
+public abstract partial class SetActionSystem<T1, T2> : GoapActionSystem<T1>
     where T1 : SetAction<T2>
     where T2 : notnull
 {
@@ -21,13 +20,27 @@ public abstract class SetActionSystem<T1, T2> : GoapActionSystem<T1>
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, T1 action)
     {
-        Set(ent, action.Key, action.Value);
+        Set(ent, action.Key, action.SetValue);
         return true;
     }
 }
 
-public sealed partial class SetFloat : SetAction<float>;
+public sealed partial class SetFloat : SetAction<float>
+{
+    [DataField(required: true)]
+    public float Value;
+
+    public override float SetValue => Value;
+}
+
 public sealed class SetFloatSystem : SetActionSystem<SetFloat, float>;
 
-public sealed partial class SetBool : SetAction<bool>;
+public sealed partial class SetBool : SetAction<bool>
+{
+    [DataField(required: true)]
+    public bool Value;
+
+    public override bool SetValue => Value;
+}
+
 public sealed class SetBoolSystem : SetActionSystem<SetBool, bool>;

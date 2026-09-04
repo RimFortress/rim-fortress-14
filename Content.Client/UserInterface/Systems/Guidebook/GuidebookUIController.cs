@@ -24,19 +24,18 @@ using Content.Client._RF.UserInterface;
 
 namespace Content.Client.UserInterface.Systems.Guidebook;
 
-public sealed class GuidebookUIController : UIController, IOnStateEntered<LobbyState>, IOnStateEntered<GameplayState>, IOnStateExited<LobbyState>, IOnStateExited<GameplayState>, IOnSystemChanged<GuidebookSystem>
+public sealed partial class GuidebookUIController : UIController, IOnStateEntered<LobbyState>, IOnStateEntered<GameplayState>, IOnStateExited<LobbyState>, IOnStateExited<GameplayState>, IOnSystemChanged<GuidebookSystem>
     , IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState>, IOnStateEntered<RimFortressLobbyState>, IOnStateExited<RimFortressLobbyState> // RimFortress
 {
     [UISystemDependency] private readonly GuidebookSystem _guidebookSystem = default!;
-    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-    [Dependency] private readonly IConfigurationManager _configuration = default!;
-    [Dependency] private readonly JobRequirementsManager _jobRequirements = default!;
+    [Dependency] private IPrototypeManager _prototypeManager = default!;
+    [Dependency] private IConfigurationManager _configuration = default!;
+    [Dependency] private JobRequirementsManager _jobRequirements = default!;
 
     private const int PlaytimeOpenGuidebook = 60;
 
     private GuidebookWindow? _guideWindow;
     private MenuButton? GuidebookButton => UIManager.GetActiveUIWidgetOrNull<MenuBar.Widgets.GameTopMenuBar>()?.GuidebookButton;
-    private ProtoId<GuideEntryPrototype>? _lastEntry;
 
     public void OnStateEntered(LobbyState state)
     {
@@ -173,7 +172,6 @@ public sealed class GuidebookUIController : UIController, IOnStateEntered<LobbyS
         if (_guideWindow != null)
         {
             _guideWindow.ReturnContainer.Visible = false;
-            _lastEntry = _guideWindow.LastEntry;
         }
     }
 
@@ -211,7 +209,7 @@ public sealed class GuidebookUIController : UIController, IOnStateEntered<LobbyS
         if (guides == null)
         {
             guides = _prototypeManager.EnumeratePrototypes<GuideEntryPrototype>()
-                .ToDictionary(x => new ProtoId<GuideEntryPrototype>(x.ID), x => (GuideEntry) x);
+                .ToDictionary(x => new ProtoId<GuideEntryPrototype>(x.ID), x => (GuideEntry)x);
         }
         else if (includeChildren)
         {
@@ -225,20 +223,23 @@ public sealed class GuidebookUIController : UIController, IOnStateEntered<LobbyS
 
         if (selected == null)
         {
-            if (_lastEntry is { } lastEntry && guides.ContainsKey(lastEntry))
+            if (_guideWindow.Selected is { } lastEntry && guides.ContainsKey(lastEntry))
             {
-                selected = _lastEntry;
+                selected = lastEntry;
             }
             else
             {
                 selected = _configuration.GetCVar(CCVars.DefaultGuide);
             }
         }
-        _guideWindow.UpdateGuides(guides, rootEntries, forceRoot, selected);
+        var changed = _guideWindow.UpdateGuides(guides, rootEntries, forceRoot, selected);
 
         // Expand up to depth-2.
-        _guideWindow.Tree.SetAllExpanded(false);
-        _guideWindow.Tree.SetAllExpanded(true, 1);
+        if (changed)
+        {
+            _guideWindow.Tree.SetAllExpanded(false);
+            _guideWindow.Tree.SetAllExpanded(true, 1);
+        }
 
         _guideWindow.OpenCenteredRight();
     }

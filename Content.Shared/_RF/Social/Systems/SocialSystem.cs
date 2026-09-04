@@ -10,12 +10,12 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Social.Systems;
 
-public sealed class SocialSystem : EntitySystem
+public sealed partial class SocialSystem : EntitySystem
 {
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly SharedRimFortressWorldSystem _world = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private SharedRimFortressWorldSystem _world = default!;
 
     public int MinMood { get; private set; }
     public int MaxMood { get; private set; }
@@ -24,15 +24,13 @@ public sealed class SocialSystem : EntitySystem
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<SocialComponent, ComponentHandleState>(OnHandleState);
-        SubscribeLocalEvent<SocialComponent, ComponentGetState>(OnGetState);
-
         _cfg.OnValueChanged(RfVars.MinMoodValue, value => MinMood = value, true);
         _cfg.OnValueChanged(RfVars.MaxMoodValue, value => MaxMood = value, true);
         _cfg.OnValueChanged(RfVars.MinOpinionValue, value => MinOpinion = value, true);
         _cfg.OnValueChanged(RfVars.MaxOpinionValue, value => MaxOpinion = value, true);
     }
 
+    [SubscribeLocalEvent]
     private void OnHandleState(Entity<SocialComponent> ent, ref ComponentHandleState args)
     {
         if (args.Current is not SocialComponentState state)
@@ -50,6 +48,7 @@ public sealed class SocialSystem : EntitySystem
         ent.Comp.OpinionEffects = opinions;
     }
 
+    [SubscribeLocalEvent]
     private void OnGetState(Entity<SocialComponent> ent, ref ComponentGetState args)
     {
         var opinions = new Dictionary<NetEntity, Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?>>();

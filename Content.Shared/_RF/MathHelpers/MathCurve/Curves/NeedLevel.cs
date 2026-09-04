@@ -1,5 +1,5 @@
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
-using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.Needs.Systems;
 using Robust.Shared.Prototypes;
 
@@ -14,7 +14,7 @@ public sealed partial class NeedLevel : BaseMathCurve<NeedLevel>
     /// Need prototype.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<NeedPrototype> Need;
+    public ProtoId<NeedCategoryPrototype> Need;
 
     /// <summary>
     /// Should be output value normalized.
@@ -25,7 +25,7 @@ public sealed partial class NeedLevel : BaseMathCurve<NeedLevel>
 
 public sealed partial class NeedLevelSystem : MathCurveSystem<NeedLevel>
 {
-    [Dependency] private readonly NeedsSystem _needs = default!;
+    [Dependency] private NeedsSystem _needs = default!;
 
     protected override float Curve(NeedLevel curve, float input, MathCurveContext ctx)
     {
@@ -35,7 +35,7 @@ public sealed partial class NeedLevelSystem : MathCurveSystem<NeedLevel>
         var value = _needs.GetValue(ctx.User.Value, curve.Need);
 
         if (curve.Normalize)
-            return value != 0 ? value / _needs.MaxValue(curve.Need) : 0f;
+            return value != 0 ? value / _needs.MaxValue(ctx.User.Value, curve.Need) : 0f;
 
         return value;
     }

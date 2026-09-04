@@ -15,9 +15,9 @@ public sealed partial class IsFriend : BaseGoapCondition<IsFriend>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class IsFriendGoapCondition : GoapConditionSystem<IsFriend>
+public sealed partial class IsFriendGoapCondition : GoapConditionSystem<IsFriend>
 {
-    [Dependency] private readonly NpcFactionSystem _faction = default!;
+    [Dependency] private NpcFactionSystem _faction = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, IsFriend condition)
         => TryGet(state, condition.TargetKey, out var target) && _faction.IsEntityFriendly(uid, target);

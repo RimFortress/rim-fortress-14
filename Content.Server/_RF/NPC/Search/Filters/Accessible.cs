@@ -12,11 +12,11 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// </summary>
 public sealed partial class Accessible : BaseSearchFilter<Accessible>;
 
-public sealed class AccessibleSystem : NpcSearchFilterSystem<Accessible>
+public sealed partial class AccessibleSystem : NpcSearchFilterSystem<Accessible>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly WeldableSystem _weldable = default!;
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private WeldableSystem _weldable = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
 
     protected override bool Filter(GoapState state, EntityUid target, Accessible filter)
     {

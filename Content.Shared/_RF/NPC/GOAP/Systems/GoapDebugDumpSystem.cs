@@ -10,9 +10,9 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// <summary>
 /// A system that provides methods for debug logging of GOAP objects.
 /// </summary>
-public abstract class GoapDebugDumpSystem : EntitySystem
+public abstract partial class GoapDebugDumpSystem : EntitySystem
 {
-    [Robust.Shared.IoC.Dependency] protected readonly SharedGoapSystem Goap = default!;
+    [Robust.Shared.IoC.Dependency] protected SharedGoapSystem Goap = default!;
 
     protected GoapDebugContext? DebugContext;
 

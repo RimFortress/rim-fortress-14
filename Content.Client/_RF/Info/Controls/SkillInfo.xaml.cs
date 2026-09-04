@@ -14,9 +14,9 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class SkillInfo : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IGameTiming _timing = default!;
 
     /// <summary>
     /// How often the information will be updated

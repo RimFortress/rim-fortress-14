@@ -27,11 +27,11 @@ public sealed partial class SpeakDataset : BaseGoapAction<SpeakDataset>
     public bool Hidden = true;
 }
 
-public sealed class SpeakDatasetGoapActionSystem : GoapActionSystem<SpeakDataset>
+public sealed partial class SpeakDatasetGoapActionSystem : GoapActionSystem<SpeakDataset>
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly ChatSystem _chat = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private ChatSystem _chat = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, SpeakDataset action)
     {

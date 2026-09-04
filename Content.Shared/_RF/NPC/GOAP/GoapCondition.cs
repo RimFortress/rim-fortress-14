@@ -38,7 +38,7 @@ public abstract partial class SimpleGoapCondition<T> : GoapCondition
     [DataField(required: true)]
     public StateKey<T> Key;
 
-    [DataField(required: true)]
+    // [DataField(required: true)] TODO: engine bug in generated code
     public T Value = default!;
 
     /// <inheritdoc/>

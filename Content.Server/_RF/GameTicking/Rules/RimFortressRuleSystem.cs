@@ -4,7 +4,7 @@ using Content.Server.Chat.Managers;
 using Content.Server.GameTicking.Rules;
 using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
-using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.Database;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
@@ -22,29 +22,18 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manages <see cref="RimFortressRuleComponent"/>
 /// </summary>
-public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
+public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleComponent>
 {
-    [Dependency] private readonly RimFortressWorldSystem _world = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly EntityTableSystem _table = default!;
-    [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly BiomeSystem _biome = default!;
-    [Dependency] private readonly MapSystem _map = default!;
-    [Dependency] private readonly IAdminLogManager _adminLogger = default!;
-    [Dependency] private readonly IChatManager _chat = default!;
-
-    private ISawmill _sawmill = default!;
-
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        base.Initialize();
-        _sawmill = LogManager.GetSawmill("rf_rule");
-
-        SubscribeLocalEvent<PlayerBeforeSpawnEvent>(OnBeforeSpawn);
-    }
+    [Dependency] private RimFortressWorldSystem _world = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private EntityTableSystem _table = default!;
+    [Dependency] private TransformSystem _transform = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private BiomeSystem _biome = default!;
+    [Dependency] private MapSystem _map = default!;
+    [Dependency] private IAdminLogManager _adminLogger = default!;
+    [Dependency] private IChatManager _chat = default!;
 
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
     {
@@ -53,6 +42,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         _world.InitializeWorld(uid, comp);
     }
 
+    [SubscribeLocalEvent]
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)
     {
         var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
@@ -82,7 +72,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             {
                 var proto = _prototype.Index(spawn);
 
-                if (!proto.TryGetComponent(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
+                if (!proto.TryComp(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
                     || GameTicker.RoundDuration() < worldRule.StartOffset)
                     continue;
 
@@ -166,7 +156,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         comp.TargetCoordinates = targetCoordinates;
 
         var str = $"Added world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}";
-        _sawmill.Info(str);
+        Log.Info(str);
         _chat.SendAdminAnnouncement(str);
 
         _adminLogger.Add(LogType.EventStarted, $"Added game rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}");
@@ -245,7 +235,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
             if (delayTime > TimeSpan.Zero)
             {
                 var str = $"Queued start for world rule {ToPrettyString(ruleEntity)} with delay {delayTime}";
-                _sawmill.Info(str);
+                Log.Info(str);
                 _chat.SendAdminAnnouncement(str);
                 _adminLogger.Add(LogType.EventStarted,
                     $"Queued start for world rule {ToPrettyString(ruleEntity)} with delay {delayTime}");
@@ -257,7 +247,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         }
 
         var msg = $"Started world rule {ToPrettyString(ruleEntity)}";
-        _sawmill.Info(msg);
+        Log.Info(msg);
         _chat.SendAdminAnnouncement(msg);
         _adminLogger.Add(LogType.EventStarted,
             $"Started world rule {ToPrettyString(ruleEntity)}");
@@ -288,7 +278,7 @@ public sealed class RimFortressRuleSystem : GameRuleSystem<RimFortressRuleCompon
         RemComp<ActiveGameRuleComponent>(uid);
         EnsureComp<EndedGameRuleComponent>(uid);
 
-        _sawmill.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
+        Log.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
         _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
 
         var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Target, uid.Comp.TargetCoordinates);

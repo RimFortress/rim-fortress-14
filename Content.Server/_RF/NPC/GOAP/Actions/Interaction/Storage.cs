@@ -19,10 +19,10 @@ public sealed partial class Storage : BaseGoapAction<Storage>
     public StateKey<EntityUid> TargetKey = GoapState.ActiveHandEntity;
 }
 
-public sealed class StorageActionSystem : GoapActionSystem<Storage>
+public sealed partial class StorageActionSystem : GoapActionSystem<Storage>
 {
-    [Dependency] private readonly InventorySystem _inventory = default!;
-    [Dependency] private readonly StorageSystem _storage = default!;
+    [Dependency] private InventorySystem _inventory = default!;
+    [Dependency] private StorageSystem _storage = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Storage action)
     {

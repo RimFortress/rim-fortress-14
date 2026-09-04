@@ -15,9 +15,9 @@ public sealed partial class HasSameOwner : BaseGoapCondition<HasSameOwner>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class HasSameOwnerConditionSystem : GoapConditionSystem<HasSameOwner>
+public sealed partial class HasSameOwnerConditionSystem : GoapConditionSystem<HasSameOwner>
 {
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, HasSameOwner condition)
         => TryGet(state, condition.TargetKey, out var target)

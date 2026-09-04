@@ -36,10 +36,10 @@ public sealed partial class Opinion : BaseGoapCondition<Opinion>
     public List<ProtoId<SocialEffectPrototype>> HasEffects = new();
 }
 
-public sealed class OpinionGoapConditionSystem : GoapConditionSystem<Opinion>
+public sealed partial class OpinionGoapConditionSystem : GoapConditionSystem<Opinion>
 {
-    [Dependency] private readonly SocialSystem _social = default!;
-    [Dependency] private readonly EntityQuery<SocialComponent> _query = default!;
+    [Dependency] private SocialSystem _social = default!;
+    [Dependency] private EntityQuery<SocialComponent> _query = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Opinion condition)
     {

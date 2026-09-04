@@ -2,25 +2,24 @@
   id: Sharp
   parent: BaseItemQuery
   filters:
-  - !type:Component
-    components:
-    - type: Sharp
+  - !type:ToolQuality
+    quality: Sawing
 
 - type: searchQuery
   id: Hoe
   parent: BaseItemQuery
   filters:
-  - !type:HasTags
-    tags:
-    - Hoe
+  - !type:Component
+    components:
+    - type: BotanyHoe
 
 - type: searchQuery
   id: PlantSampleTaker
   parent: BaseItemQuery
   filters:
-  - !type:HasTags
-    tags:
-    - PlantSampleTaker
+  - !type:Component
+    components:
+    - type: BotanySampleTaker
 
 - type: searchQuery
   id: Bucket

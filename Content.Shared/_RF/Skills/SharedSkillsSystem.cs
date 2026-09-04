@@ -11,11 +11,11 @@ namespace Content.Shared._RF.Skills;
 /// <summary>
 /// Manages <see cref="SkillsComponent"/>
 /// </summary>
-public abstract class SharedSkillsSystem : EntitySystem
+public abstract partial class SharedSkillsSystem : EntitySystem
 {
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly IRobustRandom Random = default!;
-    [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] protected IRobustRandom Random = default!;
+    [Dependency] private SharedEntityEffectsSystem _entityEffects = default!;
 
     public const string DefaultSkillProfession = "skill-profession-default";
 

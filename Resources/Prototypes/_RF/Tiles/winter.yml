@@ -1,0 +1,16 @@
+- type: !PartialOnly tile
+  id: FloorAstroIce
+  pathfindingCost: 10
+
+- type: !PartialOnly tile
+  id: FloorSnow
+  navMapColor: "#DCDCDC"
+
+- type: !PartialOnly tile
+  id: FloorIce
+  navMapColor: "#B0E8F8"
+  pathfindingCost: 10
+
+- type: !PartialOnly tile
+  id: FloorSnowDug
+  navMapColor: "#C6BFA5"

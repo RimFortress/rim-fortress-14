@@ -11,8 +11,8 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class JobInfo : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPlayerManager _player = default!;
 
     public JobInfo(EntityUid uid, NpcJob data)
     {

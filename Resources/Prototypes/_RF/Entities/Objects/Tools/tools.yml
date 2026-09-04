@@ -1,0 +1,80 @@
+- type: !PartialOnly entity
+  id: Wirecutter
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+
+- type: !PartialOnly entity
+  id: Screwdriver
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+
+- type: !PartialOnly entity
+  id: Wrench
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+
+- type: !PartialOnly entity
+  id: Multitool
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: NetworkConfigurator
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: PowerDrill
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+
+- type: !PartialOnly entity
+  id: RCD
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: RCDAmmo
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: Omnitool
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillInteraction
+    skill: Construction
+    targetLevel: 5
+
+- type: !PartialOnly entity
+  id: Shovel
+  components:
+  - type: StockpileCategory
+    category: Tool
+
+- type: !PartialOnly entity
+  id: RollingPin
+  components:
+  - type: StockpileCategory
+    category: Tool

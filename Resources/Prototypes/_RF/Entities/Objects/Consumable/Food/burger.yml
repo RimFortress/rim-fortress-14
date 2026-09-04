@@ -1,0 +1,209 @@
+- type: !PartialOnly entity
+  id: FoodBurgerBase
+  components:
+  - type: StockpileCategory
+    category: Burgers
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerJelly
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodBurgerAppendix
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodBurgerBacon
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerBaseball
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodBurgerBaseball
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+    - LavishMealReptile
+
+- type: !PartialOnly entity
+  id: FoodBurgerBig
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerBrain
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealReptile
+
+- type: !PartialOnly entity
+  id: FoodBurgerCat
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealReptile
+
+- type: !PartialOnly entity
+  id: FoodBurgerCheese
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerCheese
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerClown
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodBurgerCorgi
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerCrab
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerCrazy
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerDuck
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerEmpowered
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodBurgerCarp
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerFive
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerHuman
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+    - FineMealReptile
+
+- type: !PartialOnly entity
+  id: FoodBurgerMcguffin
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerMcrib
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerPlain
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerRat
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - LavishMealReptile
+    - FineMealVox
+
+- type: !PartialOnly entity
+  id: FoodBurgerRobot
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerSuper
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerXeno
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodBurgerMothRoach
+  components:
+  - type: Tag
+    tags:
+    - FineMeal

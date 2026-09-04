@@ -8,22 +8,21 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class ExpeditionItemButton : Control
 {
-    [Dependency] private readonly IPrototypeManager _protoManager = default!;
+    [Dependency] private IPrototypeManager _protoManager = default!;
 
     public event Action<(int Old, int New)>? OnPointsSet;
 
-    private int _count;
-
     public int Count
     {
-        get => _count;
+        get;
         set
         {
-            _count = value;
+            field = value;
             CountLine.Text = $"{Count}";
             Minus.Disabled = Count <= 0;
         }
     }
+
     public int Cost { get; private set; }
 
     public ExpeditionItemButton(EntProtoId protoId, int cost, int count)

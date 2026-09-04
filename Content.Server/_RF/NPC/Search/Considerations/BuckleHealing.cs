@@ -11,9 +11,9 @@ namespace Content.Server._RF.NPC.Search.Considerations;
 /// </summary>
 public sealed partial class BuckleHealing : BaseSearchConsideration<BuckleHealing>;
 
-public sealed class BedHealingConSystem : NpcSearchConsiderationSystem<BuckleHealing>
+public sealed partial class BedHealingConSystem : NpcSearchConsiderationSystem<BuckleHealing>
 {
-    [Dependency] private readonly EntityQuery<HealOnBuckleComponent> _query = default!;
+    [Dependency] private EntityQuery<HealOnBuckleComponent> _query;
 
     protected override float GetScore(GoapState state, EntityUid target, BuckleHealing con)
     {

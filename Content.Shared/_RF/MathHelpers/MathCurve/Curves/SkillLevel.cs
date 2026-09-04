@@ -22,9 +22,9 @@ public sealed partial class SkillLevel : BaseMathCurve<SkillLevel>
     public bool Normalize = true;
 }
 
-public sealed class SkillLevelSystem : MathCurveSystem<SkillLevel>
+public sealed partial class SkillLevelSystem : MathCurveSystem<SkillLevel>
 {
-    [Dependency] private readonly SharedSkillsSystem _skills = default!;
+    [Dependency] private SharedSkillsSystem _skills = default!;
 
     protected override float Curve(SkillLevel curve, float input, MathCurveContext ctx)
     {

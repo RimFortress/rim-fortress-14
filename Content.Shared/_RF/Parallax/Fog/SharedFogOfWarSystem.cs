@@ -5,12 +5,12 @@ using Robust.Shared.Player;
 
 namespace Content.Shared._RF.Parallax.Fog;
 
-public abstract class SharedFogOfWarSystem : EntitySystem
+public abstract partial class SharedFogOfWarSystem : EntitySystem
 {
-    [Dependency] private readonly ISharedPlayerManager _player = default!;
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
-    [Dependency] private readonly SharedViewSubscriberSystem _viewSubscriber = default!;
-    [Dependency] private readonly SharedEyeSystem _eye = default!;
+    [Dependency] private ISharedPlayerManager _player = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
+    [Dependency] private SharedViewSubscriberSystem _viewSubscriber = default!;
+    [Dependency] private SharedEyeSystem _eye = default!;
 
     private float _viewSize;
 

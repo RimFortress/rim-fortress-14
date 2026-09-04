@@ -12,7 +12,7 @@ public sealed partial class Juke : BaseGoapAction<Juke>
     public JukeType JukeType = JukeType.AdjacentTile;
 }
 
-public sealed class JukeActionSystem : GoapActionSystem<Juke>
+public sealed partial class JukeActionSystem : GoapActionSystem<Juke>
 {
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, Juke action) => 0f;
 

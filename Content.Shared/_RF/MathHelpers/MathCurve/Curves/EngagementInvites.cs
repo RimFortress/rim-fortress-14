@@ -18,11 +18,11 @@ public sealed partial class EngagementInvites : BaseMathCurve<EngagementInvites>
     public ProtoId<DatasetPrototype>? Dataset;
 }
 
-public sealed class EngagementInvitesCurveSystem : MathCurveSystem<EngagementInvites>
+public sealed partial class EngagementInvitesCurveSystem : MathCurveSystem<EngagementInvites>
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly EntityQuery<EngagementParticipantComponent> _partQuery = default!;
-    [Dependency] private readonly EntityQuery<EngagementComponent> _engageQuery = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private EntityQuery<EngagementParticipantComponent> _partQuery = default!;
+    [Dependency] private EntityQuery<EngagementComponent> _engageQuery = default!;
 
     protected override float Curve(EngagementInvites curve, float input, MathCurveContext ctx)
     {

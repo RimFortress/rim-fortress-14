@@ -8,6 +8,7 @@
     enum.HumanoidVisualLayers.Hair:
       limit: 1
       required: false
+      weight: 1
     enum.HumanoidVisualLayers.FacialHair:
       limit: 1
       required: false
@@ -97,25 +98,9 @@
     spawned:
     - id: FoodMeatHuman
       amount: 5
-  # RimFortress Start
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 4h
-      Peckish: 3h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 6h
-    randomizeValue:
-      min: 310
-      max: 460
-  # RimFortress End
 
 - type: entity
-  parent: OrganBase
+  parent: OrganBaseOrganic
   id: OrganHuman
   abstract: true
   suffix: human
@@ -161,6 +146,7 @@
     hideableLayers:
     - enum.HumanoidVisualLayers.Hair
     - enum.HumanoidVisualLayers.Snout
+    - enum.HumanoidVisualLayers.FacialHair
 
 - type: entity
   parent: [ OrganBaseArmLeft, OrganHumanExternal ]

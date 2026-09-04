@@ -13,10 +13,10 @@ namespace Content.Server._RF.NPC.Search.Filters.Workshop;
 /// </summary>
 public sealed partial class InWorkshop : BaseSearchFilter<InWorkshop>;
 
-public sealed class InWorkshopSearchFilterSystem : NpcSearchFilterSystem<InWorkshop>
+public sealed partial class InWorkshopSearchFilterSystem : NpcSearchFilterSystem<InWorkshop>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _query;
 
     public override void Initialize()
     {

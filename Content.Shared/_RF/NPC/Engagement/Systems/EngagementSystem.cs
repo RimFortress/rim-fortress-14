@@ -24,24 +24,16 @@ namespace Content.Shared._RF.NPC.Engagement.Systems;
 /// </remarks>
 public sealed partial class EngagementSystem : EntitySystem
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly SharedEntityEffectsSystem _entityEffects = default!;
-    [Dependency] private readonly SharedGoapSystem _goap = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private SharedEntityEffectsSystem _entityEffects = default!;
+    [Dependency] private SharedGoapSystem _goap = default!;
 
-    [Dependency] private readonly EntityQuery<EngagementComponent> _engagementQuery = default!;
-    [Dependency] private readonly EntityQuery<EngagementParticipantComponent> _participantQuery = default!;
-    [Dependency] private readonly EntityQuery<GoapComponent> _goapQuery = default!;
+    [Dependency] private EntityQuery<EngagementComponent> _engagementQuery = default!;
+    [Dependency] private EntityQuery<EngagementParticipantComponent> _participantQuery = default!;
+    [Dependency] private EntityQuery<GoapComponent> _goapQuery = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<EngagementParticipantComponent, ComponentRemove>(OnParticipantRemove);
-        SubscribeLocalEvent<EngagementParticipantComponent, MobStateChangedEvent>(OnMobStateChanged);
-        SubscribeLocalEvent<EngagementComponent, ComponentRemove>(OnEngagementShutdown);
-    }
-
+    [SubscribeLocalEvent]
     private void OnParticipantRemove(Entity<EngagementParticipantComponent> ent, ref ComponentRemove args)
     {
         foreach (var (engagementUid, role) in ent.Comp.Membership)
@@ -51,6 +43,7 @@ public sealed partial class EngagementSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnMobStateChanged(Entity<EngagementParticipantComponent> ent, ref MobStateChangedEvent args)
     {
         if (args.NewMobState == MobState.Alive)
@@ -63,6 +56,7 @@ public sealed partial class EngagementSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnEngagementShutdown(Entity<EngagementComponent> ent, ref ComponentRemove args)
     {
         foreach (var (_, actors) in ent.Comp.Actors)

@@ -19,7 +19,7 @@ public sealed partial class Ammo : BaseSearchConsideration<Ammo>
     public bool Normalize = true;
 }
 
-public sealed class AmmoConsiderationSystem : NpcSearchConsiderationSystem<Ammo>
+public sealed partial class AmmoConsiderationSystem : NpcSearchConsiderationSystem<Ammo>
 {
     public override void Initialize()
     {

@@ -39,13 +39,13 @@ public sealed partial class StartConversation : BaseGoapAction<StartConversation
     public StateKey<TimeSpan> WaitInvitesAcceptKey = "WaitInvitesAccept";
 }
 
-public sealed class StartConversationGoapActionSystem : GoapActionSystem<StartConversation>
+public sealed partial class StartConversationGoapActionSystem : GoapActionSystem<StartConversation>
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly ConversationSystem _conversation = default!;
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private ConversationSystem _conversation = default!;
+    [Dependency] private NpcSearcherSystem _searcher = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, StartConversation action)
     {

@@ -27,10 +27,10 @@ public sealed partial class PickAccessible : BaseGoapAction<PickAccessible>
     public StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
 }
 
-public sealed class PickAccessibleSystem : GoapActionSystem<PickAccessible>
+public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessible>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly PathfindingSystem _pathfinding = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private PathfindingSystem _pathfinding = default!;
 
     private readonly Dictionary<EntityUid, Task<PathResultEvent>> _pendingPaths = new();
 

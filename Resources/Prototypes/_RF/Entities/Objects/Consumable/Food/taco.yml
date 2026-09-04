@@ -1,0 +1,63 @@
+- type: !PartialOnly entity
+  id: FoodTacoBase
+  components:
+  - type: StockpileCategory
+    category: Taco
+
+- type: !PartialOnly entity
+  id: FoodTacoBeef
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodTacoChicken
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodTacoFish
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal
+
+- type: !PartialOnly entity
+  id: FoodTacoRat
+  components:
+  - type: Tag
+    tags:
+    - RubbishMeal
+    - FineMealVox
+    - FineMealReptile
+
+- type: !PartialOnly entity
+  id: FoodTacoBeefSupreme
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodTacoChickenSupreme
+  components:
+  - type: Tag
+    tags:
+    - FineMeal
+
+- type: !PartialOnly entity
+  id: FoodTacoDragon
+  components:
+  - type: Tag
+    tags:
+    - LavishMeal
+
+- type: !PartialOnly entity
+  id: FoodMealSoftTaco
+  components:
+  - type: Tag
+    tags:
+    - AwfulMeal

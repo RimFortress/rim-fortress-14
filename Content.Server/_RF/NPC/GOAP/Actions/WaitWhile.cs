@@ -16,7 +16,7 @@ public sealed partial class WaitWhile : BaseGoapAction<WaitWhile>
     public List<GoapCondition> Conditions = new();
 }
 
-public sealed class WaitWhileSystem : GoapActionSystem<WaitWhile>
+public sealed partial class WaitWhileSystem : GoapActionSystem<WaitWhile>
 {
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, WaitWhile action)
         => 1f + action.Conditions.Count * 0.1f;

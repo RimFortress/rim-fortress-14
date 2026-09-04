@@ -12,10 +12,10 @@ namespace Content.Client._RF.Construction.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class ConstructionButton : Button
 {
-    [Dependency] private readonly IPlacementManager _placement = default!;
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly ILocalizationManager _locale = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private IPlacementManager _placement = default!;
+    [Dependency] private IEntityManager _entityManager = default!;
+    [Dependency] private ILocalizationManager _locale = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
 
     public ConstructionButton(ConstructionPrototype prototype)
     {

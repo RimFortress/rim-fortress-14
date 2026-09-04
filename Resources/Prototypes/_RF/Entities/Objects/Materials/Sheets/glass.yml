@@ -1,0 +1,11 @@
+- type: !PartialOnly entity
+  id: SheetGlassBase
+  components:
+  - type: StockpileCategory
+    category: Material
+
+- type: !PartialOnly entity
+  id: SheetGlass10
+  components:
+  - type: StockpileCategory
+    category: null

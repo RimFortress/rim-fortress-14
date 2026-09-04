@@ -21,11 +21,11 @@ public sealed partial class AcceptConversation : BaseGoapAction<AcceptConversati
     public ProtoId<SearchQueryPrototype> Query;
 }
 
-public sealed class AcceptConversationActionSystem : GoapActionSystem<AcceptConversation>
+public sealed partial class AcceptConversationActionSystem : GoapActionSystem<AcceptConversation>
 {
-    [Dependency] private readonly ConversationSystem _conversation = default!;
-    [Dependency] private readonly EngagementSystem _engagement = default!;
-    [Dependency] private readonly NpcSearcherSystem _npcSearcher = default!;
+    [Dependency] private ConversationSystem _conversation = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
+    [Dependency] private NpcSearcherSystem _npcSearcher = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, AcceptConversation action)
     {

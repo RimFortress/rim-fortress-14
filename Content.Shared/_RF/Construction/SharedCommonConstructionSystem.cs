@@ -12,11 +12,12 @@ namespace Content.Shared._RF.Construction;
 /// <summary>
 /// A version of ConstructionSystem, which allows to work with construction ghosts on the server, for the RimFortress needs
 /// </summary>
-public abstract class SharedCommonConstructionSystem : EntitySystem // Shared common, great naming
+public abstract partial class SharedCommonConstructionSystem : EntitySystem // Shared common, great naming
 {
-    [Dependency] protected readonly EntityLookupSystem Lookup = default!;
-    [Dependency] private readonly SharedPopupSystem _popup = default!;
-    [Dependency] private readonly MetaDataSystem _meta = default!;
+    [Dependency] protected EntityLookupSystem Lookup = default!;
+    [Dependency] private SharedPopupSystem _popup = default!;
+    [Dependency] private MetaDataSystem _meta = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
 
     protected static readonly EntProtoId ConstructionGhostId = "CommonConstructionGhost";
 
@@ -42,7 +43,7 @@ public abstract class SharedCommonConstructionSystem : EntitySystem // Shared co
             return false;
 
         ghost = Spawn(ConstructionGhostId, loc);
-        Comp<TransformComponent>(ghost.Value).LocalRotation = dir.ToAngle();
+        _transform.SetLocalRotation(ghost.Value, dir.ToAngle());
 
         if (prototype.CanBuildInImpassable)
             EnsureComp<WallMountComponent>(ghost.Value).Arc = new(Math.Tau);

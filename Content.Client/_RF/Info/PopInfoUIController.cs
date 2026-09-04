@@ -8,11 +8,11 @@ using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.Info;
 
-public sealed class PopInfoUIController : WindowUiController<PopInfoWindow>
+public sealed partial class PopInfoUIController : WindowUiController<PopInfoWindow>
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IEntityNetworkManager _net = default!;
-    [Dependency] private readonly IEyeManager _eye = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IEntityNetworkManager _net = default!;
+    [Dependency] private IEyeManager _eye = default!;
 
     public event Action<EntityHealthInfoResponse>? OnHealthInfo;
 

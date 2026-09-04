@@ -37,12 +37,12 @@ public sealed partial class StockpileStorage : BaseSearchFilter<StockpileStorage
     public bool StoredInContainer;
 }
 
-public sealed class CanInsertInStockSearchFilterSystem : NpcSearchFilterSystem<StockpileStorage>
+public sealed partial class CanInsertInStockSearchFilterSystem : NpcSearchFilterSystem<StockpileStorage>
 {
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly EntityStorageSystem _storage = default!;
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private EntityStorageSystem _storage = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
 
     public override void Initialize()
     {
@@ -50,9 +50,9 @@ public sealed class CanInsertInStockSearchFilterSystem : NpcSearchFilterSystem<S
 
         SubscribeLocalEvent<SearchTrackedComponent, StockEntityInserted>((ent, ref _) => DirtyFilter(ent.Owner));
         SubscribeLocalEvent<SearchTrackedComponent, StockEntityRemoved>((ent, ref _) => DirtyFilter(ent.Owner));
-        SubscribeLocalEvent<StockSettingsChanged>(OnStockSettingsChanged);
     }
 
+    [SubscribeLocalEvent]
     private void OnStockSettingsChanged(StockSettingsChanged ev)
     {
         var enumerator = _ownership.GetEntitiesEnumerator<SearchTrackedComponent>(ev.StockUid);

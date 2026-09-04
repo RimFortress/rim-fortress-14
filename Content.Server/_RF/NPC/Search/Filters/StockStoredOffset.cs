@@ -24,9 +24,9 @@ public sealed partial class StockStoredOffset : BaseSearchFilter<StockStoredOffs
     public float? LessThan;
 }
 
-public sealed class TileOffsetSearchFilterSystem : NpcSearchFilterSystem<StockStoredOffset>
+public sealed partial class TileOffsetSearchFilterSystem : NpcSearchFilterSystem<StockStoredOffset>
 {
-    [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] private TurfSystem _turf = default!;
 
     public override void Initialize()
     {

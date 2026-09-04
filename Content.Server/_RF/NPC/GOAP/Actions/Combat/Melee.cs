@@ -49,12 +49,12 @@ public sealed partial class Melee : BaseGoapAction<Melee>
     public bool RemoveCombatMode = true;
 }
 
-public sealed class MeleeActionSystem : GoapActionSystem<Melee>
+public sealed partial class MeleeActionSystem : GoapActionSystem<Melee>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly NPCSteeringSystem _steering = default!;
-    [Dependency] private readonly SharedMeleeWeaponSystem _melee = default!;
-    [Dependency] private readonly CombatModeSystem _combatMode = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private NPCSteeringSystem _steering = default!;
+    [Dependency] private SharedMeleeWeaponSystem _melee = default!;
+    [Dependency] private CombatModeSystem _combatMode = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Melee action)
     {

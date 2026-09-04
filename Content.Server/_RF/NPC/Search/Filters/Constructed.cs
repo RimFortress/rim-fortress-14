@@ -14,7 +14,7 @@ public sealed partial class Constructed : BaseSearchFilter<Constructed>;
 
 public sealed partial class ConstructedFilterSystem : NpcSearchFilterSystem<Constructed>
 {
-    [Dependency] private readonly EntityQuery<ConstructionComponent> _query = default!;
+    [Dependency] private EntityQuery<ConstructionComponent> _query;
 
     public override void Initialize()
     {

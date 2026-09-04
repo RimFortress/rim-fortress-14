@@ -1,0 +1,215 @@
+
+# Base Alcohol
+
+- type: reagent
+  id: !PartialOnly PoisonWine
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:HealthChange
+        damage:
+          types:
+            Poison: 1
+
+- type: reagent
+  id: !PartialOnly Champagne
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 3
+
+# Mixed Alcohol
+
+- type: reagent
+  id: !PartialOnly DoctorsDelight
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ChangeNeed
+        need: Hunger
+        amount: -2
+      - !type:EvenHealthChange
+        damage:
+          Burn: -1
+          Brute: -1
+          Airloss: -1
+          Toxin: -1
+
+- type: reagent
+  id: !PartialOnly CogChamp
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectRatvarianLanguage
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly Silencer
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectMuted
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly VodkaRedBool
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly XenoBasher
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly IrishBool
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly BudgetInsulsDrink
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly WatermelonWakeup
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly Rubberneck
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly Mimeosa
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectMuted
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly Mayojito
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:Vomit
+        conditions:
+        - !type:ReagentCondition
+          reagent: Mayojito
+          min: 5
+        probability: 0.5
+      - !type:HealthChange
+        damage:
+          types:
+            Poison: .5
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+
+- type: reagent
+  id: !PartialOnly BacchusBlessing
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 3
+      - !type:Drunk
+        boozePower: 10
+      - !type:HealthChange
+        conditions:
+        - !type:ReagentCondition
+          reagent: BacchusBlessing
+          min: 6
+        - !type:MetabolizerTypeCondition
+          type: [Dwarf]
+          inverted: true
+        damage:
+          types:
+            Poison: 0.2 # TODO: Figure out poison amount. Ethanol does 0.1, this does 0.2 but also metabolises almost 3 to 4 times as fast as ethanol. This would be more Liver damage when that time arrives.
+      - !type:HealthChange
+        conditions:
+        - !type:ReagentCondition
+          reagent: BacchusBlessing
+          min: 6
+        - !type:MetabolizerTypeCondition
+          type: [Dwarf]
+        damage:
+          types:
+            Poison: 0.04 # TODO: Might increase this, even though it's just double of ethanol from 0.02 to 0.04
+      - !type:Vomit
+        probability: 0.1 #TODO: Tweak vomit probability, maybe make this more violent and poisonous but the body aggressively purges it...
+        conditions:
+        - !type:ReagentCondition
+          reagent: BacchusBlessing
+          min: 8
+        - !type:MetabolizerTypeCondition
+          type: [Dwarf]
+          inverted: true

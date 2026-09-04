@@ -23,19 +23,12 @@ public sealed partial class PassiveTargets : BaseSearchQuery<PassiveTargets>
     public HashSet<ProtoId<ExecutableGoalPrototype>> Goals = new();
 }
 
-public sealed class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTargets>
+public sealed partial class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTargets>
 {
-    [Dependency] private readonly ExecutableGoalSystem _executable = default!;
-    [Dependency] private readonly EntityQuery<NpcControllerComponent> _controllerQuery = default!;
+    [Dependency] private ExecutableGoalSystem _executable = default!;
+    [Dependency] private EntityQuery<NpcControllerComponent> _controllerQuery;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NpcPassiveGoalSet>(OnPassiveGoapSet);
-        SubscribeLocalEvent<SearchTrackedComponent, NpcPassiveGoalRemoved>(OnPassiveGoalRemove);
-    }
-
+    [SubscribeLocalEvent]
     private void OnPassiveGoapSet(NpcPassiveGoalSet ev)
     {
         if (!_controllerQuery.TryComp(ev.User, out var controller))
@@ -56,6 +49,7 @@ public sealed class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTarge
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnPassiveGoalRemove(Entity<SearchTrackedComponent> ent, ref NpcPassiveGoalRemoved ev)
     {
         foreach (var ((agent, proto), _) in ent.Comp.Tracking)

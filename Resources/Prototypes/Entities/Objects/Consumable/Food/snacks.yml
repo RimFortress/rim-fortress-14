@@ -2,34 +2,24 @@
 # Base
 
 - type: entity
-  parent: FoodBase
+  parent: [SolutionTiny, FoodBaseTrash]
   id: FoodSnackBase
   abstract: true
   components:
   - type: Tag
     tags:
       - FoodSnack
-      # RimFortress Start
-      - AwfulMeal
-      - LavishMealVox
-      # RimFortress End
   - type: Sprite
     sprite: Objects/Consumable/Food/snacks.rsi
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 30 # Room for extra condiments
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 10
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 10
   - type: Item
     sprite: Objects/Consumable/Food/snacks.rsi
     heldPrefix: packet
     size: Tiny
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Snacks
-  # RimFortress End
 # Snacks
 
 # "Snacks" means food in a packet. Down the line this stuff can have multiple
@@ -122,7 +112,6 @@
   - type: Tag
     tags:
       - FoodSnack
-      - AwfulMeal # RimFortress
   - type: SpawnItemsOnUse
     items:
       - id: FoodPacketChocolateTrash
@@ -148,20 +137,15 @@
     tags:
       - FoodSnack
       - ReptilianFood
-      # RimFortress Start
-      - AwfulMeal
-      # RimFortress End
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 30
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 10
-        - ReagentId: Theobromine
-          Quantity: 3
-        - ReagentId: CocoaPowder
-          Quantity: 1
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 5
+      - ReagentId: Theobromine
+        Quantity: 3
+      - ReagentId: CocoaPowder
+        Quantity: 2
 
 - type: entity
   parent: FoodSnackBase
@@ -220,8 +204,7 @@
   - type: Tag
     tags:
     - Fruit # Seed of a fruit, you can yell at me
-    - Pistachios # Added tag due to CrateFoodGetMore interaction with BountyFruit.
-    - AwfulMeal # RimFortress
+    - Pistachios # Added tag due to CrateServiceGetMore interaction with BountyFruit.
 
 - type: entity
   name: popcorn
@@ -232,7 +215,7 @@
   - type: FlavorProfile
     flavors:
       - corn
-      - salt
+      - salty
       - butter
   - type: Sprite
     state: popcorn
@@ -261,7 +244,6 @@
   - type: Tag
     tags:
     - Fruit
-    - AwfulMeal # RimFortress
 
 - type: entity
   parent: FoodSnackBase
@@ -300,7 +282,6 @@
   - type: Tag
     tags:
     - Meat
-    - AwfulMeal # RimFortress
 
 - type: entity
   name: syndi-cakes
@@ -329,15 +310,13 @@
     solution: food
   - type: InjectableSolution
     solution: food
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 50 #big cup
-        reagents:
-        - ReagentId: DryRamen
-          Quantity: 30
-        - ReagentId: Soysauce
-          Quantity: 5
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: DryRamen
+        Quantity: 20
+      - ReagentId: Soysauce
+        Quantity: 5
   - type: Sprite
     state: ramen
   - type: Edible
@@ -353,15 +332,13 @@
   name: hell ramen
   description: Super spicy flavor!
   components:
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 50
-        reagents:
-        - ReagentId: DryRamen
-          Quantity: 30
-        - ReagentId: CapsaicinOil
-          Quantity: 5
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: DryRamen
+        Quantity: 20
+      - ReagentId: CapsaicinOil
+        Quantity: 5
 
 - type: entity
   parent: FoodSnackBase
@@ -379,15 +356,13 @@
   - type: Item
     heldPrefix: chinese1
     storedOffset: 1,-2
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 30 # Room for extra condiments
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 10
-        - ReagentId: Soysauce
-          Quantity: 2
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 10
+      - ReagentId: Soysauce
+        Quantity: 2
   - type: Edible
     trash:
     - FoodPacketChowMeinTrash
@@ -408,17 +383,15 @@
   - type: Item
     heldPrefix: chinese2
     storedOffset: 0,-2
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 30 # Room for extra condiments
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 10
-        - ReagentId: CapsaicinOil
-          Quantity: 2
-        - ReagentId: Soysauce
-          Quantity: 2
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 10
+      - ReagentId: CapsaicinOil
+        Quantity: 2
+      - ReagentId: Soysauce
+        Quantity: 2
   - type: Edible
     trash:
     - FoodPacketDanDanTrash
@@ -434,13 +407,12 @@
       - fortunecookie
   - type: Sprite
     state: cookie_fortune
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 1
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 1
+  - type: Solution
+    solution:
+      maxVol: 2.5
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 1
   - type: Item
     sprite: Objects/Consumable/Food/snacks.rsi
     heldPrefix: cookie_fortune
@@ -463,7 +435,6 @@
   - type: Tag
     tags:
       - FoodSnack
-      - AwfulMeal # RimFortress
   - type: Sprite
     sprite: Objects/Consumable/Food/snacks.rsi
     state: nutribrick
@@ -490,16 +461,8 @@
   - type: Tag
     tags:
       - ReptilianFood
-      - AwfulMeal # RimFortress
   - type: Sprite
     state: nutribrick-open
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 25
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 20
 
 - type: entity
   parent: BaseItem
@@ -517,7 +480,6 @@
   - type: Tag
     tags:
       - FoodSnack
-      - AwfulMeal # RimFortress
   - type: SpawnItemsOnUse
     items:
       - id: FoodPacketMRETrash
@@ -526,7 +488,7 @@
       path: /Audio/Effects/unwrap.ogg
 
 - type: entity
-  parent: FoodSnackBase
+  parent: [SolutionVeryTiny, FoodSnackBase]
   id: FoodSnackMREBrownieOpen
   name: brownie
   suffix: MRE
@@ -540,15 +502,13 @@
   - type: Item
     heldPrefix: mre-brownie-open
     storedOffset: -1,-1
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 15
-        reagents:
-        - ReagentId: Nutriment
-          Quantity: 10
-        - ReagentId: Theobromine
-          Quantity: 3
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Nutriment
+        Quantity: 5
+      - ReagentId: Theobromine
+        Quantity: 1
 
 - type: entity
   parent: FoodSnackBase
@@ -569,14 +529,11 @@
     tags:
     - FoodSnack
     - ReptilianFood
-    - AwfulMeal # RimFortress
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 20 # Room for extra condiments
-        reagents:
-        - ReagentId: Sugar
-          Quantity: 15
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Sugar
+        Quantity: 15
   - type: FlavorProfile
     flavors:
     - sweet
@@ -592,7 +549,7 @@
 
 - type: entity
   categories: [ HideSpawnMenu ]
-  parent: BaseItem
+  parent: [SolutionFood, SolutionVeryTiny, BaseItem]
   id: FoodPacketTrash
   description: This is rubbish.
   abstract: true
@@ -611,19 +568,14 @@
   - type: SpaceGarbage
   - type: StaticPrice
     price: 0
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 10
-        reagents:
-        - ReagentId: ToxinTrash
-          Quantity: 5
+  - type: Solution
+    solution:
+      maxVol: 7.5
+      reagents:
+      - ReagentId: ToxinTrash
+        Quantity: 7.5
   - type: Edible
     requiresSpecialDigestion: true
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Trash
-  # RimFortress End
 
 - type: entity
   categories: [ HideSpawnMenu ]
@@ -884,13 +836,11 @@
   components:
   - type: Edible
     requiresSpecialDigestion: true
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 25
-        reagents:
-        - ReagentId: Fiber
-          Quantity: 20
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Fiber
+        Quantity: 10
   - type: Tag
     tags:
     - ClothMade

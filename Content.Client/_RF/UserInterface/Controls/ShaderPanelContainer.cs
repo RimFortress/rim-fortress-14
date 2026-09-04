@@ -10,10 +10,10 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// A container that supports texture rendering within it using a shader
 /// </summary>
 [Virtual]
-public class ShaderPanelContainer : Container
+public partial class ShaderPanelContainer : Container
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IResourceCache _cache = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IResourceCache _cache = default!;
 
     public const string StylePropertyTexture = "panel-texture";
     public const string StylePropertyShader = "shader-id";

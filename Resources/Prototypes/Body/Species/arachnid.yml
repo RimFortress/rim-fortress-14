@@ -85,6 +85,7 @@
     productionLength: 2
     entityProduced: MaterialWebSilk1
     hungerCost: 4 # Should total to 25 total silk on full hunger
+    minHungerThreshold: Peckish
   - type: Tag
     tags:
     - CanPilot
@@ -112,7 +113,7 @@
     bloodReferenceSolution:
       reagents:
       - ReagentId: CopperBlood
-        Quantity: 300
+        Quantity: 600
   - type: MeleeWeapon
     animation: WeaponArcBite
     soundHit:
@@ -132,40 +133,16 @@
     speechSounds: Arachnid
     allowedEmotes: ['Click', 'Chitter']
   - type: Vocal
-    sounds:
-      Male: UnisexArachnid
-      Female: UnisexArachnid
-      Unsexed: UnisexArachnid
+    emoteSounds: UnisexArachnid
   - type: TypingIndicator
     proto: spider
   - type: CreamPied
     sprite:
       sprite: Effects/creampie.rsi
       state: creampie_arachnid
-  # RimFortress Start
-  - type: SkillExpModificator
-    multipliers:
-      Melee: 1.25
-      Farming: 0.75
-      Cooking: 0.9
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 5h
-      Peckish: 3h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 6h
-    randomizeValue:
-      min: 310
-      max: 460
-  # RimFortress End
 
 - type: entity
-  parent: OrganBase
+  parent: OrganBaseOrganic
   id: OrganArachnid
   abstract: true
   suffix: Arachnid

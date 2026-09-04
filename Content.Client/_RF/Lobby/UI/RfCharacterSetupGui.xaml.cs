@@ -21,8 +21,8 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class RfCharacterSetupGui : Control
 {
-    [Dependency] private readonly IClientPreferencesManager _preferencesManager = default!;
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
+    [Dependency] private IClientPreferencesManager _preferencesManager = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
 
     private readonly Button _createNewCharacterButton;
 

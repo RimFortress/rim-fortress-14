@@ -9,8 +9,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class ColorPicker : Control
 {
-    [Dependency] private readonly IUserInterfaceManager _ui = default!;
-
     public event Action<Color>? OnColorChanged;
 
     private readonly ColorPickerWindow _window;
@@ -30,7 +28,7 @@ public sealed partial class ColorPicker : Control
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
-        _window = _ui.CreateWindow<ColorPickerWindow>();
+        _window = UserInterfaceManager.CreateWindow<ColorPickerWindow>();
 
         _window.Selector.OnColorChanged += color =>
         {

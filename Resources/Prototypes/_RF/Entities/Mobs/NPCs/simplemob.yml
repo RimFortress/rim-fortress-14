@@ -1,0 +1,18 @@
+- type: !PartialOnly entity
+  id: SimpleMobBase
+  components:
+  - !Remove type: Satiation
+  - type: Social
+  - type: Needs
+    needs:
+    - id: SimpleMobHunger
+    - id: SimpleModThirst
+  - type: ModifySpeedOnNeed
+    modifiers:
+      Hunger:
+        Overfed: 0.95
+        Starving: 0.85
+        StarvingCritical: 0.70
+      Thirst:
+        Parched: 0.75
+        DehydratedCritical: 0.5

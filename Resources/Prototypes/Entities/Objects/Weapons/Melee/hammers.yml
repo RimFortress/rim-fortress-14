@@ -12,7 +12,7 @@
     damage:
       types:
         Blunt: 10
-        Structural: 10
+        Structural: 6
     soundHit:
       collection: MetalThud
   - type: Wieldable
@@ -20,24 +20,9 @@
     damage:
       types:
         Blunt: 10
-        Structural: 10
+        Structural: 6
   - type: Item
     size: Large
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Melee
-  - type: SkillInteraction
-    skill: Melee
-    targetLevel: 10
-    experience: 25
-    doAfterFactor: 0.03
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.5
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.1
-  # RimFortress End
 
 - type: entity
   id: Mjollnir
@@ -73,32 +58,18 @@
     damage:
       types:
         Blunt: 20
-        Structural: 25
+        Structural: 55 # The mighty muscle wizard shatters windows in a single blow
   - type: DamageOtherOnHit
     damage:
       types:
         Blunt: 15
-        Structural: 15
+        Structural: 40
   - type: Item
     size: Ginormous
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Melee
-  - type: SkillInteraction
-    skill: Melee
-    targetLevel: 10
-    experience: 25
-    doAfterFactor: 0.03
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.25
-    successTargetEffects:
-    - !type:Electrocute # Making the enemy feel the power of Thor
-      probability: 0.5
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.1
-  # RimFortress End
+    shape:
+    - 0,0,3,1
+    - 1,2,2,5
+    storedRotation: -45
 
 - type: entity
   id: SingularityHammer
@@ -128,7 +99,6 @@
     damage:
       types:
         Blunt: 5
-        Structural: 5
     soundHit:
       path: /Audio/Effects/radpulse5.ogg
       params:
@@ -137,21 +107,9 @@
     damage:
       types:
         Blunt: 15
-        Structural: 15
   - type: Item
     size: Ginormous
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Melee
-  - type: SkillInteraction
-    skill: Melee
-    targetLevel: 10
-    experience: 25
-    doAfterFactor: 0.02
-    successEffects:
-    - !type:ResetMeleeCooldown
-      probability: 0.5
-    failUserEffects:
-    - !type:SelfAttack
-      probability: 0.1
-  # RimFortress End
+    shape:
+    - 0,0,3,1
+    - 1,2,2,5
+    storedRotation: -45

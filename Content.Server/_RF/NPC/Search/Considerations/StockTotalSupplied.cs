@@ -11,9 +11,9 @@ namespace Content.Server._RF.NPC.Search.Considerations;
 /// </summary>
 public sealed partial class StockTotalSupplied : BaseSearchConsideration<StockTotalSupplied>;
 
-public sealed class StockTotalSuppliedSearchConsiderationSystem : NpcSearchConsiderationSystem<StockTotalSupplied>
+public sealed partial class StockTotalSuppliedSearchConsiderationSystem : NpcSearchConsiderationSystem<StockTotalSupplied>
 {
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
 
     public override void Initialize()
     {

@@ -1,0 +1,75 @@
+- type: reagent
+  id: !PartialOnly Cola
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 1
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly RoyRogers
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly ChangelingSting
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Chemicals
+        amount: 0.5
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [ Changeling ]
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly EnergyDrink
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 2
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly ShirleyTemple
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly FourteenLoko
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:HealthChange
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Slime]
+          inverted: true
+        damage:
+          types:
+            Poison: 1

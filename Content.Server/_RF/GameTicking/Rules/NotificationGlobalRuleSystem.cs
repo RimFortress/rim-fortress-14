@@ -1,7 +1,7 @@
 using Content.Server._RF.Notifications.Systems;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
-using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.GameTicking.Components;
 
 namespace Content.Server._RF.GameTicking.Rules;
@@ -9,9 +9,9 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manges <see cref="NotificationRuleComponent"/>
 /// </summary>
-public sealed class NotificationGlobalRuleSystem : GameRuleSystem<NotificationRuleComponent>
+public sealed partial class NotificationGlobalRuleSystem : GameRuleSystem<NotificationRuleComponent>
 {
-    [Dependency] private readonly NotificationsSystem _notifications = default!;
+    [Dependency] private NotificationsSystem _notifications = default!;
 
     protected override void Started(
         EntityUid uid,

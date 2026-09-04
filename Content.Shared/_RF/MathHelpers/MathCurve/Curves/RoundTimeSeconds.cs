@@ -8,9 +8,9 @@ namespace Content.Shared._RF.MathHelpers.MathCurve.Curves;
 /// </summary>
 public sealed partial class RoundTimeSeconds : BaseMathCurve<RoundTimeSeconds>;
 
-public sealed class RoundTimeSecondsCurveSystem : MathCurveSystem<RoundTimeSeconds>
+public sealed partial class RoundTimeSecondsCurveSystem : MathCurveSystem<RoundTimeSeconds>
 {
-    [Dependency] private readonly SharedGameTicker _ticker = default!;
+    [Dependency] private SharedGameTicker _ticker = default!;
 
     protected override float Curve(RoundTimeSeconds curve, float input, MathCurveContext ctx)
         => _ticker.RoundDuration().Seconds;

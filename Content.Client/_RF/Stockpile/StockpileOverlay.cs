@@ -12,12 +12,12 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Stockpile;
 
-public sealed class StockpileOverlay : GridOverlay
+public sealed partial class StockpileOverlay : GridOverlay
 {
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IUserInterfaceManager _ui = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IUserInterfaceManager _ui = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     private StockpileSystem _stockpile = default!;
     private readonly StockpileUiController _stockpileController;

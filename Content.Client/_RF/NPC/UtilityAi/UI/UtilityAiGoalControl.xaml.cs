@@ -13,8 +13,8 @@ namespace Content.Client._RF.NPC.UtilityAi.UI;
 [GenerateTypedNameReferences]
 public sealed partial class UtilityAiGoalControl : DebugNodeControl
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
 
     public UtilityAiGoalControl()
     {

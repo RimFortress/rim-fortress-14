@@ -1,0 +1,13 @@
+- type: !PartialOnly entity
+  id: BaseAsteroidRock
+  components:
+  - type: Tag
+    tags:
+    - Diggable
+
+- type: !PartialOnly entity
+  id: WallRock
+  components:
+  - type: Tag
+    tags:
+    - Diggable

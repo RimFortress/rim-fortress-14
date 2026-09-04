@@ -11,8 +11,8 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class CharacterSkill : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
 
     public CharacterSkill(ProtoId<SkillPrototype> skill, int level, float? modifier = null)
     {

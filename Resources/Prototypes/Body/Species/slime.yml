@@ -5,6 +5,7 @@
     enum.HumanoidVisualLayers.Hair:
       limit: 1
       required: false
+      weight: 1
     enum.HumanoidVisualLayers.FacialHair:
       limit: 1
       required: false
@@ -69,6 +70,7 @@
       FootLeft: OrganSlimePersonFootLeft
       FootRight: OrganSlimePersonFootRight
       Brain: OrganSlimePersonCore
+      Eyes: OrganSlimePersonEyes
       Lungs: OrganSlimePersonLungs
   - type: HumanoidProfile
     species: SlimePerson
@@ -108,13 +110,11 @@
   - type: TypingIndicator
     proto: slime
   - type: Vocal
-    sounds:
-      Male: MaleSlime
-      Female: FemaleSlime
-      Unsexed: MaleSlime
+    emoteSounds: MaleSlime
   - type: Damageable
     damageModifierSet: Slime
   - type: PassiveDamage # Around 8 damage a minute healed
+    intervalHaltOnDamageTaken: 5s
     allowedStates:
     - Alive
     damage:
@@ -134,7 +134,7 @@
     bloodReferenceSolution: # TODO Color slime blood based on their slime color or smth
       reagents:
       - ReagentId: Slime
-        Quantity: 300
+        Quantity: 600
   - type: Barotrauma
     damage:
       types:
@@ -162,7 +162,6 @@
         messages: [ "slime-hurt-by-water-popup" ]
         probability: 0.25
   - type: Butcherable
-    butcheringType: Spike
     spawned:
     - id: FoodMeatSlime
       amount: 5
@@ -175,30 +174,10 @@
         Asphyxiation: -1.0
     maxSaturation: 15
   # RimFortress Start
-  - type: SkillExpModificator
-    multipliers:
-      Mining: 0.85
-      Melee: 0.85
-      Healing: 1.15
-      Farming: 1.15
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 4h
-      Peckish: 3h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 7h
-    randomizeValue:
-      min: 310
-      max: 460
   # RimFortress End
 
 - type: entity
-  parent: OrganBase
+  parent: OrganBaseOrganic
   id: OrganSlimePerson
   abstract: true
   suffix: slime person
@@ -277,15 +256,22 @@
   id: OrganSlimePersonCore
   name: sentient slime core
   components:
-  - type: SolutionContainerManager
+  - type: SolutionManager
     solutions:
-      stomach:
-        maxVol: 50.0
+    - SolutionStomach
   - type: Stomach
   - type: Metabolizer
     maxReagents: 6
     metabolizerTypes: [ Slime ]
     stages: [ Digestion, Bloodstream, Metabolites ]
+
+- type: entity
+  parent: [ OrganBaseEyes, OrganSlimePersonInternal, OrganSlimePersonExternal ]
+  id: OrganSlimePersonEyes
+  components:
+  - type: VisualOrgan
+    data:
+      sprite: Mobs/Customization/eyes.rsi
 
 - type: entity
   parent: [ OrganBaseLungs, OrganSlimePersonInternal, OrganSlimePersonMetabolizer ]

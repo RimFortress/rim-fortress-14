@@ -23,9 +23,9 @@ public sealed partial class Buckle : BaseGoapAction<Buckle>
     public StateKey<EntityUid> BuckleTo;
 }
 
-public sealed class BuckleGoapActionSystem : GoapActionSystem<Buckle>
+public sealed partial class BuckleGoapActionSystem : GoapActionSystem<Buckle>
 {
-    [Dependency] private readonly BuckleSystem _buckle = default!;
+    [Dependency] private BuckleSystem _buckle = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Buckle action)
         => TryGet(ent, action.TargetKey, out var target)

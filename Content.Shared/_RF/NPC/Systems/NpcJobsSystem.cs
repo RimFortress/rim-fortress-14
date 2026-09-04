@@ -12,10 +12,10 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.NPC.Systems;
 
-public sealed class NpcJobsSystem : EntitySystem
+public sealed partial class NpcJobsSystem : EntitySystem
 {
-    [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private INetManager _net = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     private readonly Dictionary<int, EntityUid> _jobOwners = new();
 
@@ -26,22 +26,9 @@ public sealed class NpcJobsSystem : EntitySystem
     /// </summary>
     public event Action<int>? OnJobChanged;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NpcJobsComponent, ComponentInit>(OnNpcJobsInit);
-        SubscribeLocalEvent<NpcJobSettingsComponent, NpcControllerAdded>(OnControllerAdded);
-        SubscribeLocalEvent<NpcJobSettingsComponent, UtilityAiGoalScoreModify>(OnScoreModify);
-
-        SubscribeNetworkEvent<NpcJobCreated>(OnJobCreated);
-        SubscribeNetworkEvent<NpcJobDeleted>(OnJobDeleted);
-        SubscribeNetworkEvent<NpcJobPriority>(OnJobPriority);
-        SubscribeNetworkEvent<NpcJobUpdated>(OnJobUpdated);
-    }
-
     #region Events Handle
 
+    [SubscribeLocalEvent]
     private void OnNpcJobsInit(Entity<NpcJobsComponent> ent, ref ComponentInit args)
     {
         foreach (var job in ent.Comp.Jobs)
@@ -57,6 +44,7 @@ public sealed class NpcJobsSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnControllerAdded(Entity<NpcJobSettingsComponent> ent, ref NpcControllerAdded args)
     {
         if (!TryComp(args.User, out NpcJobsComponent? comp))
@@ -68,6 +56,7 @@ public sealed class NpcJobsSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnScoreModify(Entity<NpcJobSettingsComponent> ent, ref UtilityAiGoalScoreModify ev)
     {
         foreach (var (jobId, priority) in ent.Comp.Jobs)
@@ -80,6 +69,7 @@ public sealed class NpcJobsSystem : EntitySystem
         }
     }
 
+    [SubscribeNetworkEvent]
     private void OnJobDeleted(NpcJobDeleted msg, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity == null)
@@ -88,6 +78,7 @@ public sealed class NpcJobsSystem : EntitySystem
         DeleteJob(args.SenderSession.AttachedEntity.Value, msg.Id);
     }
 
+    [SubscribeNetworkEvent]
     private void OnJobPriority(NpcJobPriority msg, EntitySessionEventArgs args)
     {
         if (!HasComp<NpcJobsComponent>(args.SenderSession.AttachedEntity)
@@ -97,6 +88,7 @@ public sealed class NpcJobsSystem : EntitySystem
         SetJobPriority(GetEntity(msg.Entity), msg.Id, msg.Priority);
     }
 
+    [SubscribeNetworkEvent]
     private void OnJobUpdated(NpcJobUpdated msg, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity == null)
@@ -110,6 +102,7 @@ public sealed class NpcJobsSystem : EntitySystem
             msg.Job.Goals);
     }
 
+    [SubscribeNetworkEvent]
     private void OnJobCreated(NpcJobCreated msg, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity == null)

@@ -1,0 +1,62 @@
+- type: needCategory
+  id: Socialization
+
+- type: needThresholdCategory
+  id: Overstimulated
+
+- type: needThresholdCategory
+  id: Socialized
+
+- type: needThresholdCategory
+  id: Lonely
+
+- type: needThresholdCategory
+  id: Isolated
+
+- type: need
+  id: NormalSocialization
+  category: Socialization
+  thresholds:
+  - Overstimulated
+  - Socialized
+  - Lonely
+  - Isolated
+  roundstartRandomize:
+    min: 70
+    max: 80
+
+- type: needThreshold
+  id: Overstimulated
+  category: Overstimulated
+  value: 100
+  decayTime: 2h
+  effects:
+  - !type:AddMood
+    proto: MoodOverstimulated
+
+- type: needThreshold
+  id: Socialized
+  category: Socialized
+  value: 80
+  decayTime: 4h
+  effects:
+  - !type:AddMood
+    proto: MoodSocialized
+
+- type: needThreshold
+  id: Lonely
+  category: Lonely
+  value: 40
+  decayTime: 2h
+  effects:
+  - !type:AddMood
+    proto: MoodLonely
+
+- type: needThreshold
+  id: Isolated
+  category: Isolated
+  value: 20
+  decayTime: 4h
+  effects:
+  - !type:AddMood
+    proto: MoodIsolated

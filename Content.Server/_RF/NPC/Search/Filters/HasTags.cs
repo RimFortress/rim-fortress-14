@@ -24,9 +24,9 @@ public sealed partial class HasTags : BaseSearchFilter<HasTags>
     public bool RequireAll;
 }
 
-public sealed class HasTagsFilterSystem : NpcSearchFilterSystem<HasTags>
+public sealed partial class HasTagsFilterSystem : NpcSearchFilterSystem<HasTags>
 {
-    [Dependency] private readonly TagSystem _tag = default!;
+    [Dependency] private TagSystem _tag = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, HasTags filter)
         => filter.RequireAll

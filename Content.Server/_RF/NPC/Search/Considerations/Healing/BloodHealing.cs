@@ -10,9 +10,9 @@ namespace Content.Server._RF.NPC.Search.Considerations.Healing;
 /// </summary>
 public sealed partial class BloodLevelHealing : BaseSearchConsideration<BloodLevelHealing>;
 
-public sealed class BloodLevelHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BloodLevelHealing>
+public sealed partial class BloodLevelHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BloodLevelHealing>
 {
-    [Dependency] private readonly EntityQuery<HealingComponent> _query = default!;
+    [Dependency] private EntityQuery<HealingComponent> _query;
 
     protected override float GetScore(GoapState state, EntityUid target, BloodLevelHealing con)
         => _query.TryComp(target, out var comp) ? comp.ModifyBloodLevel : 0f;

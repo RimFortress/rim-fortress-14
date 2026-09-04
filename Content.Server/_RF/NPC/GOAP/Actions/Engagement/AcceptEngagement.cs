@@ -26,9 +26,9 @@ public sealed partial class AcceptEngagement : BaseGoapAction<AcceptEngagement>
     public ProtoId<EngagementRolePrototype>? Role;
 }
 
-public sealed class AcceptEngagementGoapActionSystem : GoapActionSystem<AcceptEngagement>
+public sealed partial class AcceptEngagementGoapActionSystem : GoapActionSystem<AcceptEngagement>
 {
-    [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, AcceptEngagement action)
         => TryGet(ent, action.TargetKey, out var engagement)

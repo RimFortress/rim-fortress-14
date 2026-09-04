@@ -26,11 +26,11 @@ public sealed partial class Ingestion : BaseSearchConsideration<Ingestion>
     public bool Hydration;
 }
 
-public sealed class IngestionSearchConsiderationSystem : NpcSearchConsiderationSystem<Ingestion>
+public sealed partial class IngestionSearchConsiderationSystem : NpcSearchConsiderationSystem<Ingestion>
 {
-    [Dependency] private readonly IngestionSystem _ingestion = default!;
-    [Dependency] private readonly EntityQuery<BadFoodComponent> _badQuery = default!;
-    [Dependency] private readonly EntityQuery<IgnoreBadFoodComponent> _ignoreQuery = default!;
+    [Dependency] private IngestionSystem _ingestion = default!;
+    [Dependency] private EntityQuery<BadFoodComponent> _badQuery;
+    [Dependency] private EntityQuery<IgnoreBadFoodComponent> _ignoreQuery;
 
     public override void Initialize()
     {

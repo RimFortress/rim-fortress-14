@@ -26,21 +26,15 @@ public sealed partial class Nearby : BaseSearchQuery<Nearby>
     public EntityWhitelist? Whitelist;
 }
 
-public sealed class NearbyQuerySystem : NpcSearchQuerySystem<Nearby>
+public sealed partial class NearbyQuerySystem : NpcSearchQuerySystem<Nearby>
 {
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private EntityWhitelistSystem _whitelist = default!;
 
     private readonly Dictionary<EntityUid, EntityCoordinates> _lastUpdates = new();
     private const float MovementUpdateThreshold = 2f;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NpcSearcherComponent, MoveEvent>(OnSearcherMove);
-    }
-
+    [SubscribeLocalEvent]
     private void OnSearcherMove(Entity<NpcSearcherComponent> ent, ref MoveEvent ev)
     {
         if (_lastUpdates.TryGetValue(ent, out var coords)

@@ -7,18 +7,12 @@ using Content.Shared.Trigger;
 
 namespace Content.Shared._RF.Trigger.Systems;
 
-public sealed class InterruptGoalOnTriggerSystem : EntitySystem
+public sealed partial class InterruptGoalOnTriggerSystem : EntitySystem
 {
-    [Dependency] private readonly SharedGoapSystem _goap = default!;
-    [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
+    [Dependency] private SharedGoapSystem _goap = default!;
+    [Dependency] private SharedUtilityAiSystem _utilityAi = default!;
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<InterruptGoalOnTriggerComponent, TriggerEvent>(OnTrigger);
-    }
-
+    [SubscribeLocalEvent]
     private void OnTrigger(Entity<InterruptGoalOnTriggerComponent> ent, ref TriggerEvent ev)
     {
         if (ev.Key == null

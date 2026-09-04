@@ -12,9 +12,9 @@ public sealed partial class RandomCurve : BaseMathCurve<RandomCurve>
     public MinMaxFloat Random;
 }
 
-public sealed class RandomCurveCurveSystem : MathCurveSystem<RandomCurve>
+public sealed partial class RandomCurveCurveSystem : MathCurveSystem<RandomCurve>
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     protected override float Curve(RandomCurve curve, float input, MathCurveContext ctx)
         => curve.Random.Next(_random);

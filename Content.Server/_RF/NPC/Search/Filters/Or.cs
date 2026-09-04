@@ -16,7 +16,7 @@ public sealed partial class Or : BaseSearchFilter<Or>, ICompositeSearchFilter
     public IEnumerable<SearchFilter> Children => Filters;
 }
 
-public sealed class OrSystem : NpcSearchFilterSystem<Or>
+public sealed partial class OrSystem : NpcSearchFilterSystem<Or>
 {
     protected override bool Filter(GoapState state, EntityUid target, Or filter)
     {

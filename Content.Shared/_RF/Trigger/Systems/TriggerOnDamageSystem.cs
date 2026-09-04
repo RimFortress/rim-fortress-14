@@ -4,18 +4,13 @@ using Content.Shared.Trigger.Systems;
 
 namespace Content.Shared._RF.Trigger.Systems;
 
-public sealed class TriggerOnDamageSystem : EntitySystem
+public sealed partial class TriggerOnDamageSystem : EntitySystem
 {
-    [Dependency] private readonly TriggerSystem _trigger  = default!;
+    [Dependency] private TriggerSystem _trigger  = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
+    [SubscribeLocalEvent]
+    private void OnDamageChanged(Entity<TriggerOnDamageComponent> ent, ref DamageDealtEvent args)
     {
-        SubscribeLocalEvent<TriggerOnDamageComponent, DamageChangedEvent>(OnDamageChanged);
-    }
-
-    private void OnDamageChanged(EntityUid uid, TriggerOnDamageComponent component, DamageChangedEvent args)
-    {
-        _trigger.Trigger(uid, args.Origin, component.KeyOut);
+        _trigger.Trigger(ent, args.Origin, ent.Comp.KeyOut);
     }
 }

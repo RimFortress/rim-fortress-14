@@ -7,20 +7,15 @@ using Robust.Shared.Prototypes;
 namespace Content.Server._RF.Notifications.Systems;
 
 /// <summary>
-/// Manages <see cref="NotifyOnGoalGivenComponent"/>
+/// Manages <see cref="NotifyOnGoalGivenComponent"/>.
 /// </summary>
-public sealed class NotifyOnGoalGivenSystem : EntitySystem
+public sealed partial class NotifyOnGoalGivenSystem : EntitySystem
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly NotificationsSystem _notifications = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private NotificationsSystem _notifications = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<NotifyOnGoalGivenComponent, UtilityAiGoalGiven>(OnNpcGoalGiven);
-    }
-
+    [SubscribeLocalEvent]
     private void OnNpcGoalGiven(Entity<NotifyOnGoalGivenComponent> ent, ref UtilityAiGoalGiven args)
     {
         if (!ent.Comp.Notifications.TryGetValue(args.Goal, out var protoId)

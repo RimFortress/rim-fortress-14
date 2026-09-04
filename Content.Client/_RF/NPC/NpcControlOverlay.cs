@@ -9,10 +9,10 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.NPC;
 
-public sealed class NpcControlOverlay : Overlay
+public sealed partial class NpcControlOverlay : Overlay
 {
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entityManager = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
 
     private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
     private static readonly ProtoId<ShaderPrototype> PointCircleShader = "DottedCircle";

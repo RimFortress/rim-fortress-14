@@ -1,0 +1,40 @@
+- type: !PartialOnly entity
+  id: FoodBreadBase
+  components:
+  - type: StockpileCategory
+    category: Bread
+
+- type: !PartialOnly entity
+  id: FoodBreadCotton
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: FoodBreadCottonSlice
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: FoodBreadBaguetteCotton
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: FoodBreadBaguetteCottonSlice
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth
+
+- type: !PartialOnly entity
+  id: FoodBreadCottonNutriBatard
+  components:
+  - type: Tag
+    tags:
+    - LavishMealMoth

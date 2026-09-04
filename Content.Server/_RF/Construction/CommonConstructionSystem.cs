@@ -19,33 +19,20 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.Construction;
 
-public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
+public sealed partial class CommonConstructionSystem : SharedCommonConstructionSystem
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
-    [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
-    [Dependency] private readonly SharedHandsSystem _hands = default!;
-    [Dependency] private readonly SharedTransformSystem _xform = default!;
-    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly ConstructionSystem _construction = default!;
-    [Dependency] private readonly PopupSystem _popup = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private SharedInteractionSystem _interaction = default!;
+    [Dependency] private ActionBlockerSystem _actionBlocker = default!;
+    [Dependency] private SharedHandsSystem _hands = default!;
+    [Dependency] private SharedTransformSystem _xform = default!;
+    [Dependency] private EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private ConstructionSystem _construction = default!;
+    [Dependency] private PopupSystem _popup = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeNetworkEvent<ConstructionGhostSpawnRequest>(OnSpawnRequest);
-        SubscribeNetworkEvent<ConstructionGhostClearRequest>(OnClearRequest);
-
-        SubscribeLocalEvent<OwnershipComponent, ConstructionChangeEntityEvent>(OnConstructionChange);
-        SubscribeLocalEvent<CommonConstructionGhostComponent, InteractUsingEvent>(OnAfterInteract,
-            new []{typeof(AnchorableSystem), typeof(PryingSystem), typeof(WeldableSystem)},
-            new []{typeof(EncryptionKeySystem)});
-    }
-
+    [SubscribeNetworkEvent]
     private void OnSpawnRequest(ConstructionGhostSpawnRequest request, EntitySessionEventArgs args)
     {
         var coords = GetCoordinates(request.Coordinates);
@@ -65,11 +52,13 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
         _ownership.AddOwnership(ghost.Value, owned: user);
     }
 
+    [SubscribeNetworkEvent]
     private void OnClearRequest(ConstructionGhostClearRequest request)
     {
         QueueDel(GetEntity(request.Entity));
     }
 
+    [SubscribeLocalEvent]
     private void OnConstructionChange(EntityUid uid,
         OwnershipComponent component,
         ConstructionChangeEntityEvent args)
@@ -81,6 +70,9 @@ public sealed class CommonConstructionSystem : SharedCommonConstructionSystem
     }
 
     // Code taken from ConstructionSystem.Initial.cs
+    [SubscribeLocalEvent(
+        before: new []{typeof(AnchorableSystem), typeof(PryingSystem), typeof(WeldableSystem)},
+        after:new []{typeof(EncryptionKeySystem)})]
     private async void OnAfterInteract(EntityUid uid, CommonConstructionGhostComponent component, InteractUsingEvent args)
     {
         if (!_prototype.TryIndex(component.ConstructionProto, out var proto)

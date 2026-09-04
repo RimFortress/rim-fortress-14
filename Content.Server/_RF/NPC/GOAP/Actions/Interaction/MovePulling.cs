@@ -25,12 +25,12 @@ public sealed partial class MovePulling : BaseGoapAction<MovePulling>
     public StateKey<EntityCoordinates> TargetCoordinatesKey = "TargetCoordinates";
 }
 
-public sealed class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
+public sealed partial class MovePullingGoapActionSystem : GoapActionSystem<MovePulling>
 {
-    [Dependency] private readonly TransformSystem _xform = default!;
-    [Dependency] private readonly InteractionSystem _interaction = default!;
-    [Dependency] private readonly EntityQuery<PullableComponent> _pullableQuery = default!;
-    [Dependency] private readonly EntityQuery<PullerComponent> _pullerQuery = default!;
+    [Dependency] private TransformSystem _xform = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
+    [Dependency] private EntityQuery<PullableComponent> _pullableQuery;
+    [Dependency] private EntityQuery<PullerComponent> _pullerQuery;
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, MovePulling action)
         => TryGet(ent, action.TargetCoordinatesKey, out var targetCoords)

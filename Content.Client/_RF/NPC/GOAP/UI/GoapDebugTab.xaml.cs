@@ -20,7 +20,7 @@ namespace Content.Client._RF.NPC.GOAP.UI;
 [GenerateTypedNameReferences]
 public sealed partial class GoapDebugTab : AiDevWindowTab
 {
-    [Dependency] private readonly IClipboardManager _clipboard = default!;
+    [Dependency] private IClipboardManager _clipboard = default!;
 
     private readonly AiDevWindowUiController _controller;
     private readonly Dictionary<GoapBreakpoint, BreakpointControl> _points = new();

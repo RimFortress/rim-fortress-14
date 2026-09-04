@@ -12,13 +12,13 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Selection;
 
-public sealed class SelectionSystem : SharedSelectionSystem
+public sealed partial class SelectionSystem : SharedSelectionSystem
 {
-    [Dependency] private readonly IOverlayManager _overlay = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly IEyeManager _eye = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private IOverlayManager _overlay = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IInputManager _input = default!;
+    [Dependency] private IEyeManager _eye = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
 
     /// <summary>
     /// Invoked each time the selection mode settings are changed.

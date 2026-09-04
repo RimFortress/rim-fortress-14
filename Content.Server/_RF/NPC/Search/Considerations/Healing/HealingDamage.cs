@@ -26,9 +26,9 @@ public sealed partial class HealingDamage : BaseSearchConsideration<HealingDamag
     public HashSet<ProtoId<DamageTypePrototype>> DamageTypes = new();
 }
 
-public sealed class HealingDamageSearchConsiderationSystem : NpcSearchConsiderationSystem<HealingDamage>
+public sealed partial class HealingDamageSearchConsiderationSystem : NpcSearchConsiderationSystem<HealingDamage>
 {
-    [Dependency] private readonly EntityQuery<HealingComponent> _query = default!;
+    [Dependency] private EntityQuery<HealingComponent> _query;
 
     protected override float GetScore(GoapState state, EntityUid target, HealingDamage con)
     {

@@ -9,9 +9,9 @@ namespace Content.Server._RF.NPC.Search.Filters;
 
 public sealed partial class Captured : BaseSearchFilter<Captured>;
 
-public sealed class CapturedSearchFilterSystem : NpcSearchFilterSystem<Captured>
+public sealed partial class CapturedSearchFilterSystem : NpcSearchFilterSystem<Captured>
 {
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     public override void Initialize()
     {

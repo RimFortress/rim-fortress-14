@@ -17,9 +17,9 @@ public sealed partial class StockCanInsert : BaseSearchFilter<StockCanInsert>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class StockCanInsertSearchFilterSystem : NpcSearchGoapKeyFilterSystem<StockCanInsert, EntityUid>
+public sealed partial class StockCanInsertSearchFilterSystem : NpcSearchGoapKeyFilterSystem<StockCanInsert, EntityUid>
 {
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
 
     protected override HashSet<StateKey<EntityUid>> GetSubscribeKeys(StockCanInsert filter)
         => new() { filter.TargetKey };

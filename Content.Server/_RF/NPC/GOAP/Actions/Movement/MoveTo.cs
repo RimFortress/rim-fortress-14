@@ -57,13 +57,13 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
 /// <summary>
 /// Manages <see cref="MoveTo"/> operator and also provides out-of-the-box AI movement logic for other operators.
 /// </summary>
-public sealed class MoveToActionSystem : GoapActionSystem<MoveTo>
+public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly NPCSteeringSystem _steering = default!;
-    [Dependency] private readonly PathfindingSystem _pathfinding = default!;
-    [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private NPCSteeringSystem _steering = default!;
+    [Dependency] private PathfindingSystem _pathfinding = default!;
+    [Dependency] private TransformSystem _transform = default!;
+    [Dependency] private EntityQuery<NPCSteeringComponent> _steeringQuery;
 
     /// <summary>
     /// The base key for storing the path that the agent must follow.

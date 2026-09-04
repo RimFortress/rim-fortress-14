@@ -18,13 +18,13 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.NPC.Executable.Systems;
 
-public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
+public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
 {
-    [Dependency] private readonly IOverlayManager _overlay = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly SelectionSystem _selection = default!;
-    [Dependency] private readonly UserInterfaceSystem _uiSystem = default!;
+    [Dependency] private IOverlayManager _overlay = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IInputManager _input = default!;
+    [Dependency] private SelectionSystem _selection = default!;
+    [Dependency] private UserInterfaceSystem _uiSystem = default!;
 
     private static readonly SpriteSpecifier EraseIcon
         = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
@@ -39,6 +39,9 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
     [Access(typeof(ControllableNpcBoundUserInterface))]
     public EntityUid? UiTarget;
 
+    [Access(typeof(ControllableNpcBoundUserInterface))]
+    public IReadOnlyDictionary<ExecutableGoalPrototype, List<EntityUid>>? UiTasks;
+
     public event Action? OnControllerAttached;
 
     public override void Initialize()
@@ -46,8 +49,6 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         base.Initialize();
 
         _overlay.AddOverlay(new NpcControlOverlay());
-
-        SubscribeLocalEvent<NpcControllerComponent, PlayerAttachedEvent>(OnPlayerAttached);
 
         CommandBinds.Builder
             .Bind(ContentKeyFunctions.NpcCombatModeToggle, new PointerInputCmdHandler(OnCombatToggle))
@@ -60,6 +61,7 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
         _overlay.RemoveOverlay<NpcControlOverlay>();
     }
 
+    [SubscribeLocalEvent]
     private void OnPlayerAttached(Entity<NpcControllerComponent> ent, ref PlayerAttachedEvent args)
     {
         DefaultSelection();
@@ -102,6 +104,33 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
             selected = comp.CanControl.ToList();
 
         SetCombatMode(_player.LocalEntity.Value, selected, combatMode);
+    }
+
+    private Dictionary<ExecutableGoalPrototype, List<EntityUid>> GetTasks(EntityUid ent)
+    {
+        var tasks = new Dictionary<ExecutableGoalPrototype, List<EntityUid>>();
+
+        if (!TryComp(_player.LocalEntity, out NpcControllerComponent? comp))
+            return tasks;
+
+        var prototypes = comp.Goals.Select(Proto.Index).ToList();
+
+        foreach (var uid in _selection.SelectedEntities())
+        {
+            if (!CanControl(_player.LocalEntity.Value, uid)
+                || FindSatisfiedGoals(uid, ent, prototypes, ExecutableGoalType.Verb) is not { } suitable)
+                continue;
+
+            foreach (var task in suitable)
+            {
+                if (!tasks.TryAdd(task, new()))
+                    tasks[task].Add(uid);
+                else
+                    tasks[task] = new() { uid };
+            }
+        }
+
+        return tasks;
     }
 
     #region Selection
@@ -185,10 +214,17 @@ public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
 
                 if (args.ActUid is { } uid)
                 {
-                    if (_player.LocalEntity is { } playerUid
-                        && _uiSystem.TryOpenUi(playerUid, NpcControllerUiKey.Key, playerUid, true))
-                        UiTarget = uid;
+                    if (_player.LocalEntity is not { } playerUid)
+                        return;
 
+                    var tasks = GetTasks(uid);
+
+                    if (tasks.Count == 0
+                        || !_uiSystem.TryOpenUi(playerUid, NpcControllerUiKey.Key, playerUid, true))
+                        return;
+
+                    UiTarget = uid;
+                    UiTasks = tasks;
                     return;
                 }
 

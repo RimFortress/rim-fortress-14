@@ -23,18 +23,15 @@ namespace Content.Client._RF.Lobby.UI
     [GenerateTypedNameReferences]
     public sealed partial class RfHumanoidProfileEditor : BoxContainer
     {
-        [Dependency] private readonly IClientPreferencesManager _preferencesManager = default!;
-        [Dependency] private readonly IConfigurationManager _cfgManager = default!;
-        [Dependency] private readonly IEntityManager _entManager = default!;
-        [Dependency] private readonly IFileDialogManager _dialogManager = default!;
-        [Dependency] private readonly IPlayerManager _playerManager = default!;
-        [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-        [Dependency] private readonly IResourceManager _resManager = default!;
-        [Dependency] private readonly MarkingManager _markingManager = default!;
-        [Dependency] private readonly ILogManager _logManager = default!;
-
-        // CCvar.
-        private int _maxNameLength;
+        [Dependency] private IClientPreferencesManager _preferencesManager = default!;
+        [Dependency] private IConfigurationManager _cfgManager = default!;
+        [Dependency] private IEntityManager _entManager = default!;
+        [Dependency] private IFileDialogManager _dialogManager = default!;
+        [Dependency] private IPlayerManager _playerManager = default!;
+        [Dependency] private IPrototypeManager _prototypeManager = default!;
+        [Dependency] private IResourceManager _resManager = default!;
+        [Dependency] private MarkingManager _markingManager = default!;
+        [Dependency] private ILogManager _logManager = default!;
 
         /// <summary>
         /// The character slot for the current profile.
@@ -77,27 +74,27 @@ namespace Content.Client._RF.Lobby.UI
             RobustXamlLoader.Load(this);
             _sawmill = _logManager.GetSawmill("profile.editor");
 
-            _maxNameLength = _cfgManager.GetCVar(CCVars.MaxNameLength);
+            var maxNameLength = _cfgManager.GetCVar(CCVars.MaxNameLength);
             _allowFlavorText = _cfgManager.GetCVar(CCVars.FlavorText);
 
             Markings.SetModel(_markingsModel);
 
-            ImportButton.OnPressed += args =>
+            ImportButton.OnPressed += _ =>
             {
                 ImportProfile();
             };
 
-            ExportButton.OnPressed += args =>
+            ExportButton.OnPressed += _ =>
             {
                 ExportProfile();
             };
 
-            ExportImageButton.OnPressed += args =>
+            ExportImageButton.OnPressed += _ =>
             {
                 ExportImage();
             };
 
-            OpenImagesButton.OnPressed += args =>
+            OpenImagesButton.OnPressed += _ =>
             {
                 _resManager.UserData.OpenOsWindow(ContentSpriteSystem.Exports);
             };
@@ -107,9 +104,9 @@ namespace Content.Client._RF.Lobby.UI
             #region Name
 
             NameEdit.OnTextChanged += args => { SetName(args.Text); };
-            NameEdit.IsValid = args => args.Length <= _maxNameLength;
-            NameRandomize.OnPressed += args => RandomizeName();
-            RandomizeEverythingButton.OnPressed += args => { RandomizeEverything(); };
+            NameEdit.IsValid = args => args.Length <= maxNameLength;
+            NameRandomize.OnPressed += _ => RandomizeName();
+            RandomizeEverythingButton.OnPressed += _ => RandomizeEverything();
             WarningLabel.SetMarkup($"[color=red]{Loc.GetString("humanoid-profile-editor-naming-rules-warning")}[/color]");
 
             #endregion Name
@@ -236,7 +233,7 @@ namespace Content.Client._RF.Lobby.UI
 
             #endregion Left
 
-            ShowClothes.OnToggled += args =>
+            ShowClothes.OnToggled += _ =>
             {
                 ReloadPreview();
             };

@@ -6,20 +6,23 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manges <see cref="NotificationRuleComponent"/>
 /// </summary>
-public sealed class NotificationRuleSystem : WorldRuleSystem<NotificationRuleComponent>
+public sealed partial class NotificationRuleSystem : WorldRuleSystem<NotificationRuleComponent>
 {
-    [Dependency] private readonly NotificationsSystem _notifications = default!;
+    [Dependency] private NotificationsSystem _notifications = default!;
 
-    protected override void Started(EntityUid uid,
-        NotificationRuleComponent component,
+    protected override void Started(
+        Entity<NotificationRuleComponent> ent,
         WorldRuleComponent worldRule,
         WorldRuleStartedEvent args)
     {
-        _notifications.SendNotification(args.Target, component.Proto, args.TargetCoordinates);
+        _notifications.SendNotification(args.Target, ent.Comp.Proto, args.TargetCoordinates);
     }
 
-    protected override void Ended(EntityUid uid, NotificationRuleComponent component, WorldRuleComponent worldRule, WorldRuleEndedEvent args)
+    protected override void Ended(
+        Entity<NotificationRuleComponent> ent,
+        WorldRuleComponent worldRule,
+        WorldRuleEndedEvent args)
     {
-        _notifications.RemoveNotification(args.Target, component.Proto);
+        _notifications.RemoveNotification(args.Target, ent.Comp.Proto);
     }
 }

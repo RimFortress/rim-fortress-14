@@ -17,9 +17,9 @@ public sealed partial class MarkOwner : BaseGoapAction<MarkOwner>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class MarkOwnerActionSystem : GoapActionSystem<MarkOwner>
+public sealed partial class MarkOwnerActionSystem : GoapActionSystem<MarkOwner>
 {
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, MarkOwner action) => 0f;
 

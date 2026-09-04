@@ -1,0 +1,44 @@
+- type: socialEffect
+  id: BaseHungerMoodEffect
+  abstract: true
+  conflictWith:
+  - MoodOverfed
+  - MoodSated
+  - MoodHungry
+  - MoodStarving
+  - MoodStarvingCritical
+
+- type: socialEffect
+  id: MoodOverfed
+  parent: BaseHungerMoodEffect
+  name: mood-effect-overfed-name
+  description: mood-effect-overfed-desc
+  effect: -3
+
+- type: socialEffect
+  id: MoodSated
+  parent: BaseHungerMoodEffect
+  name: mood-effect-sated-name
+  description: mood-effect-sated-desc
+  effect: 3
+
+- type: socialEffect
+  id: MoodHungry
+  parent: BaseHungerMoodEffect
+  name: mood-effect-hungry-name
+  description: mood-effect-hungry-desc
+  effect: -3
+
+- type: socialEffect
+  id: MoodStarving
+  parent: BaseHungerMoodEffect
+  name: mood-effect-starving-name
+  description: mood-effect-starving-desc
+  effect: -8
+
+- type: socialEffect
+  id: MoodStarvingCritical
+  parent: BaseHungerMoodEffect
+  name: mood-effect-starving-critical-name
+  description: mood-effect-starving-critical-desc
+  effect: -15

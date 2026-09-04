@@ -15,9 +15,9 @@ public sealed partial class MoodLevel : BaseMathCurve<MoodLevel>
     public bool Normalize = true;
 }
 
-public sealed class MoodLevelMathCurveSystem : MathCurveSystem<MoodLevel>
+public sealed partial class MoodLevelMathCurveSystem : MathCurveSystem<MoodLevel>
 {
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private SocialSystem _social = default!;
 
     protected override float Curve(MoodLevel curve, float input, MathCurveContext ctx)
     {

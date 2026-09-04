@@ -16,9 +16,9 @@ namespace Content.Client._RF.Construction.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class RfConstructionMenu : FancyWindow
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IPlacementManager _placement = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entityManager = default!;
+    [Dependency] private IPlacementManager _placement = default!;
 
     private SpriteSystem _sprite = default!;
     private ConstructionSystem _construction = default!;

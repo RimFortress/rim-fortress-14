@@ -24,11 +24,11 @@ public sealed partial class MarkOwnerInRange : BaseGoapAction<MarkOwnerInRange>
     public EntityWhitelist? Whitelist;
 }
 
-public sealed class MarkOwnerInRangeActionSystem : GoapActionSystem<MarkOwnerInRange>
+public sealed partial class MarkOwnerInRangeActionSystem : GoapActionSystem<MarkOwnerInRange>
 {
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private EntityWhitelistSystem _whitelist = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, MarkOwnerInRange action)
     {

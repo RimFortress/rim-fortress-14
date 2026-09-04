@@ -1,0 +1,6 @@
+- type: !PartialOnly entity
+  id: BaseCrystalStalagmite
+  components:
+  - type: Tag
+    tags:
+    - Diggable

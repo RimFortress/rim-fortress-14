@@ -96,7 +96,8 @@
   - !type:Captured
     invert: true
   considerations:
-  - !type:Weed
+  - !type:PlantHolder
+    weed : true
     curves:
     - minus: [float: 0.40]
     - clamp:
@@ -126,7 +127,8 @@
   id: PlantWaterTarget
   parent: BasePlantHolderQuery
   considerations:
-  - !type:PlantHolderWater
+  - !type:PlantHolder
+    waterLevel: true
     curves:
     - minus: [float: 1]
     - !type:Abs

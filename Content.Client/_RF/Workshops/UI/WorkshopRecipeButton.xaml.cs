@@ -15,8 +15,8 @@ namespace Content.Client._RF.Workshops.UI;
 [GenerateTypedNameReferences]
 public sealed partial class WorkshopRecipeButton : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
 
     private bool _infoBuilt;
 

@@ -11,9 +11,9 @@ namespace Content.Server._RF.NPC.Search.Filters.Workshop;
 /// </summary>
 public sealed partial class WorkshopCanStartCraft : BaseSearchFilter<WorkshopCanStartCraft>;
 
-public sealed class WorkshopCanStartCraftSearchFilterSystem : NpcSearchFilterSystem<WorkshopCanStartCraft>
+public sealed partial class WorkshopCanStartCraftSearchFilterSystem : NpcSearchFilterSystem<WorkshopCanStartCraft>
 {
-    [Dependency] private readonly WorkshopSystem _workshop = default!;
+    [Dependency] private WorkshopSystem _workshop = default!;
 
     public override void Initialize()
     {

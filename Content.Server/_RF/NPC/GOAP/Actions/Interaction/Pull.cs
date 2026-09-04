@@ -18,10 +18,10 @@ public sealed partial class Pull : BaseGoapAction<Pull>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class PullGoapActionSystem : GoapActionSystem<Pull>
+public sealed partial class PullGoapActionSystem : GoapActionSystem<Pull>
 {
-    [Dependency] private readonly PullingSystem _pulling = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
+    [Dependency] private PullingSystem _pulling = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Pull action)
     {

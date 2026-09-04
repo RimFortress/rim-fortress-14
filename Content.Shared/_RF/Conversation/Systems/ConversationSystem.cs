@@ -20,16 +20,16 @@ namespace Content.Shared._RF.Conversation.Systems;
 /// <summary>
 /// A helper system for easily implementing advanced random conversations between NPCs.
 /// </summary>
-public sealed class ConversationSystem : EntitySystem
+public sealed partial class ConversationSystem : EntitySystem
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
 
-    [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
-    [Dependency] private readonly EntityQuery<ConversationComponent> _conversationQuery = default!;
-    [Dependency] private readonly EntityQuery<EngagementComponent> _engagementQuery = default!;
+    [Dependency] private EntityQuery<ConversationActorComponent> _actorQuery = default!;
+    [Dependency] private EntityQuery<ConversationComponent> _conversationQuery = default!;
+    [Dependency] private EntityQuery<EngagementComponent> _engagementQuery = default!;
 
     public override void Initialize()
     {

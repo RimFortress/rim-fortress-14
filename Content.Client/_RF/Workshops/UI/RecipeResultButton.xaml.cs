@@ -7,7 +7,7 @@ namespace Content.Client._RF.Workshops.UI;
 [GenerateTypedNameReferences]
 public sealed partial class RecipeResultButton : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     public RecipeResultButton()
     {

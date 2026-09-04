@@ -14,9 +14,9 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class DamageGroupInfo : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IResourceCache _cache = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IResourceCache _cache = default!;
 
     /// <summary>
     /// Path to RSI with icons of all damage types

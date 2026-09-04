@@ -1,0 +1,86 @@
+- type: !PartialOnly entity
+  id: BaseSpeciesMob
+  components:
+  - !Remove type: SSDIndicator
+  - type: Skills
+    randomizeSkills:
+    - Healing
+    - Construction
+    - Mining
+    - Melee
+    - Gun
+    - Farming
+    - Woodcutting
+    - Cooking
+    randomLevels:
+      min: 5
+      max: 20
+    maxRandomLevel: 10
+  - type: ModifySkillLevelOnMood
+    modifiers:
+      Healing: 0.0025
+      Melee: 0.0020
+      Mining: 0.0033 # Sad miner is a bad miner
+      Cooking: 0.03
+  - type: Social
+  - type: TriggerOnDamage
+    keyOut: onDamage
+  - type: TriggerMappings
+    addComponents:
+      onDamage:
+      - type: ChangeOpinionOnTrigger
+        effect: OpinionAttacked
+        keysIn:
+        - onDamage
+  - type: ChangeMoodOnAte
+    effects:
+      MoodAteRubbishMeal:
+        tags:
+        - RubbishMeal
+        - Trash
+        requireAll: false
+      MoodAteAwfulMeal:
+        tags:
+        - AwfulMeal
+        - Raw
+        - DonkPocket
+        requireAll: false
+      MoodAteFineMeal:
+        tags:
+        - FineMeal
+        - Pancake
+        requireAll: false
+      MoodAteLavishMeal:
+        tags:
+        - LavishMeal
+        - Cake
+        - Pie
+        - Pizza
+        requireAll: false
+  - type: Needs
+    needs:
+    - id: NormalHunger
+    - id: NormalThirst
+    - id: NormalSleep
+    - id: NormalSocialization
+  - type: ModifySpeedOnMood
+    moodFactor: 0.0015 # +15% for +100 mood
+  - type: ModifySpeedOnNeed
+    modifiers:
+      Hunger:
+        Overfed: 0.95
+        Starving: 0.75
+        StarvingCritical: 0.5
+      Thirst:
+        Parched: 0.75
+        DehydratedCritical: 0.5
+      Sleep:
+        Overslept: 0.95
+        Exhausted: 0.75
+  - type: ModifyNeedOnSleep
+    modifiers:
+      Sleep:
+        Overslept: 0.72
+        Rested: 0.8
+        Tired: 0.8
+        Exhausted: 1

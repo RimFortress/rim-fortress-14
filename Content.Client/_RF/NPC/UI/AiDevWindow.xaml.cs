@@ -12,8 +12,8 @@ namespace Content.Client._RF.NPC.UI;
 [GenerateTypedNameReferences]
 public sealed partial class AiDevWindow : Control
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IEntityManager _entity = default!;
     private readonly AiDevWindowUiController _aiController;
 
     private bool _goapReady;
@@ -85,9 +85,9 @@ public sealed partial class AiDevWindow : Control
 }
 
 [UsedImplicitly]
-internal sealed class AiWindowCommand : LocalizedCommands
+internal sealed partial class AiWindowCommand : LocalizedCommands
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private IEntityManager _entManager = default!;
 
     public override string Command => "aidevwindow";
 

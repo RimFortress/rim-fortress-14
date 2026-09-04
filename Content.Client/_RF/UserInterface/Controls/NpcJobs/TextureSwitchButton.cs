@@ -8,9 +8,9 @@ using Robust.Shared.Input;
 namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
 
 [Virtual]
-public sealed class TextureSwitchButton : TextureButton
+public partial class TextureSwitchButton : TextureButton
 {
-    [Dependency] private readonly IResourceCache _cache = default!;
+    [Dependency] private IResourceCache _cache = default!;
 
     private int _index;
     private List<Texture> _textures = new();

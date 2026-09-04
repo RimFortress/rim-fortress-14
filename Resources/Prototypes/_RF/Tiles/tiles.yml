@@ -1,0 +1,7 @@
+- type: !PartialOnly tile
+  id: FloorCave
+  navMapColor: "#3B3B3A"
+
+- type: !PartialOnly tile
+  id: FloorCaveDrought
+  navMapColor: "#4C3427"

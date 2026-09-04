@@ -9,9 +9,9 @@ using Content.Client._RF.UserInterface.Controls; // RimFortress
 namespace Content.Client.UserInterface.Systems.Vote;
 
 [UsedImplicitly]
-public sealed class VoteUIController : UIController
+public sealed partial class VoteUIController : UIController
 {
-    [Dependency] private readonly IVoteManager _votes = default!;
+    [Dependency] private IVoteManager _votes = default!;
 
     public override void Initialize()
     {

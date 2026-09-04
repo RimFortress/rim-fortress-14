@@ -11,9 +11,9 @@ namespace Content.Server._RF.NPC.Search.Considerations.Healing;
 /// <remarks>A negative value indicates healing; a positive value indicates damage.</remarks>
 public sealed partial class BleedHealing : BaseSearchConsideration<BleedHealing>;
 
-public sealed class BleedHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BleedHealing>
+public sealed partial class BleedHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BleedHealing>
 {
-    [Dependency] private readonly EntityQuery<HealingComponent> _query = default!;
+    [Dependency] private EntityQuery<HealingComponent> _query;
 
     protected override float GetScore(GoapState state, EntityUid target, BleedHealing con)
         => _query.TryComp(target, out var comp) ? comp.BloodlossModifier : 0f;

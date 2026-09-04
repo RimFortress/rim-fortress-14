@@ -9,7 +9,7 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class RfLobbyCharacterPreviewPanel : Control
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private IEntityManager _entManager = default!;
 
     public Button CharacterSetupButton => CharacterSetup;
     public Button EquipmentSetupButton => EquipmentSetup;

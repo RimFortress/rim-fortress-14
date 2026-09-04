@@ -23,9 +23,9 @@ public sealed partial class EndEngagement : BaseGoapAction<EndEngagement>
     public EngagementEndReason Reason = EngagementEndReason.Finished;
 }
 
-public sealed class EndEngagementGoapActionSystem : GoapActionSystem<EndEngagement>
+public sealed partial class EndEngagementGoapActionSystem : GoapActionSystem<EndEngagement>
 {
-    [Dependency] private readonly EngagementSystem _engagement = default!;
+    [Dependency] private EngagementSystem _engagement = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, EndEngagement action)
     {

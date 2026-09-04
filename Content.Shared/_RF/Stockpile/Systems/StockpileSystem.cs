@@ -1,7 +1,6 @@
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared.Maps;
-using Content.Shared.Prototypes;
 using Content.Shared.Storage.Components;
 using Content.Shared.Storage.EntitySystems;
 using Robust.Shared.Containers;
@@ -16,23 +15,23 @@ namespace Content.Shared._RF.Stockpile.Systems;
 
 public sealed partial class StockpileSystem : EntitySystem
 {
-    [Dependency] private readonly SharedTransformSystem _xform = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly TurfSystem _turf = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly MetaDataSystem _meta = default!;
-    [Dependency] private readonly FixtureSystem _fixture = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly SharedPhysicsSystem _physics = default!;
-    [Dependency] private readonly SharedContainerSystem _container = default!;
-    [Dependency] private readonly SharedEntityStorageSystem _storage = default!;
+    [Dependency] private SharedTransformSystem _xform = default!;
+    [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private TurfSystem _turf = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private INetManager _net = default!;
+    [Dependency] private MetaDataSystem _meta = default!;
+    [Dependency] private FixtureSystem _fixture = default!;
+    [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private SharedPhysicsSystem _physics = default!;
+    [Dependency] private SharedContainerSystem _container = default!;
+    [Dependency] private SharedEntityStorageSystem _storage = default!;
 
-    [Dependency] private readonly EntityQuery<StockpileComponent> _stockQuery = default!;
-    [Dependency] private readonly EntityQuery<MapGridComponent> _gridQuery = default!;
-    [Dependency] private readonly EntityQuery<ContainerManagerComponent> _containerQuery = default!;
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<StockpileComponent> _stockQuery = default!;
+    [Dependency] private EntityQuery<MapGridComponent> _gridQuery = default!;
+    [Dependency] private EntityQuery<ContainerManagerComponent> _containerQuery = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery = default!;
 
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
 
@@ -45,23 +44,6 @@ public sealed partial class StockpileSystem : EntitySystem
     /// <inheritdoc/>
     public override void Initialize()
     {
-        SubscribeLocalEvent<StockpileComponent, MapInitEvent>(OnStockInit);
-        SubscribeLocalEvent<StockpileComponent, ComponentRemove>(OnStockRemove);
-        SubscribeLocalEvent<StockpileComponent, StartCollideEvent>(OnStartCollideEvent);
-        SubscribeLocalEvent<StockpileComponent, EndCollideEvent>(OnEndCollideEvent);
-        SubscribeLocalEvent<StockpileContentComponent, EntInsertedIntoContainerMessage>(OnInsertedIntoContent);
-        SubscribeLocalEvent<StockpileContentComponent, EntGotRemovedFromContainerMessage>(OnContentRemovedFromContainer);
-
-        SubscribeNetworkEvent<StockpileCreateRequest>(OnCreateRequest);
-        SubscribeNetworkEvent<StockpileDeleted>(OnDeleted);
-        SubscribeNetworkEvent<StockpileTileAdded>(OnTileAdded);
-        SubscribeNetworkEvent<StockpileTileRemoved>(OnTileRemoved);
-        SubscribeNetworkEvent<StockpileSettingUpdated>(OnSettingUpdate);
-        SubscribeNetworkEvent<StockpileSettingsUpdated>(OnSettingsUpdate);
-        SubscribeNetworkEvent<StockpileSuppliedAdded>(OnSuppliedAdded);
-        SubscribeNetworkEvent<StockpileSuppliedRemoved>(OnSuppliedRemoved);
-        SubscribeNetworkEvent<StockpileColorSet>(OnColorSet);
-
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<EntityPrototype>())
@@ -73,6 +55,7 @@ public sealed partial class StockpileSystem : EntitySystem
 
     #region Events
 
+    [SubscribeNetworkEvent]
     private void OnCreateRequest(StockpileCreateRequest ev, EntitySessionEventArgs args)
     {
         var gridUid = GetEntity(ev.GridUid);
@@ -92,6 +75,7 @@ public sealed partial class StockpileSystem : EntitySystem
         CreateStockpile(tileRefs, owner);
     }
 
+    [SubscribeNetworkEvent]
     private void OnDeleted(StockpileDeleted ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -104,6 +88,7 @@ public sealed partial class StockpileSystem : EntitySystem
         DeleteStockpile(new(uid, comp));
     }
 
+    [SubscribeNetworkEvent]
     private void OnTileAdded(StockpileTileAdded ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -126,6 +111,7 @@ public sealed partial class StockpileSystem : EntitySystem
         AddTiles(new(uid, comp), tileRefs);
     }
 
+    [SubscribeNetworkEvent]
     private void OnTileRemoved(StockpileTileRemoved ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -148,6 +134,7 @@ public sealed partial class StockpileSystem : EntitySystem
         RemoveTile(new(uid, comp), tileRefs);
     }
 
+    [SubscribeNetworkEvent]
     private void OnSettingUpdate(StockpileSettingUpdated ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -166,6 +153,7 @@ public sealed partial class StockpileSystem : EntitySystem
         SetProtoMax(new(uid, comp), ev.ProtoId, ev.Value);
     }
 
+    [SubscribeLocalEvent]
     private void OnSettingsUpdate(StockpileSettingsUpdated ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -184,6 +172,7 @@ public sealed partial class StockpileSystem : EntitySystem
         SetProtoMax(new(uid, comp), ev.Settings);
     }
 
+    [SubscribeLocalEvent]
     private void OnSuppliedAdded(StockpileSuppliedAdded ev, EntitySessionEventArgs args)
     {
         var supplied = GetEntity(ev.Supplied);
@@ -199,6 +188,7 @@ public sealed partial class StockpileSystem : EntitySystem
         AddSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));
     }
 
+    [SubscribeLocalEvent]
     private void OnSuppliedRemoved(StockpileSuppliedRemoved ev, EntitySessionEventArgs args)
     {
         var supplied = GetEntity(ev.Supplied);
@@ -214,6 +204,7 @@ public sealed partial class StockpileSystem : EntitySystem
         RemoveSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));
     }
 
+    [SubscribeLocalEvent]
     private void OnColorSet(StockpileColorSet ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -226,6 +217,7 @@ public sealed partial class StockpileSystem : EntitySystem
         SetStockColor(new(uid, comp), ev.Color);
     }
 
+    [SubscribeLocalEvent]
     private void OnStockInit(Entity<StockpileComponent> ent, ref MapInitEvent args)
     {
         if (!_net.IsClient || IsClientSide(ent))
@@ -234,6 +226,7 @@ public sealed partial class StockpileSystem : EntitySystem
         OnStockCreated?.Invoke(ent);
     }
 
+    [SubscribeLocalEvent]
     private void OnStockRemove(Entity<StockpileComponent> ent, ref ComponentRemove args)
     {
         foreach (var uid in ent.Comp.Supplied)
@@ -249,6 +242,7 @@ public sealed partial class StockpileSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnStartCollideEvent(Entity<StockpileComponent> ent, ref StartCollideEvent args)
     {
         if (_turf.GetTileRef(Transform(args.OtherEntity).Coordinates) is not { } tile)
@@ -262,6 +256,7 @@ public sealed partial class StockpileSystem : EntitySystem
         InsertEntity(ent, args.OtherEntity);
     }
 
+    [SubscribeLocalEvent]
     private void OnEndCollideEvent(Entity<StockpileComponent> ent, ref EndCollideEvent args)
     {
         if (_turf.GetTileRef(Transform(args.OtherEntity).Coordinates) is not { } tile
@@ -269,6 +264,7 @@ public sealed partial class StockpileSystem : EntitySystem
             RemoveEntity(ent, args.OtherEntity);
     }
 
+    [SubscribeLocalEvent]
     private void OnInsertedIntoContent(Entity<StockpileContentComponent> ent, ref EntInsertedIntoContainerMessage args)
     {
         if (Prototype(args.Entity) is not { } proto
@@ -286,6 +282,7 @@ public sealed partial class StockpileSystem : EntitySystem
         InsertEntity(stockEnt, args.Entity);
     }
 
+    [SubscribeLocalEvent]
     private void OnContentRemovedFromContainer(Entity<StockpileContentComponent> ent, ref EntGotRemovedFromContainerMessage args)
     {
         if (!_stockQuery.TryComp(ent.Comp.Stock, out var stock))
@@ -302,7 +299,7 @@ public sealed partial class StockpileSystem : EntitySystem
 
         foreach (var proto in _prototype.EnumeratePrototypes<EntityPrototype>())
         {
-            if (!proto.HasComponent<StockpileCategoryComponent>(EntityManager.ComponentFactory))
+            if (!proto.HasComp<StockpileCategoryComponent>(EntityManager.ComponentFactory))
                 continue;
 
             _defaultSettings.Add(proto, 0);

@@ -21,10 +21,10 @@ public sealed partial class InInventory : BaseSearchFilter<InInventory>
     public bool ExcludeSelf = true;
 }
 
-public sealed class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
+public sealed partial class InInventoryFilterSystem : NpcSearchFilterSystem<InInventory>
 {
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private InventorySystem _inventory = default!;
 
     public override void Initialize()
     {

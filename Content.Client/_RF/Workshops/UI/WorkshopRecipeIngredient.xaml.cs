@@ -12,8 +12,8 @@ namespace Content.Client._RF.Workshops.UI;
 [GenerateTypedNameReferences]
 public sealed partial class WorkshopRecipeIngredient : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
 
     private const string ReagentIconPath = "/Textures/_RF/Interface/droplet-solid-full.svg.192dpi.png";
 

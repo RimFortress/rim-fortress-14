@@ -21,9 +21,9 @@ public sealed partial class DayHour : BaseGoapCondition<DayHour>
     public int? LessThan;
 }
 
-public sealed class DayHourGoapConditionSystem : GoapConditionSystem<DayHour>
+public sealed partial class DayHourGoapConditionSystem : GoapConditionSystem<DayHour>
 {
-    [Dependency] private readonly SharedRimFortressWorldSystem _world = default!;
+    [Dependency] private SharedRimFortressWorldSystem _world = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, DayHour condition)
     {

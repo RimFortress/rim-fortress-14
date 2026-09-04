@@ -6,19 +6,19 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// <summary>
 /// Manges <see cref="ChangeMoodRuleComponent"/>
 /// </summary>
-public sealed class ChangeMoodRuleSystem : WorldRuleSystem<ChangeMoodRuleComponent>
+public sealed partial class ChangeMoodRuleSystem : WorldRuleSystem<ChangeMoodRuleComponent>
 {
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private SocialSystem _social = default!;
 
-    protected override void Started(EntityUid uid,
-        ChangeMoodRuleComponent component,
+    protected override void Started(
+        Entity<ChangeMoodRuleComponent> ent,
         WorldRuleComponent worldRule,
         WorldRuleStartedEvent args)
     {
         foreach (var popUid in World.GetPLayerPops(args.Target) ?? new())
         {
-            _social.AddMoodEffect(popUid, component.Effects);
-            _social.RemoveMoodEffect(popUid, component.RemoveEffects);
+            _social.AddMoodEffect(popUid, ent.Comp.Effects);
+            _social.RemoveMoodEffect(popUid, ent.Comp.RemoveEffects);
         }
     }
 }

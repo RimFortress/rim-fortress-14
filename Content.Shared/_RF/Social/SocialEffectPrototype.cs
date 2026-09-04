@@ -1,4 +1,5 @@
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
 namespace Content.Shared._RF.Social;
 
@@ -6,11 +7,20 @@ namespace Content.Shared._RF.Social;
 /// Prototype of the effect that influences the social interactions of entities.
 /// </summary>
 [Prototype]
-public sealed partial class SocialEffectPrototype : IPrototype
+public sealed partial class SocialEffectPrototype : IPrototype, IInheritingPrototype
 {
     /// <inheritdoc/>
     [IdDataField]
     public string ID { get; private set; } = default!;
+
+    /// <inheritdoc/>
+    [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<SocialEffectPrototype>))]
+    public string[]? Parents { get; set; }
+
+    /// <inheritdoc/>
+    [NeverPushInheritance]
+    [AbstractDataField]
+    public bool Abstract { get; set; }
 
     /// <summary>
     /// Name of the effect.

@@ -20,9 +20,9 @@ public sealed partial class WorkshopRecipe : BaseSearchFilter<WorkshopRecipe>
     public HashSet<ProtoId<WorkshopRecipeTablePrototype>> Tables = new();
 }
 
-public sealed class WorkshopRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopRecipe>
+public sealed partial class WorkshopRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopRecipe>
 {
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _query;
 
     protected override bool Filter(GoapState state, EntityUid target, WorkshopRecipe filter)
         => _query.TryComp(target, out var comp) && filter.Tables.Any(x => x == comp.Recipes);

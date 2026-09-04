@@ -1,0 +1,3 @@
+- type: !PartialOnly tile
+  id: FloorPlanetGrass
+  navMapColor: "#48723C"

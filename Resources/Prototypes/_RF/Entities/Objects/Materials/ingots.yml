@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: IngotBase
+  components:
+  - type: StockpileCategory
+    category: Material

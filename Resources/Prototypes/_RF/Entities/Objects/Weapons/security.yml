@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: Stunbaton
+  components:
+  - type: StockpileCategory
+    category: Melee

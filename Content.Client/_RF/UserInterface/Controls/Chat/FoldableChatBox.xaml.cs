@@ -11,7 +11,7 @@ namespace Content.Client._RF.UserInterface.Controls.Chat;
 [GenerateTypedNameReferences]
 public sealed partial class FoldableChatBox : ChatBox
 {
-    [Dependency] private readonly IResourceCache _cache = default!;
+    [Dependency] private IResourceCache _cache = default!;
 
     public FoldableChatBox()
     {

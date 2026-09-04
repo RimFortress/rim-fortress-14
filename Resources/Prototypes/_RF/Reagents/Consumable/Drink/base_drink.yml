@@ -1,0 +1,26 @@
+- type: reagent
+  id: !PartialOnly BaseDrink
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 3
+
+- type: reagent
+  id: !PartialOnly BaseSoda
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly BaseAlcohol
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2

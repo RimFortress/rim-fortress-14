@@ -8,7 +8,7 @@ namespace Content.Server._RF.GameTicking.Commands;
 [AnyCommand]
 public sealed partial class RimFortressJoinGameCommand : IConsoleCommand
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private IEntityManager _entManager = default!;
 
     public string Command => "rfjoingame";
     public string Description => "";

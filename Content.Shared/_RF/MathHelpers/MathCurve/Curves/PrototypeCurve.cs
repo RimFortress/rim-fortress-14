@@ -22,10 +22,10 @@ public sealed partial class PrototypeCurve : BaseMathCurve<PrototypeCurve>
     public Dictionary<string, List<MathCurve>> Variables = new();
 }
 
-public sealed class PrototypeCurveSystem : MathCurveSystem<PrototypeCurve>
+public sealed partial class PrototypeCurveSystem : MathCurveSystem<PrototypeCurve>
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly MathCurvesSystem _mathCurves = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private MathCurvesSystem _mathCurves = default!;
 
     protected override float Curve(PrototypeCurve curve, float input, MathCurveContext ctx)
     {

@@ -7,7 +7,7 @@ using Content.Shared._RF.NPC.UtilityAi.Components;
 
 namespace Content.Server._RF.NPC.Executable.Systems;
 
-public sealed class ExecutableGoalSystem : SharedExecutableGoalSystem
+public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
 {
     /// <inheritdoc/>
     public override void Initialize()

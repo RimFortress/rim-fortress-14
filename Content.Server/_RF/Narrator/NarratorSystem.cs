@@ -9,7 +9,7 @@ using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Narrator;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
-using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.EntityTable;
 using Content.Shared.Item;
 using Robust.Server.Player;
@@ -23,31 +23,27 @@ namespace Content.Server._RF.Narrator;
 
 public sealed partial class NarratorSystem : EntitySystem
 {
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
-    [Dependency] private readonly PricingSystem _pricing = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly GameTicker _ticker = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly RimFortressRuleSystem _rule = default!;
-    [Dependency] private readonly RimFortressWorldSystem _world = default!;
-    [Dependency] private readonly IConsoleHost _host = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly EntityTableSystem _table = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly MathCurvesSystem _curves = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
+    [Dependency] private PricingSystem _pricing = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private GameTicker _ticker = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private RimFortressRuleSystem _rule = default!;
+    [Dependency] private RimFortressWorldSystem _world = default!;
+    [Dependency] private IConsoleHost _host = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private EntityTableSystem _table = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private MathCurvesSystem _curves = default!;
 
-    private EntityQuery<ItemComponent> _itemQuery;
-    private EntityQuery<ConstructionComponent> _constructionQuery;
+    [Dependency] private EntityQuery<ItemComponent> _itemQuery;
+    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery;
 
     private readonly Dictionary<EntityUid, int> _lastWaitPoint = new();
 
     public override void Initialize()
     {
         base.Initialize();
-
-        _itemQuery = GetEntityQuery<ItemComponent>();
-        _constructionQuery = GetEntityQuery<ConstructionComponent>();
-
         InitializeCommands();
     }
 
@@ -188,7 +184,7 @@ public sealed partial class NarratorSystem : EntitySystem
                 foreach (var eventId in _table.GetSpawns(comp.GlobalEvents))
                 {
                     if (!_prototype.TryIndex(eventId, out var ent)
-                        || !ent.TryGetComponent(out GlobalWorldRuleComponent? rule, EntityManager.ComponentFactory)
+                        || !ent.TryComp(out GlobalWorldRuleComponent? rule, EntityManager.ComponentFactory)
                         || chance > globalChance * rule.ChanceMod
                         || rule.Cost > globalPoints)
                         continue;
@@ -253,7 +249,7 @@ public sealed partial class NarratorSystem : EntitySystem
         foreach (var eventId in _table.GetSpawns(rule.GlobalEvents))
         {
             if (!_prototype.TryIndex(eventId, out var proto)
-                || !proto.TryGetComponent(out GlobalWorldRuleComponent? globalRule, EntityManager.ComponentFactory)
+                || !proto.TryComp(out GlobalWorldRuleComponent? globalRule, EntityManager.ComponentFactory)
                 || globalRule.Cost > waitPoints * narratorMood)
                 continue;
 

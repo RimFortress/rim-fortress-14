@@ -6,11 +6,11 @@ using Robust.Shared.Timing;
 
 namespace Content.Server._RF.GameTicking.Rules;
 
-public sealed class GlobalWorldRuleSystem : GameRuleSystem<GlobalWorldRuleComponent>
+public sealed partial class GlobalWorldRuleSystem : GameRuleSystem<GlobalWorldRuleComponent>
 {
-    [Dependency] private readonly NarratorSystem _narrator = default!;
-    [Dependency] private readonly RimFortressRuleSystem _rule = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private NarratorSystem _narrator = default!;
+    [Dependency] private RimFortressRuleSystem _rule = default!;
+    [Dependency] private IGameTiming _timing = default!;
 
     protected override void Started(EntityUid uid, GlobalWorldRuleComponent component, GameRuleComponent gameRule, GameRuleStartedEvent args)
     {

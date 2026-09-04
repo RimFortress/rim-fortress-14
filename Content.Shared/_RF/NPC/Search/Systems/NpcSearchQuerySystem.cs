@@ -11,12 +11,13 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// A system that handles search queries.
 /// </summary>
 /// <typeparam name="T">Search query type.</typeparam>
-public abstract class NpcSearchQuerySystem<T> : EntitySystem where T : BaseSearchQuery<T>
+public abstract partial class NpcSearchQuerySystem<T> : EntitySystem where T : BaseSearchQuery<T>
 {
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly SharedNpcSearcherSystem Searcher = default!;
-    [Dependency] protected readonly EntityQuery<NpcSearcherComponent> SearcherQuery = default!;
-    [Dependency] protected readonly EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] protected SharedNpcSearcherSystem Searcher = default!;
+
+    [Dependency] protected EntityQuery<NpcSearcherComponent> SearcherQuery = default!;
+    [Dependency] protected EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
 
     protected readonly HashSet<EntityUid> Query = new();
     private readonly Dictionary<ProtoId<SearchQueryPrototype>, T> _queries = new();

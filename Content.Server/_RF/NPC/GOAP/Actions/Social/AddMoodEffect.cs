@@ -31,9 +31,9 @@ public sealed partial class AddMoodEffect : BaseGoapAction<AddMoodEffect>
     public bool Multiply;
 }
 
-public sealed class AddMoodEffectSystem : GoapActionSystem<AddMoodEffect>
+public sealed partial class AddMoodEffectSystem : GoapActionSystem<AddMoodEffect>
 {
-    [Dependency] private readonly SocialSystem _social = default!;
+    [Dependency] private SocialSystem _social = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, AddMoodEffect action) => 0.5f;
 

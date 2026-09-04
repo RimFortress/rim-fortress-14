@@ -22,13 +22,13 @@ public sealed partial class WorkshopReagent : BaseSearchFilter<WorkshopReagent>
     public StateKey<EntityUid> TargetKey;
 }
 
-public sealed class WorkshopReagentSearchFilterSystem : NpcSearchGoapKeyFilterSystem<WorkshopReagent, EntityUid>
+public sealed partial class WorkshopReagentSearchFilterSystem : NpcSearchGoapKeyFilterSystem<WorkshopReagent, EntityUid>
 {
-    [Dependency] private readonly ItemSystem _item = default!;
-    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
-    [Dependency] private readonly WorkshopSystem _workshop = default!;
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _workshopQuery = default!;
-    [Dependency] private readonly EntityQuery<ItemComponent> _itemQuery = default!;
+    [Dependency] private ItemSystem _item = default!;
+    [Dependency] private SharedSolutionContainerSystem _solution = default!;
+    [Dependency] private WorkshopSystem _workshop = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _workshopQuery;
+    [Dependency] private EntityQuery<ItemComponent> _itemQuery;
 
     protected override HashSet<StateKey<EntityUid>> GetSubscribeKeys(WorkshopReagent filter)
         => new() { filter.TargetKey };

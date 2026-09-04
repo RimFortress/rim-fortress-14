@@ -13,6 +13,7 @@ using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Parallax.Fog;
+using Content.Shared._RF.World.Components;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
@@ -30,32 +31,27 @@ namespace Content.Server._RF.World;
 /// <summary>
 /// Manages the RimFortress world and player maps
 /// </summary>
-public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
+public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
-    [Dependency] private readonly IAdminManager _admin = default!;
-    [Dependency] private readonly MindSystem _mind = default!;
-    [Dependency] private readonly BiomeSystem _biome = default!;
-    [Dependency] private readonly MapSystem _map = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IServerPreferencesManager _preferences = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly StationSpawningSystem _station = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
-    [Dependency] private readonly IConfigurationManager _cvar = default!;
-    [Dependency] private readonly IPlayerEquipmentManager _equipment = default!;
-    [Dependency] private readonly ExecutableGoalSystem _executable = default!;
-    [Dependency] private readonly FogOfWarSystem _faw = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
+    [Dependency] private IAdminManager _admin = default!;
+    [Dependency] private MindSystem _mind = default!;
+    [Dependency] private BiomeSystem _biome = default!;
+    [Dependency] private MapSystem _map = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private IServerPreferencesManager _preferences = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private StationSpawningSystem _station = default!;
+    [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private IConfigurationManager _cvar = default!;
+    [Dependency] private IPlayerEquipmentManager _equipment = default!;
+    [Dependency] private ExecutableGoalSystem _executable = default!;
+    [Dependency] private FogOfWarSystem _faw = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
 
     private readonly HashSet<ICommonSession> _debugSubscribers = new();
 
-    public override void Initialize()
-    {
-        base.Initialize();
-        SubscribeNetworkEvent<WorldDebugInfoRequest>(OnDebugRequest);
-    }
-
+    [SubscribeNetworkEvent]
     private void OnDebugRequest(WorldDebugInfoRequest msg, EntitySessionEventArgs args)
     {
         if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug))
@@ -85,6 +81,7 @@ public sealed class RimFortressWorldSystem : SharedRimFortressWorldSystem
         }
 
         EnsureComp<FogOfWarComponent>(map);
+        EnsureComp<WorldMapComponent>(map);
 
         rule.WorldMap = map;
         Dirty(uid, rule);

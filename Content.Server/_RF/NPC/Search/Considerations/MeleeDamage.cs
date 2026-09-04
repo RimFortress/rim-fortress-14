@@ -21,9 +21,9 @@ public sealed partial class MeleeDamage : BaseSearchConsideration<MeleeDamage>
     public HashSet<ProtoId<DamageTypePrototype>> DamageTypes = new();
 }
 
-public sealed class MeleeDamageConsiderationSystem : NpcSearchConsiderationSystem<MeleeDamage>
+public sealed partial class MeleeDamageConsiderationSystem : NpcSearchConsiderationSystem<MeleeDamage>
 {
-    [Dependency] private readonly EntityQuery<MeleeWeaponComponent> _meleeQuery = default!;
+    [Dependency] private EntityQuery<MeleeWeaponComponent> _meleeQuery;
 
     public override void Initialize()
     {

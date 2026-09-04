@@ -3,7 +3,7 @@
   curves:
   - preset: InvNormalize
     variables:
-      saturation: [float: 2]
+      saturation: [float: 1]
 
 - type: mathCurve
   id: InvNormalize

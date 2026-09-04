@@ -10,7 +10,7 @@ namespace Content.Client._RF.Lobby.UI
     [GenerateTypedNameReferences]
     public sealed partial class RfLobbyGui : UIScreen
     {
-        [Dependency] private readonly IClientConsoleHost _consoleHost = default!;
+        [Dependency] private IClientConsoleHost _consoleHost = default!;
 
         public RfLobbyGui()
         {

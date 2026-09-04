@@ -14,9 +14,9 @@ public sealed partial class PickRandomAngle : BaseGoapAction<PickRandomAngle>
     public StateKey<Angle> TargetKey = "RotateTarget";
 }
 
-public sealed class PickRandomAngleSystem : GoapActionSystem<PickRandomAngle>
+public sealed partial class PickRandomAngleSystem : GoapActionSystem<PickRandomAngle>
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, PickRandomAngle action) => 0f;
 

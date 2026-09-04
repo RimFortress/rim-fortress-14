@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: BaseBola
+  components:
+  - type: StockpileCategory
+    category: Melee

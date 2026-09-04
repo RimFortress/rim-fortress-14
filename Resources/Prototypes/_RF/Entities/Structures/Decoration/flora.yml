@@ -1,0 +1,17 @@
+- type: !PartialOnly entity
+  id: BaseRock
+  components:
+  - type: Tag
+    tags:
+    - Diggable
+
+- type: !PartialOnly entity
+  id: BaseTree
+  components:
+  - type: Tag
+    tags:
+      - Tree
+      - NoSaveOnModify
+  - type: WorldMapStruct
+    mainColor: "#965727"
+    drawType: Dot

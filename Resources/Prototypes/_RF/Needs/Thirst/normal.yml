@@ -1,0 +1,96 @@
+- type: needCategory
+  id: Thirst
+
+- type: needThresholdCategory
+  id: Overhydrated
+
+- type: needThresholdCategory
+  id: ThirstOkay
+
+- type: needThresholdCategory
+  id: Thirsty
+
+- type: needThresholdCategory
+  id: Parched
+
+- type: needThresholdCategory
+  id: DehydratedCritical
+
+- type: need
+  id: NormalThirst
+  category: Thirst
+  thresholds:
+  - Overhydrated
+  - ThirstOkay
+  - Thirsty
+  - Parched
+  - DehydratedCritical
+  roundstartRandomize:
+    min: 300
+    max: 450
+
+- type: needThreshold
+  id: Overhydrated
+  category: Overhydrated
+  value: 600
+  decayTime: 20m
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: overhydrated
+  alert: ThirstIconOverhydrated
+  effects:
+  - !type:AddMood
+    proto: MoodOverhydrated
+
+- type: needThreshold
+  id: ThirstOkay
+  category: ThirstOkay
+  value: 450
+  decayTime: 3h
+  effects:
+  - !type:AddMood
+    proto: MoodThirstOkay
+
+- type: needThreshold
+  id: Thirsty
+  category: Thirsty
+  value: 300
+  decayTime: 6h
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: thirsty
+  alert: Thirsty
+  effects:
+  - !type:AddMood
+    proto: MoodThirsty
+
+- type: needThreshold
+  id: Parched
+  category: Parched
+  value: 150
+  decayTime: 10h
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: parched
+  alert: Parched
+  effects:
+  - !type:AddMood
+    proto: MoodParched
+
+- type: needThreshold
+  id: DehydratedCritical
+  category: DehydratedCritical
+  value: 50
+  decayTime: 10h
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: parched
+  alert: Parched
+  effects:
+  - !type:AddMood
+    proto: MoodDehydratedCritical
+  tickEffects:
+  - !type:HealthChange
+    damage:
+      types:
+        Asphyxiation: 4

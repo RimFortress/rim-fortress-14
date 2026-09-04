@@ -5,21 +5,11 @@ using Content.Shared.Trigger;
 
 namespace Content.Shared._RF.Trigger.Systems;
 
-public sealed class SocialTriggerSystem : EntitySystem
+public sealed partial class SocialTriggerSystem : EntitySystem
 {
-    [Dependency] private readonly SocialSystem _social  = default!;
+    [Dependency] private SocialSystem _social  = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<ChangeMoodOnTriggerComponent, TriggerEvent>(OnChangeMoodTrigger);
-        SubscribeLocalEvent<ChangeOpinionOnTriggerComponent, TriggerEvent>(OnChangeOpinionTrigger);
-
-        SubscribeLocalEvent<HasOpinionEffectConditionComponent, AttemptTriggerEvent>(OnHasOpinionEffectAttemptTrigger);
-        SubscribeLocalEvent<MoodTriggerConditionComponent, AttemptTriggerEvent>(OnMoodAttemptTrigger);
-        SubscribeLocalEvent<OpinionTriggerConditionComponent, AttemptTriggerEvent>(OnOpinionAttemptTrigger);
-    }
-
+    [SubscribeLocalEvent]
     private void OnChangeMoodTrigger(EntityUid uid, ChangeMoodOnTriggerComponent component, TriggerEvent ev)
     {
         if (ev.Key == null || !component.KeysIn.Contains(ev.Key))
@@ -34,6 +24,7 @@ public sealed class SocialTriggerSystem : EntitySystem
         ev.Handled = true;
     }
 
+    [SubscribeLocalEvent]
     private void OnChangeOpinionTrigger(Entity<ChangeOpinionOnTriggerComponent> ent, ref TriggerEvent ev)
     {
         if (ev.User == null || ev.Key == null || !ent.Comp.KeysIn.Contains(ev.Key))
@@ -60,6 +51,7 @@ public sealed class SocialTriggerSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnHasOpinionEffectAttemptTrigger(Entity<HasOpinionEffectConditionComponent> ent, ref AttemptTriggerEvent args)
     {
         if (args.Key == null || !ent.Comp.Keys.Contains(args.Key))
@@ -75,6 +67,7 @@ public sealed class SocialTriggerSystem : EntitySystem
         args.Cancelled |= !ent.Comp.Invert && !has || ent.Comp.Invert && has;
     }
 
+    [SubscribeLocalEvent]
     private void OnMoodAttemptTrigger(Entity<MoodTriggerConditionComponent> ent, ref AttemptTriggerEvent args)
     {
         if (args.Key == null || !ent.Comp.Keys.Contains(args.Key))
@@ -86,6 +79,7 @@ public sealed class SocialTriggerSystem : EntitySystem
                           && (ent.Comp.Max == null || ent.Comp.Max < mood);
     }
 
+    [SubscribeLocalEvent]
     private void OnOpinionAttemptTrigger(Entity<OpinionTriggerConditionComponent> ent, ref AttemptTriggerEvent args)
     {
         if (args.Key == null || !ent.Comp.Keys.Contains(args.Key))

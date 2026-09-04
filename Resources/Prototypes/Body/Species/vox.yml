@@ -176,23 +176,13 @@
       sprite: Effects/creampie.rsi
       state: creampie_vox
   - type: Vocal
-    sounds:
-      Male: UnisexVox
-      Female: UnisexVox
-      Unsexed: UnisexVox
+    emoteSounds: UnisexVox
   - type: Butcherable
-    butcheringType: Spike
     spawned:
     - id: FoodMeatChicken
       amount: 5
   - type: Destructible
     thresholds:
-    - trigger:
-        !type:DamageTypeTrigger
-        damageType: Blunt
-        damage: 400
-      behaviors:
-      - !type:GibBehavior { }
     - trigger:
         !type:DamageTypeTrigger
         damageType: Heat
@@ -204,29 +194,10 @@
           FoodMeatChickenFriedVox:
             min: 3
             max: 5
-      - !type:BurnBodyBehavior
-        popupMessage: bodyburn-vox-text-others
-      - !type:PlaySoundBehavior
-        sound:
-          collection: MeatLaserImpact
-    - trigger:
-        !type:DamageTypeTrigger
-        damageType: Radiation
-        damage: 15
-      behaviors:
-      - !type:PopupBehavior
-        popup: mouth-taste-metal
-        popupType: LargeCaution
-        targetOnly: true
-    - trigger:
-        !type:DamageTypeTrigger
-        damageType: Radiation
-        damage: 40
-      behaviors:
-      - !type:VomitBehavior
   - type: PassiveDamage
     # Augment normal health regen to be able to tank some Poison damage
     # This allows Vox to take their mask off temporarily to eat something without needing a trip to medbay afterwards.
+    intervalHaltOnDamageTaken: 5s
     allowedStates:
     - Alive
     damage:
@@ -247,7 +218,7 @@
     bloodReferenceSolution:
       reagents:
       - ReagentId: AmmoniaBlood
-        Quantity: 300
+        Quantity: 600
   - type: MeleeWeapon
     soundHit:
       collection: AlienClaw
@@ -257,32 +228,9 @@
       types:
         Slash: 5 # Reduce?
   - type: Wagging
-  # RimFortress Start
-  - type: SkillExpModificator
-    multipliers:
-      Woodcutting: 1.15
-      Mining: 1.15
-      Construction: 1.25
-      Healing: 0.75
-      Farming: 0.75
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 5h
-      Peckish: 4h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 7h
-    randomizeValue:
-      min: 310
-      max: 460
-  # RimFortress End
 
 - type: entity
-  parent: OrganBase
+  parent: OrganBaseOrganic
   id: OrganVox
   abstract: true
   suffix: Vox
@@ -324,6 +272,10 @@
 - type: entity
   parent: [ OrganBaseTorso, OrganVoxExternal ]
   id: OrganVoxTorso
+  components:
+  - type: VisualOrganMarkings
+    hideableLayers:
+    - enum.HumanoidVisualLayers.Tail
 
 - type: entity
   parent: [ OrganBaseHead, OrganVoxExternal ]
@@ -337,6 +289,12 @@
     dependentHidingLayers:
       enum.HumanoidVisualLayers.Snout:
       - enum.HumanoidVisualLayers.SnoutCover
+    markingsDisplacement:
+      Hair:
+        sizeMaps:
+          32:
+            sprite: Mobs/Species/Vox/displacement.rsi
+            state: hair
 
 - type: entity
   parent: [ OrganBaseArmLeft, OrganVoxExternal ]

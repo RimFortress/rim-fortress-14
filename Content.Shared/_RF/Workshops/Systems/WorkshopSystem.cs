@@ -25,42 +25,31 @@ namespace Content.Shared._RF.Workshops.Systems;
 
 public sealed partial class WorkshopSystem : EntitySystem
 {
-    [Dependency] private readonly SharedSolutionContainerSystem _solution = default!;
-    [Dependency] private readonly SharedContainerSystem _container = default!;
-    [Dependency] private readonly OwnershipSystem _ownership = default!;
-    [Dependency] private readonly SharedSkillsSystem _skills = default!;
-    [Dependency] private readonly SharedAudioSystem _audio = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly ContainerStockSupplierSystem _containerSupplier = default!;
-    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
-    [Dependency] private readonly SharedPointLightSystem _pointLight = default!;
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
-    [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
-    [Dependency] private readonly SharedHandsSystem _hands = default!;
-    [Dependency] private readonly SharedStackSystem _stack = default!;
-    [Dependency] private readonly SharedItemSystem _item = default!;
-    [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
-    [Dependency] private readonly SharedNpcSearcherSystem _searcher = default!;
+    [Dependency] private SharedSolutionContainerSystem _solution = default!;
+    [Dependency] private SharedContainerSystem _container = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private SharedSkillsSystem _skills = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private ContainerStockSupplierSystem _containerSupplier = default!;
+    [Dependency] private SharedAppearanceSystem _appearance = default!;
+    [Dependency] private SharedPointLightSystem _pointLight = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
+    [Dependency] private SharedUserInterfaceSystem _ui = default!;
+    [Dependency] private SharedHandsSystem _hands = default!;
+    [Dependency] private SharedStackSystem _stack = default!;
+    [Dependency] private SharedItemSystem _item = default!;
+    [Dependency] private SharedDoAfterSystem _doAfter = default!;
+    [Dependency] private SharedNpcSearcherSystem _searcher = default!;
 
-    [Dependency] private readonly EntityQuery<StackComponent> _stackQuery = default!;
+    [Dependency] private EntityQuery<StackComponent> _stackQuery = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeLocalEvent<WorkshopComponent, ComponentInit>(OnInit);
-        SubscribeLocalEvent<WorkshopComponent, ContainerIsInsertingAttemptEvent>(OnInsertAttempt);
-        SubscribeLocalEvent<WorkshopComponent, EntInsertedIntoContainerMessage>(OnInserted);
-        SubscribeLocalEvent<WorkshopComponent, EntRemovedFromContainerMessage>(OnRemoved);
-        SubscribeLocalEvent<WorkshopComponent, InteractHandEvent>(OnInteractHand);
-        SubscribeLocalEvent<WorkshopComponent, InteractUsingEvent>(OnInteractUsing, after: new[] { typeof(AnchorableSystem) });
-        SubscribeLocalEvent<WorkshopComponent, BreakageEventArgs>(OnBreak);
-        SubscribeLocalEvent<WorkshopComponent, SearchResultCaptured>(OnCaptured);
-        SubscribeLocalEvent<WorkshopComponent, SearchResultReleased>(OnReleased);
-        SubscribeLocalEvent<WorkshopComponent, AnchorStateChangedEvent>(OnAnchorChanged);
-        SubscribeLocalEvent<WorkshopComponent, WorkshopCraftingDoAfterEvent>(OnWorkshopDoAfter);
-
+        Subs.ProtoReload<WorkshopRecipePrototype, WorkshopRecipeGroupPrototype>(_proto, ReloadPrototypes);
         Subs.BuiEvents<WorkshopComponent>(WorkshopUiKey.Key,
             subs =>
         {
@@ -71,13 +60,13 @@ public sealed partial class WorkshopSystem : EntitySystem
             subs.Event<WorkshopSuspendMessage>(OnSuspend);
             subs.Event<WorkshopSuppliedStockMessage>(OnSuppliedStock);
         });
-        Subs.ProtoReload<WorkshopRecipePrototype, WorkshopRecipeGroupPrototype>(_proto, ReloadPrototypes);
 
         ReloadPrototypes();
     }
 
     #region Events
 
+    [SubscribeLocalEvent]
     private void OnInit(Entity<WorkshopComponent> ent, ref ComponentInit args)
     {
         ent.Comp.ContentStorage = _container.EnsureContainer<Container>(ent, WorkshopComponent.ContentContainerId);
@@ -85,6 +74,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         UpdateAppearance(ent.Owner);
     }
 
+    [SubscribeLocalEvent]
     private void OnInsertAttempt(Entity<WorkshopComponent> ent, ref ContainerIsInsertingAttemptEvent args)
     {
         if (args.Container.ID == WorkshopComponent.ResultContainerId
@@ -115,6 +105,7 @@ public sealed partial class WorkshopSystem : EntitySystem
             args.Cancel();
     }
 
+    [SubscribeLocalEvent]
     private void OnInserted(Entity<WorkshopComponent> ent, ref EntInsertedIntoContainerMessage args)
     {
         if (args.Container.ID == WorkshopComponent.ContentContainerId)
@@ -130,6 +121,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         UpdateUi(ent.AsNullable());
     }
 
+    [SubscribeLocalEvent]
     private void OnRemoved(Entity<WorkshopComponent> ent, ref EntRemovedFromContainerMessage args)
     {
         if (args.Container.ID == WorkshopComponent.ContentContainerId)
@@ -147,17 +139,20 @@ public sealed partial class WorkshopSystem : EntitySystem
         UpdateUi(ent.AsNullable());
     }
 
+    [SubscribeLocalEvent]
     private void OnAnchorChanged(Entity<WorkshopComponent> ent, ref AnchorStateChangedEvent args)
     {
         if (!TerminatingOrDeleted(ent) && !args.Anchored)
             _container.EmptyContainer(ent.Comp.ContentStorage);
     }
 
+    [SubscribeLocalEvent]
     private void OnInteractHand(Entity<WorkshopComponent> ent, ref InteractHandEvent args)
     {
         TryStartCrafting(ent.AsNullable());
     }
 
+    [SubscribeLocalEvent(after: new[] { typeof(AnchorableSystem) })]
     private void OnInteractUsing(Entity<WorkshopComponent> ent, ref InteractUsingEvent args)
     {
         if (args.Handled)
@@ -177,11 +172,13 @@ public sealed partial class WorkshopSystem : EntitySystem
         _hands.TryDropIntoContainer(args.User, args.Used, ent.Comp.ContentStorage);
     }
 
+    [SubscribeLocalEvent]
     private void OnBreak(Entity<WorkshopComponent> ent, ref BreakageEventArgs args)
     {
         _container.EmptyContainer(ent.Comp.ContentStorage);
     }
 
+    [SubscribeLocalEvent]
     private void OnCaptured(Entity<WorkshopComponent> ent, ref SearchResultCaptured args)
     {
         ent.Comp.User = args.User;
@@ -197,6 +194,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         UpdateUi(workshop);
     }
 
+    [SubscribeLocalEvent]
     private void OnReleased(Entity<WorkshopComponent> ent, ref SearchResultReleased args)
     {
         ent.Comp.User = null;
@@ -204,6 +202,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         UpdateUi(ent.AsNullable());
     }
 
+    [SubscribeLocalEvent]
     private void OnWorkshopDoAfter(Entity<WorkshopComponent> ent, ref WorkshopCraftingDoAfterEvent args)
     {
         var workshop = ent.AsNullable();

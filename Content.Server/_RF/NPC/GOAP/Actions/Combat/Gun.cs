@@ -110,36 +110,35 @@ public sealed partial class Gun : BaseGoapAction<Gun>
     public static readonly StateKey<JukeType> PreviousJukeTypeKey = "PreviousJukeType";
 }
 
-public sealed class GunActionSystem : GoapActionSystem<Gun>
+public sealed partial class GunActionSystem : GoapActionSystem<Gun>
 {
-    [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
-    [Dependency] private readonly SharedGunSystem _gun = default!;
-    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
-    [Dependency] private readonly NpcSearcherSystem _searcher = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly RotateToFaceSystem _rotate = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly IMapManager _mapManager = default!;
-    [Dependency] private readonly SharedAudioSystem _audio = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly ItemSlotsSystem _slots = default!;
-    [Dependency] private readonly WieldableSystem _wield = default!;
-    [Dependency] private readonly ThrowingSystem _throw = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly NpcTimingSystem _npcTiming = default!;
-    [Dependency] private readonly MoveToActionSystem _moveTo = default!;
+    [Dependency] private SharedCombatModeSystem _combatMode = default!;
+    [Dependency] private SharedGunSystem _gun = default!;
+    [Dependency] private SharedInteractionSystem _interaction = default!;
+    [Dependency] private NpcSearcherSystem _searcher = default!;
+    [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private RotateToFaceSystem _rotate = default!;
+    [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private ItemSlotsSystem _slots = default!;
+    [Dependency] private WieldableSystem _wield = default!;
+    [Dependency] private ThrowingSystem _throw = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private HandsSystem _hands = default!;
+    [Dependency] private NpcTimingSystem _npcTiming = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
 
-    [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
-    [Dependency] private readonly EntityQuery<PhysicsComponent> _physicsQuery = default!;
-    [Dependency] private readonly EntityQuery<TransformComponent> _xformQuery = default!;
-    [Dependency] private readonly EntityQuery<RechargeBasicEntityAmmoComponent> _rechargeQuery = default!;
-    [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery = default!;
-    [Dependency] private readonly EntityQuery<ItemSlotsComponent> _slotsQuery = default!;
-    [Dependency] private readonly EntityQuery<WieldableComponent> _wieldQuery = default!;
-    [Dependency] private readonly EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery = default!;
-    [Dependency] private readonly EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery = default!;
-    [Dependency] private readonly EntityQuery<NPCJukeComponent> _jukeQuery = default!;
+    [Dependency] private EntityQuery<MobStateComponent> _mobStateQuery;
+    [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
+    [Dependency] private EntityQuery<TransformComponent> _xformQuery;
+    [Dependency] private EntityQuery<RechargeBasicEntityAmmoComponent> _rechargeQuery;
+    [Dependency] private EntityQuery<NPCSteeringComponent> _steeringQuery;
+    [Dependency] private EntityQuery<ItemSlotsComponent> _slotsQuery;
+    [Dependency] private EntityQuery<WieldableComponent> _wieldQuery;
+    [Dependency] private EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery;
+    [Dependency] private EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery;
+    [Dependency] private EntityQuery<NPCJukeComponent> _jukeQuery;
 
     private static readonly ProtoId<SearchQueryPrototype> InventoryMagazineQuery = "InventoryMagazine";
     private static readonly ProtoId<SearchQueryPrototype> NearbyMagazineQuery = "NearbyMagazine";
@@ -278,7 +277,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 return GoapActionResult.Failed;
             }
 
-            if (!wield.Wielded && _wield.TryWield(gun, wield, ent))
+            if (!wield.Wielded && _wield.TryWield(new(gun, wield), ent))
             {
                 CreateDump($"failed to wield gun `{ToPrettyString(gun)}` with GunRequiresWieldComponent");
                 return GoapActionResult.Failed;
@@ -287,7 +286,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         else
         {
             if (_wieldQuery.TryComp(gun, out var wield))
-                _wield.TryWield(gun, wield, ent);
+                _wield.TryWield(new(gun, wield), ent);
         }
 
         // Chamber
@@ -302,7 +301,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         var ammoEv = new GetAmmoCountEvent();
         RaiseLocalEvent(gun, ref ammoEv);
 
-        if (_slots.TryGetSlot(gun, SharedGunSystem.ChamberSlot, out var chamberSlot)
+        if (_slots.TryGetSlot(gun.Owner, SharedGunSystem.ChamberSlot, out var chamberSlot)
             && !chamberSlot.HasItem
             && ammoEv.Count > 0)
         {
@@ -375,7 +374,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
         // Returns the coordinates for firing at a target, taking into account the required spread
         EntityCoordinates ShootCoords()
         {
-            var coords = _mapManager.TryFindGridAt(xform.MapID, targetPos, out var gridUid, out var mapGrid)
+            var coords = _map.TryFindGridAt(xform.MapID, targetPos, out var gridUid, out var mapGrid)
                 ? new EntityCoordinates(gridUid, _map.WorldToLocal(gridUid, mapGrid, targetSpot))
                 : new EntityCoordinates(xform.MapUid!.Value, targetSpot);
 
@@ -414,7 +413,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             return GoapActionResult.Failed;
         }
 
-        if (!_slots.TryGetSlot(gun, SharedGunSystem.MagazineSlot, out var slot, itemSlots))
+        if (!_slots.TryGetSlot(new(gun, itemSlots), SharedGunSystem.MagazineSlot, out var slot))
         {
             CreateDump($"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
             return GoapActionResult.Failed;
@@ -497,7 +496,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
                 return GoapActionResult.Failed;
             }
 
-            if (!_slots.TryGetSlot(gun.Value, SharedGunSystem.MagazineSlot, out slot, itemSlots))
+            if (!_slots.TryGetSlot(new(gun.Value, itemSlots), SharedGunSystem.MagazineSlot, out slot))
             {
                 CreateDump($"magazine slot `{SharedGunSystem.MagazineSlot}` in gun {ToPrettyString(gun)} not found");
                 return GoapActionResult.Failed;
@@ -512,7 +511,10 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             _npcTiming.EnqueueWait(ent,
                 this,
                 (0.15f, 0.33f),
-                onFinish: () => _wield.TryUnwield(gun.Value, wield, ent));
+                onFinish: () =>
+                {
+                    _wield.TryUnwield(new(gun.Value, wield), ent);
+                });
         }
 
         // Remove the old magazine
@@ -560,7 +562,7 @@ public sealed class GunActionSystem : GoapActionSystem<Gun>
             onFinish: () =>
             {
                 if (wield != null)
-                    _wield.TryWield(gun.Value, wield, ent);
+                    _wield.TryWield(new(gun.Value, wield), ent);
 
                 CreateDump("gun reloaded");
             });

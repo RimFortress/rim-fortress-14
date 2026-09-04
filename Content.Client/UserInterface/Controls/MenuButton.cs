@@ -11,9 +11,9 @@ using Content.Client._RF.Stylesheets; // RimFortress
 
 namespace Content.Client.UserInterface.Controls;
 
-public sealed class MenuButton : ContainerButton
+public sealed partial class MenuButton : ContainerButton
 {
-    [Dependency] private readonly IInputManager _inputManager = default!;
+    [Dependency] private IInputManager _inputManager = default!;
     public const string StyleClassLabelTopButton = "topButtonLabel";
     // public const string StyleClassRedTopButton = "topButtonLabel";
 

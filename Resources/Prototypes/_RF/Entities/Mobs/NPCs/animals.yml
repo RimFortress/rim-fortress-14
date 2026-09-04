@@ -1,0 +1,26 @@
+- type: !PartialOnly entity
+  id: BaseCockroach
+  components:
+  - !Remove type: Satiation
+  - type: Needs
+    needs:
+    - id: CockroachHunger
+    - id: SimpleModThirst
+
+- type: !PartialOnly entity
+  id: MobHamster
+  components:
+  - !Remove type: Satiation
+  - type: Needs
+    needs:
+    - id: HamsterHunger
+    - id: SimpleModThirst
+
+- type: !PartialOnly entity
+  id: MobMouse
+  components:
+  - !Remove type: Satiation
+  - type: Needs
+    needs:
+    - id: MouseHunger
+    - id: MouseThirst

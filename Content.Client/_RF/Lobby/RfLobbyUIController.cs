@@ -25,13 +25,13 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Lobby;
 
-public sealed class RfLobbyUIController : UIController, IOnStateEntered<RimFortressLobbyState>, IOnStateExited<RimFortressLobbyState>
+public sealed partial class RfLobbyUIController : UIController, IOnStateEntered<RimFortressLobbyState>, IOnStateExited<RimFortressLobbyState>
 {
-    [Dependency] private readonly IClientPreferencesManager _preferencesManager = default!;
-    [Dependency] private readonly IConfigurationManager _configurationManager = default!;
-    [Dependency] private readonly IPlayerManager _playerManager = default!;
-    [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-    [Dependency] private readonly IStateManager _stateManager = default!;
+    [Dependency] private IClientPreferencesManager _preferencesManager = default!;
+    [Dependency] private IConfigurationManager _configurationManager = default!;
+    [Dependency] private IPlayerManager _playerManager = default!;
+    [Dependency] private IPrototypeManager _prototypeManager = default!;
+    [Dependency] private IStateManager _stateManager = default!;
     [UISystemDependency] private readonly HumanoidProfileSystem _humanoid = default!;
     [UISystemDependency] private readonly ClientInventorySystem _inventory = default!;
     [UISystemDependency] private readonly StationSpawningSystem _spawn = default!;

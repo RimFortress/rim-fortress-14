@@ -1,0 +1,37 @@
+- type: need
+  id: DionaThirst
+  category: Thirst
+  thresholds:
+  - DionaOverhydrated
+  - DionaThirstOkay
+  - DionaThirsty
+  - DionaParched
+  - DionaDehydratedCritical
+  roundstartRandomize:
+    min: 300
+    max: 450
+
+- type: needThreshold
+  id: DionaOverhydrated
+  parent: Overhydrated
+  decayTime: 20m
+
+- type: needThreshold
+  id: DionaThirstOkay
+  parent: ThirstOkay
+  decayTime: 160m
+
+- type: needThreshold
+  id: DionaThirsty
+  parent: Thirsty
+  decayTime: 4h
+
+- type: needThreshold
+  id: DionaParched
+  parent: Parched
+  decayTime: 10h
+
+- type: needThreshold
+  id: DionaDehydratedCritical
+  parent: DehydratedCritical
+  decayTime: 6h

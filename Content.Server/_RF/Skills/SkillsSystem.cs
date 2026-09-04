@@ -7,21 +7,14 @@ using Robust.Shared.Serialization.Manager;
 
 namespace Content.Server._RF.Skills;
 
-public sealed class SkillsSystem : SharedSkillsSystem
+public sealed partial class SkillsSystem : SharedSkillsSystem
 {
-    [Dependency] private readonly ISerializationManager _serialization = default!;
+    [Dependency] private ISerializationManager _serialization = default!;
 
-    public override void Initialize()
+    [SubscribeLocalEvent]
+    private void OnInit(Entity<SkillsComponent> ent, ref ComponentInit args)
     {
-        base.Initialize();
-
-        SubscribeLocalEvent<SkillsComponent, ComponentInit>(OnInit);
-        SubscribeLocalEvent<SkillInteractionComponent, ConstructionChangeEntityEvent>(OnConstructionChange);
-    }
-
-    private void OnInit(EntityUid uid, SkillsComponent component, ComponentInit args)
-    {
-        foreach (var data in component.Skills)
+        foreach (var data in ent.Comp.Skills)
         {
             data.CurrentLevel = GetLevel(data.Id, data.CurrentExp);
             data.LevelUpExp = GetLevelMaxPoints(data.Id, data.CurrentLevel);
@@ -30,21 +23,20 @@ public sealed class SkillsSystem : SharedSkillsSystem
         }
 
         RandomizeSkills(
-            new(uid, component),
-            component.RandomizeSkills,
-            component.RandomLevels.Next(Random),
-            component.MaxRandomLevel);
+            ent.AsNullable(),
+            ent.Comp.RandomizeSkills,
+            ent.Comp.RandomLevels.Next(Random),
+            ent.Comp.MaxRandomLevel);
     }
 
-    private void OnConstructionChange(EntityUid uid,
-        SkillInteractionComponent component,
-        ConstructionChangeEntityEvent args)
+    [SubscribeLocalEvent]
+    private void OnConstructionChange(Entity<SkillInteractionComponent> ent, ref ConstructionChangeEntityEvent args)
     {
         if (!HasComp<SkillInteractionComponent>(args.New))
             return;
 
         var newComp = AddComp<SkillInteractionComponent>(args.New);
-        _serialization.CopyTo(component, ref newComp, notNullableOverride: true);
+        _serialization.CopyTo(ent.Comp, ref newComp, notNullableOverride: true);
     }
 
     /// <summary>

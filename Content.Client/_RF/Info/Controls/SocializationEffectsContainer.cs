@@ -7,10 +7,10 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Info.Controls;
 
-public sealed class SocializationEffectsContainer : BoxContainer
+public sealed partial class SocializationEffectsContainer : BoxContainer
 {
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     private SocialSystem _social = default!;
 

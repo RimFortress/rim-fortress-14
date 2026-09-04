@@ -13,11 +13,11 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Parallax.Fog;
 
-public sealed class FogOfWarTilesOverlay : Overlay
+public sealed partial class FogOfWarTilesOverlay : Overlay
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IResourceCache _resource = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IResourceCache _resource = default!;
 
     private static readonly ProtoId<ContentTileDefinition> BackgroundTile = "FloorPlanetGrass";
 
@@ -56,7 +56,7 @@ public sealed class FogOfWarTilesOverlay : Overlay
 
         args.WorldHandle.SetTransform(worldMatrix);
 
-        var enumerator = _map.GetTilesEnumerator(args.MapUid, grid, args.WorldBounds, false);
+        var enumerator = _map.GetTilesIntersecting(args.MapUid, grid, args.WorldBounds, false);
         while (enumerator.MoveNext(out var tileRef))
         {
             var chunk = tileRef.GridIndices / SharedBiomeSystem.ChunkSize;

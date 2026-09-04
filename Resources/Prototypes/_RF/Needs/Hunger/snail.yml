@@ -1,0 +1,42 @@
+- type: need
+  id: SnailHunger
+  category: Hunger
+  thresholds:
+  - SnailOverfed
+  - SnailSated
+  - SnailHungry
+  - SnailStarving
+  - SnailStarvingCritical
+  roundstartRandomize:
+    min: 15
+    max: 30
+
+- type: needThreshold
+  id: SnailOverfed
+  parent: Overfed
+  value: 35
+  decayTime: 20m
+
+- type: needThreshold
+  id: SnailSated
+  parent: Sated
+  value: 25
+  decayTime: 2h
+
+- type: needThreshold
+  id: SnailHungry
+  parent: Hungry
+  value: 15
+  decayTime: 3h
+
+- type: needThreshold
+  id: SnailStarving
+  parent: Starving
+  value: 10
+  decayTime: 3h
+
+- type: needThreshold
+  id: SnailStarvingCritical
+  parent: StarvingCritical
+  value: 5
+  decayTime: 4h

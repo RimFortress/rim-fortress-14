@@ -7,7 +7,7 @@ namespace Content.Client._RF.UserInterface.Controls.Table;
 
 [Virtual]
 [GenerateTypedNameReferences]
-public sealed partial class TableControl : Control
+public partial class TableControl : Control
 {
     private readonly List<TableRow> _rows = new();
     private float[] _colWidths = [];

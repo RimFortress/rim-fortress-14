@@ -31,12 +31,12 @@ namespace Content.Server.NPC.Systems
             "npc_active_count",
             "Amount of NPCs that are actively processing");
 
-        [Dependency] private readonly IConfigurationManager _configurationManager = default!;
-        [Dependency] private readonly HTNSystem _htn = default!;
-        [Dependency] private readonly MobStateSystem _mobState = default!;
+        [Dependency] private IConfigurationManager _configurationManager = default!;
+        [Dependency] private HTNSystem _htn = default!;
+        [Dependency] private MobStateSystem _mobState = default!;
         // RimFortress Start
-        [Dependency] private readonly GoapSystem _goap = default!;
-        [Dependency] private readonly UtilityAiSystem _utilityAi = default!;
+        [Dependency] private GoapSystem _goap = default!;
+        [Dependency] private UtilityAiSystem _utilityAi = default!;
         // RimFortress End
 
         /// <summary>

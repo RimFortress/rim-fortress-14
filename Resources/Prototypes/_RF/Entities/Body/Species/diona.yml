@@ -1,0 +1,16 @@
+- type: !PartialOnly entity
+  id: MobDiona
+  components:
+  - type: Needs
+    needs:
+    - id: DionaHunger
+    - id: DionaThirst
+    - id: NormalSleep
+    - id: NormalSocialization
+  - type: SkillExpModificator
+    multipliers:
+      Melee: 0.75
+      Farming: 1.25
+      Healing: 1.10
+      Woodcutting: 0.50
+      Cooking: 1.25

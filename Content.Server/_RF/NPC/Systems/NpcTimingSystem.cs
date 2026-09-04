@@ -11,10 +11,10 @@ namespace Content.Server._RF.NPC.Systems;
 /// <summary>
 /// A system that provides a convenient API for performing time-delayed actions for GOAP operations.
 /// </summary>
-public sealed class NpcTimingSystem : GoapDebugDumpSystem
+public sealed partial class NpcTimingSystem : GoapDebugDumpSystem
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     /// <summary>
     /// Waits for the time specified in the agent's state.

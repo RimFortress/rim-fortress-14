@@ -121,7 +121,6 @@
   - type: Puller
     needsHands: false
   - type: Butcherable
-    butcheringType: Spike
     spawned:
     - id: FoodMeatLizard
       amount: 5
@@ -137,10 +136,7 @@
       sprite: Effects/creampie.rsi
       state: creampie_lizard
   - type: Vocal
-    sounds:
-      Male: MaleReptilian
-      Female: FemaleReptilian
-      Unsexed: MaleReptilian
+    emoteSounds: MaleReptilian
   - type: BodyEmotes
     soundsId: ReptilianBodyEmotes
   - type: Damageable
@@ -153,11 +149,8 @@
     damage:
       types:
         Slash: 5
-  - type: Temperature
-    currentTemperature: 310.15
-    specificHeat: 42
   - type: TemperatureDamage
-    heatDamageThreshold: 400
+    heatDamageThreshold: 321.15
     coldDamageThreshold: 285
     coldDamage:
       types:
@@ -171,31 +164,9 @@
       295: 0.8
       285: 0.7
   - type: Wagging
-  # RimFortress Start
-  - type: SkillExpModificator
-    multipliers:
-      Melee: 1.15
-      Farming: 0.75
-      Healing: 0.75
-      Construction: 1.25
-  - type: HungerOverride
-    thresholdDecayTime:
-      Overfed: 90m
-      Okay: 4h
-      Peckish: 4h
-      Starving: 4h
-    randomizeValue:
-      min: 110
-      max: 160
-  - type: ThirstOverride
-    fullDecayTime: 7h
-    randomizeValue:
-      min: 310
-      max: 460
-  # RimFortress End
 
 - type: entity
-  parent: OrganBase
+  parent: OrganBaseOrganic
   id: OrganReptilian
   abstract: true
   suffix: Reptilian

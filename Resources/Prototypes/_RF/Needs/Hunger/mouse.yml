@@ -1,0 +1,42 @@
+- type: need
+  id: MouseHunger
+  category: Hunger
+  thresholds:
+  - MouseOverfed
+  - MouseSated
+  - MouseHungry
+  - MouseStarving
+  - MouseStarvingCritical
+  roundstartRandomize:
+    min: 40
+    max: 80
+
+- type: needThreshold
+  id: MouseOverfed
+  parent: SimpleMobOverfed
+  value: 35
+  decayTime: 20m
+
+- type: needThreshold
+  id: MouseSated
+  parent: SimpleMobSated
+  value: 25
+  decayTime: 1h
+
+- type: needThreshold
+  id: MouseHungry
+  parent: SimpleMobHungry
+  value: 15
+  decayTime: 90m
+
+- type: needThreshold
+  id: MouseStarving
+  parent: SimpleMobStarving
+  value: 10
+  decayTime: 2h
+
+- type: needThreshold
+  id: MouseStarvingCritical
+  parent: SimpleMobStarvingCritical
+  value: 5
+  decayTime: 2h

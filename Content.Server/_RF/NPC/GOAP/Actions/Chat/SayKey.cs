@@ -21,9 +21,9 @@ public sealed partial class SayKey : BaseGoapAction<SayKey>
     public bool Hidden = true;
 }
 
-public sealed class SayKeySystem : GoapActionSystem<SayKey>
+public sealed partial class SayKeySystem : GoapActionSystem<SayKey>
 {
-    [Dependency] private readonly ChatSystem _chat = default!;
+    [Dependency] private ChatSystem _chat = default!;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, SayKey action) => 0f;
 

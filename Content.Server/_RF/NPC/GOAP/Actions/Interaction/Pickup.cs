@@ -25,13 +25,13 @@ public sealed partial class Pickup : BaseGoapAction<Pickup>
     public StateKey<EntityUid> TargetKey = "Target";
 }
 
-public sealed class PickupActionSystem : GoapActionSystem<Pickup>
+public sealed partial class PickupActionSystem : GoapActionSystem<Pickup>
 {
-    [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly StorageSystem _storage = default!;
-    [Dependency] private readonly InventorySystem _inventory = default!;
-    [Dependency] private readonly ContainerSystem _container = default!;
-    [Dependency] private readonly InteractionSystem _interaction = default!;
+    [Dependency] private HandsSystem _hands = default!;
+    [Dependency] private StorageSystem _storage = default!;
+    [Dependency] private InventorySystem _inventory = default!;
+    [Dependency] private ContainerSystem _container = default!;
+    [Dependency] private InteractionSystem _interaction = default!;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Pickup action)
         => TryGet(ent, action.TargetKey, out var target)

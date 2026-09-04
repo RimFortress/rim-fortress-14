@@ -29,21 +29,21 @@ namespace Content.Shared._RF.NPC.Executable.Systems;
 /// </summary>
 public abstract partial class SharedExecutableGoalSystem : EntitySystem
 {
-    [Dependency] protected readonly IPrototypeManager Proto = default!;
-    [Dependency] protected readonly EntityWhitelistSystem Whitelist = default!;
-    [Dependency] protected readonly IGameTiming Timing = default!;
-    [Dependency] protected readonly SharedGoapSystem Goap = default!;
-    [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly TurfSystem _turf = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
-    [Dependency] private readonly SharedUtilityAiSystem _utilityAi = default!;
-    [Dependency] private readonly SharedCombatModeSystem _combatMode = default!;
+    [Dependency] protected IPrototypeManager Proto = default!;
+    [Dependency] protected EntityWhitelistSystem Whitelist = default!;
+    [Dependency] protected IGameTiming Timing = default!;
+    [Dependency] protected SharedGoapSystem Goap = default!;
+    [Dependency] private INetManager _net = default!;
+    [Dependency] private TurfSystem _turf = default!;
+    [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private SharedUtilityAiSystem _utilityAi = default!;
+    [Dependency] private SharedCombatModeSystem _combatMode = default!;
 
-    [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
-    [Dependency] protected readonly EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
-    [Dependency] protected readonly EntityQuery<NpcControllerComponent> ControllerQuery = default!;
-    [Dependency] protected readonly EntityQuery<PassiveGoalTargetComponent> PassiveGoalQuery = default!;
-    [Dependency] private readonly EntityQuery<ActiveNPCComponent> _activeQuery = default!;
+    [Dependency] protected EntityQuery<GoapComponent> GoapQuery = default!;
+    [Dependency] protected EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
+    [Dependency] protected EntityQuery<NpcControllerComponent> ControllerQuery = default!;
+    [Dependency] protected EntityQuery<PassiveGoalTargetComponent> PassiveGoalQuery = default!;
+    [Dependency] private EntityQuery<ActiveNPCComponent> _activeQuery = default!;
 
     protected readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, HashSet<ProtoId<ExecutableGoalPrototype>>>
         Executables = new();
@@ -53,16 +53,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<ControllableNpcComponent, BeforeUtilityAiGoalFinished>(OnUtilityAiGoalFinished);
-
-        SubscribeAllEvent<SetGoalRequest>(OnGoalRequest);
-        SubscribeAllEvent<SetVerbGoalRequest>(OnSetVerbGoalRequest);
-        SubscribeAllEvent<PassiveGoalRequest>(OnPassiveGoalRequest);
-        SubscribeAllEvent<PassiveGoalRemoveRequest>(OnPassiveGoalRemoveRequest);
-        SubscribeNetworkEvent<SetCombatModeMessage>(OnSetCombatModeMessage);
-
         Subs.ProtoReload<ExecutableGoalPrototype>(Proto, ReloadPrototypes);
-
         ReloadPrototypes();
     }
 
@@ -79,6 +70,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    [SubscribeNetworkEvent]
     private void OnSetVerbGoalRequest(SetVerbGoalRequest request, EntitySessionEventArgs args)
     {
         if (!Timing.IsFirstTimePredicted
@@ -107,6 +99,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref BeforeUtilityAiGoalFinished args)
     {
         if (Executables.TryGetValue(args.Goal, out var execs)
@@ -161,6 +154,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         DirtyField(ent.AsNullable(), nameof(ControllableNpcComponent.Queue));
     }
 
+    [SubscribeNetworkEvent]
     private void OnGoalRequest(SetGoalRequest request, EntitySessionEventArgs args)
     {
         if (!Timing.IsFirstTimePredicted
@@ -225,6 +219,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    [SubscribeNetworkEvent]
     private void OnPassiveGoalRequest(PassiveGoalRequest request, EntitySessionEventArgs args)
     {
         if (!Timing.IsFirstTimePredicted || args.SenderSession.AttachedEntity is not { } uid)
@@ -233,6 +228,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         SetPassiveTarget(uid, request.GoalId, GetEntityList(request.Entities));
     }
 
+    [SubscribeNetworkEvent]
     private void OnPassiveGoalRemoveRequest(PassiveGoalRemoveRequest request, EntitySessionEventArgs args)
     {
         if (!Timing.IsFirstTimePredicted
@@ -249,6 +245,7 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    [SubscribeNetworkEvent]
     private void OnSetCombatModeMessage(SetCombatModeMessage msg, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity is not { } player)

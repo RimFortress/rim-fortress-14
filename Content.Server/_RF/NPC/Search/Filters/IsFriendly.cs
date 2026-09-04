@@ -10,9 +10,9 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// </summary>
 public sealed partial class IsFriendly : BaseSearchFilter<IsFriendly>;
 
-public sealed class IsFriendlySearchFilterSystem : NpcSearchFilterSystem<IsFriendly>
+public sealed partial class IsFriendlySearchFilterSystem : NpcSearchFilterSystem<IsFriendly>
 {
-    [Dependency] private readonly NpcFactionSystem _faction = default!;
+    [Dependency] private NpcFactionSystem _faction = default!;
 
     protected override bool Filter(GoapState state, EntityUid target, IsFriendly filter)
         => _faction.IsEntityFriendly(Goap.GetValue(state, GoapState.Owner), target);

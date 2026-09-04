@@ -11,9 +11,9 @@ namespace Content.Server._RF.NPC.Search.Filters;
 /// </summary>
 public sealed partial class IsCritical : BaseSearchFilter<IsCritical>;
 
-public sealed class IsCriticalGoapActionSystem : NpcSearchFilterSystem<IsCritical>
+public sealed partial class IsCriticalGoapActionSystem : NpcSearchFilterSystem<IsCritical>
 {
-    [Dependency] private readonly MobStateSystem _mobState = default!;
+    [Dependency] private MobStateSystem _mobState = default!;
 
     public override void Initialize()
     {

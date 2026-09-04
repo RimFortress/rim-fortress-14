@@ -19,7 +19,7 @@ namespace Content.Client.ContextMenu.UI
     /// <remarks>
     ///     This largely involves setting up timers to open and close sub-menus when hovering over other menu elements.
     /// </remarks>
-    public sealed class ContextMenuUIController : UIController, IOnStateEntered<GameplayState>, IOnStateExited<GameplayState>, IOnSystemChanged<CombatModeSystem>, IOnStateEntered<MappingState>, IOnStateExited<MappingState>
+    public sealed partial class ContextMenuUIController : UIController, IOnStateEntered<GameplayState>, IOnStateExited<GameplayState>, IOnSystemChanged<CombatModeSystem>, IOnStateEntered<MappingState>, IOnStateExited<MappingState>
         , IOnStateEntered<RimFortressState>, IOnStateExited<RimFortressState> // RimFortress
     {
         public static readonly TimeSpan HoverDelay = TimeSpan.FromSeconds(0.2);
@@ -101,7 +101,7 @@ namespace Content.Client.ContextMenu.UI
 
             Close();
             RootMenu.OnPopupHide -= Close;
-            RootMenu.Dispose();
+            RootMenu.Orphan();
             RootMenu = default!;
         }
 
