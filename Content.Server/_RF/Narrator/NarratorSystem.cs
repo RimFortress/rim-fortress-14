@@ -9,7 +9,7 @@ using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Narrator;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
-using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.EntityTable;
 using Content.Shared.Item;
 using Robust.Server.Player;
@@ -36,8 +36,8 @@ public sealed partial class NarratorSystem : EntitySystem
     [Dependency] private OwnershipSystem _ownership = default!;
     [Dependency] private MathCurvesSystem _curves = default!;
 
-    [Dependency] private readonly EntityQuery<ItemComponent> _itemQuery = default!;
-    [Dependency] private readonly EntityQuery<ConstructionComponent> _constructionQuery = default!;
+    [Dependency] private EntityQuery<ItemComponent> _itemQuery;
+    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery;
 
     private readonly Dictionary<EntityUid, int> _lastWaitPoint = new();
 

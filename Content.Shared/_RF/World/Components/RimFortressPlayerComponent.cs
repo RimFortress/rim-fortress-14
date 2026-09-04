@@ -1,6 +1,6 @@
 using Robust.Shared.GameStates;
 
-namespace Content.Shared._RF.World;
+namespace Content.Shared._RF.World.Components;
 
 /// <summary>
 /// Represents the entity of the RimFortress player

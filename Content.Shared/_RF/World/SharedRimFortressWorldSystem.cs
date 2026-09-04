@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared._RF.World.Components;
 using Content.Shared.GameTicking;
 using Content.Shared.Light.Components;
 using Content.Shared.Maps;
@@ -212,14 +213,11 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     /// </summary>
     public bool TryGetWorld([NotNullWhen(true)] out EntityUid? ent)
     {
-        var query = AllEntityQuery<RimFortressRuleComponent>();
+        var query = EntityQueryEnumerator<WorldMapComponent>();
 
-        while (query.MoveNext(out var comp))
+        while (query.MoveNext(out var uid, out _))
         {
-            if (!Exists(comp.WorldMap))
-                continue;
-
-            ent = comp.WorldMap;
+            ent = uid;
             return true;
         }
 

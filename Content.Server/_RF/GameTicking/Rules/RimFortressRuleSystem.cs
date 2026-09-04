@@ -4,7 +4,7 @@ using Content.Server.Chat.Managers;
 using Content.Server.GameTicking.Rules;
 using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
-using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.Database;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
@@ -35,17 +35,6 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     [Dependency] private IAdminLogManager _adminLogger = default!;
     [Dependency] private IChatManager _chat = default!;
 
-    private ISawmill _sawmill = default!;
-
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        base.Initialize();
-        _sawmill = LogManager.GetSawmill("rf_rule");
-
-        SubscribeLocalEvent<PlayerBeforeSpawnEvent>(OnBeforeSpawn);
-    }
-
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
     {
         base.Added(uid, comp, gameRule, args);
@@ -53,6 +42,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         _world.InitializeWorld(uid, comp);
     }
 
+    [SubscribeLocalEvent]
     private void OnBeforeSpawn(PlayerBeforeSpawnEvent ev)
     {
         var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
@@ -166,7 +156,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         comp.TargetCoordinates = targetCoordinates;
 
         var str = $"Added world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}";
-        _sawmill.Info(str);
+        Log.Info(str);
         _chat.SendAdminAnnouncement(str);
 
         _adminLogger.Add(LogType.EventStarted, $"Added game rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}");
@@ -245,7 +235,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
             if (delayTime > TimeSpan.Zero)
             {
                 var str = $"Queued start for world rule {ToPrettyString(ruleEntity)} with delay {delayTime}";
-                _sawmill.Info(str);
+                Log.Info(str);
                 _chat.SendAdminAnnouncement(str);
                 _adminLogger.Add(LogType.EventStarted,
                     $"Queued start for world rule {ToPrettyString(ruleEntity)} with delay {delayTime}");
@@ -257,7 +247,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         }
 
         var msg = $"Started world rule {ToPrettyString(ruleEntity)}";
-        _sawmill.Info(msg);
+        Log.Info(msg);
         _chat.SendAdminAnnouncement(msg);
         _adminLogger.Add(LogType.EventStarted,
             $"Started world rule {ToPrettyString(ruleEntity)}");
@@ -288,7 +278,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         RemComp<ActiveGameRuleComponent>(uid);
         EnsureComp<EndedGameRuleComponent>(uid);
 
-        _sawmill.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
+        Log.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
         _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
 
         var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Target, uid.Comp.TargetCoordinates);

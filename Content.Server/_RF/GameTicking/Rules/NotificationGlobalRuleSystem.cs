@@ -1,7 +1,7 @@
 using Content.Server._RF.Notifications.Systems;
 using Content.Server.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
-using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.GameTicking.Components;
 
 namespace Content.Server._RF.GameTicking.Rules;

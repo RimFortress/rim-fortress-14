@@ -13,6 +13,7 @@ using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Parallax.Fog;
+using Content.Shared._RF.World.Components;
 using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
@@ -80,6 +81,7 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         }
 
         EnsureComp<FogOfWarComponent>(map);
+        EnsureComp<WorldMapComponent>(map);
 
         rule.WorldMap = map;
         Dirty(uid, rule);

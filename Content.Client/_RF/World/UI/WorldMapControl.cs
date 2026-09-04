@@ -6,6 +6,7 @@ using Content.Client.UserInterface.Controls;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared._RF.Pinpointer;
 using Content.Shared._RF.World;
+using Content.Shared._RF.World.Components;
 using Content.Shared.Follower;
 using Content.Shared.Light.Components;
 using Content.Shared.Maps;
