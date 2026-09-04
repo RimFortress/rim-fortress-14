@@ -39,11 +39,11 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
     [Dependency] private SharedUtilityAiSystem _utilityAi = default!;
     [Dependency] private SharedCombatModeSystem _combatMode = default!;
 
-    [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
-    [Dependency] protected readonly EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
-    [Dependency] protected readonly EntityQuery<NpcControllerComponent> ControllerQuery = default!;
-    [Dependency] protected readonly EntityQuery<PassiveGoalTargetComponent> PassiveGoalQuery = default!;
-    [Dependency] private readonly EntityQuery<ActiveNPCComponent> _activeQuery = default!;
+    [Dependency] protected EntityQuery<GoapComponent> GoapQuery = default!;
+    [Dependency] protected EntityQuery<ControllableNpcComponent> ControllableQuery = default!;
+    [Dependency] protected EntityQuery<NpcControllerComponent> ControllerQuery = default!;
+    [Dependency] protected EntityQuery<PassiveGoalTargetComponent> PassiveGoalQuery = default!;
+    [Dependency] private EntityQuery<ActiveNPCComponent> _activeQuery = default!;
 
     protected readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, HashSet<ProtoId<ExecutableGoalPrototype>>>
         Executables = new();

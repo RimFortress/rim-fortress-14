@@ -12,7 +12,7 @@ namespace Content.Shared._RF.Construction;
 /// <summary>
 /// A version of ConstructionSystem, which allows to work with construction ghosts on the server, for the RimFortress needs
 /// </summary>
-public abstract class SharedCommonConstructionSystem : EntitySystem // Shared common, great naming
+public abstract partial class SharedCommonConstructionSystem : EntitySystem // Shared common, great naming
 {
     [Dependency] protected EntityLookupSystem Lookup = default!;
     [Dependency] private SharedPopupSystem _popup = default!;

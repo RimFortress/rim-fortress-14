@@ -39,8 +39,8 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
     [Dependency] private INetManager _net = default!;
     [Dependency] private MathCurvesSystem _mathCurves = default!;
 
-    [Dependency] private readonly EntityQuery<SearchTrackedComponent> _trackedQuery = default!;
-    [Dependency] private readonly EntityQuery<NpcSearcherComponent> _searcherQuery = default!;
+    [Dependency] private EntityQuery<SearchTrackedComponent> _trackedQuery = default!;
+    [Dependency] private EntityQuery<NpcSearcherComponent> _searcherQuery = default!;
 
     /// <summary>
     /// Agents currently holding a live result for a given query prototype.

@@ -43,7 +43,7 @@ public sealed partial class WorkshopSystem : EntitySystem
     [Dependency] private SharedDoAfterSystem _doAfter = default!;
     [Dependency] private SharedNpcSearcherSystem _searcher = default!;
 
-    [Dependency] private readonly EntityQuery<StackComponent> _stackQuery = default!;
+    [Dependency] private EntityQuery<StackComponent> _stackQuery = default!;
 
     public override void Initialize()
     {

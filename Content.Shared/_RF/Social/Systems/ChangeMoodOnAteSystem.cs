@@ -9,7 +9,7 @@ public sealed partial class ChangeMoodOnAteSystem : EntitySystem
     [Dependency] private EntityWhitelistSystem _whitelist = default!;
     [Dependency] private SocialSystem _social = default!;
 
-    [Dependency] private readonly EntityQuery<ChangeMoodOnAteComponent> _query = default!;
+    [Dependency] private EntityQuery<ChangeMoodOnAteComponent> _query = default!;
 
     [SubscribeLocalEvent]
     private void OnFullyEaten(Entity<MetaDataComponent> ent, ref FullyEatenEvent args)

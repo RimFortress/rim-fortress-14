@@ -23,7 +23,7 @@ public sealed partial class MobState : BaseGoapCondition<MobState>
 
 public sealed partial class MobStateConditionSystem : GoapConditionSystem<MobState>
 {
-    [Dependency] private readonly EntityQuery<MobStateComponent> _mobStateQuery = default!;
+    [Dependency] private EntityQuery<MobStateComponent> _mobStateQuery = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, MobState condition)
     {

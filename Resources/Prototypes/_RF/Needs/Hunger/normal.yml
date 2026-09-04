@@ -37,7 +37,6 @@
   icon:
     sprite: /Textures/Interface/Misc/food_icons.rsi
     state: overfed
-  alert: Overfed
   effects:
   - !type:AddMood
     proto: MoodOverfed

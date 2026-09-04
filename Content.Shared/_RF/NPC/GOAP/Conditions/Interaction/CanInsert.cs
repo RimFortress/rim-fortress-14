@@ -14,7 +14,7 @@ public sealed partial class CanInsertSystem : GoapConditionSystem<CanInsert>
 {
     [Dependency] private InventorySystem _inventory = default!;
     [Dependency] private SharedStorageSystem _storage = default!;
-    [Dependency] private readonly EntityQuery<StorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<StorageComponent> _storageQuery = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, CanInsert condition)
     {

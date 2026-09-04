@@ -6,7 +6,7 @@ using Robust.Shared.Containers;
 
 namespace Content.Shared._RF.Stockpile.Systems;
 
-public sealed class ContainerStockSupplierSystem : EntitySystem
+public sealed partial class ContainerStockSupplierSystem : EntitySystem
 {
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private StockpileSystem _stockpile = default!;

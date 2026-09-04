@@ -29,9 +29,9 @@ public sealed partial class EngagementSystem : EntitySystem
     [Dependency] private SharedEntityEffectsSystem _entityEffects = default!;
     [Dependency] private SharedGoapSystem _goap = default!;
 
-    [Dependency] private readonly EntityQuery<EngagementComponent> _engagementQuery = default!;
-    [Dependency] private readonly EntityQuery<EngagementParticipantComponent> _participantQuery = default!;
-    [Dependency] private readonly EntityQuery<GoapComponent> _goapQuery = default!;
+    [Dependency] private EntityQuery<EngagementComponent> _engagementQuery = default!;
+    [Dependency] private EntityQuery<EngagementParticipantComponent> _participantQuery = default!;
+    [Dependency] private EntityQuery<GoapComponent> _goapQuery = default!;
 
     [SubscribeLocalEvent]
     private void OnParticipantRemove(Entity<EngagementParticipantComponent> ent, ref ComponentRemove args)

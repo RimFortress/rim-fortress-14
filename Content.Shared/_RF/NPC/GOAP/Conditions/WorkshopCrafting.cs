@@ -17,7 +17,7 @@ public sealed partial class WorkshopCrafting : BaseGoapCondition<WorkshopCraftin
 
 public sealed partial class WorkshopCraftingGoapConditionSystem : GoapConditionSystem<WorkshopCrafting>
 {
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _query = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, WorkshopCrafting condition)
         => TryGet(state, condition.TargetKey, out var target)

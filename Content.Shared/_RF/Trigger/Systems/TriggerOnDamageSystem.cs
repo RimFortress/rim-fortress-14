@@ -6,7 +6,7 @@ namespace Content.Shared._RF.Trigger.Systems;
 
 public sealed partial class TriggerOnDamageSystem : EntitySystem
 {
-    [Dependency] private readonly TriggerSystem _trigger  = default!;
+    [Dependency] private TriggerSystem _trigger  = default!;
 
     [SubscribeLocalEvent]
     private void OnDamageChanged(Entity<TriggerOnDamageComponent> ent, ref DamageDealtEvent args)

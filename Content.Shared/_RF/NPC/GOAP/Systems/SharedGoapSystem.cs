@@ -27,7 +27,7 @@ namespace Content.Shared._RF.NPC.GOAP.Systems;
 /// A system that handles all the logic of the Goal-Oriented Action Planning AI
 /// and provides an API for working with it.
 /// </summary>
-public abstract class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
+public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChecker, IGoapActionPerformer
 {
     [Dependency] protected IGameTiming Timing = default!;
     [Dependency] private IRobustRandom _random = default!;

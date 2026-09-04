@@ -39,7 +39,7 @@ public sealed partial class Mood : BaseGoapCondition<Mood>
 public sealed partial class MoodGoapConditionSystem : GoapConditionSystem<Mood>
 {
     [Dependency] private SocialSystem _social = default!;
-    [Dependency] private readonly EntityQuery<SocialComponent> _query = default!;
+    [Dependency] private EntityQuery<SocialComponent> _query = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Mood condition)
     {

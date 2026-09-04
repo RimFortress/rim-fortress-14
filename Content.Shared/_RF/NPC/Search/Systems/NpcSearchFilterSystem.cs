@@ -18,8 +18,8 @@ public abstract partial class NpcSearchFilterSystem<T> : EntitySystem where T : 
     [Dependency] protected IPrototypeManager Proto = default!;
     [Dependency] protected SharedNpcSearcherSystem Searcher = default!;
 
-    [Dependency] protected readonly EntityQuery<GoapComponent> GoapQuery = default!;
-    [Dependency] protected readonly EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
+    [Dependency] protected EntityQuery<GoapComponent> GoapQuery = default!;
+    [Dependency] protected EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
 
     private readonly Dictionary<ProtoId<SearchQueryPrototype>, HashSet<(int Index, T Obj)>> _filterPrototypes = new();
     protected IReadOnlyDictionary<ProtoId<SearchQueryPrototype>, HashSet<(int Index, T Obj)>> FilterPrototypes =>

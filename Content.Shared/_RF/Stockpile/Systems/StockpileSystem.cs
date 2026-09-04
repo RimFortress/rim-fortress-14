@@ -28,10 +28,10 @@ public sealed partial class StockpileSystem : EntitySystem
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private SharedEntityStorageSystem _storage = default!;
 
-    [Dependency] private readonly EntityQuery<StockpileComponent> _stockQuery = default!;
-    [Dependency] private readonly EntityQuery<MapGridComponent> _gridQuery = default!;
-    [Dependency] private readonly EntityQuery<ContainerManagerComponent> _containerQuery = default!;
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<StockpileComponent> _stockQuery = default!;
+    [Dependency] private EntityQuery<MapGridComponent> _gridQuery = default!;
+    [Dependency] private EntityQuery<ContainerManagerComponent> _containerQuery = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery = default!;
 
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
 

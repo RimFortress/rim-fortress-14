@@ -13,7 +13,7 @@ namespace Content.Shared._RF.Notifications.Systems;
 /// <summary>
 /// A system that provides an API for creating notifications for players about various events.
 /// </summary>
-public abstract class SharedNotificationsSystem : EntitySystem
+public abstract partial class SharedNotificationsSystem : EntitySystem
 {
     [Dependency] protected IPrototypeManager Proto = default!;
     [Dependency] private IGameTiming _timing = default!;
@@ -32,16 +32,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
 
     private int _lastNotificationId;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<NotificationComponent, ComponentHandleState>(OnHandleState);
-        SubscribeLocalEvent<NotificationComponent, ComponentGetState>(OnGetState);
-
-        SubscribeNetworkEvent<RemoveNotificationRequest>(OnRemoveNotificationRequest);
-        SubscribeNetworkEvent<RemoveNotificationsRequest>(OnRemoveNotificationsRequest);
-    }
-
+    [SubscribeLocalEvent]
     private void OnHandleState(Entity<NotificationComponent> ent, ref ComponentHandleState args)
     {
         if (args.Current is not NotificationComponentState state)
@@ -62,11 +53,13 @@ public abstract class SharedNotificationsSystem : EntitySystem
         ent.Comp.Notifications = state.Notifications;
     }
 
+    [SubscribeLocalEvent]
     private void OnGetState(Entity<NotificationComponent> ent, ref ComponentGetState args)
     {
         args.State = new NotificationComponentState(ent.Comp.Notifications);
     }
 
+    [SubscribeNetworkEvent]
     private void OnRemoveNotificationRequest(RemoveNotificationRequest request, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity is not { } uid)
@@ -75,6 +68,7 @@ public abstract class SharedNotificationsSystem : EntitySystem
         RemoveNotification(uid, request.Id);
     }
 
+    [SubscribeNetworkEvent]
     private void OnRemoveNotificationsRequest(RemoveNotificationsRequest request, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity is not { } uid)

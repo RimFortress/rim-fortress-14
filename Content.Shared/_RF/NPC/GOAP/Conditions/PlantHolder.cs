@@ -46,8 +46,8 @@ public sealed partial class PlantHolder : BaseGoapCondition<PlantHolder>
 public sealed partial class PlantHolderConditionSystem : GoapConditionSystem<PlantHolder>
 {
     [Dependency] private PlantTraySystem _plantTray = default!;
-    [Dependency] private readonly EntityQuery<PlantHolderComponent> _holderQuery = default!;
-    [Dependency] private readonly EntityQuery<PlantTrayComponent> _trayQuery = default!;
+    [Dependency] private EntityQuery<PlantHolderComponent> _holderQuery = default!;
+    [Dependency] private EntityQuery<PlantTrayComponent> _trayQuery = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, PlantHolder condition)
         => TryGet(state, condition.TargetKey, out var target)

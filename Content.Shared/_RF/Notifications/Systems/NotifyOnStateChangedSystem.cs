@@ -5,18 +5,13 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Notifications.Systems;
 
-public sealed class NotifyOnStateChangedSystem : EntitySystem
+public sealed partial class NotifyOnStateChangedSystem : EntitySystem
 {
     [Dependency] private IPrototypeManager _proto = default!;
     [Dependency] private OwnershipSystem _ownership = default!;
     [Dependency] private SharedNotificationsSystem _notifications = default!;
 
-    /// <inheritdoc/>
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<NotifyOnStateChangedComponent, MobStateChangedEvent>(OnMobStateChanged);
-    }
-
+    [SubscribeLocalEvent]
     private void OnMobStateChanged(Entity<NotifyOnStateChangedComponent> ent, ref MobStateChangedEvent ev)
     {
         if (!ent.Comp.Notifications.TryGetValue(ev.NewMobState, out var protoId)

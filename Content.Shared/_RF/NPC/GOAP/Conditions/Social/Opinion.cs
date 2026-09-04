@@ -39,7 +39,7 @@ public sealed partial class Opinion : BaseGoapCondition<Opinion>
 public sealed partial class OpinionGoapConditionSystem : GoapConditionSystem<Opinion>
 {
     [Dependency] private SocialSystem _social = default!;
-    [Dependency] private readonly EntityQuery<SocialComponent> _query = default!;
+    [Dependency] private EntityQuery<SocialComponent> _query = default!;
 
     protected override bool ConditionCheck(EntityUid uid, GoapState state, Opinion condition)
     {
