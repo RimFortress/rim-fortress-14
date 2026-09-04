@@ -11,11 +11,11 @@ using Robust.Shared.Prototypes;
 namespace Content.Client._RF.Parallax.Fog;
 
 
-public sealed class FogOfWarOverlay : Overlay
+public sealed partial class FogOfWarOverlay : Overlay
 {
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IClyde _clyde = default!;
+    [Dependency] private IEntityManager _entityManager = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IClyde _clyde = default!;
 
     private static readonly ProtoId<ShaderPrototype> FogShader = "Fog";
 
