@@ -13,7 +13,7 @@ public sealed partial class StockTotalSupplied : BaseSearchConsideration<StockTo
 
 public sealed partial class StockTotalSuppliedSearchConsiderationSystem : NpcSearchConsiderationSystem<StockTotalSupplied>
 {
-    [Dependency] private readonly StockpileSystem _stockpile = default!;
+    [Dependency] private StockpileSystem _stockpile = default!;
 
     public override void Initialize()
     {

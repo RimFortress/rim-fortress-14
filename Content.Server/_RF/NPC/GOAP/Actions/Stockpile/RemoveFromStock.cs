@@ -21,7 +21,7 @@ public sealed partial class RemoveFromStock : BaseGoapAction<RemoveFromStock>
 public sealed partial class RemoveFromStockGoapAction : GoapActionSystem<RemoveFromStock>
 {
     [Dependency] private StockpileSystem _stockpile = default!;
-    [Dependency] private readonly EntityQuery<StockpileContentComponent> _query = default!;
+    [Dependency] private EntityQuery<StockpileContentComponent> _query;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, RemoveFromStock action)
     {

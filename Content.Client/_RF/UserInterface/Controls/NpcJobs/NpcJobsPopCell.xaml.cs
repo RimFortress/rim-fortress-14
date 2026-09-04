@@ -7,7 +7,7 @@ namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
 [GenerateTypedNameReferences]
 public sealed partial class NpcJobsPopCell : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     public NpcJobsPopCell()
     {

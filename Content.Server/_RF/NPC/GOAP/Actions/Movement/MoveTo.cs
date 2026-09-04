@@ -63,7 +63,7 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
     [Dependency] private NPCSteeringSystem _steering = default!;
     [Dependency] private PathfindingSystem _pathfinding = default!;
     [Dependency] private TransformSystem _transform = default!;
-    [Dependency] private readonly EntityQuery<NPCSteeringComponent> _steeringQuery = default!;
+    [Dependency] private EntityQuery<NPCSteeringComponent> _steeringQuery;
 
     /// <summary>
     /// The base key for storing the path that the agent must follow.

@@ -17,7 +17,7 @@ public sealed partial class UnPullActionSystem : GoapActionSystem<UnPull>
     [Dependency] private ActionBlockerSystem _actionBlocker = default!;
     [Dependency] private PullingSystem _pulling = default!;
 
-    [Dependency] private readonly EntityQuery<PullableComponent> _pullableQuery = default!;
+    [Dependency] private EntityQuery<PullableComponent> _pullableQuery;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, UnPull action)
     {

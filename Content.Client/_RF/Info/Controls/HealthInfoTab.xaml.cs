@@ -19,9 +19,9 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class HealthInfoTab : Control, IInfoTab
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
 
     private readonly PopInfoUIController _controller;
 

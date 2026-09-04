@@ -8,7 +8,7 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class SkillsInfoTab : Control, IInfoTab
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     public SkillsInfoTab()
     {

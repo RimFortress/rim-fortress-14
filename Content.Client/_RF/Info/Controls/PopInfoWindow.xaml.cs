@@ -11,9 +11,9 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class PopInfoWindow : FancyWindow
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IEntityNetworkManager _net = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IEntityNetworkManager _net = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
 
     private EntityUid? _uid;
 

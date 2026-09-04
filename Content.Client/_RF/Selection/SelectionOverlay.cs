@@ -13,13 +13,13 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Selection;
 
-public sealed class SelectionOverlay : Overlay
+public sealed partial class SelectionOverlay : Overlay
 {
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly IEyeManager _eye = default!;
+    [Dependency] private IEntityManager _entityManager = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IInputManager _input = default!;
+    [Dependency] private IEyeManager _eye = default!;
 
     private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
     private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";

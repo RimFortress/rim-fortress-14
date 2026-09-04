@@ -16,7 +16,7 @@ public sealed partial class SamePlantCountConsiderationSystem : NpcSearchConside
 {
     [Dependency] private OwnershipSystem _ownership = default!;
     [Dependency] private PlantTraySystem _plantTray = default!;
-    [Dependency] private readonly EntityQuery<SeedComponent> _seedQuery = default!;
+    [Dependency] private EntityQuery<SeedComponent> _seedQuery;
 
     public override void Initialize()
     {

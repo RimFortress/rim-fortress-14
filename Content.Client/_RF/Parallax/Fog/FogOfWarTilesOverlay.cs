@@ -13,11 +13,11 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Parallax.Fog;
 
-public sealed class FogOfWarTilesOverlay : Overlay
+public sealed partial class FogOfWarTilesOverlay : Overlay
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IResourceCache _resource = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IResourceCache _resource = default!;
 
     private static readonly ProtoId<ContentTileDefinition> BackgroundTile = "FloorPlanetGrass";
 

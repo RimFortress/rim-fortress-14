@@ -14,7 +14,7 @@ public sealed partial class Pulled : BaseSearchFilter<Pulled>;
 
 public sealed partial class PulledSearchFilterSystem : NpcSearchFilterSystem<Pulled>
 {
-    [Dependency] private readonly EntityQuery<PullableComponent> _query = default!;
+    [Dependency] private EntityQuery<PullableComponent> _query;
 
     [SubscribeLocalEvent]
     private void OnPullStarted(Entity<SearchTrackedComponent> ent, ref PullStartedMessage ev)

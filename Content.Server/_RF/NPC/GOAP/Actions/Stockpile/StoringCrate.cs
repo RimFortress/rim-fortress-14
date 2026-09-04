@@ -56,9 +56,9 @@ public sealed partial class StoringCrateGoapActionSystem : GoapActionSystem<Stor
     [Dependency] private PullingSystem _pulling = default!;
     [Dependency] private MovePullingGoapActionSystem _movePulling = default!;
 
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
-    [Dependency] private readonly EntityQuery<PullerComponent> _pullerQuery = default!;
-    [Dependency] private readonly EntityQuery<PullableComponent> _pullableQuery = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
+    [Dependency] private EntityQuery<PullerComponent> _pullerQuery;
+    [Dependency] private EntityQuery<PullableComponent> _pullableQuery;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, StoringCrate action)
     {

@@ -77,8 +77,8 @@ public sealed partial class NpcConstructionSystem : GoapActionSystem<Constructio
     [Dependency] private ConstructionSystem _construction = default!;
     [Dependency] private NpcTimingSystem _npcTiming = default!;
 
-    [Dependency] private readonly EntityQuery<ActiveDoAfterComponent> _activeDoAfterQuery = default!;
-    [Dependency] private readonly EntityQuery<ConstructionComponent> _constructionQuery = default!;
+    [Dependency] private EntityQuery<ActiveDoAfterComponent> _activeDoAfterQuery;
+    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery;
 
     private static readonly ProtoId<ToolQualityPrototype> AnchoringQuality = "Anchoring";
     private static readonly ProtoId<ToolQualityPrototype> WeldingQuality = "Welding";

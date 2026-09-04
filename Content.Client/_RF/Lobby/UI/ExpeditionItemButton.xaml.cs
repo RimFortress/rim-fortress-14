@@ -8,7 +8,7 @@ namespace Content.Client._RF.Lobby.UI;
 [GenerateTypedNameReferences]
 public sealed partial class ExpeditionItemButton : Control
 {
-    [Dependency] private readonly IPrototypeManager _protoManager = default!;
+    [Dependency] private IPrototypeManager _protoManager = default!;
 
     public event Action<(int Old, int New)>? OnPointsSet;
 

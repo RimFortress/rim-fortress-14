@@ -69,8 +69,8 @@ public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<Stori
     [Dependency] private PickupActionSystem _pickup = default!;
     [Dependency] private HandsSystem _hands = default!;
 
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
-    [Dependency] private readonly EntityQuery<StockpileContentComponent> _contentQuery = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
+    [Dependency] private EntityQuery<StockpileContentComponent> _contentQuery;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, StoringItem action)
     {

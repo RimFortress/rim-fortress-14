@@ -25,8 +25,8 @@ public sealed partial class WorkshopItemSearchFilterSystem : NpcSearchGoapKeyFil
 {
     [Dependency] private ItemSystem _item = default!;
     [Dependency] private WorkshopSystem _workshop = default!;
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _workshopQuery = default!;
-    [Dependency] private readonly EntityQuery<ItemComponent> _itemQuery = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _workshopQuery;
+    [Dependency] private EntityQuery<ItemComponent> _itemQuery;
 
     protected override HashSet<StateKey<EntityUid>> GetSubscribeKeys(WorkshopItem filter)
         => new() { filter.TargetKey };

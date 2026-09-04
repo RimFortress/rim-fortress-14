@@ -23,7 +23,7 @@ public sealed partial class MeleeDamage : BaseSearchConsideration<MeleeDamage>
 
 public sealed partial class MeleeDamageConsiderationSystem : NpcSearchConsiderationSystem<MeleeDamage>
 {
-    [Dependency] private readonly EntityQuery<MeleeWeaponComponent> _meleeQuery = default!;
+    [Dependency] private EntityQuery<MeleeWeaponComponent> _meleeQuery;
 
     public override void Initialize()
     {

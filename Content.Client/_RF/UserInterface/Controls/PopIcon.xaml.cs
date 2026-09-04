@@ -21,9 +21,9 @@ namespace Content.Client._RF.UserInterface.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class PopIcon : Button
 {
-    [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IEntityNetworkManager _net = default!;
+    [Dependency] private IEntityManager _entityManager = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IEntityNetworkManager _net = default!;
 
     private SocialSystem _social = default!;
     private NeedsSystem _needs = default!;

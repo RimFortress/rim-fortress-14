@@ -26,7 +26,7 @@ public sealed partial class EngagementInvites : BaseSearchQuery<EngagementInvite
 public sealed partial class EngagementInvitesSearchQuerySystem : NpcSearchQuerySystem<EngagementInvites>
 {
     [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private readonly EntityQuery<EngagementComponent> _query = default!;
+    [Dependency] private EntityQuery<EngagementComponent> _query;
 
     [SubscribeLocalEvent]
     private void OnInviteSent(Entity<NpcSearcherComponent> ent, ref EngagementInviteSent ev)

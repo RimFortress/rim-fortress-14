@@ -21,7 +21,7 @@ public sealed partial class Bleed : BaseSearchConsideration<Bleed>
 
 public sealed partial class BleedSearchConsiderationSystem : NpcSearchConsiderationSystem<Bleed>
 {
-    [Dependency] private readonly EntityQuery<BloodstreamComponent> _query = default!;
+    [Dependency] private EntityQuery<BloodstreamComponent> _query;
 
     public override void Initialize()
     {

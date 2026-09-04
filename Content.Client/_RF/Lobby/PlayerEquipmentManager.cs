@@ -7,10 +7,10 @@ using Robust.Shared.Prototypes;
 namespace Content.Client._RF.Lobby;
 
 
-public sealed class PlayerEquipmentManager : IPostInjectInit, IPlayerEquipmentManager
+public sealed partial class PlayerEquipmentManager : IPostInjectInit, IPlayerEquipmentManager
 {
-    [Dependency] private readonly IClientNetManager _net = default!;
-    [Dependency] private readonly IBaseClient _client = default!;
+    [Dependency] private IClientNetManager _net = default!;
+    [Dependency] private IBaseClient _client = default!;
 
     public Dictionary<EntProtoId, int> Equipment { get; private set; } = new();
 

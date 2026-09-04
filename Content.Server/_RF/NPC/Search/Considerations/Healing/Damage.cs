@@ -23,7 +23,7 @@ public sealed partial class Damage : BaseSearchConsideration<Damage>
 public sealed partial class DamageConsiderationSystem : NpcSearchConsiderationSystem<Damage>
 {
     [Dependency] private DamageableSystem _damageable = default!;
-    [Dependency] private readonly EntityQuery<DamageableComponent> _query = default!;
+    [Dependency] private EntityQuery<DamageableComponent> _query;
 
     public override void Initialize()
     {

@@ -15,7 +15,7 @@ public sealed partial class BloodLevel : BaseSearchConsideration<BloodLevel>;
 public sealed partial class BloodLevelSearchConsiderationSystem : NpcSearchConsiderationSystem<BloodLevel>
 {
     [Dependency] private BloodstreamSystem _bloodstream = default!;
-    [Dependency] private readonly EntityQuery<BloodstreamComponent> _query = default!;
+    [Dependency] private EntityQuery<BloodstreamComponent> _query;
 
     public override void Initialize()
     {

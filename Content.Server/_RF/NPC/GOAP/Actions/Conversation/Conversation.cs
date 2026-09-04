@@ -40,7 +40,7 @@ public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conv
     [Dependency] private MoveToActionSystem _moveTo = default!;
     [Dependency] private RotateToFaceSystem _rotate = default!;
     [Dependency] private ChatSystem _chat = default!;
-    [Dependency] private readonly EntityQuery<ConversationActorComponent> _actorQuery = default!;
+    [Dependency] private EntityQuery<ConversationActorComponent> _actorQuery;
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, Conversation action)
     {

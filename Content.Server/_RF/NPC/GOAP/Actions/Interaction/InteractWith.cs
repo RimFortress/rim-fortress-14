@@ -47,7 +47,7 @@ public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
     [Dependency] private CombatModeSystem _combatMode = default!;
     [Dependency] private InteractionSystem _interaction = default!;
 
-    [Dependency] private readonly EntityQuery<DoAfterComponent> _doAfterQuery = default!;
+    [Dependency] private EntityQuery<DoAfterComponent> _doAfterQuery;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, InteractWith action) => 1f;
 

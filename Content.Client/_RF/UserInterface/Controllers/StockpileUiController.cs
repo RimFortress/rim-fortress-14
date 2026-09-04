@@ -24,17 +24,17 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controllers;
 
-public sealed class StockpileUiController :
+public sealed partial class StockpileUiController :
     WindowUiController<StockpileSettingsWindow>,
     IOnSystemLoaded<StockpileSystem>,
     IOnStateEntered<RimFortressState>,
     IOnStateExited<RimFortressState>
 {
-    [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly IEyeManager _eye = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IEntityManager _entManager = default!;
-    [Dependency] private readonly IOverlayManager _overlay = default!;
+    [Dependency] private IInputManager _input = default!;
+    [Dependency] private IEyeManager _eye = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entManager = default!;
+    [Dependency] private IOverlayManager _overlay = default!;
     [UISystemDependency] private readonly TransformSystem _xform = default!;
     [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;

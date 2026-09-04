@@ -16,7 +16,7 @@ public sealed partial class AccessibleSystem : NpcSearchFilterSystem<Accessible>
 {
     [Dependency] private ContainerSystem _container = default!;
     [Dependency] private WeldableSystem _weldable = default!;
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
 
     protected override bool Filter(GoapState state, EntityUid target, Accessible filter)
     {

@@ -14,8 +14,8 @@ namespace Content.Client._RF.World.UI;
 [GenerateTypedNameReferences]
 public sealed partial class WorldMapWindow : FancyWindow
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPlayerManager _player = default!;
 
     public WorldMapWindow()
     {

@@ -11,7 +11,7 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class OpinionInfoButton : Control
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     public int Value { get; private set; }
     public Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> Effects { get; private set; } = new();

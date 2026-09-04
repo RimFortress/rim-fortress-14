@@ -15,7 +15,7 @@ public sealed partial class WorkshopActiveRecipe : BaseSearchFilter<WorkshopActi
 public sealed partial class WorkshopActiveRecipeSearchFilterSystem : NpcSearchFilterSystem<WorkshopActiveRecipe>
 {
     [Dependency] private WorkshopSystem _workshop = default!;
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _query;
 
     public override void Initialize()
     {

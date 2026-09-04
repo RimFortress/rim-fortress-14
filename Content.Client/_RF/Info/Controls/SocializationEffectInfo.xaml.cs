@@ -13,8 +13,8 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class SocializationEffectInfo : ContainerButton
 {
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IEntityManager _entity = default!;
 
     public const string OddRowStyleClass = "odd-row";
     public const string EvenRowStyleClass = "even-row";

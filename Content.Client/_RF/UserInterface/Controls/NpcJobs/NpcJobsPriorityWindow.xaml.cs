@@ -15,8 +15,8 @@ namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
 [GenerateTypedNameReferences]
 public sealed partial class NpcJobsPriorityWindow : FancyWindow
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPlayerManager _player = default!;
 
     private NpcJobsSystem _npcJobs = default!;
 

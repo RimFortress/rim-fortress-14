@@ -12,9 +12,9 @@ namespace Content.Client._RF.UserInterface.Controls.Stockpile;
 [GenerateTypedNameReferences]
 public sealed partial class StockpileSettingsWindow : FancyWindow
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IComponentFactory _factory = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IComponentFactory _factory = default!;
 
     private static readonly ProtoId<EntityCategoryPrototype> DoNotMapCategory = "DoNotMap";
 

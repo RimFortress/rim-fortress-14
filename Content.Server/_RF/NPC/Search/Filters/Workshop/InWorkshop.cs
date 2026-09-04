@@ -16,7 +16,7 @@ public sealed partial class InWorkshop : BaseSearchFilter<InWorkshop>;
 public sealed partial class InWorkshopSearchFilterSystem : NpcSearchFilterSystem<InWorkshop>
 {
     [Dependency] private ContainerSystem _container = default!;
-    [Dependency] private readonly EntityQuery<WorkshopComponent> _query = default!;
+    [Dependency] private EntityQuery<WorkshopComponent> _query;
 
     public override void Initialize()
     {

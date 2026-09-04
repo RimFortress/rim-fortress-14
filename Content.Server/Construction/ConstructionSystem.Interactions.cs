@@ -32,7 +32,7 @@ namespace Content.Server.Construction
 #if EXCEPTION_TOLERANCE
         [Dependency] private IRuntimeLog _runtimeLog = default!;
 #endif
-        [Dependency] private readonly SkillsSystem _skills = default!; // RimFortress
+        [Dependency] private SkillsSystem _skills = default!; // RimFortress
 
         private readonly Queue<EntityUid> _constructionUpdateQueue = new();
         private readonly HashSet<EntityUid> _queuedUpdates = new();

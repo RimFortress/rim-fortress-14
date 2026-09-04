@@ -5,9 +5,9 @@ using Robust.Client.UserInterface.Controllers;
 
 namespace Content.Client._RF.UserInterface.Controllers;
 
-public sealed class NotificationsPanelUiController : UIController, IOnSystemLoaded<NotificationsSystem>
+public sealed partial class NotificationsPanelUiController : UIController, IOnSystemLoaded<NotificationsSystem>
 {
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IPlayerManager _player = default!;
 
     /// <summary>
     /// Called every time a new notification is created.

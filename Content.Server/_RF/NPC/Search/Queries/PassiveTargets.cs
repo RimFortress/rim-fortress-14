@@ -26,7 +26,7 @@ public sealed partial class PassiveTargets : BaseSearchQuery<PassiveTargets>
 public sealed partial class PassiveTargetQuerySystem : NpcSearchQuerySystem<PassiveTargets>
 {
     [Dependency] private ExecutableGoalSystem _executable = default!;
-    [Dependency] private readonly EntityQuery<NpcControllerComponent> _controllerQuery = default!;
+    [Dependency] private EntityQuery<NpcControllerComponent> _controllerQuery;
 
     [SubscribeLocalEvent]
     private void OnPassiveGoapSet(NpcPassiveGoalSet ev)

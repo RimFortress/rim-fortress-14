@@ -6,9 +6,9 @@ using Robust.Shared.Input;
 
 namespace Content.Client._RF.NPC.UI;
 
-public sealed class DraggableScrollContainer : ScrollContainer
+public sealed partial class DraggableScrollContainer : ScrollContainer
 {
-    [Dependency] private readonly IInputManager _input = default!;
+    [Dependency] private IInputManager _input = default!;
 
     private bool _dragging;
     private Vector2 _lastMousePosition;

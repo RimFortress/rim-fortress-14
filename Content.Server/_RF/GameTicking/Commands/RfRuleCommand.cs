@@ -10,9 +10,9 @@ using Robust.Shared.Toolshed;
 namespace Content.Server._RF.GameTicking.Commands;
 
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class RfRuleCommand : ToolshedCommand
+public sealed partial class RfRuleCommand : ToolshedCommand
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private IRobustRandom _random = default!;
 
     private RimFortressRuleSystem? _rule;
     private RimFortressWorldSystem? _world;

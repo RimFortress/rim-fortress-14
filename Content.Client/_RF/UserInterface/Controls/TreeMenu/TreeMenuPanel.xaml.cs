@@ -9,7 +9,7 @@ namespace Content.Client._RF.UserInterface.Controls.TreeMenu;
 [GenerateTypedNameReferences]
 public sealed partial class TreeMenuPanel : Control
 {
-    [Dependency] private readonly IInputManager _input = default!;
+    [Dependency] private IInputManager _input = default!;
 
     public bool Closable { get; set; } = true;
     public TreeMenuButton? ParentButton { get; internal set; }

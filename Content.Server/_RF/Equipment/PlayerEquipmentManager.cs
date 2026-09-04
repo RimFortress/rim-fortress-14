@@ -15,15 +15,15 @@ using Robust.Shared.Utility;
 
 namespace Content.Server._RF.Equipment;
 
-public sealed class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjectInit
+public sealed partial class PlayerEquipmentManager : IPlayerEquipmentManager, IPostInjectInit
 {
-    [Dependency] private readonly IServerNetManager _net = default!;
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
-    [Dependency] private readonly IServerDbManager _db = default!;
-    [Dependency] private readonly ILogManager _log = default!;
-    [Dependency] private readonly UserDbDataManager _userDb = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly IServerPreferencesManager _preferences = default!;
+    [Dependency] private IServerNetManager _net = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
+    [Dependency] private IServerDbManager _db = default!;
+    [Dependency] private ILogManager _log = default!;
+    [Dependency] private UserDbDataManager _userDb = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IServerPreferencesManager _preferences = default!;
 
     private Dictionary<string, int>? _costs;
     private readonly Dictionary<NetUserId, PlayerEquipData> _cachedPlayerPrefs = new();

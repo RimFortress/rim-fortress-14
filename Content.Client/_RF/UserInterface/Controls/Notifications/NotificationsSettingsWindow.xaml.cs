@@ -13,9 +13,9 @@ namespace Content.Client._RF.UserInterface.Controls.Notifications;
 [GenerateTypedNameReferences]
 public sealed partial class NotificationsSettingsWindow : FancyWindow
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IPlayerManager _player = default!;
     private NotificationsSystem _notifications = default!;
 
     private bool _setup;

@@ -27,8 +27,8 @@ namespace Content.Client._RF.Info.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class InventoryInfoTab : Control, IInfoTab
 {
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPlayerManager _player = default!;
 
     private ClientInventorySystem _inventory = default!;
     private SharedCuffableSystem _cuffable = default!;

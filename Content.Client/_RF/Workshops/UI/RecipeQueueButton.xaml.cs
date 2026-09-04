@@ -14,8 +14,8 @@ namespace Content.Client._RF.Workshops.UI;
 [GenerateTypedNameReferences]
 public sealed partial class RecipeQueueButton : Control
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IGameTiming _timing = default!;
 
     public event Action? OnRemoved;
     public event Action? OnToggleRepeat;

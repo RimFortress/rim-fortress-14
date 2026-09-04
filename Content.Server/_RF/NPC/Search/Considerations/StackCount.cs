@@ -20,8 +20,8 @@ public sealed partial class StackCount : BaseSearchConsideration<StackCount>
 
 public sealed partial class StackCountSearchConsiderationSystem : NpcSearchConsiderationSystem<StackCount>
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly EntityQuery<StackComponent> _query = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private EntityQuery<StackComponent> _query;
 
     public override void Initialize()
     {

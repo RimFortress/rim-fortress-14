@@ -11,8 +11,8 @@ namespace Content.Client._RF.UserInterface.Controls.Stockpile;
 [GenerateTypedNameReferences]
 public sealed partial class StockpileItemButton : Button
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
+    [Dependency] private IEntityManager _entManager = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
 
     public event Action<int>? OnSettingsChanged;
 

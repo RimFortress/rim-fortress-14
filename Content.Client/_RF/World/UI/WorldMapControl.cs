@@ -25,12 +25,12 @@ using Robust.Shared.Timing;
 
 namespace Content.Client._RF.World.UI;
 
-public sealed class WorldMapControl : MapGridControl
+public sealed partial class WorldMapControl : MapGridControl
 {
-    [Dependency] private readonly IInputManager _input = default!;
-    [Dependency] private readonly IResourceCache _cache = default!;
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IEntityNetworkManager _net = default!;
+    [Dependency] private IInputManager _input = default!;
+    [Dependency] private IResourceCache _cache = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IEntityNetworkManager _net = default!;
 
     private const byte ChunkSize = SharedBiomeSystem.ChunkSize;
     private const float UpdateTime = 1.0f;

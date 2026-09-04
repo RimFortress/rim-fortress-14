@@ -7,9 +7,9 @@ using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.World;
 
-public sealed class WorldMapUiController : WindowUiController<WorldMapWindow>
+public sealed partial class WorldMapUiController : WindowUiController<WorldMapWindow>
 {
-    [Dependency] private readonly IPlayerManager _player = default!;
+    [Dependency] private IPlayerManager _player = default!;
     [UISystemDependency] private readonly TransformSystem _transform = default!;
 
     protected override WorldMapWindow EnsureWindow()

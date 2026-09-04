@@ -18,9 +18,9 @@ namespace Content.Client._RF.UserInterface.Controls;
 [GenerateTypedNameReferences]
 public sealed partial class ActionsHotbarWidget : UIWidget
 {
-    [Dependency] private readonly IPlayerManager _player = default!;
-    [Dependency] private readonly IEntityManager _entity = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
 
     private ExecutableGoalSystem _executable = default!;
     private SpriteSystem _sprite = default!;
