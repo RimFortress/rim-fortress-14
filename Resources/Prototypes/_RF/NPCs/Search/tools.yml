@@ -9,17 +9,17 @@
   id: Hoe
   parent: BaseItemQuery
   filters:
-  - !type:HasTags
-    tags:
-    - Hoe
+  - !type:Component
+    components:
+    - type: BotanyHoe
 
 - type: searchQuery
   id: PlantSampleTaker
   parent: BaseItemQuery
   filters:
-  - !type:HasTags
-    tags:
-    - PlantSampleTaker
+  - !type:Component
+    components:
+    - type: BotanySampleTaker
 
 - type: searchQuery
   id: Bucket
