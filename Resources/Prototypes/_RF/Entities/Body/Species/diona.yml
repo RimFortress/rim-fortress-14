@@ -1,6 +1,12 @@
 - type: !PartialOnly entity
   id: MobDiona
   components:
+  - type: Needs
+    needs:
+    - id: DionaHunger
+    - id: DionaThirst
+    - id: NormalSleep
+    - id: NormalSocialization
   - type: SkillExpModificator
     multipliers:
       Melee: 0.75
@@ -8,17 +14,3 @@
       Healing: 1.10
       Woodcutting: 0.50
       Cooking: 1.25
-  #- type: HungerOverride
-  #  thresholdDecayTime:
-  #    Overfed: 90m
-  #    Okay: 6h
-  #    Peckish: 4h
-  #    Starving: 4h
-  #  randomizeValue:
-  #    min: 110
-  #    max: 160
-  #- type: ThirstOverride
-  #  fullDecayTime: 8h
-  #  randomizeValue:
-  #    min: 310
-  #    max: 460

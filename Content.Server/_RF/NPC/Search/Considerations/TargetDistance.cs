@@ -12,7 +12,7 @@ public sealed partial class TargetDistance : BaseSearchConsideration<TargetDista
 
 public sealed partial class TargetDistanceConsiderationSystem : NpcSearchConsiderationSystem<TargetDistance>
 {
-    [Dependency] private readonly TransformSystem _transform = default!;
+    [Dependency] private TransformSystem _transform = default!;
 
     public override void Initialize()
     {
@@ -26,7 +26,7 @@ public sealed partial class TargetDistanceConsiderationSystem : NpcSearchConside
         if (!EntityManager.TransformQuery.TryComp(target, out var xform))
             return 0f;
 
-        var coords = Transform(Goap.GetValue(state, GoapState.Owner)).Coordinates;
+        var coords = Goap.GetValue(state, GoapState.OwnerCoordinates);
 
         if (!xform.Coordinates.TryDistance(EntityManager, _transform, coords, out var distance))
             return 0f;

@@ -2,7 +2,7 @@ using Content.Shared.Botany.Components;
 using Content.Shared.Botany.Systems;
 using Content.Shared.EntityEffects;
 
-namespace Content.Server._RF.EntityEffects.Effects;
+namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Changes the parameters of the plant holder

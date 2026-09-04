@@ -1,13 +1,12 @@
-using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.MathHelpers;
-using Content.Shared._RF.Needs;
+using Content.Shared._RF.Needs.Components;
 using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.Needs.Systems;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
-namespace Content.Shared._RF.Conversation.EntityEffects;
+namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Changes the level of satisfaction of an entity's need.
@@ -18,7 +17,7 @@ public sealed partial class ChangeNeed : EntityEffectBase<ChangeNeed>
     /// Need prototype.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<NeedPrototype> Need;
+    public ProtoId<NeedCategoryPrototype> Need;
 
     /// <summary>
     /// How much will the value be increased.
@@ -33,16 +32,16 @@ public sealed partial class ChangeNeed : EntityEffectBase<ChangeNeed>
     public MinMaxFloat? Random;
 }
 
-public sealed partial class ChangeNeedEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, ChangeNeed>
+public sealed partial class ChangeNeedEntityEffectsSystem : EntityEffectSystem<NeedsComponent, ChangeNeed>
 {
     [Dependency] private NeedsSystem _needs = default!;
     [Dependency] private IRobustRandom _random = default!;
 
-    protected override void Effect(Entity<ConversationActorComponent> ent, ref EntityEffectEvent<ChangeNeed> args)
+    protected override void Effect(Entity<NeedsComponent> ent, ref EntityEffectEvent<ChangeNeed> args)
     {
-        _needs.AddValue(ent.Owner, args.Effect.Need, args.Effect.Amount);
+        _needs.AddValue(ent.AsNullable(), args.Effect.Need, args.Effect.Amount * args.Scale);
 
         if (args.Effect.Random is { } minMax)
-            _needs.AddValue(ent.Owner, args.Effect.Need, minMax.Next(_random));
+            _needs.AddValue(ent.AsNullable(), args.Effect.Need, minMax.Next(_random));
     }
 }

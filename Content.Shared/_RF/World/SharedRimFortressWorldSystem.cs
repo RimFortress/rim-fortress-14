@@ -35,8 +35,8 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
 
     protected const byte ChunkSize = SharedBiomeSystem.ChunkSize;
 
-    [Dependency] protected readonly EntityQuery<RimFortressPlayerComponent> PlayerQuery = default!;
-    [Dependency] private readonly EntityQuery<TransformComponent> _xformQuery = default!;
+    [Dependency] protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
+    [Dependency] private EntityQuery<TransformComponent> _xformQuery;
 
     private int _maxSettlementRadius = 100;
     private int _minSettlementMembers = 2;
@@ -212,7 +212,7 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     /// </summary>
     public bool TryGetWorld([NotNullWhen(true)] out EntityUid? ent)
     {
-        var query = EntityQueryEnumerator<RimFortressRuleComponent>();
+        var query = AllEntityQuery<RimFortressRuleComponent>();
 
         while (query.MoveNext(out var comp))
         {

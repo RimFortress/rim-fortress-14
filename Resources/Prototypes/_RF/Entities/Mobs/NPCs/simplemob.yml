@@ -1,11 +1,18 @@
-#- type: !PartialOnly entity
-#  id: SimpleMobBase
-#  components:
-#  - type: HungerOverride
-#    thresholdDecayTime:
-#      Overfed: 3h
-#      Okay: 6h
-#      Peckish: 4h
-#      Starving: 5h
-#  - type: ThirstOverride
-#    fullDecayTime: 10h
+- type: !PartialOnly entity
+  id: SimpleMobBase
+  components:
+  - !Remove type: Satiation
+  - type: Social
+  - type: Needs
+    needs:
+    - id: SimpleMobHunger
+    - id: SimpleModThirst
+  - type: ModifySpeedOnNeed
+    modifiers:
+      Hunger:
+        Overfed: 0.95
+        Starving: 0.85
+        StarvingCritical: 0.70
+      Thirst:
+        Parched: 0.75
+        DehydratedCritical: 0.5

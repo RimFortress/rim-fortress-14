@@ -1,0 +1,217 @@
+- type: reagent
+  id: !PartialOnly Coffee
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 2
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly Cream
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+
+- type: reagent
+  id: !PartialOnly CoconutWater
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4 # Coconut water is 94% water
+
+- type: reagent
+  id: !PartialOnly CreamOfCoconut
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly CafeLatte
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 2
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly IcedCoffee
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 2
+        type: Remove
+
+
+- type: reagent
+  id: !PartialOnly JuiceBerryPoison
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+      - !type:HealthChange
+        damage:
+          types:
+            Poison: 1
+
+- type: reagent
+  id: !PartialOnly Lemonade
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+
+- type: reagent
+  id: !PartialOnly Milk
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly MilkOat
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly MilkSpoiled
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -2
+
+- type: reagent
+  id: !PartialOnly Nothing
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+        # TODO heal mimes
+
+- type: reagent
+  id: !PartialOnly NuclearCola
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 6
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 3
+        type: Remove
+      - !type:HealthChange
+        damage:
+          types:
+            Poison: 1
+
+- type: reagent
+  id: !PartialOnly SoyLatte
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 2
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDrowsiness
+        time: 2
+        type: Remove
+
+- type: reagent
+  id: !PartialOnly Water
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly Ice
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 3 # Slightly worse for quenching thirst than just straight water
+
+- type: reagent
+  id: !PartialOnly DryRamen
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        amount: 1
+
+- type: reagent
+  id: !PartialOnly HotRamen
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly ArnoldPalmer
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 4
+
+- type: reagent
+  id: !PartialOnly Pilk
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+
+- type: reagent
+  id: !PartialOnly Mopwata
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 0.6

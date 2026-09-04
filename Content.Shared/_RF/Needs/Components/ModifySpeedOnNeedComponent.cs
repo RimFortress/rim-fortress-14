@@ -13,5 +13,5 @@ public sealed partial class ModifySpeedOnNeedComponent : Component
     /// Speed multipliers for each threshold of each need category.
     /// </summary>
     [DataField]
-    public Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdPrototype>, float>> Modifiers = new();
+    public Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdCategoryPrototype>, float>> Modifiers = new();
 }

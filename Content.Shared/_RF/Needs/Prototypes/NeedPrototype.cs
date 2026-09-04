@@ -1,7 +1,6 @@
 using Content.Shared.Alert;
 using Content.Shared.Destructible.Thresholds;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Needs.Prototypes;
 
@@ -25,7 +24,7 @@ public sealed partial class NeedPrototype : IPrototype
     /// A dictionary with threshold values of satisfaction of a need and their IDs.
     /// </summary>
     [DataField]
-    public List<NeedThreshold> Thresholds = new();
+    public HashSet<ProtoId<NeedThresholdPrototype>> Thresholds = new();
 
     /// <summary>
     /// Alert category prototype.
@@ -44,39 +43,4 @@ public sealed partial class NeedPrototype : IPrototype
     /// </summary>
     [DataField]
     public MinMax? RoundstartRandomize;
-}
-
-[DataDefinition]
-public sealed partial class NeedThreshold
-{
-    [DataField(required: true)]
-    public ProtoId<NeedThresholdPrototype> Id;
-
-    [DataField(required: true)]
-    public float Value;
-
-    /// <summary>
-    /// Decay time to the next threshold
-    /// </summary>
-    /// <remarks>
-    /// It is calculated in world time, which is then converted to simulation time.
-    /// </remarks>
-    /// <seealso cref="Content.Shared._RF.World.SharedRimFortressWorldSystem.FromWorldTime(TimeSpan)"/>
-    [DataField(required: true)]
-    public TimeSpan DecayTime;
-
-    [DataField]
-    public SpriteSpecifier? Icon;
-
-    /// <summary>
-    /// Threshold alert category prototype
-    /// </summary>
-    [DataField]
-    public ProtoId<AlertPrototype>? Alert;
-
-    /// <summary>
-    /// Localization ID for the threshold to display in the UI
-    /// </summary>
-    [DataField]
-    public LocId? Description;
 }

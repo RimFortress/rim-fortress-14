@@ -1,0 +1,38 @@
+- type: need
+  id: DionaHunger
+  category: Hunger
+  thresholds:
+  - DionaOverfed
+  - DionaSated
+  - DionaHungry
+  - DionaStarving
+  - DionaStarvingCritical
+  roundstartRandomize:
+    min: 100
+    max: 150
+
+- type: needThreshold
+  id: DionaOverfed
+  parent: Overfed
+  decayTime: 40m
+
+- type: needThreshold
+  id: DionaSated
+  parent: Sated
+  decayTime: 6h
+
+- type: needThreshold
+  id: DionaHungry
+  parent: Hungry
+  decayTime: 8h
+
+- type: needThreshold
+  id: DionaStarving
+  parent: Starving
+  decayTime: 14h
+
+- type: needThreshold
+  id: DionaStarvingCritical
+  parent: StarvingCritical
+  decayTime: 14h
+

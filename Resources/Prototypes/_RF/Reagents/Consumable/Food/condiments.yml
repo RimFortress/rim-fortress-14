@@ -1,0 +1,31 @@
+- type: reagent
+  id: !PartialOnly Soysauce
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        amount: 0.5
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -0.5 # high salt content
+
+- type: reagent
+  id: !PartialOnly TableSalt
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      # eating salt on its own kinda sucks, kids
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -0.5
+
+- type: reagent
+  id: !PartialOnly Syrup
+  metabolisms:
+    Digestion:
+      # 12 diona blood for 1 unit of syrup, this stuff better be worthwhile.
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        amount: 6.0 #Stronger than cookedramen

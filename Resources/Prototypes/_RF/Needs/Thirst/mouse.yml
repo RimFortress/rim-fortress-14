@@ -1,0 +1,42 @@
+- type: need
+  id: MouseThirst
+  category: Thirst
+  thresholds:
+  - MouseOverhydrated
+  - MouseThirstOkay
+  - MouseThirsty
+  - MouseParched
+  - MouseDehydratedCritical
+  roundstartRandomize:
+    min: 15
+    max: 25
+
+- type: needThreshold
+  id: MouseOverhydrated
+  parent: Overhydrated
+  value: 35
+  decayTime: 20m
+
+- type: needThreshold
+  id: MouseThirstOkay
+  parent: ThirstOkay
+  value: 25
+  decayTime: 2h
+
+- type: needThreshold
+  id: MouseThirsty
+  parent: Thirsty
+  value: 15
+  decayTime: 3h
+
+- type: needThreshold
+  id: MouseParched
+  parent: Parched
+  value: 10
+  decayTime: 6h
+
+- type: needThreshold
+  id: MouseDehydratedCritical
+  parent: DehydratedCritical
+  value: 5
+  decayTime: 6h

@@ -1,0 +1,45 @@
+- type: socialEffect
+  id: BaseThirstMoodEffect
+  abstract: true
+  conflictWith:
+  - MoodOverhydrated
+  - MoodThirstOkay
+  - MoodParched
+  - MoodThirsty
+  - MoodDehydratedCritical
+
+- type: socialEffect
+  id: MoodOverhydrated
+  parent: BaseThirstMoodEffect
+  name: mood-effect-overhydrated-name
+  description: mood-effect-overhydrated-desc
+  effect: -3
+
+- type: socialEffect
+  id: MoodThirstOkay
+  parent: BaseThirstMoodEffect
+  name: mood-effect-thirst-okay-name
+  description: mood-effect-thirst-okay-desc
+  duration: 1h
+  effect: 3
+
+- type: socialEffect
+  id: MoodThirsty
+  parent: BaseThirstMoodEffect
+  name: mood-effect-thirsty-name
+  description: mood-effect-thirsty-desc
+  effect: -3
+
+- type: socialEffect
+  id: MoodParched
+  parent: BaseThirstMoodEffect
+  name: mood-effect-parched-name
+  description: mood-effect-parched-desc
+  effect: -8
+
+- type: socialEffect
+  id: MoodDehydratedCritical
+  parent: BaseThirstMoodEffect
+  name: mood-effect-dehydrated-critical-name
+  description: mood-effect-dehydrated-critical-desc
+  effect: -15

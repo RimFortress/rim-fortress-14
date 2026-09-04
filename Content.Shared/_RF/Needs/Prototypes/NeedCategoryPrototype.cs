@@ -1,4 +1,5 @@
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Needs.Prototypes;
 
@@ -12,4 +13,6 @@ public sealed partial class NeedCategoryPrototype : IPrototype
     /// <inheritdoc/>
     [IdDataField]
     public string ID { get; set; } = default!;
+
+    public LocId Name => $"need-{CaseConversion.PascalToKebab(ID)}-name";
 }

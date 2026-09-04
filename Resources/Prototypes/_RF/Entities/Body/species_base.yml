@@ -32,18 +32,6 @@
         effect: OpinionAttacked
         keysIn:
         - onDamage
-  #- type: ChangeMoodOnHunger
-  #  effects:
-  #    Overfed: [MoodOverfed]
-  #    Okay: [MoodHungerOkay]
-  #    Peckish: [MoodPeckish]
-  #    Starving: [MoodStarving]
-  #- type: ChangeMoodOnThirst
-  #  effects:
-  #    Parched: [MoodParched]
-  #    Okay: [MoodThirstOkay]
-  #    Thirsty: [MoodThirsty]
-  #    Overhydrated: [MoodOverhydrated]
   - type: ChangeMoodOnAte
     effects:
       MoodAteRubbishMeal:
@@ -69,30 +57,26 @@
         - Pie
         - Pizza
         requireAll: false
-  - type: ModifySpeedOnMood
-    moodFactor: 0.0015 # +15% for +100 mood
   - type: Needs
     needs:
-    - id: Sleep
-    - id: Socialization
-  - type: ChangeMoodOnNeed
-    effects:
-      Sleep:
-        Overslept: [MoodOverslept]
-        Rested: [MoodRested]
-        Tired: [MoodTired]
-        Exhausted: [MoodExhausted]
-      Socialization:
-        Overstimulated: [MoodOverstimulated]
-        Socialized: [MoodSocialized]
-        Lonely: [MoodLonely]
-        Isolated: [MoodIsolated]
+    - id: NormalHunger
+    - id: NormalThirst
+    - id: NormalSleep
+    - id: NormalSocialization
+  - type: ModifySpeedOnMood
+    moodFactor: 0.0015 # +15% for +100 mood
   - type: ModifySpeedOnNeed
     modifiers:
+      Hunger:
+        Overfed: 0.95
+        Starving: 0.75
+        StarvingCritical: 0.5
+      Thirst:
+        Parched: 0.75
+        DehydratedCritical: 0.5
       Sleep:
         Overslept: 0.95
-        Tired: 0.8
-        Exhausted: 0.6
+        Exhausted: 0.75
   - type: ModifyNeedOnSleep
     modifiers:
       Sleep:

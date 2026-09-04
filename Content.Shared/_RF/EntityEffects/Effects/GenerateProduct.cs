@@ -1,9 +1,8 @@
 using Content.Shared.Botany.Components;
 using Content.Shared.Botany.Systems;
 using Content.Shared.EntityEffects;
-using Content.Shared.Random;
 
-namespace Content.Server._RF.EntityEffects.Effects;
+namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Causes the plant holder to spawn the product of the current plant
@@ -21,7 +20,6 @@ public sealed partial class GenerateProductEntityEffectSystem : EntityEffectSyst
 {
     [Dependency] private PlantTraySystem _plantTray = default!;
     [Dependency] private BotanySystem _botany = default!;
-    [Dependency] private RandomHelperSystem _randomHelper = default!;
 
     protected override void Effect(Entity<PlantTrayComponent> entity, ref EntityEffectEvent<GenerateProduct> args)
     {

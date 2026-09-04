@@ -14,7 +14,7 @@ public sealed partial class NeedLevel : BaseGoapCondition<NeedLevel>
     /// Need prototype.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<NeedPrototype> Need;
+    public ProtoId<NeedCategoryPrototype> Need;
 
     /// <summary>
     /// The minimum required need value.

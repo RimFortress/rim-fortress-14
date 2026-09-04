@@ -12,7 +12,7 @@ namespace Content.Shared._RF.NPC.Systems;
 public sealed partial class OwnershipSystem : EntitySystem
 {
     [Dependency] private ISharedAdminManager _admin = default!;
-    [Dependency] private readonly EntityQuery<OwnershipComponent> _ownershipQuery = default!;
+    [Dependency] private EntityQuery<OwnershipComponent> _ownershipQuery;
 
     [SubscribeLocalEvent]
     private void OnHandleState(Entity<OwnershipComponent> ent, ref ComponentHandleState args)
@@ -161,29 +161,29 @@ public sealed partial class OwnershipSystem : EntitySystem
         if (owned != null)
         {
             var ownedComp = EnsureComp<OwnershipComponent>(owned.Value);
+            var added = comp.Owned.Add(owned.Value);
+            var ownedAdded = ownedComp.Owners.Add(uid);
 
-            if (comp.Owned.Add(owned.Value) || ownedComp.Owners.Add(uid))
+            if (added || ownedAdded)
             {
                 var ev = new OwnershipAddedEvent(uid, owned.Value);
                 RaiseLocalEvent(uid, ev);
                 RaiseLocalEvent(owned.Value, ev);
             }
-
-            Dirty(owned.Value, ownedComp);
         }
 
         if (owner != null)
         {
             var ownerComp = EnsureComp<OwnershipComponent>(owner.Value);
+            var added = comp.Owners.Add(owner.Value);
+            var ownerAdded = ownerComp.Owned.Add(uid);
 
-            if (comp.Owners.Add(owner.Value) || ownerComp.Owned.Add(uid))
+            if (added || ownerAdded)
             {
                 var ev = new OwnershipAddedEvent(owner.Value, uid);
                 RaiseLocalEvent(uid, ev);
                 RaiseLocalEvent(owner.Value, ev);
             }
-
-            Dirty(owner.Value, ownerComp);
         }
 
         Dirty(uid, comp);
@@ -208,8 +208,10 @@ public sealed partial class OwnershipSystem : EntitySystem
             foreach (var owner in owners)
             {
                 var ownerComp = EnsureComp<OwnershipComponent>(owner);
+                var added = comp.Owners.Add(owner);
+                var ownerAdded = ownerComp.Owned.Add(uid);
 
-                if (!ownerComp.Owned.Add(uid) && !comp.Owners.Add(owner))
+                if (!added && !ownerAdded)
                     continue;
 
                 var ev = new OwnershipAddedEvent(owner, uid);
@@ -225,8 +227,10 @@ public sealed partial class OwnershipSystem : EntitySystem
             foreach (var ent in owned)
             {
                 var ownedComp = EnsureComp<OwnershipComponent>(ent);
+                var added = comp.Owned.Add(ent);
+                var ownedAdded = ownedComp.Owners.Add(uid);
 
-                if (!ownedComp.Owners.Add(uid) && !comp.Owned.Add(ent))
+                if (!added && !ownedAdded)
                     continue;
 
                 var ev = new OwnershipAddedEvent(ent, uid);
@@ -261,7 +265,10 @@ public sealed partial class OwnershipSystem : EntitySystem
 
         if (TryComp(owned, out OwnershipComponent? ownedComp))
         {
-            if (ent.Comp.Owned.Remove(owned.Value) || ownedComp.Owners.Remove(ent))
+            var removed = ent.Comp.Owned.Remove(owned.Value);
+            var ownedRemoved = ownedComp.Owners.Remove(ent);
+
+            if (removed || ownedRemoved)
             {
                 var ev = new OwnershipRemovedEvent(ent, owned.Value);
                 RaiseLocalEvent(ent, ev);
@@ -272,7 +279,10 @@ public sealed partial class OwnershipSystem : EntitySystem
 
         if (TryComp(owner, out OwnershipComponent? ownerComp))
         {
-            if (ent.Comp.Owners.Remove(owner.Value) || ownerComp.Owned.Remove(ent))
+            var removed = ent.Comp.Owners.Remove(owner.Value);
+            var ownerRemoved = ownerComp.Owned.Remove(ent);
+
+            if (removed || ownerRemoved)
             {
                 var ev = new OwnershipRemovedEvent(owner.Value, ent);
                 RaiseLocalEvent(ent, ev);
@@ -308,7 +318,10 @@ public sealed partial class OwnershipSystem : EntitySystem
                 if (!_ownershipQuery.TryComp(owner, out var ownerComp))
                     continue;
 
-                if (!ownerComp.Owned.Remove(ent) && !ent.Comp.Owners.Remove(owner))
+                var removed = ent.Comp.Owners.Remove(owner);
+                var ownerRemoved = ownerComp.Owned.Remove(ent);
+
+                if (!removed && !ownerRemoved)
                     continue;
 
                 var ev = new OwnershipRemovedEvent(owner, ent);
@@ -326,7 +339,10 @@ public sealed partial class OwnershipSystem : EntitySystem
                 if (!_ownershipQuery.TryComp(uid, out var ownedComp))
                     continue;
 
-                if (!ownedComp.Owners.Remove(ent) && !ent.Comp.Owned.Remove(uid))
+                var removed = ent.Comp.Owned.Remove(uid);
+                var ownedRemoved = ownedComp.Owners.Remove(ent);
+
+                if (!removed && !ownedRemoved)
                     continue;
 
                 var ev = new OwnershipRemovedEvent(ent, uid);

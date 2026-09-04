@@ -13,7 +13,7 @@ namespace Content.IntegrationTests.Tests._RF.Needs;
 [TestOf(typeof(NeedsComponent))]
 [TestOf(typeof(NeedPrototype))]
 [TestOf(typeof(NeedCategoryPrototype))]
-[TestOf(typeof(NeedThresholdPrototype))]
+[TestOf(typeof(NeedThresholdCategoryPrototype))]
 public sealed class NeedsPrototypeTest : GameTest
 {
     [SidedDependency(Side.Server)] private readonly IPrototypeManager _proto = default!;
@@ -69,7 +69,7 @@ public sealed class NeedsPrototypeTest : GameTest
     }
 
     private void ValidateCategoryThreshold<T>(
-        Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdPrototype>, T>> dict)
+        Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdCategoryPrototype>, T>> dict)
     {
         foreach (var (category, needs) in dict)
         {
@@ -82,7 +82,7 @@ public sealed class NeedsPrototypeTest : GameTest
 
     private void ValidateCategoryThreshold(
         ProtoId<NeedCategoryPrototype> category,
-        ProtoId<NeedThresholdPrototype> threshold)
+        ProtoId<NeedThresholdCategoryPrototype> threshold)
     {
         Assert.That(_needs.TryGetNeedsByCategory(category, out var categoryNeeds), Is.True);
         Assert.That(categoryNeeds, Does.Not.Null);

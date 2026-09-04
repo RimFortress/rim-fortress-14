@@ -1,0 +1,39 @@
+- type: reagent
+  id: !PartialOnly Flour
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -0.2 #its flour
+
+- type: reagent
+  id: !PartialOnly Cornmeal
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -0.2 #its cornflour
+
+- type: reagent
+  id: !PartialOnly CocoaPowder #Candy and chocolate
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        conditions:
+        - !type:ReagentCondition #Only satiates when eaten with nutriment
+          reagent: Nutriment
+          min: 0.1
+        amount: 1
+
+- type: reagent
+  id: !PartialOnly TeaPowder
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -0.2

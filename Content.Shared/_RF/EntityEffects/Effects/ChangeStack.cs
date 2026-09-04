@@ -1,9 +1,7 @@
-using Content.Server.Stack;
 using Content.Shared.EntityEffects;
 using Content.Shared.Stacks;
-using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.EntityEffects.Effects;
+namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Changes the amount of material in the stack
@@ -19,7 +17,7 @@ public sealed partial class ChangeStack : EntityEffectBase<ChangeStack>
 
 public sealed partial class ChangeStackEntityEffectSystem : EntityEffectSystem<StackComponent, ChangeStack>
 {
-    [Dependency] private StackSystem _stack = default!;
+    [Dependency] private SharedStackSystem _stack = default!;
 
     protected override void Effect(Entity<StackComponent> entity, ref EntityEffectEvent<ChangeStack> args)
     {

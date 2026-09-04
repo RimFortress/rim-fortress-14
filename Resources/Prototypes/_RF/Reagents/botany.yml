@@ -1,0 +1,28 @@
+- type: reagent
+  id: !PartialOnly EZNutrient
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Plant]
+
+- type: reagent
+  id: !PartialOnly Left4Zed
+  metabolisms:
+    Bloodstream:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Plant]
+      - !type:HealthChange
+        damage:
+          types:
+            Poison: 1
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Plant]

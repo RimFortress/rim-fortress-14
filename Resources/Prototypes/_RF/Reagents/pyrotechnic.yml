@@ -1,0 +1,43 @@
+- type: reagent
+  id: !PartialOnly WeldingFuel
+  metabolisms:
+    Bloodstream:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Vox]
+      - !type:HealthChange
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Vox]
+          inverted: true
+        damage:
+          types:
+            Poison: 1
+      - !type:Flammable
+        multiplier: 0.4
+
+- type: reagent
+  id: !PartialOnly XenoborgOil
+  metabolisms:
+    Bloodstream:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: 1
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Vox]
+      - !type:HealthChange
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [Vox]
+          inverted: true
+        damage:
+          types:
+            Poison: 1
+      - !type:Flammable
+        multiplier: 0.4

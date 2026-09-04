@@ -17,7 +17,7 @@ public partial class NeedsSystem
     public bool TryGetThreshold(
         Entity<NeedsComponent?> ent,
         [ForbidLiteral] ProtoId<NeedCategoryPrototype> protoId,
-        [NotNullWhen(true)] out ProtoId<NeedThresholdPrototype>? thresholdId,
+        [NotNullWhen(true)] out ProtoId<NeedThresholdCategoryPrototype>? thresholdId,
         [NotNullWhen(true)] out ProtoId<NeedPrototype>? needId)
     {
         thresholdId = null;
@@ -29,9 +29,11 @@ public partial class NeedsSystem
 
         foreach (var need in needs)
         {
-            if (!TryGetThreshold(ent, need, out thresholdId))
+            if (!TryGetThreshold(ent, need, out var threshold)
+                || !_proto.Resolve(threshold, out var proto))
                 continue;
 
+            thresholdId = proto.Category;
             needId = need;
             return true;
         }
@@ -40,18 +42,17 @@ public partial class NeedsSystem
     }
 
     /// <summary>
-    /// Returns the localized name of the need threshold, if any
+    /// Returns the localized name of the need threshold, if any.
     /// </summary>
     [PublicAPI, Pure]
     public bool TryGetThresholdLocalization(
-        ProtoId<NeedPrototype> protoId,
         ProtoId<NeedThresholdPrototype> thresholdId,
         [NotNullWhen(true)] out string? locale)
     {
-        if (_proto.Resolve(protoId, out var proto)
-            && proto.Thresholds.FirstOrDefault(x => x.Id == thresholdId) is { Description: not null } threshold)
+        if (_proto.Resolve(thresholdId, out var threshold)
+            && _proto.Resolve(threshold.Category, out var category))
         {
-            locale = Loc.GetString(threshold.Description);
+            locale = Loc.GetString(category.Name);
             return true;
         }
 
@@ -68,9 +69,8 @@ public partial class NeedsSystem
         icon = null;
 
         if (!Resolve(ent, ref ent.Comp)
-            || !_proto.Resolve(protoId, out var proto)
             || !TryGetThreshold(ent, protoId, out var id)
-            || proto.Thresholds.FirstOrDefault(x => x.Id == id) is not { } threshold)
+            || !_proto.Resolve(id, out var threshold))
             return false;
 
         icon = threshold.Icon;
@@ -78,16 +78,14 @@ public partial class NeedsSystem
     }
 
     /// <summary>
-    /// Returns the satisfaction level of a given entity's need
+    /// Returns the satisfaction level of a given entity's need.
     /// </summary>
     [PublicAPI, Pure]
     public float GetValue(Entity<NeedsComponent?> ent, ProtoId<NeedPrototype> protoId)
-    {
-        return TryGetValue(ent, protoId, out var value) ? value.Value : 0f;
-    }
+        => TryGetValue(ent, protoId, out var value) ? value.Value : 0f;
 
     /// <summary>
-    /// Returns the satisfaction level of a given entity's need
+    /// Returns the satisfaction level of a given entity's need.
     /// </summary>
     [PublicAPI]
     public bool TryGetValue(
@@ -104,6 +102,37 @@ public partial class NeedsSystem
         value = ClampWithinThresholds(protoId,
             need.LastAuthoritativeValue - (float)dt.TotalSeconds * need.ActualDecayRate);
         return true;
+    }
+
+    /// <summary>
+    /// Returns the satisfaction level of the first need in the target category.
+    /// </summary>
+    [PublicAPI, Pure]
+    public float GetValue(Entity<NeedsComponent?> ent, ProtoId<NeedCategoryPrototype> protoId)
+        => TryGetValue(ent, protoId, out var value) ? value.Value : 0f;
+
+    /// <summary>
+    /// Returns the satisfaction level of the first need in the target category.
+    /// </summary>
+    [PublicAPI]
+    public bool TryGetValue(
+        Entity<NeedsComponent?> ent,
+        ProtoId<NeedCategoryPrototype> protoId,
+        [NotNullWhen(true)] out float? value)
+    {
+        value = null;
+
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !_needsByCategory.TryGetValue(protoId, out var needs))
+            return false;
+
+        foreach (var need in needs)
+        {
+            if (TryGetValue(ent, need, out value))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -126,14 +155,15 @@ public partial class NeedsSystem
         if (needValue == null && !TryGetValue(ent, protoId, out needValue))
             return false;
 
-        thresholdId = proto.Thresholds.OrderBy(kv => kv.Value).First().Id;
-        var value = proto.Thresholds.Max(x => x.Value);
+        var thresholds = proto.Thresholds.Select(_proto.Index).ToList();
+        thresholdId = thresholds.OrderBy(kv => kv.Value).First();
+        var value = thresholds.Max(x => x.Value);
 
-        foreach (var threshold in proto.Thresholds)
+        foreach (var threshold in thresholds)
         {
             if (threshold.Value <= value && threshold.Value >= needValue)
             {
-                thresholdId = threshold.Id;
+                thresholdId = threshold;
                 value = threshold.Value;
             }
         }
@@ -164,7 +194,7 @@ public partial class NeedsSystem
     /// </summary>
     [PublicAPI, Pure]
     public bool TryGetNeedsByThreshold(
-        ProtoId<NeedThresholdPrototype> protoId,
+        ProtoId<NeedThresholdCategoryPrototype> protoId,
         [NotNullWhen(true)] out IReadOnlySet<ProtoId<NeedPrototype>>? needs)
     {
         if (_needsByThreshold.TryGetValue(protoId, out var needsSet))
@@ -191,22 +221,44 @@ public partial class NeedsSystem
 
         foreach (var threshold in proto.Thresholds)
         {
-            if (threshold.Value > max)
-                max = threshold.Value;
+            if (!_proto.Resolve(threshold, out var thresholdPrototype))
+                continue;
+
+            if (thresholdPrototype.Value > max)
+                max = thresholdPrototype.Value;
         }
 
         return max;
     }
 
     /// <summary>
-    /// Increases the need value by given value
+    /// Returns the maximum satisfaction level for the first need in the target category.
+    /// </summary>
+    [PublicAPI, Pure]
+    public float MaxValue(Entity<NeedsComponent?> ent, ProtoId<NeedCategoryPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !_needsByCategory.TryGetValue(protoId, out var needs))
+            return 0f;
+
+        foreach (var data in ent.Comp.Needs)
+        {
+            if (needs.Contains(data.Id))
+                return MaxValue(data.Id);
+        }
+
+        return 0f;
+    }
+
+    /// <summary>
+    /// Increases the need value by given value.
     /// </summary>
     [PublicAPI]
     public void AddValue(Entity<NeedsComponent?> ent, ProtoId<NeedPrototype> protoId, float value)
         => SetValue(ent, protoId, GetValue(ent, protoId) + value);
 
     /// <summary>
-    /// Sets the values of satisfaction of the given need of the entity
+    /// Sets the values of satisfaction of the given need of the entity.
     /// </summary>
     [PublicAPI]
     public void SetValue(Entity<NeedsComponent?> ent, ProtoId<NeedPrototype> protoId, float value)
@@ -216,6 +268,33 @@ public partial class NeedsSystem
 
         SetAuthoritativeValue(ent, proto, value);
         UpdateCurrentThreshold(ent, protoId);
+    }
+
+    /// <summary>
+    /// Increases the need value by given value.
+    /// </summary>
+    [PublicAPI]
+    public void AddValue(Entity<NeedsComponent?> ent, ProtoId<NeedCategoryPrototype> protoId, float value)
+        => SetValue(ent, protoId, GetValue(ent, protoId) + value);
+
+    /// <summary>
+    /// Sets the values of satisfaction of the given need of the entity.
+    /// </summary>
+    [PublicAPI]
+    public void SetValue(Entity<NeedsComponent?> ent, ProtoId<NeedCategoryPrototype> protoId, float value)
+    {
+        if (!Resolve(ent, ref ent.Comp)
+            || !_needsByCategory.TryGetValue(protoId, out var needs))
+            return;
+
+        foreach (var data in ent.Comp.Needs)
+        {
+            if (!needs.Contains(data.Id))
+                continue;
+
+            SetValue(ent, data.Id, value);
+            return;
+        }
     }
 
     /// <summary>

@@ -35,8 +35,8 @@
   - preset: UAIScoreNeeds
     variables:
       need:
-      - !type:Satiation
-        type: Hunger
+      - !type:NeedLevel
+        need: Hunger
   goalState:
     FoodEaten: true
 
@@ -47,7 +47,7 @@
   - preset: UAIScoreNeeds
     variables:
       need:
-      - !type:Satiation
-        type: Thirst
+      - !type:NeedLevel
+        need: Thirst
   goalState:
     DrinkDrunk: true

@@ -4,6 +4,8 @@ using Content.Shared._RF.Needs.Components;
 using Content.Shared._RF.Needs.Prototypes;
 using Content.Shared._RF.World;
 using Content.Shared.Alert;
+using Content.Shared.EntityEffects;
+using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -21,9 +23,10 @@ public sealed partial class NeedsSystem : EntitySystem
     [Dependency] private IRobustRandom _random = default!;
     [Dependency] private AlertsSystem _alerts = default!;
     [Dependency] private SharedRimFortressWorldSystem _world = default!;
+    [Dependency] private SharedEntityEffectsSystem _entityEffects = default!;
 
     private readonly Dictionary<ProtoId<NeedCategoryPrototype>, HashSet<ProtoId<NeedPrototype>>> _needsByCategory = new();
-    private readonly Dictionary<ProtoId<NeedThresholdPrototype>, HashSet<ProtoId<NeedPrototype>>> _needsByThreshold = new();
+    private readonly Dictionary<ProtoId<NeedThresholdCategoryPrototype>, HashSet<ProtoId<NeedPrototype>>> _needsByThreshold = new();
 
     public override void Initialize()
     {
@@ -31,7 +34,7 @@ public sealed partial class NeedsSystem : EntitySystem
 
         Subs.ProtoReload<NeedPrototype>(_proto, ReloadPrototypes);
         Subs.ProtoReload<NeedCategoryPrototype>(_proto, ReloadPrototypes);
-        Subs.ProtoReload<NeedThresholdPrototype>(_proto, ReloadPrototypes);
+        Subs.ProtoReload<NeedThresholdCategoryPrototype>(_proto, ReloadPrototypes);
 
         ReloadPrototypes();
     }
@@ -63,9 +66,10 @@ public sealed partial class NeedsSystem : EntitySystem
                 || proto.RoundstartRandomize == null)
                 continue;
 
+            var thresholds = proto.Thresholds.Select(_proto.Index).ToList();
             need.ThresholdDecayModifiers = CalculateDecayRates(
-                proto.Thresholds.ToDictionary(x => x.Id, x => x.Value),
-                proto.Thresholds.ToDictionary(x => x.Id, x => _world.FromWorldTime(x.DecayTime)),
+                thresholds.ToDictionary(x => new ProtoId<NeedThresholdPrototype>(x.ID), x => x.Value),
+                thresholds.ToDictionary(x => new ProtoId<NeedThresholdPrototype>(x.ID), x => _world.FromWorldTime(x.DecayTime)),
                 proto.ThresholdUpdateRate);
 
             var amount = proto.RoundstartRandomize.Value.Next(_random);
@@ -97,15 +101,18 @@ public sealed partial class NeedsSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp)
             || !TryGetNeed(ent, protoId, out var need)
-            || !TryGetThreshold(ent, protoId, out var calculatedHungerThreshold))
+            || !TryGetThreshold(ent, protoId, out var calculatedThreshold)
+            || !_proto.Resolve(calculatedThreshold, out var proto))
             return;
 
-        if (calculatedHungerThreshold == need.CurrentThreshold)
+        _entityEffects.TryApplyEffects(ent, proto.TickEffects, user: ent);
+
+        if (calculatedThreshold == need.CurrentThreshold)
             return;
 
-        var ev = new NeedThresholdChangedEvent(protoId, need.CurrentThreshold, calculatedHungerThreshold.Value);
+        var ev = new NeedThresholdChangedEvent(protoId, need.CurrentThreshold, calculatedThreshold.Value);
         RaiseLocalEvent(ent, ev);
-        need.CurrentThreshold = calculatedHungerThreshold;
+        need.CurrentThreshold = calculatedThreshold.Value;
         Dirty(ent);
         DoThresholdEffects(ent, protoId);
     }
@@ -114,16 +121,19 @@ public sealed partial class NeedsSystem : EntitySystem
     {
         if (!Resolve(ent, ref ent.Comp)
             || !TryGetNeed(ent, protoId, out var need)
-            || !_proto.Resolve(protoId, out var proto))
+            || !_proto.Resolve(protoId, out var proto)
+            || !_proto.Resolve(need.CurrentThreshold, out var threshold))
             return;
 
         if (need.CurrentThreshold == need.LastThreshold && !force)
             return;
 
-        if (proto.Thresholds.FirstOrDefault(x => x.Id == need.CurrentThreshold) is { Alert: not null } threshold)
+        if (threshold.Alert != null)
             _alerts.ShowAlert(ent.Owner, threshold.Alert.Value);
         else if (proto.AlertCategory != null)
             _alerts.ClearAlertCategory(ent.Owner, proto.AlertCategory.Value);
+
+        _entityEffects.TryApplyEffects(ent, threshold.Effects, user: ent);
 
         need.ActualDecayRate = need.ThresholdDecayModifiers.GetValueOrDefault(need.CurrentThreshold, 1);
         SetAuthoritativeValue(ent, protoId, GetValue(ent, protoId));
@@ -173,6 +183,7 @@ public sealed partial class NeedsSystem : EntitySystem
 /// </summary>
 /// <param name="Old">ID of the previous threshold</param>
 /// <param name="New">ID of the current threshold</param>
+[PublicAPI]
 public record struct NeedThresholdChangedEvent(
     ProtoId<NeedPrototype> Need,
     ProtoId<NeedThresholdPrototype> Old,

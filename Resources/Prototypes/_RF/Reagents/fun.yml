@@ -1,0 +1,10 @@
+- type: reagent
+  id: !PartialOnly Fiber
+  metabolisms:
+    Digestion:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Hunger
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [ Moth ]

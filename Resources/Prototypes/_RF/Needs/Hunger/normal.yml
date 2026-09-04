@@ -1,0 +1,96 @@
+- type: needCategory
+  id: Hunger
+
+- type: needThresholdCategory
+  id: Overfed
+
+- type: needThresholdCategory
+  id: Sated
+
+- type: needThresholdCategory
+  id: Hungry
+
+- type: needThresholdCategory
+  id: Starving
+
+- type: needThresholdCategory
+  id: StarvingCritical
+
+- type: need
+  id: NormalHunger
+  category: Hunger
+  thresholds:
+  - Overfed
+  - Sated
+  - Hungry
+  - Starving
+  - StarvingCritical
+  roundstartRandomize:
+    min: 100
+    max: 150
+
+- type: needThreshold
+  id: Overfed
+  category: Overfed
+  value: 200
+  decayTime: 30m
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: overfed
+  alert: Overfed
+  effects:
+  - !type:AddMood
+    proto: MoodOverfed
+
+- type: needThreshold
+  id: Sated
+  category: Sated
+  value: 150
+  decayTime: 5h
+  effects:
+  - !type:AddMood
+    proto: MoodSated
+
+- type: needThreshold
+  id: Hungry
+  category: Hungry
+  value: 80
+  decayTime: 6h
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: peckish
+  alert: Peckish
+  effects:
+  - !type:AddMood
+    proto: MoodHungry
+
+- type: needThreshold
+  id: Starving
+  category: Starving
+  value: 40
+  decayTime: 12h
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: starving
+  alert: Starving
+  effects:
+  - !type:AddMood
+    proto: MoodStarving
+
+- type: needThreshold
+  id: StarvingCritical
+  category: StarvingCritical
+  value: 20
+  decayTime: 12h
+  icon:
+    sprite: /Textures/Interface/Misc/food_icons.rsi
+    state: starving
+  alert: Starving
+  effects:
+  - !type:AddMood
+    proto: MoodStarvingCritical
+  tickEffects:
+  - !type:HealthChange
+    damage:
+      types:
+        Asphyxiation: 4

@@ -13,7 +13,7 @@ public sealed partial class ModifyNeedOnSleepComponent : Component
     /// The values for each need category and each threshold by which the need will be increased with each update
     /// </summary>
     [DataField]
-    public Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdPrototype>, float>> Modifiers = new();
+    public Dictionary<ProtoId<NeedCategoryPrototype>, Dictionary<ProtoId<NeedThresholdCategoryPrototype>, float>> Modifiers = new();
 
     [DataField]
     public TimeSpan UpdateRate = TimeSpan.FromSeconds(1);

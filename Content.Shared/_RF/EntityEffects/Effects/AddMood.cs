@@ -1,10 +1,10 @@
-using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Social;
+using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Conversation.EntityEffects;
+namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Adds an effect on the entity's mood.
@@ -18,12 +18,12 @@ public sealed partial class AddMood : EntityEffectBase<AddMood>
     public ProtoId<SocialEffectPrototype> Proto;
 }
 
-public sealed class AddMoodEntityEffectsSystem : EntityEffectSystem<ConversationActorComponent, AddMood>
+public sealed partial class AddMoodEntityEffectsSystem : EntityEffectSystem<SocialComponent, AddMood>
 {
     [Dependency] private SocialSystem _social = default!;
 
-    protected override void Effect(Entity<ConversationActorComponent> ent, ref EntityEffectEvent<AddMood> args)
+    protected override void Effect(Entity<SocialComponent> ent, ref EntityEffectEvent<AddMood> args)
     {
-        _social.AddMoodEffect(ent.Owner, args.Effect.Proto);
+        _social.AddMoodEffect(ent.AsNullable(), args.Effect.Proto);
     }
 }

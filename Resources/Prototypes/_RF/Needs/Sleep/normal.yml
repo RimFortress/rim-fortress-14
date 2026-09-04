@@ -1,0 +1,71 @@
+- type: needCategory
+  id: Sleep
+
+- type: needThresholdCategory
+  id: Overslept
+
+- type: needThresholdCategory
+  id: Rested
+
+- type: needThresholdCategory
+  id: Tired
+
+- type: needThresholdCategory
+  id: Exhausted
+
+- type: need
+  id: NormalSleep
+  category: Sleep
+  thresholds:
+  - Overslept
+  - Rested
+  - Tired
+  - Exhausted
+  roundstartRandomize:
+    min: 70
+    max: 85
+
+- type: needThreshold
+  id: Overslept
+  category: Overslept
+  value: 100
+  decayTime: 2h
+  icon:
+    sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
+    state: overslept
+  effects:
+  - !type:AddMood
+    proto: MoodOverslept
+
+- type: needThreshold
+  id: Rested
+  category: Rested
+  value: 80
+  decayTime: 11h
+  effects:
+  - !type:AddMood
+    proto: MoodRested
+
+- type: needThreshold
+  id: Tired
+  category: Tired
+  value: 40
+  decayTime: 5h
+  icon:
+    sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
+    state: tired
+  effects:
+  - !type:AddMood
+    proto: MoodTired
+
+- type: needThreshold
+  id: Exhausted
+  category: Exhausted
+  value: 20
+  decayTime: 4h
+  icon:
+    sprite: /Textures/_RF/Interface/Misc/need_icons.rsi
+    state: exhausted
+  effects:
+  - !type:AddMood
+    proto: MoodExhausted

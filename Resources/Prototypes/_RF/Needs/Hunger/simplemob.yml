@@ -1,0 +1,42 @@
+- type: need
+  id: SimpleMobHunger
+  category: Hunger
+  thresholds:
+  - SimpleMobOverfed
+  - SimpleMobSated
+  - SimpleMobHungry
+  - SimpleMobStarving
+  - SimpleMobStarvingCritical
+  roundstartRandomize:
+    min: 40
+    max: 80
+
+- type: needThreshold
+  id: SimpleMobOverfed
+  parent: Overfed
+  value: 100
+  decayTime: 30m
+
+- type: needThreshold
+  id: SimpleMobSated
+  parent: Sated
+  value: 50
+  decayTime: 3h
+
+- type: needThreshold
+  id: SimpleMobHungry
+  parent: Hungry
+  value: 25
+  decayTime: 5h
+
+- type: needThreshold
+  id: SimpleMobStarving
+  parent: Starving
+  value: 15
+  decayTime: 6h
+
+- type: needThreshold
+  id: SimpleMobStarvingCritical
+  parent: StarvingCritical
+  value: 5
+  decayTime: 6h

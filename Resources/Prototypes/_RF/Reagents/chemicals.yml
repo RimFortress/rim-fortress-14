@@ -1,0 +1,13 @@
+- type: reagent
+  id: !PartialOnly SodiumPolyacrylate
+  metabolisms:
+    Bloodstream:
+      effects: !Clear
+      - !type:ChangeNeed
+        need: Thirst
+        amount: -5 # This is basically industrial dessicant
+      - !type:PopupMessage
+        visualType: MediumCaution
+        type: Local
+        messages: [ "generic-reagent-effect-parched" ]
+        probability: 0.1

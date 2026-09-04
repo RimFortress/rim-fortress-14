@@ -1,0 +1,42 @@
+- type: need
+  id: SimpleModThirst
+  category: Thirst
+  thresholds:
+  - SimpleModOverhydrated
+  - SimpleModThirstOkay
+  - SimpleModThirsty
+  - SimpleModParched
+  - SimpleModDehydratedCritical
+  roundstartRandomize:
+    min: 100
+    max: 150
+
+- type: needThreshold
+  id: SimpleModOverhydrated
+  parent: Overhydrated
+  value: 200
+  decayTime: 20m
+
+- type: needThreshold
+  id: SimpleModThirstOkay
+  parent: ThirstOkay
+  value: 150
+  decayTime: 3h
+
+- type: needThreshold
+  id: SimpleModThirsty
+  parent: Thirsty
+  value: 100
+  decayTime: 4h
+
+- type: needThreshold
+  id: SimpleModParched
+  parent: Parched
+  value: 50
+  decayTime: 8h
+
+- type: needThreshold
+  id: SimpleModDehydratedCritical
+  parent: DehydratedCritical
+  value: 25
+  decayTime: 6h
