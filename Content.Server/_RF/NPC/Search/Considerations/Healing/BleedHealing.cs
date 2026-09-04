@@ -13,7 +13,7 @@ public sealed partial class BleedHealing : BaseSearchConsideration<BleedHealing>
 
 public sealed partial class BleedHealingSearchConsiderationSystem : NpcSearchConsiderationSystem<BleedHealing>
 {
-    [Dependency] private readonly EntityQuery<HealingComponent> _query = default!;
+    [Dependency] private EntityQuery<HealingComponent> _query;
 
     protected override float GetScore(GoapState state, EntityUid target, BleedHealing con)
         => _query.TryComp(target, out var comp) ? comp.BloodlossModifier : 0f;

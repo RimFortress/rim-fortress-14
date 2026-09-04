@@ -85,9 +85,9 @@ public sealed partial class AiDevWindow : Control
 }
 
 [UsedImplicitly]
-internal sealed class AiWindowCommand : LocalizedCommands
+internal sealed partial class AiWindowCommand : LocalizedCommands
 {
-    [Dependency] private readonly IEntityManager _entManager = default!;
+    [Dependency] private IEntityManager _entManager = default!;
 
     public override string Command => "aidevwindow";
 

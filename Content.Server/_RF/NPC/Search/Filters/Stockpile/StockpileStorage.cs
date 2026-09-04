@@ -42,7 +42,7 @@ public sealed partial class CanInsertInStockSearchFilterSystem : NpcSearchFilter
     [Dependency] private StockpileSystem _stockpile = default!;
     [Dependency] private OwnershipSystem _ownership = default!;
     [Dependency] private EntityStorageSystem _storage = default!;
-    [Dependency] private readonly EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
 
     public override void Initialize()
     {
