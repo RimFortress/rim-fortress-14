@@ -1,0 +1,32 @@
+uniform lowp vec4 color;
+uniform highp vec2 point1;
+uniform highp vec2 point2;
+uniform highp float thickness;
+uniform highp float dashLength;
+uniform highp float gapLength;
+
+void fragment() {
+    highp vec2 px = FRAGCOORD.xy;
+    highp vec2 dir = point2 - point1;
+    highp float len = length(dir);
+
+    if (len < 0.0001) {
+        COLOR = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
+
+    highp vec2 unit = dir / len;
+    highp vec2 normal = vec2(-unit.y, unit.x);
+    highp vec2 rel = px - point1;
+
+    highp float along = dot(rel, unit);
+    highp float across = dot(rel, normal);
+
+    if (along < 0.0 || along > len || abs(across) > thickness * 0.5) {
+        COLOR = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
+
+    bool inDash = mod(along, dashLength + gapLength) < dashLength;
+    COLOR = inDash ? color : vec4(0.0, 0.0, 0.0, 0.0);
+}

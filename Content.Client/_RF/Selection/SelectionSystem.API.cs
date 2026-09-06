@@ -18,6 +18,7 @@ public partial class SelectionSystem
     /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     /// <param name="iconColor"><see cref="Selection{T}.IconColor"/></param>
     /// <param name="allowedModes"><see cref="Selection{T}.AllowedModes"/></param>
+    /// <param name="showArea"><see cref="Selection{T}.ShowArea"/></param>
     /// <param name="default"></param>
     [PublicAPI]
     public void SetSelection(
@@ -28,6 +29,7 @@ public partial class SelectionSystem
         SpriteSpecifier? icon = null,
         Color? iconColor = null,
         SelectionMode[]? allowedModes = null,
+        bool showArea = true,
         bool @default = false)
         => SetSelection(Selection<EntityUid>.FromDefault(
                 act: act,
@@ -36,7 +38,8 @@ public partial class SelectionSystem
                 onSelected: onSelected,
                 icon: icon,
                 iconColor: iconColor,
-                allowedModes: allowedModes),
+                allowedModes: allowedModes,
+                showArea: showArea),
             @default);
 
     /// <summary>
@@ -44,30 +47,36 @@ public partial class SelectionSystem
     /// </summary>
     /// <param name="act"><see cref="Selection{T}.Act"/></param>
     /// <param name="color"><see cref="Selection{T}.Color"/></param>
+    /// <param name="innerColor"><see cref="Selection{T}.InnerColor"/></param>
     /// <param name="filter"><see cref="Selection{T}.Filter"/></param>
     /// <param name="onSelected"><see cref="Selection{T}.OnSelected"/></param>
     /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     /// <param name="iconColor"><see cref="Selection{T}.IconColor"/></param>
     /// <param name="allowedModes"><see cref="Selection{T}.AllowedModes"/></param>
+    /// <param name="showArea"><see cref="Selection{T}.ShowArea"/></param>
     /// <param name="default"></param>
     [PublicAPI]
     public void SetSelection(
         SelectionActionHandler<TileRef>? act = null,
+        Color? innerColor = null,
         Color? color = null,
         Func<TileRef, bool>? filter = null,
         Action<HashSet<TileRef>>? onSelected = null,
         SpriteSpecifier? icon = null,
         Color? iconColor = null,
         SelectionMode[]? allowedModes = null,
+        bool showArea = true,
         bool @default = false)
         => SetSelection(Selection<TileRef>.FromDefault(
                 act: act,
                 color: color,
+                innerColor: innerColor,
                 filter: filter,
                 onSelected: onSelected,
                 icon: icon,
                 iconColor: iconColor,
-                allowedModes: allowedModes),
+                allowedModes: allowedModes,
+                showArea: showArea),
             @default);
 
     /// <summary>

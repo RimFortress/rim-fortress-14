@@ -33,6 +33,7 @@ public sealed partial class SelectionComponent : Component
 /// </summary>
 /// <param name="Selected"><typeparamref name="T"/> within the boundaries of the selection frame.</param>
 /// <param name="Color">Selection drawing color.</param>
+/// <param name="InnerColor">The fill color of the inner selection area. Supported only for tiled selections.</param>
 /// <param name="Filter">A function that filters <typeparamref name="T"/> in selection</param>
 /// <param name="OnSelected">Action taken when the selection is completed.</param>
 /// <param name="Act">The action that will be invoked when the action button is clicked.</param>
@@ -40,50 +41,59 @@ public sealed partial class SelectionComponent : Component
 /// <param name="IconColor">Color of the icon that will be drawn next to the mouse cursor.</param>
 /// <param name="AllowedModes">Allowed selection modes.</param>
 /// <param name="CurrentMode">Current selection modes.</param>
+/// <param name="ShowArea">Will the selection box be displayed?</param>
 /// <typeparam name="T">The type of object that would be included in the selection.</typeparam>
 public record struct Selection<T>(
     HashSet<T> Selected,
     HashSet<T> DragBase,
     Color Color,
+    Color? InnerColor,
     Func<T, bool>? Filter,
     Action<HashSet<T>>? OnSelected,
     SelectionActionHandler<T>? Act,
     SpriteSpecifier? Icon,
     Color IconColor,
     SelectionMode[] AllowedModes,
-    SelectionMode CurrentMode)
+    SelectionMode CurrentMode,
+    bool ShowArea)
     : ISelection where T : struct
 {
     public static readonly Selection<T> Defaults = new(
         Selected: new(),
         DragBase: new(),
         Color: Color.LightGray,
+        InnerColor: null,
         Filter: null,
         OnSelected: null,
         Act: null,
         Icon: null,
         IconColor: Color.LightGray,
         AllowedModes: [SelectionMode.Default],
-        CurrentMode: SelectionMode.Default);
+        CurrentMode: SelectionMode.Default,
+        ShowArea: true);
 
     public static Selection<T> FromDefault(
         Color? color = null,
+        Color? innerColor = null,
         Func<T, bool>? filter = null,
         Action<HashSet<T>>? onSelected = null,
         SelectionActionHandler<T>? act = null,
         SpriteSpecifier? icon = null,
         Color? iconColor = null,
-        SelectionMode[]? allowedModes = null)
+        SelectionMode[]? allowedModes = null,
+        bool showArea = true)
         => new(Selected: new(),
             DragBase: new(),
             Color: color ?? Defaults.Color,
+            InnerColor: innerColor ?? Defaults.InnerColor,
             Filter: filter ?? Defaults.Filter,
             OnSelected: onSelected ?? Defaults.OnSelected,
             Act: act ?? Defaults.Act,
             Icon: icon ?? Defaults.Icon,
             IconColor: iconColor ?? Defaults.IconColor,
             AllowedModes: allowedModes ?? Defaults.AllowedModes,
-            CurrentMode: Defaults.CurrentMode);
+            CurrentMode: Defaults.CurrentMode,
+            ShowArea: showArea);
 
     /// <summary>
     /// Returns a copy with independent Selected/DragBase sets, so assigning this to
@@ -115,6 +125,10 @@ public interface ISelection
     SelectionMode[] AllowedModes { get; set; }
 
     SelectionMode CurrentMode { get; set; }
+
+    Color? InnerColor { get; set; }
+
+    bool ShowArea { get; set; }
 
     /// <summary>
     /// Snapshots the current <c>Selected</c> set into <c>DragBase</c>. Call this once,

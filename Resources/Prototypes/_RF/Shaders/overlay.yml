@@ -51,3 +51,21 @@
     thickness: 2
     dashLength: 10
     gapLength: 10
+
+- type: shader
+  id: DottedTileBorder
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_edge.swsl"
+  params:
+    thickness: 3
+    dashLength: 12
+    gapLength: 8
+
+- type: shader
+  id: DottedTileGrid
+  kind: source
+  path: "/Textures/_RF/Shaders/dotted_edge.swsl"
+  params:
+    thickness: 2
+    dashLength: 6
+    gapLength: 12

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.Selection.Components;
@@ -23,6 +24,9 @@ public sealed partial class SelectionOverlay : Overlay
 
     private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
     private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";
+    private static readonly ProtoId<ShaderPrototype> TileBorderShader = "DottedTileBorder";
+    private static readonly ProtoId<ShaderPrototype> TileGridShader = "DottedTileGrid";
+
     private const string SelectionPostShaderId = "SelectionPostShader";
 
     private readonly TurfSystem _turf;
@@ -65,16 +69,11 @@ public sealed partial class SelectionOverlay : Overlay
             SetShader(entity, selection.Color);
         }
 
-        foreach (var tileRef in _selection.Selected<TileRef>())
-        {
-            var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
-            var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
-            var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
+        DrawTileInner(args, _selection.Selected<TileRef>(), selection.InnerColor);
+        DrawTileSelection(args, _selection.Selected<TileRef>(), selection.Color);
 
-            DrawSelectArea(args, start, end, selection.Color);
-        }
-
-        if (comp is { StartPoint: { } startPoint, EndPoint: { } endPoint })
+        if (selection.ShowArea
+            && comp is { StartPoint: { } startPoint, EndPoint: { } endPoint })
             DrawSelectArea(args, startPoint, endPoint, selection.Color);
 
         if (selection.Icon != null)
@@ -146,4 +145,220 @@ public sealed partial class SelectionOverlay : Overlay
         args.WorldHandle.DrawRect(box, StyleFortress.BlackAmber.WithAlpha(0.6f));
         args.WorldHandle.DrawTextureRect(icon, box, color);
     }
+
+    #region Tiles
+
+    private void DrawTileInner(in OverlayDrawArgs args, IReadOnlySet<TileRef> tiles, Color? color)
+    {
+        if (color == null)
+            return;
+
+        foreach (var tileRef in tiles)
+        {
+            var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
+            var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
+            var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
+            var area = new Box2(
+                Math.Min(start.X, end.X),
+                Math.Min(start.Y, end.Y),
+                Math.Max(start.X, end.X),
+                Math.Max(start.Y, end.Y));
+
+            args.WorldHandle.DrawRect(area, color.Value);
+        }
+    }
+
+    /// <summary>
+    /// Draws the selected tiles as a merged region: a thick dashed outline where the
+    /// selection actually ends, and thin plain lines on the grid edges shared between
+    /// two adjacent selected tiles.
+    /// </summary>
+    private void DrawTileSelection(in OverlayDrawArgs args, IReadOnlySet<TileRef> tiles, Color color)
+    {
+        if (tiles.Count == 0)
+            return;
+
+        // A selection normally lives on a single grid, but group defensively in case it doesn't.
+        foreach (var group in tiles.GroupBy(t => t.GridUid))
+        {
+            var gridUid = group.Key;
+            var indices = new HashSet<Vector2i>();
+
+            foreach (var tile in group)
+            {
+                indices.Add(tile.GridIndices);
+            }
+
+            DrawInteriorGridLines(args, gridUid, indices, color);
+            DrawTileBoundary(args, gridUid, indices, color);
+        }
+    }
+
+    /// <summary>
+    /// Thin lines on grid edges shared between two selected tiles.
+    /// </summary>
+    private void DrawInteriorGridLines(in OverlayDrawArgs args, EntityUid gridUid, HashSet<Vector2i> tiles, Color color)
+    {
+        var thinColor = color.WithAlpha(0.6f);
+
+        foreach (var tile in tiles)
+        {
+            // Checking only the right/up neighbour of every tile visits each interior
+            // edge exactly once (the mirrored left/down edge belongs to that neighbour).
+            if (tiles.Contains(tile + Vector2i.Right))
+            {
+                var a = GridCornerToMap(gridUid, tile + new Vector2i(1, 0));
+                var b = GridCornerToMap(gridUid, tile + new Vector2i(1, 1));
+                DrawDashedSegment(args, a, b, thinColor, TileGridShader);
+            }
+
+            if (tiles.Contains(tile + Vector2i.Up))
+            {
+                var a = GridCornerToMap(gridUid, tile + new Vector2i(0, 1));
+                var b = GridCornerToMap(gridUid, tile + new Vector2i(1, 1));
+                DrawDashedSegment(args, a, b, thinColor, TileGridShader);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Thick dashed outline along the actual boundary of the selected region (and any
+    /// holes in it), with collinear runs collapsed so the dash pattern isn't reset at
+    /// every single tile edge.
+    /// </summary>
+    private void DrawTileBoundary(in OverlayDrawArgs args, EntityUid gridUid, HashSet<Vector2i> tiles, Color color)
+    {
+        foreach (var loop in GetBoundaryLoops(tiles))
+        {
+            if (loop.Count < 2)
+                continue;
+
+            for (var i = 0; i < loop.Count; i++)
+            {
+                var a = GridCornerToMap(gridUid, loop[i]);
+                var b = GridCornerToMap(gridUid, loop[(i + 1) % loop.Count]);
+                DrawDashedSegment(args, a, b, color, TileBorderShader);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Traces the boundary of a tile region into closed loops of grid-corner points,
+    /// with consecutive collinear edges merged into single segments.
+    /// </summary>
+    private static List<List<Vector2i>> GetBoundaryLoops(IReadOnlySet<Vector2i> tiles)
+    {
+        var next = new Dictionary<Vector2i, Vector2i>();
+
+        foreach (var tile in tiles)
+        {
+            var br = tile + new Vector2i(1, 0);
+            var tr = tile + new Vector2i(1, 1);
+            var tl = tile + new Vector2i(0, 1);
+
+            if (!tiles.Contains(tile + Vector2i.Down))
+                next[tile] = br;
+
+            if (!tiles.Contains(tile + Vector2i.Right))
+                next[br] = tr;
+
+            if (!tiles.Contains(tile + Vector2i.Up))
+                next[tr] = tl;
+
+            if (!tiles.Contains(tile + Vector2i.Left))
+                next[tl] = tile;
+        }
+
+        var visited = new HashSet<Vector2i>();
+        var loops = new List<List<Vector2i>>();
+
+        foreach (var start in next.Keys)
+        {
+            if (!visited.Add(start))
+                continue;
+
+            var raw = new List<Vector2i> { start };
+            var cur = start;
+            var closed = false;
+
+            // A well-formed loop can't contain more corners than there are boundary
+            // edges in total, so this bound is always safe for a valid loop and always
+            // triggers before a corrupted graph can spin forever.
+            for (var steps = 0; steps < next.Count; steps++)
+            {
+                if (!next.TryGetValue(cur, out var n))
+                    break;
+
+                if (n == start)
+                {
+                    closed = true;
+                    break;
+                }
+
+                visited.Add(n);
+                raw.Add(n);
+                cur = n;
+            }
+
+            // Two selected tiles touching only diagonally (sharing a single corner, no
+            // edge) make that corner non-manifold: it gets two conflicting outgoing
+            // edges, and whichever one 'next' silently overwrote breaks the loop so it
+            // never returns to 'start'. Rather than draw a bogus closing edge across
+            // that broken path, just skip this loop - a missing outline segment at a
+            // rare diagonal pinch point is a fine trade-off for never hanging.
+            if (!closed)
+                continue;
+
+            var loop = new List<Vector2i>();
+
+            for (var i = 0; i < raw.Count; i++)
+            {
+                var prev = raw[(i - 1 + raw.Count) % raw.Count];
+                var point = raw[i];
+                var nextPoint = raw[(i + 1) % raw.Count];
+
+                if (point - prev != nextPoint - point)
+                    loop.Add(point);
+            }
+
+            loops.Add(loop);
+        }
+
+        return loops;
+    }
+
+    private MapCoordinates GridCornerToMap(EntityUid gridUid, Vector2i corner)
+        => _transform.ToMapCoordinates(new EntityCoordinates(gridUid, corner));
+
+    private void DrawDashedSegment(
+        in OverlayDrawArgs args,
+        MapCoordinates start,
+        MapCoordinates end,
+        Color color,
+        ProtoId<ShaderPrototype> shaderId)
+    {
+        var shader = _prototype.Index(shaderId).InstanceUnique();
+        var prevShader = args.WorldHandle.GetShader();
+
+        var screenA = args.Viewport.WorldToLocal(start.Position);
+        screenA.Y = args.Viewport.Size.Y - screenA.Y;
+        var screenB = args.Viewport.WorldToLocal(end.Position);
+        screenB.Y = args.Viewport.Size.Y - screenB.Y;
+
+        shader.SetParameter("color", color);
+        shader.SetParameter("point1", screenA);
+        shader.SetParameter("point2", screenB);
+
+        var area = new Box2(
+            Math.Min(start.X, end.X),
+            Math.Min(start.Y, end.Y),
+            Math.Max(start.X, end.X),
+            Math.Max(start.Y, end.Y)).Enlarged(0.15f);
+
+        args.WorldHandle.UseShader(shader);
+        args.WorldHandle.DrawRect(area, Color.White);
+        args.WorldHandle.UseShader(prevShader);
+    }
+
+    #endregion
 }

@@ -47,6 +47,7 @@ public sealed partial class StockpileUiController :
 
     public Entity<StockpileComponent>? SettingStock;
     public Entity<StockpileComponent>? SelectedStock;
+    private Color _stockInnerColor = Color.LightGray.WithAlpha(0.15f);
 
     public List<EntityUid> HighlightedStockpiles
     {
@@ -180,7 +181,9 @@ public sealed partial class StockpileUiController :
                 _selection.SetDefault<EntityUid>();
             },
             filter: AddTileFilter,
-            icon: _createSelectionIcon);
+            innerColor: _stockInnerColor,
+            icon: _createSelectionIcon,
+            showArea: false);
     }
 
     public void AddTileSelection(Entity<StockpileComponent> stock)
@@ -193,7 +196,9 @@ public sealed partial class StockpileUiController :
                 AddTileSelection(stock);
             },
             filter: AddTileFilter,
-            icon: _addTileSelection);
+            innerColor: _stockInnerColor,
+            icon: _addTileSelection,
+            showArea: false);
     }
 
     public void RemoveTileSelection(Entity<StockpileComponent> stock)
@@ -206,7 +211,9 @@ public sealed partial class StockpileUiController :
                 RemoveTileSelection(stock);
             },
             filter: RemoveTileFilter,
-            icon: _removeTileSelection);
+            innerColor: _stockInnerColor,
+            icon: _removeTileSelection,
+            showArea: false);
     }
 
     private bool AddTileFilter(TileRef tile)
