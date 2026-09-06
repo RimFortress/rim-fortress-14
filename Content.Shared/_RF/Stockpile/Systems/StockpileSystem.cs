@@ -28,10 +28,10 @@ public sealed partial class StockpileSystem : EntitySystem
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private SharedEntityStorageSystem _storage = default!;
 
-    [Dependency] private EntityQuery<StockpileComponent> _stockQuery = default!;
-    [Dependency] private EntityQuery<MapGridComponent> _gridQuery = default!;
-    [Dependency] private EntityQuery<ContainerManagerComponent> _containerQuery = default!;
-    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<StockpileComponent> _stockQuery;
+    [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
+    [Dependency] private EntityQuery<ContainerManagerComponent> _containerQuery;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
 
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
 
@@ -153,7 +153,7 @@ public sealed partial class StockpileSystem : EntitySystem
         SetProtoMax(new(uid, comp), ev.ProtoId, ev.Value);
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnSettingsUpdate(StockpileSettingsUpdated ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -172,7 +172,7 @@ public sealed partial class StockpileSystem : EntitySystem
         SetProtoMax(new(uid, comp), ev.Settings);
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnSuppliedAdded(StockpileSuppliedAdded ev, EntitySessionEventArgs args)
     {
         var supplied = GetEntity(ev.Supplied);
@@ -188,7 +188,7 @@ public sealed partial class StockpileSystem : EntitySystem
         AddSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnSuppliedRemoved(StockpileSuppliedRemoved ev, EntitySessionEventArgs args)
     {
         var supplied = GetEntity(ev.Supplied);
@@ -204,7 +204,7 @@ public sealed partial class StockpileSystem : EntitySystem
         RemoveSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnColorSet(StockpileColorSet ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
