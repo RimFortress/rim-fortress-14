@@ -1,24 +1,27 @@
+using System.Numerics;
 using Content.Shared._RF.Selection.Components;
-using Content.Shared._RF.Selection.Systems;
-using JetBrains.Annotations;
+using Content.Shared.Input;
+using Content.Shared.Maps;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
 using Robust.Client.Player;
-using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Selection;
 
-public sealed partial class SelectionSystem : SharedSelectionSystem
+public sealed partial class SelectionSystem : EntitySystem
 {
     [Dependency] private IOverlayManager _overlay = default!;
     [Dependency] private IPlayerManager _player = default!;
     [Dependency] private IInputManager _input = default!;
     [Dependency] private IEyeManager _eye = default!;
     [Dependency] private SharedTransformSystem _transform = default!;
+    [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private TurfSystem _turf = default!;
 
     /// <summary>
     /// Invoked each time the selection mode settings are changed.
@@ -30,6 +33,11 @@ public sealed partial class SelectionSystem : SharedSelectionSystem
     /// </summary>
     public event Action? OnSelectedChanged;
 
+    private static readonly Type[] SupportedTypes = [typeof(EntityUid), typeof(TileRef)];
+
+    public static readonly SelectionMode[] AllModes =
+        [SelectionMode.Default, SelectionMode.Append, SelectionMode.Remove];
+
     /// <inheritdoc/>
     public override void Initialize()
     {
@@ -38,8 +46,10 @@ public sealed partial class SelectionSystem : SharedSelectionSystem
         _overlay.AddOverlay(new SelectionOverlay());
 
         CommandBinds.Builder
-            .Bind(EngineKeyFunctions.Use, new PointerStateInputCmdHandler(OnSelectEnabled, OnSelectDisabled))
-            .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
+            .Bind(ContentKeyFunctions.SelectionDefault, new PointerStateInputCmdHandler(OnSelectEnabled, OnSelectDisabled))
+            .Bind(ContentKeyFunctions.SelectionAppend, new PointerStateInputCmdHandler(OnAppendSelectEnabled, OnSelectDisabled))
+            .Bind(ContentKeyFunctions.SelectionRemove, new PointerStateInputCmdHandler(OnRemoveSelectEnabled, OnSelectDisabled))
+            .Bind(ContentKeyFunctions.SelectionAction, new PointerInputCmdHandler(OnAction))
             .Register<SelectionSystem>();
     }
 
@@ -53,12 +63,41 @@ public sealed partial class SelectionSystem : SharedSelectionSystem
 
     private bool OnSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
+            || GetSelection() is not { } selection
+            || !selection.AllowedModes.Contains(SelectionMode.Default))
             return false;
 
-        ClearSelection(new(_player.LocalEntity.Value, comp));
-        OnSelectedChanged?.Invoke();
+        selection.CurrentMode = SelectionMode.Default;
+        selection.CaptureDragBase();
+        comp.StartPoint = _transform.ToMapCoordinates(coords);
+        comp.EndPoint = comp.StartPoint;
+        return false;
+    }
 
+    private bool OnAppendSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    {
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
+            || GetSelection() is not { } selection
+            || !selection.AllowedModes.Contains(SelectionMode.Append))
+            return false;
+
+        selection.CurrentMode = SelectionMode.Append;
+        selection.CaptureDragBase();
+        comp.StartPoint = _transform.ToMapCoordinates(coords);
+        comp.EndPoint = comp.StartPoint;
+        return false;
+    }
+
+    private bool OnRemoveSelectEnabled(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    {
+        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
+            || GetSelection() is not { } selection
+            || !selection.AllowedModes.Contains(SelectionMode.Remove))
+            return false;
+
+        selection.CurrentMode = SelectionMode.Remove;
+        selection.CaptureDragBase();
         comp.StartPoint = _transform.ToMapCoordinates(coords);
         comp.EndPoint = comp.StartPoint;
         return false;
@@ -69,110 +108,85 @@ public sealed partial class SelectionSystem : SharedSelectionSystem
         if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
             return false;
 
-        if (comp.Selected.Count > 0)
-            comp.OnSelected?.Invoke(comp.Selected);
-
-        if (comp.SelectedTiles.Count > 0)
-            comp.OnTileSelected?.Invoke(comp.SelectedTiles);
+        if (GetSelection<EntityUid>() is { } entSelection)
+            entSelection.OnSelected?.Invoke(entSelection.Selected);
+        else if (GetSelection<TileRef>() is { } tileSelection)
+            tileSelection.OnSelected?.Invoke(tileSelection.Selected);
 
         comp.StartPoint = null;
         comp.EndPoint = null;
         return false;
     }
 
-    private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    private bool OnAction(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
     {
-        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
+        if (!HasComp<SelectionComponent>(_player.LocalEntity))
             return false;
 
-        comp.Act?.Invoke((comp.Selected, uid.IsValid() ? uid : null, coords));
-        comp.TileAct?.Invoke((comp.SelectedTiles, coords));
+        if (GetSelection<EntityUid>() is { } entSelection)
+        {
+            entSelection.Act?.Invoke(entSelection.Selected, uid.IsValid() ? uid : null, coords);
+            return entSelection.Selected.Count > 0;
+        }
 
-        return comp.Selected.Count > 0 || comp.SelectedTiles.Count > 0;
+        if (GetSelection<TileRef>() is { } tileSelection)
+        {
+            tileSelection.Act?.Invoke(tileSelection.Selected, _turf.GetTileRef(coords), coords);
+            return tileSelection.Selected.Count > 0;
+        }
+
+        return false;
     }
 
-    /// <summary>
-    /// Sets the settings for player entity selection.
-    /// </summary>
-    /// <param name="act"><see cref="SelectionComponent.Act"/></param>
-    /// <param name="color"><see cref="SelectionComponent.SelectionColor"/></param>
-    /// <param name="filter"><see cref="SelectionComponent.SelectionFilter"/></param>
-    /// <param name="onSelected"><see cref="SelectionComponent.OnSelected"/></param>
-    /// <param name="icon"><see cref="SelectionComponent.Icon"/></param>
-    /// <param name="iconColor"><see cref="SelectionComponent.IconColor"/></param>
-    /// <param name="netSync"><see cref="SelectionComponent.NetSync"/></param>
-    [PublicAPI]
-    public void SetSelection(
-        Action<(HashSet<EntityUid> Selected, EntityUid? ActUid, EntityCoordinates ActCoords)>? act = null,
-        Color? color = null,
-        Func<EntityUid, bool>? filter = null,
-        Action<HashSet<EntityUid>>? onSelected = null,
-        SpriteSpecifier? icon = null,
-        Color? iconColor = null,
-        bool netSync = false)
+    private void SetSelection<T>(Selection<T> selection, bool @default = false) where T : struct
     {
+        if (!SupportedTypes.Contains(typeof(T)))
+            throw new ArgumentException($"not supported selection type: {typeof(T)}");
+
         if (_player.LocalEntity is not { } uid)
             return;
 
         var comp = EnsureComp<SelectionComponent>(uid);
-        SetDefault(uid);
+        SetDefault<T>(uid);
 
-        comp.SelectionColor = color ?? Color.LightGray;
-        comp.SelectionFilter = filter;
-        comp.OnSelected = onSelected;
-        comp.Icon = icon;
-        comp.IconColor = iconColor ?? Color.LightGray;
-        comp.Act = act;
-        comp.NetSync = netSync;
+        if (@default)
+        {
+            comp.DefaultSelection = selection;
+            comp.CurrentSelection = selection.Cloned();
+        }
+        else
+            comp.CurrentSelection = selection;
 
         OnUpdateSelection?.Invoke();
     }
 
-    /// <summary>
-    /// Sets the settings for player tile selection.
-    /// </summary>
-    /// <param name="act"><see cref="SelectionComponent.TileAct"/></param>
-    /// <param name="color"><see cref="SelectionComponent.SelectionColor"/></param>
-    /// <param name="filter"><see cref="SelectionComponent.TileSelectionFilter"/></param>
-    /// <param name="onSelected"><see cref="SelectionComponent.OnTileSelected"/></param>
-    /// <param name="icon"><see cref="SelectionComponent.Icon"/></param>
-    /// <param name="iconColor"><see cref="SelectionComponent.IconColor"/></param>
-    [PublicAPI]
-    public void SetTileSelection(
-        Action<(HashSet<TileRef> Selected, EntityCoordinates ActCoords)>? act = null,
-        Color? color = null,
-        Func<TileRef, bool>? filter = null,
-        Action<HashSet<TileRef>>? onSelected = null,
-        SpriteSpecifier? icon = null,
-        Color? iconColor = null)
+    private void SetDefault<T>(Entity<SelectionComponent?> ent) where T : struct
     {
-        if (_player.LocalEntity is not { } uid)
+        if (!Resolve(ent, ref ent.Comp))
             return;
 
-        var comp = EnsureComp<SelectionComponent>(uid);
-        SetDefault(uid);
-
-        comp.SelectionColor = color ?? Color.LightGray;
-        comp.TileSelectionFilter = filter;
-        comp.OnTileSelected = onSelected;
-        comp.Icon = icon;
-        comp.IconColor = iconColor ?? Color.LightGray;
-        comp.TileAct = act;
-        comp.NetSync = false; // TODO: tiles NetSync
-
-        comp.Mode = SelectionMode.Tile;
-
-        OnUpdateSelection?.Invoke();
+        ClearSelection(ent);
+        var baseline = ent.Comp.DefaultSelection is Selection<T> def ? def : Selection<T>.Defaults;
+        ent.Comp.CurrentSelection = baseline.Cloned();
     }
+
+    private Selection<T>? GetSelection<T>(Entity<SelectionComponent?> ent) where T : struct
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return null;
+
+        return ent.Comp.CurrentSelection is Selection<T> selection ? selection : null;
+    }
+
+    private Selection<T>? GetSelection<T>() where T : struct
+        => _player.LocalEntity is { } uid ? GetSelection<T>(uid) : null;
 
     /// <summary>
     /// Adds an entity to the player's current selection.
     /// </summary>
-    [PublicAPI]
-    public bool Select(EntityUid uid)
+    private bool Select<T>(Entity<SelectionComponent?> ent, T select) where T : struct
     {
-        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
-            || !Select(new(_player.LocalEntity.Value, comp), uid))
+        if (GetSelection<T>(ent) is not { } selection || !selection.Selected.Add(select))
             return false;
 
         OnSelectedChanged?.Invoke();
@@ -182,36 +196,119 @@ public sealed partial class SelectionSystem : SharedSelectionSystem
     /// <summary>
     /// Removes the entity from the player's current selection.
     /// </summary>
-    [PublicAPI]
-    public bool DeSelect(EntityUid uid)
+    private bool DeSelect<T>(Entity<SelectionComponent?> ent, T deSelect) where T : struct
     {
-        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp)
-            || !DeSelect(new(_player.LocalEntity.Value, comp), uid))
+        if (GetSelection<T>(ent) is not { } selection || !selection.Selected.Remove(deSelect))
             return false;
 
         OnSelectedChanged?.Invoke();
         return true;
     }
 
-    /// <summary>
-    /// Clears all entities selected by the user.
-    /// </summary>
-    [PublicAPI]
-    public void ClearSelection()
+    private void ClearSelection(Entity<SelectionComponent?> ent)
     {
-        if (!TryComp(_player.LocalEntity, out SelectionComponent? comp))
-            return;
+        if (GetSelection<EntityUid>(ent) is { } entSelection)
+            entSelection.Selected.Clear();
 
-        ClearSelection(new(_player.LocalEntity.Value, comp));
+        if (GetSelection<TileRef>(ent) is { } tileSelection)
+            tileSelection.Selected.Clear();
+
         OnSelectedChanged?.Invoke();
     }
 
     /// <summary>
-    /// Returns a list of entities in the player's selection.
+    /// Gets the list of entities in the selection area
     /// </summary>
-    [PublicAPI]
-    public IReadOnlySet<EntityUid> SelectedEntities()
-        => _player.LocalEntity is { } uid ? SelectedEntities(uid) : new HashSet<EntityUid>();
+    private HashSet<EntityUid> EntitiesInSelect(Entity<SelectionComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp)
+            || GetSelection<EntityUid>(ent) is not { } selection
+            || ent.Comp.StartPoint == null
+            || ent.Comp.EndPoint == null
+            || ent.Comp.StartPoint.Value.MapId != ent.Comp.EndPoint.Value.MapId)
+            return new();
+
+        var start = Vector2.Min(ent.Comp.StartPoint.Value.Position, ent.Comp.EndPoint.Value.Position);
+        var end = Vector2.Max(ent.Comp.StartPoint.Value.Position, ent.Comp.EndPoint.Value.Position);
+        var area = new Box2(start, end);
+
+        var entities = _lookup.GetEntitiesIntersecting(
+            ent.Comp.StartPoint.Value.MapId,
+            area,
+            flags: LookupFlags.Uncontained | LookupFlags.Dynamic | LookupFlags.Static);
+
+        if (selection.Filter == null)
+            return entities;
+
+        foreach (var entity in entities)
+        {
+            if (!selection.Filter(entity))
+                entities.Remove(entity);
+        }
+
+        return entities;
+    }
+
+    /// <summary>
+    /// Gets the list of tiles in the selection area.
+    /// </summary>
+    private HashSet<TileRef> TilesInSelect(Entity<SelectionComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp)
+            || GetSelection<TileRef>(ent) is not { } selection
+            || ent.Comp.StartPoint == null
+            || ent.Comp.EndPoint == null
+            || ent.Comp.StartPoint.Value.MapId != ent.Comp.EndPoint.Value.MapId)
+            return new();
+
+        var tiles = new HashSet<TileRef>();
+        var map = _map.GetMap(ent.Comp.StartPoint.Value.MapId);
+        var start = Vector2.Min(ent.Comp.StartPoint.Value.Position, ent.Comp.EndPoint.Value.Position);
+        var end = Vector2.Max(ent.Comp.StartPoint.Value.Position, ent.Comp.EndPoint.Value.Position);
+        var area = new Box2(start, end);
+        var enumerator = _map.GetTilesIntersecting(map, Comp<MapGridComponent>(map), area);
+
+        while (enumerator.MoveNext(out var tile))
+        {
+            if (selection.Filter != null && !selection.Filter(tile))
+                continue;
+
+            tiles.Add(tile);
+        }
+
+        return tiles;
+    }
+
+    private void UpdateSelection<T>(Selection<T> selection, HashSet<T> boxContents) where T : struct
+    {
+        HashSet<T> target;
+
+        switch (selection.CurrentMode)
+        {
+            case SelectionMode.Append:
+                // Preview = whatever was selected BEFORE this drag started, plus whatever
+                // is currently under the rectangle right now. Recomputed from DragBase
+                // every frame, so moving the box away from a briefly-touched entity removes
+                // it from the preview again - nothing is committed until mouse-up.
+                target = new HashSet<T>(selection.DragBase);
+                target.UnionWith(boxContents);
+                break;
+            case SelectionMode.Remove:
+                target = new HashSet<T>(selection.DragBase);
+                target.ExceptWith(boxContents);
+                break;
+            default:
+                target = boxContents;
+                break;
+        }
+
+        if (target.Count == selection.Selected.Count && target.SetEquals(selection.Selected))
+            return;
+
+        selection.Selected.Clear();
+        selection.Selected.UnionWith(target);
+        OnSelectedChanged?.Invoke();
+    }
 
     public override void Update(float frameTime)
     {
@@ -226,56 +323,10 @@ public sealed partial class SelectionSystem : SharedSelectionSystem
         if (_input.MouseScreenPosition is { IsValid: true } mousePos)
             comp.EndPoint = _eye.PixelToMap(mousePos);
 
-        switch (comp.Mode)
-        {
-            case SelectionMode.Entity:
-                var selected = EntitiesInSelect(_player.LocalEntity.Value);
+        if (GetSelection<EntityUid>() is { } entSelection)
+            UpdateSelection(entSelection, EntitiesInSelect(_player.LocalEntity.Value));
 
-                if (comp.Selected.Count == 0 && selected.Count == 0)
-                    break;
-
-                var added = new HashSet<EntityUid>();
-                var removed = new HashSet<EntityUid>();
-
-                foreach (var uid in selected)
-                {
-                    if (!comp.Selected.Contains(uid))
-                        added.Add(uid);
-                }
-
-                foreach (var uid in comp.Selected)
-                {
-                    if (!selected.Contains(uid))
-                        removed.Add(uid);
-                }
-
-                if (added.Count == 0 && removed.Count == 0)
-                    break;
-
-                comp.Selected = selected;
-                OnSelectedChanged?.Invoke();
-
-                if (comp.NetSync)
-                {
-                    if (selected.Count > 0)
-                    {
-                        RaiseNetworkEvent(new SelectionEntityDeltaMessage(
-                            added.Count > 0 ? GetNetEntitySet(added) : null,
-                            removed.Count > 0 ? GetNetEntitySet(removed) : null));
-                    }
-                    else
-                        RaiseNetworkEvent(new SelectionClearedMessage());
-                }
-                break;
-            case SelectionMode.Tile:
-                var tiles = TilesInSelect(_player.LocalEntity.Value);
-
-                if (tiles == comp.SelectedTiles)
-                    break;
-
-                comp.SelectedTiles = tiles;
-                OnSelectedChanged?.Invoke();
-                break;
-        }
+        if (GetSelection<TileRef>() is { } tileSelection)
+            UpdateSelection(tileSelection, TilesInSelect(_player.LocalEntity.Value));
     }
 }

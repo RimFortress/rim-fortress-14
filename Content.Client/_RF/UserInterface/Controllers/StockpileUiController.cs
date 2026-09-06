@@ -1,4 +1,3 @@
-using Content.Client._RF.NPC.Executable.Systems;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
@@ -39,7 +38,6 @@ public sealed partial class StockpileUiController :
     [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
     [UISystemDependency] private readonly StockpileSystem _stockpile = default!;
-    [UISystemDependency] private readonly ExecutableGoalSystem _executable = default!;
     [UISystemDependency] private readonly OwnershipSystem _ownership = default!;
 
     public StockpileSelectionMode SelectMode = StockpileSelectionMode.None;
@@ -174,12 +172,12 @@ public sealed partial class StockpileUiController :
         if (_player.LocalSession?.AttachedEntity is not { } entity)
             return;
 
-        _selection.SetTileSelection(
-            act: _ => _executable.DefaultSelection(),
+        _selection.SetSelection(
+            act: (_, _, _) => _selection.SetDefault<EntityUid>(),
             onSelected: tiles =>
             {
                 _stockpile.CreateStockpile(tiles, entity);
-                _executable.DefaultSelection();
+                _selection.SetDefault<EntityUid>();
             },
             filter: AddTileFilter,
             icon: _createSelectionIcon);
@@ -187,8 +185,8 @@ public sealed partial class StockpileUiController :
 
     public void AddTileSelection(Entity<StockpileComponent> stock)
     {
-        _selection.SetTileSelection(
-            act: _ => _executable.DefaultSelection(),
+        _selection.SetSelection(
+            act: (_, _, _) => _selection.SetDefault<EntityUid>(),
             onSelected: tiles =>
             {
                 _stockpile.AddTiles(stock, tiles);
@@ -200,8 +198,8 @@ public sealed partial class StockpileUiController :
 
     public void RemoveTileSelection(Entity<StockpileComponent> stock)
     {
-        _selection.SetTileSelection(
-            act: _ => _executable.DefaultSelection(),
+        _selection.SetSelection(
+            act: (_, _, _) => _selection.SetDefault<EntityUid>(),
             onSelected: tiles =>
             {
                 _stockpile.RemoveTile(stock, tiles);
@@ -224,7 +222,7 @@ public sealed partial class StockpileUiController :
         SettingStock = null;
         SelectedStock = null;
         SelectMode = StockpileSelectionMode.None;
-        _executable.DefaultSelection();
+        _selection.SetDefault<EntityUid>();
     }
 
     public override void FrameUpdate(FrameEventArgs args)

@@ -669,4 +669,18 @@ binds:
 - function: NpcCombatModeToggle
   type: State
   key: Z
+- function: SelectionDefault
+  type: State
+  key: MouseLeft
+- function: SelectionAppend
+  type: State
+  key: MouseLeft
+  mod1: Shift
+- function: SelectionRemove
+  type: State
+  key: MouseLeft
+  mod1: Control
+- function: SelectionAction
+  type: State
+  key: MouseRight
 # RimFortress End

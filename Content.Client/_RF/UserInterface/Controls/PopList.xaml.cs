@@ -91,7 +91,7 @@ public sealed partial class PopList : UIWidget
 
     private void UpdateSelection()
     {
-        var selected = _selection.SelectedEntities();
+        var selected = _selection.Selected<EntityUid>();
 
         foreach (var (uid, icon) in _icons)
         {
@@ -113,7 +113,7 @@ public sealed partial class PopList : UIWidget
     private void UpdateCombat()
     {
         CombatMode = true;
-        var selected = _selection.SelectedEntities();
+        var selected = _selection.Selected<EntityUid>();
 
         foreach (var (uid, icon) in _icons)
         {

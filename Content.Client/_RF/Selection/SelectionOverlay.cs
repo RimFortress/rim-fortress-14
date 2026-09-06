@@ -1,5 +1,5 @@
 using System.Numerics;
-using Content.Client.Stylesheets;
+using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.Selection.Components;
 using Content.Shared.Maps;
 using Robust.Client.GameObjects;
@@ -23,10 +23,12 @@ public sealed partial class SelectionOverlay : Overlay
 
     private static readonly ProtoId<ShaderPrototype> SelectShader = "DottedOutline";
     private static readonly ProtoId<ShaderPrototype> SelectAreaShader = "DottedSquareOutline";
+    private const string SelectionPostShaderId = "SelectionPostShader";
 
     private readonly TurfSystem _turf;
     private readonly TransformSystem _transform;
     private readonly SpriteSystem _sprite;
+    private readonly SelectionSystem _selection;
 
     private readonly HashSet<SpriteComponent> _highlightedSprites = new();
 
@@ -41,37 +43,39 @@ public sealed partial class SelectionOverlay : Overlay
         _turf = _entityManager.System<TurfSystem>();
         _transform = _entityManager.System<TransformSystem>();
         _sprite = _entityManager.System<SpriteSystem>();
+        _selection = _entityManager.System<SelectionSystem>();
     }
 
     protected override void Draw(in OverlayDrawArgs args)
     {
         foreach (var sprite in _highlightedSprites)
         {
-            sprite.PostShader = null;
+            _sprite.RemovePostShader(sprite, SelectionPostShaderId);
             sprite.RenderOrder = 0;
         }
 
         _highlightedSprites.Clear();
 
-        if (!_entityManager.TryGetComponent(_player.LocalEntity, out SelectionComponent? selection))
+        if (!_entityManager.TryGetComponent(_player.LocalEntity, out SelectionComponent? comp)
+            || _selection.GetSelection() is not { } selection)
             return;
 
-        foreach (var entity in selection.Selected)
+        foreach (var entity in _selection.Selected<EntityUid>())
         {
-            SetShader(entity, selection.SelectionColor);
+            SetShader(entity, selection.Color);
         }
 
-        foreach (var tileRef in selection.SelectedTiles)
+        foreach (var tileRef in _selection.Selected<TileRef>())
         {
             var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
             var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
             var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
 
-            DrawSelectArea(args, start, end, selection.SelectionColor);
+            DrawSelectArea(args, start, end, selection.Color);
         }
 
-        if (selection is { StartPoint: { } startPoint, EndPoint: { } endPoint })
-            DrawSelectArea(args, startPoint, endPoint, selection.SelectionColor);
+        if (comp is { StartPoint: { } startPoint, EndPoint: { } endPoint })
+            DrawSelectArea(args, startPoint, endPoint, selection.Color);
 
         if (selection.Icon != null)
             DrawMouseIcon(args, selection.Icon, selection.IconColor);
@@ -88,7 +92,7 @@ public sealed partial class SelectionOverlay : Overlay
         _highlightedSprites.Add(sprite);
         shader.SetParameter("color", color);
 
-        sprite.PostShader = shader;
+        _sprite.SetPostShader(sprite, new SpriteComponent.PostShaderArgs(SelectionPostShaderId, shader));
         sprite.RenderOrder = _entityManager.CurrentTick.Value;
     }
 
@@ -139,7 +143,7 @@ public sealed partial class SelectionOverlay : Overlay
         var icon = _sprite.Frame0(sprite);
         var box = new Box2(new Vector2(mapPos.X, mapPos.Y - size), new Vector2(mapPos.X + size, mapPos.Y));
 
-        args.WorldHandle.DrawRect(box, StyleNano.PanelDark.WithAlpha(0.6f));
+        args.WorldHandle.DrawRect(box, StyleFortress.BlackAmber.WithAlpha(0.6f));
         args.WorldHandle.DrawTextureRect(icon, box, color);
     }
 }
