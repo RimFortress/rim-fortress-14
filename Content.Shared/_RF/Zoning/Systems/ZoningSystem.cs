@@ -1,12 +1,15 @@
 using System.Linq;
 using System.Numerics;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Zoning.Components;
 using Content.Shared._RF.Zoning.Prototypes;
 using Content.Shared.Maps;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Physics.Collision.Shapes;
 using Robust.Shared.Physics.Systems;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
@@ -18,6 +21,7 @@ namespace Content.Shared._RF.Zoning.Systems;
 public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 {
     [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private ISharedPlayerManager _player = default!;
     [Dependency] private FixtureSystem _fixture = default!;
     [Dependency] private EntityWhitelistSystem _whitelist = default!;
     [Dependency] private TurfSystem _turf = default!;
@@ -25,11 +29,19 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
     [Dependency] private SharedPhysicsSystem _physics = default!;
     [Dependency] private EntityLookupSystem _lookup = default!;
     [Dependency] private MetaDataSystem _meta = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
     [Dependency] private EntityQuery<ZoneComponent> _zoneQuery;
+    [Dependency] private EntityQuery<ZoneCreatorComponent> _zoneCreatorQuery;
+    [Dependency] private EntityQuery<ZoneVisualsComponent> _zoneVisualsQuery;
+
+    /// <summary>
+    /// An event invoked on the client whenever the zone controlled by the player changes.
+    /// </summary>
+    public event Action<Entity<ZoneComponent>>? OnZoneUpdated;
 
     private void UpdateFixtures(Entity<ZoneComponent> ent, bool dirty = true)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto))
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
             return;
 
         var coords = Transform(ent).Coordinates;
@@ -273,7 +285,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private bool AddTile(Entity<ZoneComponent> ent, TileRef tile, bool updateFixture, bool validate, bool dirty)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto)
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
             || !TileValidCheck(proto, tile))
             return false;
 
@@ -309,7 +321,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private bool AddTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles, bool validate, bool dirty)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto))
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
             return false;
 
         foreach (var tile in tiles)
@@ -369,7 +381,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private void RemoveTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles, bool validate, bool dirty)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto))
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
             return;
 
         foreach (var tile in tiles)
@@ -404,7 +416,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
     private bool TryEnter(Entity<ZoneComponent> ent, EntityUid toEnter, bool validate = true, bool dirty = true)
     {
         if (ent.Comp.Entities.Contains(toEnter)
-            || !_proto.Resolve(ent.Comp.Type, out var proto)
+            || !_proto.Resolve(ent.Comp.Proto, out var proto)
             || !_whitelist.IsWhitelistPassOrNull(proto.CollisionWhitelist, toEnter))
             return false;
 
@@ -445,7 +457,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private bool TryLeave(Entity<ZoneComponent> ent, EntityUid toLeave, bool validate = true, bool dirty = true)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto)
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
             || !ent.Comp.Entities.Remove(toLeave))
             return false;
 
@@ -518,7 +530,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private void ValidateSplit(Entity<ZoneComponent> ent, bool dirty = true)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto)
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
             || proto.SplitMode == ZoneSplitMode.None)
             return;
 
@@ -542,23 +554,25 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                 RaiseLocalEvent(ent, new ZoneTileRemoved(tile));
             }
 
-            if (proto.SplitMode == ZoneSplitMode.Split)
-                TryCreateZone(ent.Comp.Type, tileRefs, out _);
+            if (proto.SplitMode == ZoneSplitMode.Split
+                && Prototype(ent) is { } entProto)
+                TryCreateZone(entProto.ID, tileRefs, out _);
         }
 
         if (dirty)
             DirtyField(ent.AsNullable(), nameof(ZoneComponent.Tiles));
     }
 
+    private HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent) => GetTileRefs(ent, ent.Comp.Tiles);
 
-    private HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent)
-        => GetTileRefs(ent, ent.Comp.Tiles);
+    public HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent, IReadOnlySet<Vector2i> tiles)
+        => _transform.GetGrid(ent.Owner) is not { } grid ? new() : GetTileRefs(grid, tiles);
 
-    private HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent, IReadOnlySet<Vector2i> tiles)
+    private HashSet<TileRef> GetTileRefs(EntityUid grid, IReadOnlySet<Vector2i> tiles)
     {
         var refs = new HashSet<TileRef>();
 
-        if (_transform.GetGrid(ent.Owner) is not { } grid)
+        if (!HasComp<MapGridComponent>(grid))
             return refs;
 
         foreach (var tile in tiles)
@@ -571,6 +585,13 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
         return refs;
     }
+
+    private bool CanControl(ICommonSession session, Entity<ZoneComponent> zone)
+        => session.AttachedEntity is { } player
+           && _zoneCreatorQuery.TryComp(player, out var creator)
+           && Prototype(zone) is { } proto
+           && creator.Zones.Contains(proto.ID)
+           && _ownership.HasOwner(zone.Owner, player);
 }
 
 public interface IZoneConditionChecker

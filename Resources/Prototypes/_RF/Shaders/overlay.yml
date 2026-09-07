@@ -1,7 +1,7 @@
 - type: shader
   id: DottedCircle
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_circle.swsl"
+  path: /Textures/_RF/Shaders/dotted_circle.swsl
   params:
     radius: 0.30
     thickness: 0.04
@@ -13,7 +13,7 @@
 - type: shader
   id: DottedLine
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_line.swsl"
+  path: /Textures/_RF/Shaders/dotted_line.swsl
   params:
     startOffset: 0.5
     endOffset: 0.5
@@ -25,7 +25,7 @@
 - type: shader
   id: AnimatedDottedLine
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_line.swsl"
+  path: /Textures/_RF/Shaders/dotted_line.swsl
   params:
     startOffset: 0.2
     endOffset: 0.2
@@ -37,7 +37,7 @@
 - type: shader
   id: DottedOutline
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_outline.swsl"
+  path: /Textures/_RF/Shaders/dotted_outline.swsl
   params:
     width: 2
     frequency: 10
@@ -46,7 +46,7 @@
 - type: shader
   id: DottedSquareOutline
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_square.swsl"
+  path: /Textures/_RF/Shaders/dotted_square.swsl
   params:
     thickness: 2
     dashLength: 10
@@ -55,7 +55,7 @@
 - type: shader
   id: DottedTileBorder
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_edge.swsl"
+  path: /Textures/_RF/Shaders/dotted_edge.swsl
   params:
     thickness: 3
     dashLength: 12
@@ -64,8 +64,17 @@
 - type: shader
   id: DottedTileGrid
   kind: source
-  path: "/Textures/_RF/Shaders/dotted_edge.swsl"
+  path: /Textures/_RF/Shaders/dotted_edge.swsl
   params:
     thickness: 2
     dashLength: 6
     gapLength: 12
+
+- type: shader
+  id: SelectedZoneBorder
+  kind: source
+  path: /Textures/_RF/Shaders/dotted_edge.swsl
+  params:
+    thickness: 4
+    dashLength: 12
+    gapLength: 8

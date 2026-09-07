@@ -107,14 +107,22 @@ public abstract partial class BaseZoneCondition<T> : ZoneCondition where T : Bas
 
 /// <param name="Text">Description text.</param>
 /// <param name="IsMet">Is the condition met?</param>
+/// <param name="Progress">Text describing the current progress in fulfilling the condition.</param>
 /// <param name="TileIcon">A tiles whose sprite will be used as the description icon.</param>
 /// <param name="EntIcon">An entities whose sprite will be used as the description icon.</param>
 [Serializable, NetSerializable]
 public readonly record struct ZoneConditionDesc(
     string Text,
     bool IsMet,
+    string? Progress = null,
     List<ProtoId<ContentTileDefinition>>? TileIcon = null,
-    List<EntProtoId>? EntIcon = null);
+    List<EntProtoId>? EntIcon = null)
+{
+    public static string? ProgressText(ILocalizationManager locale, int current, int amount)
+        => amount > 1
+            ? locale.GetString("zone-condition-base-progress", ("current", current), ("amount", amount))
+            : null;
+}
 
 [Serializable, NetSerializable]
 public enum ZoneConditionType : byte

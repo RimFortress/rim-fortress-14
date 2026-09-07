@@ -2,7 +2,6 @@ using System.Linq;
 using System.Numerics;
 using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.Selection.Components;
-using Content.Shared.Maps;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
@@ -29,7 +28,6 @@ public sealed partial class SelectionOverlay : Overlay
 
     private const string SelectionPostShaderId = "SelectionPostShader";
 
-    private readonly TurfSystem _turf;
     private readonly TransformSystem _transform;
     private readonly SpriteSystem _sprite;
     private readonly SelectionSystem _selection;
@@ -44,7 +42,6 @@ public sealed partial class SelectionOverlay : Overlay
     {
         IoCManager.InjectDependencies(this);
 
-        _turf = _entityManager.System<TurfSystem>();
         _transform = _entityManager.System<TransformSystem>();
         _sprite = _entityManager.System<SpriteSystem>();
         _selection = _entityManager.System<SelectionSystem>();
@@ -69,7 +66,7 @@ public sealed partial class SelectionOverlay : Overlay
             SetShader(entity, selection.Color);
         }
 
-        DrawTileInner(args, _selection.Selected<TileRef>(), selection.InnerColor);
+        DrawTileInner(args, _selection.Selected<TileRef>().Select(x => x.GridIndices), selection.InnerColor);
         DrawTileSelection(args, _selection.Selected<TileRef>(), selection.Color);
 
         if (selection.ShowArea
@@ -148,16 +145,16 @@ public sealed partial class SelectionOverlay : Overlay
 
     #region Tiles
 
-    private void DrawTileInner(in OverlayDrawArgs args, IReadOnlySet<TileRef> tiles, Color? color)
+    public static void DrawTileInner( in OverlayDrawArgs args, IEnumerable<Vector2i> tiles, Color? color)
     {
         if (color == null)
             return;
 
-        foreach (var tileRef in tiles)
+        foreach (var tile in tiles)
         {
-            var center = _transform.ToMapCoordinates(_turf.GetTileCenter(tileRef));
-            var start = new MapCoordinates(center.Position + new Vector2(0.5f), center.MapId);
-            var end = new MapCoordinates(center.Position - new Vector2(0.5f), center.MapId);
+            var center = tile + new Vector2(0.5f, 0.5f);
+            var start = center + new Vector2(0.5f);
+            var end = center - new Vector2(0.5f);
             var area = new Box2(
                 Math.Min(start.X, end.X),
                 Math.Min(start.Y, end.Y),
@@ -178,6 +175,9 @@ public sealed partial class SelectionOverlay : Overlay
         if (tiles.Count == 0)
             return;
 
+        var gridShader = _prototype.Index(TileGridShader);
+        var borderShader = _prototype.Index(TileBorderShader);
+
         // A selection normally lives on a single grid, but group defensively in case it doesn't.
         foreach (var group in tiles.GroupBy(t => t.GridUid))
         {
@@ -189,17 +189,26 @@ public sealed partial class SelectionOverlay : Overlay
                 indices.Add(tile.GridIndices);
             }
 
-            DrawInteriorGridLines(args, gridUid, indices, color);
-            DrawTileBoundary(args, gridUid, indices, color);
+            DrawInteriorGridLines(args, gridUid, indices, color, gridShader, _transform);
+            DrawTileBoundary(args, gridUid, indices, color, borderShader, _transform);
         }
     }
 
     /// <summary>
     /// Thin lines on grid edges shared between two selected tiles.
     /// </summary>
-    private void DrawInteriorGridLines(in OverlayDrawArgs args, EntityUid gridUid, HashSet<Vector2i> tiles, Color color)
+    public static void DrawInteriorGridLines(
+        in OverlayDrawArgs args,
+        EntityUid gridUid,
+        HashSet<Vector2i> tiles,
+        Color? color,
+        ShaderPrototype shader,
+        TransformSystem transform)
     {
-        var thinColor = color.WithAlpha(0.6f);
+        if (color == null)
+            return;
+
+        var thinColor = color.Value.WithAlpha(0.6f);
 
         foreach (var tile in tiles)
         {
@@ -207,16 +216,16 @@ public sealed partial class SelectionOverlay : Overlay
             // edge exactly once (the mirrored left/down edge belongs to that neighbour).
             if (tiles.Contains(tile + Vector2i.Right))
             {
-                var a = GridCornerToMap(gridUid, tile + new Vector2i(1, 0));
-                var b = GridCornerToMap(gridUid, tile + new Vector2i(1, 1));
-                DrawDashedSegment(args, a, b, thinColor, TileGridShader);
+                var a = GridCornerToMap(gridUid, tile + new Vector2i(1, 0), transform);
+                var b = GridCornerToMap(gridUid, tile + new Vector2i(1, 1), transform);
+                DrawDashedSegment(args, a, b, thinColor, shader);
             }
 
             if (tiles.Contains(tile + Vector2i.Up))
             {
-                var a = GridCornerToMap(gridUid, tile + new Vector2i(0, 1));
-                var b = GridCornerToMap(gridUid, tile + new Vector2i(1, 1));
-                DrawDashedSegment(args, a, b, thinColor, TileGridShader);
+                var a = GridCornerToMap(gridUid, tile + new Vector2i(0, 1), transform);
+                var b = GridCornerToMap(gridUid, tile + new Vector2i(1, 1), transform);
+                DrawDashedSegment(args, a, b, thinColor, shader);
             }
         }
     }
@@ -226,8 +235,17 @@ public sealed partial class SelectionOverlay : Overlay
     /// holes in it), with collinear runs collapsed so the dash pattern isn't reset at
     /// every single tile edge.
     /// </summary>
-    private void DrawTileBoundary(in OverlayDrawArgs args, EntityUid gridUid, HashSet<Vector2i> tiles, Color color)
+    public static void DrawTileBoundary(
+        in OverlayDrawArgs args,
+        EntityUid gridUid,
+        HashSet<Vector2i> tiles,
+        Color? color,
+        ShaderPrototype shader,
+        TransformSystem transform)
     {
+        if (color == null)
+            return;
+
         foreach (var loop in GetBoundaryLoops(tiles))
         {
             if (loop.Count < 2)
@@ -235,9 +253,9 @@ public sealed partial class SelectionOverlay : Overlay
 
             for (var i = 0; i < loop.Count; i++)
             {
-                var a = GridCornerToMap(gridUid, loop[i]);
-                var b = GridCornerToMap(gridUid, loop[(i + 1) % loop.Count]);
-                DrawDashedSegment(args, a, b, color, TileBorderShader);
+                var a = GridCornerToMap(gridUid, loop[i], transform);
+                var b = GridCornerToMap(gridUid, loop[(i + 1) % loop.Count], transform);
+                DrawDashedSegment(args, a, b, color.Value, shader);
             }
         }
     }
@@ -327,17 +345,17 @@ public sealed partial class SelectionOverlay : Overlay
         return loops;
     }
 
-    private MapCoordinates GridCornerToMap(EntityUid gridUid, Vector2i corner)
-        => _transform.ToMapCoordinates(new EntityCoordinates(gridUid, corner));
+    private static MapCoordinates GridCornerToMap(EntityUid gridUid, Vector2i corner, TransformSystem transform)
+        => transform.ToMapCoordinates(new EntityCoordinates(gridUid, corner));
 
-    private void DrawDashedSegment(
+    private static void DrawDashedSegment(
         in OverlayDrawArgs args,
         MapCoordinates start,
         MapCoordinates end,
         Color color,
-        ProtoId<ShaderPrototype> shaderId)
+        ShaderPrototype shaderId)
     {
-        var shader = _prototype.Index(shaderId).InstanceUnique();
+        var shader = shaderId.InstanceUnique();
         var prevShader = args.WorldHandle.GetShader();
 
         var screenA = args.Viewport.WorldToLocal(start.Position);

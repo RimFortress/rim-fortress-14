@@ -5,18 +5,15 @@ using Robust.Shared.Prototypes;
 namespace Content.Shared._RF.Stockpile.Components;
 
 /// <summary>
-/// A component of the stockpile entity.
+/// A component of the stockpile entity. Must be placed on the same entity as a
+/// <see cref="Content.Shared._RF.Zoning.Components.ZoneComponent"/>, which now owns
+/// the tile set and collision fixtures for the stockpile (see <see cref="StockpileSystem.StockProto"/>).
 /// </summary>
 [Access(typeof(StockpileSystem))]
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
+[RegisterComponent, NetworkedComponent]
+[AutoGenerateComponentState(fieldDeltas: true, raiseAfterAutoHandleState: true)]
 public sealed partial class StockpileComponent : Component
 {
-    /// <summary>
-    /// The color with which the stockpile is rendered in the UI.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public Color Color = Color.DarkOrange;
-
     /// <summary>
     /// The maximum number of entities that can be in a single
     /// stockpile tile (not including entities in a container).
@@ -45,19 +42,8 @@ public sealed partial class StockpileComponent : Component
     public Dictionary<EntProtoId, int> Settings = new();
 
     /// <summary>
-    /// A dictionary with the fixtures for each stockpile tile.
-    /// </summary>
-    [DataField]
-    public Dictionary<Vector2i, string> TileFixtures = new();
-
-    /// <summary>
-    /// A list of all tiles assigned to the stockpile.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public HashSet<Vector2i> Tiles = new();
-
-    /// <summary>
-    /// A list of all free tiles in the stockpile.
+    /// A list of all free tiles in the stockpile. This is always a subset of the paired
+    /// <see cref="Content.Shared._RF.Zoning.Components.ZoneComponent.Tiles"/>.
     /// </summary>
     [DataField, AutoNetworkedField]
     public HashSet<Vector2i> FreeTiles = new();

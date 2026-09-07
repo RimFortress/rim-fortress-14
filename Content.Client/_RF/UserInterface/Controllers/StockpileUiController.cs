@@ -1,12 +1,11 @@
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
+using Content.Client._RF.Zoning.UI;
 using Content.Shared._RF.NPC.Systems;
-using Content.Shared._RF.Stockpile;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
-using Content.Shared.Maps;
-using Content.Shared.Physics;
+using Content.Shared._RF.Zoning.Systems;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
@@ -19,35 +18,58 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controllers;
 
 public sealed partial class StockpileUiController :
     WindowUiController<StockpileSettingsWindow>,
-    IOnSystemLoaded<StockpileSystem>,
     IOnStateEntered<RimFortressState>,
     IOnStateExited<RimFortressState>
 {
     [Dependency] private IInputManager _input = default!;
     [Dependency] private IEyeManager _eye = default!;
     [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private IEntityManager _entManager = default!;
     [Dependency] private IOverlayManager _overlay = default!;
+    [Dependency] private ZoningUiController _zoningController = default!;
     [UISystemDependency] private readonly TransformSystem _xform = default!;
-    [UISystemDependency] private readonly TurfSystem _turf = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
     [UISystemDependency] private readonly StockpileSystem _stockpile = default!;
     [UISystemDependency] private readonly OwnershipSystem _ownership = default!;
+    [UISystemDependency] private readonly ZoningSystem _zoning = default!;
 
     public StockpileSelectionMode SelectMode = StockpileSelectionMode.None;
     public event Action<Entity<StockpileComponent>>? OnStockSelected;
-    public event Action<Entity<StockpileComponent>>? OnStockpileUpdated;
     public event Action<Entity<StockpileComponent>>? OnSupplyRequested;
 
-    public Entity<StockpileComponent>? SettingStock;
-    public Entity<StockpileComponent>? SelectedStock;
-    private Color _stockInnerColor = Color.LightGray.WithAlpha(0.15f);
+    public Entity<StockpileComponent>? SettingStock
+    {
+        get;
+        set
+        {
+            if (field != null)
+                _zoningController.DeselectZone(field.Value);
+
+            field = value;
+
+            if (field != null)
+                _zoningController.SelectZone(field.Value);
+        }
+    }
+
+    public Entity<StockpileComponent>? SelectedStock
+    {
+        get;
+        set
+        {
+            if (field != null)
+                _zoningController.DeselectZone(field.Value);
+
+            field = value;
+
+            if (field != null)
+                _zoningController.SelectZone(field.Value);
+        }
+    }
 
     public List<EntityUid> HighlightedStockpiles
     {
@@ -73,36 +95,22 @@ public sealed partial class StockpileUiController :
                 || SettingStock == null
                 || SelectedStock == null
                 || SettingStock == SelectedStock
-                || StockpileSystem.HasSupplied(SelectedStock.Value, SettingStock.Value))
+                || StockpileSystem.HasSupplied(SelectedStock.Value, SettingStock.Value)
+                || !_zoning.TryGetZone(SelectedStock.Value.Owner, out var selectedZone)
+                || !_zoning.TryGetZone(SettingStock.Value.Owner, out var settingStock))
                 return null;
 
-            return (_stockpile.StockCenter(SettingStock.Value), _stockpile.StockCenter(SelectedStock.Value));
+            return (_zoning.ZoneCenter(settingStock.Value), _zoning.ZoneCenter(selectedZone.Value));
         }
     }
-
-    private readonly SpriteSpecifier _createSelectionIcon =
-        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"));
-
-    private readonly SpriteSpecifier _addTileSelection =
-        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
-
-    private readonly SpriteSpecifier _removeTileSelection =
-        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<StockpileContentUpdated>(OnContentUpdates);
         OnStockSelected += _ => OpenWindow();
 
         _overlay.AddOverlay(new StockpileOverlay());
-    }
-
-    private void OnContentUpdates(StockpileContentUpdated msg, EntitySessionEventArgs args)
-    {
-        if (_stockpile.TryGetStock(msg.Uid, out var stock))
-            OnStockpileUpdated?.Invoke(stock.Value);
     }
 
     protected override StockpileSettingsWindow EnsureWindow()
@@ -168,62 +176,6 @@ public sealed partial class StockpileUiController :
         return true;
     }
 
-    public void CreateSelection()
-    {
-        if (_player.LocalSession?.AttachedEntity is not { } entity)
-            return;
-
-        _selection.SetSelection(
-            act: (_, _, _) => _selection.SetDefault<EntityUid>(),
-            onSelected: tiles =>
-            {
-                _stockpile.CreateStockpile(tiles, entity);
-                _selection.SetDefault<EntityUid>();
-            },
-            filter: AddTileFilter,
-            innerColor: _stockInnerColor,
-            icon: _createSelectionIcon,
-            showArea: false);
-    }
-
-    public void AddTileSelection(Entity<StockpileComponent> stock)
-    {
-        _selection.SetSelection(
-            act: (_, _, _) => _selection.SetDefault<EntityUid>(),
-            onSelected: tiles =>
-            {
-                _stockpile.AddTiles(stock, tiles);
-                AddTileSelection(stock);
-            },
-            filter: AddTileFilter,
-            innerColor: _stockInnerColor,
-            icon: _addTileSelection,
-            showArea: false);
-    }
-
-    public void RemoveTileSelection(Entity<StockpileComponent> stock)
-    {
-        _selection.SetSelection(
-            act: (_, _, _) => _selection.SetDefault<EntityUid>(),
-            onSelected: tiles =>
-            {
-                _stockpile.RemoveTile(stock, tiles);
-                RemoveTileSelection(stock);
-            },
-            filter: RemoveTileFilter,
-            innerColor: _stockInnerColor,
-            icon: _removeTileSelection,
-            showArea: false);
-    }
-
-    private bool AddTileFilter(TileRef tile)
-        => !_entManager.IsClientSide(tile.GridUid)
-           && !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
-           && !_stockpile.TileInStock(tile);
-
-    private bool RemoveTileFilter(TileRef tile)
-        => SettingStock != null && _stockpile.TileInStock(SettingStock.Value, tile);
-
     public void Clear()
     {
         SettingStock = null;
@@ -251,18 +203,6 @@ public sealed partial class StockpileUiController :
 
         if (stock == null || _ownership.HasOwner(stock.Value.Owner, _player.LocalSession?.AttachedEntity))
             SelectedStock = stock;
-    }
-
-    public void OnSystemLoaded(StockpileSystem system)
-    {
-        system.OnStockCreated += stock =>
-        {
-            SettingStock = stock;
-            SelectMode = StockpileSelectionMode.None;
-            OnStockSelected?.Invoke(stock);
-        };
-
-        system.OnStockSettingsUpdated += stock => OnStockpileUpdated?.Invoke(stock);
     }
 }
 

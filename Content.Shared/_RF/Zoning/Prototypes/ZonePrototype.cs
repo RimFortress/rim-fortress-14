@@ -28,12 +28,6 @@ public sealed partial class ZonePrototype : IPrototype, IInheritingPrototype
 
     public LocId Name => $"zone-{CaseConversion.PascalToKebab(ID)}-name";
 
-    /// <summary>
-    /// A prototype of the entity that will be created as a zone entity.
-    /// </summary>
-    [DataField]
-    public EntProtoId Entity = "BaseZone";
-
     /// <inheritdoc cref="ZoneCollisionMode"/>
     [DataField]
     public ZoneCollisionMode CollisionMode = ZoneCollisionMode.Mono;
@@ -73,58 +67,6 @@ public sealed partial class ZonePrototype : IPrototype, IInheritingPrototype
     /// </summary>
     [DataField]
     public CollisionGroup Mask = CollisionGroup.Impassable;
-
-    #region Visuals
-
-    /// <summary>
-    /// A sprite that will be rendered on every tile in the zone.
-    /// </summary>
-    [DataField]
-    public SpriteSpecifier? TileSprite;
-
-    /// <summary>
-    /// A sprite that will be rendered on every tile in the zone, if the zone is selected by the player.
-    /// </summary>
-    [DataField]
-    public SpriteSpecifier? SelectedTileSprite;
-
-    /// <summary>
-    /// The color that will be applied to all content within the zone.
-    /// </summary>
-    [DataField]
-    public Color? ZoneColor;
-
-    /// <summary>
-    /// The color that will be applied to all content within the zone, if the zone is selected by the player.
-    /// </summary>
-    [DataField]
-    public Color? SelectedZoneColor;
-
-    /// <summary>
-    /// The color used to draw the zone's border.
-    /// </summary>
-    [DataField]
-    public Color? BorderColor;
-
-    /// <summary>
-    /// The color used to draw the zone's border, if the zone is selected by the player.
-    /// </summary>
-    [DataField]
-    public Color? SelectedBorderColor;
-
-    /// <summary>
-    /// The thickness of the zone border, in world coordinates.
-    /// </summary>
-    [DataField]
-    public float BorderThickness;
-
-    /// <summary>
-    /// The thickness of the zone's border, if the zone is selected by the player.
-    /// </summary>
-    [DataField]
-    public float SelectedBorderThickness;
-
-    #endregion
 }
 
 /// <summary>

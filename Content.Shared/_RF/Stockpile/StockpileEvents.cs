@@ -64,39 +64,6 @@ public readonly record struct StockpileSupplyingRemoved(
 #region Net messages
 
 [Serializable, NetSerializable]
-public sealed class StockpileCreateRequest(NetEntity gridUid, HashSet<Vector2i> tiles) : EntityEventArgs
-{
-    public NetEntity GridUid = gridUid;
-    public HashSet<Vector2i> Tiles = tiles;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileCreated(NetEntity uid) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileDeleted(NetEntity uid) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileTileAdded(NetEntity uid, HashSet<Vector2i> tiles) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public HashSet<Vector2i> Tiles = tiles;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileTileRemoved(NetEntity uid, HashSet<Vector2i> tiles) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public HashSet<Vector2i> Tiles = tiles;
-}
-
-[Serializable, NetSerializable]
 public sealed class StockpileSettingUpdated(NetEntity uid, EntProtoId protoId, int value) : EntityEventArgs
 {
     public NetEntity Uid = uid;
@@ -123,19 +90,6 @@ public sealed class StockpileSuppliedRemoved(NetEntity supplier, NetEntity suppl
 {
     public NetEntity Supplier = supplier;
     public NetEntity Supplied = supplied;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileColorSet(NetEntity uid, Color color) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
-    public Color Color = color;
-}
-
-[Serializable, NetSerializable]
-public sealed class StockpileContentUpdated(NetEntity uid) : EntityEventArgs
-{
-    public NetEntity Uid = uid;
 }
 
 #endregion

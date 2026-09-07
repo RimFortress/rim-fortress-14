@@ -3,6 +3,7 @@ using Content.Shared._RF.Zoning.Components;
 using Content.Shared._RF.Zoning.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Systems;
@@ -66,6 +67,19 @@ public partial class ZoningSystem
         => !proto.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions)
            || TileValidCheck(conditions, tile);
 
+    /// <inheritdoc cref="IZoneConditionChecker.TileValidCheck"/>
+    [PublicAPI, Pure]
+    public bool TileValidCheck(EntProtoId<ZoneComponent> protoId, TileRef tile)
+        => _proto.Resolve(protoId, out var proto)
+           && proto.TryComp(out ZoneComponent? zone, EntityManager.ComponentFactory)
+           && _proto.Resolve(zone.Proto, out var zoneProto)
+           && TileValidCheck(zoneProto, tile);
+
+    /// <inheritdoc cref="IZoneConditionChecker.TileValidCheck"/>
+    [PublicAPI, Pure]
+    public bool TileValidCheck(Entity<ZoneComponent> ent, TileRef tile)
+        => _proto.Resolve(ent.Comp.Proto, out var proto) && TileValidCheck(proto, tile);
+
     /// <inheritdoc cref="IZoneConditionChecker.TileCheck"/>
     [PublicAPI, Pure]
     public bool TileCheck(ZoneCondition condition, IReadOnlySet<TileRef> tiles)
@@ -94,7 +108,7 @@ public partial class ZoningSystem
     [PublicAPI, Pure]
     public bool TileCheck(Entity<ZoneComponent> ent)
     {
-        if (!_proto.Resolve(ent.Comp.Type, out var proto)
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
             || _transform.GetGrid(ent.Owner) is not { } grid)
             return false;
 
@@ -138,7 +152,7 @@ public partial class ZoningSystem
     /// <inheritdoc cref="IZoneConditionChecker.EntityCheck"/>
     [PublicAPI, Pure]
     public bool EntityCheck(Entity<ZoneComponent> ent)
-        => _proto.Resolve(ent.Comp.Type, out var proto)
+        => _proto.Resolve(ent.Comp.Proto, out var proto)
            && EntityCheck(proto, ent.Comp.Entities);
 
     /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription"/>
@@ -177,7 +191,7 @@ public partial class ZoningSystem
     {
         var desc = new List<ZoneConditionDesc>();
 
-        if (!_proto.Resolve(ent.Comp.Type, out var proto))
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
             return desc;
 
         var tiles = GetTileRefs(ent);
@@ -211,7 +225,7 @@ public partial class ZoningSystem
     {
         var desc = new List<ZoneConditionDesc>();
 
-        if (!_proto.Resolve(ent.Comp.Type, out var proto))
+        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
             return desc;
 
         var tiles = GetTileRefs(ent);

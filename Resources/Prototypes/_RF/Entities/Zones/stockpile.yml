@@ -1,0 +1,13 @@
+- type: entity
+  id: Stockpile
+  components:
+  - type: Zone
+    proto: Stockpile
+  - type: ZoneVisuals
+    editable: true
+    tileSprite: _RF/Tiles/Zones/stockpile.png
+    selectedTileSprite: _RF/Tiles/Zones/stockpile_selected.png
+    borderColor: darkOrange
+  - type: Stockpile
+  - type: Physics
+  - type: Fixtures

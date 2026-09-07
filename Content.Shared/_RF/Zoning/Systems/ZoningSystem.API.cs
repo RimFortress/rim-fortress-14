@@ -21,22 +21,24 @@ public partial class ZoningSystem
     /// <returns>True, if the zone was successfully created.</returns>
     [PublicAPI]
     public bool TryCreateZone(
-        ProtoId<ZonePrototype> protoId,
+        EntProtoId<ZoneComponent> protoId,
         IReadOnlySet<TileRef> tiles,
         [NotNullWhen(true)] out Entity<ZoneComponent>? zone)
     {
         zone = null;
 
-        if (tiles.Count == 0 || !_proto.Resolve(protoId, out var proto))
+        if (tiles.Count == 0
+            || !_proto.Resolve(protoId, out var proto)
+            || !proto.TryComp(out ZoneComponent? zoneComp, EntityManager.ComponentFactory)
+            || !_proto.Resolve(zoneComp.Proto, out var zoneProto))
             return false;
 
         var gridUid = tiles.First().GridUid;
         DebugTools.Assert(tiles.All(x => x.GridUid == gridUid));
 
         var coords = TilesCenter(tiles);
-        var uid = Spawn(proto.Entity, coords);
+        var uid = Spawn(protoId, coords);
         zone = new(uid, EnsureComp<ZoneComponent>(uid));
-        zone.Value.Comp.Type = protoId;
         _meta.SetEntityName(uid, $"{Loc.GetString(proto.Name)} #{uid.Id}");
 
         AddTile(zone.Value, tiles, false, false);
@@ -50,7 +52,7 @@ public partial class ZoningSystem
 
         zone.Value.Comp.TilesValid = TileCheck(zone.Value);
 
-        if (!proto.InvalidCreation && !zone.Value.Comp.TilesValid)
+        if (!zoneProto.InvalidCreation && !zone.Value.Comp.TilesValid)
         {
             Del(zone);
             zone = null;
@@ -67,9 +69,9 @@ public partial class ZoningSystem
             }
         }
 
-        zone.Value.Comp.EntitiesValid = EntityCheck(proto, zone.Value.Comp.Entities);
+        zone.Value.Comp.EntitiesValid = EntityCheck(zoneProto, zone.Value.Comp.Entities);
 
-        if (!proto.InvalidCreation && !zone.Value.Comp.EntitiesValid)
+        if (!zoneProto.InvalidCreation && !zone.Value.Comp.EntitiesValid)
         {
             Del(zone);
             zone = null;
@@ -132,12 +134,43 @@ public partial class ZoningSystem
         => RemoveTile(ent, tiles, true, true);
 
     /// <summary>
+    /// Returns the coordinates of the zone's center.
+    /// </summary>
+    /// <param name="ent">Zone entity.</param>
+    [PublicAPI, Pure]
+    public EntityCoordinates ZoneCenter(Entity<ZoneComponent> ent)
+    {
+        var coords = Transform(ent).Coordinates;
+
+        if (ent.Comp.Tiles.Count == 0)
+            return coords;
+
+        var pos = Vector2.Zero;
+
+        foreach (var ind in ent.Comp.Tiles)
+        {
+            pos += ind + new Vector2(0.5f);
+        }
+
+        pos /= ent.Comp.Tiles.Count;
+        return new EntityCoordinates(coords.EntityId, pos);
+    }
+
+    /// <summary>
     /// Checks whether a tile belongs to any zone.
     /// </summary>
     /// <param name="tile">Tile.</param>
     /// <param name="type">The type of zone to search for. If null, any zone will be found.</param>
     [PublicAPI, Pure]
     public bool TileInZone(TileRef tile, ProtoId<ZonePrototype>? type = null) => TryGetZone(tile, out _, type);
+
+    /// <summary>
+    /// Checks whether a tile belongs to a target.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool TileInZone(Entity<ZoneComponent> ent, TileRef tile)
+        => _transform.GetGrid(ent.Owner) == tile.GridUid
+           && ent.Comp.Tiles.Contains(tile.GridIndices);
 
     /// <summary>
     /// Searches for a zone located in given tile.
@@ -170,7 +203,7 @@ public partial class ZoningSystem
         _lookup.GetLocalEntitiesIntersecting(tile.GridUid, tile.GridIndices, zone);
 
         if (types.Count > 0)
-            zone = zone.Where(x => types.Contains(x.Comp.Type)).ToHashSet();
+            zone = zone.Where(x => types.Contains(x.Comp.Proto)).ToHashSet();
 
         return zone.Count != 0;
     }

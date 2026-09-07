@@ -1,0 +1,24 @@
+- type: zone
+  id: Stockpile
+  entity: BaseStockpile
+  collisionMode: Tile
+  collisionWhitelist:
+    components:
+    - Item
+    - Pullable
+    requireAll: false
+  conditions:
+    TileAdd:
+    - !type:Blocked
+      invert: true
+    - !type:InZone
+      types:
+      - Stockpile
+      invert: true
+    - !type:TileEntities
+      types:
+      - FloorWaterEntity
+      - FloorLavaEntity
+      - FloorLiquidPlasmaEntity
+      - FloorChasmEntity
+      invert: true

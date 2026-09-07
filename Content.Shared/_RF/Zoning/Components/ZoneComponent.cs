@@ -7,30 +7,31 @@ namespace Content.Shared._RF.Zoning.Components;
 /// <summary>
 /// Zone entity component.
 /// </summary>
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(fieldDeltas: true)]
+[RegisterComponent, NetworkedComponent]
+[AutoGenerateComponentState(fieldDeltas: true, raiseAfterAutoHandleState: true)]
 public sealed partial class ZoneComponent : Component
 {
     /// <summary>
-    /// A prototype with all zone settings.
+    /// A prototype with zone settings.
     /// </summary>
-    [DataField, AutoNetworkedField]
-    public ProtoId<ZonePrototype> Type;
+    [DataField(required: true), AutoNetworkedField]
+    public ProtoId<ZonePrototype> Proto;
 
     /// <summary>
     /// Are all conditions for creating the zone met?
     /// </summary>
     public bool Valid => TilesValid && EntitiesValid;
 
-    [AutoNetworkedField]
+    [ViewVariables, AutoNetworkedField]
     public bool TilesValid;
 
-    [AutoNetworkedField]
+    [ViewVariables, AutoNetworkedField]
     public bool EntitiesValid;
 
     /// <summary>
     /// A list of all tiles assigned to the zone.
     /// </summary>
-    [DataField, AutoNetworkedField]
+    [ViewVariables, AutoNetworkedField]
     public HashSet<Vector2i> Tiles = new();
 
     /// <summary>
@@ -40,7 +41,7 @@ public sealed partial class ZoneComponent : Component
     /// This list does not contain all entities within the zone's boundaries,
     /// but only those that have passed the whitelist process and been approved by other systems.
     /// </remarks>
-    [DataField, AutoNetworkedField]
+    [ViewVariables, AutoNetworkedField]
     public HashSet<EntityUid> Entities = new();
 
     /// <summary>

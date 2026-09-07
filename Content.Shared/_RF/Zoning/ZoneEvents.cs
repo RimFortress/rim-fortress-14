@@ -1,6 +1,9 @@
+using Content.Shared._RF.Zoning.Components;
 using Content.Shared._RF.Zoning.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Zoning;
 
@@ -97,3 +100,97 @@ public record struct ZoneInvalid;
 /// </summary>
 [PublicAPI]
 public record struct ZoneValid;
+
+#region NetMessages
+
+/// <summary>
+/// Client request to create a zone.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ZoneCreateRequest : EntityEventArgs
+{
+    /// <summary>
+    /// Zone type.
+    /// </summary>
+    public EntProtoId<ZoneComponent> Type;
+
+    /// <summary>
+    /// The grid on which the zone will be created.
+    /// </summary>
+    public NetEntity GridUid;
+
+    /// <summary>
+    /// The tiles on which the zone will be created.
+    /// </summary>
+    public HashSet<Vector2i> Tiles = new();
+}
+
+/// <summary>
+/// Client request to delete a zone.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ZoneDeleteRequest : EntityEventArgs
+{
+    /// <summary>
+    /// Zone entity.
+    /// </summary>
+    public NetEntity Uid;
+}
+
+/// <summary>
+/// Client request to add tiles to the zone.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ZoneTileAddRequest : EntityEventArgs
+{
+    /// <summary>
+    /// Zone entity.
+    /// </summary>
+    public NetEntity Uid;
+
+    /// <summary>
+    /// Tiles to add.
+    /// </summary>
+    public HashSet<Vector2i> Tiles = new();
+}
+
+/// <summary>
+/// Client request to remove tiles to the zone.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ZoneTileRemoveRequest : EntityEventArgs
+{
+    /// <summary>
+    /// Zone entity.
+    /// </summary>
+    public NetEntity Uid;
+
+    /// <summary>
+    /// Tiles to remove.
+    /// </summary>
+    public HashSet<Vector2i> Tiles = new();
+}
+
+/// <summary>
+/// Client request to change the appearance of the zone.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ZoneVisualsChangeRequest : EntityEventArgs
+{
+    /// <summary>
+    /// Zone entity.
+    /// </summary>
+    public NetEntity Uid;
+
+    /// <summary>
+    /// New zone inner color.
+    /// </summary>
+    public Color? ZoneColor;
+
+    /// <summary>
+    /// New zone borders color.
+    /// </summary>
+    public Color? BorderColor;
+}
+
+#endregion
