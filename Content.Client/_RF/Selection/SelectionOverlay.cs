@@ -266,7 +266,7 @@ public sealed partial class SelectionOverlay : Overlay
     /// </summary>
     private static List<List<Vector2i>> GetBoundaryLoops(IReadOnlySet<Vector2i> tiles)
     {
-        var next = new Dictionary<Vector2i, Vector2i>();
+        var outgoing = new Dictionary<Vector2i, List<Vector2i>>();
 
         foreach (var tile in tiles)
         {
@@ -275,74 +275,126 @@ public sealed partial class SelectionOverlay : Overlay
             var tl = tile + new Vector2i(0, 1);
 
             if (!tiles.Contains(tile + Vector2i.Down))
-                next[tile] = br;
+                AddEdge(tile, br);
 
             if (!tiles.Contains(tile + Vector2i.Right))
-                next[br] = tr;
+                AddEdge(br, tr);
 
             if (!tiles.Contains(tile + Vector2i.Up))
-                next[tr] = tl;
+                AddEdge(tr, tl);
 
             if (!tiles.Contains(tile + Vector2i.Left))
-                next[tl] = tile;
+                AddEdge(tl, tile);
         }
 
-        var visited = new HashSet<Vector2i>();
+        var totalEdges = outgoing.Values.Sum(l => l.Count);
+        var edgesLeft = new Dictionary<Vector2i, int>();
+
+        foreach (var (corner, list) in outgoing)
+        {
+            edgesLeft[corner] = list.Count;
+        }
+
         var loops = new List<List<Vector2i>>();
 
-        foreach (var start in next.Keys)
+        foreach (var start in outgoing.Keys.ToList())
         {
-            if (!visited.Add(start))
-                continue;
-
-            var raw = new List<Vector2i> { start };
-            var cur = start;
-            var closed = false;
-
-            // A well-formed loop can't contain more corners than there are boundary
-            // edges in total, so this bound is always safe for a valid loop and always
-            // triggers before a corrupted graph can spin forever.
-            for (var steps = 0; steps < next.Count; steps++)
+            // A pinch corner can be the start of more than one loop - keep draining its
+            // remaining edges instead of stopping after the first one found here.
+            while (edgesLeft[start] > 0)
             {
-                if (!next.TryGetValue(cur, out var n))
+                var first = TakeEdge(start, default);
+
+                if (first is not { } firstCorner)
                     break;
 
-                if (n == start)
+                var raw = new List<Vector2i> { start };
+                var cur = firstCorner;
+                var dirIn = firstCorner - start;
+                var closed = false;
+
+                // Bounded by the total edge supply: every iteration consumes one real
+                // edge, so this can never spin forever even on malformed input.
+                for (var steps = 0; steps <= totalEdges; steps++)
                 {
-                    closed = true;
-                    break;
+                    if (cur == start)
+                    {
+                        closed = true;
+                        break;
+                    }
+
+                    raw.Add(cur);
+                    var next = TakeEdge(cur, dirIn);
+
+                    if (next is not { } nextCorner)
+                        break;
+
+                    dirIn = nextCorner - cur;
+                    cur = nextCorner;
                 }
 
-                visited.Add(n);
-                raw.Add(n);
-                cur = n;
+                if (!closed)
+                    continue; // broken/degenerate chain - discard and try the next one
+
+                var loop = new List<Vector2i>();
+
+                for (var i = 0; i < raw.Count; i++)
+                {
+                    var prev = raw[(i - 1 + raw.Count) % raw.Count];
+                    var point = raw[i];
+                    var nextPoint = raw[(i + 1) % raw.Count];
+
+                    if (point - prev != nextPoint - point)
+                        loop.Add(point);
+                }
+
+                loops.Add(loop);
             }
-
-            // Two selected tiles touching only diagonally (sharing a single corner, no
-            // edge) make that corner non-manifold: it gets two conflicting outgoing
-            // edges, and whichever one 'next' silently overwrote breaks the loop so it
-            // never returns to 'start'. Rather than draw a bogus closing edge across
-            // that broken path, just skip this loop - a missing outline segment at a
-            // rare diagonal pinch point is a fine trade-off for never hanging.
-            if (!closed)
-                continue;
-
-            var loop = new List<Vector2i>();
-
-            for (var i = 0; i < raw.Count; i++)
-            {
-                var prev = raw[(i - 1 + raw.Count) % raw.Count];
-                var point = raw[i];
-                var nextPoint = raw[(i + 1) % raw.Count];
-
-                if (point - prev != nextPoint - point)
-                    loop.Add(point);
-            }
-
-            loops.Add(loop);
         }
 
         return loops;
+
+        void AddEdge(Vector2i from, Vector2i to)
+        {
+            if (!outgoing.TryGetValue(from, out var list))
+                outgoing[from] = list = new List<Vector2i>();
+
+            list.Add(to);
+        }
+
+        // Picks and consumes one still-available outgoing edge from 'from'. When there's
+        // only one candidate it's used unconditionally; when there are two (a pinch
+        // corner), the one forming a left turn relative to dirIn wins - see remarks above.
+        Vector2i? TakeEdge(Vector2i from, Vector2i dirIn)
+        {
+            if (!outgoing.TryGetValue(from, out var candidates) || edgesLeft[from] <= 0)
+                return null;
+
+            var offset = candidates.Count - edgesLeft[from];
+            var bestOffset = 0;
+
+            if (edgesLeft[from] > 1)
+            {
+                var bestCross = int.MinValue;
+
+                for (var i = 0; i < edgesLeft[from]; i++)
+                {
+                    var dir = candidates[offset + i] - from;
+                    var cross = dirIn.X * dir.Y - dirIn.Y * dir.X;
+
+                    if (cross > bestCross)
+                    {
+                        bestCross = cross;
+                        bestOffset = i;
+                    }
+                }
+            }
+
+            var index = offset + bestOffset;
+            (candidates[offset], candidates[index]) = (candidates[index], candidates[offset]);
+            edgesLeft[from]--;
+            return candidates[offset];
+        }
     }
 
     private static MapCoordinates GridCornerToMap(EntityUid gridUid, Vector2i corner, TransformSystem transform)

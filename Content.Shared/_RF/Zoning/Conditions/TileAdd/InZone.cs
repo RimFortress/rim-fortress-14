@@ -3,7 +3,6 @@ using Content.Shared._RF.Zoning.Prototypes;
 using Content.Shared._RF.Zoning.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Conditions.TileAdd;
 
@@ -36,19 +35,18 @@ public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<
         IReadOnlySet<TileRef> tiles,
         IReadOnlySet<EntityUid> entities)
     {
-        DebugTools.AssertNotNull(tile);
         _zoning.TryGetZone(tile!.Value, out var zones, condition.Types);
 
         var currentNames = zones?.Select(x => MetaData(x).EntityName).ToArray();
         var zoneNames = condition.Types.Select(x => Loc.GetString(_proto.Index(x).Name)).ToArray();
 
         return new ZoneConditionDesc(
-            Loc.GetString("zone-condition-in-zone-desc",
+            Loc.GetString(condition.Description,
                 ("invert", condition.Invert),
                 ("amount", condition.Amount),
                 ("zones", zoneNames.Length > 0 ? string.Join(", ", zoneNames) : "empty"),
-                ("current", currentNames != null ? string.Join(", ", currentNames) : "empty")),
-            zones != null && zones.Count >= condition.Amount,
+                ("current", currentNames?.Length > 0 ? string.Join(", ", currentNames) : "empty")),
+            condition.TileValidCheck(tile!.Value, Zoning),
             Progress: ZoneConditionDesc.ProgressText(Loc, zones?.Count ?? 0, condition.Amount));
     }
 }

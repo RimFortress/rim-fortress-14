@@ -27,6 +27,8 @@ public abstract partial class ZoneCondition
     [DataField]
     public bool Invert;
 
+    public LocId Description => $"zone-condition-{CaseConversion.PascalToKebab(GetType().Name)}-desc";
+
     /// <summary>
     /// Type on this condition.
     /// </summary>

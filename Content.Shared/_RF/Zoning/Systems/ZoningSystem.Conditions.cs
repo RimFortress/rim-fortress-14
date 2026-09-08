@@ -183,11 +183,9 @@ public partial class ZoningSystem
         return result;
     }
 
-    /// <summary>
-    /// Returns a description of all unmet zone validity conditions.
-    /// </summary>
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription"/>
     [PublicAPI, Pure]
-    public List<ZoneConditionDesc> UnmetConditionsDescription(Entity<ZoneComponent> ent)
+    public List<ZoneConditionDesc> ConditionDescription(Entity<ZoneComponent> ent)
     {
         var desc = new List<ZoneConditionDesc>();
 
@@ -200,8 +198,7 @@ public partial class ZoningSystem
         {
             foreach (var condition in conditions)
             {
-                if (!TileCheck(condition, tiles))
-                    desc.Add(ConditionDescription(condition, null, tiles, ent.Comp.Entities));
+                desc.Add(ConditionDescription(condition, null, tiles, ent.Comp.Entities));
             }
         }
 
@@ -209,8 +206,7 @@ public partial class ZoningSystem
         {
             foreach (var condition in conditions)
             {
-                if (!EntityCheck(condition, ent.Comp.Entities))
-                    desc.Add(ConditionDescription(condition, null, tiles, ent.Comp.Entities));
+                desc.Add(ConditionDescription(condition, null, tiles, ent.Comp.Entities));
             }
         }
 
@@ -218,25 +214,20 @@ public partial class ZoningSystem
     }
 
     /// <summary>
-    /// Returns a description of all unmet conditions for adding a target tile to a zone.
+    /// Returns a description of all conditions for adding a target tile to a zone.
     /// </summary>
     [PublicAPI, Pure]
-    public List<ZoneConditionDesc> UnmetTileAddConditionsDescription(Entity<ZoneComponent> ent, TileRef tile)
+    public List<ZoneConditionDesc> TileAddConditionsDescription(ProtoId<ZonePrototype> protoId, TileRef tile)
     {
         var desc = new List<ZoneConditionDesc>();
 
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
-            return desc;
-
-        var tiles = GetTileRefs(ent);
-
-        if (!proto.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions))
+        if (!_proto.Resolve(protoId, out var proto)
+            || !proto.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions))
             return desc;
 
         foreach (var condition in conditions)
         {
-            if (!TileCheck(condition, tiles))
-                desc.Add(ConditionDescription(condition, tile, tiles, ent.Comp.Entities));
+            desc.Add(ConditionDescription(condition, tile, new HashSet<TileRef>(), new HashSet<EntityUid>()));
         }
 
         return desc;

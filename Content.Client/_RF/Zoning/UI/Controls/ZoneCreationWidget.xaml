@@ -1,0 +1,16 @@
+<controls:ZoneCreationWidget
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
+    xmlns:controls1="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    Margin="0 15">
+    <BoxContainer SeparationOverride="5">
+        <controls1:IconButton Name="FinishButton" SetSize="40 40" Access="Public"
+                              StyleClasses="ButtonSquare ButtonColorGreen"
+                              ToolTip="{Loc 'zone-creation-widget-finish'}"
+                              TexturePath="/Textures/_RF/Interface/check-solid.svg.192dpi.png"/>
+        <controls1:IconButton Name="CancelButton" SetSize="40 40" Access="Public"
+                              StyleClasses="ButtonSquare ButtonColorRed"
+                              ToolTip="{Loc 'zone-creation-widget-cancel'}"
+                              TexturePath="/Textures/_RF/Interface/Style/cross.png"/>
+    </BoxContainer>
+</controls:ZoneCreationWidget>

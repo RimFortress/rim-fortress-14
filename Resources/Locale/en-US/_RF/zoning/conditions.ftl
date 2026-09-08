@@ -3,9 +3,21 @@ zone-condition-base-progress = ({$current}/{$amount})
 # Tile
 
 zone-condition-tile-desc = 
-    { $invert ->
-        [true] Number of tiles at most {$amount}
-       *[other] Number of tiles at least {$amount}
+    { $types ->
+        [empty] { $invert ->
+            [true] Number of tiles at most {$amount}
+           *[other] Number of tiles at least {$amount}
+        }
+       *[other] { $invert ->
+            [true] { $amount ->
+                [1] Doesn't contain tile of type: {$types}
+               *[other] Contains no more than {$amount} tile of type: {$types}
+            }
+           *[other] { $amount ->
+                [1] Contain tile of type: {$types}
+               *[other] Contains at least {$amount} tile of type: {$types}
+            }
+        }
     }
 
 # TileAdd
@@ -39,7 +51,6 @@ zone-condition-in-zone-desc =
             }
         }
     }
-
     Currently in: {$current ->
         [empty] none
         *[other] {$current}

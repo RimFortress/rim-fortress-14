@@ -53,12 +53,14 @@ public sealed partial class TileZoneConditionSystem : ZoningConditionSystem<Tile
         IReadOnlySet<EntityUid> entities)
     {
         var types = condition.Types.Select(x => _proto.Index(x).TileId).ToHashSet();
+        var names = condition.Types.Select(x => Loc.GetString(_proto.Index(x).Name)).ToHashSet();
         var count = tiles.Count(x => types.Count == 0 || types.Contains((ushort)x.Tile.TypeId));
         return new(
-            Loc.GetString("zone-condition-tile-desc",
+            Loc.GetString(condition.Description,
                 ("amount", condition.Amount),
-                ("invert", condition.Invert)),
-            count >= condition.Amount,
+                ("invert", condition.Invert),
+                ("types", names.Count > 0 ? string.Join(", ", names) : "empty")),
+            condition.TileCheck(tiles, Zoning),
             Progress: ZoneConditionDesc.ProgressText(Loc, count, condition.Amount),
             TileIcon: condition.Types.ToList());
     }

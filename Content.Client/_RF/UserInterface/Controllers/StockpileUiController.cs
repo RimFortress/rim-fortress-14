@@ -46,6 +46,9 @@ public sealed partial class StockpileUiController :
         get;
         set
         {
+            if (field == value)
+                return;
+
             if (field != null)
                 _zoningController.DeselectZone(field.Value);
 
@@ -61,6 +64,9 @@ public sealed partial class StockpileUiController :
         get;
         set
         {
+            if (field == value)
+                return;
+
             if (field != null)
                 _zoningController.DeselectZone(field.Value);
 
@@ -110,6 +116,16 @@ public sealed partial class StockpileUiController :
 
         OnStockSelected += _ => OpenWindow();
 
+        _zoningController.OnZoneCreated += zone =>
+        {
+            if (!EntityManager.TryGetComponent(zone, out StockpileComponent? stock))
+                return;
+
+            SettingStock = new(zone, stock);
+            Window?.SetStock(SettingStock.Value);
+            OpenWindow();
+        };
+
         _overlay.AddOverlay(new StockpileOverlay());
     }
 
@@ -152,8 +168,8 @@ public sealed partial class StockpileUiController :
         {
             case StockpileSelectionMode.Edit:
                 SelectMode = StockpileSelectionMode.None;
-                SettingStock = stock;
                 SelectedStock = null;
+                SettingStock = stock;
                 OnStockSelected?.Invoke(stock);
                 return true;
             case StockpileSelectionMode.Supply:

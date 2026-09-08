@@ -3,7 +3,6 @@ using Content.Shared._RF.Zoning.Systems;
 using Content.Shared.Maps;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Conditions.TileAdd;
 
@@ -55,7 +54,6 @@ public sealed partial class TileEntitiesZoneConditionSystem : ZoningConditionSys
         IReadOnlySet<TileRef> tiles,
         IReadOnlySet<EntityUid> entities)
     {
-        DebugTools.AssertNotNull(tile);
         var typeNames = condition.Types.Select(x => _proto.Index(x).Name).ToArray();
         var inTile = _turf.GetEntitiesInTile(
                 _turf.GetTileCenter(tile!.Value),
@@ -63,11 +61,11 @@ public sealed partial class TileEntitiesZoneConditionSystem : ZoningConditionSys
             .Count(uid => condition.Types.Count == 0
                           || Prototype(uid) is { } proto && condition.Types.Contains(proto.ID));
 
-        return new ZoneConditionDesc(Loc.GetString("zone-condition-tile-entities-desc",
+        return new ZoneConditionDesc(Loc.GetString(condition.Description,
                 ("invert", condition.Invert),
                 ("amount", condition.Amount),
                 ("types", typeNames.Length > 0 ? string.Join(", ", typeNames) : "empty")),
-            TileValidCheck(condition, tile!.Value),
+            condition.TileValidCheck(tile!.Value, Zoning),
             Progress: ZoneConditionDesc.ProgressText(Loc, inTile, condition.Amount),
             EntIcon: condition.Types);
     }

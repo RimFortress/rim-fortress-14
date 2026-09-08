@@ -121,13 +121,13 @@ public partial class SelectionSystem
     /// <summary>
     /// Returns a list of objects in the player's selection.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public IReadOnlySet<T> Selected<T>() where T : struct
         => GetSelection<T>() is { } selection
             ? selection.Selected
             : new HashSet<T>();
 
-    [PublicAPI]
+    [PublicAPI, Pure]
     public ISelection? GetSelection()
         => TryComp(_player.LocalEntity, out SelectionComponent? comp)
            ? comp.CurrentSelection

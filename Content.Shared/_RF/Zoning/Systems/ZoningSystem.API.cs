@@ -39,7 +39,7 @@ public partial class ZoningSystem
         var coords = TilesCenter(tiles);
         var uid = Spawn(protoId, coords);
         zone = new(uid, EnsureComp<ZoneComponent>(uid));
-        _meta.SetEntityName(uid, $"{Loc.GetString(proto.Name)} #{uid.Id}");
+        _meta.SetEntityName(uid, $"{Loc.GetString(zoneProto.Name)} #{uid.Id}");
 
         AddTile(zone.Value, tiles, false, false);
 

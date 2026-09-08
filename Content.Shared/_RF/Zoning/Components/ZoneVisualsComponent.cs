@@ -50,18 +50,6 @@ public sealed partial class ZoneVisualsComponent : Component
     public float SelectedColorFactor = 1.15f;
 
     /// <summary>
-    /// The thickness of the zone border, in world coordinates.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public float BorderThickness;
-
-    /// <summary>
-    /// The thickness of the zone's border, if the zone is selected by the player.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public float SelectedBorderThickness;
-
-    /// <summary>
     /// Will small lines be displayed along the tile boundaries inside the zone?
     /// </summary>
     [DataField, AutoNetworkedField]

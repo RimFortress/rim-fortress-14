@@ -2,7 +2,6 @@ using Content.Shared._RF.Zoning.Systems;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Robust.Shared.Map;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Conditions.TileAdd;
 
@@ -33,9 +32,8 @@ public sealed partial class BlockedZoneConditionSystem : ZoningConditionSystem<B
         IReadOnlySet<TileRef> tiles,
         IReadOnlySet<EntityUid> entities)
     {
-        DebugTools.AssertNotNull(tile);
         return new ZoneConditionDesc(
-            Loc.GetString("zone-condition-blocked-desc", ("invert", condition.Invert)),
-            TileValidCheck(condition, tile!.Value));
+            Loc.GetString(condition.Description, ("invert", condition.Invert)),
+            condition.TileValidCheck(tile!.Value, Zoning));
     }
 }

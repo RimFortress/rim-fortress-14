@@ -6,8 +6,10 @@ namespace Content.Shared._RF.Zoning.Systems;
 /// System handles the logic of a <typeparamref name="T"/> zone condition.
 /// </summary>
 /// <typeparam name="T">Condition type.</typeparam>
-public abstract class ZoningConditionSystem<T> : EntitySystem where T : BaseZoneCondition<T>
+public abstract partial class ZoningConditionSystem<T> : EntitySystem where T : BaseZoneCondition<T>
 {
+    [Dependency] protected ZoningSystem Zoning = default!;
+
     /// <inheritdoc/>
     public override void Initialize()
     {
