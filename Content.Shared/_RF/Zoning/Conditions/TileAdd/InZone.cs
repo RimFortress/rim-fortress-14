@@ -1,5 +1,5 @@
 using System.Linq;
-using Content.Shared._RF.Zoning.Prototypes;
+using Content.Shared._RF.Zoning.Components;
 using Content.Shared._RF.Zoning.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -17,7 +17,7 @@ public sealed partial class InZone : BaseZoneCondition<InZone>
     /// Types of zones to check for tile overlap. If empty, a check will be performed for any zone.
     /// </summary>
     [DataField]
-    public HashSet<ProtoId<ZonePrototype>> Types = new();
+    public HashSet<EntProtoId<ZoneComponent>> Types = new();
 }
 
 public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<InZone>

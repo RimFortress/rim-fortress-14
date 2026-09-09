@@ -1,6 +1,7 @@
-using Content.Shared._RF.Zoning.Prototypes;
+using Content.Shared.Physics;
+using Content.Shared.Whitelist;
 using Robust.Shared.GameStates;
-using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Zoning.Components;
 
@@ -11,11 +12,45 @@ namespace Content.Shared._RF.Zoning.Components;
 [AutoGenerateComponentState(fieldDeltas: true, raiseAfterAutoHandleState: true)]
 public sealed partial class ZoneComponent : Component
 {
+    /// <inheritdoc cref="ZoneCollisionMode"/>
+    [DataField, AutoNetworkedField]
+    public ZoneCollisionMode CollisionMode = ZoneCollisionMode.Mono;
+
+    /// <inheritdoc cref="ZoneSplitMode"/>
+    [DataField, AutoNetworkedField]
+    public ZoneSplitMode SplitMode = ZoneSplitMode.None;
+
     /// <summary>
-    /// A prototype with zone settings.
+    /// A whitelist of entities with which collisions will be tracked.
     /// </summary>
-    [DataField(required: true), AutoNetworkedField]
-    public ProtoId<ZonePrototype> Proto;
+    [DataField, AutoNetworkedField]
+    public EntityWhitelist? CollisionWhitelist;
+
+    /// <summary>
+    /// Conditions related to the zone's tiles/entities that
+    /// must be met for the zone to be created or to remain valid.
+    /// </summary>
+    [DataField]
+    public Dictionary<ZoneConditionType, List<ZoneCondition>> Conditions = new();
+
+    /// <summary>
+    /// Is it allowed to create a zone if not all zone creation conditions are met?
+    /// However, such a zone will be considered invalid until the conditions are met.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public bool InvalidCreation;
+
+    /// <summary>
+    /// Zone collision layer.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public CollisionGroup Layer = CollisionGroup.Impassable;
+
+    /// <summary>
+    /// Zone collision mask.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public CollisionGroup Mask = CollisionGroup.Impassable;
 
     /// <summary>
     /// Are all conditions for creating the zone met?
@@ -46,7 +81,7 @@ public sealed partial class ZoneComponent : Component
 
     /// <summary>
     /// List all fixtures in the mono zone. Yes, there may be several of them if the tiles are
-    /// divided into unconnected regions. Not empty if <see cref="ZonePrototype.CollisionMode"/>
+    /// divided into unconnected regions. Not empty if <see cref="CollisionMode"/>
     /// is <see cref="ZoneCollisionMode.Mono"/>.
     /// </summary>
     [ViewVariables, AutoNetworkedField]
@@ -54,7 +89,7 @@ public sealed partial class ZoneComponent : Component
 
     /// <summary>
     /// A dictionary with the fixtures for each stockpile tile, not empty if
-    /// <see cref="ZonePrototype.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
+    /// <see cref="CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
     /// </summary>
     [ViewVariables, AutoNetworkedField]
     public Dictionary<Vector2i, string> TileFixtures = new();
@@ -62,4 +97,48 @@ public sealed partial class ZoneComponent : Component
     public const string MonoFixtureId = "zone_mono_";
 
     public const string TileFixtureId = "zone_tile_";
+}
+
+/// <summary>
+/// Mode for tracking entities entering and exiting a zone.
+/// </summary>
+[Serializable, NetSerializable]
+public enum ZoneCollisionMode : byte
+{
+    /// <summary>
+    /// Zone does not track collisions with entities.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// The zone tracks when entities enter and exit the zone.
+    /// </summary>
+    Mono,
+
+    /// <summary>
+    /// The zone tracks when entities leave the zone and enter specific tiles within the zone.
+    /// </summary>
+    Tile,
+}
+
+/// <summary>
+/// Behavior mode of a zone when not all of its tiles are connected.
+/// </summary>
+[Serializable, NetSerializable]
+public enum ZoneSplitMode : byte
+{
+    /// <summary>
+    /// The zone will not be divided into regions; it will always remain a single entity.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Separate tile regions will be removed, leaving only the single, largest region.
+    /// </summary>
+    Delete,
+
+    /// <summary>
+    /// Separate tile regions will be split into separate zones.
+    /// </summary>
+    Split,
 }

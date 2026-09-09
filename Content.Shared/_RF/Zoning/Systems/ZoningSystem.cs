@@ -2,11 +2,11 @@ using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Zoning.Components;
-using Content.Shared._RF.Zoning.Prototypes;
 using Content.Shared.Maps;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Network;
 using Robust.Shared.Physics.Collision.Shapes;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Player;
@@ -20,6 +20,7 @@ namespace Content.Shared._RF.Zoning.Systems;
 /// </summary>
 public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 {
+    [Dependency] private INetManager _net = default!;
     [Dependency] private IPrototypeManager _proto = default!;
     [Dependency] private ISharedPlayerManager _player = default!;
     [Dependency] private FixtureSystem _fixture = default!;
@@ -39,14 +40,16 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
     /// </summary>
     public event Action<Entity<ZoneComponent>>? OnZoneUpdated;
 
+    /// <summary>
+    /// An event raised on the client each time <see cref="ZoneComponent"/> is initialized.
+    /// </summary>
+    public event Action<Entity<ZoneComponent>>? OnZoneInit;
+
     private void UpdateFixtures(Entity<ZoneComponent> ent, bool dirty = true)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
-            return;
-
         var coords = Transform(ent).Coordinates;
 
-        switch (proto.CollisionMode)
+        switch (ent.Comp.CollisionMode)
         {
             case ZoneCollisionMode.None:
                 DebugTools.Assert(ent.Comp.MonoFixtures.Count == 0);
@@ -71,8 +74,8 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                             id,
                             density: 0f,
                             hard: false,
-                            collisionLayer: (int)proto.Layer,
-                            collisionMask: (int)proto.Mask))
+                            collisionLayer: (int)ent.Comp.Layer,
+                            collisionMask: (int)ent.Comp.Mask))
                         ent.Comp.MonoFixtures.Add(id);
                 }
 
@@ -109,8 +112,8 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                             id,
                             density: 0f,
                             hard: false,
-                            collisionLayer: (int)proto.Layer,
-                            collisionMask: (int)proto.Mask))
+                            collisionLayer: (int)ent.Comp.Layer,
+                            collisionMask: (int)ent.Comp.Mask))
                         ent.Comp.TileFixtures[tile] = id;
                 }
 
@@ -118,7 +121,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                     DirtyField(ent.AsNullable(), nameof(ZoneComponent.TileFixtures));
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(proto.CollisionMode));
+                throw new ArgumentOutOfRangeException(nameof(ent.Comp.CollisionMode));
         }
     }
 
@@ -285,8 +288,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private bool AddTile(Entity<ZoneComponent> ent, TileRef tile, bool updateFixture, bool validate, bool dirty)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
-            || !TileValidCheck(proto, tile))
+        if (!TileValidCheck(ent, tile))
             return false;
 
         ent.Comp.Tiles.Add(tile.GridIndices);
@@ -306,7 +308,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
         DirtyField(ent.AsNullable(), nameof(ZoneComponent.Tiles));
 
-        switch (proto.CollisionMode)
+        switch (ent.Comp.CollisionMode)
         {
             case ZoneCollisionMode.Tile:
                 DirtyField(ent.AsNullable(), nameof(ZoneComponent.TileFixtures));
@@ -319,11 +321,8 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
         return true;
     }
 
-    private bool AddTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles, bool validate, bool dirty)
+    private void AddTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles, bool validate, bool dirty)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
-            return false;
-
         foreach (var tile in tiles)
         {
             AddTile(ent, tile, false, false, false);
@@ -338,11 +337,11 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
         }
 
         if (!dirty)
-            return true;
+            return;
 
         DirtyField(ent.AsNullable(), nameof(ZoneComponent.Tiles));
 
-        switch (proto.CollisionMode)
+        switch (ent.Comp.CollisionMode)
         {
             case ZoneCollisionMode.Tile:
                 DirtyField(ent.AsNullable(), nameof(ZoneComponent.TileFixtures));
@@ -351,8 +350,6 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                 DirtyField(ent.AsNullable(), nameof(ZoneComponent.MonoFixtures));
                 break;
         }
-
-        return true;
     }
 
     private bool RemoveTile(Entity<ZoneComponent> ent, TileRef tile, bool updateFixture, bool validate, bool dirty)
@@ -381,9 +378,6 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private void RemoveTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles, bool validate, bool dirty)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
-            return;
-
         foreach (var tile in tiles)
         {
             RemoveTile(ent, tile, false, false, false);
@@ -402,7 +396,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
         DirtyField(ent.AsNullable(), nameof(ZoneComponent.Tiles));
 
-        switch (proto.CollisionMode)
+        switch (ent.Comp.CollisionMode)
         {
             case ZoneCollisionMode.Tile:
                 DirtyField(ent.AsNullable(), nameof(ZoneComponent.TileFixtures));
@@ -416,11 +410,10 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
     private bool TryEnter(Entity<ZoneComponent> ent, EntityUid toEnter, bool validate = true, bool dirty = true)
     {
         if (ent.Comp.Entities.Contains(toEnter)
-            || !_proto.Resolve(ent.Comp.Proto, out var proto)
-            || !_whitelist.IsWhitelistPassOrNull(proto.CollisionWhitelist, toEnter))
+            || !_whitelist.IsWhitelistPassOrNull(ent.Comp.CollisionWhitelist, toEnter))
             return false;
 
-        var tile = proto.CollisionMode == ZoneCollisionMode.Tile
+        var tile = ent.Comp.CollisionMode == ZoneCollisionMode.Tile
             ? _turf.GetTileRef(Transform(toEnter).Coordinates)
             : null;
         var ev = new BeforeZoneEnter(toEnter, tile);
@@ -457,11 +450,10 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private bool TryLeave(Entity<ZoneComponent> ent, EntityUid toLeave, bool validate = true, bool dirty = true)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
-            || !ent.Comp.Entities.Remove(toLeave))
+        if (!ent.Comp.Entities.Remove(toLeave))
             return false;
 
-        var tile = proto.CollisionMode == ZoneCollisionMode.Tile
+        var tile = ent.Comp.CollisionMode == ZoneCollisionMode.Tile
             ? _turf.GetTileRef(Transform(toLeave).Coordinates)
             : null;
         var ev1 = new EntityLeavedZone(ent, tile, toLeave);
@@ -530,8 +522,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private void ValidateSplit(Entity<ZoneComponent> ent, bool dirty = true)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
-            || proto.SplitMode == ZoneSplitMode.None)
+        if (ent.Comp.SplitMode == ZoneSplitMode.None)
             return;
 
         var regions = GetRegions(ent.Comp.Tiles);
@@ -554,7 +545,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                 RaiseLocalEvent(ent, new ZoneTileRemoved(tile));
             }
 
-            if (proto.SplitMode == ZoneSplitMode.Split
+            if (ent.Comp.SplitMode == ZoneSplitMode.Split
                 && Prototype(ent) is { } entProto)
                 TryCreateZone(entProto.ID, tileRefs, out _);
         }

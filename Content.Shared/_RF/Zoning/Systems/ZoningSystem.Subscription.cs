@@ -1,11 +1,24 @@
 using Content.Shared._RF.Zoning.Components;
-using Content.Shared._RF.Zoning.Prototypes;
 using Robust.Shared.Physics.Events;
 
 namespace Content.Shared._RF.Zoning.Systems;
 
 public partial class ZoningSystem
 {
+    [SubscribeLocalEvent]
+    private void OnZoneAdded(Entity<ZoneComponent> ent, ref ComponentInit args)
+    {
+        if (!_net.IsClient
+            || Prototype(ent) is not { } proto
+            || !proto.TryComp(out ZoneComponent? zone, EntityManager.ComponentFactory))
+            return;
+
+        // We can't make the conditions networked,
+        // but since they don't change, we can take them from the prototype.
+        ent.Comp.Conditions = zone.Conditions;
+        OnZoneInit?.Invoke(ent);
+    }
+
     [SubscribeLocalEvent]
     private void OnAfterZoneHandle(Entity<ZoneComponent> ent, ref AfterAutoHandleStateEvent args)
     {
@@ -29,10 +42,7 @@ public partial class ZoningSystem
     [SubscribeLocalEvent]
     private void OnEndCollide(Entity<ZoneComponent> ent, ref EndCollideEvent args)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
-            return;
-
-        switch (proto.CollisionMode)
+        switch (ent.Comp.CollisionMode)
         {
             case ZoneCollisionMode.Mono:
                 TryLeave(ent, args.OtherEntity);

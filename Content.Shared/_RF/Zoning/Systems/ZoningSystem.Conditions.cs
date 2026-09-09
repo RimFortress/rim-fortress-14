@@ -1,6 +1,5 @@
 using System.Numerics;
 using Content.Shared._RF.Zoning.Components;
-using Content.Shared._RF.Zoning.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -63,8 +62,8 @@ public partial class ZoningSystem
 
     /// <inheritdoc cref="IZoneConditionChecker.TileValidCheck"/>
     [PublicAPI, Pure]
-    public bool TileValidCheck(ZonePrototype proto, TileRef tile)
-        => !proto.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions)
+    public bool TileValidCheck(ZoneComponent comp, TileRef tile)
+        => !comp.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions)
            || TileValidCheck(conditions, tile);
 
     /// <inheritdoc cref="IZoneConditionChecker.TileValidCheck"/>
@@ -72,13 +71,11 @@ public partial class ZoningSystem
     public bool TileValidCheck(EntProtoId<ZoneComponent> protoId, TileRef tile)
         => _proto.Resolve(protoId, out var proto)
            && proto.TryComp(out ZoneComponent? zone, EntityManager.ComponentFactory)
-           && _proto.Resolve(zone.Proto, out var zoneProto)
-           && TileValidCheck(zoneProto, tile);
+           && TileValidCheck(zone, tile);
 
     /// <inheritdoc cref="IZoneConditionChecker.TileValidCheck"/>
     [PublicAPI, Pure]
-    public bool TileValidCheck(Entity<ZoneComponent> ent, TileRef tile)
-        => _proto.Resolve(ent.Comp.Proto, out var proto) && TileValidCheck(proto, tile);
+    public bool TileValidCheck(Entity<ZoneComponent> ent, TileRef tile) => TileValidCheck(ent.Comp, tile);
 
     /// <inheritdoc cref="IZoneConditionChecker.TileCheck"/>
     [PublicAPI, Pure]
@@ -100,16 +97,15 @@ public partial class ZoningSystem
 
     /// <inheritdoc cref="IZoneConditionChecker.TileCheck"/>
     [PublicAPI, Pure]
-    public bool TileCheck(ZonePrototype proto, IReadOnlySet<TileRef> tiles)
-        => !proto.Conditions.TryGetValue(ZoneConditionType.Tile, out var conditions)
+    public bool TileCheck(ZoneComponent comp, IReadOnlySet<TileRef> tiles)
+        => !comp.Conditions.TryGetValue(ZoneConditionType.Tile, out var conditions)
            || TileCheck(conditions, tiles);
 
     /// <inheritdoc cref="IZoneConditionChecker.TileCheck"/>
     [PublicAPI, Pure]
     public bool TileCheck(Entity<ZoneComponent> ent)
     {
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto)
-            || _transform.GetGrid(ent.Owner) is not { } grid)
+        if (_transform.GetGrid(ent.Owner) is not { } grid)
             return false;
 
         var tiles = new HashSet<TileRef>();
@@ -122,7 +118,7 @@ public partial class ZoningSystem
                 tiles.Add(@ref.Value);
         }
 
-        return TileCheck(proto, tiles);
+        return TileCheck(ent.Comp, tiles);
     }
 
     /// <inheritdoc cref="IZoneConditionChecker.EntityCheck"/>
@@ -145,15 +141,13 @@ public partial class ZoningSystem
 
     /// <inheritdoc cref="IZoneConditionChecker.EntityCheck"/>
     [PublicAPI, Pure]
-    public bool EntityCheck(ZonePrototype proto, IReadOnlySet<EntityUid> entities)
-        => !proto.Conditions.TryGetValue(ZoneConditionType.Entity, out var conditions)
+    public bool EntityCheck(ZoneComponent comp, IReadOnlySet<EntityUid> entities)
+        => !comp.Conditions.TryGetValue(ZoneConditionType.Entity, out var conditions)
            || EntityCheck(conditions, entities);
 
     /// <inheritdoc cref="IZoneConditionChecker.EntityCheck"/>
     [PublicAPI, Pure]
-    public bool EntityCheck(Entity<ZoneComponent> ent)
-        => _proto.Resolve(ent.Comp.Proto, out var proto)
-           && EntityCheck(proto, ent.Comp.Entities);
+    public bool EntityCheck(Entity<ZoneComponent> ent) => EntityCheck(ent.Comp, ent.Comp.Entities);
 
     /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription"/>
     [PublicAPI, Pure]
@@ -189,12 +183,9 @@ public partial class ZoningSystem
     {
         var desc = new List<ZoneConditionDesc>();
 
-        if (!_proto.Resolve(ent.Comp.Proto, out var proto))
-            return desc;
-
         var tiles = GetTileRefs(ent);
 
-        if (proto.Conditions.TryGetValue(ZoneConditionType.Tile, out var conditions))
+        if (ent.Comp.Conditions.TryGetValue(ZoneConditionType.Tile, out var conditions))
         {
             foreach (var condition in conditions)
             {
@@ -202,7 +193,7 @@ public partial class ZoningSystem
             }
         }
 
-        if (proto.Conditions.TryGetValue(ZoneConditionType.Entity, out conditions))
+        if (ent.Comp.Conditions.TryGetValue(ZoneConditionType.Entity, out conditions))
         {
             foreach (var condition in conditions)
             {
@@ -217,12 +208,11 @@ public partial class ZoningSystem
     /// Returns a description of all conditions for adding a target tile to a zone.
     /// </summary>
     [PublicAPI, Pure]
-    public List<ZoneConditionDesc> TileAddConditionsDescription(ProtoId<ZonePrototype> protoId, TileRef tile)
+    public List<ZoneConditionDesc> TileAddConditionsDescription(ZoneComponent comp, TileRef tile)
     {
         var desc = new List<ZoneConditionDesc>();
 
-        if (!_proto.Resolve(protoId, out var proto)
-            || !proto.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions))
+        if (!comp.Conditions.TryGetValue(ZoneConditionType.TileAdd, out var conditions))
             return desc;
 
         foreach (var condition in conditions)

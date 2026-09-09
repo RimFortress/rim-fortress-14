@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.Zoning.Components;
-using Content.Shared._RF.Zoning.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -27,10 +26,7 @@ public partial class ZoningSystem
     {
         zone = null;
 
-        if (tiles.Count == 0
-            || !_proto.Resolve(protoId, out var proto)
-            || !proto.TryComp(out ZoneComponent? zoneComp, EntityManager.ComponentFactory)
-            || !_proto.Resolve(zoneComp.Proto, out var zoneProto))
+        if (tiles.Count == 0)
             return false;
 
         var gridUid = tiles.First().GridUid;
@@ -39,7 +35,7 @@ public partial class ZoningSystem
         var coords = TilesCenter(tiles);
         var uid = Spawn(protoId, coords);
         zone = new(uid, EnsureComp<ZoneComponent>(uid));
-        _meta.SetEntityName(uid, $"{Loc.GetString(zoneProto.Name)} #{uid.Id}");
+        _meta.SetEntityName(uid, $"{Name(uid)} #{uid.Id}");
 
         AddTile(zone.Value, tiles, false, false);
 
@@ -52,7 +48,7 @@ public partial class ZoningSystem
 
         zone.Value.Comp.TilesValid = TileCheck(zone.Value);
 
-        if (!zoneProto.InvalidCreation && !zone.Value.Comp.TilesValid)
+        if (!zone.Value.Comp.InvalidCreation && !zone.Value.Comp.TilesValid)
         {
             Del(zone);
             zone = null;
@@ -69,9 +65,9 @@ public partial class ZoningSystem
             }
         }
 
-        zone.Value.Comp.EntitiesValid = EntityCheck(zoneProto, zone.Value.Comp.Entities);
+        zone.Value.Comp.EntitiesValid = EntityCheck(zone.Value, zone.Value.Comp.Entities);
 
-        if (!zoneProto.InvalidCreation && !zone.Value.Comp.EntitiesValid)
+        if (!zone.Value.Comp.InvalidCreation && !zone.Value.Comp.EntitiesValid)
         {
             Del(zone);
             zone = null;
@@ -111,7 +107,7 @@ public partial class ZoningSystem
     /// <param name="ent">Zone entity.</param>
     /// <param name="tiles">Tiles to add.</param>
     [PublicAPI]
-    public bool AddTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles)
+    public void AddTile(Entity<ZoneComponent> ent, IReadOnlySet<TileRef> tiles)
         => AddTile(ent, tiles, true, true);
 
     /// <summary>
@@ -162,7 +158,7 @@ public partial class ZoningSystem
     /// <param name="tile">Tile.</param>
     /// <param name="type">The type of zone to search for. If null, any zone will be found.</param>
     [PublicAPI, Pure]
-    public bool TileInZone(TileRef tile, ProtoId<ZonePrototype>? type = null) => TryGetZone(tile, out _, type);
+    public bool TileInZone(TileRef tile, EntProtoId<ZoneComponent>? type = null) => TryGetZone(tile, out _, type);
 
     /// <summary>
     /// Checks whether a tile belongs to a target.
@@ -183,8 +179,8 @@ public partial class ZoningSystem
     public bool TryGetZone(
         TileRef tile,
         [NotNullWhen(true)] out HashSet<Entity<ZoneComponent>>? zone,
-        ProtoId<ZonePrototype>? type = null)
-        => TryGetZone(tile, out zone, type == null ? new HashSet<ProtoId<ZonePrototype>>() : new() { type.Value });
+        EntProtoId<ZoneComponent>? type = null)
+        => TryGetZone(tile, out zone, type == null ? new HashSet<EntProtoId<ZoneComponent>>() : new() { type.Value });
 
     /// <summary>
     /// Searches for a zone located in given tile.
@@ -196,14 +192,14 @@ public partial class ZoningSystem
     public bool TryGetZone(
         TileRef tile,
         [NotNullWhen(true)] out HashSet<Entity<ZoneComponent>>? zone,
-        HashSet<ProtoId<ZonePrototype>> types)
+        HashSet<EntProtoId<ZoneComponent>> types)
     {
         zone = new HashSet<Entity<ZoneComponent>>();
 
         _lookup.GetLocalEntitiesIntersecting(tile.GridUid, tile.GridIndices, zone);
 
         if (types.Count > 0)
-            zone = zone.Where(x => types.Contains(x.Comp.Proto)).ToHashSet();
+            zone = zone.Where(x => Prototype(x) is { } proto && types.Contains(proto.ID)).ToHashSet();
 
         return zone.Count != 0;
     }

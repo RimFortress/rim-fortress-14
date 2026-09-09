@@ -60,7 +60,7 @@ public sealed partial class ZoneConditionsList : Control
         LabelText.Visible = false;
         Conditions.RemoveAllChildren();
         _trackingZone = null;
-        var descriptions = _zoning.TileAddConditionsDescription(ent.Comp.Proto, tile);
+        var descriptions = _zoning.TileAddConditionsDescription(ent, tile);
 
         if (descriptions.All(x => x.IsMet))
             return;
@@ -82,7 +82,7 @@ public sealed partial class ZoneConditionsList : Control
             || !proto.TryComp(out ZoneComponent? comp, _entity.ComponentFactory))
             return;
 
-        var descriptions = _zoning.TileAddConditionsDescription(comp.Proto, tile);
+        var descriptions = _zoning.TileAddConditionsDescription(comp, tile);
 
         if (descriptions.All(x => x.IsMet))
             return;

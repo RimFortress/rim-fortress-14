@@ -1,5 +1,4 @@
 using Content.Shared._RF.Zoning.Components;
-using Content.Shared._RF.Zoning.Prototypes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -51,7 +50,7 @@ public readonly record struct ZoneTileRemoved(TileRef Tile);
 /// <param name="Uid">An entity that enters the zone.</param>
 /// <param name="Tile">
 /// The tile of the zone in which the entity is located.
-/// Not null if <see cref="ZonePrototype.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
+/// Not null if <see cref="ZoneComponent.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
 /// </param>
 /// <param name="Canceled">Was the entity's entrance canceled?</param>
 [ByRefEvent]
@@ -70,7 +69,7 @@ public record struct BeforeZoneEnter(EntityUid Uid, TileRef? Tile, bool Canceled
 /// <param name="ZoneUid">Zone entity.</param>
 /// <param name="Tile">
 /// The tile of the zone in which the entity is located.
-/// Not null if <see cref="ZonePrototype.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
+/// Not null if <see cref="ZoneComponent.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
 /// </param>
 /// <param name="Uid">Entered entity.</param>
 [PublicAPI]
@@ -83,7 +82,7 @@ public record struct EntityEnteredZone(EntityUid ZoneUid, TileRef? Tile, EntityU
 /// <param name="ZoneUid">Zone entity.</param>
 /// <param name="Tile">
 /// The tile of the zone in which the entity is located.
-/// Not null if <see cref="ZonePrototype.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
+/// Not null if <see cref="ZoneComponent.CollisionMode"/> is <see cref="ZoneCollisionMode.Tile"/>.
 /// </param>
 /// <param name="Uid">Leaved entity.</param>
 [PublicAPI]

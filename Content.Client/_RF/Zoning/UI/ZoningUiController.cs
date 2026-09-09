@@ -53,7 +53,6 @@ public sealed partial class ZoningUiController :
     {
         base.Initialize();
 
-        EntityManager.EventBus.SubscribeLocalEvent<ZoneComponent, ComponentInit>(OnZoneAdd);
         _overlay.AddOverlay(new ZoningOverlay());
     }
 
@@ -76,17 +75,17 @@ public sealed partial class ZoningUiController :
         LayoutContainer.SetPosition(widget, GetBottomRightScreenPos(tiles, widget));
     }
 
-    private void OnZoneAdd(EntityUid uid, ZoneComponent component, ComponentInit args)
+    private void OnZoneInit(Entity<ZoneComponent> ent)
     {
-        if (EntityManager.IsClientSide(uid)
+        if (EntityManager.IsClientSide(ent)
             || _expectedZone == null
             || _expectedZone.Value.Until < _timing.CurTime
-            || !EntityManager.TryGetComponent(uid, out MetaDataComponent? meta)
+            || !EntityManager.TryGetComponent(ent, out MetaDataComponent? meta)
             || meta.EntityPrototype?.ID != _expectedZone.Value.Proto.Id)
             return;
 
         _expectedZone = null;
-        OnZoneCreated?.Invoke(new(uid, component));
+        OnZoneCreated?.Invoke(ent);
     }
 
     private void OnZoneUpdate(Entity<ZoneComponent> zone)
@@ -391,6 +390,7 @@ public sealed partial class ZoningUiController :
     public void OnSystemLoaded(ZoningSystem system)
     {
         system.OnZoneUpdated += OnZoneUpdate;
+        system.OnZoneInit += OnZoneInit;
 
         var list = new ZoneConditionsList();
         list.Visible = false;
@@ -401,6 +401,7 @@ public sealed partial class ZoningUiController :
     public void OnSystemUnloaded(ZoningSystem system)
     {
         system.OnZoneUpdated -= OnZoneUpdate;
+        system.OnZoneInit -= OnZoneInit;
 
         if (_tileConditions == null)
             return;
