@@ -176,12 +176,18 @@ public sealed partial class ZoningUiController :
             return;
 
         if (_input.MouseScreenPosition is not { IsValid: true } mouse)
+        {
+            _tileConditions.Value.List.Visible = false;
             return;
+        }
 
         var map = _eye.PixelToMap(mouse);
 
         if (map == MapCoordinates.Nullspace)
+        {
+            _tileConditions.Value.List.Visible = false;
             return;
+        }
 
         var coord = _transform.ToCoordinates(map);
 
@@ -193,7 +199,7 @@ public sealed partial class ZoningUiController :
 
         LayoutContainer.SetPosition(
             _tileConditions.Value.List,
-            mouse.Position / UIManager.PopupRoot.UIScale + new Vector2(20f));
+            mouse.Position / UIManager.ModalRoot.UIScale + new Vector2(20f));
 
         if (_tileConditions.Value.Tile == tile)
             return;
@@ -349,10 +355,10 @@ public sealed partial class ZoningUiController :
             return;
 
         if (_conditions.Remove(uid, out var list))
-            UIManager.PopupRoot.RemoveChild(list);
+            UIManager.ModalRoot.RemoveChild(list);
 
         list = new ZoneConditionsList();
-        UIManager.PopupRoot.AddChild(list);
+        UIManager.ModalRoot.AddChild(list);
         list.SetZone(zone.Value);
         _conditions[uid] = list;
     }
@@ -365,7 +371,7 @@ public sealed partial class ZoningUiController :
             || !_conditions.Remove(uid, out var list))
             return;
 
-        UIManager.PopupRoot.RemoveChild(list);
+        UIManager.ModalRoot.RemoveChild(list);
     }
 
     [PublicAPI]
@@ -388,7 +394,7 @@ public sealed partial class ZoningUiController :
 
         var list = new ZoneConditionsList();
         list.Visible = false;
-        UIManager.PopupRoot.AddChild(list);
+        UIManager.ModalRoot.AddChild(list);
         _tileConditions = (TileRef.Zero, list);
     }
 
@@ -399,7 +405,7 @@ public sealed partial class ZoningUiController :
         if (_tileConditions == null)
             return;
 
-        UIManager.PopupRoot.RemoveChild(_tileConditions.Value.List);
+        UIManager.ModalRoot.RemoveChild(_tileConditions.Value.List);
         _tileConditions = null;
     }
 }

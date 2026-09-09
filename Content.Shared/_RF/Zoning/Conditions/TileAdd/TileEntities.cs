@@ -22,7 +22,6 @@ public sealed partial class TileEntities : BaseZoneCondition<TileEntities>
 
 public sealed partial class TileEntitiesZoneConditionSystem : ZoningConditionSystem<TileEntities>
 {
-    [Dependency] private IPrototypeManager _proto = default!;
     [Dependency] private TurfSystem _turf = default!;
 
     protected override bool TileValidCheck(TileEntities condition, TileRef tile)
@@ -54,7 +53,7 @@ public sealed partial class TileEntitiesZoneConditionSystem : ZoningConditionSys
         IReadOnlySet<TileRef> tiles,
         IReadOnlySet<EntityUid> entities)
     {
-        var typeNames = condition.Types.Select(x => _proto.Index(x).Name).ToArray();
+        var typeNames = condition.Types.Select(x => $"[tooltip entity=\"{x}\"]").ToArray();
         var inTile = _turf.GetEntitiesInTile(
                 _turf.GetTileCenter(tile!.Value),
                 LookupFlags.Static | LookupFlags.Dynamic)
@@ -65,8 +64,7 @@ public sealed partial class TileEntitiesZoneConditionSystem : ZoningConditionSys
                 ("invert", condition.Invert),
                 ("amount", condition.Amount),
                 ("types", typeNames.Length > 0 ? string.Join(", ", typeNames) : "empty")),
-            condition.TileValidCheck(tile!.Value, Zoning),
-            Progress: ZoneConditionDesc.ProgressText(Loc, inTile, condition.Amount),
-            EntIcon: condition.Types);
+            condition.TileValidCheck(tile.Value, Zoning),
+            Progress: ZoneConditionDesc.ProgressText(Loc, inTile, condition.Amount));
     }
 }

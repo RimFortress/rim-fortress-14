@@ -53,7 +53,7 @@ public sealed partial class TileZoneConditionSystem : ZoningConditionSystem<Tile
         IReadOnlySet<EntityUid> entities)
     {
         var types = condition.Types.Select(x => _proto.Index(x).TileId).ToHashSet();
-        var names = condition.Types.Select(x => Loc.GetString(_proto.Index(x).Name)).ToHashSet();
+        var names = condition.Types.Select(x => $"[tooltip tile=\"{x}\"]").ToHashSet();
         var count = tiles.Count(x => types.Count == 0 || types.Contains((ushort)x.Tile.TypeId));
         return new(
             Loc.GetString(condition.Description,
@@ -61,7 +61,6 @@ public sealed partial class TileZoneConditionSystem : ZoningConditionSystem<Tile
                 ("invert", condition.Invert),
                 ("types", names.Count > 0 ? string.Join(", ", names) : "empty")),
             condition.TileCheck(tiles, Zoning),
-            Progress: ZoneConditionDesc.ProgressText(Loc, count, condition.Amount),
-            TileIcon: condition.Types.ToList());
+            Progress: ZoneConditionDesc.ProgressText(Loc, count, condition.Amount));
     }
 }
