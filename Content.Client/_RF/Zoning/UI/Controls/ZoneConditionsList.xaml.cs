@@ -55,7 +55,7 @@ public sealed partial class ZoneConditionsList : Control
     }
 
     [PublicAPI]
-    public void SetTile(Entity<ZoneComponent> ent, TileRef tile)
+    public bool SetTile(Entity<ZoneComponent> ent, TileRef tile)
     {
         LabelText.Visible = false;
         Conditions.RemoveAllChildren();
@@ -63,16 +63,18 @@ public sealed partial class ZoneConditionsList : Control
         var descriptions = _zoning.TileAddConditionsDescription(ent, tile);
 
         if (descriptions.All(x => x.IsMet))
-            return;
+            return false;
 
         foreach (var desc in descriptions)
         {
             Conditions.AddChild(new ZoneConditionControl(desc));
         }
+
+        return true;
     }
 
     [PublicAPI]
-    public void SetTile(EntProtoId<ZoneComponent> protoId, TileRef tile)
+    public bool SetTile(EntProtoId<ZoneComponent> protoId, TileRef tile)
     {
         LabelText.Visible = false;
         Conditions.RemoveAllChildren();
@@ -80,17 +82,19 @@ public sealed partial class ZoneConditionsList : Control
 
         if (!_proto.Resolve(protoId, out var proto)
             || !proto.TryComp(out ZoneComponent? comp, _entity.ComponentFactory))
-            return;
+            return false;
 
         var descriptions = _zoning.TileAddConditionsDescription(comp, tile);
 
         if (descriptions.All(x => x.IsMet))
-            return;
+            return false;
 
         foreach (var desc in descriptions)
         {
             Conditions.AddChild(new ZoneConditionControl(desc));
         }
+
+        return true;
     }
 
     private void Reposition()

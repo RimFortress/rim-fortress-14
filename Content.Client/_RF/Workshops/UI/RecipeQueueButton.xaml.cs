@@ -59,7 +59,7 @@ public sealed partial class RecipeQueueButton : Control
             {
                 var msg = FormattedMessage.FromMarkupOrThrow(
                     ToolTip = Loc.GetString("workshop-menu-recipe-queue-tooltip"));
-                var tooltip = new Tooltip();
+                var tooltip = new Robust.Client.UserInterface.CustomControls.Tooltip();
                 tooltip.SetMessage(msg);
                 return tooltip;
             };

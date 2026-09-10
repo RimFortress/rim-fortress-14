@@ -1,1 +1,0 @@
-zone-stockpile-name = Stockpile

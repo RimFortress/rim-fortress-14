@@ -1,11 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Client._RF.UserInterface.Controls.Tooltip;
-using Content.Client._RF.UserInterface.Prototypes;
+using Content.Client._RF.Tooltip.Controls;
+using Content.Client._RF.Tooltip.Prototypes;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
 
-namespace Content.Client._RF.UserInterface.Controllers;
+namespace Content.Client._RF.Tooltip;
 
 /// <summary>
 /// Controller for nested tooltip logic.
@@ -37,6 +37,26 @@ public sealed class TooltipUIController : UIController
     }
 
     /// <summary>
+    /// Creates a tooltip that is not associated with any other control.
+    /// Opening this tooltip closes all other tooltips and makes
+    /// it the root tooltip, but it cannot be closed automatically.
+    /// </summary>
+    /// <param name="def">Tooltip content settings.</param>
+    /// <returns>A created tooltip.</returns>
+    [PublicAPI]
+    public TooltipPopup OpenPopupEphemeral(ITooltipDefinition def)
+    {
+        CloseAll();
+        var popup = new TooltipPopup(def);
+        popup.OpenAtMouse();
+        popup.OnMouseExited += OnMouseExited;
+        popup.OnPopupHide += CloseAll;
+        _chain.Push(popup);
+        popup.StartTracking();
+        return popup;
+    }
+
+    /// <summary>
     /// Closes all current tooltips.
     /// </summary>
     [PublicAPI]
@@ -51,7 +71,7 @@ public sealed class TooltipUIController : UIController
 
         while (control != null)
         {
-            if (control is TooltipPopup { Owner: not null } popup && _chain.Contains(popup))
+            if (control is TooltipPopup popup && _chain.Contains(popup))
             {
                 parent = popup;
                 return true;
@@ -89,7 +109,9 @@ public sealed class TooltipUIController : UIController
 
         while (_chain.TryPop(out var last))
         {
-            if (last.Pinned && last.GlobalRect.Contains(mouse) || last.Owner?.GlobalRect.Contains(mouse) == true)
+            if (last.Pinned && last.GlobalRect.Contains(mouse)
+                || last.Owner == null
+                || last.Owner.GlobalRect.Contains(mouse))
             {
                 _chain.Push(last);
                 return;

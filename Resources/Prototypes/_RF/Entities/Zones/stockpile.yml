@@ -1,8 +1,30 @@
 - type: entity
   id: Stockpile
+  name: Stockpile
+  description: A storage zone for various items. The list of items to be stored can be customized in the settings.
   components:
   - type: Zone
-    proto: Stockpile
+    collisionMode: Tile
+    collisionWhitelist:
+      components:
+      - Item
+      - Pullable
+      requireAll: false
+    conditions:
+      TileAdd:
+      - !type:Blocked
+        invert: true
+      - !type:InZone
+        types:
+        - Stockpile
+        invert: true
+      - !type:TileEntities
+        types:
+        - FloorWaterEntity
+        - FloorLavaEntity
+        - FloorLiquidPlasmaEntity
+        - FloorChasmEntity
+        invert: true
   - type: ZoneVisuals
     editable: true
     tileSprite: _RF/Tiles/Zones/stockpile.png

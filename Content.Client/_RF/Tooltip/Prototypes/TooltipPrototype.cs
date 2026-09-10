@@ -1,8 +1,9 @@
-using Content.Client._RF.UserInterface.Controls.RichText;
+using Content.Client._RF.Tooltip.RichText;
+using Robust.Client.UserInterface;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-namespace Content.Client._RF.UserInterface.Prototypes;
+namespace Content.Client._RF.Tooltip.Prototypes;
 
 /// <summary>
 /// A prototype of a tooltip that can be added when the cursor hovers over text using <see cref="TooltipTag"/>.
@@ -35,6 +36,12 @@ public sealed partial class TooltipPrototype : IPrototype, ITooltipDefinition
     /// <inheritdoc/>
     [DataField]
     public bool CanIconFocus { get; set; }
+
+    /// <inheritdoc/>
+    public NetEntity? UidIcon => null;
+
+    /// <inheritdoc/>
+    public Control? ControlAfter => null;
 }
 
 public sealed class TooltipDefinition : ITooltipDefinition
@@ -49,6 +56,9 @@ public sealed class TooltipDefinition : ITooltipDefinition
     public EntProtoId? EntIcon { get; set; }
 
     /// <inheritdoc/>
+    public NetEntity? UidIcon { get; set; }
+
+    /// <inheritdoc/>
     public ResPath? TexturePath { get; set; }
 
     /// <inheritdoc/>
@@ -56,6 +66,9 @@ public sealed class TooltipDefinition : ITooltipDefinition
 
     /// <inheritdoc/>
     public bool CanIconFocus { get; set; }
+
+    /// <inheritdoc/>
+    public Control? ControlAfter { get; set; }
 }
 
 public interface ITooltipDefinition
@@ -76,6 +89,11 @@ public interface ITooltipDefinition
     EntProtoId? EntIcon { get; }
 
     /// <summary>
+    /// An existing entity that will be used as a tooltip icon.
+    /// </summary>
+    NetEntity? UidIcon { get; }
+
+    /// <summary>
     /// The path to the texture that will be used as the tooltip icon.
     /// </summary>
     ResPath? TexturePath { get; }
@@ -89,6 +107,11 @@ public interface ITooltipDefinition
     /// If true, the user will be able to view the tooltip icon in high resolution by hovering over it.
     /// </summary>
     bool CanIconFocus { get; }
+
+    /// <summary>
+    /// A control that will be added after the tooltip body text.
+    /// </summary>
+    Control? ControlAfter { get; }
 }
 
 [Serializable]

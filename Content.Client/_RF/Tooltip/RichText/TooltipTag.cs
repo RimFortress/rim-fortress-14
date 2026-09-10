@@ -1,25 +1,27 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Client._RF.UserInterface.Controls.Tooltip;
-using Content.Client._RF.UserInterface.Prototypes;
+using Content.Client._RF.Tooltip.Controls;
+using Content.Client._RF.Tooltip.Prototypes;
 using Content.Shared.Maps;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.RichText;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
-namespace Content.Client._RF.UserInterface.Controls.RichText;
+namespace Content.Client._RF.Tooltip.RichText;
 
 /// <summary>
 /// Markup tag for hoverable tooltip terms.
 /// </summary>
 /// <example>
-/// The tag supports 3 modes:<br/>
+/// The tag supports 4 modes:<br/>
 /// 1. Displaying a tooltip from a <see cref="TooltipPrototype"/>:
 /// <c>[tooltip id="TooltipProtoId"]</c><br/>
 /// 2. Displaying a tooltip from a <see cref="ContentTileDefinition"/>:
 /// <c>[tooltip tile="TileProtoId"]</c><br/>
 /// 2. Displaying a tooltip from a <see cref="EntityPrototype"/>:
 /// <c>[tooltip entity="EntProtoId"]</c><br/>
+/// 3. Displaying a tooltip from existing <see cref="NetEntity"/>:
+/// <c>[tooltip netUid=1234]</c><br/>
 /// <br/>
 /// By default, the tooltip title text is inserted in place
 /// of the tag, but you can insert your own text using:<br/>
@@ -27,11 +29,13 @@ namespace Content.Client._RF.UserInterface.Controls.RichText;
 /// </example>
 public sealed partial class TooltipTag : IMarkupTagHandler
 {
+    [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPrototypeManager _proto = default!;
 
     private const string IdParam = "id";
     private const string TileParam = "tile";
     private const string EntParam = "entity";
+    private const string NetUidParam = "netUid";
 
     public string Name => "tooltip";
 
@@ -44,10 +48,7 @@ public sealed partial class TooltipTag : IMarkupTagHandler
             && idParam.TryGetString(out var tooltipId)
             && _proto.TryIndex<TooltipPrototype>(tooltipId, out var protoDef))
         {
-            control = new TooltipTermLabel(protoDef)
-            {
-                Text = text ?? protoDef.Title,
-            };
+            control = new TooltipTermLabel(protoDef, text ?? protoDef.Title);
             return true;
         }
 
@@ -62,10 +63,7 @@ public sealed partial class TooltipTag : IMarkupTagHandler
                 IconType = TooltipIconType.Tile,
                 CanIconFocus = true,
             };
-            control = new TooltipTermLabel(def)
-            {
-                Text = text ?? def.Title,
-            };
+            control = new TooltipTermLabel(def, text ?? def.Title);
             return true;
         }
 
@@ -80,10 +78,23 @@ public sealed partial class TooltipTag : IMarkupTagHandler
                 EntIcon = ent,
                 CanIconFocus = true,
             };
-            control = new TooltipTermLabel(def)
+            control = new TooltipTermLabel(def, text ?? def.Title);
+            return true;
+        }
+
+        if (node.Attributes.TryGetValue(NetUidParam, out var uidParam)
+            && uidParam.TryGetLong(out var netUid)
+            && _entity.TryGetEntity(new((int)netUid.Value), out var netEnt)
+            && _entity.TryGetComponent(netEnt, out MetaDataComponent? meta))
+        {
+            var def = new TooltipDefinition
             {
-                Text = text ?? def.Title,
+                Title = meta.EntityName,
+                Body = meta.EntityDescription,
+                UidIcon = new NetEntity((int)netUid.Value),
+                CanIconFocus = true,
             };
+            control = new TooltipTermLabel(def, text ?? def.Title);
             return true;
         }
 

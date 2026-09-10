@@ -1200,7 +1200,7 @@ public sealed class StyleFortress : StyleBase
 
             #region Tooltip
 
-            Element<Tooltip>()
+            Element<Robust.Client.UserInterface.CustomControls.Tooltip>()
                 .Prop(PanelContainer.StylePropertyPanel, tooltipBox),
             Element<PanelContainer>()
                 .Class(StyleClassTooltipPanel)

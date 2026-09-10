@@ -23,7 +23,6 @@ public sealed partial class InZone : BaseZoneCondition<InZone>
 public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<InZone>
 {
     [Dependency] private ZoningSystem _zoning = default!;
-    [Dependency] private IPrototypeManager _proto = default!;
 
     protected override bool TileValidCheck(InZone condition, TileRef tile)
         => _zoning.TryGetZone(tile, out var zones, condition.Types)
@@ -37,8 +36,8 @@ public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<
     {
         _zoning.TryGetZone(tile!.Value, out var zones, condition.Types);
 
-        var currentNames = zones?.Select(x => MetaData(x).EntityName).ToArray();
-        var zoneNames = condition.Types.Select(x => Loc.GetString(_proto.Index(x).Name)).ToArray();
+        var currentNames = zones?.Select(x => $"[tooltip netUid={GetNetEntity(x).Id}]").ToArray();
+        var zoneNames = condition.Types.Select(x => $"[tooltip entity=\"{x}\"]").ToArray();
 
         return new ZoneConditionDesc(
             Loc.GetString(condition.Description,
@@ -46,7 +45,7 @@ public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<
                 ("amount", condition.Amount),
                 ("zones", zoneNames.Length > 0 ? string.Join(", ", zoneNames) : "empty"),
                 ("current", currentNames?.Length > 0 ? string.Join(", ", currentNames) : "empty")),
-            condition.TileValidCheck(tile!.Value, Zoning),
+            condition.TileValidCheck(tile.Value, Zoning),
             Progress: ZoneConditionDesc.ProgressText(Loc, zones?.Count ?? 0, condition.Amount));
     }
 }

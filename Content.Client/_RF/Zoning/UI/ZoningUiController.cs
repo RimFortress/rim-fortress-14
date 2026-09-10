@@ -1,6 +1,9 @@
 using System.Linq;
 using System.Numerics;
 using Content.Client._RF.Selection;
+using Content.Client._RF.Tooltip;
+using Content.Client._RF.Tooltip.Controls;
+using Content.Client._RF.Tooltip.Prototypes;
 using Content.Client._RF.Zoning.UI.Controls;
 using Content.Shared._RF.Selection.Components;
 using Content.Shared._RF.Zoning;
@@ -31,6 +34,7 @@ public sealed partial class ZoningUiController :
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private IEyeManager _eye = default!;
     [Dependency] private IInputManager _input = default!;
+    [Dependency] private TooltipUIController _tooltipController = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
     [UISystemDependency] private readonly ZoningSystem _zoning = default!;
     [UISystemDependency] private readonly TransformSystem _transform = default!;
@@ -39,7 +43,7 @@ public sealed partial class ZoningUiController :
     public readonly HashSet<EntityUid> SelectedZones = new();
 
     private readonly Dictionary<EntityUid, ZoneConditionsList> _conditions = new();
-    private (TileRef Tile, ZoneConditionsList List)? _tileConditions;
+    private (TileRef Tile, TooltipPopup Popup)? _tileConditions;
     private EntProtoId<ZoneComponent>? _creatingZoneType;
     private (EntProtoId<ZoneComponent> Proto, TimeSpan Until)? _expectedZone;
     private static readonly TimeSpan ZoneCreationExpectTime = TimeSpan.FromSeconds(2f);
@@ -171,12 +175,9 @@ public sealed partial class ZoningUiController :
 
     private void UpdateTileConditions()
     {
-        if (_tileConditions == null)
-            return;
-
         if (_input.MouseScreenPosition is not { IsValid: true } mouse)
         {
-            _tileConditions.Value.List.Visible = false;
+            ClosePopup();
             return;
         }
 
@@ -184,7 +185,7 @@ public sealed partial class ZoningUiController :
 
         if (map == MapCoordinates.Nullspace)
         {
-            _tileConditions.Value.List.Visible = false;
+            //ClosePopup();
             return;
         }
 
@@ -192,33 +193,53 @@ public sealed partial class ZoningUiController :
 
         if (_turf.GetTileRef(coord) is not { } tile)
         {
-            _tileConditions.Value.List.Visible = false;
+            ClosePopup();
             return;
         }
 
-        LayoutContainer.SetPosition(
-            _tileConditions.Value.List,
-            mouse.Position / UIManager.ModalRoot.UIScale + new Vector2(20f));
-
-        if (_tileConditions.Value.Tile == tile)
+        if (_tileConditions?.Tile == tile)
             return;
 
-        _tileConditions = (tile, _tileConditions.Value.List);
+        ClosePopup();
 
         if (_creatingZoneType != null)
-        {
-            _tileConditions.Value.List.Visible = true;
-            _tileConditions.Value.List.SetTile(_creatingZoneType.Value, tile);
-        }
+            OpenPopup(tile, zoneProto: _creatingZoneType);
         else if (SelectedZones.Count == 1 && _zoning.TryGetZone(SelectedZones.First(), out var zone))
-        {
-            _tileConditions.Value.List.Visible = true;
-            _tileConditions.Value.List.SetTile(zone.Value, tile);
-        }
+            OpenPopup(tile, zone: zone);
         else
+            ClosePopup();
+    }
+
+    private void OpenPopup(TileRef tile, Entity<ZoneComponent>? zone = null, EntProtoId<ZoneComponent>? zoneProto = null)
+    {
+        var list = new ZoneConditionsList();
+
+        if (zone != null && !list.SetTile(zone.Value, tile))
+            return;
+
+        if (zoneProto != null && !list.SetTile(zoneProto.Value, tile))
+            return;
+
+        var tileDef = _turf.GetContentTileDefinition(tile);
+
+        var def = new TooltipDefinition
         {
-            _tileConditions.Value.List.Visible = false;
-        }
+            Title = Loc.GetString(tileDef.Name),
+            Body = Loc.GetString("zone-tile-conditions-popup-body"),
+            TexturePath = tileDef.Sprite,
+            IconType = TooltipIconType.Tile,
+            CanIconFocus = true,
+            ControlAfter = list,
+        };
+
+        var popup = _tooltipController.OpenPopupEphemeral(def);
+        _tileConditions = (tile, popup);
+    }
+
+    private void ClosePopup()
+    {
+        _tileConditions?.Popup.Close();
+        _tileConditions = null;
     }
 
     /// <summary>
@@ -391,11 +412,6 @@ public sealed partial class ZoningUiController :
     {
         system.OnZoneUpdated += OnZoneUpdate;
         system.OnZoneInit += OnZoneInit;
-
-        var list = new ZoneConditionsList();
-        list.Visible = false;
-        UIManager.ModalRoot.AddChild(list);
-        _tileConditions = (TileRef.Zero, list);
     }
 
     public void OnSystemUnloaded(ZoningSystem system)
@@ -403,10 +419,6 @@ public sealed partial class ZoningUiController :
         system.OnZoneUpdated -= OnZoneUpdate;
         system.OnZoneInit -= OnZoneInit;
 
-        if (_tileConditions == null)
-            return;
-
-        UIManager.ModalRoot.RemoveChild(_tileConditions.Value.List);
-        _tileConditions = null;
+        ClosePopup();
     }
 }
