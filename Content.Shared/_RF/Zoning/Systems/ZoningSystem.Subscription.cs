@@ -103,6 +103,16 @@ public partial class ZoningSystem
     }
 
     [SubscribeLocalEvent, SubscribeNetworkEvent]
+    public void OnZoneNameChangeRequest(ZoneNameChangeRequest msg, EntitySessionEventArgs args)
+    {
+        if (!TryGetZone(msg.Uid, out var zone)
+            || !CanControl(args.SenderSession, zone.Value))
+            return;
+
+        _meta.SetEntityName(zone.Value, msg.Name);
+    }
+
+    [SubscribeLocalEvent, SubscribeNetworkEvent]
     public void OnZoneVisualsChangeRequest(ZoneVisualsChangeRequest msg, EntitySessionEventArgs args)
     {
         if (!TryGetZone(msg.Uid, out var zone)

@@ -35,6 +35,7 @@ public partial class ZoningSystem
         var coords = TilesCenter(tiles);
         var uid = Spawn(protoId, coords);
         zone = new(uid, EnsureComp<ZoneComponent>(uid));
+        zone.Value.Comp.Creating = true;
         _meta.SetEntityName(uid, $"{Name(uid)} #{uid.Id}");
 
         AddTile(zone.Value, tiles, false, false);
@@ -76,6 +77,7 @@ public partial class ZoningSystem
 
         UpdateFixtures(zone.Value, false);
         _physics.WakeBody(uid, force: true);
+        zone.Value.Comp.Creating = false;
         Dirty(zone.Value.AsNullable());
 
         return true;
@@ -157,8 +159,10 @@ public partial class ZoningSystem
     /// </summary>
     /// <param name="tile">Tile.</param>
     /// <param name="type">The type of zone to search for. If null, any zone will be found.</param>
+    /// <param name="validOnly">If true, the search will be only in valid zones.</param>
     [PublicAPI, Pure]
-    public bool TileInZone(TileRef tile, EntProtoId<ZoneComponent>? type = null) => TryGetZone(tile, out _, type);
+    public bool TileInZone(TileRef tile, EntProtoId<ZoneComponent>? type = null, bool validOnly = false)
+        => TryGetZone(tile, out _, type);
 
     /// <summary>
     /// Checks whether a tile belongs to a target.
@@ -174,12 +178,14 @@ public partial class ZoningSystem
     /// <param name="tile">Tile.</param>
     /// <param name="zone">Found zone entities.</param>
     /// <param name="type">The type of zone to search for. If null, any zone will be found.</param>
+    /// <param name="validOnly">If true, the search will be only in valid zones.</param>
     /// <returns>True, if found a zone to which this tile is assigned.</returns>
     [PublicAPI, Pure]
     public bool TryGetZone(
         TileRef tile,
         [NotNullWhen(true)] out HashSet<Entity<ZoneComponent>>? zone,
-        EntProtoId<ZoneComponent>? type = null)
+        EntProtoId<ZoneComponent>? type = null,
+        bool validOnly = false)
         => TryGetZone(tile, out zone, type == null ? new HashSet<EntProtoId<ZoneComponent>>() : new() { type.Value });
 
     /// <summary>
@@ -188,20 +194,37 @@ public partial class ZoningSystem
     /// <param name="tile">Tile.</param>
     /// <param name="zone">Found zone entities.</param>
     /// <param name="types">The types of zone to search for. If empty, any zone will be found.</param>
+    /// <param name="validOnly">If true, the search will be only in valid zones.</param>
     /// <returns>True, if found a zone to which this tile is assigned.</returns>
+    [PublicAPI, Pure]
     public bool TryGetZone(
         TileRef tile,
         [NotNullWhen(true)] out HashSet<Entity<ZoneComponent>>? zone,
-        HashSet<EntProtoId<ZoneComponent>> types)
+        HashSet<EntProtoId<ZoneComponent>> types,
+        bool validOnly = false)
     {
         zone = new HashSet<Entity<ZoneComponent>>();
 
         _lookup.GetLocalEntitiesIntersecting(tile.GridUid, tile.GridIndices, zone);
 
         if (types.Count > 0)
-            zone = zone.Where(x => Prototype(x) is { } proto && types.Contains(proto.ID)).ToHashSet();
+        {
+            zone = zone.Where(x =>
+                    (!validOnly || x.Comp.Valid)
+                    && !x.Comp.Creating
+                    && Prototype(x) is { } proto
+                    && types.Contains(proto.ID))
+                .ToHashSet();
+        }
 
-        return zone.Count != 0;
+        if (!validOnly)
+        {
+            zone = zone.Where(x => !x.Comp.Creating).ToHashSet();
+            return zone.Count > 0;
+        }
+
+        zone = zone.Where(x => x.Comp is { Valid: true, Creating: false }).ToHashSet();
+        return zone.Count > 0;
     }
 
     /// <summary>

@@ -4,7 +4,9 @@ using Content.Client._RF.Selection;
 using Content.Client._RF.Tooltip;
 using Content.Client._RF.Tooltip.Controls;
 using Content.Client._RF.Tooltip.Prototypes;
+using Content.Client._RF.UserInterface;
 using Content.Client._RF.Zoning.UI.Controls;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Selection.Components;
 using Content.Shared._RF.Zoning;
 using Content.Shared._RF.Zoning.Components;
@@ -14,10 +16,14 @@ using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
+using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
+using Robust.Shared.Input;
+using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -27,9 +33,12 @@ namespace Content.Client._RF.Zoning.UI;
 public sealed partial class ZoningUiController :
     UIController,
     IOnSystemLoaded<ZoningSystem>,
-    IOnSystemUnloaded<ZoningSystem>
+    IOnSystemUnloaded<ZoningSystem>,
+    IOnStateEntered<RimFortressState>,
+    IOnStateExited<RimFortressState>
 {
     [Dependency] private IOverlayManager _overlay = default!;
+    [Dependency] private IPlayerManager _player = default!;
     [Dependency] private IPrototypeManager _proto = default!;
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private IEyeManager _eye = default!;
@@ -39,14 +48,26 @@ public sealed partial class ZoningUiController :
     [UISystemDependency] private readonly ZoningSystem _zoning = default!;
     [UISystemDependency] private readonly TransformSystem _transform = default!;
     [UISystemDependency] private readonly TurfSystem _turf = default!;
+    [UISystemDependency] private readonly OwnershipSystem _ownership = default!;
 
     public readonly HashSet<EntityUid> SelectedZones = new();
+
+    /// <summary>
+    /// The zone currently under the mouse cursor that the local player is allowed to act on
+    /// (unowned, or owned by them) - updated every frame in <see cref="FrameUpdate"/>. Other
+    /// controllers/systems can read this for their own hover-driven UI instead of re-implementing
+    /// their own tile-under-mouse lookup.
+    /// </summary>
+    [PublicAPI]
+    public Entity<ZoneComponent>? HoveredZone { get; private set; }
 
     private readonly Dictionary<EntityUid, ZoneConditionsList> _conditions = new();
     private (TileRef Tile, TooltipPopup Popup)? _tileConditions;
     private EntProtoId<ZoneComponent>? _creatingZoneType;
     private (EntProtoId<ZoneComponent> Proto, TimeSpan Until)? _expectedZone;
     private static readonly TimeSpan ZoneCreationExpectTime = TimeSpan.FromSeconds(2f);
+
+    private bool _pickingZone;
 
     /// <summary>
     /// Invoked when a zone is created by selection.
@@ -60,23 +81,52 @@ public sealed partial class ZoningUiController :
         _overlay.AddOverlay(new ZoningOverlay());
     }
 
-    public override void FrameUpdate(FrameEventArgs args)
+    #region Events
+
+    public void OnStateEntered(RimFortressState state)
     {
-        base.FrameUpdate(args);
+        CommandBinds.Builder
+            .Bind(EngineKeyFunctions.Use, new PointerInputCmdHandler(OnUse))
+            .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
+            .Register<ZoningUiController>();
+    }
 
-        UpdateTileConditions();
+    public void OnStateExited(RimFortressState state)
+    {
+        CommandBinds.Unregister<ZoningUiController>();
+    }
 
-        if (_creatingZoneType == null
-            || UIManager.GetActiveUIWidgetOrNull<ZoneCreationWidget>() is not { } widget)
-            return;
+    private bool OnUse(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    {
+        if (HoveredZone is not { } zone || !_pickingZone)
+            return false;
 
-        var tiles = _selection.Selected<TileRef>();
-        widget.Visible = tiles.Count > 0;
+        _pickingZone = false;
 
-        if (!widget.Visible)
-            return;
+        var ev = new ZonePicked();
+        EntityManager.EventBus.RaiseLocalEvent(zone.Owner, ref ev);
 
-        LayoutContainer.SetPosition(widget, GetBottomRightScreenPos(tiles, widget));
+        if (!ev.Handled)
+            SelectZone(zone.Owner);
+
+        return true;
+    }
+
+    private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
+    {
+        if (_pickingZone)
+        {
+            CancelPick();
+            return true;
+        }
+
+        if (HoveredZone is { } zone && SelectedZones.Contains(zone.Owner))
+        {
+            DeselectZone(zone.Owner);
+            return true;
+        }
+
+        return false;
     }
 
     private void OnZoneInit(Entity<ZoneComponent> ent)
@@ -96,6 +146,69 @@ public sealed partial class ZoningUiController :
     {
         if (_conditions.TryGetValue(zone, out var list))
             list.SetZone(zone);
+    }
+
+    private void OnCreationFinish(BaseButton.ButtonEventArgs args)
+    {
+        if (!_timing.IsFirstTimePredicted || _creatingZoneType == null)
+            return;
+
+        var tiles = _selection.Selected<TileRef>();
+
+        if (tiles.Count > 0)
+        {
+            EntityManager.RaisePredictiveEvent(new ZoneCreateRequest
+            {
+                GridUid = EntityManager.GetNetEntity(tiles.First().GridUid),
+                Tiles = tiles.Select(x => x.GridIndices).ToHashSet(),
+                Type = _creatingZoneType.Value,
+            });
+
+            _expectedZone = (_creatingZoneType.Value, _timing.CurTime + ZoneCreationExpectTime);
+        }
+
+        EndCreation();
+    }
+
+    private void OnCreationCancel(BaseButton.ButtonEventArgs args)
+    {
+        EndCreation();
+    }
+
+    public void OnSystemLoaded(ZoningSystem system)
+    {
+        system.OnZoneUpdated += OnZoneUpdate;
+        system.OnZoneInit += OnZoneInit;
+    }
+
+    public void OnSystemUnloaded(ZoningSystem system)
+    {
+        system.OnZoneUpdated -= OnZoneUpdate;
+        system.OnZoneInit -= OnZoneInit;
+
+        ClosePopup();
+    }
+
+    #endregion
+
+    public override void FrameUpdate(FrameEventArgs args)
+    {
+        base.FrameUpdate(args);
+
+        UpdateHoveredZone();
+        UpdateTileConditions();
+
+        if (_creatingZoneType == null
+            || UIManager.GetActiveUIWidgetOrNull<ZoneCreationWidget>() is not { } widget)
+            return;
+
+        var tiles = _selection.Selected<TileRef>();
+        widget.Visible = tiles.Count > 0;
+
+        if (!widget.Visible)
+            return;
+
+        LayoutContainer.SetPosition(widget, GetBottomRightScreenPos(tiles, widget));
     }
 
     /// <summary>
@@ -132,33 +245,6 @@ public sealed partial class ZoningUiController :
         return pos;
     }
 
-    private void OnCreationFinish(BaseButton.ButtonEventArgs args)
-    {
-        if (!_timing.IsFirstTimePredicted || _creatingZoneType == null)
-            return;
-
-        var tiles = _selection.Selected<TileRef>();
-
-        if (tiles.Count > 0)
-        {
-            EntityManager.RaisePredictiveEvent(new ZoneCreateRequest
-            {
-                GridUid = EntityManager.GetNetEntity(tiles.First().GridUid),
-                Tiles = tiles.Select(x => x.GridIndices).ToHashSet(),
-                Type = _creatingZoneType.Value,
-            });
-
-            _expectedZone = (_creatingZoneType.Value, _timing.CurTime + ZoneCreationExpectTime);
-        }
-
-        EndCreation();
-    }
-
-    private void OnCreationCancel(BaseButton.ButtonEventArgs args)
-    {
-        EndCreation();
-    }
-
     private void EndCreation()
     {
         _creatingZoneType = null;
@@ -173,8 +259,46 @@ public sealed partial class ZoningUiController :
         _selection.SetDefault<EntityUid>();
     }
 
+    private void UpdateHoveredZone()
+    {
+        if (!_pickingZone)
+            return;
+
+        HoveredZone = null;
+
+        if (_input.MouseScreenPosition is not { IsValid: true } mouse)
+            return;
+
+        var map = _eye.PixelToMap(mouse);
+
+        if (map == MapCoordinates.Nullspace)
+            return;
+
+        var coords = _transform.ToCoordinates(map);
+
+        if (!_zoning.TryGetZone(coords, out var zones))
+            return;
+
+        var localPlayer = _player.LocalSession?.AttachedEntity;
+
+        foreach (var zone in zones)
+        {
+            if (!_ownership.HasOwner(zone.Owner, localPlayer))
+                continue;
+
+            HoveredZone = zone;
+            return;
+        }
+    }
+
     private void UpdateTileConditions()
     {
+        if (_creatingZoneType == null && SelectedZones.Count != 1)
+        {
+            ClosePopup();
+            return;
+        }
+
         if (_input.MouseScreenPosition is not { IsValid: true } mouse)
         {
             ClosePopup();
@@ -242,6 +366,8 @@ public sealed partial class ZoningUiController :
         _tileConditions = null;
     }
 
+    #region API
+
     /// <summary>
     /// Sets the zone creation selection mode. Unlike tile add/remove, this no longer
     /// commits on selection completion - the player confirms via the
@@ -249,16 +375,21 @@ public sealed partial class ZoningUiController :
     /// which stays anchored to the bottom-right of the current selection (see <see cref="FrameUpdate"/>).
     /// </summary>
     /// <param name="zone">A prototype of the zone that will be created.</param>
-    /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     [PublicAPI]
-    public void CreateSelection(EntProtoId<ZoneComponent> zone, SpriteSpecifier? icon = null)
+    public void CreateSelection(EntProtoId<ZoneComponent> zone)
     {
-        var color = _proto.Index(zone).TryComp(out ZoneVisualsComponent? visuals, EntityManager.ComponentFactory)
+        var proto = _proto.Index(zone);
+
+        if (!proto.TryComp(out ZoneComponent? comp, EntityManager.ComponentFactory))
+            return;
+
+        var color = proto.TryComp(out ZoneVisualsComponent? visuals, EntityManager.ComponentFactory)
             ? visuals.BorderColor
             : null;
 
         _creatingZoneType = zone;
 
+        CancelPick();
         var widget = UIManager.ActiveScreen!.GetOrAddWidget<ZoneCreationWidget>();
 
         // Defensive unsubscribe in case a previous creation attempt left this wired up
@@ -274,7 +405,7 @@ public sealed partial class ZoningUiController :
             act: (_, _, _) => EndCreation(),
             innerColor: color?.WithAlpha(0.15f),
             filter: Filter,
-            icon: icon,
+            icon: comp.Icon,
             allowedModes: SelectionSystem.AllModes,
             showArea: false);
 
@@ -283,6 +414,11 @@ public sealed partial class ZoningUiController :
         bool Filter(TileRef tile) => _zoning.TileValidCheck(zone, tile);
     }
 
+    /// <summary>
+    /// Sets the selection mode to zone expansion.
+    /// </summary>
+    /// <param name="uid">Zone entity.</param>
+    /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     [PublicAPI]
     public void AddTileSelection(EntityUid uid, SpriteSpecifier? icon = null)
     {
@@ -319,6 +455,11 @@ public sealed partial class ZoningUiController :
         bool Filter(TileRef tile) => _zoning.TileValidCheck(zone.Value, tile);
     }
 
+    /// <summary>
+    /// Sets the selection mode to delete tiles in the zone.
+    /// </summary>
+    /// <param name="uid">Zone entity.</param>
+    /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     [PublicAPI]
     public void RemoveTileSelection(EntityUid uid, SpriteSpecifier? icon = null)
     {
@@ -355,6 +496,10 @@ public sealed partial class ZoningUiController :
         bool Filter(TileRef tile) => _zoning.TileInZone(zone.Value, tile);
     }
 
+    /// <summary>
+    /// Deletes the zone.
+    /// </summary>
+    /// <param name="uid">Zone entity.</param>
     [PublicAPI]
     public void DeleteZone(EntityUid uid)
     {
@@ -408,17 +553,54 @@ public sealed partial class ZoningUiController :
         });
     }
 
-    public void OnSystemLoaded(ZoningSystem system)
+    /// <summary>
+    /// Sets a name for the zone.
+    /// </summary>
+    /// <param name="uid">Zone entity.</param>
+    /// <param name="name">New name.</param>
+    [PublicAPI]
+    public void SetName(EntityUid uid, string name)
     {
-        system.OnZoneUpdated += OnZoneUpdate;
-        system.OnZoneInit += OnZoneInit;
+        if (!EntityManager.HasComponent<ZoneComponent>(uid))
+            return;
+
+        EntityManager.RaisePredictiveEvent(new ZoneNameChangeRequest
+        {
+            Uid = EntityManager.GetNetEntity(uid),
+            Name = name,
+        });
     }
 
-    public void OnSystemUnloaded(ZoningSystem system)
+    /// <summary>
+    /// Arms "pick a zone" mode: the next primary click on <see cref="HoveredZone"/> invokes <see cref="ZonePicked"/>.
+    /// A secondary click cancels the pick and invokes <see cref="ZonePickingCancel"/> instead.
+    /// Only one picker can be armed at a time - arming a new one silently replaces
+    /// (without cancelling) any previous, unfinished pick.
+    /// </summary>
+    [PublicAPI]
+    public void PickZone()
     {
-        system.OnZoneUpdated -= OnZoneUpdate;
-        system.OnZoneInit -= OnZoneInit;
+        if (_creatingZoneType != null)
+            return;
 
-        ClosePopup();
+        _pickingZone = true;
     }
+
+    /// <summary>
+    /// Cancels an in-progress <see cref="PickZone"/> without picking anything, invoking its
+    /// <c>onCancelled</c> callback if one was given. No-op if no pick is currently armed.
+    /// </summary>
+    [PublicAPI]
+    public void CancelPick()
+    {
+        if (!_pickingZone)
+            return;
+
+        HoveredZone = null;
+        _pickingZone = false;
+        var ev = new ZonePickingCancel();
+        EntityManager.EventBus.RaiseEvent(EventSource.Local, ref ev);
+    }
+
+    #endregion
 }

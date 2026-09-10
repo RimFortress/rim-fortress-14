@@ -100,6 +100,26 @@ public record struct ZoneInvalid;
 [PublicAPI]
 public record struct ZoneValid;
 
+/// <summary>
+/// An event raised on the client upon clicking a zone in edit mode.
+/// It allows other systems to open different user interfaces for different types of zones.
+/// </summary>
+/// <param name="Handled">Has this event been handled by other systems?</param>
+[ByRefEvent]
+public record struct ZonePicked(bool Handled = false)
+{
+    public void Handle()
+    {
+        Handled = true;
+    }
+}
+
+/// <summary>
+/// An event raised on the client when zone picking mode is canceled.
+/// </summary>
+[ByRefEvent]
+public record struct ZonePickingCancel;
+
 #region NetMessages
 
 /// <summary>
@@ -168,6 +188,23 @@ public sealed class ZoneTileRemoveRequest : EntityEventArgs
     /// Tiles to remove.
     /// </summary>
     public HashSet<Vector2i> Tiles = new();
+}
+
+/// <summary>
+/// Client request to change the zone name.
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class ZoneNameChangeRequest : EntityEventArgs
+{
+    /// <summary>
+    /// Zone entity.
+    /// </summary>
+    public NetEntity Uid;
+
+    /// <summary>
+    /// New zone Name.
+    /// </summary>
+    public string Name = string.Empty;
 }
 
 /// <summary>

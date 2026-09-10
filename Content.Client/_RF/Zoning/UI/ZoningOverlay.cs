@@ -44,7 +44,7 @@ public sealed partial class ZoningOverlay : GridOverlay
 
         while (enumerator.MoveNext(out var uid, out var zone, out var comp))
         {
-            var selected = _controller.SelectedZones.Contains(uid);
+            var selected = _controller.SelectedZones.Contains(uid) || _controller.HoveredZone?.Owner == uid;
 
             if (_transform.GetGrid(uid) is not { } grid)
                 continue;

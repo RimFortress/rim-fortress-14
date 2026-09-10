@@ -18,6 +18,12 @@ public sealed partial class InZone : BaseZoneCondition<InZone>
     /// </summary>
     [DataField]
     public HashSet<EntProtoId<ZoneComponent>> Types = new();
+
+    /// <summary>
+    /// If true, the search will be only in valid zones.
+    /// </summary>
+    [DataField]
+    public bool ValidOnly;
 }
 
 public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<InZone>
@@ -34,7 +40,7 @@ public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<
         IReadOnlySet<TileRef> tiles,
         IReadOnlySet<EntityUid> entities)
     {
-        _zoning.TryGetZone(tile!.Value, out var zones, condition.Types);
+        _zoning.TryGetZone(tile!.Value, out var zones, condition.Types, condition.ValidOnly);
 
         var currentNames = zones?.Select(x => $"[tooltip netUid={GetNetEntity(x).Id}]").ToArray();
         var zoneNames = condition.Types.Select(x => $"[tooltip entity=\"{x}\"]").ToArray();

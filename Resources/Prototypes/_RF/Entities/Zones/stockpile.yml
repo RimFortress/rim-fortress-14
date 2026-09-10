@@ -4,6 +4,7 @@
   description: A storage zone for various items. The list of items to be stored can be customized in the settings.
   components:
   - type: Zone
+    icon: _RF/Interface/cubes-solid.svg.192dpi.png
     collisionMode: Tile
     collisionWhitelist:
       components:
@@ -17,6 +18,7 @@
       - !type:InZone
         types:
         - Stockpile
+        validOnly: true
         invert: true
       - !type:TileEntities
         types:

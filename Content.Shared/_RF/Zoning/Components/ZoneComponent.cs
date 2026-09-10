@@ -2,6 +2,7 @@ using Content.Shared.Physics;
 using Content.Shared.Whitelist;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Components;
 
@@ -12,6 +13,12 @@ namespace Content.Shared._RF.Zoning.Components;
 [AutoGenerateComponentState(fieldDeltas: true, raiseAfterAutoHandleState: true)]
 public sealed partial class ZoneComponent : Component
 {
+    /// <summary>
+    /// Zone icon in the interface.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public SpriteSpecifier? Icon;
+
     /// <inheritdoc cref="ZoneCollisionMode"/>
     [DataField, AutoNetworkedField]
     public ZoneCollisionMode CollisionMode = ZoneCollisionMode.Mono;
@@ -93,6 +100,13 @@ public sealed partial class ZoneComponent : Component
     /// </summary>
     [ViewVariables, AutoNetworkedField]
     public Dictionary<Vector2i, string> TileFixtures = new();
+
+    /// <summary>
+    /// True if the zone is in the process of being created
+    /// (the entity has been created, but not all tiles have been added yet).
+    /// </summary>
+    [ViewVariables]
+    public bool Creating;
 
     public const string MonoFixtureId = "zone_mono_";
 

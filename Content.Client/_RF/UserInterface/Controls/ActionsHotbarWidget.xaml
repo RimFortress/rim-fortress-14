@@ -8,22 +8,15 @@
                              TexturePath="/Textures/_RF/Interface/hammer-solid.svg.192dpi.png"/>
         <tree:TreeMenuButton Name="PassiveTasksButton" Access="Public"
                              ToolTip="{Loc 'actions-hotbar-widgets-passive-tasks-tooltip'}"
-                             TexturePath="/Textures/_RF/Interface/vector-square-solid.svg.192dpi.png"/>
+                             TexturePath="/Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png"/>
         <tree:TreeMenuButton Name="NpcJobsButton" Access="Public"
                              ToolTip="{Loc 'actions-hotbar-widgets-npc-jobs-tooltip'}"
                              TexturePath="/Textures/_RF/Interface/arrow-down-wide-short-solid-full.192dpi.png"/>
 
         <PanelContainer StyleClasses="LowDivider" Margin="5 10"/>
 
-        <tree:TreeMenuButton ToolTip="{Loc 'actions-hotbar-widgets-stockpile-tooltip'}"
-                             TexturePath="/Textures/_RF/Interface/cubes-solid.svg.192dpi.png">
-            <tree:TreeMenuButton Name="CreateStockpileButton" Access="Public"
-                                 ToolTip="{Loc 'stockpile-menu-create-tooltip'}"
-                                 TexturePath="/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"/>
-            <tree:TreeMenuButton Name="EditStockpileButton" Access="Public"
-                                 ToolTip="{Loc 'stockpile-menu-edit-tooltip'}"
-                                 TexturePath="/Textures/_RF/Interface/pencil-solid.svg.192dpi.png"/>
-        </tree:TreeMenuButton>
+        <tree:TreeMenuButton Name="ZoningButton" ToolTip="{Loc 'actions-hotbar-widgets-zoning-tooltip'}"
+                             TexturePath="/Textures/_RF/Interface/vector-square-solid.svg.192dpi.png"/>
 
         <PanelContainer StyleClasses="LowDivider" Margin="5 10"/>
 
