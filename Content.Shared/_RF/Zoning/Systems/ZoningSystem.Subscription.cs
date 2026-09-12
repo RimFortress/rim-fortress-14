@@ -6,6 +6,12 @@ namespace Content.Shared._RF.Zoning.Systems;
 public partial class ZoningSystem
 {
     [SubscribeLocalEvent]
+    private void OnZoneVisualsInit(Entity<ZoneVisualsComponent> ent, ref ComponentInit args)
+    {
+        ent.Comp.CurrentState |= ZoneVisualsState.Base;
+    }
+
+    [SubscribeLocalEvent]
     private void OnZoneAdded(Entity<ZoneComponent> ent, ref ComponentInit args)
     {
         if (!_net.IsClient
@@ -45,8 +51,6 @@ public partial class ZoningSystem
         switch (ent.Comp.CollisionMode)
         {
             case ZoneCollisionMode.Mono:
-                TryLeave(ent, args.OtherEntity);
-                break;
             case ZoneCollisionMode.Tile:
                 if (_turf.GetTileRef(Transform(args.OtherEntity).Coordinates) is not { } tile
                     || !ent.Comp.Tiles.Contains(tile.GridIndices))
@@ -121,8 +125,9 @@ public partial class ZoningSystem
             || !visuals.Editable)
             return;
 
-        visuals.ZoneColor = msg.ZoneColor;
-        visuals.BorderColor = msg.BorderColor;
-        Dirty(zone.Value, visuals);
+        visuals.States = msg.States;
+
+        if (!_net.IsClient)
+            Dirty(zone.Value, visuals);
     }
 }

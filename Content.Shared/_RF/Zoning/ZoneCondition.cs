@@ -25,8 +25,6 @@ public abstract partial class ZoneCondition
     [DataField]
     public bool Invert;
 
-    public LocId Description => $"zone-condition-{CaseConversion.PascalToKebab(GetType().Name)}-desc";
-
     /// <summary>
     /// Type on this condition.
     /// </summary>
@@ -58,65 +56,114 @@ public abstract partial class ZoneCondition
     public abstract bool EntityCheck(IReadOnlySet<EntityUid> entities, IZoneConditionChecker checker);
 
     /// <summary>
-    /// Returns a description of the condition for the user.
+    /// Returns a description of the condition of type <see cref="ZoneConditionType.TileAdd"/> for the user.
     /// </summary>
-    /// <param name="tile">
-    /// Target tile to check; not null if the <see cref="Type"/> is <see cref="ZoneConditionType.TileAdd"/>.
-    /// </param>
+    /// <param name="tile">Target tile to check.</param>
+    /// <param name="checker"></param>
+    [PublicAPI, Pure]
+    public abstract ZoneConditionDesc ConditionDescription(TileRef tile, IZoneConditionChecker checker);
+
+    /// <summary>
+    /// Returns a description of the condition of type <see cref="ZoneConditionType.Tile"/> for the user.
+    /// </summary>
     /// <param name="tiles">A list of all tiles in the zone.</param>
+    /// <param name="checker"></param>
+    [PublicAPI, Pure]
+    public abstract ZoneConditionDesc ConditionDescription(IReadOnlySet<TileRef> tiles, IZoneConditionChecker checker);
+
+    /// <summary>
+    /// Returns a description of the condition of type <see cref="ZoneConditionType.Entity"/> for the user.
+    /// </summary>
     /// <param name="entities">A list of all entities in the zone.</param>
     /// <param name="checker"></param>
     [PublicAPI, Pure]
-    public abstract ZoneConditionDesc ConditionDescription(
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities,
-        IZoneConditionChecker checker);
+    public abstract ZoneConditionDesc ConditionDescription(IReadOnlySet<EntityUid> entities, IZoneConditionChecker checker);
 }
 
 public abstract partial class BaseZoneCondition<T> : ZoneCondition where T : BaseZoneCondition<T>
 {
     public override bool TileValidCheck(TileRef tile, IZoneConditionChecker checker)
     {
-        DebugTools.Assert(Type == ZoneConditionType.TileAdd);
+        DebugTools.Assert(Type.HasFlag(ZoneConditionType.TileAdd));
         var result = checker.TileValidCheck((T)this, tile);
         return Invert ? !result : result;
     }
 
     public override bool TileCheck(IReadOnlySet<TileRef> tiles, IZoneConditionChecker checker)
     {
-        DebugTools.Assert(Type == ZoneConditionType.Tile);
+        DebugTools.Assert(Type.HasFlag(ZoneConditionType.Tile));
         var result = checker.TileCheck((T)this, tiles);
         return Invert ? !result : result;
     }
 
     public override bool EntityCheck(IReadOnlySet<EntityUid> entities, IZoneConditionChecker checker)
     {
-        DebugTools.Assert(Type == ZoneConditionType.Entity);
+        DebugTools.Assert(Type.HasFlag(ZoneConditionType.Entity));
         var result = checker.EntityCheck((T)this, entities);
         return Invert ? !result : result;
     }
 
-    public override ZoneConditionDesc ConditionDescription(
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities,
-        IZoneConditionChecker checker)
-        => checker.ConditionDescription((T)this, tile, tiles, entities);
+    public override ZoneConditionDesc ConditionDescription(TileRef tile, IZoneConditionChecker checker)
+    {
+        DebugTools.Assert(Type.HasFlag(ZoneConditionType.TileAdd));
+        return checker.ConditionDescription((T)this, tile);
+    }
+
+    public override ZoneConditionDesc ConditionDescription(IReadOnlySet<TileRef> tiles, IZoneConditionChecker checker)
+    {
+        DebugTools.Assert(Type.HasFlag(ZoneConditionType.Tile));
+        return checker.ConditionDescription((T)this, tiles);
+    }
+
+    public override ZoneConditionDesc ConditionDescription(IReadOnlySet<EntityUid> entities, IZoneConditionChecker checker)
+    {
+        DebugTools.Assert(Type.HasFlag(ZoneConditionType.Entity));
+        return checker.ConditionDescription((T)this, entities);
+    }
 }
 
 /// <param name="Text">Description text.</param>
 /// <param name="IsMet">Is the condition met?</param>
 /// <param name="Progress">Text describing the current progress in fulfilling the condition.</param>
+/// <param name="SubDescriptions">List of descriptions of child conditions.</param>
 [Serializable, NetSerializable]
-public readonly record struct ZoneConditionDesc(string Text, bool IsMet, string? Progress = null)
+public readonly record struct ZoneConditionDesc(
+    string Text,
+    bool IsMet,
+    string? Progress = null,
+    List<IZoneConditionDesc>? SubDescriptions = null) : IZoneConditionDesc
 {
-    public static string? ProgressText(ILocalizationManager locale, int current, int amount)
+    public static string? ProgressText(int current, int amount)
         => amount > 1
-            ? locale.GetString("zone-condition-base-progress", ("current", current), ("amount", amount))
+            ? Loc.GetString("zone-condition-base-progress", ("current", current), ("amount", amount))
             : null;
 }
 
+// It exists only because we cannot create structs with a recursive layout
+public interface IZoneConditionDesc
+{
+    /// <summary>
+    /// Description text.
+    /// </summary>
+    string Text { get; }
+
+    /// <summary>
+    /// Is the condition met?
+    /// </summary>
+    bool IsMet { get; }
+
+    /// <summary>
+    /// Text describing the current progress in fulfilling the condition.
+    /// </summary>
+    string? Progress { get; }
+
+    /// <summary>
+    /// List of descriptions of child conditions.
+    /// </summary>
+    List<IZoneConditionDesc>? SubDescriptions { get; }
+}
+
+[Flags]
 [Serializable, NetSerializable]
 public enum ZoneConditionType : byte
 {
@@ -134,4 +181,6 @@ public enum ZoneConditionType : byte
     /// Conditions relating to entities within the zone that must be satisfied for the zone to remain valid.
     /// </summary>
     Entity,
+
+    All = TileAdd |  Tile | Entity,
 }

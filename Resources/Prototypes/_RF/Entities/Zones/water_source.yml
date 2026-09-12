@@ -1,0 +1,56 @@
+- type: entity
+  id: WaterSource
+  parent: BaseZone
+  name: Water Source
+  description: The zone where settlers will collect water for their needs.
+  components:
+  - type: Zone
+    layer:
+    - SlipLayer
+    mask:
+    - ItemMask
+    collisionWhitelist:
+      components:
+      - Solution
+    collisionBlacklist:
+      components:
+      - Item
+    conditions:
+      TileAdd:
+      - !type:Blocked
+        invert: true
+      - !type:InZone
+        types:
+        - WaterSource
+        invert: true
+      - !type:Or
+        conditions:
+        - !type:Prototyped
+          types:
+          - FloorWaterEntity
+          invert: true
+        - !type:Neighbor
+          conditions:
+          - !type:Prototyped
+            types:
+            - FloorWaterEntity
+            invert: true
+      Tile:
+      - !type:Blocked
+        invert: true
+      Entity:
+      - !type:Prototyped
+        types:
+        - FloorWaterEntity
+  - type: ZoneVisuals
+    icon: _RF/Interface/droplet-solid-full.svg.192dpi.png
+    selectionInnerColor: "#E5EBEB26"
+    selectionBorderColor: "#6E8A8A"
+    editable: true
+    states:
+      Picking:
+        zoneColor: "#E5EBEB26"
+        borderColor: "#6E8A8A"
+      Selected:
+        zoneColor: "#E5EBEB4C"
+        borderColor: "#5C7373"

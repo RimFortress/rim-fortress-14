@@ -1,0 +1,7 @@
+- type: entity
+  id: BaseZone
+  abstract: true
+  components:
+  - type: Zone
+  - type: Physics
+  - type: Fixtures

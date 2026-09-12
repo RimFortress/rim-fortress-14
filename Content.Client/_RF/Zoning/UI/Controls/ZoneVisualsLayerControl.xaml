@@ -1,0 +1,36 @@
+<controls1:ZoneVisualsLayerControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls1="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
+    xmlns:ui="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
+    <ui:ExpandableBox Name="LayerExpand">
+        <BoxContainer Orientation="Vertical">
+            <CheckBox Name="LayerEnableButton" Text="{Loc 'zone-visuals-layer-enable-button'}"/>
+
+            <BoxContainer Name="SettingsBox" Margin="10 3 0 3" Orientation="Vertical">
+                <PanelContainer StyleClasses="PanelDark">
+                    <BoxContainer Orientation="Vertical">
+                        <CheckBox Name="BorderColorButton" Margin="0 0 0 5"
+                                  Text="{Loc 'zone-visuals-border-color-button'}"/>
+                        <ColorSelectorSliders Name="BorderColor" SelectorType="Rgb" IsAlphaVisible="True"/>
+                    </BoxContainer>
+                </PanelContainer>
+
+                <PanelContainer StyleClasses="LowDivider" Margin="3 4"/>
+
+                <PanelContainer StyleClasses="PanelDark">
+                    <BoxContainer Orientation="Vertical">
+                        <CheckBox Name="ZoneColorButton" Margin="0 0 0 5"
+                                  Text="{Loc 'zone-visuals-zone-color-button'}"/>
+                        <ColorSelectorSliders Name="ZoneColor" SelectorType="Rgb" IsAlphaVisible="True"/>
+                    </BoxContainer>
+                </PanelContainer>
+
+                <CheckBox Name="ShowTileBordersButton" Margin="3 4"
+                          Text="{Loc 'zone-visuals-show-tile-borders-button'}"/>
+
+                <CheckBox Name="ShowConditionsButton" Margin="3 4"
+                          Text="{Loc 'zone-visuals-show-conditions-button'}"/>
+            </BoxContainer>
+        </BoxContainer>
+    </ui:ExpandableBox>
+</controls1:ZoneVisualsLayerControl>

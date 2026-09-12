@@ -18,7 +18,7 @@ public sealed partial class ZoneConditionControl : Control
         RobustXamlLoader.Load(this);
     }
 
-    public ZoneConditionControl(ZoneConditionDesc desc)
+    public ZoneConditionControl(IZoneConditionDesc desc)
     {
         RobustXamlLoader.Load(this);
 
@@ -34,6 +34,14 @@ public sealed partial class ZoneConditionControl : Control
 
         Text.Text = $"[bold]{desc.Text}[/bold]";
         Progress.Text = $"[bold]{desc.Progress}[/bold]";
+
+        if (desc.SubDescriptions == null)
+            return;
+
+        foreach (var subDesc in desc.SubDescriptions)
+        {
+            SubDescriptions.AddChild(new ZoneConditionControl(subDesc));
+        }
     }
 }
 

@@ -27,12 +27,6 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
 
     private readonly Dictionary<StockpileCategoryPrototype, List<EntityPrototype>> _categoryItems = new();
 
-    private static readonly SpriteSpecifier AddTileSelection
-        = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
-
-    private static readonly SpriteSpecifier RemoveTileSelection
-        = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
-
     public StockpileSettingsWindow()
     {
         IoCManager.InjectDependencies(this);
@@ -70,12 +64,12 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
         ExpandStockButton.OnPressed += _ =>
         {
             if (_stockpileController.SettingStock is { } stock)
-                zoningController.AddTileSelection(stock, AddTileSelection);
+                zoningController.AddTileSelection(stock);
         };
         ShrinkStockButton.OnPressed += _ =>
         {
             if (_stockpileController.SettingStock is { } stock)
-                zoningController.RemoveTileSelection(stock, RemoveTileSelection);
+                zoningController.RemoveTileSelection(stock);
         };
         DeleteStockButton.OnPressed += _ =>
         {
@@ -98,15 +92,17 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
         };
         CloseButton.OnPressed += _ => Close();
 
+        /*
         ColorPicker.OnColorChanged += color =>
         {
             if (_entity.TryGetComponent(_stockpileController.SettingStock, out ZoneVisualsComponent? visuals))
             {
                 zoningController.SetVisuals(_stockpileController.SettingStock.Value,
                     borderColor: color,
-                    zoneColor: visuals.ZoneColor);
+                    zoneColor: visuals.States.GetValueOrDefault(ZoneVisualsState.Base).ZoneColor);
             }
         };
+        */
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -149,7 +145,7 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
             Title = meta.EntityName;
 
         if (_entity.TryGetComponent(ent, out ZoneVisualsComponent? visuals))
-            ColorPicker.Color = visuals.BorderColor ?? Color.Transparent;
+            ColorPicker.Color = visuals.States.GetValueOrDefault(ZoneVisualsState.Base).BorderColor ?? Color.Transparent;
     }
 
     public void BuildItems(StockpileCategoryPrototype? category)

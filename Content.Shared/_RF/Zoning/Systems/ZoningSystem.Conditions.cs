@@ -1,9 +1,9 @@
+using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.Zoning.Components;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Systems;
 
@@ -26,18 +26,6 @@ public partial class ZoningSystem
     public bool EntityCheck<T>(T condition, IReadOnlySet<EntityUid> entities) where T : BaseZoneCondition<T>
     {
         var ev = new ZoneEntityCheck<T>(condition, entities, true);
-        RaiseLocalEvent(ref ev);
-        return ev.Result;
-    }
-
-    public ZoneConditionDesc ConditionDescription<T>(
-        T condition,
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities)
-        where T : BaseZoneCondition<T>
-    {
-        var ev = new GetZoneConditionDescription<T>(condition, tile, tiles, entities, new());
         RaiseLocalEvent(ref ev);
         return ev.Result;
     }
@@ -149,35 +137,65 @@ public partial class ZoningSystem
     [PublicAPI, Pure]
     public bool EntityCheck(Entity<ZoneComponent> ent) => EntityCheck(ent.Comp, ent.Comp.Entities);
 
-    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription"/>
-    [PublicAPI, Pure]
-    public ZoneConditionDesc ConditionDescription(
-        ZoneCondition condition,
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities)
-        => condition.ConditionDescription(tile, tiles, entities, this);
+    #region Description
 
-    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription"/>
-    [PublicAPI, Pure]
-    public List<ZoneConditionDesc> ConditionDescription(
-        IEnumerable<ZoneCondition> conditions,
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities)
+        public ZoneConditionDesc ConditionDescription<T>(T condition, TileRef tile) where T : BaseZoneCondition<T>
     {
-        var result = new List<ZoneConditionDesc>();
-
-        foreach (var condition in conditions)
-        {
-            result.Add(ConditionDescription(condition, tile, tiles, entities));
-        }
-
-        DebugTools.Assert(result.Count > 0);
-        return result;
+        var ev = new GetZoneTileAddConditionDescription<T>(condition, tile, new());
+        RaiseLocalEvent(ref ev);
+        return ev.Result;
     }
 
-    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription"/>
+    public ZoneConditionDesc ConditionDescription<T>(T condition, IReadOnlySet<TileRef> tiles)
+        where T : BaseZoneCondition<T>
+    {
+        var ev = new GetZoneTileConditionDescription<T>(condition, tiles, new());
+        RaiseLocalEvent(ref ev);
+        return ev.Result;
+    }
+
+    public ZoneConditionDesc ConditionDescription<T>(T condition, IReadOnlySet<EntityUid> entities)
+        where T : BaseZoneCondition<T>
+    {
+        var ev = new GetZoneEntityConditionDescription<T>(condition, entities, new());
+        RaiseLocalEvent(ref ev);
+        return ev.Result;
+    }
+
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription{T}(T, TileRef)"/>
+    [PublicAPI, Pure]
+    public ZoneConditionDesc ConditionDescription(ZoneCondition condition, TileRef tile)
+        => condition.ConditionDescription(tile, this);
+
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription{T}(T, IReadOnlySet{TileRef})"/>
+    [PublicAPI, Pure]
+    public ZoneConditionDesc ConditionDescription(ZoneCondition condition, IReadOnlySet<TileRef> tiles)
+        => condition.ConditionDescription(tiles, this);
+
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription{T}(T, IReadOnlySet{EntityUid})"/>
+    [PublicAPI, Pure]
+    public ZoneConditionDesc ConditionDescription(ZoneCondition condition, IReadOnlySet<EntityUid> entities)
+        => condition.ConditionDescription(entities, this);
+
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription{T}(T, TileRef)"/>
+    [PublicAPI, Pure]
+    public List<ZoneConditionDesc> ConditionDescription(IEnumerable<ZoneCondition> conditions, TileRef tile)
+        => conditions.Select(con => ConditionDescription(con, tile)).ToList();
+
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription{T}(T, IReadOnlySet{TileRef})"/>
+    [PublicAPI, Pure]
+    public List<ZoneConditionDesc> ConditionDescription(IEnumerable<ZoneCondition> conditions, IReadOnlySet<TileRef> tiles)
+        => conditions.Select(con => ConditionDescription(con, tiles)).ToList();
+
+    /// <inheritdoc cref="IZoneConditionChecker.ConditionDescription{T}(T, IReadOnlySet{EntityUid})"/>
+    [PublicAPI, Pure]
+    public List<ZoneConditionDesc> ConditionDescription(IEnumerable<ZoneCondition> conditions, IReadOnlySet<EntityUid> entities)
+        => conditions.Select(con => ConditionDescription(con, entities)).ToList();
+
+    /// <summary>
+    /// Returns a description of the condition of type <see cref="ZoneConditionType.Tile"/>
+    /// or <see cref="ZoneConditionType.Entity"/> for the user.
+    /// </summary>
     [PublicAPI, Pure]
     public List<ZoneConditionDesc> ConditionDescription(Entity<ZoneComponent> ent)
     {
@@ -189,7 +207,7 @@ public partial class ZoningSystem
         {
             foreach (var condition in conditions)
             {
-                desc.Add(ConditionDescription(condition, null, tiles, ent.Comp.Entities));
+                desc.Add(ConditionDescription(condition, tiles));
             }
         }
 
@@ -197,7 +215,7 @@ public partial class ZoningSystem
         {
             foreach (var condition in conditions)
             {
-                desc.Add(ConditionDescription(condition, null, tiles, ent.Comp.Entities));
+                desc.Add(ConditionDescription(condition, ent.Comp.Entities));
             }
         }
 
@@ -217,9 +235,11 @@ public partial class ZoningSystem
 
         foreach (var condition in conditions)
         {
-            desc.Add(ConditionDescription(condition, tile, new HashSet<TileRef>(), new HashSet<EntityUid>()));
+            desc.Add(ConditionDescription(condition, tile));
         }
 
         return desc;
     }
+
+    #endregion
 }

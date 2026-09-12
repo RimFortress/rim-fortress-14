@@ -2,7 +2,6 @@ using Content.Shared.Physics;
 using Content.Shared.Whitelist;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization;
-using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Zoning.Components;
 
@@ -13,12 +12,6 @@ namespace Content.Shared._RF.Zoning.Components;
 [AutoGenerateComponentState(fieldDeltas: true, raiseAfterAutoHandleState: true)]
 public sealed partial class ZoneComponent : Component
 {
-    /// <summary>
-    /// Zone icon in the interface.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public SpriteSpecifier? Icon;
-
     /// <inheritdoc cref="ZoneCollisionMode"/>
     [DataField, AutoNetworkedField]
     public ZoneCollisionMode CollisionMode = ZoneCollisionMode.Mono;
@@ -32,6 +25,12 @@ public sealed partial class ZoneComponent : Component
     /// </summary>
     [DataField, AutoNetworkedField]
     public EntityWhitelist? CollisionWhitelist;
+
+    /// <summary>
+    /// A blacklist of entities with which collisions will be tracked.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public EntityWhitelist? CollisionBlacklist;
 
     /// <summary>
     /// Conditions related to the zone's tiles/entities that

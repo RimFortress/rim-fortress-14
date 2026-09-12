@@ -42,9 +42,6 @@ public sealed partial class ZoneConditionsList : Control
         _trackingZone = null;
         var descriptions = _zoning.ConditionDescription(ent);
 
-        if (descriptions.All(x => x.IsMet))
-            return;
-
         foreach (var desc in descriptions)
         {
             Conditions.AddChild(new ZoneConditionControl(desc));

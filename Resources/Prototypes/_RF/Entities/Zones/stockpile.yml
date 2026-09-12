@@ -1,10 +1,10 @@
 - type: entity
   id: Stockpile
+  parent: BaseZone
   name: Stockpile
   description: A storage zone for various items. The list of items to be stored can be customized in the settings.
   components:
   - type: Zone
-    icon: _RF/Interface/cubes-solid.svg.192dpi.png
     collisionMode: Tile
     collisionWhitelist:
       components:
@@ -18,9 +18,8 @@
       - !type:InZone
         types:
         - Stockpile
-        validOnly: true
         invert: true
-      - !type:TileEntities
+      - !type:Prototyped
         types:
         - FloorWaterEntity
         - FloorLavaEntity
@@ -28,10 +27,15 @@
         - FloorChasmEntity
         invert: true
   - type: ZoneVisuals
+    icon: _RF/Interface/cubes-solid.svg.192dpi.png
+    selectionInnerColor: "#FF8C0026"
+    selectionBorderColor: DarkOrange
     editable: true
-    tileSprite: _RF/Tiles/Zones/stockpile.png
-    selectedTileSprite: _RF/Tiles/Zones/stockpile_selected.png
-    borderColor: darkOrange
+    states:
+      Base:
+        tileSprite: _RF/Tiles/Zones/stockpile.png
+        borderColor: DarkOrange
+      Selected:
+        tileSprite: _RF/Tiles/Zones/stockpile_selected.png
+        borderColor: "#FFA332"
   - type: Stockpile
-  - type: Physics
-  - type: Fixtures

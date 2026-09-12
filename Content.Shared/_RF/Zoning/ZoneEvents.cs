@@ -19,12 +19,15 @@ public record struct ZoneEntityCheck<T>(T Condition, IReadOnlySet<EntityUid> Ent
     where T : BaseZoneCondition<T>;
 
 [ByRefEvent]
-public record struct GetZoneConditionDescription<T>(
-    T Condition,
-    TileRef? Tile,
-    IReadOnlySet<TileRef> Tiles,
-    IReadOnlySet<EntityUid> Entities,
-    ZoneConditionDesc Result)
+public record struct GetZoneTileAddConditionDescription<T>(T Condition, TileRef Tile, ZoneConditionDesc Result)
+    where T : BaseZoneCondition<T>;
+
+[ByRefEvent]
+public record struct GetZoneTileConditionDescription<T>(T Condition, IReadOnlySet<TileRef> Tiles, ZoneConditionDesc Result)
+    where T : BaseZoneCondition<T>;
+
+[ByRefEvent]
+public record struct GetZoneEntityConditionDescription<T>(T Condition, IReadOnlySet<EntityUid> Entities, ZoneConditionDesc Result)
     where T : BaseZoneCondition<T>;
 
 /// <summary>
@@ -100,6 +103,22 @@ public record struct ZoneInvalid;
 [PublicAPI]
 public record struct ZoneValid;
 
+// Client events
+
+/// <summary>
+/// An event raised on the client when a zone created by selecting
+/// an area has been created on the server and sent to the client.
+/// </summary>
+/// <param name="Handled">Has this event been handled by other systems?</param>
+[ByRefEvent]
+public record struct ZoneCreated(bool Handled = false)
+{
+    public void Handle()
+    {
+        Handled = true;
+    }
+}
+
 /// <summary>
 /// An event raised on the client upon clicking a zone in edit mode.
 /// It allows other systems to open different user interfaces for different types of zones.
@@ -117,7 +136,7 @@ public record struct ZonePicked(bool Handled = false)
 /// <summary>
 /// An event raised on the client when zone picking mode is canceled.
 /// </summary>
-[ByRefEvent]
+[PublicAPI]
 public record struct ZonePickingCancel;
 
 #region NetMessages
@@ -219,14 +238,9 @@ public sealed class ZoneVisualsChangeRequest : EntityEventArgs
     public NetEntity Uid;
 
     /// <summary>
-    /// New zone inner color.
+    /// New zone visuals.
     /// </summary>
-    public Color? ZoneColor;
-
-    /// <summary>
-    /// New zone borders color.
-    /// </summary>
-    public Color? BorderColor;
+    public Dictionary<ZoneVisualsState, ZoneVisualsStyle> States = new();
 }
 
 #endregion

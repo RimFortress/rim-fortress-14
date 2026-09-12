@@ -4,7 +4,7 @@ using Content.Shared._RF.Zoning.Systems;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
-namespace Content.Shared._RF.Zoning.Conditions.TileAdd;
+namespace Content.Shared._RF.Zoning.Conditions;
 
 /// <summary>
 /// They will check the tile for overlap with other zones.
@@ -34,24 +34,20 @@ public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<
         => _zoning.TryGetZone(tile, out var zones, condition.Types)
            && zones.Count >= condition.Amount;
 
-    protected override ZoneConditionDesc ConditionDescription(
-        InZone condition,
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities)
+    protected override ZoneConditionDesc ConditionDescription(InZone condition, TileRef tile)
     {
-        _zoning.TryGetZone(tile!.Value, out var zones, condition.Types, condition.ValidOnly);
+        _zoning.TryGetZone(tile, out var zones, condition.Types, condition.ValidOnly);
 
         var currentNames = zones?.Select(x => $"[tooltip netUid={GetNetEntity(x).Id}]").ToArray();
-        var zoneNames = condition.Types.Select(x => $"[tooltip entity=\"{x}\"]").ToArray();
+        var zoneNames = condition.Types.Select(x => $"[tooltip entProto=\"{x}\"]").ToArray();
 
         return new ZoneConditionDesc(
-            Loc.GetString(condition.Description,
+            Loc.GetString("zone-condition-in-zone-tile-add-desc",
                 ("invert", condition.Invert),
                 ("amount", condition.Amount),
                 ("zones", zoneNames.Length > 0 ? string.Join(", ", zoneNames) : "empty"),
                 ("current", currentNames?.Length > 0 ? string.Join(", ", currentNames) : "empty")),
-            condition.TileValidCheck(tile.Value, Zoning),
-            Progress: ZoneConditionDesc.ProgressText(Loc, zones?.Count ?? 0, condition.Amount));
+            condition.TileValidCheck(tile, Zoning),
+            Progress: ZoneConditionDesc.ProgressText(zones?.Count ?? 0, condition.Amount));
     }
 }

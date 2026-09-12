@@ -19,7 +19,7 @@ namespace Content.Client._RF.Tooltip.RichText;
 /// 2. Displaying a tooltip from a <see cref="ContentTileDefinition"/>:
 /// <c>[tooltip tile="TileProtoId"]</c><br/>
 /// 2. Displaying a tooltip from a <see cref="EntityPrototype"/>:
-/// <c>[tooltip entity="EntProtoId"]</c><br/>
+/// <c>[tooltip entProto="EntProtoId"]</c><br/>
 /// 3. Displaying a tooltip from existing <see cref="NetEntity"/>:
 /// <c>[tooltip netUid=1234]</c><br/>
 /// <br/>
@@ -34,7 +34,7 @@ public sealed partial class TooltipTag : IMarkupTagHandler
 
     private const string IdParam = "id";
     private const string TileParam = "tile";
-    private const string EntParam = "entity";
+    private const string EntParam = "entProto";
     private const string NetUidParam = "netUid";
 
     public string Name => "tooltip";

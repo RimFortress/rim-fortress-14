@@ -42,7 +42,6 @@ public sealed partial class ActionsHotbarWidget : UIWidget
         WorldMapButton.OnPressed += _ => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
         NpcJobsButton.OnPressed += _ => UserInterfaceManager.GetUIController<NpcJobsUiController>().TogglePriorityWindow();
 
-        var stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
         _zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
     }
 
@@ -129,7 +128,7 @@ public sealed partial class ActionsHotbarWidget : UIWidget
             foreach (var zone in zoneCreator.Zones)
             {
                 if (!_proto.Resolve(zone, out var proto)
-                    || !proto.TryComp(out ZoneComponent? comp, _entity.ComponentFactory))
+                    || !proto.TryComp(out ZoneVisualsComponent? comp, _entity.ComponentFactory))
                     continue;
 
                 var button = new TreeMenuButton

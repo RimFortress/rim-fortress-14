@@ -1,8 +1,12 @@
 zone-condition-base-progress = ({$current}/{$amount})
 
-# Tile
+zone-condition-tile-tile-add-desc = 
+    { $invert ->
+        [true] The tile type is not one of the following: {$types}
+       *[other] The type of tile is one of the following: {$types}
+    }
 
-zone-condition-tile-desc = 
+zone-condition-tile-tile-desc = 
     { $types ->
         [empty] { $invert ->
             [true] Number of tiles at most {$amount}
@@ -20,15 +24,25 @@ zone-condition-tile-desc =
         }
     }
 
-# TileAdd
+zone-condition-blocked-tile-desc = 
+    { $invert ->
+        [true] { $amount ->
+            [1] Any tile is not blocked
+           *[other] At least {$amount} tiles are not blocked
+        }
+       *[other] { $amount ->
+            [1] Any tile is blocked
+           *[other] At least {$amount} tiles are blocked
+        }
+    }
 
-zone-condition-blocked-desc = 
+zone-condition-blocked-tile-add-desc = 
     { $invert ->
         [true] Is not blocked
        *[other] Is blocked
     }
 
-zone-condition-in-zone-desc =
+zone-condition-in-zone-tile-add-desc =
     { $zones ->
         [empty] { $invert ->
             [true] { $amount ->
@@ -56,7 +70,25 @@ zone-condition-in-zone-desc =
         *[other] {$current}
     }
 
-zone-condition-tile-entities-desc =
+zone-condition-neighbor-tile-add-desc =
+    { $invert ->
+        [true] { $amount ->
+            [1] Any neighboring tile doesn't satisfying the following conditions:
+           *[other] {$amount} neighboring tiles doesn't satisfying the following conditions:
+        }
+       *[other] { $amount ->
+            [1] Any neighboring tile satisfying the following conditions:
+           *[other] {$amount} neighboring tiles satisfying the following conditions:
+        }
+    }
+
+zone-condition-or-desc =
+    { $invert ->
+        [true] The following conditions are not met:
+       *[other] Any condition from the list is met:
+    }
+
+zone-condition-prototyped-tile-add-desc =
     { $types ->
         [empty] { $invert ->
             [true] { $amount ->
@@ -77,5 +109,17 @@ zone-condition-tile-entities-desc =
                 [1] Tile contain entity of type: {$types}
                *[other] Tile contains at least {$amount} entities of type: {$types}
             }
+        }
+    }
+
+zone-condition-prototyped-entity-desc =
+    { $invert ->
+        [true] { $amount ->
+            [1] Zone doesn't contain entity of type: {$types}
+           *[other] Zone contains no more than {$amount} entities of type: {$types}
+        }
+       *[other] { $amount ->
+            [1] Zone contain entity of type: {$types}
+           *[other] Zone contains at least {$amount} entities of type: {$types}
         }
     }

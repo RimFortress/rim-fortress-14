@@ -60,24 +60,31 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
                 foreach (var fix in ent.Comp.MonoFixtures)
                 {
-                    _fixture.DestroyFixture(ent, fix);
+                    _fixture.DestroyFixture(ent, fix, updates: false);
                 }
 
                 ent.Comp.MonoFixtures.Clear();
 
                 foreach (var region in GetRegions(ent.Comp.Tiles))
                 {
-                    var id = ZoneComponent.MonoFixtureId + $"{ent.Comp.MonoFixtures.Count}";
+                    foreach (var rect in DecomposeIntoRectangles(region))
+                    {
+                        var id = ZoneComponent.MonoFixtureId + $"{ent.Comp.MonoFixtures.Count}";
 
-                    if (_fixture.TryCreateFixture(ent,
-                            GetMonoShape(region, coords.Position),
-                            id,
-                            density: 0f,
-                            hard: false,
-                            collisionLayer: (int)ent.Comp.Layer,
-                            collisionMask: (int)ent.Comp.Mask))
-                        ent.Comp.MonoFixtures.Add(id);
+                        if (_fixture.TryCreateFixture(ent,
+                                GetRectShape(rect, coords.Position),
+                                id,
+                                density: 0f,
+                                hard: false,
+                                collisionLayer: (int)ent.Comp.Layer,
+                                collisionMask: (int)ent.Comp.Mask,
+                                updates: false))
+                            ent.Comp.MonoFixtures.Add(id);
+                    }
                 }
+
+                _fixture.FixtureUpdate(ent);
+                _physics.WakeBody(ent, force: true);
 
                 if (dirty)
                     DirtyField(ent.AsNullable(), nameof(ZoneComponent.MonoFixtures));
@@ -118,7 +125,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                 }
 
                 if (dirty)
-                    DirtyField(ent.AsNullable(), nameof(ZoneComponent.TileFixtures));
+                    DirtyField(ent.AsNullable(), nameof(ZoneComponent.MonoFixtures));
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(ent.Comp.CollisionMode));
@@ -155,114 +162,73 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
         return regions;
     }
 
-    private static ChainShape GetMonoShape(IReadOnlySet<Vector2i> tiles, Vector2 center)
+    /// <summary>
+    /// Decomposes a set of tiles into a minimal-ish set of maximal axis-aligned rectangles
+    /// (greedy "grow width, then grow height while the whole row stays free" sweep). Each
+    /// rectangle is trivially convex, so it can become a single PolygonShape fixture -
+    /// PolygonShape.Set() computes a convex hull internally and silently drops any concave
+    /// vertices, so a single polygon can never represent an arbitrary tile region; this
+    /// sidesteps that by never handing it anything but boxes.
+    /// </summary>
+    private static List<Box2i> DecomposeIntoRectangles(IReadOnlySet<Vector2i> tiles)
     {
-        // Build directed boundary edges of the tile region. Each edge goes between two tile-grid
-        // corners, winding counter-clockwise around solid tiles (interior on the traveler's left),
-        // so an isolated tile produces the loop BL -> BR -> TR -> TL -> BL. Corners use the same
-        // convention as GetTileShape: tile (x, y) spans [x, x+1] x [y, y+1].
-        var next = new Dictionary<Vector2i, Vector2i>();
+        var rects = new List<Box2i>();
+        var remaining = new HashSet<Vector2i>(tiles);
 
-        foreach (var tile in tiles)
+        while (remaining.Count > 0)
         {
-            var br = tile + new Vector2i(1, 0);
-            var tr = tile + new Vector2i(1, 1);
-            var tl = tile + new Vector2i(0, 1);
+            // Deterministic starting point (lowest Y, then lowest X) so the same tile set
+            // always decomposes into the same rectangles - makes fixture diffs/tests stable.
+            var origin = remaining.OrderBy(t => t.Y).ThenBy(t => t.X).First();
 
-            if (!tiles.Contains(tile + Vector2i.Down))
+            var width = 1;
+
+            while (remaining.Contains(origin + new Vector2i(width, 0)))
             {
-                DebugTools.Assert(!next.ContainsKey(tile), "Non-manifold zone boundary.");
-                next[tile] = br;
+                width++;
             }
 
-            if (!tiles.Contains(tile + Vector2i.Right))
+            var height = 1;
+            var canGrow = true;
+
+            while (canGrow)
             {
-                DebugTools.Assert(!next.ContainsKey(br), "Non-manifold zone boundary.");
-                next[br] = tr;
+                for (var dx = 0; dx < width; dx++)
+                {
+                    if (remaining.Contains(origin + new Vector2i(dx, height)))
+                        continue;
+
+                    canGrow = false;
+                    break;
+                }
+
+                if (canGrow)
+                    height++;
             }
 
-            if (!tiles.Contains(tile + Vector2i.Up))
-            {
-                DebugTools.Assert(!next.ContainsKey(tr), "Non-manifold zone boundary.");
-                next[tr] = tl;
-            }
+            rects.Add(new Box2i(origin.X, origin.Y, origin.X + width, origin.Y + height));
 
-            if (!tiles.Contains(tile + Vector2i.Left))
+            for (var dx = 0; dx < width; dx++)
             {
-                DebugTools.Assert(!next.ContainsKey(tl), "Non-manifold zone boundary.");
-                next[tl] = tile;
+                for (var dy = 0; dy < height; dy++)
+                {
+                    remaining.Remove(origin + new Vector2i(dx, dy));
+                }
             }
         }
 
-        // Walk the edges into closed loops. A region with a hole in the middle produces more than
-        // one loop; ChainShape only supports a single loop, so we keep the one enclosing the most
-        // area (the outer boundary) and drop the rest.
-        var visited = new HashSet<Vector2i>();
-        List<Vector2i>? best = null;
-        var bestArea = 0f;
-
-        foreach (var start in next.Keys)
-        {
-            if (!visited.Add(start))
-                continue;
-
-            var raw = new List<Vector2i> { start };
-            var cur = start;
-
-            while (next.TryGetValue(cur, out var n) && n != start)
-            {
-                visited.Add(n);
-                raw.Add(n);
-                cur = n;
-            }
-
-            // Collapse collinear runs so consecutive same-direction edges become one segment.
-            var loop = new List<Vector2i>();
-
-            for (var i = 0; i < raw.Count; i++)
-            {
-                var prev = raw[(i - 1 + raw.Count) % raw.Count];
-                var point = raw[i];
-                var nextPoint = raw[(i + 1) % raw.Count];
-
-                if (point - prev != nextPoint - point)
-                    loop.Add(point);
-            }
-
-            var area = MathF.Abs(ShoelaceArea(loop));
-
-            if (area > bestArea)
-            {
-                bestArea = area;
-                best = loop;
-            }
-        }
-
-        DebugTools.Assert(best is { Count: >= 4 });
-        var vertices = new Vector2[best!.Count];
-
-        for (var i = 0; i < best.Count; i++)
-        {
-            vertices[i] = best[i] - center;
-        }
-
-        var shape = new ChainShape();
-        shape.CreateLoop(vertices);
-        return shape;
+        return rects;
     }
 
-    private static float ShoelaceArea(IReadOnlyList<Vector2i> loop)
+    private static PolygonShape GetRectShape(Box2i rect, Vector2 center)
     {
-        float area = 0;
-
-        for (var i = 0; i < loop.Count; i++)
-        {
-            var a = loop[i];
-            var b = loop[(i + 1) % loop.Count];
-            area += a.X * b.Y - b.X * a.Y;
-        }
-
-        return area / 2f;
+        var shape = new PolygonShape();
+        shape.SetAsBox(new Box2(
+            rect.Left - center.X,
+            rect.Bottom - center.Y,
+            rect.Right - center.X,
+            rect.Top - center.Y));
+        return shape;
     }
 
     private static PolygonShape GetTileShape(Vector2i tile, Vector2 center)
@@ -410,7 +376,9 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
     private bool TryEnter(Entity<ZoneComponent> ent, EntityUid toEnter, bool validate = true, bool dirty = true)
     {
         if (ent.Comp.Entities.Contains(toEnter)
-            || !_whitelist.IsWhitelistPassOrNull(ent.Comp.CollisionWhitelist, toEnter))
+            || !_whitelist.CheckBoth(toEnter,
+                whitelist: ent.Comp.CollisionWhitelist,
+                blacklist: ent.Comp.CollisionBlacklist))
             return false;
 
         var tile = ent.Comp.CollisionMode == ZoneCollisionMode.Tile
@@ -556,7 +524,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent) => GetTileRefs(ent, ent.Comp.Tiles);
 
-    public HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent, IReadOnlySet<Vector2i> tiles)
+    private HashSet<TileRef> GetTileRefs(Entity<ZoneComponent> ent, IReadOnlySet<Vector2i> tiles)
         => _transform.GetGrid(ent.Owner) is not { } grid ? new() : GetTileRefs(grid, tiles);
 
     private HashSet<TileRef> GetTileRefs(EntityUid grid, IReadOnlySet<Vector2i> tiles)
@@ -596,11 +564,12 @@ public interface IZoneConditionChecker
     /// <inheritdoc cref="ZoneCondition.EntityCheck"/>
     bool EntityCheck<T>(T condition, IReadOnlySet<EntityUid> entities) where T : BaseZoneCondition<T>;
 
-    /// <inheritdoc cref="ZoneCondition.ConditionDescription"/>
-    ZoneConditionDesc ConditionDescription<T>(
-        T condition,
-        TileRef? tile,
-        IReadOnlySet<TileRef> tiles,
-        IReadOnlySet<EntityUid> entities)
-        where T : BaseZoneCondition<T>;
+    /// <inheritdoc cref="ZoneCondition.ConditionDescription(TileRef, IZoneConditionChecker)"/>
+    ZoneConditionDesc ConditionDescription<T>(T condition, TileRef tile) where T : BaseZoneCondition<T>;
+
+    /// <inheritdoc cref="ZoneCondition.ConditionDescription(IReadOnlySet{TileRef}, IZoneConditionChecker)"/>
+    ZoneConditionDesc ConditionDescription<T>(T condition, IReadOnlySet<TileRef> tiles) where T : BaseZoneCondition<T>;
+
+    /// <inheritdoc cref="ZoneCondition.ConditionDescription(IReadOnlySet{EntityUid}, IZoneConditionChecker)"/>
+    ZoneConditionDesc ConditionDescription<T>(T condition, IReadOnlySet<EntityUid> entities) where T : BaseZoneCondition<T>;
 }

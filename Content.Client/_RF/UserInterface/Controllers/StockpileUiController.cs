@@ -119,19 +119,22 @@ public sealed partial class StockpileUiController : WindowUiController<Stockpile
     {
         base.Initialize();
 
+        EntityManager.EventBus.SubscribeLocalEvent<StockpileComponent, ZoneCreated>(OnZoneCreated);
         EntityManager.EventBus.SubscribeLocalEvent<StockpileComponent, ZonePicked>(OnZonePick);
         SubscribeLocalEvent<ZonePickingCancel>(OnZonePickingCancel);
-        _zoningController.OnZoneCreated += zone =>
-        {
-            if (!EntityManager.TryGetComponent(zone, out StockpileComponent? stock))
-                return;
-
-            SettingStock = new(zone, stock);
-            Window?.SetStock(SettingStock.Value);
-            OpenWindow();
-        };
 
         _overlay.AddOverlay(new StockpileOverlay());
+    }
+
+    private void OnZoneCreated(EntityUid uid, StockpileComponent component, ref ZoneCreated args)
+    {
+        if (args.Handled)
+            return;
+
+        SettingStock = new(uid, component);
+        Window?.SetStock(SettingStock.Value);
+        OpenWindow();
+        args.Handle();
     }
 
     private void OnZonePick(EntityUid uid, StockpileComponent component, ref ZonePicked args)
@@ -157,7 +160,7 @@ public sealed partial class StockpileUiController : WindowUiController<Stockpile
         args.Handle();
     }
 
-    private void OnZonePickingCancel(ref ZonePickingCancel args)
+    private void OnZonePickingCancel(ZonePickingCancel args)
     {
         SettingStock = null;
         SelectMode = StockpileSelectionMode.None;

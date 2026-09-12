@@ -109,3 +109,4 @@
   - type: ZoneCreator
     zones:
     - Stockpile
+    - WaterSource

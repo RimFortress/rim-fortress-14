@@ -7,7 +7,6 @@ using Content.Client._RF.Tooltip.Prototypes;
 using Content.Client._RF.UserInterface;
 using Content.Client._RF.Zoning.UI.Controls;
 using Content.Shared._RF.NPC.Systems;
-using Content.Shared._RF.Selection.Components;
 using Content.Shared._RF.Zoning;
 using Content.Shared._RF.Zoning.Components;
 using Content.Shared._RF.Zoning.Systems;
@@ -44,6 +43,7 @@ public sealed partial class ZoningUiController :
     [Dependency] private IEyeManager _eye = default!;
     [Dependency] private IInputManager _input = default!;
     [Dependency] private TooltipUIController _tooltipController = default!;
+    [Dependency] private BaseZoneWindowUiController _baseZoneWindowController = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
     [UISystemDependency] private readonly ZoningSystem _zoning = default!;
     [UISystemDependency] private readonly TransformSystem _transform = default!;
@@ -69,10 +69,11 @@ public sealed partial class ZoningUiController :
 
     private bool _pickingZone;
 
-    /// <summary>
-    /// Invoked when a zone is created by selection.
-    /// </summary>
-    public event Action<Entity<ZoneComponent>>? OnZoneCreated;
+    private static readonly SpriteSpecifier AddTileSelectionIcon
+        = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
+
+    private static readonly SpriteSpecifier RemoveTileSelectionIcon
+        = new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
 
     public override void Initialize()
     {
@@ -102,12 +103,21 @@ public sealed partial class ZoningUiController :
             return false;
 
         _pickingZone = false;
+        var enumerator = EntityManager.EntityQueryEnumerator<ZoneVisualsComponent>();
+        while (enumerator.MoveNext(out var zoneUid, out var comp))
+        {
+            if (!_ownership.HasOwner(zoneUid, _player.LocalEntity))
+                continue;
+
+            comp.CurrentState &= ~ZoneVisualsState.Picking;
+            UpdateConditions(zoneUid);
+        }
 
         var ev = new ZonePicked();
         EntityManager.EventBus.RaiseLocalEvent(zone.Owner, ref ev);
 
         if (!ev.Handled)
-            SelectZone(zone.Owner);
+            _baseZoneWindowController.Open(zone);
 
         return true;
     }
@@ -138,14 +148,31 @@ public sealed partial class ZoningUiController :
             || meta.EntityPrototype?.ID != _expectedZone.Value.Proto.Id)
             return;
 
+        if (_pickingZone && EntityManager.TryGetComponent(ent, out ZoneVisualsComponent? visuals))
+            visuals.CurrentState |= ZoneVisualsState.Picking;
+
         _expectedZone = null;
-        OnZoneCreated?.Invoke(ent);
+        var ev = new ZoneCreated();
+        EntityManager.EventBus.RaiseLocalEvent(ent, ref ev);
+
+        if (!ev.Handled)
+            _baseZoneWindowController.Open(ent);
     }
 
     private void OnZoneUpdate(Entity<ZoneComponent> zone)
     {
         if (_conditions.TryGetValue(zone, out var list))
             list.SetZone(zone);
+
+        if (!EntityManager.TryGetComponent(zone, out ZoneVisualsComponent? visuals))
+            return;
+
+        if (zone.Comp.Valid)
+            visuals.CurrentState &= ~ZoneVisualsState.Invalid;
+        else
+            visuals.CurrentState |= ZoneVisualsState.Invalid;
+
+        UpdateConditions(zone);
     }
 
     private void OnCreationFinish(BaseButton.ButtonEventArgs args)
@@ -264,6 +291,14 @@ public sealed partial class ZoningUiController :
         if (!_pickingZone)
             return;
 
+        if (HoveredZone != null
+            && !SelectedZones.Contains(HoveredZone.Value)
+            && EntityManager.TryGetComponent(HoveredZone, out ZoneVisualsComponent? visuals))
+        {
+            visuals.CurrentState &= ~ZoneVisualsState.Selected;
+            UpdateConditions(HoveredZone.Value);
+        }
+
         HoveredZone = null;
 
         if (_input.MouseScreenPosition is not { IsValid: true } mouse)
@@ -286,7 +321,11 @@ public sealed partial class ZoningUiController :
             if (!_ownership.HasOwner(zone.Owner, localPlayer))
                 continue;
 
+            if (EntityManager.TryGetComponent(zone, out visuals))
+                visuals.CurrentState |= ZoneVisualsState.Selected;
+
             HoveredZone = zone;
+            UpdateConditions(zone);
             return;
         }
     }
@@ -366,6 +405,33 @@ public sealed partial class ZoningUiController :
         _tileConditions = null;
     }
 
+    private void UpdateConditions(EntityUid uid)
+    {
+        if (!_zoning.TryGetZone(uid, out var zone)
+            || !EntityManager.TryGetComponent(uid, out ZoneVisualsComponent? visuals))
+            return;
+
+        var style = visuals.GetStyle();
+
+        if (style.ShowConditions == true)
+        {
+            if (_conditions.Remove(uid, out var list))
+                UIManager.ModalRoot.RemoveChild(list);
+
+            list = new ZoneConditionsList();
+            UIManager.ModalRoot.AddChild(list);
+            list.SetZone(zone.Value);
+            _conditions[uid] = list;
+        }
+        else
+        {
+            if (!_conditions.Remove(uid, out var list))
+                return;
+
+            UIManager.ModalRoot.RemoveChild(list);
+        }
+    }
+
     #region API
 
     /// <summary>
@@ -380,12 +446,10 @@ public sealed partial class ZoningUiController :
     {
         var proto = _proto.Index(zone);
 
-        if (!proto.TryComp(out ZoneComponent? comp, EntityManager.ComponentFactory))
+        if (!proto.TryComp(out ZoneComponent? _, EntityManager.ComponentFactory))
             return;
 
-        var color = proto.TryComp(out ZoneVisualsComponent? visuals, EntityManager.ComponentFactory)
-            ? visuals.BorderColor
-            : null;
+        proto.TryComp(out ZoneVisualsComponent? visuals, EntityManager.ComponentFactory);
 
         _creatingZoneType = zone;
 
@@ -401,11 +465,11 @@ public sealed partial class ZoningUiController :
         widget.Visible = false;
 
         _selection.SetSelection(
-            color: color,
+            color: visuals?.SelectionBorderColor,
             act: (_, _, _) => EndCreation(),
-            innerColor: color?.WithAlpha(0.15f),
+            innerColor: visuals?.SelectionInnerColor,
             filter: Filter,
-            icon: comp.Icon,
+            icon: visuals?.Icon,
             allowedModes: SelectionSystem.AllModes,
             showArea: false);
 
@@ -418,16 +482,13 @@ public sealed partial class ZoningUiController :
     /// Sets the selection mode to zone expansion.
     /// </summary>
     /// <param name="uid">Zone entity.</param>
-    /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     [PublicAPI]
-    public void AddTileSelection(EntityUid uid, SpriteSpecifier? icon = null)
+    public void AddTileSelection(EntityUid uid)
     {
         if (!_zoning.TryGetZone(uid, out var zone))
             return;
 
-        var color = EntityManager.TryGetComponent(zone, out ZoneVisualsComponent? visuals)
-            ? visuals.BorderColor
-            : null;
+        EntityManager.TryGetComponent(zone, out ZoneVisualsComponent? visuals);
 
         _selection.SetSelection(
             act: (_, _, _) => EndCreation(),
@@ -445,9 +506,9 @@ public sealed partial class ZoningUiController :
                 _selection.ClearSelection();
             },
             filter: Filter,
-            color: color,
-            innerColor: color?.WithAlpha(0.15f),
-            icon: icon,
+            color: visuals?.SelectionBorderColor,
+            innerColor: visuals?.SelectionInnerColor,
+            icon: AddTileSelectionIcon,
             showArea: false);
 
         return;
@@ -459,16 +520,13 @@ public sealed partial class ZoningUiController :
     /// Sets the selection mode to delete tiles in the zone.
     /// </summary>
     /// <param name="uid">Zone entity.</param>
-    /// <param name="icon"><see cref="Selection{T}.Icon"/></param>
     [PublicAPI]
-    public void RemoveTileSelection(EntityUid uid, SpriteSpecifier? icon = null)
+    public void RemoveTileSelection(EntityUid uid)
     {
         if (!_zoning.TryGetZone(uid, out var zone))
             return;
 
-        var color = EntityManager.TryGetComponent(zone, out ZoneVisualsComponent? visuals)
-            ? visuals.BorderColor
-            : null;
+        EntityManager.TryGetComponent(zone, out ZoneVisualsComponent? visuals);
 
         _selection.SetSelection(
             act: (_, _, _) => EndCreation(),
@@ -486,9 +544,9 @@ public sealed partial class ZoningUiController :
                 _selection.ClearSelection();
             },
             filter: Filter,
-            color: color,
-            innerColor: color?.WithAlpha(0.15f),
-            icon: icon,
+            color: visuals?.SelectionBorderColor,
+            innerColor: visuals?.SelectionInnerColor,
+            icon: RemoveTileSelectionIcon,
             showArea: false);
 
         return;
@@ -515,32 +573,31 @@ public sealed partial class ZoningUiController :
     [PublicAPI]
     public void SelectZone(EntityUid uid)
     {
-        if (!_zoning.TryGetZone(uid, out var zone)
+        if (!_zoning.TryGetZone(uid, out _)
             || !SelectedZones.Add(uid))
             return;
 
-        if (_conditions.Remove(uid, out var list))
-            UIManager.ModalRoot.RemoveChild(list);
+        if (EntityManager.TryGetComponent(uid, out ZoneVisualsComponent? visuals))
+            visuals.CurrentState |= ZoneVisualsState.Selected;
 
-        list = new ZoneConditionsList();
-        UIManager.ModalRoot.AddChild(list);
-        list.SetZone(zone.Value);
-        _conditions[uid] = list;
+        UpdateConditions(uid);
     }
 
     [PublicAPI]
-    public void DeselectZone(EntityUid uid)
+    public void DeselectZone(EntityUid? uid)
     {
         if (!EntityManager.HasComponent<ZoneComponent>(uid)
-            || !SelectedZones.Remove(uid)
-            || !_conditions.Remove(uid, out var list))
+            || !SelectedZones.Remove(uid.Value))
             return;
 
-        UIManager.ModalRoot.RemoveChild(list);
+        if (EntityManager.TryGetComponent(uid, out ZoneVisualsComponent? visuals))
+            visuals.CurrentState &= ~ZoneVisualsState.Selected;
+
+        UpdateConditions(uid.Value);
     }
 
     [PublicAPI]
-    public void SetVisuals(EntityUid uid, Color? zoneColor, Color? borderColor)
+    public void SetVisuals(EntityUid uid, Dictionary<ZoneVisualsState, ZoneVisualsStyle> states)
     {
         if (!EntityManager.HasComponent<ZoneVisualsComponent>(uid))
             return;
@@ -548,8 +605,7 @@ public sealed partial class ZoningUiController :
         EntityManager.RaisePredictiveEvent(new ZoneVisualsChangeRequest
         {
             Uid = EntityManager.GetNetEntity(uid),
-            ZoneColor = zoneColor,
-            BorderColor = borderColor,
+            States = states,
         });
     }
 
@@ -583,6 +639,16 @@ public sealed partial class ZoningUiController :
         if (_creatingZoneType != null)
             return;
 
+        var enumerator = EntityManager.EntityQueryEnumerator<ZoneVisualsComponent>();
+        while (enumerator.MoveNext(out var uid, out var comp))
+        {
+            if (!_ownership.HasOwner(uid, _player.LocalEntity))
+                continue;
+
+            comp.CurrentState |= ZoneVisualsState.Picking;
+            UpdateConditions(uid);
+        }
+
         _pickingZone = true;
     }
 
@@ -596,10 +662,19 @@ public sealed partial class ZoningUiController :
         if (!_pickingZone)
             return;
 
+        var enumerator = EntityManager.EntityQueryEnumerator<ZoneVisualsComponent>();
+        while (enumerator.MoveNext(out var uid, out var comp))
+        {
+            if (!_ownership.HasOwner(uid, _player.LocalEntity))
+                continue;
+
+            comp.CurrentState &= ~ZoneVisualsState.Picking;
+            UpdateConditions(uid);
+        }
+
         HoveredZone = null;
         _pickingZone = false;
-        var ev = new ZonePickingCancel();
-        EntityManager.EventBus.RaiseEvent(EventSource.Local, ref ev);
+        EntityManager.EventBus.RaiseEvent(EventSource.Local, new ZonePickingCancel());
     }
 
     #endregion

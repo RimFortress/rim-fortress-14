@@ -70,11 +70,11 @@
     dashLength: 6
     gapLength: 12
 
-- type: shader
-  id: SelectedZoneBorder
-  kind: source
-  path: /Textures/_RF/Shaders/dotted_edge.swsl
-  params:
-    thickness: 4
-    dashLength: 12
-    gapLength: 8
+#- type: shader
+#  id: SelectedZoneBorder
+#  kind: source
+#  path: /Textures/_RF/Shaders/dotted_edge.swsl
+#  params:
+#    thickness: 4
+#    dashLength: 12
+#    gapLength: 8
