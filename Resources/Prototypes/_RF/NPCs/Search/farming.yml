@@ -109,11 +109,9 @@
 
 - type: searchQuery
   id: WaterSource
-  query: !type:Nearby # TODO: zones
-    whitelist:
-      components:
-      - DrainableSolution
-    range: 15
+  query: !type:InZone 
+    zones:
+    - WaterSource
   filters:
   - !type:DrainableSolution
     reagent: Water
