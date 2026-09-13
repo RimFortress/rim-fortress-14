@@ -31,7 +31,7 @@ public sealed partial class InZoneZoningConditionSystem : ZoningConditionSystem<
     [Dependency] private ZoningSystem _zoning = default!;
 
     protected override bool TileValidCheck(InZone condition, TileRef tile)
-        => _zoning.TryGetZone(tile, out var zones, condition.Types)
+        => _zoning.TryGetZone(tile, out var zones, condition.Types, condition.ValidOnly)
            && zones.Count >= condition.Amount;
 
     protected override ZoneConditionDesc ConditionDescription(InZone condition, TileRef tile)

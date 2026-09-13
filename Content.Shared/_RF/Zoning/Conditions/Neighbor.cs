@@ -32,6 +32,13 @@ public sealed partial class NeighborZoneConditionSystem : ZoningConditionSystem<
         DebugTools.Assert(condition.Amount != 0);
         DebugTools.Assert(condition.Amount <= 4, "there can't be more than 4 neighboring tiles.");
 
+        var required = condition.Invert
+            ? Directions.Length - condition.Amount + 1
+            : condition.Amount;
+
+        if (required <= 0)
+            return true;
+
         var coords = _turf.GetTileCenter(tile);
         var count = 0;
 
@@ -40,7 +47,7 @@ public sealed partial class NeighborZoneConditionSystem : ZoningConditionSystem<
             if (Check(condition, coords, dir))
                 count++;
 
-            if (count >= condition.Amount)
+            if (count >= required)
                 return true;
         }
 
@@ -54,7 +61,12 @@ public sealed partial class NeighborZoneConditionSystem : ZoningConditionSystem<
     protected override ZoneConditionDesc ConditionDescription(Neighbor condition, TileRef tile)
     {
         var tileCoords = _turf.GetTileCenter(tile);
-        var count = Directions.Count(x => Check(condition, tileCoords, x));
+        var matching = Directions.Count(x => Check(condition, tileCoords, x));
+
+        // Same fix as Blocked's ConditionDescription: show whichever quantity the localized
+        // text is actually claiming - matching count for "at least Amount match", non-matching
+        // count for "at least Amount don't match".
+        var count = condition.Invert ? Directions.Length - matching : matching;
 
         return new ZoneConditionDesc(
             Loc.GetString("zone-condition-neighbor-tile-add-desc",

@@ -25,15 +25,23 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
 {
     [Dependency] private TurfSystem _turf = default!;
 
+    private const LookupFlags EntityFlags = LookupFlags.Static | LookupFlags.Dynamic | LookupFlags.Sensors;
+
     protected override bool TileValidCheck(Prototyped condition, TileRef tile)
     {
-        var entities = _turf.GetEntitiesInTile(
-            _turf.GetTileCenter(tile),
-            LookupFlags.Static | LookupFlags.Dynamic | LookupFlags.Sensors);
-        var count = 0;
+        var entities = _turf.GetEntitiesInTile(_turf.GetTileCenter(tile), EntityFlags);
 
         if (condition.Types.Count == 0)
             return entities.Count >= condition.Amount;
+
+        var required = condition.Invert
+            ? entities.Count - condition.Amount + 1
+            : condition.Amount;
+
+        if (required <= 0)
+            return true;
+
+        var count = 0;
 
         foreach (var uid in entities)
         {
@@ -42,7 +50,7 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
 
             count++;
 
-            if (count >= condition.Amount)
+            if (count >= required)
                 return true;
         }
 
@@ -57,7 +65,7 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
 
         foreach (var uid in entities)
         {
-            if (Prototype(uid) is not { } proto || !condition.Types.Contains(proto))
+            if (Prototype(uid) is not { } proto || !condition.Types.Contains(proto.ID))
                 continue;
 
             count++;
@@ -72,29 +80,31 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
     protected override ZoneConditionDesc ConditionDescription(Prototyped condition, TileRef tile)
     {
         var typeNames = condition.Types.Select(x => $"[tooltip entProto=\"{x}\"]").ToArray();
-        var inTile = _turf.GetEntitiesInTile(
-                _turf.GetTileCenter(tile),
-                LookupFlags.Static | LookupFlags.Dynamic)
-            .Count(uid => condition.Types.Count == 0
-                          || EntityManager.MetaQuery.TryComp(uid, out var meta)
-                          && meta.EntityPrototype is { } proto
-                          && condition.Types.Contains(proto.ID));
+        var entities = _turf.GetEntitiesInTile(_turf.GetTileCenter(tile), EntityFlags);
+        var matching = entities.Count(uid => condition.Types.Count == 0
+                                             || EntityManager.MetaQuery.TryComp(uid, out var meta)
+                                             && meta.EntityPrototype is { } proto
+                                             && condition.Types.Contains(proto.ID));
+
+        var count = condition is { Invert: true, Types.Count: > 0 }
+            ? entities.Count - matching
+            : matching;
 
         return new ZoneConditionDesc(Loc.GetString("zone-condition-prototyped-tile-add-desc",
                 ("invert", condition.Invert),
                 ("amount", condition.Amount),
                 ("types", typeNames.Length > 0 ? string.Join(", ", typeNames) : "empty")),
             condition.TileValidCheck(tile, Zoning),
-            Progress: ZoneConditionDesc.ProgressText(inTile, condition.Amount));
+            Progress: ZoneConditionDesc.ProgressText(count, condition.Amount));
     }
 
     protected override ZoneConditionDesc ConditionDescription(Prototyped condition, IReadOnlySet<EntityUid> entities)
     {
         var typeNames = condition.Types.Select(x => $"[tooltip entProto=\"{x}\"]").ToArray();
-        var count = entities
-            .Count(uid => EntityManager.MetaQuery.TryComp(uid, out var meta)
-                          && meta.EntityPrototype is { } proto
-                          && condition.Types.Contains(proto));
+        var matching = entities.Count(uid => EntityManager.MetaQuery.TryComp(uid, out var meta)
+                                             && meta.EntityPrototype is { } proto
+                                             && condition.Types.Contains(proto.ID));
+        var count = condition.Invert ? entities.Count - matching : matching;
 
         return new ZoneConditionDesc(Loc.GetString("zone-condition-prototyped-entity-desc",
                 ("invert", condition.Invert),

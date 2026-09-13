@@ -65,7 +65,9 @@ public sealed partial class TileZoneConditionSystem : ZoningConditionSystem<Tile
     {
         var types = condition.Types.Select(x => _proto.Index(x).TileId).ToHashSet();
         var names = condition.Types.Select(x => $"[tooltip tile=\"{x}\"]").ToHashSet();
-        var count = tiles.Count(x => types.Count == 0 || types.Contains((ushort)x.Tile.TypeId));
+        var matching = tiles.Count(x => types.Count == 0 || types.Contains((ushort)x.Tile.TypeId));
+        var count = condition.Invert ? tiles.Count - matching : matching;
+
         return new(
             Loc.GetString("zone-condition-tile-tile-desc",
                 ("amount", condition.Amount),
