@@ -34,13 +34,6 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
         if (condition.Types.Count == 0)
             return entities.Count >= condition.Amount;
 
-        var required = condition.Invert
-            ? entities.Count - condition.Amount + 1
-            : condition.Amount;
-
-        if (required <= 0)
-            return true;
-
         var count = 0;
 
         foreach (var uid in entities)
@@ -50,7 +43,7 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
 
             count++;
 
-            if (count >= required)
+            if (count >= condition.Amount)
                 return true;
         }
 
@@ -65,7 +58,7 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
 
         foreach (var uid in entities)
         {
-            if (Prototype(uid) is not { } proto || !condition.Types.Contains(proto.ID))
+            if (Prototype(uid) is not { } proto || !condition.Types.Contains(proto))
                 continue;
 
             count++;
@@ -103,7 +96,7 @@ public sealed partial class PrototypedZoneConditionSystem : ZoningConditionSyste
         var typeNames = condition.Types.Select(x => $"[tooltip entProto=\"{x}\"]").ToArray();
         var matching = entities.Count(uid => EntityManager.MetaQuery.TryComp(uid, out var meta)
                                              && meta.EntityPrototype is { } proto
-                                             && condition.Types.Contains(proto.ID));
+                                             && condition.Types.Contains(proto));
         var count = condition.Invert ? entities.Count - matching : matching;
 
         return new ZoneConditionDesc(Loc.GetString("zone-condition-prototyped-entity-desc",
