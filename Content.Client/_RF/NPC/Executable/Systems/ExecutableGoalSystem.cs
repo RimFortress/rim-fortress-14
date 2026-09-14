@@ -74,7 +74,7 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
             return false;
 
         var selected = _selection
-            .SelectedEntities()
+            .Selected<EntityUid>()
             .Where(HasComp<CombatModeComponent>)
             .Select(x => new Entity<CombatModeComponent>(x, Comp<CombatModeComponent>(x)))
             .ToList();
@@ -96,7 +96,7 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
             return;
 
         var selected = _selection
-            .SelectedEntities()
+            .Selected<EntityUid>()
             .Where(HasComp<CombatModeComponent>)
             .ToList();
 
@@ -115,7 +115,7 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
 
         var prototypes = comp.Goals.Select(Proto.Index).ToList();
 
-        foreach (var uid in _selection.SelectedEntities())
+        foreach (var uid in _selection.Selected<EntityUid>())
         {
             if (!CanControl(_player.LocalEntity.Value, uid)
                 || FindSatisfiedGoals(uid, ent, prototypes, ExecutableGoalType.Verb) is not { } suitable)
@@ -148,7 +148,7 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
             && Proto.Resolve(proto.Goal, out var goal))
         {
             _selection.SetSelection(
-                act: _ => SetSelectedTask(null),
+                act: (_, _, _) => SetSelectedTask(null),
                 onSelected: entities =>
                 {
                     if (Timing.IsFirstTimePredicted)
@@ -181,7 +181,7 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
         if (Eraser)
         {
             _selection.SetSelection(
-                act: _ => SetEraser(false),
+                act: (_, _, _) => SetEraser(false),
                 onSelected: entities =>
                 {
                     if (!Timing.IsFirstTimePredicted)
@@ -206,24 +206,24 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
     public void DefaultSelection()
     {
         _selection.SetSelection(
-            act: args =>
+            act: (selected, target, coords) =>
             {
                 if (!ControllerQuery.HasComp(_player.LocalEntity)
-                    || args.Selected.Count == 0)
+                    || selected.Count == 0)
                     return;
 
-                if (args.ActUid is { } uid)
+                if (target != null)
                 {
                     if (_player.LocalEntity is not { } playerUid)
                         return;
 
-                    var tasks = GetTasks(uid);
+                    var tasks = GetTasks(target.Value);
 
                     if (tasks.Count == 0
                         || !_uiSystem.TryOpenUi(playerUid, NpcControllerUiKey.Key, playerUid, true))
                         return;
 
-                    UiTarget = uid;
+                    UiTarget = target.Value;
                     UiTasks = tasks;
                     return;
                 }
@@ -233,12 +233,14 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
 
                 RaisePredictiveEvent(new SetGoalRequest
                 {
-                    Entities = args.Selected.Select(x => GetNetEntity(x)).ToList(),
-                    TargetCoordinates = GetNetCoordinates(args.ActCoords),
+                    Entities = selected.Select(x => GetNetEntity(x)).ToList(),
+                    TargetCoordinates = GetNetCoordinates(coords),
                     AddToQueue = !NeedForceGoalExecution(),
                 });
             },
-            filter: NpcFilter);
+            filter: NpcFilter,
+            allowedModes: SelectionSystem.AllModes,
+            @default: true);
     }
 
     #endregion

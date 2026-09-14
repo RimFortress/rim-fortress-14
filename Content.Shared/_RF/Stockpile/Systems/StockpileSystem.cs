@@ -1,138 +1,47 @@
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Stockpile.Components;
+using Content.Shared._RF.Zoning;
+using Content.Shared._RF.Zoning.Components;
 using Content.Shared.Maps;
 using Content.Shared.Storage.Components;
 using Content.Shared.Storage.EntitySystems;
 using Robust.Shared.Containers;
-using Robust.Shared.Map;
-using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
-using Robust.Shared.Physics.Events;
-using Robust.Shared.Physics.Systems;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 
 namespace Content.Shared._RF.Stockpile.Systems;
 
 public sealed partial class StockpileSystem : EntitySystem
 {
     [Dependency] private SharedTransformSystem _xform = default!;
-    [Dependency] private SharedMapSystem _map = default!;
     [Dependency] private TurfSystem _turf = default!;
     [Dependency] private IPrototypeManager _prototype = default!;
     [Dependency] private INetManager _net = default!;
-    [Dependency] private MetaDataSystem _meta = default!;
-    [Dependency] private FixtureSystem _fixture = default!;
     [Dependency] private EntityLookupSystem _lookup = default!;
     [Dependency] private OwnershipSystem _ownership = default!;
-    [Dependency] private SharedPhysicsSystem _physics = default!;
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private SharedEntityStorageSystem _storage = default!;
 
-    [Dependency] private EntityQuery<StockpileComponent> _stockQuery = default!;
-    [Dependency] private EntityQuery<MapGridComponent> _gridQuery = default!;
-    [Dependency] private EntityQuery<ContainerManagerComponent> _containerQuery = default!;
-    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery = default!;
+    [Dependency] private EntityQuery<StockpileComponent> _stockQuery;
+    [Dependency] private EntityQuery<ZoneComponent> _zoneQuery;
+    [Dependency] private EntityQuery<ContainerManagerComponent> _containerQuery;
+    [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
 
     private readonly Dictionary<EntProtoId, int> _defaultSettings = new();
 
-    private static readonly LocId DefaultStockName = "stockpile-name-default";
-    private static readonly EntProtoId StockProto = "BaseStockpile";
+    public static readonly EntProtoId<ZoneComponent> StockProto = "Stockpile";
 
-    public event Action<Entity<StockpileComponent>>? OnStockCreated;
-    public event Action<Entity<StockpileComponent>>? OnStockSettingsUpdated;
+    public event Action<Entity<StockpileComponent>>? OnStockUpdated;
 
     /// <inheritdoc/>
     public override void Initialize()
     {
-        _prototype.PrototypesReloaded += args =>
-        {
-            if (args.WasModified<EntityPrototype>())
-                ReloadPrototypes();
-        };
-
+        Subs.ProtoReload<EntityPrototype>(_prototype, ReloadPrototypes);
         ReloadPrototypes();
     }
 
     #region Events
-
-    [SubscribeNetworkEvent]
-    private void OnCreateRequest(StockpileCreateRequest ev, EntitySessionEventArgs args)
-    {
-        var gridUid = GetEntity(ev.GridUid);
-
-        if (!TryComp(gridUid, out MapGridComponent? grid)
-            || args.SenderSession.AttachedEntity is not { } owner)
-            return;
-
-        var tileRefs = new HashSet<TileRef>();
-
-        foreach (var ind in ev.Tiles)
-        {
-            if (_map.TryGetTileRef(gridUid, grid, ind, out var tileRef))
-                tileRefs.Add(tileRef);
-        }
-
-        CreateStockpile(tileRefs, owner);
-    }
-
-    [SubscribeNetworkEvent]
-    private void OnDeleted(StockpileDeleted ev, EntitySessionEventArgs args)
-    {
-        var uid = GetEntity(ev.Uid);
-
-        if (args.SenderSession.AttachedEntity is not { } owner
-            || !_stockQuery.TryComp(uid, out var comp)
-            || !_ownership.HasOwner(uid, owner))
-            return;
-
-        DeleteStockpile(new(uid, comp));
-    }
-
-    [SubscribeNetworkEvent]
-    private void OnTileAdded(StockpileTileAdded ev, EntitySessionEventArgs args)
-    {
-        var uid = GetEntity(ev.Uid);
-
-        if (args.SenderSession.AttachedEntity is not { } owner
-            || !_stockQuery.TryComp(uid, out var comp)
-            || !_ownership.HasOwner(uid, owner)
-            || _xform.GetGrid(uid) is not { } gridUid
-            || !_gridQuery.TryComp(gridUid, out var grid))
-            return;
-
-        var tileRefs = new HashSet<TileRef>();
-
-        foreach (var ind in ev.Tiles)
-        {
-            if (_map.TryGetTileRef(gridUid, grid, ind, out var tileRef))
-                tileRefs.Add(tileRef);
-        }
-
-        AddTiles(new(uid, comp), tileRefs);
-    }
-
-    [SubscribeNetworkEvent]
-    private void OnTileRemoved(StockpileTileRemoved ev, EntitySessionEventArgs args)
-    {
-        var uid = GetEntity(ev.Uid);
-
-        if (args.SenderSession.AttachedEntity is not { } owner
-            || !_stockQuery.TryComp(uid, out var comp)
-            || !_ownership.HasOwner(uid, owner)
-            || _xform.GetGrid(uid) is not { } gridUid
-            || !_gridQuery.TryComp(gridUid, out var grid))
-            return;
-
-        var tileRefs = new HashSet<TileRef>();
-
-        foreach (var ind in ev.Tiles)
-        {
-            if (_map.TryGetTileRef(gridUid, grid, ind, out var tileRef))
-                tileRefs.Add(tileRef);
-        }
-
-        RemoveTile(new(uid, comp), tileRefs);
-    }
 
     [SubscribeNetworkEvent]
     private void OnSettingUpdate(StockpileSettingUpdated ev, EntitySessionEventArgs args)
@@ -144,16 +53,13 @@ public sealed partial class StockpileSystem : EntitySystem
             || !_ownership.HasOwner(uid, owner))
             return;
 
-        if (_net.IsClient)
-        {
-            OnStockSettingsUpdated?.Invoke(new(uid, comp));
-            return;
-        }
-
         SetProtoMax(new(uid, comp), ev.ProtoId, ev.Value);
+
+        if (_net.IsClient)
+            OnStockUpdated?.Invoke(new(uid, comp));
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnSettingsUpdate(StockpileSettingsUpdated ev, EntitySessionEventArgs args)
     {
         var uid = GetEntity(ev.Uid);
@@ -165,14 +71,14 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (_net.IsClient)
         {
-            OnStockSettingsUpdated?.Invoke(new(uid, comp));
+            OnStockUpdated?.Invoke(new(uid, comp));
             return;
         }
 
         SetProtoMax(new(uid, comp), ev.Settings);
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnSuppliedAdded(StockpileSuppliedAdded ev, EntitySessionEventArgs args)
     {
         var supplied = GetEntity(ev.Supplied);
@@ -188,7 +94,7 @@ public sealed partial class StockpileSystem : EntitySystem
         AddSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));
     }
 
-    [SubscribeLocalEvent]
+    [SubscribeNetworkEvent]
     private void OnSuppliedRemoved(StockpileSuppliedRemoved ev, EntitySessionEventArgs args)
     {
         var supplied = GetEntity(ev.Supplied);
@@ -205,25 +111,9 @@ public sealed partial class StockpileSystem : EntitySystem
     }
 
     [SubscribeLocalEvent]
-    private void OnColorSet(StockpileColorSet ev, EntitySessionEventArgs args)
+    private void OnStockHandle(Entity<StockpileComponent> ent, ref AfterAutoHandleStateEvent args)
     {
-        var uid = GetEntity(ev.Uid);
-
-        if (args.SenderSession.AttachedEntity is not { } owner
-            || !_stockQuery.TryComp(uid, out var comp)
-            || !_ownership.HasOwner(uid, owner))
-            return;
-
-        SetStockColor(new(uid, comp), ev.Color);
-    }
-
-    [SubscribeLocalEvent]
-    private void OnStockInit(Entity<StockpileComponent> ent, ref MapInitEvent args)
-    {
-        if (!_net.IsClient || IsClientSide(ent))
-            return;
-
-        OnStockCreated?.Invoke(ent);
+        OnStockUpdated?.Invoke(ent);
     }
 
     [SubscribeLocalEvent]
@@ -243,25 +133,47 @@ public sealed partial class StockpileSystem : EntitySystem
     }
 
     [SubscribeLocalEvent]
-    private void OnStartCollideEvent(Entity<StockpileComponent> ent, ref StartCollideEvent args)
+    private void OnZoneTileAdded(Entity<StockpileComponent> ent, ref ZoneTileAdded args)
     {
-        if (_turf.GetTileRef(Transform(args.OtherEntity).Coordinates) is not { } tile)
-            return;
-
-        RemoveEntity(ent, args.OtherEntity);
-
-        if (!CanInsert(ent, args.OtherEntity, tile.GridIndices))
-            return;
-
-        InsertEntity(ent, args.OtherEntity);
+        ent.Comp.FreeTiles.Add(args.Tile.GridIndices);
+        DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
     }
 
     [SubscribeLocalEvent]
-    private void OnEndCollideEvent(Entity<StockpileComponent> ent, ref EndCollideEvent args)
+    private void OnZoneTileRemoved(Entity<StockpileComponent> ent, ref ZoneTileRemoved args)
     {
-        if (_turf.GetTileRef(Transform(args.OtherEntity).Coordinates) is not { } tile
-            || !ent.Comp.Tiles.Contains(tile.GridIndices))
-            RemoveEntity(ent, args.OtherEntity);
+        ent.Comp.FreeTiles.Remove(args.Tile.GridIndices);
+        ent.Comp.ReservedTiles.Remove(args.Tile.GridIndices);
+        DirtyField(ent.AsNullable(), nameof(StockpileComponent.FreeTiles));
+
+        // Deferred: we're still inside ZoningSystem's per-tile removal loop for this batch,
+        // so deleting the entity synchronously here would pull it out from under that loop.
+        if (_zoneQuery.TryComp(ent.Owner, out var zone) && zone.Tiles.Count == 0)
+            QueueDel(ent.Owner);
+    }
+
+    [SubscribeLocalEvent]
+    private void OnZoneEntityEntered(Entity<StockpileComponent> ent, ref EntityEnteredZone args)
+    {
+        if (args.ZoneUid != ent.Owner)
+            return;
+
+        DebugTools.Assert(args.Tile != null, "Stockpile zones must use tile-based collision mode.");
+
+        if (args.Tile is not { } tile
+            || !CanInsert(ent, args.Uid, tile.GridIndices))
+            return;
+
+        InsertEntity(ent, args.Uid);
+    }
+
+    [SubscribeLocalEvent]
+    private void OnZoneEntityLeft(Entity<StockpileComponent> ent, ref EntityLeavedZone args)
+    {
+        if (args.ZoneUid != ent.Owner)
+            return;
+
+        RemoveEntity(ent, args.Uid);
     }
 
     [SubscribeLocalEvent]
@@ -324,9 +236,6 @@ public sealed partial class StockpileSystem : EntitySystem
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Stored));
 
-        if (_net.IsServer)
-            RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));
-
         var ev = new StockEntityInserted(ent, uid);
         RaiseLocalEvent(ent, ev);
         RaiseLocalEvent(uid, ev);
@@ -337,6 +246,9 @@ public sealed partial class StockpileSystem : EntitySystem
     /// </summary>
     private void ValidateStockEntities(Entity<StockpileComponent> ent)
     {
+        if (!_zoneQuery.TryComp(ent.Owner, out var zone))
+            return;
+
         var stored = new Dictionary<EntProtoId, int>();
         var intersecting = new HashSet<EntityUid>();
 
@@ -349,7 +261,7 @@ public sealed partial class StockpileSystem : EntitySystem
         ent.Comp.Stored.Clear();
         var grid = Transform(ent).Coordinates.EntityId;
 
-        foreach (var tile in ent.Comp.Tiles)
+        foreach (var tile in zone.Tiles)
         {
             intersecting.Clear();
             _lookup.GetLocalEntitiesIntersecting(grid,
@@ -373,9 +285,6 @@ public sealed partial class StockpileSystem : EntitySystem
         }
 
         DirtyField(ent.AsNullable(), nameof(StockpileComponent.Stored));
-
-        if (_net.IsServer)
-            RaiseNetworkEvent(new StockpileContentUpdated(GetNetEntity(ent)));
 
         foreach (var uid in oldStored)
         {

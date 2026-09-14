@@ -1,0 +1,31 @@
+<controls:BaseZoneWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="clr-namespace:Content.Client._RF.NPC.GOAP.UI"
+    Title="{Loc 'base-zone-window-title'}" MinSize="450 550">
+    <BoxContainer Orientation="Vertical">
+        <TabContainer Name="Tab" VerticalExpand="True">
+            <ScrollContainer VerticalExpand="True">
+                <BoxContainer Orientation="Vertical">
+                    <controls:ZoneChangeNameControl Name="NameChange"/>
+
+                    <PanelContainer StyleClasses="LowDivider" Margin="3 5"/>
+
+                    <ui:ExpandableBox Name="ContentBox" Title="{Loc 'base-zone-window-content-title'}"
+                                      Orientation="Vertical"/>
+                </BoxContainer>
+            </ScrollContainer>
+
+            <ScrollContainer VerticalExpand="True">
+                <BoxContainer Orientation="Vertical">
+                    <controls:ZoneVisualsControl Name="VisualsControl" Margin="3"/>
+                </BoxContainer>
+            </ScrollContainer>
+        </TabContainer>
+
+        <PanelContainer StyleClasses="AngleRect">
+            <controls:ZoneChangeTileControl Name="BottonPanel" Margin="4 2"/>
+        </PanelContainer>
+    </BoxContainer>
+</controls:BaseZoneWindow>

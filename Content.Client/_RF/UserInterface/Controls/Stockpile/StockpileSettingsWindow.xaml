@@ -4,28 +4,43 @@
     xmlns:controls1="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:style="clr-namespace:Content.Client._RF.Stylesheets"
+    xmlns:controls2="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
     MinSize="500 750">
     <BoxContainer Orientation="Vertical" VerticalExpand="True">
-        <PanelContainer Name="AddressBox" StyleClasses="PanelLight" HorizontalExpand="True">
-            <Label Name="Address" Margin="8 0 0 0" Align="Left"
-                   VAlign="Center" StyleClasses="PlaceholderText"/>
-        </PanelContainer>
+        <TabContainer Name="Tab" VerticalExpand="True">
+            <BoxContainer Orientation="Vertical">
+                <PanelContainer Name="AddressBox" StyleClasses="PanelLight" HorizontalExpand="True">
+                    <Label Name="Address" Margin="8 0 0 0" Align="Left"
+                           VAlign="Center" StyleClasses="LabelHeading"/>
+                </PanelContainer>
 
-        <PanelContainer Name="SearchBar" StyleClasses="PanelDark" HorizontalExpand="True">
-            <BoxContainer Orientation="Horizontal">
-                <TextureButton Name="BackButton" SetSize="32 32" StyleClasses="ButtonColorGold"
-                               TexturePath="/Textures/Interface/VerbIcons/close.svg.192dpi.png"/>
-                <LineEdit Name="Search" Margin="3 2" HorizontalExpand="True"
-                          PlaceHolder="{Loc 'stockpile-settings-menu-search-placeholder'}"/>
+                <PanelContainer Name="SearchBar" StyleClasses="PanelDark" HorizontalExpand="True">
+                    <BoxContainer Orientation="Horizontal">
+                        <TextureButton Name="BackButton" SetSize="32 32" StyleClasses="ButtonColorGold"
+                                       TexturePath="/Textures/Interface/VerbIcons/close.svg.192dpi.png"/>
+                        <LineEdit Name="Search" Margin="3 2" HorizontalExpand="True"
+                                  PlaceHolder="{Loc 'stockpile-settings-menu-search-placeholder'}"/>
+                    </BoxContainer>
+                </PanelContainer>
+
+                <BoxContainer VerticalExpand="True" HorizontalExpand="True">
+                    <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
+                        <BoxContainer Name="ItemList" Orientation="Vertical"
+                                      VerticalExpand="True" HorizontalExpand="True"/>
+                    </ScrollContainer>
+                </BoxContainer>
             </BoxContainer>
-        </PanelContainer>
 
-        <BoxContainer VerticalExpand="True" HorizontalExpand="True">
-            <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
-                <BoxContainer Name="ItemList" Orientation="Vertical"
-                              VerticalExpand="True" HorizontalExpand="True"/>
+            <ScrollContainer VerticalExpand="True">
+                <BoxContainer Orientation="Vertical">
+                    <controls2:ZoneChangeNameControl Name="NameChange"/>
+
+                    <PanelContainer StyleClasses="LowDivider" Margin="3 5"/>
+
+                    <controls2:ZoneVisualsControl Name="VisualsControl"/>
+                </BoxContainer>
             </ScrollContainer>
-        </BoxContainer>
+        </TabContainer>
 
         <PanelContainer StyleClasses="HighDivider"/>
 
@@ -49,10 +64,6 @@
                              HorizontalAlignment="Center" VerticalAlignment="Center"
                              TexturePath="/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"/>
             </controls1:ConfirmButton>
-
-            <BoxContainer HorizontalExpand="True"/>
-
-            <controls:ColorPicker Name="ColorPicker" SetHeight="45" HorizontalAlignment="Center"/>
         </BoxContainer>
     </BoxContainer>
 </controls1:FancyWindow>

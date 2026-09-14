@@ -5,7 +5,6 @@ using Robust.Client.Graphics;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
-using Robust.Client.UserInterface.CustomControls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Input;
 using Robust.Shared.Prototypes;
@@ -126,7 +125,7 @@ public sealed partial class NotificationButton : Control
     {
         var msg = FormattedMessage.FromMarkupOrThrow(
             Button.ToolTip = $"{NameLabel.Text}\n{Loc.GetString("notification-name-tooltip")}");
-        var tooltip = new Tooltip();
+        var tooltip = new Robust.Client.UserInterface.CustomControls.Tooltip();
         tooltip.SetMessage(msg);
         return tooltip;
     }

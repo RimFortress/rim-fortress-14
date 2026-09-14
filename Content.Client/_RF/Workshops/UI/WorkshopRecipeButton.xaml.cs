@@ -45,7 +45,7 @@ public sealed partial class WorkshopRecipeButton : Control
         {
             var msg = FormattedMessage.FromMarkupOrThrow(
                 Button.ToolTip = $"{result.Description}\n{Loc.GetString("workshop-menu-recipe-tooltip")}");
-            var tooltip = new Tooltip();
+            var tooltip = new Robust.Client.UserInterface.CustomControls.Tooltip();
             tooltip.SetMessage(msg);
             return tooltip;
         };

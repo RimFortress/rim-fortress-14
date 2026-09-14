@@ -106,3 +106,7 @@
     interfaces:
       enum.NpcControllerUiKey.Key:
         type: ControllableNpcBoundUserInterface
+  - type: ZoneCreator
+    zones:
+    - Stockpile
+    - WaterSource

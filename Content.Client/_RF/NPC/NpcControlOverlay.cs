@@ -53,7 +53,7 @@ public sealed partial class NpcControlOverlay : Overlay
 
         DrawPassiveGoals(args);
 
-        foreach (var entity in _selection.SelectedEntities())
+        foreach (var entity in _selection.Selected<EntityUid>())
         {
             if (!_controllableQuery.TryComp(entity, out var controllable)
                 || !_prototype.TryIndex(controllable.CurrentGoal, out var exec)

@@ -82,4 +82,14 @@ public sealed class RfVars : CVars
         CVarDef.Create("social.max_opinion_value", 100, CVar.SERVER | CVar.REPLICATED);
 
     #endregion
+
+    #region User Interface
+
+    /// <summary>
+    /// The time between opening a tooltip and when it becomes fixed.
+    /// </summary>
+    public static readonly CVarDef<float> PopupPinDelay =
+        CVarDef.Create("ui.popup_pin_delay", 1.33f, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    #endregion
 }

@@ -1,6 +1,7 @@
 - type: entity
-  id: BaseStockpile
+  id: BaseZone
+  abstract: true
   components:
-  - type: Stockpile
+  - type: Zone
   - type: Physics
   - type: Fixtures

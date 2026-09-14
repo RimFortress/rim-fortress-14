@@ -1,54 +1,86 @@
-using Content.Client._RF.NPC.Executable.Systems;
 using Content.Client._RF.Selection;
 using Content.Client._RF.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
-using Content.Shared._RF.NPC.Systems;
-using Content.Shared._RF.Stockpile;
+using Content.Client._RF.Zoning.UI;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
-using Content.Shared.Maps;
-using Content.Shared.Physics;
-using Robust.Client.GameObjects;
+using Content.Shared._RF.Zoning;
+using Content.Shared._RF.Zoning.Systems;
 using Robust.Client.Graphics;
-using Robust.Client.Input;
-using Robust.Client.Player;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.Controls;
-using Robust.Shared.Input;
-using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
-using Robust.Shared.Player;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controllers;
 
-public sealed partial class StockpileUiController :
-    WindowUiController<StockpileSettingsWindow>,
-    IOnSystemLoaded<StockpileSystem>,
-    IOnStateEntered<RimFortressState>,
-    IOnStateExited<RimFortressState>
+public sealed partial class StockpileUiController : WindowUiController<StockpileSettingsWindow>
 {
-    [Dependency] private IInputManager _input = default!;
-    [Dependency] private IEyeManager _eye = default!;
-    [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private IEntityManager _entManager = default!;
     [Dependency] private IOverlayManager _overlay = default!;
-    [UISystemDependency] private readonly TransformSystem _xform = default!;
-    [UISystemDependency] private readonly TurfSystem _turf = default!;
+    [Dependency] private ZoningUiController _zoningController = default!;
     [UISystemDependency] private readonly SelectionSystem _selection = default!;
-    [UISystemDependency] private readonly StockpileSystem _stockpile = default!;
-    [UISystemDependency] private readonly ExecutableGoalSystem _executable = default!;
-    [UISystemDependency] private readonly OwnershipSystem _ownership = default!;
+    [UISystemDependency] private readonly ZoningSystem _zoning = default!;
 
-    public StockpileSelectionMode SelectMode = StockpileSelectionMode.None;
     public event Action<Entity<StockpileComponent>>? OnStockSelected;
-    public event Action<Entity<StockpileComponent>>? OnStockpileUpdated;
     public event Action<Entity<StockpileComponent>>? OnSupplyRequested;
 
-    public Entity<StockpileComponent>? SettingStock;
-    public Entity<StockpileComponent>? SelectedStock;
+    public StockpileSelectionMode SelectMode
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+
+            switch (value)
+            {
+                case StockpileSelectionMode.Supply:
+                    _zoningController.PickZone();
+                    break;
+                case StockpileSelectionMode.None:
+                    _zoningController.CancelPick();
+                    break;
+            }
+        }
+    }
+
+    public Entity<StockpileComponent>? SettingStock
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            if (field != null)
+                _zoningController.DeselectZone(field.Value);
+
+            field = value;
+
+            if (field != null)
+                _zoningController.SelectZone(field.Value);
+        }
+    }
+
+    public Entity<StockpileComponent>? SelectedStock
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            if (field != null)
+                _zoningController.DeselectZone(field.Value);
+
+            field = value;
+
+            if (field != null)
+                _zoningController.SelectZone(field.Value);
+        }
+    }
 
     public List<EntityUid> HighlightedStockpiles
     {
@@ -74,36 +106,64 @@ public sealed partial class StockpileUiController :
                 || SettingStock == null
                 || SelectedStock == null
                 || SettingStock == SelectedStock
-                || StockpileSystem.HasSupplied(SelectedStock.Value, SettingStock.Value))
+                || StockpileSystem.HasSupplied(SelectedStock.Value, SettingStock.Value)
+                || !_zoning.TryGetZone(SelectedStock.Value.Owner, out var selectedZone)
+                || !_zoning.TryGetZone(SettingStock.Value.Owner, out var settingStock))
                 return null;
 
-            return (_stockpile.StockCenter(SettingStock.Value), _stockpile.StockCenter(SelectedStock.Value));
+            return (_zoning.ZoneCenter(settingStock.Value), _zoning.ZoneCenter(selectedZone.Value));
         }
     }
-
-    private readonly SpriteSpecifier _createSelectionIcon =
-        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/cubes-solid.svg.192dpi.png"));
-
-    private readonly SpriteSpecifier _addTileSelection =
-        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"));
-
-    private readonly SpriteSpecifier _removeTileSelection =
-        new SpriteSpecifier.Texture(new("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"));
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeNetworkEvent<StockpileContentUpdated>(OnContentUpdates);
-        OnStockSelected += _ => OpenWindow();
+        EntityManager.EventBus.SubscribeLocalEvent<StockpileComponent, ZoneCreated>(OnZoneCreated);
+        EntityManager.EventBus.SubscribeLocalEvent<StockpileComponent, ZonePicked>(OnZonePick);
+        SubscribeLocalEvent<ZonePickingCancel>(OnZonePickingCancel);
 
         _overlay.AddOverlay(new StockpileOverlay());
     }
 
-    private void OnContentUpdates(StockpileContentUpdated msg, EntitySessionEventArgs args)
+    private void OnZoneCreated(EntityUid uid, StockpileComponent component, ref ZoneCreated args)
     {
-        if (_stockpile.TryGetStock(msg.Uid, out var stock))
-            OnStockpileUpdated?.Invoke(stock.Value);
+        if (args.Handled)
+            return;
+
+        SettingStock = new(uid, component);
+        Window?.SetStock(SettingStock.Value);
+        OpenWindow();
+        args.Handle();
+    }
+
+    private void OnZonePick(EntityUid uid, StockpileComponent component, ref ZonePicked args)
+    {
+        if (args.Handled)
+            return;
+
+        if (SelectMode == StockpileSelectionMode.Supply)
+        {
+            if (SettingStock != null
+                && uid != SettingStock.Value.Owner
+                && !StockpileSystem.HasSupplied(SettingStock.Value, uid)
+                && EntityManager.TryGetComponent(uid, out StockpileComponent? comp))
+                OnSupplyRequested?.Invoke(new(uid, comp));
+
+            SelectMode = StockpileSelectionMode.None;
+            return;
+        }
+
+        SettingStock = new(uid, component);
+        OpenWindow();
+        OnStockSelected?.Invoke(SettingStock.Value);
+        args.Handle();
+    }
+
+    private void OnZonePickingCancel(ZonePickingCancel args)
+    {
+        SettingStock = null;
+        SelectMode = StockpileSelectionMode.None;
     }
 
     protected override StockpileSettingsWindow EnsureWindow()
@@ -123,147 +183,35 @@ public sealed partial class StockpileUiController :
         Window!.BuildItems(null);
     }
 
-    public void OnStateEntered(RimFortressState state)
-    {
-        CommandBinds.Builder
-            .Bind(EngineKeyFunctions.Use, new PointerInputCmdHandler(OnUse))
-            .Bind(EngineKeyFunctions.UseSecondary, new PointerInputCmdHandler(OnUseSecondary))
-            .Register<StockpileUiController>();
-    }
-
-    public void OnStateExited(RimFortressState state)
-    {
-        CommandBinds.Unregister<StockpileUiController>();
-    }
-
-    private bool OnUse(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
-    {
-        if (SelectedStock is not { } stock)
-            return false;
-
-        switch (SelectMode)
-        {
-            case StockpileSelectionMode.Edit:
-                SelectMode = StockpileSelectionMode.None;
-                SettingStock = stock;
-                SelectedStock = null;
-                OnStockSelected?.Invoke(stock);
-                return true;
-            case StockpileSelectionMode.Supply:
-                SelectMode = StockpileSelectionMode.None;
-                SelectedStock = null;
-                OnSupplyRequested?.Invoke(stock);
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private bool OnUseSecondary(ICommonSession? player, EntityCoordinates coords, EntityUid uid)
-    {
-        if (SelectMode == StockpileSelectionMode.None)
-            return false;
-
-        SelectMode = StockpileSelectionMode.None;
-        SettingStock = null;
-        return true;
-    }
-
-    public void CreateSelection()
-    {
-        if (_player.LocalSession?.AttachedEntity is not { } entity)
-            return;
-
-        _selection.SetTileSelection(
-            act: _ => _executable.DefaultSelection(),
-            onSelected: tiles =>
-            {
-                _stockpile.CreateStockpile(tiles, entity);
-                _executable.DefaultSelection();
-            },
-            filter: AddTileFilter,
-            icon: _createSelectionIcon);
-    }
-
-    public void AddTileSelection(Entity<StockpileComponent> stock)
-    {
-        _selection.SetTileSelection(
-            act: _ => _executable.DefaultSelection(),
-            onSelected: tiles =>
-            {
-                _stockpile.AddTiles(stock, tiles);
-                AddTileSelection(stock);
-            },
-            filter: AddTileFilter,
-            icon: _addTileSelection);
-    }
-
-    public void RemoveTileSelection(Entity<StockpileComponent> stock)
-    {
-        _selection.SetTileSelection(
-            act: _ => _executable.DefaultSelection(),
-            onSelected: tiles =>
-            {
-                _stockpile.RemoveTile(stock, tiles);
-                RemoveTileSelection(stock);
-            },
-            filter: RemoveTileFilter,
-            icon: _removeTileSelection);
-    }
-
-    private bool AddTileFilter(TileRef tile)
-        => !_entManager.IsClientSide(tile.GridUid)
-           && !_turf.IsTileBlocked(tile, CollisionGroup.Impassable ^ CollisionGroup.HighImpassable)
-           && !_stockpile.TileInStock(tile);
-
-    private bool RemoveTileFilter(TileRef tile)
-        => SettingStock != null && _stockpile.TileInStock(SettingStock.Value, tile);
-
     public void Clear()
     {
         SettingStock = null;
         SelectedStock = null;
         SelectMode = StockpileSelectionMode.None;
-        _executable.DefaultSelection();
+        _selection.SetDefault<EntityUid>();
     }
 
+    /// <summary>
+    /// Keeps <see cref="SelectedStock"/> mirroring <see cref="ZoningUiController.HoveredZone"/>
+    /// while a mode is active, for <see cref="HighlightedStockpiles"/>/<see cref="DrawSupplyLine"/> -
+    /// same guard as the old direct-hover implementation had.
+    /// </summary>
     public override void FrameUpdate(FrameEventArgs args)
     {
         base.FrameUpdate(args);
 
-        if (SelectMode == StockpileSelectionMode.None
-            || _input.MouseScreenPosition is not { IsValid: true } mouseCoords)
+        if (SelectMode == StockpileSelectionMode.None)
             return;
 
-        var mapCoords = _eye.PixelToMap(mouseCoords);
-
-        if (mapCoords == MapCoordinates.Nullspace)
-            return;
-
-        var coords = _xform.ToCoordinates(mapCoords);
-
-        _stockpile.TryGetStock(coords, out var stock);
-
-        if (stock == null || _ownership.HasOwner(stock.Value.Owner, _player.LocalSession?.AttachedEntity))
-            SelectedStock = stock;
-    }
-
-    public void OnSystemLoaded(StockpileSystem system)
-    {
-        system.OnStockCreated += stock =>
-        {
-            SettingStock = stock;
-            SelectMode = StockpileSelectionMode.None;
-            OnStockSelected?.Invoke(stock);
-        };
-
-        system.OnStockSettingsUpdated += stock => OnStockpileUpdated?.Invoke(stock);
+        SelectedStock = _zoningController.HoveredZone is { } zone
+                        && EntityManager.TryGetComponent(zone.Owner, out StockpileComponent? comp)
+            ? new(zone.Owner, comp)
+            : null;
     }
 }
 
 public enum StockpileSelectionMode
 {
     None,
-    Edit,
     Supply,
 }

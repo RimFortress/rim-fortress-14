@@ -1,0 +1,18 @@
+<controls:ZoneConditionControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Zoning.UI.Controls">
+    <BoxContainer Orientation="Vertical">
+        <BoxContainer>
+            <Control SetSize="18 18" VerticalAlignment="Top" Margin="2">
+                <TextureRect Name="IsMetOutLine" SetSize="22 22" Stretch="KeepAspectCentered"/>
+                <TextureRect Name="IsMet" SetSize="18 18" Stretch="KeepAspectCentered"/>
+            </Control>
+            <RichTextLabel Name="Text" HorizontalExpand="True"/>
+            <BoxContainer Name="Textures" Margin="5 0 0 0"
+                          SeparationOverride="2" VerticalAlignment="Center"/>
+            <RichTextLabel Name="Progress" SetWidth="80"
+                           HorizontalAlignment="Right" Margin="15 0 0 0"/>
+        </BoxContainer>
+        <BoxContainer Name="SubDescriptions" Orientation="Vertical" Margin="17 0 0 0"/>
+    </BoxContainer>
+</controls:ZoneConditionControl>

@@ -157,6 +157,11 @@ namespace Content.Shared.Input
         /// A button that, when pressed, switches the combat mode of the selected AIs.
         /// </summary>
         public static readonly BoundKeyFunction NpcCombatModeToggle = "NpcCombatModeToggle";
+
+        public static readonly BoundKeyFunction SelectionDefault = "SelectionDefault";
+        public static readonly BoundKeyFunction SelectionAppend = "SelectionAppend";
+        public static readonly BoundKeyFunction SelectionRemove = "SelectionRemove";
+        public static readonly BoundKeyFunction SelectionAction = "SelectionAction";
         // RimFortress End
     }
 }

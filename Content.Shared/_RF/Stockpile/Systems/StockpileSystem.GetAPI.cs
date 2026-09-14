@@ -215,24 +215,6 @@ public partial class StockpileSystem
         => _ownership.GetEntitiesEnumerator<StockpileComponent>(owner);
 
     /// <summary>
-    /// Returns the coordinates of the stockpile center.
-    /// </summary>
-    /// <param name="ent">Stockpile entity.</param>
-    [PublicAPI, Pure]
-    public EntityCoordinates StockCenter(Entity<StockpileComponent> ent)
-    {
-        var pos = Vector2.Zero;
-
-        foreach (var ind in ent.Comp.Tiles)
-        {
-            pos += ind + new Vector2(0.5f);
-        }
-
-        pos /= ent.Comp.Tiles.Count;
-        return new EntityCoordinates(Transform(ent).Coordinates.EntityId, pos);
-    }
-
-    /// <summary>
     /// Checks whether this tile has been assigned to a stockpile.
     /// </summary>
     /// <param name="ent">Stockpile entity.</param>
@@ -248,7 +230,8 @@ public partial class StockpileSystem
     /// <param name="ent">Stockpile entity.</param>
     /// <param name="tile">Target tile.</param>
     [PublicAPI, Pure]
-    public static bool TileInStock(Entity<StockpileComponent> ent, Vector2i tile) => ent.Comp.Tiles.Contains(tile);
+    public bool TileInStock(Entity<StockpileComponent> ent, Vector2i tile)
+        => _zoneQuery.TryComp(ent.Owner, out var zone) && zone.Tiles.Contains(tile);
 
     /// <summary>
     /// Counts the current number of entities of a specific type in the stockpile.
@@ -272,14 +255,13 @@ public partial class StockpileSystem
     /// <summary>
     /// Checks the target stockpile tile to see if anything can be stored there.
     /// </summary>
-    /// <param name="ent">Stockpile entity.</param>
-    /// <param name="tile">Target tile.</param>
     [PublicAPI, Pure]
     public bool IsTileFree(Entity<StockpileComponent> ent, TileRef tile)
     {
         if (_xform.GetGrid(ent.Owner) is not { } grid
             || grid != tile.GridUid
-            || !ent.Comp.Tiles.Contains(tile.GridIndices))
+            || !_zoneQuery.TryComp(ent.Owner, out var zone)
+            || !zone.Tiles.Contains(tile.GridIndices))
             return true;
 
         var intersecting = new HashSet<Entity<StockpileContentComponent>>();

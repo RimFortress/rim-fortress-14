@@ -1,0 +1,8 @@
+<controls1:ZoneContentControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls1="clr-namespace:Content.Client._RF.Zoning.UI.Controls">
+    <BoxContainer>
+        <SpriteView Name="SpriteView" SetSize="32 32"/>
+        <RichTextLabel Name="Label" Margin="5 0" VerticalAlignment="Center"/>
+    </BoxContainer>
+</controls1:ZoneContentControl>

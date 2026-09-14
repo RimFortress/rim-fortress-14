@@ -1,0 +1,9 @@
+<controls:ZoneConditionsList
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
+    MinWidth="250">
+    <BoxContainer Orientation="Vertical" SeparationOverride="5">
+        <RichTextLabel Name="LabelText" Text="{Loc 'zone-conditions-label'}"/>
+        <BoxContainer Name="Conditions" Orientation="Vertical"/>
+    </BoxContainer>
+</controls:ZoneConditionsList>

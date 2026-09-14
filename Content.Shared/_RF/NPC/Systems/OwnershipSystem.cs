@@ -169,6 +169,7 @@ public sealed partial class OwnershipSystem : EntitySystem
                 var ev = new OwnershipAddedEvent(uid, owned.Value);
                 RaiseLocalEvent(uid, ev);
                 RaiseLocalEvent(owned.Value, ev);
+                Dirty(owned.Value, ownedComp);
             }
         }
 
@@ -183,6 +184,7 @@ public sealed partial class OwnershipSystem : EntitySystem
                 var ev = new OwnershipAddedEvent(owner.Value, uid);
                 RaiseLocalEvent(uid, ev);
                 RaiseLocalEvent(owner.Value, ev);
+                Dirty(owner.Value, ownerComp);
             }
         }
 

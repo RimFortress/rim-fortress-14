@@ -148,6 +148,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassPanelHighlightedTransparent = "PanelHighlightedTransparent";
 
     public const string ClassAngleRect = "AngleRect";
+    public const string StyleClassPanelAngleRectGolden = "AngleRectGolden";
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
     public const string StyleClassTopInfoPanel = "TopInfoPanel";
@@ -528,6 +529,7 @@ public sealed class StyleFortress : StyleBase
         angleRect.SetPatchMargin(StyleBox.Margin.All, 11);
         angleRect.SetContentMarginOverride(StyleBox.Margin.All, 3);
 
+        var angleRectGolden = StyleBoxTex("angle_rect_golden_panel.png", angleRect);
         var angleRectTransparent = StyleBoxTex("angle_rect_panel_transparent.png", angleRect);
 
         var topInfoPanel = new StyleBoxTexture
@@ -1198,7 +1200,7 @@ public sealed class StyleFortress : StyleBase
 
             #region Tooltip
 
-            Element<Tooltip>()
+            Element<Robust.Client.UserInterface.CustomControls.Tooltip>()
                 .Prop(PanelContainer.StylePropertyPanel, tooltipBox),
             Element<PanelContainer>()
                 .Class(StyleClassTooltipPanel)
@@ -1636,6 +1638,10 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(ClassAngleRect)
                 .Prop(PanelContainer.StylePropertyPanel, angleRect),
+
+            Element<PanelContainer>()
+                .Class(StyleClassPanelAngleRectGolden)
+                .Prop(PanelContainer.StylePropertyPanel, angleRectGolden),
 
             Element<PanelContainer>()
                 .Class(StyleClassPanelAngleRectTransparent)
