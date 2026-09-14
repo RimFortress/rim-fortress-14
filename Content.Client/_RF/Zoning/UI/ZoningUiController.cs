@@ -348,7 +348,8 @@ public sealed partial class ZoningUiController :
 
         if (map == MapCoordinates.Nullspace)
         {
-            //ClosePopup(); TODO
+            if (_tileConditions?.Popup.Pinned != true)
+                ClosePopup();
             return;
         }
 
