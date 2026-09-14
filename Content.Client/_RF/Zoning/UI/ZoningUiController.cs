@@ -348,7 +348,7 @@ public sealed partial class ZoningUiController :
 
         if (map == MapCoordinates.Nullspace)
         {
-            //ClosePopup();
+            //ClosePopup(); TODO
             return;
         }
 
@@ -363,8 +363,6 @@ public sealed partial class ZoningUiController :
         if (_tileConditions?.Tile == tile)
             return;
 
-        ClosePopup();
-
         if (_creatingZoneType != null)
             OpenPopup(tile, zoneProto: _creatingZoneType);
         else if (SelectedZones.Count == 1 && _zoning.TryGetZone(SelectedZones.First(), out var zone))
@@ -377,11 +375,12 @@ public sealed partial class ZoningUiController :
     {
         var list = new ZoneConditionsList();
 
-        if (zone != null && !list.SetTile(zone.Value, tile))
+        if (zone != null && !list.SetTile(zone.Value, tile)
+            || zoneProto != null && !list.SetTile(zoneProto.Value, tile))
+        {
+            ClosePopup();
             return;
-
-        if (zoneProto != null && !list.SetTile(zoneProto.Value, tile))
-            return;
+        }
 
         var tileDef = _turf.GetContentTileDefinition(tile);
 
@@ -395,8 +394,17 @@ public sealed partial class ZoningUiController :
             ControlAfter = list,
         };
 
-        var popup = _tooltipController.OpenPopupEphemeral(def);
-        _tileConditions = (tile, popup);
+        if (_tileConditions == null)
+        {
+            var popup = _tooltipController.OpenPopupEphemeral(def);
+            _tileConditions = (tile, popup);
+        }
+        else
+        {
+            _tileConditions = (tile, _tileConditions.Value.Popup);
+            _tileConditions.Value.Popup.SetDefinition(def);
+            _tileConditions.Value.Popup.StartTracking();
+        }
     }
 
     private void ClosePopup()
@@ -605,7 +613,7 @@ public sealed partial class ZoningUiController :
         EntityManager.RaisePredictiveEvent(new ZoneVisualsChangeRequest
         {
             Uid = EntityManager.GetNetEntity(uid),
-            States = states,
+            States = new(states),
         });
     }
 
@@ -671,6 +679,9 @@ public sealed partial class ZoningUiController :
             comp.CurrentState &= ~ZoneVisualsState.Picking;
             UpdateConditions(uid);
         }
+
+        if (EntityManager.TryGetComponent(HoveredZone, out ZoneVisualsComponent? visuals))
+            visuals.CurrentState &= ~ZoneVisualsState.Selected;
 
         HoveredZone = null;
         _pickingZone = false;

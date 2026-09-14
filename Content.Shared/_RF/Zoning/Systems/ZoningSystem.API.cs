@@ -17,12 +17,14 @@ public partial class ZoningSystem
     /// <param name="protoId">A prototype of the zone that will be created.</param>
     /// <param name="tiles">The tiles on which the zone will be created.</param>
     /// <param name="zone">Created zone entity.</param>
+    /// <param name="owner">Zone creator.</param>
     /// <returns>True, if the zone was successfully created.</returns>
     [PublicAPI]
     public bool TryCreateZone(
         EntProtoId<ZoneComponent> protoId,
         IReadOnlySet<TileRef> tiles,
-        [NotNullWhen(true)] out Entity<ZoneComponent>? zone)
+        [NotNullWhen(true)] out Entity<ZoneComponent>? zone,
+        EntityUid? owner = null)
     {
         zone = null;
 
@@ -37,6 +39,7 @@ public partial class ZoningSystem
         zone = new(uid, EnsureComp<ZoneComponent>(uid));
         zone.Value.Comp.Creating = true;
         _meta.SetEntityName(uid, $"{Name(uid)} #{uid.Id}");
+        _ownership.AddOwnership(uid, owner: owner);
 
         AddTile(zone.Value, tiles, false, false);
 

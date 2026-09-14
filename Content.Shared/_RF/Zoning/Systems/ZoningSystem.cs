@@ -41,9 +41,19 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
     public event Action<Entity<ZoneComponent>>? OnZoneUpdated;
 
     /// <summary>
+    /// An event invoked on the client whenever the zone visuals controlled by the player changes.
+    /// </summary>
+    public event Action<Entity<ZoneVisualsComponent>>? OnZoneVisualsUpdated;
+
+    /// <summary>
     /// An event raised on the client each time <see cref="ZoneComponent"/> is initialized.
     /// </summary>
     public event Action<Entity<ZoneComponent>>? OnZoneInit;
+
+    /// <summary>
+    /// An event raised on the client when a <see cref="ZoneComponent"/> is deleted.
+    /// </summary>
+    public event Action<Entity<ZoneComponent>>? OnZoneDeleted;
 
     private void UpdateFixtures(Entity<ZoneComponent> ent, bool dirty = true)
     {
@@ -84,7 +94,6 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
                 }
 
                 _fixture.FixtureUpdate(ent);
-                _physics.WakeBody(ent, force: true);
 
                 if (dirty)
                     DirtyField(ent.AsNullable(), nameof(ZoneComponent.MonoFixtures));
@@ -418,7 +427,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
 
     private bool TryLeave(Entity<ZoneComponent> ent, EntityUid toLeave, bool validate = true, bool dirty = true)
     {
-        if (!ent.Comp.Entities.Remove(toLeave))
+        if (!ent.Comp.Entities.Remove(toLeave) || !Exists(toLeave))
             return false;
 
         var tile = ent.Comp.CollisionMode == ZoneCollisionMode.Tile
@@ -514,8 +523,11 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
             }
 
             if (ent.Comp.SplitMode == ZoneSplitMode.Split
-                && Prototype(ent) is { } entProto)
-                TryCreateZone(entProto.ID, tileRefs, out _);
+                && Prototype(ent) is { } entProto
+                && TryCreateZone(entProto.ID, tileRefs, out var zone))
+            {
+                _ownership.AddOwnership(zone.Value, owners: _ownership.GetOwners(ent), owned: _ownership.GetOwned(ent));
+            }
         }
 
         if (dirty)

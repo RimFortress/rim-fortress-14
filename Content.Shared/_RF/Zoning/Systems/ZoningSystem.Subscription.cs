@@ -12,6 +12,13 @@ public partial class ZoningSystem
     }
 
     [SubscribeLocalEvent]
+    private void OnZoneRemove(Entity<ZoneComponent> ent, ref ComponentRemove args)
+    {
+        if (_net.IsClient)
+            OnZoneDeleted?.Invoke(ent);
+    }
+
+    [SubscribeLocalEvent]
     private void OnZoneAdded(Entity<ZoneComponent> ent, ref ComponentInit args)
     {
         if (!_net.IsClient
@@ -33,6 +40,16 @@ public partial class ZoningSystem
             return;
 
         OnZoneUpdated?.Invoke(ent);
+    }
+
+    [SubscribeLocalEvent]
+    private void OnAfterZoneVisualsHandle(Entity<ZoneVisualsComponent> ent, ref AfterAutoHandleStateEvent args)
+    {
+        if (_player.LocalEntity is not { } player
+            || !_ownership.HasOwner(ent.Owner, player))
+            return;
+
+        OnZoneVisualsUpdated?.Invoke(ent);
     }
 
     [SubscribeLocalEvent]
@@ -69,11 +86,7 @@ public partial class ZoningSystem
             return;
 
         var tiles = GetTileRefs(grid.Value, msg.Tiles);
-
-        if (!TryCreateZone(msg.Type, tiles, out var zone))
-            return;
-
-        _ownership.AddOwnership(zone.Value, owner: args.SenderSession.AttachedEntity.Value);
+        TryCreateZone(msg.Type, tiles, out _, owner: args.SenderSession.AttachedEntity.Value);
     }
 
     [SubscribeLocalEvent, SubscribeNetworkEvent]
@@ -125,9 +138,7 @@ public partial class ZoningSystem
             || !visuals.Editable)
             return;
 
-        visuals.States = msg.States;
-
-        if (!_net.IsClient)
-            Dirty(zone.Value, visuals);
+        visuals.States = new(msg.States);
+        DirtyField(zone.Value, visuals, nameof(ZoneVisualsComponent.States));
     }
 }
