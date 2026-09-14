@@ -29,22 +29,20 @@ public sealed partial class InZoneSearchQuerySystem : NpcSearchQuerySystem<InZon
     [Dependency] private OwnershipSystem _ownership = default!;
 
     [SubscribeLocalEvent]
-    private void OnZoneInsert(Entity<OwnershipComponent> ent, ref EntityEnteredZone args)
+    private void OnZoneEnter(Entity<OwnershipComponent> ent, ref EntityEnteredZone args)
     {
-        if (ent.Owner != args.Uid || Prototype(args.ZoneUid) is not { } zone)
+        if (ent.Owner != args.ZoneUid || Prototype(args.ZoneUid) is not { } zone)
             return;
 
-        foreach (var uid in _ownership.GetOwners(ent))
+        var enumerator = _ownership.GetEntitiesEnumerator<NpcSearcherComponent>(args.ZoneUid);
+        while (enumerator.MoveNext(out var uid, out var comp))
         {
-            if (!SearcherQuery.TryComp(uid, out var comp))
-                continue;
-
             foreach (var (proto, _) in comp.Queries)
             {
                 if (!TryGetQuery(proto, out var query) || !query.Zones.Contains(zone.ID))
                     continue;
 
-                Searcher.ReportDirty(uid, proto, added: new() { ent });
+                Searcher.ReportDirty(uid, proto, added: new() { args.Uid });
             }
         }
     }

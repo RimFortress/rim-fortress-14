@@ -1,0 +1,25 @@
+<controls:ZoneChangeNameControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
+    xmlns:style="clr-namespace:Content.Client._RF.Stylesheets"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <BoxContainer SetHeight="30">
+        <RichTextLabel Text="{Loc 'base-zone-window-name-label'}" VerticalAlignment="Center" Margin="5 0 6 0"/>
+        <BoxContainer Name="NameBox" VerticalAlignment="Center">
+            <RichTextLabel Name="NameLabel" VerticalAlignment="Center"/>
+            <TextureButton Name="EditButton" SetSize="18 18" Margin="5 0"
+                           ModulateSelfOverride="{x:Static style:StyleFortress.GoldFortress}"
+                           TexturePath="/Textures/_RF/Interface/pencil-solid.svg.192dpi.png"/>
+        </BoxContainer>
+        <BoxContainer Name="NameEditBox" VerticalAlignment="Center" Visible="False">
+            <LineEdit Name="NameEdit" SetWidth="200" Margin="5 0"/>
+            <TextureButton Name="ApplyNameButton" SetSize="18 18" Scale="1.2 1.2"
+                           ModulateSelfOverride="{x:Static style:StyleFortress.GoldFortress}"
+                           TexturePath="/Textures/_RF/Interface/check-solid.svg.192dpi.png"/>
+            <PanelContainer StyleClasses="LowDivider" Margin="3"/>
+            <TextureButton Name="CancelNameButton" SetSize="18 18"
+                           ModulateSelfOverride="{x:Static style:StyleFortress.GoldFortress}"
+                           TexturePath="/Textures/_RF/Interface/Style/cross.png"/>
+        </BoxContainer>
+    </BoxContainer>
+</controls:ZoneChangeNameControl>

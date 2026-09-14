@@ -5,13 +5,14 @@ zone-tile-conditions-popup-body = Tile is blocked, not all conditions have been 
 
 base-zone-window-title = Zone
 base-zone-window-name-label = [bold]Name:[/bold]
+base-zone-window-content-title = [bold]Content:[/bold]
+base-zone-window-visuals-tab-general-title = General
+base-zone-window-visuals-tab-visuals-title = Visuals
+base-zone-window-visuals-save-button = Save
+base-zone-window-visuals-reset-button = Reset
 base-zone-window-expand-button-tooltip = Expand Zone
 base-zone-window-shrink-button-tooltip = Shrink Zone
 base-zone-window-delete-button-tooltip = Delete Zone
-base-zone-window-visuals-title = [bold]Visuals:[bold]
-base-zone-window-content-title = [bold]Content:[/bold]
-base-zone-window-visuals-save-button = Save
-base-zone-window-visuals-reset-button = Reset
 
 zone-content-name-label =
     { $amount ->

@@ -1,0 +1,17 @@
+<controls:ZoneVisualsControl
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.Zoning.UI.Controls">
+    <BoxContainer Orientation="Vertical">
+        <BoxContainer Name="VisualsBox" Orientation="Vertical"/>
+        <BoxContainer Name="VisualChangesBox" HorizontalExpand="True" Visible="False">
+            <PanelContainer StyleClasses="PanelDark" HorizontalExpand="True" Margin="2 3">
+                <BoxContainer HorizontalExpand="True">
+                    <Button Name="SaveVisualsButton" Text="{Loc 'base-zone-window-visuals-save-button'}"
+                            Margin="3 2" StyleClasses="OpenRight"/>
+                    <Button Name="ResetVisualsButton" Text="{Loc 'base-zone-window-visuals-reset-button'}"
+                            Margin="3 2" StyleClasses="OpenLeft ButtonColorRed"/>
+                </BoxContainer>
+            </PanelContainer>
+        </BoxContainer>
+    </BoxContainer>
+</controls:ZoneVisualsControl>

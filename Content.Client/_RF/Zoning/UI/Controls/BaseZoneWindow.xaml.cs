@@ -15,7 +15,6 @@ public sealed partial class BaseZoneWindow : FancyWindow
     private readonly ZoningUiController _controller;
     private readonly ZoningSystem _zoning;
     private Entity<ZoneComponent>? _zone;
-    private Dictionary<ZoneVisualsState, ZoneVisualsStyle> _originalVisuals = new();
 
     public BaseZoneWindow()
     {
@@ -25,81 +24,12 @@ public sealed partial class BaseZoneWindow : FancyWindow
         _zoning = _entity.System<ZoningSystem>();
         _controller = UserInterfaceManager.GetUIController<ZoningUiController>();
 
-        _zoning.OnZoneUpdated += OnZoneUpdate;
-
-        // Naming
-
-        EditButton.OnPressed += _ =>
+        Tab.SetTabTitle(0, Loc.GetString("base-zone-window-visuals-tab-general-title"));
+        Tab.SetTabTitle(1, Loc.GetString("base-zone-window-visuals-tab-visuals-title"));
+        Tab.OnTabChanged += ind =>
         {
-            if (!_entity.TryGetComponent(_zone, out MetaDataComponent? meta))
-                return;
-
-            NameBox.Visible = false;
-            NameEditBox.Visible = true;
-            NameEdit.Text = meta.EntityName;
-        };
-
-        ApplyNameButton.OnPressed += _ =>
-        {
-            NameBox.Visible = true;
-            NameEditBox.Visible = false;
-
-            if (_zone == null)
-                return;
-
-            NameLabel.Text = NameEdit.Text;
-            _controller.SetName(_zone.Value, NameEdit.Text);
-        };
-
-        CancelNameButton.OnPressed += _ =>
-        {
-            NameBox.Visible = true;
-            NameEditBox.Visible = false;
-        };
-
-        // Bottom panel
-
-        ExpandButton.OnPressed += _ =>
-        {
-            if (_zone != null)
-                _controller.AddTileSelection(_zone.Value);
-        };
-
-        ShrinkButton.OnPressed += _ =>
-        {
-            if (_zone != null)
-                _controller.RemoveTileSelection(_zone.Value);
-        };
-
-        DeleteButton.OnPressed += _ =>
-        {
-            if (_zone == null)
-                return;
-
-            _controller.DeleteZone(_zone.Value);
-            Close();
-        };
-
-        // Visuals
-
-        SaveVisualsButton.OnPressed += _ =>
-        {
-            VisualChangesBox.Visible = false;
-
-            if (!_entity.TryGetComponent(_zone, out ZoneVisualsComponent? visuals))
-                return;
-
-            _controller.SetVisuals(_zone.Value, visuals.States);
-        };
-
-        ResetVisualsButton.OnPressed += _ =>
-        {
-            VisualChangesBox.Visible = false;
-
-            if (_entity.HasComponent<ZoneVisualsComponent>(_zone))
-                _controller.SetVisuals(_zone.Value, _originalVisuals);
-
-            UpdateVisuals();
+            if (ind == 1)
+                VisualsControl.SetZone(_zone);
         };
     }
 
@@ -111,13 +41,14 @@ public sealed partial class BaseZoneWindow : FancyWindow
 
         if (_entity.TryGetComponent(ent, out MetaDataComponent? meta)
             && meta.EntityPrototype != null)
-        {
-            NameLabel.Text = meta.EntityName;
             Title = meta.EntityPrototype.Name;
-        }
 
+        Tab.SetTabVisible(1, _entity.TryGetComponent(ent, out ZoneVisualsComponent? comp) && comp.Editable);
+
+        BottonPanel.SetZone(ent);
+        NameChange.SetZone(ent);
+        VisualsControl.SetZone(ent);
         UpdateContent();
-        UpdateVisuals();
     }
 
     private void UpdateContent()
@@ -142,76 +73,40 @@ public sealed partial class BaseZoneWindow : FancyWindow
         }
     }
 
-    private void UpdateVisuals()
-    {
-        VisualsBox.RemoveAllChildren();
-        _originalVisuals.Clear();
-
-        if (_entity.TryGetComponent(_zone, out ZoneVisualsComponent? visuals) && visuals.Editable)
-        {
-            _originalVisuals = new(visuals.States);
-            VisualsExpand.Visible = true;
-            ContentDivider.Visible = ContentBox.Visible;
-
-            for (var i = ZoneVisualsComponent.PriorityOrder.Length - 1; i >= 0; i--)
-            {
-                var state = ZoneVisualsComponent.PriorityOrder[i];
-                var control = new ZoneVisualsLayerControl(state,
-                    visuals.States.TryGetValue(state, out var s) ? s : null);
-
-                control.OnStyleAdded += style =>
-                {
-                    visuals.States[state] = style;
-                    VisualChangesBox.Visible = true;
-                };
-
-                control.OnStyleRemoved += _ =>
-                {
-                    visuals.States.Remove(state);
-                    VisualChangesBox.Visible = true;
-                };
-
-                control.OnStyleChanged += style =>
-                {
-                    visuals.States[state] = style;
-                    VisualChangesBox.Visible = true;
-                };
-
-                VisualsBox.AddChild(control);
-            }
-        }
-        else
-            VisualsExpand.Visible = false;
-    }
-
     public override void Close()
     {
         base.Close();
         _controller.DeselectZone(_zone?.Owner);
         _zone = null;
-
-        if (_entity.HasComponent<ZoneVisualsComponent>(_zone))
-            _controller.SetVisuals(_zone.Value, _originalVisuals);
-
-        VisualsExpand.Visible = false;
+        VisualsControl.ResetVisuals();
         ContentBox.Visible = false;
-        ContentDivider.Visible = false;
         ContentBox.CollapseAll();
-        VisualsExpand.CollapseAll();
+    }
+
+    protected override void EnteredTree()
+    {
+        base.EnteredTree();
+        _zoning.OnZoneUpdated += OnZoneUpdate;
+        _zoning.OnZoneDeleted += OnZoneDelete;
     }
 
     protected override void ExitedTree()
     {
         base.ExitedTree();
         _zoning.OnZoneUpdated -= OnZoneUpdate;
+        _zoning.OnZoneDeleted -= OnZoneDelete;
     }
 
     private void OnZoneUpdate(Entity<ZoneComponent> ent)
     {
-        if (ent != _zone)
-            return;
+        if (ent == _zone)
+            UpdateContent();
+    }
 
-        Open(ent);
+    private void OnZoneDelete(Entity<ZoneComponent> ent)
+    {
+        if (ent == _zone)
+            Close();
     }
 }
 

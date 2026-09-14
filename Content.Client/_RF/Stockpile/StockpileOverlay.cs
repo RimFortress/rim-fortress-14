@@ -93,8 +93,13 @@ public sealed partial class StockpileOverlay : GridOverlay
         shader.SetParameter("start", screenEnd);
         shader.SetParameter("end", screenStart);
 
+        var box = new Box2(
+            Vector2.Min(start.Position, end.Position),
+            Vector2.Max(start.Position, end.Position))
+            .Enlarged(-0.5f);
+
         args.WorldHandle.UseShader(shader);
-        args.WorldHandle.DrawRect(new Box2(start.Position, end.Position).Enlarged(-0.5f), Color.White);
+        args.WorldHandle.DrawRect(box, Color.White);
         args.WorldHandle.UseShader(prevShader);
     }
 }

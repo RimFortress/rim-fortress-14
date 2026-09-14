@@ -22,6 +22,7 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
     private static readonly ProtoId<EntityCategoryPrototype> DoNotMapCategory = "DoNotMap";
 
     private readonly StockpileUiController _stockpileController;
+    private readonly ZoningSystem _zoning;
 
     private StockpileCategoryPrototype? _currentCategory;
 
@@ -35,16 +36,12 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
         _stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
         var zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
 
+        _zoning = _entity.System<ZoningSystem>();
+
         _stockpileController.OnStockSelected += SetStock;
         _entity.System<StockpileSystem>().OnStockUpdated += stock =>
         {
             if (Visible && _stockpileController.SettingStock == stock)
-                BuildItems(_currentCategory);
-        };
-
-        _entity.System<ZoningSystem>().OnZoneUpdated += zone =>
-        {
-            if (Visible && _stockpileController.SettingStock?.Owner == zone)
                 BuildItems(_currentCategory);
         };
 
@@ -77,8 +74,6 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
                 return;
 
             zoningController.DeleteZone(_stockpileController.SettingStock.Value);
-            _stockpileController.SettingStock = null;
-            Close();
         };
         SuppliersButton.OnPressed += _ => _stockpileController.SelectMode = StockpileSelectionMode.Supply;
 
@@ -92,23 +87,19 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
         };
         CloseButton.OnPressed += _ => Close();
 
-        /*
-        ColorPicker.OnColorChanged += color =>
-        {
-            if (_entity.TryGetComponent(_stockpileController.SettingStock, out ZoneVisualsComponent? visuals))
-            {
-                zoningController.SetVisuals(_stockpileController.SettingStock.Value,
-                    borderColor: color,
-                    zoneColor: visuals.States.GetValueOrDefault(ZoneVisualsState.Base).ZoneColor);
-            }
-        };
-        */
-
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<EntityPrototype>()
                 || args.WasModified<StockpileCategoryPrototype>())
                 ReloadPrototypes();
+        };
+
+        Tab.SetTabTitle(0, Loc.GetString("base-zone-window-visuals-tab-general-title"));
+        Tab.SetTabTitle(1, Loc.GetString("base-zone-window-visuals-tab-visuals-title"));
+        Tab.OnTabChanged += ind =>
+        {
+            if (ind == 1)
+                VisualsControl.SetZone(_stockpileController.SettingStock);
         };
     }
 
@@ -136,16 +127,17 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
         base.Close();
 
         _stockpileController.Clear();
-        ColorPicker.CloseWindow();
+        VisualsControl.ResetVisuals();
     }
 
     public void SetStock(Entity<StockpileComponent> ent)
     {
-        if (_entity.TryGetComponent(ent, out MetaDataComponent? meta))
-            Title = meta.EntityName;
+        if (_entity.TryGetComponent(ent, out MetaDataComponent? meta)
+            && meta.EntityPrototype != null)
+            Title = meta.EntityPrototype.Name;
 
-        if (_entity.TryGetComponent(ent, out ZoneVisualsComponent? visuals))
-            ColorPicker.Color = visuals.States.GetValueOrDefault(ZoneVisualsState.Base).BorderColor ?? Color.Transparent;
+        VisualsControl.SetZone(ent);
+        NameChange.SetZone(ent);
     }
 
     public void BuildItems(StockpileCategoryPrototype? category)
@@ -354,6 +346,32 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
         }
 
         return null;
+    }
+
+    protected override void EnteredTree()
+    {
+        base.EnteredTree();
+        _zoning.OnZoneUpdated += OnZoneUpdate;
+        _zoning.OnZoneDeleted += OnZoneDelete;
+    }
+
+    protected override void ExitedTree()
+    {
+        base.ExitedTree();
+        _zoning.OnZoneUpdated -= OnZoneUpdate;
+        _zoning.OnZoneDeleted -= OnZoneDelete;
+    }
+
+    private void OnZoneUpdate(Entity<ZoneComponent> ent)
+    {
+        if (ent == _stockpileController.SettingStock?.Owner)
+            BuildItems(_currentCategory);
+    }
+
+    private void OnZoneDelete(Entity<ZoneComponent> ent)
+    {
+        if (ent == _stockpileController.SettingStock?.Owner)
+            Close();
     }
 }
 
