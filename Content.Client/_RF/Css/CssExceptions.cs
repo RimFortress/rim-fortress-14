@@ -14,3 +14,8 @@ public sealed class CssTokenizeError(string context, int errorCp, string? expect
         }
     }
 }
+
+public sealed class CssParserError(string context, string message) : Exception
+{
+    public override string Message => $"error while {context}: {message}";
+}

@@ -5,7 +5,7 @@ namespace Content.Client._RF.Css;
 /// different data (string, number, single code point, or nothing at all) —
 /// see the CSS Syntax Module Level 3 definitions for each token type.
 /// </summary>
-public interface ICssToken;
+public interface ICssToken : ICssComponentValue;
 
 public readonly record struct WhitespaceToken : ICssToken;
 
