@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Content.Client._RF.Css;
+namespace Content.Client._RF.CSS;
 
 /// <summary>
 /// A CCS token parser written according to the specification at https://www.w3.org/TR/css-syntax-3/

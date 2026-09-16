@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Content.Client._RF.Css;
+namespace Content.Client._RF.CSS;
 
 public sealed class CssTokenizeError(string context, int errorCp, string? expected, params int[] expectedCp) : Exception
 {

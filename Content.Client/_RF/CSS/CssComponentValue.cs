@@ -1,4 +1,4 @@
-namespace Content.Client._RF.Css;
+namespace Content.Client._RF.CSS;
 
 /// <summary>
 /// Anything that can live in a rule's prelude or a declaration's value:

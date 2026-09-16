@@ -2,7 +2,7 @@ using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 
-namespace Content.Client._RF.Css;
+namespace Content.Client._RF.CSS;
 
 /// <summary>
 /// CCS Text Tokenizer. Written entirely in accordance with the CSS Syntax Module Level 3 specification,

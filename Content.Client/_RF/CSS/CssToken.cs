@@ -1,4 +1,4 @@
-namespace Content.Client._RF.Css;
+namespace Content.Client._RF.CSS;
 
 /// <summary>
 /// A marker interface for any CSS token. Different token types carry
