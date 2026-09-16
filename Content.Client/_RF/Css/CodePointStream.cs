@@ -1,3 +1,5 @@
+using Robust.Shared.Collections;
+
 namespace Content.Client._RF.Css;
 
 public record struct CodePointStream(int[] CodePoints)
@@ -26,15 +28,14 @@ public record struct CodePointStream(int[] CodePoints)
     /// <returns>All code points consumed.</returns>
     public int[] ConsumeUntil(Func<int, bool> until)
     {
-        var output = Array.Empty<int>();
+        var output = new ValueList<int>();
 
         while (true)
         {
-            if (until(ConsumeNext()))
-                return output;
+            if (until(PeekNext()))
+                return output.ToArray();
 
-            Array.Resize(ref output, output.Length + 1);
-            output[^1] = Current;
+            output.Add(ConsumeNext());
         }
     }
 
@@ -45,15 +46,14 @@ public record struct CodePointStream(int[] CodePoints)
     /// <returns>All code points consumed.</returns>
     public int[] ConsumeWhile(Func<int, bool> @while)
     {
-        var output = Array.Empty<int>();
+        var output = new ValueList<int>();
 
         while (true)
         {
-            if (!@while(ConsumeNext()))
-                return output;
+            if (!@while(PeekNext()))
+                return output.ToArray();
 
-            Array.Resize(ref output, output.Length + 1);
-            output[^1] = Current;
+            output.Add(ConsumeNext());
         }
     }
 
