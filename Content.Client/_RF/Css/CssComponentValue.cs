@@ -7,6 +7,11 @@ namespace Content.Client._RF.Css;
 public interface ICssComponentValue;
 
 /// <summary>
+/// A basic interface for any CSS token parsing result.
+/// </summary>
+public interface IParsedCssObject;
+
+/// <summary>
 /// A function invocation, e.g. rgb(255 0 0) — name is the function-token's
 /// value (without the trailing '('), Value is everything up to the matching ')'.
 /// </summary>
@@ -26,7 +31,7 @@ public sealed class CssSimpleBlock(ICssToken associatedToken, List<ICssComponent
     public List<ICssComponentValue> Value { get; } = value;
 }
 
-public sealed class CssDeclaration(string name)
+public sealed class CssDeclaration(string name) : IParsedCssObject
 {
     public string Name { get; } = name;
     public List<ICssComponentValue> Value { get; } = new();
@@ -38,13 +43,16 @@ public sealed class CssDeclaration(string name)
 /// care that a style rule's prelude is a selector. That interpretation happens
 /// one layer up (Selectors Level 4), not in this parser.
 /// </summary>
-public sealed class CssQualifiedRule
+public sealed class CssQualifiedRule : IParsedCssObject
 {
     public List<ICssComponentValue> Prelude { get; } = new();
     public CssSimpleBlock? Block { get; set; }
 }
 
-public sealed class CssAtRule(string name)
+/// <summary>
+/// https://www.w3.org/TR/css-syntax-3/#at-rules
+/// </summary>
+public sealed class CssAtRule(string name) : IParsedCssObject
 {
     public string Name { get; } = name;
     public List<ICssComponentValue> Prelude { get; } = new();

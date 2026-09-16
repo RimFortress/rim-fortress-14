@@ -1,22 +1,43 @@
+using JetBrains.Annotations;
+
 namespace Content.Client._RF.Css;
 
+/// <summary>
+/// A CCS token parser written according to the specification at https://www.w3.org/TR/css-syntax-3/
+/// </summary>
 public static class CssParser
 {
-    public static List<object> ParseStylesheet(List<ICssToken> tokens)
+    /// <summary>
+    /// Parses CSS text into a set of style rules.
+    /// This is the function you want to use to parse CSS files.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static List<IParsedCssObject> ParseStylesheet(string text)
     {
+        var tokens = CssTokenizer.Tokenize(text);
         var stream = new CssTokenStream(tokens);
         return ConsumeListOfRules(ref stream, topLevelFlag: true);
     }
 
-    public static List<object> ParseListOfDeclarations(ICssComponentValue[] items)
+    /// <summary>
+    /// It parses the contents of a single block of CSS rules.
+    /// This is the function you'll want to use to parse the
+    /// contents of the `style` attribute or something similar.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static List<IParsedCssObject> ParseListOfDeclarations(string text)
     {
-        var stream = new CssTokenStream(items);
+        var tokens = CssTokenizer.Tokenize(text);
+        var stream = new CssTokenStream(tokens);
         return ConsumeListOfDeclarations(ref stream);
     }
 
-    private static List<object> ConsumeListOfRules(ref CssTokenStream stream, bool topLevelFlag = false)
+    /// <summary>
+    /// https://www.w3.org/TR/css-syntax-3/#consume-list-of-rules
+    /// </summary>
+    private static List<IParsedCssObject> ConsumeListOfRules(ref CssTokenStream stream, bool topLevelFlag = false)
     {
-        var result = new List<object>();
+        var result = new List<IParsedCssObject>();
 
         while (true)
         {
@@ -24,7 +45,14 @@ public static class CssParser
 
             switch (token)
             {
-                case WhitespaceToken or CdoToken or CdcToken:
+                case WhitespaceToken:
+                    continue;
+                case CdoToken or CdcToken:
+                    if (topLevelFlag)
+                        continue;
+
+                    stream.Reconsume();
+                    result.Add(ConsumeQualifiedRule(ref stream));
                     continue;
                 case EofToken:
                     return result;
@@ -36,30 +64,9 @@ public static class CssParser
         }
     }
 
-    private static List<object> ConsumeListOfDeclarations(ref CssTokenStream stream)
-    {
-        var result = new List<object>();
-
-        while (true)
-        {
-            var token = stream.ConsumeNext();
-
-            switch (token)
-            {
-                case WhitespaceToken or SemicolonToken:
-                    continue;
-                case EofToken:
-                    return result;
-                case AtKeywordToken:
-                    stream.Reconsume();
-                    result.Add(ConsumeAtRule(ref stream));
-                    break;
-                case IdentToken:
-                    // TODO
-            }
-        }
-    }
-
+    /// <summary>
+    /// https://www.w3.org/TR/css-syntax-3/#consume-at-rule
+    /// </summary>
     private static CssAtRule ConsumeAtRule(ref CssTokenStream stream)
     {
         var nameToken = (AtKeywordToken)stream.ConsumeNext();
@@ -86,6 +93,124 @@ public static class CssParser
         }
     }
 
+    /// <summary>
+    /// https://www.w3.org/TR/css-syntax-3/#consume-qualified-rule
+    /// </summary>
+    private static CssQualifiedRule ConsumeQualifiedRule(ref CssTokenStream stream)
+    {
+        var rule = new CssQualifiedRule();
+
+        while (true)
+        {
+            var token = stream.ConsumeNext();
+
+            switch (token)
+            {
+                case EofToken:
+                    throw new CssParserError("consuming qualified rule", "unexpected EOF");
+                case LeftCurlyBracket:
+                    rule.Block = ConsumeSimpleBlock(ref stream);
+                    return rule;
+                default:
+                    stream.Reconsume();
+                    rule.Prelude.Add(ConsumeComponentValue(ref stream));
+                    continue;
+            }
+        }
+    }
+
+    /// <summary>
+    /// https://www.w3.org/TR/css-syntax-3/#consume-list-of-declarations
+    /// </summary>
+    private static List<IParsedCssObject> ConsumeListOfDeclarations(ref CssTokenStream stream)
+    {
+        var result = new List<IParsedCssObject>();
+
+        while (true)
+        {
+            var token = stream.ConsumeNext();
+
+            switch (token)
+            {
+                case WhitespaceToken or SemicolonToken:
+                    continue;
+                case EofToken:
+                    return result;
+                case AtKeywordToken:
+                    stream.Reconsume();
+                    result.Add(ConsumeAtRule(ref stream));
+                    break;
+                case IdentToken:
+                    stream.Reconsume();
+                    var s = new CssTokenStream(CollectUntilSemicolonOrEof(stream));
+                    result.Add(ConsumeDeclaration(ref s));
+                    break;
+                default:
+                    throw new CssParserError(
+                        "consuming list of declarations",
+                        $"unexpected {token.GetType().Name}, expected a declaration or at-rule");
+            }
+        }
+    }
+
+    /// <summary>
+    /// https://www.w3.org/TR/css-syntax-3/#consume-declaration
+    /// </summary>
+    private static CssDeclaration ConsumeDeclaration(ref CssTokenStream stream)
+    {
+        var token = (IdentToken)stream.ConsumeNext();
+        var declaration = new CssDeclaration(token.Value);
+
+        while (stream.PeekNext() is WhitespaceToken)
+        {
+            stream.ConsumeNext();
+        }
+
+        if (stream.PeekNext() is not ColonToken)
+        {
+            throw new CssParserError("consuming declaration",
+                $"expected ColonToken, not {stream.PeekNext().GetType().Name}");
+        }
+
+        stream.ConsumeNext();
+
+        while (stream.PeekNext() is WhitespaceToken)
+        {
+            stream.ConsumeNext();
+        }
+
+        while (stream.PeekNext() is not EofToken)
+        {
+            declaration.Value.Add(ConsumeComponentValue(ref stream));
+        }
+
+        StripImportantFlag(declaration);
+        TrimTrailingWhitespace(declaration);
+
+        return declaration;
+    }
+
+    /// <summary>
+    /// Consume a component value. This is the workhorse every other algorithm
+    /// below calls into — it's what turns "{"/"("/"[" and function-tokens into
+    /// their folded representations, and passes everything else through as-is.
+    /// https://www.w3.org/TR/css-syntax-3/#consume-component-value
+    /// </summary>
+    private static ICssComponentValue ConsumeComponentValue(ref CssTokenStream stream)
+    {
+        var token = stream.ConsumeNext();
+
+        return token switch
+        {
+            LeftCurlyBracket or LeftParenthesisToken or LeftSquareBracket => ConsumeSimpleBlock(ref stream),
+            FunctionToken => ConsumeFunction(ref stream),
+            _ => token,
+        };
+    }
+
+    /// <summary>
+    /// https://www.w3.org/TR/css-syntax-3/#consume-simple-block
+    /// </summary>
     private static CssSimpleBlock ConsumeSimpleBlock(ref CssTokenStream stream)
     {
         ICssToken ending = stream.Current switch
@@ -118,22 +243,8 @@ public static class CssParser
     }
 
     /// <summary>
-    /// Consume a component value. This is the workhorse every other algorithm
-    /// below calls into — it's what turns "{"/"("/"[" and function-tokens into
-    /// their folded representations, and passes everything else through as-is.
+    /// https://www.w3.org/TR/css-syntax-3/#consume-function
     /// </summary>
-    private static ICssComponentValue ConsumeComponentValue(ref CssTokenStream stream)
-    {
-        var token = stream.ConsumeNext();
-
-        return token switch
-        {
-            LeftCurlyBracket or LeftParenthesisToken or LeftSquareBracket => ConsumeSimpleBlock(ref stream),
-            FunctionToken => ConsumeFunction(ref stream),
-            _ => token,
-        };
-    }
-
     private static CssFunction ConsumeFunction(ref CssTokenStream stream)
     {
         var func = new CssFunction(((FunctionToken)stream.Current).Value, new());
@@ -154,5 +265,63 @@ public static class CssParser
                     break;
             }
         }
+    }
+
+    private static void StripImportantFlag(CssDeclaration declaration)
+    {
+        var i = declaration.Value.Count - 1;
+        while (i >= 0 && declaration.Value[i] is WhitespaceToken)
+        {
+            i--;
+        }
+
+        var lastIdx = i;
+        i--;
+
+        while (i >= 0 && declaration.Value[i] is WhitespaceToken)
+        {
+            i--;
+        }
+        var secondLastIdx = i;
+
+        if (lastIdx < 0 || secondLastIdx < 0)
+            return;
+
+        if (declaration.Value[secondLastIdx] is not DelimToken { CodePoint: 0x0021 }) // !
+            return;
+
+        if (declaration.Value[lastIdx] is not IdentToken { Value: var value }
+            || !value.Equals("important", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        declaration.Value.RemoveAt(lastIdx); // remove higher index first
+        declaration.Value.RemoveAt(secondLastIdx);
+        declaration.Important = true;
+    }
+
+    private static void TrimTrailingWhitespace(CssDeclaration declaration)
+    {
+        while (declaration.Value.Count > 0 && declaration.Value[^1] is WhitespaceToken)
+        {
+            declaration.Value.RemoveAt(declaration.Value.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// "Initialize a temp list filled with the current input token, then consume
+    /// component values into it until ; or EOF" (§5.4.5/5.4.6). Note this collects
+    /// component values, not raw tokens — a function/block met along the way is
+    /// already folded by ConsumeComponentValue by the time it lands in this list.
+    /// </summary>
+    private static ICssComponentValue[] CollectUntilSemicolonOrEof(CssTokenStream stream)
+    {
+        var items = new List<ICssComponentValue> { stream.ConsumeNext() };
+
+        while (stream.PeekNext() is not (SemicolonToken or EofToken))
+        {
+            items.Add(ConsumeComponentValue(ref stream));
+        }
+
+        return items.ToArray();
     }
 }
