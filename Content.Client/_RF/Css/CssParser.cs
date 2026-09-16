@@ -13,8 +13,26 @@ public static class CssParser
     /// </summary>
     [PublicAPI, Pure]
     public static List<IParsedCssObject> ParseStylesheet(string text)
+        => ParseStylesheet(CssTokenizer.Tokenize(text));
+
+    /// <summary>
+    /// Parses CSS tokens into a set of style rules.
+    /// This is the function you want to use to parse CSS files.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static List<IParsedCssObject> ParseStylesheet(List<ICssToken> tokens)
     {
-        var tokens = CssTokenizer.Tokenize(text);
+        var stream = new CssTokenStream(tokens);
+        return ConsumeListOfRules(ref stream, topLevelFlag: true);
+    }
+
+    /// <summary>
+    /// Parses CSS tokens into a set of style rules.
+    /// This is the function you want to use to parse CSS files.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static List<IParsedCssObject> ParseStylesheet(ICssComponentValue[] tokens)
+    {
         var stream = new CssTokenStream(tokens);
         return ConsumeListOfRules(ref stream, topLevelFlag: true);
     }
@@ -28,6 +46,16 @@ public static class CssParser
     public static List<IParsedCssObject> ParseListOfDeclarations(string text)
     {
         var tokens = CssTokenizer.Tokenize(text);
+        var stream = new CssTokenStream(tokens);
+        return ConsumeListOfDeclarations(ref stream);
+    }
+
+    /// <summary>
+    /// It parses the tokens of a single block of CSS rules.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static List<IParsedCssObject> ParseListOfDeclarations(ICssComponentValue[] tokens)
+    {
         var stream = new CssTokenStream(tokens);
         return ConsumeListOfDeclarations(ref stream);
     }
@@ -59,7 +87,11 @@ public static class CssParser
                 case AtKeywordToken:
                     stream.Reconsume();
                     result.Add(ConsumeAtRule(ref stream));
-                    break;
+                    continue;
+                default:
+                    stream.Reconsume();
+                    result.Add(ConsumeQualifiedRule(ref stream));
+                    continue;
             }
         }
     }
@@ -111,6 +143,9 @@ public static class CssParser
                 case LeftCurlyBracket:
                     rule.Block = ConsumeSimpleBlock(ref stream);
                     return rule;
+                case CssSimpleBlock block:
+                    rule.Block = block;
+                    return rule;
                 default:
                     stream.Reconsume();
                     rule.Prelude.Add(ConsumeComponentValue(ref stream));
@@ -142,7 +177,7 @@ public static class CssParser
                     break;
                 case IdentToken:
                     stream.Reconsume();
-                    var s = new CssTokenStream(CollectUntilSemicolonOrEof(stream));
+                    var s = new CssTokenStream(CollectUntilSemicolonOrEof(ref stream));
                     result.Add(ConsumeDeclaration(ref s));
                     break;
                 default:
@@ -213,11 +248,11 @@ public static class CssParser
     /// </summary>
     private static CssSimpleBlock ConsumeSimpleBlock(ref CssTokenStream stream)
     {
-        ICssToken ending = stream.Current switch
+        var ending = stream.Current switch
         {
-            LeftCurlyBracket => new RightCurlyBracket(),
-            LeftParenthesisToken => new RightParenthesisToken(),
-            LeftSquareBracket => new RightSquareBracket(),
+            LeftCurlyBracket => typeof(RightCurlyBracket),
+            LeftParenthesisToken => typeof(RightParenthesisToken),
+            LeftSquareBracket => typeof(RightSquareBracket),
             _ => throw new CssParserError("consuming simple block",
                 $"unexpected simple block opening token: {stream.Current.GetType().Name}"),
         };
@@ -228,13 +263,13 @@ public static class CssParser
         {
             var token = stream.ConsumeNext();
 
-            if (token == ending)
+            if (token.GetType() == ending)
                 return block;
 
             if (token is EofToken)
             {
                 throw new CssParserError("consuming simple block",
-                    $"expected simple block closing token {ending.GetType().Name}, not EOF");
+                    $"expected simple block closing token {ending.Name}, not EOF");
             }
 
             stream.Reconsume();
@@ -313,7 +348,7 @@ public static class CssParser
     /// component values, not raw tokens — a function/block met along the way is
     /// already folded by ConsumeComponentValue by the time it lands in this list.
     /// </summary>
-    private static ICssComponentValue[] CollectUntilSemicolonOrEof(CssTokenStream stream)
+    private static ICssComponentValue[] CollectUntilSemicolonOrEof(ref CssTokenStream stream)
     {
         var items = new List<ICssComponentValue> { stream.ConsumeNext() };
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Content.Client._RF.Css;
+// ReSharper disable ReturnValueOfPureMethodIsNotUsed
 
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
