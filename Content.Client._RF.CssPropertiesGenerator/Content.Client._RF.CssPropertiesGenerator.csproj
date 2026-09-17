@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\RobustToolbox\Robust.Roslyn.Shared\Robust.Roslyn.Shared.props" />
+
+  <!-- Idk -->
+  <ItemGroup>
+    <ProjectReference Include="..\RobustToolbox\Robust.Shared.EntitySystemSubscriptionsGenerator\Robust.Shared.EntitySystemSubscriptionsGenerator.csproj" />
+  </ItemGroup>
+
+</Project>

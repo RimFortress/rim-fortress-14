@@ -24,6 +24,10 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="Content.Benchmarks/Content.Benchmarks.csproj" />
+  <Project Path="Content.Client._RF.CssPropertiesGenerator/Content.Client._RF.CssPropertiesGenerator.csproj">
+    <BuildType Solution="DebugOpt|*" Project="Debug" />
+    <BuildType Solution="Tools|*" Project="Debug" />
+  </Project>
   <Project Path="Content.Client/Content.Client.csproj" />
   <Project Path="Content.IntegrationTests/Content.IntegrationTests.csproj" />
   <Project Path="Content.MapRenderer/Content.MapRenderer.csproj" />
