@@ -56,7 +56,7 @@ namespace Content.Client.Stylesheets
             SheetSpace = new StyleSpace(_resCache).Stylesheet; // TODO: REMOVE (obsolete)
             SheetFortress = new StyleFortress(_resCache).Stylesheet; // RimFortress
 
-            _userInterfaceManager.Stylesheet = SheetFortress; // RimFortress
+            // _userInterfaceManager.Stylesheet = SheetNanotrasen; RimFortress
 
             // warn about unused sheetlets
             if (UnusedSheetlets.Count > 0)

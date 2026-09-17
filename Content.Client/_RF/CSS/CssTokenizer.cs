@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
@@ -464,7 +465,7 @@ public static class CssTokenizer
         if (IsWhitespace(stream.PeekNext()))
             stream.ConsumeNext();
 
-        var value = Convert.ToInt32(CodePointsToString(hexDigits), 16);
+        var value = int.Parse(CodePointsToString(hexDigits), style: NumberStyles.HexNumber);
 
         if (value == 0 || IsSurrogate(value) || IsMaximumAllowed(value))
             return 0xFFFD;

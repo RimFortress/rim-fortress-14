@@ -30,7 +30,10 @@ using Content.Shared.IoC;
 using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Players.RateLimiting;
 
-using Content.Client._RF.Lobby; // RimFortress
+// RimFortress Start
+using Content.Client._RF.CSS;
+using Content.Client._RF.Lobby;
+// RimFortress End
 
 namespace Content.Client.IoC
 {
@@ -39,7 +42,10 @@ namespace Content.Client.IoC
         public static void Register(IDependencyCollection collection)
         {
             SharedContentIoC.Register(collection);
-            collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>(); // RimFortress
+            // RimFortress Start
+            collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>();
+            collection.Register<ICssManager, CssManager>();
+            // RimFortress End
             collection.Register<IParallaxManager, ParallaxManager>();
             collection.Register<GeneratedParallaxCache>();
             collection.Register<IChatManager, ChatManager>();
