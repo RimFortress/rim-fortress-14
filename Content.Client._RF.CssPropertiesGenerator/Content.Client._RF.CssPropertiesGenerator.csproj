@@ -2,9 +2,14 @@
 
   <Import Project="..\RobustToolbox\Robust.Roslyn.Shared\Robust.Roslyn.Shared.props" />
 
-  <!-- Idk -->
   <ItemGroup>
-    <ProjectReference Include="..\RobustToolbox\Robust.Shared.EntitySystemSubscriptionsGenerator\Robust.Shared.EntitySystemSubscriptionsGenerator.csproj" />
+    <Compile Include="../RobustToolbox/Robust.Roslyn.Shared/**/*.cs" Exclude="../RobustToolbox/Robust.Roslyn.Shared/obj/**/*.cs">
+      <Link>Robust.Roslyn.Shared/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
   </ItemGroup>
+
+  <PropertyGroup>
+    <IsRoslynComponent>true</IsRoslynComponent>
+  </PropertyGroup>
 
 </Project>

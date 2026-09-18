@@ -17,6 +17,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
 {
     private const string CssPropertyAttributeName = "Content.Client._RF.CSS.CssPropertyAttribute";
     private const string CssStylingAttributeName = "Content.Client._RF.CSS.CssStylingAttribute";
+    private const string CssPropertyAccessorName = "Content.Client._RF.CSS.CssPropertyAccessor";
     private const string CssPropertyAttributeDefaultName = "Default";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -104,7 +105,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
         info.PartialType.WriteHeader(ref indent, attributes: $"[global::{CssStylingAttributeName}]");
 
         builder.AppendLine("{");
-        builder.AppendLine("    public override System.Collections.Generic.Dictionary<string, CssPropertyAccessor> AutoCssProperties()");
+        builder.AppendLine($"    public override System.Collections.Generic.Dictionary<string, {CssPropertyAccessorName}> AutoCssProperties()");
         builder.AppendLine("    {");
         builder.AppendLine("        return new()");
         builder.AppendLine("        {");
@@ -114,7 +115,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
             var parserArg = member.ParserFqn is not null ? $"typeof({member.ParserFqn})" : "null";
 
             builder.AppendLine($"""
-                            ["{member.CssName}"] = new CssPropertyAccessor(
+                            ["{member.CssName}"] = new {CssPropertyAccessorName}(
                                 typeof({member.ClrTypeFqn}),
                                 static (c, v) => (({info.PartialType.FullDisplayName})c).{member.PropertyName} = ({member.ClrTypeFqn})v,
                                 {parserArg}),

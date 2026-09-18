@@ -3,7 +3,7 @@
     "profiles": {
         "CSS Properties Generator": {
             "commandName": "DebugRoslynComponent",
-            "targetProject": "../../Content.Client/Content.Client.csproj"
+            "targetProject": "../Content.Client/Content.Client.csproj"
         }
     }
 }
