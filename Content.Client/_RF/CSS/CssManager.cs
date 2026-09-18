@@ -226,6 +226,12 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         return new Stylesheet(rules);
     }
 
+    public void ClearStylesheet()
+    {
+        _notFileRules.Clear();
+        _rulesByFile.Clear();
+    }
+
     private static bool TryParseEnum(Type type, ref CssValueStream stream, [NotNullWhen(true)] out object? value)
     {
         value = null;
@@ -287,7 +293,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     {
         CssPropertyAccessor? accessor = null;
 
-        for (var type = targetType; type != null; type = type.BaseType)
+        // null ElementType means "no type restriction" (bare class/id/pseudo-class
+        // selector, or an explicit "Control" that TryGetSelector normalized away)
+        // — every Control is still a Control, so property lookup must start from
+        // typeof(CssControl), not skip the walk entirely.
+        var startType = targetType ?? typeof(CssControl);
+
+        for (var type = startType; type != null; type = type.BaseType)
         {
             if (!_properties.TryGetValue(type, out var dict)
                 || !dict.TryGetValue(decl.Name, out var a))

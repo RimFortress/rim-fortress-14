@@ -62,6 +62,11 @@ public interface ICssManager
     /// Rebuilds the style sheet and updates <see cref="IUserInterfaceManager.Stylesheet"/>.
     /// </summary>
     void UpdateStylesheet();
+
+    /// <summary>
+    /// Clears all loaded CSS rules without updating <see cref="IUserInterfaceManager.Stylesheet"/>.
+    /// </summary>
+    void ClearStylesheet();
 }
 
 /// <summary>
