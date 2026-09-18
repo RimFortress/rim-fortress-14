@@ -23,6 +23,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     private readonly Dictionary<Type, ICssValueParser> _customParsers = new(); // parser type : parser
     private readonly Dictionary<Type, Dictionary<string, CssPropertyAccessor>> _properties = new();
     private readonly Dictionary<ResPath, List<StyleRule>> _rulesByFile = new();
+    private readonly List<StyleRule> _notFileRules = new(); // Needed for tests
     private ISawmill _sawmill = null!;
 
     public ResPath StylesPath => new("/CSS/");
@@ -45,9 +46,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var sw = new RStopwatch();
         sw.Start();
         LoadDirectory(StylesPath);
-        var stylesheet = BuildStylesheet();
-        _ui.Stylesheet = stylesheet;
-        _sawmill.Info($"{stylesheet.Rules.Count} CSS styles loaded at {sw.Elapsed}");
+        UpdateStylesheet();
+        _sawmill.Info($"{_ui.Stylesheet?.Rules.Count} CSS styles loaded at {sw.Elapsed}");
         sw.Stop();
     }
 
@@ -137,7 +137,31 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public void LoadFile(ResPath path)
     {
         var reader = new StreamReader(_resource.ContentFileRead(path), EncodingHelpers.UTF8);
-        var result = CssParser.ParseStylesheet(reader.ReadToEnd());
+        _rulesByFile[path] = Load(reader.ReadToEnd());
+    }
+
+    /// <inheritdoc/>
+    public void LoadString(string cssText)
+    {
+        var rules = Load(cssText);
+
+        foreach (var rule in rules)
+        {
+            _notFileRules.Add(rule);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void UpdateStylesheet()
+    {
+        var stylesheet = BuildStylesheet();
+        _ui.Stylesheet = stylesheet;
+        _sawmill.Info("stylesheet updated");
+    }
+
+    private List<StyleRule> Load(string cssText)
+    {
+        var result = CssParser.ParseStylesheet(cssText);
         var rules = new List<StyleRule>();
 
         foreach (var item in result)
@@ -178,7 +202,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             }
         }
 
-        _rulesByFile[path] = rules;
+        return rules;
     }
 
     /// <inheritdoc/>
@@ -192,6 +216,11 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             {
                 rules.Add(rule);
             }
+        }
+
+        foreach (var rule in _notFileRules)
+        {
+            rules.Add(rule);
         }
 
         return new Stylesheet(rules);
@@ -246,7 +275,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             }
         }
 
-        selector = new SelectorElement(type,
+        selector = new SelectorElement(
+            type != typeof(Control) ? type : null,
             classes.Count > 0 ? classes : null,
             id,
             pseudoClasses.Count > 0 ? pseudoClasses : null);
@@ -279,7 +309,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (!ok)
             return false;
 
-        output.Add(new StyleProperty(decl.Name, value!));
+        output.Add(new StyleProperty(accessor.Value.PropertyName ?? decl.Name, value!));
         return true;
     }
 
@@ -337,8 +367,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             if (!_properties.TryGetValue(typeof(TControl), out var dict))
                 _properties[typeof(TControl)] = dict = new(StringComparer.OrdinalIgnoreCase);
 
-            var accessor = new CssPropertyAccessor(typeof(TField), (c, v) => setter(c, (TField)v), handler);
-            if (!dict.TryAdd(fieldName, accessor))
+            var accessor = new CssPropertyAccessor(typeof(TField), (c, v) => setter(c, (TField)v), handler, fieldName);
+            if (!dict.TryAdd(CaseConversion.PascalToKebab(fieldName), accessor))
             {
 #if !EXCEPTION_TOLERANCE
                 throw new ArgumentException($"duplicated CSS field registration for {typeof(TControl).FullName}, Field: {fieldName}");

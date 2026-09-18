@@ -49,12 +49,33 @@ public interface ICssManager
     void LoadFile(ResPath path);
 
     /// <summary>
+    /// Loads CSS text.
+    /// </summary>
+    void LoadString(string cssText);
+
+    /// <summary>
     /// Creates a style sheet from all loaded CSS files.
     /// </summary>
     Stylesheet BuildStylesheet();
+
+    /// <summary>
+    /// Rebuilds the style sheet and updates <see cref="IUserInterfaceManager.Stylesheet"/>.
+    /// </summary>
+    void UpdateStylesheet();
 }
 
+/// <summary>
+/// A struct that provides access to Control fields via CSS.
+/// </summary>
+/// <param name="ClrType">Type of the target field's value.</param>
+/// <param name="Setter">An action triggered when the value of a CSS property changes.</param>
+/// <param name="CustomParser">The type of custom parser for CSS values; if null, the default parser is used.</param>
+/// <param name="PropertyName">
+/// A custom field name that will be used to create a <see cref="StyleProperty"/>;
+/// if null, the field name converted to kebab case will be used.
+/// </param>
 public readonly record struct CssPropertyAccessor(
     Type ClrType,
     Action<Control, object> Setter,
-    Type? CustomParser);
+    Type? CustomParser,
+    string? PropertyName = null);
