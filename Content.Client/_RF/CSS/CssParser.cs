@@ -1,4 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+using Content.Shared._RF.Utilities;
 using JetBrains.Annotations;
+using Robust.Client.UserInterface;
+using Robust.Shared.Reflection;
 
 namespace Content.Client._RF.CSS;
 
@@ -58,6 +62,66 @@ public static class CssParser
     {
         var stream = new CssTokenStream(tokens);
         return ConsumeListOfDeclarations(ref stream);
+    }
+
+    /// <summary>
+    /// Parses the selector from <see cref="CssQualifiedRule"/>.
+    /// </summary>
+    /// <param name="rule"></param>
+    /// <param name="reflection">Reflection manager. Used to get the <see cref="SelectorElement.ElementType"/>.</param>
+    /// <param name="selector">A selector extracted from a rule.</param>
+    /// <returns>True if the selector has been successfully parsed.</returns>
+    /// <exception cref="CssParserError">
+    /// If !EXCEPTION_TOLERANCE and the <see cref="SelectorElement.ElementType"/> could not be found.
+    /// </exception>
+    [PublicAPI, Pure]
+    public static bool TryGetSelector(
+        CssQualifiedRule rule,
+        IReflectionManager reflection,
+        [NotNullWhen(true)] out Selector? selector)
+    {
+        var stream = new CssValueStream(rule.Prelude);
+
+        Type? type = null;
+        string? id = null;
+        var classes = new List<string>();
+        var pseudoClasses = new List<string>();
+
+        while (stream.Peek() is not null)
+        {
+            switch (stream.ConsumeNext())
+            {
+                case IdentToken ident:
+                    if (!reflection.TryLooseGetType(RfCaseConversion.CapitalizeFirst(ident.Value), out type))
+                    {
+#if EXCEPTION_TOLERANCE
+                        selector = null;
+                        return false;
+#else
+                        throw new CssParserError("resolving selector", $"unknown control type '{ident.Value}'");
+#endif
+                    }
+                    break;
+                case DelimToken { CodePoint: '.' }:
+                    if (stream.ConsumeNext() is IdentToken cls)
+                        classes.Add(cls.Value);
+                    break;
+                case HashToken { IsId: true } hash:
+                    id = hash.Value;
+                    break;
+                case ColonToken:
+                    if (stream.ConsumeNext() is IdentToken pseudo)
+                        pseudoClasses.Add(pseudo.Value);
+                    break;
+            }
+        }
+
+        selector = new SelectorElement(
+            type != typeof(Control) ? type : null,
+            classes.Count > 0 ? classes : null,
+            id,
+            pseudoClasses.Count > 0 ? pseudoClasses : null);
+        return true;
     }
 
     /// <summary>

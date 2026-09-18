@@ -172,9 +172,10 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     if (qualified.Block == null)
                         continue;
 
-                    if (!TryGetSelector(qualified, out var selector))
+                    if (!CssParser.TryGetSelector(qualified, _reflection, out var selector))
                         continue;
 
+                    var elemType = selector is SelectorElement elem ? elem.ElementType : null;
                     var properties = new List<StyleProperty>();
 
                     foreach (var decl in CssParser.ParseListOfDeclarations(qualified.Block.Value.ToArray()))
@@ -182,7 +183,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                         switch (decl)
                         {
                             case CssDeclaration declaration:
-                                if (!TryApplyDeclaration(properties, selector.ElementType, declaration))
+                                if (!TryApplyDeclaration(properties, elemType, declaration))
 #if EXCEPTION_TOLERANCE
                                     continue;
 #else
@@ -241,52 +242,6 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
         var pascalCase = RfCaseConversion.KebabToPascal(ident.Value);
         return Enum.TryParse(type, pascalCase, ignoreCase: true, out value);
-    }
-
-    private bool TryGetSelector(CssQualifiedRule rule, [NotNullWhen(true)] out SelectorElement? selector)
-    {
-        var stream = new CssValueStream(rule.Prelude);
-
-        Type? type = null;
-        string? id = null;
-        var classes = new List<string>();
-        var pseudoClasses = new List<string>();
-
-        while (stream.Peek() is not null)
-        {
-            switch (stream.ConsumeNext())
-            {
-                case IdentToken ident:
-                    if (!_reflection.TryLooseGetType(RfCaseConversion.CapitalizeFirst(ident.Value), out type))
-                    {
-#if EXCEPTION_TOLERANCE
-                        selector = null;
-                        return false;
-#else
-                        throw new CssParserError("resolving selector", $"unknown control type '{ident.Value}'");
-#endif
-                    }
-                    break;
-                case DelimToken { CodePoint: '.' }:
-                    if (stream.ConsumeNext() is IdentToken cls)
-                        classes.Add(cls.Value);
-                    break;
-                case HashToken { IsId: true } hash:
-                    id = hash.Value;
-                    break;
-                case ColonToken:
-                    if (stream.ConsumeNext() is IdentToken pseudo)
-                        pseudoClasses.Add(pseudo.Value);
-                    break;
-            }
-        }
-
-        selector = new SelectorElement(
-            type != typeof(Control) ? type : null,
-            classes.Count > 0 ? classes : null,
-            id,
-            pseudoClasses.Count > 0 ? pseudoClasses : null);
-        return true;
     }
 
     private bool TryApplyDeclaration(List<StyleProperty> output, Type? targetType, CssDeclaration decl)
