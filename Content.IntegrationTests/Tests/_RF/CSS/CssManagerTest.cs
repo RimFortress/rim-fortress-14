@@ -157,4 +157,24 @@ public sealed class CssManagerTest : GameTest
         Assert.That(genericOk, Is.EqualTo(nonGenericOk));
         Assert.That(viaGeneric, Is.EqualTo(viaNonGeneric));
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void ChildSelectorParseTest()
+    {
+        var sheet = Load("""
+            cssControl > testCssControl {
+                min-height: 10px;
+            }
+            """);
+
+        Assert.That(sheet.Rules, Has.Count.EqualTo(1));
+        Assert.That(sheet.Rules.Single().Selector, Is.TypeOf<SelectorChild>());
+
+        var parent = new CssControl();
+        var child = new TestCssControl();
+        parent.AddChild(child);
+
+        Assert.That(sheet.Rules.Single().Selector.Matches(child), Is.True);
+    }
 }

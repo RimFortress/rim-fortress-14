@@ -1,8 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
-using Content.Shared._RF.Utilities;
 using JetBrains.Annotations;
-using Robust.Client.UserInterface;
-using Robust.Shared.Reflection;
 
 namespace Content.Client._RF.CSS;
 
@@ -62,109 +58,6 @@ public static partial class CssParser
     {
         var stream = new CssTokenStream(tokens);
         return ConsumeListOfDeclarations(ref stream);
-    }
-
-    /// <summary>
-    /// Parses the selector from <see cref="CssQualifiedRule"/>.
-    /// </summary>
-    /// <param name="rule"></param>
-    /// <param name="reflection">Reflection manager. Used to get the <see cref="SelectorElement.ElementType"/>.</param>
-    /// <param name="selector">A selector extracted from a rule.</param>
-    /// <returns>True if the selector has been successfully parsed.</returns>
-    /// <exception cref="CssParserError">
-    /// If !EXCEPTION_TOLERANCE and the <see cref="SelectorElement.ElementType"/> could not be found.
-    /// </exception>
-    [PublicAPI, Pure]
-    public static bool TryGetSelector(
-        CssQualifiedRule rule,
-        IReflectionManager reflection,
-        [NotNullWhen(true)] out Selector? selector)
-    {
-        var stream = new CssValueStream(rule.Prelude);
-
-        Type? type = null;
-        string? id = null;
-        var classes = new List<string>();
-        var pseudoClasses = new List<string>();
-        var extraSelectors = new List<Selector>(); // nth-child / nth-of-type
-
-        while (stream.Peek() is not null)
-        {
-            switch (stream.ConsumeNext())
-            {
-                case IdentToken ident:
-                    if (!reflection.TryLooseGetType(RfCaseConversion.CapitalizeFirst(ident.Value), out type))
-                    {
-#if EXCEPTION_TOLERANCE
-                        selector = null;
-                        return false;
-#else
-                        throw new CssParserError("resolving selector", $"unknown control type '{ident.Value}'");
-#endif
-                    }
-                    break;
-                case DelimToken { CodePoint: '.' }:
-                    if (stream.ConsumeNext() is IdentToken cls)
-                        classes.Add(cls.Value);
-                    break;
-                case HashToken { IsId: true } hash:
-                    id = hash.Value;
-                    break;
-                case ColonToken:
-                    switch (stream.ConsumeNext())
-                    {
-                        case IdentToken pseudo:
-                            pseudoClasses.Add(pseudo.Value);
-                            break;
-
-                        case CssFunction { Name: "nth-child" } nthChild:
-                            if (!TryParseAnBMicrosyntax(nthChild.Value, out var anbChild))
-                            {
-#if EXCEPTION_TOLERANCE
-                                selector = null;
-                                return false;
-#else
-                                throw new CssParserError("resolving selector", $"invalid An+B in {nthChild.Name}()");
-#endif
-                            }
-                            extraSelectors.Add(new NthChildSelector(anbChild.Value));
-                            break;
-
-                        case CssFunction { Name: "nth-of-type" } nthType:
-                            if (!TryParseAnBMicrosyntax(nthType.Value, out var anbType))
-                            {
-#if EXCEPTION_TOLERANCE
-                                selector = null;
-                                return false;
-#else
-                                throw new CssParserError("resolving selector", $"invalid An+B in {nthType.Name}()");
-#endif
-                            }
-                            extraSelectors.Add(new NthOfTypeSelector(anbType.Value));
-                            break;
-                        default:
-#if EXCEPTION_TOLERANCE
-                            selector = null;
-                            return false;
-#else
-                            throw new CssParserError("resolving selector", "expected a pseudo-class or pseudo-function after ':'");
-#endif
-                    }
-                    break;
-            }
-        }
-
-        var element = new SelectorElement(
-            type != typeof(Control) ? type : null,
-            classes.Count > 0 ? classes : null,
-            id,
-            pseudoClasses.Count > 0 ? pseudoClasses : null);
-
-        selector = extraSelectors.Count == 0
-            ? element
-            : new AndSelector([element, .. extraSelectors]);
-
-        return true;
     }
 
     /// <summary>
