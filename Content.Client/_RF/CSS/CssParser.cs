@@ -9,7 +9,7 @@ namespace Content.Client._RF.CSS;
 /// <summary>
 /// A CCS token parser written according to the specification at https://www.w3.org/TR/css-syntax-3/
 /// </summary>
-public static class CssParser
+public static partial class CssParser
 {
     /// <summary>
     /// Parses CSS text into a set of style rules.
@@ -86,6 +86,7 @@ public static class CssParser
         string? id = null;
         var classes = new List<string>();
         var pseudoClasses = new List<string>();
+        var extraSelectors = new List<Selector>(); // nth-child / nth-of-type
 
         while (stream.Peek() is not null)
         {
@@ -110,17 +111,59 @@ public static class CssParser
                     id = hash.Value;
                     break;
                 case ColonToken:
-                    if (stream.ConsumeNext() is IdentToken pseudo)
-                        pseudoClasses.Add(pseudo.Value);
+                    switch (stream.ConsumeNext())
+                    {
+                        case IdentToken pseudo:
+                            pseudoClasses.Add(pseudo.Value);
+                            break;
+
+                        case CssFunction { Name: "nth-child" } nthChild:
+                            if (!TryParseAnBMicrosyntax(nthChild.Value, out var anbChild))
+                            {
+#if EXCEPTION_TOLERANCE
+                                selector = null;
+                                return false;
+#else
+                                throw new CssParserError("resolving selector", $"invalid An+B in {nthChild.Name}()");
+#endif
+                            }
+                            extraSelectors.Add(new NthChildSelector(anbChild.Value));
+                            break;
+
+                        case CssFunction { Name: "nth-of-type" } nthType:
+                            if (!TryParseAnBMicrosyntax(nthType.Value, out var anbType))
+                            {
+#if EXCEPTION_TOLERANCE
+                                selector = null;
+                                return false;
+#else
+                                throw new CssParserError("resolving selector", $"invalid An+B in {nthType.Name}()");
+#endif
+                            }
+                            extraSelectors.Add(new NthOfTypeSelector(anbType.Value));
+                            break;
+                        default:
+#if EXCEPTION_TOLERANCE
+                            selector = null;
+                            return false;
+#else
+                            throw new CssParserError("resolving selector", "expected a pseudo-class or pseudo-function after ':'");
+#endif
+                    }
                     break;
             }
         }
 
-        selector = new SelectorElement(
+        var element = new SelectorElement(
             type != typeof(Control) ? type : null,
             classes.Count > 0 ? classes : null,
             id,
             pseudoClasses.Count > 0 ? pseudoClasses : null);
+
+        selector = extraSelectors.Count == 0
+            ? element
+            : new AndSelector([element, .. extraSelectors]);
+
         return true;
     }
 

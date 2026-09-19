@@ -18,7 +18,7 @@ public sealed class ColorParser : CssValueParser<Color>
                 stream.ConsumeNext();
                 return true;
             case IdentToken ident:
-                if (!Color.TryFromHex(ident.Value, out value))
+                if (!Color.TryFromName(ident.Value, out value))
                     return false;
 
                 stream.ConsumeNext();

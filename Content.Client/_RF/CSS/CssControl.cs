@@ -24,4 +24,36 @@ public class CssControl : Control
     {
         return new();
     }
+
+    protected override void ChildMoved(Control child, int oldIndex, int newIndex)
+    {
+        base.ChildMoved(child, oldIndex, newIndex);
+
+        foreach (var control in Children)
+        {
+            control.DoStyleUpdate();
+        }
+    }
+
+    protected override void ChildAdded(Control newChild)
+    {
+        base.ChildAdded(newChild);
+
+        foreach (var control in Children)
+        {
+            if (control != newChild)
+                control.DoStyleUpdate();
+        }
+    }
+
+    protected override void ChildRemoved(Control child)
+    {
+        base.ChildRemoved(child);
+
+        foreach (var control in Children)
+        {
+            if (control != child)
+                control.DoStyleUpdate();
+        }
+    }
 }

@@ -36,6 +36,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     {
         _sawmill = Logger.GetSawmill("css");
 
+        RegisterParsers();
         RegisterProperties();
         Reload();
     }
@@ -67,54 +68,31 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// <inheritdoc/>
     public bool TryParseValue(ref CssValueStream stream, Type type, [NotNullWhen(true)] out object? value)
     {
-        // We don't want to create a different parser for each enum
+        // We don't want to create a different parsers for each enum
         if (type != typeof(Enum) && type.IsAssignableTo(typeof(Enum)))
             return TryParseEnum(type, ref stream, out value);
 
-        if (_defaultParsers.TryGetValue(type, out var cache))
-        {
-            var mark = stream.Mark();
-
-            foreach (var parser in cache)
-            {
-                if (parser.TryParse(ref stream, out value))
-                    return true;
-
-                stream.Reset(mark);
-            }
-
-            value = null;
-            return false;
-        }
-
-        var types = _reflection.GetAllChildren<ICssValueParser>().Where(x => !x.IsAbstract).ToList();
-
-        if (types.Count == 0)
+        if (!_defaultParsers.TryGetValue(type, out var parsers) || parsers.Count == 0)
         {
 #if EXCEPTION_TOLERANCE
             return false;
 #else
-            throw new ArgumentException($"CSS parser for type {type.FullName} not found");
+            throw new ArgumentException($"default CSS parser for type {type.FullName} not found");
 #endif
         }
 
-        var parsers = new List<ICssValueParser>();
+        var mark = stream.Mark();
 
-        foreach (var parserType in types)
+        foreach (var parser in parsers)
         {
-            var instance = _factory.CreateInstance<ICssValueParser>(parserType);
+            if (parser.TryParse(ref stream, out value))
+                return true;
 
-            if (!instance.Default)
-            {
-                _customParsers.Add(instance.GetType(), instance);
-                continue;
-            }
-
-            parsers.Add(instance);
+            stream.Reset(mark);
         }
 
-        _defaultParsers[type] = parsers;
-        return TryParseValue(ref stream, out value);
+        value = null;
+        return false;
     }
 
     /// <inheritdoc/>
@@ -175,7 +153,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     if (!CssParser.TryGetSelector(qualified, _reflection, out var selector))
                         continue;
 
-                    var elemType = selector is SelectorElement elem ? elem.ElementType : null;
+                    var elemType = selector switch
+                    {
+                        SelectorElement elem => elem.ElementType,
+                        AndSelector and => and.Selectors.OfType<SelectorElement>().FirstOrDefault()?.ElementType,
+                        _ => null,
+                    };
+
                     var properties = new List<StyleProperty>();
 
                     foreach (var decl in CssParser.ParseListOfDeclarations(qualified.Block.Value.ToArray()))
@@ -274,10 +258,34 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             : TryParseValue(ref stream, accessor.Value.ClrType, out value);
 
         if (!ok)
+        {
+#if EXCEPTION_TOLERANCE
             return false;
+#else
+            throw new ArgumentException($"failed to parse CSS value '{decl.Name}: {decl.Value}'");
+#endif
+        }
 
         output.Add(new StyleProperty(accessor.Value.PropertyName ?? decl.Name, value!));
         return true;
+    }
+
+    private void RegisterParsers()
+    {
+        var types = _reflection.GetAllChildren<ICssValueParser>().Where(x => !x.IsAbstract).ToList();
+
+        foreach (var parserType in types)
+        {
+            var instance = _factory.CreateInstance<ICssValueParser>(parserType);
+
+            if (!instance.Default)
+            {
+                _customParsers.Add(instance.GetType(), instance);
+                continue;
+            }
+
+            _defaultParsers.GetOrNew(instance.ValueType).Add(instance);
+        }
     }
 
     private void RegisterProperties()
