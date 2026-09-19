@@ -150,37 +150,47 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     if (qualified.Block == null)
                         continue;
 
-                    if (!CssParser.TryGetSelector(qualified, _reflection, out var selector))
+                    if (!CssParser.TryGetSelectors(qualified, _reflection, out var selectors))
                         continue;
 
-                    var elemType = selector switch
-                    {
-                        SelectorElement elem => elem.ElementType,
-                        AndSelector and => and.Selectors.OfType<SelectorElement>().FirstOrDefault()?.ElementType,
-                        _ => null,
-                    };
-
-                    var properties = new List<StyleProperty>();
-
+                    // Declaration parsing is selector-independent — do it once
+                    // per rule, not once per selector in the group.
+                    var declarations = new List<CssDeclaration>();
                     foreach (var decl in CssParser.ParseListOfDeclarations(qualified.Block.Value.ToArray()))
                     {
                         switch (decl)
                         {
                             case CssDeclaration declaration:
-                                if (!TryApplyDeclaration(properties, elemType, declaration))
-#if EXCEPTION_TOLERANCE
-                                    continue;
-#else
-                                    throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
-#endif
-
+                                declarations.Add(declaration);
                                 break;
                             default:
                                 throw new NotImplementedException();
                         }
                     }
 
-                    rules.Add(new StyleRule(selector, properties));
+                    // Property *resolution* IS selector-dependent (different
+                    // types in a comma group can have different registered
+                    // properties), and CSS specificity is computed per individual
+                    // selector, not once for the whole group — so each selector
+                    // gets its own StyleRule.
+                    foreach (var selector in selectors)
+                    {
+                        var elemType = GetElementType(selector);
+                        var properties = new List<StyleProperty>();
+
+                        foreach (var declaration in declarations)
+                        {
+                            if (!TryApplyDeclaration(properties, elemType, declaration))
+#if EXCEPTION_TOLERANCE
+                                continue;
+#else
+                                throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
+#endif
+                        }
+
+                        rules.Add(new StyleRule(selector, properties));
+                    }
+
                     break;
                 default:
                     throw new NotImplementedException();
@@ -216,6 +226,20 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         _notFileRules.Clear();
         _rulesByFile.Clear();
     }
+
+    /// <summary>
+    /// Extracts the element type a selector is scoped to, for property-registry
+    /// lookup (see <see cref="TryApplyDeclaration"/>). Walks into <see cref="AndSelector"/>
+    /// (compound with nth-child/nth-of-type etc.) and <see cref="SelectorChild"/> (child combinator,
+    /// takes the rightmost/innermost compound — "A > B" applies to B).
+    /// </summary>
+    private static Type? GetElementType(Selector selector) => selector switch
+    {
+        SelectorElement elem => elem.ElementType,
+        AndSelector and => and.Selectors.OfType<SelectorElement>().FirstOrDefault()?.ElementType,
+        SelectorChild child => GetElementType(child.Child),
+        _ => null,
+    };
 
     private static bool TryParseEnum(Type type, ref CssValueStream stream, [NotNullWhen(true)] out object? value)
     {

@@ -1,13 +1,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using Content.Client._RF.CSS;
+using Content.IntegrationTests.Fixtures;
+using Content.IntegrationTests.Fixtures.Attributes;
+using Robust.Shared.Reflection;
+
 // ReSharper disable ReturnValueOfPureMethodIsNotUsed
 
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
 [TestFixture, TestOf(typeof(CssParser))]
-public sealed class CssParserTests
+public sealed class CssParserTests : GameTest
 {
+    [SidedDependency(Side.Client)] private readonly IReflectionManager _reflection = default!;
+
     [Test]
     public void Simple_Declaration_Is_Parsed_With_Correct_Name_And_Value()
     {
@@ -237,5 +243,60 @@ public sealed class CssParserTests
     public void Unclosed_Function_Throws()
     {
         Assert.Throws<CssParserError>(() => CssParser.ParseStylesheet("a { color: rgb(255, 0, 0; }"));
+    }
+
+    [Test]
+    [TestCase(":focus {}", typeof(FocusSelector))]
+    [TestCase(":root {}", typeof(RootSelector))]
+    [TestCase(":empty {}", typeof(EmptySelector))]
+    [TestCase(":first-child {}", typeof(NthChildSelector))]
+    [TestCase(":last-child {}", typeof(NthLastChildSelector))]
+    [TestCase(":first-of-type {}", typeof(NthOfTypeSelector))]
+    [TestCase(":last-of-type {}", typeof(NthLastOfTypeSelector))]
+    [TestCase(":only-child {}", typeof(OnlyChildSelector))]
+    [TestCase(":only-of-type {}", typeof(OnlyOfTypeSelector))]
+    [TestCase(":nth-child(2n) {}", typeof(NthChildSelector))]
+    [TestCase(":nth-of-type(even) {}", typeof(NthOfTypeSelector))]
+    [TestCase(":nth-last-child(3n + 1) {}", typeof(NthLastChildSelector))]
+    [TestCase(":nth-last-of-type(odd) {}", typeof(NthLastOfTypeSelector))]
+    [RunOnSide(Side.Client)]
+    public void SelectorsParseTest(string text, Type type)
+    {
+        var result = CssParser.ParseStylesheet(text);
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
+
+        var qualified = (CssQualifiedRule)result[0];
+        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, out var selectors), Is.True);
+        Assert.That(selectors, Has.Count.EqualTo(1));
+        Assert.That(selectors![0], Is.TypeOf(type));
+    }
+
+    [TestCase(":not(:first-child) {}", typeof(NotSelector), typeof(NthChildSelector))]
+    [TestCase(":not(:focus, :root) {}", typeof(NotSelector), typeof(FocusSelector), typeof(RootSelector))]
+    [TestCase(":not(:empty, :nth-child(2n)) {}", typeof(NotSelector), typeof(EmptySelector), typeof(NthChildSelector))]
+    [TestCase(":is(:last-of-type, :nth-last-child(5n - 3)) {}", typeof(OrSelector), typeof(NthLastOfTypeSelector), typeof(NthLastChildSelector))]
+    [TestCase(":is(:empty, :nth-of-type(even)) {}", typeof(OrSelector), typeof(EmptySelector), typeof(NthOfTypeSelector))]
+    [TestCase(":is(:nth-last-of-type(odd), :first-of-type, :only-of-type) {}", typeof(OrSelector), typeof(NthLastOfTypeSelector), typeof(NthOfTypeSelector), typeof(OnlyOfTypeSelector))]
+    [RunOnSide(Side.Client)]
+    public void CompoundSelectorsParseTest(string text, Type compoundType, params Type[] type)
+    {
+        var result = CssParser.ParseStylesheet(text);
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
+
+        var qualified = (CssQualifiedRule)result[0];
+        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, out var selectors), Is.True);
+        Assert.That(selectors, Has.Count.EqualTo(1));
+        Assert.That(selectors![0], Is.TypeOf(compoundType));
+
+        var main = (CompoundSelector)selectors[0];
+
+        for (var i = 0; i < type.Length; i++)
+        {
+            Assert.That(main.Selectors[i],
+                Is.TypeOf(type[i]),
+                $"expected {type[i].FullName}, not {main.Selectors[i].GetType().FullName}");
+        }
     }
 }

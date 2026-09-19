@@ -13,6 +13,11 @@ namespace Content.Client._RF.CSS;
 public class CssControl : Control
 {
     /// <summary>
+    /// Is this control the <see cref="UserInterfaceManager.CurrentlyHovered"/>?
+    /// </summary>
+    public bool Hovered => UserInterfaceManager.CurrentlyHovered == this;
+
+    /// <summary>
     /// The method through which CssPropertiesGenerator adds
     /// CSS properties extracted from this class's <see cref="CssPropertyAttribute"/>,
     /// and through which <see cref="ICssManager"/> then builds the style sheet.
@@ -55,5 +60,35 @@ public class CssControl : Control
             if (control != child)
                 control.DoStyleUpdate();
         }
+    }
+
+    protected override void KeyboardFocusEntered()
+    {
+        base.KeyboardFocusEntered();
+        DoStyleUpdate();
+    }
+
+    protected override void ControlFocusExited()
+    {
+        base.ControlFocusExited();
+        DoStyleUpdate();
+    }
+
+    protected override void KeyboardFocusExited()
+    {
+        base.KeyboardFocusExited();
+        DoStyleUpdate();
+    }
+
+    protected override void MouseEntered()
+    {
+        base.MouseEntered();
+        DoStyleUpdate();
+    }
+
+    protected override void MouseExited()
+    {
+        base.MouseExited();
+        DoStyleUpdate();
     }
 }
