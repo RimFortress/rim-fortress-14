@@ -12,7 +12,7 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 public sealed class CssManagerTest : GameTest
 {
     [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
-    [SidedDependency(Side.Client)] private readonly ILocalizationManager _loc = default!;
+    [SidedDependency(Side.Client)] private readonly ILocalizationManager _loc = null!;
 
     private Stylesheet Load(string text)
     {
