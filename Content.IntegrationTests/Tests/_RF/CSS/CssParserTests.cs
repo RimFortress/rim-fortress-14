@@ -246,6 +246,7 @@ public sealed class CssParserTests : GameTest
     }
 
     [Test]
+    [TestCase(":hover {}", typeof(HoverSelector))]
     [TestCase(":focus {}", typeof(FocusSelector))]
     [TestCase(":root {}", typeof(RootSelector))]
     [TestCase(":empty {}", typeof(EmptySelector))]
