@@ -118,6 +118,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
                             ["{member.CssName}"] = new {CssPropertyAccessorName}(
                                 typeof({member.ClrTypeFqn}),
                                 static (c, v) => (({info.PartialType.FullDisplayName})c).{member.PropertyName} = ({member.ClrTypeFqn})v,
+                                static c => (({info.PartialType.FullDisplayName})c).{member.PropertyName}!,
                                 {parserArg}),
                 """);
         }

@@ -13,6 +13,7 @@ public static partial class CssParser
     /// </summary>
     /// <param name="rule"></param>
     /// <param name="reflection">Reflection manager. Used to get the <see cref="SelectorElement.ElementType"/>.</param>
+    /// <param name="resolver">CSS property access manager. Used for parsing <see cref="AttributeSelector"/>.</param>
     /// <param name="selectors">A selectors extracted from a rule.</param>
     /// <returns>True if the selector has been successfully parsed.</returns>
     /// <exception cref="CssParserError">
@@ -22,19 +23,21 @@ public static partial class CssParser
     public static bool TryGetSelectors(
         CssQualifiedRule rule,
         IReflectionManager reflection,
+        ICssPropertyResolver resolver,
         [NotNullWhen(true)] out List<Selector>? selectors)
-        => TryGetSelectors(rule.Prelude, reflection, out selectors);
+        => TryGetSelectors(rule.Prelude, reflection, resolver, out selectors);
 
     private static bool TryGetSelectors(
         List<ICssComponentValue> prelude,
         IReflectionManager reflection,
+        ICssPropertyResolver resolver,
         [NotNullWhen(true)] out List<Selector>? selectors)
     {
         selectors = new List<Selector>();
 
         foreach (var part in SplitByComma(prelude))
         {
-            if (!TryGetSelectorFromPrelude(part, reflection, out var selector))
+            if (!TryGetSelectorFromPrelude(part, reflection, resolver, out var selector))
             {
                 selectors = null;
                 return false;
@@ -54,6 +57,7 @@ public static partial class CssParser
     private static bool TryGetSelectorFromPrelude(
         List<ICssComponentValue> prelude,
         IReflectionManager reflection,
+        ICssPropertyResolver resolver,
         [NotNullWhen(true)] out Selector? selector)
     {
         selector = null;
@@ -72,7 +76,7 @@ public static partial class CssParser
 
         foreach (var segment in segments)
         {
-            if (!TryParseCompoundSelector(segment, reflection, out var compound))
+            if (!TryParseCompoundSelector(segment, reflection, resolver, out var compound))
                 return false; // inner call already threw when !EXCEPTION_TOLERANCE
 
             compounds.Add(compound);
@@ -147,6 +151,7 @@ public static partial class CssParser
     private static bool TryParseCompoundSelector(
         List<ICssComponentValue> segment,
         IReflectionManager reflection,
+        ICssPropertyResolver resolver,
         [NotNullWhen(true)] out Selector? selector)
     {
         selector = null;
@@ -163,6 +168,9 @@ public static partial class CssParser
             switch (stream.ConsumeNext())
             {
                 case IdentToken ident:
+                    // TODO: Using `TryLooseGetType` here can be a huge problem, since it checks the
+                    // suffix of the type name, which can cause conflicts with controls
+                    // that have similar names—as I experienced with `LocaleTestCssControl` and `TestCssControl`.
                     if (!reflection.TryLooseGetType(RfCaseConversion.KebabToPascal(ident.Value), out type))
                         return Exception($"unknown control type '{ident.Value}'");
 
@@ -235,13 +243,13 @@ public static partial class CssParser
                             extraSelectors.Add(new NthLastOfTypeSelector(anb.Value));
                             break;
                         case CssFunction { Name: "not" } not:
-                            if (!TryGetSelectors(not.Value, reflection, out var inner))
+                            if (!TryGetSelectors(not.Value, reflection, resolver, out var inner))
                                 return Exception("invalid content of not() selector");
 
                             extraSelectors.Add(new NotSelector(inner));
                             break;
                         case CssFunction { Name: "is" } @is:
-                            if (!TryGetSelectors(@is.Value, reflection, out inner))
+                            if (!TryGetSelectors(@is.Value, reflection, resolver, out inner))
                                 return Exception("invalid content of is() selector");
 
                             extraSelectors.Add(new OrSelector(inner));
@@ -249,6 +257,68 @@ public static partial class CssParser
                         default:
                             return Exception("expected a pseudo-class or pseudo-function after ':'");
                     }
+                    break;
+                case CssSimpleBlock { AssociatedToken: LeftSquareBracket } squareBlock:
+                    string attrName;
+                    var blockStream = new CssValueStream(squareBlock.Value);
+                    var next = blockStream.ConsumeNext();
+
+                    switch (next)
+                    {
+                        case StringToken str:
+                            attrName = str.Value;
+                            break;
+                        case IdentToken ident:
+                            attrName = ident.Value;
+                            break;
+                        default:
+                            return Exception($"attribute selector property must be string or ident, not {next?.GetType().FullName}");
+                    }
+
+                    var resolveType = type ?? typeof(CssControl);
+
+                    if (!resolver.TryGetPropertyAccessor(resolveType, attrName, out var accessor))
+                        return Exception($"unknown attribute `{attrName}` for {resolveType.FullName}");
+
+                    var op = blockStream.ConsumeNext() switch
+                    {
+                        DelimToken { CodePoint: '=' } => AttributeMatchOperator.Equals,
+                        DelimToken { CodePoint: '~' } when blockStream.ConsumeNext() is DelimToken { CodePoint: '=' } => AttributeMatchOperator.WhitespaceList,
+                        DelimToken { CodePoint: '|' } when blockStream.ConsumeNext() is DelimToken { CodePoint: '=' } => AttributeMatchOperator.HyphenList,
+                        DelimToken { CodePoint: '^' } when blockStream.ConsumeNext() is DelimToken { CodePoint: '=' } => AttributeMatchOperator.StartsWith,
+                        DelimToken { CodePoint: '$' } when blockStream.ConsumeNext() is DelimToken { CodePoint: '=' } => AttributeMatchOperator.EndsWith,
+                        DelimToken { CodePoint: '*' } when blockStream.ConsumeNext() is DelimToken { CodePoint: '=' } => AttributeMatchOperator.Contains,
+                        _ => (AttributeMatchOperator?)null,
+                    };
+
+                    if (op == null)
+                        return Exception("unknown attribute selector operator");
+
+                    // substring/prefix/suffix/list operators are inherently string
+                    // operations — reject them for non-string properties
+                    if (op != AttributeMatchOperator.Equals && accessor.Value.ClrType != typeof(string))
+                        return Exception($"operator only valid for string-typed properties, '{attrName}' is {accessor.Value.ClrType.Name}");
+
+                    if (!resolver.TryParseValue(ref blockStream, accessor.Value.ClrType, out var comparisonValue))
+                        return Exception($"failed to parse attribute selector value of field '{attrName}'");
+
+                    var comparison = StringComparison.Ordinal;
+
+                    if (blockStream.Peek() is IdentToken { Value: "i" or "I" })
+                    {
+                        blockStream.ConsumeNext();
+                        comparison = StringComparison.OrdinalIgnoreCase;
+                    }
+                    else if (blockStream.Peek() is IdentToken { Value: "s" or "S" })
+                    {
+                        blockStream.ConsumeNext();
+                        comparison = StringComparison.Ordinal; // explicit default, just consumes the token
+                    }
+
+                    if (blockStream.ConsumeNext() != null)
+                        return Exception("unexpected content after attribute selector value, expected ']'");
+
+                    extraSelectors.Add(new AttributeSelector(accessor.Value.Getter, op.Value, comparisonValue, comparison));
                     break;
             }
         }

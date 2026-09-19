@@ -13,6 +13,7 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 public sealed class CssParserTests : GameTest
 {
     [SidedDependency(Side.Client)] private readonly IReflectionManager _reflection = default!;
+    [SidedDependency(Side.Client)] private readonly ICssManager _css = default!;
 
     [Test]
     public void Simple_Declaration_Is_Parsed_With_Correct_Name_And_Value()
@@ -260,6 +261,7 @@ public sealed class CssParserTests : GameTest
     [TestCase(":nth-of-type(even) {}", typeof(NthOfTypeSelector))]
     [TestCase(":nth-last-child(3n + 1) {}", typeof(NthLastChildSelector))]
     [TestCase(":nth-last-of-type(odd) {}", typeof(NthLastOfTypeSelector))]
+    [TestCase("[min-height=10px] {}", typeof(AttributeSelector))]
     [RunOnSide(Side.Client)]
     public void SelectorsParseTest(string text, Type type)
     {
@@ -268,17 +270,18 @@ public sealed class CssParserTests : GameTest
         Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
 
         var qualified = (CssQualifiedRule)result[0];
-        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, out var selectors), Is.True);
+        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, _css, out var selectors), Is.True);
         Assert.That(selectors, Has.Count.EqualTo(1));
         Assert.That(selectors![0], Is.TypeOf(type));
     }
 
+    [Test]
     [TestCase(":not(:first-child) {}", typeof(NotSelector), typeof(NthChildSelector))]
     [TestCase(":not(:focus, :root) {}", typeof(NotSelector), typeof(FocusSelector), typeof(RootSelector))]
     [TestCase(":not(:empty, :nth-child(2n)) {}", typeof(NotSelector), typeof(EmptySelector), typeof(NthChildSelector))]
     [TestCase(":is(:last-of-type, :nth-last-child(5n - 3)) {}", typeof(OrSelector), typeof(NthLastOfTypeSelector), typeof(NthLastChildSelector))]
     [TestCase(":is(:empty, :nth-of-type(even)) {}", typeof(OrSelector), typeof(EmptySelector), typeof(NthOfTypeSelector))]
-    [TestCase(":is(:nth-last-of-type(odd), :first-of-type, :only-of-type) {}", typeof(OrSelector), typeof(NthLastOfTypeSelector), typeof(NthOfTypeSelector), typeof(OnlyOfTypeSelector))]
+    [TestCase(":is(:nth-last-of-type(odd), [min-height=10px], :only-of-type) {}", typeof(OrSelector), typeof(NthLastOfTypeSelector), typeof(AttributeSelector), typeof(OnlyOfTypeSelector))]
     [RunOnSide(Side.Client)]
     public void CompoundSelectorsParseTest(string text, Type compoundType, params Type[] type)
     {
@@ -287,7 +290,7 @@ public sealed class CssParserTests : GameTest
         Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
 
         var qualified = (CssQualifiedRule)result[0];
-        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, out var selectors), Is.True);
+        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, _css, out var selectors), Is.True);
         Assert.That(selectors, Has.Count.EqualTo(1));
         Assert.That(selectors![0], Is.TypeOf(compoundType));
 
@@ -299,5 +302,30 @@ public sealed class CssParserTests : GameTest
                 Is.TypeOf(type[i]),
                 $"expected {type[i].FullName}, not {main.Selectors[i].GetType().FullName}");
         }
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void AttributeSelectorTest()
+    {
+        var result = CssParser.ParseStylesheet("locale-test-css-control[text=\"test\"] {}");
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
+
+        var qualified = (CssQualifiedRule)result[0];
+        Assert.That(CssParser.TryGetSelectors(qualified, _reflection, _css, out var selectors), Is.True);
+        Assert.That(selectors, Has.Count.EqualTo(1));
+        Assert.That(selectors![0], Is.TypeOf<AndSelector>());
+
+        var and = (AndSelector)selectors[0];
+        Assert.That(and.Selectors, Has.Count.EqualTo(2));
+        Assert.That(and.Selectors[1], Is.TypeOf<AttributeSelector>());
+
+        var attr = (AttributeSelector)and.Selectors[1];
+        var control = new LocaleTestCssControl();
+
+        Assert.That(attr.Matches(control), Is.False);
+        control.Text = "test";
+        Assert.That(attr.Matches(control), Is.True);
     }
 }

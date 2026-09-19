@@ -96,6 +96,28 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <inheritdoc/>
+    public bool TryGetPropertyAccessor(
+        Type? elementType,
+        string propertyName,
+        [NotNullWhen(true)] out CssPropertyAccessor? accessor)
+    {
+        accessor = null;
+        var startType = elementType ?? typeof(CssControl);
+
+        for (var type = startType; type != null; type = type.BaseType)
+        {
+            if (!_properties.TryGetValue(type, out var dict)
+                || !dict.TryGetValue(propertyName, out var access))
+                continue;
+
+            accessor = access;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
     public void LoadDirectory(ResPath path)
     {
         var streams = _resource.ContentFindFiles(path)
@@ -150,7 +172,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     if (qualified.Block == null)
                         continue;
 
-                    if (!CssParser.TryGetSelectors(qualified, _reflection, out var selectors))
+                    if (!CssParser.TryGetSelectors(qualified, _reflection, this, out var selectors))
                         continue;
 
                     // Declaration parsing is selector-independent — do it once
@@ -254,25 +276,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     private bool TryApplyDeclaration(List<StyleProperty> output, Type? targetType, CssDeclaration decl)
     {
-        CssPropertyAccessor? accessor = null;
-
-        // null ElementType means "no type restriction" (bare class/id/pseudo-class
-        // selector, or an explicit "Control" that TryGetSelector normalized away)
-        // — every Control is still a Control, so property lookup must start from
-        // typeof(CssControl), not skip the walk entirely.
-        var startType = targetType ?? typeof(CssControl);
-
-        for (var type = startType; type != null; type = type.BaseType)
-        {
-            if (!_properties.TryGetValue(type, out var dict)
-                || !dict.TryGetValue(decl.Name, out var a))
-                continue;
-
-            accessor = a;
-            break;
-        }
-
-        if (accessor == null)
+        if (!TryGetPropertyAccessor(targetType, decl.Name, out var accessor))
             return false;
 
         var stream = new CssValueStream(decl.Value);
@@ -338,35 +342,52 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </summary>
     private void RegisterEngineProperties()
     {
-        Register<Control, float>(nameof(Control.SizeFlagsStretchRatio), (c, v) => c.SizeFlagsStretchRatio = v);
+        Register<Control, float>(nameof(Control.SizeFlagsStretchRatio),
+            (c, v) => c.SizeFlagsStretchRatio = v,
+            c => c.SizeFlagsStretchRatio);
 
-        Register<Control, float>(nameof(Control.MinHeight), (c, v) => c.MinHeight = v);
-        Register<Control, float>(nameof(Control.SetHeight), (c, v) => c.SetHeight = v);
-        Register<Control, float>(nameof(Control.MaxHeight), (c, v) => c.MaxHeight = v);
+        Register<Control, float>(nameof(Control.MinHeight), (c, v) => c.MinHeight = v, c => c.MinHeight);
+        Register<Control, float>(nameof(Control.SetHeight), (c, v) => c.SetHeight = v, c => c.SetHeight);
+        Register<Control, float>(nameof(Control.MaxHeight), (c, v) => c.MaxHeight = v, c => c.MaxHeight);
 
-        Register<Control, float>(nameof(Control.MinWidth), (c, v) => c.MinWidth = v);
-        Register<Control, float>(nameof(Control.SetWidth), (c, v) => c.SetWidth = v);
-        Register<Control, float>(nameof(Control.MaxWidth), (c, v) => c.MaxWidth = v);
+        Register<Control, float>(nameof(Control.MinWidth), (c, v) => c.MinWidth = v, c => c.MinWidth);
+        Register<Control, float>(nameof(Control.SetWidth), (c, v) => c.SetWidth = v, c => c.SetWidth);
+        Register<Control, float>(nameof(Control.MaxWidth), (c, v) => c.MaxWidth = v, c => c.MaxWidth);
 
-        Register<Control, bool>(nameof(Control.HorizontalExpand), (c, v) => c.HorizontalExpand = v);
-        Register<Control, bool>(nameof(Control.VerticalExpand), (c, v) => c.VerticalExpand = v);
+        Register<Control, bool>(nameof(Control.HorizontalExpand),
+            (c, v) => c.HorizontalExpand = v,
+            c => c.HorizontalExpand);
+        Register<Control, bool>(nameof(Control.VerticalExpand),
+            (c, v) => c.VerticalExpand = v,
+            c => c.VerticalExpand);
 
-        Register<Control, Control.HAlignment>(nameof(Control.HorizontalAlignment), (c, v) => c.HorizontalAlignment = v);
-        Register<Control, Control.VAlignment>(nameof(Control.VerticalAlignment), (c, v) => c.VerticalAlignment = v);
+        Register<Control, Control.HAlignment>(
+            nameof(Control.HorizontalAlignment),
+            (c, v) => c.HorizontalAlignment = v,
+            c => c.HorizontalAlignment);
+        Register<Control, Control.VAlignment>(
+            nameof(Control.VerticalAlignment),
+            (c, v) => c.VerticalAlignment = v,
+            c => c.VerticalAlignment);
 
-        Register<Control, Thickness>(nameof(Control.Margin), (c, v) => c.Margin = v);
+        Register<Control, Thickness>(nameof(Control.Margin), (c, v) => c.Margin = v, c => c.Margin);
 
         return;
 
         void Register<TControl, TField>(
             string fieldName,
             Action<Control, TField> setter,
+            Func<Control, TField> getter,
             Type? handler = null)
         {
             if (!_properties.TryGetValue(typeof(TControl), out var dict))
                 _properties[typeof(TControl)] = dict = new(StringComparer.OrdinalIgnoreCase);
 
-            var accessor = new CssPropertyAccessor(typeof(TField), (c, v) => setter(c, (TField)v), handler, fieldName);
+            var accessor = new CssPropertyAccessor(typeof(TField),
+                (c, v) => setter(c, (TField)v),
+                control => getter(control)!,
+                handler,
+                fieldName);
             if (!dict.TryAdd(CaseConversion.PascalToKebab(fieldName), accessor))
             {
 #if !EXCEPTION_TOLERANCE
