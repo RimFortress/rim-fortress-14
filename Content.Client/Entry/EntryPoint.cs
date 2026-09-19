@@ -161,7 +161,7 @@ namespace Content.Client.Entry
         {
             base.PostInit();
 
-            _stylesheetManager.Initialize();
+            // _stylesheetManager.Initialize(); RimFortress
             _css.Initialize(); // RimFortress
 
             // Setup key contexts
