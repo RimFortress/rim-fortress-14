@@ -130,7 +130,7 @@ public static partial class CssParser
             switch (stream.ConsumeNext())
             {
                 case IdentToken ident:
-                    if (!reflection.TryLooseGetType(RfCaseConversion.CapitalizeFirst(ident.Value), out type))
+                    if (!reflection.TryLooseGetType(RfCaseConversion.KebabToPascal(ident.Value), out type))
                     {
     #if EXCEPTION_TOLERANCE
                         selector = null;

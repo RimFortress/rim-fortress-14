@@ -30,7 +30,7 @@ public sealed class CssPropertyGeneratorTest : GameTest
     public void GeneratorGetterTest()
     {
         _css.LoadString("""
-            testCssControl {
+            test-css-control {
                 test: 1337px;
                 min-height: 11px;
             }

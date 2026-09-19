@@ -40,8 +40,8 @@ public sealed class CssTokenizerTests
     [TestCase("\"hello\"", "hello")]
     [TestCase("'hello'", "hello")]
     [TestCase("\"line\\\ncontinuation\"", "linecontinuation")] // backslash-newline = line continuation, dropped
-    [TestCase("\"esc\\61pe\"", "escape")]                       // \61 = hex escape for 'a'
-    [TestCase("\"quote\\\"inside\"", "quote\"inside")]           // escaped quote doesn't end the string
+    [TestCase("\"esc\\61pe\"", "escape")]                      // \61 = hex escape for 'a'
+    [TestCase("\"quote\\\"inside\"", "quote\"inside")]         // escaped quote doesn't end the string
     public void String_Token_Value_Is_Correctly_Unescaped(string input, string expectedValue)
     {
         var tokens = Tokenize(input);

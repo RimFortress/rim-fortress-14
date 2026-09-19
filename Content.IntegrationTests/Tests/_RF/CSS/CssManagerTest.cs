@@ -49,7 +49,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Unknown_Type_Selector_Throws()
     {
-        Assert.Throws<CssParserError>(() => _css.LoadString("notarealcontrol { min-height: 1px; }"));
+        Assert.Throws<CssParserError>(() => _css.LoadString("not-a-real-control { min-height: 1px; }"));
     }
 
     [Test]
@@ -163,7 +163,7 @@ public sealed class CssManagerTest : GameTest
     public void ChildSelectorParseTest()
     {
         var sheet = Load("""
-            cssControl > testCssControl {
+            css-control > test-css-control {
                 min-height: 10px;
             }
             """);

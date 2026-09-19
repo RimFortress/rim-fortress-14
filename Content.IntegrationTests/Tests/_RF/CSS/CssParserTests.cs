@@ -140,7 +140,7 @@ public sealed class CssParserTests
     [Test]
     public void Qualified_Rule_Prelude_And_Block_Are_Split_Correctly()
     {
-        var rules = CssParser.ParseStylesheet("Label.title { color: red; }");
+        var rules = CssParser.ParseStylesheet("label.title { color: red; }");
 
         Assert.That(rules, Has.Count.EqualTo(1));
         Assert.That(rules[0], Is.TypeOf<CssQualifiedRule>());
@@ -164,7 +164,7 @@ public sealed class CssParserTests
     [Test]
     public void Qualified_Rule_Block_Contents_Parse_As_Declarations()
     {
-        var rules = CssParser.ParseStylesheet("Button { color: red; }");
+        var rules = CssParser.ParseStylesheet("button { color: red; }");
         Assert.That(rules, Has.Count.EqualTo(1));
         Assert.That(rules[0], Is.TypeOf<CssQualifiedRule>());
         var rule = (CssQualifiedRule)rules[0];
@@ -200,7 +200,7 @@ public sealed class CssParserTests
     [Test]
     public void At_Rule_With_Block_Captures_Nested_Content_As_A_Simple_Block()
     {
-        var rules = CssParser.ParseStylesheet("@media screen { Button { color: red; } }");
+        var rules = CssParser.ParseStylesheet("@media screen { button { color: red; } }");
 
         Assert.That(rules, Has.Count.EqualTo(1));
         Assert.That(rules[0], Is.TypeOf<CssAtRule>());
@@ -221,7 +221,7 @@ public sealed class CssParserTests
     [Test]
     public void Multiple_Top_Level_Rules_Are_All_Returned_In_Order()
     {
-        var rules = CssParser.ParseStylesheet("A { color: red; } B { color: blue; }");
+        var rules = CssParser.ParseStylesheet("a { color: red; } b { color: blue; }");
 
         Assert.That(rules, Has.Count.EqualTo(2));
         Assert.That(rules.All(r => r is CssQualifiedRule), Is.True);
@@ -230,12 +230,12 @@ public sealed class CssParserTests
     [Test]
     public void Unclosed_Block_Throws()
     {
-        Assert.Throws<CssParserError>(() => CssParser.ParseStylesheet("A { color: red;"));
+        Assert.Throws<CssParserError>(() => CssParser.ParseStylesheet("a { color: red;"));
     }
 
     [Test]
     public void Unclosed_Function_Throws()
     {
-        Assert.Throws<CssParserError>(() => CssParser.ParseStylesheet("A { color: rgb(255, 0, 0; }"));
+        Assert.Throws<CssParserError>(() => CssParser.ParseStylesheet("a { color: rgb(255, 0, 0; }"));
     }
 }

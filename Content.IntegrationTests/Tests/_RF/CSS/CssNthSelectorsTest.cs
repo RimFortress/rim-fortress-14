@@ -128,11 +128,11 @@ public sealed class CssNthSelectorsTest : GameTest
     {
         _css.ClearStylesheet();
         _css.LoadString("""
-            nthTestControl:nth-child(odd) {
+            nth-test-control:nth-child(odd) {
                 color: red;
             }
 
-            nthTestControl:nth-child(even) {
+            nth-test-control:nth-child(even) {
                 color: yellow;
             }
             """);
