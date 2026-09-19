@@ -1,5 +1,8 @@
+using JetBrains.Annotations;
+
 namespace Content.Client._RF.CSS.Parsers;
 
+[UsedImplicitly]
 public sealed class ThicknessParser : CssValueParser<Thickness>
 {
     public override bool TryParse(ref CssValueStream stream, out Thickness value)

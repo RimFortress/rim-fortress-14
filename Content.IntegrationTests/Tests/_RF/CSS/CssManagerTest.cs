@@ -4,6 +4,7 @@ using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
+using Robust.Shared.Localization;
 
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
@@ -11,6 +12,7 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 public sealed class CssManagerTest : GameTest
 {
     [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ILocalizationManager _loc = default!;
 
     private Stylesheet Load(string text)
     {
@@ -177,4 +179,30 @@ public sealed class CssManagerTest : GameTest
 
         Assert.That(sheet.Rules.Single().Selector.Matches(child), Is.True);
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void LocaleFunctionParseTest()
+    {
+        const string locKey = "generic-unknown";
+
+        Load($$"""
+            locale-test-css-control {
+                text: loc("{{locKey}}");
+            }
+            """);
+        _css.UpdateStylesheet();
+
+        var control = new LocaleTestCssControl();
+        control.InvalidateStyleSheet();
+        control.DoStyleUpdate();
+
+        Assert.That(control.Text, Is.EqualTo(_loc.GetString(locKey)));
+    }
+}
+
+public sealed partial class LocaleTestCssControl : CssControl
+{
+    [CssProperty]
+    public partial string Text { get; set; }
 }
