@@ -1,0 +1,16 @@
+<controls:TestCssWindow
+    xmlns="https://spacestation14.io"
+    xmlns:controls="clr-namespace:Content.Client._RF.CSS"
+    MinSize="800 600" Title="CSS Debug Window">
+    <BoxContainer Orientation="Vertical">
+        <BoxContainer>
+            <Label Text="ID:"/>
+            <LineEdit Name="IdEdit" SetWidth="150"/>
+            <Label Text="PseudoClasses:"/>
+            <LineEdit Name="PseudoEdit" HorizontalExpand="True"/>
+            <Label Text="StyleClasses:"/>
+            <LineEdit Name="StyleEdit" HorizontalExpand="True"/>
+        </BoxContainer>
+        <controls:TestCssWindowControl Name="TestControl" HorizontalExpand="True" VerticalExpand="True"/>
+    </BoxContainer>
+</controls:TestCssWindow>
