@@ -133,9 +133,7 @@ public sealed class CssManagerTest : GameTest
     public void Unknown_Property_Is_Skipped_Rather_Than_Applied()
     {
         // Relies on the EXCEPTION_TOLERANCE branch in TryApplyDeclaration's caller
-        // (Load) taking the "continue" path for an unregistered property name,
-        // rather than the "throw" path — confirm which #if branch this test
-        // project actually compiles under before trusting this assertion.
+        // (Load) taking the "continue" path for an unregistered property name, rather than the throw.
         var sheet = Load("label { not-a-real-property: 1px; min-height: 3px; }");
         var properties = sheet.Rules.Single().Properties;
 
