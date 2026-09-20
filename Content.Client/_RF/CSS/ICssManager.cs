@@ -72,7 +72,7 @@ public interface ICssPropertyResolver
     /// <param name="value">Parsing result.</param>
     /// <typeparam name="T">Parsing type.</typeparam>
     /// <returns>True if any parser returned a value.</returns>
-    bool TryParseValue<T>(ref CssValueStream stream, [NotNullWhen(true)] out T? value);
+    bool TryParseValue<T>(ref CssValueStream stream, out T? value);
 
     /// <summary>
     /// Parses a value from a CSS values stream into the target type.
@@ -81,7 +81,7 @@ public interface ICssPropertyResolver
     /// <param name="value">Parsing result.</param>
     /// <param name="type">Parsing type.</param>
     /// <returns>True if any parser returned a value.</returns>
-    bool TryParseValue(ref CssValueStream stream, Type type, [NotNullWhen(true)] out object? value);
+    bool TryParseValue(ref CssValueStream stream, Type type, out object? value);
 }
 
 /// <summary>

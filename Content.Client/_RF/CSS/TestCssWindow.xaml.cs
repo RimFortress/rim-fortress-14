@@ -23,6 +23,7 @@ public sealed partial class TestCssWindow : DefaultWindow
         };
         PseudoEdit.OnTextEntered += args => TestControl.SetPseudoClasses(args.Text.Split(' ',
             StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        ReloadButton.OnPressed += _ => IoCManager.Resolve<IConsoleHost>().ExecuteCommand("rldcss");
     }
 }
 

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.Utilities;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
@@ -53,7 +54,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <inheritdoc/>
-    public bool TryParseValue<T>(ref CssValueStream stream, [NotNullWhen(true)] out T? value)
+    public bool TryParseValue<T>(ref CssValueStream stream, out T? value)
     {
         if (!TryParseValue(ref stream, typeof(T), out var obj))
         {
@@ -61,23 +62,39 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             return false;
         }
 
-        value = (T)obj;
+        value = (T?)obj;
         return true;
     }
 
     /// <inheritdoc/>
-    public bool TryParseValue(ref CssValueStream stream, Type type, [NotNullWhen(true)] out object? value)
+    public bool TryParseValue(ref CssValueStream stream, Type type, out object? value)
     {
-        // We don't want to create a different parsers for each enum
-        if (type != typeof(Enum) && type.IsAssignableTo(typeof(Enum)))
-            return TryParseEnum(type, ref stream, out value);
+        var parserValue = type;
 
-        if (!_defaultParsers.TryGetValue(type, out var parsers) || parsers.Count == 0)
+        if (type.IsNullable(out var t))
+        {
+            parserValue = t;
+
+            if (stream.Peek() is IdentToken ident
+                && ident.Value.Equals("none", StringComparison.InvariantCultureIgnoreCase))
+            {
+                stream.ConsumeNext();
+                value = null;
+                return true;
+            }
+        }
+
+        // We don't want to create a different parsers for each enum
+        if (parserValue != typeof(Enum) && parserValue.IsAssignableTo(typeof(Enum)))
+            return TryParseEnum(parserValue, ref stream, out value);
+
+        if (!_defaultParsers.TryGetValue(parserValue, out var parsers) || parsers.Count == 0)
         {
 #if EXCEPTION_TOLERANCE
+            value = null;
             return false;
 #else
-            throw new ArgumentException($"default CSS parser for type {type.FullName} not found");
+            throw new ArgumentException($"default CSS parser for type {parserValue.FullName} not found");
 #endif
         }
 
@@ -240,6 +257,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             rules.Add(rule);
         }
 
+        rules.AddRange(new StyleFortress(IoCManager.Resolve<IResourceCache>()).Stylesheet.Rules); // TODO remove
         return new Stylesheet(rules);
     }
 
@@ -322,7 +340,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         sw.Start();
         _properties.Clear();
         RegisterEngineProperties();
-        var styled = _reflection.GetAllChildren<CssControl>(true)
+        _properties[typeof(CssControl)] = new CssControl().AutoCssProperties();
+        var styled = _reflection.GetAllChildren<CssControl>()
             .Where(type => !type.IsAbstract && _reflection.IsAttributeDefined(type, typeof(CssStylingAttribute)))
             .ToList();
 
