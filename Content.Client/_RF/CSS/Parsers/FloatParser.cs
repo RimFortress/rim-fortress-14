@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS.Parsers;
 
@@ -13,11 +12,13 @@ public sealed class FloatParser : CssValueParser<float>
         switch (stream.Peek())
         {
             case DimensionToken dimension:
-                DebugTools.Assert(dimension.Unit == "px", "CSS units not supported by now");
-                stream.ConsumeNext();
-                value = (float)dimension.Value;
-                return true;
+                if (!LengthUnit.TryParse(dimension.Unit, out var unit)
+                    || !LengthUnit.AbsoluteUnits.Contains(unit.Value))
+                    return false;
 
+                stream.ConsumeNext();
+                value = (float)dimension.Value / LengthUnit.AbsoluteToPxRatio[unit.Value];
+                return true;
             case NumberToken { Value: 0 }: // unitless zero is a valid length
                 stream.ConsumeNext();
                 return true;
