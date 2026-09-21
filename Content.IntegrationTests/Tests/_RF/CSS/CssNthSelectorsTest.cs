@@ -126,7 +126,7 @@ public sealed class CssNthSelectorsTest : GameTest
     [RunOnSide(Side.Client)]
     public void NthStyleUpdateTest()
     {
-        _css.ClearStylesheet();
+        _css.ClearTestStylesheet();
         _css.LoadString("""
             nth-test-control:nth-child(odd) {
                 color: red;
@@ -136,10 +136,9 @@ public sealed class CssNthSelectorsTest : GameTest
                 color: yellow;
             }
             """);
-        _css.UpdateStylesheet();
 
         var parent = new CssControl();
-        parent.InvalidateStyleSheet();
+        parent.Stylesheet = _css.BuildTestStylesheet();
         parent.DoStyleUpdate();
 
         var first = new NthTestControl();
@@ -159,6 +158,8 @@ public sealed class CssNthSelectorsTest : GameTest
 
         Assert.That(first.Color, Is.EqualTo(Color.Red));
         Assert.That(last.Color, Is.EqualTo(Color.Yellow));
+
+        parent.AddChild(middle); // Without this line, the test fails during synchronization
     }
 }
 

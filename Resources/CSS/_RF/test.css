@@ -1,0 +1,70 @@
+test-css-window-control {
+    background-color: white;
+    margin: 10px 20px;
+    background-image: texture("/Textures/_RF/Logo/logo.png");
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+test-css-window-control:hover {
+    background-color: orange;
+    margin: 30px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+test-css-window-control {
+    background-image: texture("/Textures/_RF/Logo/logo.png");
+    background-repeat: no-repeat;
+    margin: 10px;
+    background-size: 100%;
+}
+
+test-css-window-control:hover {
+    background-image: none;
+    background-color: green;
+    margin: 20px;
+}
+
+test-css-window-control:red {
+    background-color: red;
+}
+
+*/
+
+
+/*
+/Textures/Tiles/Grass/grass.png
+*/

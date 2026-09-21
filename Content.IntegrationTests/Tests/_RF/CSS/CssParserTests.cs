@@ -158,7 +158,7 @@ public sealed class CssParserTests : GameTest
             rule.Prelude,
             Is.EqualTo(new List<ICssComponentValue>
             {
-                new IdentToken("Label"),
+                new IdentToken("label"),
                 new DelimToken('.'),
                 new IdentToken("title"),
                 new WhitespaceToken(),
@@ -308,7 +308,7 @@ public sealed class CssParserTests : GameTest
     [RunOnSide(Side.Client)]
     public void AttributeSelectorTest()
     {
-        var result = CssParser.ParseStylesheet("locale-test-css-control[text=\"test\"] {}");
+        var result = CssParser.ParseStylesheet("test-locale-css-control[text=\"test\"] {}");
         Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
 
@@ -322,7 +322,7 @@ public sealed class CssParserTests : GameTest
         Assert.That(and.Selectors[1], Is.TypeOf<AttributeSelector>());
 
         var attr = (AttributeSelector)and.Selectors[1];
-        var control = new LocaleTestCssControl();
+        var control = new TestLocaleCssControl();
 
         Assert.That(attr.Matches(control), Is.False);
         control.Text = "test";

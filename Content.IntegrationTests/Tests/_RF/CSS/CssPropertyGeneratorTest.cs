@@ -29,16 +29,16 @@ public sealed class CssPropertyGeneratorTest : GameTest
     [RunOnSide(Side.Client)]
     public void GeneratorGetterTest()
     {
+        _css.ClearTestStylesheet();
         _css.LoadString("""
             test-css-control {
                 test: 1337px;
                 min-height: 11px;
             }
             """);
-        _css.UpdateStylesheet();
 
         var control = new TestCssControl();
-        control.InvalidateStyleSheet();
+        control.Stylesheet = _css.BuildTestStylesheet();
         control.DoStyleUpdate();
 
         Assert.That(control.Test, Is.EqualTo(1337f));

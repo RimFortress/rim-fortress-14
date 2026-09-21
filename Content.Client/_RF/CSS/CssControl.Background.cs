@@ -5,7 +5,10 @@ namespace Content.Client._RF.CSS;
 
 public partial class CssControl
 {
-    protected StyleBox? Background;
+    /// <summary>
+    /// Current control background.
+    /// </summary>
+    public StyleBox? Background { get; private set; }
 
     /// <summary>
     /// Sets the background color of an element. The background of an element is the
@@ -14,7 +17,7 @@ public partial class CssControl
     /// <remarks>
     /// If a texture is used as the background, the color will be used to modulate the texture.
     /// </remarks>
-    protected Color? BackgroundColor
+    public Color? BackgroundColor
     {
         get;
         set
@@ -27,7 +30,7 @@ public partial class CssControl
     /// <summary>
     /// Sets the texture of the control's background image.
     /// </summary>
-    protected Texture? BackgroundImage
+    public Texture? BackgroundImage
     {
         get;
         set
@@ -42,7 +45,7 @@ public partial class CssControl
     /// By default, a <see cref="BackgroundImage"/> is repeated
     /// both vertically and horizontally.
     /// </summary>
-    protected RfStyleBoxTexture.StretchMode BackgroundRepeat
+    public RfStyleBoxTexture.StretchMode BackgroundRepeat
     {
         get;
         set
@@ -60,7 +63,7 @@ public partial class CssControl
     /// (first value: width of the image, second value: height),
     /// and the multiple background syntax (separated with comma).
     /// </summary>
-    protected RfStyleBoxTexture.StyleBoxSize BackgroundSize
+    public RfStyleBoxTexture.StyleBoxSize BackgroundSize
     {
         get;
         set
@@ -71,22 +74,54 @@ public partial class CssControl
     }
 
     /// <summary>
-    /// Sets the starting position of a <see cref="BackgroundImage"/>.
+    /// Horizontal component of the background image's starting position.
     /// </summary>
-    protected RfStyleBoxTexture.StyleBoxPosition BackgroundPosition
+    public StyleBoxPositionComponent BackgroundPositionX
     {
         get;
         set
         {
             field = value;
             Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Vertical component of the background image's starting position.
+    /// </summary>
+    public StyleBoxPositionComponent BackgroundPositionY
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Combines <see cref="BackgroundPositionX"/> and <see cref="BackgroundPositionY"/>.
+    /// Setting this assigns both components at once (mirrors the CSS background-position
+    /// shorthand); the longhand background-position-x/-y properties remain independently settable.
+    /// </summary>
+    public RfStyleBoxTexture.StyleBoxPosition BackgroundPosition
+    {
+        get => new()
+        {
+            X = BackgroundPositionX.Value, XIsAbsolute = BackgroundPositionX.IsAbsolute,
+            Y = BackgroundPositionY.Value, YIsAbsolute = BackgroundPositionY.IsAbsolute,
+        };
+        set
+        {
+            BackgroundPositionX = new StyleBoxPositionComponent(value.X, value.XIsAbsolute);
+            BackgroundPositionY = new StyleBoxPositionComponent(value.Y, value.YIsAbsolute);
         }
     }
 
     /// <summary>
     /// Defines how far the background (color, image, or gradient) should extend within an element.
     /// </summary>
-    protected StyleBoxBackgroundClip BackgroundClip
+    public StyleBoxBackgroundClip BackgroundClip
     {
         get;
         set
@@ -96,7 +131,7 @@ public partial class CssControl
         }
     }
 
-    private StyleBox? GetBackground()
+    private StyleBox GetBackground()
     {
         if (BackgroundImage != null)
         {
@@ -111,12 +146,9 @@ public partial class CssControl
             };
         }
 
-        if (BackgroundColor == null)
-            return null;
-
         return new RfStyleBoxFlat
         {
-            BackgroundColor = BackgroundColor.Value,
+            BackgroundColor = BackgroundColor ?? Color.Transparent,
             BackgroundClip =  BackgroundClip,
         };
     }
@@ -129,4 +161,12 @@ public partial class CssControl
         if (Background is { } box)
             box.Draw(handle, PixelSizeBox, UIScale);
     }
+}
+
+/// <summary>
+/// One axis of a background-position value.
+/// </summary>
+public record struct StyleBoxPositionComponent(float Value, bool IsAbsolute)
+{
+    public static readonly StyleBoxPositionComponent Zero = new() { Value = 0f };
 }

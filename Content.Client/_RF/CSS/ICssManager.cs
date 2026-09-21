@@ -41,14 +41,19 @@ public interface ICssManager : ICssPropertyResolver
     Stylesheet BuildStylesheet();
 
     /// <summary>
+    /// Creates a style sheet from the loaded test styles.
+    /// </summary>
+    Stylesheet BuildTestStylesheet();
+
+    /// <summary>
     /// Rebuilds the style sheet and updates <see cref="IUserInterfaceManager.Stylesheet"/>.
     /// </summary>
     void UpdateStylesheet();
 
     /// <summary>
-    /// Clears all loaded CSS rules without updating <see cref="IUserInterfaceManager.Stylesheet"/>.
+    /// Clears all CSS rules loaded through <see cref="LoadString"/>.
     /// </summary>
-    void ClearStylesheet();
+    void ClearTestStylesheet();
 }
 
 public interface ICssPropertyResolver

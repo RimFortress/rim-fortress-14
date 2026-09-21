@@ -22,6 +22,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     private readonly Dictionary<Type, List<ICssValueParser>> _defaultParsers = new(); // parsing value type : parsers
     private readonly Dictionary<Type, ICssValueParser> _customParsers = new(); // parser type : parser
+    private readonly Dictionary<string, List<ICssShorthandParser>> _shorthands = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, Dictionary<string, CssPropertyAccessor>> _properties = new();
     private readonly Dictionary<ResPath, List<StyleRule>> _rulesByFile = new();
     private readonly List<StyleRule> _notFileRules = new(); // Needed for tests
@@ -38,6 +39,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         _sawmill = Logger.GetSawmill("css");
 
         RegisterParsers();
+        RegisterShorthands();
         RegisterProperties();
         Reload();
     }
@@ -215,17 +217,51 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     foreach (var selector in selectors)
                     {
                         var elemType = GetElementType(selector);
-                        var properties = new List<StyleProperty>();
+                        var propertyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
                         foreach (var declaration in declarations)
                         {
-                            if (!TryApplyDeclaration(properties, elemType, declaration))
+                            if (_shorthands.TryGetValue(declaration.Name, out var shorthand))
+                            {
+                                var stream = new CssValueStream(declaration.Value);
+                                var parsed = false;
+
+                                foreach (var parser in shorthand)
+                                {
+                                    if (!parser.TryExpand(ref stream, out var values)
+                                        || values.Length != parser.Longhands.Count)
+                                        continue;
+
+                                    for (var i = 0; i < parser.Longhands.Count; i++)
+                                    {
+                                        propertyValues[parser.Longhands[i]] = values[i]!;
+                                    }
+
+                                    parsed = true;
+                                    break;
+                                }
+
+#if !EXCEPTION_TOLERANCE
+                                if (!parsed)
+                                    throw new ArgumentException($"failed to apply shorthand declaration '{declaration.Name}'");
+#endif
+
+                                continue;
+                            }
+
+                            if (!TryResolveDeclarationValue(elemType, declaration, out var name, out var value))
 #if EXCEPTION_TOLERANCE
                                 continue;
 #else
                                 throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
 #endif
+
+                            propertyValues[name] = value!;
                         }
+
+                        var properties = propertyValues
+                            .Select(kv => new StyleProperty(kv.Key, kv.Value))
+                            .ToList();
 
                         rules.Add(new StyleRule(selector, properties));
                     }
@@ -261,22 +297,34 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         return new Stylesheet(rules);
     }
 
-    public void ClearStylesheet()
+    /// <inheritdoc/>
+    public Stylesheet BuildTestStylesheet()
+    {
+        var rules = new List<StyleRule>();
+
+        foreach (var rule in _notFileRules)
+        {
+            rules.Add(rule);
+        }
+
+        return new Stylesheet(rules);
+    }
+
+    public void ClearTestStylesheet()
     {
         _notFileRules.Clear();
-        _rulesByFile.Clear();
     }
 
     /// <summary>
     /// Extracts the element type a selector is scoped to, for property-registry
-    /// lookup (see <see cref="TryApplyDeclaration"/>). Walks into <see cref="AndSelector"/>
+    /// lookup (see <see cref="TryResolveDeclarationValue"/>). Walks into <see cref="CompoundSelector"/>
     /// (compound with nth-child/nth-of-type etc.) and <see cref="SelectorChild"/> (child combinator,
     /// takes the rightmost/innermost compound — "A > B" applies to B).
     /// </summary>
     private static Type? GetElementType(Selector selector) => selector switch
     {
         SelectorElement elem => elem.ElementType,
-        AndSelector and => and.Selectors.OfType<SelectorElement>().FirstOrDefault()?.ElementType,
+        CompoundSelector compound => compound.Selectors.OfType<SelectorElement>().FirstOrDefault()?.ElementType, // TODO: maybe recursion?
         SelectorChild child => GetElementType(child.Child),
         _ => null,
     };
@@ -292,27 +340,38 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         return Enum.TryParse(type, pascalCase, ignoreCase: true, out value);
     }
 
-    private bool TryApplyDeclaration(List<StyleProperty> output, Type? targetType, CssDeclaration decl)
+    private bool TryResolveDeclarationValue(
+        Type? targetType,
+        CssDeclaration decl,
+        [NotNullWhen(true)] out string? name,
+        [NotNullWhen(true)] out object? value)
     {
-        if (!TryGetPropertyAccessor(targetType, decl.Name, out var accessor))
+        name = null;
+        value = null;
+        CssPropertyAccessor? accessor = null;
+
+        var startType = targetType ?? typeof(CssControl);
+        for (var type = startType; type != null; type = type.BaseType)
+        {
+            if (!_properties.TryGetValue(type, out var dict) || !dict.TryGetValue(decl.Name, out var a))
+                continue;
+            accessor = a;
+            break;
+        }
+
+        if (accessor == null)
             return false;
 
         var stream = new CssValueStream(decl.Value);
-
         var ok = accessor.Value.CustomParser is not null
-            ? _customParsers[accessor.Value.CustomParser].TryParse(ref stream, out var value)
+            ? _customParsers[accessor.Value.CustomParser].TryParse(ref stream, out value)
             : TryParseValue(ref stream, accessor.Value.ClrType, out value);
 
         if (!ok)
-        {
-#if EXCEPTION_TOLERANCE
             return false;
-#else
-            throw new ArgumentException($"failed to parse CSS value '{decl.Name}: {decl.Value}'");
-#endif
-        }
 
-        output.Add(new StyleProperty(accessor.Value.PropertyName ?? decl.Name, value!));
+        name = accessor.Value.PropertyName ?? decl.Name;
+        value ??= default!; // Ok
         return true;
     }
 
@@ -331,6 +390,17 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             }
 
             _defaultParsers.GetOrNew(instance.ValueType).Add(instance);
+        }
+    }
+
+    private void RegisterShorthands()
+    {
+        var types = _reflection.GetAllChildren<ICssShorthandParser>().Where(x => !x.IsAbstract).ToList();
+
+        foreach (var type in types)
+        {
+            var instance = _factory.CreateInstance<ICssShorthandParser>(type);
+            _shorthands.GetOrNew(instance.CssName).Add(instance);
         }
     }
 

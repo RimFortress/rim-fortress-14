@@ -36,7 +36,8 @@ public partial class CssControl : Control
         Register(nameof(BackgroundImage), (c, v) => c.BackgroundImage = v, c => c.BackgroundImage);
         Register(nameof(BackgroundRepeat), (c, v) => c.BackgroundRepeat = v, c => c.BackgroundRepeat);
         Register(nameof(BackgroundSize), (c, v) => c.BackgroundSize = v, c => c.BackgroundSize);
-        Register(nameof(BackgroundPosition), (c, v) => c.BackgroundPosition = v, c => c.BackgroundPosition);
+        Register(nameof(BackgroundPositionX), (c, v) => c.BackgroundPositionX = v, c => c.BackgroundPositionX);
+        Register(nameof(BackgroundPositionY), (c, v) => c.BackgroundPositionY = v, c => c.BackgroundPositionY);
 
         return properties;
 
@@ -138,8 +139,11 @@ public partial class CssControl : Control
         BackgroundSize = TryGetStyleProperty<RfStyleBoxTexture.StyleBoxSize>("background-size", out var size)
             ? size
             : RfStyleBoxTexture.StyleBoxSize.Auto;
-        BackgroundPosition = TryGetStyleProperty<RfStyleBoxTexture.StyleBoxPosition>("background-position", out var position)
-            ? position
-            : RfStyleBoxTexture.StyleBoxPosition.Default;
+        BackgroundPositionX = TryGetStyleProperty<StyleBoxPositionComponent>("background-position-x", out var positionX)
+            ? positionX
+            : StyleBoxPositionComponent.Zero;
+        BackgroundPositionY = TryGetStyleProperty<StyleBoxPositionComponent>("background-position-y", out var positionY)
+            ? positionY
+            : StyleBoxPositionComponent.Zero;
     }
 }
