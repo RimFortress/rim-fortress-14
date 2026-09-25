@@ -14,39 +14,29 @@ public sealed partial class TestCssWindow : DefaultWindow
     {
         RobustXamlLoader.Load(this);
 
-        IdEdit.OnTextEntered += args => TestControl.StyleIdentifier = args.Text;
+        IdEdit.OnTextEntered += args => TestControl.CssStyleIdentifier = args.Text;
         StyleEdit.OnTextEntered += args =>
         {
-            TestControl.StyleClasses = new StyleClassCollection(args.Text.Split(' ',
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            TestControl.CssStyleClasses = args.Text
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
             TestControl.DoStyleUpdate();
         };
-        PseudoEdit.OnTextEntered += args => TestControl.SetPseudoClasses(args.Text.Split(' ',
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-        ReloadButton.OnPressed += _ => IoCManager.Resolve<IConsoleHost>().ExecuteCommand("rldcss");
+
+        PseudoEdit.OnTextEntered += args => TestControl.CssPseudoStyleClasses = args.Text
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        ReloadButton.OnPressed += _ => IoCManager
+            .Resolve<IConsoleHost>()
+            .ExecuteCommand("rldcss");
     }
 }
 
-public sealed class TestCssWindowControl : CssControl
-{
-    public void SetPseudoClasses(string[] classes)
-    {
-        foreach (var pseudo in StylePseudoClass.ToArray())
-        {
-            RemoveStylePseudoClass(pseudo);
-        }
-
-        foreach (var pseudo in classes)
-        {
-            AddStylePseudoClass(pseudo);
-        }
-
-        DoStyleUpdate();
-    }
-}
+public sealed class TestCssWindowControl : CssControl;
 
 [UsedImplicitly]
-public sealed class SystemFontDebugCommand : IConsoleCommand
+public sealed class CssDebugCommand : IConsoleCommand
 {
     public string Command => "css_debug";
     public string Description => "";

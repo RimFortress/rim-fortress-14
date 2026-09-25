@@ -17,14 +17,4 @@ public sealed class CssPropertyAttribute(string? name = null, Type? parser = nul
     /// by-CLR-type converter registered in <see cref="ICssManager"/>.
     /// </summary>
     public Type? Parser { get; } = parser;
-
-    /// <summary>
-    /// Optional default value for the implementing declaration's initializer.
-    /// Must be a compile-time constant of an attribute-argument-compatible
-    /// type (numeric, bool, string, enum). Set as a named argument:
-    /// <c>[CssProperty(Default = 0f)]</c>. Omit for reference/struct types
-    /// without a meaningful constant default — the field then starts at
-    /// <c>default(T)</c>, same as an un-initialized auto-property.
-    /// </summary>
-    public object? Default { get; set; }
 }

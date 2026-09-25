@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Content.Shared._RF.Utilities;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface;
@@ -12,7 +13,7 @@ public static partial class CssParser
     /// Parses the selector from <see cref="CssQualifiedRule"/>.
     /// </summary>
     /// <param name="rule"></param>
-    /// <param name="reflection">Reflection manager. Used to get the <see cref="SelectorElement.ElementType"/>.</param>
+    /// <param name="reflection">Reflection manager. Used to get the <see cref="CssElementSelector.ElementType"/>.</param>
     /// <param name="resolver">CSS property access manager. Used for parsing <see cref="AttributeSelector"/>.</param>
     /// <param name="selectors">A selectors extracted from a rule.</param>
     /// <returns>True if the selector has been successfully parsed.</returns>
@@ -26,6 +27,20 @@ public static partial class CssParser
         ICssPropertyResolver resolver,
         [NotNullWhen(true)] out List<Selector>? selectors)
         => TryGetSelectors(rule.Prelude, reflection, resolver, out selectors);
+
+    /// <summary>
+    /// Extracts the element type a selector is scoped to, for property-registry
+    /// lookup. Walks into <see cref="CompoundSelector"/>
+    /// (compound with nth-child/nth-of-type etc.) and <see cref="SelectorChild"/> (child combinator,
+    /// takes the rightmost/innermost compound — "A > B" applies to B).
+    /// </summary>
+    public static Type? GetElementType(Selector selector) => selector switch
+    {
+        CssElementSelector elem => elem.ElementType,
+        CompoundSelector compound => compound.Selectors.OfType<CssElementSelector>().FirstOrDefault()?.ElementType, // TODO: maybe recursion?
+        SelectorChild child => GetElementType(child.Child),
+        _ => null,
+    };
 
     private static bool TryGetSelectors(
         List<ICssComponentValue> prelude,
@@ -335,8 +350,8 @@ public static partial class CssParser
             return true;
         }
 
-        var element = new SelectorElement(
-            type != typeof(Control) ? type : null,
+        var element = new CssElementSelector(
+            type != typeof(Control) && type != typeof(CssControl) ? type : null,
             classes.Count > 0 ? classes : null,
             id,
             pseudoClasses.Count > 0 ? pseudoClasses : null);

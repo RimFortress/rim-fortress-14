@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.Utilities;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
@@ -22,25 +21,31 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     private readonly Dictionary<Type, List<ICssValueParser>> _defaultParsers = new(); // parsing value type : parsers
     private readonly Dictionary<Type, ICssValueParser> _customParsers = new(); // parser type : parser
-    private readonly Dictionary<string, List<ICssShorthandParser>> _shorthands = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly Dictionary<Type, Dictionary<string, CssPropertyAccessor>> _properties = new();
-    private readonly Dictionary<ResPath, List<StyleRule>> _rulesByFile = new();
-    private readonly List<StyleRule> _notFileRules = new(); // Needed for tests
+    private readonly Dictionary<Type, Dictionary<string, CssShorthandInfo>> _shorthands = new();
+
+    private readonly Dictionary<ResPath, List<CssStyleRule>> _rulesByFile = new();
+    private readonly List<CssStyleRule> _notFileRules = new(); // Needed for tests
+
     private ISawmill _sawmill = null!;
 
+    /// <inheritdoc/>
     public ResPath StylesPath => new("/CSS/");
 
-    public void PostInject()
-    {
-    }
+    /// <inheritdoc/>
+    public CssStylesheet Stylesheet { get; private set; } = new(new List<CssStyleRule>());
 
-    public void Initialize()
+    public void PostInject()
     {
         _sawmill = Logger.GetSawmill("css");
 
         RegisterParsers();
-        RegisterShorthands();
         RegisterProperties();
+    }
+
+    public void Initialize()
+    {
         Reload();
     }
 
@@ -51,7 +56,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         sw.Start();
         LoadDirectory(StylesPath);
         UpdateStylesheet();
-        _sawmill.Info($"{_ui.Stylesheet?.Rules.Count} CSS styles loaded at {sw.Elapsed}");
+
+        foreach (var root in _ui.AllRoots)
+        {
+            UpdateStyleRecursively(root);
+        }
+
+        _sawmill.Info($"{Stylesheet.Rules.Count} CSS styles loaded at {sw.Elapsed}");
         sw.Stop();
     }
 
@@ -173,15 +184,145 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// <inheritdoc/>
     public void UpdateStylesheet()
     {
-        var stylesheet = BuildStylesheet();
-        _ui.Stylesheet = stylesheet;
+        Stylesheet = BuildStylesheet();
         _sawmill.Info("stylesheet updated");
     }
 
-    private List<StyleRule> Load(string cssText)
+    /// <inheritdoc/>
+    public CssStylesheet BuildStylesheet()
+    {
+        var rules = new List<CssStyleRule>();
+
+        foreach (var (_, list) in _rulesByFile)
+        {
+            foreach (var rule in list)
+            {
+                rules.Add(rule);
+            }
+        }
+
+        foreach (var rule in _notFileRules)
+        {
+            rules.Add(rule);
+        }
+
+        return new CssStylesheet(rules);
+    }
+
+    /// <inheritdoc/>
+    public CssStylesheet BuildTestStylesheet() => new(_notFileRules);
+
+    /// <inheritdoc/>
+    public void UpdateStyle<T>(CssControl control) where T : Selector => UpdateStyle(control, typeof(T));
+
+    /// <inheritdoc/>
+    public void UpdateStyle(CssControl control, params Type[] selectors)
+    {
+        foreach (var kind in selectors)
+        {
+            if (Stylesheet.UnsortedSelectorTypes.Contains(kind))
+            {
+                UpdateStyle(control);
+                return;
+            }
+
+            for (var type = control.GetType(); type != null; type = type.BaseType)
+            {
+                if (Stylesheet.SortedSelectorTypes.TryGetValue(type, out var bySelector) && bySelector.Contains(kind))
+                {
+                    UpdateStyle(control);
+                    return;
+                }
+
+                if (type == typeof(Control))
+                    break;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void UpdateStyle(CssControl control) => UpdateStyle(control, Stylesheet);
+
+    /// <inheritdoc/>
+    public void UpdateTestStyle(CssControl control) => UpdateStyle(control, BuildTestStylesheet());
+
+    /// <inheritdoc/>
+    public void ClearTestStylesheet()
+    {
+        _notFileRules.Clear();
+    }
+
+    /// <inheritdoc/>
+    public void UpdateStyleRecursively(Control control)
+    {
+        if (control is CssControl css)
+            UpdateStyle(css);
+
+        foreach (var child in control.Children)
+        {
+            UpdateStyleRecursively(child);
+        }
+    }
+
+    private void UpdateStyle(CssControl control, CssStylesheet stylesheet)
+    {
+        var candidates = new List<CssStyleRule>();
+
+        foreach (var rule in stylesheet.UnsortedRules)
+        {
+            if (rule.Selector.Matches(control))
+                candidates.Add(rule);
+        }
+
+        for (var type = control.GetType(); type != null; type = type.BaseType)
+        {
+            if (stylesheet.TypeSortedRules.TryGetValue(type, out var typeSortedRules))
+            {
+                foreach (var rule in typeSortedRules)
+                {
+                    if (rule.Selector.Matches(control))
+                        candidates.Add(rule);
+                }
+            }
+
+            if (type == typeof(Control))
+                break;
+        }
+
+        var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var ordered = candidates
+            .Select((rule, i) => (rule, i))
+            .OrderBy(x => x.rule.Specificity)
+            .ThenBy(x => x.i)
+            .Select(x => x.rule)
+            .ToList();
+
+        var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rule in ordered)
+        {
+            foreach (var property in rule.Properties)
+            {
+                previouslyApplied.Remove(property.Name);
+                property.Accessor.Setter(control, property.Value);
+                applied.Add(property.Name);
+            }
+        }
+
+        control.CssLastAppliedProperties = applied;
+        var controlType = control.GetType();
+
+        foreach (var name in previouslyApplied)
+        {
+            if (TryGetPropertyAccessor(controlType, name, out var accessor))
+                accessor.Value.Setter(control, accessor.Value.DefaultValue!);
+        }
+    }
+
+    private List<CssStyleRule> Load(string cssText)
     {
         var result = CssParser.ParseStylesheet(cssText);
-        var rules = new List<StyleRule>();
+        var rules = new List<CssStyleRule>();
 
         foreach (var item in result)
         {
@@ -209,61 +350,38 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                         }
                     }
 
-                    // Property *resolution* IS selector-dependent (different
-                    // types in a comma group can have different registered
-                    // properties), and CSS specificity is computed per individual
-                    // selector, not once for the whole group — so each selector
-                    // gets its own StyleRule.
                     foreach (var selector in selectors)
                     {
-                        var elemType = GetElementType(selector);
-                        var propertyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                        var elemType = CssParser.GetElementType(selector);
+                        var propertyValues = new Dictionary<string, (object, CssPropertyAccessor)>(StringComparer.OrdinalIgnoreCase);
 
                         foreach (var declaration in declarations)
                         {
-                            if (_shorthands.TryGetValue(declaration.Name, out var shorthand))
+                            if (TryResolveShorthandValue(elemType, declaration, out var expanded))
                             {
-                                var stream = new CssValueStream(declaration.Value);
-                                var parsed = false;
-
-                                foreach (var parser in shorthand)
+                                foreach (var prop in expanded)
                                 {
-                                    if (!parser.TryExpand(ref stream, out var values)
-                                        || values.Length != parser.Longhands.Count)
-                                        continue;
-
-                                    for (var i = 0; i < parser.Longhands.Count; i++)
-                                    {
-                                        propertyValues[parser.Longhands[i]] = values[i]!;
-                                    }
-
-                                    parsed = true;
-                                    break;
+                                    propertyValues[prop.Name] = (prop.Value, prop.Accessor);
                                 }
-
-#if !EXCEPTION_TOLERANCE
-                                if (!parsed)
-                                    throw new ArgumentException($"failed to apply shorthand declaration '{declaration.Name}'");
-#endif
 
                                 continue;
                             }
 
-                            if (!TryResolveDeclarationValue(elemType, declaration, out var name, out var value))
+                            if (!TryResolveDeclarationValue(elemType, declaration, out var accessor, out var name, out var value))
 #if EXCEPTION_TOLERANCE
                                 continue;
 #else
                                 throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
 #endif
 
-                            propertyValues[name] = value!;
+                            propertyValues[name] = (value, accessor.Value);
                         }
 
                         var properties = propertyValues
-                            .Select(kv => new StyleProperty(kv.Key, kv.Value))
+                            .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Item1, kv.Value.Item2))
                             .ToList();
 
-                        rules.Add(new StyleRule(selector, properties));
+                        rules.Add(new CssStyleRule(selector, properties));
                     }
 
                     break;
@@ -274,60 +392,6 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
         return rules;
     }
-
-    /// <inheritdoc/>
-    public Stylesheet BuildStylesheet()
-    {
-        var rules = new List<StyleRule>();
-
-        foreach (var (_, list) in _rulesByFile)
-        {
-            foreach (var rule in list)
-            {
-                rules.Add(rule);
-            }
-        }
-
-        foreach (var rule in _notFileRules)
-        {
-            rules.Add(rule);
-        }
-
-        rules.AddRange(new StyleFortress(IoCManager.Resolve<IResourceCache>()).Stylesheet.Rules); // TODO remove
-        return new Stylesheet(rules);
-    }
-
-    /// <inheritdoc/>
-    public Stylesheet BuildTestStylesheet()
-    {
-        var rules = new List<StyleRule>();
-
-        foreach (var rule in _notFileRules)
-        {
-            rules.Add(rule);
-        }
-
-        return new Stylesheet(rules);
-    }
-
-    public void ClearTestStylesheet()
-    {
-        _notFileRules.Clear();
-    }
-
-    /// <summary>
-    /// Extracts the element type a selector is scoped to, for property-registry
-    /// lookup (see <see cref="TryResolveDeclarationValue"/>). Walks into <see cref="CompoundSelector"/>
-    /// (compound with nth-child/nth-of-type etc.) and <see cref="SelectorChild"/> (child combinator,
-    /// takes the rightmost/innermost compound — "A > B" applies to B).
-    /// </summary>
-    private static Type? GetElementType(Selector selector) => selector switch
-    {
-        SelectorElement elem => elem.ElementType,
-        CompoundSelector compound => compound.Selectors.OfType<SelectorElement>().FirstOrDefault()?.ElementType, // TODO: maybe recursion?
-        SelectorChild child => GetElementType(child.Child),
-        _ => null,
-    };
 
     private static bool TryParseEnum(Type type, ref CssValueStream stream, [NotNullWhen(true)] out object? value)
     {
@@ -340,21 +404,108 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         return Enum.TryParse(type, pascalCase, ignoreCase: true, out value);
     }
 
+    /// <summary>
+    /// Resolves the <see cref="CssShorthandInfo"/> registered for a shorthand
+    /// declaration name, walking from <paramref name="elementType"/> up through
+    /// its base types (mirrors <see cref="TryGetPropertyAccessor"/> — a shorthand
+    /// registered on a base CssControl class applies to every derived control).
+    /// </summary>
+    private bool TryGetShorthandInfo(
+        Type? elementType,
+        string declarationName,
+        [NotNullWhen(true)] out CssShorthandInfo? info)
+    {
+        info = null;
+        var startType = elementType ?? typeof(CssControl);
+
+        for (var type = startType; type != null; type = type.BaseType)
+        {
+            if (!_shorthands.TryGetValue(type, out var dict) || !dict.TryGetValue(declarationName, out var found))
+                continue;
+
+            info = found;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Expands a shorthand declaration (e.g. "background: red no-repeat;") into
+    /// its constituent longhand <see cref="CssStyleProperty"/> entries, ready to
+    /// be merged into a rule's property set the same way a regular declaration
+    /// is. Returns <c>false</c> if <paramref name="decl"/>'s name isn't a
+    /// registered shorthand for <paramref name="targetType"/> at all — callers
+    /// should fall through to regular declaration handling in that case, not
+    /// treat it as an error. Any longhand the shorthand's own grammar allowed to
+    /// be omitted is reset to <c>default</c> for its CLR type, per CSS's "a
+    /// shorthand resets every longhand it covers" rule.
+    /// </summary>
+    private bool TryResolveShorthandValue(
+        Type? targetType,
+        CssDeclaration decl,
+        [NotNullWhen(true)] out List<CssStyleProperty>? expanded)
+    {
+        expanded = null;
+
+        if (!TryGetShorthandInfo(targetType, decl.Name, out var info))
+            return false; // not a shorthand for this type — not an error, let the caller try a regular declaration
+
+        var stream = new CssValueStream(decl.Value);
+        var values = new Dictionary<string, object?>();
+
+        if (!info.Value.Parser(ref stream, this, values))
+        {
+    #if EXCEPTION_TOLERANCE
+            return false;
+    #else
+            throw new ArgumentException($"failed to expand shorthand declaration '{decl.Name}'");
+    #endif
+        }
+
+        var result = new List<CssStyleProperty>(info.Value.Longhands.Count);
+
+        foreach (var longhand in info.Value.Longhands)
+        {
+            if (!TryGetPropertyAccessor(targetType, longhand, out var accessor))
+            {
+    #if EXCEPTION_TOLERANCE
+                continue;
+    #else
+                throw new ArgumentException($"failed to find property accessor for '{longhand}' (from shorthand '{decl.Name}')");
+    #endif
+            }
+
+            var value = values.TryGetValue(longhand, out var found)
+                ? found
+                : accessor.Value.ClrType.IsValueType
+                    ? _factory.CreateInstance(accessor.Value.ClrType)
+                    : null;
+
+            result.Add(new CssStyleProperty(longhand, value!, accessor.Value));
+        }
+
+        expanded = result;
+        return true;
+    }
+
     private bool TryResolveDeclarationValue(
         Type? targetType,
         CssDeclaration decl,
+        [NotNullWhen(true)] out CssPropertyAccessor? accessor,
         [NotNullWhen(true)] out string? name,
         [NotNullWhen(true)] out object? value)
     {
         name = null;
         value = null;
-        CssPropertyAccessor? accessor = null;
+        accessor = null;
 
         var startType = targetType ?? typeof(CssControl);
         for (var type = startType; type != null; type = type.BaseType)
         {
             if (!_properties.TryGetValue(type, out var dict) || !dict.TryGetValue(decl.Name, out var a))
                 continue;
+
             accessor = a;
             break;
         }
@@ -393,32 +544,23 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         }
     }
 
-    private void RegisterShorthands()
-    {
-        var types = _reflection.GetAllChildren<ICssShorthandParser>().Where(x => !x.IsAbstract).ToList();
-
-        foreach (var type in types)
-        {
-            var instance = _factory.CreateInstance<ICssShorthandParser>(type);
-            _shorthands.GetOrNew(instance.CssName).Add(instance);
-        }
-    }
-
     private void RegisterProperties()
     {
         var sw = new RStopwatch();
         sw.Start();
         _properties.Clear();
+        _properties.Clear();
         RegisterEngineProperties();
-        _properties[typeof(CssControl)] = new CssControl().AutoCssProperties();
-        var styled = _reflection.GetAllChildren<CssControl>()
+
+        var styled = _reflection.GetAllChildren<AutoCssControl>()
             .Where(type => !type.IsAbstract && _reflection.IsAttributeDefined(type, typeof(CssStylingAttribute)))
             .ToList();
 
         foreach (var type in styled)
         {
-            var control = _factory.CreateInstance<CssControl>(type);
+            var control = _factory.CreateInstance<AutoCssControl>(type);
             _properties.Add(type, control.AutoCssProperties());
+            _shorthands.Add(type, control.AutoCssShorthands());
         }
 
         _sawmill.Info($"{_properties.Sum(x => x.Value.Count)} properties loaded at {sw.Elapsed}");
@@ -431,35 +573,68 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </summary>
     private void RegisterEngineProperties()
     {
-        Register<Control, float>(nameof(Control.SizeFlagsStretchRatio),
+        Register<Control, float>(
+            nameof(Control.SizeFlagsStretchRatio),
             (c, v) => c.SizeFlagsStretchRatio = v,
-            c => c.SizeFlagsStretchRatio);
+            c => c.SizeFlagsStretchRatio,
+            defValue: 1f);
 
-        Register<Control, float>(nameof(Control.MinHeight), (c, v) => c.MinHeight = v, c => c.MinHeight);
-        Register<Control, float>(nameof(Control.SetHeight), (c, v) => c.SetHeight = v, c => c.SetHeight);
-        Register<Control, float>(nameof(Control.MaxHeight), (c, v) => c.MaxHeight = v, c => c.MaxHeight);
+        Register<Control, float>(
+            nameof(Control.MinHeight),
+            (c, v) => c.MinHeight = v,
+            c => c.MinHeight);
+        Register<Control, float>(
+            nameof(Control.SetHeight),
+            (c, v) => c.SetHeight = v,
+            c => c.SetHeight,
+             defValue: float.NaN);
+        Register<Control, float>(
+            nameof(Control.MaxHeight),
+            (c, v) => c.MaxHeight = v,
+            c => c.MaxHeight,
+            defValue: float.PositiveInfinity);
 
-        Register<Control, float>(nameof(Control.MinWidth), (c, v) => c.MinWidth = v, c => c.MinWidth);
-        Register<Control, float>(nameof(Control.SetWidth), (c, v) => c.SetWidth = v, c => c.SetWidth);
-        Register<Control, float>(nameof(Control.MaxWidth), (c, v) => c.MaxWidth = v, c => c.MaxWidth);
+        Register<Control, float>(
+            nameof(Control.MinWidth),
+            (c, v) => c.MinWidth = v,
+            c => c.MinWidth);
+        Register<Control, float>(
+            nameof(Control.SetWidth),
+            (c, v) => c.SetWidth = v,
+            c => c.SetWidth,
+            defValue: float.NaN);
+        Register<Control, float>(
+            nameof(Control.MaxWidth),
+            (c, v) => c.MaxWidth = v,
+            c => c.MaxWidth,
+            defValue: float.PositiveInfinity);
 
-        Register<Control, bool>(nameof(Control.HorizontalExpand),
+        Register<Control, bool>(
+            nameof(Control.HorizontalExpand),
             (c, v) => c.HorizontalExpand = v,
-            c => c.HorizontalExpand);
-        Register<Control, bool>(nameof(Control.VerticalExpand),
+            c => c.HorizontalExpand,
+            defValue: false);
+        Register<Control, bool>(
+            nameof(Control.VerticalExpand),
             (c, v) => c.VerticalExpand = v,
-            c => c.VerticalExpand);
+            c => c.VerticalExpand,
+            defValue: false);
 
         Register<Control, Control.HAlignment>(
             nameof(Control.HorizontalAlignment),
             (c, v) => c.HorizontalAlignment = v,
-            c => c.HorizontalAlignment);
+            c => c.HorizontalAlignment,
+            defValue: Control.HAlignment.Stretch);
         Register<Control, Control.VAlignment>(
             nameof(Control.VerticalAlignment),
             (c, v) => c.VerticalAlignment = v,
-            c => c.VerticalAlignment);
+            c => c.VerticalAlignment,
+            defValue: Control.VAlignment.Stretch);
 
-        Register<Control, Thickness>(nameof(Control.Margin), (c, v) => c.Margin = v, c => c.Margin);
+        Register<Control, Thickness>(
+            nameof(Control.Margin),
+            (c, v) => c.Margin = v,
+            c => c.Margin);
 
         return;
 
@@ -467,6 +642,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             string fieldName,
             Action<Control, TField> setter,
             Func<Control, TField> getter,
+            TField defValue = default!,
             Type? handler = null)
         {
             if (!_properties.TryGetValue(typeof(TControl), out var dict))
@@ -476,7 +652,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 (c, v) => setter(c, (TField)v),
                 control => getter(control)!,
                 handler,
-                fieldName);
+                fieldName,
+                defValue);
+
             if (!dict.TryAdd(CaseConversion.PascalToKebab(fieldName), accessor))
             {
 #if !EXCEPTION_TOLERANCE

@@ -27,35 +27,6 @@ public interface ICssValueParser
     bool TryParse(ref CssValueStream stream, [NotNullWhen(true)] out object? value);
 }
 
-/// <summary>
-/// Expands one CSS shorthand property (e.g. "background", "background-position")
-/// into its constituent longhand values. Per CSS cascade semantics, a shorthand
-/// resets EVERY longhand it covers — including ones not mentioned in its value,
-/// which fall back to their initial value — rather than leaving unmentioned
-/// longhands untouched. Implementations must therefore always return a value
-/// for every entry in <see cref="Longhands"/>, never skip one.
-/// </summary>
-public interface ICssShorthandParser
-{
-    /// <summary>
-    /// The CSS name this shorthand is written kebab-case.
-    /// </summary>
-    string CssName { get; }
-
-    /// <summary>
-    /// The longhand CSS property names this shorthand expands into, e.g. "background-color".
-    /// </summary>
-    IReadOnlyList<string> Longhands { get; }
-
-    /// <summary>
-    /// Parses the shorthand's value stream and returns one value per entry in
-    /// <see cref="Longhands"/>, in the same order. Each value must already be
-    /// boxed as the exact CLR type that longhand's registered
-    /// <see cref="CssPropertyAccessor.ClrType"/> expects.
-    /// </summary>
-    bool TryExpand(ref CssValueStream stream, [NotNullWhen(true)] out object?[]? values);
-}
-
 public abstract partial class CssValueParser<T> : ICssValueParser
 {
     [Dependency] protected ICssManager Css = null!;

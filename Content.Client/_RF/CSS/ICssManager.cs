@@ -19,6 +19,11 @@ public interface ICssManager : ICssPropertyResolver
     ResPath StylesPath { get; }
 
     /// <summary>
+    /// A table of all loaded CSS styles.
+    /// </summary>
+    CssStylesheet Stylesheet { get; }
+
+    /// <summary>
     /// Recursively loads all CSS files in the directory.
     /// </summary>
     /// <param name="path">Directory path.</param>
@@ -38,12 +43,12 @@ public interface ICssManager : ICssPropertyResolver
     /// <summary>
     /// Creates a style sheet from all loaded CSS files.
     /// </summary>
-    Stylesheet BuildStylesheet();
+    CssStylesheet BuildStylesheet();
 
     /// <summary>
     /// Creates a style sheet from the loaded test styles.
     /// </summary>
-    Stylesheet BuildTestStylesheet();
+    CssStylesheet BuildTestStylesheet();
 
     /// <summary>
     /// Rebuilds the style sheet and updates <see cref="IUserInterfaceManager.Stylesheet"/>.
@@ -54,6 +59,38 @@ public interface ICssManager : ICssPropertyResolver
     /// Clears all CSS rules loaded through <see cref="LoadString"/>.
     /// </summary>
     void ClearTestStylesheet();
+
+    /// <summary>
+    /// Updates the control styles that use specific selector.
+    /// </summary>
+    /// <param name="control">Control to update.</param>
+    /// <typeparam name="T">Selector type.</typeparam>
+    void UpdateStyle<T>(CssControl control) where T : Selector;
+
+    /// <summary>
+    /// Updates the control styles that use specific selectors.
+    /// </summary>
+    /// <param name="control">Control to update.</param>
+    /// <param name="selectors">Selector types.</param>
+    void UpdateStyle(CssControl control, params Type[] selectors);
+
+    /// <summary>
+    /// Updates all control styles.
+    /// </summary>
+    /// <param name="control">Control to update.</param>
+    void UpdateStyle(CssControl control);
+
+    /// <summary>
+    /// Updates control fields based on CSS styles loaded during testing.
+    /// </summary>
+    /// <param name="control">Control to update.</param>
+    void UpdateTestStyle(CssControl control);
+
+    /// <summary>
+    /// Recursively updates the CSS styles of the control and all its child elements.
+    /// </summary>
+    /// <param name="control">The control from which the update will begin.</param>
+    void UpdateStyleRecursively(Control control);
 }
 
 public interface ICssPropertyResolver
@@ -105,4 +142,5 @@ public readonly record struct CssPropertyAccessor(
     Action<Control, object> Setter,
     Func<Control, object> Getter,
     Type? CustomParser,
-    string? PropertyName = null);
+    string? PropertyName = null,
+    object? DefaultValue = null);

@@ -35,35 +35,6 @@ public static class BackgroundPositionParsing
     }
 }
 
-public sealed class BackgroundPositionShorthandHandler : ICssShorthandParser
-{
-    public string CssName => "background-position";
-    public IReadOnlyList<string> Longhands { get; } = ["background-position-x", "background-position-y"];
-
-    public bool TryExpand(ref CssValueStream stream, [NotNullWhen(true)] out object?[]? values)
-    {
-        values = null;
-
-        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var x, out var xAbs, isXAxis: true))
-            return false;
-
-        StyleBoxPositionComponent xComp = new() { Value = x, IsAbsolute = xAbs };
-        StyleBoxPositionComponent yComp;
-
-        if (stream.AtEnd)
-            yComp = new StyleBoxPositionComponent { Value = 0.5f };
-        else
-        {
-            if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var y, out var yAbs, isXAxis: false) || !stream.AtEnd)
-                return false;
-            yComp = new StyleBoxPositionComponent { Value = y, IsAbsolute = yAbs };
-        }
-
-        values = [xComp, yComp];
-        return true;
-    }
-}
-
 [UsedImplicitly]
 public sealed class StyleBoxPositionXParser : CssValueParser<StyleBoxPositionComponent>
 {

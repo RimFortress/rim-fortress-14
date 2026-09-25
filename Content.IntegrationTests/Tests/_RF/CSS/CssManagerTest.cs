@@ -15,7 +15,7 @@ public sealed class CssManagerTest : GameTest
     [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
     [SidedDependency(Side.Client)] private readonly ILocalizationManager _loc = null!;
 
-    private Stylesheet Load(string text)
+    private CssStylesheet Load(string text)
     {
         _css.ClearTestStylesheet();
         _css.LoadString(text);
@@ -27,7 +27,7 @@ public sealed class CssManagerTest : GameTest
     public void TypeSelector_Resolves_Known_Control_Type()
     {
         var sheet = Load("label { min-height: 10px; }");
-        var selector = (SelectorElement)sheet.Rules.Single().Selector;
+        var selector = (CssElementSelector)sheet.Rules.Single().Selector;
 
         Assert.That(selector.ElementType, Is.EqualTo(typeof(Label)));
     }
@@ -37,12 +37,12 @@ public sealed class CssManagerTest : GameTest
     public void Class_Id_And_PseudoClass_Selectors_Are_Parsed_Without_A_Type()
     {
         var sheet = Load(".foo#bar:testPseudo { min-height: 1px; }");
-        var selector = (SelectorElement)sheet.Rules.Single().Selector;
+        var selector = (CssElementSelector)sheet.Rules.Single().Selector;
 
         Assert.That(selector.ElementType, Is.Null);
         // exact member names below (StyleClasses/StyleIdentifier/StylePseudoClass)
         // assumed from the constructor's parameter order — verify against the
-        // real SelectorElement declaration before relying on this test.
+        // real CssElementSelector declaration before relying on this test.
         Assert.That(selector.ElementClasses, Does.Contain("foo"));
         Assert.That(selector.ElementId, Is.EqualTo("bar"));
         Assert.That(selector.PseudoClasses, Does.Contain("testPseudo"));
@@ -86,31 +86,26 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Applying_The_Stylesheet_Updates_A_Real_Engine_Control()
     {
-        _css.LoadString("label { min-height: 25px; }");
-        _css.UpdateStylesheet();
+        Load("css-control { min-height: 25px; }");
+        var control = new CssControl();
+        _css.UpdateTestStyle(control);
 
-        var label = new Label();
-        label.InvalidateStyleSheet();
-        label.DoStyleUpdate();
-
-        Assert.That(label.MinHeight, Is.EqualTo(25f));
+        Assert.That(control.MinHeight, Is.EqualTo(25f));
     }
 
     [Test]
     [RunOnSide(Side.Client)]
     public void Custom_CssControl_Property_Applies_Through_A_Class_Selector()
     {
-        _css.LoadString("""
+        Load("""
             .highlighted {
                 max-width: 42px;
             }
             """);
-        _css.UpdateStylesheet();
 
         var control = new CssControl();
-        control.AddStyleClass("highlighted");
-        control.InvalidateStyleSheet();
-        control.DoStyleUpdate();
+        control.AddCssStyleClass("highlighted");
+        _css.UpdateTestStyle(control);
 
         Assert.That(control.MaxWidth, Is.EqualTo(42f));
     }
@@ -189,11 +184,9 @@ public sealed class CssManagerTest : GameTest
                 text: loc("{{locKey}}");
             }
             """);
-        _css.UpdateStylesheet();
 
         var control = new TestLocaleCssControl();
-        control.InvalidateStyleSheet();
-        control.DoStyleUpdate();
+        _css.UpdateTestStyle(control);
 
         Assert.That(control.Text, Is.EqualTo(_loc.GetString(locKey)));
     }
@@ -202,7 +195,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Shorthand_Expands_Into_Separate_StyleProperty_Entries()
     {
-        var sheet = Load("label { background: red no-repeat; }");
+        var sheet = Load("css-control { background: red no-repeat; }");
         var properties = sheet.Rules.Single().Properties;
         var names = properties.Select(p => p.Name).ToArray();
 
@@ -215,7 +208,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Position_Shorthand_Expands_Into_X_And_Y()
     {
-        var sheet = Load("label { background-position: right bottom; }");
+        var sheet = Load("css-control { background-position: right bottom; }");
         var properties = sheet.Rules.Single().Properties;
 
         Assert.That(
@@ -231,15 +224,14 @@ public sealed class CssManagerTest : GameTest
         // Order within one declaration block is meaningful in real CSS (later
         // wins at equal specificity) — verify the shorthand's expanded
         // background-color doesn't clobber an explicit longhand that follows it.
-        control.Stylesheet = Load("""
+        Load("""
             test-locale-css-control {
                 background: red;
                 background-color: blue;
             }
             """);
 
-        control.InvalidateStyleSheet();
-        control.DoStyleUpdate();
+        _css.UpdateTestStyle(control);
 
         // Exact accessor for reading the applied color back depends on
         // CssControl's actual background field/property — adjust to the
@@ -251,5 +243,5 @@ public sealed class CssManagerTest : GameTest
 public sealed partial class TestLocaleCssControl : CssControl
 {
     [CssProperty]
-    public partial string Text { get; set; }
+    public string Text { get; set; }
 }

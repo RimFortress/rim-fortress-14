@@ -1,7 +1,93 @@
 using System.Linq;
 using Robust.Client.UserInterface;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
+
+public sealed class CssElementSelector : Selector
+{
+    private readonly string[]? _elementClasses;
+    private readonly string[]? _pseudoClasses;
+
+    public CssElementSelector(
+        Type? elementType,
+        IEnumerable<string>? elementClasses,
+        string? elementId,
+        IEnumerable<string>? pseudoClass)
+    {
+        if (elementType != null)
+        {
+            if (!typeof(Control).IsAssignableFrom(elementType))
+                throw new ArgumentException("elementType must inherit Control.", nameof(elementType));
+
+            if (elementType == typeof(Control) || elementType == typeof(CssControl))
+                throw new ArgumentException("elementType may not be Control itself.", nameof(elementType));
+        }
+
+        ElementType = elementType;
+        _elementClasses = elementClasses?.ToArray();
+        ElementId = elementId;
+        _pseudoClasses = pseudoClass?.ToArray();
+    }
+
+    public Type? ElementType { get; }
+    public IReadOnlyList<string>? ElementClasses => _elementClasses;
+    public string? ElementId { get; }
+    public IReadOnlyList<string>? PseudoClasses => _pseudoClasses;
+
+    public override bool Matches(Control control)
+    {
+        if (control is not CssControl css)
+            return false;
+
+        if (ElementId != null && css.CssStyleIdentifier != ElementId)
+            return false;
+
+        if (ElementType != null && !ElementType.IsInstanceOfType(css))
+            return false;
+
+        if (_elementClasses != null)
+        {
+            foreach (var elementClass in _elementClasses)
+            {
+                if (!css.HasCssStyleClass(elementClass))
+                    return false;
+            }
+        }
+
+        if (_pseudoClasses != null)
+        {
+            foreach (var elementClass in _pseudoClasses)
+            {
+                if (!css.HasCssPseudoStyleClass(elementClass))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    public override StyleSpecificity CalculateSpecificity()
+    {
+        var countId = ElementId == null ? 0 : 1;
+        var countClasses = (ElementClasses?.Count ?? 0) + (PseudoClasses?.Count ?? 0);
+        var countTypes = 0;
+
+        if (ElementType == null)
+            return new StyleSpecificity(countId, countClasses, countTypes);
+
+        var type = ElementType;
+
+        while (type != typeof(Control))
+        {
+            DebugTools.AssertNotNull(type);
+            type = type.BaseType;
+            countTypes += 1;
+        }
+
+        return new StyleSpecificity(countId, countClasses, countTypes);
+    }
+}
 
 /// <summary>
 /// Selector for CSS :nth-child() pseudoclasses.

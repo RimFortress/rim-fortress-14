@@ -38,8 +38,7 @@ public sealed class CssPropertyGeneratorTest : GameTest
             """);
 
         var control = new TestCssControl();
-        control.Stylesheet = _css.BuildTestStylesheet();
-        control.DoStyleUpdate();
+        _css.UpdateTestStyle(control);
 
         Assert.That(control.Test, Is.EqualTo(1337f));
         Assert.That(control.MinHeight, Is.EqualTo(11f));
@@ -49,8 +48,8 @@ public sealed class CssPropertyGeneratorTest : GameTest
 public sealed partial class TestCssControl : CssControl
 {
     [CssProperty]
-    public partial float Test { get; set; }
+    public float Test { get; set; }
 
-    [CssProperty(Default = 15f)]
-    public partial float TestDefault { get; set; }
+    [CssProperty]
+    public float TestDefault { get; set; } = 15f;
 }

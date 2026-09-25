@@ -1,7 +1,6 @@
-using Content.Client._RF.Graphics;
+using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
 
@@ -13,13 +12,239 @@ namespace Content.Client._RF.CSS;
 /// To allow the field's value to be set via CSS, you need to mark it using the <see cref="CssPropertyAttribute"/>.
 /// </remarks>
 [Virtual]
-public partial class CssControl : Control
+public partial class CssControl : AutoCssControl
 {
+    [Dependency] protected ICssManager Css = null!;
+
     /// <summary>
     /// Is this control the <see cref="UserInterfaceManager.CurrentlyHovered"/>?
     /// </summary>
     public bool Hovered { get; private set; }
 
+    /// <summary>
+    /// Applied-property bookkeeping for full UpdateStyle(control) calls. See UpdateStyleForSelectorKind for the partial counterpart.
+    /// </summary>
+    internal HashSet<string>? CssLastAppliedProperties;
+
+    /// <summary>
+    /// Applied-property bookkeeping per selector-kind for partial
+    /// UpdateStyle(control, params Type[]) calls — kept separate per Type so
+    /// refreshing one selector kind (e.g. NthChildSelector after a structural
+    /// change) never resets properties tracked under a different, untouched
+    /// scope (e.g. plain type-selector or :hover rules).
+    /// </summary>
+    internal Dictionary<Type, HashSet<string>>? CssLastAppliedPropertiesByScope;
+
+    /// <summary>
+    /// The CSS style identifier for the control.
+    /// </summary>
+    /// <remarks>
+    /// It is this field that supports CSS, not <see cref="Control.StyleIdentifier"/>.
+    /// </remarks>
+    [ViewVariables]
+    public string? CssStyleIdentifier
+    {
+        get;
+        set
+        {
+            field = value;
+            Css.UpdateStyle(this);
+        }
+    }
+
+    /// <summary>
+    /// Current control style classes.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadOnly)]
+    public List<string> CssStyleClasses
+    {
+        get;
+        set
+        {
+            field = new(value);
+            Css.UpdateStyle(this);
+        }
+    } = new();
+
+    /// <summary>
+    /// Current control pseudo style classes.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadOnly)]
+    public List<string> CssPseudoStyleClasses
+    {
+        get;
+        set
+        {
+            field = new(value);
+            Css.UpdateStyle(this);
+        }
+    } = new();
+
+    public CssControl()
+    {
+        IoCManager.InjectDependencies(this);
+    }
+
+    [PublicAPI, Pure]
+    public bool HasCssPseudoStyleClass(string className) => CssPseudoStyleClasses.Contains(className);
+
+    [PublicAPI]
+    protected void AddCssPseudoStyleClass(string className)
+    {
+        if (CssPseudoStyleClasses.Contains(className))
+            return;
+
+        CssPseudoStyleClasses.Add(className);
+        Css.UpdateStyle(this);
+    }
+
+    [PublicAPI]
+    protected void RemoveCssPseudoStyleClass(string className)
+    {
+        if (!CssPseudoStyleClasses.Remove(className))
+            return;
+
+        Css.UpdateStyle(this);
+    }
+
+    [PublicAPI, Pure]
+    public bool HasCssStyleClass(string className) => CssStyleClasses.Contains(className);
+
+    [PublicAPI]
+    public void AddCssStyleClass(string className)
+    {
+        if (CssStyleClasses.Contains(className))
+            return;
+
+        CssStyleClasses.Add(className);
+        Css.UpdateStyle(this);
+    }
+
+    [PublicAPI]
+    public void RemoveCssStyleClass(string className)
+    {
+        if (!CssStyleClasses.Remove(className))
+            return;
+
+        Css.UpdateStyle(this);
+    }
+
+    protected override void Parented(Control newParent)
+    {
+        base.Parented(newParent);
+
+        Css.UpdateStyleRecursively(this);
+    }
+
+    protected override void ChildMoved(Control child, int oldIndex, int newIndex)
+    {
+        base.ChildMoved(child, oldIndex, newIndex);
+
+        foreach (var control in Children)
+        {
+            if (control is not CssControl css)
+                continue;
+
+            Css.UpdateStyle(css,
+                typeof(NthChildSelector),
+                typeof(NthLastChildSelector),
+                typeof(NthLastOfTypeSelector),
+                typeof(NthOfTypeSelector));
+        }
+    }
+
+    protected override void ChildAdded(Control newChild)
+    {
+        base.ChildAdded(newChild);
+
+        Css.UpdateStyle<EmptySelector>(this);
+
+        foreach (var control in Children)
+        {
+            if (control is not CssControl css)
+                continue;
+
+            if (control == newChild)
+                continue;
+
+            Css.UpdateStyle(css,
+                typeof(NthChildSelector),
+                typeof(NthLastChildSelector),
+                typeof(NthLastOfTypeSelector),
+                typeof(NthOfTypeSelector),
+                typeof(OnlyChildSelector),
+                typeof(OnlyOfTypeSelector),
+                typeof(SelectorChild));
+        }
+    }
+
+    protected override void ChildRemoved(Control child)
+    {
+        base.ChildRemoved(child);
+
+        Css.UpdateStyle<EmptySelector>(this);
+
+        foreach (var control in Children)
+        {
+            if (control is not CssControl css)
+                continue;
+
+            if (control == child)
+                continue;
+
+            Css.UpdateStyle(css,
+                typeof(NthChildSelector),
+                typeof(NthLastChildSelector),
+                typeof(NthLastOfTypeSelector),
+                typeof(NthOfTypeSelector),
+                typeof(OnlyChildSelector),
+                typeof(OnlyOfTypeSelector),
+                typeof(SelectorChild));
+        }
+    }
+
+    protected override void KeyboardFocusEntered()
+    {
+        base.KeyboardFocusEntered();
+        Css.UpdateStyle<FocusSelector>(this);
+    }
+
+    protected override void ControlFocusExited()
+    {
+        base.ControlFocusExited();
+        Css.UpdateStyle<FocusSelector>(this);
+    }
+
+    protected override void KeyboardFocusExited()
+    {
+        base.KeyboardFocusExited();
+        Css.UpdateStyle<FocusSelector>(this);
+    }
+
+    protected override void MouseEntered()
+    {
+        base.MouseEntered();
+        Hovered = true;
+        Css.UpdateStyle<HoverSelector>(this);
+    }
+
+    protected override void MouseExited()
+    {
+        base.MouseExited();
+        Hovered = false;
+        Css.UpdateStyle<HoverSelector>(this);
+    }
+
+    protected override void Draw(DrawingHandleScreen handle)
+    {
+        base.Draw(handle);
+
+        DrawBackground(handle);
+    }
+}
+
+public abstract class AutoCssControl : Control
+{
     /// <summary>
     /// The method through which CssPropertiesGenerator adds
     /// CSS properties extracted from this class's <see cref="CssPropertyAttribute"/>,
@@ -30,120 +255,53 @@ public partial class CssControl : Control
     /// </remarks>
     public virtual Dictionary<string, CssPropertyAccessor> AutoCssProperties()
     {
-        var properties = new Dictionary<string, CssPropertyAccessor>();
-
-        Register(nameof(BackgroundColor), (c, v) => c.BackgroundColor = v, c => c.BackgroundColor);
-        Register(nameof(BackgroundImage), (c, v) => c.BackgroundImage = v, c => c.BackgroundImage);
-        Register(nameof(BackgroundRepeat), (c, v) => c.BackgroundRepeat = v, c => c.BackgroundRepeat);
-        Register(nameof(BackgroundSize), (c, v) => c.BackgroundSize = v, c => c.BackgroundSize);
-        Register(nameof(BackgroundPositionX), (c, v) => c.BackgroundPositionX = v, c => c.BackgroundPositionX);
-        Register(nameof(BackgroundPositionY), (c, v) => c.BackgroundPositionY = v, c => c.BackgroundPositionY);
-
-        return properties;
-
-        void Register<TField>(
-            string fieldName,
-            Action<CssControl, TField> setter,
-            Func<CssControl, TField> getter,
-            Type? handler = null)
-        {
-            var accessor = new CssPropertyAccessor(typeof(TField),
-                (c, v) => setter((CssControl)c, (TField)v),
-                control => getter((CssControl)control)!,
-                handler);
-
-            properties.Add(CaseConversion.PascalToKebab(fieldName), accessor);
-        }
+        return new();
     }
 
-    protected override void ChildMoved(Control child, int oldIndex, int newIndex)
+    /// <summary>
+    /// Returns every CSS shorthand this class declares via
+    /// <see cref="CssShorthandPropertyAttribute"/>, keyed by shorthand CSS
+    /// name (e.g. "background").
+    /// </summary>
+    /// <remarks>
+    /// You should never manually modify the contents of this method.
+    /// </remarks>
+    public virtual Dictionary<string, CssShorthandInfo> AutoCssShorthands()
     {
-        base.ChildMoved(child, oldIndex, newIndex);
-
-        foreach (var control in Children)
-        {
-            control.DoStyleUpdate();
-        }
-    }
-
-    protected override void ChildAdded(Control newChild)
-    {
-        base.ChildAdded(newChild);
-
-        foreach (var control in Children)
-        {
-            if (control != newChild)
-                control.DoStyleUpdate();
-        }
-    }
-
-    protected override void ChildRemoved(Control child)
-    {
-        base.ChildRemoved(child);
-
-        foreach (var control in Children)
-        {
-            if (control != child)
-                control.DoStyleUpdate();
-        }
-    }
-
-    protected override void KeyboardFocusEntered()
-    {
-        base.KeyboardFocusEntered();
-        DoStyleUpdate();
-    }
-
-    protected override void ControlFocusExited()
-    {
-        base.ControlFocusExited();
-        DoStyleUpdate();
-    }
-
-    protected override void KeyboardFocusExited()
-    {
-        base.KeyboardFocusExited();
-        DoStyleUpdate();
-    }
-
-    protected override void MouseEntered()
-    {
-        base.MouseEntered();
-        Hovered = true;
-        DoStyleUpdate();
-    }
-
-    protected override void MouseExited()
-    {
-        base.MouseExited();
-        Hovered = false;
-        DoStyleUpdate();
-    }
-
-    protected override void Draw(DrawingHandleScreen handle)
-    {
-        base.Draw(handle);
-
-        DrawBackground(handle);
-    }
-
-    protected override void StylePropertiesChanged()
-    {
-        base.StylePropertiesChanged();
-
-        BackgroundColor = TryGetStyleProperty<Color?>("background-color", out var color) ? color : null;
-        BackgroundImage = TryGetStyleProperty<Texture?>("background-image", out var texture) ? texture : null;
-        BackgroundRepeat = TryGetStyleProperty<RfStyleBoxTexture.StretchMode>("background-repeat", out var mode)
-            ? mode
-            : RfStyleBoxTexture.StretchMode.Repeat;
-        BackgroundSize = TryGetStyleProperty<RfStyleBoxTexture.StyleBoxSize>("background-size", out var size)
-            ? size
-            : RfStyleBoxTexture.StyleBoxSize.Auto;
-        BackgroundPositionX = TryGetStyleProperty<StyleBoxPositionComponent>("background-position-x", out var positionX)
-            ? positionX
-            : StyleBoxPositionComponent.Zero;
-        BackgroundPositionY = TryGetStyleProperty<StyleBoxPositionComponent>("background-position-y", out var positionY)
-            ? positionY
-            : StyleBoxPositionComponent.Zero;
+        return new();
     }
 }
+
+/// <summary>
+/// Parses a shorthand declaration's value stream, writing one entry into
+/// <paramref name="values"/> per longhand it recognized (using each longhand's
+/// CSS name as the key). Longhands the shorthand's grammar allows to be
+/// omitted simply aren't added to <paramref name="values"/> — the caller
+/// resets those to their registered default, per CSS's "a shorthand resets
+/// every longhand it covers" rule. Returns <c>false</c> if the value couldn't
+/// be parsed as this shorthand at all (a genuine syntax error, not just an
+/// omitted optional component).
+/// </summary>
+public delegate bool CssShorthandParserDelegate(
+    ref CssValueStream stream,
+    ICssManager css,
+    Dictionary<string, object?> values);
+
+/// <summary>
+/// Everything needed to expand one shorthand declaration: which longhand CSS
+/// properties it covers, and how to parse its value into them. Produced by
+/// <see cref="AutoCssControl.AutoCssShorthands"/> — either hand-written (via
+/// <see cref="CssShorthandPropertyAttribute.CustomParserMethod"/>) or
+/// generated automatically for the common case.
+/// </summary>
+/// <param name="Longhands">
+/// The CSS names of every longhand this shorthand can set, in a fixed,
+/// generator-determined order. Any longhand not populated by
+/// <see cref="Parser"/> for a given declaration is reset to its default.
+/// </param>
+/// <param name="Parser">
+/// Parses one shorthand value into its longhands. See <see cref="CssShorthandParserDelegate"/>.
+/// </param>
+public readonly record struct CssShorthandInfo(
+    IReadOnlyList<string> Longhands,
+    CssShorthandParserDelegate Parser);

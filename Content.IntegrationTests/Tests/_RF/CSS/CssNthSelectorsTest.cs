@@ -138,8 +138,7 @@ public sealed class CssNthSelectorsTest : GameTest
             """);
 
         var parent = new CssControl();
-        parent.Stylesheet = _css.BuildTestStylesheet();
-        parent.DoStyleUpdate();
+        _css.UpdateTestStyle(parent);
 
         var first = new NthTestControl();
         var middle = new NthTestControl();
@@ -148,13 +147,19 @@ public sealed class CssNthSelectorsTest : GameTest
         parent.AddChild(first);
         parent.AddChild(middle);
         parent.AddChild(last);
-        last.DoStyleUpdate();
+
+        _css.UpdateTestStyle(first);
+        _css.UpdateTestStyle(middle);
+        _css.UpdateTestStyle(last);
 
         Assert.That(first.Color, Is.EqualTo(Color.Red));
         Assert.That(middle.Color, Is.EqualTo(Color.Yellow));
         Assert.That(last.Color, Is.EqualTo(Color.Red));
 
         parent.RemoveChild(middle);
+
+        _css.UpdateTestStyle(first);
+        _css.UpdateTestStyle(last);
 
         Assert.That(first.Color, Is.EqualTo(Color.Red));
         Assert.That(last.Color, Is.EqualTo(Color.Yellow));
@@ -166,5 +171,5 @@ public sealed class CssNthSelectorsTest : GameTest
 public sealed partial class NthTestControl : CssControl
 {
     [CssProperty]
-    public partial Color Color { get; set; }
+    public Color Color { get; set; }
 }
