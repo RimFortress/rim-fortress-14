@@ -8,6 +8,9 @@ public partial class CssControl
 {
     private const string BackgroundShorthandName = "background";
     private const string BackgroundPositionShorthandName = "background-position";
+    private const string PaddingShorthandName = "padding";
+    private const string ExpandMarginShorthandName = "expand-margin";
+    private const string PatchMarginShorthandName = "pathc-margin";
 
     /// <summary>
     /// Current control background.
@@ -151,6 +154,229 @@ public partial class CssControl
         }
     }
 
+    /// <summary>
+    /// Sets the width of the padding area to the left of an element.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PaddingShorthandName, nameof(ParsePaddingShorthand))]
+    public float PaddingLeft
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Sets the height of the padding area on the top of an element.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PaddingShorthandName)]
+    public float PaddingTop
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Sets the width of the padding area to the right of an element.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PaddingShorthandName)]
+    public float PaddingRight
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Sets the height of the padding area on the bottom of an element.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PaddingShorthandName)]
+    public float PaddingBottom
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Sets the padding area on all four sides of an element at once.
+    /// </summary>
+    public Thickness Padding
+    {
+        get => new(PaddingLeft, PaddingTop, PaddingRight, PaddingBottom);
+        set
+        {
+            PaddingLeft = value.Left;
+            PaddingTop = value.Top;
+            PaddingRight = value.Right;
+            PaddingBottom = value.Bottom;
+        }
+    }
+
+    /// <summary>
+    /// Left expansion size, in virtual pixels.
+    /// </summary>
+    /// <remarks>
+    /// This expands the size of the area where the patches get drawn. This will cause the drawn texture to
+    /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
+    /// <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </remarks>
+    [CssProperty]
+    [CssShorthandProperty(ExpandMarginShorthandName, nameof(ParseExpandMarginShorthand))]
+    public float ExpandMarginLeft
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Top expansion size, in virtual pixels.
+    /// </summary>
+    /// <remarks>
+    /// This expands the size of the area where the patches get drawn. This will cause the drawn texture to
+    /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
+    /// <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </remarks>
+    [CssProperty]
+    [CssShorthandProperty(ExpandMarginShorthandName)]
+    public float ExpandMarginTop
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Bottom expansion size, in virtual pixels.
+    /// </summary>
+    /// <remarks>
+    /// This expands the size of the area where the patches get drawn. This will cause the drawn texture to
+    /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
+    /// <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </remarks>
+    [CssProperty]
+    [CssShorthandProperty(ExpandMarginShorthandName)]
+    public float ExpandMarginBottom
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Right expansion size, in virtual pixels.
+    /// </summary>
+    /// <remarks>
+    /// This expands the size of the area where the patches get drawn. This will cause the drawn texture to
+    /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
+    /// <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </remarks>
+    [CssProperty]
+    [CssShorthandProperty(ExpandMarginShorthandName)]
+    public float ExpandMarginRight
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+    
+    /// <summary>
+    /// Distance of the left patch margin from the image. In texture space.
+    /// The size of this patch in virtual pixels can be obtained by scaling
+    /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PatchMarginShorthandName, nameof(ParsePatchMarginShorthand))]
+    public float PatchMarginLeft
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Distance of the right patch margin from the image. In texture space.
+    /// The size of this patch in virtual pixels can be obtained by scaling
+    /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PatchMarginShorthandName)]
+    public float PatchMarginRight
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Distance of the top patch margin from the image. In texture space.
+    /// The size of this patch in virtual pixels can be obtained by scaling
+    /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PatchMarginShorthandName)]
+    public float PatchMarginTop
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
+    /// <summary>
+    /// Distance of the bottom patch margin from the image. In texture space.
+    /// The size of this patch in virtual pixels can be obtained by scaling
+    /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(PatchMarginShorthandName)]
+    public float PatchMarginBottom
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    }
+
     private StyleBox GetBackground()
     {
         if (BackgroundImage != null)
@@ -163,6 +389,15 @@ public partial class CssControl
                 Size = BackgroundSize,
                 Position = BackgroundPosition,
                 BackgroundClip =  BackgroundClip,
+                Padding = Padding,
+                ExpandMarginBottom = ExpandMarginBottom,
+                ExpandMarginLeft = ExpandMarginLeft,
+                ExpandMarginRight = ExpandMarginRight,
+                ExpandMarginTop = ExpandMarginTop,
+                PatchMarginBottom = PatchMarginBottom,
+                PatchMarginLeft = PatchMarginLeft,
+                PatchMarginRight = PatchMarginRight,
+                PatchMarginTop = PatchMarginTop,
             };
         }
 
@@ -170,6 +405,7 @@ public partial class CssControl
         {
             BackgroundColor = BackgroundColor ?? Color.Transparent,
             BackgroundClip =  BackgroundClip,
+            Padding = Padding,
         };
     }
 
@@ -327,6 +563,82 @@ public partial class CssControl
     // rather than requiring the whole stream to end.
     private static bool LooksLikePositionEnd(CssValueStream stream) =>
         stream.Peek() is DelimToken { CodePoint: '/' } || !LooksLikePositionStart(stream);
+
+    private static bool ParsePaddingShorthand(
+        ref CssValueStream stream,
+        ICssManager css,
+        Dictionary<string, object?> values)
+        => ParseMarginLikeShorthand(
+            "padding-top",
+            "padding-right",
+            "padding-bottom",
+            "padding-left",
+            ref stream,
+            css,
+            values);
+
+    private static bool ParseExpandMarginShorthand(
+        ref CssValueStream stream,
+        ICssManager css,
+        Dictionary<string, object?> values)
+        => ParseMarginLikeShorthand(
+            "expand-margin-top",
+            "expand-margin-right",
+            "expand-margin-bottom",
+            "expand-margin-left",
+            ref stream,
+            css,
+            values);
+
+    private static bool ParsePatchMarginShorthand(
+        ref CssValueStream stream,
+        ICssManager css,
+        Dictionary<string, object?> values)
+        => ParseMarginLikeShorthand(
+            "patch-margin-top",
+            "patch-margin-right",
+            "patch-margin-bottom",
+            "patch-margin-left",
+            ref stream,
+            css,
+            values);
+
+    private static bool ParseMarginLikeShorthand(
+        string property1,
+        string property2,
+        string property3,
+        string property4,
+        ref CssValueStream stream,
+        ICssManager css,
+        Dictionary<string, object?> values)
+    {
+        var lengths = new List<float>();
+
+        while (lengths.Count < 4 && !stream.AtEnd)
+        {
+            if (!css.TryParseValue<float>(ref stream, out var v))
+                break;
+
+            lengths.Add(v);
+        }
+
+        if (!stream.AtEnd || lengths.Count is not (1 or 2 or 4))
+            return false;
+
+        var (top, right, bottom, left) = lengths.Count switch
+        {
+            1 => (lengths[0], lengths[0], lengths[0], lengths[0]),
+            2 => (lengths[0], lengths[1], lengths[0], lengths[1]), // CSS: vertical horizontal
+            4 => (lengths[0], lengths[1], lengths[2], lengths[3]), // CSS: top right bottom left
+            _ => default,
+        };
+
+        values[property1] = top;
+        values[property2] = right;
+        values[property3] = bottom;
+        values[property4] = left;
+        return true;
+    }
 
     #endregion
 }

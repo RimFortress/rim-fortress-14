@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 
@@ -22,111 +21,48 @@ public partial class CssControl : AutoCssControl
     public bool Hovered { get; private set; }
 
     /// <summary>
-    /// Applied-property bookkeeping for full UpdateStyle(control) calls. See UpdateStyleForSelectorKind for the partial counterpart.
+    /// Left value of the <see cref="Control.Margin"/>.
     /// </summary>
-    internal HashSet<string>? CssLastAppliedProperties;
-
-    /// <summary>
-    /// Applied-property bookkeeping per selector-kind for partial
-    /// UpdateStyle(control, params Type[]) calls — kept separate per Type so
-    /// refreshing one selector kind (e.g. NthChildSelector after a structural
-    /// change) never resets properties tracked under a different, untouched
-    /// scope (e.g. plain type-selector or :hover rules).
-    /// </summary>
-    internal Dictionary<Type, HashSet<string>>? CssLastAppliedPropertiesByScope;
-
-    /// <summary>
-    /// The CSS style identifier for the control.
-    /// </summary>
-    /// <remarks>
-    /// It is this field that supports CSS, not <see cref="Control.StyleIdentifier"/>.
-    /// </remarks>
-    [ViewVariables]
-    public string? CssStyleIdentifier
+    [CssProperty]
+    public float MarginLeft
     {
-        get;
-        set
-        {
-            field = value;
-            Css.UpdateStyle(this);
-        }
+        get => Margin.Left;
+        set => Margin = new Thickness(value, Margin.Top, Margin.Right, Margin.Bottom);
     }
 
     /// <summary>
-    /// Current control style classes.
+    /// Top value of the <see cref="Control.Margin"/>.
     /// </summary>
-    [ViewVariables(VVAccess.ReadOnly)]
-    public List<string> CssStyleClasses
+    [CssProperty]
+    public float MarginTop
     {
-        get;
-        set
-        {
-            field = new(value);
-            Css.UpdateStyle(this);
-        }
-    } = new();
+        get => Margin.Top;
+        set => Margin = new Thickness(Margin.Left, value, Margin.Right, Margin.Bottom);
+    }
 
     /// <summary>
-    /// Current control pseudo style classes.
+    /// Right value of the <see cref="Control.Margin"/>.
     /// </summary>
-    [ViewVariables(VVAccess.ReadOnly)]
-    public List<string> CssPseudoStyleClasses
+    [CssProperty]
+    public float MarginRight
     {
-        get;
-        set
-        {
-            field = new(value);
-            Css.UpdateStyle(this);
-        }
-    } = new();
+        get => Margin.Right;
+        set => Margin = new Thickness(Margin.Left, Margin.Top, value, Margin.Bottom);
+    }
+
+    /// <summary>
+    /// Bottom value of the <see cref="Control.Margin"/>.
+    /// </summary>
+    [CssProperty]
+    public float MarginBottom
+    {
+        get => Margin.Bottom;
+        set => Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right, value);
+    }
 
     public CssControl()
     {
         IoCManager.InjectDependencies(this);
-    }
-
-    [PublicAPI, Pure]
-    public bool HasCssPseudoStyleClass(string className) => CssPseudoStyleClasses.Contains(className);
-
-    [PublicAPI]
-    protected void AddCssPseudoStyleClass(string className)
-    {
-        if (CssPseudoStyleClasses.Contains(className))
-            return;
-
-        CssPseudoStyleClasses.Add(className);
-        Css.UpdateStyle(this);
-    }
-
-    [PublicAPI]
-    protected void RemoveCssPseudoStyleClass(string className)
-    {
-        if (!CssPseudoStyleClasses.Remove(className))
-            return;
-
-        Css.UpdateStyle(this);
-    }
-
-    [PublicAPI, Pure]
-    public bool HasCssStyleClass(string className) => CssStyleClasses.Contains(className);
-
-    [PublicAPI]
-    public void AddCssStyleClass(string className)
-    {
-        if (CssStyleClasses.Contains(className))
-            return;
-
-        CssStyleClasses.Add(className);
-        Css.UpdateStyle(this);
-    }
-
-    [PublicAPI]
-    public void RemoveCssStyleClass(string className)
-    {
-        if (!CssStyleClasses.Remove(className))
-            return;
-
-        Css.UpdateStyle(this);
     }
 
     protected override void Parented(Control newParent)
