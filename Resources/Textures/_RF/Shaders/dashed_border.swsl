@@ -1,0 +1,13 @@
+uniform highp float side_length;
+uniform highp float segment_length;
+uniform highp float gap_length;
+
+void fragment()
+{
+    highp float period = segment_length + gap_length;
+    highp float pos = UV.x * side_length - side_length * 0.5;
+    highp float local = mod(pos + period * 0.5, period) - period * 0.5;
+
+    COLOR = texture2D(TEXTURE, UV);
+    COLOR.a *= step(abs(local), segment_length * 0.5);
+}

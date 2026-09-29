@@ -9,13 +9,13 @@ public partial class CssControl
     private const string BackgroundShorthandName = "background";
     private const string BackgroundPositionShorthandName = "background-position";
     private const string PaddingShorthandName = "padding";
-    private const string ExpandMarginShorthandName = "expand-margin";
-    private const string PatchMarginShorthandName = "pathc-margin";
+    private const string ExpandPatchMarginShorthandName = "expand-patch-margin";
+    private const string PatchMarginShorthandName = "patch-margin";
 
     /// <summary>
     /// Current control background.
     /// </summary>
-    public StyleBox? Background { get; private set; }
+    protected StyleBox? Background { get; private set; }
 
     /// <summary>
     /// Sets the background color of an element. The background of an element is the
@@ -26,7 +26,7 @@ public partial class CssControl
     /// </remarks>
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName, nameof(ParseBackgroundShorthand))]
-    public Color? BackgroundColor
+    protected Color? BackgroundColor
     {
         get;
         set
@@ -41,7 +41,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName)]
-    public Texture? BackgroundImage
+    protected Texture? BackgroundImage
     {
         get;
         set
@@ -58,7 +58,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName)]
-    public RfStyleBoxTexture.StretchMode BackgroundRepeat
+    protected RfStyleBoxTexture.StretchMode BackgroundRepeat
     {
         get;
         set
@@ -78,7 +78,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName)]
-    public RfStyleBoxTexture.StyleBoxSize BackgroundSize
+    protected RfStyleBoxTexture.StyleBoxSize BackgroundSize
     {
         get;
         set
@@ -94,7 +94,7 @@ public partial class CssControl
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName)]
     [CssShorthandProperty(BackgroundPositionShorthandName, nameof(ParseBackgroundPositionShorthand))]
-    public StyleBoxPositionComponent BackgroundPositionX
+    protected StyleBoxPositionComponent BackgroundPositionX
     {
         get;
         set
@@ -110,7 +110,7 @@ public partial class CssControl
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName)]
     [CssShorthandProperty(BackgroundPositionShorthandName)]
-    public StyleBoxPositionComponent BackgroundPositionY
+    protected StyleBoxPositionComponent BackgroundPositionY
     {
         get;
         set
@@ -125,7 +125,7 @@ public partial class CssControl
     /// Setting this assigns both components at once (mirrors the CSS background-position
     /// shorthand); the longhand background-position-x/-y properties remain independently settable.
     /// </summary>
-    public RfStyleBoxTexture.StyleBoxPosition BackgroundPosition
+    protected RfStyleBoxTexture.StyleBoxPosition BackgroundPosition
     {
         get => new()
         {
@@ -144,7 +144,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName)]
-    public StyleBoxBackgroundClip BackgroundClip
+    protected StyleBoxBackgroundClip BackgroundClip
     {
         get;
         set
@@ -152,14 +152,14 @@ public partial class CssControl
             field = value;
             Background = GetBackground();
         }
-    }
+    } = StyleBoxBackgroundClip.BorderBox;
 
     /// <summary>
     /// Sets the width of the padding area to the left of an element.
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName, nameof(ParsePaddingShorthand))]
-    public float PaddingLeft
+    protected float PaddingLeft
     {
         get;
         set
@@ -174,7 +174,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName)]
-    public float PaddingTop
+    protected float PaddingTop
     {
         get;
         set
@@ -189,7 +189,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName)]
-    public float PaddingRight
+    protected float PaddingRight
     {
         get;
         set
@@ -204,7 +204,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName)]
-    public float PaddingBottom
+    protected float PaddingBottom
     {
         get;
         set
@@ -217,7 +217,7 @@ public partial class CssControl
     /// <summary>
     /// Sets the padding area on all four sides of an element at once.
     /// </summary>
-    public Thickness Padding
+    protected Thickness Padding
     {
         get => new(PaddingLeft, PaddingTop, PaddingRight, PaddingBottom);
         set
@@ -238,8 +238,8 @@ public partial class CssControl
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
     [CssProperty]
-    [CssShorthandProperty(ExpandMarginShorthandName, nameof(ParseExpandMarginShorthand))]
-    public float ExpandMarginLeft
+    [CssShorthandProperty(ExpandPatchMarginShorthandName, nameof(ParseExpandMarginShorthand))]
+    protected float ExpandPatchMarginLeft
     {
         get;
         set
@@ -258,8 +258,8 @@ public partial class CssControl
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
     [CssProperty]
-    [CssShorthandProperty(ExpandMarginShorthandName)]
-    public float ExpandMarginTop
+    [CssShorthandProperty(ExpandPatchMarginShorthandName)]
+    protected float ExpandPatchMarginTop
     {
         get;
         set
@@ -278,8 +278,8 @@ public partial class CssControl
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
     [CssProperty]
-    [CssShorthandProperty(ExpandMarginShorthandName)]
-    public float ExpandMarginBottom
+    [CssShorthandProperty(ExpandPatchMarginShorthandName)]
+    protected float ExpandPatchMarginBottom
     {
         get;
         set
@@ -298,8 +298,8 @@ public partial class CssControl
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
     [CssProperty]
-    [CssShorthandProperty(ExpandMarginShorthandName)]
-    public float ExpandMarginRight
+    [CssShorthandProperty(ExpandPatchMarginShorthandName)]
+    protected float ExpandPatchMarginRight
     {
         get;
         set
@@ -308,7 +308,7 @@ public partial class CssControl
             Background = GetBackground();
         }
     }
-    
+
     /// <summary>
     /// Distance of the left patch margin from the image. In texture space.
     /// The size of this patch in virtual pixels can be obtained by scaling
@@ -316,7 +316,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PatchMarginShorthandName, nameof(ParsePatchMarginShorthand))]
-    public float PatchMarginLeft
+    protected float PatchMarginLeft
     {
         get;
         set
@@ -333,7 +333,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PatchMarginShorthandName)]
-    public float PatchMarginRight
+    protected float PatchMarginRight
     {
         get;
         set
@@ -350,7 +350,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PatchMarginShorthandName)]
-    public float PatchMarginTop
+    protected float PatchMarginTop
     {
         get;
         set
@@ -367,7 +367,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PatchMarginShorthandName)]
-    public float PatchMarginBottom
+    protected float PatchMarginBottom
     {
         get;
         set
@@ -379,34 +379,30 @@ public partial class CssControl
 
     private StyleBox GetBackground()
     {
-        if (BackgroundImage != null)
-        {
-            return new RfStyleBoxTexture
+        RfStyleBox box = BackgroundImage != null
+            ? new RfStyleBoxTexture
             {
                 Texture = BackgroundImage,
                 Modulate = BackgroundColor ?? Color.White,
                 Mode = BackgroundRepeat,
                 Size = BackgroundSize,
                 Position = BackgroundPosition,
-                BackgroundClip =  BackgroundClip,
-                Padding = Padding,
-                ExpandMarginBottom = ExpandMarginBottom,
-                ExpandMarginLeft = ExpandMarginLeft,
-                ExpandMarginRight = ExpandMarginRight,
-                ExpandMarginTop = ExpandMarginTop,
+                ExpandMarginBottom = ExpandPatchMarginBottom,
+                ExpandMarginLeft = ExpandPatchMarginLeft,
+                ExpandMarginRight = ExpandPatchMarginRight,
+                ExpandMarginTop = ExpandPatchMarginTop,
                 PatchMarginBottom = PatchMarginBottom,
                 PatchMarginLeft = PatchMarginLeft,
                 PatchMarginRight = PatchMarginRight,
                 PatchMarginTop = PatchMarginTop,
-            };
-        }
+            }
+            : new RfStyleBoxFlat { BackgroundColor = BackgroundColor ?? Color.Transparent };
 
-        return new RfStyleBoxFlat
-        {
-            BackgroundColor = BackgroundColor ?? Color.Transparent,
-            BackgroundClip =  BackgroundClip,
-            Padding = Padding,
-        };
+        box.BackgroundClip = BackgroundClip;
+        box.Padding = Padding;
+        box.Border = BuildBorder();
+
+        return box;
     }
 
     /// <summary>

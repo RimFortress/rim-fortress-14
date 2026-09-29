@@ -22,29 +22,6 @@ public sealed class RfStyleBoxTexture : RfStyleBox
     }
 
     /// <summary>
-    /// Clones a stylebox so it can be separately modified.
-    /// </summary>
-    public RfStyleBoxTexture(RfStyleBoxTexture copy) : base(copy)
-    {
-        TilingShader = copy.TilingShader;
-        Size = copy.Size;
-
-        PatchMarginTop = copy.PatchMarginTop;
-        PatchMarginLeft = copy.PatchMarginLeft;
-        PatchMarginBottom = copy.PatchMarginBottom;
-        PatchMarginRight = copy.PatchMarginRight;
-
-        ExpandMarginLeft = copy.ExpandMarginLeft;
-        ExpandMarginTop = copy.ExpandMarginTop;
-        ExpandMarginBottom = copy.ExpandMarginBottom;
-        ExpandMarginRight = copy.ExpandMarginRight;
-
-        Texture = copy.Texture;
-        Modulate = copy.Modulate;
-        TextureScale = copy.TextureScale;
-    }
-
-    /// <summary>
     /// <see cref="TilingShader"/> prototype ID.
     /// </summary>
     public static readonly ProtoId<ShaderPrototype> TilingShaderId = "TiledTexture";
@@ -213,7 +190,7 @@ public sealed class RfStyleBoxTexture : RfStyleBox
             ExpandMarginLeft = value;
     }
 
-    protected override void DoDraw(DrawingHandleScreen handle, UIBox2 box, float uiScale)
+    protected override void DoDrawFill(DrawingHandleScreen handle, UIBox2 box, float uiScale)
     {
         if (Texture == null)
             return;

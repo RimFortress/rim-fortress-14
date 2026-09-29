@@ -66,11 +66,11 @@ public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleB
                 value = (float)(pct.Value / 100.0);
                 return true;
             case DimensionToken dim:
-                if (!LengthUnit.TryParse(dim.Unit, out var unit)
-                    || !LengthUnit.AbsoluteUnits.Contains(unit.Value))
+                if (!LengthUnitType.TryParse(dim.Unit, out var unit)
+                    || !LengthUnitType.AbsoluteUnits.Contains(unit.Value))
                     return false;
 
-                value = (float)dim.Value * LengthUnit.AbsoluteToPxRatio[unit.Value];
+                value = (float)dim.Value * LengthUnitType.AbsoluteToPxRatio[unit.Value];
                 return true;
             default:
                 return false;

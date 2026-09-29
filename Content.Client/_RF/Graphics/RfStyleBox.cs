@@ -9,33 +9,64 @@ public abstract class RfStyleBox : StyleBox
     /// </summary>
     public StyleBoxBackgroundClip BackgroundClip { get; set; } = StyleBoxBackgroundClip.PaddingBox;
 
-    protected RfStyleBox()
+    /// <summary>
+    /// Border of the background.
+    /// </summary>
+    public StyleBoxBorder? Border{ get; set; }
+
+    protected abstract void DoDrawFill(DrawingHandleScreen handle, UIBox2 box, float uiScale);
+
+    protected sealed override void DoDraw(DrawingHandleScreen handle, UIBox2 box, float uiScale)
     {
+        var borderBox = new UIBox2(
+            box.Left - PaddingLeft,
+            box.Top - PaddingTop,
+            box.Right + PaddingRight,
+            box.Bottom + PaddingBottom);
+
+        DoDrawFill(handle, GetClippedBox(borderBox), uiScale);
+        Border?.Draw(handle, borderBox, uiScale);
     }
 
-    protected RfStyleBox(RfStyleBox copy) : base(copy)
+    protected override float GetDefaultContentMargin(Margin margin) => margin switch
     {
-        BackgroundClip = copy.BackgroundClip;
-    }
+        Margin.Top => Border?.Top.Width ?? 0f,
+        Margin.Bottom => Border?.Bottom.Width ?? 0f,
+        Margin.Right => Border?.Right.Width ?? 0f,
+        Margin.Left => Border?.Left.Width ?? 0f,
+        _ => throw new ArgumentOutOfRangeException(nameof(margin), margin, null),
+    };
 
     /// <summary>
-    /// Applies <see cref="BackgroundClip"/> to the padding-inset box a
-    /// <see cref="StyleBox.DoDraw"/> override receives, returning the box background
-    /// painting should actually be confined to.
+    /// Computes the fill area for a given <see cref="BackgroundClip"/>, from the
+    /// box's TRUE outer border edge. BorderBox = unchanged (paints under padding
+    /// AND under the border). PaddingBox = inset by the BORDER's own thickness
+    /// only — not by Padding; per spec, padding-box's boundary is where the
+    /// border ends, regardless of the Padding value itself. ContentBox = inset
+    /// by both the border's thickness AND Padding.
     /// </summary>
-    protected UIBox2 GetClippedBox(UIBox2 paddingBox) => BackgroundClip switch
+    protected UIBox2 GetClippedBox(UIBox2 borderBox)
     {
-        StyleBoxBackgroundClip.BorderBox => new UIBox2(paddingBox.Left - PaddingLeft,
-            paddingBox.Top - PaddingTop,
-            paddingBox.Right + PaddingRight,
-            paddingBox.Bottom + PaddingBottom),
-        StyleBoxBackgroundClip.ContentBox => new UIBox2(
-            paddingBox.Left + (GetContentMargin(Margin.Left) - GetPadding(Margin.Left)),
-            paddingBox.Top + (GetContentMargin(Margin.Top) - GetPadding(Margin.Top)),
-            paddingBox.Right - (GetContentMargin(Margin.Right) - GetPadding(Margin.Right)),
-            paddingBox.Bottom - (GetContentMargin(Margin.Bottom) - GetPadding(Margin.Bottom))),
-        _ => paddingBox,
-    };
+        var bl = Border?.Left.Width ?? 0f;
+        var bt = Border?.Top.Width ?? 0f;
+        var br = Border?.Right.Width ?? 0f;
+        var bb = Border?.Bottom.Width ?? 0f;
+
+        return BackgroundClip switch
+        {
+            StyleBoxBackgroundClip.BorderBox => borderBox,
+            StyleBoxBackgroundClip.ContentBox => new UIBox2(
+                borderBox.Left + bl + PaddingLeft,
+                borderBox.Top + bt + PaddingTop,
+                borderBox.Right - br - PaddingRight,
+                borderBox.Bottom - bb - PaddingBottom),
+            _ => new UIBox2( // PaddingBox
+                borderBox.Left + bl,
+                borderBox.Top + bt,
+                borderBox.Right - br,
+                borderBox.Bottom - bb),
+        };
+    }
 }
 
 /// <summary>

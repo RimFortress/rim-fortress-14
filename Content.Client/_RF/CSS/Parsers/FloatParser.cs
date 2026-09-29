@@ -12,12 +12,12 @@ public sealed class FloatParser : CssValueParser<float>
         switch (stream.Peek())
         {
             case DimensionToken dimension:
-                if (!LengthUnit.TryParse(dimension.Unit, out var unit)
-                    || !LengthUnit.AbsoluteUnits.Contains(unit.Value))
+                if (!LengthUnitType.TryParse(dimension.Unit, out var unit)
+                    || !LengthUnitType.AbsoluteUnits.Contains(unit.Value))
                     return false;
 
                 stream.ConsumeNext();
-                value = (float)dimension.Value / LengthUnit.AbsoluteToPxRatio[unit.Value];
+                value = (float)dimension.Value / LengthUnitType.AbsoluteToPxRatio[unit.Value];
                 return true;
             case NumberToken { Value: 0 }: // unitless zero is a valid length
                 stream.ConsumeNext();

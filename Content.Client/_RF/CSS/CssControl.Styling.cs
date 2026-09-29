@@ -6,7 +6,7 @@ namespace Content.Client._RF.CSS;
 public partial class CssControl
 {
     /// <summary>
-    /// Applied-property bookkeeping for full UpdateStyle(control) calls. See UpdateStyleForSelectorKind for the partial counterpart.
+    /// Applied-property bookkeeping for full UpdateStyle(control) calls.
     /// </summary>
     internal HashSet<string>? CssLastAppliedProperties;
 

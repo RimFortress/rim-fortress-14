@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using JetBrains.Annotations;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
 
-public enum LengthUnit : byte
+public enum LengthUnitType : byte
 {
     // Absolute units
 
@@ -72,71 +73,154 @@ public enum LengthUnit : byte
     Percent,
 }
 
-// TODO: Relative units PLEASE!!!
+/// <summary>
+/// A floating-point number calculated in a specific unit.
+/// </summary>
+public readonly record struct LengthUnit(float Value, LengthUnitType Type)
+{
+    /// <summary>
+    /// Is this number absolute, i.e., can it be converted to <see cref="LengthUnitType.Px"/>
+    /// without needing to know other values (such as the viewport or parent size)?
+    /// </summary>
+    public bool IsAbsolute => LengthUnitType.AbsoluteUnits.Contains(Type);
+
+    public static LengthUnit Zero => new(0, LengthUnitType.Px);
+
+    public bool IsZero => Value == 0f;
+
+    /// <summary>
+    /// Resolves a percent value against an explicit reference — the caller
+    /// must supply the correct axis for the specific CSS property this value
+    /// belongs to (parent width for margin/padding/width, own box width/height
+    /// for border-radius, etc.). Not meaningful for non-Percent units.
+    /// </summary>
+    [PublicAPI, Pure]
+    public LengthUnit PercentToPx(float referenceValue)
+    {
+        DebugTools.AssertEqual(Type, LengthUnitType.Percent);
+        return new LengthUnit(Value / 100f * referenceValue, LengthUnitType.Px);
+    }
+
+    /// <summary>
+    /// Converts viewport-relative values to <see cref="LengthUnitType.Px"/>.
+    /// </summary>
+    /// <param name="viewportSize">The viewport size relative to which the value should be calculated.</param>
+    [PublicAPI, Pure]
+    public LengthUnit ViewportToPx(Vector2 viewportSize) => Type switch
+    {
+        LengthUnitType.Vw => new LengthUnit(LengthUnitType.FromVw(Value, viewportSize), LengthUnitType.Px),
+        LengthUnitType.Vh => new LengthUnit(LengthUnitType.FromVh(Value, viewportSize), LengthUnitType.Px),
+        LengthUnitType.VMin => new LengthUnit(LengthUnitType.FromVMin(Value, viewportSize), LengthUnitType.Px),
+        LengthUnitType.VMax => new LengthUnit(LengthUnitType.FromVMax(Value, viewportSize), LengthUnitType.Px),
+        _ => throw new ArgumentOutOfRangeException(nameof(Type), Type, null),
+    };
+
+    /// <summary>
+    /// Converts the absolute unit value to <see cref="LengthUnitType.Px"/>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public LengthUnit AbsoluteToPx()
+    {
+        if (Type == LengthUnitType.Px)
+            return this;
+
+        DebugTools.Assert(LengthUnitType.AbsoluteUnits.Contains(Type));
+        return new LengthUnit(Value / LengthUnitType.AbsoluteToPxRatio[Type], LengthUnitType.Px);
+    }
+
+    public override string ToString() => $"{Value:F2}{Type.ToString().ToLowerInvariant()}";
+}
+
+/// <summary>
+/// A two-dimensional vector whose components are expressed in specific unit systems.
+/// </summary>
+public record struct UnitVector2(LengthUnit X, LengthUnit Y)
+{
+    /// <summary>
+    /// Are all the components of the vector absolute?
+    /// </summary>
+    /// <seealso cref="LengthUnit.IsAbsolute"/>
+    public bool IsAbsolute => X.IsAbsolute &&  Y.IsAbsolute;
+
+    public bool IsZero => X.IsZero && Y.IsZero;
+
+    public override string ToString() => $"{X.ToString()},{Y.ToString()}";
+}
 
 public static class LengthUnitsExtensions
 {
-    extension(LengthUnit unit)
+    extension(LengthUnitType unitType)
     {
         /// <summary>
         /// A dictionary that stores predefined conversion ratios between absolute CSS units and RT UI virtual pixels.
         /// </summary>
-        public static Dictionary<LengthUnit, float> AbsoluteToPxRatio => new()
+        public static Dictionary<LengthUnitType, float> AbsoluteToPxRatio => new()
         {
-            [LengthUnit.Px] = 1f,
-            [LengthUnit.In] = 96f,
-            [LengthUnit.Cm] = 96f / 2.54f,
-            [LengthUnit.Mm] = 96f / 25.4f,
-            [LengthUnit.Q]  = 96f / 101.6f, // 1q = 1/40 cm
-            [LengthUnit.Pc] = 16f,          // 1pc = 12pt = 16px
-            [LengthUnit.Pt] = 96f / 72f,
+            [LengthUnitType.Px] = 1f,
+            [LengthUnitType.In] = 96f,
+            [LengthUnitType.Cm] = 96f / 2.54f,
+            [LengthUnitType.Mm] = 96f / 25.4f,
+            [LengthUnitType.Q]  = 96f / 101.6f, // 1q = 1/40 cm
+            [LengthUnitType.Pc] = 16f,          // 1pc = 12pt = 16px
+            [LengthUnitType.Pt] = 96f / 72f,
         };
 
         /// <summary>
         /// A list of all absolute CSS units (whose ratio to virtual pixels remains constant).
         /// </summary>
-        public static HashSet<LengthUnit> AbsoluteUnits => new()
+        public static HashSet<LengthUnitType> AbsoluteUnits => new()
         {
-            LengthUnit.Px,
-            LengthUnit.In,
-            LengthUnit.Cm,
-            LengthUnit.Mm,
-            LengthUnit.Q,
-            LengthUnit.Pc,
-            LengthUnit.Pt,
+            LengthUnitType.Px,
+            LengthUnitType.In,
+            LengthUnitType.Cm,
+            LengthUnitType.Mm,
+            LengthUnitType.Q,
+            LengthUnitType.Pc,
+            LengthUnitType.Pt,
         };
 
         /// <summary>
-        /// Converts <see cref="LengthUnit.Vw"/> to <see cref="LengthUnit.Px"/>.
+        /// A list of all viewport-relative CSS units.
+        /// </summary>
+        public static HashSet<LengthUnitType> ViewportUnits => new()
+        {
+            LengthUnitType.Vw,
+            LengthUnitType.Vh,
+            LengthUnitType.VMin,
+            LengthUnitType.VMax,
+        };
+
+        /// <summary>
+        /// Converts <see cref="LengthUnitType.Vw"/> to <see cref="LengthUnitType.Px"/>.
         /// </summary>
         [PublicAPI, Pure]
         public static float FromVw(float value, Vector2 viewportSize) => value / 100f * viewportSize.X;
 
         /// <summary>
-        /// Converts <see cref="LengthUnit.Vh"/> to <see cref="LengthUnit.Px"/>.
+        /// Converts <see cref="LengthUnitType.Vh"/> to <see cref="LengthUnitType.Px"/>.
         /// </summary>
         [PublicAPI, Pure]
         public static float FromVh(float value, Vector2 viewportSize) => value / 100f * viewportSize.Y;
 
         /// <summary>
-        /// Converts <see cref="LengthUnit.VMin"/> to <see cref="LengthUnit.Px"/>.
+        /// Converts <see cref="LengthUnitType.VMin"/> to <see cref="LengthUnitType.Px"/>.
         /// </summary>
         [PublicAPI, Pure]
         public static float FromVMin(float value, Vector2 viewportSize)
             => value / 100f * MathF.Min(viewportSize.X, viewportSize.Y);
 
         /// <summary>
-        /// Converts <see cref="LengthUnit.VMax"/> to <see cref="LengthUnit.Px"/>.
+        /// Converts <see cref="LengthUnitType.VMax"/> to <see cref="LengthUnitType.Px"/>.
         /// </summary>
         [PublicAPI, Pure]
         public static float FromVMax(float value, Vector2 viewportSize)
             => value / 100f * MathF.Max(viewportSize.X, viewportSize.Y);
 
-        public static bool TryParse(string unitText, [NotNullWhen(true)] out LengthUnit? parsed)
+        public static bool TryParse(string unitText, [NotNullWhen(true)] out LengthUnitType? parsed)
         {
             parsed = null;
 
-            if (!Enum.TryParse<LengthUnit>(unitText, true, out var value))
+            if (!Enum.TryParse<LengthUnitType>(unitText, true, out var value))
                 return false;
 
             parsed = value;
