@@ -6,8 +6,8 @@ public sealed class RfStyleBoxFlat : RfStyleBox
 {
     public Color BackgroundColor { get; set; }
 
-    protected override void DoDrawFill(DrawingHandleScreen handle, UIBox2 box, float uiScale)
+    protected override void DoDrawFill(DrawingHandleScreen handle, UIBox2 clipBox, UIBox2 originBox, float uiScale)
     {
-        handle.DrawRect(box, BackgroundColor);
+        handle.DrawRect(clipBox, BackgroundColor);
     }
 }

@@ -190,12 +190,12 @@ public sealed class RfStyleBoxTexture : RfStyleBox
             ExpandMarginLeft = value;
     }
 
-    protected override void DoDrawFill(DrawingHandleScreen handle, UIBox2 box, float uiScale)
+    protected override void DoDrawFill(DrawingHandleScreen handle, UIBox2 clipBox, UIBox2 originBox, float uiScale)
     {
         if (Texture == null)
             return;
 
-        box = GetClippedBox(box);
+        var box = clipBox;
         var left = box.Left - ExpandMarginLeft * uiScale;
         var top = box.Top - ExpandMarginTop * uiScale;
         var right = MathF.Max(left, box.Right + ExpandMarginRight * uiScale);
@@ -221,31 +221,24 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         {
             if (sourceMargin.Top > 0)
             {
-                // Draw top left
-                var topLeftBox = new UIBox2(0, 0, scaledMargin.Left, scaledMargin.Top)
-                    .Translated(box.TopLeft);
-                DrawRegion(handle,
-                    topLeftBox,
-                    new UIBox2(0, 0, sourceMargin.Left, sourceMargin.Top));
+                var topLeftBox = new UIBox2(0, 0, scaledMargin.Left, scaledMargin.Top).Translated(box.TopLeft);
+                DrawRegion(handle, topLeftBox, new UIBox2(0, 0, sourceMargin.Left, sourceMargin.Top));
             }
 
             {
-                // Draw left
-                var leftBox =
-                    new UIBox2(0, scaledMargin.Top, scaledMargin.Left, innerBottom)
-                        .Translated(box.TopLeft);
-                DrawStretchingArea(handle,
+                var leftBox = new UIBox2(0, scaledMargin.Top, scaledMargin.Left, innerBottom).Translated(box.TopLeft);
+                DrawStretchingArea(
+                    handle,
                     leftBox,
                     new UIBox2(0, sourceMargin.Top, sourceMargin.Left, Texture.Height - sourceMargin.Bottom),
-                    uiScale);
+                    uiScale,
+                    originBox: leftBox);
             }
 
             if (sourceMargin.Bottom > 0)
             {
-                // Draw bottom left
-                var bottomLeftBox =
-                    new UIBox2(0, box.Height - scaledMargin.Bottom, scaledMargin.Left, box.Height)
-                        .Translated(box.TopLeft);
+                var bottomLeftBox = new UIBox2(0, box.Height - scaledMargin.Bottom, scaledMargin.Left, box.Height)
+                    .Translated(box.TopLeft);
                 DrawRegion(handle,
                     bottomLeftBox,
                     new UIBox2(0, Texture.Height - sourceMargin.Bottom, sourceMargin.Left, Texture.Height));
@@ -256,7 +249,6 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         {
             if (sourceMargin.Top > 0)
             {
-                // Draw top right
                 var topRightBox = new UIBox2(box.Width - scaledMargin.Right, 0, box.Width, scaledMargin.Top)
                     .Translated(box.TopLeft);
                 DrawRegion(handle,
@@ -265,29 +257,22 @@ public sealed class RfStyleBoxTexture : RfStyleBox
             }
 
             {
-                // Draw right
-                var rightBox =
-                    new UIBox2(box.Width - scaledMargin.Right,
-                            scaledMargin.Top,
-                            box.Width,
-                            innerBottom)
-                        .Translated(box.TopLeft);
-
+                var rightBox = new UIBox2(box.Width - scaledMargin.Right, scaledMargin.Top, box.Width, innerBottom)
+                    .Translated(box.TopLeft);
                 DrawStretchingArea(handle,
                     rightBox,
                     new UIBox2(Texture.Width - sourceMargin.Right,
                         sourceMargin.Top,
                         Texture.Width,
                         Texture.Height - sourceMargin.Bottom),
-                    uiScale);
+                    uiScale,
+                    originBox: rightBox);
             }
 
             if (sourceMargin.Bottom > 0)
             {
-                // Draw bottom right
-                var bottomRightBox =
-                    new UIBox2(box.Width - scaledMargin.Right, box.Height - scaledMargin.Bottom, box.Width, box.Height)
-                        .Translated(box.TopLeft);
+                var bottomRightBox = new UIBox2(box.Width - scaledMargin.Right, box.Height - scaledMargin.Bottom, box.Width, box.Height)
+                    .Translated(box.TopLeft);
                 DrawRegion(handle,
                     bottomRightBox,
                     new UIBox2(Texture.Width - sourceMargin.Right,
@@ -299,41 +284,33 @@ public sealed class RfStyleBoxTexture : RfStyleBox
 
         if (sourceMargin.Top > 0)
         {
-            // Draw top
-            var topBox =
-                new UIBox2(scaledMargin.Left, 0, innerRight, scaledMargin.Top)
-                    .Translated(box.TopLeft);
+            var topBox = new UIBox2(scaledMargin.Left, 0, innerRight, scaledMargin.Top).Translated(box.TopLeft);
             DrawStretchingArea(handle,
                 topBox,
                 new UIBox2(sourceMargin.Left, 0, Texture.Width - sourceMargin.Right, sourceMargin.Top),
-                uiScale);
+                uiScale,
+                originBox: topBox);
         }
 
         if (sourceMargin.Bottom > 0)
         {
-            // Draw bottom
-            var bottomBox =
-                new UIBox2(scaledMargin.Left,
-                        box.Height - scaledMargin.Bottom,
-                        innerRight,
-                        box.Height)
-                    .Translated(box.TopLeft);
-
+            var bottomBox = new UIBox2(scaledMargin.Left, box.Height - scaledMargin.Bottom, innerRight, box.Height).Translated(box.TopLeft);
             DrawStretchingArea(handle,
                 bottomBox,
                 new UIBox2(sourceMargin.Left,
                     Texture.Height - sourceMargin.Bottom,
                     Texture.Width - sourceMargin.Right,
                     Texture.Height),
-                uiScale);
+                uiScale,
+                originBox: bottomBox);
         }
 
-        // Draw center
+        // Центр — единственное место, напрямую соответствующее обычному CSS
+        // background-image без 9-patch (при PatchMargin=0 центр совпадает со
+        // всей областью заливки). Здесь background-position/size/фаза тайлинга
+        // обязаны резолвиться от originBox, а не от локального centerBox.
         {
-            var centerBox = new UIBox2(scaledMargin.Left,
-                scaledMargin.Top,
-                innerRight,
-                innerBottom).Translated(box.TopLeft);
+            var centerBox = new UIBox2(scaledMargin.Left, scaledMargin.Top, innerRight, innerBottom).Translated(box.TopLeft);
 
             DrawStretchingArea(handle,
                 centerBox,
@@ -341,7 +318,8 @@ public sealed class RfStyleBoxTexture : RfStyleBox
                     sourceMargin.Top,
                     Texture.Width - sourceMargin.Right,
                     Texture.Height - sourceMargin.Bottom),
-                uiScale);
+                uiScale,
+                originBox: originBox);
         }
     }
 
@@ -353,7 +331,14 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         handle.DrawTextureRectRegion(Texture!, area, texCoords, Modulate);
     }
 
-    private void DrawStretchingArea(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale)
+    /// <summary>
+    /// Draws one patch (edge/center) with the given fill mode.
+    /// <paramref name="originBox"/> is where position/size percentages and
+    /// tiling phase are resolved from — pass the patch's own <paramref name="area"/>
+    /// for RF's 9-patch edge strips (self-contained tiling, no CSS equivalent),
+    /// or the real background-origin box for the center patch.
+    /// </summary>
+    private void DrawStretchingArea(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale, UIBox2 originBox)
     {
         if (area.Width <= 0 || area.Height <= 0 || texCoords.Width <= 0 || texCoords.Height <= 0)
             return;
@@ -364,19 +349,19 @@ public sealed class RfStyleBoxTexture : RfStyleBox
                 handle.DrawTextureRectRegion(Texture!, area, texCoords, Modulate);
                 return;
             case StretchMode.NoRepeat:
-                DrawNoTile(handle, area, texCoords, uiScale);
+                DrawNoTile(handle, area, texCoords, uiScale, originBox);
                 return;
-            default: // Tile / TileX / TileY
-                DrawTiled(handle, area, texCoords, uiScale);
+            default:
+                DrawTiled(handle, area, texCoords, uiScale, originBox);
                 return;
         }
     }
 
-    private void DrawNoTile(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale)
+    private void DrawNoTile(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale, UIBox2 originBox)
     {
-        var naturalSize = ComputeTileSize(area, texCoords, uiScale);
+        var naturalSize = ComputeTileSize(originBox, texCoords, uiScale);
         var clippedSize = Vector2.Min(naturalSize, area.Size);
-        var anchor = ComputeAnchor(area, clippedSize, uiScale);
+        var anchor = ComputeAnchor(originBox, clippedSize, uiScale);
         var destBox = UIBox2.FromDimensions(anchor, clippedSize);
 
         var texClip = new UIBox2(
@@ -388,13 +373,13 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         handle.DrawTextureRectRegion(Texture!, destBox, texClip, Modulate);
     }
 
-    private void DrawTiled(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale)
+    private void DrawTiled(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale, UIBox2 originBox)
     {
         if (Texture is null || TextureScale.X <= 0 || TextureScale.Y <= 0 || uiScale <= 0)
             return;
 
-        var tileSize = ComputeTileSize(area, texCoords, uiScale);
-        var anchor = ComputeAnchor(area, tileSize, uiScale);
+        var tileSize = ComputeTileSize(originBox, texCoords, uiScale);
+        var anchor = ComputeAnchor(originBox, tileSize, uiScale);
 
         var repeatX = Mode is StretchMode.Repeat or StretchMode.RepeatX;
         var repeatY = Mode is StretchMode.Repeat or StretchMode.RepeatY;

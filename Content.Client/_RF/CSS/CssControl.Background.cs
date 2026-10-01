@@ -155,6 +155,22 @@ public partial class CssControl
     } = StyleBoxBackgroundClip.BorderBox;
 
     /// <summary>
+    /// Sets the reference box for resolving background-position/background-size
+    /// percentages and the tiling pattern's phase. See <see cref="StyleBoxBackgroundOrigin"/>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(BackgroundShorthandName)]
+    protected StyleBoxBackgroundOrigin BackgroundOrigin
+    {
+        get;
+        set
+        {
+            field = value;
+            Background = GetBackground();
+        }
+    } = StyleBoxBackgroundOrigin.PaddingBox;
+
+    /// <summary>
     /// Sets the width of the padding area to the left of an element.
     /// </summary>
     [CssProperty]
@@ -399,6 +415,7 @@ public partial class CssControl
             : new RfStyleBoxFlat { BackgroundColor = BackgroundColor ?? Color.Transparent };
 
         box.BackgroundClip = BackgroundClip;
+        box.BackgroundOrigin = BackgroundOrigin;
         box.Padding = Padding;
         box.Border = BuildBorder();
 
@@ -438,6 +455,8 @@ public partial class CssControl
         var positionX = StyleBoxPositionComponent.Zero;
         var positionY = StyleBoxPositionComponent.Zero;
         var sawPosition = false;
+        var clip = StyleBoxBackgroundClip.BorderBox;
+        var origin = StyleBoxBackgroundOrigin.BorderBox;
 
         while (!stream.AtEnd)
         {
@@ -462,6 +481,20 @@ public partial class CssControl
                     return false;
 
                 repeat = v;
+                continue;
+            }
+
+            if (stream.Peek() is IdentToken { Value: "border-box" or "padding-box" or "content-box" })
+            {
+                if (!css.TryParseValue<StyleBoxBackgroundOrigin>(ref stream, out var o))
+                    return false;
+
+                origin = o;
+
+                if (stream.Peek() is IdentToken { Value: "border-box" or "padding-box" or "content-box" }
+                    && css.TryParseValue<StyleBoxBackgroundClip>(ref stream, out var cl))
+                    clip = cl;
+
                 continue;
             }
 
@@ -496,6 +529,8 @@ public partial class CssControl
         values["background-image"] = image;
         values["background-repeat"] = repeat;
         values["background-size"] = size;
+        values["background-origin"] = origin;
+        values["background-clip"] = clip;
         values["background-position-x"] = positionX;
         values["background-position-y"] = positionY;
         return true;
