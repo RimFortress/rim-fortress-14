@@ -15,7 +15,7 @@ public partial class CssControl
     /// <summary>
     /// Current control background.
     /// </summary>
-    protected StyleBox? Background { get; private set; }
+    protected RfStyleBox? Background { get; private set; }
 
     /// <summary>
     /// Sets the background color of an element. The background of an element is the
@@ -377,7 +377,7 @@ public partial class CssControl
         }
     }
 
-    private StyleBox GetBackground()
+    private RfStyleBox GetBackground()
     {
         RfStyleBox box = BackgroundImage != null
             ? new RfStyleBoxTexture

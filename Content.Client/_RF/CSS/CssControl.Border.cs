@@ -13,7 +13,7 @@ public partial class CssControl
     private const string BorderColorShorthandName = "border-color";
     private const string BorderWidthShorthandName = "border-width";
     private const string BorderStyleShorthandName = "border-style";
-    //private const string BorderRadiusShorthandName = "border-radius";
+    private const string BorderRadiusShorthandName = "border-radius";
 
     // ── Per-side color ──────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -41,7 +41,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -55,7 +55,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -69,7 +69,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -85,7 +85,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -99,7 +99,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -113,7 +113,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -127,7 +127,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -143,7 +143,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     } = CssBorderStyle.None;
 
@@ -157,7 +157,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     } = CssBorderStyle.None;
 
@@ -171,7 +171,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     } = CssBorderStyle.None;
 
@@ -185,11 +185,11 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     } = CssBorderStyle.None;
 
-    /* ── Per-corner radius ──────────────────────────────────────────── TODO
+    // ── Per-corner radius ────────────────────────────────────────────
 
     [CssProperty]
     [CssShorthandProperty(BorderRadiusShorthandName, nameof(ParseBorderRadiusShorthand))]
@@ -199,7 +199,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -211,7 +211,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -223,7 +223,7 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
@@ -235,11 +235,22 @@ public partial class CssControl
         set
         {
             field = value;
-            Background = GetBackground();
+            Background?.Border = BuildBorder();
         }
     }
 
-    */
+    protected CornerRadius BorderRadius
+    {
+        get => new(BorderTopLeftRadius, BorderTopRightRadius, BorderBottomRightRadius, BorderBottomLeftRadius);
+        set
+        {
+            BorderTopLeftRadius = value.TopLeft;
+            BorderTopRightRadius = value.TopRight;
+            BorderBottomRightRadius = value.BottomRight;
+            BorderBottomLeftRadius = value.BottomLeft;
+            Background?.Border = BuildBorder();
+        }
+    }
 
     private StyleBoxBorder? BuildBorder()
     {
@@ -263,7 +274,7 @@ public partial class CssControl
         if (top.Width <= 0 && right.Width <= 0 && bottom.Width <= 0 && left.Width <= 0)
             return null;
 
-        return new StyleBoxBorder(top, right, bottom, left);
+        return new StyleBoxBorder(BorderRadius, top, right, bottom, left);
     }
 
     #region Parsing

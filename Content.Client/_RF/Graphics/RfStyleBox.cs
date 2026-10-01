@@ -12,7 +12,7 @@ public abstract class RfStyleBox : StyleBox
     /// <summary>
     /// Border of the background.
     /// </summary>
-    public StyleBoxBorder? Border{ get; set; }
+    public StyleBoxBorder? Border { get; set; }
 
     protected abstract void DoDrawFill(DrawingHandleScreen handle, UIBox2 box, float uiScale);
 
