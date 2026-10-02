@@ -280,6 +280,92 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         }
     }
 
+    #region Variables API
+
+    /// <inheritdoc/>
+    public void SetVariable(CssControl control, string name, string cssValue, bool important = false)
+    {
+        if (!CssVariables.IsCustomProperty(name))
+            throw new ArgumentException($"CSS variable name must start with '--': '{name}'", nameof(name));
+
+        if (!TryTokenizeValue(cssValue, out var tokens, out var valueImportant))
+        {
+#if EXCEPTION_TOLERANCE
+            _sawmill.Error($"invalid CSS value for variable '{name}': '{cssValue}'");
+            return;
+#else
+            throw new ArgumentException($"invalid CSS value for variable '{name}': '{cssValue}'", nameof(cssValue));
+#endif
+        }
+
+        control.CssInlineVariables ??= new Dictionary<string, CssCustomProperty>(StringComparer.Ordinal);
+        control.CssInlineVariables[name] = new CssCustomProperty(name, tokens, important || valueImportant);
+
+        UpdateStyle(control);
+    }
+
+    /// <inheritdoc/>
+    public bool RemoveVariable(CssControl control, string name)
+    {
+        if (control.CssInlineVariables is not { } inline || !inline.Remove(name))
+            return false;
+
+        if (inline.Count == 0)
+            control.CssInlineVariables = null;
+
+        UpdateStyle(control);
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public bool TryGetVariable<T>(CssControl control, string name, out T? value)
+    {
+        value = default;
+
+        if (control.CssComputedVariables is not { } variables || !variables.TryGet(name, out var tokens))
+            return false;
+
+        var stream = new CssValueStream(tokens);
+
+        if (TryParseValue(ref stream, out value) && stream.AtEnd)
+            return true;
+
+        value = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Turns CSS value text into component values by running it through the regular stylesheet parser,
+    /// so the code API accepts exactly what a stylesheet declaration accepts (including a trailing
+    /// <c>!important</c>).
+    /// </summary>
+    /// <returns><c>false</c> if the text isn't a single valid declaration value.</returns>
+    private static bool TryTokenizeValue(
+        string cssValue,
+        [NotNullWhen(true)] out List<ICssComponentValue>? tokens,
+        out bool important)
+    {
+        tokens = null;
+        important = false;
+
+        var items = CssParser.ParseStylesheet($"x{{--v:{cssValue}}}").ToList();
+
+        if (items is not [CssQualifiedRule qualified] || qualified.Block == null)
+            return false;
+
+        var declarations = CssParser.ParseListOfDeclarations(qualified.Block.Value.Value.ToArray()).ToList();
+
+        // Anything that closes the block early or adds declarations (";", "}") shows up as extra items.
+        if (declarations is not [CssDeclaration { Name: "--v" } declaration])
+            return false;
+
+        tokens = declaration.Value;
+        important = declaration.Important;
+        return true;
+    }
+
+    #endregion
+
     #region Applying
 
     /// <summary>
@@ -304,29 +390,15 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var rule in ordered)
+        // Cascade: normal declarations are applied first, then !important ones, so the latter always win.
+        // Within one importance level the later rule (higher specificity / later in source) wins.
+        for (var pass = 0; pass < 2; pass++)
         {
-            if (rule.DeferredDeclarations.Count == 0)
+            var important = pass == 1;
+
+            foreach (var rule in ordered)
             {
-                foreach (var property in rule.Properties)
-                {
-                    Apply(property);
-                }
-
-                continue;
-            }
-
-            var deferred = new List<CssStyleProperty>();
-
-            foreach (var declaration in rule.DeferredDeclarations)
-            {
-                TryResolveDeferred(declaration, variables, deferred);
-            }
-
-            // Declaration order decides which value wins; OrderBy is stable.
-            foreach (var property in rule.Properties.Concat(deferred).OrderBy(p => p.Order))
-            {
-                Apply(property);
+                ApplyRule(rule, important);
             }
         }
 
@@ -354,6 +426,42 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             previouslyApplied.Remove(property.Name);
             property.Accessor.Setter(control, property.Value);
             applied.Add(property.Name);
+        }
+
+        void ApplyRule(CssStyleRule rule, bool important)
+        {
+            if (important && !rule.HasImportant)
+                return;
+
+            if (rule.DeferredDeclarations.Count == 0)
+            {
+                foreach (var property in rule.Properties)
+                {
+                    if (property.Important == important)
+                        Apply(property);
+                }
+
+                return;
+            }
+
+            var deferred = new List<CssStyleProperty>();
+
+            foreach (var declaration in rule.DeferredDeclarations)
+            {
+                if (declaration.Declaration.Important == important)
+                    TryResolveDeferred(declaration, variables, deferred);
+            }
+
+            // Declaration order decides which value wins; OrderBy is stable.
+            var properties = rule.Properties
+                .Where(p => p.Important == important)
+                .Concat(deferred)
+                .OrderBy(p => p.Order);
+
+            foreach (var property in properties)
+            {
+                Apply(property);
+            }
         }
     }
 
@@ -407,10 +515,32 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var inherited = GetInheritedVariables(control, stylesheet);
         Dictionary<string, List<ICssComponentValue>>? declared = null;
 
-        foreach (var rule in ordered)
+        // Same cascade as for regular properties: normal declarations first, then !important ones.
+        // At each importance level, variables set from code (inline) sit above the stylesheet rules.
+        for (var pass = 0; pass < 2; pass++)
         {
-            foreach (var custom in rule.CustomProperties)
+            var important = pass == 1;
+
+            foreach (var rule in ordered)
             {
+                foreach (var custom in rule.CustomProperties)
+                {
+                    if (custom.Important != important)
+                        continue;
+
+                    declared ??= new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
+                    declared[custom.Name] = custom.Value;
+                }
+            }
+
+            if (control.CssInlineVariables is not { } inline)
+                continue;
+
+            foreach (var custom in inline.Values)
+            {
+                if (custom.Important != important)
+                    continue;
+
                 declared ??= new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
                 declared[custom.Name] = custom.Value;
             }
@@ -468,7 +598,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         {
             foreach (var property in expanded)
             {
-                output.Add(property with { Order = deferred.Order });
+                output.Add(property with { Order = deferred.Order, Important = declaration.Important });
             }
 
             return true;
@@ -489,7 +619,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 #endif
         }
 
-        output.Add(new CssStyleProperty(name, value, accessor.Value, deferred.Order));
+        output.Add(new CssStyleProperty(name, value, accessor.Value, deferred.Order, declaration.Important));
         return true;
     }
 
@@ -560,15 +690,20 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     {
         var declared = new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
 
-        foreach (var rule in pending)
-        {
-            if (!rule.Selectors.Any(IsRootSelector))
-                continue;
+        var rootRules = pending.Where(rule => rule.Selectors.Any(IsRootSelector)).ToList();
 
-            foreach (var declaration in rule.Declarations)
+        // Normal declarations first, then !important ones, so the latter always win.
+        for (var pass = 0; pass < 2; pass++)
+        {
+            var important = pass == 1;
+
+            foreach (var rule in rootRules)
             {
-                if (CssVariables.IsCustomProperty(declaration.Name))
-                    declared[declaration.Name] = declaration.Value;
+                foreach (var declaration in rule.Declarations)
+                {
+                    if (CssVariables.IsCustomProperty(declaration.Name) && declaration.Important == important)
+                        declared[declaration.Name] = declaration.Value;
+                }
             }
         }
 
@@ -576,7 +711,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     private static bool IsRootSelector(Selector selector)
-        => selector is RootSelector or AndSelector { Selectors: [RootSelector] };
+        => selector is RootSelector or CompoundSelector { Selectors: [RootSelector] };
 
     /// <summary>
     /// Phase 2: parses declarations into typed properties. Declarations without <c>var()</c> are parsed
@@ -594,13 +729,17 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             foreach (var declaration in rule.Declarations)
             {
                 if (CssVariables.IsCustomProperty(declaration.Name))
-                    customProperties.Add(new CssCustomProperty(declaration.Name, declaration.Value));
+                    customProperties.Add(new CssCustomProperty(declaration.Name, declaration.Value, declaration.Important));
             }
 
             foreach (var selector in rule.Selectors)
             {
                 var elemType = CssParser.GetElementType(selector);
-                var propertyValues = new Dictionary<string, (object Value, CssPropertyAccessor Accessor, int Order)>(
+                // Kept apart so that "color: red !important; color: blue;" keeps both: importance, not
+                // source order, decides the winner, and the cascade applies the important pass last.
+                var normalValues = new Dictionary<string, (object Value, CssPropertyAccessor Accessor, int Order)>(
+                    StringComparer.OrdinalIgnoreCase);
+                var importantValues = new Dictionary<string, (object Value, CssPropertyAccessor Accessor, int Order)>(
                     StringComparer.OrdinalIgnoreCase);
                 var deferred = new List<CssDeferredDeclaration>();
 
@@ -629,6 +768,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                         continue;
                     }
 
+                    var propertyValues = declaration.Important ? importantValues : normalValues;
+
                     if (TryResolveShorthandValue(elemType, declaration, out var expanded))
                     {
                         foreach (var prop in expanded)
@@ -654,11 +795,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 var custom = IsRootSelector(selector) ? [] : customProperties;
 
                 // Rules that only declared :root variables produce nothing.
-                if (propertyValues.Count == 0 && deferred.Count == 0 && custom.Count == 0)
+                if (normalValues.Count == 0 && importantValues.Count == 0 && deferred.Count == 0 && custom.Count == 0)
                     continue;
 
-                var properties = propertyValues
+                var properties = normalValues
                     .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order))
+                    .Concat(importantValues.Select(kv =>
+                        new CssStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order, Important: true)))
                     .OrderBy(p => p.Order)
                     .ToList();
 
@@ -666,6 +809,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 {
                     CustomProperties = custom,
                     DeferredDeclarations = deferred,
+                    HasImportant = importantValues.Count > 0 || deferred.Any(d => d.Declaration.Important),
                 });
             }
         }

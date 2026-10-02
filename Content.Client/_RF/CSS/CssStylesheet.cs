@@ -147,6 +147,12 @@ public readonly record struct CssStyleRule(Selector Selector, IReadOnlyList<CssS
     /// </summary>
     public IReadOnlyList<CssDeferredDeclaration> DeferredDeclarations { get; init; } = [];
 
+    /// <summary>
+    /// Does the rule contain at least one <c>!important</c> regular declaration? Lets the cascade skip
+    /// the second (important) pass for rules that have nothing to apply in it.
+    /// </summary>
+    public bool HasImportant { get; init; }
+
     public StyleSpecificity Specificity => Selector.CalculateSpecificity();
 }
 
@@ -157,14 +163,21 @@ public readonly record struct CssStyleRule(Selector Selector, IReadOnlyList<CssS
 /// <param name="Value">Parsed value.</param>
 /// <param name="Accessor">Accessor used to apply the value to a control.</param>
 /// <param name="Order">Index of the source declaration, used to interleave with deferred declarations.</param>
-public readonly record struct CssStyleProperty(string Name, object Value, CssPropertyAccessor Accessor, int Order = 0);
+/// <param name="Important">Was the source declaration marked <c>!important</c>?</param>
+public readonly record struct CssStyleProperty(
+    string Name,
+    object Value,
+    CssPropertyAccessor Accessor,
+    int Order = 0,
+    bool Important = false);
 
 /// <summary>
 /// A custom property declaration (<c>--name: tokens</c>) with its unparsed value.
 /// </summary>
 /// <param name="Name">Name including the leading <c>--</c>.</param>
 /// <param name="Value">Raw value tokens; may contain <c>var()</c>.</param>
-public readonly record struct CssCustomProperty(string Name, List<ICssComponentValue> Value);
+/// <param name="Important">Was the declaration marked <c>!important</c>?</param>
+public readonly record struct CssCustomProperty(string Name, List<ICssComponentValue> Value, bool Important = false);
 
 /// <summary>
 /// A declaration (regular property or shorthand) whose value contains <c>var()</c>.
