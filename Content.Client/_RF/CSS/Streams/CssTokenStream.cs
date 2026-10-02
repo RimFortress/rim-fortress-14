@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Content.Client._RF.CSS;
+namespace Content.Client._RF.CSS.Streams;
 
 /// <summary>
 /// The token/component-value-level equivalent of CodePointStream. Per §5.2, the

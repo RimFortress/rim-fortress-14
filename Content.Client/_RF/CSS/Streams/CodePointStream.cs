@@ -1,6 +1,6 @@
 using Robust.Shared.Collections;
 
-namespace Content.Client._RF.CSS;
+namespace Content.Client._RF.CSS.Streams;
 
 public record struct CodePointStream(int[] CodePoints)
 {

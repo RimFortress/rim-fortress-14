@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using Content.Client._RF.CSS.Streams;
 using Content.Shared._RF.Utilities;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;

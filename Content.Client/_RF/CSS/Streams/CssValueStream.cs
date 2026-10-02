@@ -1,4 +1,4 @@
-namespace Content.Client._RF.CSS;
+namespace Content.Client._RF.CSS.Streams;
 
 public record struct CssValueStream(List<ICssComponentValue> Items)
 {

@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Client._RF.CSS;
+using Content.Client._RF.CSS.Streams;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Robust.Client.UserInterface;
