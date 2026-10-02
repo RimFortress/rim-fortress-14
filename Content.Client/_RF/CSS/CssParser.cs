@@ -219,8 +219,8 @@ public static partial class CssParser
             declaration.Value.Add(ConsumeComponentValue(ref stream));
         }
 
-        StripImportantFlag(declaration);
-        TrimTrailingWhitespace(declaration);
+        StripImportantFlag(ref declaration);
+        TrimTrailingWhitespace(ref declaration);
 
         return declaration;
     }
@@ -302,7 +302,7 @@ public static partial class CssParser
         }
     }
 
-    private static void StripImportantFlag(CssDeclaration declaration)
+    private static void StripImportantFlag(ref CssDeclaration declaration)
     {
         var i = declaration.Value.Count - 1;
         while (i >= 0 && declaration.Value[i] is WhitespaceToken)
@@ -334,7 +334,7 @@ public static partial class CssParser
         declaration.Important = true;
     }
 
-    private static void TrimTrailingWhitespace(CssDeclaration declaration)
+    private static void TrimTrailingWhitespace(ref CssDeclaration declaration)
     {
         while (declaration.Value.Count > 0 && declaration.Value[^1] is WhitespaceToken)
         {

@@ -238,6 +238,47 @@ public sealed class CssManagerTest : GameTest
         // real getter if this isn't it.
         Assert.That(control.BackgroundColor, Is.EqualTo(Color.Blue));
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void VariableParseTest()
+    {
+        var control = new CssControl();
+
+        Load("""
+            :root {
+                --test-var: red;
+            }
+
+            css-control {
+                background-color: var(--test-var);
+            }
+            """);
+
+        _css.UpdateTestStyle(control);
+        Assert.That(control.BackgroundColor, Is.EqualTo(Color.Red));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void VariableOverwriteTest()
+    {
+        var control = new CssControl();
+
+        Load("""
+            :root {
+                --test-var: red;
+            }
+
+            css-control {
+                --test-var: blue;
+                background-color: var(--test-var);
+            }
+            """);
+
+        _css.UpdateTestStyle(control);
+        Assert.That(control.BackgroundColor, Is.EqualTo(Color.Blue));
+    }
 }
 
 public sealed partial class TestLocaleCssControl : CssControl

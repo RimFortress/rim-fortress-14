@@ -25,8 +25,18 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     private readonly Dictionary<Type, Dictionary<string, CssPropertyAccessor>> _properties = new();
     private readonly Dictionary<Type, Dictionary<string, CssShorthandInfo>> _shorthands = new();
 
-    private readonly Dictionary<ResPath, List<CssStyleRule>> _rulesByFile = new();
-    private readonly List<CssStyleRule> _notFileRules = new(); // Needed for tests
+    /// <summary>
+    /// Parsed but not yet compiled rules, per file. Values are compiled only in <see cref="BuildStylesheet"/>,
+    /// when every CSS file (and therefore every <c>var()</c> definition) is known.
+    /// </summary>
+    private readonly Dictionary<ResPath, List<PendingRule>> _pendingByFile = new();
+
+    /// <summary>
+    /// Parsed but not yet compiled rules loaded through <see cref="LoadString"/>. Needed for tests.
+    /// </summary>
+    private readonly List<PendingRule> _pendingTest = new();
+
+    private CssStylesheet? _testStylesheet;
 
     private ISawmill _sawmill = null!;
 
@@ -35,6 +45,14 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     /// <inheritdoc/>
     public CssStylesheet Stylesheet { get; private set; } = new(new List<CssStyleRule>());
+
+    /// <summary>
+    /// A rule after tokenizing and selector parsing, but before its declaration values are
+    /// expanded (<c>var()</c>) and parsed into typed values.
+    /// </summary>
+    private readonly record struct PendingRule(
+        IReadOnlyList<Selector> Selectors,
+        IReadOnlyList<CssDeclaration> Declarations);
 
     public void PostInject()
     {
@@ -167,50 +185,44 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public void LoadFile(ResPath path)
     {
         var reader = new StreamReader(_resource.ContentFileRead(path), EncodingHelpers.UTF8);
-        _rulesByFile[path] = Load(reader.ReadToEnd());
+        _pendingByFile[path] = Parse(reader.ReadToEnd());
     }
 
     /// <inheritdoc/>
     public void LoadString(string cssText)
     {
-        var rules = Load(cssText);
-
-        foreach (var rule in rules)
-        {
-            _notFileRules.Add(rule);
-        }
+        _pendingTest.AddRange(Parse(cssText));
+        _testStylesheet = null;
     }
 
     /// <inheritdoc/>
     public void UpdateStylesheet()
     {
         Stylesheet = BuildStylesheet();
+        _testStylesheet = null; // test rules may reference variables from the files
         _sawmill.Info("stylesheet updated");
     }
 
     /// <inheritdoc/>
     public CssStylesheet BuildStylesheet()
     {
-        var rules = new List<CssStyleRule>();
+        var pending = GetFilePendingRules();
+        var globals = BuildGlobalVariables(pending);
 
-        foreach (var (_, list) in _rulesByFile)
-        {
-            foreach (var rule in list)
-            {
-                rules.Add(rule);
-            }
-        }
-
-        foreach (var rule in _notFileRules)
-        {
-            rules.Add(rule);
-        }
-
-        return new CssStylesheet(rules);
+        return new CssStylesheet(Compile(pending, globals));
     }
 
     /// <inheritdoc/>
-    public CssStylesheet BuildTestStylesheet() => new(_notFileRules);
+    public CssStylesheet BuildTestStylesheet()
+    {
+        if (_testStylesheet != null)
+            return _testStylesheet;
+
+        // Test rules may use variables declared in the real files, and may declare their own.
+        var globals = BuildGlobalVariables(GetFilePendingRules().Concat(_pendingTest));
+
+        return _testStylesheet = new CssStylesheet(Compile(_pendingTest, globals));
+    }
 
     /// <inheritdoc/>
     public void UpdateStyle<T>(CssControl control) where T : Selector => UpdateStyle(control, typeof(T));
@@ -249,7 +261,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// <inheritdoc/>
     public void ClearTestStylesheet()
     {
-        _notFileRules.Clear();
+        _pendingTest.Clear();
+        _testStylesheet = null;
     }
 
     /// <inheritdoc/>
@@ -319,10 +332,17 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         }
     }
 
-    private List<CssStyleRule> Load(string cssText)
+    #region Loading
+
+    /// <summary>
+    /// Phase 1: tokenizes the CSS text and parses selectors and declarations.
+    /// Declaration values are kept as raw tokens, because they may contain <c>var()</c>
+    /// referencing variables that are declared in files which have not been loaded yet.
+    /// </summary>
+    private List<PendingRule> Parse(string cssText)
     {
         var result = CssParser.ParseStylesheet(cssText);
-        var rules = new List<CssStyleRule>();
+        var rules = new List<PendingRule>();
 
         foreach (var item in result)
         {
@@ -335,10 +355,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     if (!CssParser.TryGetSelectors(qualified, _reflection, this, out var selectors))
                         continue;
 
-                    // Declaration parsing is selector-independent — do it once
-                    // per rule, not once per selector in the group.
                     var declarations = new List<CssDeclaration>();
-                    foreach (var decl in CssParser.ParseListOfDeclarations(qualified.Block.Value.ToArray()))
+                    foreach (var decl in CssParser.ParseListOfDeclarations(qualified.Block.Value.Value.ToArray()))
                     {
                         switch (decl)
                         {
@@ -350,40 +368,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                         }
                     }
 
-                    foreach (var selector in selectors)
-                    {
-                        var elemType = CssParser.GetElementType(selector);
-                        var propertyValues = new Dictionary<string, (object, CssPropertyAccessor)>(StringComparer.OrdinalIgnoreCase);
-
-                        foreach (var declaration in declarations)
-                        {
-                            if (TryResolveShorthandValue(elemType, declaration, out var expanded))
-                            {
-                                foreach (var prop in expanded)
-                                {
-                                    propertyValues[prop.Name] = (prop.Value, prop.Accessor);
-                                }
-
-                                continue;
-                            }
-
-                            if (!TryResolveDeclarationValue(elemType, declaration, out var accessor, out var name, out var value))
-#if EXCEPTION_TOLERANCE
-                                continue;
-#else
-                                throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
-#endif
-
-                            propertyValues[name] = (value, accessor.Value);
-                        }
-
-                        var properties = propertyValues
-                            .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Item1, kv.Value.Item2))
-                            .ToList();
-
-                        rules.Add(new CssStyleRule(selector, properties));
-                    }
-
+                    rules.Add(new PendingRule(selectors.ToList(), declarations));
                     break;
                 default:
                     throw new NotImplementedException();
@@ -392,6 +377,124 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
         return rules;
     }
+
+    /// <summary>
+    /// All rules loaded from files, ordered by path so that duplicated variable
+    /// definitions are resolved deterministically (load order itself is shuffled).
+    /// </summary>
+    private List<PendingRule> GetFilePendingRules() => _pendingByFile
+        .OrderBy(kv => kv.Key.ToString(), StringComparer.Ordinal)
+        .SelectMany(kv => kv.Value)
+        .ToList();
+
+    /// <summary>
+    /// Collects custom properties declared in <c>:root</c> rules. Later definitions override earlier ones.
+    /// </summary>
+    private static CssVariables BuildGlobalVariables(IEnumerable<PendingRule> pending)
+    {
+        var globals = new CssVariables();
+
+        foreach (var rule in pending)
+        {
+            if (!rule.Selectors.Any(IsRootSelector))
+                continue;
+
+            foreach (var declaration in rule.Declarations)
+            {
+                if (CssVariables.IsCustomProperty(declaration.Name))
+                    globals.Set(declaration.Name, declaration.Value);
+            }
+        }
+
+        return globals;
+    }
+
+    private static bool IsRootSelector(Selector selector)
+        => selector is RootSelector or AndSelector { Selectors: [RootSelector] };
+
+    /// <summary>
+    /// Phase 2: expands <c>var()</c> in every declaration and parses the values into typed properties.
+    /// Variables declared in the same rule override the global ones.
+    /// </summary>
+    private List<CssStyleRule> Compile(IEnumerable<PendingRule> pending, CssVariables globals)
+    {
+        var rules = new List<CssStyleRule>();
+
+        foreach (var rule in pending)
+        {
+            var scope = new CssVariables(globals);
+
+            foreach (var declaration in rule.Declarations)
+            {
+                if (CssVariables.IsCustomProperty(declaration.Name))
+                    scope.Set(declaration.Name, declaration.Value);
+            }
+
+            // Substitution is selector-independent — do it once per rule,
+            // not once per selector in the group.
+            var expandedDeclarations = new List<CssDeclaration>();
+
+            foreach (var declaration in rule.Declarations)
+            {
+                if (CssVariables.IsCustomProperty(declaration.Name))
+                    continue; // custom properties are not real properties, they must never be resolved as such
+
+                if (!scope.TryExpand(declaration.Value, out var expanded))
+#if EXCEPTION_TOLERANCE
+                {
+                    _sawmill.Warning($"failed to resolve var() in declaration '{declaration.Name}'");
+                    continue;
+                }
+#else
+                    throw new ArgumentException($"failed to resolve var() in declaration '{declaration.Name}'");
+#endif
+
+                expandedDeclarations.Add(declaration with { Value = expanded });
+            }
+
+            foreach (var selector in rule.Selectors)
+            {
+                var elemType = CssParser.GetElementType(selector);
+                var propertyValues = new Dictionary<string, (object, CssPropertyAccessor)>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var declaration in expandedDeclarations)
+                {
+                    if (TryResolveShorthandValue(elemType, declaration, out var expandedShorthand))
+                    {
+                        foreach (var prop in expandedShorthand)
+                        {
+                            propertyValues[prop.Name] = (prop.Value, prop.Accessor);
+                        }
+
+                        continue;
+                    }
+
+                    if (!TryResolveDeclarationValue(elemType, declaration, out var accessor, out var name, out var value))
+#if EXCEPTION_TOLERANCE
+                        continue;
+#else
+                        throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
+#endif
+
+                    propertyValues[name] = (value, accessor.Value);
+                }
+
+                // Rules that only declared variables (e.g. ":root { --a: red; }") produce nothing.
+                if (propertyValues.Count == 0)
+                    continue;
+
+                var properties = propertyValues
+                    .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Item1, kv.Value.Item2))
+                    .ToList();
+
+                rules.Add(new CssStyleRule(selector, properties));
+            }
+        }
+
+        return rules;
+    }
+
+    #endregion
 
     private static bool TryParseEnum(Type type, ref CssValueStream stream, [NotNullWhen(true)] out object? value)
     {
@@ -549,7 +652,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var sw = new RStopwatch();
         sw.Start();
         _properties.Clear();
-        _properties.Clear();
+        _shorthands.Clear();
         RegisterEngineProperties();
 
         var styled = _reflection.GetAllChildren<AutoCssControl>()

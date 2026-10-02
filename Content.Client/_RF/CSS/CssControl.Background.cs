@@ -26,7 +26,7 @@ public partial class CssControl
     /// </remarks>
     [CssProperty]
     [CssShorthandProperty(BackgroundShorthandName, nameof(ParseBackgroundShorthand))]
-    protected Color? BackgroundColor
+    public Color? BackgroundColor // public for test
     {
         get;
         set

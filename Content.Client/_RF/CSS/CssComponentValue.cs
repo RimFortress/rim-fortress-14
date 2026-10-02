@@ -15,27 +15,17 @@ public interface IParsedCssObject;
 /// A function invocation, e.g. rgb(255 0 0) — name is the function-token's
 /// value (without the trailing '('), Value is everything up to the matching ')'.
 /// </summary>
-public sealed class CssFunction(string name, List<ICssComponentValue> value) : ICssComponentValue
-{
-    public string Name { get; } = name;
-    public List<ICssComponentValue> Value { get; } = value;
-}
+public record struct CssFunction(string Name, List<ICssComponentValue> Value) : ICssComponentValue;
 
 /// <summary>
 /// A {}/()/[] block. AssociatedToken is the opening token that started it —
 /// used to know what "ending token" to look for and what kind of block this is.
 /// </summary>
-public sealed class CssSimpleBlock(ICssToken associatedToken, List<ICssComponentValue> value) : ICssComponentValue
-{
-    public ICssToken AssociatedToken { get; } = associatedToken;
-    public List<ICssComponentValue> Value { get; } = value;
-}
+public record struct CssSimpleBlock(ICssToken AssociatedToken, List<ICssComponentValue> Value) : ICssComponentValue;
 
-public sealed class CssDeclaration(string name) : IParsedCssObject
+public record struct CssDeclaration(string Name, bool Important = false) : IParsedCssObject
 {
-    public string Name { get; } = name;
-    public List<ICssComponentValue> Value { get; } = new();
-    public bool Important { get; set; }
+    public List<ICssComponentValue> Value { get; set; } = new();
 }
 
 /// <summary>
@@ -43,7 +33,7 @@ public sealed class CssDeclaration(string name) : IParsedCssObject
 /// care that a style rule's prelude is a selector. That interpretation happens
 /// one layer up (Selectors Level 4), not in this parser.
 /// </summary>
-public sealed class CssQualifiedRule : IParsedCssObject
+public record struct CssQualifiedRule() : IParsedCssObject
 {
     public List<ICssComponentValue> Prelude { get; } = new();
     public CssSimpleBlock? Block { get; set; }
@@ -52,9 +42,8 @@ public sealed class CssQualifiedRule : IParsedCssObject
 /// <summary>
 /// https://www.w3.org/TR/css-syntax-3/#at-rules
 /// </summary>
-public sealed class CssAtRule(string name) : IParsedCssObject
+public record struct CssAtRule(string Name) : IParsedCssObject
 {
-    public string Name { get; } = name;
     public List<ICssComponentValue> Prelude { get; } = new();
     public CssSimpleBlock? Block { get; set; }
 }

@@ -165,7 +165,7 @@ public sealed class CssParserTests : GameTest
             }));
 
         Assert.That(rule.Block, Is.Not.Null);
-        Assert.That(rule.Block.AssociatedToken, Is.TypeOf<LeftCurlyBracket>());
+        Assert.That(rule.Block.Value.AssociatedToken, Is.TypeOf<LeftCurlyBracket>());
     }
 
     [Test]
@@ -176,7 +176,7 @@ public sealed class CssParserTests : GameTest
         Assert.That(rules[0], Is.TypeOf<CssQualifiedRule>());
         var rule = (CssQualifiedRule)rules[0];
 
-        var declarations = CssParser.ParseListOfDeclarations(rule.Block!.Value.ToArray());
+        var declarations = CssParser.ParseListOfDeclarations(rule.Block!.Value.Value.ToArray());
 
         Assert.That(declarations, Has.Count.EqualTo(1));
         Assert.That(declarations[0], Is.TypeOf<CssDeclaration>());
@@ -217,7 +217,7 @@ public sealed class CssParserTests : GameTest
         Assert.That(atRule.Block, Is.Not.Null);
 
         // nested rule should be reachable by feeding the block's contents back into the parser
-        var nested = CssParser.ParseStylesheet(atRule.Block!.Value.ToArray());
+        var nested = CssParser.ParseStylesheet(atRule.Block!.Value.Value.ToArray());
 
         Assert.That(nested, Has.Count.EqualTo(1));
         Assert.That(nested[0], Is.TypeOf<CssQualifiedRule>());
