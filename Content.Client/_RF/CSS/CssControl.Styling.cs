@@ -11,6 +11,16 @@ public partial class CssControl
     internal HashSet<string>? CssLastAppliedProperties;
 
     /// <summary>
+    /// The computed CSS custom properties (variables) of this control: its own cascaded declarations
+    /// plus everything inherited from ancestors. Shared with the parent when this control declares none.
+    /// </summary>
+    /// <remarks>
+    /// Owned and updated by <see cref="ICssManager"/>. Reference changes signal that
+    /// descendants must be restyled, so never replace this value from anywhere else.
+    /// </remarks>
+    internal CssVariables? CssComputedVariables;
+
+    /// <summary>
     /// The CSS style identifier for the control.
     /// </summary>
     /// <remarks>

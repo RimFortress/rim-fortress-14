@@ -12,6 +12,12 @@ public sealed class CssStylesheet
     public IReadOnlyList<CssStyleRule> Rules { get; }
 
     /// <summary>
+    /// Custom properties declared in <c>:root</c> rules. They form the base of the inheritance chain:
+    /// every control inherits from this set, as if it were the property set of a virtual document root.
+    /// </summary>
+    public CssVariables GlobalVariables { get; }
+
+    /// <summary>
     /// Rules whose selector isn't bound to a specific element type (bare class/
     /// id/pseudo-class selectors, or compound selectors where GetElementType
     /// couldn't resolve a concrete type) — checked against every control
@@ -30,7 +36,7 @@ public sealed class CssStylesheet
 
     public IReadOnlySet<Type> UnsortedSelectorTypes { get; }
 
-    public CssStylesheet(IReadOnlyList<CssStyleRule> rules)
+    public CssStylesheet(IReadOnlyList<CssStyleRule> rules, CssVariables? globalVariables = null)
     {
         var global = new List<(int index, CssStyleRule rule)>();
         var byType = new Dictionary<Type, List<(int index, CssStyleRule rule)>>();
@@ -76,6 +82,7 @@ public sealed class CssStylesheet
         }
 
         Rules = rules;
+        GlobalVariables = globalVariables ?? CssVariables.Empty;
         UnsortedRules = SortBySpecificity(global);
         TypeSortedRules = byType.ToDictionary(
             kv => kv.Key,
@@ -120,12 +127,49 @@ public sealed class CssStylesheet
 /// <summary>
 /// A single rule in a style sheet, containing a bunch of properties and a selector.
 /// </summary>
+/// <remarks>
+/// Declarations are split into three groups, all of which keep the order of the source declarations
+/// via <see cref="CssStyleProperty.Order"/> / <see cref="CssDeferredDeclaration.Order"/>:
+/// values that were fully parsed at load time (<see cref="Properties"/>), values that contain
+/// <c>var()</c> and can only be parsed per control (<see cref="DeferredDeclarations"/>),
+/// and custom property declarations (<see cref="CustomProperties"/>).
+/// </remarks>
 public readonly record struct CssStyleRule(Selector Selector, IReadOnlyList<CssStyleProperty> Properties)
 {
+    /// <summary>
+    /// Custom property declarations (<c>--name: ...</c>) of this rule, as raw tokens, in source order.
+    /// </summary>
+    public IReadOnlyList<CssCustomProperty> CustomProperties { get; init; } = [];
+
+    /// <summary>
+    /// Declarations whose values contain <c>var()</c>. Their tokens are expanded and parsed
+    /// every time the rule is applied to a control, using that control's computed variables.
+    /// </summary>
+    public IReadOnlyList<CssDeferredDeclaration> DeferredDeclarations { get; init; } = [];
+
     public StyleSpecificity Specificity => Selector.CalculateSpecificity();
 }
 
 /// <summary>
 /// A single property in a rule, with a name and an object value.
 /// </summary>
-public readonly record struct CssStyleProperty(string Name, object Value, CssPropertyAccessor Accessor);
+/// <param name="Name">Property name.</param>
+/// <param name="Value">Parsed value.</param>
+/// <param name="Accessor">Accessor used to apply the value to a control.</param>
+/// <param name="Order">Index of the source declaration, used to interleave with deferred declarations.</param>
+public readonly record struct CssStyleProperty(string Name, object Value, CssPropertyAccessor Accessor, int Order = 0);
+
+/// <summary>
+/// A custom property declaration (<c>--name: tokens</c>) with its unparsed value.
+/// </summary>
+/// <param name="Name">Name including the leading <c>--</c>.</param>
+/// <param name="Value">Raw value tokens; may contain <c>var()</c>.</param>
+public readonly record struct CssCustomProperty(string Name, List<ICssComponentValue> Value);
+
+/// <summary>
+/// A declaration (regular property or shorthand) whose value contains <c>var()</c>.
+/// </summary>
+/// <param name="Declaration">The declaration with raw, unexpanded tokens.</param>
+/// <param name="ElementType">Element type of the rule's selector, used to resolve property accessors.</param>
+/// <param name="Order">Index of the source declaration.</param>
+public readonly record struct CssDeferredDeclaration(CssDeclaration Declaration, Type? ElementType, int Order);

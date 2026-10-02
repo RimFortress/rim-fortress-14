@@ -27,7 +27,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     /// <summary>
     /// Parsed but not yet compiled rules, per file. Values are compiled only in <see cref="BuildStylesheet"/>,
-    /// when every CSS file (and therefore every <c>var()</c> definition) is known.
+    /// when every CSS file (and therefore every <c>:root</c> variable definition) is known.
     /// </summary>
     private readonly Dictionary<ResPath, List<PendingRule>> _pendingByFile = new();
 
@@ -47,8 +47,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public CssStylesheet Stylesheet { get; private set; } = new(new List<CssStyleRule>());
 
     /// <summary>
-    /// A rule after tokenizing and selector parsing, but before its declaration values are
-    /// expanded (<c>var()</c>) and parsed into typed values.
+    /// A rule after tokenizing and selector parsing, but before its declarations are compiled.
     /// </summary>
     private readonly record struct PendingRule(
         IReadOnlyList<Selector> Selectors,
@@ -207,9 +206,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public CssStylesheet BuildStylesheet()
     {
         var pending = GetFilePendingRules();
-        var globals = BuildGlobalVariables(pending);
 
-        return new CssStylesheet(Compile(pending, globals));
+        return new CssStylesheet(Compile(pending), BuildGlobalVariables(pending));
     }
 
     /// <inheritdoc/>
@@ -221,7 +219,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         // Test rules may use variables declared in the real files, and may declare their own.
         var globals = BuildGlobalVariables(GetFilePendingRules().Concat(_pendingTest));
 
-        return _testStylesheet = new CssStylesheet(Compile(_pendingTest, globals));
+        return _testStylesheet = new CssStylesheet(Compile(_pendingTest), globals);
     }
 
     /// <inheritdoc/>
@@ -253,10 +251,10 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <inheritdoc/>
-    public void UpdateStyle(CssControl control) => UpdateStyle(control, Stylesheet);
+    public void UpdateStyle(CssControl control) => ApplyStyle(control, Stylesheet, propagate: true);
 
     /// <inheritdoc/>
-    public void UpdateTestStyle(CssControl control) => UpdateStyle(control, BuildTestStylesheet());
+    public void UpdateTestStyle(CssControl control) => ApplyStyle(control, BuildTestStylesheet(), propagate: true);
 
     /// <inheritdoc/>
     public void ClearTestStylesheet()
@@ -266,18 +264,103 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <inheritdoc/>
-    public void UpdateStyleRecursively(Control control)
+    public void UpdateStyleRecursively(Control control) => UpdateStyleRecursively(control, Stylesheet);
+
+    private void UpdateStyleRecursively(Control control, CssStylesheet stylesheet)
     {
+        // Parents are always styled before their children, so every child sees fresh inherited variables.
+        // No propagation is needed here: the recursion itself visits all descendants.
         if (control is CssControl css)
-            UpdateStyle(css);
+            ApplyStyle(css, stylesheet, propagate: false);
 
         foreach (var child in control.Children)
         {
-            UpdateStyleRecursively(child);
+            UpdateStyleRecursively(child, stylesheet);
         }
     }
 
-    private void UpdateStyle(CssControl control, CssStylesheet stylesheet)
+    #region Applying
+
+    /// <summary>
+    /// Matches the stylesheet rules against the control and applies them.
+    /// Custom properties are cascaded and inherited first, then every declaration containing
+    /// <c>var()</c> is expanded and parsed against the control's computed variables.
+    /// </summary>
+    /// <param name="control">Control to update.</param>
+    /// <param name="stylesheet">Stylesheet to take the rules from.</param>
+    /// <param name="propagate">
+    /// If the control's computed variables changed, restyle all of its descendants.
+    /// Pass <c>false</c> when the caller already walks the whole subtree.
+    /// </param>
+    private void ApplyStyle(CssControl control, CssStylesheet stylesheet, bool propagate)
+    {
+        var ordered = GetOrderedRules(control, stylesheet);
+
+        var variables = ComputeVariables(control, ordered, stylesheet);
+        var variablesChanged = !ReferenceEquals(control.CssComputedVariables, variables);
+        control.CssComputedVariables = variables;
+
+        var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rule in ordered)
+        {
+            if (rule.DeferredDeclarations.Count == 0)
+            {
+                foreach (var property in rule.Properties)
+                {
+                    Apply(property);
+                }
+
+                continue;
+            }
+
+            var deferred = new List<CssStyleProperty>();
+
+            foreach (var declaration in rule.DeferredDeclarations)
+            {
+                TryResolveDeferred(declaration, variables, deferred);
+            }
+
+            // Declaration order decides which value wins; OrderBy is stable.
+            foreach (var property in rule.Properties.Concat(deferred).OrderBy(p => p.Order))
+            {
+                Apply(property);
+            }
+        }
+
+        control.CssLastAppliedProperties = applied;
+        var controlType = control.GetType();
+
+        foreach (var name in previouslyApplied)
+        {
+            if (TryGetPropertyAccessor(controlType, name, out var accessor))
+                accessor.Value.Setter(control, accessor.Value.DefaultValue!);
+        }
+
+        if (!propagate || !variablesChanged)
+            return;
+
+        foreach (var child in control.Children)
+        {
+            UpdateStyleRecursively(child, stylesheet);
+        }
+
+        return;
+
+        void Apply(CssStyleProperty property)
+        {
+            previouslyApplied.Remove(property.Name);
+            property.Accessor.Setter(control, property.Value);
+            applied.Add(property.Name);
+        }
+    }
+
+    /// <summary>
+    /// Returns all rules matching the control, sorted by specificity and then by declaration order
+    /// (the last rule wins).
+    /// </summary>
+    private List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
     {
         var candidates = new List<CssStyleRule>();
 
@@ -302,42 +385,120 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 break;
         }
 
-        var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var ordered = candidates
+        return candidates
             .Select((rule, i) => (rule, i))
             .OrderBy(x => x.rule.Specificity)
             .ThenBy(x => x.i)
             .Select(x => x.rule)
             .ToList();
+    }
 
-        var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Cascades the custom properties of the matching rules (higher specificity / later rule wins)
+    /// and resolves them on top of the variables inherited from the parent.
+    /// </summary>
+    /// <remarks>
+    /// Returns the parent's set itself when the control declares nothing, and the previous set
+    /// when none of the inputs changed, so reference equality reliably tells whether anything changed.
+    /// </remarks>
+    private CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
+    {
+        var inherited = GetInheritedVariables(control, stylesheet);
+        Dictionary<string, List<ICssComponentValue>>? declared = null;
 
         foreach (var rule in ordered)
         {
-            foreach (var property in rule.Properties)
+            foreach (var custom in rule.CustomProperties)
             {
-                previouslyApplied.Remove(property.Name);
-                property.Accessor.Setter(control, property.Value);
-                applied.Add(property.Name);
+                declared ??= new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
+                declared[custom.Name] = custom.Value;
             }
         }
 
-        control.CssLastAppliedProperties = applied;
-        var controlType = control.GetType();
+        if (declared == null)
+            return inherited;
 
-        foreach (var name in previouslyApplied)
-        {
-            if (TryGetPropertyAccessor(controlType, name, out var accessor))
-                accessor.Value.Setter(control, accessor.Value.DefaultValue!);
-        }
+        var previous = control.CssComputedVariables;
+
+        return previous != null && previous.HasSameInputs(inherited, declared)
+            ? previous
+            : new CssVariables(inherited, declared);
     }
+
+    /// <summary>
+    /// The variables inherited by the control: the computed set of the nearest <see cref="CssControl"/>
+    /// ancestor (controls of other types don't take part in CSS), or the global <c>:root</c> variables.
+    /// </summary>
+    private CssVariables GetInheritedVariables(Control control, CssStylesheet stylesheet)
+    {
+        for (var parent = control.Parent; parent != null; parent = parent.Parent)
+        {
+            if (parent is not CssControl css)
+                continue;
+
+            // An ancestor that was never styled (e.g. a subtree assembled before being attached).
+            return css.CssComputedVariables ??=
+                ComputeVariables(css, GetOrderedRules(css, stylesheet), stylesheet);
+        }
+
+        return stylesheet.GlobalVariables;
+    }
+
+    /// <summary>
+    /// Expands <c>var()</c> in a deferred declaration using the control's variables and parses the result.
+    /// </summary>
+    /// <returns>
+    /// <c>false</c> if a referenced variable is missing, invalid or has no fallback. Per CSS the declaration
+    /// is then "invalid at computed-value time"; here it is ignored.
+    /// </returns>
+    private bool TryResolveDeferred(CssDeferredDeclaration deferred, CssVariables variables, List<CssStyleProperty> output)
+    {
+        var declaration = deferred.Declaration;
+
+        if (!variables.TryExpand(declaration.Value, out var tokens))
+        {
+            _sawmill.Debug($"var() in declaration '{declaration.Name}' could not be resolved, declaration ignored");
+            return false;
+        }
+
+        var expandedDeclaration = declaration with { Value = tokens };
+
+        if (TryResolveShorthandValue(deferred.ElementType, expandedDeclaration, out var expanded))
+        {
+            foreach (var property in expanded)
+            {
+                output.Add(property with { Order = deferred.Order });
+            }
+
+            return true;
+        }
+
+        if (!TryResolveDeclarationValue(
+                deferred.ElementType,
+                expandedDeclaration,
+                out var accessor,
+                out var name,
+                out var value))
+        {
+#if EXCEPTION_TOLERANCE
+            _sawmill.Error($"failed to apply declaration '{declaration.Name}' after var() substitution");
+            return false;
+#else
+            throw new ArgumentException($"failed to apply declaration '{declaration.Name}' after var() substitution");
+#endif
+        }
+
+        output.Add(new CssStyleProperty(name, value, accessor.Value, deferred.Order));
+        return true;
+    }
+
+    #endregion
 
     #region Loading
 
     /// <summary>
     /// Phase 1: tokenizes the CSS text and parses selectors and declarations.
-    /// Declaration values are kept as raw tokens, because they may contain <c>var()</c>
-    /// referencing variables that are declared in files which have not been loaded yet.
+    /// Declaration values are kept as raw tokens, because they may contain <c>var()</c>.
     /// </summary>
     private List<PendingRule> Parse(string cssText)
     {
@@ -379,20 +540,24 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <summary>
-    /// All rules loaded from files, ordered by path so that duplicated variable
-    /// definitions are resolved deterministically (load order itself is shuffled).
+    /// All rules loaded from files, ordered by path so that duplicated definitions are resolved
+    /// deterministically (load order itself is shuffled).
     /// </summary>
-    private List<PendingRule> GetFilePendingRules() => _pendingByFile
-        .OrderBy(kv => kv.Key.ToString(), StringComparer.Ordinal)
-        .SelectMany(kv => kv.Value)
-        .ToList();
+    private List<PendingRule> GetFilePendingRules()
+    {
+        return _pendingByFile
+            .OrderBy(kv => kv.Key.ToString(), StringComparer.Ordinal)
+            .SelectMany(kv => kv.Value)
+            .ToList();
+    }
 
     /// <summary>
-    /// Collects custom properties declared in <c>:root</c> rules. Later definitions override earlier ones.
+    /// Collects custom properties declared in <c>:root</c> rules into the base set that every control inherits from.
+    /// All <c>:root</c> rules have the same specificity, so the later definition wins.
     /// </summary>
     private static CssVariables BuildGlobalVariables(IEnumerable<PendingRule> pending)
     {
-        var globals = new CssVariables();
+        var declared = new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
 
         foreach (var rule in pending)
         {
@@ -402,68 +567,72 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             foreach (var declaration in rule.Declarations)
             {
                 if (CssVariables.IsCustomProperty(declaration.Name))
-                    globals.Set(declaration.Name, declaration.Value);
+                    declared[declaration.Name] = declaration.Value;
             }
         }
 
-        return globals;
+        return new CssVariables(null, declared);
     }
 
     private static bool IsRootSelector(Selector selector)
         => selector is RootSelector or AndSelector { Selectors: [RootSelector] };
 
     /// <summary>
-    /// Phase 2: expands <c>var()</c> in every declaration and parses the values into typed properties.
-    /// Variables declared in the same rule override the global ones.
+    /// Phase 2: parses declarations into typed properties. Declarations without <c>var()</c> are parsed
+    /// right here; declarations with <c>var()</c> are deferred until they are applied to a control,
+    /// because their value depends on the variables that control inherits.
     /// </summary>
-    private List<CssStyleRule> Compile(IEnumerable<PendingRule> pending, CssVariables globals)
+    private List<CssStyleRule> Compile(IEnumerable<PendingRule> pending)
     {
         var rules = new List<CssStyleRule>();
 
         foreach (var rule in pending)
         {
-            var scope = new CssVariables(globals);
+            var customProperties = new List<CssCustomProperty>();
 
             foreach (var declaration in rule.Declarations)
             {
                 if (CssVariables.IsCustomProperty(declaration.Name))
-                    scope.Set(declaration.Name, declaration.Value);
-            }
-
-            // Substitution is selector-independent — do it once per rule,
-            // not once per selector in the group.
-            var expandedDeclarations = new List<CssDeclaration>();
-
-            foreach (var declaration in rule.Declarations)
-            {
-                if (CssVariables.IsCustomProperty(declaration.Name))
-                    continue; // custom properties are not real properties, they must never be resolved as such
-
-                if (!scope.TryExpand(declaration.Value, out var expanded))
-#if EXCEPTION_TOLERANCE
-                {
-                    _sawmill.Warning($"failed to resolve var() in declaration '{declaration.Name}'");
-                    continue;
-                }
-#else
-                    throw new ArgumentException($"failed to resolve var() in declaration '{declaration.Name}'");
-#endif
-
-                expandedDeclarations.Add(declaration with { Value = expanded });
+                    customProperties.Add(new CssCustomProperty(declaration.Name, declaration.Value));
             }
 
             foreach (var selector in rule.Selectors)
             {
                 var elemType = CssParser.GetElementType(selector);
-                var propertyValues = new Dictionary<string, (object, CssPropertyAccessor)>(StringComparer.OrdinalIgnoreCase);
+                var propertyValues = new Dictionary<string, (object Value, CssPropertyAccessor Accessor, int Order)>(
+                    StringComparer.OrdinalIgnoreCase);
+                var deferred = new List<CssDeferredDeclaration>();
 
-                foreach (var declaration in expandedDeclarations)
+                for (var i = 0; i < rule.Declarations.Count; i++)
                 {
-                    if (TryResolveShorthandValue(elemType, declaration, out var expandedShorthand))
+                    var declaration = rule.Declarations[i];
+
+                    if (CssVariables.IsCustomProperty(declaration.Name))
+                        continue; // custom properties are not real properties, they must never be resolved as such
+
+                    if (CssVariables.ContainsVar(declaration.Value))
                     {
-                        foreach (var prop in expandedShorthand)
+                        // The value can't be parsed yet, but a typo in the property name can be caught now.
+                        if (!TryGetShorthandInfo(elemType, declaration.Name, out _)
+                            && !TryGetPropertyAccessor(elemType, declaration.Name, out _))
                         {
-                            propertyValues[prop.Name] = (prop.Value, prop.Accessor);
+#if EXCEPTION_TOLERANCE
+                            _sawmill.Error($"unknown CSS property '{declaration.Name}'");
+                            continue;
+#else
+                            throw new ArgumentException($"unknown CSS property '{declaration.Name}'");
+#endif
+                        }
+
+                        deferred.Add(new CssDeferredDeclaration(declaration, elemType, i));
+                        continue;
+                    }
+
+                    if (TryResolveShorthandValue(elemType, declaration, out var expanded))
+                    {
+                        foreach (var prop in expanded)
+                        {
+                            propertyValues[prop.Name] = (prop.Value, prop.Accessor, i);
                         }
 
                         continue;
@@ -476,18 +645,27 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                         throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
 #endif
 
-                    propertyValues[name] = (value, accessor.Value);
+                    propertyValues[name] = (value, accessor.Value, i);
                 }
 
-                // Rules that only declared variables (e.g. ":root { --a: red; }") produce nothing.
-                if (propertyValues.Count == 0)
+                // :root variables are global and form the base of the inheritance chain,
+                // so a :root selector doesn't contribute its custom properties to controls it matches.
+                var custom = IsRootSelector(selector) ? [] : customProperties;
+
+                // Rules that only declared :root variables produce nothing.
+                if (propertyValues.Count == 0 && deferred.Count == 0 && custom.Count == 0)
                     continue;
 
                 var properties = propertyValues
-                    .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Item1, kv.Value.Item2))
+                    .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order))
+                    .OrderBy(p => p.Order)
                     .ToList();
 
-                rules.Add(new CssStyleRule(selector, properties));
+                rules.Add(new CssStyleRule(selector, properties)
+                {
+                    CustomProperties = custom,
+                    DeferredDeclarations = deferred,
+                });
             }
         }
 
