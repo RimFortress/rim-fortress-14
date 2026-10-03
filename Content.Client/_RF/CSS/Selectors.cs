@@ -202,11 +202,12 @@ public sealed class OnlyOfTypeSelector : Selector
 }
 
 /// <summary>
-/// A control has no children.
+/// A control has no children and element text is empty.
 /// </summary>
 public sealed class EmptySelector : Selector
 {
-    public override bool Matches(Control control) => control.ChildCount == 0;
+    public override bool Matches(Control control)
+        => control.ChildCount == 0 && (control is not CssControl css || string.IsNullOrWhiteSpace(css.Text));
 
     public override StyleSpecificity CalculateSpecificity() => new(0, 1, 0);
 }

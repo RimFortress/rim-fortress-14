@@ -115,12 +115,12 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             }
         }
 
-        // We don't want to create a different parsers for each enum
-        if (parserValue != typeof(Enum) && parserValue.IsAssignableTo(typeof(Enum)))
-            return TryParseEnum(parserValue, ref stream, out value);
-
         if (!_defaultParsers.TryGetValue(parserValue, out var parsers) || parsers.Count == 0)
         {
+            // We don't want to create a different parsers for each enum
+            if (parserValue != typeof(Enum) && parserValue.IsAssignableTo(typeof(Enum)))
+                return TryParseEnum(parserValue, ref stream, out value);
+
 #if EXCEPTION_TOLERANCE
             value = null;
             return false;
@@ -185,7 +185,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public void LoadFile(ResPath path)
     {
         var reader = new StreamReader(_resource.ContentFileRead(path), EncodingHelpers.UTF8);
-        _pendingByFile[path] = Parse(reader.ReadToEnd());
+        var faces = new List<CssFontFace>();
+        _pendingByFile[path] = Parse(reader.ReadToEnd(), faces);
+        _fontFacesByFile[path] = faces;
     }
 
     /// <inheritdoc/>
@@ -469,7 +471,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// Returns all rules matching the control, sorted by specificity and then by declaration order
     /// (the last rule wins).
     /// </summary>
-    private List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
+    private static List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
     {
         var candidates = new List<CssStyleRule>();
 
@@ -510,7 +512,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// Returns the parent's set itself when the control declares nothing, and the previous set
     /// when none of the inputs changed, so reference equality reliably tells whether anything changed.
     /// </remarks>
-    private CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
+    private static CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
     {
         var inherited = GetInheritedVariables(control, stylesheet);
         Dictionary<string, List<ICssComponentValue>>? declared = null;
@@ -560,7 +562,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// The variables inherited by the control: the computed set of the nearest <see cref="CssControl"/>
     /// ancestor (controls of other types don't take part in CSS), or the global <c>:root</c> variables.
     /// </summary>
-    private CssVariables GetInheritedVariables(Control control, CssStylesheet stylesheet)
+    private static CssVariables GetInheritedVariables(Control control, CssStylesheet stylesheet)
     {
         for (var parent = control.Parent; parent != null; parent = parent.Parent)
         {
@@ -631,7 +633,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// Phase 1: tokenizes the CSS text and parses selectors and declarations.
     /// Declaration values are kept as raw tokens, because they may contain <c>var()</c>.
     /// </summary>
-    private List<PendingRule> Parse(string cssText)
+    private List<PendingRule> Parse(string cssText, List<CssFontFace>? fontFaces = null)
     {
         var result = CssParser.ParseStylesheet(cssText);
         var rules = new List<PendingRule>();
@@ -662,6 +664,20 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
                     rules.Add(new PendingRule(selectors.ToList(), declarations));
                     break;
+                case CssAtRule atRule:
+                    if (IsFontFace(atRule))
+                    {
+                        // Only files register fonts; rules loaded from strings (tests) don't.
+                        if (fontFaces != null && TryParseFontFace(atRule, out var fontFace))
+                            fontFaces.Add(fontFace);
+                    }
+
+#if EXCEPTION_TOLERANCE
+                    _sawmill.Error($"unsupported CSS at-rule '{atRule.Name}'");
+                    break;
+#else
+                    throw new NotSupportedException($"unsupported CSS at-rule '{atRule.Name}'");
+#endif
                 default:
                     throw new NotImplementedException();
             }

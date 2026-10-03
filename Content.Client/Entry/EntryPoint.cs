@@ -1,4 +1,3 @@
-using Content.Client._RF.CSS; // RimFortress
 using Content.Client.Administration.Managers;
 using Content.Client.Changelog;
 using Content.Client.Chat.Managers;
@@ -42,6 +41,8 @@ using Robust.Shared.ContentPack;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Replays;
 using Robust.Shared.Timing;
+
+using Content.Client._RF.CSS; // RimFortress
 
 namespace Content.Client.Entry
 {

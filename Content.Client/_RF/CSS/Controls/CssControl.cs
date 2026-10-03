@@ -177,6 +177,7 @@ public partial class CssControl : AutoCssControl
         base.Draw(handle);
 
         DrawBackground(handle);
+        DrawText(handle);
     }
 }
 

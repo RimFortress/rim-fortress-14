@@ -1,0 +1,711 @@
+using System.Numerics;
+using Content.Client._RF.CSS.Parsers;
+using Content.Client._RF.CSS.Streams;
+using Content.Client._RF.CSS.Text;
+using Content.Shared._RF.Utilities;
+using Robust.Client.Graphics;
+using Content.Client._RF.CSS.Markup;
+using Robust.Shared.Utility;
+
+namespace Content.Client._RF.CSS;
+
+public partial class CssControl
+{
+    [Dependency] private RfMarkupTagManager _tagManager = null!;
+    [Dependency] private ICssFontManager _fonts = null!;
+
+    private const string TextDecorationShorthandName = "text-decoration";
+    private const string FontShorthandName = "font";
+
+    /// <summary>
+    /// The default <c>font-size</c> in virtual pixels.
+    /// </summary>
+    public const float DefaultFontSize = 12f;
+
+    private RfRichTextEntry? _textEntry;
+    private RfTextStyle? _textStyle;
+
+    #region Content
+
+    /// <summary>
+    /// The markup text displayed by this control, or <c>null</c> if it displays no text.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Setting this converts the string with <see cref="FormattedMessage.FromMarkupPermissive(string)"/>;
+    /// the original string is not kept, so a get may return a different, equivalent markup.
+    /// All markup tags are allowed, so never pass untrusted input here.
+    /// </para>
+    /// <para>
+    /// A control that displays text must not have other children: its children are the controls created
+    /// by markup tags, and they are laid out by the text.
+    /// </para>
+    /// </remarks>
+    public string? Text
+    {
+        get => _textEntry?.Message.ToMarkup();
+        set
+        {
+            if (value == null)
+                ClearText();
+            else
+                SetMessage(FormattedMessage.FromMarkupPermissive(value), null);
+        }
+    }
+
+    /// <summary>
+    /// Displays a formatted message, allowing only a small set of safe formatting tags.
+    /// </summary>
+    public void SetMessage(FormattedMessage message) => SetMessage(message, RfRichTextEntry.DefaultTags);
+
+    /// <summary>
+    /// Displays a formatted message.
+    /// </summary>
+    /// <param name="message">The message to display.</param>
+    /// <param name="tagsAllowed">The allowed markup tags; <c>null</c> allows all of them.</param>
+    public void SetMessage(FormattedMessage message, Type[]? tagsAllowed)
+    {
+        _textEntry?.RemoveControls();
+        _textEntry = new RfRichTextEntry(message, this, _tagManager, tagsAllowed);
+        InvalidateMeasure();
+    }
+
+    /// <summary>
+    /// Displays plain text: markup in <paramref name="text"/> is not interpreted.
+    /// </summary>
+    public void SetPlainText(string text)
+    {
+        var message = new FormattedMessage();
+        message.AddText(text);
+        SetMessage(message, RfRichTextEntry.DefaultTags);
+    }
+
+    /// <summary>
+    /// Removes the displayed text and the controls created by its markup tags.
+    /// </summary>
+    public void ClearText()
+    {
+        _textEntry?.RemoveControls();
+        _textEntry = null;
+        InvalidateMeasure();
+    }
+
+    /// <summary>
+    /// Does this control display text?
+    /// </summary>
+    public bool HasText => _textEntry != null;
+
+    #endregion
+
+    #region Font
+
+    /// <summary>
+    /// CSS <c>font-family</c>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(FontShorthandName, nameof(ParseFontShorthand))]
+    protected CssFontFamily FontFamily
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssFontFamily.SansSerif;
+
+    /// <summary>
+    /// CSS <c>font-size</c>, in virtual pixels.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(FontShorthandName)]
+    protected float FontSize
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = DefaultFontSize;
+
+    /// <summary>
+    /// CSS <c>font-weight</c> (<c>normal</c>, <c>bold</c> or a number).
+    /// </summary>
+    [CssProperty(parser: typeof(CssFontWeightParser))]
+    [CssShorthandProperty(FontShorthandName)]
+    protected FontWeight FontWeight
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = FontWeight.Normal;
+
+    /// <summary>
+    /// CSS <c>font-style</c> (<c>normal</c>, <c>italic</c>, <c>oblique</c>).
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(FontShorthandName)]
+    protected FontSlant FontStyle
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = FontSlant.Normal;
+
+    #endregion
+
+    #region Text
+
+    /// <summary>
+    /// CSS <c>color</c>.
+    /// </summary>
+    [CssProperty("color")]
+    protected Color TextColor
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = new(200, 200, 200);
+
+    /// <summary>
+    /// CSS <c>letter-spacing</c>.
+    /// </summary>
+    [CssProperty]
+    protected float LetterSpacing
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// CSS <c>word-spacing</c>.
+    /// </summary>
+    [CssProperty]
+    protected float WordSpacing
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// CSS <c>line-height</c>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(FontShorthandName)]
+    protected CssLineHeight LineHeight
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssLineHeight.Normal;
+
+    /// <summary>
+    /// CSS <c>text-align</c>.
+    /// </summary>
+    [CssProperty]
+    protected CssTextAlign TextAlign
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssTextAlign.Start;
+
+    /// <summary>
+    /// CSS <c>text-indent</c>.
+    /// </summary>
+    [CssProperty]
+    protected float TextIndent
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// CSS <c>text-transform</c>.
+    /// </summary>
+    [CssProperty]
+    protected CssTextTransform TextTransform
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssTextTransform.None;
+
+    /// <summary>
+    /// CSS <c>text-overflow</c>. The ellipsis is only visible if the control clips its content.
+    /// </summary>
+    [CssProperty]
+    protected CssTextOverflow TextOverflow
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssTextOverflow.Clip;
+
+    /// <summary>
+    /// CSS <c>white-space</c>.
+    /// </summary>
+    [CssProperty]
+    protected CssWhiteSpace WhiteSpace
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssWhiteSpace.Normal;
+
+    /// <summary>
+    /// CSS <c>word-break</c>.
+    /// </summary>
+    [CssProperty]
+    protected CssWordBreak WordBreak
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssWordBreak.Normal;
+
+    /// <summary>
+    /// CSS <c>overflow-wrap</c>.
+    /// </summary>
+    [CssProperty]
+    protected CssOverflowWrap OverflowWrap
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssOverflowWrap.Normal;
+
+    /// <summary>
+    /// CSS <c>line-clamp</c>: the maximum number of lines, <c>0</c> (<c>none</c>) for no limit.
+    /// </summary>
+    [CssProperty(parser: typeof(CssLineClampParser))]
+    protected int LineClamp
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    #endregion
+
+    #region Decoration, shadow, outline
+
+    /// <summary>
+    /// CSS <c>text-decoration-line</c>.
+    /// </summary>
+    [CssProperty(parser: typeof(CssTextDecorationLineParser))]
+    [CssShorthandProperty(TextDecorationShorthandName, nameof(ParseTextDecorationShorthand))]
+    protected CssTextDecorationLine TextDecorationLine
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssTextDecorationLine.None;
+
+    /// <summary>
+    /// CSS <c>text-decoration-style</c>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(TextDecorationShorthandName)]
+    protected CssTextDecorationStyle TextDecorationStyle
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = CssTextDecorationStyle.Solid;
+
+    /// <summary>
+    /// CSS <c>text-decoration-color</c>; <c>null</c> means <c>currentcolor</c>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(TextDecorationShorthandName)]
+    protected Color? TextDecorationColor
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// CSS <c>text-decoration-thickness</c>; <c>null</c> means <c>auto</c>.
+    /// </summary>
+    [CssProperty]
+    [CssShorthandProperty(TextDecorationShorthandName)]
+    protected float? TextDecorationThickness
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// CSS <c>text-underline-offset</c>; <c>null</c> means <c>auto</c>.
+    /// </summary>
+    [CssProperty]
+    protected float? TextUnderlineOffset
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// CSS <c>text-shadow</c>.
+    /// </summary>
+    [CssProperty]
+    protected CssTextShadow[] TextShadow
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    } = [];
+
+    /// <summary>
+    /// Text outline width (RF extension, <c>-rf-text-outline-width</c>); <c>0</c> disables the outline.
+    /// </summary>
+    [CssProperty("-rf-text-outline-width")]
+    protected float TextOutlineWidth
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    /// <summary>
+    /// Text outline color (RF extension, <c>-rf-text-outline-color</c>); <c>null</c> means black.
+    /// </summary>
+    [CssProperty("-rf-text-outline-color")]
+    protected Color? TextOutlineColor
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateTextStyle();
+        }
+    }
+
+    #endregion
+
+    #region Layout and drawing
+
+    internal void RefreshFonts() => InvalidateTextStyle();
+
+    /// <summary>
+    /// Drops the cached <see cref="RfTextStyle"/> and schedules a new layout.
+    /// </summary>
+    private void InvalidateTextStyle()
+    {
+        _textStyle = null;
+
+        // The entry keeps the style of its last layout, so even a pure color change needs a new Update.
+        if (_textEntry != null)
+            InvalidateMeasure();
+    }
+
+    private RfTextStyle BuildTextStyle()
+    {
+        return _textStyle ??= new RfTextStyle
+        {
+            Font = _fonts.Resolve(FontFamily, FontWeight, FontStyle, FontSize),
+            FontFamily = FontFamily,
+            FontSize = FontSize,
+            FontWeight = FontWeight,
+            FontSlant = FontStyle,
+            Color = TextColor,
+            LetterSpacing = LetterSpacing,
+            WordSpacing = WordSpacing,
+            LineHeight = LineHeight,
+            TextAlign = TextAlign,
+            TextIndent = TextIndent,
+            TextTransform = TextTransform,
+            TextOverflow = TextOverflow,
+            WhiteSpace = WhiteSpace,
+            WordBreak = WordBreak,
+            OverflowWrap = OverflowWrap,
+            LineClamp = LineClamp > 0 ? LineClamp : null,
+            DecorationLine = TextDecorationLine,
+            DecorationStyle = TextDecorationStyle,
+            DecorationColor = TextDecorationColor,
+            DecorationThickness = TextDecorationThickness,
+            UnderlineOffset = TextUnderlineOffset,
+            Shadows = TextShadow,
+            Outline = TextOutlineWidth > 0f ? new TextOutline(TextOutlineWidth, TextOutlineColor ?? Color.Black) : null,
+        };
+    }
+
+    /// <summary>
+    /// The space between the control's outer edge and its text, in virtual pixels (padding plus borders).
+    /// </summary>
+    protected Thickness TextContentInset
+    {
+        get
+        {
+            var border = Background?.Border;
+
+            return new Thickness(
+                PaddingLeft + (border?.Left.Width ?? 0f),
+                PaddingTop + (border?.Top.Width ?? 0f),
+                PaddingRight + (border?.Right.Width ?? 0f),
+                PaddingBottom + (border?.Bottom.Width ?? 0f));
+        }
+    }
+
+    /// <inheritdoc/>
+    protected override Vector2 MeasureOverride(Vector2 availableSize)
+    {
+        if (_textEntry is not { } entry)
+            return base.MeasureOverride(availableSize);
+
+        var inset = TextContentInset;
+        var horizontal = inset.Left + inset.Right;
+        var vertical = inset.Top + inset.Bottom;
+        var innerWidth = MathF.Max(0f, availableSize.X - horizontal);
+
+        entry.Update(_tagManager, BuildTextStyle(), innerWidth * UIScale, UIScale);
+
+        return new Vector2(entry.Width / UIScale + horizontal, entry.Height / UIScale + vertical);
+    }
+
+    /// <summary>
+    /// Draws the control's text inside its padding and borders. Called after <see cref="DrawBackground"/>.
+    /// </summary>
+    protected virtual void DrawText(DrawingHandleScreen handle)
+    {
+        if (_textEntry is not { } entry)
+            return;
+
+        var inset = TextContentInset;
+        var area = PixelSizeBox;
+        var box = new UIBox2(
+            area.Left + inset.Left * UIScale,
+            area.Top + inset.Top * UIScale,
+            area.Right - inset.Right * UIScale,
+            area.Bottom - inset.Bottom * UIScale);
+
+        entry.Draw(_tagManager, handle, box, UIScale);
+    }
+
+    #endregion
+
+    #region Parsing
+
+    /// <summary>
+    /// Custom parser for the <c>font</c> shorthand:
+    /// <c>[ &lt;style&gt; || &lt;weight&gt; ]* &lt;size&gt; [ / &lt;line-height&gt; ]? &lt;family&gt;</c>.
+    /// </summary>
+    /// <remarks>
+    /// Size and family are required, as in CSS. Every longhand the shorthand covers is written explicitly
+    /// (style, weight and line-height get their initial values when omitted), because the generic fallback
+    /// would use <c>default(ClrType)</c>, which is not a valid weight. <c>small-caps</c> is accepted and ignored.
+    /// Not supported: system fonts (<c>font: menu</c>), keyword and percentage sizes, <c>font-stretch</c>.
+    /// </remarks>
+    private static bool ParseFontShorthand(
+        ref CssValueStream stream,
+        ICssManager css,
+        Dictionary<string, object?> values)
+    {
+        var style = FontSlant.Normal;
+        var weight = FontWeight.Normal;
+        var lineHeight = CssLineHeight.Normal;
+
+        // Optional style / variant / weight, in any order.
+        while (!stream.AtEnd)
+        {
+            if (stream.Peek() is IdentToken { Value: var ident })
+            {
+                if (ident.Equals("normal", StringComparison.OrdinalIgnoreCase)
+                    || ident.Equals("small-caps", StringComparison.OrdinalIgnoreCase))
+                {
+                    stream.ConsumeNext();
+                    continue;
+                }
+
+                if (ident.Equals("italic", StringComparison.OrdinalIgnoreCase))
+                {
+                    stream.ConsumeNext();
+                    style = FontSlant.Italic;
+                    continue;
+                }
+
+                if (ident.Equals("oblique", StringComparison.OrdinalIgnoreCase))
+                {
+                    stream.ConsumeNext();
+                    style = FontSlant.Oblique;
+                    continue;
+                }
+
+                if (ident.Equals("bold", StringComparison.OrdinalIgnoreCase))
+                {
+                    stream.ConsumeNext();
+                    weight = FontWeight.Bold;
+                    continue;
+                }
+
+                break;
+            }
+
+            // A unitless number before the size is a weight; "0" and lengths are sizes.
+            if (stream.Peek() is NumberToken { Value: >= 1 and <= 1000 } number)
+            {
+                stream.ConsumeNext();
+                weight = (FontWeight) (ushort) number.Value;
+                continue;
+            }
+
+            break;
+        }
+
+        if (!css.TryParseValue<float>(ref stream, out var size))
+            return false;
+
+        if (stream.Peek() is DelimToken { CodePoint: '/' })
+        {
+            stream.ConsumeNext();
+
+            if (!css.TryParseValue<CssLineHeight>(ref stream, out lineHeight))
+                return false;
+        }
+
+        if (!css.TryParseValue<CssFontFamily>(ref stream, out var family) || family == null || !stream.AtEnd)
+            return false;
+
+        values["font-style"] = style;
+        values["font-weight"] = weight;
+        values["font-size"] = size;
+        values["line-height"] = lineHeight;
+        values["font-family"] = family;
+        return true;
+    }
+
+    /// <summary>
+    /// Custom parser for the <c>text-decoration</c> shorthand:
+    /// <c>&lt;line&gt; || &lt;style&gt; || &lt;color&gt; || &lt;thickness&gt;</c> in any order.
+    /// Omitted components are reset to their defaults by the caller.
+    /// </summary>
+    private static bool ParseTextDecorationShorthand(
+        ref CssValueStream stream,
+        ICssManager css,
+        Dictionary<string, object?> values)
+    {
+        var line = CssTextDecorationLine.None;
+        var style = CssTextDecorationStyle.Solid;
+        Color? color = null;
+        float? thickness = null;
+
+        while (!stream.AtEnd)
+        {
+            if (stream.Peek() is IdentToken { Value: var ident })
+            {
+                if (CssTextDecorationLineParser.TryParseKeyword(ident, out _))
+                {
+                    if (!CssTextDecorationLineParser.TryParseLine(ref stream, out var parsedLine))
+                        return false;
+
+                    line |= parsedLine;
+                    continue;
+                }
+
+                if (Enum.TryParse<CssTextDecorationStyle>(RfCaseConversion.KebabToPascal(ident), true, out var parsedStyle))
+                {
+                    stream.ConsumeNext();
+                    style = parsedStyle;
+                    continue;
+                }
+            }
+
+            var mark = stream.Mark();
+
+            if (css.TryParseValue<float>(ref stream, out var width))
+            {
+                thickness = width;
+                continue;
+            }
+
+            stream.Reset(mark);
+
+            if (css.TryParseValue<Color>(ref stream, out var parsedColor))
+            {
+                color = parsedColor;
+                continue;
+            }
+
+            return false;
+        }
+
+        values["text-decoration-line"] = line;
+        values["text-decoration-style"] = style;
+        values["text-decoration-color"] = color;
+        values["text-decoration-thickness"] = thickness;
+        return true;
+    }
+
+    #endregion
+}

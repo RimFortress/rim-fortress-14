@@ -17,7 +17,7 @@ public interface ICssValueParser
     /// If true, this parser will be registered as the base parser for
     /// the <see cref="ValueType"/> when <see cref="ICssManager"/> is initialized.
     /// </summary>
-    bool Default => true;
+    bool Default { get; }
 
     /// <summary>
     /// Parses a value from a CSS values stream.
@@ -33,6 +33,8 @@ public abstract partial class CssValueParser<T> : ICssValueParser
     [Dependency] protected ICssManager Css = null!;
 
     public Type ValueType => typeof(T);
+
+    public virtual bool Default => true;
 
     public bool TryParse(ref CssValueStream stream, [NotNullWhen(true)] out object? value)
     {
