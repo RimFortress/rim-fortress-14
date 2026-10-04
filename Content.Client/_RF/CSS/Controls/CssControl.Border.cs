@@ -80,7 +80,7 @@ public partial class CssControl
     [CssShorthandProperty(BorderShorthandName)]
     [CssShorthandProperty(BorderTopShorthandName)]
     [CssShorthandProperty(BorderWidthShorthandName, nameof(ParseBorderWidthShorthand))]
-    protected float BorderTopWidth
+    protected LengthUnit BorderTopWidth
     {
         get;
         set
@@ -94,7 +94,7 @@ public partial class CssControl
     [CssShorthandProperty(BorderShorthandName)]
     [CssShorthandProperty(BorderRightShorthandName)]
     [CssShorthandProperty(BorderWidthShorthandName)]
-    protected float BorderRightWidth
+    protected LengthUnit BorderRightWidth
     {
         get;
         set
@@ -108,7 +108,7 @@ public partial class CssControl
     [CssShorthandProperty(BorderShorthandName)]
     [CssShorthandProperty(BorderBottomShorthandName)]
     [CssShorthandProperty(BorderWidthShorthandName)]
-    protected float BorderBottomWidth
+    protected LengthUnit BorderBottomWidth
     {
         get;
         set
@@ -122,7 +122,7 @@ public partial class CssControl
     [CssShorthandProperty(BorderShorthandName)]
     [CssShorthandProperty(BorderLeftShorthandName)]
     [CssShorthandProperty(BorderWidthShorthandName)]
-    protected float BorderLeftWidth
+    protected LengthUnit BorderLeftWidth
     {
         get;
         set
@@ -253,29 +253,42 @@ public partial class CssControl
         }
     }
 
+    // Font-relative and viewport units can't be resolved by the style box (it only knows its own size),
+    // so everything except percentages is converted to pixels here.
+    private CornerRadius ResolveBorderRadius(CornerRadius radius) => new(
+        ResolveRadius(radius.TopLeft),
+        ResolveRadius(radius.TopRight),
+        ResolveRadius(radius.BottomRight),
+        ResolveRadius(radius.BottomLeft));
+
+    private UnitVector2 ResolveRadius(UnitVector2 radius) => new(ResolveRadiusComponent(radius.X), ResolveRadiusComponent(radius.Y));
+
+    private LengthUnit ResolveRadiusComponent(LengthUnit length)
+        => length.IsPercent ? length : LengthUnit.Px(ToPx(length));
+
     private StyleBoxBorder? BuildBorder()
     {
         var top = new BorderSide(
             BorderTopStyle,
             BorderTopColor ?? Color.Black,
-            BorderTopStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0 : BorderTopWidth);
+            BorderTopStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0f : ToPx(BorderTopWidth));
         var right = new BorderSide(
             BorderRightStyle,
             BorderRightColor ?? Color.Black,
-            BorderRightStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0 : BorderRightWidth);
+            BorderRightStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0f : ToPx(BorderRightWidth));
         var bottom = new BorderSide(
             BorderBottomStyle,
             BorderBottomColor ?? Color.Black,
-            BorderBottomStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0 : BorderBottomWidth);
+            BorderBottomStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0f : ToPx(BorderBottomWidth));
         var left = new BorderSide(
             BorderLeftStyle,
             BorderLeftColor ?? Color.Black,
-            BorderLeftStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0 : BorderLeftWidth);
+            BorderLeftStyle is CssBorderStyle.None or CssBorderStyle.Hidden ? 0f : ToPx(BorderLeftWidth));
 
         if (top.Width <= 0 && right.Width <= 0 && bottom.Width <= 0 && left.Width <= 0)
             return null;
 
-        return new StyleBoxBorder(BorderRadius, top, right, bottom, left);
+        return new StyleBoxBorder(ResolveBorderRadius(BorderRadius), top, right, bottom, left);
     }
 
     #region Parsing
@@ -305,7 +318,7 @@ public partial class CssControl
     private static bool ParseBorderTriple(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values, params string[] sides)
     {
         Color? color = null;
-        float? width = null;
+        LengthUnit? width = null;
         CssBorderStyle? style = null;
 
         while (!stream.AtEnd)
@@ -319,7 +332,7 @@ public partial class CssControl
             }
 
             var mark = stream.Mark();
-            if (css.TryParseValue<float>(ref stream, out var w))
+            if (css.TryParseValue<LengthUnit>(ref stream, out var w))
             {
                 width = w;
                 continue;
@@ -338,7 +351,7 @@ public partial class CssControl
         foreach (var side in sides)
         {
             values[$"border-{side}-color"] = color;
-            values[$"border-{side}-width"] = width ?? 0f;
+            values[$"border-{side}-width"] = width ?? LengthUnit.Zero;
             values[$"border-{side}-style"] = style ?? CssBorderStyle.None;
         }
 
@@ -383,10 +396,10 @@ public partial class CssControl
     /// </summary>
     private static bool ParseBorderWidthShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
     {
-        var widths = new List<float>();
+        var widths = new List<LengthUnit>();
         while (widths.Count < 4 && !stream.AtEnd)
         {
-            if (!css.TryParseValue<float>(ref stream, out var w))
+            if (!css.TryParseValue<LengthUnit>(ref stream, out var w))
                 break;
 
             widths.Add(w);

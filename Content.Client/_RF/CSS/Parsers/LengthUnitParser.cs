@@ -3,9 +3,15 @@ using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
+/// <summary>
+/// Parses a CSS <c>&lt;length-percentage&gt;</c>: a dimension (<c>12px</c>, <c>1.5em</c>, <c>10vw</c>, ...),
+/// a percentage, or a unitless zero. Whether a percentage means anything is up to the property that
+/// receives the value.
+/// </summary>
 [UsedImplicitly]
 public sealed class LengthUnitParser : CssValueParser<LengthUnit>
 {
+    /// <inheritdoc/>
     public override bool TryParse(ref CssValueStream stream, out LengthUnit value)
     {
         value = LengthUnit.Zero;
@@ -13,6 +19,7 @@ public sealed class LengthUnitParser : CssValueParser<LengthUnit>
         switch (stream.Peek())
         {
             case PercentageToken percentage:
+                stream.ConsumeNext();
                 value = new LengthUnit((float)percentage.Value, LengthUnitType.Percent);
                 return true;
             case DimensionToken dimension:

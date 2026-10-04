@@ -176,7 +176,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName, nameof(ParsePaddingShorthand))]
-    protected float PaddingLeft
+    protected LengthUnit PaddingLeft
     {
         get;
         set
@@ -191,7 +191,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName)]
-    protected float PaddingTop
+    protected LengthUnit PaddingTop
     {
         get;
         set
@@ -206,7 +206,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName)]
-    protected float PaddingRight
+    protected LengthUnit PaddingRight
     {
         get;
         set
@@ -221,7 +221,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(PaddingShorthandName)]
-    protected float PaddingBottom
+    protected LengthUnit PaddingBottom
     {
         get;
         set
@@ -236,7 +236,7 @@ public partial class CssControl
     /// </summary>
     protected Thickness Padding
     {
-        get => new(PaddingLeft, PaddingTop, PaddingRight, PaddingBottom);
+        get => ToThickness(PaddingLeft, PaddingTop, PaddingRight, PaddingBottom);
         set
         {
             PaddingLeft = value.Left;
@@ -600,7 +600,7 @@ public partial class CssControl
         ref CssValueStream stream,
         ICssManager css,
         Dictionary<string, object?> values)
-        => ParseMarginLikeShorthand(
+        => ParseMarginLikeShorthand<LengthUnit>(
             "padding-top",
             "padding-right",
             "padding-bottom",
@@ -613,7 +613,7 @@ public partial class CssControl
         ref CssValueStream stream,
         ICssManager css,
         Dictionary<string, object?> values)
-        => ParseMarginLikeShorthand(
+        => ParseMarginLikeShorthand<float>(
             "expand-margin-top",
             "expand-margin-right",
             "expand-margin-bottom",
@@ -626,7 +626,7 @@ public partial class CssControl
         ref CssValueStream stream,
         ICssManager css,
         Dictionary<string, object?> values)
-        => ParseMarginLikeShorthand(
+        => ParseMarginLikeShorthand<float>(
             "patch-margin-top",
             "patch-margin-right",
             "patch-margin-bottom",
@@ -635,7 +635,7 @@ public partial class CssControl
             css,
             values);
 
-    private static bool ParseMarginLikeShorthand(
+    private static bool ParseMarginLikeShorthand<T>(
         string property1,
         string property2,
         string property3,
@@ -644,14 +644,14 @@ public partial class CssControl
         ICssManager css,
         Dictionary<string, object?> values)
     {
-        var lengths = new List<float>();
+        var lengths = new List<T>();
 
         while (lengths.Count < 4 && !stream.AtEnd)
         {
-            if (!css.TryParseValue<float>(ref stream, out var v))
+            if (!css.TryParseValue<T>(ref stream, out var v))
                 break;
 
-            lengths.Add(v);
+            lengths.Add(v!);
         }
 
         if (!stream.AtEnd || lengths.Count is not (1 or 2 or 4))

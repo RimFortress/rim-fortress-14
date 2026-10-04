@@ -12,7 +12,7 @@
             <LineEdit Name="StyleEdit" HorizontalExpand="True"/>
             <Button Name="ReloadButton" Text="Reload"/>
         </BoxContainer>
-        <controls:TestCssWindowControl Name="TestControl" MouseFilter="Pass"
+        <controls:TestCssWindowControl Name="TestControl" MouseFilter="Pass" Text="Test text"
                                        HorizontalExpand="True" VerticalExpand="True"/>
     </BoxContainer>
 </controls:TestCssWindow>

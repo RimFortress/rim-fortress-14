@@ -1,4 +1,3 @@
-using System.Numerics;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS.Text;
@@ -166,15 +165,16 @@ public enum CssLineHeightKind : byte
 }
 
 /// <summary>
-/// CSS <c>line-height</c> value: <c>normal</c>, a unitless number, or an absolute length.
+/// CSS <c>line-height</c> value: <c>normal</c>, a unitless number, or a length.
 /// </summary>
 /// <remarks>
 /// Unlike real CSS, a multiplier is applied to the font's natural line height
 /// (<see cref="Font.GetLineHeight"/>), not to the font size, because <see cref="Font"/> doesn't expose its size.
-/// <c>1</c> is therefore the same as <c>normal</c>. Relative lengths (<c>em</c>, <c>%</c>) must be converted
-/// by the parser/style resolver before they get here.
+/// <c>1</c> is therefore the same as <c>normal</c>. A percentage is stored as a multiplier.
+/// A length may be written in any unit except a percentage; <see cref="Resolve"/> turns it into pixels,
+/// and only then <see cref="ResolvePx"/> may be used.
 /// </remarks>
-public readonly record struct CssLineHeight(CssLineHeightKind Kind, float Value)
+public readonly record struct CssLineHeight(CssLineHeightKind Kind, float Value, LengthUnitType Unit = LengthUnitType.Px)
 {
     /// <summary>
     /// <c>line-height: normal</c>.
@@ -192,7 +192,22 @@ public readonly record struct CssLineHeight(CssLineHeightKind Kind, float Value)
     public static CssLineHeight FromLength(float virtualPixels) => new(CssLineHeightKind.Length, virtualPixels);
 
     /// <summary>
-    /// Resolves the value to a line box height in real pixels.
+    /// Creates a line height from a length in any unit.
+    /// </summary>
+    public static CssLineHeight FromLength(LengthUnit length) => new(CssLineHeightKind.Length, length.Value, length.Type);
+
+    /// <summary>
+    /// Converts the length of a <see cref="CssLineHeightKind.Length"/> value to virtual pixels.
+    /// Other kinds are returned as is.
+    /// </summary>
+    /// <param name="context">The font metrics and the viewport size.</param>
+    public CssLineHeight Resolve(in LengthContext context)
+        => Kind == CssLineHeightKind.Length && Unit != LengthUnitType.Px
+            ? FromLength(new LengthUnit(Value, Unit).Resolve(context))
+            : this;
+
+    /// <summary>
+    /// Resolves the value to a line box height in real pixels. The length, if any, must already be in pixels.
     /// </summary>
     /// <param name="font">The font the line is measured with.</param>
     /// <param name="uiScale">Current UI scale.</param>
@@ -210,9 +225,9 @@ public readonly record struct CssLineHeight(CssLineHeightKind Kind, float Value)
 }
 
 /// <summary>
-/// A single CSS <c>text-shadow</c> layer.
+/// A single CSS <c>text-shadow</c> layer as it was written (lengths in any unit).
 /// </summary>
-/// <param name="Offset">Offset in virtual pixels.</param>
-/// <param name="Blur">Blur radius in virtual pixels. Stored, but not rendered yet (shadows are sharp).</param>
+/// <param name="Offset">Offset.</param>
+/// <param name="Blur">Blur radius. Stored, but not rendered yet (shadows are sharp).</param>
 /// <param name="Color">Shadow color; <c>null</c> = <c>currentcolor</c>.</param>
-public readonly record struct CssTextShadow(Vector2 Offset, float Blur, Color? Color);
+public readonly record struct CssTextShadow(UnitVector2 Offset, LengthUnit Blur, Color? Color);

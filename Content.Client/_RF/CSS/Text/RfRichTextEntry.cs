@@ -108,7 +108,7 @@ public sealed class RfRichTextEntry
     public RfRichTextEntry(
         FormattedMessage message,
         Control parent,
-        RfMarkupTagManager tagManager,
+        IRfMarkupTagManager tagManager,
         Type[]? tagsAllowed = null)
     {
         Message = message;
@@ -117,7 +117,7 @@ public sealed class RfRichTextEntry
         Controls = GetControls(parent, tagManager);
     }
 
-    private Dictionary<int, Control>? GetControls(Control parent, RfMarkupTagManager tagManager)
+    private Dictionary<int, Control>? GetControls(Control parent, IRfMarkupTagManager tagManager)
     {
         Dictionary<int, Control>? tagControls = null;
         var nodeIndex = -1;
@@ -181,7 +181,7 @@ public sealed class RfRichTextEntry
     /// <param name="style">The computed style used for this layout and for the following <see cref="Draw"/> calls.</param>
     /// <param name="maxSizeX">Maximum width available for the text, in pixels.</param>
     /// <param name="uiScale">Current UI scale.</param>
-    public void Update(RfMarkupTagManager tagManager, RfTextStyle style, float maxSizeX, float uiScale)
+    public void Update(IRfMarkupTagManager tagManager, RfTextStyle style, float maxSizeX, float uiScale)
     {
         _style = style;
         _breaks.Clear();
@@ -353,7 +353,7 @@ public sealed class RfRichTextEntry
     /// <param name="drawBox">The box to draw the text in, in pixels. Its width is used for alignment and ellipsis.</param>
     /// <param name="uiScale">Current UI scale.</param>
     public void Draw(
-        RfMarkupTagManager tagManager,
+        IRfMarkupTagManager tagManager,
         DrawingHandleScreen handle,
         UIBox2 drawBox,
         float uiScale)
@@ -374,12 +374,12 @@ public sealed class RfRichTextEntry
     }
 
     private void DrawPass(
-        RfMarkupTagManager tagManager,
+        IRfMarkupTagManager tagManager,
         DrawingHandleScreen handle,
         UIBox2 drawBox,
         float uiScale,
         Pass pass,
-        CssTextShadow? shadow)
+        RfTextShadow? shadow)
     {
         var style = _style!;
         var defaultFont = style.Font;
@@ -514,6 +514,38 @@ public sealed class RfRichTextEntry
 
         return;
 
+        void DrawDecoration(Font font, float x, float width, Color color)
+        {
+            if (pass == Pass.Outline)
+                return;
+
+            DrawTextDecoration(
+                handle,
+                style,
+                style.DecorationLine | _context.Current.Decoration,
+                font,
+                new Vector2(x, baseline.Y) + passOffset,
+                width,
+                shadow?.Color ?? _context.Current.DecorationColor ?? style.DecorationColor ?? color,
+                uiScale);
+        }
+
+        float DrawGlyph(Font font, Rune rune, Color color)
+        {
+            var position = baseline + passOffset;
+
+            return pass == Pass.Outline
+                ? font.DrawCharOutline(handle, rune, position, uiScale, style.Outline!.Value)
+                : font.DrawChar(handle, rune, position, uiScale, shadow?.Color ?? color);
+        }
+
+        void DrawEllipsis(Font font, Color color)
+        {
+            ellipsisDone = true;
+            var advance = DrawGlyph(font, Ellipsis, color);
+            DrawDecoration(font, baseline.X, advance, color);
+        }
+
         void BeginLine(int k)
         {
             lineIndex = k;
@@ -564,38 +596,6 @@ public sealed class RfRichTextEntry
 
             if (lastVisibleOfTruncated || overflows)
                 cutIndex = ComputeCut(k, available - indent - ellipsisWidth);
-        }
-
-        float DrawGlyph(Font font, Rune rune, Color color)
-        {
-            var position = baseline + passOffset;
-
-            return pass == Pass.Outline
-                ? font.DrawCharOutline(handle, rune, position, uiScale, style.Outline!.Value)
-                : font.DrawChar(handle, rune, position, uiScale, shadow?.Color ?? color);
-        }
-
-        void DrawDecoration(Font font, float x, float width, Color color)
-        {
-            if (pass == Pass.Outline)
-                return;
-
-            DrawTextDecoration(
-                handle,
-                style,
-                style.DecorationLine | _context.Current.Decoration,
-                font,
-                new Vector2(x, baseline.Y) + passOffset,
-                width,
-                shadow?.Color ?? _context.Current.DecorationColor ?? style.DecorationColor ?? color,
-                uiScale);
-        }
-
-        void DrawEllipsis(Font font, Color color)
-        {
-            ellipsisDone = true;
-            var advance = DrawGlyph(font, Ellipsis, color);
-            DrawDecoration(font, baseline.X, advance, color);
         }
     }
 

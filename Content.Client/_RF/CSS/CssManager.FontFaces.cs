@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Client._RF.CSS.Parsers;
 using Content.Client._RF.CSS.Streams;
-using Content.Client._RF.CSS.Text;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
@@ -12,8 +11,6 @@ namespace Content.Client._RF.CSS;
 // The @font-face at-rule: binds a TTF/OTF file to a font-family name, weight and style.
 public sealed partial class CssManager
 {
-    [Dependency] private ICssFontManager _fonts = null!;
-
     /// <summary>
     /// Font faces declared by <c>@font-face</c> rules, per file.
     /// </summary>
@@ -26,12 +23,6 @@ public sealed partial class CssManager
         .OrderBy(kv => kv.Key.ToString(), StringComparer.Ordinal)
         .SelectMany(kv => kv.Value)
         .ToList();
-
-    /// <summary>
-    /// Is this at-rule a <c>@font-face</c>?
-    /// </summary>
-    private static bool IsFontFace(CssAtRule rule)
-        => rule.Name.TrimStart('@').Equals("font-face", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Parses the descriptors of a <c>@font-face</c> rule: <c>font-family</c> (one name), <c>src</c>

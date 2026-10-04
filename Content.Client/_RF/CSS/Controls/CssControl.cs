@@ -21,44 +21,75 @@ public partial class CssControl : AutoCssControl
     /// </summary>
     public bool Hovered { get; private set; }
 
+    private bool _marginSpecified;
+
     /// <summary>
-    /// Left value of the <see cref="Control.Margin"/>.
+    /// Left value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
     [CssProperty]
-    public float MarginLeft
+    public LengthUnit MarginLeft
     {
-        get => Margin.Left;
-        set => Margin = new Thickness(value, Margin.Top, Margin.Right, Margin.Bottom);
+        get;
+        set
+        {
+            field = value;
+            UpdateMargin();
+        }
     }
 
     /// <summary>
-    /// Top value of the <see cref="Control.Margin"/>.
+    /// Top value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
     [CssProperty]
-    public float MarginTop
+    public LengthUnit MarginTop
     {
-        get => Margin.Top;
-        set => Margin = new Thickness(Margin.Left, value, Margin.Right, Margin.Bottom);
+        get;
+        set
+        {
+            field = value;
+            UpdateMargin();
+        }
     }
 
     /// <summary>
-    /// Right value of the <see cref="Control.Margin"/>.
+    /// Right value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
     [CssProperty]
-    public float MarginRight
+    public LengthUnit MarginRight
     {
-        get => Margin.Right;
-        set => Margin = new Thickness(Margin.Left, Margin.Top, value, Margin.Bottom);
+        get;
+        set
+        {
+            field = value;
+            UpdateMargin();
+        }
     }
 
     /// <summary>
-    /// Bottom value of the <see cref="Control.Margin"/>.
+    /// Bottom value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
     [CssProperty]
-    public float MarginBottom
+    public LengthUnit MarginBottom
     {
-        get => Margin.Bottom;
-        set => Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right, value);
+        get;
+        set
+        {
+            field = value;
+            UpdateMargin();
+        }
+    }
+
+    // Once a margin side was set from CSS or code, the sides own the control's Margin and follow the font.
+    private void UpdateMargin()
+    {
+        _marginSpecified = true;
+        ApplyMargin();
+    }
+
+    private void ApplyMargin()
+    {
+        if (_marginSpecified)
+            Margin = ToThickness(MarginLeft, MarginTop, MarginRight, MarginBottom);
     }
 
     public CssControl()
@@ -70,6 +101,7 @@ public partial class CssControl : AutoCssControl
     {
         base.Parented(newParent);
 
+        RefreshLengthContext();
         Css.UpdateStyleRecursively(this);
     }
 

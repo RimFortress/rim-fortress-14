@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text;
 using Robust.Client.Graphics;
 
@@ -128,7 +129,7 @@ public sealed class RfTextStyle
     /// <summary>
     /// CSS <c>text-shadow</c> layers. The first layer is painted on top, as in CSS.
     /// </summary>
-    public IReadOnlyList<CssTextShadow> Shadows { get; init; } = [];
+    public IReadOnlyList<RfTextShadow> Shadows { get; init; } = [];
 
     /// <summary>
     /// Text outline (RF extension, e.g. <c>-rf-text-outline</c> or <c>-webkit-text-stroke</c>).
@@ -143,6 +144,14 @@ public sealed class RfTextStyle
         or CssWhiteSpace.PreLine
         or CssWhiteSpace.BreakSpaces;
 }
+
+/// <summary>
+/// A resolved <c>text-shadow</c> layer, in virtual pixels.
+/// </summary>
+/// <param name="Offset">Offset.</param>
+/// <param name="Blur">Blur radius. Stored, but not rendered yet (shadows are sharp).</param>
+/// <param name="Color">Shadow color; <c>null</c> = <c>currentcolor</c>.</param>
+public readonly record struct RfTextShadow(Vector2 Offset, float Blur, Color? Color);
 
 /// <summary>
 /// Stateful per-pass filter that applies <c>white-space</c> collapsing and <c>text-transform</c> to the text

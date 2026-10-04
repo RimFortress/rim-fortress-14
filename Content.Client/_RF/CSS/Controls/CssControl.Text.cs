@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Client._RF.CSS.Parsers;
 using Content.Client._RF.CSS.Streams;
@@ -11,9 +12,6 @@ namespace Content.Client._RF.CSS;
 
 public partial class CssControl
 {
-    [Dependency] private RfMarkupTagManager _tagManager = null!;
-    [Dependency] private ICssFontManager _fonts = null!;
-
     private const string TextDecorationShorthandName = "text-decoration";
     private const string FontShorthandName = "font";
 
@@ -21,6 +19,9 @@ public partial class CssControl
     /// The default <c>font-size</c> in virtual pixels.
     /// </summary>
     public const float DefaultFontSize = 12f;
+
+    [Dependency] private IRfMarkupTagManager _tagManager = null!;
+    [Dependency] private ICssFontManager _fonts = null!;
 
     private RfRichTextEntry? _textEntry;
     private RfTextStyle? _textStyle;
@@ -110,24 +111,24 @@ public partial class CssControl
         set
         {
             field = value;
-            InvalidateTextStyle();
+            OnFontChanged();
         }
     } = CssFontFamily.SansSerif;
 
     /// <summary>
-    /// CSS <c>font-size</c>, in virtual pixels.
+    /// CSS <c>font-size</c>. Relative units refer to the parent's font size; the default <c>1em</c> inherits it.
     /// </summary>
-    [CssProperty]
+    [CssProperty(parser: typeof(CssFontSizeParser))]
     [CssShorthandProperty(FontShorthandName)]
-    protected float FontSize
+    protected LengthUnit FontSize
     {
         get;
         set
         {
             field = value;
-            InvalidateTextStyle();
+            OnFontChanged();
         }
-    } = DefaultFontSize;
+    } = new(1f, LengthUnitType.Em);
 
     /// <summary>
     /// CSS <c>font-weight</c> (<c>normal</c>, <c>bold</c> or a number).
@@ -140,7 +141,7 @@ public partial class CssControl
         set
         {
             field = value;
-            InvalidateTextStyle();
+            OnFontChanged();
         }
     } = FontWeight.Normal;
 
@@ -155,7 +156,7 @@ public partial class CssControl
         set
         {
             field = value;
-            InvalidateTextStyle();
+            OnFontChanged();
         }
     } = FontSlant.Normal;
 
@@ -181,7 +182,7 @@ public partial class CssControl
     /// CSS <c>letter-spacing</c>.
     /// </summary>
     [CssProperty]
-    protected float LetterSpacing
+    protected LengthUnit LetterSpacing
     {
         get;
         set
@@ -195,7 +196,7 @@ public partial class CssControl
     /// CSS <c>word-spacing</c>.
     /// </summary>
     [CssProperty]
-    protected float WordSpacing
+    protected LengthUnit WordSpacing
     {
         get;
         set
@@ -238,7 +239,7 @@ public partial class CssControl
     /// CSS <c>text-indent</c>.
     /// </summary>
     [CssProperty]
-    protected float TextIndent
+    protected LengthUnit TextIndent
     {
         get;
         set
@@ -386,7 +387,7 @@ public partial class CssControl
     /// </summary>
     [CssProperty]
     [CssShorthandProperty(TextDecorationShorthandName)]
-    protected float? TextDecorationThickness
+    protected LengthUnit? TextDecorationThickness
     {
         get;
         set
@@ -400,7 +401,7 @@ public partial class CssControl
     /// CSS <c>text-underline-offset</c>; <c>null</c> means <c>auto</c>.
     /// </summary>
     [CssProperty]
-    protected float? TextUnderlineOffset
+    protected LengthUnit? TextUnderlineOffset
     {
         get;
         set
@@ -428,7 +429,7 @@ public partial class CssControl
     /// Text outline width (RF extension, <c>-rf-text-outline-width</c>); <c>0</c> disables the outline.
     /// </summary>
     [CssProperty("-rf-text-outline-width")]
-    protected float TextOutlineWidth
+    protected LengthUnit TextOutlineWidth
     {
         get;
         set
@@ -472,19 +473,25 @@ public partial class CssControl
 
     private RfTextStyle BuildTextStyle()
     {
-        return _textStyle ??= new RfTextStyle
+        if (_textStyle is { } cached)
+            return cached;
+
+        var context = LengthContext;
+        var outlineWidth = ToPx(TextOutlineWidth);
+
+        return _textStyle = new RfTextStyle
         {
-            Font = _fonts.Resolve(FontFamily, FontWeight, FontStyle, FontSize),
+            Font = _fonts.Resolve(FontFamily, FontWeight, FontStyle, context.FontSize),
             FontFamily = FontFamily,
-            FontSize = FontSize,
+            FontSize = context.FontSize,
             FontWeight = FontWeight,
             FontSlant = FontStyle,
             Color = TextColor,
-            LetterSpacing = LetterSpacing,
-            WordSpacing = WordSpacing,
-            LineHeight = LineHeight,
+            LetterSpacing = ToPx(LetterSpacing),
+            WordSpacing = ToPx(WordSpacing),
+            LineHeight = LineHeight.Resolve(context),
             TextAlign = TextAlign,
-            TextIndent = TextIndent,
+            TextIndent = ToPx(TextIndent),
             TextTransform = TextTransform,
             TextOverflow = TextOverflow,
             WhiteSpace = WhiteSpace,
@@ -494,12 +501,15 @@ public partial class CssControl
             DecorationLine = TextDecorationLine,
             DecorationStyle = TextDecorationStyle,
             DecorationColor = TextDecorationColor,
-            DecorationThickness = TextDecorationThickness,
-            UnderlineOffset = TextUnderlineOffset,
-            Shadows = TextShadow,
-            Outline = TextOutlineWidth > 0f ? new TextOutline(TextOutlineWidth, TextOutlineColor ?? Color.Black) : null,
+            DecorationThickness = TextDecorationThickness is { } thickness ? ToPx(thickness) : null,
+            UnderlineOffset = TextUnderlineOffset is { } offset ? ToPx(offset) : null,
+            Shadows = TextShadow.Select(ResolveShadow).ToArray(),
+            Outline = outlineWidth > 0f ? new TextOutline(outlineWidth, TextOutlineColor ?? Color.Black) : null,
         };
     }
+
+    private RfTextShadow ResolveShadow(CssTextShadow shadow)
+        => new(ToPx(shadow.Offset), ToPx(shadow.Blur), shadow.Color);
 
     /// <summary>
     /// The space between the control's outer edge and its text, in virtual pixels (padding plus borders).
@@ -511,10 +521,10 @@ public partial class CssControl
             var border = Background?.Border;
 
             return new Thickness(
-                PaddingLeft + (border?.Left.Width ?? 0f),
-                PaddingTop + (border?.Top.Width ?? 0f),
-                PaddingRight + (border?.Right.Width ?? 0f),
-                PaddingBottom + (border?.Bottom.Width ?? 0f));
+                ToPx(PaddingLeft) + (border?.Left.Width ?? 0f),
+                ToPx(PaddingTop) + (border?.Top.Width ?? 0f),
+                ToPx(PaddingRight) + (border?.Right.Width ?? 0f),
+                ToPx(PaddingBottom) + (border?.Bottom.Width ?? 0f));
         }
     }
 
@@ -623,14 +633,14 @@ public partial class CssControl
             break;
         }
 
-        if (!css.TryParseValue<float>(ref stream, out var size))
+        if (!CssFontSizeParser.TryParseSize(ref stream, css, out var size))
             return false;
 
         if (stream.Peek() is DelimToken { CodePoint: '/' })
         {
             stream.ConsumeNext();
 
-            if (!css.TryParseValue<CssLineHeight>(ref stream, out lineHeight))
+            if (!css.TryParseValue(ref stream, out lineHeight))
                 return false;
         }
 
@@ -658,7 +668,7 @@ public partial class CssControl
         var line = CssTextDecorationLine.None;
         var style = CssTextDecorationStyle.Solid;
         Color? color = null;
-        float? thickness = null;
+        LengthUnit? thickness = null;
 
         while (!stream.AtEnd)
         {
@@ -683,7 +693,7 @@ public partial class CssControl
 
             var mark = stream.Mark();
 
-            if (css.TryParseValue<float>(ref stream, out var width))
+            if (css.TryParseValue<LengthUnit>(ref stream, out var width))
             {
                 thickness = width;
                 continue;
