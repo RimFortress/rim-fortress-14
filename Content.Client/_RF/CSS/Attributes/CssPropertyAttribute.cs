@@ -17,4 +17,11 @@ public sealed class CssPropertyAttribute(string? name = null, Type? parser = nul
     /// by-CLR-type converter registered in <see cref="ICssManager"/>.
     /// </summary>
     public Type? Parser { get; } = parser;
+
+    /// <summary>
+    /// Is the property inherited, like <c>color</c> or <c>font-family</c> in CSS? A control that doesn't declare
+    /// an inherited property takes the value of its nearest <c>CssControl</c> ancestor (its computed value:
+    /// lengths are passed down as pixels). Properties of the box (padding, border, background, ...) are not inherited.
+    /// </summary>
+    public bool Inherited { get; set; }
 }

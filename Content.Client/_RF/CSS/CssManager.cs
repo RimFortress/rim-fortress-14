@@ -38,6 +38,12 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </summary>
     private readonly List<PendingRule> _pendingTest = new();
 
+    /// <summary>
+    /// <see cref="GetPropertyAccessors"/> results: every accessor of a control type, base types included.
+    /// </summary>
+    private readonly Dictionary<Type, IReadOnlyDictionary<string, CssPropertyAccessor>> _accessorCache = new();
+
+
     private CssStylesheet? _testStylesheet;
 
     private ISawmill _sawmill = null!;
@@ -148,6 +154,37 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
         return false;
     }
+
+    /// <inheritdoc/>
+    public IReadOnlyDictionary<string, CssPropertyAccessor> GetPropertyAccessors(Type elementType)
+    {
+        if (_accessorCache.TryGetValue(elementType, out var cached))
+            return cached;
+
+        var chain = new List<Type>();
+
+        for (var type = elementType; type != null; type = type.BaseType)
+        {
+            chain.Add(type);
+        }
+
+        // Base types go first, so a property redeclared in a derived class wins.
+        var merged = new Dictionary<string, CssPropertyAccessor>(StringComparer.OrdinalIgnoreCase);
+
+        for (var i = chain.Count - 1; i >= 0; i--)
+        {
+            if (!_properties.TryGetValue(chain[i], out var dict))
+                continue;
+
+            foreach (var (name, accessor) in dict)
+            {
+                merged[name] = accessor;
+            }
+        }
+
+        return _accessorCache[elementType] = merged;
+    }
+
 
     /// <inheritdoc/>
     public void UpdateStylesheet()
@@ -347,6 +384,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        // Properties whose winning declaration is inherit (or unset on an inherited property): they follow the parent.
+        var inheriting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         // Cascade: normal declarations are applied first, then !important ones, so the latter always win.
         // Within one importance level the later rule (higher specificity / later in source) wins.
         for (var pass = 0; pass < 2; pass++)
@@ -360,13 +400,17 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         }
 
         control.CssLastAppliedProperties = applied;
+        control.CssInheritKeywordProperties = inheriting.Count > 0 ? inheriting : null;
         var controlType = control.GetType();
 
         foreach (var name in previouslyApplied)
         {
-            if (TryGetPropertyAccessor(controlType, name, out var accessor))
+            if (TryGetAppliedPropertyAccessor(controlType, name, out var accessor))
                 accessor.Value.Setter(control, accessor.Value.DefaultValue!);
         }
+
+        // Whatever the cascade doesn't declare (or just reset) falls back to the inherited value, not to the initial one.
+        control.RefreshInheritedProperties();
 
         if (!propagate || !variablesChanged)
             return;
@@ -381,7 +425,24 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         void Apply(CssStyleProperty property)
         {
             previouslyApplied.Remove(property.Name);
-            property.Accessor.Setter(control, property.Value);
+
+            var value = property.Value;
+
+            if (value is CssWideValue wide)
+            {
+                value = ResolveCssWide(control, property, wide.Keyword, out var inherits);
+
+                if (inherits)
+                    inheriting.Add(property.Name);
+                else
+                    inheriting.Remove(property.Name);
+            }
+            else
+            {
+                inheriting.Remove(property.Name);
+            }
+
+            property.Accessor.Setter(control, value!);
             applied.Add(property.Name);
         }
 
@@ -643,6 +704,21 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var stream = new CssValueStream(decl.Value);
         var values = new Dictionary<string, object?>();
 
+        // A CSS-wide keyword applies to every longhand of the shorthand.
+        if (CssWideKeyword.TryParse(ref stream, out var wideKeyword))
+        {
+            var wideResult = new List<CssStyleProperty>(info.Value.Longhands.Count);
+
+            foreach (var longhand in info.Value.Longhands)
+            {
+                if (TryGetPropertyAccessor(targetType, longhand, out var longhandAccessor))
+                    wideResult.Add(new CssStyleProperty(longhand, CssWideValue.For(wideKeyword), longhandAccessor.Value));
+            }
+
+            expanded = wideResult;
+            return true;
+        }
+
         if (!info.Value.Parser(ref stream, this, values))
         {
     #if EXCEPTION_TOLERANCE
@@ -703,6 +779,15 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             return false;
 
         var stream = new CssValueStream(decl.Value);
+
+        // CSS-wide keywords are valid for every property and are resolved when the style is applied.
+        if (CssWideKeyword.TryParse(ref stream, out var keyword))
+        {
+            name = accessor.Value.PropertyName ?? decl.Name;
+            value = CssWideValue.For(keyword);
+            return true;
+        }
+
         var ok = accessor.Value.CustomParser is not null
             ? _customParsers[accessor.Value.CustomParser].TryParse(ref stream, out value)
             : TryParseValue(ref stream, accessor.Value.ClrType, out value);

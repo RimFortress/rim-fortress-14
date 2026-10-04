@@ -308,7 +308,7 @@ public sealed class CssParserTests : GameTest
     [RunOnSide(Side.Client)]
     public void AttributeSelectorTest()
     {
-        var result = CssParser.ParseStylesheet("test-locale-css-control[text=\"test\"] {}");
+        var result = CssParser.ParseStylesheet("test-locale-css-control[locale-text=\"test\"] {}");
         Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result[0], Is.TypeOf<CssQualifiedRule>());
 
@@ -325,7 +325,7 @@ public sealed class CssParserTests : GameTest
         var control = new TestLocaleCssControl();
 
         Assert.That(attr.Matches(control), Is.False);
-        control.Text = "test";
+        control.LocaleText = "test";
         Assert.That(attr.Matches(control), Is.True);
     }
 }

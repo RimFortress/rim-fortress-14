@@ -103,7 +103,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-family</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     [CssShorthandProperty(FontShorthandName, nameof(ParseFontShorthand))]
     protected CssFontFamily FontFamily
     {
@@ -118,7 +118,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-size</c>. Relative units refer to the parent's font size; the default <c>1em</c> inherits it.
     /// </summary>
-    [CssProperty(parser: typeof(CssFontSizeParser))]
+    [CssProperty(parser: typeof(CssFontSizeParser), Inherited = true)]
     [CssShorthandProperty(FontShorthandName)]
     protected LengthUnit FontSize
     {
@@ -128,12 +128,12 @@ public partial class CssControl
             field = value;
             OnFontChanged();
         }
-    } = new(1f, LengthUnitType.Em);
+    } = LengthUnit.Em(1f);
 
     /// <summary>
     /// CSS <c>font-weight</c> (<c>normal</c>, <c>bold</c> or a number).
     /// </summary>
-    [CssProperty(parser: typeof(CssFontWeightParser))]
+    [CssProperty(parser: typeof(CssFontWeightParser), Inherited = true)]
     [CssShorthandProperty(FontShorthandName)]
     protected FontWeight FontWeight
     {
@@ -148,7 +148,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-style</c> (<c>normal</c>, <c>italic</c>, <c>oblique</c>).
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     [CssShorthandProperty(FontShorthandName)]
     protected FontSlant FontStyle
     {
@@ -167,7 +167,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>color</c>.
     /// </summary>
-    [CssProperty("color")]
+    [CssProperty("color", Inherited = true)]
     protected Color TextColor
     {
         get;
@@ -181,7 +181,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>letter-spacing</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected LengthUnit LetterSpacing
     {
         get;
@@ -195,7 +195,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>word-spacing</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected LengthUnit WordSpacing
     {
         get;
@@ -209,7 +209,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>line-height</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     [CssShorthandProperty(FontShorthandName)]
     protected CssLineHeight LineHeight
     {
@@ -224,7 +224,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-align</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected CssTextAlign TextAlign
     {
         get;
@@ -238,7 +238,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-indent</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected LengthUnit TextIndent
     {
         get;
@@ -252,7 +252,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-transform</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected CssTextTransform TextTransform
     {
         get;
@@ -280,7 +280,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>white-space</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected CssWhiteSpace WhiteSpace
     {
         get;
@@ -294,7 +294,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>word-break</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected CssWordBreak WordBreak
     {
         get;
@@ -308,7 +308,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>overflow-wrap</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected CssOverflowWrap OverflowWrap
     {
         get;
@@ -414,7 +414,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-shadow</c>.
     /// </summary>
-    [CssProperty]
+    [CssProperty(Inherited = true)]
     protected CssTextShadow[] TextShadow
     {
         get;
@@ -428,7 +428,7 @@ public partial class CssControl
     /// <summary>
     /// Text outline width (RF extension, <c>-rf-text-outline-width</c>); <c>0</c> disables the outline.
     /// </summary>
-    [CssProperty("-rf-text-outline-width")]
+    [CssProperty("-rf-text-outline-width", Inherited = true)]
     protected LengthUnit TextOutlineWidth
     {
         get;
@@ -442,7 +442,7 @@ public partial class CssControl
     /// <summary>
     /// Text outline color (RF extension, <c>-rf-text-outline-color</c>); <c>null</c> means black.
     /// </summary>
-    [CssProperty("-rf-text-outline-color")]
+    [CssProperty("-rf-text-outline-color", Inherited = true)]
     protected Color? TextOutlineColor
     {
         get;
@@ -640,7 +640,7 @@ public partial class CssControl
         {
             stream.ConsumeNext();
 
-            if (!css.TryParseValue(ref stream, out lineHeight))
+            if (!css.TryParseValue<CssLineHeight>(ref stream, out lineHeight))
                 return false;
         }
 

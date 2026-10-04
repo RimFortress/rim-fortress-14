@@ -136,6 +136,11 @@ public interface ICssPropertyResolver
         [NotNullWhen(true)] out CssPropertyAccessor? accessor);
 
     /// <summary>
+    /// Returns every property accessor of a control type, base types included (the keys are CSS names).
+    /// </summary>
+    IReadOnlyDictionary<string, CssPropertyAccessor> GetPropertyAccessors(Type elementType);
+
+    /// <summary>
     /// Parses a value from a CSS values stream into the target type.
     /// </summary>
     /// <param name="stream">CSS values stream.</param>
@@ -171,4 +176,5 @@ public readonly record struct CssPropertyAccessor(
     Func<Control, object> Getter,
     Type? CustomParser,
     string? PropertyName = null,
-    object? DefaultValue = null);
+    object? DefaultValue = null,
+    bool Inherited = false);

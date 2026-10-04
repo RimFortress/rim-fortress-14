@@ -13,7 +13,7 @@ public sealed class ColorParser : CssValueParser<Color>
         switch (stream.Peek())
         {
             case HashToken hash:
-                if (!Color.TryFromHex(hash.Value, out value))
+                if (!Color.TryFromHex($"#{hash.Value}", out value))
                     return false;
 
                 stream.ConsumeNext();

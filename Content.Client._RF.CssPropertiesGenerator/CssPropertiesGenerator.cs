@@ -115,13 +115,14 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
             ? parserType.ToDisplayString()
             : null;
 
+        var inherited = attribute.NamedArguments.Any(a => a is { Key: "Inherited", Value.Value: true });
         var clrTypeFqn = property.Type.ToDisplayString();
 
         var typeofFqn = property.Type is { IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
             ? property.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()
             : clrTypeFqn;
 
-        var member = new CssPropertyMember(property.Name, cssName, clrTypeFqn, typeofFqn, parserFqn);
+        var member = new CssPropertyMember(property.Name, cssName, clrTypeFqn, typeofFqn, parserFqn, inherited);
         return new MemberCandidate(PartialTypeInfo.FromSymbol(property.ContainingType, parentSyntax), member);
     }
 
@@ -233,6 +234,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
         foreach (var member in members)
         {
             var parserArg = member.ParserFqn is not null ? $"typeof({member.ParserFqn})" : "null";
+            var inheritedArg = member.Inherited ? ", Inherited: true" : "";
 
             builder.AppendLine($"""
                             ["{member.CssName}"] = new {CssPropertyAccessorName}(
@@ -240,7 +242,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
                                 static (c, v) => (({info.PartialType.FullDisplayName})c).{member.PropertyName} = ({member.ClrTypeFqn})v,
                                 static c => (({info.PartialType.FullDisplayName})c).{member.PropertyName}!,
                                 {parserArg},
-                                DefaultValue: this.{member.PropertyName}),
+                                DefaultValue: this.{member.PropertyName}{inheritedArg}),
                 """);
         }
 
@@ -360,7 +362,8 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
         string CssName,
         string ClrTypeFqn,
         string TypeofFqn,
-        string? ParserFqn);
+        string? ParserFqn,
+        bool Inherited);
 
     private record struct ShorthandMember(
         string PropertyName,

@@ -87,7 +87,7 @@ public sealed partial class CssFontManager : ICssFontManager
 
         var result = fonts.Count switch
         {
-            0 => _ui.ThemeDefaults.DefaultFont,
+            0 => new DummyFont(),
             1 => fonts[0],
             _ => new StackedFont(fonts.ToArray()),
         };

@@ -182,14 +182,14 @@ public sealed class CssManagerTest : GameTest
 
         Load($$"""
             test-locale-css-control {
-                text: loc("{{locKey}}");
+                locale-text: loc("{{locKey}}");
             }
             """);
 
         var control = new TestLocaleCssControl();
         _css.UpdateTestStyle(control);
 
-        Assert.That(control.Text, Is.EqualTo(_loc.GetString(locKey)));
+        Assert.That(control.LocaleText, Is.EqualTo(_loc.GetString(locKey)));
     }
 
     [Test]
@@ -285,5 +285,5 @@ public sealed class CssManagerTest : GameTest
 public sealed partial class TestLocaleCssControl : CssControl
 {
     [CssProperty]
-    public string Text { get; set; }
+    public string LocaleText { get; set; }
 }

@@ -103,6 +103,7 @@ public partial class CssControl : AutoCssControl
 
         RefreshLengthContext();
         Css.UpdateStyleRecursively(this);
+        RefreshInheritedProperties();
     }
 
     protected override void ChildMoved(Control child, int oldIndex, int newIndex)

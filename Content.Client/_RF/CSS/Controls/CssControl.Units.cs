@@ -24,14 +24,12 @@ namespace Content.Client._RF.CSS;
 /// </remarks>
 public partial class CssControl
 {
-    [Dependency] private IUserInterfaceManager _ui = null!;
-
     private LengthContext? _lengthContext;
 
     /// <summary>
     /// The nearest <see cref="CssControl"/> ancestor (controls of other types don't take part in CSS).
     /// </summary>
-    private CssControl? CssParent
+    internal CssControl? CssParent
     {
         get
         {
@@ -95,7 +93,14 @@ public partial class CssControl
     /// </summary>
     private Vector2 GetViewportSize()
     {
-        return _ui.RootControl.Size;
+        Control? parent = null;
+
+        for (var control = Parent; control != null; control = control.Parent)
+        {
+            parent = control;
+        }
+
+        return parent?.Size ?? Vector2.Zero;
     }
 
     private LengthContext BuildLengthContext()
