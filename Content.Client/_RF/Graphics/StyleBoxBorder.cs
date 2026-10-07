@@ -350,11 +350,13 @@ public sealed class StyleBoxBorder(
     }
 
     private static Vector2 ResolveCornerRadius(UnitVector2 radius, UIBox2 borderBox, float uiScale)
-        => new(ResolveComponent(radius.X, borderBox.Width) * uiScale, ResolveComponent(radius.Y, borderBox.Height) * uiScale);
+        => new(ResolveComponent(radius.X, borderBox.Width / uiScale) * uiScale, ResolveComponent(radius.Y, borderBox.Height / uiScale) * uiScale);
 
+    // referenceSize is in virtual pixels, like the result.
     private static float ResolveComponent(LengthUnit length, float referenceSize) => length.Type switch
     {
         LengthUnitType.Percent => length.PercentToPx(referenceSize).Value,
+        LengthUnitType.Calc => length.Calc!.Eval(default, referenceSize), // bound by the control
         _ when length.IsAbsolute => length.AbsoluteToPx().Value,
         _ => throw new NotSupportedException($"border-radius: {length.Type} is not supported here."),
     };

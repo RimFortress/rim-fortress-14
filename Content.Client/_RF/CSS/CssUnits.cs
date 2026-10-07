@@ -74,6 +74,21 @@ public enum LengthUnitType : byte
     /// </summary>
     Lh,
 
+    /// <summary>
+    /// The computed <c>line-height</c> of the root element.
+    /// </summary>
+    Rlh,
+
+    /// <summary>
+    /// The cap height (the height of capital letters) of the element's font.
+    /// </summary>
+    Cap,
+
+    /// <summary>
+    /// The advance of the "水" (U+6C34) glyph of the element's font: the width of a CJK ideograph.
+    /// </summary>
+    Ic,
+
     // Viewport-relative units
 
     /// <summary>
@@ -97,9 +112,30 @@ public enum LengthUnitType : byte
     VMax,
 
     /// <summary>
+    /// Equal to 1% of the height of the dynamic viewport. The viewport here has no collapsing browser chrome,
+    /// so it is the same as <see cref="Vh"/>.
+    /// </summary>
+    Dvh,
+
+    /// <summary>
+    /// Equal to 1% of the height of the small viewport; the same as <see cref="Vh"/> (see <see cref="Dvh"/>).
+    /// </summary>
+    Svh,
+
+    /// <summary>
+    /// Equal to 1% of the height of the large viewport; the same as <see cref="Vh"/> (see <see cref="Dvh"/>).
+    /// </summary>
+    Lvh,
+
+    /// <summary>
     /// A percentage of a reference value that depends on the property (see <see cref="LengthUnit.Resolve"/>).
     /// </summary>
     Percent,
+
+    /// <summary>
+    /// A <c>calc()</c>/<c>min()</c>/<c>max()</c>/<c>clamp()</c> expression, kept in <see cref="LengthUnit.Calc"/>.
+    /// </summary>
+    Calc,
 }
 
 /// <summary>
@@ -111,20 +147,26 @@ public enum LengthUnitType : byte
 /// <param name="ExHeight">The x-height of the element's font (<c>ex</c>).</param>
 /// <param name="ChWidth">The advance of the "0" glyph of the element's font (<c>ch</c>).</param>
 /// <param name="LineHeight">The computed <c>line-height</c> of the element (<c>lh</c>).</param>
-/// <param name="Viewport">The viewport size (<c>vw</c>, <c>vh</c>, <c>vmin</c>, <c>vmax</c>).</param>
+/// <param name="Viewport">The viewport size (<c>vw</c>, <c>vh</c>, <c>vmin</c>, <c>vmax</c>, <c>dvh</c>, <c>svh</c>, <c>lvh</c>).</param>
+/// <param name="CapHeight">The cap height of the element's font (<c>cap</c>).</param>
+/// <param name="IcWidth">The advance of the "水" glyph of the element's font (<c>ic</c>).</param>
+/// <param name="RootLineHeight">The computed <c>line-height</c> of the root element (<c>rlh</c>).</param>
 public readonly record struct LengthContext(
     float FontSize,
     float RootFontSize,
     float ExHeight,
     float ChWidth,
     float LineHeight,
-    Vector2 Viewport)
+    Vector2 Viewport,
+    float CapHeight = 0f,
+    float IcWidth = 0f,
+    float RootLineHeight = 0f)
 {
     /// <summary>
     /// A context with rough font metrics derived from <paramref name="fontSize"/>, for code that has no font at hand.
     /// </summary>
     public static LengthContext Initial(float fontSize, Vector2 viewport)
-        => new(fontSize, fontSize, fontSize * 0.5f, fontSize * 0.5f, fontSize * 1.2f, viewport);
+        => new(fontSize, fontSize, fontSize * 0.5f, fontSize * 0.5f, fontSize * 1.2f, viewport, fontSize * 0.7f, fontSize, fontSize * 1.2f);
 }
 
 /// <summary>
@@ -134,7 +176,7 @@ public readonly record struct LengthContext(
 /// A plain <see cref="float"/> converts to <see cref="LengthUnitType.Px"/> implicitly, so
 /// <c>Padding = 4</c> and <c>MarginLeft = 8f</c> keep working. Use <see cref="Resolve"/> to get virtual pixels.
 /// </remarks>
-public readonly record struct LengthUnit(float Value, LengthUnitType Type)
+public readonly record struct LengthUnit(float Value, LengthUnitType Type, CalcNode? Calc = null)
 {
     /// <summary>
     /// Zero pixels.
@@ -179,6 +221,42 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
     public static LengthUnit Lh(float value) => new(value, LengthUnitType.Lh);
 
     /// <summary>
+    /// Creates a length in <c>rlh</c>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static LengthUnit Rlh(float value) => new(value, LengthUnitType.Rlh);
+
+    /// <summary>
+    /// Creates a length in <c>cap</c>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static LengthUnit Cap(float value) => new(value, LengthUnitType.Cap);
+
+    /// <summary>
+    /// Creates a length in <c>ic</c>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static LengthUnit Ic(float value) => new(value, LengthUnitType.Ic);
+
+    /// <summary>
+    /// Creates a length in <c>dvh</c>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static LengthUnit Dvh(float value) => new(value, LengthUnitType.Dvh);
+
+    /// <summary>
+    /// Creates a length in <c>svh</c>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static LengthUnit Svh(float value) => new(value, LengthUnitType.Svh);
+
+    /// <summary>
+    /// Creates a length in <c>lvh</c>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static LengthUnit Lvh(float value) => new(value, LengthUnitType.Lvh);
+
+    /// <summary>
     /// Creates a length in <c>vw</c>.
     /// </summary>
     [PublicAPI, Pure]
@@ -217,7 +295,10 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
         or LengthUnitType.Rem
         or LengthUnitType.Ex
         or LengthUnitType.Ch
-        or LengthUnitType.Lh;
+        or LengthUnitType.Lh
+        or LengthUnitType.Rlh
+        or LengthUnitType.Cap
+        or LengthUnitType.Ic;
 
     /// <summary>
     /// Does this number depend on the viewport size?
@@ -226,7 +307,10 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
     public bool IsViewportRelative => Type is LengthUnitType.Vw
         or LengthUnitType.Vh
         or LengthUnitType.VMin
-        or LengthUnitType.VMax;
+        or LengthUnitType.VMax
+        or LengthUnitType.Dvh
+        or LengthUnitType.Svh
+        or LengthUnitType.Lvh;
 
     /// <summary>
     /// Is this number a percentage?
@@ -235,10 +319,16 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
     public bool IsPercent => Type == LengthUnitType.Percent;
 
     /// <summary>
+    /// Does the result depend on the percentage reference (a percentage, or a calculation that contains one)?
+    /// </summary>
+    [PublicAPI]
+    public bool DependsOnPercent => IsPercent || Calc is { HasPercent: true };
+
+    /// <summary>
     /// Is the value zero (in any unit)?
     /// </summary>
     [PublicAPI]
-    public bool IsZero => Value == 0f;
+    public bool IsZero => Type != LengthUnitType.Calc && Value == 0f;
 
     /// <summary>
     /// Resolves the number to virtual pixels.
@@ -257,11 +347,16 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
         LengthUnitType.Ex => Value * context.ExHeight,
         LengthUnitType.Ch => Value * context.ChWidth,
         LengthUnitType.Lh => Value * context.LineHeight,
+        LengthUnitType.Rlh => Value * context.RootLineHeight,
+        LengthUnitType.Cap => Value * context.CapHeight,
+        LengthUnitType.Ic => Value * context.IcWidth,
         LengthUnitType.Vw => LengthUnitType.FromVw(Value, context.Viewport),
-        LengthUnitType.Vh => LengthUnitType.FromVh(Value, context.Viewport),
+        LengthUnitType.Vh or LengthUnitType.Dvh or LengthUnitType.Svh or LengthUnitType.Lvh
+            => LengthUnitType.FromVh(Value, context.Viewport),
         LengthUnitType.VMin => LengthUnitType.FromVMin(Value, context.Viewport),
         LengthUnitType.VMax => LengthUnitType.FromVMax(Value, context.Viewport),
         LengthUnitType.Percent => Value / 100f * percentBase,
+        LengthUnitType.Calc => Calc!.Eval(context, percentBase),
         _ => Value * AbsoluteRatio(Type),
     };
 
@@ -286,7 +381,8 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
     public LengthUnit ViewportToPx(Vector2 viewportSize) => Type switch
     {
         LengthUnitType.Vw => new LengthUnit(LengthUnitType.FromVw(Value, viewportSize), LengthUnitType.Px),
-        LengthUnitType.Vh => new LengthUnit(LengthUnitType.FromVh(Value, viewportSize), LengthUnitType.Px),
+        LengthUnitType.Vh or LengthUnitType.Dvh or LengthUnitType.Svh or LengthUnitType.Lvh
+            => new LengthUnit(LengthUnitType.FromVh(Value, viewportSize), LengthUnitType.Px),
         LengthUnitType.VMin => new LengthUnit(LengthUnitType.FromVMin(Value, viewportSize), LengthUnitType.Px),
         LengthUnitType.VMax => new LengthUnit(LengthUnitType.FromVMax(Value, viewportSize), LengthUnitType.Px),
         _ => throw new ArgumentOutOfRangeException(nameof(Type), Type, null),
@@ -313,16 +409,24 @@ public readonly record struct LengthUnit(float Value, LengthUnitType Type)
     /// <summary>
     /// Scales the value, keeping the unit.
     /// </summary>
-    public static LengthUnit operator *(LengthUnit length, float factor) => length with { Value = length.Value * factor };
+    public static LengthUnit operator *(LengthUnit length, float factor)
+        => length.Type == LengthUnitType.Calc
+            ? length with { Calc = new CalcOperation('*', length.Calc!, new CalcNumber(factor)) }
+            : length with { Value = length.Value * factor };
 
     /// <summary>
     /// Negates the value, keeping the unit.
     /// </summary>
-    public static LengthUnit operator -(LengthUnit length) => length with { Value = -length.Value };
+    public static LengthUnit operator -(LengthUnit length) => length * -1f;
 
     /// <inheritdoc/>
     public override string ToString()
-        => Type == LengthUnitType.Percent ? $"{Value:F2}%" : $"{Value:F2}{Type.ToString().ToLowerInvariant()}";
+        => Type switch
+        {
+            LengthUnitType.Percent => $"{Value:F2}%",
+            LengthUnitType.Calc => $"calc{Calc}",
+            _ => $"{Value:F2}{Type.ToString().ToLowerInvariant()}",
+        };
 
     // How many virtual pixels are in one of the given absolute units.
     private static float AbsoluteRatio(LengthUnitType type) => type switch
@@ -384,10 +488,16 @@ public static class LengthUnitsExtensions
     private static readonly HashSet<LengthUnitType> Absolute = new(AbsoluteRatios.Keys);
 
     private static readonly HashSet<LengthUnitType> FontRelative =
-        [LengthUnitType.Em, LengthUnitType.Rem, LengthUnitType.Ex, LengthUnitType.Ch, LengthUnitType.Lh];
+        [
+            LengthUnitType.Em, LengthUnitType.Rem, LengthUnitType.Ex, LengthUnitType.Ch, LengthUnitType.Lh,
+            LengthUnitType.Rlh, LengthUnitType.Cap, LengthUnitType.Ic,
+        ];
 
     private static readonly HashSet<LengthUnitType> Viewport =
-        [LengthUnitType.Vw, LengthUnitType.Vh, LengthUnitType.VMin, LengthUnitType.VMax];
+        [
+            LengthUnitType.Vw, LengthUnitType.Vh, LengthUnitType.VMin, LengthUnitType.VMax,
+            LengthUnitType.Dvh, LengthUnitType.Svh, LengthUnitType.Lvh,
+        ];
 
     extension(LengthUnitType)
     {
@@ -457,6 +567,12 @@ public static class LengthUnitsExtensions
                 "ex" => LengthUnitType.Ex,
                 "ch" => LengthUnitType.Ch,
                 "lh" => LengthUnitType.Lh,
+                "rlh" => LengthUnitType.Rlh,
+                "cap" => LengthUnitType.Cap,
+                "ic" => LengthUnitType.Ic,
+                "dvh" => LengthUnitType.Dvh,
+                "svh" => LengthUnitType.Svh,
+                "lvh" => LengthUnitType.Lvh,
                 "vw" => LengthUnitType.Vw,
                 "vh" => LengthUnitType.Vh,
                 "vmin" => LengthUnitType.VMin,

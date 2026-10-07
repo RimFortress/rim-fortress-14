@@ -15,14 +15,16 @@ public sealed class ThicknessParser : CssValueParser<Thickness>
             values.Add(length);
         }
 
+        // CSS order: top, right, bottom, left; Thickness takes left, top, right, bottom.
         value = values.Count switch
         {
             1 => new Thickness(values[0]),
-            2 => new Thickness(values[0], values[1]),
-            4 => new Thickness(values[0], values[1], values[2], values[3]),
+            2 => new Thickness(values[1], values[0], values[1], values[0]),
+            3 => new Thickness(values[1], values[0], values[1], values[2]),
+            4 => new Thickness(values[3], values[0], values[1], values[2]),
             _ => default,
         };
 
-        return values.Count is 1 or 2 or 4;
+        return values.Count is >= 1 and <= 4;
     }
 }

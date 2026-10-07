@@ -254,7 +254,7 @@ public partial class CssControl
     }
 
     // Font-relative and viewport units can't be resolved by the style box (it only knows its own size),
-    // so everything except percentages is converted to pixels here.
+    // so everything except percentages (and calculations that contain them) is converted to pixels here.
     private CornerRadius ResolveBorderRadius(CornerRadius radius) => new(
         ResolveRadius(radius.TopLeft),
         ResolveRadius(radius.TopRight),
@@ -264,7 +264,12 @@ public partial class CssControl
     private UnitVector2 ResolveRadius(UnitVector2 radius) => new(ResolveRadiusComponent(radius.X), ResolveRadiusComponent(radius.Y));
 
     private LengthUnit ResolveRadiusComponent(LengthUnit length)
-        => length.IsPercent ? length : LengthUnit.Px(ToPx(length));
+        => length switch
+        {
+            { IsPercent: true } => length,
+            { Calc: { HasPercent: true } calc } => length with { Calc = calc.Bind(LengthContext) }, // finished by the style box
+            _ => LengthUnit.Px(ToPx(length)),
+        };
 
     private StyleBoxBorder? BuildBorder()
     {

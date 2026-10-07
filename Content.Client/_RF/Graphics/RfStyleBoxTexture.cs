@@ -1,3 +1,4 @@
+using Content.Client._RF.CSS;
 using System.Numerics;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
@@ -466,11 +467,13 @@ public sealed class RfStyleBoxTexture : RfStyleBox
 
             case StyleBoxBackgroundSizeMode.Explicit:
             {
-                var w = Size.WidthIsPercent ? area.Width * Size.Width
+                var w = Size.WidthCalc != null ? Size.WidthCalc.Eval(default, area.Width / uiScale) * uiScale
+                    : Size.WidthIsPercent ? area.Width * Size.Width
                     : Size.WidthAuto ? -1f
                     : Size.Width * uiScale;
 
-                var h = Size.HeightIsPercent ? area.Height * Size.Height
+                var h = Size.HeightCalc != null ? Size.HeightCalc.Eval(default, area.Height / uiScale) * uiScale
+                    : Size.HeightIsPercent ? area.Height * Size.Height
                     : Size.HeightAuto ? -1f
                     : Size.Height * uiScale;
 
@@ -491,11 +494,15 @@ public sealed class RfStyleBoxTexture : RfStyleBox
 
     private Vector2 ComputeAnchor(UIBox2 area, Vector2 tileSize, float uiScale)
     {
-        var x = Position.XIsAbsolute
+        var x = Position.XCalc != null
+            ? area.Left + Position.XCalc.Eval(default, (area.Width - tileSize.X) / uiScale) * uiScale
+            : Position.XIsAbsolute
             ? area.Left + Position.X * uiScale
             : area.Left + (area.Width - tileSize.X) * Position.X;
 
-        var y = Position.YIsAbsolute
+        var y = Position.YCalc != null
+            ? area.Top + Position.YCalc.Eval(default, (area.Height - tileSize.Y) / uiScale) * uiScale
+            : Position.YIsAbsolute
             ? area.Top + Position.Y * uiScale
             : area.Top + (area.Height - tileSize.Y) * Position.Y;
 
@@ -533,6 +540,17 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         public bool WidthAuto;
         public bool HeightAuto;
 
+        /// <summary>
+        /// A math function instead of <see cref="Width"/>. Must be bound (see <see cref="CalcNode.Bind"/>);
+        /// a percentage in it refers to the width of the area.
+        /// </summary>
+        public CalcNode? WidthCalc;
+
+        /// <summary>
+        /// A math function instead of <see cref="Height"/>; see <see cref="WidthCalc"/>.
+        /// </summary>
+        public CalcNode? HeightCalc;
+
         public static readonly StyleBoxSize Auto = new() { Mode = StyleBoxBackgroundSizeMode.Auto };
         public static readonly StyleBoxSize Cover = new() { Mode = StyleBoxBackgroundSizeMode.Cover };
         public static readonly StyleBoxSize Contain = new() { Mode = StyleBoxBackgroundSizeMode.Contain };
@@ -544,6 +562,17 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         public float Y;
         public bool XIsAbsolute;
         public bool YIsAbsolute;
+
+        /// <summary>
+        /// A math function instead of <see cref="X"/>. Must be bound (see <see cref="CalcNode.Bind"/>);
+        /// a percentage in it refers to the free space on the axis, like a plain percentage.
+        /// </summary>
+        public CalcNode? XCalc;
+
+        /// <summary>
+        /// A math function instead of <see cref="Y"/>; see <see cref="XCalc"/>.
+        /// </summary>
+        public CalcNode? YCalc;
 
         public static readonly StyleBoxPosition Default = new() { X = 0f, Y = 0f }; // left top
     }

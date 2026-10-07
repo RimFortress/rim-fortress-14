@@ -6,10 +6,11 @@ namespace Content.Client._RF.CSS.Parsers;
 
 public static class BackgroundPositionParsing
 {
-    public static bool TryParseComponent(ref CssValueStream stream, out float value, out bool isAbsolute, bool isXAxis)
+    public static bool TryParseComponent(ref CssValueStream stream, out float value, out bool isAbsolute, out CalcNode? calc, bool isXAxis)
     {
         value = 0;
         isAbsolute = false;
+        calc = null;
 
         switch (stream.ConsumeNext())
         {
@@ -26,9 +27,28 @@ public static class BackgroundPositionParsing
             case PercentageToken pct:
                 value = (float)(pct.Value / 100.0);
                 return true;
-            case DimensionToken { Unit: "px" } dim:
-                value = (float)dim.Value;
+            case DimensionToken dim:
+                if (!LengthUnitType.TryParse(dim.Unit, out var unit)
+                    || !LengthUnitType.AbsoluteUnits.Contains(unit.Value))
+                    return false;
+
+                value = (float)dim.Value * LengthUnitType.AbsoluteToPxRatio[unit.Value];
                 isAbsolute = true;
+                return true;
+            case CssFunction function when CssCalc.IsMathFunction(function.Name):
+                if (!CssCalc.TryParse(function, out var node) || node.Kind != CalcKind.Length)
+                    return false;
+
+                if (node.IsConstant)
+                {
+                    value = node.EvalConstant();
+                    isAbsolute = true;
+                }
+                else
+                {
+                    calc = node; // percentages in it refer to the free space; bound by the control
+                }
+
                 return true;
             default:
                 return false;
@@ -43,10 +63,10 @@ public sealed class StyleBoxPositionXParser : CssValueParser<StyleBoxPositionCom
     {
         value = default;
 
-        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var v, out var abs, isXAxis: true) || !stream.AtEnd)
+        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var v, out var abs, out var calc, isXAxis: true) || !stream.AtEnd)
             return false;
 
-        value = new StyleBoxPositionComponent(v, abs);
+        value = new StyleBoxPositionComponent(v, abs, calc);
         return true;
     }
 }
@@ -58,10 +78,10 @@ public sealed class StyleBoxPositionYParser : CssValueParser<StyleBoxPositionCom
     {
         value = default;
 
-        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var v, out var abs, isXAxis: false) || !stream.AtEnd)
+        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var v, out var abs, out var calc, isXAxis: false) || !stream.AtEnd)
             return false;
 
-        value = new StyleBoxPositionComponent(v, abs);
+        value = new StyleBoxPositionComponent(v, abs, calc);
         return true;
     }
 }

@@ -303,7 +303,7 @@ public partial class CssControl
 
         switch (value)
         {
-            case LengthUnit { IsPercent: false } length:
+            case LengthUnit { DependsOnPercent: false } length:
                 return LengthUnit.Px(length.Resolve(context));
             case CssLineHeight lineHeight:
                 return lineHeight.Resolve(context);

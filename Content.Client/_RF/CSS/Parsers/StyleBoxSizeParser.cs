@@ -25,7 +25,7 @@ public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleB
             return stream.AtEnd;
         }
 
-        if (!TryParseComponent(ref stream, out var w, out var wPct, out var wAuto))
+        if (!TryParseComponent(ref stream, out var w, out var wPct, out var wAuto, out var wCalc))
             return false;
 
         if (stream.AtEnd)
@@ -33,29 +33,30 @@ public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleB
             value = new RfStyleBoxTexture.StyleBoxSize
             {
                 Mode = RfStyleBoxTexture.StyleBoxBackgroundSizeMode.Explicit,
-                Width = w, WidthIsPercent = wPct, WidthAuto = wAuto,
+                Width = w, WidthIsPercent = wPct, WidthAuto = wAuto, WidthCalc = wCalc,
                 HeightAuto = true,
             };
             return true;
         }
 
-        if (!TryParseComponent(ref stream, out var h, out var hPct, out var hAuto) || !stream.AtEnd)
+        if (!TryParseComponent(ref stream, out var h, out var hPct, out var hAuto, out var hCalc) || !stream.AtEnd)
             return false;
 
         value = new RfStyleBoxTexture.StyleBoxSize
         {
             Mode = RfStyleBoxTexture.StyleBoxBackgroundSizeMode.Explicit,
-            Width = w, WidthIsPercent = wPct, WidthAuto = wAuto,
-            Height = h, HeightIsPercent = hPct, HeightAuto = hAuto,
+            Width = w, WidthIsPercent = wPct, WidthAuto = wAuto, WidthCalc = wCalc,
+            Height = h, HeightIsPercent = hPct, HeightAuto = hAuto, HeightCalc = hCalc,
         };
         return true;
     }
 
-    private static bool TryParseComponent(ref CssValueStream stream, out float value, out bool isPercent, out bool isAuto)
+    private static bool TryParseComponent(ref CssValueStream stream, out float value, out bool isPercent, out bool isAuto, out CalcNode? calc)
     {
         value = 0;
         isPercent = false;
         isAuto = false;
+        calc = null;
 
         switch (stream.ConsumeNext())
         {
@@ -72,6 +73,16 @@ public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleB
                     return false;
 
                 value = (float)dim.Value * LengthUnitType.AbsoluteToPxRatio[unit.Value];
+                return true;
+            case CssFunction function when CssCalc.IsMathFunction(function.Name):
+                if (!CssCalc.TryParse(function, out var node) || node.Kind != CalcKind.Length)
+                    return false;
+
+                if (node.IsConstant)
+                    value = node.EvalConstant();
+                else
+                    calc = node; // needs the element and/or the size of the area: resolved by the control and the style box
+
                 return true;
             default:
                 return false;

@@ -130,13 +130,13 @@ public partial class CssControl
     {
         get => new()
         {
-            X = BackgroundPositionX.Value, XIsAbsolute = BackgroundPositionX.IsAbsolute,
-            Y = BackgroundPositionY.Value, YIsAbsolute = BackgroundPositionY.IsAbsolute,
+            X = BackgroundPositionX.Value, XIsAbsolute = BackgroundPositionX.IsAbsolute, XCalc = BackgroundPositionX.Calc,
+            Y = BackgroundPositionY.Value, YIsAbsolute = BackgroundPositionY.IsAbsolute, YCalc = BackgroundPositionY.Calc,
         };
         set
         {
-            BackgroundPositionX = new StyleBoxPositionComponent(value.X, value.XIsAbsolute);
-            BackgroundPositionY = new StyleBoxPositionComponent(value.Y, value.YIsAbsolute);
+            BackgroundPositionX = new StyleBoxPositionComponent(value.X, value.XIsAbsolute, value.XCalc);
+            BackgroundPositionY = new StyleBoxPositionComponent(value.Y, value.YIsAbsolute, value.YCalc);
         }
     }
 
@@ -394,6 +394,21 @@ public partial class CssControl
         }
     }
 
+    // A style box knows its area but not the element, so what depends on the element is resolved here.
+    private RfStyleBoxTexture.StyleBoxSize BindBackgroundSize(RfStyleBoxTexture.StyleBoxSize size)
+    {
+        size.WidthCalc = size.WidthCalc?.Bind(LengthContext);
+        size.HeightCalc = size.HeightCalc?.Bind(LengthContext);
+        return size;
+    }
+
+    private RfStyleBoxTexture.StyleBoxPosition BindBackgroundPosition(RfStyleBoxTexture.StyleBoxPosition position)
+    {
+        position.XCalc = position.XCalc?.Bind(LengthContext);
+        position.YCalc = position.YCalc?.Bind(LengthContext);
+        return position;
+    }
+
     private RfStyleBox GetBackground()
     {
         RfStyleBox box = BackgroundImage != null
@@ -402,8 +417,8 @@ public partial class CssControl
                 Texture = BackgroundImage,
                 Modulate = BackgroundColor ?? Color.White,
                 Mode = BackgroundRepeat,
-                Size = BackgroundSize,
-                Position = BackgroundPosition,
+                Size = BindBackgroundSize(BackgroundSize),
+                Position = BindBackgroundPosition(BackgroundPosition),
                 ExpandMarginBottom = ExpandPatchMarginBottom,
                 ExpandMarginLeft = ExpandPatchMarginLeft,
                 ExpandMarginRight = ExpandPatchMarginRight,
@@ -566,10 +581,10 @@ public partial class CssControl
         x = StyleBoxPositionComponent.Zero;
         y = StyleBoxPositionComponent.Zero;
 
-        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var xValue, out var xAbs, isXAxis: true))
+        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var xValue, out var xAbs, out var xCalc, isXAxis: true))
             return false;
 
-        x = new StyleBoxPositionComponent(xValue, xAbs);
+        x = new StyleBoxPositionComponent(xValue, xAbs, xCalc);
 
         if (stream.AtEnd || LooksLikePositionEnd(stream))
         {
@@ -577,10 +592,10 @@ public partial class CssControl
             return true;
         }
 
-        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var yValue, out var yAbs, isXAxis: false))
+        if (!BackgroundPositionParsing.TryParseComponent(ref stream, out var yValue, out var yAbs, out var yCalc, isXAxis: false))
             return false;
 
-        y = new StyleBoxPositionComponent(yValue, yAbs);
+        y = new StyleBoxPositionComponent(yValue, yAbs, yCalc);
         return true;
     }
 
@@ -588,6 +603,7 @@ public partial class CssControl
         IdentToken { Value: "left" or "right" or "top" or "bottom" or "center" }
         or PercentageToken
         or DimensionToken
+        or CssFunction
         or NumberToken { Value: 0 };
 
     // Used inside the "background" shorthand, where position parsing must
@@ -654,13 +670,14 @@ public partial class CssControl
             lengths.Add(v!);
         }
 
-        if (!stream.AtEnd || lengths.Count is not (1 or 2 or 4))
+        if (!stream.AtEnd || lengths.Count is < 1 or > 4)
             return false;
 
         var (top, right, bottom, left) = lengths.Count switch
         {
             1 => (lengths[0], lengths[0], lengths[0], lengths[0]),
             2 => (lengths[0], lengths[1], lengths[0], lengths[1]), // CSS: vertical horizontal
+            3 => (lengths[0], lengths[1], lengths[2], lengths[1]), // CSS: top horizontal bottom
             4 => (lengths[0], lengths[1], lengths[2], lengths[3]), // CSS: top right bottom left
             _ => default,
         };
@@ -678,7 +695,7 @@ public partial class CssControl
 /// <summary>
 /// One axis of a background-position value.
 /// </summary>
-public record struct StyleBoxPositionComponent(float Value, bool IsAbsolute)
+public record struct StyleBoxPositionComponent(float Value, bool IsAbsolute, CalcNode? Calc = null)
 {
     public static readonly StyleBoxPositionComponent Zero = new() { Value = 0f };
 }

@@ -5,7 +5,7 @@ namespace Content.Client._RF.CSS.Parsers;
 
 /// <summary>
 /// Parses a CSS <c>&lt;length-percentage&gt;</c>: a dimension (<c>12px</c>, <c>1.5em</c>, <c>10vw</c>, ...),
-/// a percentage, or a unitless zero. Whether a percentage means anything is up to the property that
+/// a percentage, a unitless zero, or a math function (<c>calc()</c>, <c>min()</c>, <c>max()</c>, <c>clamp()</c>). Whether a percentage means anything is up to the property that
 /// receives the value.
 /// </summary>
 [UsedImplicitly]
@@ -28,6 +28,12 @@ public sealed class LengthUnitParser : CssValueParser<LengthUnit>
 
                 stream.ConsumeNext();
                 value = new LengthUnit((float)dimension.Value, unit.Value);
+                return true;
+            case CssFunction function when CssCalc.IsMathFunction(function.Name):
+                if (!CssCalc.TryParseLength(function, out value))
+                    return false;
+
+                stream.ConsumeNext();
                 return true;
             case NumberToken { Value: 0 }: // unitless zero is a valid length
                 stream.ConsumeNext();

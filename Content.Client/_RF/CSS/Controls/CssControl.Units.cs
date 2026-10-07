@@ -135,15 +135,19 @@ public partial class CssControl
         else
         {
             var initialFont = _fonts.Resolve(CssFontFamily.SansSerif, FontWeight.Normal, FontSlant.Normal, DefaultFontSize);
-            var (initialEx, initialCh) = MeasureFont(initialFont, DefaultFontSize, scale);
+            var initial = MeasureFont(initialFont, DefaultFontSize, scale);
+            var initialLineHeight = initialFont.GetLineHeight(scale) / scale;
 
             parentContext = new LengthContext(
                 DefaultFontSize,
                 DefaultFontSize,
-                initialEx,
-                initialCh,
-                initialFont.GetLineHeight(scale) / scale,
-                viewport);
+                initial.Ex,
+                initial.Ch,
+                initialLineHeight,
+                viewport,
+                initial.Cap,
+                initial.Ic,
+                initialLineHeight);
         }
 
         // font-size is relative to the parent; the root's own rem refers to the initial size.
@@ -151,21 +155,37 @@ public partial class CssControl
         var rootFontSize = parent == null ? fontSize : parentContext.RootFontSize;
 
         var font = _fonts.Resolve(FontFamily, FontWeight, FontStyle, fontSize);
-        var (ex, ch) = MeasureFont(font, fontSize, scale);
+        var metrics = MeasureFont(font, fontSize, scale);
 
         // line-height may itself be written in em/ex/ch, so it is resolved against the context without lh.
-        var partial = new LengthContext(fontSize, rootFontSize, ex, ch, 0f, viewport);
+        // rlh in the root's own line-height refers to the initial value.
+        var partial = new LengthContext(
+            fontSize,
+            rootFontSize,
+            metrics.Ex,
+            metrics.Ch,
+            0f,
+            viewport,
+            metrics.Cap,
+            metrics.Ic,
+            parentContext.RootLineHeight);
         var lineHeight = LineHeight.Resolve(partial).ResolvePx(font, scale) / scale;
 
-        return partial with { LineHeight = lineHeight };
+        return partial with
+        {
+            LineHeight = lineHeight,
+            RootLineHeight = parent == null ? lineHeight : parentContext.RootLineHeight,
+        };
     }
 
-    private static (float Ex, float Ch) MeasureFont(Font font, float fontSize, float scale)
+    private static (float Ex, float Ch, float Cap, float Ic) MeasureFont(Font font, float fontSize, float scale)
     {
         var ex = font.GetCharMetrics(new Rune('x'), scale) is { } x ? x.Height / scale : fontSize * 0.5f;
         var ch = font.GetCharMetrics(new Rune('0'), scale) is { } zero ? zero.Advance / scale : fontSize * 0.5f;
+        var cap = font.GetCharMetrics(new Rune('H'), scale) is { } h ? h.Height / scale : fontSize * 0.7f;
+        var ic = font.GetCharMetrics(new Rune('\u6C34'), scale) is { } water ? water.Advance / scale : fontSize;
 
-        return (ex, ch);
+        return (ex, ch, cap, ic);
     }
 
     /// <summary>
