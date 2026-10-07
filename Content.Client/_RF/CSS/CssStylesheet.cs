@@ -98,7 +98,7 @@ public sealed class CssStylesheet
         entries.Sort((a, b) =>
         {
             var cmp = a.rule.Specificity.CompareTo(b.rule.Specificity);
-            return -(cmp != 0 ? cmp : a.index.CompareTo(b.index));
+            return cmp != 0 ? -cmp : a.index.CompareTo(b.index);
         });
         return entries.Select(e => e.rule).ToList();
     }

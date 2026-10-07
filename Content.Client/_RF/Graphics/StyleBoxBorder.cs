@@ -5,7 +5,12 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Graphics;
 
-public sealed class StyleBoxBorder(
+/// <summary>
+/// Border of a <see cref="RfStyleBox"/>. The sides and the radius are shared; how they are drawn is up to the
+/// subtype: <see cref="StyleBoxBorderStroke"/> for <c>border-style</c> or <see cref="StyleBoxBorderImage"/>
+/// for <c>border-image</c>.
+/// </summary>
+public abstract class StyleBoxBorder(
     CornerRadius radius,
     BorderSide top,
     BorderSide right,
@@ -18,6 +23,21 @@ public sealed class StyleBoxBorder(
     public readonly BorderSide Left = left;
     public readonly CornerRadius Radius = radius;
 
+    protected Thickness GetThickness(float uiScale) => new Thickness(Left.Width, Top.Width, Right.Width, Bottom.Width).Scale(uiScale);
+
+    public abstract void Draw(DrawingHandleScreen handle, UIBox2 box, float uiScale);
+}
+
+/// <summary>
+/// Draws the sides and the corners of the border in their <see cref="CssBorderStyle"/>.
+/// </summary>
+public sealed class StyleBoxBorderStroke(
+    CornerRadius radius,
+    BorderSide top,
+    BorderSide right,
+    BorderSide bottom,
+    BorderSide left) : StyleBoxBorder(radius, top, right, bottom, left)
+{
     private static readonly ShaderInstance DashedShader = Shader("DashedBorder");
     private static readonly ShaderInstance DottedShader = Shader("DottedBorder");
     private static readonly ShaderInstance DoubleShader = Shader("DoubleBorder");
@@ -28,9 +48,9 @@ public sealed class StyleBoxBorder(
         .Index<ShaderPrototype>(id)
         .InstanceUnique();
 
-    public void Draw(DrawingHandleScreen handle, UIBox2 box, float uiScale)
+    public override void Draw(DrawingHandleScreen handle, UIBox2 box, float uiScale)
     {
-        var t = new Thickness(Left.Width, Top.Width, Right.Width, Bottom.Width).Scale(uiScale);
+        var t = GetThickness(uiScale);
 
         var rawTl = ResolveCornerRadius(Radius.TopLeft, box, uiScale);
         var rawTr = ResolveCornerRadius(Radius.TopRight, box, uiScale);

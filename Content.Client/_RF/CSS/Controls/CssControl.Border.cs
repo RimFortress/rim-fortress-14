@@ -293,7 +293,8 @@ public partial class CssControl
         if (top.Width <= 0 && right.Width <= 0 && bottom.Width <= 0 && left.Width <= 0)
             return null;
 
-        return new StyleBoxBorder(ResolveBorderRadius(BorderRadius), top, right, bottom, left);
+        return (StyleBoxBorder?) BuildBorderImage(top, right, bottom, left)
+               ?? new StyleBoxBorderStroke(ResolveBorderRadius(BorderRadius), top, right, bottom, left);
     }
 
     #region Parsing
@@ -518,7 +519,7 @@ public partial class CssControl
 
 /// <summary>
 /// Which CSS <c>border-style</c> keyword a border segment should render as.
-/// Determines which concrete <see cref="StyleBoxBorder"/> subtype a CSS
+/// Determines which concrete <see cref="StyleBoxBorderStroke"/> subtype a CSS
 /// <c>border-style</c> declaration is mapped to.
 /// </summary>
 public enum CssBorderStyle : byte
