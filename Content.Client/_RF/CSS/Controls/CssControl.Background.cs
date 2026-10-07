@@ -236,7 +236,7 @@ public partial class CssControl
     /// </summary>
     protected Thickness Padding
     {
-        get => ToThickness(PaddingLeft, PaddingTop, PaddingRight, PaddingBottom);
+        get => ToPaddingThickness();
         set
         {
             PaddingLeft = value.Left;

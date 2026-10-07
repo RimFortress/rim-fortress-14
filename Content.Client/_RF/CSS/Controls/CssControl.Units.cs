@@ -1,3 +1,4 @@
+using Content.Client._RF.CSS.Text;
 using System.Numerics;
 using System.Text;
 using Robust.Client.Graphics;
@@ -80,6 +81,17 @@ public partial class CssControl
         => new(ToPx(left), ToPx(top), ToPx(right), ToPx(bottom));
 
     /// <summary>
+    /// The padding of this control in virtual pixels. Padding can't be negative, so a <c>calc()</c> that
+    /// comes out below zero is clamped to zero.
+    /// </summary>
+    protected Thickness ToPaddingThickness()
+        => new(
+            MathF.Max(0f, ToPx(PaddingLeft)),
+            MathF.Max(0f, ToPx(PaddingTop)),
+            MathF.Max(0f, ToPx(PaddingRight)),
+            MathF.Max(0f, ToPx(PaddingBottom)));
+
+    /// <summary>
     /// The size of the viewport that <c>vw</c>/<c>vh</c> refer to, in virtual pixels.
     /// </summary>
     private Vector2 GetViewportSize() => GetViewportRoot()?.Size ?? Vector2.Zero;
@@ -136,7 +148,7 @@ public partial class CssControl
         {
             var initialFont = _fonts.Resolve(CssFontFamily.SansSerif, FontWeight.Normal, FontSlant.Normal, DefaultFontSize);
             var initial = MeasureFont(initialFont, DefaultFontSize, scale);
-            var initialLineHeight = initialFont.GetLineHeight(scale) / scale;
+            var initialLineHeight = NaturalLineHeight(initialFont, DefaultFontSize, scale);
 
             parentContext = new LengthContext(
                 DefaultFontSize,
@@ -169,13 +181,26 @@ public partial class CssControl
             metrics.Cap,
             metrics.Ic,
             parentContext.RootLineHeight);
-        var lineHeight = LineHeight.Resolve(partial).ResolvePx(font, scale) / scale;
+        var lineHeight = LineHeight.Resolve(partial).Kind == CssLineHeightKind.Length
+            ? LineHeight.Resolve(partial).ResolvePx(font, scale) / scale
+            : LineHeight.Kind == CssLineHeightKind.Multiplier
+                ? NaturalLineHeight(font, fontSize, scale) * LineHeight.Value
+                : NaturalLineHeight(font, fontSize, scale);
 
         return partial with
         {
             LineHeight = lineHeight,
             RootLineHeight = parent == null ? lineHeight : parentContext.RootLineHeight,
         };
+    }
+
+    /// <summary>
+    /// The natural line height of a font in virtual pixels. A font without metrics (headless) gets 1.2 of its size.
+    /// </summary>
+    private static float NaturalLineHeight(Font font, float fontSize, float scale)
+    {
+        var height = font.GetLineHeight(scale) / scale;
+        return height > 0f ? height : fontSize * 1.2f;
     }
 
     private static (float Ex, float Ch, float Cap, float Ic) MeasureFont(Font font, float fontSize, float scale)

@@ -521,10 +521,10 @@ public partial class CssControl
             var border = Background?.Border;
 
             return new Thickness(
-                ToPx(PaddingLeft) + (border?.Left.Width ?? 0f),
-                ToPx(PaddingTop) + (border?.Top.Width ?? 0f),
-                ToPx(PaddingRight) + (border?.Right.Width ?? 0f),
-                ToPx(PaddingBottom) + (border?.Bottom.Width ?? 0f));
+                MathF.Max(0f, ToPx(PaddingLeft)) + (border?.Left.Width ?? 0f),
+                MathF.Max(0f, ToPx(PaddingTop)) + (border?.Top.Width ?? 0f),
+                MathF.Max(0f, ToPx(PaddingRight)) + (border?.Right.Width ?? 0f),
+                MathF.Max(0f, ToPx(PaddingBottom)) + (border?.Bottom.Width ?? 0f));
         }
     }
 
