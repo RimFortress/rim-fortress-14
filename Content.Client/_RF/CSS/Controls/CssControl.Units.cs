@@ -14,7 +14,7 @@ namespace Content.Client._RF.CSS;
 /// The conversion needs a <see cref="LengthContext"/>: the computed font size of the element,
 /// the root font size, the metrics of the font and the viewport size. It is cached per control and rebuilt
 /// when something it depends on changes: the font properties of this control or of an ancestor, the
-/// parent, the UI scale or the viewport. When that happens everything that was resolved from it
+/// parent, the UI scale or the viewport (the resizing of the root control). When that happens everything that was resolved from it
 /// (text style, background, border, margin) is rebuilt too.
 /// </para>
 /// <para>
@@ -25,6 +25,11 @@ namespace Content.Client._RF.CSS;
 public partial class CssControl
 {
     private LengthContext? _lengthContext;
+
+    /// <summary>
+    /// The root whose size is the viewport; its resizing rebuilds the context.
+    /// </summary>
+    private Control? _viewportRoot;
 
     /// <summary>
     /// The nearest <see cref="CssControl"/> ancestor (controls of other types don't take part in CSS).
@@ -46,21 +51,7 @@ public partial class CssControl
     /// <summary>
     /// The context used to resolve the lengths of this control. Cached; see the class remarks.
     /// </summary>
-    protected LengthContext LengthContext
-    {
-        get
-        {
-            if (_lengthContext is not { } cached)
-                return _lengthContext ??= BuildLengthContext();
-
-            if (cached.Viewport == GetViewportSize())
-                return cached;
-
-            RefreshLengthContext(); // the viewport changed
-
-            return _lengthContext ??= BuildLengthContext();
-        }
-    }
+    protected LengthContext LengthContext => _lengthContext ??= BuildLengthContext();
 
     /// <summary>
     /// The computed <c>font-size</c> of this control, in virtual pixels.
@@ -91,16 +82,42 @@ public partial class CssControl
     /// <summary>
     /// The size of the viewport that <c>vw</c>/<c>vh</c> refer to, in virtual pixels.
     /// </summary>
-    private Vector2 GetViewportSize()
+    private Vector2 GetViewportSize() => GetViewportRoot()?.Size ?? Vector2.Zero;
+
+    private Control? GetViewportRoot()
     {
-        Control? parent = null;
+        Control? root = null;
 
         for (var control = Parent; control != null; control = control.Parent)
         {
-            parent = control;
+            root = control;
         }
 
-        return parent?.Size ?? Vector2.Zero;
+        return root;
+    }
+
+    /// <inheritdoc/>
+    protected override void EnteredTree()
+    {
+        base.EnteredTree();
+
+        _viewportRoot = GetViewportRoot();
+
+        if (_viewportRoot != null)
+            _viewportRoot.OnResized += RefreshLengthContext;
+
+        RefreshLengthContext(); // the viewport may have changed while the control was outside of the tree
+    }
+
+    /// <inheritdoc/>
+    protected override void ExitedTree()
+    {
+        base.ExitedTree();
+
+        if (_viewportRoot != null)
+            _viewportRoot.OnResized -= RefreshLengthContext;
+
+        _viewportRoot = null;
     }
 
     private LengthContext BuildLengthContext()
