@@ -16,11 +16,6 @@ public partial class CssControl : AutoCssControl
 {
     [Dependency] protected ICssManager Css = null!;
 
-    /// <summary>
-    /// Is this control the <see cref="UserInterfaceManager.CurrentlyHovered"/>?
-    /// </summary>
-    public bool Hovered { get; private set; }
-
     private bool _marginSpecified;
 
     /// <summary>
@@ -176,33 +171,25 @@ public partial class CssControl : AutoCssControl
     protected override void KeyboardFocusEntered()
     {
         base.KeyboardFocusEntered();
-        Css.UpdateStyle<FocusSelector>(this);
-    }
-
-    protected override void ControlFocusExited()
-    {
-        base.ControlFocusExited();
-        Css.UpdateStyle<FocusSelector>(this);
+        Focused = true;
     }
 
     protected override void KeyboardFocusExited()
     {
         base.KeyboardFocusExited();
-        Css.UpdateStyle<FocusSelector>(this);
+        Focused = false;
     }
 
     protected override void MouseEntered()
     {
         base.MouseEntered();
         Hovered = true;
-        Css.UpdateStyle<HoverSelector>(this);
     }
 
     protected override void MouseExited()
     {
         base.MouseExited();
         Hovered = false;
-        Css.UpdateStyle<HoverSelector>(this);
     }
 
     protected override void Draw(DrawingHandleScreen handle)

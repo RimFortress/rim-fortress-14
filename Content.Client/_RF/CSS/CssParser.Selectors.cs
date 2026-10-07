@@ -201,12 +201,6 @@ public static partial class CssParser
                 case ColonToken:
                     switch (stream.ConsumeNext())
                     {
-                        case IdentToken { Value: "hover" }:
-                            extraSelectors.Add(new HoverSelector());
-                            break;
-                        case IdentToken { Value: "focus" }:
-                            extraSelectors.Add(new FocusSelector());
-                            break;
                         case IdentToken { Value: "root" }:
                             extraSelectors.Add(new RootSelector());
                             break;

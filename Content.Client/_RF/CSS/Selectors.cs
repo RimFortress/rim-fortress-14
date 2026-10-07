@@ -213,26 +213,6 @@ public sealed class EmptySelector : Selector
 }
 
 /// <summary>
-/// A control has user input focus.
-/// </summary>
-public sealed class FocusSelector : Selector
-{
-    public override bool Matches(Control control) => control.HasKeyboardFocus();
-
-    public override StyleSpecificity CalculateSpecificity() => new(0, 1, 0);
-}
-
-/// <summary>
-/// A control is under the cursor.
-/// </summary>
-public sealed class HoverSelector : Selector
-{
-    public override bool Matches(Control control) => control is CssControl { Hovered: true };
-
-    public override StyleSpecificity CalculateSpecificity() => new(0, 1, 0);
-}
-
-/// <summary>
 /// A control has no parent.
 /// </summary>
 public sealed class RootSelector : Selector

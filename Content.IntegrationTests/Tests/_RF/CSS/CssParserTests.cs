@@ -247,8 +247,8 @@ public sealed class CssParserTests : GameTest
     }
 
     [Test]
-    [TestCase(":hover {}", typeof(HoverSelector))]
-    [TestCase(":focus {}", typeof(FocusSelector))]
+    [TestCase(":hover {}", typeof(CssElementSelector))]
+    [TestCase(":focus {}", typeof(CssElementSelector))]
     [TestCase(":root {}", typeof(RootSelector))]
     [TestCase(":empty {}", typeof(EmptySelector))]
     [TestCase(":first-child {}", typeof(NthChildSelector))]
@@ -277,7 +277,7 @@ public sealed class CssParserTests : GameTest
 
     [Test]
     [TestCase(":not(:first-child) {}", typeof(NotSelector), typeof(NthChildSelector))]
-    [TestCase(":not(:focus, :root) {}", typeof(NotSelector), typeof(FocusSelector), typeof(RootSelector))]
+    [TestCase(":not(:focus, :root) {}", typeof(NotSelector), typeof(CssElementSelector), typeof(RootSelector))]
     [TestCase(":not(:empty, :nth-child(2n)) {}", typeof(NotSelector), typeof(EmptySelector), typeof(NthChildSelector))]
     [TestCase(":is(:last-of-type, :nth-last-child(5n - 3)) {}", typeof(OrSelector), typeof(NthLastOfTypeSelector), typeof(NthLastChildSelector))]
     [TestCase(":is(:empty, :nth-of-type(even)) {}", typeof(OrSelector), typeof(EmptySelector), typeof(NthOfTypeSelector))]
