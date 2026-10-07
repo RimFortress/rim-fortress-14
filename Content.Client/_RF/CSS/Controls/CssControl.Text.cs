@@ -465,6 +465,7 @@ public partial class CssControl
     private void InvalidateTextStyle()
     {
         _textStyle = null;
+        OnTextStyleChanged();
 
         // The entry keeps the style of its last layout, so even a pure color change needs a new Update.
         if (_textEntry != null)
@@ -640,7 +641,7 @@ public partial class CssControl
         {
             stream.ConsumeNext();
 
-            if (!css.TryParseValue<CssLineHeight>(ref stream, out lineHeight))
+            if (!css.TryParseValue(ref stream, out lineHeight))
                 return false;
         }
 
