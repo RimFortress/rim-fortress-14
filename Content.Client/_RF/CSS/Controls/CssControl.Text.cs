@@ -512,9 +512,9 @@ public partial class CssControl
         => new(ToPx(shadow.Offset), ToPx(shadow.Blur), shadow.Color);
 
     /// <summary>
-    /// The space between the control's outer edge and its text, in virtual pixels (padding plus borders).
+    /// The space between the control's outer edge and its content (text or children), in virtual pixels (padding plus borders).
     /// </summary>
-    protected Thickness TextContentInset
+    protected Thickness ContentInset
     {
         get
         {
@@ -534,7 +534,7 @@ public partial class CssControl
         if (_textEntry is not { } entry)
             return base.MeasureOverride(availableSize);
 
-        var inset = TextContentInset;
+        var inset = ContentInset;
         var horizontal = inset.Left + inset.Right;
         var vertical = inset.Top + inset.Bottom;
         var innerWidth = MathF.Max(0f, availableSize.X - horizontal);
@@ -552,7 +552,7 @@ public partial class CssControl
         if (_textEntry is not { } entry)
             return;
 
-        var inset = TextContentInset;
+        var inset = ContentInset;
         var area = PixelSizeBox;
         var box = new UIBox2(
             area.Left + inset.Left * UIScale,
