@@ -1,0 +1,202 @@
+/*
+ * StyleFortress.cs: Window, Context Menu
+ *
+ * Old name of every class is in the comment above the rule.
+ */
+
+/* ---------- Window ---------- */
+
+/* DefaultWindow.StyleClassWindowTitle: windowTitle */
+.window-title {
+    color: var(--gold-fortress);
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* windowTitleAlert */
+.window-title-alert {
+    color: var(--rim-silver);
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* DefaultWindow.StyleClassWindowPanel: windowPanel */
+.window-panel {
+    background-image: texture("/Textures/_RF/Interface/Style/window_background.png");
+    background-repeat: stretch;
+    patch-margin: 0 2px 2px 2px;
+    expand-patch-margin: 0 2px 2px 2px;
+    padding: 0 2px 2px 2px;
+}
+
+/* BorderedWindowPanel */
+.bordered-window-panel {
+    background-image: texture("/Textures/_RF/Interface/Style/window_background_bordered.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 2px;
+}
+
+/* TransparentBorderedWindowPanel */
+.transparent-bordered-window-panel {
+    background-image: texture("/Textures/_RF/Interface/Style/transparent_window_background_bordered.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 2px;
+}
+
+/* DefaultWindow.StyleClassWindowHeader: windowHeader */
+.window-header {
+    background-image: texture("/Textures/_RF/Interface/Style/window_header.png");
+    background-repeat: stretch;
+    patch-margin: 0 0 3px 0;
+    expand-patch-margin: 0 0 3px 0;
+    padding: 0;
+}
+
+/* windowHeaderAlert */
+.window-header-alert {
+    background-image: texture("/Textures/_RF/Interface/Style/window_header_alert.png");
+    background-repeat: stretch;
+    patch-margin: 0 0 3px 0;
+    expand-patch-margin: 0 0 3px 0;
+    padding: 0;
+}
+
+/* FancyWindow.StyleClassWindowHelpButton: windowHelpButton */
+.window-help-button {
+    background-image: texture("/Textures/Interface/Nano/help.png");
+    background-repeat: no-repeat;
+    background-color: var(--bright-green);
+}
+
+.window-help-button:hover {
+    background-color: var(--dark-bad);
+}
+
+.window-help-button:active,
+.window-help-button:checked {
+    background-color: var(--darkest-bad);
+}
+
+/* DefaultWindow.StyleClassWindowCloseButton: windowCloseButton */
+.window-close-button {
+    background-image: texture("/Textures/_RF/Interface/Style/cross.png");
+    background-repeat: no-repeat;
+    background-color: var(--gold-button-color-default);
+}
+
+.window-close-button:hover {
+    background-color: var(--gold-button-color-hovered);
+}
+
+.window-close-button:active,
+.window-close-button:checked {
+    background-color: var(--gold-button-color-pressed);
+}
+
+/* FancyWindowTitle */
+.fancy-window-title {
+    font-family: var(--title-font);
+    font-size: 13px;
+    color: var(--gold-fortress);
+}
+
+/* WindowHeadingBackground */
+.window-heading-background {
+    background-image: texture("/Textures/_RF/Interface/Style/fancy_window_header.png");
+    background-repeat: stretch;
+    patch-margin: 3px 0 1px 0;
+    padding: 3px 0 1px 0;
+}
+
+/* WindowHeadingBackgroundLight */
+.window-heading-background-light {
+    background-image: texture("/Textures/_RF/Interface/Style/light_fancy_window_header.png");
+    background-repeat: stretch;
+    patch-margin: 3px 0 1px 0;
+    padding: 3px 0 1px 0;
+}
+
+/* WindowFooterText */
+.window-footer-text {
+    font-size: 8px;
+    color: var(--placeholder-font-color);
+}
+
+/* ---------- Context Menu ---------- */
+
+/* ContextMenuPopup.StyleClassContextMenuPopup: contextMenuPopup (ContextMenuElement.ElementMargin = 2) */
+.context-menu-popup {
+    background-image: texture("/Textures/_RF/Interface/Style/window_background_bordered.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 2px;
+}
+
+/* ContextMenuElement.StyleClassContextMenuButton: contextMenuButton */
+.context-menu-button {
+    background-color: var(--graphite-black);
+}
+
+.context-menu-button:hover {
+    background-color: var(--signal-black);
+}
+
+.context-menu-button:active,
+.context-menu-button:checked {
+    background-color: var(--wooden-fortress);
+}
+
+.context-menu-button:disabled {
+    background-color: var(--black-amber);
+}
+
+/* ConfirmationMenuElement.StyleClassConfirmationContextMenuButton: confirmationContextMenuButton */
+.confirmation-context-menu-button {
+    background-color: var(--bad);
+}
+
+.confirmation-context-menu-button:hover {
+    background-color: var(--light-bad);
+}
+
+.confirmation-context-menu-button:active,
+.confirmation-context-menu-button:checked {
+    background-color: var(--dark-bad);
+}
+
+.confirmation-context-menu-button:disabled {
+    background-color: var(--darkest-bad);
+}
+
+/* Verb.DefaultTextStyleClass: Verb, InteractionVerb, AlternativeVerb, ActivationVerb */
+.interaction-verb {
+    font-weight: bold;
+    font-style: italic;
+}
+
+.activation-verb {
+    font-weight: bold;
+}
+
+.alternative-verb {
+    font-style: italic;
+}
+
+.verb {
+    font-weight: normal;
+    font-style: normal;
+}
+
+/*
+ * ContextMenuElement.StyleClassContextMenuExpansionTexture: contextMenuExpansionTexture
+ * VerbMenuElement.StyleClassVerbMenuConfirmationTexture: verbMenuConfirmationTexture
+ *   Both were a TextureRect with the texture below. There is no CssTextureRect, so the CssControl that replaces
+ *   it draws the texture as its background.
+ */
+.context-menu-expansion-texture,
+.verb-menu-confirmation-texture {
+    background-image: texture("/Textures/Interface/VerbIcons/group.svg.192dpi.png");
+    background-repeat: no-repeat;
+}

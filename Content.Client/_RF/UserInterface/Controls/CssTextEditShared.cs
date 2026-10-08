@@ -19,9 +19,12 @@ internal static class CssTextEditShared
     {
         for (var i = start; i < str.Length;)
         {
-            Rune.DecodeFromUtf16(str.AsSpan(i), out var rune, out var consumed);
+            // Invalid (lone surrogate) data is one replacement rune per char, like Rune.DecodeFromUtf16.
+            if (!Rune.TryGetRuneAt(str, i, out var rune))
+                rune = Rune.ReplacementChar;
+
             yield return rune;
-            i += consumed;
+            i += rune == Rune.ReplacementChar && str[i] != '\uFFFD' ? 1 : rune.Utf16SequenceLength;
         }
     }
 
@@ -32,9 +35,15 @@ internal static class CssTextEditShared
     {
         for (var i = end; i > 0;)
         {
-            Rune.DecodeLastFromUtf16(str.AsSpan(0, i), out var rune, out var consumed);
+            var start = i - 1;
+            if (start > 0 && char.IsLowSurrogate(str[start]) && char.IsHighSurrogate(str[start - 1]))
+                start--;
+
+            if (!Rune.TryGetRuneAt(str, start, out var rune))
+                rune = Rune.ReplacementChar;
+
             yield return rune;
-            i -= consumed;
+            i = start;
         }
     }
 

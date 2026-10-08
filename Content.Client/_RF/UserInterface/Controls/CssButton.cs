@@ -146,7 +146,7 @@ public class CssButton : CssControl
     [PublicAPI]
     public event Action<CssButtonToggledEventArgs>? OnToggled;
 
-    protected CssButton()
+    public CssButton()
     {
         MouseFilter = MouseFilterMode.Stop;
     }

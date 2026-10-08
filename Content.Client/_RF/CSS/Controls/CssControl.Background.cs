@@ -16,7 +16,17 @@ public partial class CssControl
     /// <summary>
     /// Current control background.
     /// </summary>
-    protected RfStyleBox? Background { get; private set; }
+    protected RfStyleBox? Background
+    {
+        get;
+        private set
+        {
+            field = value;
+
+            // Padding and borders are part of the content inset, so the layout depends on the background.
+            InvalidateMeasure();
+        }
+    }
 
     /// <summary>
     /// Sets the background color of an element. The background of an element is the

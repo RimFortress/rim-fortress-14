@@ -1,0 +1,251 @@
+/*
+ * StyleFortress.cs: Labels, Tooltips, Item status, PDA text.
+ *
+ * Label.StylePropertyFont is font-family, font-size, font-weight and font-style; Label.StylePropertyFontColor and
+ * ModulateSelf of a text are `color`. The font of every control is Source Code Pro (variables.css), so only the
+ * size, the weight and the style are written here.
+ */
+
+/* ---------- Labels ---------- */
+
+/* StyleClass.LabelHeading: LabelHeading */
+.label-heading {
+    font-weight: bold;
+    font-size: 16px;
+    color: var(--gold-fortress);
+}
+
+/* LabelHeadingBigger */
+.label-heading-bigger {
+    font-weight: bold;
+    font-size: 20px;
+    color: var(--gold-fortress);
+}
+
+/* StyleClass.LabelSubText: LabelSubText */
+.label-sub-text {
+    font-size: 10px;
+    color: var(--gray-silver);
+}
+
+/* LabelKeyText */
+.label-key-text {
+    font-weight: bold;
+    font-size: 12px;
+    color: var(--gold-fortress);
+}
+
+/* LabelSecondaryColor */
+.label-secondary-color {
+    font-size: 12px;
+    color: var(--gray-silver);
+}
+
+/* LabelBig */
+.label-big {
+    font-size: 16px;
+}
+
+/* LabelSmall */
+.label-small {
+    font-size: 10px;
+}
+
+/* LabelSmallest */
+.label-smallest {
+    font-size: 8px;
+}
+
+/* StatusFieldTitle */
+.status-field-title {
+    color: var(--gold-fortress);
+}
+
+/* Good */
+.good {
+    color: var(--good-green-fore);
+}
+
+/* Caution */
+.caution {
+    color: var(--gold-fortress);
+}
+
+/* Danger */
+.danger {
+    color: var(--light-bad);
+}
+
+/* Disabled */
+.disabled {
+    color: var(--disabled-button-font-color);
+}
+
+/* Placeholder.StyleClassPlaceholderText: PlaceholderText */
+.placeholder-text {
+    font-size: 16px;
+    color: var(--placeholder-font-color);
+}
+
+/* SiliconLawContainer.StyleClassSiliconLawPositionLabel: SiliconLawPositionLabel */
+.silicon-law-position-label {
+    color: var(--gold-fortress);
+}
+
+/* hotbarSlotNumber */
+.hotbar-slot-number {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* ---------- APC and SMES power state ---------- */
+
+/* PowerStateNone: rgb(0.8, 0, 0) */
+.power-state-none {
+    color: rgb(204, 0, 0);
+}
+
+/* PowerStateLow: rgb(0.9, 0.36, 0) */
+.power-state-low {
+    color: rgb(230, 92, 0);
+}
+
+/* PowerStateGood: rgb(0.024, 0.8, 0) */
+.power-state-good {
+    color: rgb(6, 204, 0);
+}
+
+/* ---------- Tooltips ---------- */
+
+/* tooltipAlertTitle */
+.tooltip-alert-title {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* tooltipAlertDesc */
+.tooltip-alert-desc {
+    font-size: 16px;
+}
+
+/* tooltipAlertCooldown */
+.tooltip-alert-cooldown {
+    font-size: 16px;
+}
+
+/* tooltipActionTitle */
+.tooltip-action-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* tooltipActionDesc */
+.tooltip-action-desc {
+    font-size: 15px;
+}
+
+/* tooltipActionCooldown */
+.tooltip-action-cooldown {
+    font-size: 15px;
+}
+
+/* StyleClassTooltipActionRequirements was "tooltipActionCooldown" too (the same value, probably a typo) */
+.tooltip-action-requirements {
+    font-size: 15px;
+}
+
+/* tooltipActionCharges */
+.tooltip-action-charges {
+    font-size: 15px;
+}
+
+/* ---------- Item status ---------- */
+
+/* ItemStatus (the rule for the hands wins over the one for RichTextLabel, they have the same selector now) */
+.item-status {
+    font-size: 10px;
+    line-height: 0.7;
+    margin: 0 0 2px 4px;
+}
+
+/* ItemStatusNotHeld */
+.item-status-not-held {
+    font-size: 10px;
+    font-style: italic;
+    color: var(--gray-silver);
+    margin: 0 0 2px 4px;
+}
+
+/* ---------- Paper ---------- */
+
+/* PaperWrittenText */
+.paper-written-text {
+    font-size: 12px;
+    color: var(--black-amber);
+}
+
+/* ---------- Window / PDA text ---------- */
+
+/* PdaContentFooterText */
+.pda-content-footer-text {
+    font-size: 10px;
+    color: var(--pda-footer-text);
+}
+
+/* PdaWindowFooterText */
+.pda-window-footer-text {
+    font-size: 10px;
+    color: var(--pda-window-footer-text);
+}
+
+/* ---------- Texture icons ---------- */
+
+/* NTLogoDark */
+.nt-logo-dark {
+    background-image: texture("/Textures/Interface/Nano/ntlogo.svg.png");
+    background-repeat: no-repeat;
+    background-color: #757575;
+}
+
+/* SpeciesInfoDefault */
+.species-info-default {
+    background-image: texture("/Textures/Interface/VerbIcons/information.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* SpeciesInfoWarning */
+.species-info-warning {
+    background-image: texture("/Textures/Interface/info.svg.192dpi.png");
+    background-repeat: no-repeat;
+    background-color: var(--gold-fortress);
+}
+
+/* DirectionIcon.StyleClassDirectionIconArrow: direction-icon-arrow (south pointing arrow) */
+.direction-icon-arrow {
+    background-image: texture("/Textures/Interface/VerbIcons/drop.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* DirectionIcon.StyleClassDirectionIconUnknown: direction-icon-unknown */
+.direction-icon-unknown {
+    background-image: texture("/Textures/Interface/VerbIcons/information.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* DirectionIcon.StyleClassDirectionIconHere: direction-icon-here */
+.direction-icon-here {
+    background-image: texture("/Textures/Interface/VerbIcons/dot.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/*
+ * Rules that can't be written yet:
+ *
+ * RichTextLabel.LabelSubText (the paper variant of label-sub-text: font 10, color graphite-black)
+ *   The Label and the RichTextLabel had different rules for the same class, selected by the control type. Now the
+ *   type is gone, so the paper text has to get its own class (e.g. paper-label-sub-text).
+ *
+ * ItemStatus of a RichTextLabel (margin 0 0 0 -6 instead of 0 0 2px 4px): needs a class of its own too.
+ *
+ * Popup messages (PopupMessageSmall, ...Caution, ...Medium, ...Large): StyleFortress only declares the names.
+ */

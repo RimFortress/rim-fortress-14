@@ -1,71 +1,65 @@
-﻿<Control xmlns="https://spacestation14.io"
+<Control xmlns="https://spacestation14.io"
          xmlns:pllax="clr-namespace:Content.Client.Parallax"
-         xmlns:clog="clr-namespace:Content.Client.Changelog"
-         xmlns:system="clr-namespace:System;assembly=System.Runtime">
+         xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+         xmlns:css="clr-namespace:Content.Client._RF.CSS">
     <pllax:ParallaxControl
         Name="BackgroundParallax"
+        StyleClasses=""
         SpeedX="5"
         SpeedY="20"
         ScaleX="3"
         ScaleY="3" />
-    <BoxContainer Name="VBox"
-                  Orientation="Vertical"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  HorizontalExpand="True"
-                  VerticalExpand="True"
-                  SeparationOverride="24">
-        <!-- RimFortress: Logo -->
+    <!-- RimFortress: styled by Resources/CSS/_RF/fortress-main-menu.css -->
+    <controls:CssBoxContainer Name="VBox"
+                              FlexDirection="Column"
+                              CssStyleIdentifier="main-menu"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              HorizontalExpand="True"
+                              VerticalExpand="True">
         <TextureRect Name="Logo"
                      TexturePath="/Textures/_RF/Logo/logo.png"
                      TextureScale="3 3"
                      Stretch="KeepCentered" />
-        <PanelContainer StyleClasses="BackgroundPanel">
-            <BoxContainer Orientation="Vertical"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          HorizontalExpand="True"
-                          VerticalExpand="True"
-                          StyleIdentifier="mainMenuVBox"
-                          MinWidth="320"
-                          Margin="0 4 0 12">
-                <GridContainer Columns="2" Margin="0 4">
-                    <Label Text="{Loc 'main-menu-username-label'}" />
-                    <LineEdit Name="UsernameBox"
-                              Access="Public"
-                              PlaceHolder="{Loc 'main-menu-username-text'}"
-                              HorizontalExpand="True" />
-                    <Label Text="{Loc 'main-menu-address-label'}" />
-                    <LineEdit Name="AddressBox"
-                              Access="Public"
-                              Text="localhost"
-                              PlaceHolder="server address:port"
-                              HorizontalExpand="True" />
-                </GridContainer>
-                <Button Name="DirectConnectButton"
-                        Access="Public"
-                        Text="{Loc 'main-menu-direct-connect-button'}"
-                        TextAlign="Center"
-                        StyleClasses="OpenLeft"
-                        StyleIdentifier="mainMenu" />
-                <clog:ChangelogButton
-                    Name="ChangelogButton"
-                    StyleIdentifier="mainMenu"
-                    StyleClasses="OpenBoth"
-                    Access="Public" />
-                <Button Name="OptionsButton"
-                        Access="Public"
-                        Text="{Loc 'main-menu-options-button'}"
-                        TextAlign="Center"
-                        StyleClasses="OpenBoth"
-                        StyleIdentifier="mainMenu" />
-                <Button Name="QuitButton"
-                        Access="Public"
-                        Text="{Loc 'main-menu-quit-button'}"
-                        TextAlign="Center"
-                        StyleIdentifier="mainMenu"
-                        StyleClasses="negative OpenRight" />
-            </BoxContainer>
-        </PanelContainer>
-    </BoxContainer>
+        <controls:CssBoxContainer Name="Panel"
+                                  FlexDirection="Column"
+                                  CssStyleIdentifier="main-menu-panel">
+            <controls:CssBoxContainer Name="Fields"
+                                      FlexDirection="Column"
+                                      CssStyleIdentifier="main-menu-fields">
+                <controls:CssBoxContainer FlexDirection="Row">
+                    <css:CssControl Name="UsernameLabel"
+                                    Text="{Loc 'main-menu-username-label'}" />
+                    <controls:CssLineEdit Name="UsernameBox"
+                                          Access="Public"
+                                          PlaceHolder="{Loc 'main-menu-username-text'}"
+                                          FlexGrow="1" />
+                </controls:CssBoxContainer>
+                <controls:CssBoxContainer FlexDirection="Row">
+                    <css:CssControl Name="AddressLabel"
+                                    Text="{Loc 'main-menu-address-label'}" />
+                    <controls:CssLineEdit Name="AddressBox"
+                                          Access="Public"
+                                          Text="localhost"
+                                          PlaceHolder="server address:port"
+                                          FlexGrow="1" />
+                </controls:CssBoxContainer>
+            </controls:CssBoxContainer>
+            <controls:CssButton Name="DirectConnectButton"
+                                Access="Public"
+                                CssStyleClasses="main-menu-button open-both"
+                                Text="{Loc 'main-menu-direct-connect-button'}" />
+            <controls:CssChangelogButton Name="ChangelogButton"
+                                         CssStyleClasses="main-menu-button open-both"
+                                         Access="Public" />
+            <controls:CssButton Name="OptionsButton"
+                                Access="Public"
+                                CssStyleClasses="main-menu-button open-both"
+                                Text="{Loc 'main-menu-options-button'}" />
+            <controls:CssButton Name="QuitButton"
+                                Access="Public"
+                                CssStyleClasses="main-menu-button open-both negative"
+                                Text="{Loc 'main-menu-quit-button'}" />
+        </controls:CssBoxContainer>
+    </controls:CssBoxContainer>
 </Control>

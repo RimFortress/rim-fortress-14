@@ -104,13 +104,12 @@ public static partial class CssParser
             return true;
         }
 
-        // "A > B > C" matches C directly, requiring its parent to match B,
-        // whose parent must match A — fold right-to-left so the rightmost
-        // compound ends up as the outermost (innermost-matching) selector.
-        var result = compounds[^1];
-        for (var i = compounds.Count - 2; i >= 0; i--)
+        // "A > B > C" matches C, whose parent must match "A > B" (B, and B's parent A): fold left-to-right,
+        // so every parent chain is checked one level further up (the rightmost compound is the Child).
+        var result = compounds[0];
+        for (var i = 1; i < compounds.Count; i++)
         {
-            result = new SelectorChild(compounds[i], result);
+            result = new SelectorChild(result, compounds[i]);
         }
 
         selector = result;

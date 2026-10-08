@@ -55,6 +55,56 @@ public sealed class CssInheritanceTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
+    public void Child_Combinator_Chain_Checks_Every_Level()
+    {
+        Load(".a > .b > .c { color: red; }");
+
+        // a > b > c: matches.
+        var a = Node("a");
+        var b = Node("b");
+        var c = Node("c");
+        a.AddChild(b);
+        b.AddChild(c);
+        Style(a, b, c);
+
+        // The parent has both classes, but it has no parent of its own: only "B > C" holds, "A" has nothing to match.
+        var both = Node("a", "b");
+        var lone = Node("c");
+        both.AddChild(lone);
+        Style(both, lone);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(c.ColorValue, Is.EqualTo(Color.Red));
+            Assert.That(lone.ColorValue, Is.Not.EqualTo(Color.Red));
+        });
+    }
+
+    [TestCase(":root { font-family: \"Foo\"; }")]
+    [TestCase(":root { --f: \"Foo\"; font-family: var(--f); }")]
+    [RunOnSide(Side.Client)]
+    public void Root_Font_Family_Reaches_A_Descendant(string rule)
+    {
+        Load(rule);
+        var root = Node();
+        var middle = new Robust.Client.UserInterface.Controls.BoxContainer();
+        var child = Node();
+        root.AddChild(middle);
+        middle.AddChild(child);
+        var screen = new Robust.Client.UserInterface.Control();
+        screen.AddChild(root);
+
+        Style(root, child);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.FontFamilyValue.Names, Is.EqualTo(new[] { "Foo" }));
+            Assert.That(child.FontFamilyValue.Names, Is.EqualTo(new[] { "Foo" }));
+        });
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
     public void Inherited_Property_Reaches_A_Child_That_Was_Never_Restyled()
     {
         Load(".p { color: red; }");
@@ -736,6 +786,7 @@ public sealed class CssInheritanceTest : GameTest
 public sealed class TestInheritanceControl : CssControl
 {
     public Color ColorValue => TextColor;
+    public CssFontFamily FontFamilyValue => FontFamily;
     public LengthUnit FontSizeValue => FontSize;
     public FontWeight FontWeightValue => FontWeight;
     public LengthUnit LetterSpacingValue => LetterSpacing;

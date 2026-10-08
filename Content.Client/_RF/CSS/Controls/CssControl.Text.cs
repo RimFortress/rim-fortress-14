@@ -550,18 +550,22 @@ public partial class CssControl
     /// </summary>
     protected virtual void DrawText(DrawingHandleScreen handle)
     {
-        if (_textEntry is not { } entry)
+        if (_textEntry == null)
             return;
 
         var inset = ContentInset;
         var area = PixelSizeBox;
-        var box = new UIBox2(
-            area.Left + inset.Left * UIScale,
-            area.Top + inset.Top * UIScale,
-            area.Right - inset.Right * UIScale,
-            area.Bottom - inset.Bottom * UIScale);
+        var left = area.Left + inset.Left * UIScale;
+        var top = area.Top + inset.Top * UIScale;
 
-        entry.Draw(_tagManager, handle, box, UIScale);
+        // The control can be smaller than its padding and borders (e.g. squeezed by a container).
+        var box = new UIBox2(
+            left,
+            top,
+            MathF.Max(left, area.Right - inset.Right * UIScale),
+            MathF.Max(top, area.Bottom - inset.Bottom * UIScale));
+
+        _textEntry.Draw(_tagManager, handle, box, UIScale);
     }
 
     #endregion

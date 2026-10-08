@@ -1,6 +1,5 @@
 using Content.Client._RF.CSS;
 using JetBrains.Annotations;
-using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
@@ -12,14 +11,17 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// The box is <see cref="Indicator"/> (style class <see cref="IndicatorStyleClass"/>, plus
 /// <see cref="CheckedStyleClass"/> while checked) and the text is <see cref="Label"/> (style class
 /// <see cref="LabelStyleClass"/>). Select them with <c>css-check-box > .indicator.checked</c>; the check box itself
-/// matches <c>:checked</c>, <c>:hover</c>, <c>:active</c> and <c>:disabled</c>.
+/// matches <c>:checked</c>, <c>:hover</c>, <c>:active</c> and <c>:disabled</c>. The space between them is
+/// <see cref="Gap"/> (CSS <c>gap</c>).
 /// </remarks>
 [Virtual, UsedImplicitly]
-public class CssCheckBox : CssButton
+public partial class CssCheckBox : CssButton
 {
     public const string IndicatorStyleClass = "indicator";
     public const string LabelStyleClass = "label";
     public const string CheckedStyleClass = "checked";
+
+    private readonly CssBoxContainer _box;
 
     /// <summary>
     /// The check box.
@@ -46,7 +48,7 @@ public class CssCheckBox : CssButton
                 return;
 
             field = value;
-            Label.HorizontalExpand = !value;
+            Label.FlexGrow = value ? 0f : 1f;
 
             if (value)
             {
@@ -77,26 +79,31 @@ public class CssCheckBox : CssButton
 
         Indicator = new CssControl
         {
-            VerticalAlignment = VAlignment.Center,
+            AlignSelf = CssAlignSelf.Center,
             MouseFilter = MouseFilterMode.Ignore,
         };
         Indicator.AddCssStyleClass(IndicatorStyleClass);
 
         Label = new CssControl
         {
-            VerticalAlignment = VAlignment.Center,
+            AlignSelf = CssAlignSelf.Center,
             MouseFilter = MouseFilterMode.Ignore,
         };
         Label.AddCssStyleClass(LabelStyleClass);
 
-        var box = new BoxContainer
+        _box = new CssBoxContainer
         {
-            Orientation = BoxContainer.LayoutOrientation.Horizontal,
+            FlexDirection = CssFlexDirection.Row,
             MouseFilter = MouseFilterMode.Ignore,
         };
-        box.AddChild(Indicator);
-        box.AddChild(Label);
-        AddChild(box);
+        _box.AddChild(Indicator);
+        _box.AddChild(Label);
+        AddChild(_box);
+    }
+
+    protected override void OnGapChanged()
+    {
+        _box.Gap = Gap;
     }
 
     protected override void StateChanged()

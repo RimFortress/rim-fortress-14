@@ -217,7 +217,24 @@ public sealed class EmptySelector : Selector
 /// </summary>
 public sealed class RootSelector : Selector
 {
-    public override bool Matches(Control control) => control.Parent == null;
+    /// <summary>
+    /// The root is the topmost <see cref="CssControl"/>: one with no <see cref="CssControl"/> ancestor. A CSS tree
+    /// is usually hung under plain controls (the screen, a window), so "has no parent" would never match it, and
+    /// the properties of <c>:root</c> (the default font) would never reach the controls.
+    /// </summary>
+    public override bool Matches(Control control)
+    {
+        if (control is not CssControl)
+            return control.Parent == null;
+
+        for (var parent = control.Parent; parent != null; parent = parent.Parent)
+        {
+            if (parent is CssControl)
+                return false;
+        }
+
+        return true;
+    }
 
     public override StyleSpecificity CalculateSpecificity() => new(0, 1, 0);
 }

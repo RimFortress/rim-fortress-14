@@ -1,3 +1,83 @@
+/*
+ * Variables of the Rim Fortress theme (StyleFortress.cs: Colors).
+ *
+ * Alpha variants are written as #RRGGBBAA, because there is no color-mix() yet:
+ *   WithAlpha(0.8f)  -> CC
+ *   WithAlpha(0.35f) -> 59
+ *   WithAlpha(0.51f) -> 82
+ *   WithAlpha(200)   -> C8
+ */
 :root {
     --main-font: "Source Code Pro";
+    --title-font: "Boxfont Round";
+
+    /* Base colors */
+    --gold-fortress: #B07D2B;
+    --rim-silver: #C0C0C0;
+    --gray-silver: #7F7F7F;
+
+    --signal-black: #2D2A23;
+    --wooden-fortress: #5E4B3A;
+
+    --black-amber: #0B0C0B;
+    --graphite-black: #1A1D1A;
+    --dark-forest: #293329;
+    --bright-green: #4E544E;
+
+    --light-good: #6EAD54;
+    --good: #61A53E;
+    --dark-good: #589338;
+    --darkest-good: #416D29;
+
+    --light-bad: #BF2233;
+    --bad: #9B111E;
+    --dark-bad: #8B0000;
+    --darkest-bad: #681C23;
+
+    /* Buttons */
+    --button-color-default: #5E4B3A;
+    --button-color-hovered: #7A614B;
+    --button-color-pressed: #737A52;
+    --button-color-disabled: #352A21;
+
+    --button-color-default-transparent: #5E4B3AC8;
+    --button-color-hovered-transparent: #7A614BC8;
+    --button-color-pressed-transparent: #737A52C8;
+    --button-color-disabled-transparent: #352A21C8;
+
+    --gold-button-color-default: #B07D2B;
+    --gold-button-color-hovered: #B28A52;
+    --gold-button-color-pressed: #CE9033;
+    --gold-button-color-disabled: #997746;
+
+    --blue-button-color-default: #226794;
+    --blue-button-color-hovered: #4299D2;
+    --blue-button-color-pressed: #3896A3;
+    --blue-button-color-disabled: #1E5158;
+
+    --tree-menu-button-color-default: transparent;
+    --tree-menu-button-color-hovered: #2D2A23;
+    --tree-menu-button-color-pressed: #1A1D1A;
+
+    --scrollbar-grabber-default: #5E4B3A59;
+    --scrollbar-grabber-hovered: #7A614B59;
+    --scrollbar-grabber-pressed: #737A5259;
+
+    /* Backgrounds */
+    --chat-background-color: #293329CC;
+    --graphite-black-transparent: #1A1D1ACC;
+    --dark-forest-transparent: #293329CC;
+    --default-paper-background-color: #EAEDDE;
+
+    /* Text */
+    --disabled-button-font-color: #C0C0C082;
+    --placeholder-font-color: #7C7763;
+    --good-green-fore: #31843E;
+
+    /* PDA */
+    --pda-content-background: #25252A;
+    --pda-background: #000000;
+    --pda-background-rect: #717059;
+    --pda-footer-text: #757575;
+    --pda-window-footer-text: #333D3B;
 }

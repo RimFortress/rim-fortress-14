@@ -17,15 +17,11 @@ public sealed partial class TestCssWindow : DefaultWindow
         IdEdit.OnTextEntered += args => TestControl.CssStyleIdentifier = args.Text;
         StyleEdit.OnTextEntered += args =>
         {
-            TestControl.CssStyleClasses = args.Text
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
+            TestControl.CssStyleClasses = CssStyleClassCollection.Parse(args.Text);
             TestControl.DoStyleUpdate();
         };
 
-        PseudoEdit.OnTextEntered += args => TestControl.CssPseudoStyleClasses = args.Text
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToList();
+        PseudoEdit.OnTextEntered += args => TestControl.CssPseudoStyleClasses = CssStyleClassCollection.Parse(args.Text);
 
         ReloadButton.OnPressed += _ => IoCManager
             .Resolve<IConsoleHost>()

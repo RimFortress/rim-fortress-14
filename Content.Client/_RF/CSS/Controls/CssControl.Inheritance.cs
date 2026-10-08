@@ -48,7 +48,12 @@ public partial class CssControl
     }
 
     // The set of inherited properties only depends on the control's type. UI thread only.
-    private static readonly Dictionary<Type, InheritedProperties> InheritedByType = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, InheritedProperties> InheritedByType = new();
+
+    /// <summary>
+    /// Drops the per-type tables; they are built from the property registry and are stale once it changes.
+    /// </summary>
+    internal static void ResetInheritedCache() => InheritedByType.Clear();
 
     // What the children saw the last time they were refreshed, in the order of InheritedProperties.All.
     private object?[]? _inheritedSnapshot;

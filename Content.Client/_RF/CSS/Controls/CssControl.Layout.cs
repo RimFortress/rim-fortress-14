@@ -66,6 +66,31 @@ public partial class CssControl
     }
 
     /// <summary>
+    /// CSS <c>gap</c>: the space between the children of a container that lays them out (<c>CssBoxContainer</c>,
+    /// <c>CssCheckBox</c>); other controls ignore it. Percentages are not supported.
+    /// </summary>
+    /// <remarks>
+    /// It is declared here, not on the containers, so that it can be used in a selector without a type
+    /// (<c>.main-menu { gap: 2px; }</c>).
+    /// </remarks>
+    [CssProperty]
+    public LengthUnit Gap
+    {
+        get;
+        set
+        {
+            field = value;
+            OnGapChanged();
+            InvalidateMeasure();
+        }
+    }
+
+    /// <summary>
+    /// Called after <see cref="Gap"/> has changed.
+    /// </summary>
+    protected virtual void OnGapChanged() { }
+
+    /// <summary>
     /// The <c>flex-grow</c> of any child of a flex container; a plain <see cref="Control"/> grows
     /// with its <see cref="Control.SizeFlagsStretchRatio"/> when it expands along the main axis.
     /// </summary>

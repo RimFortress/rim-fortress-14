@@ -44,33 +44,35 @@ public partial class CssControl
         }
     }
 
-    /// <summary>
-    /// Current control style classes.
-    /// </summary>
-    [ViewVariables(VVAccess.ReadOnly)]
-    public List<string> CssStyleClasses
-    {
-        get;
-        set
-        {
-            field = new(value);
-            Css.UpdateStyle(this);
-        }
-    } = new();
+    internal void RestyleCss() => Css.UpdateStyle(this);
 
     /// <summary>
-    /// Current control pseudo style classes.
+    /// Current control style classes. Can be set from XAML with the classes separated by spaces.
     /// </summary>
-    [ViewVariables(VVAccess.ReadOnly)]
-    public List<string> CssPseudoStyleClasses
+    [ViewVariables]
+    public CssStyleClassCollection CssStyleClasses
     {
-        get;
+        get => field ??= new(this);
         set
         {
-            field = new(value);
+            field = new(value) { Owner = this };
             Css.UpdateStyle(this);
         }
-    } = new();
+    }
+
+    /// <summary>
+    /// Current control pseudo style classes. Can be set from XAML with the classes separated by spaces.
+    /// </summary>
+    [ViewVariables]
+    public CssStyleClassCollection CssPseudoStyleClasses
+    {
+        get => field ??= new(this);
+        set
+        {
+            field = new(value) { Owner = this };
+            Css.UpdateStyle(this);
+        }
+    }
 
     /// <summary>
     /// Sets a CSS custom property directly on this control, like <c>element.style.setProperty()</c>.
@@ -117,16 +119,12 @@ public partial class CssControl
             return;
 
         CssPseudoStyleClasses.Add(className);
-        Css.UpdateStyle(this);
     }
 
     [PublicAPI]
     protected void RemoveCssPseudoStyleClass(string className)
     {
-        if (!CssPseudoStyleClasses.Remove(className))
-            return;
-
-        Css.UpdateStyle(this);
+        CssPseudoStyleClasses.Remove(className);
     }
 
     [PublicAPI, Pure]
@@ -139,15 +137,11 @@ public partial class CssControl
             return;
 
         CssStyleClasses.Add(className);
-        Css.UpdateStyle(this);
     }
 
     [PublicAPI]
     public void RemoveCssStyleClass(string className)
     {
-        if (!CssStyleClasses.Remove(className))
-            return;
-
-        Css.UpdateStyle(this);
+        CssStyleClasses.Remove(className);
     }
 }

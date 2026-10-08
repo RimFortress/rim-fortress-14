@@ -127,7 +127,7 @@ public partial class CssLineEdit : CssControl
     }
 
     [PublicAPI]
-    public ReadOnlySpan<char> SelectedText => _text.AsSpan(SelectionLower, SelectionLength);
+    public string SelectedText => _text.AsSpan(SelectionLower, SelectionLength).ToString();
 
     [PublicAPI]
     public int SelectionLength => Math.Abs(_selectionStart - _cursorPosition);
@@ -289,11 +289,15 @@ public partial class CssLineEdit : CssControl
         {
             var inset = ContentInset;
             var scale = UIScale;
+            var left = inset.Left * scale;
+            var top = inset.Top * scale;
+
+            // The control can be smaller than its padding and borders.
             return new UIBox2(
-                inset.Left * scale,
-                inset.Top * scale,
-                PixelWidth - inset.Right * scale,
-                PixelHeight - inset.Bottom * scale);
+                left,
+                top,
+                MathF.Max(left, PixelWidth - inset.Right * scale),
+                MathF.Max(top, PixelHeight - inset.Bottom * scale));
         }
     }
 
@@ -670,8 +674,9 @@ public partial class CssLineEdit : CssControl
     private void Copy()
     {
         var text = SelectedText;
-        if (!text.IsEmpty)
-            _clipboard.SetText(text.ToString());
+
+        if (!string.IsNullOrWhiteSpace(text))
+            _clipboard.SetText(text);
     }
 
     protected override void KeyBindUp(GUIBoundKeyEventArgs args)

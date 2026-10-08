@@ -79,20 +79,6 @@ public partial class CssBoxContainer : CssControl
         }
     }
 
-    /// <summary>
-    /// CSS <c>gap</c>: the space between children. Percentages are not supported.
-    /// </summary>
-    [CssProperty]
-    public LengthUnit Gap
-    {
-        get;
-        set
-        {
-            field = value;
-            InvalidateMeasure();
-        }
-    }
-
     private bool IsRow => FlexDirection is CssFlexDirection.Row or CssFlexDirection.RowReverse;
 
     private bool IsReverse => FlexDirection is CssFlexDirection.RowReverse or CssFlexDirection.ColumnReverse;

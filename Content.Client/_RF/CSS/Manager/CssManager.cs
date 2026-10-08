@@ -741,13 +741,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     #endif
             }
 
-            var value = values.TryGetValue(longhand, out var found)
+            // A longhand the shorthand does not mention is reset to its initial value. The factory cannot create
+            // non-content types (float, ...), and `initial` is what CSS prescribes here anyway.
+            var value = values.TryGetValue(longhand, out var found) && found != null
                 ? found
-                : accessor.Value.ClrType.IsValueType
-                    ? _factory.CreateInstance(accessor.Value.ClrType)
-                    : null;
+                : CssWideValue.For(CssWideKeyword.Initial);
 
-            result.Add(new CssStyleProperty(longhand, value!, accessor.Value));
+            result.Add(new CssStyleProperty(longhand, value, accessor.Value));
         }
 
         expanded = result;
@@ -836,6 +836,11 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             _properties.Add(type, control.AutoCssProperties());
             _shorthands.Add(type, control.AutoCssShorthands());
         }
+
+        // Creating the controls above may have asked for the accessors of a type before its base classes were
+        // registered; such tables would lack their properties (e.g. the inherited font) for good.
+        _accessorCache.Clear();
+        CssControl.ResetInheritedCache();
 
         _sawmill.Info($"{_properties.Sum(x => x.Value.Count)} properties loaded at {sw.Elapsed}");
         sw.Stop();
