@@ -33,13 +33,15 @@ public static partial class CssParser
     /// Extracts the element type a selector is scoped to, for property-registry
     /// lookup. Walks into <see cref="CompoundSelector"/>
     /// (compound with nth-child/nth-of-type etc.) and <see cref="SelectorChild"/> (child combinator,
-    /// takes the rightmost/innermost compound — "A > B" applies to B).
+    /// takes the rightmost/innermost compound — "A > B" applies to B) and
+    /// <see cref="CssDescendantSelector"/> (the same for "A B").
     /// </summary>
     public static Type? GetElementType(Selector selector) => selector switch
     {
         CssElementSelector elem => elem.ElementType,
         CompoundSelector compound => compound.Selectors.OfType<CssElementSelector>().FirstOrDefault()?.ElementType, // TODO: maybe recursion?
         SelectorChild child => GetElementType(child.Child),
+        CssDescendantSelector descendant => GetElementType(descendant.Descendant),
         _ => null,
     };
 
@@ -78,13 +80,12 @@ public static partial class CssParser
     {
         selector = null;
 
-        if (!TrySplitCombinatorSegments(prelude, out var segments))
+        if (!TrySplitCombinatorSegments(prelude, out var segments, out var descendantBefore))
         {
 #if EXCEPTION_TOLERANCE
             return false;
 #else
-            throw new CssParserError("resolving selector",
-                "expected compound selectors joined only by '>' (descendant combinator via whitespace is not supported)");
+            throw new CssParserError("resolving selector", "expected compound selectors joined by '>' or whitespace");
 #endif
         }
 
@@ -106,10 +107,14 @@ public static partial class CssParser
 
         // "A > B > C" matches C, whose parent must match "A > B" (B, and B's parent A): fold left-to-right,
         // so every parent chain is checked one level further up (the rightmost compound is the Child).
+        // "A B" is the same with any ancestor instead of the parent, and the two mix: "A B > C" is C whose parent
+        // is a B that has an ancestor A.
         var result = compounds[0];
         for (var i = 1; i < compounds.Count; i++)
         {
-            result = new SelectorChild(result, compounds[i]);
+            result = descendantBefore[i]
+                ? new CssDescendantSelector(result, compounds[i])
+                : new SelectorChild(result, compounds[i]);
         }
 
         selector = result;
@@ -117,19 +122,22 @@ public static partial class CssParser
     }
 
     /// <summary>
-    /// Splits a selector's prelude into compound-selector segments separated by
-    /// the child combinator '>'. Whitespace between two compounds WITHOUT an
-    /// explicit '>' would be the descendant combinator, which RT's Selector API
-    /// doesn't support (SelectorDescendant is internal and disabled) — this is
-    /// rejected explicitly rather than silently misparsed.
+    /// Splits a selector's prelude into compound-selector segments separated by the child combinator '>' or by
+    /// whitespace (the descendant combinator). Whitespace around '>' is not a combinator by itself.
     /// </summary>
+    /// <param name="descendantBefore">
+    /// For every segment, whether it is joined to the previous one by the descendant combinator (the first is never).
+    /// </param>
     private static bool TrySplitCombinatorSegments(
         List<ICssComponentValue> prelude,
-        out List<List<ICssComponentValue>> segments)
+        out List<List<ICssComponentValue>> segments,
+        out List<bool> descendantBefore)
     {
         segments = new List<List<ICssComponentValue>>();
+        descendantBefore = new List<bool>();
         var current = new List<ICssComponentValue>();
         var sawWhitespace = false;
+        var currentDescendant = false;
 
         foreach (var item in prelude)
         {
@@ -143,12 +151,20 @@ public static partial class CssParser
                         return false; // '>' with nothing preceding it
 
                     segments.Add(current);
+                    descendantBefore.Add(currentDescendant);
                     current = [];
+                    currentDescendant = false;
                     sawWhitespace = false;
                     continue;
                 default:
                     if (sawWhitespace && current.Count > 0)
-                        return false; // whitespace between compounds with no explicit '>' — descendant combinator, unsupported
+                    {
+                        // Whitespace between compounds with no explicit '>'.
+                        segments.Add(current);
+                        descendantBefore.Add(currentDescendant);
+                        current = [];
+                        currentDescendant = true;
+                    }
 
                     current.Add(item);
                     sawWhitespace = false;
@@ -160,6 +176,7 @@ public static partial class CssParser
             return false; // trailing '>', or an empty prelude
 
         segments.Add(current);
+        descendantBefore.Add(currentDescendant);
         return true;
     }
 

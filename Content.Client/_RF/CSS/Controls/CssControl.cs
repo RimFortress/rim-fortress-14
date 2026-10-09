@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Client._RF.CSS.Streams;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
@@ -198,6 +199,55 @@ public partial class CssControl : AutoCssControl
 
         DrawBackground(handle);
         DrawText(handle);
+    }
+
+    /// <inheritdoc/>
+    protected override Vector2 MeasureOverride(Vector2 availableSize)
+    {
+        var inset = ContentInset;
+
+        // No text: the children are laid out inside the padding and the borders, like the text would be.
+        if (_textEntry is not { } entry)
+        {
+            var insetSize = new Vector2(inset.Left + inset.Right, inset.Top + inset.Bottom);
+            var content = Vector2.Zero;
+
+            foreach (var child in Children)
+            {
+                child.Measure(Vector2.Max(availableSize - insetSize, Vector2.Zero));
+                content = Vector2.Max(content, child.DesiredSize);
+            }
+
+            return content + insetSize;
+        }
+
+        var horizontal = inset.Left + inset.Right;
+        var vertical = inset.Top + inset.Bottom;
+        var innerWidth = MathF.Max(0f, availableSize.X - horizontal);
+
+        entry.Update(_tagManager, BuildTextStyle(), innerWidth * UIScale, UIScale);
+
+        return new Vector2(entry.Width / UIScale + horizontal, entry.Height / UIScale + vertical);
+    }
+
+    /// <inheritdoc/>
+    protected override Vector2 ArrangeOverride(Vector2 finalSize)
+    {
+        var inset = ContentInset;
+        var left = MathF.Min(inset.Left, finalSize.X);
+        var top = MathF.Min(inset.Top, finalSize.Y);
+        var box = new UIBox2(
+            left,
+            top,
+            MathF.Max(left, finalSize.X - inset.Right),
+            MathF.Max(top, finalSize.Y - inset.Bottom));
+
+        foreach (var child in Children)
+        {
+            child.Arrange(box);
+        }
+
+        return finalSize;
     }
 }
 

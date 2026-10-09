@@ -44,12 +44,23 @@ public partial class CssControl
         get;
         set
         {
+            var old = field;
             field = value;
             Css.UpdateStyle(this);
+            Css.UpdateDependents(this, "#" + old);
+            Css.UpdateDependents(this, "#" + value);
         }
     }
 
-    internal void RestyleCss() => Css.UpdateStyle(this);
+    /// <summary>
+    /// Restyles the control after its class changed, and the controls whose rules look at this class on their ancestor.
+    /// </summary>
+    /// <param name="key">The class with its prefix, see <see cref="CssStyleClassCollection"/>; <c>null</c> for any.</param>
+    internal void RestyleCss(string? key)
+    {
+        Css.UpdateStyle(this);
+        Css.UpdateDependents(this, key);
+    }
 
     /// <summary>
     /// Current control style classes. Can be set from XAML with the classes separated by spaces.
@@ -61,7 +72,7 @@ public partial class CssControl
         set
         {
             field = new(value) { Owner = this };
-            Css.UpdateStyle(this);
+            RestyleCss(null);
         }
     }
 
@@ -71,11 +82,11 @@ public partial class CssControl
     [ViewVariables]
     public CssStyleClassCollection CssPseudoStyleClasses
     {
-        get => field ??= new(this);
+        get => field ??= new(this, ":");
         set
         {
-            field = new(value) { Owner = this };
-            Css.UpdateStyle(this);
+            field = new(value) { Owner = this, Prefix = ":" };
+            RestyleCss(null);
         }
     }
 
@@ -148,5 +159,17 @@ public partial class CssControl
     public void RemoveCssStyleClass(string className)
     {
         CssStyleClasses.Remove(className);
+    }
+
+    /// <summary>
+    /// Adds or removes a pseudo-class depending on <paramref name="value"/>.
+    /// </summary>
+    [PublicAPI]
+    public void SetCssPseudoStyleClass(string className, bool value)
+    {
+        if (value)
+            AddCssPseudoStyleClass(className);
+        else
+            RemoveCssPseudoStyleClass(className);
     }
 }

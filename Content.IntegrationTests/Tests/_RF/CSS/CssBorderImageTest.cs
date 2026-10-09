@@ -49,6 +49,21 @@ public sealed class CssBorderImageTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
+    public void Slice_Px_Is_The_Same_As_A_Number()
+    {
+        // Not in the specification, but every size of the stylesheets is written with a unit.
+        var stream = Stream("4px 11px");
+
+        Assert.That(BorderImageParsing.TryParseSlice(ref stream, out var slice) && stream.AtEnd, Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(slice.Edges.Top, Is.EqualTo(BorderImageEdge.Number(4)));
+            Assert.That(slice.Edges.Left, Is.EqualTo(BorderImageEdge.Number(11)));
+        });
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
     public void Slice_Takes_Four_Values_And_Fill_In_Any_Place()
     {
         var stream = Stream("fill 1 2 3 4");
@@ -80,7 +95,8 @@ public sealed class CssBorderImageTest : GameTest
     }
 
     [TestCase("-1")]
-    [TestCase("10px")]
+    [TestCase("-1px")]
+    [TestCase("10em")]
     [TestCase("fill")]
     [TestCase("1 2 3 4 5")]
     [RunOnSide(Side.Client)]

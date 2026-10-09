@@ -82,6 +82,17 @@ public interface ICssManager : ICssPropertyResolver
     void UpdateStyle(CssControl control);
 
     /// <summary>
+    /// Restyles the controls below <paramref name="control"/> whose rules look at the control in a combinator
+    /// (<c>.a > .b</c>, <c>.a .b</c>), after something that selectors match on changed on the control.
+    /// It does nothing when no rule does, and walks only as deep as the rules reach.
+    /// </summary>
+    /// <param name="control">The control that changed. It is not restyled itself.</param>
+    /// <param name="key">
+    /// What has changed: <c>.class</c>, <c>:pseudo-class</c> or <c>#id</c>; <c>null</c> if anything may have.
+    /// </param>
+    void UpdateDependents(CssControl control, string? key);
+
+    /// <summary>
     /// Updates control fields based on CSS styles loaded during testing.
     /// </summary>
     /// <param name="control">Control to update.</param>

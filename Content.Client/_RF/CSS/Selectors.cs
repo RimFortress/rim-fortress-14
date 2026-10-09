@@ -90,6 +90,37 @@ public sealed class CssElementSelector : Selector
 }
 
 /// <summary>
+/// The descendant combinator (<c>A B</c>): <see cref="Descendant"/> matches the control and
+/// <see cref="Ancestor"/> matches any of its ancestors. Unlike the engine's <c>SelectorDescendant</c> (internal,
+/// disabled because of performance), the stylesheet knows which classes an ancestor part depends on and restyles
+/// the descendants only when one of those changes, see <see cref="CssStylesheet.GetAncestorReach"/>.
+/// </summary>
+public sealed class CssDescendantSelector(Selector ancestor, Selector descendant) : Selector
+{
+    public Selector Ancestor { get; } = ancestor;
+
+    public Selector Descendant { get; } = descendant;
+
+    public override bool Matches(Control control)
+    {
+        // The cheap part first: most controls are rejected without walking the tree.
+        if (!Descendant.Matches(control))
+            return false;
+
+        for (var parent = control.Parent; parent != null; parent = parent.Parent)
+        {
+            if (Ancestor.Matches(parent))
+                return true;
+        }
+
+        return false;
+    }
+
+    public override StyleSpecificity CalculateSpecificity()
+        => Ancestor.CalculateSpecificity() + Descendant.CalculateSpecificity();
+}
+
+/// <summary>
 /// Selector for CSS :nth-child() pseudoclasses.
 /// </summary>
 /// <param name="anb">Result of parsing CSS An+B syntax.</param>
@@ -268,7 +299,7 @@ public sealed class NotSelector(IReadOnlyList<Selector> selectors) : CompoundSel
 /// Combines several selector components that must ALL match the SAME
 /// element — a compound selector like "label.title:nth-child(odd)",
 /// where type/class/pseudo-function conditions apply together, not as
-/// alternatives. Not to be confused with <see cref="SelectorChild"/>/<see cref="SelectorDescendant"/>,
+/// alternatives. Not to be confused with <see cref="SelectorChild"/>/<see cref="CssDescendantSelector"/>,
 /// which relate a selector to a DIFFERENT element (a parent).
 /// </summary>
 public sealed class AndSelector(IReadOnlyList<Selector> selectors) : CompoundSelector(selectors)

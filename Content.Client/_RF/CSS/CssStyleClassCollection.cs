@@ -13,11 +13,18 @@ namespace Content.Client._RF.CSS;
 public sealed class CssStyleClassCollection : ICollection<string>, IReadOnlyCollection<string>
 {
     internal CssControl? Owner;
+
+    /// <summary>
+    /// The prefix of a name in <see cref="CssStylesheet.GetAncestorReach"/>: "." for classes, ":" for pseudo-classes.
+    /// </summary>
+    internal string Prefix = ".";
+
     private readonly HashSet<string> _values;
 
-    internal CssStyleClassCollection(CssControl owner)
+    internal CssStyleClassCollection(CssControl owner, string prefix = ".")
     {
         Owner = owner;
+        Prefix = prefix;
         _values = new();
     }
 
@@ -53,7 +60,7 @@ public sealed class CssStyleClassCollection : ICollection<string>, IReadOnlyColl
     public void Add(string item)
     {
         if (_values.Add(item))
-            Owner?.RestyleCss();
+            Owner?.RestyleCss(Prefix + item);
     }
 
     public void Clear()
@@ -62,7 +69,7 @@ public sealed class CssStyleClassCollection : ICollection<string>, IReadOnlyColl
             return;
 
         _values.Clear();
-        Owner?.RestyleCss();
+        Owner?.RestyleCss(null);
     }
 
     public bool Contains(string item) => _values.Contains(item);
@@ -75,7 +82,7 @@ public sealed class CssStyleClassCollection : ICollection<string>, IReadOnlyColl
             return false;
 
         if (Owner != null)
-            Owner.RestyleCss();
+            Owner.RestyleCss(Prefix + item);
 
         return true;
     }

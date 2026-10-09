@@ -4,8 +4,36 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
 
+/// <summary>
+/// How far below a control the rules of a stylesheet look at its classes, see <see cref="CssStylesheet.GetAncestorReach"/>.
+/// </summary>
+public enum CssAncestorReach : byte
+{
+    /// <summary>
+    /// No rule depends on it being on an ancestor.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Only the rules with the child combinator (<c>A > B</c>) depend on it: the direct children are affected.
+    /// </summary>
+    Children,
+
+    /// <summary>
+    /// A rule with the descendant combinator (<c>A B</c>), or a longer chain, depends on it.
+    /// </summary>
+    Descendants,
+}
+
 public sealed class CssStylesheet
 {
+    // ".class", ":pseudo-class" and "#id" of the ancestor parts of the combinator selectors.
+    private readonly Dictionary<string, CssAncestorReach> _ancestorKeys = new();
+    private readonly HashSet<Type> _ancestorDependentTypes = new();
+    private readonly Dictionary<Type, bool> _ancestorDependentCache = new();
+    private readonly bool _ancestorDependentAll;
+    private readonly CssAncestorReach _maxAncestorReach;
+
     /// <summary>
     /// List of all stylesheet rules.
     /// </summary>
@@ -49,6 +77,14 @@ public sealed class CssStylesheet
             var rule = rules[i];
             var elementType = CssParser.GetElementType(rule.Selector);
 
+            if (CollectAncestorKeys(rule.Selector, 0, _ancestorKeys))
+            {
+                if (elementType is null)
+                    _ancestorDependentAll = true;
+                else
+                    _ancestorDependentTypes.Add(elementType);
+            }
+
             if (elementType is null)
             {
                 global.Add((i, rule));
@@ -81,6 +117,12 @@ public sealed class CssStylesheet
             }
         }
 
+        foreach (var reach in _ancestorKeys.Values)
+        {
+            if (reach > _maxAncestorReach)
+                _maxAncestorReach = reach;
+        }
+
         Rules = rules;
         GlobalVariables = globalVariables ?? CssVariables.Empty;
         UnsortedRules = SortBySpecificity(global);
@@ -91,6 +133,109 @@ public sealed class CssStylesheet
         SortedSelectorTypes = sortedSelectorTypes.ToDictionary(
             kv => kv.Key,
             IReadOnlySet<Type> (kv) => kv.Value);
+    }
+
+    /// <summary>
+    /// How far below a control a change of <paramref name="key"/> can change the styles of other controls.
+    /// </summary>
+    /// <param name="key">
+    /// What has changed on the control: <c>.class</c>, <c>:pseudo-class</c> or <c>#id</c>;
+    /// <c>null</c> if anything may have changed.
+    /// </param>
+    /// <remarks>
+    /// Only the classes that are written in the part of a combinator selector before the last compound count
+    /// (<c>.a</c> in <c>.a .b</c> or <c>.a > .b</c>), so for a stylesheet without combinators, or when nobody
+    /// uses the class this way, nothing but the control itself is restyled. A structural pseudo-class
+    /// (<c>:nth-child</c>, <c>:empty</c>) of an ancestor part is not tracked.
+    /// </remarks>
+    public CssAncestorReach GetAncestorReach(string? key)
+    {
+        if (key == null)
+            return _maxAncestorReach;
+
+        return _ancestorKeys.TryGetValue(key, out var reach) ? reach : CssAncestorReach.None;
+    }
+
+    /// <summary>
+    /// Whether a rule with an ancestor part may apply to a control of this type, so it is worth restyling when an
+    /// ancestor changes.
+    /// </summary>
+    public bool IsAncestorDependent(Type type)
+    {
+        if (_ancestorDependentAll)
+            return true;
+
+        if (_ancestorDependentCache.TryGetValue(type, out var cached))
+            return cached;
+
+        var result = false;
+
+        for (var t = type; t != null && t != typeof(Control); t = t.BaseType)
+        {
+            if (_ancestorDependentTypes.Contains(t))
+            {
+                result = true;
+                break;
+            }
+        }
+
+        _ancestorDependentCache[type] = result;
+        return result;
+    }
+
+    // depth: 0 is the styled control, 1 its parent, 2 and more: further ancestors, or any of them.
+    private static bool CollectAncestorKeys(Selector selector, int depth, Dictionary<string, CssAncestorReach> keys)
+    {
+        switch (selector)
+        {
+            case SelectorChild child:
+                var added = CollectAncestorKeys(child.Child, depth, keys);
+                return CollectAncestorKeys(child.Parent, depth + 1, keys) | added;
+            case CssDescendantSelector descendant:
+                added = CollectAncestorKeys(descendant.Descendant, depth, keys);
+                // Any ancestor, so any distance (2 and more) from the styled control.
+                return CollectAncestorKeys(descendant.Ancestor, Math.Max(depth + 1, 2), keys) | added;
+            case CssElementSelector element:
+                if (depth == 0)
+                    return false;
+
+                var reach = depth == 1 ? CssAncestorReach.Children : CssAncestorReach.Descendants;
+                var any = false;
+
+                foreach (var name in element.ElementClasses ?? [])
+                {
+                    any |= AddKey("." + name, reach, keys);
+                }
+
+                foreach (var name in element.PseudoClasses ?? [])
+                {
+                    any |= AddKey(":" + name, reach, keys);
+                }
+
+                if (element.ElementId != null)
+                    any |= AddKey("#" + element.ElementId, reach, keys);
+
+                return any;
+            case CompoundSelector compound:
+                any = false;
+
+                foreach (var inner in compound.Selectors)
+                {
+                    any |= CollectAncestorKeys(inner, depth, keys);
+                }
+
+                return any;
+            default:
+                return false;
+        }
+    }
+
+    private static bool AddKey(string key, CssAncestorReach reach, Dictionary<string, CssAncestorReach> keys)
+    {
+        if (!keys.TryGetValue(key, out var existing) || reach > existing)
+            keys[key] = reach;
+
+        return true;
     }
 
     private static List<CssStyleRule> SortBySpecificity(List<(int index, CssStyleRule rule)> entries)
@@ -118,6 +263,8 @@ public sealed class CssStylesheet
                 return types;
             case SelectorChild child:
                 return GetSelectorTypes(child.Child).Union(GetSelectorTypes(child.Parent)).ToList();
+            case CssDescendantSelector descendant:
+                return GetSelectorTypes(descendant.Descendant).Union(GetSelectorTypes(descendant.Ancestor)).ToList();
             default:
                 return new() { selector.GetType() };
         }

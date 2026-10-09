@@ -247,6 +247,31 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public void UpdateStyle(CssControl control) => ApplyStyle(control, Stylesheet, propagate: true);
 
     /// <inheritdoc/>
+    public void UpdateDependents(CssControl control, string? key)
+    {
+        var stylesheet = control.CssComputedStylesheet ?? Stylesheet;
+        var reach = stylesheet.GetAncestorReach(key);
+
+        if (reach == CssAncestorReach.None)
+            return;
+
+        UpdateDependents(control, stylesheet, reach == CssAncestorReach.Descendants);
+    }
+
+    private void UpdateDependents(Control parent, CssStylesheet stylesheet, bool deep)
+    {
+        foreach (var child in parent.Children)
+        {
+            // Only the controls that a rule with an ancestor part can apply to are worth matching again.
+            if (child is CssControl css && stylesheet.IsAncestorDependent(css.GetType()))
+                ApplyStyle(css, stylesheet, propagate: true);
+
+            if (deep)
+                UpdateDependents(child, stylesheet, true);
+        }
+    }
+
+    /// <inheritdoc/>
     public void UpdateTestStyle(CssControl control) => ApplyStyle(control, BuildTestStylesheet(), propagate: true);
 
     /// <inheritdoc/>

@@ -80,16 +80,4 @@ public partial class CssControl
     /// Called after <see cref="Disabled"/> has changed.
     /// </summary>
     protected virtual void OnDisabledChanged() { }
-
-    /// <summary>
-    /// Adds or removes a pseudo-class depending on <paramref name="value"/>.
-    /// </summary>
-    [PublicAPI]
-    public void SetCssPseudoStyleClass(string className, bool value)
-    {
-        if (value)
-            AddCssPseudoStyleClass(className);
-        else
-            RemoveCssPseudoStyleClass(className);
-    }
 }
