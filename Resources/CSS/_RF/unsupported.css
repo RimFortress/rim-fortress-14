@@ -15,8 +15,7 @@
  *
  * MenuButton (type): the colors are the same as css-button, a Css counterpart of MenuButton is a CssButton.
  *
- * OptionButton (type): the stylebox `button` and the state colors (button-color-default, -hovered, -pressed,
- *   -disabled) -> make the Css replacement a CssButton and give it the class `option-button-root`.
+ * OptionButton (type): the Css replacement is CssOptionButton, a CssButton, so css-button styles it.
  *
  * Label.StylePropertyAlignMode (Label.AlignMode.Center) of css-button and `.option-button` is text-align: center.
  */

@@ -82,21 +82,3 @@
 .chat-filter-option-button:disabled {
     background-color: var(--button-color-disabled);
 }
-
-/* ---------- OptionButton ---------- */
-
-/* OptionButton.StyleClassOptionTriangle: optionTriangle */
-.option-triangle {
-    background-image: texture("/Textures/_RF/Interface/Style/inverted_triangle.png");
-    background-repeat: no-repeat;
-}
-
-/* OptionButton.StyleClassOptionButton: optionButton (the label of the button) */
-.option-button {
-    text-align: center;
-}
-
-/* OptionButton.StyleClassOptionsBackground: optionButtonBackground */
-.option-button-background {
-    background-color: var(--graphite-black);
-}

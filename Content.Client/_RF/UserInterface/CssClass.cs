@@ -34,7 +34,8 @@ public static class CssClass
     public const string OpenLeft = "open-left";
     public const string OpenRight = "open-right";
     public const string OptionButton = "option-button";
-    public const string OptionButtonBackground = "option-button-background";
+    public const string OptionButtonPanel = "option-button-panel";
+    public const string OptionItem = "option-item";
     public const string OptionTriangle = "option-triangle";
     public const string PinButtonPinned = "pin-button-pinned";
     public const string PinButtonUnpinned = "pin-button-unpinned";

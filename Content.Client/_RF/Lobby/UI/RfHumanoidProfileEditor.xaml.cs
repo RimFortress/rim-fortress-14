@@ -119,8 +119,7 @@ namespace Content.Client._RF.Lobby.UI
 
             SexButton.OnItemSelected += args =>
             {
-                SexButton.SelectId(args.Id);
-                SetSex((Sex)args.Id);
+                SetSex((Sex) args.Value!);
             };
 
             #endregion Sex
@@ -139,15 +138,14 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Gender
 
-            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-male-text"), (int)Gender.Male);
-            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-female-text"), (int)Gender.Female);
-            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-epicene-text"), (int)Gender.Epicene);
-            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-neuter-text"), (int)Gender.Neuter);
+            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-male-text"), Gender.Male);
+            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-female-text"), Gender.Female);
+            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-epicene-text"), Gender.Epicene);
+            PronounsButton.AddItem(Loc.GetString("humanoid-profile-editor-pronouns-neuter-text"), Gender.Neuter);
 
             PronounsButton.OnItemSelected += args =>
             {
-                PronounsButton.SelectId(args.Id);
-                SetGender((Gender)args.Id);
+                SetGender((Gender) args.Value!);
             };
 
             #endregion Gender
@@ -156,8 +154,7 @@ namespace Content.Client._RF.Lobby.UI
 
             SpeciesButton.OnItemSelected += args =>
             {
-                SpeciesButton.SelectId(args.Id);
-                SetSpecies(_species[args.Id].ID);
+                SetSpecies((string) args.Value!);
                 OnSkinColorOnValueChanged();
             };
 

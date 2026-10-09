@@ -21,10 +21,11 @@ public sealed partial class RfHumanoidProfileEditor
         SpeciesInfoButton.StyleClasses.Clear();
 
         var species = Profile?.Species;
+
         if (species is null)
             return;
 
-        if (!_prototypeManager.Resolve<SpeciesPrototype>(species, out var speciesProto))
+        if (!_prototypeManager.Resolve(species, out _))
             return;
 
         // Don't display the info button if no guide entry is found
@@ -42,7 +43,7 @@ public sealed partial class RfHumanoidProfileEditor
             return;
         }
 
-        PronounsButton.SelectId((int)Profile.Gender);
+        PronounsButton.SelectValue(Profile.Gender);
     }
 
     private void UpdateAgeEdit()
@@ -75,13 +76,10 @@ public sealed partial class RfHumanoidProfileEditor
         // add button for each sex
         foreach (var sex in sexes)
         {
-            SexButton.AddItem(Loc.GetString($"humanoid-profile-editor-sex-{sex.ToString().ToLower()}-text"), (int)sex);
+            SexButton.AddItem(Loc.GetString($"humanoid-profile-editor-sex-{sex.ToString().ToLower()}-text"), sex);
         }
 
-        if (sexes.Contains(Profile.Sex))
-            SexButton.SelectId((int)Profile.Sex);
-        else
-            SexButton.SelectId((int)sexes[0]);
+        SexButton.SelectValue(sexes.Contains(Profile.Sex) ? Profile.Sex : sexes[0]);
     }
 
     private void UpdateEyePickers()
@@ -100,7 +98,7 @@ public sealed partial class RfHumanoidProfileEditor
         if (Profile == null)
             return;
 
-        var skin = _prototypeManager.Index<SpeciesPrototype>(Profile.Species).SkinColoration;
+        var skin = _prototypeManager.Index(Profile.Species).SkinColoration;
         var strategy = _prototypeManager.Index(skin).Strategy;
 
         switch (strategy.InputType)
@@ -144,24 +142,24 @@ public sealed partial class RfHumanoidProfileEditor
         _species.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase));
         var speciesIds = _species.Select(o => o.ID).ToList();
 
-        for (var i = 0; i < _species.Count; i++)
+        foreach (var species in _species)
         {
-            var name = Loc.GetString(_species[i].Name);
-            SpeciesButton.AddItem(name, i);
+            var name = Loc.GetString(species.Name);
+            SpeciesButton.AddItem(name, species.ID);
 
-            if (Profile?.Species.Equals(_species[i].ID) == true)
+            if (Profile?.Species.Equals(species.ID) == true)
             {
-                SpeciesButton.SelectId(i);
+                SpeciesButton.SelectValue(species.ID);
             }
         }
 
         // If our species isn't available then reset it to default.
-        if (Profile != null)
+        if (Profile == null)
+            return;
+
+        if (!speciesIds.Contains(Profile.Species))
         {
-            if (!speciesIds.Contains(Profile.Species))
-            {
-                SetSpecies(HumanoidCharacterProfile.DefaultSpecies);
-            }
+            SetSpecies(HumanoidCharacterProfile.DefaultSpecies);
         }
     }
 
@@ -212,12 +210,6 @@ public sealed partial class RfHumanoidProfileEditor
         ReloadPreview();
     }
 
-    private void SetSpawnPriority(SpawnPriorityPreference newSpawnPriority)
-    {
-        Profile = Profile?.WithSpawnPriorityPreference(newSpawnPriority);
-        SetDirty();
-    }
-
     private void OnSpeciesInfoButtonPressed(BaseButton.ButtonEventArgs args)
     {
         // TODO GUIDEBOOK
@@ -241,9 +233,10 @@ public sealed partial class RfHumanoidProfileEditor
 
     private void OnSkinColorOnValueChanged()
     {
-        if (Profile is null) return;
+        if (Profile is null)
+            return;
 
-        var skin = _prototypeManager.Index<SpeciesPrototype>(Profile.Species).SkinColoration;
+        var skin = _prototypeManager.Index(Profile.Species).SkinColoration;
         var strategy = _prototypeManager.Index(skin).Strategy;
 
         switch (strategy.InputType)

@@ -85,7 +85,7 @@ public partial class CssControl
     /// Adds or removes a pseudo-class depending on <paramref name="value"/>.
     /// </summary>
     [PublicAPI]
-    protected void SetCssPseudoStyleClass(string className, bool value)
+    public void SetCssPseudoStyleClass(string className, bool value)
     {
         if (value)
             AddCssPseudoStyleClass(className);

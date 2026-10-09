@@ -7,7 +7,7 @@
     xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
     FlexDirection="Column">
     <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
-    <!-- The TabContainer, OptionButtons, Sliders and the pickers have no CSS version yet. -->
+    <!-- The TabContainer, Sliders and the pickers have no CSS version yet. -->
     <!-- Middle container -->
     <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-top">
         <!-- Name box-->
@@ -65,7 +65,7 @@
                                        VerticalAlignment="Center"
                                        ToolTip="{Loc 'humanoid-profile-editor-guidebook-button-tooltip'}" />
                     </controls:CssBoxContainer>
-                    <OptionButton Name="SpeciesButton" HorizontalExpand="True" />
+                    <controls:CssOptionButton Name="SpeciesButton" />
                     <css:CssControl CssStyleClasses="low-divider profile-divider" />
                     <!-- Age -->
                     <css:CssControl Text="{Loc 'humanoid-profile-editor-age-label'}" />
@@ -73,11 +73,11 @@
                     <css:CssControl CssStyleClasses="low-divider profile-divider" />
                     <!-- Sex -->
                     <css:CssControl Text="{Loc 'humanoid-profile-editor-sex-label'}" />
-                    <OptionButton Name="SexButton" HorizontalExpand="True" />
+                    <controls:CssOptionButton Name="SexButton" />
                     <css:CssControl CssStyleClasses="low-divider profile-divider" />
                     <!-- Pronouns -->
                     <css:CssControl Text="{Loc 'humanoid-profile-editor-pronouns-label'}" />
-                    <OptionButton Name="PronounsButton" HorizontalExpand="True" />
+                    <controls:CssOptionButton Name="PronounsButton" />
                     <css:CssControl CssStyleClasses="low-divider profile-divider" />
                     <!-- Show clothing -->
                     <css:CssControl Text="{Loc 'humanoid-profile-editor-clothing'}" />
