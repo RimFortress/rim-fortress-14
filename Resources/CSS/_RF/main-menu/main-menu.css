@@ -2,24 +2,12 @@
  * MainMenuControl.xaml (the main menu: logo, fields and the buttons).
  *
  * The buttons get their shape (open-left, open-both, open-right), the colors and the `negative` class from
- * fortress-button.css; MainMenuControl.xaml.cs adds those classes. Only what is specific to the main menu is here.
+ * buttons/*.css; MainMenuControl.xaml.cs adds those classes. Only what is specific to the main menu is here.
  */
 
 /* The logo and the panel under it */
 #main-menu {
     gap: 24px;
-}
-
-/* BackgroundPanel (AngleRect): the panel under the logo */
-#main-menu-panel {
-    background-image: texture("/Textures/_RF/Interface/Style/angle_rect_panel.png");
-    background-color: rgba(255, 255, 255, 0.95);
-    background-repeat: stretch;
-    patch-margin: 11px;
-    padding: 5px 5px 15px 5px;
-    min-width: 320px;
-    /* mainMenuVBox: the buttons are slightly more separated */
-    gap: 3px;
 }
 
 /* The username and the address with their labels */

@@ -1,0 +1,12 @@
+/* ---------- CheckBox (CssCheckBox: the .indicator is the box, .checked is set while it is checked) ---------- */
+
+/* CheckBox.StyleClassCheckBox: checkBox */
+css-check-box > .indicator {
+    background-image: texture("/Textures/_RF/Interface/Style/checkbox_unchecked.png");
+    background-repeat: no-repeat;
+}
+
+/* CheckBox.StyleClassCheckBoxChecked: checkBoxChecked */
+css-check-box > .indicator.checked {
+    background-image: texture("/Textures/_RF/Interface/Style/checkbox_checked.png");
+}

@@ -221,7 +221,7 @@ public sealed class StyleBoxBorderStroke(
                 handle.DrawPrimitives(
                     DrawPrimitiveTopology.TriangleFan,
                     new[] { quad.OuterA, quad.OuterB, quad.InnerB, quad.InnerA },
-                    sideData.Color);
+                    Flat(sideData.Color));
                 return;
             case CssBorderStyle.Dashed:
                 var segment = thickness * 2.5f;
@@ -233,7 +233,7 @@ public sealed class StyleBoxBorderStroke(
                     handle.DrawPrimitives(
                         DrawPrimitiveTopology.TriangleFan,
                         new[] { quad.OuterA, quad.OuterB, quad.InnerB, quad.InnerA },
-                        sideData.Color);
+                        Flat(sideData.Color));
                     return;
                 }
 
@@ -251,7 +251,7 @@ public sealed class StyleBoxBorderStroke(
                     handle.DrawPrimitives(
                         DrawPrimitiveTopology.TriangleFan,
                         new[] { quad.OuterA, quad.OuterB, quad.InnerB, quad.InnerA },
-                        sideData.Color);
+                        Flat(sideData.Color));
                     return;
                 }
 
@@ -286,7 +286,7 @@ public sealed class StyleBoxBorderStroke(
                 return;
         }
 
-        handle.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, Texture.White, quad.ToVertices(), sideData.Color);
+        handle.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, Texture.White, quad.ToVertices(), Flat(sideData.Color));
         handle.UseShader(prev);
     }
 
@@ -343,11 +343,11 @@ public sealed class StyleBoxBorderStroke(
             // though the pattern doesn't continue around it.
             case CssBorderStyle.Dashed:
             case CssBorderStyle.Dotted:
-                handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, side.Color);
+                handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, Flat(side.Color));
                 return;
             case CssBorderStyle.Double:
                 handle.UseShader(DoubleShader);
-                handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, side.Color);
+                handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, Flat(side.Color));
                 handle.UseShader(prev);
                 return;
             case CssBorderStyle.Groove:
@@ -384,6 +384,13 @@ public sealed class StyleBoxBorderStroke(
     private static Vector2 InnerRadius(Vector2 outer, float horizontalSideWidth, float verticalSideWidth) => new(
         MathF.Max(outer.X - horizontalSideWidth, 0f),
         MathF.Max(outer.Y - verticalSideWidth, 0f));
+
+    /// <summary>
+    /// The flat color of <see cref="DrawingHandleBase.DrawPrimitives(DrawPrimitiveTopology, ReadOnlySpan{Vector2}, Color)"/>
+    /// goes through <see cref="Color.FromSrgb"/> once in the handle and once more in the vertex shader, so the
+    /// color arrives darker than it was set. This cancels one of the conversions.
+    /// </summary>
+    private static Color Flat(Color c) => Color.ToSrgb(c);
 
     private static (Color Dark, Color Light) GetShades(Color c)
     {

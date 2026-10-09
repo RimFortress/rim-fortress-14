@@ -1,56 +1,49 @@
-<Control xmlns="https://spacestation14.io"
-         xmlns:cc="clr-namespace:Content.Client.Administration.UI.CustomControls"
-         xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
-         VerticalExpand="True">
-    <PanelContainer StyleClasses="AngleRectTransparent"/>
-
-    <BoxContainer Orientation="Vertical" SeparationOverride="0">
-        <controls:FancyBack>
-            <BoxContainer Orientation="Horizontal" MinSize="0 40">
-                <Label Text="{Loc 'character-setup-gui-character-setup-label'}"
-                       Margin="8 0 0 0" VAlign="Center"
-                       StyleClasses="LabelHeadingBigger" />
-                <BoxContainer HorizontalExpand="True"/>
-                <BoxContainer Orientation="Horizontal">
-                    <Button Name="ResetButton" Access="Public" HorizontalExpand="True"
+<controls:CssBoxContainer
+    xmlns="https://spacestation14.io"
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    FlexDirection="Column"
+    CssStyleClasses="angle-rect-transparent">
+    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" CssStyleIdentifier="setup-header">
+        <css:CssControl Text="{Loc 'character-setup-gui-character-setup-label'}"
+                        CssStyleClasses="label-heading-bigger" CssStyleIdentifier="setup-title" />
+        <css:CssControl CssStyleClasses="flex-fill" />
+        <controls:CssButton Name="ResetButton" Access="Public"
                             Text="{Loc 'humanoid-profile-editor-reset-button'}"
-                            StyleClasses="ButtonBig"/>
-                    <Button Name="SaveProfilesButton" Access="Public" HorizontalExpand="True"
+                            CssStyleClasses="font-big" />
+        <controls:CssButton Name="SaveProfilesButton" Access="Public"
                             Text="{Loc 'character-setup-gui-character-setup-save-profiles-button'}"
-                            StyleClasses="ButtonBig"/>
-                    <Button Name="StatsButton" HorizontalExpand="True"
+                            CssStyleClasses="font-big" />
+        <controls:CssButton Name="StatsButton"
                             Text="{Loc 'character-setup-gui-character-setup-stats-button'}"
-                            StyleClasses="ButtonBig"/>
-                    <cc:CommandButton Name="AdminRemarksButton"
-                                      Command="adminremarks"
-                                      Text="{Loc 'character-setup-gui-character-setup-adminremarks-button'}"
-                                      StyleClasses="ButtonBig" />
-                    <Button Name="RulesButton"
+                            CssStyleClasses="font-big" />
+        <controls:CssCommandButton Name="AdminRemarksButton"
+                                   Command="adminremarks"
+                                   Text="{Loc 'character-setup-gui-character-setup-adminremarks-button'}"
+                                   CssStyleClasses="font-big" />
+        <controls:CssButton Name="RulesButton"
                             Text="{Loc 'character-setup-gui-character-setup-rules-button'}"
-                            StyleClasses="ButtonBig"/>
-                    <Button Name="CloseButton"
-                            Access="Public"
+                            CssStyleClasses="font-big" />
+        <controls:CssButton Name="CloseButton" Access="Public"
                             Text="{Loc 'character-setup-gui-character-setup-close-button'}"
-                            StyleClasses="ButtonBig"/>
-                </BoxContainer>
-            </BoxContainer>
-        </controls:FancyBack>
+                            CssStyleClasses="font-big" />
+    </controls:CssBoxContainer>
 
-        <PanelContainer StyleClasses="LowDivider"/>
+    <css:CssControl CssStyleClasses="low-divider" />
 
-        <BoxContainer Orientation="Horizontal" VerticalExpand="True" SeparationOverride="0">
-            <BoxContainer MinSize="350 0" Margin="5 5 0 0" Orientation="Vertical">
-                <controls:FancyBack HorizontalExpand="True">
-                    <Label Name="CharactersCount" MinHeight="30"/>
-                </controls:FancyBack>
-                <ScrollContainer HorizontalExpand="True" VerticalExpand="True">
-                    <BoxContainer Name="Characters" Orientation="Vertical" />
-                </ScrollContainer>
-            </BoxContainer>
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="setup-body">
+        <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="setup-characters">
+            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back">
+                <css:CssControl Name="CharactersCount" CssStyleIdentifier="setup-characters-count" />
+            </controls:CssBoxContainer>
+            <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="setup-characters-scroll">
+                <controls:CssBoxContainer Name="Characters" FlexDirection="Column" />
+            </controls:CssScrollContainer>
+        </controls:CssBoxContainer>
 
-            <PanelContainer StyleClasses="LowDivider"/>
+        <css:CssControl CssStyleClasses="low-divider" />
 
-            <BoxContainer Name="CharEditor" HorizontalExpand="True" />
-        </BoxContainer>
-    </BoxContainer>
-</Control>
+        <controls:CssBoxContainer Name="CharEditor" FlexDirection="Row" CssStyleIdentifier="setup-editor" />
+    </controls:CssBoxContainer>
+</controls:CssBoxContainer>

@@ -1,31 +1,20 @@
-<Control
+<controls:CssBoxContainer
     xmlns="https://spacestation14.io"
-    Margin="0 0 0 3" HorizontalExpand="True">
-    <PanelContainer StyleClasses="PanelDarkBordered">
-        <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
-            <PanelContainer StyleClasses="PanelLightBordered">
-                <EntityPrototypeView Name="View" Scale="2 2" SetSize="36 36"/>
-            </PanelContainer>
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    FlexDirection="Row"
+    CssStyleClasses="panel-dark-bordered">
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="panel-light-bordered">
+        <EntityPrototypeView Name="View" Scale="2 2" SetSize="36 36" />
+    </controls:CssBoxContainer>
 
-            <PanelContainer Margin="10 5" StyleClasses="LowDivider"/>
+    <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="expedition-item-divider" />
 
-            <TextureButton Name="Button" TrackingTooltip="True"
-                           HorizontalExpand="True" VerticalExpand="True">
-                <Label Name="NameLabel" Access="Public"
-                       Align="Left" ClipText="True" VAlign="Bottom"
-                       StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"/>
-            </TextureButton>
-            <Label Name="CostLabel" Align="Left"
-                   VAlign="Bottom" VerticalExpand="True" SetWidth="150"
-                   StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"/>
+    <css:CssControl Name="NameLabel" MouseFilter="Pass"
+                    CssStyleClasses="placeholder-text" CssStyleIdentifier="expedition-item-name" />
+    <css:CssControl Name="CostLabel"
+                    CssStyleClasses="placeholder-text" CssStyleIdentifier="expedition-item-cost" />
 
-            <PanelContainer Margin="10 5" StyleClasses="LowDivider"/>
-
-            <Button Name="Plus" Access="Public" Margin="2"
-                    Text="+" StyleClasses="OpenRight"/>
-            <LineEdit Name="CountLine" Text="0" Margin="0 3" MinWidth="50"/>
-            <Button Name="Minus" Margin="2"
-                    Text="–" StyleClasses="OpenLeft"/>
-        </BoxContainer>
-    </PanelContainer>
-</Control>
+    <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="expedition-item-divider" />
+    <controls:IntCounter Name="Counter" Access="Public" MinValue="0" />
+</controls:CssBoxContainer>

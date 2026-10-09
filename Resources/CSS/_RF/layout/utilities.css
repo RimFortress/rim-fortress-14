@@ -1,0 +1,13 @@
+/* ---------- Shared ---------- */
+
+/* The empty control that takes all the free space (the BoxContainer with HorizontalExpand or VerticalExpand) */
+.flex-fill {
+    flex-grow: 1;
+}
+
+/* ScrollContainer: it scrolls vertically only and takes the free space of the column */
+.scroll-vertical {
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-grow: 1;
+}

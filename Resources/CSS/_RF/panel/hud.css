@@ -1,0 +1,42 @@
+/* ---------- Top info ---------- */
+
+/* TopInfoPanel */
+.top-info-panel {
+    background-image: texture("/Textures/_RF/Interface/Style/top_info_panel.png");
+    background-repeat: stretch;
+    patch-margin: 4px 8px 9px 4px;
+    padding: 10px 10px 9px 10px;
+}
+
+/* TopInfoCellPanel */
+.top-info-cell-panel {
+    background-color: var(--graphite-black);
+    border-bottom: 1px solid var(--black-amber);
+}
+
+/* ---------- Slots and hotbar ---------- */
+
+/* InventorySlotBackground */
+.inventory-slot-background {
+    background-image: texture("/Textures/Interface/Inventory/inv_slot_background.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 0;
+}
+
+/* HandSlotHighlight */
+.hand-slot-highlight {
+    background-image: texture("/Textures/Interface/Inventory/hand_slot_highlight.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 2px;
+}
+
+/* HotbarPanel: the transparent bordered window background expanded by 4 */
+.hotbar-panel {
+    background-image: texture("/Textures/_RF/Interface/Style/transparent_window_background_bordered.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    expand-patch-margin: 4px;
+    padding: 2px;
+}

@@ -1,6 +1,6 @@
+using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Humanoid;
 using Content.Client.Lobby;
-using Content.Client.Message;
 using Content.Client.Sprite;
 using Content.Shared.CCVar;
 using Content.Shared.Humanoid;
@@ -21,7 +21,7 @@ using Direction = Robust.Shared.Maths.Direction;
 namespace Content.Client._RF.Lobby.UI
 {
     [GenerateTypedNameReferences]
-    public sealed partial class RfHumanoidProfileEditor : BoxContainer
+    public sealed partial class RfHumanoidProfileEditor : CssBoxContainer
     {
         [Dependency] private IClientPreferencesManager _preferencesManager = default!;
         [Dependency] private IConfigurationManager _cfgManager = default!;
@@ -107,7 +107,7 @@ namespace Content.Client._RF.Lobby.UI
             NameEdit.IsValid = args => args.Length <= maxNameLength;
             NameRandomize.OnPressed += _ => RandomizeName();
             RandomizeEverythingButton.OnPressed += _ => RandomizeEverything();
-            WarningLabel.SetMarkup($"[color=red]{Loc.GetString("humanoid-profile-editor-naming-rules-warning")}[/color]");
+            WarningLabel.Text = Loc.GetString("humanoid-profile-editor-naming-rules-warning");
 
             #endregion Name
 

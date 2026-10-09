@@ -1,3 +1,4 @@
+using Content.Client._RF.UserInterface.Controls;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
@@ -12,7 +13,7 @@ using Robust.Shared.Utility;
 namespace Content.Client._RF.Lobby.UI;
 
 [GenerateTypedNameReferences]
-public sealed partial class CharacterSkillsTab : Control
+public sealed partial class CharacterSkillsTab : CssBoxContainer
 {
     [Dependency] private IPrototypeManager _prototype = default!;
     [Dependency] private IEntityManager _entity = default!;
@@ -33,7 +34,6 @@ public sealed partial class CharacterSkillsTab : Control
     public void Refresh(HumanoidCharacterProfile? profile)
     {
         Container.RemoveAllChildren();
-
 
         var leftPoints = _controller.LeftPoints();
         LeftPoints.Text = $"{Loc.GetString("character-skills-tab-left-points")}: {leftPoints.ToString()}";

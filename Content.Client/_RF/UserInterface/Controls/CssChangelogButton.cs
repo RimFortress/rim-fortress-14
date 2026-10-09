@@ -40,12 +40,12 @@ public sealed partial class CssChangelogButton : CssButton
         if (_changelogManager.NewChangelogEntries)
         {
             Text = Loc.GetString("changelog-button-new-entries");
-            AddCssStyleClass("positive");
+            AddCssStyleClass(CssClass.Positive);
         }
         else
         {
             Text = Loc.GetString("changelog-button");
-            RemoveCssStyleClass("positive");
+            RemoveCssStyleClass(CssClass.Positive);
         }
     }
 }

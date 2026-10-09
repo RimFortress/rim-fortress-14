@@ -1,0 +1,29 @@
+/* ---------- Dividers ---------- */
+
+/* StyleClass.LowDivider: LowDivider */
+.low-divider {
+    background-color: var(--gold-fortress);
+    min-width: 2px;
+    min-height: 2px;
+}
+
+/* StyleClass.HighDivider: HighDivider */
+.high-divider {
+    background-color: var(--gold-fortress);
+    min-width: 3px;
+    min-height: 3px;
+}
+
+/* LowDividerDark */
+.low-divider-dark {
+    background-color: var(--black-amber);
+    min-width: 2px;
+    min-height: 2px;
+}
+
+/* HighDividerDark */
+.high-divider-dark {
+    background-color: var(--black-amber);
+    min-width: 3px;
+    min-height: 3px;
+}

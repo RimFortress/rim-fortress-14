@@ -103,7 +103,7 @@ public readonly record struct BorderImageRepeat(BorderImageRepeatMode X, BorderI
 public static class BorderImageParsing
 {
     /// <summary>
-    /// <c>[ &lt;number&gt; | &lt;percentage&gt; ]{1,4} &amp;&amp; fill?</c>
+    /// <c>[ &lt;number&gt; | &lt;percentage&gt; | &lt;number&gt;px ]{1,4} &amp;&amp; fill?</c>
     /// </summary>
     public static bool TryParseSlice(ref CssValueStream stream, out BorderImageSlice value)
     {
@@ -123,6 +123,13 @@ public static class BorderImageParsing
                 case NumberToken { Value: >= 0 } number when edges.Count < 4:
                     stream.ConsumeNext();
                     edges.Add(BorderImageEdge.Number((float) number.Value));
+                    continue;
+                // Not in the specification, where a number already is in image pixels, but every other size of
+                // this stylesheet is written with a unit, so `2px` is the same as `2`.
+                case DimensionToken { Value: >= 0 } dimension
+                    when edges.Count < 4 && dimension.Unit.Equals("px", StringComparison.OrdinalIgnoreCase):
+                    stream.ConsumeNext();
+                    edges.Add(BorderImageEdge.Number((float) dimension.Value));
                     continue;
                 case PercentageToken { Value: >= 0 } percentage when edges.Count < 4:
                     stream.ConsumeNext();

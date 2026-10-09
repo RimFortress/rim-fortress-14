@@ -1,0 +1,194 @@
+/* ---------- Colors of the buttons ---------- */
+
+css-button {
+    border-color: var(--button-color-default);
+    background-color: var(--button-color-default);
+}
+
+css-button:hover {
+    border-color: var(--button-color-hovered);
+    background-color: var(--button-color-hovered);
+}
+
+css-button:active,
+css-button:checked {
+    border-color: var(--button-color-pressed);
+    background-color: var(--button-color-pressed);
+}
+
+css-button:disabled {
+    color: var(--disabled-button-font-color);
+    border-color: var(--button-color-disabled);
+    background-color: var(--button-color-disabled);
+}
+
+/* ButtonTransparent */
+.transparent {
+    border-color: var(--button-color-default);
+    background-color: color-mix(in srgb, var(--button-color-default) 78.43%, transparent);
+}
+
+.transparent:hover {
+    border-color: var(--button-color-hovered);
+    background-color: color-mix(in srgb, var(--button-color-hovered) 78.43%, transparent);
+}
+
+.transparent:active,
+.transparent:checked {
+    border-color: var(--button-color-pressed);
+    background-color: color-mix(in srgb, var(--button-color-pressed) 78.43%, transparent);
+}
+
+.transparent:disabled {
+    border-color: var(--button-color-disabled);
+    background-color: color-mix(in srgb, var(--button-color-disabled) 78.43%, transparent);
+}
+
+/* negative: the caution buttons; confirming: CssConfirmButton waiting for the second click */
+css-button.negative,
+css-button.confirming {
+    border-color: var(--bad);
+    background-color: var(--bad);
+}
+
+css-button.negative:hover,
+css-button.confirming:hover {
+    border-color: var(--light-bad);
+    background-color: var(--light-bad);
+}
+
+css-button.negative:active,
+css-button.negative:checked,
+css-button.confirming:active,
+css-button.confirming:checked {
+    border-color: var(--dark-bad);
+    background-color: var(--dark-bad);
+}
+
+css-button.negative:disabled,
+css-button.confirming:disabled {
+    border-color: var(--darkest-bad);
+    background-color: var(--darkest-bad);
+}
+
+/* ButtonColorBlue */
+css-button.blue {
+    border-color: var(--blue-button-color-default);
+    background-color: var(--blue-button-color-default);
+}
+
+css-button.blue:hover {
+    border-color: var(--blue-button-color-hovered);
+    background-color: var(--blue-button-color-hovered);
+}
+
+css-button.blue:active,
+css-button.blue:checked {
+    border-color: var(--blue-button-color-pressed);
+    background-color: var(--blue-button-color-pressed);
+}
+
+css-button.blue:disabled {
+    border-color: var(--blue-button-color-disabled);
+    background-color: var(--blue-button-color-disabled);
+}
+
+/* ButtonColorGold (ContainerButton and TextureButton) */
+.gold {
+    border-color: var(--gold-button-color-default);
+    background-color: var(--gold-button-color-default);
+}
+
+.gold:hover {
+    border-color: var(--gold-button-color-hovered);
+    background-color: var(--gold-button-color-hovered);
+}
+
+.gold:active,
+.gold:checked {
+    border-color: var(--gold-button-color-pressed);
+    background-color: var(--gold-button-color-pressed);
+}
+
+.gold:disabled {
+    border-color: var(--gold-button-color-disabled);
+    background-color: var(--gold-button-color-disabled);
+}
+
+/* ButtonColorRed */
+.red,
+.red:active,
+.red:checked {
+    border-color: var(--bad);
+    background-color: var(--bad);
+}
+
+.red:hover {
+    border-color: var(--light-bad);
+    background-color: var(--light-bad);
+}
+
+/* ButtonColorGreen */
+.green,
+.green:active,
+.green:checked {
+    border-color: var(--good);
+    background-color: var(--good);
+}
+
+.green:hover {
+    border-color: var(--light-good);
+    background-color: var(--light-good);
+}
+
+/* ButtonAccept (merge with green?) */
+.accept,
+.accept:active,
+.accept:checked {
+    border-color: var(--good);
+    background-color: var(--good);
+}
+
+.accept:hover {
+    border-color: var(--light-good);
+    background-color: var(--light-good);
+}
+
+.accept:disabled {
+    border-color: var(--darkest-good);
+    background-color: var(--darkest-good);
+}
+
+/* ButtonEmpty: after all the colors, the selectors have the same specificity */
+.empty,
+.empty:hover,
+.empty:active,
+.empty:checked,
+.empty:disabled {
+    background: transparent;
+    padding: 0;
+}
+
+/* ---------- Examine buttons ---------- */
+
+/* ExamineButton.StyleClassExamineButton: examine-button */
+.examine-button {
+    border-color: var(--gold-button-color-default);
+    background-color: var(--gold-button-color-default);
+}
+
+.examine-button:hover {
+    border-color: var(--gold-button-color-hovered);
+    background-color: var(--gold-button-color-hovered);
+}
+
+.examine-button:active,
+.examine-button:checked {
+    border-color: var(--gold-button-color-pressed);
+    background-color: var(--gold-button-color-pressed);
+}
+
+.examine-button:disabled {
+    border-color: var(--gold-button-color-disabled);
+    background-color: var(--gold-button-color-disabled);
+}

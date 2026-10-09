@@ -8,19 +8,15 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <see cref="Robust.Client.UserInterface.Controls.CheckBox"/>.
 /// </summary>
 /// <remarks>
-/// The box is <see cref="Indicator"/> (style class <see cref="IndicatorStyleClass"/>, plus
-/// <see cref="CheckedStyleClass"/> while checked) and the text is <see cref="Label"/> (style class
-/// <see cref="LabelStyleClass"/>). Select them with <c>css-check-box > .indicator.checked</c>; the check box itself
+/// The box is <see cref="Indicator"/> (style class <see cref="CssClass.Indicator"/>, plus
+/// <see cref="CssClass.Checked"/> while checked) and the text is <see cref="Label"/> (style class
+/// <see cref="CssClass.Label"/>). Select them with <c>css-check-box > .indicator.checked</c>; the check box itself
 /// matches <c>:checked</c>, <c>:hover</c>, <c>:active</c> and <c>:disabled</c>. The space between them is
 /// <see cref="Gap"/> (CSS <c>gap</c>).
 /// </remarks>
 [Virtual, UsedImplicitly]
 public partial class CssCheckBox : CssButton
 {
-    public const string IndicatorStyleClass = "indicator";
-    public const string LabelStyleClass = "label";
-    public const string CheckedStyleClass = "checked";
-
     private readonly CssBoxContainer _box;
 
     /// <summary>
@@ -82,14 +78,14 @@ public partial class CssCheckBox : CssButton
             AlignSelf = CssAlignSelf.Center,
             MouseFilter = MouseFilterMode.Ignore,
         };
-        Indicator.AddCssStyleClass(IndicatorStyleClass);
+        Indicator.AddCssStyleClass(CssClass.Indicator);
 
         Label = new CssControl
         {
             AlignSelf = CssAlignSelf.Center,
             MouseFilter = MouseFilterMode.Ignore,
         };
-        Label.AddCssStyleClass(LabelStyleClass);
+        Label.AddCssStyleClass(CssClass.Label);
 
         _box = new CssBoxContainer
         {
@@ -115,8 +111,8 @@ public partial class CssCheckBox : CssButton
             return;
 
         if (Pressed)
-            Indicator.AddCssStyleClass(CheckedStyleClass);
+            Indicator.AddCssStyleClass(CssClass.Checked);
         else
-            Indicator.RemoveCssStyleClass(CheckedStyleClass);
+            Indicator.RemoveCssStyleClass(CssClass.Checked);
     }
 }

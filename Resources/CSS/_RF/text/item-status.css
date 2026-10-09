@@ -1,0 +1,16 @@
+/* ---------- Item status ---------- */
+
+/* ItemStatus (the rule for the hands wins over the one for RichTextLabel, they have the same selector now) */
+.item-status {
+    font-size: 10px;
+    line-height: 0.7;
+    margin: 0 0 2px 4px;
+}
+
+/* ItemStatusNotHeld */
+.item-status-not-held {
+    font-size: 10px;
+    font-style: italic;
+    color: var(--gray-silver);
+    margin: 0 0 2px 4px;
+}

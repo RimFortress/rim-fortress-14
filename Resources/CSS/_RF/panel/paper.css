@@ -1,0 +1,10 @@
+/* ---------- Paper ---------- */
+
+/* PaperDefaultBorder: the default look of paper in UIs. Pages can have components which override this */
+.paper-default-border {
+    background-image: texture("/Textures/Interface/Paper/paper_background_default.svg.96dpi.png");
+    background-repeat: stretch;
+    background-color: var(--default-paper-background-color);
+    patch-margin: 16px;
+    padding: 16px;
+}

@@ -1,24 +1,21 @@
-<Control
+<ui:RfLobbyCharacterPreviewPanel
     xmlns="https://spacestation14.io"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls">
-    <BoxContainer Name="VBox" Orientation="Vertical">
-        <controls:NanoHeading Name="Header" Text="{Loc 'lobby-characters-preview-panel-header'}">
-
-        </controls:NanoHeading>
-        <BoxContainer Name="Loaded" Orientation="Vertical"
-                      Visible="False">
-            <BoxContainer Name="ViewBox" Orientation="Horizontal" HorizontalAlignment="Center">
-
-            </BoxContainer>
-            <controls:VSpacer/>
-            <BoxContainer HorizontalAlignment="Center" Margin="0 5 0 0">
-                <Button Name="CharacterSetup" Text="{Loc 'lobby-character-preview-panel-characters-setup-button'}"
-                        StyleClasses="OpenRight"/>
-                <Button Name="EquipmentSetup" Text="{Loc 'lobby-character-preview-panel-equipment-setup-button'}"
-                        StyleClasses="OpenLeft"/>
-            </BoxContainer>
-        </BoxContainer>
-        <Label Name="Unloaded" Text="{Loc 'lobby-character-preview-panel-unloaded-preferences-label'}"/>
-    </BoxContainer>
-</Control>
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
+    FlexDirection="Column">
+    <css:CssControl Text="{Loc 'lobby-characters-preview-panel-header'}"
+                    CssStyleClasses="rim-heading label-heading" />
+    <controls:CssBoxContainer Name="Loaded" FlexDirection="Column" Visible="False">
+        <controls:CssBoxContainer Name="ViewBox" FlexDirection="Row" CssStyleIdentifier="preview-view-box" />
+        <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="preview-buttons">
+            <controls:CssButton Name="CharacterSetup"
+                                Text="{Loc 'lobby-character-preview-panel-characters-setup-button'}"
+                                CssStyleClasses="open-right" />
+            <controls:CssButton Name="EquipmentSetup"
+                                Text="{Loc 'lobby-character-preview-panel-equipment-setup-button'}"
+                                CssStyleClasses="open-left" />
+        </controls:CssBoxContainer>
+    </controls:CssBoxContainer>
+    <css:CssControl Name="Unloaded" Text="{Loc 'lobby-character-preview-panel-unloaded-preferences-label'}" />
+</ui:RfLobbyCharacterPreviewPanel>

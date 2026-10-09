@@ -168,57 +168,63 @@ public sealed class StyleBoxBorderImage(
         var innerBottom = area.Bottom - wB;
 
         // Corners.
-        DrawRegion(handle, new UIBox2(area.Left, area.Top, innerLeft, innerTop), new UIBox2(0, 0, sL, sT));
-        DrawRegion(handle, new UIBox2(innerRight, area.Top, area.Right, innerTop), new UIBox2(texW - sR, 0, texW, sT));
-        DrawRegion(handle, new UIBox2(area.Left, innerBottom, innerLeft, area.Bottom), new UIBox2(0, texH - sB, sL, texH));
-        DrawRegion(handle, new UIBox2(innerRight, innerBottom, area.Right, area.Bottom), new UIBox2(texW - sR, texH - sB, texW, texH));
+        DrawRegion(handle, new UIBox2(area.Left, area.Top, innerLeft, innerTop), new UIBox2(0, 0, sL, sT), Top.Color);
+        DrawRegion(handle, new UIBox2(innerRight, area.Top, area.Right, innerTop), new UIBox2(texW - sR, 0, texW, sT), Top.Color);
+        DrawRegion(handle, new UIBox2(area.Left, innerBottom, innerLeft, area.Bottom), new UIBox2(0, texH - sB, sL, texH), Bottom.Color);
+        DrawRegion(handle, new UIBox2(innerRight, innerBottom, area.Right, area.Bottom), new UIBox2(texW - sR, texH - sB, texW, texH), Bottom.Color);
+
+        // Slices that overlap (e.g. the initial 100%) leave no middle in the image: there are no edges to draw,
+        // only the corners.
+        var hasMiddleX = texW - sL - sR > 0f;
+        var hasMiddleY = texH - sT - sB > 0f;
 
         // Edges. The tile of an edge keeps the proportions of its slice in the direction across the edge.
-        if (sT > 0f)
+        if (sT > 0f && hasMiddleX)
         {
             DrawEdge(handle,
                 new UIBox2(innerLeft, area.Top, innerRight, innerTop),
                 new UIBox2(sL, 0, texW - sR, sT),
                 (texW - sL - sR) * (wT / sT),
                 horizontal: true,
-                RepeatX);
+                RepeatX, Top.Color);
         }
 
-        if (sB > 0f)
+        if (sB > 0f && hasMiddleX)
         {
             DrawEdge(handle,
                 new UIBox2(innerLeft, innerBottom, innerRight, area.Bottom),
                 new UIBox2(sL, texH - sB, texW - sR, texH),
                 (texW - sL - sR) * (wB / sB),
                 horizontal: true,
-                RepeatX);
+                RepeatX, Bottom.Color);
         }
 
-        if (sL > 0f)
+        if (sL > 0f && hasMiddleY)
         {
             DrawEdge(handle,
                 new UIBox2(area.Left, innerTop, innerLeft, innerBottom),
                 new UIBox2(0, sT, sL, texH - sB),
                 (texH - sT - sB) * (wL / sL),
                 horizontal: false,
-                RepeatY);
+                RepeatY, Left.Color);
         }
 
-        if (sR > 0f)
+        if (sR > 0f && hasMiddleY)
         {
             DrawEdge(handle,
                 new UIBox2(innerRight, innerTop, area.Right, innerBottom),
                 new UIBox2(texW - sR, sT, texW, texH - sB),
                 (texH - sT - sB) * (wR / sR),
                 horizontal: false,
-                RepeatY);
+                RepeatY, Right.Color);
         }
 
-        if (Fill)
+        if (Fill && hasMiddleX && hasMiddleY)
         {
             DrawRegion(handle,
                 new UIBox2(innerLeft, innerTop, innerRight, innerBottom),
-                new UIBox2(sL, sT, texW - sR, texH - sB));
+                new UIBox2(sL, sT, texW - sR, texH - sB),
+                Top.Color);
         }
     }
 
@@ -250,12 +256,12 @@ public sealed class StyleBoxBorderImage(
                 _ => slice * uiScale, // auto
             });
 
-    private void DrawRegion(DrawingHandleScreen handle, UIBox2 dest, UIBox2 src)
+    private void DrawRegion(DrawingHandleScreen handle, UIBox2 dest, UIBox2 src, Color tint)
     {
         if (dest.Width <= 0f || dest.Height <= 0f || src.Width <= 0f || src.Height <= 0f)
             return;
 
-        handle.DrawTextureRectRegion(Texture, dest, src);
+        handle.DrawTextureRectRegion(Texture, dest, src, tint);
     }
 
     /// <summary>
@@ -267,7 +273,8 @@ public sealed class StyleBoxBorderImage(
         UIBox2 src,
         float tileLength,
         bool horizontal,
-        BorderImageRepeatMode mode)
+        BorderImageRepeatMode mode,
+        Color tint)
     {
         var length = horizontal ? dest.Width : dest.Height;
 
@@ -276,7 +283,7 @@ public sealed class StyleBoxBorderImage(
 
         if (mode == BorderImageRepeatMode.Stretch || tileLength <= 0f || length / tileLength > MaxTiles)
         {
-            DrawRegion(handle, dest, src);
+            DrawRegion(handle, dest, src, tint);
             return;
         }
 
@@ -327,13 +334,15 @@ public sealed class StyleBoxBorderImage(
             {
                 DrawRegion(handle,
                     new UIBox2(dest.Left + clippedStart, dest.Top, dest.Left + clippedEnd, dest.Bottom),
-                    new UIBox2(src.Left + src.Width * from, src.Top, src.Left + src.Width * to, src.Bottom));
+                    new UIBox2(src.Left + src.Width * from, src.Top, src.Left + src.Width * to, src.Bottom),
+                    tint);
             }
             else
             {
                 DrawRegion(handle,
                     new UIBox2(dest.Left, dest.Top + clippedStart, dest.Right, dest.Top + clippedEnd),
-                    new UIBox2(src.Left, src.Top + src.Height * from, src.Right, src.Top + src.Height * to));
+                    new UIBox2(src.Left, src.Top + src.Height * from, src.Right, src.Top + src.Height * to),
+                    tint);
             }
         }
     }

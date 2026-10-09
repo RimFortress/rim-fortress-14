@@ -1,0 +1,67 @@
+/* ---------- Texture buttons ---------- */
+
+/* HelpButton */
+.help-button {
+    background-image: texture("/Textures/Interface/VerbIcons/information.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* CrossButtonRed */
+.cross-button-red {
+    background-image: texture("/Textures/_RF/Interface/Style/cross.png");
+    background-repeat: no-repeat;
+    background-color: var(--bad);
+}
+
+.cross-button-red:hover {
+    background-color: var(--light-bad);
+}
+
+.cross-button-red:active,
+.cross-button-red:checked {
+    background-color: var(--darkest-bad);
+}
+
+/* pinButtonPinned */
+.pin-button-pinned {
+    background-image: texture("/Textures/Interface/Bwoink/pinned.png");
+    background-repeat: no-repeat;
+}
+
+/* pinButtonUnpinned */
+.pin-button-unpinned {
+    background-image: texture("/Textures/Interface/Bwoink/un_pinned.png");
+    background-repeat: no-repeat;
+}
+
+/* ---------- Radial menu ---------- */
+
+/* RadialMenuButton */
+.radial-menu-button {
+    background-image: texture("/Textures/Interface/Radial/button_normal.png");
+    background-repeat: no-repeat;
+}
+
+.radial-menu-button:hover {
+    background-image: texture("/Textures/Interface/Radial/button_hover.png");
+}
+
+/* RadialMenuCloseButton */
+.radial-menu-close-button {
+    background-image: texture("/Textures/Interface/Radial/close_normal.png");
+    background-repeat: no-repeat;
+}
+
+.radial-menu-close-button:hover {
+    background-image: texture("/Textures/Interface/Radial/close_hover.png");
+}
+
+/* RadialMenuBackButton */
+.radial-menu-back-button {
+    background-image: texture("/Textures/Interface/Radial/back_normal.png");
+    background-repeat: no-repeat;
+}
+
+.radial-menu-back-button:hover {
+    background-image: texture("/Textures/Interface/Radial/back_hover.png");
+}

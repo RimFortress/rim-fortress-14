@@ -1,7 +1,7 @@
 using Content.Client._RF.Lobby.UI;
+using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Audio;
 using Content.Client.GameTicking.Managers;
-using Content.Client.Message;
 using Content.Client.UserInterface.Systems.Chat;
 using Content.Client.Voting;
 using Content.Shared.CCVar;
@@ -13,6 +13,7 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Lobby;
 
@@ -33,6 +34,10 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
 
     protected override Type? LinkedScreenType { get; } = typeof(RfLobbyGui);
     public RfLobbyGui? Lobby;
+
+    // Setting the text of a CssControl rebuilds it, so the per-frame texts are set only when they change.
+    private string? _startTimeText;
+    private string? _stationTimeText;
 
     protected override void Startup()
     {
@@ -56,9 +61,10 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         var lobbyNameCvar = _cfg.GetCVar(CCVars.ServerLobbyName);
         var serverName = _baseClient.GameInfo?.ServerName ?? string.Empty;
 
-        Lobby.ServerName.Text = string.IsNullOrEmpty(lobbyNameCvar)
+        // The name comes from the server, so it is not markup.
+        Lobby.ServerName.SetPlainText(string.IsNullOrEmpty(lobbyNameCvar)
             ? Loc.GetString("ui-lobby-title", ("serverName", serverName))
-            : lobbyNameCvar;
+            : lobbyNameCvar);
 
         var width = _cfg.GetCVar(CCVars.ServerLobbyRightPanelWidth);
         Lobby.RightSide.SetWidth = width;
@@ -100,19 +106,19 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         Lobby?.SwitchState(state);
     }
 
-    private void OnSetupPressed(BaseButton.ButtonEventArgs args)
+    private void OnSetupPressed(CssButtonEventArgs args)
     {
         SetReady(false);
         Lobby?.SwitchState(RfLobbyGui.LobbyGuiState.CharacterSetup);
     }
 
-    private void OnEquipmentSetupPressed(BaseButton.ButtonEventArgs args)
+    private void OnEquipmentSetupPressed(CssButtonEventArgs args)
     {
         SetReady(false);
         Lobby?.SwitchState(RfLobbyGui.LobbyGuiState.EquipmentSetup);
     }
 
-    private void OnReadyPressed(BaseButton.ButtonEventArgs args)
+    private void OnReadyPressed(CssButtonEventArgs args)
     {
         if (!_gameTicker.IsGameStarted)
         {
@@ -123,7 +129,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         _consoleHost.ExecuteCommand("scene RimFortressState");
     }
 
-    private void OnReadyToggled(BaseButton.ButtonToggledEventArgs args)
+    private void OnReadyToggled(CssButtonToggledEventArgs args)
     {
         SetReady(args.Pressed);
     }
@@ -132,13 +138,13 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
     {
         if (_gameTicker.IsGameStarted)
         {
-            Lobby!.StartTime.Text = string.Empty;
+            SetStartTime(string.Empty);
             var roundTime = _gameTiming.CurTime.Subtract(_gameTicker.RoundStartTimeSpan);
-            Lobby!.StationTime.Text = Loc.GetString("lobby-state-player-status-round-time", ("hours", roundTime.Hours), ("minutes", roundTime.Minutes));
+            SetStationTime(Loc.GetString("lobby-state-player-status-round-time", ("hours", roundTime.Hours), ("minutes", roundTime.Minutes)));
             return;
         }
 
-        Lobby!.StationTime.Text = Loc.GetString("lobby-state-player-status-round-not-started");
+        SetStationTime(Loc.GetString("lobby-state-player-status-round-not-started"));
         string text;
 
         if (_gameTicker.Paused)
@@ -147,7 +153,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         }
         else if (_gameTicker.StartTime < _gameTiming.CurTime)
         {
-            Lobby!.StartTime.Text = Loc.GetString("lobby-state-soon");
+            SetStartTime(Loc.GetString("lobby-state-soon"));
             return;
         }
         else
@@ -168,7 +174,25 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
             }
         }
 
-        Lobby!.StartTime.Text = Loc.GetString("lobby-state-round-start-countdown-text", ("timeLeft", text));
+        SetStartTime(Loc.GetString("lobby-state-round-start-countdown-text", ("timeLeft", text)));
+    }
+
+    private void SetStartTime(string text)
+    {
+        if (_startTimeText == text)
+            return;
+
+        _startTimeText = text;
+        Lobby!.StartTime.Text = text;
+    }
+
+    private void SetStationTime(string text)
+    {
+        if (_stationTimeText == text)
+            return;
+
+        _stationTimeText = text;
+        Lobby!.StationTime.Text = text;
     }
 
     private void LobbyStatusUpdated()
@@ -193,7 +217,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         }
         else
         {
-            Lobby!.StartTime.Text = string.Empty;
+            SetStartTime(string.Empty);
             Lobby!.ReadyButton.Text = Loc.GetString(Lobby!.ReadyButton.Pressed
                 ? "lobby-state-player-status-ready"
                 : "lobby-state-player-status-not-ready");
@@ -213,7 +237,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
     {
         if (ev.SoundtrackFilename == null)
         {
-            Lobby!.LobbySong.SetMarkup(Loc.GetString("lobby-state-song-no-song-text"));
+            Lobby!.LobbySong.Text = Loc.GetString("lobby-state-song-no-song-text");
         }
         else if (
             ev.SoundtrackFilename != null
@@ -230,11 +254,12 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
                 ? Loc.GetString("lobby-state-song-unknown-artist")
                 : lobbyStream.Artist;
 
+            // The tags of the file are not trusted.
             var markup = Loc.GetString("lobby-state-song-text",
-                ("songTitle", title),
-                ("songArtist", artist));
+                ("songTitle", FormattedMessage.EscapeText(title)),
+                ("songArtist", FormattedMessage.EscapeText(artist)));
 
-            Lobby!.LobbySong.SetMarkup(markup);
+            Lobby!.LobbySong.SetMessage(FormattedMessage.FromMarkupPermissive(markup));
         }
     }
 
@@ -248,13 +273,13 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
                 ("backgroundTitle", Loc.GetString(proto.Title)),
                 ("backgroundArtist", Loc.GetString(proto.Artist)));
 
-            Lobby!.LobbyBackground.SetMarkup(markup);
+            Lobby!.LobbyBackground.Text = markup;
         }
         else
         {
             Lobby!.Background.Texture = null;
 
-            Lobby!.LobbyBackground.SetMarkup(Loc.GetString("lobby-state-background-no-background-text"));
+            Lobby!.LobbyBackground.Text = Loc.GetString("lobby-state-background-no-background-text");
         }
     }
 

@@ -1,11 +1,9 @@
 <controls:IntCounter
     xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
-    <BoxContainer Name="ItemCountBox" Access="Public" Orientation="Horizontal">
-        <Button Name="Plus" Margin="1 2 1 2"
-                Text="+" StyleClasses="OpenRight"/>
-        <LineEdit Name="CountLine" Margin="0 5" MinWidth="50"/>
-        <Button Name="Minus" Margin="1 2 1 2"
-                Text="–" StyleClasses="OpenLeft"/>
-    </BoxContainer>
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    FlexDirection="Row">
+    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
+    <controls:CssButton Name="Plus" Text="+" CssStyleClasses="open-right" />
+    <controls:CssLineEdit Name="CountLine" />
+    <controls:CssButton Name="Minus" Text="–" CssStyleClasses="open-left" />
 </controls:IntCounter>

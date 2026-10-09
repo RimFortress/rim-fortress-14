@@ -1,8 +1,10 @@
+using Content.Client._RF.UserInterface;
 using System.Linq;
+using Content.Client._RF.CSS;
+using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Info;
 using Content.Client.Info.PlaytimeStats;
 using Content.Client.Lobby;
-using Content.Client.Stylesheets;
 using Content.Shared._RF.CCVar;
 using Content.Shared.CCVar;
 using Content.Shared.Preferences;
@@ -19,12 +21,12 @@ namespace Content.Client._RF.Lobby.UI;
 /// Holds the entire character setup GUI, from character picks to individual character editing.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class RfCharacterSetupGui : Control
+public sealed partial class RfCharacterSetupGui : CssBoxContainer
 {
     [Dependency] private IClientPreferencesManager _preferencesManager = default!;
     [Dependency] private IConfigurationManager _cfg = default!;
 
-    private readonly Button _createNewCharacterButton;
+    private readonly CssButton _createNewCharacterButton;
 
     public event Action<int>? OnSelected;
     public event Action? OnDirty;
@@ -75,7 +77,7 @@ public sealed partial class RfCharacterSetupGui : Control
 
         Profiles = _preferencesManager.Preferences?.Characters.ToDictionary();
 
-        _createNewCharacterButton = new Button
+        _createNewCharacterButton = new CssButton
         {
             Text = Loc.GetString("character-setup-gui-create-new-character-button"),
         };
@@ -121,7 +123,7 @@ public sealed partial class RfCharacterSetupGui : Control
         Characters.DisposeAllChildren();
 
         var numberOfFullSlots = 0;
-        var characterButtonsGroup = new ButtonGroup();
+        var characterButtonsGroup = new CssButtonGroup();
 
         if (!_preferencesManager.ServerDataLoaded
             || _preferencesManager.Preferences == null)
@@ -158,11 +160,9 @@ public sealed partial class RfCharacterSetupGui : Control
 
             if (numberOfFullSlots > maxPops && !separatorAdded)
             {
-                Characters.AddChild(new PanelContainer
-                {
-                    Margin = new Thickness(0, 10f),
-                    StyleClasses = { StyleClass.HighDivider },
-                });
+                var divider = new CssControl { Margin = new Thickness(0, 10f) };
+                divider.AddCssStyleClass(CssClass.HighDivider);
+                Characters.AddChild(divider);
 
                 separatorAdded = true;
             }

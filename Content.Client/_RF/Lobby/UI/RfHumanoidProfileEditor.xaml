@@ -1,133 +1,121 @@
-<BoxContainer xmlns="https://spacestation14.io"
-         xmlns:humanoid="clr-namespace:Content.Client.Humanoid"
-         xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
-         xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
-         HorizontalExpand="True">
-        <BoxContainer Orientation="Vertical" Margin="10" HorizontalExpand="True">
-            <!-- Middle container -->
-            <BoxContainer Orientation="Horizontal" SeparationOverride="10" HorizontalExpand="True">
-                <!-- Name box-->
-                <PanelContainer StyleClasses="PanelHighlighted">
-                    <BoxContainer Orientation="Vertical">
-                        <BoxContainer Orientation="Horizontal" VerticalExpand="True">
-                            <Label Text="{Loc 'humanoid-profile-editor-name-label'}" />
-                            <LineEdit Name="NameEdit" MinSize="270 0" VerticalAlignment="Center" Margin="5 0 0 0" />
-                            <Button Name="NameRandomize" Text="{Loc 'humanoid-profile-editor-randomize'}" />
-                        </BoxContainer>
-                        <Button Name="RandomizeEverythingButton" HorizontalAlignment="Center"
-                                HorizontalExpand="False" MaxWidth="256"
+<ui:RfHumanoidProfileEditor
+    xmlns="https://spacestation14.io"
+    xmlns:humanoid="clr-namespace:Content.Client.Humanoid"
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
+    xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
+    FlexDirection="Column">
+    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
+    <!-- The TabContainer, OptionButtons, Sliders and the pickers have no CSS version yet. -->
+    <!-- Middle container -->
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-top">
+        <!-- Name box-->
+        <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
+                                  CssStyleIdentifier="profile-name-panel">
+            <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-name-row">
+                <css:CssControl Text="{Loc 'humanoid-profile-editor-name-label'}" />
+                <controls:CssLineEdit Name="NameEdit" />
+                <controls:CssButton Name="NameRandomize" Text="{Loc 'humanoid-profile-editor-randomize'}" />
+            </controls:CssBoxContainer>
+            <controls:CssButton Name="RandomizeEverythingButton" CssStyleIdentifier="profile-randomize-all"
                                 Text="{Loc 'humanoid-profile-editor-randomize-everything'}" />
-                        <RichTextLabel Name="WarningLabel" HorizontalExpand="False"
-                                       VerticalExpand="True" MaxWidth="425"
-                                       HorizontalAlignment="Left" />
-                    </BoxContainer>
-                </PanelContainer>
+            <css:CssControl Name="WarningLabel" CssStyleClasses="danger" CssStyleIdentifier="profile-warning" />
+        </controls:CssBoxContainer>
 
-                <BoxContainer HorizontalExpand="True"/>
+        <css:CssControl CssStyleClasses="flex-fill" />
 
-                <!-- Import/Export -->
-                <PanelContainer StyleClasses="PanelDarkBordered">
-                    <BoxContainer Orientation="Vertical" MinSize="60 0"
-                                  VerticalExpand="True" HorizontalExpand="True"
-                                  HorizontalAlignment="Right">
-                        <Button Name="ImportButton" Text="{Loc 'humanoid-profile-editor-import-button'}"/>
-                        <Button Name="ExportButton" Text="{Loc 'humanoid-profile-editor-export-button'}"/>
-                        <Button Name="ExportImageButton" Text="{Loc 'humanoid-profile-editor-export-image-button'}"/>
-                        <Button Name="OpenImagesButton" Text="{Loc 'humanoid-profile-editor-open-image-button'}"/>
-                    </BoxContainer>
-                </PanelContainer>
-            </BoxContainer>
+        <!-- Import/Export -->
+        <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-dark-bordered"
+                                  CssStyleIdentifier="profile-export-panel">
+            <controls:CssButton Name="ImportButton" Text="{Loc 'humanoid-profile-editor-import-button'}" />
+            <controls:CssButton Name="ExportButton" Text="{Loc 'humanoid-profile-editor-export-button'}" />
+            <controls:CssButton Name="ExportImageButton" Text="{Loc 'humanoid-profile-editor-export-image-button'}" />
+            <controls:CssButton Name="OpenImagesButton" Text="{Loc 'humanoid-profile-editor-open-image-button'}" />
+        </controls:CssBoxContainer>
+    </controls:CssBoxContainer>
 
-            <Control MinHeight="10"/>
+    <css:CssControl MinHeight="10" />
 
-            <!-- tabContainer -->
-            <TabContainer Name="TabContainer" VerticalExpand="True">
-                <BoxContainer Name="AppearanceTab" Orientation="Vertical" HorizontalExpand="True">
-                    <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
-                        <!-- Sprite view -->
-                        <PanelContainer StyleClasses="PanelDarkBordered" Margin="3">
-                            <BoxContainer Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True">
-                                <profile:ProfilePreviewSpriteView Name="SpriteView" Stretch="Fill"
-                                                                  MinSize="250 250" SizeFlagsStretchRatio="1"
-                                                                  VerticalExpand="True" HorizontalExpand="True"/>
-                                <BoxContainer VerticalExpand="True"/>
-                                <BoxContainer Orientation="Horizontal"
-                                              HorizontalAlignment="Center" VerticalAlignment="Bottom">
-                                    <Button Name="SpriteRotateLeft" Text="◀" StyleClasses="OpenRight" />
-                                    <Button Name="SpriteRotateRight" Text="▶" StyleClasses="OpenLeft" />
-                                </BoxContainer>
-                            </BoxContainer>
-                        </PanelContainer>
-                        <BoxContainer HorizontalExpand="True"/>
-                        <PanelContainer StyleClasses="PanelHighlighted" MinWidth="165" Margin="3">
-                            <BoxContainer Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
-                                <!-- Species -->
-                                <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
-                                    <Label Text="{Loc 'humanoid-profile-editor-species-label'}" Align="Left"/>
-                                    <BoxContainer HorizontalExpand="True"/>
-                                    <TextureButton Name="SpeciesInfoButton" Scale="0.3 0.3"
-                                                   VerticalAlignment="Center"
-                                                   ToolTip="{Loc 'humanoid-profile-editor-guidebook-button-tooltip'}"/>
-                                </BoxContainer>
-                                <OptionButton Name="SpeciesButton" HorizontalExpand="True" />
-                                <PanelContainer Margin="2" StyleClasses="LowDivider"/>
-                                <!-- Age -->
-                                <Label Text="{Loc 'humanoid-profile-editor-age-label'}" Align="Left"/>
-                                <LineEdit Name="AgeEdit" MinSize="40 0" HorizontalExpand="True" />
-                                <PanelContainer Margin="2" StyleClasses="LowDivider"/>
-                                <!-- Sex -->
-                                <Label Text="{Loc 'humanoid-profile-editor-sex-label'}" Align="Left"/>
-                                <OptionButton Name="SexButton" HorizontalExpand="True" />
-                                <PanelContainer Margin="2" StyleClasses="LowDivider"/>
-                                <!-- Pronouns -->
-                                <Label Text="{Loc 'humanoid-profile-editor-pronouns-label'}" Align="Left"/>
-                                <OptionButton Name="PronounsButton" HorizontalExpand="True" />
-                                <PanelContainer Margin="2" StyleClasses="LowDivider"/>
-                                <!-- Show clothing -->
-                                <Label Text="{Loc 'humanoid-profile-editor-clothing'}" Align="Left"/>
-                                <Button Name="ShowClothes" Pressed="True" ToggleMode="True"
-                                        Text="{Loc 'humanoid-profile-editor-clothing-show'}"
-                                        HorizontalExpand="True" />
-                            </BoxContainer>
-                        </PanelContainer>
-                    </BoxContainer>
+    <!-- tabContainer -->
+    <TabContainer Name="TabContainer" VerticalExpand="True">
+        <controls:CssBoxContainer Name="AppearanceTab" FlexDirection="Column">
+            <controls:CssBoxContainer FlexDirection="Row">
+                <!-- Sprite view -->
+                <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-dark-bordered"
+                                          CssStyleIdentifier="profile-sprite-panel">
+                    <profile:ProfilePreviewSpriteView Name="SpriteView" Stretch="Fill"
+                                                      MinSize="250 250" SizeFlagsStretchRatio="1"
+                                                      VerticalExpand="True" HorizontalExpand="True" />
+                    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-rotate">
+                        <controls:CssButton Name="SpriteRotateLeft" Text="◀" CssStyleClasses="open-right" />
+                        <controls:CssButton Name="SpriteRotateRight" Text="▶" CssStyleClasses="open-left" />
+                    </controls:CssBoxContainer>
+                </controls:CssBoxContainer>
 
-                    <PanelContainer Margin="2" StyleClasses="HighDivider"/>
+                <css:CssControl CssStyleClasses="flex-fill" />
 
-                    <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
-                        <BoxContainer Orientation="Vertical" HorizontalExpand="True">
-                            <!-- Skin -->
-                            <PanelContainer StyleClasses="PanelHighlighted" Margin="10">
-                                <BoxContainer Orientation="Vertical">
-                                    <Label Text="{Loc 'humanoid-profile-editor-skin-color-label'}"/>
-                                    <Slider HorizontalExpand="True" Name="Skin" MinValue="0" MaxValue="100" Value="20"/>
-                                    <BoxContainer Name="RgbSkinColorContainer" Visible="False" Orientation="Vertical" HorizontalExpand="True"></BoxContainer>
-                                </BoxContainer>
-                            </PanelContainer>
-                            <PanelContainer StyleClasses="PanelHighlighted" HorizontalExpand="True" VerticalExpand="True" Margin="10">
-                                <BoxContainer Orientation="Vertical">
-                                    <!-- Eyes -->
-                                    <Label Text="{Loc 'humanoid-profile-editor-eyes-label'}"/>
-                                    <humanoid:EyeColorPicker Name="EyeColorPicker" Margin="0 0 0 10"/>
-                                    <!-- Markings -->
-                                    <PanelContainer StyleClasses="PanelHighlighted" HorizontalExpand="True" VerticalExpand="True" Margin="10">
-                                        <BoxContainer Margin="10" Orientation="Vertical">
-                                            <Label Text="{Loc 'humanoid-profile-editor-markings-tab'}"/>
-                                            <humanoid:MarkingPicker Name="Markings" HorizontalExpand="True" VerticalExpand="True"/>
-                                        </BoxContainer>
-                                    </PanelContainer>
-                                </BoxContainer>
-                            </PanelContainer>
-                        </BoxContainer>
-                    </ScrollContainer>
-                </BoxContainer>
-                <ui:CharacterSkillsTab Name="SkillsTab" Margin="10"/>
-                <BoxContainer Name="TraitsTab" Orientation="Vertical" Margin="10">
-                    <!-- Traits -->
-                    <ScrollContainer VerticalExpand="True">
-                        <BoxContainer Name="TraitsList" Orientation="Vertical"/>
-                    </ScrollContainer>
-                </BoxContainer>
-            </TabContainer>
-        </BoxContainer>
-</BoxContainer>
+                <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
+                                          CssStyleIdentifier="profile-options-panel">
+                    <!-- Species -->
+                    <controls:CssBoxContainer FlexDirection="Row">
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-species-label'}" />
+                        <css:CssControl CssStyleClasses="flex-fill" />
+                        <TextureButton Name="SpeciesInfoButton" Scale="0.3 0.3"
+                                       VerticalAlignment="Center"
+                                       ToolTip="{Loc 'humanoid-profile-editor-guidebook-button-tooltip'}" />
+                    </controls:CssBoxContainer>
+                    <OptionButton Name="SpeciesButton" HorizontalExpand="True" />
+                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                    <!-- Age -->
+                    <css:CssControl Text="{Loc 'humanoid-profile-editor-age-label'}" />
+                    <controls:CssLineEdit Name="AgeEdit" MinSize="40 0" />
+                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                    <!-- Sex -->
+                    <css:CssControl Text="{Loc 'humanoid-profile-editor-sex-label'}" />
+                    <OptionButton Name="SexButton" HorizontalExpand="True" />
+                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                    <!-- Pronouns -->
+                    <css:CssControl Text="{Loc 'humanoid-profile-editor-pronouns-label'}" />
+                    <OptionButton Name="PronounsButton" HorizontalExpand="True" />
+                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                    <!-- Show clothing -->
+                    <css:CssControl Text="{Loc 'humanoid-profile-editor-clothing'}" />
+                    <controls:CssButton Name="ShowClothes" Pressed="True" ToggleMode="True"
+                                        Text="{Loc 'humanoid-profile-editor-clothing-show'}" />
+                </controls:CssBoxContainer>
+            </controls:CssBoxContainer>
+
+            <css:CssControl CssStyleClasses="high-divider profile-divider" />
+
+            <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="profile-appearance-scroll">
+                <controls:CssBoxContainer FlexDirection="Column">
+                    <!-- Skin -->
+                    <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-skin-color-label'}" />
+                        <Slider HorizontalExpand="True" Name="Skin" MinValue="0" MaxValue="100" Value="20" />
+                        <controls:CssBoxContainer Name="RgbSkinColorContainer" Visible="False" FlexDirection="Column" />
+                    </controls:CssBoxContainer>
+                    <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
+                        <!-- Eyes -->
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-eyes-label'}" />
+                        <humanoid:EyeColorPicker Name="EyeColorPicker" Margin="0 0 0 10" />
+                        <!-- Markings -->
+                        <controls:CssBoxContainer FlexDirection="Column"
+                                                  CssStyleClasses="panel-highlighted profile-block profile-markings">
+                            <css:CssControl Text="{Loc 'humanoid-profile-editor-markings-tab'}" />
+                            <humanoid:MarkingPicker Name="Markings" HorizontalExpand="True" VerticalExpand="True" />
+                        </controls:CssBoxContainer>
+                    </controls:CssBoxContainer>
+                </controls:CssBoxContainer>
+            </controls:CssScrollContainer>
+        </controls:CssBoxContainer>
+        <ui:CharacterSkillsTab Name="SkillsTab" Margin="10" />
+        <controls:CssBoxContainer Name="TraitsTab" FlexDirection="Column" Margin="10">
+            <!-- Traits -->
+            <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="profile-traits-scroll">
+                <controls:CssBoxContainer Name="TraitsList" FlexDirection="Column" />
+            </controls:CssScrollContainer>
+        </controls:CssBoxContainer>
+    </TabContainer>
+</ui:RfHumanoidProfileEditor>

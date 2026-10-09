@@ -204,7 +204,7 @@ public sealed partial class CssTextEdit : CssControl
         {
             _editable = value;
             UpdateCursorShape();
-            SetCssPseudoStyleClass(ReadOnlyPseudoClass, !value);
+            SetCssPseudoStyleClass(CssPseudoClass.ReadOnly, !value);
         }
     }
 
@@ -291,7 +291,7 @@ public sealed partial class CssTextEdit : CssControl
             return;
 
         _placeholderShown = shown;
-        SetCssPseudoStyleClass(PlaceholderShownPseudoClass, shown);
+        SetCssPseudoStyleClass(CssPseudoClass.PlaceholderShown, shown);
     }
 
     protected override void OnDisabledChanged()

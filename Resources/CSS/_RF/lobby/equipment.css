@@ -1,0 +1,94 @@
+/* ---------- RfExpeditionEquipmentEditor ---------- */
+
+rf-expedition-equipment-editor {
+    flex-grow: 1;
+}
+
+#equipment-body {
+    flex-grow: 1;
+    margin: 10px 0 0 0;
+}
+
+#equipment-categories {
+    min-width: 325px;
+    margin: 15px 35px 15px 15px;
+}
+
+#equipment-categories-label {
+    align-self: center;
+    margin: 2px;
+    color: #FFFFFF;
+}
+
+#equipment-items {
+    flex-grow: 1;
+}
+
+/* The scrollable lists are the panels themselves, the old panel was inside of the scroll */
+.equipment-list {
+    padding: 15px;
+}
+
+#equipment-items-list {
+    margin: 15px;
+}
+
+#equipment-search-panel {
+    margin: 15px 15px 0 15px;
+}
+
+#equipment-search-row {
+    gap: 2px;
+}
+
+#equipment-search-row > css-line-edit {
+    margin: 4px 0 3px 4px;
+}
+
+#equipment-search-row > css-button {
+    margin: 2px;
+}
+
+#equipment-search-divider {
+    margin: 3px 5px 3px 2px;
+}
+
+#equipment-points {
+    margin: 2px 0 0 3px;
+}
+
+/* ---------- ExpeditionItemButton ---------- */
+
+expedition-item-button {
+    margin: 0 0 3px 0;
+}
+
+#expedition-item-divider {
+    margin: 5px 10px;
+}
+
+#expedition-item-name {
+    flex-grow: 1;
+    align-self: center;
+    color: #FFFFFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#expedition-item-cost {
+    min-width: 150px;
+    align-self: center;
+    color: #FFFFFF;
+}
+
+/* ---------- IntCounter ---------- */
+
+int-counter > css-button {
+    margin: 2px 1px;
+}
+
+int-counter > css-line-edit {
+    min-width: 50px;
+    margin: 5px 0;
+}

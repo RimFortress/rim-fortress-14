@@ -9,7 +9,7 @@
         SpeedY="20"
         ScaleX="3"
         ScaleY="3" />
-    <!-- RimFortress: styled by Resources/CSS/_RF/fortress-main-menu.css -->
+    <!-- RimFortress: styled by Resources/CSS/_RF/main-menu/main-menu.css -->
     <controls:CssBoxContainer Name="VBox"
                               FlexDirection="Column"
                               CssStyleIdentifier="main-menu"
@@ -23,7 +23,7 @@
                      Stretch="KeepCentered" />
         <controls:CssBoxContainer Name="Panel"
                                   FlexDirection="Column"
-                                  CssStyleIdentifier="main-menu-panel">
+                                  CssStyleClasses="angle-rect-transparent">
             <controls:CssBoxContainer Name="Fields"
                                       FlexDirection="Column"
                                       CssStyleIdentifier="main-menu-fields">

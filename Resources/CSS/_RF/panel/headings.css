@@ -1,0 +1,31 @@
+/* ---------- Headings ---------- */
+
+/*
+ * FancyBack: the striped bar with the golden edges on top and on the bottom.
+ * The edge was drawn after `pad-size` (4) of empty space, it is the margin here. The tile of the shader is the
+ * repeating background. Put the content right into the element (a row, as a CssBoxContainer), no wrapper is needed.
+ */
+.fancy-back {
+    background-image: texture("/Textures/_RF/Interface/Style/stripeback.png");
+    background-repeat: repeat;
+    border-top: 2px solid var(--gold-fortress);
+    border-bottom: 2px solid var(--gold-fortress);
+    margin: 4px 0;
+}
+
+/* FancyBack with the StyleClassFancyBackWooden */
+.fancy-back.wooden-back {
+    background-image: texture("/Textures/_RF/Interface/Style/wooden_back.png");
+}
+
+/*
+ * NanoHeading: the panel with the heading under it. NanoHeading is the Label with this class and `label-heading`.
+ * The old control was aligned to the left.
+ */
+.rim-heading {
+    background-image: texture("/Textures/_RF/Interface/Style/rimheading.png");
+    background-repeat: stretch;
+    patch-margin: 10px 2px 2px 2px;
+    padding: 6px 4px 2px;
+    align-self: flex-start;
+}

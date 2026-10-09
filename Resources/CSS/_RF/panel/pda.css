@@ -1,0 +1,41 @@
+/* ---------- PDA ---------- */
+
+/* PdaContentBackground */
+.pda-content-background {
+    background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
+    background-repeat: stretch;
+    background-color: var(--pda-content-background);
+    patch-margin: 11px;
+    padding: 7px 9px;
+}
+
+/* PdaBackground */
+.pda-background {
+    background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
+    background-repeat: stretch;
+    background-color: var(--pda-background);
+    patch-margin: 11px;
+    padding: 7px 9px;
+}
+
+/* PdaBackgroundRect: StyleBase.BaseAngleRect */
+.pda-background-rect {
+    background-image: texture("/Textures/Interface/Nano/button.svg.96dpi.png");
+    background-repeat: stretch;
+    background-color: var(--pda-background-rect);
+    patch-margin: 10px;
+    padding: 10px;
+}
+
+/* PdaBorderRect: StyleBase.AngleBorderRect */
+.pda-border-rect {
+    background-image: texture("/Textures/Interface/Nano/geometric_panel_border.svg.96dpi.png");
+    background-repeat: stretch;
+    patch-margin: 10px;
+    padding: 10px;
+}
+
+/* BackgroundDark */
+.background-dark {
+    background-color: var(--pda-content-background);
+}

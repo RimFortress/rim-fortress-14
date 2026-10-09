@@ -1,33 +1,10 @@
+using Content.Client._RF.UserInterface;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS;
 
 public partial class CssControl
 {
-    /// <summary>
-    /// Name of the pseudo-class (<c>:hover</c>) set while <see cref="Hovered"/> is <c>true</c>.
-    /// </summary>
-    [PublicAPI]
-    public const string HoverPseudoClass = "hover";
-
-    /// <summary>
-    /// Name of the pseudo-class (<c>:focus</c>) set while <see cref="Focused"/> is <c>true</c>.
-    /// </summary>
-    [PublicAPI]
-    public const string FocusPseudoClass = "focus";
-
-    /// <summary>
-    /// Name of the pseudo-class (<c>:disabled</c>) set while <see cref="Disabled"/> is <c>true</c>.
-    /// </summary>
-    [PublicAPI]
-    public const string DisabledPseudoClass = "disabled";
-
-    /// <summary>
-    /// Name of the pseudo-class (<c>:active</c>) set while <see cref="Active"/> is <c>true</c>.
-    /// </summary>
-    [PublicAPI]
-    public const string ActivePseudoClass = "active";
-
     /// <summary>
     /// Is the cursor over this control? A hovered control matches <c>:hover</c>.
     /// </summary>
@@ -41,7 +18,7 @@ public partial class CssControl
                 return;
 
             field = value;
-            SetCssPseudoStyleClass(HoverPseudoClass, value);
+            SetCssPseudoStyleClass(CssPseudoClass.Hover, value);
         }
     }
 
@@ -58,7 +35,7 @@ public partial class CssControl
                 return;
 
             field = value;
-            SetCssPseudoStyleClass(FocusPseudoClass, value);
+            SetCssPseudoStyleClass(CssPseudoClass.Focus, value);
         }
     }
 
@@ -76,7 +53,7 @@ public partial class CssControl
                 return;
 
             field = value;
-            SetCssPseudoStyleClass(DisabledPseudoClass, value);
+            SetCssPseudoStyleClass(CssPseudoClass.Disabled, value);
             OnDisabledChanged();
         }
     }
@@ -95,7 +72,7 @@ public partial class CssControl
                 return;
 
             field = value;
-            SetCssPseudoStyleClass(ActivePseudoClass, value);
+            SetCssPseudoStyleClass(CssPseudoClass.Active, value);
         }
     }
 

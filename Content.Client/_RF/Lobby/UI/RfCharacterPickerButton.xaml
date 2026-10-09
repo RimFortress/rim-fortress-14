@@ -1,25 +1,25 @@
-<ContainerButton xmlns="https://spacestation14.io"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
-         xmlns:controls1="clr-namespace:Content.Client._RF.UserInterface.Controls">
-    <BoxContainer Orientation="Horizontal" HorizontalExpand="True"
-                  SeparationOverride="0" Name="InternalHBox">
-        <BoxContainer Orientation="Vertical">
-            <controls1:IconButton Name="Up" Access="Public" TextureScale="2 2"
-                                  SetSize="36 36" StyleClasses="OpenBoth" Disabled="True"
-                                  TexturePath="/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png"/>
-            <BoxContainer VerticalExpand="True"/>
-            <controls1:IconButton Name="Down" Access="Public" TextureScale="2 2"
-                                  SetSize="36 36" StyleClasses="OpenBoth" Disabled="True"
-                                  TexturePath="/Textures/_RF/Interface/sort-down-solid.svg.192dpi.png"/>
-        </BoxContainer>
+<controls:CssButton
+    xmlns="https://spacestation14.io"
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
+    <controls:CssBoxContainer FlexDirection="Row" MouseFilter="Ignore" CssStyleIdentifier="picker-row">
+        <controls:CssBoxContainer FlexDirection="Column" MouseFilter="Ignore">
+            <controls:CssButton Name="Up" Access="Public" Disabled="True" SetSize="36 36"
+                                CssStyleClasses="icon-button open-both">
+                <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-sort-up" />
+            </controls:CssButton>
+            <css:CssControl CssStyleClasses="flex-fill" />
+            <controls:CssButton Name="Down" Access="Public" Disabled="True" SetSize="36 36"
+                                CssStyleClasses="icon-button open-both">
+                <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-sort-down" />
+            </controls:CssButton>
+        </controls:CssBoxContainer>
         <SpriteView Scale="2 2" Margin="0 4 4 4"
                     Name="View" SetSize="64 64"
-                    OverrideDirection="South"/>
-        <RichTextLabel Name="DescriptionLabel" MaxWidth="150"
-                       HorizontalAlignment="Left" HorizontalExpand="True"/>
-        <controls:ConfirmButton Name="DeleteButton" StyleClasses="OpenBoth"
-                                Text="{Loc 'character-setup-gui-character-picker-button-delete-button'}"
-                                ConfirmationText="{Loc 'character-setup-gui-character-picker-button-confirm-delete-button'}"/>
-    </BoxContainer>
-</ContainerButton>
+                    OverrideDirection="South" />
+        <css:CssControl Name="DescriptionLabel" MouseFilter="Ignore" CssStyleIdentifier="picker-description" />
+        <controls:CssConfirmButton Name="DeleteButton" CssStyleClasses="open-both"
+                                   Text="{Loc 'character-setup-gui-character-picker-button-delete-button'}"
+                                   ConfirmationText="{Loc 'character-setup-gui-character-picker-button-confirm-delete-button'}" />
+    </controls:CssBoxContainer>
+</controls:CssButton>

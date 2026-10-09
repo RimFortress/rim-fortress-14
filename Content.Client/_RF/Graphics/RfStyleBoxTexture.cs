@@ -385,9 +385,13 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         var repeatX = Mode is StretchMode.Repeat or StretchMode.RepeatX;
         var repeatY = Mode is StretchMode.Repeat or StretchMode.RepeatY;
 
+        // The shader tiles by `area_size / (size of the region in texture pixels)`: it is the area size when
+        // the tile has the natural size of the region. Scale it to the tile size that is really wanted, and
+        // draw a single stretched tile along an axis that doesn't repeat.
+        var regionPixels = texCoords.Size;
         var areaSizeParam = new Vector2(
-            repeatX ? tileSize.X : area.Width,
-            repeatY ? tileSize.Y : area.Height);
+            repeatX ? area.Width / tileSize.X * regionPixels.X : regionPixels.X,
+            repeatY ? area.Height / tileSize.Y * regionPixels.Y : regionPixels.Y);
 
         var phaseOffset = new Vector2(
             repeatX ? (anchor.X - area.Left) / tileSize.X : 0f,

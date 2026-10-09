@@ -1,0 +1,43 @@
+/* ---------- Angle rect ---------- */
+
+/*
+ * The panel with the cut bottom-left corner. The texture is split into two: the border (angle_rect_panel_border.png)
+ * and the background (angle_rect_panel.png), which has the transparent inset of the border in itself, so it is drawn
+ * under the whole border box (background-clip: border-box) and its own inset leaves the border visible.
+ *
+ * The thickness of the border is 4px at the top and on the right, 3px at the bottom and on the left. The slice and
+ * the width of the border image are 4px at the top and on the right and 11px at the bottom and on the left: the
+ * cut corner takes 11x11 pixels of the texture and is drawn 1:1. Both textures are 24x24.
+ */
+.angle-rect,
+.angle-rect-golden,
+.angle-rect-transparent {
+    border-style: solid;
+    border-width: 4px 4px 3px 3px;
+    border-image: texture("/Textures/_RF/Interface/Style/angle_rect_panel_border.png");
+    border-image-slice: 4px 4px 11px 11px;
+    border-image-width: 4px 4px 11px 11px;
+    background-image: texture("/Textures/_RF/Interface/Style/angle_rect_panel.png");
+    background-repeat: stretch;
+    background-clip: border-box;
+    patch-margin: 4px 4px 11px 11px;
+    padding: 0 2px 3px 2px;
+}
+
+/* AngleRect */
+.angle-rect {
+    background-color: var(--signal-black);
+    border-color: var(--graphite-black);
+}
+
+/* AngleRectGolden */
+.angle-rect-golden {
+    background-color: var(--signal-black);
+    border-color: var(--gold-fortress);
+}
+
+/* AngleRectTransparent */
+.angle-rect-transparent {
+    background-color: color-mix(in srgb, var(--signal-black) 90%, transparent);
+    border-color: color-mix(in srgb, var(--graphite-black) 90%, transparent);
+}

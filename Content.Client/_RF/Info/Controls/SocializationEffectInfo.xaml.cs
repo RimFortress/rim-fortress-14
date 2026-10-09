@@ -1,3 +1,4 @@
+using Content.Client._RF.UserInterface;
 using Content.Client._RF.Stylesheets;
 using Content.Client._RF.World;
 using Content.Shared._RF.Social;
@@ -16,8 +17,8 @@ public sealed partial class SocializationEffectInfo : ContainerButton
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private IEntityManager _entity = default!;
 
-    public const string OddRowStyleClass = "odd-row";
-    public const string EvenRowStyleClass = "even-row";
+    public const string OddRowStyleClass = CssClass.OddRow;
+    public const string EvenRowStyleClass = CssClass.EvenRow;
 
     public ProtoId<SocialEffectPrototype> Proto { get; private set; }
     public int Value { get; private set; }

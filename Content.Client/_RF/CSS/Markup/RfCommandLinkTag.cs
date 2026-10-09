@@ -1,3 +1,4 @@
+using Content.Client._RF.UserInterface;
 using System.Diagnostics.CodeAnalysis;
 using Content.Client._RF.CSS.Text;
 using JetBrains.Annotations;
@@ -69,7 +70,7 @@ public sealed class RfCommandLinkControl : CssControl
         DefaultCursorShape = CursorShape.Hand;
         TextDecorationLine = CssTextDecorationLine.Underline;
         TextColor = new Color(0.4f, 0.6f, 1f);
-        AddCssStyleClass("command-link");
+        AddCssStyleClass(CssClass.CommandLink);
     }
 
     /// <summary>

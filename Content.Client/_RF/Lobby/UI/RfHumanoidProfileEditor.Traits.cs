@@ -1,8 +1,8 @@
+using Content.Client._RF.UserInterface;
 using System.Linq;
+using Content.Client._RF.CSS;
 using Content.Client.Lobby.UI.Roles;
-using Content.Client.Stylesheets;
 using Content.Shared.Traits;
-using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Lobby.UI;
@@ -22,11 +22,7 @@ public sealed partial class RfHumanoidProfileEditor
 
         if (traits.Count < 1)
         {
-            TraitsList.AddChild(new Label
-            {
-                Text = Loc.GetString("humanoid-profile-editor-no-traits"),
-                FontColorOverride = Color.Gray,
-            });
+            TraitsList.AddChild(CreateLabel(Loc.GetString("humanoid-profile-editor-no-traits"), CssClass.ProfileHint));
             return;
         }
 
@@ -59,12 +55,9 @@ public sealed partial class RfHumanoidProfileEditor
             {
                 category = _prototypeManager.Index<TraitCategoryPrototype>(categoryId);
                 // Label
-                TraitsList.AddChild(new Label
-                {
-                    Text = Loc.GetString(category.Name),
-                    Margin = new Thickness(0, 10, 0, 0),
-                    StyleClasses = { StyleClass.LabelHeading },
-                });
+                var label = CreateLabel(Loc.GetString(category.Name), CssClass.LabelHeading);
+                label.Margin = new Thickness(0, 10, 0, 0);
+                TraitsList.AddChild(label);
             }
 
             List<TraitPreferenceSelector?> selectors = new();
@@ -99,11 +92,9 @@ public sealed partial class RfHumanoidProfileEditor
             // Selection counter
             if (category is { MaxTraitPoints: >= 0 })
             {
-                TraitsList.AddChild(new Label
-                {
-                    Text = Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints)),
-                    FontColorOverride = Color.Gray
-                });
+                TraitsList.AddChild(CreateLabel(
+                    Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints)),
+                    CssClass.ProfileHint));
             }
 
             foreach (var selector in selectors)
@@ -120,5 +111,12 @@ public sealed partial class RfHumanoidProfileEditor
                 TraitsList.AddChild(selector);
             }
         }
+    }
+
+    private static CssControl CreateLabel(string text, string styleClass)
+    {
+        var label = new CssControl { Text = text };
+        label.AddCssStyleClass(styleClass);
+        return label;
     }
 }

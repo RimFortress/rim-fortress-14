@@ -140,7 +140,7 @@ public partial class CssLineEdit : CssControl
         {
             _editable = value;
             UpdateCursorShape();
-            SetCssPseudoStyleClass(ReadOnlyPseudoClass, !value);
+            SetCssPseudoStyleClass(CssPseudoClass.ReadOnly, !value);
         }
     }
 
@@ -277,7 +277,7 @@ public partial class CssLineEdit : CssControl
             return;
 
         _placeholderShown = shown;
-        SetCssPseudoStyleClass(PlaceholderShownPseudoClass, shown);
+        SetCssPseudoStyleClass(CssPseudoClass.PlaceholderShown, shown);
     }
 
     /// <summary>

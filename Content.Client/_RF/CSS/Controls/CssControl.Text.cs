@@ -546,6 +546,11 @@ public partial class CssControl
     }
 
     /// <summary>
+    /// Whether the text is centered vertically in the content box when the control is taller than the text.
+    /// </summary>
+    protected virtual bool CenterTextVertically => false;
+
+    /// <summary>
     /// Draws the control's text inside its padding and borders. Called after <see cref="DrawBackground"/>.
     /// </summary>
     protected virtual void DrawText(DrawingHandleScreen handle)
@@ -557,6 +562,16 @@ public partial class CssControl
         var area = PixelSizeBox;
         var left = area.Left + inset.Left * UIScale;
         var top = area.Top + inset.Top * UIScale;
+
+        // The control can be taller than its text (stretched by a flex container): the text of a button stays
+        // in the middle instead of sticking to the top edge.
+        if (CenterTextVertically)
+        {
+            var free = area.Height - (inset.Top + inset.Bottom) * UIScale - _textEntry.Height;
+
+            if (free > 0f)
+                top += free / 2f;
+        }
 
         // The control can be smaller than its padding and borders (e.g. squeezed by a container).
         var box = new UIBox2(

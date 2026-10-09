@@ -1,11 +1,5 @@
 /*
  * Variables of the Rim Fortress theme (StyleFortress.cs: Colors).
- *
- * Alpha variants are written as #RRGGBBAA, because there is no color-mix() yet:
- *   WithAlpha(0.8f)  -> CC
- *   WithAlpha(0.35f) -> 59
- *   WithAlpha(0.51f) -> 82
- *   WithAlpha(200)   -> C8
  */
 :root {
     --main-font: "Source Code Pro";
@@ -40,11 +34,6 @@
     --button-color-pressed: #737A52;
     --button-color-disabled: #352A21;
 
-    --button-color-default-transparent: #5E4B3AC8;
-    --button-color-hovered-transparent: #7A614BC8;
-    --button-color-pressed-transparent: #737A52C8;
-    --button-color-disabled-transparent: #352A21C8;
-
     --gold-button-color-default: #B07D2B;
     --gold-button-color-hovered: #B28A52;
     --gold-button-color-pressed: #CE9033;
@@ -65,8 +54,6 @@
 
     /* Backgrounds */
     --chat-background-color: #293329CC;
-    --graphite-black-transparent: #1A1D1ACC;
-    --dark-forest-transparent: #293329CC;
     --default-paper-background-color: #EAEDDE;
 
     /* Text */

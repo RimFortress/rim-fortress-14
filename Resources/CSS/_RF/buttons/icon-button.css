@@ -1,0 +1,56 @@
+/* ---------- Icon button ---------- */
+
+/*
+ * IconButton: the button (any shape: square, open-both) with the icon in its center. The icon is a child
+ * CssControl with the `icon` class and the texture (background-image) set per button, scaled to fit (as KeepAspectCentered); it is gold and follows the
+ * state of the button, `gold` swaps the colors as in the old control.
+ */
+.icon-button > .icon {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    background-color: var(--gold-button-color-default);
+}
+
+.icon-button:hover > .icon {
+    background-color: var(--gold-button-color-hovered);
+}
+
+.icon-button:active > .icon,
+.icon-button:checked > .icon {
+    background-color: var(--gold-button-color-pressed);
+}
+
+.icon-button:disabled > .icon {
+    background-color: var(--gold-button-color-disabled);
+}
+
+.icon-button.gold > .icon {
+    background-color: var(--button-color-default);
+}
+
+.icon-button.gold:hover > .icon {
+    background-color: var(--button-color-hovered);
+}
+
+.icon-button.gold:active > .icon,
+.icon-button.gold:checked > .icon {
+    background-color: var(--button-color-pressed);
+}
+
+.icon-button.gold:disabled > .icon {
+    background-color: var(--button-color-disabled);
+}
+
+/* The icons of .icon-button */
+.icon-sort-up {
+    background-image: texture("/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png");
+}
+
+.icon-sort-down {
+    background-image: texture("/Textures/_RF/Interface/sort-down-solid.svg.192dpi.png");
+}
+
+.icon-cross {
+    background-image: texture("/Textures/_RF/Interface/Style/cross.png");
+}

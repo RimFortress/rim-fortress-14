@@ -1,75 +1,61 @@
-<Control
+<ui:RfExpeditionEquipmentEditor
     xmlns="https://spacestation14.io"
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
-    VerticalExpand="True">
-    <PanelContainer StyleClasses="AngleRectTransparent"/>
+    xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
+    FlexDirection="Column"
+    CssStyleClasses="angle-rect-transparent">
+    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
+    <!-- Top panel -->
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" CssStyleIdentifier="setup-header">
+        <css:CssControl Text="{Loc 'expedition-equipment-editor-label'}"
+                        CssStyleClasses="label-heading-bigger" CssStyleIdentifier="setup-title" />
+        <css:CssControl CssStyleClasses="flex-fill" />
+        <controls:CssButton Name="SaveButton" Access="Public"
+                            Text="{Loc 'expedition-equipment-editor-save-button'}"
+                            CssStyleClasses="font-big" />
+        <controls:CssButton Name="ResetButton" Access="Public"
+                            Text="{Loc 'expedition-equipment-editor-reset-button'}"
+                            CssStyleClasses="font-big" />
+        <controls:CssButton Name="CloseButton" Access="Public"
+                            Text="{Loc 'expedition-equipment-editor-close-button'}"
+                            CssStyleClasses="font-big" />
+    </controls:CssBoxContainer>
 
-    <BoxContainer Orientation="Vertical">
-        <!-- Top panel -->
-        <controls:FancyBack>
-            <BoxContainer Orientation="Horizontal" MinSize="0 40">
-                <Label Text="{Loc 'expedition-equipment-editor-label'}"
-                       Margin="8 0 0 0" VAlign="Center"
-                       StyleClasses="LabelHeadingBigger" />
-                <BoxContainer HorizontalExpand="True"/>
-                <Button Name="SaveButton" Access="Public"
-                        Text="{Loc 'expedition-equipment-editor-save-button'}"
-                        StyleClasses="ButtonBig" VerticalExpand="True"/>
-                <Button Name="ResetButton" Access="Public"
-                        Text="{Loc 'expedition-equipment-editor-reset-button'}"
-                        StyleClasses="ButtonBig" VerticalExpand="True"/>
-                <Button Name="CloseButton" Access="Public"
-                        Text="{Loc 'expedition-equipment-editor-close-button'}"
-                        StyleClasses="ButtonBig" VerticalExpand="True"/>
-            </BoxContainer>
-        </controls:FancyBack>
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="equipment-body">
+        <!-- Left panel -->
+        <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="equipment-categories">
+            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back">
+                <css:CssControl Text="{Loc 'expedition-equipment-editor-categories'}"
+                                CssStyleClasses="placeholder-text" CssStyleIdentifier="equipment-categories-label" />
+            </controls:CssBoxContainer>
+            <controls:CssScrollContainer CssStyleClasses="scroll-vertical panel-light-transparent equipment-list"
+                                         CssStyleIdentifier="equipment-categories-list">
+                <controls:CssBoxContainer Name="CategoryBox" FlexDirection="Column" />
+            </controls:CssScrollContainer>
+        </controls:CssBoxContainer>
 
-        <PanelContainer Margin="15 10 15 0"/>
+        <!-- Right panel -->
+        <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="equipment-items">
+            <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
+                                      CssStyleIdentifier="equipment-search-panel">
+                <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="equipment-search-row">
+                    <controls:CssLineEdit Name="Search" FlexGrow="1"
+                                          PlaceHolder="{Loc 'expedition-equipment-editor-search'}" />
+                    <controls:CssButton Name="ClearSearch" SetSize="36 36"
+                                        CssStyleClasses="icon-button square">
+                        <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-cross" />
+                    </controls:CssButton>
+                </controls:CssBoxContainer>
 
-        <BoxContainer Orientation="Horizontal" VerticalExpand="True">
-            <!-- Left panel -->
-            <BoxContainer Margin="15" MinWidth="325" Orientation="Vertical">
-                <controls:FancyBack>
-                    <Label Margin="2" Align="Center" VAlign="Center"
-                           StyleClasses="PlaceholderText" FontColorOverride="#FFFFFFFF"
-                           Text="{Loc 'expedition-equipment-editor-categories'}"/>
-                </controls:FancyBack>
-                <ScrollContainer VerticalExpand="True">
-                    <PanelContainer StyleClasses="PanelLightTransparent" VerticalExpand="True">
-                        <BoxContainer Name="CategoryBox" Orientation="Vertical" Margin="5">
+                <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="equipment-search-divider" />
 
-                        </BoxContainer>
-                    </PanelContainer>
-                </ScrollContainer>
-            </BoxContainer>
-
-            <PanelContainer Margin="10 0 10 15"/>
-
-            <!-- Right panel -->
-            <BoxContainer HorizontalExpand="True" Orientation="Vertical">
-                <PanelContainer StyleClasses="PanelHighlighted" HorizontalExpand="True" Margin="15 15 15 0">
-                    <BoxContainer Orientation="Vertical">
-                        <BoxContainer Orientation="Horizontal">
-                            <LineEdit Name="Search" Margin="4 4 0 3" HorizontalExpand="True"
-                                      PlaceHolder="{Loc 'expedition-equipment-editor-search'}"/>
-                            <controls:IconButton Name="ClearSearch" Margin="2" TextureScale="2 2"
-                                                 SetSize="36 36" StyleClasses="ButtonSquare"
-                                                 TexturePath="/Textures/_RF/Interface/Style/cross.png"/>
-                        </BoxContainer>
-
-                        <PanelContainer Margin="2 3 5 3" StyleClasses="LowDivider"/>
-
-                        <Label Name="PointsLabel" Align="Left" Margin="3 2 0 0"/>
-                    </BoxContainer>
-                </PanelContainer>
-                <ScrollContainer VerticalExpand="True" Margin="15">
-                    <PanelContainer StyleClasses="PanelLightTransparent">
-                        <BoxContainer Name="ItemBox" Orientation="Vertical" Margin="5 5 0 5">
-
-                        </BoxContainer>
-                    </PanelContainer>
-                </ScrollContainer>
-            </BoxContainer>
-        </BoxContainer>
-    </BoxContainer>
-</Control>
+                <css:CssControl Name="PointsLabel" CssStyleIdentifier="equipment-points" />
+            </controls:CssBoxContainer>
+            <controls:CssScrollContainer CssStyleClasses="scroll-vertical panel-light-transparent equipment-list"
+                                         CssStyleIdentifier="equipment-items-list">
+                <controls:CssBoxContainer Name="ItemBox" FlexDirection="Column" />
+            </controls:CssScrollContainer>
+        </controls:CssBoxContainer>
+    </controls:CssBoxContainer>
+</ui:RfExpeditionEquipmentEditor>

@@ -1,0 +1,36 @@
+/* ---------- Chat ---------- */
+
+/* ChatMessagesBubble.StyleClassChatMessagesBubble: ChatMessagesBubble */
+.chat-messages-bubble {
+    background-image: texture("/Textures/_RF/Interface/Style/chat_messages_bubble.png");
+    background-repeat: stretch;
+    background-color: var(--light-bad);
+    patch-margin: 3px;
+    padding: 3px;
+}
+
+/* speechBox + sayBox */
+.speech-box.say-box {
+    background-image: texture("/Textures/_RF/Interface/Style/tooltip.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 2px 7px;
+}
+
+/* speechBox + whisperBox */
+.speech-box.whisper-box {
+    background-image: texture("/Textures/_RF/Interface/Style/whisper.png");
+    background-repeat: stretch;
+    patch-margin: 2px;
+    padding: 2px 7px;
+}
+
+/* bubbleContent of a whisper */
+.speech-box.whisper-box > .bubble-content {
+    font-style: italic;
+}
+
+/* The text of an emote (the children of speechBox + emoteBox inherit the font style) */
+.speech-box.emote-box {
+    font-style: italic;
+}

@@ -119,6 +119,11 @@ public partial class CssControl
             _viewportRoot.OnResized += RefreshLengthContext;
 
         RefreshLengthContext(); // the viewport may have changed while the control was outside of the tree
+
+        // Styled against another stylesheet (a screen built before the CSS was loaded or reloaded while it was
+        // detached): neither Reload nor Parented reaches it, because its parent may not be a CssControl.
+        if (!ReferenceEquals(CssComputedStylesheet, Css.Stylesheet))
+            Css.UpdateStyle(this);
     }
 
     /// <inheritdoc/>

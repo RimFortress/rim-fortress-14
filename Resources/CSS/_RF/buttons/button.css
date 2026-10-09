@@ -1,0 +1,81 @@
+/*
+ * StyleFortress.cs: Button, Top Menu, Storage Button, ListContainer, Chat Channel Selector,
+ * OptionButton, X Texture button, Pinned button, Radial menu.
+ *
+ * - The pseudo-classes of ContainerButton are mapped: normal -> the rule without a pseudo-class, hover -> :hover,
+ *   pressed -> :active and :checked, disabled -> :disabled. :active comes before :disabled, so the disabled
+ *   color wins; the order matters. Files are applied in the order of their paths (button.css, then colors.css,
+ *   then the rest), so the modifier classes (`.gold`, `.empty`, ...) of colors.css win over the shapes.
+ * - Modifier classes: the shape (`.open-left`, `.open-right`, `.open-both`, `.square`),
+ *   the size of the font (`.font-big`, `.font-small`, text/font-size.css) and the color (`.gold`, `.red`, `.green`, `.blue`, `.accept`, `.negative`, `.transparent`, `.empty`)
+ *   are combined on one button: `css-button open-left gold`.
+ * - Element<ContainerButton>().Class(button) is the type selector css-button: CssButton and its descendants
+ *   (CssCheckBox) match it, so no `button` style class is needed. A control type that has no Css counterpart
+ *   is replaced with the class of the rule.
+ * - ModulateSelf of a textured button is background-color: it modulates the background texture.
+ * - The content margin of an old style box (the override, or the patch margin when there is none, plus the
+ *   Padding of the box) is the padding here, the patch margins are the patch-margin. The texture of the old box
+ *   was also drawn inside its Padding (1px for the buttons); this is not reproduced.
+ */
+
+/* ---------- Button shapes ---------- */
+
+/* ContainerButton.StyleClassButton: button */
+css-button {
+    border: 4px solid transparent;
+    border-image: texture("/Textures/_RF/Interface/Style/button_border.png");
+    border-image-slice: 4px;
+    background-clip: border-box;
+    background-image: texture("/Textures/_RF/Interface/Style/button.png");
+    background-repeat: stretch;
+    patch-margin: 5px;
+    padding: 2px 4px;
+    text-align: center;
+}
+
+/* StyleClass.ButtonOpenRight: OpenRight */
+.open-right {
+    border-style: solid;
+    border-width: 5px 5px 5px 6px;
+    border-image: texture("/Textures/_RF/Interface/Style/button_open_right_border.png");
+    border-image-slice: 11px 5px 11px 11px;
+    border-image-width: 11px 5px 11px 11px;
+    background-image: texture("/Textures/_RF/Interface/Style/button_open_right.png");
+    patch-margin: 11px 5px 11px 11px;
+    padding: 3px 10px 3px 9px;
+}
+
+/* StyleClass.ButtonOpenLeft: OpenLeft */
+.open-left {
+    border-style: solid;
+    border-width: 5px 6px 5px 5px;
+    border-image: texture("/Textures/_RF/Interface/Style/button_open_left_border.png");
+    border-image-slice: 11px 11px 11px 5px;
+    border-image-width: 11px 11px 11px 5px;
+    background-image: texture("/Textures/_RF/Interface/Style/button_open_left.png");
+    patch-margin: 11px 11px 11px 5px;
+    padding: 3px 10px 3px 9px;
+}
+
+/* StyleClass.ButtonOpenBoth: OpenBoth */
+.open-both {
+    border-style: solid;
+    border-width: 5px 6px 5px 6px;
+    border-image: texture("/Textures/_RF/Interface/Style/button_open_both_border.png");
+    border-image-slice: 11px;
+    border-image-width: 11px;
+    background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
+    patch-margin: 11px;
+    padding: 3px 9px;
+}
+
+/* StyleClass.ButtonSquare: ButtonSquare */
+.square {
+    border-style: solid;
+    border-width: 2px;
+    border-image: texture("/Textures/_RF/Interface/Style/button_square_border.png");
+    border-image-slice: 2px;
+    background-image: texture("/Textures/_RF/Interface/Style/button_square.png");
+    patch-margin: 2px;
+    padding: 3px;
+}

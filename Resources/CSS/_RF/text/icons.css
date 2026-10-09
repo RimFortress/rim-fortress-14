@@ -1,0 +1,39 @@
+/* ---------- Texture icons ---------- */
+
+/* NTLogoDark */
+.nt-logo-dark {
+    background-image: texture("/Textures/Interface/Nano/ntlogo.svg.png");
+    background-repeat: no-repeat;
+    background-color: #757575;
+}
+
+/* SpeciesInfoDefault */
+.species-info-default {
+    background-image: texture("/Textures/Interface/VerbIcons/information.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* SpeciesInfoWarning */
+.species-info-warning {
+    background-image: texture("/Textures/Interface/info.svg.192dpi.png");
+    background-repeat: no-repeat;
+    background-color: var(--gold-fortress);
+}
+
+/* DirectionIcon.StyleClassDirectionIconArrow: direction-icon-arrow (south pointing arrow) */
+.direction-icon-arrow {
+    background-image: texture("/Textures/Interface/VerbIcons/drop.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* DirectionIcon.StyleClassDirectionIconUnknown: direction-icon-unknown */
+.direction-icon-unknown {
+    background-image: texture("/Textures/Interface/VerbIcons/information.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* DirectionIcon.StyleClassDirectionIconHere: direction-icon-here */
+.direction-icon-here {
+    background-image: texture("/Textures/Interface/VerbIcons/dot.svg.192dpi.png");
+    background-repeat: no-repeat;
+}

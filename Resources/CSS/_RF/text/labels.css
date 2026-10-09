@@ -1,0 +1,84 @@
+/*
+ * StyleFortress.cs: Labels, Tooltips, Item status, PDA text.
+ *
+ * Label.StylePropertyFont is font-family, font-size, font-weight and font-style; Label.StylePropertyFontColor and
+ * ModulateSelf of a text are `color`. The font of every control is Source Code Pro (base/variables.css), so only the
+ * size, the weight and the style are written here.
+ */
+
+/* ---------- Labels ---------- */
+
+/* StyleClass.LabelHeading: LabelHeading */
+.label-heading {
+    font-weight: bold;
+    font-size: 16px;
+    color: var(--gold-fortress);
+}
+
+/* LabelHeadingBigger */
+.label-heading-bigger {
+    font-weight: bold;
+    font-size: 20px;
+    color: var(--gold-fortress);
+}
+
+/* StyleClass.LabelSubText: LabelSubText */
+.label-sub-text {
+    font-size: 10px;
+    color: var(--gray-silver);
+}
+
+/* LabelKeyText */
+.label-key-text {
+    font-weight: bold;
+    font-size: 12px;
+    color: var(--gold-fortress);
+}
+
+/* LabelSecondaryColor */
+.label-secondary-color {
+    font-size: 12px;
+    color: var(--gray-silver);
+}
+
+/* StatusFieldTitle */
+.status-field-title {
+    color: var(--gold-fortress);
+}
+
+/* Good */
+.good {
+    color: var(--good-green-fore);
+}
+
+/* Caution */
+.caution {
+    color: var(--gold-fortress);
+}
+
+/* Danger */
+.danger {
+    color: var(--light-bad);
+}
+
+/* Disabled */
+.disabled {
+    color: var(--disabled-button-font-color);
+}
+
+/* Placeholder.StyleClassPlaceholderText: PlaceholderText */
+.placeholder-text {
+    font-size: 16px;
+    color: var(--placeholder-font-color);
+}
+
+/* SiliconLawContainer.StyleClassSiliconLawPositionLabel: SiliconLawPositionLabel */
+.silicon-law-position-label {
+    color: var(--gold-fortress);
+}
+
+/* hotbarSlotNumber */
+.hotbar-slot-number {
+    font-weight: bold;
+    font-size: 16px;
+}

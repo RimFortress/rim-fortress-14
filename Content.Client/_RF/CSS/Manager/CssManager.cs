@@ -380,6 +380,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         var variables = ComputeVariables(control, ordered, stylesheet);
         var variablesChanged = !ReferenceEquals(control.CssComputedVariables, variables);
         control.CssComputedVariables = variables;
+        control.CssComputedStylesheet = stylesheet;
 
         var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -585,9 +586,16 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             if (parent is not CssControl css)
                 continue;
 
-            // An ancestor that was never styled (e.g. a subtree assembled before being attached).
-            return css.CssComputedVariables ??=
-                ComputeVariables(css, GetOrderedRules(css, stylesheet), stylesheet);
+            // An ancestor that was never styled (e.g. a subtree assembled before being attached), or whose
+            // variables were computed against another stylesheet (e.g. built before the CSS was loaded or reloaded
+            // while it was detached from every root): its cache has no :root variables of this stylesheet.
+            if (css.CssComputedVariables == null || !ReferenceEquals(css.CssComputedStylesheet, stylesheet))
+            {
+                css.CssComputedVariables = ComputeVariables(css, GetOrderedRules(css, stylesheet), stylesheet);
+                css.CssComputedStylesheet = stylesheet;
+            }
+
+            return css.CssComputedVariables;
         }
 
         return stylesheet.GlobalVariables;
@@ -827,7 +835,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         RegisterEngineProperties();
 
         var styled = _reflection.GetAllChildren<AutoCssControl>()
-            .Where(type => !type.IsAbstract && _reflection.IsAttributeDefined(type, typeof(CssStylingAttribute)))
+            // Only the types that declare properties themselves (the generator overrides AutoCssProperties there):
+            // the attribute is inherited, but a subclass without properties has nothing to register (the chain of
+            // base types is walked), and creating it may be impossible here (a XAML control needs the XAML proxy,
+            // a control may have constructor arguments).
+            .Where(type => !type.IsAbstract
+                           && _reflection.IsAttributeDefined(type, typeof(CssStylingAttribute))
+                           && type.GetMethod(nameof(AutoCssControl.AutoCssProperties))?.DeclaringType == type)
             .ToList();
 
         foreach (var type in styled)

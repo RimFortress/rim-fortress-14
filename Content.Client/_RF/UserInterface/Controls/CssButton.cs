@@ -20,8 +20,6 @@ public class CssButton : CssControl
     /// <summary>
     /// Name of the pseudo-class (<c>:checked</c>) set while the button is <see cref="Pressed"/>.
     /// </summary>
-    public const string CheckedPseudoClass = "checked";
-
     private int _attemptingPress;
 
     /// <summary>
@@ -146,6 +144,9 @@ public class CssButton : CssControl
     [PublicAPI]
     public event Action<CssButtonToggledEventArgs>? OnToggled;
 
+    /// <inheritdoc/>
+    protected override bool CenterTextVertically => true;
+
     public CssButton()
     {
         MouseFilter = MouseFilterMode.Stop;
@@ -171,7 +172,7 @@ public class CssButton : CssControl
     /// </summary>
     protected virtual void StateChanged()
     {
-        SetCssPseudoStyleClass(CheckedPseudoClass, Pressed);
+        SetCssPseudoStyleClass(CssPseudoClass.Checked, Pressed);
         Active = _attemptingPress > 0;
     }
 

@@ -21,6 +21,11 @@ public partial class CssControl
     internal CssVariables? CssComputedVariables;
 
     /// <summary>
+    /// The stylesheet <see cref="CssComputedVariables"/> were computed against.
+    /// </summary>
+    internal CssStylesheet? CssComputedStylesheet;
+
+    /// <summary>
     /// Custom properties set from code via <see cref="SetCssVariable"/>. They are the equivalent of an
     /// inline <c>style</c> attribute: they win over stylesheet declarations of the same importance,
     /// regardless of selector specificity.

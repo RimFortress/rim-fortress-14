@@ -1,0 +1,46 @@
+/* ---------- Tree menu ---------- */
+
+/* TreeMenuButton.StyleClassTreeMenuButton: TreeMenuButton */
+.tree-menu-button {
+    background-image: texture("/Textures/_RF/Interface/Style/rounded_button_bordered.png");
+    background-repeat: stretch;
+    patch-margin: 5px;
+    padding: 5px;
+    background-color: var(--tree-menu-button-color-default);
+}
+
+.tree-menu-button:hover {
+    background-color: var(--tree-menu-button-color-hovered);
+}
+
+.tree-menu-button:active,
+.tree-menu-button:checked {
+    background-color: var(--tree-menu-button-color-pressed);
+}
+
+/* ---------- Rows (SocializationEffectInfo and TreeItem) ---------- */
+
+/* SocializationEffectInfo.EvenRowStyleClass: even-row */
+.even-row {
+    background-color: var(--graphite-black);
+}
+
+/* SocializationEffectInfo.OddRowStyleClass: odd-row */
+.odd-row {
+    background-color: var(--dark-forest);
+}
+
+/* TreeItem.StyleIdentifierTreeButton: tree-button */
+#tree-button.even-row {
+    background-color: var(--graphite-black);
+}
+
+#tree-button.odd-row {
+    background-color: var(--dark-forest);
+}
+
+/* TreeItem.StyleClassSelected: selected */
+#tree-button.selected,
+#tree-button:hover {
+    background-color: var(--bright-green);
+}

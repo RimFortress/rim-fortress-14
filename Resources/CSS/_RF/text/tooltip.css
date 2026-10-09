@@ -1,0 +1,43 @@
+/* ---------- Tooltips ---------- */
+
+/* tooltipAlertTitle */
+.tooltip-alert-title {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* tooltipAlertDesc */
+.tooltip-alert-desc {
+    font-size: 16px;
+}
+
+/* tooltipAlertCooldown */
+.tooltip-alert-cooldown {
+    font-size: 16px;
+}
+
+/* tooltipActionTitle */
+.tooltip-action-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* tooltipActionDesc */
+.tooltip-action-desc {
+    font-size: 15px;
+}
+
+/* tooltipActionCooldown */
+.tooltip-action-cooldown {
+    font-size: 15px;
+}
+
+/* StyleClassTooltipActionRequirements was "tooltipActionCooldown" too (the same value, probably a typo) */
+.tooltip-action-requirements {
+    font-size: 15px;
+}
+
+/* tooltipActionCharges */
+.tooltip-action-charges {
+    font-size: 15px;
+}

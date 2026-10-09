@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Content.Client._RF.CSS;
 using Robust.Client.UserInterface;
@@ -103,24 +104,27 @@ public partial class CssBoxContainer : CssControl
         var crossSize = 0f;
         var count = 0;
 
-        foreach (var child in Children)
+        // Children that can't be squeezed are measured first, so a squeezable one (a clipped label that grows to
+        // fill the row) can't take the space they need: the rest of the row goes to the squeezable children.
+        var visible = Children.Where(child => child.Visible).ToList();
+        remaining -= gap * Math.Max(0, visible.Count - 1);
+        mainSize += gap * Math.Max(0, visible.Count - 1);
+
+        for (var pass = 0; pass < 2; pass++)
         {
-            if (!child.Visible)
-                continue;
-
-            if (count > 0)
+            foreach (var child in visible)
             {
-                remaining -= gap;
-                mainSize += gap;
+                if (CanShrink(child, row) != (pass == 1))
+                    continue;
+
+                child.Measure(Make(MathF.Max(0f, remaining), crossAvailable, row));
+
+                var desired = child.DesiredSize;
+                remaining -= Main(desired, row);
+                mainSize += Main(desired, row);
+                crossSize = MathF.Max(crossSize, Cross(desired, row));
+                count++;
             }
-
-            child.Measure(Make(MathF.Max(0f, remaining), crossAvailable, row));
-
-            var desired = child.DesiredSize;
-            remaining -= Main(desired, row);
-            mainSize += Main(desired, row);
-            crossSize = MathF.Max(crossSize, Cross(desired, row));
-            count++;
         }
 
         return Make(mainSize, crossSize, row) + insetSize;
@@ -166,12 +170,36 @@ public partial class CssBoxContainer : CssControl
 
         if (free < 0f)
         {
-            // flex-shrink: 1 for every child, proportionally to its size.
-            var factor = desiredSum > 0f ? MathF.Max(0f, (mainContent - gap * (count - 1)) / desiredSum) : 0f;
+            // flex-shrink: the children that can be squeezed give up their size first, the others keep theirs
+            // (a button doesn't lose its padding because a long label is next to it).
+            var deficit = -free;
+            var shrinkableSum = 0f;
 
             for (var i = 0; i < count; i++)
             {
-                sizes[i] *= factor;
+                if (CanShrink(items[i], row))
+                    shrinkableSum += sizes[i];
+            }
+
+            if (shrinkableSum >= deficit)
+            {
+                var factor = (shrinkableSum - deficit) / shrinkableSum;
+
+                for (var i = 0; i < count; i++)
+                {
+                    if (CanShrink(items[i], row))
+                        sizes[i] *= factor;
+                }
+            }
+            else
+            {
+                // Nothing left to squeeze there, so everything is squeezed proportionally to its size.
+                var factor = desiredSum > 0f ? MathF.Max(0f, (mainContent - gap * (count - 1)) / desiredSum) : 0f;
+
+                for (var i = 0; i < count; i++)
+                {
+                    sizes[i] *= factor;
+                }
             }
         }
         else if (growSum > 0f)
@@ -228,6 +256,18 @@ public partial class CssBoxContainer : CssControl
         }
 
         return finalSize;
+    }
+
+    /// <summary>
+    /// Can the child be made smaller than its desired size without breaking it: it clips its content or fills the
+    /// free space of the row.
+    /// </summary>
+    private static bool CanShrink(Control child, bool row)
+    {
+        if (child is not CssControl css)
+            return false;
+
+        return css.FlexGrow > 0f || (row ? css.OverflowX : css.OverflowY) != CssOverflow.Visible;
     }
 
     private CssAlignSelf ResolveAlign(Control child, bool row)

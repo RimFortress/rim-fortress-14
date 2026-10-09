@@ -1,0 +1,105 @@
+/*
+ * The lobby of Rim Fortress (Content.Client/_RF/Lobby/UI/*.xaml).
+ *
+ * The look of the elements (panels, buttons, headings, dividers) is in the shared classes of the other files:
+ * angle-rect, panel-highlighted, fancy-back, rim-heading, low-divider, big, icon-button, etc. Only the
+ * layout (sizes, margins, gaps, growth) of the lobby is here, each block by its CssStyleIdentifier.
+ *
+ * The margins written here replace the Margin of the old XAML. The Margin order of XAML is left, top, right, bottom,
+ * the order of CSS is top, right, bottom, left.
+ * Do not set `margin` of a .fancy-back element, it has its own.
+ * justify-content and align-items belong to the CssBoxContainer, so the rules with them select the type too.
+ */
+
+/* ---------- RfLobbyGui ---------- */
+
+#lobby-main {
+    padding: 10px;
+    gap: 2px;
+}
+
+#lobby-left {
+    flex-grow: 1;
+    gap: 4px;
+}
+
+/* The panel with the buttons on top, the banners on the bottom */
+css-box-container#lobby-default-state {
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+/* CharacterSetupState and EquipmentEditorState, only one of them is visible */
+#lobby-setup-state {
+    flex-grow: 1;
+}
+
+#lobby-left-top {
+    align-self: flex-start;
+    max-width: 800px;
+}
+
+#lobby-start-row {
+    gap: 6px;
+    padding: 3px;
+}
+
+#lobby-start-time {
+    flex-grow: 1;
+    color: var(--gray-silver);
+}
+
+#lobby-ready-button {
+    min-width: 137px;
+}
+
+/* The popups of the votes */
+#lobby-votes {
+    align-self: flex-start;
+    gap: 4px;
+    margin: 8px 0;
+}
+
+#lobby-left-bottom {
+    align-self: flex-start;
+}
+
+#lobby-credits {
+    gap: 6px;
+}
+
+#lobby-header > .label-heading-bigger {
+    flex-grow: 1;
+    align-self: center;
+    text-align: center;
+}
+
+#lobby-divider {
+    margin: 10px 0;
+}
+
+#lobby-server-info {
+    flex-grow: 1;
+    margin: 0 10px;
+}
+
+#lobby-station-time {
+    align-self: flex-start;
+    margin: 3px;
+    color: #D3D3D3;
+}
+
+#lobby-actions {
+    margin: 0 10px;
+}
+
+/* ---------- RfLobbyCharacterPreviewPanel ---------- */
+
+#preview-view-box {
+    align-self: center;
+}
+
+#preview-buttons {
+    align-self: center;
+    margin: 5px 0 0 0;
+}

@@ -6,16 +6,6 @@ namespace Content.Client._RF.CSS;
 public partial class CssControl
 {
     /// <summary>
-    /// Name of the pseudo-class (<c>:placeholder-shown</c>) set while an edit control shows its placeholder.
-    /// </summary>
-    public const string PlaceholderShownPseudoClass = "placeholder-shown";
-
-    /// <summary>
-    /// Name of the pseudo-class (<c>:read-only</c>) set while an edit control can't be edited by the user.
-    /// </summary>
-    public const string ReadOnlyPseudoClass = "read-only";
-
-    /// <summary>
     /// CSS <c>caret-color</c>: the color of the text cursor of an edit control; <c>null</c> (<c>auto</c>) means
     /// the text color.
     /// </summary>

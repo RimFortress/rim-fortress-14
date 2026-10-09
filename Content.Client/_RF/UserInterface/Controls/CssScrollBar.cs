@@ -19,11 +19,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </remarks>
 public abstract class CssScrollBar : CssControl
 {
-    public const string ScrollBarStyleClass = "scrollbar";
-    public const string GrabberStyleClass = "grabber";
-    public const string VerticalStyleClass = "vertical";
-    public const string HorizontalStyleClass = "horizontal";
-
     private readonly bool _vertical;
     private readonly ScrollGrabber _grabber = new();
 
@@ -144,11 +139,11 @@ public abstract class CssScrollBar : CssControl
         MouseFilter = MouseFilterMode.Pass;
         ReservesSpace = true;
 
-        AddCssStyleClass(ScrollBarStyleClass);
-        AddCssStyleClass(vertical ? VerticalStyleClass : HorizontalStyleClass);
+        AddCssStyleClass(CssClass.Scrollbar);
+        AddCssStyleClass(vertical ? CssClass.Vertical : CssClass.Horizontal);
 
         _grabber.MouseFilter = MouseFilterMode.Ignore;
-        _grabber.AddCssStyleClass(GrabberStyleClass);
+        _grabber.AddCssStyleClass(CssClass.Grabber);
         AddChild(_grabber);
     }
 
@@ -289,8 +284,8 @@ public abstract class CssScrollBar : CssControl
     {
         public void SetState(bool hovered, bool grabbed)
         {
-            SetCssPseudoStyleClass(HoverPseudoClass, hovered);
-            SetCssPseudoStyleClass(ActivePseudoClass, grabbed);
+            SetCssPseudoStyleClass(CssPseudoClass.Hover, hovered);
+            SetCssPseudoStyleClass(CssPseudoClass.Active, grabbed);
         }
     }
 }
