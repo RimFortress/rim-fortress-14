@@ -225,7 +225,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         {
             if (Stylesheet.UnsortedSelectorTypes.Contains(kind))
             {
-                UpdateStyle(control);
+                QueueStyleUpdate(control);
                 return;
             }
 
@@ -233,7 +233,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             {
                 if (Stylesheet.SortedSelectorTypes.TryGetValue(type, out var bySelector) && bySelector.Contains(kind))
                 {
-                    UpdateStyle(control);
+                    QueueStyleUpdate(control);
                     return;
                 }
 
@@ -400,6 +400,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </param>
     private void ApplyStyle(CssControl control, CssStylesheet stylesheet, bool propagate)
     {
+        // Whatever was waiting in the queue is satisfied by this.
+        control.CssStyleDirty = false;
+
         var ordered = GetOrderedRules(control, stylesheet);
 
         var variables = ComputeVariables(control, ordered, stylesheet);

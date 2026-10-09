@@ -204,6 +204,10 @@ public partial class CssControl : AutoCssControl
     /// <inheritdoc/>
     protected override Vector2 MeasureOverride(Vector2 availableSize)
     {
+        // Measured before the frame update has restyled it (e.g. right after its classes changed).
+        if (CssStyleDirty)
+            Css.FlushStyleUpdate(this);
+
         var inset = ContentInset;
 
         // No text: the children are laid out inside the padding and the borders, like the text would be.

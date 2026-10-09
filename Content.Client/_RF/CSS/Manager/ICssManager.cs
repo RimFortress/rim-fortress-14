@@ -62,6 +62,34 @@ public interface ICssManager : ICssPropertyResolver
     void ClearTestStylesheet();
 
     /// <summary>
+    /// Queues the restyling of the control, which happens once at the start of the next frame, before the layout, no
+    /// matter how many times the control was queued before that. Prefer it to <see cref="UpdateStyle(CssControl)"/>
+    /// whenever the result is not needed right away.
+    /// </summary>
+    void QueueStyleUpdate(CssControl control);
+
+    /// <summary>
+    /// Same as <see cref="QueueStyleUpdate(CssControl)"/>, after something that selectors match on changed on the
+    /// control: the controls below it whose rules look at it in a combinator are restyled as well, see
+    /// <see cref="UpdateDependents"/>.
+    /// </summary>
+    /// <param name="control">The control that changed.</param>
+    /// <param name="key">
+    /// What has changed: <c>.class</c>, <c>:pseudo-class</c> or <c>#id</c>; <c>null</c> if anything may have.
+    /// </param>
+    void QueueStyleUpdate(CssControl control, string? key);
+
+    /// <summary>
+    /// Restyles everything that was queued. Done every frame by itself.
+    /// </summary>
+    void FlushStyleUpdates();
+
+    /// <summary>
+    /// Restyles the control right now if it is queued, for when its styles are needed before the next frame.
+    /// </summary>
+    void FlushStyleUpdate(CssControl control);
+
+    /// <summary>
     /// Updates the control styles that use specific selector.
     /// </summary>
     /// <param name="control">Control to update.</param>
@@ -76,7 +104,7 @@ public interface ICssManager : ICssPropertyResolver
     void UpdateStyle(CssControl control, params Type[] selectors);
 
     /// <summary>
-    /// Updates all control styles.
+    /// Updates all control styles right now.
     /// </summary>
     /// <param name="control">Control to update.</param>
     void UpdateStyle(CssControl control);

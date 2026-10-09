@@ -21,6 +21,21 @@ public partial class CssControl
     internal CssVariables? CssComputedVariables;
 
     /// <summary>
+    /// The control has changed since it was last restyled, see <see cref="ICssManager.QueueStyleUpdate(CssControl)"/>.
+    /// </summary>
+    internal bool CssStyleDirty;
+
+    /// <summary>
+    /// The control is in the queue of style updates (it can be there although nothing is dirty any more).
+    /// </summary>
+    internal bool CssQueued;
+
+    /// <summary>
+    /// How far below the control the changes of its classes have yet to restyle other controls.
+    /// </summary>
+    internal CssAncestorReach CssPendingReach;
+
+    /// <summary>
     /// The stylesheet <see cref="CssComputedVariables"/> were computed against.
     /// </summary>
     internal CssStylesheet? CssComputedStylesheet;
@@ -46,21 +61,17 @@ public partial class CssControl
         {
             var old = field;
             field = value;
-            Css.UpdateStyle(this);
-            Css.UpdateDependents(this, "#" + old);
-            Css.UpdateDependents(this, "#" + value);
+            Css.QueueStyleUpdate(this, "#" + old);
+            Css.QueueStyleUpdate(this, "#" + value);
         }
     }
 
     /// <summary>
-    /// Restyles the control after its class changed, and the controls whose rules look at this class on their ancestor.
+    /// Queues the restyling of the control after its class changed, and of the controls whose rules look at this
+    /// class on their ancestor.
     /// </summary>
     /// <param name="key">The class with its prefix, see <see cref="CssStyleClassCollection"/>; <c>null</c> for any.</param>
-    internal void RestyleCss(string? key)
-    {
-        Css.UpdateStyle(this);
-        Css.UpdateDependents(this, key);
-    }
+    internal void RestyleCss(string? key) => Css.QueueStyleUpdate(this, key);
 
     /// <summary>
     /// Current control style classes. Can be set from XAML with the classes separated by spaces.
