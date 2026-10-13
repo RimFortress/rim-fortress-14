@@ -1,0 +1,79 @@
+/* ---------- Slider (CssSlider: .slider is the track, .fill and .grabber are inside) and the color sliders ---------- */
+
+/*
+ * Slider: the track slider_fill.png modulated graphite-black, the fill dark-good, the grabber button-color-default
+ * (patch margin 12 for all of them). The grabber is 24px wide, as the textures are.
+ * ColorableSlider (css-color-slider) draws its gradient itself, so the background of its track is not needed.
+ */
+.slider {
+    min-height: 24px;
+    background-color: var(--black-amber);
+    border: 2px solid var(--dark-forest);
+    border-radius: 12px;
+}
+
+.slider > .fill {
+    background-color: var(--dark-good);
+    border-radius: 10px 0px 0px 10px;
+}
+
+.slider > .grabber {
+    min-width: 24px;
+    min-height: 24px;
+    background-image: texture("/Textures/_RF/Interface/Style/slider_grabber.png");
+    background-repeat: stretch;
+    patch-margin: 12px;
+    background-color: var(--button-color-default);
+}
+
+.slider:hover > .grabber {
+    background-color: var(--button-color-hovered);
+}
+
+.slider:active > .grabber {
+    background-color: var(--button-color-pressed);
+}
+
+.slider:disabled > .grabber {
+    background-color: var(--button-color-disabled);
+}
+
+/* The gradient of the track is the color to choose: no own background, no fill */
+.slider.color-slider {
+    background-image: none;
+    background-color: transparent;
+}
+
+.slider.color-slider > .fill {
+    background-image: none;
+    background-color: transparent;
+}
+
+/* ---------- The number boxes of the sliders (IntCounter) ---------- */
+
+.color-selector-row > int-counter {
+    gap: 0;
+}
+
+.color-selector-row > int-counter > css-line-edit {
+    min-width: 40px;
+}
+
+/* ---------- ColorSelectorSliders (CssColorSelectorSliders) ---------- */
+
+css-color-selector-sliders {
+    gap: 3px;
+}
+
+.color-selector-row {
+    gap: 4px;
+}
+
+.color-selector-header {
+    gap: 6px;
+}
+
+/* The texts at the start of the rows take the width of their text, the sliders start right after them */
+.color-selector-label {
+    align-self: center;
+}

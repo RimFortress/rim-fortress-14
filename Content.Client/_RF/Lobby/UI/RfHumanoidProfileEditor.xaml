@@ -7,7 +7,7 @@
     xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
     FlexDirection="Column">
     <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
-    <!-- The Sliders and the pickers have no CSS version yet. -->
+    <!-- The pickers have no CSS version yet. -->
     <!-- Middle container -->
     <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-top">
         <!-- Name box-->
@@ -94,13 +94,13 @@
                     <!-- Skin -->
                     <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
                         <css:CssControl Text="{Loc 'humanoid-profile-editor-skin-color-label'}" />
-                        <Slider HorizontalExpand="True" Name="Skin" MinValue="0" MaxValue="100" Value="20" />
+                        <controls:CssSlider Name="Skin" MinValue="0" MaxValue="100" Value="20" />
                         <controls:CssBoxContainer Name="RgbSkinColorContainer" Visible="False" FlexDirection="Column" />
                     </controls:CssBoxContainer>
                     <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
                         <!-- Eyes -->
                         <css:CssControl Text="{Loc 'humanoid-profile-editor-eyes-label'}" />
-                        <humanoid:EyeColorPicker Name="EyeColorPicker" Margin="0 0 0 10" />
+                        <controls:CssColorSelectorSliders Name="EyeColorPicker" SelectorType="Hsv" Margin="0 0 0 10" />
                         <!-- Markings -->
                         <controls:CssBoxContainer FlexDirection="Column"
                                                   CssStyleClasses="panel-highlighted profile-block profile-markings">

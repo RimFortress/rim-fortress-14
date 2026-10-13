@@ -62,9 +62,12 @@ public static class CssClass
     public const string Checked = "checked";
     public const string Grabber = "grabber";
     public const string Horizontal = "horizontal";
+    public const string ColorSlider = "color-slider";
+    public const string Fill = "fill";
     public const string Indicator = "indicator";
     public const string PaperLineEdit = "paper-line-edit";
     public const string Scrollbar = "scrollbar";
+    public const string Slider = "slider";
     public const string Vertical = "vertical";
 
     // Layout

@@ -444,6 +444,7 @@ public partial class CssControl
         box.BackgroundOrigin = BackgroundOrigin;
         box.Padding = Padding;
         box.Border = BuildBorder();
+        box.Radius = ResolveBorderRadius(BorderRadius);
 
         return box;
     }

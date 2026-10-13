@@ -1,3 +1,4 @@
+using System.Numerics;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.Graphics;
@@ -19,6 +20,18 @@ public abstract class RfStyleBox : StyleBox
     /// painting all the way out to the border box).
     /// </summary>
     public StyleBoxBackgroundOrigin BackgroundOrigin { get; set; } = StyleBoxBackgroundOrigin.PaddingBox;
+
+    /// <summary>
+    /// The <c>border-radius</c>: the corners of the fill are rounded by it, inside the border (a border has its own
+    /// <see cref="StyleBoxBorder.Radius"/>, which is the same). Only a plain color fill is rounded, a texture is not.
+    /// </summary>
+    public CornerRadius Radius { get; set; }
+
+    /// <summary>
+    /// The radii of the corners of the box passed to <see cref="DoDrawFill"/>, in pixels: the radius of the border box
+    /// reduced by how far the clip box is from it. All zero when the corners are square.
+    /// </summary>
+    protected (Vector2 Tl, Vector2 Tr, Vector2 Br, Vector2 Bl) FillRadii { get; private set; }
 
     /// <summary>
     /// Border of the background.
@@ -43,9 +56,24 @@ public abstract class RfStyleBox : StyleBox
             box.Right + PaddingRight,
             box.Bottom + PaddingBottom);
 
-        DoDrawFill(handle, GetClippedBox(borderBox), GetOriginBox(borderBox), uiScale);
+        var clipBox = GetClippedBox(borderBox);
+        var (tl, tr, br, bl) = StyleBoxBorderStroke.ResolveRadii(Radius, borderBox, uiScale);
+        var left = clipBox.Left - borderBox.Left;
+        var top = clipBox.Top - borderBox.Top;
+        var right = borderBox.Right - clipBox.Right;
+        var bottom = borderBox.Bottom - clipBox.Bottom;
+        FillRadii = (
+            Inset(tl, left, top),
+            Inset(tr, right, top),
+            Inset(br, right, bottom),
+            Inset(bl, left, bottom));
+
+        DoDrawFill(handle, clipBox, GetOriginBox(borderBox), uiScale);
         Border?.Draw(handle, borderBox, uiScale);
     }
+
+    private static Vector2 Inset(Vector2 radius, float horizontal, float vertical)
+        => new(MathF.Max(radius.X - horizontal, 0f), MathF.Max(radius.Y - vertical, 0f));
 
     protected override float GetDefaultContentMargin(Margin margin) => margin switch
     {

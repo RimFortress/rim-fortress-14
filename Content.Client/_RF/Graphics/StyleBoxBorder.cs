@@ -369,6 +369,18 @@ public sealed class StyleBoxBorderStroke(
         }
     }
 
+    /// <summary>
+    /// The radii of the corners of <paramref name="box"/> in pixels, scaled down by the CSS rule when they don't fit.
+    /// </summary>
+    public static (Vector2 Tl, Vector2 Tr, Vector2 Br, Vector2 Bl) ResolveRadii(CornerRadius radius, UIBox2 box, float uiScale)
+        => ClampRadii(
+            ResolveCornerRadius(radius.TopLeft, box, uiScale),
+            ResolveCornerRadius(radius.TopRight, box, uiScale),
+            ResolveCornerRadius(radius.BottomRight, box, uiScale),
+            ResolveCornerRadius(radius.BottomLeft, box, uiScale),
+            box.Width,
+            box.Height);
+
     private static Vector2 ResolveCornerRadius(UnitVector2 radius, UIBox2 borderBox, float uiScale)
         => new(ResolveComponent(radius.X, borderBox.Width / uiScale) * uiScale, ResolveComponent(radius.Y, borderBox.Height / uiScale) * uiScale);
 
@@ -390,7 +402,7 @@ public sealed class StyleBoxBorderStroke(
     /// goes through <see cref="Color.FromSrgb"/> once in the handle and once more in the vertex shader, so the
     /// color arrives darker than it was set. This cancels one of the conversions.
     /// </summary>
-    private static Color Flat(Color c) => Color.ToSrgb(c);
+    public static Color Flat(Color c) => Color.ToSrgb(c);
 
     private static (Color Dark, Color Light) GetShades(Color c)
     {

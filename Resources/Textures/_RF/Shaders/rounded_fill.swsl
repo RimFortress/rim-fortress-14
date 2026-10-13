@@ -1,0 +1,65 @@
+// The fill of a box with the rounded corners of border-radius: it doesn't draw where a corner cuts the box off.
+// The corners are ellipses, the shape is the same as the one of the border of the box.
+// With `gradient` the fill is the color gradient of the color picker (see color_picker.swsl) instead of the texture.
+
+uniform highp vec2 size;       // the box, in pixels
+uniform highp vec2 offset;     // the top left corner of the box on the screen, in pixels
+uniform highp vec4 radiiX;     // the horizontal radii of the corners: top left, top right, bottom right, bottom left
+uniform highp vec4 radiiY;     // the vertical radii
+
+uniform bool gradient;
+uniform highp vec4 xAxis;
+uniform highp vec4 yAxis;
+uniform highp vec4 baseColor;
+uniform bool hsv;
+
+// hsv to RGB conversion taken from www.shadertoy.com/view/MsS3Wc (the MIT License, Copyright © 2014 Inigo Quilez)
+highp vec3 hsv2rgb( in highp vec3 c )
+{
+    highp vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
+    return c.z * mix( vec3(1.0), rgb, c.y);
+}
+
+void fragment()
+{
+    // The position in the box, from its top left corner.
+    highp float yCoords = 1.0/SCREEN_PIXEL_SIZE.y - FRAGCOORD.y;
+    highp vec2 p = vec2(FRAGCOORD.x - offset.x, yCoords - offset.y);
+
+    bool right = p.x > size.x * 0.5;
+    bool bottom = p.y > size.y * 0.5;
+
+    highp vec2 r = right
+        ? (bottom ? vec2(radiiX.z, radiiY.z) : vec2(radiiX.y, radiiY.y))
+        : (bottom ? vec2(radiiX.w, radiiY.w) : vec2(radiiX.x, radiiY.x));
+
+    highp vec2 center = vec2(right ? size.x - r.x : r.x, bottom ? size.y - r.y : r.y);
+    highp vec2 d = p - center;
+
+    highp float alpha = 1.0;
+    if (r.x > 0.0 && r.y > 0.0 && (right ? d.x > 0.0 : d.x < 0.0) && (bottom ? d.y > 0.0 : d.y < 0.0))
+    {
+        // About a pixel of the smoothing on the edge of the ellipse.
+        alpha = clamp(0.5 - (length(d / r) - 1.0) * min(r.x, r.y), 0.0, 1.0);
+    }
+
+    if (gradient)
+    {
+        highp vec2 uv = p / size;
+        uv.y = 1.0 - uv.y;
+
+        highp vec4 color = baseColor + uv.x * xAxis + uv.y * yAxis;
+        if (hsv)
+        {
+            color.xyz = hsv2rgb(color.xyz);
+        }
+
+        COLOR = zTexture(UV) * color;
+    }
+    else
+    {
+        COLOR = zTexture(UV);
+    }
+
+    COLOR.a *= alpha;
+}

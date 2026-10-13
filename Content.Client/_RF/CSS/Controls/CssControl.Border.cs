@@ -201,6 +201,7 @@ public partial class CssControl
         {
             field = value;
             Background?.Border = BuildBorder();
+            Background?.Radius = ResolveBorderRadius(BorderRadius);
         }
     }
 
@@ -213,6 +214,7 @@ public partial class CssControl
         {
             field = value;
             Background?.Border = BuildBorder();
+            Background?.Radius = ResolveBorderRadius(BorderRadius);
         }
     }
 
@@ -225,6 +227,7 @@ public partial class CssControl
         {
             field = value;
             Background?.Border = BuildBorder();
+            Background?.Radius = ResolveBorderRadius(BorderRadius);
         }
     }
 
@@ -237,6 +240,7 @@ public partial class CssControl
         {
             field = value;
             Background?.Border = BuildBorder();
+            Background?.Radius = ResolveBorderRadius(BorderRadius);
         }
     }
 

@@ -1,7 +1,8 @@
 <controls1:ZoneVisualsLayerControl
     xmlns="https://spacestation14.io"
     xmlns:controls1="clr-namespace:Content.Client._RF.Zoning.UI.Controls"
-    xmlns:ui="clr-namespace:Content.Client._RF.NPC.GOAP.UI">
+    xmlns:ui="clr-namespace:Content.Client._RF.NPC.GOAP.UI"
+    xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls">
     <ui:ExpandableBox Name="LayerExpand">
         <BoxContainer Orientation="Vertical">
             <CheckBox Name="LayerEnableButton" Text="{Loc 'zone-visuals-layer-enable-button'}"/>
@@ -11,7 +12,7 @@
                     <BoxContainer Orientation="Vertical">
                         <CheckBox Name="BorderColorButton" Margin="0 0 0 5"
                                   Text="{Loc 'zone-visuals-border-color-button'}"/>
-                        <ColorSelectorSliders Name="BorderColor" SelectorType="Rgb" IsAlphaVisible="True"/>
+                        <rf:CssColorSelectorSliders Name="BorderColor" SelectorType="Rgb" IsAlphaVisible="True"/>
                     </BoxContainer>
                 </PanelContainer>
 
@@ -21,7 +22,7 @@
                     <BoxContainer Orientation="Vertical">
                         <CheckBox Name="ZoneColorButton" Margin="0 0 0 5"
                                   Text="{Loc 'zone-visuals-zone-color-button'}"/>
-                        <ColorSelectorSliders Name="ZoneColor" SelectorType="Rgb" IsAlphaVisible="True"/>
+                        <rf:CssColorSelectorSliders Name="ZoneColor" SelectorType="Rgb" IsAlphaVisible="True"/>
                     </BoxContainer>
                 </PanelContainer>
 

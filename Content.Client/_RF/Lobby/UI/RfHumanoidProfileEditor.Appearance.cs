@@ -1,3 +1,4 @@
+using Content.Client._RF.UserInterface.Controls;
 using System.Linq;
 using Content.Client.UserInterface.Systems.Guidebook;
 using Content.Shared.Guidebook;
@@ -12,7 +13,7 @@ namespace Content.Client._RF.Lobby.UI;
 
 public sealed partial class RfHumanoidProfileEditor
 {
-    private ColorSelectorSliders _rgbSkinColorSelector;
+    private CssColorSelectorSliders _rgbSkinColorSelector;
     private List<SpeciesPrototype> _species = new();
     private static readonly ProtoId<GuideEntryPrototype> DefaultSpeciesGuidebook = "Species";
 
@@ -90,7 +91,7 @@ public sealed partial class RfHumanoidProfileEditor
         }
 
         _markingsModel.SetOrganEyeColor(Profile.Appearance.EyeColor);
-        EyeColorPicker.SetData(Profile.Appearance.EyeColor);
+        EyeColorPicker.Color = Profile.Appearance.EyeColor;
     }
 
     private void UpdateSkinColor()

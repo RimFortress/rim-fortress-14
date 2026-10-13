@@ -163,8 +163,8 @@ namespace Content.Client._RF.Lobby.UI
                 OnSkinColorOnValueChanged();
             };
 
-            RgbSkinColorContainer.AddChild(_rgbSkinColorSelector = new ColorSelectorSliders());
-            _rgbSkinColorSelector.SelectorType = ColorSelectorSliders.ColorSelectorType.Hsv; // defaults color selector to HSV
+            RgbSkinColorContainer.AddChild(_rgbSkinColorSelector = new CssColorSelectorSliders());
+            _rgbSkinColorSelector.SelectorType = CssColorSelectorSliders.ColorSelectorType.Hsv; // defaults color selector to HSV
             _rgbSkinColorSelector.OnColorChanged += _ =>
             {
                 OnSkinColorOnValueChanged();
@@ -174,7 +174,7 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Eyes
 
-            EyeColorPicker.OnEyeColorPicked += newColor =>
+            EyeColorPicker.OnColorChanged += newColor =>
             {
                 if (Profile is null)
                     return;

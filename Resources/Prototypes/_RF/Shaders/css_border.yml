@@ -20,3 +20,8 @@
   darken_factor: 0.5
   lighten_factor: 0.5
   split: 0.5
+
+- type: shader
+  id: RoundedFill
+  kind: source
+  path: /Textures/_RF/Shaders/rounded_fill.swsl
