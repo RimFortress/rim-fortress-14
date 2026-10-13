@@ -57,3 +57,8 @@ rf-humanoid-profile-editor {
 .profile-hint {
     color: var(--gray-silver);
 }
+
+/* A trait that doesn't fit in the points of its category (RfTraitPreferenceSelector) */
+css-check-box.over-limit .label {
+    color: var(--light-bad);
+}

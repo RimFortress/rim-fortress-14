@@ -34,8 +34,8 @@
 
     <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="setup-body">
         <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="setup-characters">
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back">
-                <css:CssControl Name="CharactersCount" CssStyleIdentifier="setup-characters-count" />
+            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" MinHeight="30">
+                <css:CssControl Name="CharactersCount" CssStyleClasses="text-center"/>
             </controls:CssBoxContainer>
             <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="setup-characters-scroll">
                 <controls:CssBoxContainer Name="Characters" FlexDirection="Column" />

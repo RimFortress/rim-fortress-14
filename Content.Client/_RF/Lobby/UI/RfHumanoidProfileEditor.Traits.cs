@@ -1,7 +1,6 @@
 using Content.Client._RF.UserInterface;
 using System.Linq;
 using Content.Client._RF.CSS;
-using Content.Client.Lobby.UI.Roles;
 using Content.Shared.Traits;
 using Robust.Shared.Utility;
 
@@ -61,13 +60,13 @@ public sealed partial class RfHumanoidProfileEditor
                 TraitsList.AddChild(label);
             }
 
-            List<TraitPreferenceSelector?> selectors = new();
+            List<RfTraitPreferenceSelector?> selectors = new();
             var selectionCount = 0;
 
             foreach (var traitProto in categoryTraits)
             {
                 var trait = _prototypeManager.Index<TraitPrototype>(traitProto);
-                var selector = new TraitPreferenceSelector(trait);
+                var selector = new RfTraitPreferenceSelector(trait);
 
                 selector.Preference = Profile?.TraitPreferences.Contains(trait.ID) == true;
                 if (selector.Preference)
@@ -106,7 +105,7 @@ public sealed partial class RfHumanoidProfileEditor
                 if (category is { MaxTraitPoints: >= 0 } &&
                     selector.Cost + selectionCount > category.MaxTraitPoints)
                 {
-                    selector.Checkbox.Label.FontColorOverride = Color.Red;
+                    selector.OverLimit = true;
                 }
 
                 TraitsList.AddChild(selector);

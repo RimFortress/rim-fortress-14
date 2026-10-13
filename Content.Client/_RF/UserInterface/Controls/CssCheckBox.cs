@@ -10,7 +10,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <remarks>
 /// The box is <see cref="Indicator"/> (style class <see cref="CssClass.Indicator"/>, plus
 /// <see cref="CssClass.Checked"/> while checked) and the text is <see cref="Label"/> (style class
-/// <see cref="CssClass.Label"/>). Select them with <c>css-check-box > .indicator.checked</c>; the check box itself
+/// <see cref="CssClass.Label"/>). Select them with <c>css-check-box .indicator.checked</c>; the check box itself
 /// matches <c>:checked</c>, <c>:hover</c>, <c>:active</c> and <c>:disabled</c>. The space between them is
 /// <see cref="Gap"/> (CSS <c>gap</c>).
 /// </remarks>

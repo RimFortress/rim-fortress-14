@@ -1,7 +1,6 @@
 <lobbyUi:RfLobbyGui
     xmlns="https://spacestation14.io"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vote="clr-namespace:Content.Client.Voting.UI"
     xmlns:lobbyUi="clr-namespace:Content.Client._RF.Lobby.UI"
     xmlns:info="clr-namespace:Content.Client.Info"
     xmlns:widgets="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
@@ -31,7 +30,7 @@
                                                          CssStyleClasses="font-big"
                                                          WindowType="{x:Type ui:ObserveWarningWindow}" />
                             <css:CssControl Name="StartTime" Access="Public"
-                                            CssStyleClasses="font-big"
+                                            CssStyleClasses="font-big text-center"
                                             CssStyleIdentifier="lobby-start-time" />
                             <controls:CssButton Name="ReadyButton" Access="Public" ToggleMode="True"
                                                 Text="{Loc 'ui-lobby-ready-up-button'}"

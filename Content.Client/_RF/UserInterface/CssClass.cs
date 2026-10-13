@@ -68,11 +68,13 @@ public static class CssClass
 
     // Layout
     public const string FlexFill = "flex-fill";
+    public const string TextCenter = "text-center";
     public const string ScrollVertical = "scroll-vertical";
 
     // Lobby
     public const string EquipmentList = "equipment-list";
     public const string LabelHeadingBigger = "label-heading-bigger";
+    public const string OverLimit = "over-limit";
     public const string ProfileBlock = "profile-block";
     public const string ProfileDivider = "profile-divider";
     public const string ProfileHint = "profile-hint";

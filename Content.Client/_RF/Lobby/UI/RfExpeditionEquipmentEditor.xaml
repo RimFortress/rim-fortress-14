@@ -25,9 +25,9 @@
     <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="equipment-body">
         <!-- Left panel -->
         <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="equipment-categories">
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back">
+            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" MinHeight="30">
                 <css:CssControl Text="{Loc 'expedition-equipment-editor-categories'}"
-                                CssStyleClasses="placeholder-text" CssStyleIdentifier="equipment-categories-label" />
+                                CssStyleClasses="placeholder-text text-center" CssStyleIdentifier="equipment-categories-label" />
             </controls:CssBoxContainer>
             <controls:CssScrollContainer CssStyleClasses="scroll-vertical panel-light-transparent equipment-list"
                                          CssStyleIdentifier="equipment-categories-list">

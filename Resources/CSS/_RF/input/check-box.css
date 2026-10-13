@@ -1,12 +1,45 @@
 /* ---------- CheckBox (CssCheckBox: the .indicator is the box, .checked is set while it is checked) ---------- */
 
+/*
+ * The indicator and the label are not the children of the check box but of its inner box, so they are
+ * selected as descendants (`css-check-box .indicator`).
+ *
+ * css-check-box is a css-button, so it would take the look of a button (the colors of css-button:hover, :active, :checked
+ * and :disabled): it is reset here to a transparent control, the rules are of the same specificity and come later.
+ */
+
 /* CheckBox.StyleClassCheckBox: checkBox */
-css-check-box > .indicator {
+css-check-box {
+    border: none;
+    border-image: none;
+    background-image: none;
+    background-color: transparent;
+    padding: 0;
+    gap: 10px;
+    text-align: left;
+}
+
+css-check-box:hover,
+css-check-box:active,
+css-check-box:checked {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+css-check-box:disabled {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+/* The indicator has no content, so its size (the size of the textures) is set here. */
+css-check-box .indicator {
+    min-width: 20px;
+    min-height: 20px;
     background-image: texture("/Textures/_RF/Interface/Style/checkbox_unchecked.png");
     background-repeat: no-repeat;
 }
 
 /* CheckBox.StyleClassCheckBoxChecked: checkBoxChecked */
-css-check-box > .indicator.checked {
+css-check-box .indicator.checked {
     background-image: texture("/Textures/_RF/Interface/Style/checkbox_checked.png");
 }
