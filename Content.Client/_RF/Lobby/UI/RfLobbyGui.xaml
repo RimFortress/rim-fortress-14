@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:lobbyUi="clr-namespace:Content.Client._RF.Lobby.UI"
     xmlns:info="clr-namespace:Content.Client.Info"
+    xmlns:rfInfo="clr-namespace:Content.Client._RF.Info.Controls"
     xmlns:widgets="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
     xmlns:ui="clr-namespace:Content.Client.Lobby.UI"
     xmlns:css="clr-namespace:Content.Client._RF.CSS"
@@ -21,8 +22,7 @@
                     <controls:CssBoxContainer Name="LeftSideTop" FlexDirection="Column"
                                               CssStyleClasses="angle-rect"
                                               CssStyleIdentifier="lobby-left-top">
-                        <info:LinkBanner Name="LinkBanner" VerticalExpand="false" HorizontalAlignment="Center"
-                                         Margin="3 3 3 3" />
+                        <rfInfo:RfLinkBanner Name="LinkBanner" AlignSelf="Center" Margin="3 3 3 3" />
                         <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back"
                                                   CssStyleIdentifier="lobby-start-row">
                             <controls:CssUICommandButton Command="observe" Name="ObserveButton" Access="Public"
@@ -44,7 +44,7 @@
                 </controls:CssBoxContainer>
                 <!-- Left Bot Panel -->
                 <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="lobby-left-bottom">
-                    <info:DevInfoBanner Name="DevInfoBanner" VerticalExpand="false" Margin="3 3 3 3" />
+                    <rfInfo:RfDevInfoBanner Name="DevInfoBanner" Margin="3 3 3 3" />
                     <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="angle-rect"
                                               CssStyleIdentifier="lobby-credits">
                         <css:CssControl Name="LobbySong" Access="Public" />

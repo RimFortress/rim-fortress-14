@@ -39,6 +39,7 @@ public static class CssClass
     public const string OptionTriangle = "option-triangle";
     public const string PinButtonPinned = "pin-button-pinned";
     public const string PinButtonUnpinned = "pin-button-unpinned";
+    public const string RowButton = "row-button";
     public const string RadialMenuBackButton = "radial-menu-back-button";
     public const string RadialMenuButton = "radial-menu-button";
     public const string RadialMenuCloseButton = "radial-menu-close-button";

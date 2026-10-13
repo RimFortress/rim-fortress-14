@@ -20,6 +20,15 @@
 
 /* ---------- Button shapes ---------- */
 
+/*
+ * A solid row of buttons: a button with the class `row-button` gets its shape by its place among its siblings,
+ * without choosing `open-*` by hand. The first one is `open-right`, the last one is `open-left`, the only one is
+ * `open-both`, the ones between stay as they are. The selectors are in the lists of the shapes below, so the
+ * shapes are declared once; the rules are of the same specificity, and the later one wins: a button that is the only
+ * one matches all three, `open-both` is the last of them.
+ * Note that a hidden button is counted by :first-child and :last-child as well.
+ */
+
 /* ContainerButton.StyleClassButton: button */
 css-button {
     border: 4px solid transparent;
@@ -34,7 +43,8 @@ css-button {
 }
 
 /* StyleClass.ButtonOpenRight: OpenRight */
-.open-right {
+.open-right,
+.row-button:first-child {
     border-style: solid;
     border-width: 5px 5px 5px 6px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_right_border.png");
@@ -46,7 +56,8 @@ css-button {
 }
 
 /* StyleClass.ButtonOpenLeft: OpenLeft */
-.open-left {
+.open-left,
+.row-button:last-child {
     border-style: solid;
     border-width: 5px 6px 5px 5px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_left_border.png");
@@ -58,7 +69,8 @@ css-button {
 }
 
 /* StyleClass.ButtonOpenBoth: OpenBoth */
-.open-both {
+.open-both,
+.row-button:only-child {
     border-style: solid;
     border-width: 5px 6px 5px 6px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_both_border.png");
