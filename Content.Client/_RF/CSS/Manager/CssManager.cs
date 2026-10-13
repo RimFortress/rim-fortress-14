@@ -411,10 +411,15 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         control.CssComputedStylesheet = stylesheet;
 
         var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var applied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // The set of the update before the last one is free by now: reused, a control is restyled often.
+        var applied = control.CssSpareAppliedProperties ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        control.CssSpareAppliedProperties = null;
+        applied.Clear();
 
         // Properties whose winning declaration is inherit (or unset on an inherited property): they follow the parent.
-        var inheriting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Almost no control has any, so the set is made on demand.
+        HashSet<string>? inheriting = null;
 
         // Cascade: normal declarations are applied first, then !important ones, so the latter always win.
         // Within one importance level the later rule (higher specificity / later in source) wins.
@@ -429,7 +434,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         }
 
         control.CssLastAppliedProperties = applied;
-        control.CssInheritKeywordProperties = inheriting.Count > 0 ? inheriting : null;
+        control.CssInheritKeywordProperties = inheriting is { Count: > 0 } ? inheriting : null;
         var controlType = control.GetType();
 
         foreach (var name in previouslyApplied)
@@ -437,6 +442,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             if (TryGetAppliedPropertyAccessor(controlType, name, out var accessor))
                 accessor.Value.Setter(control, accessor.Value.DefaultValue!);
         }
+
+        previouslyApplied.Clear();
+        control.CssSpareAppliedProperties = previouslyApplied;
 
         // Whatever the cascade doesn't declare (or just reset) falls back to the inherited value, not to the initial one.
         control.RefreshInheritedProperties();
@@ -462,13 +470,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 value = ResolveCssWide(control, property, wide.Keyword, out var inherits);
 
                 if (inherits)
-                    inheriting.Add(property.Name);
+                    (inheriting ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase)).Add(property.Name);
                 else
-                    inheriting.Remove(property.Name);
+                    inheriting?.Remove(property.Name);
             }
             else
             {
-                inheriting.Remove(property.Name);
+                inheriting?.Remove(property.Name);
             }
 
             property.Accessor.Setter(control, value!);
@@ -491,25 +499,60 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 return;
             }
 
-            var deferred = new List<CssStyleProperty>();
-
-            foreach (var declaration in rule.DeferredDeclarations)
-            {
-                if (declaration.Declaration.Important == important)
-                    TryResolveDeferred(declaration, variables, deferred);
-            }
-
-            // Declaration order decides which value wins; OrderBy is stable.
-            var properties = rule.Properties
-                .Where(p => p.Important == important)
-                .Concat(deferred)
-                .OrderBy(p => p.Order);
-
-            foreach (var property in properties)
+            foreach (var property in ResolveDeferredProperties(rule, important, variables))
             {
                 Apply(property);
             }
         }
+    }
+
+    /// <summary>
+    /// The properties of a rule with <c>var()</c> declarations for one importance level, in declaration order:
+    /// the plain ones merged with the deferred ones expanded and parsed against <paramref name="variables"/>.
+    /// </summary>
+    /// <remarks>
+    /// The result only depends on the rule and on the variables, and the variables are shared by reference between all
+    /// the controls that inherit them, so it is cached on them: a restyle does not parse the same values again.
+    /// </remarks>
+    private CssStyleProperty[] ResolveDeferredProperties(CssStyleRule rule, bool important, CssVariables variables)
+    {
+        var key = (rule.DeferredDeclarations, important);
+
+        if (variables.ResolvedRules.TryGetValue(key, out var cached))
+            return cached;
+
+        var deferred = new List<CssStyleProperty>();
+
+        foreach (var declaration in rule.DeferredDeclarations)
+        {
+            if (declaration.Declaration.Important == important)
+                TryResolveDeferred(declaration, variables, deferred);
+        }
+
+        // Declaration order decides which value wins; both lists are in it already, and never share an order.
+        var plain = rule.Properties;
+        var result = new List<CssStyleProperty>(plain.Count + deferred.Count);
+        var d = 0;
+
+        foreach (var property in plain)
+        {
+            if (property.Important != important)
+                continue;
+
+            while (d < deferred.Count && deferred[d].Order < property.Order)
+            {
+                result.Add(deferred[d++]);
+            }
+
+            result.Add(property);
+        }
+
+        while (d < deferred.Count)
+        {
+            result.Add(deferred[d++]);
+        }
+
+        return variables.ResolvedRules[key] = result.ToArray();
     }
 
     /// <summary>
@@ -519,9 +562,12 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     private static List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
     {
         var candidates = new List<CssStyleRule>();
+        var unsorted = stylesheet.UnsortedRules;
 
-        foreach (var rule in stylesheet.UnsortedRules)
+        for (var i = 0; i < unsorted.Count; i++)
         {
+            var rule = unsorted[i];
+
             if (rule.Selector.Matches(control))
                 candidates.Add(rule);
         }
@@ -530,8 +576,10 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         {
             if (stylesheet.TypeSortedRules.TryGetValue(type, out var typeSortedRules))
             {
-                foreach (var rule in typeSortedRules)
+                for (var i = 0; i < typeSortedRules.Count; i++)
                 {
+                    var rule = typeSortedRules[i];
+
                     if (rule.Selector.Matches(control))
                         candidates.Add(rule);
                 }
@@ -541,12 +589,23 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 break;
         }
 
-        return candidates
-            .Select((rule, i) => (rule, i))
-            .OrderBy(x => x.rule.Specificity)
-            .ThenBy(x => x.i)
-            .Select(x => x.rule)
-            .ToList();
+        // Ascending specificity, the order of the candidates among equals. A stable insertion sort: there are
+        // few matches per control, and it neither allocates nor needs the index of a rule.
+        for (var i = 1; i < candidates.Count; i++)
+        {
+            var rule = candidates[i];
+            var j = i - 1;
+
+            while (j >= 0 && candidates[j].Specificity.CompareTo(rule.Specificity) > 0)
+            {
+                candidates[j + 1] = candidates[j];
+                j--;
+            }
+
+            candidates[j + 1] = rule;
+        }
+
+        return candidates;
     }
 
     /// <summary>

@@ -300,7 +300,10 @@ public readonly record struct CssStyleRule(Selector Selector, IReadOnlyList<CssS
     /// </summary>
     public bool HasImportant { get; init; }
 
-    public StyleSpecificity Specificity => Selector.CalculateSpecificity();
+    /// <summary>
+    /// Calculated once: the cascade sorts the matching rules by it for every control it styles.
+    /// </summary>
+    public StyleSpecificity Specificity { get; init; } = Selector.CalculateSpecificity();
 }
 
 /// <summary>

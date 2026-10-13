@@ -11,6 +11,11 @@ public partial class CssControl
     internal HashSet<string>? CssLastAppliedProperties;
 
     /// <summary>
+    /// A cleared set kept from the last style update to be filled by the next one, instead of making a new one.
+    /// </summary>
+    internal HashSet<string>? CssSpareAppliedProperties;
+
+    /// <summary>
     /// The computed CSS custom properties (variables) of this control: its own cascaded declarations
     /// plus everything inherited from ancestors. Shared with the parent when this control declares none.
     /// </summary>

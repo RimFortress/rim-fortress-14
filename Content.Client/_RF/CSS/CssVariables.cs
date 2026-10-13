@@ -35,6 +35,27 @@ public sealed class CssVariables
     private readonly CssVariables? _parent;
 
     /// <summary>
+    /// Declarations with <c>var()</c> of the rules, expanded and parsed against this set, keyed by the list of the
+    /// deferred declarations of the rule (the rule itself) and the importance. The set never changes, so neither does
+    /// the result; it lives as long as the set does. Filled by the style manager.
+    /// </summary>
+    internal Dictionary<(IReadOnlyList<CssDeferredDeclaration> Rule, bool Important), CssStyleProperty[]> ResolvedRules { get; }
+        = new(RuleKeyComparer.Instance);
+
+    private sealed class RuleKeyComparer : IEqualityComparer<(IReadOnlyList<CssDeferredDeclaration> Rule, bool Important)>
+    {
+        public static readonly RuleKeyComparer Instance = new();
+
+        public bool Equals(
+            (IReadOnlyList<CssDeferredDeclaration> Rule, bool Important) x,
+            (IReadOnlyList<CssDeferredDeclaration> Rule, bool Important) y)
+            => ReferenceEquals(x.Rule, y.Rule) && x.Important == y.Important;
+
+        public int GetHashCode((IReadOnlyList<CssDeferredDeclaration> Rule, bool Important) key)
+            => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(key.Rule) * 2 + (key.Important ? 1 : 0);
+    }
+
+    /// <summary>
     /// Raw cascaded declarations of this control, as they appear in CSS (may contain <c>var()</c>).
     /// </summary>
     private readonly Dictionary<string, List<ICssComponentValue>> _declared;
