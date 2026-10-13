@@ -50,6 +50,11 @@ public static class CssClass
     public const string Transparent = "transparent";
     public const string TreeMenuButton = "tree-menu-button";
 
+    // Tabs
+    public const string Tab = "tab";
+    public const string TabBar = "tab-bar";
+    public const string TabPanel = "tab-panel";
+
     // Input
     public const string ActionSearchBox = "action-search-box";
     public const string ChatLineEdit = "chat-line-edit";

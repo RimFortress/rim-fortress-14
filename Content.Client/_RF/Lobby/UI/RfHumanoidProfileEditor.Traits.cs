@@ -9,7 +9,6 @@ namespace Content.Client._RF.Lobby.UI;
 
 public sealed partial class RfHumanoidProfileEditor
 {
-
     /// <summary>
     /// Refreshes traits selector
     /// </summary>
@@ -17,8 +16,10 @@ public sealed partial class RfHumanoidProfileEditor
     {
         TraitsList.RemoveAllChildren();
 
-        var traits = _prototypeManager.EnumeratePrototypes<TraitPrototype>().OrderBy(t => Loc.GetString(t.Name)).ToList();
-        TabContainer.SetTabTitle(TraitsTab.GetPositionInParent(), Loc.GetString("humanoid-profile-editor-traits-tab"));
+        var traits = _prototypeManager
+            .EnumeratePrototypes<TraitPrototype>()
+            .OrderBy(t => Loc.GetString(t.Name))
+            .ToList();
 
         if (traits.Count < 1)
         {

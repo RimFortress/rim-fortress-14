@@ -7,7 +7,7 @@
     xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
     FlexDirection="Column">
     <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
-    <!-- The TabContainer, Sliders and the pickers have no CSS version yet. -->
+    <!-- The Sliders and the pickers have no CSS version yet. -->
     <!-- Middle container -->
     <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-top">
         <!-- Name box-->
@@ -38,8 +38,9 @@
     <css:CssControl MinHeight="10" />
 
     <!-- tabContainer -->
-    <TabContainer Name="TabContainer" VerticalExpand="True">
-        <controls:CssBoxContainer Name="AppearanceTab" FlexDirection="Column">
+    <controls:CssTabContainer Name="Tabs" FlexGrow="1">
+        <controls:CssBoxContainer Name="AppearanceTab" FlexDirection="Column"
+                                  controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-appearance-tab'}">
             <controls:CssBoxContainer FlexDirection="Row">
                 <!-- Sprite view -->
                 <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-dark-bordered"
@@ -110,12 +111,14 @@
                 </controls:CssBoxContainer>
             </controls:CssScrollContainer>
         </controls:CssBoxContainer>
-        <ui:CharacterSkillsTab Name="SkillsTab" Margin="10" />
-        <controls:CssBoxContainer Name="TraitsTab" FlexDirection="Column" Margin="10">
+        <ui:CharacterSkillsTab Name="SkillsTab" Margin="10"
+                               controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-skills-tab'}" />
+        <controls:CssBoxContainer Name="TraitsTab" FlexDirection="Column" Margin="10"
+                                  controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-traits-tab'}">
             <!-- Traits -->
             <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="profile-traits-scroll">
                 <controls:CssBoxContainer Name="TraitsList" FlexDirection="Column" />
             </controls:CssScrollContainer>
         </controls:CssBoxContainer>
-    </TabContainer>
+    </controls:CssTabContainer>
 </ui:RfHumanoidProfileEditor>

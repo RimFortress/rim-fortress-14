@@ -113,8 +113,6 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Appearance
 
-            TabContainer.SetTabTitle(AppearanceTab.GetPositionInParent(), Loc.GetString("humanoid-profile-editor-appearance-tab"));
-
             #region Sex
 
             SexButton.OnItemSelected += args =>
@@ -218,7 +216,6 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Skills
 
-            TabContainer.SetTabTitle(SkillsTab.GetPositionInParent(), Loc.GetString("humanoid-profile-editor-skills-tab"));
             SkillsTab.OnSkillUpdate += args =>
             {
                 Profile = Profile?.WithSkillPreference(args.Skill, args.Level, args.LeftPoints, _prototypeManager);

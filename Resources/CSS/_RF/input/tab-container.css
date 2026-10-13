@@ -1,0 +1,61 @@
+/* ---------- TabContainer (CssTabContainer) ---------- */
+
+/*
+ * TabContainer: panel tabcontainer_panel.png (patch margin 2, content margin top 2), active tab dark-forest,
+ * inactive tab graphite-black, content margin horizontal 5.
+ *
+ * The structure of css-tab-container is
+ *     css-tab-container
+ *       .tab-bar            a row of css-button.tab, the selected one is :checked and .selected
+ *       .tab-panel          holds the pages
+ * and the container is a css-box-container, so:
+ *   - `flex-direction: column-reverse` puts the bar below the pages;
+ *   - `flex-direction: row` + `.tab-bar { flex-direction: column }` puts the bar to the left of the pages
+ *     (`row-reverse` to the right);
+ *   - `gap` is the space between the bar and the panel (and `.tab-bar { gap }` between the tabs);
+ *   - `.tab-bar { justify-content: center }` aligns the tabs, `.tab { flex-grow: 1 }` stretches them to the bar;
+ *   - a tab is a button, so everything of css-button works for it: borders, border-image, background-image,
+ *     font, `:hover`, `:disabled`, `.tab:first-child`, `.tab:last-child`;
+ *   - `css-tab-container.my-tabs > .tab-bar > .tab` restyles the tabs of one container.
+ * The child combinators keep a container that lies on a page from taking the rules of the outer one.
+ */
+
+css-tab-container {
+    gap: 0;
+}
+
+css-tab-container > .tab-bar {
+    gap: 0;
+}
+
+css-tab-container > .tab-panel {
+    border: 2px solid var(--wooden-fortress);
+    background-color: var(--dark-forest);
+    background-clip: border-box;
+    background-repeat: stretch;
+    padding: 2px 0 0 0;
+}
+
+/* The tab: a flat button of two colors, it doesn't take the texture of css-button. */
+css-tab-container > .tab-bar > .tab {
+    border: none;
+    border-image: none;
+    background-image: none;
+    padding: 0 5px;
+    text-align: center;
+    background-color: var(--graphite-black);
+}
+
+css-tab-container > .tab-bar > .tab:hover {
+    background-color: color-mix(in srgb, var(--dark-forest) 60%, var(--graphite-black));
+}
+
+css-tab-container > .tab-bar > .tab:active,
+css-tab-container > .tab-bar > .tab:checked {
+    background-color: var(--dark-forest);
+}
+
+css-tab-container > .tab-bar > .tab:disabled {
+    color: var(--disabled-button-font-color);
+    background-color: var(--graphite-black);
+}

@@ -21,8 +21,7 @@ public sealed partial class RfHumanoidProfileEditor
                 return;
 
             _flavorText = new FlavorText.FlavorText();
-            TabContainer.AddChild(_flavorText);
-            TabContainer.SetTabTitle(TabContainer.ChildCount - 1, Loc.GetString("humanoid-profile-editor-flavortext-tab"));
+            Tabs.AddTab(Loc.GetString("humanoid-profile-editor-flavortext-tab"), _flavorText);
             _flavorTextEdit = _flavorText.CFlavorTextInput;
 
             _flavorText.OnFlavorTextChanged += OnFlavorTextChange;
@@ -32,7 +31,8 @@ public sealed partial class RfHumanoidProfileEditor
             if (_flavorText == null)
                 return;
 
-            TabContainer.RemoveChild(_flavorText);
+            if (Tabs.FindByPage(_flavorText) is { } tab)
+                Tabs.RemoveTab(tab);
             _flavorText.OnFlavorTextChanged -= OnFlavorTextChange;
             _flavorText.Dispose();
             _flavorTextEdit?.Dispose();
