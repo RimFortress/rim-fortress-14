@@ -32,6 +32,8 @@ public sealed class CssStylesheet
     private readonly HashSet<Type> _ancestorDependentTypes = new();
     private readonly Dictionary<Type, bool> _ancestorDependentCache = new();
     private readonly bool _ancestorDependentAll;
+    private readonly Dictionary<Type, bool> _siblingDependentCache = new();
+    private readonly Dictionary<Type, bool> _orderDependentCache = new();
     private readonly CssAncestorReach _maxAncestorReach;
 
     /// <summary>
@@ -59,6 +61,16 @@ public sealed class CssStylesheet
     /// Each bucket is already sorted by specificity.
     /// </summary>
     public IReadOnlyDictionary<Type, IReadOnlyList<CssStyleRule>> TypeSortedRules { get; }
+
+    /// <summary>
+    /// <see cref="UnsortedRules"/> by the class or id they require, to match only the rules a control can have.
+    /// </summary>
+    internal CssRuleIndex UnsortedIndex { get; }
+
+    /// <summary>
+    /// <see cref="TypeSortedRules"/> by the class or id they require.
+    /// </summary>
+    internal IReadOnlyDictionary<Type, CssRuleIndex> TypeIndex { get; }
 
     public IReadOnlyDictionary<Type, IReadOnlySet<Type>> SortedSelectorTypes { get; }
 
@@ -129,6 +141,8 @@ public sealed class CssStylesheet
         TypeSortedRules = byType.ToDictionary(
             kv => kv.Key,
             IReadOnlyList<CssStyleRule> (kv) => SortBySpecificity(kv.Value));
+        UnsortedIndex = new CssRuleIndex(UnsortedRules);
+        TypeIndex = TypeSortedRules.ToDictionary(kv => kv.Key, kv => new CssRuleIndex(kv.Value));
         UnsortedSelectorTypes = unsortedSelectorTypes;
         SortedSelectorTypes = sortedSelectorTypes.ToDictionary(
             kv => kv.Key,
@@ -181,6 +195,76 @@ public sealed class CssStylesheet
 
         _ancestorDependentCache[type] = result;
         return result;
+    }
+
+    // What a rule can look at among the siblings of a control: its place among them, or whether it is the only one.
+    private static readonly Type[] SiblingSelectors =
+    [
+        typeof(NthChildSelector),
+        typeof(NthLastChildSelector),
+        typeof(NthLastOfTypeSelector),
+        typeof(NthOfTypeSelector),
+        typeof(OnlyChildSelector),
+        typeof(OnlyOfTypeSelector),
+        typeof(SelectorChild),
+    ];
+
+    // The same, for a sibling that only changed its place.
+    private static readonly Type[] OrderSelectors =
+    [
+        typeof(NthChildSelector),
+        typeof(NthLastChildSelector),
+        typeof(NthLastOfTypeSelector),
+        typeof(NthOfTypeSelector),
+    ];
+
+    /// <summary>
+    /// Whether a rule that may apply to a control of this type depends on the siblings of the control: on their
+    /// number or on the place of the control among them. Such a control is restyled when a sibling is added or removed.
+    /// </summary>
+    public bool IsSiblingDependent(Type type) => IsDependentOn(type, SiblingSelectors, _siblingDependentCache);
+
+    /// <summary>
+    /// Whether a rule that may apply to a control of this type depends on the place of the control among its siblings.
+    /// Such a control is restyled when a sibling is moved.
+    /// </summary>
+    public bool IsOrderDependent(Type type) => IsDependentOn(type, OrderSelectors, _orderDependentCache);
+
+    private bool IsDependentOn(Type type, Type[] kinds, Dictionary<Type, bool> cache)
+    {
+        if (cache.TryGetValue(type, out var cached))
+            return cached;
+
+        var result = false;
+
+        foreach (var kind in kinds)
+        {
+            if (UnsortedSelectorTypes.Contains(kind))
+            {
+                result = true;
+                break;
+            }
+        }
+
+        for (var t = type; !result && t != null; t = t.BaseType)
+        {
+            if (SortedSelectorTypes.TryGetValue(t, out var bySelector))
+            {
+                foreach (var kind in kinds)
+                {
+                    if (bySelector.Contains(kind))
+                    {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+
+            if (t == typeof(Control))
+                break;
+        }
+
+        return cache[type] = result;
     }
 
     // depth: 0 is the styled control, 1 its parent, 2 and more: further ancestors, or any of them.
@@ -336,3 +420,71 @@ public readonly record struct CssCustomProperty(string Name, List<ICssComponentV
 /// <param name="ElementType">Element type of the rule's selector, used to resolve property accessors.</param>
 /// <param name="Order">Index of the source declaration.</param>
 public readonly record struct CssDeferredDeclaration(CssDeclaration Declaration, Type? ElementType, int Order);
+
+
+/// <summary>
+/// A list of rules (already sorted) with the rules that require a class or an id of the control found by it:
+/// a control is matched against the rules without such a requirement, and against those of its own classes and id,
+/// instead of against all of them.
+/// </summary>
+internal sealed class CssRuleIndex
+{
+    /// <summary>
+    /// A rule with its place in the list the index was built from.
+    /// </summary>
+    public readonly record struct Entry(CssStyleRule Rule, int Position);
+
+    // The requirements of the rules are looked at by the selector of the rule only: if it can't tell one for sure
+    // (a type selector, a pseudo-class, a negation), the rule is always matched.
+    private readonly List<Entry> _always = new();
+    private readonly Dictionary<string, List<Entry>> _byKey = new(StringComparer.Ordinal);
+
+    public CssRuleIndex(IReadOnlyList<CssStyleRule> rules)
+    {
+        for (var i = 0; i < rules.Count; i++)
+        {
+            var entry = new Entry(rules[i], i);
+            var key = RequiredKey(rules[i].Selector);
+
+            if (key == null)
+                _always.Add(entry);
+            else
+                _byKey.GetOrNew(key).Add(entry);
+        }
+    }
+
+    public IReadOnlyList<Entry> Always => _always;
+
+    public bool TryGet(string key, out List<Entry> entries) => _byKey.TryGetValue(key, out entries!);
+
+    /// <summary>
+    /// A class (<c>.name</c>) or an id (<c>#name</c>) that every control matching the selector has.
+    /// </summary>
+    private static string? RequiredKey(Selector selector)
+    {
+        switch (selector)
+        {
+            case CssElementSelector element:
+                if (element.ElementId != null)
+                    return "#" + element.ElementId;
+
+                return element.ElementClasses is { Count: > 0 } classes ? "." + classes[0] : null;
+            case AndSelector and:
+                // All of the parts must match: any class one of them requires is required by the whole.
+                // (A negation or an alternative requires nothing.)
+                foreach (var inner in and.Selectors)
+                {
+                    if (RequiredKey(inner) is { } key)
+                        return key;
+                }
+
+                return null;
+            case SelectorChild child:
+                return RequiredKey(child.Child);
+            case CssDescendantSelector descendant:
+                return RequiredKey(descendant.Descendant);
+            default:
+                return null;
+        }
+    }
+}

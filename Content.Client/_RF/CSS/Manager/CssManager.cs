@@ -219,6 +219,20 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     public void UpdateStyle<T>(CssControl control) where T : Selector => UpdateStyle(control, typeof(T));
 
     /// <inheritdoc/>
+    public void UpdateStyleOnSiblingsChanged(CssControl control)
+    {
+        if (Stylesheet.IsSiblingDependent(control.GetType()))
+            QueueStyleUpdate(control);
+    }
+
+    /// <inheritdoc/>
+    public void UpdateStyleOnSiblingsReordered(CssControl control)
+    {
+        if (Stylesheet.IsOrderDependent(control.GetType()))
+            QueueStyleUpdate(control);
+    }
+
+    /// <inheritdoc/>
     public void UpdateStyle(CssControl control, params Type[] selectors)
     {
         foreach (var kind in selectors)
@@ -245,6 +259,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     /// <inheritdoc/>
     public void UpdateStyle(CssControl control) => ApplyStyle(control, Stylesheet, propagate: true);
+
+    /// <inheritdoc/>
+    public void UpdateStyleOnEnter(CssControl control) => ApplyStyle(control, Stylesheet, propagate: false);
 
     /// <inheritdoc/>
     public void UpdateDependents(CssControl control, string? key)
@@ -290,8 +307,6 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         // No propagation is needed here: the recursion itself visits all descendants.
         if (control is CssControl css)
             ApplyStyle(css, stylesheet, propagate: false);
-
-        RefreshFonts(control);
 
         foreach (var child in control.Children)
         {
@@ -559,53 +574,103 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// Returns all rules matching the control, sorted by specificity and then by declaration order
     /// (the last rule wins).
     /// </summary>
-    private static List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
+    // (rule, place in the cascade): the candidates being sorted. Belongs to the manager, since there may be several
+    // clients (the tests run many in one process); not used while a rule is matched, so it can't be re-entered.
+    private readonly List<(CssStyleRule Rule, long Order)> _candidates = new();
+
+    private List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
     {
-        var candidates = new List<CssStyleRule>();
-        var unsorted = stylesheet.UnsortedRules;
+        var candidates = _candidates;
+        candidates.Clear();
 
-        for (var i = 0; i < unsorted.Count; i++)
-        {
-            var rule = unsorted[i];
-
-            if (rule.Selector.Matches(control))
-                candidates.Add(rule);
-        }
+        // The place of a rule is where the unindexed cascade would find it: the rules of no particular type first,
+        // then the rules of the control's type and of each of its base types, each in the order of its sorted list.
+        AddMatching(control, stylesheet.UnsortedIndex, 0, candidates);
+        var level = 1L;
 
         for (var type = control.GetType(); type != null; type = type.BaseType)
         {
-            if (stylesheet.TypeSortedRules.TryGetValue(type, out var typeSortedRules))
-            {
-                for (var i = 0; i < typeSortedRules.Count; i++)
-                {
-                    var rule = typeSortedRules[i];
+            if (stylesheet.TypeIndex.TryGetValue(type, out var index))
+                AddMatching(control, index, level, candidates);
 
-                    if (rule.Selector.Matches(control))
-                        candidates.Add(rule);
-                }
-            }
+            level++;
 
             if (type == typeof(Control))
                 break;
         }
 
-        // Ascending specificity, the order of the candidates among equals. A stable insertion sort: there are
-        // few matches per control, and it neither allocates nor needs the index of a rule.
+        // Ascending specificity, the place in the cascade among equals. A stable insertion sort: there are few
+        // matches per control, and it neither allocates nor needs a comparer.
         for (var i = 1; i < candidates.Count; i++)
         {
-            var rule = candidates[i];
+            var candidate = candidates[i];
             var j = i - 1;
 
-            while (j >= 0 && candidates[j].Specificity.CompareTo(rule.Specificity) > 0)
+            while (j >= 0 && Compare(candidates[j], candidate) > 0)
             {
                 candidates[j + 1] = candidates[j];
                 j--;
             }
 
-            candidates[j + 1] = rule;
+            candidates[j + 1] = candidate;
         }
 
-        return candidates;
+        var result = new List<CssStyleRule>(candidates.Count);
+
+        foreach (var (rule, _) in candidates)
+        {
+            result.Add(rule);
+        }
+
+        candidates.Clear();
+        return result;
+    }
+
+    private static int Compare((CssStyleRule Rule, long Order) a, (CssStyleRule Rule, long Order) b)
+    {
+        var cmp = a.Rule.Specificity.CompareTo(b.Rule.Specificity);
+        return cmp != 0 ? cmp : a.Order.CompareTo(b.Order);
+    }
+
+    private static void AddMatching(
+        CssControl control,
+        CssRuleIndex index,
+        long level,
+        List<(CssStyleRule Rule, long Order)> output)
+    {
+        var always = index.Always;
+
+        for (var i = 0; i < always.Count; i++)
+        {
+            var entry = always[i];
+
+            if (entry.Rule.Selector.Matches(control))
+                output.Add((entry.Rule, (level << 32) | (uint) entry.Position));
+        }
+
+        if (control.CssStyleIdentifier is { } id && index.TryGet("#" + id, out var byId))
+            AddMatching(control, byId, level, output);
+
+        foreach (var name in control.CssStyleClasses.Values)
+        {
+            if (index.TryGet("." + name, out var byClass))
+                AddMatching(control, byClass, level, output);
+        }
+    }
+
+    private static void AddMatching(
+        CssControl control,
+        List<CssRuleIndex.Entry> entries,
+        long level,
+        List<(CssStyleRule Rule, long Order)> output)
+    {
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+
+            if (entry.Rule.Selector.Matches(control))
+                output.Add((entry.Rule, (level << 32) | (uint) entry.Position));
+        }
     }
 
     /// <summary>
@@ -616,7 +681,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// Returns the parent's set itself when the control declares nothing, and the previous set
     /// when none of the inputs changed, so reference equality reliably tells whether anything changed.
     /// </remarks>
-    private static CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
+    private CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
     {
         var inherited = GetInheritedVariables(control, stylesheet);
         Dictionary<string, List<ICssComponentValue>>? declared = null;
@@ -666,7 +731,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// The variables inherited by the control: the computed set of the nearest <see cref="CssControl"/>
     /// ancestor (controls of other types don't take part in CSS), or the global <c>:root</c> variables.
     /// </summary>
-    private static CssVariables GetInheritedVariables(Control control, CssStylesheet stylesheet)
+    private CssVariables GetInheritedVariables(Control control, CssStylesheet stylesheet)
     {
         for (var parent = control.Parent; parent != null; parent = parent.Parent)
         {

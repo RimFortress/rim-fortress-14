@@ -98,8 +98,15 @@ public partial class CssControl : AutoCssControl
         base.Parented(newParent);
 
         RefreshLengthContext();
-        Css.UpdateStyleRecursively(this);
-        RefreshInheritedProperties();
+
+        // A parent that is in the tree means that this control enters it right away, and EnteredTree styles it.
+        if (newParent.IsInsideTree)
+            return;
+
+        // Putting a subtree together outside of the tree and styling it on every step would style a control once for
+        // every level it is nested in. It is styled once, when the whole thing enters the tree; until then (a measure
+        // is the only way to need it) the style is flagged as outdated.
+        CssStyleDirty = true;
     }
 
     protected override void ChildMoved(Control child, int oldIndex, int newIndex)
@@ -111,11 +118,7 @@ public partial class CssControl : AutoCssControl
             if (control is not CssControl css)
                 continue;
 
-            Css.UpdateStyle(css,
-                typeof(NthChildSelector),
-                typeof(NthLastChildSelector),
-                typeof(NthLastOfTypeSelector),
-                typeof(NthOfTypeSelector));
+            Css.UpdateStyleOnSiblingsReordered(css);
         }
     }
 
@@ -133,14 +136,7 @@ public partial class CssControl : AutoCssControl
             if (control == newChild)
                 continue;
 
-            Css.UpdateStyle(css,
-                typeof(NthChildSelector),
-                typeof(NthLastChildSelector),
-                typeof(NthLastOfTypeSelector),
-                typeof(NthOfTypeSelector),
-                typeof(OnlyChildSelector),
-                typeof(OnlyOfTypeSelector),
-                typeof(SelectorChild));
+            Css.UpdateStyleOnSiblingsChanged(css);
         }
     }
 
@@ -158,14 +154,7 @@ public partial class CssControl : AutoCssControl
             if (control == child)
                 continue;
 
-            Css.UpdateStyle(css,
-                typeof(NthChildSelector),
-                typeof(NthLastChildSelector),
-                typeof(NthLastOfTypeSelector),
-                typeof(NthOfTypeSelector),
-                typeof(OnlyChildSelector),
-                typeof(OnlyOfTypeSelector),
-                typeof(SelectorChild));
+            Css.UpdateStyleOnSiblingsChanged(css);
         }
     }
 

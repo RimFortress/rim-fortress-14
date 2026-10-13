@@ -19,6 +19,7 @@ public partial class CssManager
         foreach (var root in _ui.AllRoots)
         {
             UpdateStyleRecursively(root);
+            RefreshFonts(root); // once per tree: the faces are what changed, not the controls
         }
 
         _sawmill.Info($"{Stylesheet.Rules.Count} CSS styles loaded at {sw.Elapsed}");

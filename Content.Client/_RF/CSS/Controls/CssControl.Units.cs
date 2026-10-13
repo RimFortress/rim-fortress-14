@@ -120,10 +120,10 @@ public partial class CssControl
 
         RefreshLengthContext(); // the viewport may have changed while the control was outside of the tree
 
-        // Styled against another stylesheet (a screen built before the CSS was loaded or reloaded while it was
-        // detached): neither Reload nor Parented reaches it, because its parent may not be a CssControl.
-        if (!ReferenceEquals(CssComputedStylesheet, Css.Stylesheet))
-            Css.UpdateStyle(this);
+        // The only place a control gets its style when it is put into a tree: its parent is styled already, since the
+        // controls enter the tree from the top down, and its descendants follow. This also covers a screen built
+        // before the CSS was loaded or reloaded while it was detached.
+        Css.UpdateStyleOnEnter(this);
     }
 
     /// <inheritdoc/>

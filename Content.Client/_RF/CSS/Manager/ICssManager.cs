@@ -97,11 +97,30 @@ public interface ICssManager : ICssPropertyResolver
     void UpdateStyle<T>(CssControl control) where T : Selector;
 
     /// <summary>
+    /// Queues the restyling of the control if its rules depend on its siblings (<c>:nth-child</c>, <c>:only-child</c>
+    /// and the like), after a sibling was added or removed. Does nothing for the controls that no rule does this for.
+    /// </summary>
+    void UpdateStyleOnSiblingsChanged(CssControl control);
+
+    /// <summary>
+    /// Same as <see cref="UpdateStyleOnSiblingsChanged"/>, after a sibling changed its place among the children
+    /// of the parent: only the rules that depend on the place of the control count.
+    /// </summary>
+    void UpdateStyleOnSiblingsReordered(CssControl control);
+
+    /// <summary>
     /// Updates the control styles that use specific selectors.
     /// </summary>
     /// <param name="control">Control to update.</param>
     /// <param name="selectors">Selector types.</param>
     void UpdateStyle(CssControl control, params Type[] selectors);
+
+    /// <summary>
+    /// Styles the control that has just entered the UI tree, without touching its descendants: they enter the tree
+    /// after it, and are styled by their own call.
+    /// </summary>
+    /// <param name="control">Control to update.</param>
+    void UpdateStyleOnEnter(CssControl control);
 
     /// <summary>
     /// Updates all control styles right now.

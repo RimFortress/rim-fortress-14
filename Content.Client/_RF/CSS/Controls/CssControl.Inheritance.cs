@@ -119,6 +119,15 @@ public partial class CssControl
 
         PullKeywordInherited();
 
+        // The snapshot is what the children saw, to tell whether they have to be refreshed. A control without any
+        // has no use for it (and a child that comes later takes the values from its parent when it is styled);
+        // the missing snapshot makes the next refresh pass the values on, once there are children.
+        if (ChildCount == 0)
+        {
+            _inheritedSnapshot = null;
+            return;
+        }
+
         var snapshot = new object?[inherited.All.Length];
         var changed = _inheritedSnapshot == null;
 

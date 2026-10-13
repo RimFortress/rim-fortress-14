@@ -49,6 +49,11 @@ public sealed class CssStyleClassCollection : ICollection<string>, IReadOnlyColl
     public static CssStyleClassCollection Parse(string s) =>
         new(s.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
+    /// <summary>
+    /// The classes themselves, for enumerating them without allocating an enumerator.
+    /// </summary>
+    internal HashSet<string> Values => _values;
+
     public int Count => _values.Count;
 
     public bool IsReadOnly => false;
