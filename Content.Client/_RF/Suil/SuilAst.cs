@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Linq;
 
 namespace Content.Client._RF.Suil;
 
@@ -84,6 +85,28 @@ public sealed record SuilCompoundSelector(
 
 // ---- Elements ----
 
+/// <summary>
+/// The name of a class or an id of an element: text with `variable` references, like <c>icon-`name`</c>.
+/// After the expansion every name is literal.
+/// </summary>
+public sealed record SuilName(ImmutableArray<StringPart> Parts)
+{
+    public static SuilName Literal(string text) => new([StringPart.Literal(text)]);
+
+    public static implicit operator SuilName(string text) => Literal(text);
+
+    public bool IsLiteral => Parts.All(p => !p.IsVariable);
+
+    /// <summary>
+    /// The source form: variables are in backticks.
+    /// </summary>
+    public override string ToString() => string.Concat(Parts.Select(p => p.IsVariable ? $"`{p.Text}`" : p.Text));
+
+    public bool Equals(SuilName? other) => other != null && StringPart.SequenceEqual(Parts, other.Parts);
+
+    public override int GetHashCode() => StringPart.Hash(Parts);
+}
+
 public enum SuilAccess
 {
     Private,
@@ -98,8 +121,8 @@ public enum SuilAccess
 public sealed record SuilElement(
     SuilAccess Access,
     string? Tag,
-    string? Id,
-    List<string> Classes,
+    SuilName? Id,
+    List<SuilName> Classes,
     List<SuilProperty> Properties,
     List<ISuilElementNode> Children,
     SuilPosition Position) : ISuilElementNode;

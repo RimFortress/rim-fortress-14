@@ -39,8 +39,8 @@ public sealed class SuilParserTests
             """);
 
         Assert.That(root.Tag, Is.EqualTo("button"));
-        Assert.That(root.Id, Is.EqualTo("ok"));
-        Assert.That(root.Classes, Is.EqualTo(new[] { "a", "b" }));
+        Assert.That(root.Id!.ToString(), Is.EqualTo("ok"));
+        Assert.That(root.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "a", "b" }));
         Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "size", "disabled" }));
         Assert.That(Prop(root, "size").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(36, true) }));
         Assert.That(Prop(root, "disabled").Value, Is.Null);
@@ -53,7 +53,7 @@ public sealed class SuilParserTests
         var child = Child(Root("row { _ .flex-fill }"), 0);
 
         Assert.That(child.Tag, Is.Null);
-        Assert.That(child.Classes, Is.EqualTo(new[] { "flex-fill" }));
+        Assert.That(child.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "flex-fill" }));
     }
 
     [Test]
@@ -85,7 +85,7 @@ public sealed class SuilParserTests
             """);
 
         Assert.That(root.Children, Has.Count.EqualTo(3));
-        Assert.That(Child(root, 1).Id, Is.EqualTo("x"));
+        Assert.That(Child(root, 1).Id!.ToString(), Is.EqualTo("x"));
     }
 
     [Test]
@@ -137,6 +137,39 @@ public sealed class SuilParserTests
 
         Assert.That(root.Position, Is.EqualTo(new SuilPosition(1, 1)));
         Assert.That(Child(root, 0).Position, Is.EqualTo(new SuilPosition(2, 5)));
+    }
+
+    [Test]
+    public void Class_And_Id_With_Variables()
+    {
+        var root = Root("button #`p`-ok .icon-`name` .plain");
+
+        Assert.That(root.Id!.ToString(), Is.EqualTo("`p`-ok"));
+        Assert.That(root.Id!.IsLiteral, Is.False);
+        Assert.That(root.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "icon-`name`", "plain" }));
+        Assert.That(root.Classes[0].Parts, Is.EqualTo(new[] { StringPart.Literal("icon-"), StringPart.Variable("name") }));
+        Assert.That(root.Classes[1].IsLiteral, Is.True);
+    }
+
+    [Test]
+    public void Variable_Name_Can_Be_The_Only_Thing_After_The_Tag()
+    {
+        var child = Child(Root("row { _ .`c` }"), 0);
+
+        Assert.That(child.Tag, Is.Null);
+        Assert.That(child.Classes.Single().ToString(), Is.EqualTo("`c`"));
+    }
+
+    [Test]
+    [TestCase(".a-`x` { y: 1; }")]
+    [TestCase("button#a-`x` { y: 1; }")]
+    [TestCase("button .a-`x` { y: 1; }")]
+    [TestCase(".a, .b-`x` { y: 1; }")]
+    [TestCase("row { .a-`x` }")]
+    [TestCase(".a { v: #`x`; }")]
+    public void Variables_In_Names_Are_Only_For_Elements(string input)
+    {
+        Assert.Throws<SuilParserError>(() => Parse(input));
     }
 
     // ---- use / let ----
@@ -251,7 +284,7 @@ public sealed class SuilParserTests
         var file = Parse("button .big { row .x }");
 
         Assert.That(file.Items, Is.Empty);
-        Assert.That(file.Root!.Classes, Is.EqualTo(new[] { "big" }));
+        Assert.That(file.Root!.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "big" }));
     }
 
     [Test]
@@ -417,7 +450,7 @@ public sealed class SuilParserTests
         var col = Child(row, 0);
 
         Assert.That(file.Root!.Tag, Is.EqualTo("button"));
-        Assert.That(row.Classes, Is.EqualTo(new[] { "picker-row" }));
+        Assert.That(row.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "picker-row" }));
         Assert.That(col.Children, Has.Count.EqualTo(3));
         Assert.That(Child(col, 0).Access, Is.EqualTo(SuilAccess.Public));
         Assert.That(Child(row, 2).Tag, Is.Null);

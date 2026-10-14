@@ -89,6 +89,17 @@ public readonly record struct FunctionToken(string Value) : ISuilToken;
 /// </summary>
 public readonly record struct HashToken(string Value, bool IsId) : ISuilToken;
 
+/// <summary>
+/// <c>.icon-`name`</c> or <c>#`prefix`-button</c>: a class or an id whose name has `variable` references.
+/// A plain <c>.name</c> and <c>#name</c> are not turned into it. <paramref name="Sigil"/> is '.' or '#'.
+/// </summary>
+public readonly record struct InterpolatedNameToken(int Sigil, ImmutableArray<StringPart> Parts) : ISuilToken
+{
+    public bool Equals(InterpolatedNameToken other) => Sigil == other.Sigil && StringPart.SequenceEqual(Parts, other.Parts);
+
+    public override int GetHashCode() => HashCode.Combine(Sigil, StringPart.Hash(Parts));
+}
+
 public readonly record struct NumberToken(double Value, bool IsInteger) : ISuilToken;
 
 public readonly record struct PercentageToken(double Value) : ISuilToken;

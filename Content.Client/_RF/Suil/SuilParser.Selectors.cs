@@ -12,7 +12,7 @@ public static partial class SuilParser
     {
         switch (stream.PeekNext())
         {
-            case DelimToken { CodePoint: '.' } or HashToken or ColonToken:
+            case DelimToken { CodePoint: '.' } or HashToken or ColonToken or InterpolatedNameToken:
                 return true;
             case IdentToken:
                 break;
@@ -170,7 +170,7 @@ public static partial class SuilParser
     }
 
     private static bool StartsCompoundSelector(ISuilToken token)
-        => token is IdentToken or HashToken or ColonToken or DelimToken { CodePoint: '.' };
+        => token is IdentToken or HashToken or ColonToken or InterpolatedNameToken or DelimToken { CodePoint: '.' };
 
     /// <summary>
     /// compound = ( ident , { sub } ) | sub , { sub }
@@ -216,6 +216,10 @@ public static partial class SuilParser
 
                     classes.Add(cls.Value);
                     continue;
+                case InterpolatedNameToken:
+                    stream.ConsumeNext();
+                    throw ErrorAtCurrent(ref stream, "consuming selector",
+                        "variables are not allowed in selectors, only in the classes and ids of elements");
                 case ColonToken:
                     stream.ConsumeNext();
 

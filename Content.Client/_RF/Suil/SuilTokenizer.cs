@@ -157,6 +157,9 @@ public static class SuilTokenizer
             case 0x0022: // "
                 return ConsumeString(ref stream);
             case 0x0023: // #
+                if (NameHasVariable(ref stream))
+                    return ConsumeInterpolatedName(ref stream, cp);
+
                 if (!IsIdentChar(stream.PeekNext()))
                     return new DelimToken(cp);
 
@@ -172,7 +175,12 @@ public static class SuilTokenizer
                 return new RightParenthesisToken();
             case 0x002B or 0x002D or 0x002E: // + - .
                 if (!WouldStartNumber(ref stream))
+                {
+                    if (cp == 0x002E && NameHasVariable(ref stream))
+                        return ConsumeInterpolatedName(ref stream, cp);
+
                     return new DelimToken(cp);
+                }
 
                 stream.Reconsume();
                 return ConsumeNumericToken(ref stream);
@@ -188,7 +196,9 @@ public static class SuilTokenizer
 
                 if (underscore != "_")
                 {
-                    throw new SuilTokenizeError("consuming ident", cp, stream.Position,
+                    throw new SuilTokenizeError("consuming ident",
+                        cp,
+                        stream.Position,
                         "an ident that doesn't start with an underscore");
                 }
 
@@ -276,6 +286,54 @@ public static class SuilTokenizer
     }
 
     /// <summary>
+    /// Whether the name that follows a '.' or '#' has a `variable` reference: ident code points go up to a backtick.
+    /// Nothing is consumed.
+    /// </summary>
+    private static bool NameHasVariable(ref CodePointStream stream)
+    {
+        for (var offset = 1;; offset++)
+        {
+            var cp = stream.PeekNext(offset);
+
+            if (cp == 0x0060) // `
+                return true;
+
+            if (!IsIdentChar(cp))
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Consumes the name after '.' or '#' (already consumed) that has `variable` references.
+    /// </summary>
+    private static InterpolatedNameToken ConsumeInterpolatedName(ref CodePointStream stream, int sigil)
+    {
+        var parts = ImmutableArray.CreateBuilder<StringPart>();
+        var text = new StringBuilder();
+
+        while (true)
+        {
+            var next = stream.PeekNext();
+
+            if (IsIdentChar(next))
+            {
+                text.Append(new Rune(stream.ConsumeNext()));
+                continue;
+            }
+
+            if (next != 0x0060) // `
+                break;
+
+            stream.ConsumeNext();
+            FlushLiteral(parts, text);
+            parts.Add(StringPart.Variable(ConsumeVariableName(ref stream)));
+        }
+
+        FlushLiteral(parts, text);
+        return new InterpolatedNameToken(sigil, parts.ToImmutable());
+    }
+
+    /// <summary>
     /// Consumes <c>name`</c> after the opening backtick and returns the name.
     /// </summary>
     private static string ConsumeVariableName(ref CodePointStream stream)
@@ -299,7 +357,9 @@ public static class SuilTokenizer
     {
         if (stream.PeekNext() == 0x002E)
         {
-            throw new SuilTokenizeError("consuming localization key", 0x002E, stream.Position + 1,
+            throw new SuilTokenizeError("consuming localization key",
+                0x002E,
+                stream.Position + 1,
                 "a key that doesn't start with a dot (relative keys are not supported)");
         }
 

@@ -31,3 +31,10 @@ public sealed class SuilParserError(string context, string message, SuilPosition
 
     public override string Message => $"error while {context} ({Position.Line}:{Position.Column}): {message}";
 }
+
+public sealed class SuilExpansionError(string context, string message, SuilPosition position) : Exception
+{
+    public SuilPosition Position { get; } = position;
+
+    public override string Message => $"error while {context} ({Position.Line}:{Position.Column}): {message}";
+}

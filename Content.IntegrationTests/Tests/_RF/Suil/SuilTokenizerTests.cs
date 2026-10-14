@@ -119,6 +119,66 @@ public sealed class SuilTokenizerTests
         Assert.That(Tokenize("# "), Is.EqualTo(new List<ISuilToken> { new DelimToken('#'), new WhitespaceToken() }));
     }
 
+    private static InterpolatedNameToken Name(char sigil, params StringPart[] parts) => new(sigil, parts.ToImmutableArray());
+
+    [Test]
+    public void Class_With_A_Variable()
+    {
+        Assert.That(Tokenize(".icon-`name`"), Is.EqualTo(new List<ISuilToken>
+        {
+            Name('.', StringPart.Literal("icon-"), StringPart.Variable("name")),
+        }));
+    }
+
+    [Test]
+    public void Name_May_Start_And_Continue_After_A_Variable()
+    {
+        Assert.That(Tokenize(".`a`-b`c`_d #`x`"), Is.EqualTo(new List<ISuilToken>
+        {
+            Name('.', StringPart.Variable("a"), StringPart.Literal("-b"), StringPart.Variable("c"), StringPart.Literal("_d")),
+            new WhitespaceToken(),
+            Name('#', StringPart.Variable("x")),
+        }));
+    }
+
+    [Test]
+    public void Id_With_A_Variable()
+    {
+        Assert.That(Tokenize("#slot-`n`"), Is.EqualTo(new List<ISuilToken>
+        {
+            Name('#', StringPart.Literal("slot-"), StringPart.Variable("n")),
+        }));
+    }
+
+    [Test]
+    public void Name_Ends_At_The_First_Non_Name_Code_Point()
+    {
+        Assert.That(Tokenize(".a-`b` .c"), Is.EqualTo(new List<ISuilToken>
+        {
+            Name('.', StringPart.Literal("a-"), StringPart.Variable("b")), new WhitespaceToken(),
+            new DelimToken('.'), new IdentToken("c"),
+        }));
+    }
+
+    [Test]
+    public void Plain_Names_Stay_Plain_Tokens()
+    {
+        Assert.That(Tokenize(".a #b `c`"), Is.EqualTo(new List<ISuilToken>
+        {
+            new DelimToken('.'), new IdentToken("a"), new WhitespaceToken(),
+            new HashToken("b", true), new WhitespaceToken(), new VariableToken("c"),
+        }));
+    }
+
+    [Test]
+    [TestCase(".a-`")]
+    [TestCase(".`1a`")]
+    [TestCase("#`")]
+    public void Invalid_Name_Variable_Throws(string input)
+    {
+        Assert.Throws<SuilTokenizeError>(() => Tokenize(input));
+    }
+
     [Test]
     public void Number_Tokens()
     {

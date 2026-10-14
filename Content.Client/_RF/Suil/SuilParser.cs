@@ -237,7 +237,7 @@ public static partial class SuilParser
                 propertiesConsumed = true;
                 break;
             default:
-                var hint = token is DelimToken { CodePoint: '.' } or HashToken
+                var hint = token is DelimToken { CodePoint: '.' } or HashToken or InterpolatedNameToken
                     ? ", write '_' for an element without a type, like '_ .class'"
                     : string.Empty;
                 throw ErrorAtCurrent(ref stream,
@@ -245,24 +245,33 @@ public static partial class SuilParser
                     $"expected an element type or '_', not {Describe(token)}{hint}");
         }
 
-        string? id = null;
-        var classes = new List<string>();
+        SuilName? id = null;
+        var classes = new List<SuilName>();
 
         while (!propertiesConsumed)
         {
             stream.SkipWhitespace();
 
-            if (stream.PeekNext() is HashToken hash)
+            if (stream.PeekNext() is HashToken or InterpolatedNameToken { Sigil: '#' })
             {
-                stream.ConsumeNext();
-
-                if (!hash.IsId)
-                    throw ErrorAtCurrent(ref stream, "consuming element", $"'#{hash.Value}' is not a valid id");
+                var name = stream.ConsumeNext() switch
+                {
+                    HashToken { IsId: false } hash => throw ErrorAtCurrent(ref stream, "consuming element",
+                        $"'#{hash.Value}' is not a valid id"),
+                    HashToken hash => SuilName.Literal(hash.Value),
+                    InterpolatedNameToken interpolated => new SuilName(interpolated.Parts),
+                    _ => throw new InvalidOperationException(),
+                };
 
                 if (id != null)
                     throw ErrorAtCurrent(ref stream, "consuming element", "an element can have only one id");
 
-                id = hash.Value;
+                id = name;
+            }
+            else if (stream.PeekNext() is InterpolatedNameToken { Sigil: '.' } classToken)
+            {
+                stream.ConsumeNext();
+                classes.Add(new SuilName(classToken.Parts));
             }
             else if (stream.PeekNext() is DelimToken { CodePoint: '.' })
             {
@@ -270,12 +279,11 @@ public static partial class SuilParser
 
                 if (stream.ConsumeNext() is not IdentToken cls)
                 {
-                    throw ErrorAtCurrent(ref stream,
-                        "consuming element",
+                    throw ErrorAtCurrent(ref stream, "consuming element",
                         $"expected a class name, not {Describe(stream.Current)}");
                 }
 
-                classes.Add(cls.Value);
+                classes.Add(SuilName.Literal(cls.Value));
             }
             else
             {
@@ -386,6 +394,7 @@ public static partial class SuilParser
         IdentToken ident => $"'{ident.Value}'",
         FunctionToken function => $"'{function.Value}('",
         HashToken hash => $"'#{hash.Value}'",
+        InterpolatedNameToken name => $"a name with variables ('{char.ConvertFromUtf32(name.Sigil)}...')",
         DelimToken delim => $"'{char.ConvertFromUtf32(delim.CodePoint)}'",
         UnderscoreToken => "'_'",
         LeftParenthesisToken => "'('",
