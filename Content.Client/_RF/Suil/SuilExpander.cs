@@ -8,12 +8,6 @@ using Robust.Shared.Utility;
 namespace Content.Client._RF.Suil;
 
 /// <summary>
-/// Loads (reads and parses) the file named in <c>use "/path.suil";</c>. The path is already validated and
-/// cleaned: it is rooted, has no '..' and ends with <c>.suil</c>. It should throw if the file doesn't exist.
-/// </summary>
-public delegate SuilFile SuilFileResolver(ResPath path);
-
-/// <summary>
 /// The pass that removes <c>let</c> from a parsed file: substitutes the variables, inlines the templates
 /// and brings the rules of the imported files. The result is a <see cref="SuilFile"/> that has only
 /// <see cref="SuilRule"/> in its items and a root made of plain elements: no <c>let</c>, <c>use</c>,
@@ -31,7 +25,7 @@ public static class SuilExpander
     /// Expands a parsed file.
     /// </summary>
     /// <param name="file">The file to expand.</param>
-    /// <param name="resolver">Loads the files of <c>use</c>. Without it a <c>use</c> is an error.</param>
+    /// <param name="source">Loads the files of <c>use</c>. Without it a <c>use</c> is an error.</param>
     /// <param name="globalUsings">
     /// Files that are imported into every file as if it started with <c>use</c> of each of them
     /// (see <see cref="SuilGlobalUsings"/>). The files that the global ones import, and the global ones themselves,
@@ -41,9 +35,9 @@ public static class SuilExpander
     [PublicAPI, Pure]
     public static SuilFile Expand(
         SuilFile file,
-        SuilFileResolver? resolver = null,
+        ISuilFileSource? source = null,
         IReadOnlyList<ResPath>? globalUsings = null)
-        => new Expansion(resolver, globalUsings ?? []).Run(file);
+        => new Expansion(source, globalUsings ?? []).Run(file);
 
     /// <summary>
     /// Parses and expands SUIL text.
@@ -51,31 +45,69 @@ public static class SuilExpander
     [PublicAPI, Pure]
     public static SuilFile Expand(
         string text,
-        SuilFileResolver? resolver = null,
+        ISuilFileSource? source = null,
         IReadOnlyList<ResPath>? globalUsings = null)
-        => Expand(SuilParser.ParseFile(text), resolver, globalUsings);
+        => Expand(SuilParser.ParseFile(text), source, globalUsings);
 
     /// <summary>
-    /// Turns the string of <c>use</c> into a path of the resolver. Only absolute paths are accepted:
-    /// they start with '/', have neither '\' nor '..' and end with <c>.suil</c>.
+    /// Turns the string of <c>use</c> into a path for <see cref="ISuilFileSource"/>. Only absolute paths are accepted:
+    /// they start with '/' and have neither '\' nor '..'.
+    /// <list type="bullet">
+    /// <item><c>/dir/file</c> is the file <c>/dir/file.suil</c>, the extension may be written but doesn't have to.</item>
+    /// <item><c>/dir/*</c> is every file directly in <c>/dir</c>, see <see cref="IsFolder"/>.</item>
+    /// </list>
     /// </summary>
     internal static ResPath ParseUsePath(string raw, string context, SuilPosition position)
     {
         if (!ResPath.IsValidPath(raw))
             throw new SuilExpansionError(context, $"'{raw}': the path can't have backslashes, use '/'", position);
 
-        var path = new ResPath(raw);
-
-        if (!path.IsRooted)
+        if (!raw.StartsWith('/'))
             throw new SuilExpansionError(context, $"'{raw}': only absolute paths are allowed, start it with '/'", position);
 
         if (raw.Split('/').Contains(".."))
             throw new SuilExpansionError(context, $"'{raw}': the path can't have '..'", position);
 
-        if (!raw.EndsWith(".suil", StringComparison.Ordinal))
-            throw new SuilExpansionError(context, $"'{raw}': the path must be a .suil file", position);
+        if (raw == "/*" || raw.EndsWith("/*", StringComparison.Ordinal))
+        {
+            var directory = raw[..^2];
 
-        return path.Clean();
+            if (directory.Contains('*'))
+            {
+                throw new SuilExpansionError(context,
+                    $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'", position);
+            }
+
+            var cleaned = new ResPath(directory.Length == 0 ? "/" : directory).Clean().CanonPath;
+            return new ResPath(cleaned == "/" ? "/*" : cleaned + "/*");
+        }
+
+        if (raw.Contains('*'))
+        {
+            throw new SuilExpansionError(context,
+                $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'", position);
+        }
+
+        if (raw.EndsWith('/'))
+        {
+            throw new SuilExpansionError(context,
+                $"'{raw}': this is a directory, write '{raw}*' to import all of its files", position);
+        }
+
+        var file = raw.EndsWith(".suil", StringComparison.Ordinal) ? raw : raw + ".suil";
+        return new ResPath(file).Clean();
+    }
+
+    /// <summary>
+    /// Whether a path from <see cref="ParseUsePath"/> is a directory (<c>/dir/*</c>) and not a file.
+    /// </summary>
+    internal static bool IsFolder(ResPath path) => path.CanonPath.EndsWith("/*", StringComparison.Ordinal);
+
+    private static string ParentOf(ResPath path)
+    {
+        var canon = path.CanonPath;
+        var index = canon.LastIndexOf('/');
+        return index <= 0 ? "/" : canon[..index];
     }
 
     private abstract class Binding;
@@ -128,7 +160,7 @@ public static class SuilExpander
     private static bool ContainsSlot(List<ISuilElementNode> nodes)
         => nodes.Any(n => n is SuilContentSlot || n is SuilElement element && ContainsSlot(element.Children));
 
-    private sealed class Expansion(SuilFileResolver? resolver, IReadOnlyList<ResPath> globalUsings)
+    private sealed class Expansion(ISuilFileSource? source, IReadOnlyList<ResPath> globalUsings)
     {
         private const string SlotName = "content";
 
@@ -171,7 +203,7 @@ public static class SuilExpander
                 {
                     foreach (var globalPath in globalUsings)
                     {
-                        DeclareExports(ref scope, Import(globalPath, "resolving global using", default));
+                        ImportInto(ref scope, globalPath, "resolving global using", default);
                     }
                 }
                 finally
@@ -186,7 +218,7 @@ public static class SuilExpander
                 {
                     case SuilUse use:
                         var path = ParseUsePath(use.Path, "resolving use", use.Position);
-                        DeclareExports(ref scope, Import(path, "resolving use", use.Position), use.Position);
+                        ImportInto(ref scope, path, "resolving use", use.Position);
                         break;
                     case SuilLet let:
                         var declared = ExpandLet(let, scope);
@@ -202,10 +234,41 @@ public static class SuilExpander
             return new Module(scope, exports);
         }
 
+        /// <summary>
+        /// Brings the exports of a file, or of every file of a directory, into the scope.
+        /// </summary>
+        private void ImportInto(ref Scope? scope, ResPath path, string context, SuilPosition position)
+        {
+            if (!IsFolder(path))
+            {
+                DeclareExports(ref scope, Import(path, context, position), position);
+                return;
+            }
+
+            if (source == null)
+                throw new SuilExpansionError(context, "no file source was provided", position);
+
+            var directory = new ResPath(path.CanonPath == "/*" ? "/" : path.CanonPath[..^2]);
+            var files = source.List(directory)
+                .Select(f => f.Clean())
+                .Where(f => f.CanonPath.EndsWith(".suil", StringComparison.Ordinal) && ParentOf(f) == directory.CanonPath)
+                .Distinct()
+                .OrderBy(f => f.CanonPath, StringComparer.Ordinal)
+                .ToList();
+
+            if (files.Count == 0)
+                throw new SuilExpansionError(context, $"'{path}': there are no .suil files in '{directory}'", position);
+
+            foreach (var file in files)
+            {
+                DeclareExports(ref scope, Import(file, context, position), position);
+            }
+        }
+
         private Module Import(ResPath path, string context, SuilPosition position)
         {
-            if (resolver == null)
-                throw new SuilExpansionError(context, "no file resolver was provided", position);
+            if (source == null)
+                throw new SuilExpansionError(context, "no file source was provided", position);
 
             if (_modules.TryGetValue(path, out var cached))
                 return cached;
@@ -213,7 +276,7 @@ public static class SuilExpander
             if (!_loading.Add(path))
                 throw new SuilExpansionError(context, $"import cycle through '{path}'", position);
 
-            var imported = resolver(path);
+            var imported = source.Load(path);
 
             if (imported.Root != null)
             {

@@ -10,18 +10,33 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 [TestFixture, TestOf(typeof(SuilExpander))]
 public sealed class SuilExpanderTests
 {
+    private sealed class DictionarySource(Dictionary<string, string> files, List<string>? log = null) : ISuilFileSource
+    {
+        public SuilFile Load(ResPath path)
+        {
+            log?.Add(path.ToString());
+
+            return SuilParser.ParseFile(files.TryGetValue(path.ToString(), out var text)
+                ? text
+                : throw new FileNotFoundException(path.ToString()));
+        }
+
+        // Nested files are returned too: the expander has to keep only the direct ones.
+        public IReadOnlyList<ResPath> List(ResPath directory)
+        {
+            var prefix = directory.CanonPath.TrimEnd('/') + "/";
+            return files.Keys.Where(k => k.StartsWith(prefix)).Select(k => new ResPath(k)).ToList();
+        }
+    }
+
     private static SuilFile Expand(
         string input,
         Dictionary<string, string>? files = null,
         params string[] globals)
     {
-        SuilFileResolver? resolver = files == null
-            ? null
-            : path => SuilParser.ParseFile(files.TryGetValue(path.ToString(), out var text)
-                ? text
-                : throw new FileNotFoundException(path.ToString()));
+        ISuilFileSource? source = files == null ? null : new DictionarySource(files);
 
-        return SuilExpander.Expand(input, resolver, globals.Select(g => new ResPath(g)).ToList());
+        return SuilExpander.Expand(input, source, globals.Select(g => new ResPath(g)).ToList());
     }
 
     private static SuilElement Root(string input) => Expand(input).Root!;
@@ -507,9 +522,13 @@ public sealed class SuilExpanderTests
     [TestCase("../lib.suil")]
     [TestCase("/a/../lib.suil")]
     [TestCase("/..")]
-    [TestCase("/lib")]
-    [TestCase("/lib.css")]
     [TestCase("/dir/")]
+    [TestCase("/")]
+    [TestCase("/a/*/b.suil")]
+    [TestCase("/a/b*")]
+    [TestCase("/a/*.suil")]
+    [TestCase("/**")]
+    [TestCase("*")]
     [TestCase("\\lib.suil")]
     [TestCase("/a\\lib.suil")]
     public void Use_Only_Accepts_Absolute_Suil_Paths(string path)
@@ -524,19 +543,131 @@ public sealed class SuilExpanderTests
     public void Use_Path_Is_Cleaned_Before_It_Is_Loaded()
     {
         var loaded = new List<string>();
-        var files = new Dictionary<string, string> { ["/lib/a.suil"] = ".a { x: 1; }" };
-        SuilFileResolver resolver = path =>
-        {
-            loaded.Add(path.ToString());
-            return SuilParser.ParseFile(files[path.ToString()]);
-        };
+        var source = new DictionarySource(new() { ["/lib/a.suil"] = ".a { x: 1; }" }, loaded);
 
         var file = SuilExpander.Expand(
-            "use \"/lib/a.suil\";\nuse \"/lib//a.suil\";\nuse \"/lib/./a.suil\";\nrow",
-            resolver);
+            "use \"/lib/a.suil\";\nuse \"/lib//a.suil\";\nuse \"/lib/./a.suil\";\nuse \"/lib/a\";\nrow",
+            source);
 
         Assert.That(loaded, Is.EqualTo(new[] { "/lib/a.suil" }));
         Assert.That(file.Items, Has.Count.EqualTo(1));
+    }
+
+    // ---- Extensions and folders ----
+
+    [Test]
+    public void Extension_Is_Not_Needed()
+    {
+        var loaded = new List<string>();
+        var source = new DictionarySource(new() { ["/theme/buttons.suil"] = "let b = 1;" }, loaded);
+
+        var file = SuilExpander.Expand("use \"/theme/buttons\";\nrow (x: `b`)", source);
+
+        Assert.That(loaded, Is.EqualTo(new[] { "/theme/buttons.suil" }));
+        Assert.That(file.Root, Is.Not.Null);
+    }
+
+    [Test]
+    public void Folder_Import_Brings_Every_File_Of_The_Folder_In_Order()
+    {
+        var loaded = new List<string>();
+        var source = new DictionarySource(new()
+        {
+            ["/theme/b.suil"] = "let fromB = 2;\n.b { x: 1; }",
+            ["/theme/a.suil"] = "let fromA = 1;\n.a { x: 1; }",
+            ["/theme/sub/c.suil"] = "let fromC = 3;\n.c { x: 1; }",
+            ["/theme/notes.txt"] = "not suil",
+            ["/other/d.suil"] = ".d { x: 1; }",
+        }, loaded);
+
+        var file = SuilExpander.Expand("use \"/theme/*\";\n.own { x: `fromA`; y: `fromB`; }\nrow", source);
+
+        Assert.That(loaded, Is.EqualTo(new[] { "/theme/a.suil", "/theme/b.suil" }));
+        Assert.That(file.Items.Cast<SuilRule>().Select(r => r.Selectors[0].Steps[0].Compound.Classes[0]),
+            Is.EqualTo(new[] { "a", "b", "own" }));
+    }
+
+    [Test]
+    public void Folder_Import_Does_Not_Reach_Nested_Folders()
+    {
+        var files = new Dictionary<string, string>
+        {
+            ["/theme/a.suil"] = "let fromA = 1;",
+            ["/theme/sub/c.suil"] = "let fromC = 3;",
+        };
+
+        Assert.DoesNotThrow(() => Expand("use \"/theme/*\";\nrow (x: `fromA`)", files));
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow (x: `fromC`)", files));
+    }
+
+    [Test]
+    public void Root_Folder_Import()
+    {
+        var file = Expand("use \"/*\";\nrow", new() { ["/a.suil"] = ".a { x: 1; }", ["/dir/b.suil"] = ".b { x: 1; }" });
+
+        Assert.That(file.Items, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void Folder_Import_Path_Is_Cleaned()
+    {
+        var loaded = new List<string>();
+        var source = new DictionarySource(new() { ["/theme/a.suil"] = ".a { x: 1; }" }, loaded);
+
+        SuilExpander.Expand("use \"/theme/*\";\nuse \"/theme//*\";\nuse \"/theme/./*\";\nuse \"/theme/a\";\nrow", source);
+
+        Assert.That(loaded, Is.EqualTo(new[] { "/theme/a.suil" }));
+    }
+
+    [Test]
+    public void Folder_And_Single_File_Of_The_Same_Folder_Can_Be_Combined()
+    {
+        var files = new Dictionary<string, string> { ["/theme/a.suil"] = "let fromA = 1;" };
+
+        Assert.DoesNotThrow(() => Expand("use \"/theme/a\";\nuse \"/theme/*\";\nrow (x: `fromA`)", files));
+    }
+
+    [Test]
+    public void Folder_Import_Name_Clash_Between_Files_Throws()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow", new()
+        {
+            ["/theme/a.suil"] = "let same = 1;",
+            ["/theme/b.suil"] = "let same = 2;",
+        }));
+
+        Assert.That(error!.Message, Does.Contain("same"));
+    }
+
+    [Test]
+    public void Folder_Import_Of_An_Empty_Or_Absent_Folder_Throws()
+    {
+        var files = new Dictionary<string, string> { ["/theme/a.txt"] = "x", ["/other/a.suil"] = "let a = 1;" };
+
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow", files));
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/missing/*\";\nrow", files));
+    }
+
+    [Test]
+    public void Folder_Import_Of_A_File_With_A_Root_Throws()
+    {
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/widgets/*\";\nrow", new() { ["/widgets/w.suil"] = "button" }));
+    }
+
+    [Test]
+    public void Folder_Import_Needs_A_Source()
+    {
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow"));
+    }
+
+    [Test]
+    public void Folder_May_Contain_The_File_That_Imports_It_Without_A_Loop_When_It_Has_No_Root()
+    {
+        // /theme/a.suil imports its own folder: the cycle is reported instead of a stack overflow.
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow", new()
+        {
+            ["/theme/a.suil"] = "use \"/theme/*\";",
+        }));
     }
 
     // ---- Global usings ----
@@ -640,16 +771,30 @@ public sealed class SuilExpanderTests
     }
 
     [Test]
+    public void Global_Usings_Can_Be_A_Folder()
+    {
+        var file = Expand("row (x: `a`, y: `b`)", new()
+        {
+            ["/theme/a.suil"] = "let a = 1;",
+            ["/theme/b.suil"] = "let b = 2;",
+        }, "/theme/*");
+
+        Assert.That(file.Root!.Properties, Has.Count.EqualTo(2));
+    }
+
+    [Test]
     public void Global_Usings_File_Is_Read_From_Uses()
     {
         var paths = SuilGlobalUsings.FromFile(SuilParser.ParseFile("""
             use "/UI/theme/variables.suil";
-            use "/UI/theme//buttons.suil";
-            use "/UI/theme/variables.suil";
+            use "/UI/theme//buttons";
+            use "/UI/theme/variables";
+            use "/UI/common/*";
             """));
 
-        Assert.That(paths.Select(p => p.ToString()), Is.EqualTo(new[] { "/UI/theme/variables.suil", "/UI/theme/buttons.suil" }));
-        Assert.That(SuilGlobalUsings.DefaultPath.ToString(), Is.EqualTo("/UI/GlobalUsings.suil"));
+        Assert.That(paths.Select(p => p.ToString()),
+            Is.EqualTo(new[] { "/UI/theme/variables.suil", "/UI/theme/buttons.suil", "/UI/common/*" }));
+        Assert.That(SuilGlobalUsings.DefaultPath.ToString(), Is.EqualTo("/UI/global-usings.suil"));
     }
 
     [Test]
@@ -657,7 +802,7 @@ public sealed class SuilExpanderTests
     [TestCase(".a { x: 1; }")]
     [TestCase("use \"/a.suil\";\nrow")]
     [TestCase("use \"a.suil\";")]
-    [TestCase("use \"/a.css\";")]
+    [TestCase("use \"/a/*/b\";")]
     public void Global_Usings_File_Can_Only_Have_Valid_Uses(string text)
     {
         Assert.Throws<SuilExpansionError>(() => SuilGlobalUsings.FromFile(SuilParser.ParseFile(text)));

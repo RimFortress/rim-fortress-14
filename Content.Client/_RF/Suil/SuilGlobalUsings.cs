@@ -7,8 +7,9 @@ namespace Content.Client._RF.Suil;
 /// The SUIL counterpart of C# <c>global using</c>: a file that lists the files imported into every other file.
 /// It may have nothing but <c>use</c>:
 /// <code>
-/// use "/UI/theme/variables.suil";
-/// use "/UI/theme/buttons.suil";
+/// use "/UI/theme/variables";
+/// use "/UI/theme/buttons";
+/// use "/UI/common/*";
 /// </code>
 /// </summary>
 public static class SuilGlobalUsings
