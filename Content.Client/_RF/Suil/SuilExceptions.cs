@@ -24,3 +24,10 @@ public sealed class SuilTokenizeError(string context, int errorCp, int position,
         }
     }
 }
+
+public sealed class SuilParserError(string context, string message, SuilPosition position) : Exception
+{
+    public SuilPosition Position { get; } = position;
+
+    public override string Message => $"error while {context} ({Position.Line}:{Position.Column}): {message}";
+}
