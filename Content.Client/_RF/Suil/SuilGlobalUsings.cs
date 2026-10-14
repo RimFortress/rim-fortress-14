@@ -16,7 +16,7 @@ public static class SuilGlobalUsings
     /// <summary>
     /// Where the list is looked for.
     /// </summary>
-    public static readonly ResPath DefaultPath = new("/UI/global_usings.suil");
+    public static readonly ResPath DefaultPath = new("/UI/global-usings.suil");
 
     /// <summary>
     /// Takes the paths out of a parsed global usings file, in the order they are written.
