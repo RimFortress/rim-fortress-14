@@ -17,7 +17,10 @@
         <SpriteView Scale="2 2" Margin="0 4 4 4"
                     Name="View" SetSize="64 64"
                     OverrideDirection="South" />
-        <css:CssControl Name="DescriptionLabel" MouseFilter="Ignore" CssStyleIdentifier="picker-description" />
+        <css:CssControl Name="DescriptionLabel"
+                        MouseFilter="Ignore"
+                        CssStyleClasses="text-center"
+                        CssStyleIdentifier="picker-description" />
         <controls:CssConfirmButton Name="DeleteButton" CssStyleClasses="open-both"
                                    Text="{Loc 'character-setup-gui-character-picker-button-delete-button'}"
                                    ConfirmationText="{Loc 'character-setup-gui-character-picker-button-confirm-delete-button'}" />

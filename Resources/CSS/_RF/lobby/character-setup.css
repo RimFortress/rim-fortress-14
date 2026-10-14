@@ -23,7 +23,6 @@ rf-character-setup-gui {
 
 /* RfCharacterPickerButton: the description has the name and the profession on two lines */
 #picker-description {
-    flex-grow: 1;
     max-width: 150px;
     align-self: flex-start;
     white-space: pre-line;

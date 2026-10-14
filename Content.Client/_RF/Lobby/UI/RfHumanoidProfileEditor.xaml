@@ -1,13 +1,11 @@
 <ui:RfHumanoidProfileEditor
     xmlns="https://spacestation14.io"
-    xmlns:humanoid="clr-namespace:Content.Client.Humanoid"
     xmlns:css="clr-namespace:Content.Client._RF.CSS"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
     FlexDirection="Column">
-    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
-    <!-- The pickers have no CSS version yet. -->
+    <!-- Styled by Resources/CSS/_RF/lobby/ -->
     <!-- Middle container -->
     <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-top">
         <!-- Name box-->
@@ -39,56 +37,8 @@
 
     <!-- tabContainer -->
     <controls:CssTabContainer Name="Tabs" FlexGrow="1">
-        <controls:CssBoxContainer Name="AppearanceTab" FlexDirection="Column"
+        <controls:CssBoxContainer Name="AppearanceTab" FlexDirection="Row"
                                   controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-appearance-tab'}">
-            <controls:CssBoxContainer FlexDirection="Row">
-                <!-- Sprite view -->
-                <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-dark-bordered"
-                                          CssStyleIdentifier="profile-sprite-panel">
-                    <profile:ProfilePreviewSpriteView Name="SpriteView" Stretch="Fill"
-                                                      MinSize="250 250" SizeFlagsStretchRatio="1"
-                                                      VerticalExpand="True" HorizontalExpand="True" />
-                    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-rotate">
-                        <controls:CssButton Name="SpriteRotateLeft" Text="◀" CssStyleClasses="open-right" />
-                        <controls:CssButton Name="SpriteRotateRight" Text="▶" CssStyleClasses="open-left" />
-                    </controls:CssBoxContainer>
-                </controls:CssBoxContainer>
-
-                <css:CssControl CssStyleClasses="flex-fill" />
-
-                <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
-                                          CssStyleIdentifier="profile-options-panel">
-                    <!-- Species -->
-                    <controls:CssBoxContainer FlexDirection="Row">
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-species-label'}" />
-                        <css:CssControl CssStyleClasses="flex-fill" />
-                        <TextureButton Name="SpeciesInfoButton" Scale="0.3 0.3"
-                                       VerticalAlignment="Center"
-                                       ToolTip="{Loc 'humanoid-profile-editor-guidebook-button-tooltip'}" />
-                    </controls:CssBoxContainer>
-                    <controls:CssOptionButton Name="SpeciesButton" />
-                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
-                    <!-- Age -->
-                    <css:CssControl Text="{Loc 'humanoid-profile-editor-age-label'}" />
-                    <controls:CssLineEdit Name="AgeEdit" MinSize="40 0" />
-                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
-                    <!-- Sex -->
-                    <css:CssControl Text="{Loc 'humanoid-profile-editor-sex-label'}" />
-                    <controls:CssOptionButton Name="SexButton" />
-                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
-                    <!-- Pronouns -->
-                    <css:CssControl Text="{Loc 'humanoid-profile-editor-pronouns-label'}" />
-                    <controls:CssOptionButton Name="PronounsButton" />
-                    <css:CssControl CssStyleClasses="low-divider profile-divider" />
-                    <!-- Show clothing -->
-                    <css:CssControl Text="{Loc 'humanoid-profile-editor-clothing'}" />
-                    <controls:CssButton Name="ShowClothes" Pressed="True" ToggleMode="True"
-                                        Text="{Loc 'humanoid-profile-editor-clothing-show'}" />
-                </controls:CssBoxContainer>
-            </controls:CssBoxContainer>
-
-            <css:CssControl CssStyleClasses="high-divider profile-divider" />
-
             <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="profile-appearance-scroll">
                 <controls:CssBoxContainer FlexDirection="Column">
                     <!-- Skin -->
@@ -97,19 +47,72 @@
                         <controls:CssSlider Name="Skin" MinValue="0" MaxValue="100" Value="20" />
                         <controls:CssBoxContainer Name="RgbSkinColorContainer" Visible="False" FlexDirection="Column" />
                     </controls:CssBoxContainer>
+                    <!-- Eyes -->
                     <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
-                        <!-- Eyes -->
                         <css:CssControl Text="{Loc 'humanoid-profile-editor-eyes-label'}" />
                         <controls:CssColorSelectorSliders Name="EyeColorPicker" SelectorType="Hsv" Margin="0 0 0 10" />
-                        <!-- Markings -->
-                        <controls:CssBoxContainer FlexDirection="Column"
-                                                  CssStyleClasses="panel-highlighted profile-block profile-markings">
-                            <css:CssControl Text="{Loc 'humanoid-profile-editor-markings-tab'}" />
-                            <humanoid:MarkingPicker Name="Markings" HorizontalExpand="True" VerticalExpand="True" />
-                        </controls:CssBoxContainer>
+                    </controls:CssBoxContainer>
+                    <!-- Markings -->
+                    <controls:CssBoxContainer FlexDirection="Column"
+                                              CssStyleClasses="panel-highlighted profile-block profile-markings">
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-markings-tab'}" />
+                        <ui:RfMarkingPicker Name="Markings" FlexGrow="1" />
                     </controls:CssBoxContainer>
                 </controls:CssBoxContainer>
             </controls:CssScrollContainer>
+
+            <css:CssControl CssStyleClasses="high-divider profile-divider" />
+
+            <controls:CssBoxContainer FlexDirection="Column">
+                <controls:CssBoxContainer FlexDirection="Row">
+                    <!-- Sprite view -->
+                    <controls:CssBoxContainer FlexDirection="Column"
+                                              CssStyleClasses="panel-dark-bordered"
+                                              CssStyleIdentifier="profile-sprite-panel">
+                        <profile:ProfilePreviewSpriteView Name="SpriteView" Stretch="Fill"
+                                                          MinSize="250 250" SizeFlagsStretchRatio="1"
+                                                          VerticalExpand="True" HorizontalExpand="True" />
+                        <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-rotate">
+                            <controls:CssButton Name="SpriteRotateLeft" Text="◀" CssStyleClasses="open-right" />
+                            <controls:CssButton Name="SpriteRotateRight" Text="▶" CssStyleClasses="open-left" />
+                        </controls:CssBoxContainer>
+                    </controls:CssBoxContainer>
+
+                    <css:CssControl CssStyleClasses="flex-fill"/>
+
+                    <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
+                                              CssStyleIdentifier="profile-options-panel">
+                        <!-- Species -->
+                        <controls:CssBoxContainer FlexDirection="Row">
+                            <css:CssControl Text="{Loc 'humanoid-profile-editor-species-label'}" />
+                            <css:CssControl CssStyleClasses="flex-fill" />
+                            <TextureButton Name="SpeciesInfoButton" Scale="0.3 0.3"
+                                           VerticalAlignment="Center"
+                                           ToolTip="{Loc 'humanoid-profile-editor-guidebook-button-tooltip'}" />
+                        </controls:CssBoxContainer>
+                        <controls:CssOptionButton Name="SpeciesButton" />
+                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <!-- Age -->
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-age-label'}" />
+                        <controls:CssLineEdit Name="AgeEdit" MinSize="40 0" />
+                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <!-- Sex -->
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-sex-label'}" />
+                        <controls:CssOptionButton Name="SexButton" />
+                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <!-- Pronouns -->
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-pronouns-label'}" />
+                        <controls:CssOptionButton Name="PronounsButton" />
+                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <!-- Show clothing -->
+                        <css:CssControl Text="{Loc 'humanoid-profile-editor-clothing'}" />
+                        <controls:CssButton Name="ShowClothes" Pressed="True" ToggleMode="True"
+                                            Text="{Loc 'humanoid-profile-editor-clothing-show'}" />
+                    </controls:CssBoxContainer>
+                </controls:CssBoxContainer>
+
+                <css:CssControl CssStyleClasses="flex-fill"/>
+            </controls:CssBoxContainer>
         </controls:CssBoxContainer>
         <ui:CharacterSkillsTab Name="SkillsTab" Margin="10"
                                controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-skills-tab'}" />

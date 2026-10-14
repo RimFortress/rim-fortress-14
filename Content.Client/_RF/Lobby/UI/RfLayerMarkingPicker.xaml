@@ -1,0 +1,15 @@
+<controls:CssBoxContainer
+    xmlns="https://spacestation14.io"
+    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    FlexDirection="Column">
+    <controls:CssLineEdit Name="SearchBar" PlaceHolder="{Loc 'markings-search'}" />
+    <controls:CssScrollContainer Name="SelectionItems" CssStyleClasses="scroll-vertical">
+        <controls:CssGridContainer Name="Items" Columns="2" CssStyleClasses="marking-items" />
+    </controls:CssScrollContainer>
+    <controls:CssScrollContainer Name="OrderingItems" Visible="False" CssStyleClasses="scroll-vertical" />
+    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="marking-status-row">
+        <css:CssControl Name="MarkingsStatus" FlexGrow="1" AlignSelf="Center" />
+        <controls:CssButton Name="ReorderButton" ToggleMode="True" Text="{Loc 'markings-reorder'}" />
+    </controls:CssBoxContainer>
+</controls:CssBoxContainer>

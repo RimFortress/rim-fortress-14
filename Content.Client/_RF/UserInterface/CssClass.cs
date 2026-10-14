@@ -25,6 +25,7 @@ public static class CssClass
     public const string Icon = "icon";
     public const string IconButton = "icon-button";
     public const string IconCross = "icon-cross";
+    public const string IconPalette = "icon-palette";
     public const string IconSortDown = "icon-sort-down";
     public const string IconSortUp = "icon-sort-up";
     public const string ListContainerButton = "list-container-button";

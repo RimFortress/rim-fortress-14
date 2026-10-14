@@ -6,6 +6,7 @@ using Robust.Client.UserInterface.XAML;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.ColorNaming;
 using Robust.Shared.Localization;
+using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
@@ -42,6 +43,10 @@ public sealed partial class CssColorSelectorSliders : CssBoxContainer
     private ColorSelectorType _currentType = ColorSelectorType.Rgb;
     private bool _updating;
 
+    // OnColorChanged is not fired for every step of a slider that is dragged, see ChangeInterval.
+    private bool _changePending;
+    private float _sinceChange = float.MaxValue;
+
     /// <summary>
     /// The chosen color, setting it does not fire <see cref="OnColorChanged"/>.
     /// </summary>
@@ -51,12 +56,19 @@ public sealed partial class CssColorSelectorSliders : CssBoxContainer
         get => _currentColor;
         set
         {
+            // The color the code knows is the one of the last report, it would move the slider back.
+            if (IsDragged)
+                return;
+
             _currentColor = value;
             _colorData = Strategy.ToColorData(value);
+            _changePending = false;
 
             UpdateAllSliders();
         }
     }
+
+    private bool IsDragged => TopSlider.Grabbed || MiddleSlider.Grabbed || BottomSlider.Grabbed || AlphaSlider.Grabbed;
 
     [PublicAPI]
     public ColorSelectorType SelectorType
@@ -81,7 +93,15 @@ public sealed partial class CssColorSelectorSliders : CssBoxContainer
     }
 
     /// <summary>
-    /// Fired when the player changes the color.
+    /// The least time in seconds between two <see cref="OnColorChanged"/> while a slider is dragged: whatever uses the
+    /// color (restyles a character, sends a message) is not called at every frame. The first step is reported at once,
+    /// the last one is when the slider is released. The other ways to change the color are reported at once.
+    /// </summary>
+    [PublicAPI]
+    public float ChangeInterval { get; set; } = 0.1f;
+
+    /// <summary>
+    /// Fired when the player changes the color, at most once in <see cref="ChangeInterval"/> while a slider is dragged.
     /// </summary>
     [PublicAPI]
     public Action<Color>? OnColorChanged;
@@ -106,6 +126,7 @@ public sealed partial class CssColorSelectorSliders : CssBoxContainer
             var captured = order;
 
             slider.OnValueChanged += _ => OnSliderValueChanged(captured);
+            slider.OnReleased += _ => ReportPendingChange();
             input.MinValue = 0;
             input.MaxValue = (int) GetDivisor(captured);
             input.OnValueChanged += args => slider.Value = args.New / GetDivisor(captured);
@@ -170,12 +191,12 @@ public sealed partial class CssColorSelectorSliders : CssBoxContainer
         TopSlider.Gradient.SetBaseColor(_colorData);
         MiddleSlider.Gradient.SetBaseColor(_colorData);
         BottomSlider.Gradient.SetBaseColor(_colorData);
-        DescriptionLabel.SetPlainText(ColorNaming.Describe(_currentColor, _localization));
         HexEdit.SetText(_currentColor.ToHex());
     }
 
     private void UpdateAllSliders()
     {
+        DescriptionLabel.SetPlainText(ColorNaming.Describe(_currentColor, _localization));
         UpdateVisuals();
         UpdateSlider(Order.Top);
         UpdateSlider(Order.Middle);
@@ -190,10 +211,34 @@ public sealed partial class CssColorSelectorSliders : CssBoxContainer
 
         _colorData = new Vector4(TopSlider.Value, MiddleSlider.Value, BottomSlider.Value, AlphaSlider.Value);
         _currentColor = Strategy.FromColorData(_colorData);
-        OnColorChanged?.Invoke(_currentColor);
 
         UpdateVisuals();
         UpdateSlider(order);
+
+        _changePending = true;
+        if (!IsDragged || _sinceChange >= ChangeInterval)
+            ReportPendingChange();
+    }
+
+    private void ReportPendingChange()
+    {
+        if (!_changePending)
+            return;
+
+        _changePending = false;
+        _sinceChange = 0f;
+        DescriptionLabel.SetPlainText(ColorNaming.Describe(_currentColor, _localization));
+        OnColorChanged?.Invoke(_currentColor);
+    }
+
+    protected override void FrameUpdate(FrameEventArgs args)
+    {
+        base.FrameUpdate(args);
+
+        _sinceChange = MathF.Min(_sinceChange + args.DeltaSeconds, 60f);
+
+        if (_changePending && _sinceChange >= ChangeInterval)
+            ReportPendingChange();
     }
 
     private void OnHexEntered(CssLineEdit.LineEditEventArgs args)

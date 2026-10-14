@@ -1,0 +1,62 @@
+/* ---------- Markings (RfMarkingPicker, RfOrganMarkingPicker, RfLayerMarkingPicker, RfLayerMarkingItem, RfLayerMarkingOrderer) ---------- */
+
+/*
+ * MarkingPicker: the organs are tabs (.marking-tabs, see input/tab-container.css), in every one the layers are tabs.
+ * A layer is a search field, the grid of markings (.marking-items) or the list to reorder (.marking-orderer) and the
+ * row with the limits (.marking-status-row).
+ * A marking (.marking-item-row) is the preview (.marking-preview), the button that selects it and the button with the
+ * palette; its colors (.marking-colors) open under it, one sliders block (.marking-color) for each sprite.
+ * While a marking is dragged, the place it would drop to is .drop-target.
+ */
+
+rf-marking-picker {
+    gap: 0;
+}
+
+/* The list scrolls inside of the page that scrolls, so it needs a height of its own */
+rf-layer-marking-picker {
+    gap: 4px;
+    min-height: 400px;
+}
+
+.marking-items {
+    gap: 4px;
+    padding: 4px;
+}
+
+.marking-orderer {
+    gap: 0;
+    padding: 4px;
+}
+
+rf-layer-marking-item {
+    gap: 4px;
+}
+
+.marking-item-row {
+    gap: 4px;
+}
+
+.marking-colors {
+    gap: 4px;
+    padding: 4px 0 0 0;
+}
+
+.marking-color {
+    gap: 2px;
+}
+
+.marking-status-row {
+    gap: 4px;
+    padding: 4px;
+}
+
+.marking-item-slot {
+    margin: 4px;
+}
+
+/* MarkingDropTarget: StyleBoxFlat, the dark button color at the half of the opacity with the border of the button color */
+.marking-drop-beacon.drop-target {
+    background-color: color-mix(in srgb, var(--button-color-disabled) 50%, transparent);
+    border: 2px solid var(--button-color-default);
+}

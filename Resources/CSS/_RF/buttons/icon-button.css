@@ -54,3 +54,7 @@
 .icon-cross {
     background-image: texture("/Textures/_RF/Interface/Style/cross.png");
 }
+
+.icon-palette {
+    background-image: texture("/Textures/Interface/palette.svg.png");
+}

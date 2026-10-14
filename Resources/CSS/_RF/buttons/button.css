@@ -27,6 +27,8 @@
  * shapes are declared once; the rules are of the same specificity, and the later one wins: a button that is the only
  * one matches all three, `open-both` is the last of them.
  * Note that a hidden button is counted by :first-child and :last-child as well.
+ * The selectors name the type (`css-button`) on purpose: a rule of any type that depends on the siblings makes every
+ * control restyle itself whenever a sibling is added or removed, which is slow for a container with many children.
  */
 
 /* ContainerButton.StyleClassButton: button */
@@ -44,7 +46,7 @@ css-button {
 
 /* StyleClass.ButtonOpenRight: OpenRight */
 .open-right,
-.row-button:first-child {
+css-button.row-button:first-child {
     border-style: solid;
     border-width: 5px 5px 5px 6px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_right_border.png");
@@ -57,7 +59,7 @@ css-button {
 
 /* StyleClass.ButtonOpenLeft: OpenLeft */
 .open-left,
-.row-button:last-child {
+css-button.row-button:last-child {
     border-style: solid;
     border-width: 5px 6px 5px 5px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_left_border.png");
@@ -70,7 +72,7 @@ css-button {
 
 /* StyleClass.ButtonOpenBoth: OpenBoth */
 .open-both,
-.row-button:only-child {
+css-button.row-button:only-child {
     border-style: solid;
     border-width: 5px 6px 5px 6px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_both_border.png");

@@ -37,7 +37,7 @@ public sealed partial class RfCharacterPickerButton : CssButton
         description = $"{description}, \n{_entManager.System<SkillsSystem>().SkillProfession(profile.SkillsPreferences)}";
 
         Pressed = isSelected;
-        DeleteButton.Visible = !isSelected;
+        DeleteButton.Disabled = isSelected;
 
         View.SetEntity(_previewDummy);
         // The name of the character is not markup.
