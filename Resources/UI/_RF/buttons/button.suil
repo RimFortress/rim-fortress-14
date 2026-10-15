@@ -8,8 +8,8 @@
  *   then the rest), so the modifier classes (`.gold`, `.empty`, ...) of colors.suil win over the shapes.
  * - Modifier classes: the shape (`.open-left`, `.open-right`, `.open-both`, `.square`),
  *   the size of the font (`.font-big`, `.font-small`, text/font-size.suil) and the color (`.gold`, `.red`, `.green`, `.blue`, `.accept`, `.negative`, `.transparent`, `.empty`)
- *   are combined on one button: `rf-button open-left gold`.
- * - Element<ContainerButton>().Class(button) is the type selector rf-button: RfButton and its descendants
+ *   are combined on one button: `button open-left gold`.
+ * - Element<ContainerButton>().Class(button) is the type selector button: RfButton and its descendants
  *   (RfCheckBox) match it, so no `button` style class is needed. A control type that has no Suil counterpart
  *   is replaced with the class of the rule.
  * - ModulateSelf of a textured button is background-color: it modulates the background texture.
@@ -27,12 +27,12 @@
  * shapes are declared once; the rules are of the same specificity, and the later one wins: a button that is the only
  * one matches all three, `open-both` is the last of them.
  * Note that a hidden button is counted by :first-child and :last-child as well.
- * The selectors name the type (`rf-button`) on purpose: a rule of any type that depends on the siblings makes every
+ * The selectors name the type (`button`) on purpose: a rule of any type that depends on the siblings makes every
  * control restyle itself whenever a sibling is added or removed, which is slow for a container with many children.
  */
 
 /* ContainerButton.StyleClassButton: button */
-rf-button {
+button {
     border: 4px solid transparent;
     border-image: texture("/Textures/_RF/Interface/Style/button_border.png");
     border-image-slice: 4px;
@@ -46,7 +46,7 @@ rf-button {
 
 /* StyleClass.ButtonOpenRight: OpenRight */
 .open-right,
-rf-button.row-button:first-child {
+button.row-button:first-child {
     border-style: solid;
     border-width: 5px 5px 5px 6px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_right_border.png");
@@ -59,7 +59,7 @@ rf-button.row-button:first-child {
 
 /* StyleClass.ButtonOpenLeft: OpenLeft */
 .open-left,
-rf-button.row-button:last-child {
+button.row-button:last-child {
     border-style: solid;
     border-width: 5px 6px 5px 5px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_left_border.png");
@@ -72,7 +72,7 @@ rf-button.row-button:last-child {
 
 /* StyleClass.ButtonOpenBoth: OpenBoth */
 .open-both,
-rf-button.row-button:only-child {
+button.row-button:only-child {
     border-style: solid;
     border-width: 5px 6px 5px 6px;
     border-image: texture("/Textures/_RF/Interface/Style/button_open_both_border.png");

@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
@@ -14,6 +15,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// keeping their aspect ratio, and centered. The first texture is the lowest.
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("layered-texture")]
 public class RfLayeredTexture : UiElement
 {
     /// <summary>

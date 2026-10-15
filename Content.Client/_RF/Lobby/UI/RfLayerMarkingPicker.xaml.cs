@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Linq;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Guidebook.Controls;
@@ -19,6 +20,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingPicker"/>.
 /// </summary>
 [GenerateTypedNameReferences]
+[SuilTag("layer-marking-picker")]
 public sealed partial class RfLayerMarkingPicker : RfBoxContainer
 {
     private const int ColumnWidth = 500;

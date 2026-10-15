@@ -1,6 +1,6 @@
 /* ---------- RfCharacterSetupGui ---------- */
 
-rf-character-setup-gui {
+character-setup-gui {
     flex-grow: 1;
 }
 

@@ -42,7 +42,7 @@ public sealed class SuilFileSourceTest : GameTest
     [RunOnSide(Side.Client)]
     public void Files_Are_Read_By_Their_Path_In_The_Language()
     {
-        Mount("/TestSuilA", ("/dir/a.suil", "box { }"), ("/b.suil", "box { rf-button }"));
+        Mount("/TestSuilA", ("/dir/a.suil", "box { }"), ("/b.suil", "box { button }"));
         var source = Source("/TestSuilA");
 
         Assert.That(source.Has("/dir/a.suil"), Is.True);
@@ -67,7 +67,7 @@ public sealed class SuilFileSourceTest : GameTest
 
         Assert.That(source.FindChanges().Any, Is.False, "nothing was edited");
 
-        root.AddOrUpdateFile(new ResPath("/a.suil"), "box { rf-button }");
+        root.AddOrUpdateFile(new ResPath("/a.suil"), "box { button }");
         var changes = source.FindChanges();
 
         Assert.That(changes.Changed, Is.EqualTo(new[] { "/a.suil" }));
@@ -107,7 +107,7 @@ public sealed class SuilFileSourceTest : GameTest
         source.Load("/a.suil");
         source.MarkScanned();
 
-        root.AddOrUpdateFile(new ResPath("/a.suil"), "box { rf-button }");
+        root.AddOrUpdateFile(new ResPath("/a.suil"), "box { button }");
         Assert.That(source.FindChanges().Any, Is.True);
 
         source.Load("/a.suil");

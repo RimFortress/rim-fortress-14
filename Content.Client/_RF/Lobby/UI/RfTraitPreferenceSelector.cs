@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface;
 using Content.Client._RF.UserInterface.Controls;
@@ -12,6 +13,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// <remarks>
 /// While <see cref="OverLimit"/> is set the check box has the class <c>over-limit</c>.
 /// </remarks>
+[SuilTag("trait-preference-selector")]
 public sealed class RfTraitPreferenceSelector : RfCheckBox
 {
     public int Cost { get; }

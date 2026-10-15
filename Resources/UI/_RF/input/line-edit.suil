@@ -5,7 +5,7 @@
 /* ---------- LineEdit / TextEdit ---------- */
 
 /* Fancy LineEdit (the stylebox lineedit.png: patch margin 3, content margin 3 on the vertical and 5 on the horizontal) */
-rf-line-edit {
+line-edit {
     background-image: texture("/Textures/_RF/Interface/Style/lineedit.png");
     background-repeat: stretch;
     patch-margin: 3px;
@@ -13,14 +13,14 @@ rf-line-edit {
 }
 
 /* LineEdit.StyleClassLineEditNotEditable: notEditable (it was a style property with the color, which never worked) */
-rf-line-edit:read-only,
-rf-text-edit:read-only {
+line-edit:read-only,
+text-edit:read-only {
     color: <gray-silver>;
 }
 
 /* LineEdit.StylePseudoClassPlaceholder, TextEdit.StylePseudoClassPlaceholder: placeholder */
-rf-line-edit:placeholder-shown,
-rf-text-edit:placeholder-shown {
+line-edit:placeholder-shown,
+text-edit:placeholder-shown {
     color: <placeholder-font-color>;
 }
 

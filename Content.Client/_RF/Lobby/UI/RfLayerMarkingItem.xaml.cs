@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Linq;
 using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
@@ -21,6 +22,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// its sprites. The <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingItem"/>.
 /// </summary>
 [GenerateTypedNameReferences]
+[SuilTag("layer-marking-item")]
 public sealed partial class RfLayerMarkingItem : RfBoxContainer, ISearchableControl
 {
     [Dependency] private IEntityManager _entity = default!;

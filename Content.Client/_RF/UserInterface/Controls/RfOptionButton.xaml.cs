@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
@@ -29,12 +30,13 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <para>
 /// The label is <c>.option-button</c>, the triangle is <c>.option-triangle</c> (plus <c>.checked</c> while the
 /// list is open), the list is
-/// <c>.option-button-panel</c> and its items are <c>.option-item</c> (a <c>rf-button</c>, the selected one
+/// <c>.option-button-panel</c> and its items are <c>.option-item</c> (a <c>button</c>, the selected one
 /// is <c>:checked</c>).
 /// </para>
 /// </remarks>
 [GenerateTypedNameReferences]
 [Virtual, UsedImplicitly]
+[SuilTag("option-button")]
 public partial class RfOptionButton : RfButton
 {
 
@@ -114,7 +116,7 @@ public partial class RfOptionButton : RfButton
     /// <c>ItemSuilStyleClasses="open-both gold"</c>. The classes of one item are <see cref="RfOptionItem.SuilStyleClasses"/>.
     /// </summary>
     /// <remarks>
-    /// The list lives in the modal root, not inside the button, so a selector like <c>rf-option-button .option-item</c>
+    /// The list lives in the modal root, not inside the button, so a selector like <c>option-button .option-item</c>
     /// does not reach it: select the items by their own classes.
     /// </remarks>
     [PublicAPI]

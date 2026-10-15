@@ -3,7 +3,7 @@
 /*
  * Slider: the track slider_fill.png modulated graphite-black, the fill dark-good, the grabber button-color-default
  * (patch margin 12 for all of them). The grabber is 24px wide, as the textures are.
- * ColorableSlider (rf-color-slider) draws its gradient itself, so the background of its track is not needed.
+ * ColorableSlider (color-slider) draws its gradient itself, so the background of its track is not needed.
  */
 .slider {
     min-height: 24px;
@@ -55,13 +55,13 @@
     gap: 0;
 }
 
-.color-selector-row > int-counter > rf-line-edit {
+.color-selector-row > int-counter > line-edit {
     min-width: 40px;
 }
 
 /* ---------- ColorSelectorSliders (RfColorSelectorSliders) ---------- */
 
-rf-color-selector-sliders {
+color-selector-sliders {
     gap: 3px;
 }
 

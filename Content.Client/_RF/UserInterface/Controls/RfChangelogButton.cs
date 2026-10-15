@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client.Changelog;
 using JetBrains.Annotations;
 
@@ -8,6 +9,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// changelog entries, and it gets the <c>positive</c> style class while there are.
 /// </summary>
 [UsedImplicitly]
+[SuilTag("changelog-button")]
 public sealed partial class RfChangelogButton : RfButton
 {
     [Dependency] private ChangelogManager _changelogManager = default!;

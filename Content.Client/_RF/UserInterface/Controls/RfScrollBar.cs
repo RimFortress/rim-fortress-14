@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
@@ -17,6 +18,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// while it is dragged. The thickness of the scrollbar is its <c>min-width</c> (vertical) or <c>min-height</c>
 /// (horizontal), the shortest length of the grabber is its <c>min-height</c> or <c>min-width</c>.
 /// </remarks>
+[SuilTag("scroll-bar")]
 public abstract class RfScrollBar : UiElement
 {
     private readonly bool _vertical;
@@ -291,7 +293,9 @@ public abstract class RfScrollBar : UiElement
 }
 
 [Virtual, UsedImplicitly]
+[SuilTag("v-scroll-bar")]
 public class RfVScrollBar() : RfScrollBar(true);
 
 [Virtual, UsedImplicitly]
+[SuilTag("h-scroll-bar")]
 public class RfHScrollBar() : RfScrollBar(false);

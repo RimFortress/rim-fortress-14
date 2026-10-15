@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.Suil;
 using Content.Client.Credits;
 using Content.Shared.CCVar;
@@ -15,6 +16,7 @@ namespace Content.Client._RF.Info.Controls;
 /// <see cref="Content.Client.Info.DevInfoBanner"/>. The space between the buttons is <c>gap</c>.
 /// </summary>
 [UsedImplicitly]
+[SuilTag("dev-info-banner")]
 public sealed partial class RfDevInfoBanner : RfBoxContainer
 {
     [Dependency] private IConfigurationManager _cfg = null!;

@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using Content.Client._RF.Graphics;
@@ -18,6 +19,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// radius, <see cref="RfSlider.Grabber"/> and the like come from SUIL.
 /// </remarks>
 [UsedImplicitly]
+[SuilTag("color-slider")]
 public sealed class RfColorSlider : RfSlider
 {
     private readonly RoundedFillShader _fill = new();

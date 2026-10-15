@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.UserInterface;
 using System.Linq;
 using Content.Client._RF.Suil;
@@ -21,6 +22,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// Holds the entire character setup GUI, from character picks to individual character editing.
 /// </summary>
 [GenerateTypedNameReferences]
+[SuilTag("character-setup-gui")]
 public sealed partial class RfCharacterSetupGui : RfBoxContainer
 {
     [Dependency] private IClientPreferencesManager _preferencesManager = default!;

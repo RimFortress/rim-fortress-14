@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
@@ -18,6 +19,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// the grabber is styled by them as <c>.slider:active > .grabber</c>.
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("slider")]
 public class RfSlider : UiElement
 {
     private float _min;

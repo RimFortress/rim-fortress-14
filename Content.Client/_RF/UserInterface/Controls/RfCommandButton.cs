@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
 using Robust.Client.Console;
@@ -12,6 +13,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// It hides itself when the player can't run the command.
 /// </summary>
 [Virtual, UsedImplicitly]
+[SuilTag("command-button")]
 public partial class RfCommandButton : RfButton
 {
     [Dependency] private IClientConGroupController _conGroup = null!;
@@ -51,6 +53,7 @@ public partial class RfCommandButton : RfButton
 /// The command is still used to decide whether the button is shown.
 /// </summary>
 [UsedImplicitly]
+[SuilTag("ui-command-button")]
 public sealed partial class RfUICommandButton : RfCommandButton
 {
     [Dependency] private IDynamicTypeFactory _factory = null!;

@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Humanoid;
 using Content.Shared.Body;
@@ -14,6 +15,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// <see cref="RfLayerMarkingPicker"/>. The <see cref="RfBoxContainer"/> version of <see cref="OrganMarkingPicker"/>.
 /// </summary>
 [GenerateTypedNameReferences]
+[SuilTag("organ-marking-picker")]
 public sealed partial class RfOrganMarkingPicker : RfBoxContainer
 {
     [Dependency] private MarkingManager _marking = default!;

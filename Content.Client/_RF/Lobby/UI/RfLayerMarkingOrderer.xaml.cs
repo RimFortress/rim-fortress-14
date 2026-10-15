@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Linq;
 using System.Numerics;
 using Content.Client._RF.Suil;
@@ -25,6 +26,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// marking would be dropped on gets <c>.drop-target</c>.
 /// </remarks>
 [GenerateTypedNameReferences]
+[SuilTag("layer-marking-orderer")]
 public sealed partial class RfLayerMarkingOrderer : RfBoxContainer
 {
     private const float ItemHeight = 64f;
@@ -161,6 +163,7 @@ public sealed partial class RfLayerMarkingOrderer : RfBoxContainer
 
 internal readonly record struct RfLayerMarkingDragged(RfLayerMarkingItem Item, RfLayerMarkingItemSlot Container);
 
+[SuilTag("layer-marking-item-slot")]
 internal sealed class RfLayerMarkingItemSlot : UiElement
 {
     public RfLayerMarkingItemSlot()
@@ -170,6 +173,7 @@ internal sealed class RfLayerMarkingItemSlot : UiElement
     }
 }
 
+[SuilTag("layer-drag-drop-beacon")]
 internal sealed class RfLayerDragDropBeacon : UiElement
 {
     public readonly CandidatePosition CandidatePosition;

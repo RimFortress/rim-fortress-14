@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.Suil;
 using Content.Client.Info;
 using Content.Client.UserInterface.Systems.EscapeMenu;
@@ -17,10 +18,11 @@ namespace Content.Client._RF.Info.Controls;
 /// the <see cref="UiElement"/> version of <see cref="Content.Client.Info.LinkBanner"/>.
 /// </summary>
 /// <remarks>
-/// It is a <see cref="RfBoxContainer"/> (<c>rf-link-banner</c>, a row by default), so the space between the
-/// buttons is <c>gap</c>, the buttons are plain <c>rf-button</c>s. A link whose CVar is empty is hidden.
+/// It is a <see cref="RfBoxContainer"/> (<c>link-banner</c>, a row by default), so the space between the
+/// buttons is <c>gap</c>, the buttons are plain <c>button</c>s. A link whose CVar is empty is hidden.
 /// </remarks>
 [UsedImplicitly]
+[SuilTag("link-banner")]
 public sealed partial class RfLinkBanner : RfBoxContainer
 {
     [Dependency] private IConfigurationManager _cfg = null!;

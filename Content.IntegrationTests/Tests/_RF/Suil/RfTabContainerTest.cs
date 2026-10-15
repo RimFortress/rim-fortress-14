@@ -1,6 +1,5 @@
 using Content.Suil;
 #nullable enable
-using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface;
 using Content.Client._RF.UserInterface.Controls;
 using Content.IntegrationTests.Fixtures;
@@ -194,7 +193,7 @@ public sealed class RfTabContainerTest : GameTest
         var tabs = Make(out var first, out var second, out _);
 
         _suil.ClearTestStylesheet();
-        _suil.LoadSuilString("rf-tab-container > .tab-bar > .tab { flex-grow: 7; } rf-tab-container > .tab-bar > .tab:checked { flex-grow: 9; }");
+        _suil.LoadSuilString("tab > .tab-bar > .tab { flex-grow: 7; } tab > .tab-bar > .tab:checked { flex-grow: 9; }");
         _suil.BuildTestStylesheet();
         _suil.UpdateTestStyle(first.Button);
         _suil.UpdateTestStyle(second.Button);

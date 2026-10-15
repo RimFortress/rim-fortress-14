@@ -1,22 +1,22 @@
 /* ---------- Colors of the buttons ---------- */
 
-rf-button {
+button {
     border-color: <button-color-default>;
     background-color: <button-color-default>;
 }
 
-rf-button:hover {
+button:hover {
     border-color: <button-color-hovered>;
     background-color: <button-color-hovered>;
 }
 
-rf-button:active,
-rf-button:checked {
+button:active,
+button:checked {
     border-color: <button-color-pressed>;
     background-color: <button-color-pressed>;
 }
 
-rf-button:disabled {
+button:disabled {
     color: <disabled-button-font-color>;
     border-color: <button-color-disabled>;
     background-color: <button-color-disabled>;
@@ -45,50 +45,50 @@ rf-button:disabled {
 }
 
 /* negative: the caution buttons; confirming: RfConfirmButton waiting for the second click */
-rf-button.negative,
-rf-button.confirming {
+button.negative,
+button.confirming {
     border-color: <bad>;
     background-color: <bad>;
 }
 
-rf-button.negative:hover,
-rf-button.confirming:hover {
+button.negative:hover,
+button.confirming:hover {
     border-color: <light-bad>;
     background-color: <light-bad>;
 }
 
-rf-button.negative:active,
-rf-button.negative:checked,
-rf-button.confirming:active,
-rf-button.confirming:checked {
+button.negative:active,
+button.negative:checked,
+button.confirming:active,
+button.confirming:checked {
     border-color: <dark-bad>;
     background-color: <dark-bad>;
 }
 
-rf-button.negative:disabled,
-rf-button.confirming:disabled {
+button.negative:disabled,
+button.confirming:disabled {
     border-color: <darkest-bad>;
     background-color: <darkest-bad>;
 }
 
 /* ButtonColorBlue */
-rf-button.blue {
+button.blue {
     border-color: <blue-button-color-default>;
     background-color: <blue-button-color-default>;
 }
 
-rf-button.blue:hover {
+button.blue:hover {
     border-color: <blue-button-color-hovered>;
     background-color: <blue-button-color-hovered>;
 }
 
-rf-button.blue:active,
-rf-button.blue:checked {
+button.blue:active,
+button.blue:checked {
     border-color: <blue-button-color-pressed>;
     background-color: <blue-button-color-pressed>;
 }
 
-rf-button.blue:disabled {
+button.blue:disabled {
     border-color: <blue-button-color-disabled>;
     background-color: <blue-button-color-disabled>;
 }

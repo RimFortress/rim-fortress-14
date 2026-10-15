@@ -13,11 +13,11 @@
  *   and StylePropertyMarkerColor (gold-button-color-default)
  *   -> the marker of a tree menu button, there is no SUIL property for it.
  *
- * MenuButton (type): the colors are the same as rf-button, a Suil counterpart of MenuButton is a RfButton.
+ * MenuButton (type): the colors are the same as button, a Suil counterpart of MenuButton is a RfButton.
  *
- * OptionButton (type): the Suil replacement is RfOptionButton, a RfButton, so rf-button styles it.
+ * OptionButton (type): the Suil replacement is RfOptionButton, a RfButton, so button styles it.
  *
- * Label.StylePropertyAlignMode (Label.AlignMode.Center) of rf-button and `.option-button` is text-align: center.
+ * Label.StylePropertyAlignMode (Label.AlignMode.Center) of button and `.option-button` is text-align: center.
  */
 
 /* ---- from unsupported.suil ---- */

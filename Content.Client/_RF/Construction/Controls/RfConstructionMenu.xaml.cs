@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
@@ -14,6 +15,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Client._RF.Construction.Controls;
 
 [GenerateTypedNameReferences]
+[SuilTag("construction-menu")]
 public sealed partial class RfConstructionMenu : FancyWindow
 {
     [Dependency] private IPrototypeManager _prototype = default!;

@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.UserInterface;
 using System.Linq;
 using Content.Client._RF.UserInterface.Controls;
@@ -10,6 +11,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Client._RF.Lobby.UI;
 
 [GenerateTypedNameReferences]
+[SuilTag("expedition-equipment-editor")]
 public sealed partial class RfExpeditionEquipmentEditor : RfBoxContainer
 {
     [Dependency] private IPrototypeManager _protoManager = default!;

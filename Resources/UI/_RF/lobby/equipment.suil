@@ -1,6 +1,6 @@
 /* ---------- RfExpeditionEquipmentEditor ---------- */
 
-rf-expedition-equipment-editor {
+expedition-equipment-editor {
     flex-grow: 1;
 }
 
@@ -41,11 +41,11 @@ rf-expedition-equipment-editor {
     gap: 2px;
 }
 
-#equipment-search-row > rf-line-edit {
+#equipment-search-row > line-edit {
     margin: 4px 0 3px 4px;
 }
 
-#equipment-search-row > rf-button {
+#equipment-search-row > button {
     margin: 2px;
 }
 
@@ -84,11 +84,11 @@ expedition-item-button {
 
 /* ---------- IntCounter ---------- */
 
-int-counter > rf-button {
+int-counter > button {
     margin: 2px 1px;
 }
 
-int-counter > rf-line-edit {
+int-counter > line-edit {
     min-width: 50px;
     margin: 5px 0;
 }

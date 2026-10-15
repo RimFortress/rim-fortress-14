@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
 
@@ -10,11 +11,12 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <remarks>
 /// The box is <see cref="Indicator"/> (style class <see cref="SuilClass.Indicator"/>, plus
 /// <see cref="SuilClass.Checked"/> while checked) and the text is <see cref="Label"/> (style class
-/// <see cref="SuilClass.Label"/>). Select them with <c>rf-check-box .indicator.checked</c>; the check box itself
+/// <see cref="SuilClass.Label"/>). Select them with <c>checkbox .indicator.checked</c>; the check box itself
 /// matches <c>:checked</c>, <c>:hover</c>, <c>:active</c> and <c>:disabled</c>. The space between them is
-/// <see cref="Gap"/> (SUIL <c>gap</c>).
+/// <see cref="UiElement.Gap"/> (SUIL <c>gap</c>).
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("checkbox")]
 public partial class RfCheckBox : RfButton
 {
     private readonly RfBoxContainer _box;

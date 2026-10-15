@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.UserInterface;
 using System.Diagnostics.CodeAnalysis;
 using Content.Client._RF.Suil.Text;
@@ -52,6 +53,7 @@ public sealed class RfCommandLinkTag : IRfMarkupTagHandler
 /// The control created by <see cref="RfCommandLinkTag"/>. Underlined and blue by default; both can be
 /// overridden from SUIL through the <c>command-link</c> class.
 /// </summary>
+[SuilTag("command-link-control")]
 public sealed class RfCommandLinkControl : UiElement
 {
     private RfInlineStyle? _appliedContext;

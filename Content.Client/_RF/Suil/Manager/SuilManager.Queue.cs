@@ -177,6 +177,7 @@ public sealed partial class SuilManager
 /// Sits in the root of the UI to flush the queued SUIL style updates every frame, in the frame update, before the
 /// UI manager measures and arranges the controls the new styles have changed.
 /// </summary>
+[SuilTag("style-flusher")]
 internal sealed class RfStyleFlusher : Control
 {
     private readonly Action _flush;

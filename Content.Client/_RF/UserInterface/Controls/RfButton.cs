@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Linq;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
@@ -15,6 +16,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <c>:disabled</c> and <c>:checked</c> pseudo-classes.
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("button")]
 public class RfButton : UiElement
 {
     /// <summary>

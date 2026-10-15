@@ -1,6 +1,6 @@
 /* ---------- RfHumanoidProfileEditor ---------- */
 
-rf-humanoid-profile-editor {
+humanoid-profile-editor {
     flex-grow: 1;
     padding: 10px;
 }
@@ -13,7 +13,7 @@ rf-humanoid-profile-editor {
     gap: 5px;
 }
 
-#profile-name-row > rf-line-edit {
+#profile-name-row > line-edit {
     min-width: 270px;
     align-self: center;
 }
@@ -59,6 +59,6 @@ rf-humanoid-profile-editor {
 }
 
 /* A trait that doesn't fit in the points of its category (RfTraitPreferenceSelector) */
-rf-check-box.over-limit .label {
+checkbox.over-limit .label {
     color: <light-bad>;
 }

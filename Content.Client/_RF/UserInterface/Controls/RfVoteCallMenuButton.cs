@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client.Voting;
 using Content.Client.Voting.UI;
 using JetBrains.Annotations;
@@ -9,6 +10,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// Disables itself if the client cannot call votes.
 /// </summary>
 [UsedImplicitly]
+[SuilTag("vote-call-menu-button")]
 public sealed partial class RfVoteCallMenuButton : RfButton
 {
     [Dependency] private IVoteManager _voteManager = null!;

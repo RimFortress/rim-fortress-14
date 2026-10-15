@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Collections.Frozen;
 using System.Numerics;
 using Content.Client._RF.Suil;
@@ -48,6 +49,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </para>
 /// </remarks>
 [UsedImplicitly]
+[SuilTag("text-edit")]
 public sealed partial class RfTextEdit : UiElement
 {
     [Dependency] private IClipboardManager _clipboard = null!;

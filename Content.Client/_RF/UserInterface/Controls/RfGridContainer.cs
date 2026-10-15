@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
@@ -16,6 +17,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// hiding the children (a search) closes the gaps.
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("grid")]
 public class RfGridContainer : UiElement
 {
     /// <summary>

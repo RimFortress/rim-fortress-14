@@ -4,9 +4,9 @@
  * TabContainer: panel tabcontainer_panel.png (patch margin 2, content margin top 2), active tab dark-forest,
  * inactive tab graphite-black, content margin horizontal 5.
  *
- * The structure of rf-tab-container is
- *     rf-tab-container
- *       .tab-bar            a row of rf-button.tab, the selected one is :checked and .selected
+ * The structure of tab is
+ *     tab
+ *       .tab-bar            a row of button.tab, the selected one is :checked and .selected
  *       .tab-panel          holds the pages
  * and the container is a box, so:
  *   - `flex-direction: column-reverse` puts the bar below the pages;
@@ -14,21 +14,21 @@
  *     (`row-reverse` to the right);
  *   - `gap` is the space between the bar and the panel (and `.tab-bar { gap }` between the tabs);
  *   - `.tab-bar { justify-content: center }` aligns the tabs, `.tab { flex-grow: 1 }` stretches them to the bar;
- *   - a tab is a button, so everything of rf-button works for it: borders, border-image, background-image,
+ *   - a tab is a button, so everything of button works for it: borders, border-image, background-image,
  *     font, `:hover`, `:disabled`, `.tab:first-child`, `.tab:last-child`;
- *   - `rf-tab-container.my-tabs > .tab-bar > .tab` restyles the tabs of one container.
+ *   - `tab.my-tabs > .tab-bar > .tab` restyles the tabs of one container.
  * The child combinators keep a container that lies on a page from taking the rules of the outer one.
  */
 
-rf-tab-container {
+tab {
     gap: 0;
 }
 
-rf-tab-container > .tab-bar {
+tab > .tab-bar {
     gap: 0;
 }
 
-rf-tab-container > .tab-panel {
+tab > .tab-panel {
     border: 2px solid <wooden-fortress>;
     background-color: <dark-forest>;
     background-clip: border-box;
@@ -36,8 +36,8 @@ rf-tab-container > .tab-panel {
     padding: 2px 0 0 0;
 }
 
-/* The tab: a flat button of two colors, it doesn't take the texture of rf-button. */
-rf-tab-container > .tab-bar > .tab {
+/* The tab: a flat button of two colors, it doesn't take the texture of button. */
+tab > .tab-bar > .tab {
     border: none;
     border-image: none;
     background-image: none;
@@ -46,16 +46,16 @@ rf-tab-container > .tab-bar > .tab {
     background-color: <graphite-black>;
 }
 
-rf-tab-container > .tab-bar > .tab:hover {
+tab > .tab-bar > .tab:hover {
     background-color: color-mix(in srgb, <dark-forest> 60%, <graphite-black>);
 }
 
-rf-tab-container > .tab-bar > .tab:active,
-rf-tab-container > .tab-bar > .tab:checked {
+tab > .tab-bar > .tab:active,
+tab > .tab-bar > .tab:checked {
     background-color: <dark-forest>;
 }
 
-rf-tab-container > .tab-bar > .tab:disabled {
+tab > .tab-bar > .tab:disabled {
     color: <disabled-button-font-color>;
     background-color: <graphite-black>;
 }

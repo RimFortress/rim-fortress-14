@@ -58,8 +58,8 @@ public sealed class SuilHotReloadTest : GameTest
 
         var result = Reload(view, """
             box .root #main (min-width: 40) {
-                +rf-button #submit .primary (text: "Go", disabled)
-                box { rf-button .plain }
+                +button #submit .primary (text: "Go", disabled)
+                box { button .plain }
             }
             """);
 
@@ -88,8 +88,8 @@ public sealed class SuilHotReloadTest : GameTest
 
         Assert.That(Reload(view, """
             box {
-                rf-button #submit (text: "One")
-                rf-button .loose
+                button #submit (text: "One")
+                button .loose
             }
             """).Success, Is.True);
 
@@ -100,8 +100,8 @@ public sealed class SuilHotReloadTest : GameTest
 
         var result = Reload(view, """
             box {
-                rf-button .loose
-                rf-button #submit (text: "Two")
+                button .loose
+                button #submit (text: "Two")
             }
             """);
 
@@ -121,12 +121,12 @@ public sealed class SuilHotReloadTest : GameTest
     public void What_The_File_No_Longer_Sets_Goes_Back()
     {
         var view = new TestView();
-        Reload(view, "box { rf-button #submit .a .b (text: \"Hi\", disabled) }");
+        Reload(view, "box { button #submit .a .b (text: \"Hi\", disabled) }");
 
         var submit = view.Submit!;
         Assert.That(submit.Disabled, Is.True);
 
-        var result = Reload(view, "box { rf-button #submit .b (text: \"Hi\") }");
+        var result = Reload(view, "box { button #submit .b (text: \"Hi\") }");
 
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
         Assert.Multiple(() =>
@@ -143,11 +143,11 @@ public sealed class SuilHotReloadTest : GameTest
     public void The_Controls_Of_The_Code_Are_Not_Touched_Outside_The_Fields()
     {
         var view = new TestView();
-        Reload(view, "box { rf-button #submit }");
+        Reload(view, "box { button #submit }");
 
         // the code sets a class the file doesn't know: it is not the file's to take away
         view.Submit!.AddSuilStyleClass("from-code");
-        Reload(view, "box { rf-button #submit .x }");
+        Reload(view, "box { button #submit .x }");
 
         Assert.That(view.Submit.HasSuilStyleClass("from-code"), Is.True);
         Assert.That(view.Submit.HasSuilStyleClass("x"), Is.True);
@@ -163,7 +163,7 @@ public sealed class SuilHotReloadTest : GameTest
             use "/test/parts";
             box { my-button (text: "Hello") }
             """,
-            ("/test/parts.suil", "let my-button = (text) { rf-button #submit (text: <text>) }"));
+            ("/test/parts.suil", "let my-button = (text) { button #submit (text: <text>) }"));
 
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
         Assert.That(view.Submit!.Text, Is.EqualTo("Hello"));
@@ -177,16 +177,16 @@ public sealed class SuilHotReloadTest : GameTest
     public void A_Mistake_Leaves_The_Tree_As_It_Was()
     {
         var view = new TestView();
-        Reload(view, "box { rf-button #submit (text: \"Keep\") }");
+        Reload(view, "box { button #submit (text: \"Keep\") }");
         var submit = view.Submit!;
 
         foreach (var broken in new[]
                  {
-                     "box { rf-button #submit (no-such-property: 1) }",
+                     "box { button #submit (no-such-property: 1) }",
                      "box { no-such-control #submit }",
-                     "box { rf-button #submit (text: ) }",
-                     "box { rf-button #submit (min-width: red) }",
-                     "box { rf-button #submit rf-button",
+                     "box { button #submit (text: ) }",
+                     "box { button #submit (min-width: red) }",
+                     "box { button #submit button",
                  })
         {
             var result = Reload(view, broken);
@@ -215,9 +215,9 @@ public sealed class SuilHotReloadTest : GameTest
     public void The_Root_Can_Not_Change_Its_Type()
     {
         var view = new TestView();
-        Reload(view, "box { rf-button #submit }");
+        Reload(view, "box { button #submit }");
 
-        var result = Reload(view, "rf-button { }");
+        var result = Reload(view, "button { }");
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.Errors.Single(), Does.Contain("build the project"));
@@ -230,7 +230,7 @@ public sealed class SuilHotReloadTest : GameTest
     {
         var view = new TestView();
 
-        var result = Reload(view, "box { rf-button #brand-new }");
+        var result = Reload(view, "box { button #brand-new }");
 
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
         Assert.That(result.Warnings.Single(), Does.Contain("brand-new").And.Contain("no field"));
@@ -255,7 +255,7 @@ public sealed class SuilHotReloadTest : GameTest
     public void An_Id_That_Left_The_File_Is_Reported()
     {
         var view = new TestView();
-        Reload(view, "box { rf-button #submit }");
+        Reload(view, "box { button #submit }");
 
         var result = Reload(view, "box { }");
 
@@ -283,7 +283,7 @@ public sealed class SuilHotReloadTest : GameTest
     public void Reloading_Twice_Gives_The_Same_Tree()
     {
         var view = new TestView();
-        const string file = "box .a { rf-button #submit .b (text: \"x\") box { rf-button .c } }";
+        const string file = "box .a { button #submit .b (text: \"x\") box { button .c } }";
 
         Reload(view, file);
         var first = Shape(view);

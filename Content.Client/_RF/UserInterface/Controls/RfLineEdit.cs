@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,6 +31,7 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </para>
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("line-edit")]
 public partial class RfLineEdit : UiElement
 {
     [Dependency] private IConfigurationManager _cfgManager = null!;

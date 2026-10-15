@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.Suil;
 using JetBrains.Annotations;
 using Robust.Shared.Timing;
@@ -15,10 +16,11 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// ignored for <see cref="CooldownTime"/> to avoid a double click confirming it.
 /// </para>
 /// <para>
-/// The colors of the confirming state are in the stylesheet (<c>rf-button.confirming</c>).
+/// The colors of the confirming state are in the stylesheet (<c>button.confirming</c>).
 /// </para>
 /// </remarks>
 [Virtual, UsedImplicitly]
+[SuilTag("confirm-button")]
 public partial class RfConfirmButton : RfButton
 {
     [Dependency] private IGameTiming _gameTiming = null!;

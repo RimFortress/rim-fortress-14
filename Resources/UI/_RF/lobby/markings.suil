@@ -9,12 +9,12 @@
  * While a marking is dragged, the place it would drop to is .drop-target.
  */
 
-rf-marking-picker {
+marking-picker {
     gap: 0;
 }
 
 /* The list scrolls inside of the page that scrolls, so it needs a height of its own */
-rf-layer-marking-picker {
+layer-marking-picker {
     gap: 4px;
     min-height: 400px;
 }
@@ -29,7 +29,7 @@ rf-layer-marking-picker {
     padding: 4px;
 }
 
-rf-layer-marking-item {
+layer-marking-item {
     gap: 4px;
 }
 

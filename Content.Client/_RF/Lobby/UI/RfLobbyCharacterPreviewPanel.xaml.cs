@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
@@ -9,6 +10,7 @@ using Robust.Client.UserInterface.XAML;
 namespace Content.Client._RF.Lobby.UI;
 
 [GenerateTypedNameReferences]
+[SuilTag("lobby-character-preview-panel")]
 public sealed partial class RfLobbyCharacterPreviewPanel : RfBoxContainer
 {
     [Dependency] private IEntityManager _entManager = default!;
