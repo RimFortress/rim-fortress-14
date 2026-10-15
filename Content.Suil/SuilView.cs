@@ -1,0 +1,134 @@
+using System;
+using System.Collections.Generic;
+
+namespace Content.Suil;
+
+/// <summary>
+/// A control built from a <c>.suil</c> file by <c>[SuilView]</c>. The generator implements it, so the hot reload can
+/// build the tree again and bind the fields of the class without reflection, which the sandbox doesn't allow.
+/// </summary>
+/// <remarks>
+/// Fields are named by the id of the element as it is written in the file (<c>submit-button</c>), not by the name of the
+/// C# member (<c>SubmitButton</c>).
+/// </remarks>
+public interface ISuilView
+{
+    /// <summary>
+    /// The path in <c>[SuilView]</c> without the extension, like <c>/Lobby/Screen</c>.
+    /// </summary>
+    string SuilPath { get; }
+
+    /// <summary>
+    /// The ids of the elements that have a field in the class.
+    /// </summary>
+    IReadOnlyList<string> SuilFieldIds { get; }
+
+    /// <summary>
+    /// The type of the field of the id, or <c>null</c> if the class has no such field.
+    /// </summary>
+    Type? SuilFieldType(string id);
+
+    /// <summary>
+    /// The control in the field of the id.
+    /// </summary>
+    object? SuilGetField(string id);
+
+    /// <summary>
+    /// Puts a control in the field of the id. Returns <c>false</c> if there is no such field or the control is of
+    /// another type.
+    /// </summary>
+    bool SuilSetField(string id, object? value);
+}
+
+/// <summary>
+/// A view that wants to know when its tree was built again by the hot reload: the controls that the code of the class
+/// has not got in fields (and the handlers of the ones it has, if they were replaced) are new.
+/// </summary>
+public interface ISuilReloadHandler
+{
+    void OnSuilReloaded();
+}
+
+/// <summary>
+/// A view that is alive: the weak reference to it and what the hot reload remembers about it.
+/// </summary>
+public sealed class SuilViewEntry
+{
+    private readonly WeakReference<ISuilView> _view;
+
+    internal SuilViewEntry(ISuilView view)
+    {
+        _view = new WeakReference<ISuilView>(view);
+    }
+
+    /// <summary>
+    /// The view, unless it has been collected.
+    /// </summary>
+    public bool TryGetView(out ISuilView view)
+    {
+        if (_view.TryGetTarget(out var target))
+        {
+            view = target;
+            return true;
+        }
+
+        view = null!;
+        return false;
+    }
+
+    /// <summary>
+    /// Whatever the hot reload keeps for the view between the reloads. The entry lives as long as the view does.
+    /// </summary>
+    public object? State { get; set; }
+}
+
+/// <summary>
+/// The views that are alive. Every generated <c>InitializeComponent()</c> adds its control here; the references are weak,
+/// so a view that nothing holds goes away.
+/// </summary>
+public static class SuilViewRegistry
+{
+    private static readonly object Lock = new();
+    private static readonly List<SuilViewEntry> Entries = new();
+
+    public static void Register(ISuilView view)
+    {
+        lock (Lock)
+        {
+            // A long session creates many views, so the dead ones are dropped now and then.
+            if (Entries.Count >= 256 && Entries.Count % 256 == 0)
+                Entries.RemoveAll(entry => !entry.TryGetView(out _));
+
+            Entries.Add(new SuilViewEntry(view));
+        }
+    }
+
+    /// <summary>
+    /// The views that are alive now.
+    /// </summary>
+    public static List<SuilViewEntry> Snapshot()
+    {
+        lock (Lock)
+        {
+            Entries.RemoveAll(entry => !entry.TryGetView(out _));
+            return new List<SuilViewEntry>(Entries);
+        }
+    }
+
+    /// <summary>
+    /// The entry of the view, <c>null</c> if the view was not built by a generated <c>InitializeComponent()</c>.
+    /// </summary>
+    public static SuilViewEntry? Find(ISuilView view)
+    {
+        lock (Lock)
+        {
+            foreach (var entry in Entries)
+            {
+                if (entry.TryGetView(out var other) && ReferenceEquals(other, view))
+                    return entry;
+            }
+
+            return null;
+        }
+    }
+}

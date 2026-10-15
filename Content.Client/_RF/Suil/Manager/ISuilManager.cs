@@ -1,6 +1,5 @@
 using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
-using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
 
@@ -19,6 +18,18 @@ public interface ISuilManager : ISuilPropertyResolver, ISuilValues
     /// The path where SUIL files will be searched for.
     /// </summary>
     ResPath StylesPath { get; }
+
+    /// <summary>
+    /// The files of the language. It remembers what was read, so the hot reload can find the files that were edited.
+    /// </summary>
+    ResourceSuilFileSource Files { get; }
+
+    /// <summary>
+    /// The type of the control a tag stands for, <c>null</c> for an unknown tag or one that stands for several types.
+    /// </summary>
+    /// <param name="tag">The tag as written in the file; <c>null</c> is <c>_</c>.</param>
+    /// <param name="error">What is wrong with the tag, if it has no type.</param>
+    Type? ResolveTag(string? tag, out string? error);
 
     /// <summary>
     /// A table of all loaded SUIL styles.

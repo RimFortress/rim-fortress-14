@@ -66,6 +66,73 @@ internal sealed class SuilTagRegistry
         return registry;
     }
 
+    /// <summary>
+    /// The custom tags that the assemblies the project references declare, like the <c>box</c> of <c>RfBoxContainer</c>
+    /// in the game: a project that has views of its own writes them with the same tags. Only the assemblies of the
+    /// <c>Content</c> and <c>Robust</c> families are looked at, the same ones the default names come from.
+    /// </summary>
+    public static IEnumerable<SuilTagRegistration> FromReferences(Compilation compilation)
+    {
+        foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+        {
+            if (!assembly.Name.StartsWith("Content", StringComparison.Ordinal)
+                && !assembly.Name.StartsWith("Robust", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            foreach (var attribute in assembly.GetAttributes())
+            {
+                if (attribute.AttributeClass?.ToDisplayString() == SuilViewAttributeSource.TagMetadataName
+                    && attribute.ConstructorArguments is [{ Value: string name }, { Value: INamedTypeSymbol type }])
+                {
+                    yield return new SuilTagRegistration(name, type, Location.None);
+                }
+            }
+
+            var found = new List<SuilTagRegistration>();
+            Visit(assembly.GlobalNamespace, found);
+
+            foreach (var registration in found)
+            {
+                yield return registration;
+            }
+        }
+
+        static void Visit(INamespaceSymbol ns, List<SuilTagRegistration> found)
+        {
+            foreach (var member in ns.GetMembers())
+            {
+                switch (member)
+                {
+                    case INamespaceSymbol child:
+                        Visit(child, found);
+                        break;
+                    case INamedTypeSymbol type:
+                        VisitType(type, found);
+                        break;
+                }
+            }
+        }
+
+        static void VisitType(INamedTypeSymbol type, List<SuilTagRegistration> found)
+        {
+            foreach (var attribute in type.GetAttributes())
+            {
+                if (attribute.AttributeClass?.ToDisplayString() == SuilViewAttributeSource.TagMetadataName
+                    && attribute.ConstructorArguments is [{ Value: string tag }])
+                {
+                    found.Add(new SuilTagRegistration(tag, type, Location.None));
+                }
+            }
+
+            foreach (var nested in type.GetTypeMembers())
+            {
+                VisitType(nested, found);
+            }
+        }
+    }
+
     private static string? Validate(SuilTagRegistration registration, INamedTypeSymbol control, Compilation compilation)
     {
         // (the checks of the type are shared with the default names, see IsUsableControl)

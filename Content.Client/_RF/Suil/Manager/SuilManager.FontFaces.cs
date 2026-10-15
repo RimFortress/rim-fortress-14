@@ -2,7 +2,6 @@ using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Client._RF.Suil.Parsers;
-using Content.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;

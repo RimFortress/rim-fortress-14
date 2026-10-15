@@ -43,7 +43,7 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Replays;
 using Robust.Shared.Timing;
 
-using Content.Client._RF.Suil; // RimFortress
+using Content.Client._RF.Suil.HotReload; // RimFortress
 
 namespace Content.Client.Entry
 {
@@ -84,6 +84,7 @@ namespace Content.Client.Entry
         [Dependency] private ClientsidePlaytimeTrackingManager _clientsidePlaytimeManager = default!;
         [Dependency] private ClientFeedbackManager _feedbackManager = null!;
         [Dependency] private ISuilManager _suil = null!; // RimFortress
+        [Dependency] private ISuilHotReload _suilHotReload = null!; // RimFortress
 
         public override void PreInit()
         {
@@ -165,6 +166,7 @@ namespace Content.Client.Entry
 
             _stylesheetManager.Initialize();
             _suil.Initialize(); // RimFortress
+            _suilHotReload.Initialize(); // RimFortress
 
             // Setup key contexts
             ContentContexts.SetupContexts(_inputManager.Contexts);

@@ -1,7 +1,6 @@
 using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Suil;
 using Robust.Client.UserInterface;
 
 namespace Content.Suil;
@@ -191,6 +190,23 @@ public sealed partial class SuilManager
             ? $"the tag '{tag}' stands for several control types: {string.Join(", ", candidates.Select(c => c.FullName))}"
             : $"unknown control type '{tag}'");
     }
+
+    /// <inheritdoc/>
+    public Type? ResolveTag(string? tag, out string? error)
+    {
+        error = null;
+        tag ??= SuilTagTableUntyped;
+
+        if (_tags.TryGet(tag, out var found, out var candidates))
+            return found;
+
+        error = candidates.Count > 0
+            ? $"the tag '{tag}' stands for several control types: {string.Join(", ", candidates.Select(c => c.FullName))}"
+            : $"unknown control type '{tag}'";
+        return null;
+    }
+
+    private const string SuilTagTableUntyped = "_";
 
     private bool TryBuildAttribute(SuilAttributeSelector attribute, Type? type, [NotNullWhen(true)] out Selector? result)
     {

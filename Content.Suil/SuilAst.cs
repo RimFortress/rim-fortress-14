@@ -163,7 +163,7 @@ public sealed record SuilName(ImmutableArray<StringPart> Parts)
     public bool IsLiteral => Parts.All(p => !p.IsVariable);
 
     /// <summary>
-    /// The source form: variables are in backticks.
+    /// The source form: variables are in angle brackets.
     /// </summary>
     public override string ToString() => string.Concat(Parts.Select(p => p.IsVariable ? $"<{p.Text}>" : p.Text));
 

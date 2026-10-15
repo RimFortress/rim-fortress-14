@@ -33,6 +33,78 @@ public sealed class SuilViewGeneratorTests
         Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors) + "\n" + result.Source);
     }
 
+    // ---- The hot reload interface ----
+
+    [Test]
+    public void The_View_Implements_ISuilView_With_Its_Fields_By_Id()
+    {
+        var result = Run("""
+            button .picker {
+                box #top-row {
+                    +button #up
+                    =button #down-button
+                }
+            }
+            """);
+
+        AssertClean(result);
+
+        var type = result.Load().GetType("Game.Ui.Picker")!;
+        var view = (ISuilView) Activator.CreateInstance(type)!;
+
+        Assert.That(view.SuilPath, Is.EqualTo("/Picker"), "without the extension");
+        Assert.That(view.SuilFieldIds, Is.EquivalentTo(new[] { "top-row", "up", "down-button" }));
+        Assert.That(view.SuilFieldType("up")!.Name, Is.EqualTo("RfButton"));
+        Assert.That(view.SuilFieldType("top-row")!.Name, Is.EqualTo("RfBoxContainer"));
+        Assert.That(view.SuilFieldType("nope"), Is.Null);
+
+        // the fields are filled by InitializeComponent and can be read and replaced by id
+        var up = view.SuilGetField("up");
+        Assert.That(up, Is.Not.Null);
+        Assert.That(type.GetField("Up")!.GetValue(view), Is.SameAs(up));
+
+        var other = Activator.CreateInstance(up!.GetType())!;
+        Assert.That(view.SuilSetField("up", other), Is.True);
+        Assert.That(type.GetField("Up")!.GetValue(view), Is.SameAs(other));
+
+        Assert.That(view.SuilSetField("up", new object()), Is.False, "another type");
+        Assert.That(view.SuilSetField("up", null), Is.False);
+        Assert.That(view.SuilSetField("nope", other), Is.False);
+        Assert.That(view.SuilGetField("nope"), Is.Null);
+    }
+
+    [Test]
+    public void The_View_Is_Registered_When_It_Is_Built()
+    {
+        var result = Run("button #up");
+
+        AssertClean(result);
+
+        var view = (ISuilView) Activator.CreateInstance(result.Load().GetType("Game.Ui.Picker")!)!;
+
+        Assert.That(SuilViewRegistry.Find(view), Is.Not.Null);
+    }
+
+    [Test]
+    public void A_Nested_View_Gets_The_Interface_On_The_Inner_Part_Only()
+    {
+        var result = Run("button #up", """
+            using Content.Suil;
+            using Content.Client._RF.UserInterface.Controls;
+            namespace Game.Ui;
+
+            public partial class Outer
+            {
+                [SuilView("/Picker.suil")]
+                public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+            }
+            """);
+
+        AssertClean(result);
+        Assert.That(result.Source, Does.Contain("partial class Outer\r\n").Or.Contain("partial class Outer\n"));
+        Assert.That(result.Source, Does.Contain("partial class Picker : global::Content.Suil.ISuilView"));
+    }
+
     // ---- Generation ----
 
     [Test]

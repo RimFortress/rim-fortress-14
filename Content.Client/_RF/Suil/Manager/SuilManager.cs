@@ -1,10 +1,7 @@
 using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Client._RF.Suil.Streams;
 using Content.Client._RF.Suil.Text;
-using Content.Shared._RF.Utilities;
-using Content.Suil;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
 using Robust.Shared.Random;
@@ -60,6 +57,9 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     public ResPath StylesPath => new("/UI/");
 
     /// <inheritdoc/>
+    public ResourceSuilFileSource Files { get; private set; } = null!;
+
+    /// <inheritdoc/>
     public SuilStylesheet Stylesheet { get; private set; } = new(new List<SuilStyleRule>());
 
     /// <summary>
@@ -72,6 +72,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     public void PostInject()
     {
         _sawmill = Logger.GetSawmill("suil");
+        Files = new ResourceSuilFileSource(_resource, StylesPath);
 
         RegisterParsers();
         RegisterProperties();

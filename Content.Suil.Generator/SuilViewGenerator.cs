@@ -109,7 +109,8 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
 
         // The classes with [SuilView(Name = ...)] are tags as well.
         var registrations = tagRegistrations
-            .Concat(views.Where(v => v.Name != null).Select(v => new SuilTagRegistration(v.Name!, v.Symbol, v.AttributeLocation)));
+            .Concat(views.Where(v => v.Name != null).Select(v => new SuilTagRegistration(v.Name!, v.Symbol, v.AttributeLocation)))
+            .Concat(SuilTagRegistry.FromReferences(compilation));
         var tags = SuilTagRegistry.Build(registrations, control, compilation, context.ReportDiagnostic);
 
         foreach (var view in views)

@@ -1,8 +1,5 @@
 using Content.Client._RF.Suil;
-using System.IO;
 using System.Linq;
-using Content.Suil;
-using Robust.Client.UserInterface;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
@@ -17,7 +14,9 @@ public partial class SuilManager
         sw.Start();
         _pendingByFile.Clear();
         _fontFacesByFile.Clear();
+        Files.Forget();
         LoadDirectory(StylesPath);
+        Files.MarkScanned();
         UpdateStylesheet();
 
         foreach (var root in _ui.AllRoots)
@@ -33,8 +32,8 @@ public partial class SuilManager
     /// <inheritdoc/>
     public void LoadDirectory(ResPath path)
     {
-        var source = new ResourceSuilFileSource(_resource, StylesPath);
-        var globals = LoadGlobalUsings(source);
+        var source = Files;
+        var globals = source.LoadGlobals();
 
         var files = _resource.ContentFindFiles(path)
             .Where(filePath => filePath.Extension == "suil" && !filePath.Filename.StartsWith('.'))
@@ -52,11 +51,10 @@ public partial class SuilManager
     /// <inheritdoc/>
     public void LoadFile(ResPath path)
     {
-        var source = new ResourceSuilFileSource(_resource, StylesPath);
-        LoadFile(path, source, LoadGlobalUsings(source));
+        LoadFile(path, Files, Files.LoadGlobals());
     }
 
-    private void LoadFile(ResPath path, ResourceSuilFileSource source, GlobalUsings globals)
+    private void LoadFile(ResPath path, ResourceSuilFileSource source, SuilGlobals globals)
     {
         var suilPath = source.ToSuilPath(path);
 
@@ -80,37 +78,6 @@ public partial class SuilManager
 
         _pendingByFile[path] = BuildPendingRules(own, faces);
         _fontFacesByFile[path] = faces;
-    }
-
-    private GlobalUsings LoadGlobalUsings(ResourceSuilFileSource source)
-    {
-        if (!source.Has(SuilGlobalUsings.DefaultPath))
-            return new GlobalUsings(Array.Empty<string>(), new HashSet<string>());
-
-        var paths = SuilGlobalUsings.FromFile(source.Load(SuilGlobalUsings.DefaultPath));
-
-        // The files that the global ones bring don't get the global usings themselves, found by expanding the list
-        // alone and seeing what was read.
-        var recorder = new RecordingSource(source);
-        var list = new SuilFile(paths.Select(path => (ISuilTopLevelItem) new SuilUse(path, default)).ToList(), null);
-        SuilExpander.Expand(list, recorder);
-
-        return new GlobalUsings(paths, recorder.Loaded);
-    }
-
-    private sealed record GlobalUsings(IReadOnlyList<string> Paths, HashSet<string> Files);
-
-    private sealed class RecordingSource(ISuilFileSource inner) : ISuilFileSource
-    {
-        public HashSet<string> Loaded { get; } = new(StringComparer.Ordinal);
-
-        public SuilFile Load(string path)
-        {
-            Loaded.Add(path);
-            return inner.Load(path);
-        }
-
-        public IReadOnlyList<string> List(string directory) => inner.List(directory);
     }
 
     /// <summary>

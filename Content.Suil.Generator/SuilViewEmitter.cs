@@ -29,7 +29,7 @@ internal sealed class SuilViewEmitter(
     INamedTypeSymbol viewClass)
 {
     private readonly StringBuilder _body = new();
-    private readonly List<(string Name, string Type, string Access)> _fields = new();
+    private readonly List<(string Id, string Name, string Type, string Access)> _fields = new();
     private readonly HashSet<string> _ids = new();
     private int _counter;
 
@@ -140,7 +140,7 @@ internal sealed class SuilViewEmitter(
             _ => "private",
         };
 
-        _fields.Add((name, typeName, access));
+        _fields.Add((id, name, typeName, access));
         _body.AppendLine($"            this.{name} = {variable};");
     }
 
@@ -418,6 +418,78 @@ internal sealed class SuilViewEmitter(
 
     private static string Literal(string text) => SymbolDisplay.FormatLiteral(text, true);
 
+    // ---- The members of ISuilView ----
+
+    /// <summary>
+    /// The implementation of <c>ISuilView</c>: the path of the file and the fields by the ids of the elements, so the hot
+    /// reload binds a new control to its field without reflection.
+    /// </summary>
+    private void WriteViewMembers(StringBuilder sb, string viewPath)
+    {
+        const string view = "global::Content.Suil.ISuilView";
+        var path = viewPath.EndsWith(".suil", StringComparison.Ordinal)
+            ? viewPath.Substring(0, viewPath.Length - ".suil".Length)
+            : viewPath;
+        var ids = string.Join(", ", _fields.Select(f => Literal(f.Id)));
+
+        sb.AppendLine($"        string {view}.SuilPath => {Literal(path)};");
+        sb.AppendLine();
+        sb.AppendLine($"        private static readonly string[] __suilFieldIds = new string[] {{ {ids} }};");
+        sb.AppendLine($"        global::System.Collections.Generic.IReadOnlyList<string> {view}.SuilFieldIds => __suilFieldIds;");
+        sb.AppendLine();
+        sb.AppendLine($"        global::System.Type? {view}.SuilFieldType(string id)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            switch (id)");
+        sb.AppendLine("            {");
+
+        foreach (var (id, _, type, _) in _fields)
+        {
+            sb.AppendLine($"                case {Literal(id)}: return typeof({type});");
+        }
+
+        sb.AppendLine("                default: return null;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine($"        object? {view}.SuilGetField(string id)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            switch (id)");
+        sb.AppendLine("            {");
+
+        foreach (var (id, name, _, _) in _fields)
+        {
+            sb.AppendLine($"                case {Literal(id)}: return this.{name};");
+        }
+
+        sb.AppendLine("                default: return null;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine($"        bool {view}.SuilSetField(string id, object? value)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            switch (id)");
+        sb.AppendLine("            {");
+
+        var index = 0;
+
+        foreach (var (id, name, type, _) in _fields)
+        {
+            sb.AppendLine($"                case {Literal(id)}:");
+            sb.AppendLine($"                    if (value is {type} __v{index})");
+            sb.AppendLine("                    {");
+            sb.AppendLine($"                        this.{name} = __v{index};");
+            sb.AppendLine("                        return true;");
+            sb.AppendLine("                    }");
+            sb.AppendLine();
+            sb.AppendLine("                    return false;");
+            index++;
+        }
+
+        sb.AppendLine("                default: return false;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+    }
+
     // ---- The file ----
 
     private string Wrap(string viewPath)
@@ -447,11 +519,16 @@ internal sealed class SuilViewEmitter(
 
         foreach (var container in containers)
         {
-            sb.AppendLine($"    partial class {container.Name}");
+            // the innermost part is the view: it is the one that implements the interface of the hot reload
+            var declaration = ReferenceEquals(container, viewClass)
+                ? $"    partial class {container.Name} : global::Content.Suil.ISuilView"
+                : $"    partial class {container.Name}";
+
+            sb.AppendLine(declaration);
             sb.AppendLine("    {");
         }
 
-        foreach (var (name, type, access) in _fields)
+        foreach (var (_, name, type, access) in _fields)
         {
             sb.AppendLine($"        {access} {type} {name} = default!;");
         }
@@ -463,7 +540,10 @@ internal sealed class SuilViewEmitter(
         sb.AppendLine("        private void InitializeComponent()");
         sb.AppendLine("        {");
         sb.Append(_body);
+        sb.AppendLine("            global::Content.Suil.SuilViewRegistry.Register(this);");
         sb.AppendLine("        }");
+        sb.AppendLine();
+        WriteViewMembers(sb, viewPath);
 
         for (var i = 0; i < containers.Count; i++)
         {

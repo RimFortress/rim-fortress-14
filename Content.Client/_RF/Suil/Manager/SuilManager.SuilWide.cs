@@ -1,6 +1,5 @@
 using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
-using Robust.Shared.Utility;
 
 namespace Content.Suil;
 

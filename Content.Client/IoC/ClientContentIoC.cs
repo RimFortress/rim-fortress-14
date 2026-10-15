@@ -31,6 +31,7 @@ using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Players.RateLimiting;
 
 // RimFortress Start
+using Content.Client._RF.Suil.HotReload;
 using Content.Suil;
 using Content.Client._RF.Suil.Markup;
 using Content.Client._RF.Suil.Text;
@@ -47,6 +48,7 @@ namespace Content.Client.IoC
             // RimFortress Start
             collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>();
             collection.Register<ISuilManager, SuilManager>();
+            collection.Register<ISuilHotReload, SuilHotReload>(); // RimFortress
             collection.Register<ISuilFontManager, SuilFontManager>();
             collection.Register<IRfMarkupTagManager, RfMarkupTagManager>();
             // RimFortress End
