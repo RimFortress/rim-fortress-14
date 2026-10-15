@@ -22,6 +22,7 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 public sealed class SuilHotReloadTest : GameTest
 {
     [SidedDependency(Side.Client)] private readonly ISuilHotReload _reload = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _suil = null!;
 
     private sealed class MemorySource(Dictionary<string, string> files) : ISuilFileSource
     {
@@ -261,6 +262,95 @@ public sealed class SuilHotReloadTest : GameTest
 
         Assert.That(result.Success, Is.True);
         Assert.That(result.Warnings.Single(), Does.Contain("submit"));
+    }
+
+    // ---- Hard and soft properties ----
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void What_The_File_Assigns_Is_Hard_Unless_It_Has_A_Question_Mark()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, "box { button #submit (text: \"Go\", disabled: ?true) }");
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(view.Submit!.SuilIsHard("text"), Is.True);
+        Assert.That(view.Submit.SuilIsHard("disabled"), Is.False, "soft");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Styles_Do_Not_Override_A_Hard_Property_Even_With_Important()
+    {
+        _suil.ClearTestStylesheet();
+        _suil.LoadSuilString("""
+            button.styled { min-width: 70px; min-height: 80px; }
+            button.styled { min-height: 90px !important; }
+            """);
+
+        var view = new TestView();
+        Reload(view, "box { button #submit .styled (min-width: 10, min-height: ?20) }");
+
+        _suil.UpdateTestStyle(view.Submit!);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(view.Submit!.MinWidth, Is.EqualTo(10f), "hard: the rule can't change it");
+            Assert.That(view.Submit.MinHeight, Is.EqualTo(90f), "soft: the rule, and the important one first, wins");
+        });
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Property_Changes_Between_Hard_And_Soft_When_The_File_Does()
+    {
+        _suil.ClearTestStylesheet();
+        _suil.LoadSuilString("button.styled { min-width: 70px; }");
+
+        var view = new TestView();
+        Reload(view, "box { button #submit .styled (min-width: 10) }");
+        var submit = view.Submit!;
+        _suil.UpdateTestStyle(submit);
+        Assert.That(submit.MinWidth, Is.EqualTo(10f));
+
+        // now the styles have it
+        Reload(view, "box { button #submit .styled (min-width: ?10) }");
+        _suil.UpdateTestStyle(submit);
+        Assert.That(submit.SuilIsHard("min-width"), Is.False);
+        Assert.That(submit.MinWidth, Is.EqualTo(70f));
+
+        // and the file has it again
+        Reload(view, "box { button #submit .styled (min-width: 12) }");
+        _suil.UpdateTestStyle(submit);
+        Assert.That(submit.MinWidth, Is.EqualTo(12f));
+
+        // a property that left the file is no one's but the styles'
+        Reload(view, "box { button #submit .styled }");
+        Assert.That(submit.SuilIsHard("min-width"), Is.False);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void An_Exclamation_Mark_After_A_Value_Is_An_Error()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, "box { button #submit (min-width: 10!) }");
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Errors.Single(), Does.Contain("hard by default"));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Root_Properties_Are_Hard_As_Well()
+    {
+        var view = new TestView();
+
+        Reload(view, "box (min-width: 33) { }");
+
+        Assert.That(view.SuilIsHard("min-width"), Is.True);
     }
 
     // ---- The rest ----

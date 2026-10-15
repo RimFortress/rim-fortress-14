@@ -320,7 +320,9 @@ public static partial class SuilParser
     /// <summary>
     /// Consumes properties up to the closing parenthesis, the opening one is already consumed.
     /// props = "(" , [ prop , { "," , prop } ] , ")"
-    /// prop  = ident , [ ":" , value-list , [ "!" ] ]
+    /// prop  = ident , [ ":" , [ "?" ] , value-list ]
+    /// A property is hard by default: the styles can't change it. A "?" before the value makes it soft, the styles
+    /// override it like any other property.
     /// </summary>
     private static List<SuilProperty> ConsumeProperties(ref SuilTokenStream stream)
     {
@@ -349,22 +351,31 @@ public static partial class SuilParser
             stream.SkipWhitespace();
 
             List<ISuilValue>? value = null;
-            var isHard = false;
+            var isSoft = false;
 
             if (stream.PeekNext() is ColonToken)
             {
                 stream.ConsumeNext();
+                stream.SkipWhitespace();
+
+                if (stream.PeekNext() is DelimToken { CodePoint: '?' })
+                {
+                    stream.ConsumeNext();
+                    isSoft = true;
+                }
+
                 value = ConsumeValueList(ref stream, "consuming properties");
                 stream.SkipWhitespace();
 
                 if (stream.PeekNext() is DelimToken { CodePoint: '!' })
                 {
-                    stream.ConsumeNext();
-                    isHard = true;
+                    throw ErrorAtNext(ref stream,
+                        "consuming properties",
+                        "'!' after a value is not used any more: a property is hard by default, write '?' before the value to let the styles override it");
                 }
             }
 
-            properties.Add(new SuilProperty(name.Value, value, isHard, position));
+            properties.Add(new SuilProperty(name.Value, value, isSoft, position));
             stream.SkipWhitespace();
 
             var token = stream.ConsumeNext();

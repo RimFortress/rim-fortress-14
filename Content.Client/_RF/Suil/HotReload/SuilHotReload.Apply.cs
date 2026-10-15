@@ -172,12 +172,22 @@ public sealed partial class SuilHotReload
     {
         Dictionary<string, object?>? originals = null;
 
-        // what the file had set and doesn't any more goes back to what the control had before the file set it
-        if (before != null && key != null && state.Originals.TryGetValue(key, out originals))
+        // what the file had set and doesn't any more goes back to what the control had before the file set it, and
+        // is the styles' again
+        if (before != null)
         {
+            if (key != null)
+                state.Originals.TryGetValue(key, out originals);
+
             foreach (var old in before.Properties)
             {
-                if (plan.Properties.Any(p => p.Name == old.Name) || !originals.TryGetValue(old.Name, out var original))
+                if (plan.Properties.Any(p => p.Name == old.Name))
+                    continue;
+
+                if (control is UiElement element)
+                    element.SuilSetHard(old.Name, false);
+
+                if (originals == null || !originals.TryGetValue(old.Name, out var original))
                     continue;
 
                 Set(control, old.Accessor, original, old.Name, errors);
@@ -197,6 +207,10 @@ public sealed partial class SuilHotReload
             }
 
             Set(control, property.Accessor, property.Value, property.Name, errors);
+
+            // as in the generated code: what the file assigns is out of reach of the styles, unless it is soft
+            if (control is UiElement styled)
+                styled.SuilSetHard(property.Name, !property.Soft);
         }
     }
 

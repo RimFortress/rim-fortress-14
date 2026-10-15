@@ -20,7 +20,8 @@ public sealed partial class SuilHotReload
         public readonly List<PlannedElement> Children = new();
     }
 
-    private readonly record struct PlannedProperty(string Name, SuilStyleAccessor Accessor, object? Value);
+    /// <param name="Soft">The <c>?</c> before the value: the styles may override the property. Otherwise they may not.</param>
+    private readonly record struct PlannedProperty(string Name, SuilStyleAccessor Accessor, object? Value, bool Soft);
 
     /// <summary>
     /// Checks the tree of the file against the view and turns it into a plan. The mistakes are put in
@@ -113,7 +114,7 @@ public sealed partial class SuilHotReload
                 continue;
             }
 
-            plan.Properties.Add(new PlannedProperty(property.Name, accessor.Value, value));
+            plan.Properties.Add(new PlannedProperty(property.Name, accessor.Value, value, property.IsSoft));
         }
 
         foreach (var node in element.Children)

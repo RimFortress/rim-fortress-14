@@ -199,9 +199,10 @@ public sealed record SuilContentSlot(string Name, SuilPosition Position) : ISuil
 
 /// <summary>
 /// A property in the parentheses of an element. <paramref name="Value"/> is null for a flag (<c>disabled</c>).
-/// <paramref name="IsHard"/> is the <c>!</c> after the value: styles can't override it.
+/// A property is hard by default: the styles can't change what the file assigned. <paramref name="IsSoft"/> is the
+/// <c>?</c> before the value (<c>(text: ?"x")</c>), which lets the styles override it.
 /// </summary>
-public sealed record SuilProperty(string Name, List<ISuilValue>? Value, bool IsHard, SuilPosition Position);
+public sealed record SuilProperty(string Name, List<ISuilValue>? Value, bool IsSoft, SuilPosition Position);
 
 // ---- Values ----
 

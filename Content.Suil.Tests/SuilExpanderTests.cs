@@ -401,14 +401,15 @@ public sealed class SuilExpanderTests
         var root = Root("""
             let row = { box (flex-direction: row, gap: 1) { %content% } }
             let gap-default = 3;
-            row (gap: <gap-default>, disabled, size: 4!) { label }
+            row (gap: <gap-default>, disabled, size: ?4) { label }
             """);
 
         Assert.That(root.Tag, Is.EqualTo("box"));
         Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "flex-direction", "gap", "disabled", "size" }));
         Assert.That(Prop(root, "gap").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(3, true) }));
         Assert.That(Prop(root, "disabled").Value, Is.Null);
-        Assert.That(Prop(root, "size").IsHard, Is.True);
+        Assert.That(Prop(root, "size").IsSoft, Is.True, "the flag of the property goes to the root");
+        Assert.That(Prop(root, "gap").IsSoft, Is.False);
         Assert.That(root.Children, Has.Count.EqualTo(1));
     }
 
@@ -437,7 +438,7 @@ public sealed class SuilExpanderTests
     [TestCase("let t = (a) { _ _ }\nt (a: 1, b: 2)")]
     [TestCase("let t = { _ }\nt (b: 1, b: 2)")]
     [TestCase("let t = (a) { _ }\nt (a)")]
-    [TestCase("let t = (a) { _ }\nt (a: 1!)")]
+    [TestCase("let t = (a) { _ }\nt (a: ?1)")]
     [TestCase("let t = (a) { _ }\nt (a: 1, a: 2)")]
     [TestCase("let t = (a, a) { _ }\nt (a: 1)")]
     [TestCase("let t = { _ }\nt { label }")]

@@ -59,6 +59,9 @@ internal static class GeneratorHarness
                 public string? SuilStyleIdentifier { get; set; }
                 public string? Text { get; set; }
                 public void AddSuilStyleClass(string name) { }
+                public System.Collections.Generic.HashSet<string> Hard { get; } = new();
+                public bool SuilIsHard(string property) => Hard.Contains(property);
+                public void SuilSetHard(string property, bool hard = true) { if (hard) Hard.Add(property); else Hard.Remove(property); }
             }
         }
         namespace Content.Client._RF.UserInterface.Controls

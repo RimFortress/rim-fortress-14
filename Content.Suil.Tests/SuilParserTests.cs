@@ -98,13 +98,25 @@ public sealed class SuilParserTests
     }
 
     [Test]
-    public void Hard_Property()
+    public void Properties_Are_Hard_Unless_They_Have_A_Question_Mark()
     {
-        var root = Root("button (size: 32 32!, text: \"a\", disabled)");
+        var root = Root("button (size: 32 32, text: ?\"a\", disabled, gap: ? 4)");
 
-        Assert.That(Prop(root, "size").IsHard, Is.True);
+        Assert.That(Prop(root, "size").IsSoft, Is.False, "hard by default");
         Assert.That(Prop(root, "size").Value, Has.Count.EqualTo(2));
-        Assert.That(Prop(root, "text").IsHard, Is.False);
+        Assert.That(Prop(root, "text").IsSoft, Is.True);
+        Assert.That(Prop(root, "text").Value, Is.EqualTo(new List<ISuilValue> { new SuilString([StringPart.Literal("a")]) }));
+        Assert.That(Prop(root, "disabled").IsSoft, Is.False, "a flag is hard too");
+        Assert.That(Prop(root, "gap").IsSoft, Is.True, "space after the question mark is fine");
+        Assert.That(Prop(root, "gap").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(4, true) }));
+    }
+
+    [Test]
+    public void The_Old_Exclamation_Mark_Is_An_Error_That_Says_What_To_Write()
+    {
+        var error = Assert.Throws<SuilParserError>(() => Root("button (size: 32 32!)"))!;
+
+        Assert.That(error.Message, Does.Contain("hard by default").And.Contain("'?'"));
     }
 
     [Test]

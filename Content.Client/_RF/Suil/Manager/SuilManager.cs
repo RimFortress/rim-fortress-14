@@ -311,8 +311,9 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
         foreach (var name in previouslyApplied)
         {
-            // A property that can't be read has no original to go back to.
-            if (TryGetPropertyAccessor(controlType, name, out var accessor)
+            // A property that can't be read has no original to go back to; one the view assigned is not the styles' to touch.
+            if (!control.SuilIsHard(name)
+                && TryGetPropertyAccessor(controlType, name, out var accessor)
                 && control.SuilOriginalValues is { } originals
                 && originals.TryGetValue(name, out var original))
             {
@@ -330,6 +331,10 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
         void Apply(SuilStyleProperty property)
         {
+            // what the file of the view assigned is final
+            if (control.SuilIsHard(property.Name))
+                return;
+
             previouslyApplied.Remove(property.Name);
             control.RememberOriginal(property.Name, property.Accessor);
 

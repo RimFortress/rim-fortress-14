@@ -389,7 +389,7 @@ public static class SuilExpander
                 .Select(p => new SuilProperty(
                     p.Name,
                     p.Value == null ? null : ExpandValues(p.Value, scope, p.Position),
-                    p.IsHard,
+                    p.IsSoft,
                     p.Position))
                 .ToList();
 
@@ -444,10 +444,10 @@ public static class SuilExpander
                         property.Position);
                 }
 
-                if (property.IsHard)
+                if (property.IsSoft)
                 {
                     throw new SuilExpansionError(context,
-                        $"the argument '{property.Name}' of '{tag}' can't be hard, '!' is for element properties",
+                        $"the argument '{property.Name}' of '{tag}' can't be soft, '?' is for element properties",
                         property.Position);
                 }
 

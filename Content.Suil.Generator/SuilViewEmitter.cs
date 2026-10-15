@@ -88,6 +88,11 @@ internal sealed class SuilViewEmitter(
         foreach (var property in properties)
         {
             EmitProperty(variable, type, property);
+
+            // The file assigned it, so the styles must leave it alone, unless it is soft: `?` before the value.
+            // Only a control of SUIL is styled, an engine one has nothing to protect.
+            if (isSuil && !property.IsSoft)
+                _body.AppendLine($"            {variable}.SuilSetHard({Literal(property.Name)});");
         }
 
         foreach (var node in element.Children)

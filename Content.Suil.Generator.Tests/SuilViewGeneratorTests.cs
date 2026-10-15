@@ -105,6 +105,32 @@ public sealed class SuilViewGeneratorTests
         Assert.That(result.Source, Does.Contain("partial class Picker : global::Content.Suil.ISuilView"));
     }
 
+    // ---- Hard and soft properties ----
+
+    [Test]
+    public void The_Properties_Of_A_Suil_Control_Are_Hard_Unless_They_Have_A_Question_Mark()
+    {
+        var result = Run("""
+            button (disabled, toggle-mode: ?true) {
+                button #child (disabled: ?false)
+                sprite-view (scale: 2)
+            }
+            """);
+
+        AssertClean(result);
+        Assert.That(result.Source, Does.Contain("this.SuilSetHard(\"disabled\");"), "the root is hard by default");
+        Assert.That(result.Source, Does.Not.Contain("SuilSetHard(\"toggle-mode\")"), "soft: the styles may override it");
+        Assert.That(result.Source, Does.Not.Contain("SuilSetHard(\"scale\")"), "an engine control is not styled, there is nothing to protect");
+        Assert.That(result.Source.Split("SuilSetHard(").Length - 1, Is.EqualTo(1));
+
+        // what the generated code makes at run time
+        var type = result.Load().GetType("Game.Ui.Picker")!;
+        var view = Activator.CreateInstance(type)!;
+        var hard = (HashSet<string>) type.GetProperty("Hard")!.GetValue(view)!;
+
+        Assert.That(hard, Is.EquivalentTo(new[] { "disabled" }));
+    }
+
     // ---- Generation ----
 
     [Test]

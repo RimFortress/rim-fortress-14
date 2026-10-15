@@ -18,7 +18,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// while it is dragged. The thickness of the scrollbar is its <c>min-width</c> (vertical) or <c>min-height</c>
 /// (horizontal), the shortest length of the grabber is its <c>min-height</c> or <c>min-width</c>.
 /// </remarks>
-[SuilTag("scroll-bar")]
 public abstract class RfScrollBar : UiElement
 {
     private readonly bool _vertical;

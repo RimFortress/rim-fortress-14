@@ -108,6 +108,9 @@ public partial class UiElement
                 if (declared != null && declared.Contains(property.Name))
                     continue;
 
+                if (SuilIsHard(property.Name))
+                    continue;
+
                 if (!TryGetInheritedValue(parent, property.Name, out var value))
                     continue;
 
@@ -165,7 +168,7 @@ public partial class UiElement
 
         foreach (var name in names)
         {
-            if (!TryFindAccessor(name, out var own))
+            if (SuilIsHard(name) || !TryFindAccessor(name, out var own))
                 continue;
 
             if (!TryGetInheritedFromParent(name, out var value))

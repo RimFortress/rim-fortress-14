@@ -24,6 +24,43 @@ public partial class UiElement
         SuilOriginalValues.TryAdd(name, getter(this));
     }
 
+    // The properties the file of the view assigned, see SuilSetHard.
+    private HashSet<string>? _suilHardProperties;
+
+    /// <summary>
+    /// Whether the styles are not allowed to change the property: its value was assigned by the <c>.suil</c> file of the
+    /// view, <c>(text: "x")</c>, and the property was not made soft with <c>?</c> (<c>(text: ?"x")</c>). Neither a
+    /// rule, nor <c>!important</c>, nor the inheritance, nor the keywords like <c>initial</c> touch it.
+    /// </summary>
+    /// <param name="property">The name of the property in SUIL.</param>
+    [PublicAPI, Pure]
+    public bool SuilIsHard(string property) => _suilHardProperties?.Contains(property) == true;
+
+    /// <summary>
+    /// Makes the property hard or soft, see <see cref="SuilIsHard"/>. The generated code of a view calls it for the
+    /// properties of its elements, and so does the hot reload.
+    /// </summary>
+    /// <param name="property">The name of the property in SUIL.</param>
+    /// <param name="hard"><c>false</c> hands the property back to the styles.</param>
+    [PublicAPI]
+    public void SuilSetHard(string property, bool hard = true)
+    {
+        if (hard)
+        {
+            (_suilHardProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase)).Add(property);
+            return;
+        }
+
+        if (_suilHardProperties?.Remove(property) != true)
+            return;
+
+        if (_suilHardProperties.Count == 0)
+            _suilHardProperties = null;
+
+        // The rules have not been able to set it for a while: they get their say now
+        Suil.QueueStyleUpdate(this);
+    }
+
     /// <summary>
     /// Applied-property bookkeeping for full UpdateStyle(control) calls.
     /// </summary>
