@@ -325,6 +325,143 @@ public sealed class SuilHotReloadEventTest : GameTest
         Assert.That(view.Calls, Is.EqualTo(new[] { "refresh" }));
     }
 
+    // ---- Number expressions ----
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Handler_Assigns_A_Number_From_The_Properties_Of_Other_Elements()
+    {
+        var view = new TestView();
+        var result = Reload(view, """
+            box {
+                button #submit (on-pressed => {
+                    #target (
+                        min-width: calc(#source.min-width * 2 + 1px),
+                        min-height: #source.min-height,
+                        max-width: calc(min(#source.min-width, 4) + abs(-3) + clamp(1, #source.min-height, 6))
+                    )
+                })
+                button #source
+                button #target
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        var source = (RfButton) view.GetChild(1);
+        var target = (RfButton) view.GetChild(2);
+        source.MinWidth = 5;
+        source.MinHeight = 9;
+
+        Press(view.Submit!);
+
+        Assert.That(target.MinWidth, Is.EqualTo(11f));
+        Assert.That(target.MinHeight, Is.EqualTo(9f), "a lone reference to a number is read as a number");
+        Assert.That(target.MaxWidth, Is.EqualTo(13f), "4 + 3 + 6");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Short_Operations_Change_A_Property_In_Place()
+    {
+        var view = new TestView();
+        Reload(view, """
+            let step = 2;
+            box {
+                button #submit (min-width: 10, min-height: 8, max-width: 6, max-height: 20, on-pressed => {
+                    &(min-width +: 5, min-height *: <step>, max-width -: calc(#other.min-width * 3), max-height /: #other.min-width)
+                })
+                button #other (min-width: 4)
+            }
+            """);
+
+        Press(view.Submit!);
+
+        Assert.That(view.Submit!.MinWidth, Is.EqualTo(15f));
+        Assert.That(view.Submit.MinHeight, Is.EqualTo(16f));
+        Assert.That(view.Submit.MaxWidth, Is.EqualTo(-6f));
+        Assert.That(view.Submit.MaxHeight, Is.EqualTo(5f));
+
+        Press(view.Submit);
+        Assert.That(view.Submit.MinWidth, Is.EqualTo(20f), "every time the event is raised");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Variables_Of_The_File_Are_Folded_Into_The_Number_Expression()
+    {
+        var view = new TestView();
+        Reload(view, """
+            let gap = 3;
+            box {
+                button #submit (min-width: 1, on-pressed => { &(min-width: calc(#other.min-width * (<gap> + 1)), min-height +: calc(<gap> * 2)) })
+                button #other (min-width: 4)
+            }
+            """);
+
+        Press(view.Submit!);
+
+        Assert.That(view.Submit!.MinWidth, Is.EqualTo(16f));
+        Assert.That(view.Submit.MinHeight, Is.EqualTo(6f));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Number_May_Come_From_A_View_Inside()
+    {
+        var view = new TestView();
+        Reload(view, """
+            box {
+                button #submit (on-pressed => { &(min-width: calc(#panel/header.min-width + 1), min-height +: #panel/header.min-width) })
+                test-inner #panel
+            }
+            """);
+
+        ((TestInnerView) view.GetChild(1)).Header.MinWidth = 7;
+        Press(view.Submit!);
+
+        Assert.That(view.Submit!.MinWidth, Is.EqualTo(8f));
+        Assert.That(view.Submit.MinHeight, Is.EqualTo(7f));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Number_That_Is_Not_A_Number_Of_The_Property_Is_Held_To_Its_Type()
+    {
+        var view = new TestView();
+        Reload(view, "box { button #submit (toggle-mode: true, on-pressed => { &(min-width: calc(#other.min-width / 3)) }) button #other }");
+
+        ((RfButton) view.GetChild(1)).MinWidth = 10;
+        Press(view.Submit!);
+
+        Assert.That(view.Submit!.MinWidth, Is.EqualTo(10f / 3f).Within(1e-5), "min-width is a float: no rounding");
+    }
+
+    [TestCase("box { button #submit (on-pressed => { &(min-width: calc(#peer.disabled)) }) button #peer }", "no readable numeric property")]
+    [TestCase("box { button #submit (on-pressed => { &(min-width: calc(#peer.no-such)) }) button #peer }", "no readable numeric property")]
+    [TestCase("box { button #submit (on-pressed => { &(min-width: calc(#nowhere.min-width)) }) }", "no element with the id")]
+    [TestCase("box { button #submit (on-pressed => { &(disabled: calc(1 + 2)) }) }", "'disabled'")]
+    [TestCase("box { button #submit (on-pressed => { &(text: calc(1 + 2)) }) }", "'text'")]
+    [TestCase("box { button #submit (on-pressed => { &(disabled +: 1) }) }", "works on a numeric property")]
+    [TestCase("box { button #submit (on-pressed => { &(text *: 2) }) }", "works on a numeric property")]
+    [TestCase("box { button #submit (on-pressed => { &(no-such +: 1) }) }", "no property")]
+    [TestCase("box { button #submit (on-pressed => { &(min-width +: #nowhere.min-width) }) }", "no element with the id")]
+    [RunOnSide(Side.Client)]
+    public void A_Mistake_In_A_Number_Expression_Leaves_Everything_As_It_Was(string suil, string expected)
+    {
+        var view = new TestView();
+        Reload(view, "box { button #submit (on-pressed => @Refresh) }");
+        var submit = view.Submit!;
+
+        var result = Reload(view, suil);
+
+        Assert.That(result.Success, Is.False, suil);
+        Assert.That(string.Join("\n", result.Errors), Does.Contain(expected), suil);
+        Assert.That(view.Submit, Is.SameAs(submit));
+        Press(view.Submit!);
+        Assert.That(view.Calls, Is.EqualTo(new[] { "refresh" }));
+    }
+
     // ---- Reloading ----
 
     [Test]

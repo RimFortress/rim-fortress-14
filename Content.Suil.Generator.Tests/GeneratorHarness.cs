@@ -60,6 +60,10 @@ internal static class GeneratorHarness
             {
                 public string? SuilStyleIdentifier { get; set; }
                 public string? Text { get; set; }
+                public double Ratio { get; set; }
+                public byte Level { get; set; }
+                public long Big { get; set; }
+                public int WriteOnly { set { } }
                 public System.Collections.Generic.HashSet<string> Classes { get; } = new();
                 public System.Collections.Generic.HashSet<string> Pseudo { get; } = new();
                 public void AddSuilStyleClass(string name) => Classes.Add(name);

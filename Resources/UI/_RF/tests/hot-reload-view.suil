@@ -4,7 +4,7 @@ box .hot-reload-root #hot-reload-root (min-width: 40) {
     +button #hot-submit .primary (text: "Go", disabled, on-pressed => {
         @OnHotSubmit;
         &(add .pressed);
-        #hot-nested (min-height: 3, visible: !&.disabled)
+        #hot-nested (min-height: calc(&.min-width + 3px), visible: !&.disabled, min-width +: 4)
     })
     +box #hot-nested .nested {
         button .plain (text: "Plain")

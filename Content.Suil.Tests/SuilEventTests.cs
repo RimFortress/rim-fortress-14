@@ -1210,3 +1210,303 @@ public sealed class SuilBoolExpressionTests
             """));
     }
 }
+
+[TestFixture]
+public sealed class SuilNumberExpressionTests
+{
+    private static SuilElement Parsed(string input) => SuilParser.ParseFile(input).Root!;
+
+    private static SuilElement Root(string input) => SuilExpander.Expand(input).Root!;
+
+    private static SuilProperty Prop(SuilElement element, string name) => element.Properties.Single(p => p.Name == name);
+
+    private static SuilNumNode Expression(SuilProperty property) => ((SuilNumValue) property.Value!.Single()).Root;
+
+    private static SuilNumNode Of(string value) => Expression(Prop(Parsed($"button (min-width: {value})"), "min-width"));
+
+    private static double Folded(string expression, string lets = "")
+    {
+        var value = Prop(Root($"{lets}\nbutton (min-width: {expression})"), "min-width").Value!.Single();
+        return ((SuilDimension) value).Value;
+    }
+
+    // ---- Parser ----
+
+    [Test]
+    public void A_Calc_Of_Numbers_And_Lengths_Is_An_Expression()
+    {
+        var plus = (SuilNumBinary) Of("calc(1px + 2)");
+
+        Assert.That(plus.Operator, Is.EqualTo('+'));
+        Assert.That(plus.Left, Is.EqualTo(new SuilNumConst(1)));
+        Assert.That(plus.Right, Is.EqualTo(new SuilNumConst(2)));
+    }
+
+    [Test]
+    public void Multiplication_Binds_Tighter_Than_Addition()
+    {
+        var plus = (SuilNumBinary) Of("calc(1 + 2 * 3 - 4 / 2)");
+
+        // (1 + (2 * 3)) - (4 / 2)
+        Assert.That(plus.Operator, Is.EqualTo('-'));
+        var left = (SuilNumBinary) plus.Left;
+        Assert.That(left.Operator, Is.EqualTo('+'));
+        Assert.That(((SuilNumBinary) left.Right).Operator, Is.EqualTo('*'));
+        Assert.That(((SuilNumBinary) plus.Right).Operator, Is.EqualTo('/'));
+    }
+
+    [Test]
+    public void Parentheses_Negation_And_Nested_Functions()
+    {
+        Assert.That(((SuilNumBinary) Of("calc((1 + 2) * 3)")).Left, Is.InstanceOf<SuilNumBinary>());
+        Assert.That(Of("calc(-<x>)"), Is.InstanceOf<SuilNumNegate>());
+        Assert.That(Of("calc(2 * -3)"), Is.InstanceOf<SuilNumBinary>());
+        Assert.That(((SuilNumFunction) Of("calc(min(1, 2) + 3)").AsBinary().Left).Name, Is.EqualTo("min"));
+    }
+
+    [TestCase("min(1px, 2px)", "min", 2)]
+    [TestCase("max(1, 2, 3)", "max", 3)]
+    [TestCase("clamp(1px, 5px, 9px)", "clamp", 3)]
+    public void The_Functions_Are_Values_Of_Their_Own(string value, string name, int count)
+    {
+        var function = (SuilNumFunction) Of(value);
+
+        Assert.That(function.Name, Is.EqualTo(name));
+        Assert.That(function.Arguments, Has.Count.EqualTo(count));
+    }
+
+    [TestCase("calc(1em + 2px)")]
+    [TestCase("calc(50% + 10px)")]
+    [TestCase("calc(1px+2px)")]
+    [TestCase("min(1vw, 2px)")]
+    public void A_Value_With_Other_Units_Is_Left_To_The_Parsers_Of_The_Values(string value)
+    {
+        var property = Prop(Parsed($"button (min-width: {value})"), "min-width");
+
+        Assert.That(property.Value!.Single(), Is.InstanceOf<SuilFunction>(), "the way it was before the expressions");
+    }
+
+    [TestCase("button (min-width: calc(#a.min-width * 2))")]
+    [TestCase("button (min-width: calc(&.min-height))")]
+    [TestCase("button (min-width: min(1, #a/b.min-width))")]
+    [TestCase("let n = calc(#a.min-width);")]
+    public void An_Element_Can_Not_Declare_A_Number_From_Another_Element(string input)
+    {
+        var error = Assert.Throws<SuilParserError>(() => Parsed(input))!;
+
+        Assert.That(error.Message, Does.Contain("handlers"));
+    }
+
+    [Test]
+    public void A_Handler_May_Use_The_Properties_Of_Elements()
+    {
+        var root = Parsed("button (on-pressed => { #p (min-width: calc(#a.min-width * 2 + &.min-height), min-height: #a.min-height) })");
+
+        var statement = (SuilTargetStatement) root.Events.Single().Statements.Single();
+        var first = ((SuilPropertyItem) statement.Items[0]).Property;
+        Assert.That(Expression(first), Is.InstanceOf<SuilNumBinary>());
+
+        // a bare reference is a bool reference for the parser: the target decides what it is
+        Assert.That(((SuilPropertyItem) statement.Items[1]).Property.Value!.Single(), Is.InstanceOf<SuilBoolValue>());
+    }
+
+    [TestCase("+", '+')]
+    [TestCase("-", '-')]
+    [TestCase("*", '*')]
+    [TestCase("/", '/')]
+    public void The_Short_Operations_Change_A_Property_By_A_Number(string op, char expected)
+    {
+        var root = Parsed($"button (on-pressed => {{ #p (min-width {op}: 10, min-height {op}: calc(#a.min-width * 2), margin {op}: <gap>) }})");
+
+        var items = ((SuilTargetStatement) root.Events.Single().Statements.Single()).Items.Cast<SuilOperatorItem>().ToArray();
+
+        Assert.That(items.Select(i => i.Operator), Is.All.EqualTo(expected));
+        Assert.That(items[0].Property, Is.EqualTo("min-width"));
+        Assert.That(items[0].Operand, Is.EqualTo(new SuilNumConst(10)));
+        Assert.That(items[1].Operand, Is.InstanceOf<SuilNumBinary>());
+        Assert.That(items[2].Operand, Is.InstanceOf<SuilNumVariable>());
+    }
+
+    [Test]
+    public void The_Operand_Of_A_Short_Operation_Needs_No_Calc()
+    {
+        var root = Parsed("button (on-pressed => { &(min-width +: #a.min-width * 2 + 4px, min-height /: <x> - 1) })");
+
+        var items = ((SuilTargetStatement) root.Events.Single().Statements.Single()).Items.Cast<SuilOperatorItem>().ToArray();
+
+        Assert.That(items[0].Operand, Is.InstanceOf<SuilNumBinary>());
+        Assert.That(((SuilNumBinary) items[1].Operand).Operator, Is.EqualTo('-'));
+    }
+
+    [Test]
+    public void A_Short_Operation_Is_Not_Confused_With_The_Other_Items()
+    {
+        var root = Parsed("button (on-pressed => { &(min-width +: 1, min-height: 2, add .a, disabled, set .b true) })");
+
+        var items = ((SuilTargetStatement) root.Events.Single().Statements.Single()).Items;
+
+        Assert.That(items.Select(i => i.GetType()), Is.EqualTo(new[]
+        {
+            typeof(SuilOperatorItem), typeof(SuilPropertyItem), typeof(SuilStyleItem), typeof(SuilPropertyItem), typeof(SuilStyleItem),
+        }));
+    }
+
+    [TestCase("button (min-width: calc())")]
+    [TestCase("button (min-width: calc(1 +))")]
+    [TestCase("button (min-width: calc(* 2))")]
+    [TestCase("button (min-width: calc(1 2))")]
+    [TestCase("button (min-width: clamp(1, 2))")]
+    public void A_Broken_Calc_Is_Not_An_Expression(string input)
+    {
+        // it stays a function, and no field takes it: the build says so when it needs the number
+        var property = Prop(Parsed(input), "min-width");
+
+        Assert.That(property.Value!.Single(), Is.InstanceOf<SuilFunction>());
+    }
+
+    [TestCase("button (on-pressed => { &(min-width +:) })")]
+    [TestCase("button (on-pressed => { &(min-width +: ) })")]
+    [TestCase("button (on-pressed => { &(min-width +: red) })")]
+    [TestCase("button (on-pressed => { &(min-width +: 1 2) })")]
+    [TestCase("button (on-pressed => { &(min-width +: 1px+2px) })")]
+    [TestCase("button (on-pressed => { &(min-width +: calc(1 +)) })")]
+    public void Broken_Short_Operations_Are_Errors(string input)
+    {
+        Assert.Throws<SuilParserError>(() => Parsed(input));
+    }
+
+    // ---- Expander ----
+
+    [Test]
+    public void Constants_Are_Folded_To_A_Length_In_Px()
+    {
+        var value = Prop(Root("button (min-width: calc(2 * 3px + 4))"), "min-width").Value!.Single();
+
+        Assert.That(value, Is.EqualTo(new SuilDimension(10, true, "px")));
+    }
+
+    [TestCase("calc(1 + 2 * 3)", 7)]
+    [TestCase("calc((1 + 2) * 3)", 9)]
+    [TestCase("calc(10 / 4)", 2.5)]
+    [TestCase("calc(-3 + 5)", 2)]
+    [TestCase("calc(2 * -3)", -6)]
+    [TestCase("calc(10 - 2 - 3)", 5)]
+    [TestCase("calc(100 / 5 / 2)", 10)]
+    [TestCase("min(5, 2, 9)", 2)]
+    [TestCase("max(5, 2, 9)", 9)]
+    [TestCase("clamp(0, 5, 3)", 3)]
+    [TestCase("clamp(0, -5, 3)", 0)]
+    [TestCase("clamp(0, 2, 3)", 2)]
+    [TestCase("clamp(5, 1, 3)", 5)]
+    [TestCase("calc(abs(-4) + min(1, 2))", 5)]
+    public void The_Arithmetic(string expression, double expected)
+    {
+        Assert.That(Folded(expression), Is.EqualTo(expected).Within(1e-9));
+    }
+
+    [Test]
+    public void A_Whole_Result_Is_An_Integer_And_A_Fraction_Is_Not()
+    {
+        var whole = (SuilDimension) Prop(Root("button (min-width: calc(2 * 3))"), "min-width").Value!.Single();
+        var fraction = (SuilDimension) Prop(Root("button (min-width: calc(1 / 3))"), "min-width").Value!.Single();
+
+        Assert.That(whole.IsInteger, Is.True);
+        Assert.That(fraction.IsInteger, Is.False);
+    }
+
+    [Test]
+    public void The_Variables_Are_Numbers_Or_Lengths()
+    {
+        Assert.That(Folded("calc(<a> * 2 + <b>)", "let a = 3;\nlet b = 4px;"), Is.EqualTo(10));
+        Assert.That(Folded("min(<a>, <b>)", "let a = 3;\nlet b = 4px;"), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void A_Let_And_An_Argument_And_A_Default_May_Be_Expressions()
+    {
+        var root = Root("""
+            let base = 4;
+            let double = calc(<base> * 2);
+            let btn = (w, h: calc(<double> + 1)) { button (min-width: <w>, min-height: <h>) }
+            btn (calc(<double> * 3))
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilDimension(24, true, "px") }));
+        Assert.That(Prop(root, "min-height").Value, Is.EqualTo(new List<ISuilValue> { new SuilDimension(9, true, "px") }));
+    }
+
+    [Test]
+    public void A_Local_Let_May_Be_An_Expression_Too()
+    {
+        var root = Root("""
+            let a = 5;
+            box {
+                let b = calc(<a> + 1);
+                button (min-width: calc(<b> * 2))
+            }
+            """);
+
+        Assert.That(Prop((SuilElement) root.Children.Single(), "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilDimension(12, true, "px") }));
+    }
+
+    [TestCase("button (min-width: calc(1 / 0))")]
+    [TestCase("let z = 0;\nbutton (min-width: calc(5 / <z>))")]
+    [TestCase("let n = red;\nbutton (min-width: calc(<n> + 1))")]
+    [TestCase("let n = 1 2;\nbutton (min-width: calc(<n> + 1))")]
+    [TestCase("let n = 50%;\nbutton (min-width: calc(<n> + 1))")]
+    [TestCase("button (min-width: calc(<missing> + 1))")]
+    public void A_Calculation_That_Can_Not_Be_Made_Is_An_Error(string input)
+    {
+        Assert.Throws<SuilExpansionError>(() => Root(input));
+    }
+
+    // ---- In the handlers ----
+
+    [Test]
+    public void A_Handler_Keeps_What_Depends_On_The_Elements_And_Folds_The_Rest()
+    {
+        var root = Root("""
+            let gap = 3;
+            button (on-pressed => {
+                #p (min-width: calc(#a.min-width * (2 + <gap>) - (4 - 4)), min-height: calc(<gap> * 2));
+                &(min-width +: calc(<gap> + 1), min-height *: #a.min-height / 2)
+            })
+            """);
+
+        var statements = root.Events.Single().Statements;
+        var first = ((SuilTargetStatement) statements[0]).Items.Cast<SuilPropertyItem>().Select(i => i.Property).ToArray();
+
+        // `#a.min-width * 5 - 0`
+        var sub = (SuilNumBinary) Expression(first[0]);
+        Assert.That(sub.Operator, Is.EqualTo('-'));
+        Assert.That(((SuilNumBinary) sub.Left).Right, Is.EqualTo(new SuilNumConst(5)));
+        Assert.That(sub.Right, Is.EqualTo(new SuilNumConst(0)));
+
+        Assert.That(first[1].Value, Is.EqualTo(new List<ISuilValue> { new SuilDimension(6, true, "px") }));
+
+        var operators = ((SuilTargetStatement) statements[1]).Items.Cast<SuilOperatorItem>().ToArray();
+        Assert.That(operators[0].Operand, Is.EqualTo(new SuilNumConst(4)));
+        Assert.That(operators[1].Operand, Is.InstanceOf<SuilNumBinary>());
+    }
+
+    [Test]
+    public void A_Reference_Can_Not_Travel_Through_An_Argument_Of_A_Template()
+    {
+        Assert.Throws<SuilParserError>(() => Root("""
+            let t = (w) { button (min-width: <w>) }
+            t (calc(#menu.min-width))
+            """));
+    }
+
+    [Test]
+    public void Division_By_Zero_In_A_Handler_Is_An_Error_Too()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("button (on-pressed => { &(min-width /: 0) })"));
+        Assert.Throws<SuilExpansionError>(() => Root("button (on-pressed => { &(min-width: calc(#a.min-width / (1 - 1))) })"));
+    }
+}
+
+internal static class SuilNumberTestExtensions
+{
+    public static SuilNumBinary AsBinary(this SuilNumNode node) => (SuilNumBinary) node;
+}

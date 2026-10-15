@@ -23,6 +23,10 @@ public static partial class SuilParser
     {
         stream.SkipWhitespace();
 
+        // calc(), min(), max(), clamp() of numbers, the variables and (in handlers) the numeric properties of elements
+        if (TryConsumeNumValue(ref stream, context, references, commasEnd, out var number))
+            return number!;
+
         switch (ScanBool(ref stream, commasEnd))
         {
             case BoolScan.None:

@@ -256,6 +256,13 @@ public interface ISuilTargetItem
 }
 
 /// <summary>
+/// <c>min-width +: 10</c>: changes a numeric property by a number, the way <c>+=</c> does. The operators are
+/// <c>+: -: *: /:</c>.
+/// </summary>
+public sealed record SuilOperatorItem(string Property, char Operator, SuilNumNode Operand, SuilPosition Position)
+    : ISuilTargetItem;
+
+/// <summary>
 /// <c>visible: true</c>: assigns a property of the element.
 /// </summary>
 public sealed record SuilPropertyItem(SuilProperty Property) : ISuilTargetItem
@@ -317,6 +324,41 @@ public sealed record SuilBoolReference(SuilTarget Target, string Property) : Sui
 /// <c>args.pressed</c>: a bool member of the arguments of the event.
 /// </summary>
 public sealed record SuilBoolArgs(string Member, SuilPosition Position) : SuilBoolNode;
+
+// ---- Number expressions ----
+
+/// <summary>
+/// A node of a number expression, the <c>calc()</c> of a numeric field: <c>+ - * /</c>, parentheses, <c>min()</c>,
+/// <c>max()</c>, <c>clamp()</c> and <c>abs()</c> of numbers, <c>px</c> lengths, the variables and, in the handlers of the
+/// events only, the numeric properties of the elements.
+/// </summary>
+public abstract record SuilNumNode;
+
+public sealed record SuilNumConst(double Value) : SuilNumNode;
+
+/// <summary>
+/// <c>&lt;size&gt;</c>: a variable that holds a number. It is replaced when the file is expanded.
+/// </summary>
+public sealed record SuilNumVariable(string Name, SuilPosition Position) : SuilNumNode;
+
+public sealed record SuilNumNegate(SuilNumNode Operand) : SuilNumNode;
+
+/// <param name="Operator">One of <c>+ - * /</c>.</param>
+public sealed record SuilNumBinary(char Operator, SuilNumNode Left, SuilNumNode Right, SuilPosition Position) : SuilNumNode;
+
+/// <param name="Name"><c>min</c>, <c>max</c>, <c>clamp</c> or <c>abs</c>.</param>
+public sealed record SuilNumFunction(string Name, List<SuilNumNode> Arguments, SuilPosition Position) : SuilNumNode;
+
+/// <summary>
+/// <c>#panel.min-width</c> or <c>&amp;.min-height</c>: a numeric property of an element, read when the handler runs.
+/// </summary>
+public sealed record SuilNumReference(SuilTarget Target, string Property) : SuilNumNode;
+
+/// <summary>
+/// A number expression as the value of a property. When the file is expanded the variables are replaced and the constants
+/// are folded to a length in <c>px</c>: what stays an expression depends on the elements, and is for the handlers.
+/// </summary>
+public sealed record SuilNumValue(SuilNumNode Root, SuilPosition Position) : ISuilValue;
 
 /// <summary>
 /// A bool expression as the value of a property. When the file is expanded the variables are replaced and the constants

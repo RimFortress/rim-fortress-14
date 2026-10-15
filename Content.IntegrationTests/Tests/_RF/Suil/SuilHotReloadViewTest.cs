@@ -48,6 +48,7 @@ public sealed class SuilHotReloadViewTest : GameTest
         Assert.That(view.Submitted, Is.EqualTo(1), "the handler of the compiled code");
         Assert.That(submit.HasSuilStyleClass("pressed"), Is.True);
         Assert.That(view.HotNested.MinHeight, Is.EqualTo(3f));
+        Assert.That(view.HotNested.MinWidth, Is.EqualTo(4f), "min-width +: 4");
         Assert.That(view.HotNested.Visible, Is.False, "!disabled: the button is disabled in the file");
 
         submit.RemoveSuilStyleClass("pressed");
@@ -59,12 +60,16 @@ public sealed class SuilHotReloadViewTest : GameTest
         // the file disables the button again; the expression reads the state of the button when the button is pressed
         submit.Disabled = false;
         view.HotNested.Visible = false;
+        view.HotNested.MinWidth = 0;
+        view.HotNested.MinHeight = 0;
 
         Press(submit);
 
         Assert.That(view.Submitted, Is.EqualTo(2), "once: the compiled handler is off, the one of the reload is on");
         Assert.That(submit.HasSuilStyleClass("pressed"), Is.True);
         Assert.That(view.HotNested.Visible, Is.True, "the expression of the reload read the new state: !false");
+        Assert.That(view.HotNested.MinWidth, Is.EqualTo(4f), "once: the short operation of the compiled handler is off as well");
+        Assert.That(view.HotNested.MinHeight, Is.EqualTo(3f));
 
         _reload.Reload(view);
         Press(submit);

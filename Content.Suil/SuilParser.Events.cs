@@ -9,6 +9,7 @@ public static partial class SuilParser
     /// statement = call | target , "(" , item , { "," , item } , ")"
     /// call      = "@" , ident
     /// item      = ident , [ ":" , value-list ]
+    ///           | ident , ( "+:" | "-:" | "*:" | "/:" ) , number-expression
     ///           | ( "add" | "remove" ) , ref , { ref }
     ///           | "set" , ref , { ref } , ( "true" | "false" | "args" , "." , ident )
     /// target    = "&amp;" | "#" id , { "/" , ident }
@@ -178,6 +179,16 @@ public static partial class SuilParser
             {
                 items.Add(ConsumeStyleItem(ref stream, context, name.Value, position));
             }
+            else if (OperatorFollows(ref stream))
+            {
+                // min-width +: 10
+                stream.SkipWhitespace();
+                var op = (char) ((DelimToken) stream.ConsumeNext()).CodePoint;
+                stream.ConsumeNext(); // the colon
+                stream.SkipWhitespace();
+
+                items.Add(new SuilOperatorItem(name.Value, op, ConsumeNumOperand(ref stream, context, references: true), position));
+            }
             else
             {
                 stream.SkipWhitespace();
@@ -212,6 +223,17 @@ public static partial class SuilParser
 
             throw ErrorAtCurrent(ref stream, context, $"expected ',' or ')', not {Describe(next)}");
         }
+    }
+
+    /// <summary>
+    /// Whether an operator with a colon follows the name of a property: <c>+:</c>, <c>-:</c>, <c>*:</c>, <c>/:</c>.
+    /// </summary>
+    private static bool OperatorFollows(ref SuilTokenStream stream)
+    {
+        var offset = stream.PeekNext() is WhitespaceToken ? 2 : 1;
+
+        return stream.PeekNext(offset) is DelimToken { CodePoint: '+' or '-' or '*' or '/' }
+               && stream.PeekNext(offset + 1) is ColonToken;
     }
 
     /// <summary>

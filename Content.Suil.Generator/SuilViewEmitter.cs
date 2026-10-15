@@ -258,6 +258,20 @@ internal sealed partial class SuilViewEmitter(
             return Fail("expected a string, an ident or a $localization key");
         }
 
+        // `min-width: calc(#panel.min-width * 2)`, or `min-width: #panel.min-width`: read when the event is raised
+        if (IsNumeric(target.SpecialType, out _) && _numContext != null)
+        {
+            if (values is [SuilNumValue numeric])
+                return ToNumeric(target.SpecialType, _numContext(numeric.Root));
+
+            // a lone reference is read as a bool by the parser; the property it is assigned to tells what it is
+            if (values is [SuilBoolValue { Root: SuilBoolReference reference }])
+                return ToNumeric(target.SpecialType, _numContext(new SuilNumReference(reference.Target, reference.Property)));
+        }
+
+        if (values.Any(v => v is SuilNumValue))
+            return Fail("a number expression can only be assigned to a numeric property");
+
         if (values.Any(v => v is SuilBoolValue) && target.SpecialType != SpecialType.System_Boolean)
             return Fail("a bool expression can only be assigned to a bool property");
 
@@ -283,7 +297,7 @@ internal sealed partial class SuilViewEmitter(
                 return $"({CSharpKeyword(target.SpecialType)}){NumberLiteral(number, integer)}";
             }
 
-            return Fail("expected a number");
+            return Fail("expected a number, or a number expression in a handler of an event");
         }
 
         if (target.TypeKind == TypeKind.Enum)

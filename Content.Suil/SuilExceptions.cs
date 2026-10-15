@@ -31,6 +31,12 @@ public sealed class SuilParserError(string context, string message, SuilPosition
 {
     public SuilPosition Position { get; } = position;
 
+    /// <summary>
+    /// The mistake is certain, there is no other way to read the text: a parser that tried one way must not go on with
+    /// another and hide it.
+    /// </summary>
+    public bool Definite { get; init; }
+
     public override string Message => $"error while {context} ({Position.Line}:{Position.Column}): {message}";
 }
 

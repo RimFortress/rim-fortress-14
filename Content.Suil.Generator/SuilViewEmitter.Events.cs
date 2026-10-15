@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Microsoft.CodeAnalysis;
 
@@ -16,6 +17,9 @@ internal sealed partial class SuilViewEmitter
 
     // How a bool expression becomes C# in the handler that is being written; null outside of one.
     private Func<SuilBoolNode, string>? _boolContext;
+
+    // The same for the number expressions.
+    private Func<SuilNumNode, string>? _numContext;
 
     private sealed record PendingHandlers(string Variable, INamedTypeSymbol Type, SuilElement Element);
 
@@ -56,6 +60,7 @@ internal sealed partial class SuilViewEmitter
         var lambda = new StringBuilder();
 
         _boolContext = node => BoolOf(node, pending, argsType);
+        _numContext = node => NumOf(node, pending, argsType);
 
         foreach (var statement in handler.Statements)
         {
@@ -63,6 +68,7 @@ internal sealed partial class SuilViewEmitter
         }
 
         _boolContext = null;
+        _numContext = null;
 
         _body.AppendLine($"            {delegateName} {name} = {(argsType == null ? "()" : "__args")} =>");
         _body.AppendLine("            {");
@@ -114,6 +120,9 @@ internal sealed partial class SuilViewEmitter
                     {
                         case SuilPropertyItem property:
                             sb.AppendLine($"{indent}{AssignmentOf(expression, type, property.Property)}");
+                            break;
+                        case SuilOperatorItem op:
+                            sb.AppendLine($"{indent}{OperatorOf(expression, type, op, pending, argsType)}");
                             break;
                         case SuilStyleItem style:
                             EmitStyle(sb, indent, expression, type, style, pending, argsType);
@@ -342,6 +351,150 @@ internal sealed partial class SuilViewEmitter
                 break;
             }
         }
+    }
+
+    // ---- Number expressions ----
+
+    /// <summary>
+    /// <c>min-width +: 10</c> is <c>x.MinWidth = (float)((double)x.MinWidth + (10d));</c>
+    /// </summary>
+    private string OperatorOf(string target, INamedTypeSymbol type, SuilOperatorItem item, PendingHandlers pending, ITypeSymbol? argsType)
+    {
+        var member = FindWritableMember(type, item.Property, out var memberType);
+
+        if (member == null || memberType == null)
+        {
+            throw new SuilGenerationException(SuilDiagnostics.UnknownProperty, item.Position,
+                type.ToDisplayString(), item.Property);
+        }
+
+        if (!IsNumeric(memberType.SpecialType, out _) || !IsReadable(member))
+        {
+            throw new SuilGenerationException(SuilDiagnostics.BadStatement, item.Position,
+                $"'{item.Property}' of '{type.ToDisplayString()}' is {memberType.ToDisplayString()}: '{item.Operator}:' works on a numeric property that can be read and written");
+        }
+
+        var current = $"(double){target}.{member.Name}";
+        var value = $"{current} {item.Operator} ({NumOf(item.Operand, pending, argsType)})";
+
+        return $"{target}.{member.Name} = {ToNumeric(memberType.SpecialType, value)};";
+    }
+
+    private static bool IsReadable(ISymbol member)
+        => member is IFieldSymbol || member is IPropertySymbol { GetMethod: { DeclaredAccessibility: Accessibility.Public } };
+
+    /// <summary>
+    /// A number of C# (a <c>double</c> expression) in the numeric type of a field.
+    /// </summary>
+    private static string ToNumeric(SpecialType type, string expression)
+    {
+        switch (type)
+        {
+            case SpecialType.System_Double:
+                return $"({expression})";
+            case SpecialType.System_Single:
+                return $"(float)({expression})";
+        }
+
+        var (clr, keyword) = type switch
+        {
+            SpecialType.System_SByte => ("SByte", "sbyte"),
+            SpecialType.System_Byte => ("Byte", "byte"),
+            SpecialType.System_Int16 => ("Int16", "short"),
+            SpecialType.System_UInt16 => ("UInt16", "ushort"),
+            SpecialType.System_Int32 => ("Int32", "int"),
+            SpecialType.System_UInt32 => ("UInt32", "uint"),
+            SpecialType.System_Int64 => ("Int64", "long"),
+            _ => ("UInt64", "ulong"),
+        };
+
+        return $"({keyword}) global::Content.Suil.SuilMath.ToInteger({expression}, global::System.{clr}.MinValue, global::System.{clr}.MaxValue)";
+    }
+
+    /// <summary>
+    /// The C# expression (of the type double) of a number expression of a handler.
+    /// </summary>
+    private string NumOf(SuilNumNode node, PendingHandlers pending, ITypeSymbol? argsType)
+    {
+        switch (node)
+        {
+            case SuilNumConst constant:
+            {
+                var text = constant.Value.ToString("R", CultureInfo.InvariantCulture) + "d";
+                return constant.Value < 0 ? $"({text})" : text;
+            }
+            case SuilNumNegate negate:
+                return $"(-({NumOf(negate.Operand, pending, argsType)}))";
+            case SuilNumBinary binary:
+                return $"({NumOf(binary.Left, pending, argsType)} {binary.Operator} {NumOf(binary.Right, pending, argsType)})";
+            case SuilNumFunction function:
+            {
+                var arguments = function.Arguments.Select(a => NumOf(a, pending, argsType)).ToList();
+
+                switch (function.Name)
+                {
+                    case "abs":
+                        return $"global::System.Math.Abs({arguments[0]})";
+                    case "clamp":
+                        return $"global::System.Math.Max({arguments[0]}, global::System.Math.Min({arguments[1]}, {arguments[2]}))";
+                    default:
+                    {
+                        var method = function.Name == "min" ? "Min" : "Max";
+                        var result = arguments[0];
+
+                        for (var i = 1; i < arguments.Count; i++)
+                        {
+                            result = $"global::System.Math.{method}({result}, {arguments[i]})";
+                        }
+
+                        return result;
+                    }
+                }
+            }
+            case SuilNumReference reference:
+            {
+                var (expression, type) = ResolveTarget(reference.Target, pending);
+                var member = FindReadableNumber(type, reference.Property);
+
+                if (member == null)
+                {
+                    throw new SuilGenerationException(SuilDiagnostics.BadStatement, reference.Target.Position,
+                        $"'{type.ToDisplayString()}' has no public numeric property '{reference.Property}' to read");
+                }
+
+                return $"((double){expression}.{member})";
+            }
+            default:
+                throw new SuilGenerationException(SuilDiagnostics.BadStatement, default,
+                    "a variable is left in a number expression: it must hold a number");
+        }
+    }
+
+    private static string? FindReadableNumber(INamedTypeSymbol type, string written)
+    {
+        for (INamedTypeSymbol? current = type; current != null; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (member.IsStatic || member.DeclaredAccessibility != Accessibility.Public
+                    || SuilNaming.ToKebab(member.Name) != written)
+                {
+                    continue;
+                }
+
+                var memberType = member switch
+                {
+                    IPropertySymbol { IsIndexer: false, GetMethod: { DeclaredAccessibility: Accessibility.Public } } p => p.Type,
+                    IFieldSymbol f => f.Type,
+                    _ => null,
+                };
+
+                if (memberType != null && IsNumeric(memberType.SpecialType, out _))
+                    return member.Name;
+            }
+        }
+
+        return null;
     }
 
     // ---- Bool expressions ----

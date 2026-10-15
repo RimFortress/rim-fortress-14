@@ -478,6 +478,7 @@ public static class SuilExpander
                     ? null
                     : ExpandValues(property.Property.Value, scope, property.Property.Position),
             }),
+            SuilOperatorItem op => FoldOperator(op, scope),
             SuilStyleItem style => style with
             {
                 State = style.State == null
@@ -491,6 +492,16 @@ public static class SuilExpander
             },
             _ => item,
         };
+
+        private SuilOperatorItem FoldOperator(SuilOperatorItem item, Scope? scope)
+        {
+            var operand = FoldNum(item.Operand, scope, item.Position);
+
+            if (item.Operator == '/' && operand is SuilNumConst { Value: 0 })
+                throw new SuilExpansionError("expanding number expression", "division by zero", item.Position);
+
+            return item with { Operand = operand };
+        }
 
         private static SuilTarget ExpandTarget(SuilTarget target, Scope? scope)
             => target.Id == null ? target : target with { Id = ExpandName(target.Id, "id", scope, target.Position) };
@@ -741,6 +752,9 @@ public static class SuilExpander
                     case SuilBoolValue boolValue:
                         result.Add(FoldValue(boolValue, scope, position));
                         break;
+                    case SuilNumValue numValue:
+                        result.Add(FoldNumValue(numValue, scope, position));
+                        break;
                     case SuilFunction function:
                         result.Add(function with
                         {
@@ -817,6 +831,96 @@ public static class SuilExpander
             }
         }
 
+        // ---- Number expressions ----
+
+        /// <summary>
+        /// Replaces the variables of a number expression and folds the constants. A value that is all constants becomes a
+        /// length in <c>px</c> (which any numeric field takes); what is left depends on the elements.
+        /// </summary>
+        private ISuilValue FoldNumValue(SuilNumValue value, Scope? scope, SuilPosition position)
+        {
+            var folded = FoldNum(value.Root, scope, value.Position.Line > 0 ? value.Position : position);
+
+            if (folded is not SuilNumConst constant)
+                return new SuilNumValue(folded, value.Position);
+
+            var number = constant.Value;
+            return new SuilDimension(number, Math.Abs(number - Math.Round(number)) < 1e-9, "px");
+        }
+
+        private SuilNumNode FoldNum(SuilNumNode node, Scope? scope, SuilPosition position)
+        {
+            switch (node)
+            {
+                case SuilNumVariable variable:
+                    return new SuilNumConst(LookupNumber(variable.Name, scope, variable.Position.Line > 0 ? variable.Position : position));
+                case SuilNumNegate negate:
+                {
+                    var operand = FoldNum(negate.Operand, scope, position);
+                    return operand is SuilNumConst c ? new SuilNumConst(-c.Value) : new SuilNumNegate(operand);
+                }
+                case SuilNumBinary binary:
+                {
+                    var left = FoldNum(binary.Left, scope, position);
+                    var right = FoldNum(binary.Right, scope, position);
+
+                    if (binary.Operator == '/' && right is SuilNumConst { Value: 0 })
+                        throw new SuilExpansionError("expanding number expression", "division by zero", binary.Position);
+
+                    if (left is SuilNumConst l && right is SuilNumConst r)
+                    {
+                        return new SuilNumConst(binary.Operator switch
+                        {
+                            '+' => l.Value + r.Value,
+                            '-' => l.Value - r.Value,
+                            '*' => l.Value * r.Value,
+                            _ => l.Value / r.Value,
+                        });
+                    }
+
+                    return binary with { Left = left, Right = right };
+                }
+                case SuilNumFunction function:
+                {
+                    var arguments = function.Arguments.Select(a => FoldNum(a, scope, position)).ToList();
+
+                    if (arguments.All(a => a is SuilNumConst))
+                    {
+                        var values = arguments.Select(a => ((SuilNumConst) a).Value).ToList();
+
+                        return new SuilNumConst(function.Name switch
+                        {
+                            "min" => values.Min(),
+                            "max" => values.Max(),
+                            "abs" => Math.Abs(values[0]),
+                            // clamp(min, value, max): the value held between them, and the minimum wins over the maximum
+                            _ => Math.Max(values[0], Math.Min(values[1], values[2])),
+                        });
+                    }
+
+                    return function with { Arguments = arguments };
+                }
+                case SuilNumReference reference:
+                    return reference with { Target = ExpandTarget(reference.Target, scope) };
+                default:
+                    return node;
+            }
+        }
+
+        private static double LookupNumber(string name, Scope? scope, SuilPosition position)
+        {
+            var values = LookupValues(name, scope, position);
+
+            return values switch
+            {
+                [SuilNumber number] => number.Value,
+                [SuilDimension { Unit: var unit } dimension] when unit.ToLowerInvariant() == "px" => dimension.Value,
+                _ => throw new SuilExpansionError("expanding number expression",
+                    $"variable '{name}' must hold a number or a length in px to be used in a calculation",
+                    position),
+            };
+        }
+
         private static bool LookupBool(string name, Scope? scope, SuilPosition position)
         {
             var values = LookupValues(name, scope, position);
@@ -838,10 +942,10 @@ public static class SuilExpander
         /// </summary>
         private static List<ISuilValue> NoRuntime(List<ISuilValue> values, SuilPosition position)
         {
-            if (values.Any(v => v is SuilBoolValue))
+            if (values.Any(v => v is SuilBoolValue or SuilNumValue))
             {
                 throw new SuilExpansionError("expanding bool expression",
-                    "here only true, false and the variables can be used: the properties of elements and the arguments of the event are read when an event is raised, so only the handler of an event can use them",
+                    "here only constants and the variables can be used: the properties of elements and the arguments of the event are read when an event is raised, so only the handler of an event can use them",
                     position);
             }
 

@@ -41,6 +41,19 @@ public sealed partial class SuilHotReload
         : PlannedItem;
 
     /// <summary>
+    /// <c>min-width: calc(#panel.min-width * 2)</c>: the number is worked out when the handler runs and put in the type of
+    /// the property.
+    /// </summary>
+    private sealed record PlannedAssignNumber(string Name, SuilStyleAccessor? Accessor, Func<EvalContext, double> Expression)
+        : PlannedItem;
+
+    /// <summary>
+    /// <c>min-width +: 10</c>.
+    /// </summary>
+    private sealed record PlannedOperator(string Name, SuilStyleAccessor? Accessor, char Operator, Func<EvalContext, double> Operand)
+        : PlannedItem;
+
+    /// <summary>
     /// What a bool expression needs to be worked out when an event is raised.
     /// </summary>
     private readonly record struct EvalContext(ViewState State, Control Sender, object? Argument);
@@ -141,31 +154,21 @@ public sealed partial class SuilHotReload
                 {
                     switch (item)
                     {
-                        case SuilPropertyItem { Property.Value: [SuilBoolValue expression] } property:
+                        case SuilPropertyItem { Property.Value: [SuilNumValue or SuilBoolValue] } expressionItem:
                         {
-                            var condition = CompileBool(expression.Root, element, evt, ids, errors);
-                            SuilStyleAccessor? boolAccessor = null;
+                            var plannedExpression = PlanExpressionItem(expressionItem.Property, type, element, evt, ids, errors);
 
-                            if (type != null)
-                            {
-                                if (!_suil.TryGetPropertyAccessor(type, property.Property.Name, out var found))
-                                {
-                                    errors.Add(At(property.Position, $"{type.Name} has no property '{property.Property.Name}'"));
-                                    break;
-                                }
+                            if (plannedExpression != null)
+                                items.Add(plannedExpression);
 
-                                if ((Nullable.GetUnderlyingType(found.Value.ClrType) ?? found.Value.ClrType) != typeof(bool))
-                                {
-                                    errors.Add(At(property.Position,
-                                        $"'{property.Property.Name}' is {found.Value.ClrType.Name}: a bool expression can only be assigned to a bool property"));
-                                    break;
-                                }
+                            break;
+                        }
+                        case SuilOperatorItem op:
+                        {
+                            var plannedOperator = PlanOperator(op, type, element, evt, ids, errors);
 
-                                boolAccessor = found.Value;
-                            }
-
-                            if (condition != null)
-                                items.Add(new PlannedAssignBool(property.Property.Name, boolAccessor, condition));
+                            if (plannedOperator != null)
+                                items.Add(plannedOperator);
 
                             break;
                         }
@@ -204,6 +207,98 @@ public sealed partial class SuilHotReload
             default:
                 return null;
         }
+    }
+
+    /// <summary>
+    /// A property assigned an expression. The type of the property tells which kind it is: a bool expression for a bool
+    /// property, a number expression for a numeric one (and a lone reference, which the parser reads as a bool one, is a
+    /// number if the property is).
+    /// </summary>
+    private PlannedItem? PlanExpressionItem(
+        SuilProperty property,
+        Type? type,
+        PlannedElement owner,
+        SuilEventAccessor evt,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        SuilStyleAccessor? accessor = null;
+        var value = property.Value![0];
+
+        if (type != null)
+        {
+            if (!_suil.TryGetPropertyAccessor(type, property.Name, out var found))
+            {
+                errors.Add(At(property.Position, $"{type.Name} has no property '{property.Name}'"));
+                return null;
+            }
+
+            accessor = found.Value;
+        }
+
+        var clr = accessor == null ? null : Nullable.GetUnderlyingType(accessor.Value.ClrType) ?? accessor.Value.ClrType;
+
+        // a number expression, or a reference that is assigned to a number
+        if (value is SuilNumValue || clr != null && SuilMath.IsNumeric(clr) && value is SuilBoolValue { Root: SuilBoolReference })
+        {
+            if (clr != null && !SuilMath.IsNumeric(clr))
+            {
+                errors.Add(At(property.Position,
+                    $"'{property.Name}' is {accessor!.Value.ClrType.Name}: a number expression can only be assigned to a numeric property"));
+                return null;
+            }
+
+            var node = value is SuilNumValue number
+                ? number.Root
+                : new SuilNumReference(((SuilBoolReference) ((SuilBoolValue) value).Root).Target, ((SuilBoolReference) ((SuilBoolValue) value).Root).Property);
+
+            var expression = CompileNum(node, owner, ids, errors);
+            return expression == null ? null : new PlannedAssignNumber(property.Name, accessor, expression);
+        }
+
+        var boolValue = (SuilBoolValue) value;
+        var condition = CompileBool(boolValue.Root, owner, evt, ids, errors);
+
+        if (clr != null && clr != typeof(bool))
+        {
+            errors.Add(At(property.Position,
+                $"'{property.Name}' is {accessor!.Value.ClrType.Name}: a bool expression can only be assigned to a bool property"));
+            return null;
+        }
+
+        return condition == null ? null : new PlannedAssignBool(property.Name, accessor, condition);
+    }
+
+    private PlannedItem? PlanOperator(
+        SuilOperatorItem item,
+        Type? type,
+        PlannedElement owner,
+        SuilEventAccessor evt,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        SuilStyleAccessor? accessor = null;
+
+        if (type != null)
+        {
+            if (!_suil.TryGetPropertyAccessor(type, item.Property, out var found))
+            {
+                errors.Add(At(item.Position, $"{type.Name} has no property '{item.Property}'"));
+                return null;
+            }
+
+            if (!SuilMath.IsNumeric(found.Value.ClrType) || found.Value.Getter == null)
+            {
+                errors.Add(At(item.Position,
+                    $"'{item.Property}' is {found.Value.ClrType.Name}: '{item.Operator}:' works on a numeric property that can be read and written"));
+                return null;
+            }
+
+            accessor = found.Value;
+        }
+
+        var operand = CompileNum(item.Operand, owner, ids, errors);
+        return operand == null ? null : new PlannedOperator(item.Property, accessor, item.Operator, operand);
     }
 
     private PlannedStyle? PlanStyle(
@@ -295,6 +390,126 @@ public sealed partial class SuilHotReload
                 errors.Add("a variable is left in a bool expression: it must hold true or false");
                 return null;
         }
+    }
+
+    // ---- Number expressions ----
+
+    /// <summary>
+    /// Turns a number expression into a function that works it out when the event is raised. <c>null</c> if something it
+    /// names is wrong.
+    /// </summary>
+    private Func<EvalContext, double>? CompileNum(
+        SuilNumNode node,
+        PlannedElement owner,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        switch (node)
+        {
+            case SuilNumConst constant:
+            {
+                var value = constant.Value;
+                return _ => value;
+            }
+            case SuilNumNegate negate:
+            {
+                var operand = CompileNum(negate.Operand, owner, ids, errors);
+                return operand == null ? null : context => -operand(context);
+            }
+            case SuilNumBinary binary:
+            {
+                var left = CompileNum(binary.Left, owner, ids, errors);
+                var right = CompileNum(binary.Right, owner, ids, errors);
+
+                if (left == null || right == null)
+                    return null;
+
+                return binary.Operator switch
+                {
+                    '+' => context => left(context) + right(context),
+                    '-' => context => left(context) - right(context),
+                    '*' => context => left(context) * right(context),
+                    _ => context => left(context) / right(context),
+                };
+            }
+            case SuilNumFunction function:
+            {
+                var arguments = new List<Func<EvalContext, double>>();
+
+                foreach (var argument in function.Arguments)
+                {
+                    var compiled = CompileNum(argument, owner, ids, errors);
+
+                    if (compiled == null)
+                        return null;
+
+                    arguments.Add(compiled);
+                }
+
+                return function.Name switch
+                {
+                    "abs" => context => Math.Abs(arguments[0](context)),
+                    "clamp" => context => Math.Max(arguments[0](context), Math.Min(arguments[1](context), arguments[2](context))),
+                    "min" => context => arguments.Min(a => a(context)),
+                    _ => context => arguments.Max(a => a(context)),
+                };
+            }
+            case SuilNumReference reference:
+                return CompileNumReference(reference, owner, ids, errors);
+            default:
+                errors.Add("a variable is left in a number expression: it must hold a number");
+                return null;
+        }
+    }
+
+    private Func<EvalContext, double>? CompileNumReference(
+        SuilNumReference reference,
+        PlannedElement owner,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        if (!PlanTarget(reference.Target, owner, ids, errors, out var target, out var type))
+            return null;
+
+        var property = reference.Property;
+
+        if (type == null)
+        {
+            return context =>
+            {
+                var control = Resolve(context.State, target, context.Sender);
+                return control == null ? 0 : ReadNumber(control, property);
+            };
+        }
+
+        if (!_suil.TryGetPropertyAccessor(type, property, out var accessor)
+            || accessor.Value.Getter == null
+            || !SuilMath.IsNumeric(accessor.Value.ClrType))
+        {
+            errors.Add(At(reference.Target.Position, $"{type.Name} has no readable numeric property '{property}'"));
+            return null;
+        }
+
+        var getter = accessor.Value.Getter;
+
+        return context =>
+        {
+            var control = Resolve(context.State, target, context.Sender);
+            return control == null ? 0 : SuilMath.ToDouble(getter(control));
+        };
+    }
+
+    private double ReadNumber(Control control, string property)
+    {
+        if (_suil.TryGetPropertyAccessor(control.GetType(), property, out var accessor)
+            && accessor.Value.Getter is { } getter
+            && SuilMath.IsNumeric(accessor.Value.ClrType))
+        {
+            return SuilMath.ToDouble(getter(control));
+        }
+
+        _sawmill.Error($"{control.GetType().Name} has no readable numeric property '{property}'");
+        return 0;
     }
 
     private Func<EvalContext, bool>? CompileReference(
@@ -463,6 +678,33 @@ public sealed partial class SuilHotReload
                 }
 
                 break;
+            case PlannedAssignNumber number:
+            {
+                if (!TryNumericAccessor(view, target, number.Name, number.Accessor, requireGetter: false, out var numeric))
+                    break;
+
+                numeric.Setter(target, SuilMath.FromDouble(numeric.ClrType, number.Expression(context))!);
+                break;
+            }
+            case PlannedOperator op:
+            {
+                if (!TryNumericAccessor(view, target, op.Name, op.Accessor, requireGetter: true, out var numeric))
+                    break;
+
+                var current = SuilMath.ToDouble(numeric.Getter!(target));
+                var operand = op.Operand(context);
+
+                var result = op.Operator switch
+                {
+                    '+' => current + operand,
+                    '-' => current - operand,
+                    '*' => current * operand,
+                    _ => current / operand,
+                };
+
+                numeric.Setter(target, SuilMath.FromDouble(numeric.ClrType, result)!);
+                break;
+            }
             case PlannedAssignBool assign:
             {
                 var accessor = assign.Accessor;
@@ -502,6 +744,34 @@ public sealed partial class SuilHotReload
                 break;
             }
         }
+    }
+
+    private bool TryNumericAccessor(
+        ISuilView view,
+        Control target,
+        string name,
+        SuilStyleAccessor? planned,
+        bool requireGetter,
+        out SuilStyleAccessor accessor)
+    {
+        accessor = default;
+
+        if (planned is { } known)
+        {
+            accessor = known;
+            return true;
+        }
+
+        if (_suil.TryGetPropertyAccessor(target.GetType(), name, out var found)
+            && SuilMath.IsNumeric(found.Value.ClrType)
+            && (!requireGetter || found.Value.Getter != null))
+        {
+            accessor = found.Value;
+            return true;
+        }
+
+        _sawmill.Error($"{view.SuilPath}: {target.GetType().Name} has no numeric property '{name}' to change");
+        return false;
     }
 
     private void ChangeClass(ISuilView view, Control target, bool isPseudo, string name, bool on)

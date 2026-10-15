@@ -468,6 +468,167 @@ public sealed class SuilViewEventTests
         Assert.That(Ids(result), Is.EqualTo(new[] { id }), suil);
     }
 
+    // ---- Number expressions ----
+
+    [Test]
+    public void An_Element_Declares_A_Number_From_Constants_And_Variables()
+    {
+        var result = Run("""
+            let gap = 3;
+            button (min-width: calc(<gap> * 2 + 4px), scale: calc(1 / 4), ratio: min(<gap>, 10) / 2, level: clamp(0, 300, 200))
+            """.Replace("ratio: min(<gap>, 10) / 2", "ratio: calc(min(<gap>, 10) / 2)"), View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(10));
+        Assert.That(Get(view, "Scale"), Is.EqualTo(0.25f));
+        Assert.That(Get(view, "Ratio"), Is.EqualTo(1.5));
+        Assert.That(Get(view, "Level"), Is.EqualTo((byte) 200));
+    }
+
+    [Test]
+    public void A_Fraction_Is_Not_A_Whole_Number_For_An_Integer_Field()
+    {
+        var result = Run("button (min-width: calc(1 / 3))", View(string.Empty));
+
+        Assert.That(Ids(result), Is.EqualTo(new[] { "SUIL011" }));
+    }
+
+    [Test]
+    public void A_Handler_Assigns_A_Number_From_The_Properties_Of_Other_Elements()
+    {
+        var result = Run("""
+            button {
+                +button #source
+                +button #target
+                +button #go (on-pressed => {
+                    #target (
+                        min-width: calc(#source.min-width * 2 + 1px),
+                        scale: #source.scale,
+                        ratio: calc(#source.ratio / 4),
+                        level: calc(#source.min-width * 100),
+                        big: calc(abs(#source.min-width) + max(#source.scale, 5) + clamp(1, #source.scale, 3))
+                    )
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var source = Field(view, "Source");
+        var target = Field(view, "Target");
+        var go = Field(view, "Go");
+
+        source.GetType().GetProperty("MinWidth")!.SetValue(source, 5);
+        source.GetType().GetProperty("Scale")!.SetValue(source, 2.5f);
+        source.GetType().GetProperty("Ratio")!.SetValue(source, 10.0);
+        Raise(go, "RaisePressed", Args(view));
+
+        Assert.That(Get(target, "MinWidth"), Is.EqualTo(11));
+        Assert.That(Get(target, "Scale"), Is.EqualTo(2.5f), "a lone reference to a number is read as a number");
+        Assert.That(Get(target, "Ratio"), Is.EqualTo(2.5));
+        Assert.That(Get(target, "Level"), Is.EqualTo((byte) 255), "500 held to the range of byte");
+        Assert.That(Get(target, "Big"), Is.EqualTo(13L), "5 + max(2.5, 5) + clamp(1, 2.5, 3) is 12.5, rounded away from zero");
+    }
+
+    [Test]
+    public void The_Short_Operations_Change_A_Property_In_Place()
+    {
+        var result = Run("""
+            button {
+                +button #other (min-width: 4, scale: 2)
+                +button #go (min-width: 10, scale: 1.5, ratio: 8, level: 10, on-pressed => {
+                    &(min-width +: 5, scale *: 2, ratio /: #other.min-width, level -: calc(#other.scale * 3))
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var go = Field(view, "Go");
+
+        Raise(go, "RaisePressed", Args(view));
+        Assert.That(Get(go, "MinWidth"), Is.EqualTo(15));
+        Assert.That(Get(go, "Scale"), Is.EqualTo(3.0f));
+        Assert.That(Get(go, "Ratio"), Is.EqualTo(2.0));
+        Assert.That(Get(go, "Level"), Is.EqualTo((byte) 4));
+
+        Raise(go, "RaisePressed", Args(view));
+        Raise(go, "RaisePressed", Args(view));
+        Raise(go, "RaisePressed", Args(view));
+        Assert.That(Get(go, "MinWidth"), Is.EqualTo(30));
+        Assert.That(Get(go, "Level"), Is.EqualTo((byte) 0), "held to the range: never below zero");
+    }
+
+    [Test]
+    public void An_Integer_Field_Rounds_And_Does_Not_Fail_On_A_Division_By_Zero()
+    {
+        var result = Run("""
+            button {
+                +button #zero
+                +button #go (min-width: 7, on-pressed => { &(min-width /: 2, big +: 0) })
+                +button #inf (min-width: 7, on-pressed => { &(min-width /: #zero.min-width) })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var go = Field(view, "Go");
+        var inf = Field(view, "Inf");
+
+        Raise(go, "RaisePressed", Args(view));
+        Assert.That(Get(go, "MinWidth"), Is.EqualTo(4), "3.5 is rounded away from zero");
+
+        Raise(inf, "RaisePressed", Args(view));
+        Assert.That(Get(inf, "MinWidth"), Is.EqualTo(int.MaxValue), "7 / 0 is held to the range of int");
+    }
+
+    [Test]
+    public void The_Variables_Of_The_File_Are_Folded_Into_The_Number_Expression_Of_A_Handler()
+    {
+        var result = Run("""
+            let gap = 3;
+            button {
+                +button #other (min-width: 4)
+                +button #go (min-width: 1, on-pressed => { &(min-width: calc(#other.min-width * (<gap> + 1)), scale +: calc(<gap> * 2)) })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+        var source = string.Join("\n", result.Sources.Select(x => x.SourceText.ToString()));
+        Assert.That(source, Does.Not.Contain("3d").Or.Contain("4d"), "the sum of the constants is one number");
+
+        var view = New(result);
+        var go = Field(view, "Go");
+        Raise(go, "RaisePressed", Args(view));
+
+        Assert.That(Get(go, "MinWidth"), Is.EqualTo(16));
+        Assert.That(Get(go, "Scale"), Is.EqualTo(6f));
+    }
+
+    [TestCase("button { +button #x\n button (on-pressed => { &(min-width: calc(#x.text)) }) }", "SUIL023")]
+    [TestCase("button { +button #x\n button (on-pressed => { &(min-width: calc(#x.no-such)) }) }", "SUIL023")]
+    [TestCase("button { +button #x\n button (on-pressed => { &(min-width: calc(#nowhere.min-width)) }) }", "SUIL022")]
+    [TestCase("button { +button #x\n button (on-pressed => { &(min-width: #x.disabled) }) }", "SUIL023")]
+    [TestCase("button (on-pressed => { &(disabled: calc(1 + 2)) })", "SUIL011")]
+    [TestCase("button (on-pressed => { &(text: calc(1 + 2)) })", "SUIL011")]
+    [TestCase("button (on-pressed => { &(disabled +: 1) })", "SUIL023")]
+    [TestCase("button (on-pressed => { &(text *: 2) })", "SUIL023")]
+    [TestCase("button (on-pressed => { &(write-only +: 1) })", "SUIL023")]
+    [TestCase("button (on-pressed => { &(no-such +: 1) })", "SUIL010")]
+    [TestCase("button (on-pressed => { &(min-width +: #nowhere.min-width) })", "SUIL022")]
+    [TestCase("button (min-width: calc(#x.min-width))", "SUIL003")]
+    public void Mistakes_In_The_Number_Expressions_Are_Reported_At_The_Build(string suil, string id)
+    {
+        var result = Run(suil, View(string.Empty));
+
+        Assert.That(Ids(result), Is.EqualTo(new[] { id }), suil);
+    }
+
     // ---- Mistakes ----
 
     [TestCase("button (on-nope => @A)", "SUIL018")]
