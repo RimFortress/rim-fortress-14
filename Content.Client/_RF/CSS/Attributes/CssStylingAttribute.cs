@@ -1,3 +1,4 @@
+using Content.Suil;
 namespace Content.Client._RF.CSS;
 
 /// <summary>
@@ -6,7 +7,7 @@ namespace Content.Client._RF.CSS;
 /// </summary>
 /// <remarks>
 /// This attribute is automatically added to classes that use the
-/// <see cref="CssPropertyAttribute"/>; you do not need to add it manually.
+/// <see cref="SuilPropertyAttribute"/>; you do not need to add it manually.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class CssStylingAttribute : Attribute;

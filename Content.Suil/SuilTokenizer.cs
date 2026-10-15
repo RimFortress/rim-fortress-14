@@ -70,11 +70,21 @@ public static class SuilTokenizer
         {
             index = Math.Max(index, 0);
 
-            var line = Array.BinarySearch(_lineStarts, index);
-            if (line < 0)
-                line = ~line - 1;
+            // the last line that starts at or before the index
+            var low = 0;
+            var high = _lineStarts.Length - 1;
 
-            return (line + 1, index - _lineStarts[line] + 1);
+            while (low < high)
+            {
+                var middle = (low + high + 1) / 2;
+
+                if (_lineStarts[middle] <= index)
+                    low = middle;
+                else
+                    high = middle - 1;
+            }
+
+            return (low + 1, index - _lineStarts[low] + 1);
         }
     }
 

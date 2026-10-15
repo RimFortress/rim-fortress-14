@@ -1,6 +1,7 @@
 using Content.Client._RF.CSS.Parsers;
 using Content.Client._RF.CSS.Streams;
 using Content.Client._RF.Graphics;
+using Content.Suil;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS;
@@ -35,8 +36,8 @@ public partial class CssControl
     /// <remarks>
     /// If a texture is used as the background, the color will be used to modulate the texture.
     /// </remarks>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName, nameof(ParseBackgroundShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName, nameof(ParseBackgroundShorthand))]
     public Color? BackgroundColor // public for test
     {
         get;
@@ -50,8 +51,8 @@ public partial class CssControl
     /// <summary>
     /// Sets the texture of the control's background image.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
     protected Texture? BackgroundImage
     {
         get;
@@ -67,8 +68,8 @@ public partial class CssControl
     /// By default, a <see cref="BackgroundImage"/> is repeated
     /// both vertically and horizontally.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
     protected RfStyleBoxTexture.StretchMode BackgroundRepeat
     {
         get;
@@ -87,8 +88,8 @@ public partial class CssControl
     /// (first value: width of the image, second value: height),
     /// and the multiple background syntax (separated with comma).
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
     protected RfStyleBoxTexture.StyleBoxSize BackgroundSize
     {
         get;
@@ -102,9 +103,9 @@ public partial class CssControl
     /// <summary>
     /// Horizontal component of the background image's starting position.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
-    [CssShorthandProperty(BackgroundPositionShorthandName, nameof(ParseBackgroundPositionShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
+    [SuilShorthand(BackgroundPositionShorthandName, nameof(ParseBackgroundPositionShorthand))]
     protected StyleBoxPositionComponent BackgroundPositionX
     {
         get;
@@ -118,9 +119,9 @@ public partial class CssControl
     /// <summary>
     /// Vertical component of the background image's starting position.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
-    [CssShorthandProperty(BackgroundPositionShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
+    [SuilShorthand(BackgroundPositionShorthandName)]
     protected StyleBoxPositionComponent BackgroundPositionY
     {
         get;
@@ -153,8 +154,8 @@ public partial class CssControl
     /// <summary>
     /// Defines how far the background (color, image, or gradient) should extend within an element.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
     protected StyleBoxBackgroundClip BackgroundClip
     {
         get;
@@ -169,8 +170,8 @@ public partial class CssControl
     /// Sets the reference box for resolving background-position/background-size
     /// percentages and the tiling pattern's phase. See <see cref="StyleBoxBackgroundOrigin"/>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BackgroundShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BackgroundShorthandName)]
     protected StyleBoxBackgroundOrigin BackgroundOrigin
     {
         get;
@@ -184,8 +185,8 @@ public partial class CssControl
     /// <summary>
     /// Sets the width of the padding area to the left of an element.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PaddingShorthandName, nameof(ParsePaddingShorthand))]
+    [SuilProperty]
+    [SuilShorthand(PaddingShorthandName, nameof(ParsePaddingShorthand))]
     protected LengthUnit PaddingLeft
     {
         get;
@@ -199,8 +200,8 @@ public partial class CssControl
     /// <summary>
     /// Sets the height of the padding area on the top of an element.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PaddingShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(PaddingShorthandName)]
     protected LengthUnit PaddingTop
     {
         get;
@@ -214,8 +215,8 @@ public partial class CssControl
     /// <summary>
     /// Sets the width of the padding area to the right of an element.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PaddingShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(PaddingShorthandName)]
     protected LengthUnit PaddingRight
     {
         get;
@@ -229,8 +230,8 @@ public partial class CssControl
     /// <summary>
     /// Sets the height of the padding area on the bottom of an element.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PaddingShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(PaddingShorthandName)]
     protected LengthUnit PaddingBottom
     {
         get;
@@ -264,8 +265,8 @@ public partial class CssControl
     /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
-    [CssProperty]
-    [CssShorthandProperty(ExpandPatchMarginShorthandName, nameof(ParseExpandMarginShorthand))]
+    [SuilProperty]
+    [SuilShorthand(ExpandPatchMarginShorthandName, nameof(ParseExpandMarginShorthand))]
     protected float ExpandPatchMarginLeft
     {
         get;
@@ -284,8 +285,8 @@ public partial class CssControl
     /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
-    [CssProperty]
-    [CssShorthandProperty(ExpandPatchMarginShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(ExpandPatchMarginShorthandName)]
     protected float ExpandPatchMarginTop
     {
         get;
@@ -304,8 +305,8 @@ public partial class CssControl
     /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
-    [CssProperty]
-    [CssShorthandProperty(ExpandPatchMarginShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(ExpandPatchMarginShorthandName)]
     protected float ExpandPatchMarginBottom
     {
         get;
@@ -324,8 +325,8 @@ public partial class CssControl
     /// extend beyond the box passed to the <see cref="StyleBox.Draw"/> function. This is not affected by
     /// <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </remarks>
-    [CssProperty]
-    [CssShorthandProperty(ExpandPatchMarginShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(ExpandPatchMarginShorthandName)]
     protected float ExpandPatchMarginRight
     {
         get;
@@ -341,8 +342,8 @@ public partial class CssControl
     /// The size of this patch in virtual pixels can be obtained by scaling
     /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PatchMarginShorthandName, nameof(ParsePatchMarginShorthand))]
+    [SuilProperty]
+    [SuilShorthand(PatchMarginShorthandName, nameof(ParsePatchMarginShorthand))]
     protected float PatchMarginLeft
     {
         get;
@@ -358,8 +359,8 @@ public partial class CssControl
     /// The size of this patch in virtual pixels can be obtained by scaling
     /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PatchMarginShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(PatchMarginShorthandName)]
     protected float PatchMarginRight
     {
         get;
@@ -375,8 +376,8 @@ public partial class CssControl
     /// The size of this patch in virtual pixels can be obtained by scaling
     /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PatchMarginShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(PatchMarginShorthandName)]
     protected float PatchMarginTop
     {
         get;
@@ -392,8 +393,8 @@ public partial class CssControl
     /// The size of this patch in virtual pixels can be obtained by scaling
     /// this with <see cref="RfStyleBoxTexture.TextureScale"/>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(PatchMarginShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(PatchMarginShorthandName)]
     protected float PatchMarginBottom
     {
         get;

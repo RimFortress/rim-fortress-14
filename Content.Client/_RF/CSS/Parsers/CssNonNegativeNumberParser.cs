@@ -1,11 +1,12 @@
 using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 /// <summary>
 /// Parses a non-negative unitless number, like the value of <c>flex-grow</c>. Use it with
-/// <c>[CssProperty(parser: typeof(CssNonNegativeNumberParser))]</c>.
+/// <c>[SuilProperty(parser: typeof(CssNonNegativeNumberParser))]</c>.
 /// </summary>
 [UsedImplicitly]
 public sealed class CssNonNegativeNumberParser : CssValueParser<float>

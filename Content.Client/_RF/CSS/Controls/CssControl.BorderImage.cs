@@ -1,6 +1,7 @@
 using Content.Client._RF.CSS.Parsers;
 using Content.Client._RF.CSS.Streams;
 using Content.Client._RF.Graphics;
+using Content.Suil;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS;
@@ -13,8 +14,8 @@ public partial class CssControl
     /// Sets the image to draw instead of the border-style of the border. The widths of the border are still
     /// set by <c>border-width</c> (and the border-style must not be <c>none</c>).
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BorderImageShorthandName, nameof(ParseBorderImageShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BorderImageShorthandName, nameof(ParseBorderImageShorthand))]
     protected Texture? BorderImageSource
     {
         get;
@@ -29,8 +30,8 @@ public partial class CssControl
     /// Cuts the border image into nine regions: four corners, four edges and the middle.
     /// A number is in image pixels, a percentage is of the size of the image.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BorderImageShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderImageShorthandName)]
     protected BorderImageSlice BorderImageSlice
     {
         get;
@@ -44,8 +45,8 @@ public partial class CssControl
     /// <summary>
     /// Sets the width of the area the border image is drawn in. A number is a multiple of the border width.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BorderImageShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderImageShorthandName)]
     protected BorderImageWidth BorderImageWidth
     {
         get;
@@ -59,8 +60,8 @@ public partial class CssControl
     /// <summary>
     /// Sets how far the border image extends beyond the border box. A number is a multiple of the border width.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BorderImageShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderImageShorthandName)]
     protected BorderImageOutset BorderImageOutset
     {
         get;
@@ -74,8 +75,8 @@ public partial class CssControl
     /// <summary>
     /// Sets how the edges of the border image are stretched or tiled between the corners.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(BorderImageShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderImageShorthandName)]
     protected BorderImageRepeat BorderImageRepeat
     {
         get;

@@ -1,13 +1,14 @@
 using System.Collections;
 using System.Linq;
 using Content.Client._RF.CSS.Text;
+using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
 
 /// <summary>
-/// Inheritance of CSS properties marked with <c>[CssProperty(Inherited = true)]</c>.
+/// Inheritance of CSS properties marked with <c>[SuilProperty(Inherited = true)]</c>.
 /// </summary>
 /// <remarks>
 /// <para>

@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Client._RF.CSS;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Maths;
@@ -170,6 +171,6 @@ public sealed class CssNthSelectorsTest : GameTest
 
 public sealed partial class NthTestControl : CssControl
 {
-    [CssProperty]
+    [SuilProperty]
     public Color Color { get; set; }
 }

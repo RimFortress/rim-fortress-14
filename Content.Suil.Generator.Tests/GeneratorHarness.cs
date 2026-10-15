@@ -79,8 +79,25 @@ internal static class GeneratorHarness
     public sealed record Result(
         ImmutableArray<Diagnostic> GeneratorDiagnostics,
         ImmutableArray<GeneratedSourceResult> Sources,
-        ImmutableArray<Diagnostic> CompilationErrors)
+        ImmutableArray<Diagnostic> CompilationErrors,
+        Compilation Compilation)
     {
+        /// <summary>
+        /// Compiles the user code with the generated code and loads the assembly.
+        /// </summary>
+        public System.Reflection.Assembly Load()
+        {
+            using var stream = new MemoryStream();
+            var emitted = Compilation.Emit(stream);
+            Assert.That(emitted.Success, Is.True, string.Join("\n", emitted.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)));
+
+            stream.Position = 0;
+
+            // every test has its own context: the assemblies are all called TestAssembly
+            var context = new System.Runtime.Loader.AssemblyLoadContext(Guid.NewGuid().ToString(), isCollectible: true);
+            return context.LoadFromStream(stream);
+        }
+
         public string Source => Sources.Single().SourceText.ToString();
 
         public IEnumerable<string> Ids => GeneratorDiagnostics.Select(d => d.Id);
@@ -95,6 +112,8 @@ internal static class GeneratorHarness
         var references = ((string) AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
             .Split(Path.PathSeparator)
             .Select(p => (MetadataReference) MetadataReference.CreateFromFile(p))
+            // the generator assembly has the runtime types of SUIL (SuilPropertyRegistry), the generated code uses them
+            .Append(MetadataReference.CreateFromFile(typeof(SuilViewGenerator).Assembly.Location))
             .ToList();
 
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
@@ -115,7 +134,7 @@ internal static class GeneratorHarness
             .ToImmutableArray();
 
         var driver = CSharpGeneratorDriver.Create(
-            new[] { new SuilViewGenerator().AsSourceGenerator() },
+            new[] { new SuilViewGenerator().AsSourceGenerator(), new SuilPropertyTablesGenerator().AsSourceGenerator() },
             texts,
             parseOptions,
             new TestOptions(root));
@@ -124,7 +143,13 @@ internal static class GeneratorHarness
         var run = driver.GetRunResult();
 
         var errors = updated.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToImmutableArray();
-        return new Result(run.Diagnostics, run.Results.SelectMany(r => r.GeneratedSources).Where(s => s.HintName != "SuilViewAttribute.g.cs").ToImmutableArray(), errors);
+        return new Result(
+            run.Diagnostics,
+            run.Results.SelectMany(r => r.GeneratedSources)
+                .Where(s => s.HintName is not ("SuilViewAttribute.g.cs" or "SuilPropertyTables.g.cs"))
+                .ToImmutableArray(),
+            errors,
+            updated);
     }
 
     private sealed class TestText(string path, string text) : AdditionalText

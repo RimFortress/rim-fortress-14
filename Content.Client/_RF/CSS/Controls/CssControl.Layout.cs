@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Robust.Client.UserInterface;
+using Content.Suil;
 
 namespace Content.Client._RF.CSS;
 
@@ -40,7 +41,7 @@ public partial class CssControl
     /// <c>CssBoxContainer</c> adds the free space to the size of the control in proportion to this value,
     /// unlike <see cref="Control.HorizontalExpand"/>, which splits the whole space.
     /// </remarks>
-    [CssProperty(parser: typeof(Parsers.CssNonNegativeNumberParser))]
+    [SuilProperty(parser: typeof(Parsers.CssNonNegativeNumberParser))]
     public float FlexGrow
     {
         get;
@@ -54,7 +55,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>align-self</c>: the placement of this control on the cross axis of a flex container.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public CssAlignSelf AlignSelf
     {
         get;
@@ -73,7 +74,7 @@ public partial class CssControl
     /// It is declared here, not on the containers, so that it can be used in a selector without a type
     /// (<c>.main-menu { gap: 2px; }</c>).
     /// </remarks>
-    [CssProperty]
+    [SuilProperty]
     public LengthUnit Gap
     {
         get;

@@ -3,6 +3,7 @@ using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Streams;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Localization;
@@ -284,6 +285,6 @@ public sealed class CssManagerTest : GameTest
 
 public sealed partial class TestLocaleCssControl : CssControl
 {
-    [CssProperty]
+    [SuilProperty]
     public string LocaleText { get; set; }
 }

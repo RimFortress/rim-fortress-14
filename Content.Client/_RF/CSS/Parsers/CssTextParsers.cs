@@ -1,5 +1,6 @@
 using Content.Client._RF.CSS.Streams;
 using Content.Client._RF.CSS.Text;
+using Content.Suil;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
 
@@ -66,7 +67,7 @@ public sealed class CssFontFamilyParser : CssValueParser<CssFontFamily>
 /// </summary>
 /// <remarks>
 /// Not a default parser: <see cref="FontWeight"/> is an enum, so it must be attached with
-/// <c>[CssProperty(parser: typeof(CssFontWeightParser))]</c>.
+/// <c>[SuilProperty(parser: typeof(CssFontWeightParser))]</c>.
 /// </remarks>
 [UsedImplicitly]
 public sealed class CssFontWeightParser : CssValueParser<FontWeight>
@@ -111,7 +112,7 @@ public sealed class CssFontWeightParser : CssValueParser<FontWeight>
 /// </summary>
 /// <remarks>
 /// Not a default parser, so it never competes with the generic <see cref="LengthUnit"/> parser. Attach it with
-/// <c>[CssProperty(parser: typeof(CssFontSizeParser))]</c>.
+/// <c>[SuilProperty(parser: typeof(CssFontSizeParser))]</c>.
 /// </remarks>
 [UsedImplicitly]
 public sealed class CssFontSizeParser : CssValueParser<LengthUnit>
@@ -214,7 +215,7 @@ public sealed class CssLineHeightParser : CssValueParser<CssLineHeight>
 /// </summary>
 /// <remarks>
 /// Not a default parser, so it never competes with a generic <see cref="int"/> parser. Attach it with
-/// <c>[CssProperty(parser: typeof(CssLineClampParser))]</c>.
+/// <c>[SuilProperty(parser: typeof(CssLineClampParser))]</c>.
 /// </remarks>
 [UsedImplicitly]
 public sealed class CssLineClampParser : CssValueParser<int>

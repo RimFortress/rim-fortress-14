@@ -1,6 +1,7 @@
 using Content.Client._RF.CSS.Streams;
 using Content.Client._RF.Graphics;
 using Content.Shared._RF.Utilities;
+using Content.Suil;
 
 namespace Content.Client._RF.CSS;
 
@@ -18,10 +19,10 @@ public partial class CssControl
 
     // ── Per-side color ──────────────────────────────────────────────
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName, nameof(ParseBorderShorthand))]
-    [CssShorthandProperty(BorderTopShorthandName, nameof(ParseBorderTopShorthand))]
-    [CssShorthandProperty(BorderColorShorthandName, nameof(ParseBorderColorShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName, nameof(ParseBorderShorthand))]
+    [SuilShorthand(BorderTopShorthandName, nameof(ParseBorderTopShorthand))]
+    [SuilShorthand(BorderColorShorthandName, nameof(ParseBorderColorShorthand))]
     protected Color? BorderTopColor
     {
         get;
@@ -32,10 +33,10 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderRightShorthandName, nameof(ParseBorderRightShorthand))]
-    [CssShorthandProperty(BorderColorShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderRightShorthandName, nameof(ParseBorderRightShorthand))]
+    [SuilShorthand(BorderColorShorthandName)]
     protected Color? BorderRightColor
     {
         get;
@@ -46,10 +47,10 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderBottomShorthandName, nameof(ParseBorderBottomShorthand))]
-    [CssShorthandProperty(BorderColorShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderBottomShorthandName, nameof(ParseBorderBottomShorthand))]
+    [SuilShorthand(BorderColorShorthandName)]
     protected Color? BorderBottomColor
     {
         get;
@@ -60,10 +61,10 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderLeftShorthandName, nameof(ParseBorderLeftShorthand))]
-    [CssShorthandProperty(BorderColorShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderLeftShorthandName, nameof(ParseBorderLeftShorthand))]
+    [SuilShorthand(BorderColorShorthandName)]
     protected Color? BorderLeftColor
     {
         get;
@@ -76,10 +77,10 @@ public partial class CssControl
 
     // ── Per-side width ──────────────────────────────────────────────
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderTopShorthandName)]
-    [CssShorthandProperty(BorderWidthShorthandName, nameof(ParseBorderWidthShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderTopShorthandName)]
+    [SuilShorthand(BorderWidthShorthandName, nameof(ParseBorderWidthShorthand))]
     protected LengthUnit BorderTopWidth
     {
         get;
@@ -90,10 +91,10 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderRightShorthandName)]
-    [CssShorthandProperty(BorderWidthShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderRightShorthandName)]
+    [SuilShorthand(BorderWidthShorthandName)]
     protected LengthUnit BorderRightWidth
     {
         get;
@@ -104,10 +105,10 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderBottomShorthandName)]
-    [CssShorthandProperty(BorderWidthShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderBottomShorthandName)]
+    [SuilShorthand(BorderWidthShorthandName)]
     protected LengthUnit BorderBottomWidth
     {
         get;
@@ -118,10 +119,10 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderLeftShorthandName)]
-    [CssShorthandProperty(BorderWidthShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderLeftShorthandName)]
+    [SuilShorthand(BorderWidthShorthandName)]
     protected LengthUnit BorderLeftWidth
     {
         get;
@@ -134,10 +135,10 @@ public partial class CssControl
 
     // ── Per-side style ───────────────────────────────────────────────
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderTopShorthandName)]
-    [CssShorthandProperty(BorderStyleShorthandName, nameof(ParseBorderStyleShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderTopShorthandName)]
+    [SuilShorthand(BorderStyleShorthandName, nameof(ParseBorderStyleShorthand))]
     protected CssBorderStyle BorderTopStyle
     {
         get;
@@ -148,10 +149,10 @@ public partial class CssControl
         }
     } = CssBorderStyle.None;
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderRightShorthandName)]
-    [CssShorthandProperty(BorderStyleShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderRightShorthandName)]
+    [SuilShorthand(BorderStyleShorthandName)]
     protected CssBorderStyle BorderRightStyle
     {
         get;
@@ -162,10 +163,10 @@ public partial class CssControl
         }
     } = CssBorderStyle.None;
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderBottomShorthandName)]
-    [CssShorthandProperty(BorderStyleShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderBottomShorthandName)]
+    [SuilShorthand(BorderStyleShorthandName)]
     protected CssBorderStyle BorderBottomStyle
     {
         get;
@@ -176,10 +177,10 @@ public partial class CssControl
         }
     } = CssBorderStyle.None;
 
-    [CssProperty]
-    [CssShorthandProperty(BorderShorthandName)]
-    [CssShorthandProperty(BorderLeftShorthandName)]
-    [CssShorthandProperty(BorderStyleShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderShorthandName)]
+    [SuilShorthand(BorderLeftShorthandName)]
+    [SuilShorthand(BorderStyleShorthandName)]
     protected CssBorderStyle BorderLeftStyle
     {
         get;
@@ -192,8 +193,8 @@ public partial class CssControl
 
     // ── Per-corner radius ────────────────────────────────────────────
 
-    [CssProperty]
-    [CssShorthandProperty(BorderRadiusShorthandName, nameof(ParseBorderRadiusShorthand))]
+    [SuilProperty]
+    [SuilShorthand(BorderRadiusShorthandName, nameof(ParseBorderRadiusShorthand))]
     protected UnitVector2 BorderTopLeftRadius
     {
         get;
@@ -205,8 +206,8 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderRadiusShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderRadiusShorthandName)]
     protected UnitVector2 BorderTopRightRadius
     {
         get;
@@ -218,8 +219,8 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderRadiusShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderRadiusShorthandName)]
     protected UnitVector2 BorderBottomRightRadius
     {
         get;
@@ -231,8 +232,8 @@ public partial class CssControl
         }
     }
 
-    [CssProperty]
-    [CssShorthandProperty(BorderRadiusShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(BorderRadiusShorthandName)]
     protected UnitVector2 BorderBottomLeftRadius
     {
         get;

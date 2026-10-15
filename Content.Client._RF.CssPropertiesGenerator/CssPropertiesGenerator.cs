@@ -22,8 +22,8 @@ namespace Content.Client._RF.CssPropertiesGenerator;
 [Generator(LanguageNames.CSharp)]
 public sealed class CssPropertyGenerator : IIncrementalGenerator
 {
-    private const string CssPropertyAttributeName = "Content.Client._RF.CSS.CssPropertyAttribute";
-    private const string CssShorthandPropertyAttributeName = "Content.Client._RF.CSS.CssShorthandPropertyAttribute";
+    private const string CssPropertyAttributeName = "Content.Suil.SuilPropertyAttribute";
+    private const string CssShorthandPropertyAttributeName = "Content.Suil.SuilShorthandAttribute";
     private const string CssStylingAttributeName = "Content.Client._RF.CSS.CssStylingAttribute";
     private const string CssPropertyAccessorName = "Content.Client._RF.CSS.CssPropertyAccessor";
     private const string CssShorthandInfoName = "Content.Client._RF.CSS.CssShorthandInfo";

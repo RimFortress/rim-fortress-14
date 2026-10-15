@@ -1,4 +1,5 @@
 using Content.Client._RF.CSS.Text;
+using Content.Suil;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS;
@@ -9,13 +10,13 @@ public partial class CssControl
     /// CSS <c>caret-color</c>: the color of the text cursor of an edit control; <c>null</c> (<c>auto</c>) means
     /// the text color.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected Color? CaretColor { get; set; }
 
     /// <summary>
     /// Color of the selected text background of an edit control (RF extension, <c>-rf-selection-color</c>).
     /// </summary>
-    [CssProperty("-rf-selection-color", Inherited = true)]
+    [SuilProperty("-rf-selection-color", Inherited = true)]
     protected Color SelectionColor { get; set; } = Color.CornflowerBlue.WithAlpha(0.25f);
 
     /// <summary>

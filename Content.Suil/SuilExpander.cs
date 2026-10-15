@@ -386,8 +386,8 @@ public static class SuilExpander
                     p.Position))
                 .ToList();
 
-            return
-            [
+            return new List<ISuilElementNode>
+            {
                 new SuilElement(
                     element.Access,
                     element.Tag,
@@ -396,7 +396,7 @@ public static class SuilExpander
                     properties,
                     ExpandNodes(element.Children, scope, slotContent),
                     element.Position),
-            ];
+            };
         }
 
         private List<ISuilElementNode> Instantiate(
@@ -517,16 +517,16 @@ public static class SuilExpander
                 .Concat(forwarded)
                 .ToList();
 
-            return
-            [
+            return new List<ISuilElementNode>
+            {
                 root with
                 {
                     Access = usage.Access != SuilAccess.Private ? usage.Access : root.Access,
                     Id = id ?? root.Id,
-                    Classes = [.. root.Classes, .. classes],
+                    Classes = root.Classes.Concat(classes).ToList(),
                     Properties = properties,
                 },
-            ];
+            };
         }
 
         private static ISuilElementNode Clone(ISuilElementNode node) => node switch
@@ -662,7 +662,9 @@ public static class SuilExpander
                 text.Append(valueText);
             }
 
-            return text.Length == 0 ? [] : [StringPart.Literal(text.ToString())];
+            return text.Length == 0
+                ? ImmutableArray<StringPart>.Empty
+                : ImmutableArray.Create(StringPart.Literal(text.ToString()));
         }
 
         private static string? ToText(ISuilValue value) => value switch

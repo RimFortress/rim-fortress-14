@@ -91,7 +91,7 @@ public sealed record SuilCompoundSelector(
 /// </summary>
 public sealed record SuilName(ImmutableArray<StringPart> Parts)
 {
-    public static SuilName Literal(string text) => new([StringPart.Literal(text)]);
+    public static SuilName Literal(string text) => new(ImmutableArray.Create(StringPart.Literal(text)));
 
     public static implicit operator SuilName(string text) => Literal(text);
 

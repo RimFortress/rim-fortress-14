@@ -15,6 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+    The language itself (the tokenizer, the parser, the expander) is compiled into the project, not referenced as an
+    assembly: the game package lists its assemblies by name, and one assembly is checked by the sandbox as it is.
+    -->
+    <Compile Include="$(MSBuildThisFileDirectory)..\Content.Suil\**\*.cs" Exclude="$(MSBuildThisFileDirectory)..\Content.Suil\obj\**;$(MSBuildThisFileDirectory)..\Content.Suil\bin\**">
+      <Link>_RF/Suil/Language/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)\..\Content.Suil.Generator\Content.Suil.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
   </ItemGroup>
 </Project>

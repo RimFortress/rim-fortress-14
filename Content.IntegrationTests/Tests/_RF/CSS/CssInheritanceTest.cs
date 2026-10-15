@@ -3,6 +3,7 @@ using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Text;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 using Robust.Shared.Maths;
@@ -10,7 +11,7 @@ using Robust.Shared.Maths;
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
 /// <summary>
-/// Inheritance of CSS properties (<c>[CssProperty(Inherited = true)]</c>) and the CSS-wide keywords
+/// Inheritance of CSS properties (<c>[SuilProperty(Inherited = true)]</c>) and the CSS-wide keywords
 /// (<c>inherit</c>, <c>initial</c>, <c>unset</c>, <c>revert</c>).
 /// </summary>
 /// <remarks>

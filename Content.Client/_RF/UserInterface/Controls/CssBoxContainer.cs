@@ -49,7 +49,7 @@ public enum CssJustifyContent : byte
 [SuilTag("box")]
 public partial class CssBoxContainer : CssControl
 {
-    [CssProperty]
+    [SuilProperty]
     public CssFlexDirection FlexDirection
     {
         get;
@@ -60,7 +60,7 @@ public partial class CssBoxContainer : CssControl
         }
     }
 
-    [CssProperty]
+    [SuilProperty]
     public CssJustifyContent JustifyContent
     {
         get;
@@ -71,7 +71,7 @@ public partial class CssBoxContainer : CssControl
         }
     }
 
-    [CssProperty]
+    [SuilProperty]
     public CssAlignItems AlignItems
     {
         get;

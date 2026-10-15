@@ -10,6 +10,10 @@ internal static class SuilViewAttributeSource
 
     public const string TagMetadataName = "Content.Suil.SuilTagAttribute";
 
+    public const string PropertyMetadataName = "Content.Suil.SuilPropertyAttribute";
+
+    public const string ShorthandMetadataName = "Content.Suil.SuilShorthandAttribute";
+
     public const string HintName = "SuilViewAttribute.g.cs";
 
     public const string Text = """
@@ -80,6 +84,69 @@ internal static class SuilViewAttributeSource
                 public string Name { get; }
 
                 public global::System.Type? Type { get; }
+            }
+
+            /// <summary>
+            /// Customizes how a public property or field of a control is styled from SUIL. Without the attribute every public
+            /// settable member is stylable anyway, under its name in kebab-case (<c>MinHeight</c> is <c>min-height</c>),
+            /// so it is only for what the defaults can't express.
+            /// </summary>
+            [global::System.AttributeUsage(
+                global::System.AttributeTargets.Property | global::System.AttributeTargets.Field,
+                AllowMultiple = false,
+                Inherited = false)]
+            internal sealed class SuilPropertyAttribute : global::System.Attribute
+            {
+                public SuilPropertyAttribute(string? name = null, global::System.Type? parser = null)
+                {
+                    Name = name;
+                    Parser = parser;
+                }
+
+                /// <summary>
+                /// The custom name of the property in SUIL. <c>null</c> = the member name in kebab-case.
+                /// </summary>
+                public string? Name { get; }
+
+                /// <summary>
+                /// The parser of the value for the irregular grammars (several notations, units). <c>null</c> = the default parser
+                /// of the type of the member.
+                /// </summary>
+                public global::System.Type? Parser { get; }
+
+                /// <summary>
+                /// Is the property inherited, like <c>color</c> or <c>font-family</c> in CSS? A control that doesn't declare
+                /// an inherited property takes the computed value of its nearest styled ancestor.
+                /// </summary>
+                public bool Inherited { get; set; }
+            }
+
+            /// <summary>
+            /// Marks a property as one of the longhands expanded from a shorthand declaration (like <c>background</c> or
+            /// <c>border-top</c>). It can be applied several times when the property is in several shorthands.
+            /// </summary>
+            [global::System.AttributeUsage(
+                global::System.AttributeTargets.Property | global::System.AttributeTargets.Field,
+                AllowMultiple = true,
+                Inherited = false)]
+            internal sealed class SuilShorthandAttribute : global::System.Attribute
+            {
+                public SuilShorthandAttribute(string name, string? customParserMethod = null)
+                {
+                    Name = name;
+                    CustomParserMethod = customParserMethod;
+                }
+
+                /// <summary>
+                /// The name of the shorthand this longhand belongs to.
+                /// </summary>
+                public string Name { get; }
+
+                /// <summary>
+                /// The name of a static method of the same class that parses the shorthand, or <c>null</c> for the generated
+                /// expander that tries the parser of every not yet matched longhand against the next value.
+                /// </summary>
+                public string? CustomParserMethod { get; }
             }
         }
         """;

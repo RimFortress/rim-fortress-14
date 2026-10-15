@@ -12,7 +12,7 @@ namespace Content.Client._RF.CSS;
 /// </summary>
 /// <remarks>
 /// <para>
-/// To allow the field's value to be set via CSS, you need to mark it using the <see cref="CssPropertyAttribute"/>.
+/// To allow the field's value to be set via CSS, you need to mark it using the <see cref="SuilPropertyAttribute"/>.
 /// </para>
 /// <para>
 /// In SUIL it is the element written as <c>_</c>: an element without a type.
@@ -29,7 +29,7 @@ public partial class CssControl : AutoCssControl
     /// <summary>
     /// Left value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public LengthUnit MarginLeft
     {
         get;
@@ -43,7 +43,7 @@ public partial class CssControl : AutoCssControl
     /// <summary>
     /// Top value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public LengthUnit MarginTop
     {
         get;
@@ -57,7 +57,7 @@ public partial class CssControl : AutoCssControl
     /// <summary>
     /// Right value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public LengthUnit MarginRight
     {
         get;
@@ -71,7 +71,7 @@ public partial class CssControl : AutoCssControl
     /// <summary>
     /// Bottom value of the <see cref="Control.Margin"/>. Percentages are not supported.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public LengthUnit MarginBottom
     {
         get;
@@ -255,7 +255,7 @@ public abstract class AutoCssControl : Control
 {
     /// <summary>
     /// The method through which CssPropertiesGenerator adds
-    /// CSS properties extracted from this class's <see cref="CssPropertyAttribute"/>,
+    /// CSS properties extracted from this class's <see cref="SuilPropertyAttribute"/>,
     /// and through which <see cref="ICssManager"/> then builds the style sheet.
     /// </summary>
     /// <remarks>
@@ -268,7 +268,7 @@ public abstract class AutoCssControl : Control
 
     /// <summary>
     /// Returns every CSS shorthand this class declares via
-    /// <see cref="CssShorthandPropertyAttribute"/>, keyed by shorthand CSS
+    /// <see cref="SuilShorthandAttribute"/>, keyed by shorthand CSS
     /// name (e.g. "background").
     /// </summary>
     /// <remarks>
@@ -299,7 +299,7 @@ public delegate bool CssShorthandParserDelegate(
 /// Everything needed to expand one shorthand declaration: which longhand CSS
 /// properties it covers, and how to parse its value into them. Produced by
 /// <see cref="AutoCssControl.AutoCssShorthands"/> — either hand-written (via
-/// <see cref="CssShorthandPropertyAttribute.CustomParserMethod"/>) or
+/// <see cref="SuilShorthandAttribute.CustomParserMethod"/>) or
 /// generated automatically for the common case.
 /// </summary>
 /// <param name="Longhands">

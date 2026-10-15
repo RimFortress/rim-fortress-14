@@ -3,6 +3,7 @@ using System.Linq;
 using Content.Client._RF.CSS.Streams;
 using Content.Client._RF.CSS.Text;
 using Content.Shared._RF.Utilities;
+using Content.Suil;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
 using Robust.Shared.Random;
@@ -1014,7 +1015,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     /// <summary>
     /// All CSS properties for the engine's classes must be registered manually here,
-    /// since we cannot use the <see cref="CssPropertyAttribute"/> for them.
+    /// since we cannot use the <see cref="SuilPropertyAttribute"/> for them.
     /// </summary>
     private void RegisterEngineProperties()
     {

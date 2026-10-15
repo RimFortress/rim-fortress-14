@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Client._RF.CSS;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Suil;
 
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
@@ -47,9 +48,9 @@ public sealed class CssPropertyGeneratorTest : GameTest
 
 public sealed partial class TestCssControl : CssControl
 {
-    [CssProperty]
+    [SuilProperty]
     public float Test { get; set; }
 
-    [CssProperty]
+    [SuilProperty]
     public float TestDefault { get; set; } = 15f;
 }

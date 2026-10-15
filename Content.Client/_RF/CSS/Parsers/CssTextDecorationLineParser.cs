@@ -1,5 +1,6 @@
 using Content.Client._RF.CSS.Streams;
 using Content.Client._RF.CSS.Text;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
@@ -10,7 +11,7 @@ namespace Content.Client._RF.CSS.Parsers;
 /// <remarks>
 /// Enums never reach the registered parsers (<see cref="CssManager"/> sends every enum type to its generic
 /// single-ident enum parser), so this parser is not a default one and has to be attached explicitly:
-/// <c>[CssProperty(parser: typeof(CssTextDecorationLineParser))]</c>.
+/// <c>[SuilProperty(parser: typeof(CssTextDecorationLineParser))]</c>.
 /// <c>blink</c> is not supported and makes the value invalid.
 /// </remarks>
 [UsedImplicitly]

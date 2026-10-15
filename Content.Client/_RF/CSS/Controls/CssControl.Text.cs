@@ -5,6 +5,7 @@ using Content.Client._RF.CSS.Text;
 using Content.Shared._RF.Utilities;
 using Robust.Client.Graphics;
 using Content.Client._RF.CSS.Markup;
+using Content.Suil;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
@@ -102,8 +103,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-family</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
-    [CssShorthandProperty(FontShorthandName, nameof(ParseFontShorthand))]
+    [SuilProperty(Inherited = true)]
+    [SuilShorthand(FontShorthandName, nameof(ParseFontShorthand))]
     protected CssFontFamily FontFamily
     {
         get;
@@ -117,8 +118,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-size</c>. Relative units refer to the parent's font size; the default <c>1em</c> inherits it.
     /// </summary>
-    [CssProperty(parser: typeof(CssFontSizeParser), Inherited = true)]
-    [CssShorthandProperty(FontShorthandName)]
+    [SuilProperty(parser: typeof(CssFontSizeParser), Inherited = true)]
+    [SuilShorthand(FontShorthandName)]
     protected LengthUnit FontSize
     {
         get;
@@ -132,8 +133,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-weight</c> (<c>normal</c>, <c>bold</c> or a number).
     /// </summary>
-    [CssProperty(parser: typeof(CssFontWeightParser), Inherited = true)]
-    [CssShorthandProperty(FontShorthandName)]
+    [SuilProperty(parser: typeof(CssFontWeightParser), Inherited = true)]
+    [SuilShorthand(FontShorthandName)]
     protected FontWeight FontWeight
     {
         get;
@@ -147,8 +148,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>font-style</c> (<c>normal</c>, <c>italic</c>, <c>oblique</c>).
     /// </summary>
-    [CssProperty(Inherited = true)]
-    [CssShorthandProperty(FontShorthandName)]
+    [SuilProperty(Inherited = true)]
+    [SuilShorthand(FontShorthandName)]
     protected FontSlant FontStyle
     {
         get;
@@ -166,7 +167,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>color</c>.
     /// </summary>
-    [CssProperty("color", Inherited = true)]
+    [SuilProperty("color", Inherited = true)]
     protected Color TextColor
     {
         get;
@@ -180,7 +181,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>letter-spacing</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected LengthUnit LetterSpacing
     {
         get;
@@ -194,7 +195,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>word-spacing</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected LengthUnit WordSpacing
     {
         get;
@@ -208,8 +209,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>line-height</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
-    [CssShorthandProperty(FontShorthandName)]
+    [SuilProperty(Inherited = true)]
+    [SuilShorthand(FontShorthandName)]
     protected CssLineHeight LineHeight
     {
         get;
@@ -223,7 +224,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-align</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected CssTextAlign TextAlign
     {
         get;
@@ -237,7 +238,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-indent</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected LengthUnit TextIndent
     {
         get;
@@ -251,7 +252,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-transform</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected CssTextTransform TextTransform
     {
         get;
@@ -265,7 +266,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-overflow</c>. The ellipsis is only visible if the control clips its content.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     protected CssTextOverflow TextOverflow
     {
         get;
@@ -279,7 +280,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>white-space</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected CssWhiteSpace WhiteSpace
     {
         get;
@@ -293,7 +294,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>word-break</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected CssWordBreak WordBreak
     {
         get;
@@ -307,7 +308,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>overflow-wrap</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected CssOverflowWrap OverflowWrap
     {
         get;
@@ -321,7 +322,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>line-clamp</c>: the maximum number of lines, <c>0</c> (<c>none</c>) for no limit.
     /// </summary>
-    [CssProperty(parser: typeof(CssLineClampParser))]
+    [SuilProperty(parser: typeof(CssLineClampParser))]
     protected int LineClamp
     {
         get;
@@ -339,8 +340,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-decoration-line</c>.
     /// </summary>
-    [CssProperty(parser: typeof(CssTextDecorationLineParser))]
-    [CssShorthandProperty(TextDecorationShorthandName, nameof(ParseTextDecorationShorthand))]
+    [SuilProperty(parser: typeof(CssTextDecorationLineParser))]
+    [SuilShorthand(TextDecorationShorthandName, nameof(ParseTextDecorationShorthand))]
     protected CssTextDecorationLine TextDecorationLine
     {
         get;
@@ -354,8 +355,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-decoration-style</c>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(TextDecorationShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(TextDecorationShorthandName)]
     protected CssTextDecorationStyle TextDecorationStyle
     {
         get;
@@ -369,8 +370,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-decoration-color</c>; <c>null</c> means <c>currentcolor</c>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(TextDecorationShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(TextDecorationShorthandName)]
     protected Color? TextDecorationColor
     {
         get;
@@ -384,8 +385,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-decoration-thickness</c>; <c>null</c> means <c>auto</c>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(TextDecorationShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(TextDecorationShorthandName)]
     protected LengthUnit? TextDecorationThickness
     {
         get;
@@ -399,7 +400,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-underline-offset</c>; <c>null</c> means <c>auto</c>.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     protected LengthUnit? TextUnderlineOffset
     {
         get;
@@ -413,7 +414,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>text-shadow</c>.
     /// </summary>
-    [CssProperty(Inherited = true)]
+    [SuilProperty(Inherited = true)]
     protected CssTextShadow[] TextShadow
     {
         get;
@@ -427,7 +428,7 @@ public partial class CssControl
     /// <summary>
     /// Text outline width (RF extension, <c>-rf-text-outline-width</c>); <c>0</c> disables the outline.
     /// </summary>
-    [CssProperty("-rf-text-outline-width", Inherited = true)]
+    [SuilProperty("-rf-text-outline-width", Inherited = true)]
     protected LengthUnit TextOutlineWidth
     {
         get;
@@ -441,7 +442,7 @@ public partial class CssControl
     /// <summary>
     /// Text outline color (RF extension, <c>-rf-text-outline-color</c>); <c>null</c> means black.
     /// </summary>
-    [CssProperty("-rf-text-outline-color", Inherited = true)]
+    [SuilProperty("-rf-text-outline-color", Inherited = true)]
     protected Color? TextOutlineColor
     {
         get;

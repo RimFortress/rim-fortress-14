@@ -1,4 +1,5 @@
 using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 
 namespace Content.Client._RF.CSS;
 
@@ -70,8 +71,8 @@ public partial class CssControl
     /// <remarks>
     /// The clip is a rectangle, so it is applied to both axes when either of them isn't visible.
     /// </remarks>
-    [CssProperty]
-    [CssShorthandProperty(OverflowShorthandName, nameof(ParseOverflowShorthand))]
+    [SuilProperty]
+    [SuilShorthand(OverflowShorthandName, nameof(ParseOverflowShorthand))]
     public CssOverflow OverflowX
     {
         get;
@@ -85,8 +86,8 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>overflow-y</c>. See <see cref="OverflowX"/>.
     /// </summary>
-    [CssProperty]
-    [CssShorthandProperty(OverflowShorthandName)]
+    [SuilProperty]
+    [SuilShorthand(OverflowShorthandName)]
     public CssOverflow OverflowY
     {
         get;
@@ -100,7 +101,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>scrollbar-width</c>: <c>none</c> hides the scrollbars of a scroll container.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public CssScrollbarWidth ScrollbarWidth
     {
         get;
@@ -114,7 +115,7 @@ public partial class CssControl
     /// <summary>
     /// CSS <c>scrollbar-gutter</c>: <c>stable</c> reserves the space of the scrollbars of a scroll container.
     /// </summary>
-    [CssProperty]
+    [SuilProperty]
     public CssScrollbarGutter ScrollbarGutter
     {
         get;
