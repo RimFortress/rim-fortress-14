@@ -14,7 +14,9 @@ public sealed partial class SuilHotReload
     private sealed class PlannedElement
     {
         public required Type Type;
+        public required SuilElement Element;
         public string? Id;
+        public readonly List<PlannedHandler> Handlers = new();
         public readonly List<string> Classes = new();
         public readonly List<PlannedProperty> Properties = new();
         public readonly List<PlannedElement> Children = new();
@@ -52,7 +54,12 @@ public sealed partial class SuilHotReload
         }
 
         var ids = new HashSet<string>(StringComparer.Ordinal);
-        return PlanElement(view, root, rootType, isRoot: true, ids, errors, warnings);
+        var plan = PlanElement(view, root, rootType, isRoot: true, ids, errors, warnings);
+
+        if (plan != null)
+            PlanHandlers(view, plan, errors);
+
+        return plan;
     }
 
     private PlannedElement? PlanElement(
@@ -73,7 +80,7 @@ public sealed partial class SuilHotReload
             return null;
         }
 
-        var plan = new PlannedElement { Type = type, Id = element.Id?.ToString() };
+        var plan = new PlannedElement { Type = type, Element = element, Id = element.Id?.ToString() };
 
         if (plan.Id != null)
         {

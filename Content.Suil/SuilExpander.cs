@@ -53,7 +53,7 @@ public static class SuilExpander
     /// they start with '/' and have neither '\' nor '..'.
     /// <list type="bullet">
     /// <item><c>/dir/file</c> is the file <c>/dir/file.suil</c>, the extension may be written but doesn't have to.</item>
-    /// <item><c>/dir/*</c> is every file directly in <c>/dir</c>, see <see cref="IsFolder"/>.</item>
+    /// <item><c>/dir/*</c> is every file directly in <c>/dir</c>, see <see cref="SuilPaths.IsFolder"/>.</item>
     /// </list>
     /// </summary>
     internal static string ParseUsePath(string raw, string context, SuilPosition position)
@@ -61,7 +61,7 @@ public static class SuilExpander
         if (raw.IndexOf('\\') >= 0)
             throw new SuilExpansionError(context, $"'{raw}': the path can't have backslashes, use '/'", position);
 
-        if (!raw.StartsWith("/", StringComparison.Ordinal))
+        if (!raw.StartsWith('/'))
             throw new SuilExpansionError(context, $"'{raw}': only absolute paths are allowed, start it with '/'", position);
 
         if (raw.Split('/').Contains(".."))
@@ -74,7 +74,8 @@ public static class SuilExpander
             if (directory.IndexOf('*') >= 0)
             {
                 throw new SuilExpansionError(context,
-                    $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'", position);
+                    $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'",
+                    position);
             }
 
             var cleaned = SuilPaths.Clean(directory.Length == 0 ? "/" : directory);
@@ -84,13 +85,15 @@ public static class SuilExpander
         if (raw.IndexOf('*') >= 0)
         {
             throw new SuilExpansionError(context,
-                $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'", position);
+                $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'",
+                position);
         }
 
-        if (raw.EndsWith("/", StringComparison.Ordinal))
+        if (raw.EndsWith('/'))
         {
             throw new SuilExpansionError(context,
-                $"'{raw}': this is a directory, write '{raw}*' to import all of its files", position);
+                $"'{raw}': this is a directory, write '{raw}*' to import all of its files",
+                position);
         }
 
         var file = raw.EndsWith(SuilPaths.Extension, StringComparison.Ordinal) ? raw : raw + SuilPaths.Extension;
@@ -402,9 +405,55 @@ public static class SuilExpander
                     element.Classes.Select(c => ExpandName(c, "class", scope, element.Position)).ToList(),
                     properties,
                     ExpandNodes(element.Children, scope, slotContent),
-                    element.Position),
+                    element.Position)
+                {
+                    Events = ExpandEvents(element.Events, scope),
+                },
             };
         }
+
+        /// <summary>
+        /// The variables of the handlers are the constants of the file: the values and the names are expanded the way
+        /// those of the properties and of the classes of an element are.
+        /// </summary>
+        private List<SuilEventHandler> ExpandEvents(List<SuilEventHandler> events, Scope? scope)
+            => events.Select(handler => handler with
+                {
+                    Statements = handler.Statements.Select(statement => ExpandStatement(statement, scope)).ToList(),
+                })
+                .ToList();
+
+        private ISuilStatement ExpandStatement(ISuilStatement statement, Scope? scope) => statement switch
+        {
+            SuilTargetStatement target => target with
+            {
+                Target = ExpandTarget(target.Target, scope),
+                Items = target.Items.Select(item => ExpandItem(item, scope)).ToList(),
+            },
+            _ => statement,
+        };
+
+        private ISuilTargetItem ExpandItem(ISuilTargetItem item, Scope? scope) => item switch
+        {
+            SuilPropertyItem property => new SuilPropertyItem(property.Property with
+            {
+                Value = property.Property.Value == null
+                    ? null
+                    : ExpandValues(property.Property.Value, scope, property.Property.Position),
+            }),
+            SuilStyleItem style => style with
+            {
+                Refs = style.Refs.Select(r => r with
+                    {
+                        Name = ExpandName(r.Name, r.IsPseudo ? "pseudo-class" : "class", scope, style.Position)
+                    })
+                    .ToList(),
+            },
+            _ => item,
+        };
+
+        private static SuilTarget ExpandTarget(SuilTarget target, Scope? scope)
+            => target.Id == null ? target : target with { Id = ExpandName(target.Id, "id", scope, target.Position) };
 
         private List<ISuilElementNode> Instantiate(
             SuilElement usage,
@@ -488,7 +537,11 @@ public static class SuilExpander
             var id = usage.Id == null ? null : ExpandName(usage.Id, "id", callerScope, usage.Position);
             var classes = usage.Classes.Select(c => ExpandName(c, "class", callerScope, usage.Position)).ToList();
 
-            return ApplyUsageHead(usage, id, classes, forwarded, ExpandNodes(template.Template.Body, scope, content));
+            // The handlers of the usage belong to the root of the template like the properties that aren't parameters; the
+            // variables in them are the caller's.
+            var forwardedEvents = ExpandEvents(usage.Events, callerScope);
+
+            return ApplyUsageHead(usage, id, classes, forwarded, forwardedEvents, ExpandNodes(template.Template.Body, scope, content));
         }
 
         /// <summary>
@@ -500,15 +553,19 @@ public static class SuilExpander
             SuilName? id,
             List<SuilName> classes,
             List<SuilProperty> forwarded,
+            List<SuilEventHandler> forwardedEvents,
             List<ISuilElementNode> expanded)
         {
-            if (usage.Access == SuilAccess.Private && id == null && classes.Count == 0 && forwarded.Count == 0)
+            if (usage.Access == SuilAccess.Private && id == null && classes.Count == 0 && forwarded.Count == 0
+                && forwardedEvents.Count == 0)
+            {
                 return expanded;
+            }
 
-            if (expanded.Count != 1 || expanded[0] is not SuilElement root)
+            if (expanded is not [SuilElement root])
             {
                 throw new SuilExpansionError("expanding template",
-                    $"'{usage.Tag}' is used with an access sigil, an id, classes or properties that are not its parameters, so the template must have exactly one root element",
+                    $"'{usage.Tag}' is used with an access sigil, an id, classes, handlers or properties that are not its parameters, so the template must have exactly one root element",
                     usage.Position);
             }
 
@@ -532,6 +589,7 @@ public static class SuilExpander
                     Id = id ?? root.Id,
                     Classes = root.Classes.Concat(classes).ToList(),
                     Properties = properties,
+                    Events = root.Events.Concat(forwardedEvents).ToList(),
                 },
             };
         }
@@ -541,6 +599,7 @@ public static class SuilExpander
             SuilElement element => element with
             {
                 Classes = new List<SuilName>(element.Classes),
+                Events = new List<SuilEventHandler>(element.Events),
                 Properties = element.Properties
                     .Select(p => p with { Value = p.Value == null ? null : new List<ISuilValue>(p.Value) })
                     .ToList(),

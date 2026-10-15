@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Content.Suil;
 
 /// <summary>
@@ -38,6 +35,19 @@ public interface ISuilView
     /// another type.
     /// </summary>
     bool SuilSetField(string id, object? value);
+
+    /// <summary>
+    /// Finds a method of the class that a handler of the file can call, <c>@OnSubmit</c>: one that returns nothing and
+    /// takes nothing or one argument.
+    /// </summary>
+    /// <param name="name">The name of the method, as in the code.</param>
+    /// <param name="argumentType">The type of its argument, <c>null</c> if it takes nothing.</param>
+    bool SuilTryGetMethod(string name, out Type? argumentType);
+
+    /// <summary>
+    /// Calls the method found by <see cref="SuilTryGetMethod"/>, with the arguments of the event if it takes them.
+    /// </summary>
+    void SuilInvoke(string name, object? argument);
 }
 
 /// <summary>
@@ -56,9 +66,24 @@ public sealed class SuilViewEntry
 {
     private readonly WeakReference<ISuilView> _view;
 
-    internal SuilViewEntry(ISuilView view)
+    private IReadOnlyList<Action>? _unsubscribers;
+
+    internal SuilViewEntry(ISuilView view, IReadOnlyList<Action>? unsubscribers)
     {
         _view = new WeakReference<ISuilView>(view);
+        _unsubscribers = unsubscribers;
+    }
+
+    /// <summary>
+    /// Takes the actions that unsubscribe the handlers that the generated code of the view subscribed from the file as
+    /// it was compiled. The hot reload subscribes the ones of the new file, so the old ones must go; they are given
+    /// once.
+    /// </summary>
+    public IReadOnlyList<Action> TakeUnsubscribers()
+    {
+        var result = _unsubscribers ?? Array.Empty<Action>();
+        _unsubscribers = null;
+        return result;
     }
 
     /// <summary>
@@ -91,7 +116,9 @@ public static class SuilViewRegistry
     private static readonly object Lock = new();
     private static readonly List<SuilViewEntry> Entries = new();
 
-    public static void Register(ISuilView view)
+    /// <param name="view">The view.</param>
+    /// <param name="unsubscribers">What takes the handlers of the generated code off the events, for the hot reload.</param>
+    public static void Register(ISuilView view, IReadOnlyList<Action>? unsubscribers = null)
     {
         lock (Lock)
         {
@@ -99,7 +126,7 @@ public static class SuilViewRegistry
             if (Entries.Count >= 256 && Entries.Count % 256 == 0)
                 Entries.RemoveAll(entry => !entry.TryGetView(out _));
 
-            Entries.Add(new SuilViewEntry(view));
+            Entries.Add(new SuilViewEntry(view, unsubscribers));
         }
     }
 

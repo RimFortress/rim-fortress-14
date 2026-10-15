@@ -1,5 +1,4 @@
 using System.Diagnostics.Contracts;
-using System.Collections.Generic;
 
 namespace Content.Suil;
 

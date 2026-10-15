@@ -396,11 +396,23 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
     public int Reloaded;
 
-    public TestView()
+    /// <summary>What the handlers of the file called.</summary>
+    public readonly List<string> Calls = new();
+
+    /// <summary>The unsubscribers a generated <c>InitializeComponent()</c> would have registered.</summary>
+    public int CompiledUnsubscribed;
+
+    public TestView(bool compiledHandler = false)
     {
         // what the generated InitializeComponent() does at its end
-        SuilViewRegistry.Register(this);
+        SuilViewRegistry.Register(this, compiledHandler ? new Action[] { () => CompiledUnsubscribed++ } : null);
     }
+
+    public void Refresh() => Calls.Add("refresh");
+
+    public void OnSubmit(RfButtonEventArgs args) => Calls.Add("submit:" + args.GetType().Name);
+
+    public void OnToggle(RfButtonToggledEventArgs args) => Calls.Add("toggle:" + args.Pressed);
 
     string ISuilView.SuilPath => "/test/view";
 
@@ -417,6 +429,41 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
         Submit = button;
         return true;
+    }
+
+    bool ISuilView.SuilTryGetMethod(string name, out Type? argumentType)
+    {
+        switch (name)
+        {
+            case nameof(Refresh):
+                argumentType = null;
+                return true;
+            case nameof(OnSubmit):
+                argumentType = typeof(RfButtonEventArgs);
+                return true;
+            case nameof(OnToggle):
+                argumentType = typeof(RfButtonToggledEventArgs);
+                return true;
+            default:
+                argumentType = null;
+                return false;
+        }
+    }
+
+    void ISuilView.SuilInvoke(string name, object? argument)
+    {
+        switch (name)
+        {
+            case nameof(Refresh):
+                Refresh();
+                break;
+            case nameof(OnSubmit):
+                OnSubmit((RfButtonEventArgs) argument!);
+                break;
+            case nameof(OnToggle):
+                OnToggle((RfButtonToggledEventArgs) argument!);
+                break;
+        }
     }
 
     void ISuilReloadHandler.OnSuilReloaded() => Reloaded++;

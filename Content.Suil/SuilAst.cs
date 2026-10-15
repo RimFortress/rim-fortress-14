@@ -61,14 +61,14 @@ public sealed record SuilRule(
     SuilPosition Position) : ISuilTopLevelItem;
 
 /// <summary>
-/// <c>name: value;</c>. <paramref name="Important"/> is <c>!important</c>: the declaration wins over the ones without it,
-/// whatever their specificity.
-/// </summary>
-/// <summary>
 /// <c>@font-face { font-family: ...; src: url("..."); }</c>
 /// </summary>
 public sealed record SuilFontFace(List<SuilDeclaration> Descriptors, SuilPosition Position) : ISuilTopLevelItem;
 
+/// <summary>
+/// <c>name: value;</c>. <paramref name="Important"/> is <c>!important</c>: the declaration wins over the ones without it,
+/// whatever their specificity.
+/// </summary>
 public sealed record SuilDeclaration(string Name, List<ISuilValue> Value, SuilPosition Position, bool Important = false);
 
 /// <summary>
@@ -190,7 +190,98 @@ public sealed record SuilElement(
     List<SuilName> Classes,
     List<SuilProperty> Properties,
     List<ISuilElementNode> Children,
-    SuilPosition Position) : ISuilElementNode;
+    SuilPosition Position) : ISuilElementNode
+{
+    /// <summary>
+    /// The handlers of the events of the element, <c>on-pressed =&gt; @OnSubmit</c> in the parentheses.
+    /// </summary>
+    public List<SuilEventHandler> Events { get; init; } = new();
+}
+
+// ---- Event handlers ----
+
+/// <summary>
+/// <c>on-pressed =&gt; @OnSubmit</c> or <c>on-pressed =&gt; { ... }</c>: what the element does when its event is raised.
+/// <paramref name="Event"/> is the name of the event as written, the name of the member in kebab-case.
+/// </summary>
+public sealed record SuilEventHandler(string Event, List<ISuilStatement> Statements, SuilPosition Position);
+
+/// <summary>
+/// A statement of a handler: a call of a method of the view, or a change of an element.
+/// </summary>
+public interface ISuilStatement
+{
+    SuilPosition Position { get; }
+}
+
+/// <summary>
+/// <c>@OnSubmit</c>: calls the method of the class of the view. The method takes either nothing or the arguments of
+/// the event.
+/// </summary>
+public sealed record SuilCallStatement(string Method, SuilPosition Position) : ISuilStatement;
+
+/// <summary>
+/// <c>#details (visible: true, add .open, remove :loading)</c> or <c>&amp;(set .active args.pressed)</c>: changes an
+/// element. The parentheses hold the properties to assign (constants) and the changes of the classes.
+/// </summary>
+public sealed record SuilTargetStatement(SuilTarget Target, List<ISuilTargetItem> Items, SuilPosition Position)
+    : ISuilStatement;
+
+/// <summary>
+/// An item in the parentheses of a <see cref="SuilTargetStatement"/>.
+/// </summary>
+public interface ISuilTargetItem
+{
+    SuilPosition Position { get; }
+}
+
+/// <summary>
+/// <c>visible: true</c>: assigns a property of the element.
+/// </summary>
+public sealed record SuilPropertyItem(SuilProperty Property) : ISuilTargetItem
+{
+    public SuilPosition Position => Property.Position;
+}
+
+public enum SuilStyleOp
+{
+    /// <summary><c>add</c>: puts the classes and the pseudo-classes on the element.</summary>
+    Add,
+
+    /// <summary><c>remove</c>: takes them off.</summary>
+    Remove,
+
+    /// <summary><c>set</c>: puts them on or takes them off by a state: <c>set .open true</c>.</summary>
+    Set,
+}
+
+/// <summary>
+/// A class (<c>.open</c>) or a pseudo-class (<c>:loading</c>) in a change of the styles.
+/// </summary>
+public sealed record SuilStyleRef(bool IsPseudo, SuilName Name);
+
+/// <summary>
+/// The state of <c>set</c>: a constant, or a member of the arguments of the event (<c>args.pressed</c>).
+/// </summary>
+public sealed record SuilStateValue(bool? Constant, string? ArgsMember);
+
+/// <summary>
+/// <c>add .open :loading</c>, <c>remove .closed</c>, <c>set .open true</c>.
+/// </summary>
+public sealed record SuilStyleItem(
+    SuilStyleOp Op,
+    List<SuilStyleRef> Refs,
+    SuilStateValue? State,
+    SuilPosition Position) : ISuilTargetItem;
+
+/// <summary>
+/// The element a statement works on: <c>&amp;</c> is the element the event was raised on, <c>#id</c> is the element
+/// of the view with that id, and <c>#id/field/field</c> goes on through the public fields of a view inside it.
+/// </summary>
+/// <param name="IsSender"><c>&amp;</c>.</param>
+/// <param name="Id">The id, for a target that isn't <c>&amp;</c>.</param>
+/// <param name="Path">The fields after the id, as written (kebab-case).</param>
+public sealed record SuilTarget(bool IsSender, SuilName? Id, List<string> Path, SuilPosition Position);
 
 /// <summary>
 /// <c>%content%</c>

@@ -19,14 +19,21 @@ internal sealed class SuilGenerationException(DiagnosticDescriptor descriptor, S
 }
 
 /// <summary>
+/// A field of a view as its file describes it: the generator of another view in the same project can't see the code
+/// that is generated for this one, so the path <c>#panel/header</c> asks the file.
+/// </summary>
+internal sealed record ViewField(string Member, SuilAccess Access, INamedTypeSymbol Type);
+
+/// <summary>
 /// Writes the partial class of a view from the expanded tree: a field for every element with an id and
 /// <c>InitializeComponent()</c> that builds the elements, sets the classes, ids and properties and adds the children.
 /// </summary>
-internal sealed class SuilViewEmitter(
+internal sealed partial class SuilViewEmitter(
     Compilation compilation,
     SuilTagRegistry tags,
     INamedTypeSymbol? suilControl,
-    INamedTypeSymbol viewClass)
+    INamedTypeSymbol viewClass,
+    Func<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?> fieldsOfView)
 {
     private readonly StringBuilder _body = new();
     private readonly List<(string Id, string Name, string Type, string Access)> _fields = new();
@@ -43,7 +50,12 @@ internal sealed class SuilViewEmitter(
                 viewClass.ToDisplayString(), rootType.ToDisplayString(), root.Tag ?? "_");
         }
 
+        _rootId = root.Id?.ToString();
+
         EmitElement(root, "this", rootType);
+
+        // The handlers come last: they name elements of the whole view, which have their fields only now.
+        EmitHandlers();
 
         return Wrap(viewPath);
     }
@@ -95,6 +107,9 @@ internal sealed class SuilViewEmitter(
                 _body.AppendLine($"            {variable}.SuilSetHard({Literal(property.Name)});");
         }
 
+        if (element.Events.Count > 0)
+            _handlers.Add(new PendingHandlers(variable, variable == "this" ? viewClass : type, element));
+
         foreach (var node in element.Children)
         {
             if (node is not SuilElement child)
@@ -117,13 +132,13 @@ internal sealed class SuilViewEmitter(
             EmitElement(child, childVariable, childType);
 
             if (child.Id != null)
-                AddField(child, childVariable, typeName);
+                AddField(child, childVariable, typeName, childType);
 
             _body.AppendLine($"            {variable}.AddChild({childVariable});");
         }
     }
 
-    private void AddField(SuilElement element, string variable, string typeName)
+    private void AddField(SuilElement element, string variable, string typeName, INamedTypeSymbol type)
     {
         var id = element.Id!.ToString();
 
@@ -146,12 +161,19 @@ internal sealed class SuilViewEmitter(
         };
 
         _fields.Add((id, name, typeName, access));
+        _fieldTypes[id] = (name, type);
         _body.AppendLine($"            this.{name} = {variable};");
     }
 
     // ---- Properties ----
 
     private void EmitProperty(string variable, INamedTypeSymbol type, SuilProperty property)
+        => _body.AppendLine($"            {AssignmentOf(variable, type, property)}");
+
+    /// <summary>
+    /// The C# statement that assigns a property of the file to a member of the target.
+    /// </summary>
+    private string AssignmentOf(string target, INamedTypeSymbol type, SuilProperty property)
     {
         var member = FindWritableMember(type, property.Name, out var memberType);
 
@@ -162,7 +184,7 @@ internal sealed class SuilViewEmitter(
         }
 
         var value = Convert(memberType, property, member.Name);
-        _body.AppendLine($"            {variable}.{member.Name} = {value};");
+        return $"{target}.{member.Name} = {value};";
     }
 
     /// <summary>
@@ -544,11 +566,18 @@ internal sealed class SuilViewEmitter(
         sb.AppendLine("        /// <summary>Builds the tree of the view. Call it from the constructor.</summary>");
         sb.AppendLine("        private void InitializeComponent()");
         sb.AppendLine("        {");
+
+        if (_handlers.Count > 0)
+            sb.AppendLine("            var __unsub = new global::System.Collections.Generic.List<global::System.Action>();");
+
         sb.Append(_body);
-        sb.AppendLine("            global::Content.Suil.SuilViewRegistry.Register(this);");
+        sb.AppendLine(_handlers.Count > 0
+            ? "            global::Content.Suil.SuilViewRegistry.Register(this, __unsub);"
+            : "            global::Content.Suil.SuilViewRegistry.Register(this);");
         sb.AppendLine("        }");
         sb.AppendLine();
         WriteViewMembers(sb, viewPath);
+        WriteMethodMembers(sb);
 
         for (var i = 0; i < containers.Count; i++)
         {

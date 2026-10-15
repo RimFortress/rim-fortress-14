@@ -44,7 +44,9 @@ internal static class GeneratorHarness
                 public float UIScale { get; set; }
                 public bool Visible { get; set; }
                 public void AddChild(Control child) { }
-                public void AddStyleClass(string name) { }
+                public System.Collections.Generic.HashSet<string> StyleClasses { get; } = new();
+                public void AddStyleClass(string name) => StyleClasses.Add(name);
+                public void RemoveStyleClass(string name) => StyleClasses.Remove(name);
             }
         }
         namespace Robust.Client.UserInterface.Controls
@@ -58,7 +60,11 @@ internal static class GeneratorHarness
             {
                 public string? SuilStyleIdentifier { get; set; }
                 public string? Text { get; set; }
-                public void AddSuilStyleClass(string name) { }
+                public System.Collections.Generic.HashSet<string> Classes { get; } = new();
+                public System.Collections.Generic.HashSet<string> Pseudo { get; } = new();
+                public void AddSuilStyleClass(string name) => Classes.Add(name);
+                public void RemoveSuilStyleClass(string name) => Classes.Remove(name);
+                public void SetSuilPseudoStyleClass(string name, bool present) { if (present) Pseudo.Add(name); else Pseudo.Remove(name); }
                 public System.Collections.Generic.HashSet<string> Hard { get; } = new();
                 public bool SuilIsHard(string property) => Hard.Contains(property);
                 public void SuilSetHard(string property, bool hard = true) { if (hard) Hard.Add(property); else Hard.Remove(property); }
@@ -69,7 +75,20 @@ internal static class GeneratorHarness
             using Content.Client._RF.Suil;
             public enum SuilFlexDirection { Row, Column }
             public class RfBoxContainer : UiElement { public SuilFlexDirection FlexDirection { get; set; } }
-            public class RfButton : UiElement { public bool Disabled { get; set; } public bool ToggleMode { get; set; } }
+            public sealed class RfButtonEventArgs { public bool Pressed { get; set; } public int Count { get; set; } public string NotBool => ""; }
+            public class RfButton : UiElement
+            {
+                public bool Disabled { get; set; }
+                public bool ToggleMode { get; set; }
+                public event System.Action<RfButtonEventArgs>? OnPressed;
+                public event System.Action<RfButtonEventArgs>? OnToggled;
+                public event System.Action? OnClosed;
+                public event System.EventHandler? OnWeird;
+                public event System.Func<int>? OnReturns;
+                public void RaisePressed(RfButtonEventArgs args) => OnPressed?.Invoke(args);
+                public void RaiseToggled(RfButtonEventArgs args) => OnToggled?.Invoke(args);
+                public void RaiseClosed() => OnClosed?.Invoke();
+            }
             public class RfConfirmButton : RfButton { public string? ConfirmationText { get; set; } }
             public class RfScrollContainer : RfBoxContainer { }
             public class RfTabContainer : RfBoxContainer { }

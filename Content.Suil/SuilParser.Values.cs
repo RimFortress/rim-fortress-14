@@ -87,7 +87,8 @@ public static partial class SuilParser
 
             if (stream.ConsumeNext() is not IdentToken name)
             {
-                throw ErrorAtCurrent(ref stream, context,
+                throw ErrorAtCurrent(ref stream,
+                    context,
                     $"expected an argument name, not {Describe(stream.Current)}");
             }
 

@@ -37,6 +37,43 @@ public sealed class SuilHotReloadViewTest : GameTest
         Assert.That(result.Dependencies, Does.Contain("/layout.suil"), "the globals are what the view depends on as well");
     }
 
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Handlers_Of_The_File_Replace_The_Compiled_Ones()
+    {
+        var view = new GeneratedHotReloadView();
+        var submit = view.HotSubmit;
+
+        Press(submit);
+        Assert.That(view.Submitted, Is.EqualTo(1), "the handler of the compiled code");
+        Assert.That(submit.HasSuilStyleClass("pressed"), Is.True);
+        Assert.That(view.HotNested.MinHeight, Is.EqualTo(3f));
+
+        submit.RemoveSuilStyleClass("pressed");
+
+        var result = _reload.Reload(view);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(view.HotSubmit, Is.SameAs(submit));
+
+        Press(submit);
+
+        Assert.That(view.Submitted, Is.EqualTo(2), "once: the compiled handler is off, the one of the reload is on");
+        Assert.That(submit.HasSuilStyleClass("pressed"), Is.True);
+
+        _reload.Reload(view);
+        Press(submit);
+        Assert.That(view.Submitted, Is.EqualTo(3), "and still once after another reload");
+    }
+
+    private static void Press(RfButton button)
+    {
+        var field = typeof(RfButton).GetField("OnPressed", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var args = new RfButtonEventArgs(button, new GUIBoundKeyEventArgs(
+            Robust.Shared.Input.EngineKeyFunctions.UIClick, Robust.Shared.Input.BoundKeyState.Down, default, true,
+            System.Numerics.Vector2.Zero, System.Numerics.Vector2.Zero));
+        ((Delegate?) field.GetValue(button))?.DynamicInvoke(args);
+    }
+
     /// <summary>
     /// The shape of the tree with what the file sets, which a comparison of two builds needs.
     /// </summary>
@@ -60,8 +97,12 @@ public sealed class SuilHotReloadViewTest : GameTest
 [SuilView("/_RF/tests/hot-reload-view")]
 public sealed partial class GeneratedHotReloadView : RfBoxContainer
 {
+    public int Submitted;
+
     public GeneratedHotReloadView()
     {
         InitializeComponent();
     }
+
+    private void OnHotSubmit() => Submitted++;
 }

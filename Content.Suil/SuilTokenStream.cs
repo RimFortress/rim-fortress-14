@@ -1,8 +1,7 @@
 namespace Content.Suil;
 
 /// <summary>
-/// The SUIL equivalent of <see cref="Content.Client._RF.Suil.Streams.SuilTokenStream"/>. The tokens keep
-/// their positions, so errors can point at the place of the file.
+/// The tokens keep their positions, so errors can point at the place of the file.
 /// </summary>
 public record struct SuilTokenStream(SuilToken[] Tokens, string? File = null)
 {

@@ -32,6 +32,8 @@ public sealed partial class SuilHotReload
                 reusable[id] = control;
         }
 
+        state.Controls.Clear();
+
         var previous = new Dictionary<string, PlannedElement>(StringComparer.Ordinal);
 
         if (state.Plan != null)
@@ -75,6 +77,11 @@ public sealed partial class SuilHotReload
 
         ApplyIdentity(control, plan, before);
         ApplyProperties(control, plan, before, key, state, errors);
+
+        if (plan.Id != null)
+            state.Controls[plan.Id] = control;
+
+        Subscribe(view, control, plan, state);
 
         // Everything below is built again. The controls that are kept are taken out first, so nothing is added twice.
         foreach (var child in new List<Control>(control.Children))

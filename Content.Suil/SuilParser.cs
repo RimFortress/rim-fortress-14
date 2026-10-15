@@ -4,8 +4,8 @@ namespace Content.Suil;
 
 /// <summary>
 /// A SUIL token parser, a recursive descent over the grammar of the language
-/// (see <see cref="SuilTokenizer"/> for the tokens). Written in the manner of
-/// <see cref="Content.Client._RF.Suil.SuilParser"/>: <c>Consume*</c> methods take the token stream by reference,
+/// (see <see cref="SuilTokenizer"/> for the tokens).
+/// <c>Consume*</c> methods take the token stream by reference,
 /// and the first error aborts the parsing with a <see cref="SuilParserError"/>.
 /// This file holds the file level and the elements, the selectors and the values are in the other parts.
 /// </summary>
@@ -226,6 +226,7 @@ public static partial class SuilParser
 
         string? tag;
         var properties = new List<SuilProperty>();
+        var events = new List<SuilEventHandler>();
         var propertiesConsumed = false;
 
         switch (token)
@@ -238,7 +239,7 @@ public static partial class SuilParser
                 break;
             case FunctionToken function: // row(size: 1): the properties are glued to the tag
                 tag = function.Value;
-                properties = ConsumeProperties(ref stream);
+                properties = ConsumeProperties(ref stream, events);
                 propertiesConsumed = true;
                 break;
             default:
@@ -261,7 +262,9 @@ public static partial class SuilParser
             {
                 var name = stream.ConsumeNext() switch
                 {
-                    HashToken { IsId: false } hash => throw ErrorAtCurrent(ref stream, "consuming element",
+                    HashToken { IsId: false } hash => throw ErrorAtCurrent(
+                        ref stream,
+                        "consuming element",
                         $"'#{hash.Value}' is not a valid id"),
                     HashToken hash => SuilName.Literal(hash.Value),
                     InterpolatedNameToken interpolated => new SuilName(interpolated.Parts),
@@ -284,7 +287,8 @@ public static partial class SuilParser
 
                 if (stream.ConsumeNext() is not IdentToken cls)
                 {
-                    throw ErrorAtCurrent(ref stream, "consuming element",
+                    throw ErrorAtCurrent(ref stream,
+                        "consuming element",
                         $"expected a class name, not {Describe(stream.Current)}");
                 }
 
@@ -301,7 +305,7 @@ public static partial class SuilParser
         if (!propertiesConsumed && stream.PeekNext() is LeftParenthesisToken)
         {
             stream.ConsumeNext();
-            properties = ConsumeProperties(ref stream);
+            properties = ConsumeProperties(ref stream, events);
         }
 
         var children = new List<ISuilElementNode>();
@@ -314,17 +318,18 @@ public static partial class SuilParser
             children = ConsumeElementList(ref stream);
         }
 
-        return new SuilElement(access, tag, id, classes, properties, children, position);
+        return new SuilElement(access, tag, id, classes, properties, children, position) { Events = events };
     }
 
     /// <summary>
     /// Consumes properties up to the closing parenthesis, the opening one is already consumed.
     /// props = "(" , [ prop , { "," , prop } ] , ")"
     /// prop  = ident , [ ":" , [ "?" ] , value-list ]
+    ///       | ident , "=>" , handler
     /// A property is hard by default: the styles can't change it. A "?" before the value makes it soft, the styles
     /// override it like any other property.
     /// </summary>
-    private static List<SuilProperty> ConsumeProperties(ref SuilTokenStream stream)
+    private static List<SuilProperty> ConsumeProperties(ref SuilTokenStream stream, List<SuilEventHandler>? events)
     {
         var properties = new List<SuilProperty>();
 
@@ -349,6 +354,33 @@ public static partial class SuilParser
             }
 
             stream.SkipWhitespace();
+
+            // on-pressed => @OnSubmit
+            if (stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is DelimToken { CodePoint: '>' })
+            {
+                if (events == null)
+                {
+                    throw ErrorAtNext(ref stream,
+                        "consuming properties",
+                        "an event handler is only for the properties of an element, not for a statement");
+                }
+
+                stream.ConsumeNext();
+                stream.ConsumeNext();
+                events.Add(ConsumeEventHandler(ref stream, name.Value, position));
+                stream.SkipWhitespace();
+
+                var next = stream.ConsumeNext();
+                if (next is CommaToken)
+                    continue;
+
+                if (next is RightParenthesisToken)
+                    return properties;
+
+                throw ErrorAtCurrent(ref stream,
+                    "consuming properties",
+                    $"expected ',' or ')' after a handler, not {Describe(next)}");
+            }
 
             List<ISuilValue>? value = null;
             var isSoft = false;

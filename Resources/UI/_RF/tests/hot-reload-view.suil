@@ -1,8 +1,12 @@
 // The view of SuilHotReloadViewTest: a real [SuilView] built by the generator, to see that the hot reload builds the
-// same tree as the generated code.
+// same tree as the generated code and that its handlers replace the compiled ones.
 box .hot-reload-root #hot-reload-root (min-width: 40) {
-    +button #hot-submit .primary (text: "Go", disabled)
-    box .nested {
+    +button #hot-submit .primary (text: "Go", disabled, on-pressed => {
+        @OnHotSubmit;
+        &(add .pressed);
+        #hot-nested (min-height: 3)
+    })
+    +box #hot-nested .nested {
         button .plain (text: "Plain")
     }
 }

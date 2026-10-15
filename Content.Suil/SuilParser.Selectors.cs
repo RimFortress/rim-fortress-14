@@ -283,7 +283,8 @@ public static partial class SuilParser
                     continue;
                 case InterpolatedNameToken:
                     stream.ConsumeNext();
-                    throw ErrorAtCurrent(ref stream, "consuming selector",
+                    throw ErrorAtCurrent(ref stream,
+                        "consuming selector",
                         "variables are not allowed in selectors, only in the classes and ids of elements");
                 case ColonToken:
                     stream.ConsumeNext();
@@ -379,7 +380,8 @@ public static partial class SuilParser
         {
             IdentToken ident => ident.Value,
             StringToken { Parts: { Length: 1 } parts } when !parts[0].IsVariable => parts[0].Text,
-            var other => throw ErrorAtCurrent(ref stream, context,
+            var other => throw ErrorAtCurrent(ref stream,
+                context,
                 $"the property must be a name or a string, not {Describe(other)}"),
         };
 

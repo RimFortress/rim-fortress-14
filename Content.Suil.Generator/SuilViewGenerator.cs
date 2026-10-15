@@ -113,13 +113,25 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             .Concat(SuilTagRegistry.FromReferences(compilation));
         var tags = SuilTagRegistry.Build(registrations, control, compilation, context.ReportDiagnostic);
 
+        // The fields of the views of this project, for the paths of the handlers that go through one view into another.
+        var fieldTables = new Dictionary<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?>(SymbolEqualityComparer.Default);
+
+        IReadOnlyDictionary<string, ViewField>? FieldsOfView(INamedTypeSymbol type)
+        {
+            if (fieldTables.TryGetValue(type, out var known))
+                return known;
+
+            var candidate = views.FirstOrDefault(v => SymbolEqualityComparer.Default.Equals(v.Symbol, type));
+            return fieldTables[type] = candidate == null ? null : BuildFieldTable(candidate, source, globals, tags);
+        }
+
         foreach (var view in views)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
 
             try
             {
-                GenerateView(context, compilation, view, source, globals, root!, tags, suilControl);
+                GenerateView(context, compilation, view, source, globals, root!, tags, suilControl, FieldsOfView);
             }
             catch (SuilSourceException)
             {
@@ -144,7 +156,8 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         IReadOnlyList<string> globals,
         string root,
         SuilTagRegistry tags,
-        INamedTypeSymbol? suilControl)
+        INamedTypeSymbol? suilControl,
+        Func<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?> fieldsOfView)
     {
         if (!view.IsPartialClass)
         {
@@ -186,9 +199,55 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             return;
         }
 
-        var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol);
+        var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol, fieldsOfView);
 
         context.AddSource(HintName(view.Symbol), SourceText.From(emitter.Emit(expanded.Root, path), Encoding.UTF8));
+    }
+
+    /// <summary>
+    /// The fields a view gets from its file: the elements with an id, with their access and type. A file that can't be
+    /// read gives nothing here; it is reported when its own view is generated.
+    /// </summary>
+    private static IReadOnlyDictionary<string, ViewField>? BuildFieldTable(
+        ViewCandidate view,
+        AdditionalFilesSource source,
+        IReadOnlyList<string> globals,
+        SuilTagRegistry tags)
+    {
+        try
+        {
+            var path = SuilExpander.ParseUsePath(view.Path, "reading [SuilView]", default);
+
+            if (SuilPaths.IsFolder(path) || !source.Has(path))
+                return null;
+
+            var expanded = SuilExpander.Expand(source.Load(path), source, globals);
+            var fields = new Dictionary<string, ViewField>(StringComparer.Ordinal);
+
+            void Visit(SuilElement element, bool isRoot)
+            {
+                if (!isRoot && element.Id != null
+                    && tags.TryResolve(element.Tag ?? SuilTagRegistry.UntypedTag, out var type, out _) && type != null)
+                {
+                    var id = element.Id.ToString();
+                    fields[id] = new ViewField(SuilNaming.ToPascal(id), element.Access, type);
+                }
+
+                foreach (var child in element.Children.OfType<SuilElement>())
+                {
+                    Visit(child, false);
+                }
+            }
+
+            if (expanded.Root != null)
+                Visit(expanded.Root, true);
+
+            return fields;
+        }
+        catch (Exception e) when (e is SuilSourceException or SuilExpansionError or SuilParserError or SuilTokenizeError)
+        {
+            return null;
+        }
     }
 
     private static bool TryLoadGlobals(

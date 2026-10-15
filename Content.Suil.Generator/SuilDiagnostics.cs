@@ -93,4 +93,34 @@ internal static class SuilDiagnostics
         "SUIL016",
         "Invalid [SuilView] path",
         "{0}");
+
+    public static readonly DiagnosticDescriptor UnknownEvent = Error(
+        "SUIL018",
+        "Unknown SUIL event",
+        "'{0}' has no public event '{1}' (the name of an event is the name of the member in kebab-case: OnPressed is on-pressed)");
+
+    public static readonly DiagnosticDescriptor UnsupportedEvent = Error(
+        "SUIL019",
+        "Unsupported SUIL event",
+        "The event '{0}' of '{1}' is {2}: only a delegate that returns nothing and takes nothing or one argument (Action, Action<T>) can be subscribed to");
+
+    public static readonly DiagnosticDescriptor UnknownMethod = Error(
+        "SUIL020",
+        "Unknown method in a SUIL handler",
+        "The class '{0}' has no method '{1}' that a handler can call (a method that returns nothing and takes nothing or the arguments of the event)");
+
+    public static readonly DiagnosticDescriptor BadMethodSignature = Error(
+        "SUIL021",
+        "Wrong method in a SUIL handler",
+        "The method '{0}.{1}' can't handle '{2}': it must take nothing or {3}");
+
+    public static readonly DiagnosticDescriptor UnknownTarget = Error(
+        "SUIL022",
+        "Unknown target in a SUIL handler",
+        "{0}");
+
+    public static readonly DiagnosticDescriptor BadStatement = Error(
+        "SUIL023",
+        "Invalid statement in a SUIL handler",
+        "{0}");
 }

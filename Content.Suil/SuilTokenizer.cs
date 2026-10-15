@@ -1,14 +1,13 @@
 using System.Collections.Immutable;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Diagnostics.Contracts;
 
 namespace Content.Suil;
 
 /// <summary>
-/// SUIL (Styled UI Layout) text tokenizer. It is built on <see cref="SuilCodePointStream"/> in the same way as
-/// <see cref="Content.Client._RF.Suil.SuilTokenizer"/> and keeps its zero tolerance for syntax errors:
+/// SUIL (Styled UI Layout) text tokenizer. It is built on <see cref="SuilCodePointStream"/>
+/// and keeps its zero tolerance for syntax errors:
 /// a <see cref="SuilTokenizeError"/> is thrown for anything the language can't contain.
 /// Differences from SUIL:
 /// <list type="bullet">
