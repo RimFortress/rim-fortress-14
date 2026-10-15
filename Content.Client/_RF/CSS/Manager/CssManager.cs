@@ -24,7 +24,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     private readonly SuilValueParsers _values = new();
 
-    private readonly Dictionary<Type, Dictionary<string, CssPropertyAccessor>> _properties = new();
+    private readonly SuilPropertyRegistry _registry = new();
+    private readonly SuilTagTable _tags = new();
     private readonly Dictionary<Type, Dictionary<string, CssShorthandInfo>> _shorthands = new();
 
     /// <summary>
@@ -43,6 +44,12 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </summary>
     private readonly Dictionary<Type, IReadOnlyDictionary<string, CssPropertyAccessor>> _accessorCache = new();
 
+    /// <summary>
+    /// The accessors of the registry as the engine needs them, made once.
+    /// </summary>
+    private readonly Dictionary<SuilPropertyAccessor, CssPropertyAccessor> _adapted =
+        new(ReferenceEqualityComparer.Instance);
+
 
     private CssStylesheet? _testStylesheet;
 
@@ -59,7 +66,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </summary>
     private readonly record struct PendingRule(
         IReadOnlyList<Selector> Selectors,
-        IReadOnlyList<CssDeclaration> Declarations);
+        IReadOnlyList<SuilDeclaration> Declarations);
 
     public void PostInject()
     {
@@ -133,20 +140,14 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         string propertyName,
         [NotNullWhen(true)] out CssPropertyAccessor? accessor)
     {
-        accessor = null;
-        var startType = elementType ?? typeof(CssControl);
-
-        for (var type = startType; type != null; type = type.BaseType)
+        if (!_registry.TryGet(elementType ?? typeof(CssControl), propertyName, out var found))
         {
-            if (!_properties.TryGetValue(type, out var dict)
-                || !dict.TryGetValue(propertyName, out var access))
-                continue;
-
-            accessor = access;
-            return true;
+            accessor = null;
+            return false;
         }
 
-        return false;
+        accessor = Adapt(found!);
+        return true;
     }
 
     /// <inheritdoc/>
@@ -155,30 +156,30 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (_accessorCache.TryGetValue(elementType, out var cached))
             return cached;
 
-        var chain = new List<Type>();
+        var all = new Dictionary<string, CssPropertyAccessor>(StringComparer.OrdinalIgnoreCase);
 
-        for (var type = elementType; type != null; type = type.BaseType)
+        foreach (var (name, accessor) in _registry.GetAll(elementType))
         {
-            chain.Add(type);
+            all[name] = Adapt(accessor);
         }
 
-        // Base types go first, so a property redeclared in a derived class wins.
-        var merged = new Dictionary<string, CssPropertyAccessor>(StringComparer.OrdinalIgnoreCase);
-
-        for (var i = chain.Count - 1; i >= 0; i--)
-        {
-            if (!_properties.TryGetValue(chain[i], out var dict))
-                continue;
-
-            foreach (var (name, accessor) in dict)
-            {
-                merged[name] = accessor;
-            }
-        }
-
-        return _accessorCache[elementType] = merged;
+        return _accessorCache[elementType] = all;
     }
 
+    private CssPropertyAccessor Adapt(SuilPropertyAccessor accessor)
+    {
+        if (_adapted.TryGetValue(accessor, out var adapted))
+            return adapted;
+
+        var getter = accessor.Getter;
+
+        return _adapted[accessor] = new CssPropertyAccessor(
+            accessor.ClrType,
+            (control, value) => accessor.Setter(control, value),
+            getter == null ? null : control => getter(control),
+            accessor.CustomParser,
+            accessor.Inherited);
+    }
 
     /// <inheritdoc/>
     public void UpdateStylesheet()
@@ -353,7 +354,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (control.CssComputedVariables is not { } variables || !variables.TryGet(name, out var tokens))
             return false;
 
-        var stream = CssValueConverter.Stream(tokens);
+        var stream = new SuilValueStream(tokens);
 
         if (_values.TryParse(ref stream, out value) && stream.AtEnd)
             return true;
@@ -363,33 +364,32 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <summary>
-    /// Turns CSS value text into component values by running it through the regular stylesheet parser,
-    /// so the code API accepts exactly what a stylesheet declaration accepts (including a trailing
-    /// <c>!important</c>).
+    /// Turns value text into values by running it through the regular parser of the rules, so the code API accepts
+    /// exactly what a declaration accepts (including a trailing <c>!important</c>).
     /// </summary>
     /// <returns><c>false</c> if the text isn't a single valid declaration value.</returns>
     private static bool TryTokenizeValue(
-        string cssValue,
-        [NotNullWhen(true)] out List<ICssComponentValue>? tokens,
+        string text,
+        [NotNullWhen(true)] out List<ISuilValue>? values,
         out bool important)
     {
-        tokens = null;
+        values = null;
         important = false;
 
-        var items = CssParser.ParseStylesheet($"x{{--v:{cssValue}}}").ToList();
+        try
+        {
+            // Anything that closes the block early or adds declarations (";", "}") shows up as extra items.
+            if (SuilParser.ParseFile($"x{{--v:{text}}}").Items is not [SuilRule { Declarations: [{ Name: "--v" } declaration] }])
+                return false;
 
-        if (items is not [CssQualifiedRule qualified] || qualified.Block == null)
+            values = declaration.Value;
+            important = declaration.Important;
+            return true;
+        }
+        catch (Exception e) when (e is SuilParserError or SuilTokenizeError)
+        {
             return false;
-
-        var declarations = CssParser.ParseListOfDeclarations(qualified.Block.Value.Value.ToArray()).ToList();
-
-        // Anything that closes the block early or adds declarations (";", "}") shows up as extra items.
-        if (declarations is not [CssDeclaration { Name: "--v" } declaration])
-            return false;
-
-        tokens = declaration.Value;
-        important = declaration.Important;
-        return true;
+        }
     }
 
     #endregion
@@ -448,8 +448,13 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
         foreach (var name in previouslyApplied)
         {
-            if (TryGetAppliedPropertyAccessor(controlType, name, out var accessor))
-                accessor.Value.Setter(control, accessor.Value.DefaultValue!);
+            // A property that can't be read has no original to go back to.
+            if (TryGetPropertyAccessor(controlType, name, out var accessor)
+                && control.CssOriginalValues is { } originals
+                && originals.TryGetValue(name, out var original))
+            {
+                accessor.Value.Setter(control, original!);
+            }
         }
 
         previouslyApplied.Clear();
@@ -471,6 +476,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         void Apply(CssStyleProperty property)
         {
             previouslyApplied.Remove(property.Name);
+            control.RememberOriginal(property.Name, property.Accessor);
 
             var value = property.Value;
 
@@ -678,7 +684,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     private CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
     {
         var inherited = GetInheritedVariables(control, stylesheet);
-        Dictionary<string, List<ICssComponentValue>>? declared = null;
+        Dictionary<string, List<ISuilValue>>? declared = null;
 
         // Same cascade as for regular properties: normal declarations first, then !important ones.
         // At each importance level, variables set from code (inline) sit above the stylesheet rules.
@@ -693,7 +699,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                     if (custom.Important != important)
                         continue;
 
-                    declared ??= new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
+                    declared ??= new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
                     declared[custom.Name] = custom.Value;
                 }
             }
@@ -706,7 +712,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
                 if (custom.Important != important)
                     continue;
 
-                declared ??= new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
+                declared ??= new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
                 declared[custom.Name] = custom.Value;
             }
         }
@@ -836,7 +842,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// </summary>
     private bool TryResolveShorthandValue(
         Type? targetType,
-        CssDeclaration decl,
+        SuilDeclaration decl,
         [NotNullWhen(true)] out List<CssStyleProperty>? expanded)
     {
         expanded = null;
@@ -844,7 +850,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (!TryGetShorthandInfo(targetType, decl.Name, out var info))
             return false; // not a shorthand for this type — not an error, let the caller try a regular declaration
 
-        var stream = CssValueConverter.Stream(decl.Value);
+        var stream = new SuilValueStream(decl.Value);
         var values = new Dictionary<string, object?>();
 
         // A CSS-wide keyword applies to every longhand of the shorthand.
@@ -899,7 +905,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     private bool TryResolveDeclarationValue(
         Type? targetType,
-        CssDeclaration decl,
+        SuilDeclaration decl,
         [NotNullWhen(true)] out CssPropertyAccessor? accessor,
         [NotNullWhen(true)] out string? name,
         [NotNullWhen(true)] out object? value)
@@ -908,25 +914,15 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         value = null;
         accessor = null;
 
-        var startType = targetType ?? typeof(CssControl);
-        for (var type = startType; type != null; type = type.BaseType)
-        {
-            if (!_properties.TryGetValue(type, out var dict) || !dict.TryGetValue(decl.Name, out var a))
-                continue;
-
-            accessor = a;
-            break;
-        }
-
-        if (accessor == null)
+        if (!TryGetPropertyAccessor(targetType, decl.Name, out accessor))
             return false;
 
-        var stream = CssValueConverter.Stream(decl.Value);
+        var stream = new SuilValueStream(decl.Value);
 
         // CSS-wide keywords are valid for every property and are resolved when the style is applied.
         if (CssWideKeyword.TryParse(ref stream, out var keyword))
         {
-            name = accessor.Value.PropertyName ?? decl.Name;
+            name = decl.Name;
             value = CssWideValue.For(keyword);
             return true;
         }
@@ -938,7 +934,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (!ok)
             return false;
 
-        name = accessor.Value.PropertyName ?? decl.Name;
+        name = decl.Name;
         value ??= default!; // Ok
         return true;
     }
@@ -957,130 +953,40 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     {
         var sw = new RStopwatch();
         sw.Start();
-        _properties.Clear();
         _shorthands.Clear();
-        RegisterEngineProperties();
+        _registry.Clear();
+        _tags.Clear();
 
+        // the tables the generator wrote in every assembly that has controls
+        foreach (var tablesType in _reflection.GetAllChildren<ISuilControlTables>().Where(t => !t.IsAbstract && !t.IsInterface))
+        {
+            var tables = _factory.CreateInstance<ISuilControlTables>(tablesType);
+            tables.RegisterProperties(_registry);
+            tables.RegisterTags(_tags);
+        }
+
+        // The shorthands are written by the generator into the classes that declare them.
         var styled = _reflection.GetAllChildren<AutoCssControl>()
-            // Only the types that declare properties themselves (the generator overrides AutoCssProperties there):
-            // the attribute is inherited, but a subclass without properties has nothing to register (the chain of
-            // base types is walked), and creating it may be impossible here (a XAML control needs the XAML proxy,
-            // a control may have constructor arguments).
+            // Only the types that declare shorthands themselves (the generator overrides AutoCssShorthands there):
+            // a subclass without any has nothing to register (the chain of base types is walked), and creating it may
+            // be impossible here (a XAML control needs the XAML proxy, a control may have constructor arguments).
             .Where(type => !type.IsAbstract
                            && _reflection.IsAttributeDefined(type, typeof(CssStylingAttribute))
-                           && type.GetMethod(nameof(AutoCssControl.AutoCssProperties))?.DeclaringType == type)
+                           && type.GetMethod(nameof(AutoCssControl.AutoCssShorthands))?.DeclaringType == type)
             .ToList();
 
         foreach (var type in styled)
         {
             var control = _factory.CreateInstance<AutoCssControl>(type);
-            _properties.Add(type, control.AutoCssProperties());
             _shorthands.Add(type, control.AutoCssShorthands());
         }
 
-        // Creating the controls above may have asked for the accessors of a type before its base classes were
-        // registered; such tables would lack their properties (e.g. the inherited font) for good.
+        // The tables of the types are made on demand, and the inherited ones of the controls are built from them.
         _accessorCache.Clear();
+        _adapted.Clear();
         CssControl.ResetInheritedCache();
 
-        _sawmill.Info($"{_properties.Sum(x => x.Value.Count)} properties loaded at {sw.Elapsed}");
+        _sawmill.Info($"properties and {_shorthands.Sum(x => x.Value.Count)} shorthands registered at {sw.Elapsed}");
         sw.Stop();
-    }
-
-    /// <summary>
-    /// All CSS properties for the engine's classes must be registered manually here,
-    /// since we cannot use the <see cref="SuilPropertyAttribute"/> for them.
-    /// </summary>
-    private void RegisterEngineProperties()
-    {
-        Register<Control, float>(
-            nameof(Control.SizeFlagsStretchRatio),
-            (c, v) => c.SizeFlagsStretchRatio = v,
-            c => c.SizeFlagsStretchRatio,
-            defValue: 1f);
-
-        Register<Control, float>(
-            nameof(Control.MinHeight),
-            (c, v) => c.MinHeight = v,
-            c => c.MinHeight);
-        Register<Control, float>(
-            nameof(Control.SetHeight),
-            (c, v) => c.SetHeight = v,
-            c => c.SetHeight,
-             defValue: float.NaN);
-        Register<Control, float>(
-            nameof(Control.MaxHeight),
-            (c, v) => c.MaxHeight = v,
-            c => c.MaxHeight,
-            defValue: float.PositiveInfinity);
-
-        Register<Control, float>(
-            nameof(Control.MinWidth),
-            (c, v) => c.MinWidth = v,
-            c => c.MinWidth);
-        Register<Control, float>(
-            nameof(Control.SetWidth),
-            (c, v) => c.SetWidth = v,
-            c => c.SetWidth,
-            defValue: float.NaN);
-        Register<Control, float>(
-            nameof(Control.MaxWidth),
-            (c, v) => c.MaxWidth = v,
-            c => c.MaxWidth,
-            defValue: float.PositiveInfinity);
-
-        Register<Control, bool>(
-            nameof(Control.HorizontalExpand),
-            (c, v) => c.HorizontalExpand = v,
-            c => c.HorizontalExpand,
-            defValue: false);
-        Register<Control, bool>(
-            nameof(Control.VerticalExpand),
-            (c, v) => c.VerticalExpand = v,
-            c => c.VerticalExpand,
-            defValue: false);
-
-        Register<Control, Control.HAlignment>(
-            nameof(Control.HorizontalAlignment),
-            (c, v) => c.HorizontalAlignment = v,
-            c => c.HorizontalAlignment,
-            defValue: Control.HAlignment.Stretch);
-        Register<Control, Control.VAlignment>(
-            nameof(Control.VerticalAlignment),
-            (c, v) => c.VerticalAlignment = v,
-            c => c.VerticalAlignment,
-            defValue: Control.VAlignment.Stretch);
-
-        Register<Control, Thickness>(
-            nameof(Control.Margin),
-            (c, v) => c.Margin = v,
-            c => c.Margin);
-
-        return;
-
-        void Register<TControl, TField>(
-            string fieldName,
-            Action<Control, TField> setter,
-            Func<Control, TField> getter,
-            TField defValue = default!,
-            Type? handler = null)
-        {
-            if (!_properties.TryGetValue(typeof(TControl), out var dict))
-                _properties[typeof(TControl)] = dict = new(StringComparer.OrdinalIgnoreCase);
-
-            var accessor = new CssPropertyAccessor(typeof(TField),
-                (c, v) => setter(c, (TField)v),
-                control => getter(control)!,
-                handler,
-                fieldName,
-                defValue);
-
-            if (!dict.TryAdd(CaseConversion.PascalToKebab(fieldName), accessor))
-            {
-#if !EXCEPTION_TOLERANCE
-                throw new ArgumentException($"duplicated CSS field registration for {typeof(TControl).FullName}, Field: {fieldName}");
-#endif
-            }
-        }
     }
 }

@@ -57,6 +57,9 @@ public static partial class SuilParser
                 case IdentToken { Value: "use" }:
                     items.Add(ConsumeUse(ref stream));
                     break;
+                case DelimToken { CodePoint: '@' }:
+                    items.Add(ConsumeAtRule(ref stream));
+                    break;
                 default:
                     if (LooksLikeRule(ref stream))
                     {

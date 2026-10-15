@@ -12,7 +12,7 @@ public static partial class SuilParser
     {
         switch (stream.PeekNext())
         {
-            case DelimToken { CodePoint: '.' } or HashToken or ColonToken or InterpolatedNameToken:
+            case DelimToken { CodePoint: '.' or '*' or '[' } or HashToken or ColonToken or InterpolatedNameToken:
                 return true;
             case IdentToken:
                 break;
@@ -83,6 +83,40 @@ public static partial class SuilParser
                 $"expected '{{' or ',', not {Describe(stream.Current)}");
         }
 
+        return new SuilRule(selectors, ConsumeDeclarations(ref stream), position);
+    }
+
+    /// <summary>
+    /// @font-face = "@" , "font-face" , "{" , { declaration } , "}"
+    /// </summary>
+    private static SuilFontFace ConsumeAtRule(ref SuilTokenStream stream)
+    {
+        var position = stream.PeekPosition();
+        stream.ConsumeNext(); // @
+
+        if (stream.ConsumeNext() is not IdentToken { Value: var name }
+            || !name.Equals("font-face", StringComparison.OrdinalIgnoreCase))
+        {
+            throw ErrorAtCurrent(ref stream,
+                "consuming at-rule",
+                $"only '@font-face' is supported, not {Describe(stream.Current)}");
+        }
+
+        stream.SkipWhitespace();
+
+        if (stream.ConsumeNext() is not LeftCurlyBracket)
+            throw ErrorAtCurrent(ref stream, "consuming at-rule", $"expected '{{', not {Describe(stream.Current)}");
+
+        return new SuilFontFace(ConsumeDeclarations(ref stream), position);
+    }
+
+    /// <summary>
+    /// The declarations of a block up to the closing curly bracket, the opening one is already consumed.
+    /// declaration = ident , ":" , value-list , [ "!" , "important" ] , ";"
+    /// The last ';' before '}' may be omitted, as in CSS.
+    /// </summary>
+    private static List<SuilDeclaration> ConsumeDeclarations(ref SuilTokenStream stream)
+    {
         var declarations = new List<SuilDeclaration>();
 
         while (true)
@@ -92,7 +126,7 @@ public static partial class SuilParser
             if (stream.PeekNext() is RightCurlyBracket)
             {
                 stream.ConsumeNext();
-                return new SuilRule(selectors, declarations, position);
+                return declarations;
             }
 
             var declarationPosition = stream.PeekPosition();
@@ -113,8 +147,29 @@ public static partial class SuilParser
             }
 
             var value = ConsumeValueList(ref stream, "consuming declaration", commas: true);
-            declarations.Add(new SuilDeclaration(name.Value, value, declarationPosition));
             stream.SkipWhitespace();
+
+            var important = false;
+
+            // `!important`: the declaration wins over the ones without it
+            if (stream.PeekNext() is DelimToken { CodePoint: '!' })
+            {
+                stream.ConsumeNext();
+                stream.SkipWhitespace();
+
+                if (stream.ConsumeNext() is not IdentToken { Value: var keyword }
+                    || !keyword.Equals("important", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw ErrorAtCurrent(ref stream,
+                        "consuming declaration",
+                        $"expected 'important' after '!', not {Describe(stream.Current)}");
+                }
+
+                important = true;
+                stream.SkipWhitespace();
+            }
+
+            declarations.Add(new SuilDeclaration(name.Value, value, declarationPosition, important));
 
             switch (stream.ConsumeNext())
             {
@@ -123,10 +178,6 @@ public static partial class SuilParser
                 case RightCurlyBracket:
                     stream.Reconsume();
                     continue;
-                case DelimToken { CodePoint: '!' }:
-                    throw ErrorAtCurrent(ref stream,
-                        "consuming declaration",
-                        "'!' is only for the properties of an element, styles can't be hard");
                 default:
                     throw ErrorAtCurrent(ref stream,
                         "consuming declaration",
@@ -170,23 +221,31 @@ public static partial class SuilParser
     }
 
     private static bool StartsCompoundSelector(ISuilToken token)
-        => token is IdentToken or HashToken or ColonToken or InterpolatedNameToken or DelimToken { CodePoint: '.' };
+        => token is IdentToken or HashToken or ColonToken or InterpolatedNameToken or DelimToken { CodePoint: '.' or '*' or '[' };
 
     /// <summary>
-    /// compound = ( ident , { sub } ) | sub , { sub }
-    /// sub = "#" , ident | "." , ident | ":" , ident
+    /// compound = ( ident | "*" ) , { sub } | sub , { sub }
+    /// sub = "#" , ident | "." , ident | ":" , ident | ":" , func | "[" , attribute , "]"
     /// </summary>
     private static SuilCompoundSelector ConsumeCompoundSelector(ref SuilTokenStream stream)
     {
         string? type = null;
         string? id = null;
+        var universal = false;
         var classes = new List<string>();
         var pseudoClasses = new List<string>();
+        var attributes = new List<SuilAttributeSelector>();
+        var functions = new List<SuilPseudoFunction>();
 
         if (stream.PeekNext() is IdentToken typeToken)
         {
             stream.ConsumeNext();
             type = typeToken.Value;
+        }
+        else if (stream.PeekNext() is DelimToken { CodePoint: '*' })
+        {
+            stream.ConsumeNext();
+            universal = true;
         }
 
         while (true)
@@ -223,25 +282,149 @@ public static partial class SuilParser
                 case ColonToken:
                     stream.ConsumeNext();
 
-                    if (stream.ConsumeNext() is not IdentToken pseudo)
+                    switch (stream.ConsumeNext())
                     {
-                        throw ErrorAtCurrent(ref stream,
-                            "consuming selector",
-                            $"expected a pseudo-class name, not {Describe(stream.Current)}");
+                        case IdentToken pseudo:
+                            pseudoClasses.Add(pseudo.Value);
+                            continue;
+                        case FunctionToken function:
+                            functions.Add(ConsumePseudoFunction(ref stream, function.Value));
+                            continue;
+                        default:
+                            throw ErrorAtCurrent(ref stream,
+                                "consuming selector",
+                                $"expected a pseudo-class name, not {Describe(stream.Current)}");
                     }
-
-                    pseudoClasses.Add(pseudo.Value);
+                case DelimToken { CodePoint: '[' }:
+                    stream.ConsumeNext();
+                    attributes.Add(ConsumeAttributeSelector(ref stream));
                     continue;
             }
 
-            if (type == null && id == null && classes.Count == 0 && pseudoClasses.Count == 0)
+            if (type == null && !universal && id == null && classes.Count == 0 && pseudoClasses.Count == 0
+                && attributes.Count == 0 && functions.Count == 0)
             {
                 throw ErrorAtNext(ref stream,
                     "consuming selector",
                     $"expected a selector, not {Describe(stream.PeekNext())}");
             }
 
-            return new SuilCompoundSelector(type, id, classes, pseudoClasses);
+            return new SuilCompoundSelector(type, id, classes, pseudoClasses)
+            {
+                Universal = universal,
+                Attributes = attributes,
+                Functions = functions,
+            };
         }
+    }
+
+    /// <summary>
+    /// The arguments of <c>:name(</c>, the parenthesis is already consumed:
+    /// <c>nth-child(An+B)</c>, <c>nth-last-child</c>, <c>nth-of-type</c>, <c>nth-last-of-type</c>,
+    /// <c>not(selectors)</c> and <c>is(selectors)</c>.
+    /// </summary>
+    private static SuilPseudoFunction ConsumePseudoFunction(ref SuilTokenStream stream, string name)
+    {
+        const string context = "consuming selector";
+
+        switch (name.ToLowerInvariant())
+        {
+            case "nth-child" or "nth-last-child" or "nth-of-type" or "nth-last-of-type":
+                var function = ConsumeFunction(ref stream, name, context);
+
+                if (!SuilAnbParser.TryParse(SuilValueStream.Flatten(function.Arguments), out var anb))
+                    throw ErrorAtCurrent(ref stream, context, $"invalid An+B in {name}()");
+
+                return new SuilPseudoFunction(name.ToLowerInvariant(), anb, null);
+            case "not" or "is":
+                var selectors = new List<SuilSelector>();
+
+                while (true)
+                {
+                    stream.SkipWhitespace();
+                    selectors.Add(ConsumeSelector(ref stream));
+                    stream.SkipWhitespace();
+
+                    var token = stream.ConsumeNext();
+                    if (token is CommaToken)
+                        continue;
+
+                    if (token is RightParenthesisToken)
+                        return new SuilPseudoFunction(name.ToLowerInvariant(), null, selectors);
+
+                    throw ErrorAtCurrent(ref stream, context, $"expected ',' or ')', not {Describe(token)}");
+                }
+            default:
+                throw ErrorAtCurrent(ref stream, context, $"unknown pseudo-class function ':{name}()'");
+        }
+    }
+
+    /// <summary>
+    /// <c>[name]</c>, <c>[name=value]</c> and <c>~= |= ^= $= *=</c>, with an optional <c>i</c> or <c>s</c> flag.
+    /// The bracket is already consumed.
+    /// </summary>
+    private static SuilAttributeSelector ConsumeAttributeSelector(ref SuilTokenStream stream)
+    {
+        const string context = "consuming attribute selector";
+
+        stream.SkipWhitespace();
+
+        var name = stream.ConsumeNext() switch
+        {
+            IdentToken ident => ident.Value,
+            StringToken { Parts: { Length: 1 } parts } when !parts[0].IsVariable => parts[0].Text,
+            var other => throw ErrorAtCurrent(ref stream, context,
+                $"the property must be a name or a string, not {Describe(other)}"),
+        };
+
+        stream.SkipWhitespace();
+
+        if (stream.PeekNext() is DelimToken { CodePoint: ']' })
+        {
+            stream.ConsumeNext();
+            return new SuilAttributeSelector(name, SuilAttributeOperator.Exists, new List<ISuilValue>(), false);
+        }
+
+        var op = stream.ConsumeNext() switch
+        {
+            DelimToken { CodePoint: '=' } => SuilAttributeOperator.Equals,
+            DelimToken { CodePoint: '~' } when stream.ConsumeNext() is DelimToken { CodePoint: '=' } => SuilAttributeOperator.WhitespaceList,
+            DelimToken { CodePoint: '|' } when stream.ConsumeNext() is DelimToken { CodePoint: '=' } => SuilAttributeOperator.HyphenList,
+            DelimToken { CodePoint: '^' } when stream.ConsumeNext() is DelimToken { CodePoint: '=' } => SuilAttributeOperator.StartsWith,
+            DelimToken { CodePoint: '$' } when stream.ConsumeNext() is DelimToken { CodePoint: '=' } => SuilAttributeOperator.EndsWith,
+            DelimToken { CodePoint: '*' } when stream.ConsumeNext() is DelimToken { CodePoint: '=' } => SuilAttributeOperator.Contains,
+            var other => throw ErrorAtCurrent(ref stream, context, $"unknown attribute selector operator at {Describe(other)}"),
+        };
+
+        var values = new List<ISuilValue>();
+
+        while (true)
+        {
+            stream.SkipWhitespace();
+
+            if (stream.PeekNext() is DelimToken { CodePoint: ']' })
+            {
+                stream.ConsumeNext();
+                break;
+            }
+
+            if (stream.PeekNext() is EofToken)
+                throw ErrorAtNext(ref stream, context, "expected ']', not end of file");
+
+            values.Add(ConsumeValue(ref stream, context));
+        }
+
+        // a last `i` or `s` is the flag: case-insensitive or the default
+        var ignoreCase = false;
+        if (values.Count >= 2 && values[^1] is SuilIdent { Value: var flag } && flag is "i" or "I" or "s" or "S")
+        {
+            ignoreCase = flag is "i" or "I";
+            values.RemoveAt(values.Count - 1);
+        }
+
+        if (values.Count == 0)
+            throw ErrorAtCurrent(ref stream, context, "expected a value to compare with");
+
+        return new SuilAttributeSelector(name, op, values, ignoreCase);
     }
 }

@@ -43,6 +43,13 @@ public interface ICssManager : ICssPropertyResolver, ISuilValues
     void LoadString(string cssText);
 
     /// <summary>
+    /// Loads rules written in SUIL for the tests, like <see cref="LoadString"/> does for CSS text.
+    /// </summary>
+    /// <param name="suil">The text of a .suil file; it may have <c>let</c>, templates and, with a source, <c>use</c>.</param>
+    /// <param name="source">Where <c>use</c> takes the files from.</param>
+    void LoadSuilString(string suil, ISuilFileSource? source = null);
+
+    /// <summary>
     /// Creates a style sheet from all loaded CSS files.
     /// </summary>
     CssStylesheet BuildStylesheet();
@@ -219,21 +226,16 @@ public interface ICssPropertyResolver
 }
 
 /// <summary>
-/// A struct that provides access to Control fields via CSS.
+/// A struct that provides access to Control fields via styles.
 /// </summary>
 /// <param name="ClrType">Type of the target field's value.</param>
-/// <param name="Setter">An action triggered when the value of a CSS property changes.</param>
-/// <param name="Getter">A function used to retrieve the value of a CSS property.</param>
-/// <param name="CustomParser">The type of custom parser for CSS values; if null, the default parser is used.</param>
-/// <param name="PropertyName">
-/// A custom field name that will be used to create a <see cref="StyleProperty"/>;
-/// if null, the field name converted to kebab case will be used.
-/// </param>
+/// <param name="Setter">An action triggered when the value of a property changes.</param>
+/// <param name="Getter">A function used to retrieve the value of a property; <c>null</c> for a property that can only be set.</param>
+/// <param name="CustomParser">The type of custom parser for the values; if null, the default parser is used.</param>
+/// <param name="Inherited">Does a control without a value of its own take the one of its ancestor.</param>
 public readonly record struct CssPropertyAccessor(
     Type ClrType,
     Action<Control, object> Setter,
-    Func<Control, object> Getter,
+    Func<Control, object?>? Getter,
     Type? CustomParser,
-    string? PropertyName = null,
-    object? DefaultValue = null,
     bool Inherited = false);

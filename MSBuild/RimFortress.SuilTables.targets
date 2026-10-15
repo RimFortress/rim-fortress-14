@@ -1,0 +1,14 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <!--
+  The SUIL generator for a project that is not the game: it writes the property tables of the controls of the project
+  (the types of the language itself come from Content.Client). The attributes it adds are the same as the ones of
+  Content.Client, which the project can see, so the duplicates are not an error.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)\..\Content.Suil.Generator\Content.Suil.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+  </ItemGroup>
+</Project>

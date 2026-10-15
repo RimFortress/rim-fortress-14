@@ -360,7 +360,7 @@ public enum AttributeMatchOperator
 /// </remarks>
 // TODO: style update on property changed
 public sealed class AttributeSelector(
-    Func<Control, object> getter,
+    Func<Control, object?> getter,
     AttributeMatchOperator op,
     object? comparisonValue,
     StringComparison stringComparison = StringComparison.Ordinal) : Selector
@@ -375,7 +375,7 @@ public sealed class AttributeSelector(
         if (comparisonValue is not string target)
             return Equals(current, comparisonValue);
 
-        var str = (string)current;
+        var str = (string?)current ?? string.Empty;
         return op switch
         {
             AttributeMatchOperator.Equals => string.Equals(str, target, stringComparison),

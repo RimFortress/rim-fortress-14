@@ -125,6 +125,36 @@ internal sealed class SuilTagRegistry
     }
 
     /// <summary>
+    /// Every tag and the type it stands for: the registered names, and the default names of the types that have no
+    /// registered name. <paramref name="owner"/>, if given, limits the types to the ones of the assembly.
+    /// </summary>
+    public IEnumerable<(string Tag, INamedTypeSymbol Type)> Entries(IAssemblySymbol? owner)
+    {
+        foreach (var pair in _byTag)
+        {
+            foreach (var type in pair.Value)
+            {
+                if (owner == null || SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, owner))
+                    yield return (pair.Key, type);
+            }
+        }
+
+        _defaults ??= BuildDefaults();
+
+        foreach (var pair in _defaults)
+        {
+            foreach (var type in pair.Value)
+            {
+                if (_explicitTypes.Contains(type))
+                    continue;
+
+                if (owner == null || SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, owner))
+                    yield return (pair.Key, type);
+            }
+        }
+    }
+
+    /// <summary>
     /// Finds the type of a tag: a registered name first, then the default name (the class name in kebab-case).
     /// Several different types under one tag are not resolved: <paramref name="ambiguous"/> has them.
     /// </summary>

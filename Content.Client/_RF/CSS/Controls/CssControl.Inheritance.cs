@@ -111,9 +111,10 @@ public partial class CssControl
                 if (!TryGetInheritedValue(parent, property.Name, out var value))
                     continue;
 
-                if (ValueEquals(property.Accessor.Getter(this), value))
+                if (ValueEquals(property.Accessor.Getter?.Invoke(this), value))
                     continue;
 
+                RememberOriginal(property.Name, property.Accessor);
                 property.Accessor.Setter(this, value!);
             }
         }
@@ -135,7 +136,7 @@ public partial class CssControl
         for (var i = 0; i < snapshot.Length; i++)
         {
             var property = inherited.All[i];
-            snapshot[i] = ComputeInheritableValue(property.Name, property.Accessor.Getter(this));
+            snapshot[i] = ComputeInheritableValue(property.Name, property.Accessor.Getter?.Invoke(this));
 
             if (!changed && !ValueEquals(snapshot[i], _inheritedSnapshot![i]))
                 changed = true;
@@ -168,11 +169,12 @@ public partial class CssControl
                 continue;
 
             if (!TryGetInheritedFromParent(name, out var value))
-                value = own.DefaultValue;
+                CssOriginalValues.TryGetOriginal(name, out value);
 
-            if (ValueEquals(own.Getter(this), value))
+            if (ValueEquals(own.Getter?.Invoke(this), value))
                 continue;
 
+            RememberOriginal(name, own);
             own.Setter(this, value!);
         }
     }
@@ -191,7 +193,7 @@ public partial class CssControl
             if (!control.TryFindAccessor(cssName, out var accessor))
                 continue;
 
-            value = control.ComputeInheritableValue(cssName, accessor.Getter(control));
+            value = control.ComputeInheritableValue(cssName, accessor.Getter?.Invoke(control));
             return true;
         }
 
@@ -254,7 +256,7 @@ public partial class CssControl
             if (!control.GetInheritedProperties().Accessors.TryGetValue(name, out var accessor))
                 continue;
 
-            value = control.ComputeInheritableValue(name, accessor.Getter(control));
+            value = control.ComputeInheritableValue(name, accessor.Getter?.Invoke(control));
             return true;
         }
 

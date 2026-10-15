@@ -60,7 +60,16 @@ public sealed record SuilRule(
     List<SuilDeclaration> Declarations,
     SuilPosition Position) : ISuilTopLevelItem;
 
-public sealed record SuilDeclaration(string Name, List<ISuilValue> Value, SuilPosition Position);
+/// <summary>
+/// <c>name: value;</c>. <paramref name="Important"/> is <c>!important</c>: the declaration wins over the ones without it,
+/// whatever their specificity.
+/// </summary>
+/// <summary>
+/// <c>@font-face { font-family: ...; src: url("..."); }</c>
+/// </summary>
+public sealed record SuilFontFace(List<SuilDeclaration> Descriptors, SuilPosition Position) : ISuilTopLevelItem;
+
+public sealed record SuilDeclaration(string Name, List<ISuilValue> Value, SuilPosition Position, bool Important = false);
 
 /// <summary>
 /// Compound selectors joined by combinators, left to right. The combinator of the first step is
@@ -81,7 +90,63 @@ public sealed record SuilCompoundSelector(
     string? Type,
     string? Id,
     List<string> Classes,
-    List<string> PseudoClasses);
+    List<string> PseudoClasses)
+{
+    /// <summary>
+    /// <c>*</c>: any element.
+    /// </summary>
+    public bool Universal { get; init; }
+
+    /// <summary>
+    /// <c>[property=value]</c>
+    /// </summary>
+    public List<SuilAttributeSelector> Attributes { get; init; } = new();
+
+    /// <summary>
+    /// <c>:nth-child(2n+1)</c>, <c>:not(.a, .b)</c> and the like.
+    /// </summary>
+    public List<SuilPseudoFunction> Functions { get; init; } = new();
+}
+
+public enum SuilAttributeOperator
+{
+    /// <summary><c>[name]</c></summary>
+    Exists,
+
+    /// <summary><c>=</c></summary>
+    Equals,
+
+    /// <summary><c>*=</c></summary>
+    Contains,
+
+    /// <summary><c>^=</c></summary>
+    StartsWith,
+
+    /// <summary><c>$=</c></summary>
+    EndsWith,
+
+    /// <summary><c>~=</c></summary>
+    WhitespaceList,
+
+    /// <summary><c>|=</c></summary>
+    HyphenList,
+}
+
+/// <summary>
+/// <c>[name op value i]</c>, matched against the property of a control. <paramref name="Value"/> is empty for
+/// <see cref="SuilAttributeOperator.Exists"/>.
+/// </summary>
+public sealed record SuilAttributeSelector(
+    string Name,
+    SuilAttributeOperator Operator,
+    List<ISuilValue> Value,
+    bool IgnoreCase);
+
+/// <summary>
+/// A pseudo-class with arguments: <paramref name="Anb"/> for <c>nth-child</c>, <c>nth-last-child</c>, <c>nth-of-type</c>
+/// and <c>nth-last-of-type</c>, <paramref name="Selectors"/> for <c>not</c> and <c>is</c>.
+/// </summary>
+public sealed record SuilPseudoFunction(string Name, SuilAnb? Anb, List<SuilSelector>? Selectors);
 
 // ---- Elements ----
 

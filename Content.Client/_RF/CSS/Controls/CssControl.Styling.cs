@@ -6,6 +6,24 @@ namespace Content.Client._RF.CSS;
 public partial class CssControl
 {
     /// <summary>
+    /// What the control had in the properties the styles have changed, before the first change: this is what a
+    /// property goes back to when no rule sets it any more, and what <c>initial</c> is. Filled by the style manager.
+    /// </summary>
+    internal Dictionary<string, object?>? CssOriginalValues;
+
+    /// <summary>
+    /// Remembers what the control has in a property before the styles (a rule or the inheritance) change it, once.
+    /// </summary>
+    internal void RememberOriginal(string name, CssPropertyAccessor accessor)
+    {
+        if (accessor.Getter is not { } getter)
+            return;
+
+        CssOriginalValues ??= new Dictionary<string, object?>(StringComparer.Ordinal);
+        CssOriginalValues.TryAdd(name, getter(this));
+    }
+
+    /// <summary>
     /// Applied-property bookkeeping for full UpdateStyle(control) calls.
     /// </summary>
     internal HashSet<string>? CssLastAppliedProperties;

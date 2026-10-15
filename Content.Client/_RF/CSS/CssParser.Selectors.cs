@@ -344,7 +344,11 @@ public static partial class CssParser
                     if (blockStream.ConsumeNext() != null)
                         return Exception("unexpected content after attribute selector value, expected ']'");
 
-                    extraSelectors.Add(new AttributeSelector(accessor.Value.Getter, op.Value, comparisonValue, comparison));
+                    // a property that can only be set has nothing to compare
+                    if (accessor.Value.Getter is not { } attributeGetter)
+                        return Exception($"property '{attrName}' can't be read, so it can't be used in an attribute selector");
+
+                    extraSelectors.Add(new AttributeSelector(attributeGetter, op.Value, comparisonValue, comparison));
                     break;
             }
         }

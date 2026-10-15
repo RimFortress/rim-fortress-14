@@ -5,6 +5,8 @@
   Resources/UI/Lobby/Screen.suil is written as /Lobby/Screen (the extension is optional).
   -->
   <PropertyGroup>
+    <!-- The tables of the game include the controls of the engine and of the referenced assemblies. -->
+    <SuilIncludeReferencedControls>true</SuilIncludeReferencedControls>
     <SuilRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'Resources', 'UI'))</SuilRoot>
   </PropertyGroup>
 
@@ -12,6 +14,7 @@
     <!-- The generator reads them as additional files; an edit of one of them regenerates the views. -->
     <AdditionalFiles Include="$(SuilRoot)**/*.suil" />
     <CompilerVisibleProperty Include="SuilRoot" />
+    <CompilerVisibleProperty Include="SuilIncludeReferencedControls" />
   </ItemGroup>
 
   <ItemGroup>

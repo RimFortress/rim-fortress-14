@@ -21,6 +21,17 @@ public sealed record SuilPropertyAccessor(
     bool Inherited);
 
 /// <summary>
+/// The generated tables of the controls of one assembly: their properties and their tags. Every assembly that the
+/// generator runs on has a class that implements it; the style manager finds them all and lets each register its controls.
+/// </summary>
+public interface ISuilControlTables
+{
+    void RegisterProperties(SuilPropertyRegistry registry);
+
+    void RegisterTags(SuilTagTable tags);
+}
+
+/// <summary>
 /// The properties of the control types. A type has the properties it declares itself, the ones of its base types
 /// are looked for up the chain, and a property of a derived type hides the one of the base type with the same name.
 /// </summary>
@@ -37,6 +48,16 @@ public sealed class SuilPropertyRegistry
     {
         _factories[declaringType] = create;
         _declared.Remove(declaringType);
+        _merged.Clear();
+    }
+
+    /// <summary>
+    /// Forgets everything.
+    /// </summary>
+    public void Clear()
+    {
+        _factories.Clear();
+        _declared.Clear();
         _merged.Clear();
     }
 

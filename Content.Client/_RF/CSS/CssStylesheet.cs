@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
 
@@ -368,12 +369,12 @@ public sealed class CssStylesheet
 public readonly record struct CssStyleRule(Selector Selector, IReadOnlyList<CssStyleProperty> Properties)
 {
     /// <summary>
-    /// Custom property declarations (<c>--name: ...</c>) of this rule, as raw tokens, in source order.
+    /// Custom property declarations (<c>--name: ...</c>) of this rule, as raw values, in source order.
     /// </summary>
     public IReadOnlyList<CssCustomProperty> CustomProperties { get; init; } = [];
 
     /// <summary>
-    /// Declarations whose values contain <c>var()</c>. Their tokens are expanded and parsed
+    /// Declarations whose values contain <c>var()</c>. Their values are expanded and parsed
     /// every time the rule is applied to a control, using that control's computed variables.
     /// </summary>
     public IReadOnlyList<CssDeferredDeclaration> DeferredDeclarations { get; init; } = [];
@@ -406,20 +407,20 @@ public readonly record struct CssStyleProperty(
     bool Important = false);
 
 /// <summary>
-/// A custom property declaration (<c>--name: tokens</c>) with its unparsed value.
+/// A custom property declaration (<c>--name: values</c>) with its unparsed value.
 /// </summary>
 /// <param name="Name">Name including the leading <c>--</c>.</param>
-/// <param name="Value">Raw value tokens; may contain <c>var()</c>.</param>
+/// <param name="Value">Raw values; may contain <c>var()</c>.</param>
 /// <param name="Important">Was the declaration marked <c>!important</c>?</param>
-public readonly record struct CssCustomProperty(string Name, List<ICssComponentValue> Value, bool Important = false);
+public readonly record struct CssCustomProperty(string Name, List<ISuilValue> Value, bool Important = false);
 
 /// <summary>
 /// A declaration (regular property or shorthand) whose value contains <c>var()</c>.
 /// </summary>
-/// <param name="Declaration">The declaration with raw, unexpanded tokens.</param>
+/// <param name="Declaration">The declaration with raw, unexpanded values.</param>
 /// <param name="ElementType">Element type of the rule's selector, used to resolve property accessors.</param>
 /// <param name="Order">Index of the source declaration.</param>
-public readonly record struct CssDeferredDeclaration(CssDeclaration Declaration, Type? ElementType, int Order);
+public readonly record struct CssDeferredDeclaration(SuilDeclaration Declaration, Type? ElementType, int Order);
 
 
 /// <summary>

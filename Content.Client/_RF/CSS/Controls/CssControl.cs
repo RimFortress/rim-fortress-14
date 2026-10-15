@@ -253,19 +253,6 @@ public partial class CssControl : AutoCssControl
 public abstract class AutoCssControl : Control
 {
     /// <summary>
-    /// The method through which CssPropertiesGenerator adds
-    /// CSS properties extracted from this class's <see cref="SuilPropertyAttribute"/>,
-    /// and through which <see cref="ICssManager"/> then builds the style sheet.
-    /// </summary>
-    /// <remarks>
-    /// You should never manually modify the contents of this method.
-    /// </remarks>
-    public virtual Dictionary<string, CssPropertyAccessor> AutoCssProperties()
-    {
-        return new();
-    }
-
-    /// <summary>
     /// Returns every CSS shorthand this class declares via
     /// <see cref="SuilShorthandAttribute"/>, keyed by shorthand CSS
     /// name (e.g. "background").

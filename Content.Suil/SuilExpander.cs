@@ -215,6 +215,13 @@ public static class SuilExpander
                     case SuilRule rule:
                         _rules.Add(ExpandRule(rule, scope));
                         break;
+                    case SuilFontFace fontFace:
+                        _rules.Add(new SuilFontFace(
+                            fontFace.Descriptors
+                                .Select(d => d with { Value = ExpandValues(d.Value, scope, d.Position) })
+                                .ToList(),
+                            fontFace.Position));
+                        break;
                 }
             }
 
@@ -324,7 +331,7 @@ public static class SuilExpander
         private SuilRule ExpandRule(SuilRule rule, Scope? scope)
         {
             var declarations = rule.Declarations
-                .Select(d => new SuilDeclaration(d.Name, ExpandValues(d.Value, scope, d.Position), d.Position))
+                .Select(d => d with { Value = ExpandValues(d.Value, scope, d.Position) })
                 .ToList();
 
             return new SuilRule(rule.Selectors, declarations, rule.Position);

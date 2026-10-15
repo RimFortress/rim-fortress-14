@@ -30,22 +30,33 @@ public sealed partial class CssManager
 
         inherits = keyword == CssWideKeyword.Inherit;
 
+        control.CssOriginalValues.TryGetOriginal(property.Name, out var original);
+
         if (!inherits)
-            return accessor.DefaultValue;
+            return original;
 
         // The root of the CSS tree has nothing to inherit from, so inherit is initial there.
-        return control.TryGetInheritedFromParent(property.Name, out var value) ? value : accessor.DefaultValue;
+        return control.TryGetInheritedFromParent(property.Name, out var value) ? value : original;
     }
 
     /// <summary>
-    /// Finds the accessor of an applied property. Applied names are CSS names for generated properties,
-    /// but the field names (<c>MinHeight</c>) for the properties registered for the engine controls,
-    /// which are stored under their kebab-case names (<c>min-height</c>).
+    /// Finds the accessor of an applied property by its name.
     /// </summary>
     private bool TryGetAppliedPropertyAccessor(
         Type type,
         string appliedName,
         [NotNullWhen(true)] out CssPropertyAccessor? accessor)
-        => TryGetPropertyAccessor(type, appliedName, out accessor)
-           || TryGetPropertyAccessor(type, CaseConversion.PascalToKebab(appliedName), out accessor);
+        => TryGetPropertyAccessor(type, appliedName, out accessor);
+}
+
+internal static class CssOriginalValuesExtensions
+{
+    /// <summary>
+    /// The value a control had in a property before the styles changed it.
+    /// </summary>
+    public static bool TryGetOriginal(this Dictionary<string, object?>? originals, string name, out object? value)
+    {
+        value = null;
+        return originals != null && originals.TryGetValue(name, out value);
+    }
 }

@@ -207,6 +207,10 @@ public static class SuilTokenizer
                 var isId = IsIdentStart(stream.PeekNext());
                 return new HashToken(CodePointsToString(stream.ConsumeWhile(IsIdentChar)), isId);
             case 0x0024: // $
+                // `$=` is the operator of an attribute selector, not a localization key
+                if (stream.PeekNext() == 0x003D)
+                    return new DelimToken(cp);
+
                 return ConsumeLocKey(ref stream);
             case 0x0025: // %
                 return ConsumeContentSlot(ref stream);
@@ -220,8 +224,9 @@ public static class SuilTokenizer
                     if (cp == 0x002E && NameHasVariable(ref stream))
                         return ConsumeInterpolatedName(ref stream, cp);
 
-                    // a name with a leading hyphen, like -rf-text-outline-width
-                    if (cp == 0x002D && IsIdentStart(stream.PeekNext()))
+                    // a name with a leading hyphen, like -rf-text-outline-width, and a custom property, like --gold
+                    if (cp == 0x002D && (IsIdentStart(stream.PeekNext())
+                                         || stream.PeekNext() == 0x002D && IsIdentChar(stream.PeekNext(2))))
                     {
                         stream.Reconsume();
                         return ConsumeIdentLikeToken(ref stream);

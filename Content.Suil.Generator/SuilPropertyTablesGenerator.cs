@@ -8,16 +8,26 @@ namespace Content.Suil.Generator;
 /// settable property and field of every UI control, the ones of the project and the ones of the engine and the game
 /// (the <c>Content</c> and <c>Robust</c> namespaces). The runtime can't find them with reflection, and the engine
 /// classes can't be marked, so nothing needs a mark: <see cref="SuilPropertyAttribute"/> only changes the name,
-/// the parser and the inheritance of a member.
+/// the parser and the inheritance of a member. The exception is a member that is not public: the table can't reach it,
+/// so one with the attribute is registered from the class itself (it must be partial), see <c>SuilAddProperties</c>.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
 {
     private const string ControlName = "Robust.Client.UserInterface.Control";
+    private const string TablesInterfaceName = "Content.Suil.ISuilControlTables";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider.Select(static (compilation, ct) => Build(compilation, ct));
+        // A project describes the controls it declares itself. Only the game also takes the ones of the engine and of the
+        // other assemblies it references (build property SuilIncludeReferencedControls), so no type has two tables.
+        var includeReferenced = context.AnalyzerConfigOptionsProvider.Select(static (options, _) =>
+            options.GlobalOptions.TryGetValue("build_property.SuilIncludeReferencedControls", out var value)
+            && value.Equals("true", StringComparison.OrdinalIgnoreCase));
+
+        var source = context.CompilationProvider
+            .Combine(includeReferenced)
+            .Select(static (pair, ct) => Build(pair.Left, pair.Right, ct));
 
         context.RegisterSourceOutput(source, static (ctx, text) =>
         {
@@ -26,12 +36,12 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
         });
     }
 
-    private static string? Build(Compilation compilation, CancellationToken cancellationToken)
+    private static string? Build(Compilation compilation, bool includeReferenced, CancellationToken cancellationToken)
     {
         var control = compilation.GetTypeByMetadataName(ControlName);
 
         // a project without the UI (the server, the shared code) has nothing to write
-        if (control == null)
+        if (control == null || compilation.GetTypeByMetadataName(TablesInterfaceName) == null)
             return null;
 
         var types = new List<INamedTypeSymbol>();
@@ -68,10 +78,13 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
 
         Visit(compilation.Assembly.GlobalNamespace);
 
-        foreach (var root in compilation.GlobalNamespace.GetNamespaceMembers())
+        if (includeReferenced)
         {
-            if (root.Name is "Content" or "Robust")
-                Visit(root);
+            foreach (var root in compilation.GlobalNamespace.GetNamespaceMembers())
+            {
+                if (root.Name is "Content" or "Robust")
+                    Visit(root);
+            }
         }
 
         var sb = new StringBuilder();
@@ -81,41 +94,67 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
         sb.AppendLine("#nullable disable");
         sb.AppendLine("#pragma warning disable");
         sb.AppendLine();
+        // one class per assembly: the tables of every assembly the generator runs on are found by the interface
+        var className = "SuilPropertyTables_" + new string((compilation.AssemblyName ?? "Assembly")
+            .Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
+
         sb.AppendLine("namespace Content.Suil");
         sb.AppendLine("{");
-        sb.AppendLine("    internal static class SuilPropertyTables");
+        sb.AppendLine($"    public sealed class {className} : global::Content.Suil.ISuilControlTables");
         sb.AppendLine("    {");
-        sb.AppendLine("        public static void Register(global::Content.Suil.SuilPropertyRegistry registry)");
+        sb.AppendLine("        public void RegisterProperties(global::Content.Suil.SuilPropertyRegistry registry)");
         sb.AppendLine("        {");
+
+        var partials = new StringBuilder();
 
         foreach (var type in types.OrderBy(t => t.ToDisplayString(), StringComparer.Ordinal))
         {
-            var members = Members(type, compilation);
+            var members = Members(type, compilation, out var hidden);
+            var hasHidden = hidden.Count > 0 && IsPartialChain(type);
 
-            if (members.Count == 0)
+            if (members.Count == 0 && !hasHidden)
                 continue;
 
             var typeName = type.ToDisplayString(Format);
-            sb.AppendLine($"            registry.Register(typeof({typeName}), static () => new global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilPropertyAccessor>");
+            sb.AppendLine($"            registry.Register(typeof({typeName}), static () =>");
             sb.AppendLine("            {");
+            sb.AppendLine("                var table = new global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilPropertyAccessor>();");
 
             foreach (var member in members)
             {
-                sb.AppendLine($"                [{Literal(member.Name)}] = new global::Content.Suil.SuilPropertyAccessor(");
-                sb.AppendLine($"                    {Literal(member.Name)}, {Literal(member.MemberName)}, typeof({member.TypeName}),");
-                sb.AppendLine($"                    static (c, v) => (({typeName}) c).{member.MemberName} = ({member.TypeName}) v,");
-                sb.AppendLine(member.CanRead
-                    ? $"                    static c => (object) (({typeName}) c).{member.MemberName},"
-                    : "                    null,");
-                sb.AppendLine($"                    {(member.Parser == null ? "null" : $"typeof({member.Parser})")}, {(member.Inherited ? "true" : "false")}),");
+                WriteAccessor(sb, "                ", "table", typeName, member);
             }
 
+            if (hasHidden)
+                sb.AppendLine($"                {typeName}.SuilAddProperties(table);");
+
+            sb.AppendLine("                return table;");
             sb.AppendLine("            });");
+
+            if (hasHidden)
+                WritePartial(partials, type, typeName, hidden);
+        }
+
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine("        public void RegisterTags(global::Content.Suil.SuilTagTable tags)");
+        sb.AppendLine("        {");
+
+        // the project describes its own controls; the game also the ones it references
+        var owner = includeReferenced ? null : compilation.Assembly;
+        var registry = SuilTagRegistry.Build(CollectTagRegistrations(compilation, types), control, compilation, _ => { });
+
+        foreach (var (tag, type) in registry.Entries(owner)
+                     .OrderBy(e => e.Tag, StringComparer.Ordinal)
+                     .ThenBy(e => e.Type.ToDisplayString(), StringComparer.Ordinal))
+        {
+            sb.AppendLine($"            tags.Add({Literal(tag)}, typeof({type.ToDisplayString(Format)}));");
         }
 
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine("}");
+        sb.Append(partials);
         return sb.ToString();
     }
 
@@ -134,34 +173,159 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
                && SuilTagRegistry.Derives(type, control);
     }
 
+    /// <summary>
+    /// The custom tags: [SuilTag] on the assembly and on the classes, and the Name of [SuilView].
+    /// </summary>
+    private static List<SuilTagRegistration> CollectTagRegistrations(Compilation compilation, List<INamedTypeSymbol> types)
+    {
+        var result = new List<SuilTagRegistration>();
+
+        foreach (var attribute in compilation.Assembly.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString() != SuilViewAttributeSource.TagMetadataName)
+                continue;
+
+            if (attribute.ConstructorArguments is [{ Value: string name }, { Value: INamedTypeSymbol type }])
+                result.Add(new SuilTagRegistration(name, type, Location.None));
+        }
+
+        foreach (var type in types)
+        {
+            foreach (var attribute in type.GetAttributes())
+            {
+                switch (attribute.AttributeClass?.ToDisplayString())
+                {
+                    case SuilViewAttributeSource.TagMetadataName
+                        when attribute.ConstructorArguments is [{ Value: string tag }]:
+                        result.Add(new SuilTagRegistration(tag, type, Location.None));
+                        break;
+                    case SuilViewAttributeSource.MetadataName
+                        when attribute.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value is string name:
+                        result.Add(new SuilTagRegistration(name, type, Location.None));
+                        break;
+                }
+            }
+        }
+
+        return result;
+    }
+
     private sealed record Member(string Name, string MemberName, string TypeName, string? Parser, bool Inherited, bool CanRead);
 
+    private static void WriteAccessor(StringBuilder sb, string indent, string table, string typeName, Member member)
+    {
+        sb.AppendLine($"{indent}{table}[{Literal(member.Name)}] = new global::Content.Suil.SuilPropertyAccessor(");
+        sb.AppendLine($"{indent}    {Literal(member.Name)}, {Literal(member.MemberName)}, typeof({member.TypeName}),");
+        sb.AppendLine($"{indent}    static (c, v) => (({typeName}) c).{member.MemberName} = ({member.TypeName}) v,");
+        sb.AppendLine(member.CanRead
+            ? $"{indent}    static c => (object) (({typeName}) c).{member.MemberName},"
+            : $"{indent}    null,");
+        sb.AppendLine($"{indent}    {(member.Parser == null ? "null" : $"typeof({member.Parser})")}, {(member.Inherited ? "true" : "false")});");
+    }
+
     /// <summary>
-    /// The public settable properties and fields declared by the type, by their names in SUIL.
+    /// Whether the type and everything it is nested in is a partial class, so a part can be added to it.
     /// </summary>
-    private static List<Member> Members(INamedTypeSymbol type, Compilation compilation)
+    private static bool IsPartialChain(INamedTypeSymbol type)
+    {
+        for (var current = type; current != null; current = current.ContainingType)
+        {
+            if (current.TypeKind != TypeKind.Class || current.TypeParameters.Length > 0)
+                return false;
+
+            foreach (var reference in current.DeclaringSyntaxReferences)
+            {
+                if (reference.GetSyntax() is not Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax syntax
+                    || !syntax.Modifiers.Any(m => m.Text == "partial"))
+                {
+                    return false;
+                }
+            }
+
+            if (current.DeclaringSyntaxReferences.Length == 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Adds a part to the class with the accessors of its members that are not public.
+    /// </summary>
+    private static void WritePartial(StringBuilder sb, INamedTypeSymbol type, string typeName, List<Member> hidden)
+    {
+        var containers = new List<INamedTypeSymbol>();
+        for (var current = type; current != null; current = current.ContainingType)
+        {
+            containers.Insert(0, current);
+        }
+
+        var ns = type.ContainingNamespace;
+        var hasNamespace = ns is { IsGlobalNamespace: false };
+
+        if (hasNamespace)
+        {
+            sb.AppendLine($"namespace {ns.ToDisplayString()}");
+            sb.AppendLine("{");
+        }
+
+        foreach (var container in containers)
+        {
+            sb.AppendLine($"    partial class {container.Name}");
+            sb.AppendLine("    {");
+        }
+
+        sb.AppendLine("        internal static void SuilAddProperties(global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilPropertyAccessor> table)");
+        sb.AppendLine("        {");
+
+        foreach (var member in hidden)
+        {
+            WriteAccessor(sb, "            ", "table", typeName, member);
+        }
+
+        sb.AppendLine("        }");
+
+        foreach (var _ in containers)
+        {
+            sb.AppendLine("    }");
+        }
+
+        if (hasNamespace)
+            sb.AppendLine("}");
+    }
+
+    /// <summary>
+    /// The public settable properties and fields declared by the type, by their names in SUIL. A member that is not
+    /// public (or has a setter that is not) but has <see cref="SuilPropertyAttribute"/> goes to <paramref name="hidden"/>:
+    /// only the class itself can reach it.
+    /// </summary>
+    private static List<Member> Members(INamedTypeSymbol type, Compilation compilation, out List<Member> hidden)
     {
         var result = new Dictionary<string, Member>(StringComparer.Ordinal);
+        var hiddenResult = new Dictionary<string, Member>(StringComparer.Ordinal);
 
         foreach (var symbol in type.GetMembers())
         {
             ITypeSymbol valueType;
             bool canRead;
+            bool isPublic;
 
             switch (symbol)
             {
                 case IPropertySymbol property
                     when property is { IsStatic: false, IsIndexer: false, IsOverride: false, RefKind: RefKind.None }
-                         && property.SetMethod is { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false }
-                         && property.DeclaredAccessibility == Accessibility.Public:
+                         && property.SetMethod is { IsInitOnly: false }:
                     valueType = property.Type;
-                    canRead = property.GetMethod is { DeclaredAccessibility: Accessibility.Public };
+                    canRead = property.GetMethod != null;
+                    isPublic = property.DeclaredAccessibility == Accessibility.Public
+                               && property.SetMethod.DeclaredAccessibility == Accessibility.Public;
+                    canRead = canRead && (!isPublic || property.GetMethod!.DeclaredAccessibility == Accessibility.Public);
                     break;
                 case IFieldSymbol field
-                    when field is { IsStatic: false, IsReadOnly: false, IsConst: false, IsImplicitlyDeclared: false }
-                         && field.DeclaredAccessibility == Accessibility.Public:
+                    when field is { IsStatic: false, IsReadOnly: false, IsConst: false, IsImplicitlyDeclared: false }:
                     valueType = field.Type;
                     canRead = true;
+                    isPublic = field.DeclaredAccessibility == Accessibility.Public;
                     break;
                 default:
                     continue;
@@ -177,6 +341,10 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
             var attribute = symbol.GetAttributes()
                 .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == SuilViewAttributeSource.PropertyMetadataName);
 
+            // not public and not marked: nothing to do for it
+            if (!isPublic && attribute == null)
+                continue;
+
             if (attribute != null)
             {
                 if (attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string custom)
@@ -188,9 +356,15 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
                 inherited = attribute.NamedArguments.Any(a => a is { Key: "Inherited", Value.Value: true });
             }
 
-            result[name] = new Member(name, symbol.Name, valueType.ToDisplayString(Format), parser, inherited, canRead);
+            var member = new Member(name, symbol.Name, valueType.ToDisplayString(Format), parser, inherited, canRead);
+
+            if (isPublic)
+                result[name] = member;
+            else
+                hiddenResult[name] = member;
         }
 
+        hidden = hiddenResult.Values.OrderBy(m => m.Name, StringComparer.Ordinal).ToList();
         return result.Values.OrderBy(m => m.Name, StringComparer.Ordinal).ToList();
     }
 

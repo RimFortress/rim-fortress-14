@@ -109,6 +109,41 @@ public sealed class SuilValueTests
         }));
     }
 
+    [Test]
+    public void Important_Declarations()
+    {
+        var rule = (SuilRule) SuilParser.ParseFile(".a { x: 1 !important; y: 2 ! IMPORTANT; z: 3; w: 4 !important }").Items.Single();
+
+        Assert.That(rule.Declarations.Select(d => (d.Name, d.Important)),
+            Is.EqualTo(new[] { ("x", true), ("y", true), ("z", false), ("w", true) }));
+        Assert.That(rule.Declarations[0].Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(1, true) }));
+    }
+
+    [Test]
+    [TestCase(".a { x: 1 ! ; }")]
+    [TestCase(".a { x: 1 !hard; }")]
+    [TestCase(".a { x: !important; }")]
+    public void Malformed_Important_Throws(string input)
+    {
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile(input));
+    }
+
+    [Test]
+    public void Custom_Properties_And_Var_Calls()
+    {
+        var rule = (SuilRule) SuilParser.ParseFile(
+            ":root { --gold: #B07D2B; } .a { color: var(--gold); border: 1px solid var(--gold, red); }").Items[0];
+
+        Assert.That(rule.Declarations.Single().Name, Is.EqualTo("--gold"));
+
+        var second = (SuilRule) SuilParser.ParseFile(".a { border: 1px solid var(--gold, red, blue); }").Items.Single();
+        var call = (SuilFunction) second.Declarations.Single().Value[2];
+
+        Assert.That(call.Name, Is.EqualTo("var"));
+        Assert.That(call.Arguments[0].Single(), Is.EqualTo(new SuilIdent("--gold")));
+        Assert.That(call.Arguments, Has.Count.EqualTo(3));
+    }
+
     // ---- The stream ----
 
     [Test]

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS;
@@ -12,11 +13,11 @@ namespace Content.Client._RF.CSS;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Variables are stored as untyped token lists. Their type is determined only at the point of use,
+/// Variables are stored as untyped lists of values. Their type is determined only at the point of use,
 /// by whichever property (or shorthand) receives the substituted tokens.
 /// </para>
 /// <para>
-/// Substitution descends into the arguments of any function and any simple block, so individual
+/// Substitution descends into the arguments of any function and any group, so individual
 /// value parsers never need to know that <c>var()</c> exists.
 /// </para>
 /// <para>
@@ -30,7 +31,7 @@ public sealed class CssVariables
     /// <summary>
     /// A set that declares nothing and inherits nothing.
     /// </summary>
-    public static readonly CssVariables Empty = new(null, new Dictionary<string, List<ICssComponentValue>>());
+    public static readonly CssVariables Empty = new(null, new Dictionary<string, List<ISuilValue>>());
 
     private readonly CssVariables? _parent;
 
@@ -58,24 +59,24 @@ public sealed class CssVariables
     /// <summary>
     /// Raw cascaded declarations of this control, as they appear in CSS (may contain <c>var()</c>).
     /// </summary>
-    private readonly Dictionary<string, List<ICssComponentValue>> _declared;
+    private readonly Dictionary<string, List<ISuilValue>> _declared;
 
     /// <summary>
     /// Fully resolved values of <see cref="_declared"/>. A <c>null</c> value means the variable is
     /// invalid (cycle or unresolvable reference) — it then shadows the inherited value, like
     /// the "guaranteed-invalid value" of the CSS specification.
     /// </summary>
-    private readonly Dictionary<string, List<ICssComponentValue>?> _resolved = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<ISuilValue>?> _resolved = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Creates a variable set and resolves all of its own declarations.
     /// </summary>
     /// <param name="parent">The set inherited from the nearest styled ancestor, if any.</param>
     /// <param name="declared">Cascaded custom property declarations of this control (raw tokens).</param>
-    public CssVariables(CssVariables? parent, IReadOnlyDictionary<string, List<ICssComponentValue>> declared)
+    public CssVariables(CssVariables? parent, IReadOnlyDictionary<string, List<ISuilValue>> declared)
     {
         _parent = parent;
-        _declared = new Dictionary<string, List<ICssComponentValue>>(declared, StringComparer.Ordinal);
+        _declared = new Dictionary<string, List<ISuilValue>>(declared, StringComparer.Ordinal);
 
         var inProgress = new HashSet<string>(StringComparer.Ordinal);
 
@@ -95,22 +96,20 @@ public sealed class CssVariables
     /// Does the token stream contain a <c>var()</c> call anywhere, including nested functions and blocks?
     /// </summary>
     [PublicAPI, Pure]
-    public static bool ContainsVar(IReadOnlyList<ICssComponentValue> tokens)
+    public static bool ContainsVar(IReadOnlyList<ISuilValue> values)
     {
-        foreach (var item in tokens)
+        foreach (var item in values)
         {
-            switch (item)
+            if (item is not SuilFunction func)
+                continue;
+
+            if (func.Name.Equals("var", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            foreach (var argument in func.Arguments)
             {
-                case CssFunction func:
-                    if (func.Name.Equals("var", StringComparison.OrdinalIgnoreCase) || ContainsVar(func.Value))
-                        return true;
-
-                    break;
-                case CssSimpleBlock block:
-                    if (ContainsVar(block.Value))
-                        return true;
-
-                    break;
+                if (ContainsVar(argument))
+                    return true;
             }
         }
 
@@ -123,7 +122,7 @@ public sealed class CssVariables
     /// shared until the stylesheet is rebuilt.
     /// </summary>
     [PublicAPI, Pure]
-    public bool HasSameInputs(CssVariables? parent, IReadOnlyDictionary<string, List<ICssComponentValue>> declared)
+    public bool HasSameInputs(CssVariables? parent, IReadOnlyDictionary<string, List<ISuilValue>> declared)
     {
         if (!ReferenceEquals(_parent, parent) || _declared.Count != declared.Count)
             return false;
@@ -142,7 +141,7 @@ public sealed class CssVariables
     /// </summary>
     /// <returns><c>false</c> if the variable is not declared or is invalid.</returns>
     [PublicAPI, Pure]
-    public bool TryGet(string name, [NotNullWhen(true)] out List<ICssComponentValue>? tokens)
+    public bool TryGet(string name, [NotNullWhen(true)] out List<ISuilValue>? tokens)
     {
         for (var scope = this; scope != null; scope = scope._parent)
         {
@@ -164,9 +163,9 @@ public sealed class CssVariables
     /// The declaration is then "invalid at computed-value time".
     /// </returns>
     [PublicAPI, Pure]
-    public bool TryExpand(IReadOnlyList<ICssComponentValue> input, [NotNullWhen(true)] out List<ICssComponentValue>? output)
+    public bool TryExpand(IReadOnlyList<ISuilValue> input, [NotNullWhen(true)] out List<ISuilValue>? output)
     {
-        output = new List<ICssComponentValue>(input.Count);
+        output = new List<ISuilValue>(input.Count);
 
         if (Expand(input, name => TryGet(name, out var tokens) ? tokens : null, output))
             return true;
@@ -175,7 +174,7 @@ public sealed class CssVariables
         return false;
     }
 
-    private List<ICssComponentValue>? ResolveOwn(string name, HashSet<string> inProgress)
+    private List<ISuilValue>? ResolveOwn(string name, HashSet<string> inProgress)
     {
         if (_resolved.TryGetValue(name, out var done))
             return done;
@@ -186,8 +185,8 @@ public sealed class CssVariables
         if (!inProgress.Add(name))
             return null; // reference cycle
 
-        var output = new List<ICssComponentValue>(raw.Count);
-        var result = Expand(raw, n => ResolveOwn(n, inProgress), output) ? Trim(output) : null;
+        var output = new List<ISuilValue>(raw.Count);
+        var result = Expand(raw, n => ResolveOwn(n, inProgress), output) ? output : null;
 
         inProgress.Remove(name);
         _resolved[name] = result;
@@ -195,44 +194,41 @@ public sealed class CssVariables
     }
 
     private static bool Expand(
-        IReadOnlyList<ICssComponentValue> input,
-        Func<string, List<ICssComponentValue>?> lookup,
-        List<ICssComponentValue> output)
+        IReadOnlyList<ISuilValue> input,
+        Func<string, List<ISuilValue>?> lookup,
+        List<ISuilValue> output)
     {
         foreach (var item in input)
         {
             switch (item)
             {
-                case CssSimpleBlock block:
+                case SuilFunction func when !func.Name.Equals("var", StringComparison.OrdinalIgnoreCase):
                 {
-                    var inner = new List<ICssComponentValue>(block.Value.Count);
+                    var arguments = new List<List<ISuilValue>>(func.Arguments.Count);
 
-                    if (!Expand(block.Value, lookup, inner))
-                        return false;
-
-                    output.Add(block with { Value = inner });
-                    break;
-                }
-                case CssFunction func when !func.Name.Equals("var", StringComparison.OrdinalIgnoreCase):
-                {
-                    var args = new List<ICssComponentValue>(func.Value.Count);
-
-                    if (!Expand(func.Value, lookup, args))
-                        return false;
-
-                    output.Add(func with { Value = args });
-                    break;
-                }
-                case CssFunction varCall:
-                {
-                    if (!TryParseVarArgs(varCall.Value, out var name, out var fallback))
-                        return false;
-
-                    var tokens = lookup(name);
-
-                    if (tokens != null)
+                    foreach (var argument in func.Arguments)
                     {
-                        output.AddRange(tokens); // already fully resolved, contains no var()
+                        var expanded = new List<ISuilValue>(argument.Count);
+
+                        if (!Expand(argument, lookup, expanded))
+                            return false;
+
+                        arguments.Add(expanded);
+                    }
+
+                    output.Add(func with { Arguments = arguments });
+                    break;
+                }
+                case SuilFunction varCall:
+                {
+                    if (!TryParseVarArgs(varCall.Arguments, out var name, out var fallback))
+                        return false;
+
+                    var values = lookup(name);
+
+                    if (values != null)
+                    {
+                        output.AddRange(values); // already fully resolved, contains no var()
                     }
                     else if (fallback != null)
                     {
@@ -255,64 +251,36 @@ public sealed class CssVariables
         return true;
     }
 
+    /// <summary>
+    /// <c>var(--name)</c> or <c>var(--name, fallback)</c>. Everything after the FIRST comma is the fallback,
+    /// further commas included (per spec), so the arguments after the first are joined back.
+    /// </summary>
     private static bool TryParseVarArgs(
-        IReadOnlyList<ICssComponentValue> args,
+        IReadOnlyList<List<ISuilValue>> args,
         [NotNullWhen(true)] out string? name,
-        out List<ICssComponentValue>? fallback)
+        out List<ISuilValue>? fallback)
     {
         name = null;
         fallback = null;
 
-        var i = 0;
-        while (i < args.Count && args[i] is WhitespaceToken)
-        {
-            i++;
-        }
-
-        if (i >= args.Count || args[i] is not IdentToken { Value: var n } || !IsCustomProperty(n))
+        if (args.Count == 0 || args[0] is not [SuilIdent { Value: var n }] || !IsCustomProperty(n))
             return false;
 
         name = n;
-        i++;
 
-        while (i < args.Count && args[i] is WhitespaceToken)
-        {
-            i++;
-        }
-
-        if (i == args.Count)
+        if (args.Count == 1)
             return true;
 
-        if (args[i] is not CommaToken)
-            return false;
+        fallback = new List<ISuilValue>();
 
-        // Everything after the FIRST comma is the fallback, further commas included (per spec).
-        fallback = Trim(args.Skip(i + 1).ToList());
+        for (var i = 1; i < args.Count; i++)
+        {
+            if (i > 1)
+                fallback.Add(new SuilComma());
+
+            fallback.AddRange(args[i]);
+        }
+
         return true;
-    }
-
-    private static List<ICssComponentValue> Trim(IReadOnlyList<ICssComponentValue> tokens)
-    {
-        var start = 0;
-        var end = tokens.Count;
-
-        while (start < end && tokens[start] is WhitespaceToken)
-        {
-            start++;
-        }
-
-        while (end > start && tokens[end - 1] is WhitespaceToken)
-        {
-            end--;
-        }
-
-        var result = new List<ICssComponentValue>(end - start);
-
-        for (var i = start; i < end; i++)
-        {
-            result.Add(tokens[i]);
-        }
-
-        return result;
     }
 }

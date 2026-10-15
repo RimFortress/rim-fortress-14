@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Client._RF.CSS.Parsers;
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
@@ -30,24 +30,18 @@ public sealed partial class CssManager
     /// are ignored), <c>font-weight</c> and <c>font-style</c>. Other descriptors are ignored with a warning.
     /// <c>var()</c> is not supported inside <c>@font-face</c>.
     /// </summary>
-    private bool TryParseFontFace(CssAtRule rule, [NotNullWhen(true)] out CssFontFace? face)
+    private bool TryParseFontFace(IReadOnlyList<SuilDeclaration> descriptors, [NotNullWhen(true)] out CssFontFace? face)
     {
         face = null;
-
-        if (rule.Block is not { } block)
-            return FontFaceError("@font-face has no block");
 
         string? family = null;
         ResPath? source = null;
         var weight = (int) FontWeight.Normal;
         var slant = FontSlant.Normal;
 
-        foreach (var item in CssParser.ParseListOfDeclarations(block.Value.ToArray()))
+        foreach (var declaration in descriptors)
         {
-            if (item is not CssDeclaration declaration)
-                continue;
-
-            var stream = CssValueConverter.Stream(declaration.Value);
+            var stream = new SuilValueStream(declaration.Value);
 
             switch (declaration.Name.ToLowerInvariant())
             {
@@ -99,28 +93,21 @@ public sealed partial class CssManager
     /// <summary>
     /// Finds the first <c>url()</c> in a <c>src</c> value and turns it into a rooted <see cref="ResPath"/>.
     /// </summary>
-    private static bool TryGetFontSource(IReadOnlyList<ICssComponentValue> value, [NotNullWhen(true)] out ResPath? path)
+    private static bool TryGetFontSource(IReadOnlyList<ISuilValue> value, [NotNullWhen(true)] out ResPath? path)
     {
         foreach (var item in value)
         {
-            switch (item)
+            // url("/Fonts/A.ttf") is a function that holds a string.
+            if (item is not SuilFunction func || !func.Name.Equals("url", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            foreach (var argument in func.Arguments.SelectMany(a => a))
             {
-                // url(/Fonts/A.ttf) without quotes is tokenized as a single url token.
-                case UrlToken url:
-                    path = ToRooted(url.Value);
-                    return true;
-                // url("/Fonts/A.ttf") is a function that holds a string.
-                case CssFunction func when func.Name.Equals("url", StringComparison.OrdinalIgnoreCase):
-                    foreach (var argument in func.Value)
-                    {
-                        if (argument is not StringToken text)
-                            continue;
+                if (argument is not SuilString text)
+                    continue;
 
-                        path = ToRooted(text.Value);
-                        return true;
-                    }
-
-                    break;
+                path = ToRooted(text.Text);
+                return true;
             }
         }
 
@@ -132,6 +119,25 @@ public sealed partial class CssManager
             var parsed = new ResPath(raw);
             return parsed.IsRooted ? parsed : parsed.ToRootedPath();
         }
+    }
+
+    /// <summary>
+    /// The descriptors of an <c>@font-face</c> rule of CSS text.
+    /// </summary>
+    private static List<SuilDeclaration> FontFaceDescriptors(CssAtRule rule)
+    {
+        var result = new List<SuilDeclaration>();
+
+        if (rule.Block is not { } block)
+            return result;
+
+        foreach (var item in CssParser.ParseListOfDeclarations(block.Value.ToArray()))
+        {
+            if (item is CssDeclaration declaration)
+                result.Add(ToSuil(declaration));
+        }
+
+        return result;
     }
 
     private bool FontFaceError(string message)

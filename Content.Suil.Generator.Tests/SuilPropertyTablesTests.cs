@@ -51,6 +51,34 @@ public sealed class SuilPropertyTablesTests
                 public int Extra { get; set; }
             }
 
+            public partial class Hidden : CssControl
+            {
+                public int Open { get; set; }
+
+                [SuilProperty] protected int Guarded { get; set; } = 7;
+                [SuilProperty("renamed-private")] private float _secret = 1.5f;
+                [SuilProperty] internal string Internal { get; set; } = "a";
+                [SuilProperty] public int PublicWithPrivateSet { get; private set; } = 3;
+                [SuilProperty] protected int WriteOnlyHidden { set { } }
+                protected int NotMarked { get; set; }
+
+                public float Secret => _secret;
+                public int Peek => Guarded;
+                public int PrivateSetValue => PublicWithPrivateSet;
+
+                public partial class Nested : CssControl
+                {
+                    [SuilProperty] protected int Deep { get; set; } = 9;
+                    public int Peek => Deep;
+                }
+            }
+
+            public class NotPartial : CssControl
+            {
+                public int Open { get; set; }
+                [SuilProperty] protected int Lost { get; set; }
+            }
+
             public abstract class Base2 : Sample { public int FromAbstract { get; set; } }
             public class Concrete : Base2 { }
 
@@ -66,9 +94,9 @@ public sealed class SuilPropertyTablesTests
         Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors));
 
         var assembly = result.Load();
-        var tables = assembly.GetType("Content.Suil.SuilPropertyTables")!;
+        var tables = assembly.GetTypes().Single(t => typeof(ISuilControlTables).IsAssignableFrom(t));
         var registry = new SuilPropertyRegistry();
-        tables.GetMethod("Register")!.Invoke(null, new object[] { registry });
+        ((ISuilControlTables) Activator.CreateInstance(tables)!).RegisterProperties(registry);
         return (assembly, registry);
     }
 
@@ -212,6 +240,56 @@ public sealed class SuilPropertyTablesTests
     }
 
     [Test]
+    public void Members_That_Are_Not_Public_Are_Registered_By_The_Class_When_Marked()
+    {
+        var (assembly, registry) = Make();
+        var hidden = assembly.GetType("Game.Hidden")!;
+        var instance = Activator.CreateInstance(hidden)!;
+
+        Assert.That(registry.TryGet(hidden, "open", out _), Is.True);
+
+        foreach (var name in new[] { "guarded", "renamed-private", "internal", "public-with-private-set", "write-only-hidden" })
+        {
+            Assert.That(registry.TryGet(hidden, name, out _), Is.True, name);
+        }
+
+        Assert.That(registry.TryGet(hidden, "not-marked", out _), Is.False);
+        Assert.That(registry.TryGet(hidden, "secret", out _), Is.False, "the default name is replaced");
+
+        registry.TryGet(hidden, "guarded", out var guarded);
+        Assert.That(guarded!.Getter!(instance), Is.EqualTo(7));
+        guarded.Setter(instance, 11);
+        Assert.That(hidden.GetProperty("Peek")!.GetValue(instance), Is.EqualTo(11));
+
+        registry.TryGet(hidden, "renamed-private", out var secret);
+        secret!.Setter(instance, 2.5f);
+        Assert.That(hidden.GetProperty("Secret")!.GetValue(instance), Is.EqualTo(2.5f));
+
+        registry.TryGet(hidden, "public-with-private-set", out var privateSet);
+        privateSet!.Setter(instance, 4);
+        Assert.That(hidden.GetProperty("PrivateSetValue")!.GetValue(instance), Is.EqualTo(4));
+
+        registry.TryGet(hidden, "write-only-hidden", out var writeOnly);
+        Assert.That(writeOnly!.Getter, Is.Null);
+
+        var nested = assembly.GetType("Game.Hidden+Nested")!;
+        var nestedInstance = Activator.CreateInstance(nested)!;
+        registry.TryGet(nested, "deep", out var deep);
+        deep!.Setter(nestedInstance, 5);
+        Assert.That(nested.GetProperty("Peek")!.GetValue(nestedInstance), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void A_Marked_Member_Of_A_Class_That_Is_Not_Partial_Is_Skipped()
+    {
+        var (assembly, registry) = Make();
+        var type = assembly.GetType("Game.NotPartial")!;
+
+        Assert.That(registry.TryGet(type, "open", out _), Is.True);
+        Assert.That(registry.TryGet(type, "lost", out _), Is.False);
+    }
+
+    [Test]
     public void Only_Usable_Controls_Have_Tables()
     {
         var (assembly, registry) = Make();
@@ -220,6 +298,55 @@ public sealed class SuilPropertyTablesTests
         Assert.That(registry.Declares(assembly.GetType("Game.Old")!), Is.False);
         Assert.That(registry.Declares(assembly.GetType("Game.NotAControl")!), Is.False);
         Assert.That(registry.Declares(assembly.GetType("Game.Base2")!), Is.True, "an abstract class declares members for its children");
+    }
+
+    [Test]
+    public void Tags_Are_Registered_By_Default_Name_And_By_Custom_Name()
+    {
+        var result = GeneratorHarness.Run("""
+            using Content.Suil;
+            using Content.Client._RF.CSS;
+
+            [assembly: SuilTag("untyped", typeof(Content.Client._RF.CSS.CssControl))]
+
+            namespace Game
+            {
+                public class Plain : CssControl { }
+                public class MiniHUDView : CssControl { }
+                [SuilTag("fancy")] public class Renamed : CssControl { }
+                public abstract class Abstract : CssControl { }
+                public class NotAControl { }
+            }
+
+            namespace Other { public class Plain : CssControl { } }
+            """, new(), withDefaultTags: false);
+
+        Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors));
+
+        var assembly = result.Load();
+        var tables = (ISuilControlTables) Activator.CreateInstance(assembly.GetTypes().Single(t => typeof(ISuilControlTables).IsAssignableFrom(t)))!;
+        var tags = new SuilTagTable();
+        tables.RegisterTags(tags);
+
+        Assert.That(tags.TryGet("mini-hud-view", out var hud, out _), Is.True);
+        Assert.That(hud!.FullName, Is.EqualTo("Game.MiniHUDView"));
+
+        Assert.That(tags.TryGet("fancy", out var fancy, out _), Is.True);
+        Assert.That(fancy!.FullName, Is.EqualTo("Game.Renamed"));
+        Assert.That(tags.TryGet("renamed", out _, out _), Is.False, "a custom name replaces the default one");
+
+        // the stub CssControl lives in the same compilation here, so it has a tag of its own
+        Assert.That(tags.TryGet("untyped", out var untyped, out _), Is.True);
+        Assert.That(untyped!.Name, Is.EqualTo("CssControl"));
+        Assert.That(tags.TryGet("css-control", out _, out _), Is.False);
+
+        // two classes with one default name are not resolved
+        Assert.That(tags.TryGet("plain", out var plain, out var candidates), Is.False);
+        Assert.That(plain, Is.Null);
+        Assert.That(candidates.Select(c => c.FullName), Is.EquivalentTo(new[] { "Game.Plain", "Other.Plain" }));
+
+        Assert.That(tags.TryGet("abstract", out _, out _), Is.False);
+        Assert.That(tags.TryGet("not-a-control", out _, out _), Is.False);
     }
 
     [Test]

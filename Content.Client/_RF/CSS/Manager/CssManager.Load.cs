@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -78,13 +79,13 @@ public partial class CssManager
                     if (!CssParser.TryGetSelectors(qualified, _reflection, this, out var selectors))
                         continue;
 
-                    var declarations = new List<CssDeclaration>();
+                    var declarations = new List<SuilDeclaration>();
                     foreach (var decl in CssParser.ParseListOfDeclarations(qualified.Block.Value.Value.ToArray()))
                     {
                         switch (decl)
                         {
                             case CssDeclaration declaration:
-                                declarations.Add(declaration);
+                                declarations.Add(ToSuil(declaration));
                                 break;
                             default:
                                 throw new NotImplementedException();
@@ -97,7 +98,7 @@ public partial class CssManager
                     if (atRule.Name.Equals("font-face", StringComparison.OrdinalIgnoreCase))
                     {
                         // Only files register fonts; rules loaded from strings (tests) don't.
-                        if (fontFaces != null && TryParseFontFace(atRule, out var fontFace))
+                        if (fontFaces != null && TryParseFontFace(FontFaceDescriptors(atRule), out var fontFace))
                             fontFaces.Add(fontFace);
 
                         continue;
@@ -118,6 +119,12 @@ public partial class CssManager
     }
 
     /// <summary>
+    /// A declaration of CSS text as the style engine knows it: with the values of SUIL.
+    /// </summary>
+    private static SuilDeclaration ToSuil(CssDeclaration declaration)
+        => new(declaration.Name, CssValueConverter.Convert(declaration.Value), default, declaration.Important);
+
+    /// <summary>
     /// All rules loaded from files, ordered by path so that duplicated definitions are resolved
     /// deterministically (load order itself is shuffled).
     /// </summary>
@@ -132,7 +139,7 @@ public partial class CssManager
     /// </summary>
     private static CssVariables BuildGlobalVariables(IEnumerable<PendingRule> pending)
     {
-        var declared = new Dictionary<string, List<ICssComponentValue>>(StringComparer.Ordinal);
+        var declared = new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
 
         var rootRules = pending.Where(rule => rule.Selectors.Any(IsRootSelector)).ToList();
 

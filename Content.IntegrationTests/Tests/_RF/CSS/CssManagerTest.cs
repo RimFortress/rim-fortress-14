@@ -59,17 +59,14 @@ public sealed class CssManagerTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Engine_Property_Is_Stored_Under_The_PascalCase_Name_Not_The_Css_Name()
+    public void Engine_Property_Is_Stored_Under_Its_Kebab_Case_Name()
     {
-        // Regression test for the kebab-case/PascalCase mismatch: StyleProperty.Name
-        // must equal nameof(Control.MinHeight) ("MinHeight"), never the raw CSS
-        // declaration name ("min-height") — otherwise Control's internal switch
-        // (Control.Layout.Styling.cs) silently fails to match any case and the
-        // property is dropped without any error.
+        // The properties of the engine controls are found by the generated tables like any other: by the name of the
+        // member in kebab-case, which is also the name in the stylesheet.
         var sheet = Load("label { min-height: 10px; }");
         var property = sheet.Rules.Single().Properties.Single();
 
-        Assert.That(property.Name, Is.EqualTo(nameof(Control.MinHeight)));
+        Assert.That(property.Name, Is.EqualTo("min-height"));
         Assert.That(property.Value, Is.EqualTo(10f));
     }
 
@@ -80,7 +77,7 @@ public sealed class CssManagerTest : GameTest
         var sheet = Load("label { horizontal-alignment: center; }");
         var property = sheet.Rules.Single().Properties.Single();
 
-        Assert.That(property.Name, Is.EqualTo(nameof(Control.HorizontalAlignment)));
+        Assert.That(property.Name, Is.EqualTo("horizontal-alignment"));
         Assert.That(property.Value, Is.EqualTo(Control.HAlignment.Center));
     }
 
