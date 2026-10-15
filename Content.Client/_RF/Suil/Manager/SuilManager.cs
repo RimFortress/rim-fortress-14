@@ -146,7 +146,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     {
         Stylesheet = BuildStylesheet();
         _fonts.SetFaces(GetFontFaces());
-        _testStylesheet = null; // test rules may reference variables from the files
         _sawmill.Info("stylesheet updated");
     }
 
@@ -155,7 +154,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     {
         var pending = GetFilePendingRules();
 
-        return new SuilStylesheet(Compile(pending), BuildGlobalVariables(pending));
+        return new SuilStylesheet(Compile(pending));
     }
 
     /// <inheritdoc/>
@@ -164,10 +163,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         if (_testStylesheet != null)
             return _testStylesheet;
 
-        // Test rules may use variables declared in the real files, and may declare their own.
-        var globals = BuildGlobalVariables(GetFilePendingRules().Concat(_pendingTest));
-
-        return _testStylesheet = new SuilStylesheet(Compile(_pendingTest), globals);
+        return _testStylesheet = new SuilStylesheet(Compile(_pendingTest));
     }
 
     /// <inheritdoc/>
@@ -213,10 +209,10 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     /// <inheritdoc/>
-    public void UpdateStyle(UiElement control) => ApplyStyle(control, Stylesheet, propagate: true);
+    public void UpdateStyle(UiElement control) => ApplyStyle(control, Stylesheet);
 
     /// <inheritdoc/>
-    public void UpdateStyleOnEnter(UiElement control) => ApplyStyle(control, Stylesheet, propagate: false);
+    public void UpdateStyleOnEnter(UiElement control) => ApplyStyle(control, Stylesheet);
 
     /// <inheritdoc/>
     public void UpdateDependents(UiElement control, string? key)
@@ -236,7 +232,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         {
             // Only the controls that a rule with an ancestor part can apply to are worth matching again.
             if (child is UiElement suil && stylesheet.IsAncestorDependent(suil.GetType()))
-                ApplyStyle(suil, stylesheet, propagate: true);
+                ApplyStyle(suil, stylesheet);
 
             if (deep)
                 UpdateDependents(child, stylesheet, true);
@@ -244,7 +240,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     /// <inheritdoc/>
-    public void UpdateTestStyle(UiElement control) => ApplyStyle(control, BuildTestStylesheet(), propagate: true);
+    public void UpdateTestStyle(UiElement control) => ApplyStyle(control, BuildTestStylesheet());
 
     /// <inheritdoc/>
     public void ClearTestStylesheet()
@@ -261,7 +257,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         // Parents are always styled before their children, so every child sees fresh inherited variables.
         // No propagation is needed here: the recursion itself visits all descendants.
         if (control is UiElement suil)
-            ApplyStyle(suil, stylesheet, propagate: false);
+            ApplyStyle(suil, stylesheet);
 
         foreach (var child in control.Children)
         {
@@ -269,114 +265,20 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         }
     }
 
-    #region Variables API
-
-    /// <inheritdoc/>
-    public void SetVariable(UiElement control, string name, string suilValue, bool important = false)
-    {
-        if (!SuilVariables.IsCustomProperty(name))
-            throw new ArgumentException($"SUIL variable name must start with '--': '{name}'", nameof(name));
-
-        if (!TryTokenizeValue(suilValue, out var tokens, out var valueImportant))
-        {
-#if EXCEPTION_TOLERANCE
-            _sawmill.Error($"invalid SUIL value for variable '{name}': '{suilValue}'");
-            return;
-#else
-            throw new ArgumentException($"invalid SUIL value for variable '{name}': '{suilValue}'", nameof(suilValue));
-#endif
-        }
-
-        control.SuilInlineVariables ??= new Dictionary<string, SuilCustomProperty>(StringComparer.Ordinal);
-        control.SuilInlineVariables[name] = new SuilCustomProperty(name, tokens, important || valueImportant);
-
-        UpdateStyle(control);
-    }
-
-    /// <inheritdoc/>
-    public bool RemoveVariable(UiElement control, string name)
-    {
-        if (control.SuilInlineVariables is not { } inline || !inline.Remove(name))
-            return false;
-
-        if (inline.Count == 0)
-            control.SuilInlineVariables = null;
-
-        UpdateStyle(control);
-        return true;
-    }
-
-    /// <inheritdoc/>
-    public bool TryGetVariable<T>(UiElement control, string name, out T? value)
-    {
-        value = default;
-
-        if (control.SuilComputedVariables is not { } variables || !variables.TryGet(name, out var tokens))
-            return false;
-
-        var stream = new SuilValueStream(tokens);
-
-        if (_values.TryParse(ref stream, out value) && stream.AtEnd)
-            return true;
-
-        value = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Turns value text into values by running it through the regular parser of the rules, so the code API accepts
-    /// exactly what a declaration accepts (including a trailing <c>!important</c>).
-    /// </summary>
-    /// <returns><c>false</c> if the text isn't a single valid declaration value.</returns>
-    private static bool TryTokenizeValue(
-        string text,
-        [NotNullWhen(true)] out List<ISuilValue>? values,
-        out bool important)
-    {
-        values = null;
-        important = false;
-
-        try
-        {
-            // Anything that closes the block early or adds declarations (";", "}") shows up as extra items.
-            if (SuilParser.ParseFile($"x{{--v:{text}}}").Items is not [SuilRule { Declarations: [{ Name: "--v" } declaration] }])
-                return false;
-
-            values = declaration.Value;
-            important = declaration.Important;
-            return true;
-        }
-        catch (Exception e) when (e is SuilParserError or SuilTokenizeError)
-        {
-            return false;
-        }
-    }
-
-    #endregion
-
     #region Applying
 
     /// <summary>
     /// Matches the stylesheet rules against the control and applies them.
-    /// Custom properties are cascaded and inherited first, then every declaration containing
-    /// <c>var()</c> is expanded and parsed against the control's computed variables.
     /// </summary>
     /// <param name="control">Control to update.</param>
     /// <param name="stylesheet">Stylesheet to take the rules from.</param>
-    /// <param name="propagate">
-    /// If the control's computed variables changed, restyle all of its descendants.
-    /// Pass <c>false</c> when the caller already walks the whole subtree.
-    /// </param>
-    private void ApplyStyle(UiElement control, SuilStylesheet stylesheet, bool propagate)
+    private void ApplyStyle(UiElement control, SuilStylesheet stylesheet)
     {
         // Whatever was waiting in the queue is satisfied by this.
         control.SuilStyleDirty = false;
 
         var ordered = GetOrderedRules(control, stylesheet);
 
-        var variables = ComputeVariables(control, ordered, stylesheet);
-        var variablesChanged = !ReferenceEquals(control.SuilComputedVariables, variables);
-        control.SuilComputedVariables = variables;
         control.SuilComputedStylesheet = stylesheet;
 
         var previouslyApplied = control.SuilLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -423,14 +325,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         // Whatever the cascade doesn't declare (or just reset) falls back to the inherited value, not to the initial one.
         control.RefreshInheritedProperties();
 
-        if (!propagate || !variablesChanged)
-            return;
-
-        foreach (var child in control.Children)
-        {
-            UpdateStyleRecursively(child, stylesheet);
-        }
-
         return;
 
         void Apply(SuilStyleProperty property)
@@ -463,71 +357,12 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             if (important && !rule.HasImportant)
                 return;
 
-            if (rule.DeferredDeclarations.Count == 0)
+            foreach (var property in rule.Properties)
             {
-                foreach (var property in rule.Properties)
-                {
-                    if (property.Important == important)
-                        Apply(property);
-                }
-
-                return;
-            }
-
-            foreach (var property in ResolveDeferredProperties(rule, important, variables))
-            {
-                Apply(property);
+                if (property.Important == important)
+                    Apply(property);
             }
         }
-    }
-
-    /// <summary>
-    /// The properties of a rule with <c>var()</c> declarations for one importance level, in declaration order:
-    /// the plain ones merged with the deferred ones expanded and parsed against <paramref name="variables"/>.
-    /// </summary>
-    /// <remarks>
-    /// The result only depends on the rule and on the variables, and the variables are shared by reference between all
-    /// the controls that inherit them, so it is cached on them: a restyle does not parse the same values again.
-    /// </remarks>
-    private SuilStyleProperty[] ResolveDeferredProperties(SuilStyleRule rule, bool important, SuilVariables variables)
-    {
-        var key = (rule.DeferredDeclarations, important);
-
-        if (variables.ResolvedRules.TryGetValue(key, out var cached))
-            return cached;
-
-        var deferred = new List<SuilStyleProperty>();
-
-        foreach (var declaration in rule.DeferredDeclarations)
-        {
-            if (declaration.Declaration.Important == important)
-                TryResolveDeferred(declaration, variables, deferred);
-        }
-
-        // Declaration order decides which value wins; both lists are in it already, and never share an order.
-        var plain = rule.Properties;
-        var result = new List<SuilStyleProperty>(plain.Count + deferred.Count);
-        var d = 0;
-
-        foreach (var property in plain)
-        {
-            if (property.Important != important)
-                continue;
-
-            while (d < deferred.Count && deferred[d].Order < property.Order)
-            {
-                result.Add(deferred[d++]);
-            }
-
-            result.Add(property);
-        }
-
-        while (d < deferred.Count)
-        {
-            result.Add(deferred[d++]);
-        }
-
-        return variables.ResolvedRules[key] = result.ToArray();
     }
 
     /// <summary>
@@ -631,134 +466,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             if (entry.Rule.Selector.Matches(control))
                 output.Add((entry.Rule, (level << 32) | (uint) entry.Position));
         }
-    }
-
-    /// <summary>
-    /// Cascades the custom properties of the matching rules (higher specificity / later rule wins)
-    /// and resolves them on top of the variables inherited from the parent.
-    /// </summary>
-    /// <remarks>
-    /// Returns the parent's set itself when the control declares nothing, and the previous set
-    /// when none of the inputs changed, so reference equality reliably tells whether anything changed.
-    /// </remarks>
-    private SuilVariables ComputeVariables(UiElement control, List<SuilStyleRule> ordered, SuilStylesheet stylesheet)
-    {
-        var inherited = GetInheritedVariables(control, stylesheet);
-        Dictionary<string, List<ISuilValue>>? declared = null;
-
-        // Same cascade as for regular properties: normal declarations first, then !important ones.
-        // At each importance level, variables set from code (inline) sit above the stylesheet rules.
-        for (var pass = 0; pass < 2; pass++)
-        {
-            var important = pass == 1;
-
-            foreach (var rule in ordered)
-            {
-                foreach (var custom in rule.CustomProperties)
-                {
-                    if (custom.Important != important)
-                        continue;
-
-                    declared ??= new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
-                    declared[custom.Name] = custom.Value;
-                }
-            }
-
-            if (control.SuilInlineVariables is not { } inline)
-                continue;
-
-            foreach (var custom in inline.Values)
-            {
-                if (custom.Important != important)
-                    continue;
-
-                declared ??= new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
-                declared[custom.Name] = custom.Value;
-            }
-        }
-
-        if (declared == null)
-            return inherited;
-
-        var previous = control.SuilComputedVariables;
-
-        return previous != null && previous.HasSameInputs(inherited, declared)
-            ? previous
-            : new SuilVariables(inherited, declared);
-    }
-
-    /// <summary>
-    /// The variables inherited by the control: the computed set of the nearest <see cref="UiElement"/>
-    /// ancestor (controls of other types don't take part in SUIL), or the global <c>:root</c> variables.
-    /// </summary>
-    private SuilVariables GetInheritedVariables(Control control, SuilStylesheet stylesheet)
-    {
-        for (var parent = control.Parent; parent != null; parent = parent.Parent)
-        {
-            if (parent is not UiElement suil)
-                continue;
-
-            // An ancestor that was never styled (e.g. a subtree assembled before being attached), or whose
-            // variables were computed against another stylesheet (e.g. built before the SUIL was loaded or reloaded
-            // while it was detached from every root): its cache has no :root variables of this stylesheet.
-            if (suil.SuilComputedVariables == null || !ReferenceEquals(suil.SuilComputedStylesheet, stylesheet))
-            {
-                suil.SuilComputedVariables = ComputeVariables(suil, GetOrderedRules(suil, stylesheet), stylesheet);
-                suil.SuilComputedStylesheet = stylesheet;
-            }
-
-            return suil.SuilComputedVariables;
-        }
-
-        return stylesheet.GlobalVariables;
-    }
-
-    /// <summary>
-    /// Expands <c>var()</c> in a deferred declaration using the control's variables and parses the result.
-    /// </summary>
-    /// <returns>
-    /// <c>false</c> if a referenced variable is missing, invalid or has no fallback. Per SUIL the declaration
-    /// is then "invalid at computed-value time"; here it is ignored.
-    /// </returns>
-    private bool TryResolveDeferred(SuilDeferredDeclaration deferred, SuilVariables variables, List<SuilStyleProperty> output)
-    {
-        var declaration = deferred.Declaration;
-
-        if (!variables.TryExpand(declaration.Value, out var tokens))
-        {
-            _sawmill.Debug($"var() in declaration '{declaration.Name}' could not be resolved, declaration ignored");
-            return false;
-        }
-
-        var expandedDeclaration = declaration with { Value = tokens };
-
-        if (TryResolveShorthandValue(deferred.ElementType, expandedDeclaration, out var expanded))
-        {
-            foreach (var property in expanded)
-            {
-                output.Add(property with { Order = deferred.Order, Important = declaration.Important });
-            }
-
-            return true;
-        }
-
-        if (!TryResolveDeclarationValue(
-                deferred.ElementType,
-                expandedDeclaration,
-                out var accessor,
-                out var name,
-                out var value))
-        {
-#if EXCEPTION_TOLERANCE
-            _sawmill.Error($"failed to apply declaration '{declaration.Name}' after var() substitution");
-            return false;
-#else
-            throw new ArgumentException($"failed to apply declaration '{declaration.Name}' after var() substitution");
-#endif
-        }
-
-        output.Add(new SuilStyleProperty(name, value, accessor.Value, deferred.Order, declaration.Important));
-        return true;
     }
 
     #endregion

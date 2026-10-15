@@ -13,7 +13,7 @@ public interface ISuilToken;
 public readonly record struct SuilToken(ISuilToken Value, int Line, int Column);
 
 /// <summary>
-/// A piece of a string or a localization key: either literal text or a `variable` reference.
+/// A piece of a string or a localization key: either literal text or a &lt;variable&gt; reference.
 /// </summary>
 public readonly record struct StringPart(string Text, bool IsVariable)
 {
@@ -90,7 +90,7 @@ public readonly record struct FunctionToken(string Value) : ISuilToken;
 public readonly record struct HashToken(string Value, bool IsId) : ISuilToken;
 
 /// <summary>
-/// <c>.icon-`name`</c> or <c>#`prefix`-button</c>: a class or an id whose name has `variable` references.
+/// <c>.icon-&lt;name&gt;</c> or <c>#&lt;prefix&gt;-button</c>: a class or an id whose name has &lt;variable&gt; references.
 /// A plain <c>.name</c> and <c>#name</c> are not turned into it. <paramref name="Sigil"/> is '.' or '#'.
 /// </summary>
 public readonly record struct InterpolatedNameToken(int Sigil, ImmutableArray<StringPart> Parts) : ISuilToken
@@ -107,7 +107,7 @@ public readonly record struct PercentageToken(double Value) : ISuilToken;
 public readonly record struct DimensionToken(double Value, bool IsInteger, string Unit) : ISuilToken;
 
 /// <summary>
-/// <c>"text with `variable` inside"</c>. Escapes are already resolved.
+/// <c>"text with &lt;variable&gt; inside"</c>. Escapes are already resolved.
 /// </summary>
 public readonly record struct StringToken(ImmutableArray<StringPart> Parts) : ISuilToken
 {
@@ -117,12 +117,12 @@ public readonly record struct StringToken(ImmutableArray<StringPart> Parts) : IS
 }
 
 /// <summary>
-/// A reference to a variable outside of a string: <c>`name`</c>.
+/// A reference to a variable outside of a string: <c>&lt;name&gt;</c>.
 /// </summary>
 public readonly record struct VariableToken(string Name) : ISuilToken;
 
 /// <summary>
-/// <c>$key-name</c> or <c>$prefix-`p`-suffix</c>. <paramref name="HasArguments"/> is true when the key is glued
+/// <c>$key-name</c> or <c>$prefix-&lt;p&gt;-suffix</c>. <paramref name="HasArguments"/> is true when the key is glued
 /// to a following <c>(</c>, that parenthesis is consumed and the parser expects the arguments and <c>)</c>.
 /// </summary>
 public readonly record struct LocToken(ImmutableArray<StringPart> Key, bool HasArguments) : ISuilToken

@@ -4,7 +4,7 @@
 .chat-messages-bubble {
     background-image: texture("/Textures/_RF/Interface/Style/chat_messages_bubble.png");
     background-repeat: stretch;
-    background-color: var(--light-bad);
+    background-color: <light-bad>;
     patch-margin: 3px;
     padding: 3px;
 }

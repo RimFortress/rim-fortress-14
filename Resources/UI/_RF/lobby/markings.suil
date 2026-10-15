@@ -57,6 +57,6 @@ rf-layer-marking-item {
 
 /* MarkingDropTarget: StyleBoxFlat, the dark button color at the half of the opacity with the border of the button color */
 .marking-drop-beacon.drop-target {
-    background-color: color-mix(in srgb, var(--button-color-disabled) 50%, transparent);
-    border: 2px solid var(--button-color-default);
+    background-color: color-mix(in srgb, <button-color-disabled> 50%, transparent);
+    border: 2px solid <button-color-default>;
 }

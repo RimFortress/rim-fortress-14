@@ -328,31 +328,10 @@ public sealed class SuilStylesTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Custom_Properties_And_Var()
+    public void Custom_Properties_Are_Not_Supported_Constants_Are_Let()
     {
-        Load("""
-            :root { --n: 8; --text: "from root"; }
-            suil-styles-control.a { count: var(--n); label: var(--text); ratio: var(--missing, 3px); }
-            suil-styles-control.local { --n: 12; }
-            suil-styles-control.b { count: var(--n); }
-            """);
-
-        var root = Node();
-        var a = Node("a");
-        var local = Node("local");
-        var b = Node("b");
-        local.AddChild(b);
-        root.AddChild(a);
-        root.AddChild(local);
-        Style(root, a, local, b);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(a.Count, Is.EqualTo(8f));
-            Assert.That(a.Label, Is.EqualTo("from root"));
-            Assert.That(a.Ratio, Is.EqualTo(3f), "the fallback");
-            Assert.That(b.Count, Is.EqualTo(12f), "a variable of the parent wins over :root");
-        });
+        Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { --n: 1; }"));
+        Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { count: var(--n); }"));
     }
 
     [Test]
@@ -363,7 +342,7 @@ public sealed class SuilStylesTest : GameTest
             let n = 11;
             let names = a, b;
             let rule-color = #B07D2B;
-            suil-styles-control.a { count: `n`; tint: `rule-color`; }
+            suil-styles-control.a { count: <n>; tint: <rule-color>; }
             """);
 
         var control = Node("a");

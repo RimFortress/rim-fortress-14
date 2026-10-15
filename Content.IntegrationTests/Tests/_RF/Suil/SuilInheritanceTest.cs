@@ -82,7 +82,7 @@ public sealed class SuilInheritanceTest : GameTest
     }
 
     [TestCase(":root { font-family: \"Foo\"; }")]
-    [TestCase(":root { --f: \"Foo\"; font-family: var(--f); }")]
+    [TestCase("let f = \"Foo\"; :root { font-family: <f>; }")]
     [RunOnSide(Side.Client)]
     public void Root_Font_Family_Reaches_A_Descendant(string rule)
     {

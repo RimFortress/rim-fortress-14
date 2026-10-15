@@ -7,7 +7,7 @@
 
 /* Default font (Element()) */
 :root {
-    font-family: var(--main-font);
+    font-family: <main-font>;
     font-size: 12px;
 }
 

@@ -26,18 +26,18 @@
 
 /* AngleRect */
 .angle-rect {
-    background-color: var(--signal-black);
-    border-color: var(--graphite-black);
+    background-color: <signal-black>;
+    border-color: <graphite-black>;
 }
 
 /* AngleRectGolden */
 .angle-rect-golden {
-    background-color: var(--signal-black);
-    border-color: var(--gold-fortress);
+    background-color: <signal-black>;
+    border-color: <gold-fortress>;
 }
 
 /* AngleRectTransparent */
 .angle-rect-transparent {
-    background-color: color-mix(in srgb, var(--signal-black) 90%, transparent);
-    border-color: color-mix(in srgb, var(--graphite-black) 90%, transparent);
+    background-color: color-mix(in srgb, <signal-black> 90%, transparent);
+    border-color: color-mix(in srgb, <graphite-black> 90%, transparent);
 }

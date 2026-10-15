@@ -10,16 +10,16 @@
 .cross-button-red {
     background-image: texture("/Textures/_RF/Interface/Style/cross.png");
     background-repeat: no-repeat;
-    background-color: var(--bad);
+    background-color: <bad>;
 }
 
 .cross-button-red:hover {
-    background-color: var(--light-bad);
+    background-color: <light-bad>;
 }
 
 .cross-button-red:active,
 .cross-button-red:checked {
-    background-color: var(--darkest-bad);
+    background-color: <darkest-bad>;
 }
 
 /* pinButtonPinned */

@@ -32,5 +32,5 @@
 
 /* The changelog button while there are new entries */
 .main-menu-button.positive {
-    color: var(--light-good);
+    color: <light-good>;
 }

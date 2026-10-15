@@ -1,28 +1,28 @@
 /* ---------- Scroll bars (RfScrollBar: .scrollbar, .vertical or .horizontal, and the .grabber inside) ---------- */
 
 .scrollbar.vertical > .grabber {
-    background-color: var(--scrollbar-grabber-default);
+    background-color: <scrollbar-grabber-default>;
     min-width: 10px;
     min-height: 10px;
 }
 
 .scrollbar.vertical > .grabber:hover {
-    background-color: var(--scrollbar-grabber-hovered);
+    background-color: <scrollbar-grabber-hovered>;
 }
 
 .scrollbar.vertical > .grabber:active {
-    background-color: var(--scrollbar-grabber-pressed);
+    background-color: <scrollbar-grabber-pressed>;
 }
 
 .scrollbar.horizontal > .grabber {
-    background-color: var(--scrollbar-grabber-default);
+    background-color: <scrollbar-grabber-default>;
     min-height: 10px;
 }
 
 .scrollbar.horizontal > .grabber:hover {
-    background-color: var(--scrollbar-grabber-hovered);
+    background-color: <scrollbar-grabber-hovered>;
 }
 
 .scrollbar.horizontal > .grabber:active {
-    background-color: var(--scrollbar-grabber-pressed);
+    background-color: <scrollbar-grabber-pressed>;
 }

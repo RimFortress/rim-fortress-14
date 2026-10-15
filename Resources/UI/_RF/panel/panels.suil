@@ -9,78 +9,78 @@
 
 /* PanelLight */
 .panel-light {
-    background-color: var(--dark-forest);
+    background-color: <dark-forest>;
     padding: 10px;
 }
 
 /* PanelLightTransparent */
 .panel-light-transparent {
-    background-color: color-mix(in srgb, var(--dark-forest) 80%, transparent);
+    background-color: color-mix(in srgb, <dark-forest> 80%, transparent);
     padding: 10px;
 }
 
 /* PanelDark */
 .panel-dark {
-    background-color: var(--graphite-black);
+    background-color: <graphite-black>;
     padding: 10px;
 }
 
 /* PanelDarkTransparent */
 .panel-dark-transparent {
-    background-color: color-mix(in srgb, var(--graphite-black) 80%, transparent);
+    background-color: color-mix(in srgb, <graphite-black> 80%, transparent);
     padding: 10px;
 }
 
 /* PanelLightBordered */
 .panel-light-bordered {
-    background-color: var(--dark-forest);
-    border: 1px solid var(--wooden-fortress);
+    background-color: <dark-forest>;
+    border: 1px solid <wooden-fortress>;
     padding: 9px;
 }
 
 /* PanelLightBorderedTransparent */
 .panel-light-bordered-transparent {
-    background-color: color-mix(in srgb, var(--dark-forest) 80%, transparent);
-    border: 1px solid var(--wooden-fortress);
+    background-color: color-mix(in srgb, <dark-forest> 80%, transparent);
+    border: 1px solid <wooden-fortress>;
     padding: 9px;
 }
 
 /* PanelDarkBordered */
 .panel-dark-bordered {
-    background-color: var(--graphite-black);
-    border: 1px solid var(--wooden-fortress);
+    background-color: <graphite-black>;
+    border: 1px solid <wooden-fortress>;
     padding: 9px;
 }
 
 /* PanelDarkBorderedTransparent */
 .panel-dark-bordered-transparent {
-    background-color: color-mix(in srgb, var(--graphite-black) 80%, transparent);
-    border: 1px solid var(--wooden-fortress);
+    background-color: color-mix(in srgb, <graphite-black> 80%, transparent);
+    border: 1px solid <wooden-fortress>;
     padding: 9px;
 }
 
 /* PanelHighlighted */
 .panel-highlighted {
-    background-color: var(--graphite-black);
-    border: 1px solid var(--black-amber);
+    background-color: <graphite-black>;
+    border: 1px solid <black-amber>;
     padding: 9px;
 }
 
 /* PanelHighlightedTransparent */
 .panel-highlighted-transparent {
-    background-color: color-mix(in srgb, var(--graphite-black) 80%, transparent);
-    border: 1px solid var(--black-amber);
+    background-color: color-mix(in srgb, <graphite-black> 80%, transparent);
+    border: 1px solid <black-amber>;
     padding: 9px;
 }
 
 /* FoldableChatPanel: the highlighted panel with the content margin 3 */
 .foldable-chat-panel {
-    background-color: var(--graphite-black);
-    border: 1px solid var(--black-amber);
+    background-color: <graphite-black>;
+    border: 1px solid <black-amber>;
     padding: 2px;
 }
 
 /* ChatPanel: chat subpanels (chat LineEdit backing, popup backings) */
 .chat-panel {
-    background-color: var(--chat-background-color);
+    background-color: <chat-background-color>;
 }

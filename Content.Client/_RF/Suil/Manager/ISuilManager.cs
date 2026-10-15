@@ -153,33 +153,6 @@ public interface ISuilManager : ISuilPropertyResolver, ISuilValues
     /// </summary>
     /// <param name="control">The control from which the update will begin.</param>
     void UpdateStyleRecursively(Control control);
-
-    /// <summary>
-    /// Sets a SUIL custom property directly on a control (an inline declaration) and restyles
-    /// the control and its descendants. See <see cref="UiElement.SetSuilVariable"/>.
-    /// </summary>
-    /// <param name="control">Control to set the variable on.</param>
-    /// <param name="name">Variable name including the leading <c>--</c>.</param>
-    /// <param name="suilValue">The value as SUIL text; may end with <c>!important</c>.</param>
-    /// <param name="important">Mark the value <c>!important</c>.</param>
-    /// <exception cref="ArgumentException">
-    /// The name doesn't start with <c>--</c> or the value isn't valid SUIL
-    /// (the latter is only logged when <c>EXCEPTION_TOLERANCE</c> is defined).
-    /// </exception>
-    void SetVariable(UiElement control, string name, string suilValue, bool important = false);
-
-    /// <summary>
-    /// Removes an inline custom property previously set with <see cref="SetVariable"/>.
-    /// </summary>
-    /// <returns><c>true</c> if an inline value was removed.</returns>
-    bool RemoveVariable(UiElement control, string name);
-
-    /// <summary>
-    /// Reads the computed value of a custom property of a control (inline, stylesheet or inherited)
-    /// and parses it into <typeparamref name="T"/>. Reflects the state after the control's last style update.
-    /// </summary>
-    /// <returns><c>false</c> if the variable is missing, invalid, or can't be parsed as <typeparamref name="T"/>.</returns>
-    bool TryGetVariable<T>(UiElement control, string name, out T? value);
 }
 
 public interface ISuilPropertyResolver

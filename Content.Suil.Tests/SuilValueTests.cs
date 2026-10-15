@@ -100,7 +100,7 @@ public sealed class SuilValueTests
     [Test]
     public void Let_Values_Are_Spliced_With_Their_Commas()
     {
-        var file = SuilExpander.Expand("let stack = a, b;\n.x { font-family: c, `stack`; }");
+        var file = SuilExpander.Expand("let stack = a, b;\n.x { font-family: c, <stack>; }");
         var rule = (SuilRule) file.Items.Single();
 
         Assert.That(rule.Declarations.Single().Value, Is.EqualTo(new List<ISuilValue>

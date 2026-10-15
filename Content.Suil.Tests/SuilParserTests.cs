@@ -142,11 +142,11 @@ public sealed class SuilParserTests
     [Test]
     public void Class_And_Id_With_Variables()
     {
-        var root = Root("button #`p`-ok .icon-`name` .plain");
+        var root = Root("button #<p>-ok .icon-<name> .plain");
 
-        Assert.That(root.Id!.ToString(), Is.EqualTo("`p`-ok"));
+        Assert.That(root.Id!.ToString(), Is.EqualTo("<p>-ok"));
         Assert.That(root.Id!.IsLiteral, Is.False);
-        Assert.That(root.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "icon-`name`", "plain" }));
+        Assert.That(root.Classes.Select(c => c.ToString()), Is.EqualTo(new[] { "icon-<name>", "plain" }));
         Assert.That(root.Classes[0].Parts, Is.EqualTo(new[] { StringPart.Literal("icon-"), StringPart.Variable("name") }));
         Assert.That(root.Classes[1].IsLiteral, Is.True);
     }
@@ -154,19 +154,19 @@ public sealed class SuilParserTests
     [Test]
     public void Variable_Name_Can_Be_The_Only_Thing_After_The_Tag()
     {
-        var child = Child(Root("row { _ .`c` }"), 0);
+        var child = Child(Root("row { _ .<c> }"), 0);
 
         Assert.That(child.Tag, Is.Null);
-        Assert.That(child.Classes.Single().ToString(), Is.EqualTo("`c`"));
+        Assert.That(child.Classes.Single().ToString(), Is.EqualTo("<c>"));
     }
 
     [Test]
-    [TestCase(".a-`x` { y: 1; }")]
-    [TestCase("button#a-`x` { y: 1; }")]
-    [TestCase("button .a-`x` { y: 1; }")]
-    [TestCase(".a, .b-`x` { y: 1; }")]
-    [TestCase("row { .a-`x` }")]
-    [TestCase(".a { v: #`x`; }")]
+    [TestCase(".a-<x> { y: 1; }")]
+    [TestCase("button#a-<x> { y: 1; }")]
+    [TestCase("button .a-<x> { y: 1; }")]
+    [TestCase(".a, .b-<x> { y: 1; }")]
+    [TestCase("row { .a-<x> }")]
+    [TestCase(".a { v: #<x>; }")]
     public void Variables_In_Names_Are_Only_For_Elements(string input)
     {
         Assert.Throws<SuilParserError>(() => Parse(input));
@@ -194,7 +194,7 @@ public sealed class SuilParserTests
     [Test]
     public void Let_Template_With_Parameters()
     {
-        var let = (SuilLet) Parse("let tab-scroll = (title, icon) { tab (title: `title`) { %content% } }").Items.Single();
+        var let = (SuilLet) Parse("let tab-scroll = (title, icon) { tab (title: <title>) { %content% } }").Items.Single();
         var template = (SuilTemplate) let.Value;
         var tab = (SuilElement) template.Body.Single();
 
@@ -302,7 +302,7 @@ public sealed class SuilParserTests
     {
         var rule = (SuilRule) Parse("""
             .a {
-                v: 1 2.5 50% 4px #B07D2B #5E4B3A59 center "s" `p`;
+                v: 1 2.5 50% 4px #B07D2B #5E4B3A59 center "s" <p>;
             }
             """).Items.Single();
 
@@ -319,7 +319,7 @@ public sealed class SuilParserTests
     {
         var rule = (SuilRule) Parse("""
             .a {
-                v: texture("/a.png") color-mix(in srgb, `c` 78%, transparent) f();
+                v: texture("/a.png") color-mix(in srgb, <c> 78%, transparent) f();
             }
             """).Items.Single();
         var values = rule.Declarations.Single().Value;
@@ -340,8 +340,8 @@ public sealed class SuilParserTests
     {
         var root = Root("""
             confirm-button (
-                text: $`p`-delete-button,
-                count: $ui-count(n: `count`, kind: plain)
+                text: $<p>-delete-button,
+                count: $ui-count(n: <count>, kind: plain)
             )
             """);
 
@@ -375,7 +375,7 @@ public sealed class SuilParserTests
     [TestCase("let x = 1")]
     [TestCase("let x = (a b) { _ }")]
     [TestCase("use \"a\"")]
-    [TestCase("use \"a`b`\";")]
+    [TestCase("use \"a<b>\";")]
     [TestCase("use a;")]
     [TestCase(".a { v: #12; }")]
     [TestCase(".a { v: 1 w: 2; }")]
@@ -416,7 +416,7 @@ public sealed class SuilParserTests
             let p = "character-setup-gui-character-picker-button";
 
             let tab-scroll = (title) {
-                tab (title: `title`) { scroll .scroll-vertical { col { %content% } } }
+                tab (title: <title>) { scroll .scroll-vertical { col { %content% } } }
             }
 
             .picker-row { gap: 4px; }
@@ -432,8 +432,8 @@ public sealed class SuilParserTests
                     sprite-view #view (size: 64, scale: 2, direction: south)
                     +_ #description-label .picker-description .text-center
                     +confirm-button #delete-button .open-both (
-                        text: $`p`-delete-button,
-                        confirm-text: $`p`-confirm-delete-button
+                        text: $<p>-delete-button,
+                        confirm-text: $<p>-confirm-delete-button
                     )
                 }
             }

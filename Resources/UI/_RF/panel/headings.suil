@@ -8,8 +8,8 @@
 .fancy-back {
     background-image: texture("/Textures/_RF/Interface/Style/stripeback.png");
     background-repeat: repeat;
-    border-top: 2px solid var(--gold-fortress);
-    border-bottom: 2px solid var(--gold-fortress);
+    border-top: 2px solid <gold-fortress>;
+    border-bottom: 2px solid <gold-fortress>;
     margin: 4px 0;
 }
 

@@ -7,13 +7,13 @@
  */
 .slider {
     min-height: 24px;
-    background-color: var(--black-amber);
-    border: 2px solid var(--dark-forest);
+    background-color: <black-amber>;
+    border: 2px solid <dark-forest>;
     border-radius: 12px;
 }
 
 .slider > .fill {
-    background-color: var(--dark-good);
+    background-color: <dark-good>;
     border-radius: 10px 0px 0px 10px;
 }
 
@@ -23,19 +23,19 @@
     background-image: texture("/Textures/_RF/Interface/Style/slider_grabber.png");
     background-repeat: stretch;
     patch-margin: 12px;
-    background-color: var(--button-color-default);
+    background-color: <button-color-default>;
 }
 
 .slider:hover > .grabber {
-    background-color: var(--button-color-hovered);
+    background-color: <button-color-hovered>;
 }
 
 .slider:active > .grabber {
-    background-color: var(--button-color-pressed);
+    background-color: <button-color-pressed>;
 }
 
 .slider:disabled > .grabber {
-    background-color: var(--button-color-disabled);
+    background-color: <button-color-disabled>;
 }
 
 /* The gradient of the track is the color to choose: no own background, no fill */

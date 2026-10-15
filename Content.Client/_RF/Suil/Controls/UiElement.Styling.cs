@@ -35,16 +35,6 @@ public partial class UiElement
     internal HashSet<string>? SuilSpareAppliedProperties;
 
     /// <summary>
-    /// The computed SUIL custom properties (variables) of this control: its own cascaded declarations
-    /// plus everything inherited from ancestors. Shared with the parent when this control declares none.
-    /// </summary>
-    /// <remarks>
-    /// Owned and updated by <see cref="ISuilManager"/>. Reference changes signal that
-    /// descendants must be restyled, so never replace this value from anywhere else.
-    /// </remarks>
-    internal SuilVariables? SuilComputedVariables;
-
-    /// <summary>
     /// The control has changed since it was last restyled, see <see cref="ISuilManager.QueueStyleUpdate(UiElement)"/>.
     /// </summary>
     internal bool SuilStyleDirty;
@@ -60,16 +50,9 @@ public partial class UiElement
     internal SuilAncestorReach SuilPendingReach;
 
     /// <summary>
-    /// The stylesheet <see cref="SuilComputedVariables"/> were computed against.
+    /// The stylesheet the control was last styled with.
     /// </summary>
     internal SuilStylesheet? SuilComputedStylesheet;
-
-    /// <summary>
-    /// Custom properties set from code via <see cref="SetSuilVariable"/>. They are the equivalent of an
-    /// inline <c>style</c> attribute: they win over stylesheet declarations of the same importance,
-    /// regardless of selector specificity.
-    /// </summary>
-    internal Dictionary<string, SuilCustomProperty>? SuilInlineVariables;
 
     /// <summary>
     /// The SUIL style identifier for the control.
@@ -124,41 +107,6 @@ public partial class UiElement
             RestyleSuil(null);
         }
     }
-
-    /// <summary>
-    /// Sets a SUIL custom property directly on this control, like <c>element.style.setProperty()</c>.
-    /// The control and all its descendants are restyled.
-    /// </summary>
-    /// <remarks>
-    /// The value takes part in the cascade as an inline declaration: it beats stylesheet declarations
-    /// of the same importance regardless of specificity, but an <c>!important</c> declaration from a
-    /// stylesheet still beats a non-important inline value.
-    /// </remarks>
-    /// <param name="name">Variable name including the leading <c>--</c>.</param>
-    /// <param name="suilValue">The value as SUIL text, e.g. <c>"#ff0000"</c>, <c>"4px"</c> or <c>"texture(\"/a.png\")"</c>.</param>
-    /// <param name="important">Mark the value <c>!important</c>.</param>
-    [PublicAPI]
-    public void SetSuilVariable(string name, string suilValue, bool important = false)
-        => Suil.SetVariable(this, name, suilValue, important);
-
-    /// <summary>
-    /// Removes a variable previously set with <see cref="SetSuilVariable"/>. Values coming from stylesheets
-    /// and from ancestors are not affected.
-    /// </summary>
-    /// <returns><c>true</c> if an inline value was removed.</returns>
-    [PublicAPI]
-    public bool RemoveSuilVariable(string name) => Suil.RemoveVariable(this, name);
-
-    /// <summary>
-    /// Reads the computed value of a SUIL custom property of this control (inline, stylesheet or inherited)
-    /// and parses it into <typeparamref name="T"/> with the same parsers the stylesheet uses.
-    /// </summary>
-    /// <param name="name">Variable name including the leading <c>--</c>.</param>
-    /// <param name="value">Parsed value.</param>
-    /// <typeparam name="T">Target type, e.g. <see cref="Color"/> or <see cref="float"/>.</typeparam>
-    /// <returns><c>false</c> if the variable is missing, invalid, or its value can't be parsed as <typeparamref name="T"/>.</returns>
-    [PublicAPI, Pure]
-    public bool TryGetSuilVariable<T>(string name, out T? value) => Suil.TryGetVariable(this, name, out value);
 
     [PublicAPI, Pure]
     public bool HasSuilPseudoStyleClass(string className) => SuilPseudoStyleClasses.Contains(className);

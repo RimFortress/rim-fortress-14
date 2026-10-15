@@ -29,7 +29,7 @@ public sealed partial class SuilManager
     /// Parses the descriptors of a <c>@font-face</c> rule: <c>font-family</c> (one name), <c>src</c>
     /// (the first <c>url()</c>, a <see cref="ResPath"/> of a TTF/OTF file; <c>format()</c> and <c>local()</c>
     /// are ignored), <c>font-weight</c> and <c>font-style</c>. Other descriptors are ignored with a warning.
-    /// <c>var()</c> is not supported inside <c>@font-face</c>.
+    /// Variables (<c>&lt;name&gt;</c>) are expanded in <c>@font-face</c> like everywhere else.
     /// </summary>
     private bool TryParseFontFace(IReadOnlyList<SuilDeclaration> descriptors, [NotNullWhen(true)] out SuilFontFaceEntry? face)
     {

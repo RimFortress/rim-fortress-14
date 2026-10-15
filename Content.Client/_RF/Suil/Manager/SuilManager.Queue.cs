@@ -149,7 +149,7 @@ public sealed partial class SuilManager
 
         // Might be done already: restyled by an ancestor, or on demand by FlushStyleUpdate.
         if (control.SuilStyleDirty)
-            ApplyStyle(control, Stylesheet, propagate: true);
+            ApplyStyle(control, Stylesheet);
 
         var reach = control.SuilPendingReach;
 

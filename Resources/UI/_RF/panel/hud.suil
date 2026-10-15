@@ -10,8 +10,8 @@
 
 /* TopInfoCellPanel */
 .top-info-cell-panel {
-    background-color: var(--graphite-black);
-    border-bottom: 1px solid var(--black-amber);
+    background-color: <graphite-black>;
+    border-bottom: 1px solid <black-amber>;
 }
 
 /* ---------- Slots and hotbar ---------- */

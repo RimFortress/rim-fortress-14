@@ -270,7 +270,7 @@ public sealed class SuilValuesTest : GameTest
         var file = SuilExpander.Expand("""
             let gold = #B07D2B;
             let pad = 3px 10px;
-            .a { color: `gold`; padding: `pad`; }
+            .a { color: <gold>; padding: <pad>; }
             """);
         var rule = (SuilRule) file.Items.Single();
 

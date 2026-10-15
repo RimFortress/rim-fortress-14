@@ -8,14 +8,14 @@
 
 /* DefaultWindow.StyleClassWindowTitle: windowTitle */
 .window-title {
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
     font-weight: bold;
     font-size: 14px;
 }
 
 /* windowTitleAlert */
 .window-title-alert {
-    color: var(--rim-silver);
+    color: <rim-silver>;
     font-weight: bold;
     font-size: 14px;
 }
@@ -67,39 +67,39 @@
 .window-help-button {
     background-image: texture("/Textures/Interface/Nano/help.png");
     background-repeat: no-repeat;
-    background-color: var(--bright-green);
+    background-color: <bright-green>;
 }
 
 .window-help-button:hover {
-    background-color: var(--dark-bad);
+    background-color: <dark-bad>;
 }
 
 .window-help-button:active,
 .window-help-button:checked {
-    background-color: var(--darkest-bad);
+    background-color: <darkest-bad>;
 }
 
 /* DefaultWindow.StyleClassWindowCloseButton: windowCloseButton */
 .window-close-button {
     background-image: texture("/Textures/_RF/Interface/Style/cross.png");
     background-repeat: no-repeat;
-    background-color: var(--gold-button-color-default);
+    background-color: <gold-button-color-default>;
 }
 
 .window-close-button:hover {
-    background-color: var(--gold-button-color-hovered);
+    background-color: <gold-button-color-hovered>;
 }
 
 .window-close-button:active,
 .window-close-button:checked {
-    background-color: var(--gold-button-color-pressed);
+    background-color: <gold-button-color-pressed>;
 }
 
 /* FancyWindowTitle */
 .fancy-window-title {
-    font-family: var(--title-font);
+    font-family: <title-font>;
     font-size: 13px;
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* WindowHeadingBackground */
@@ -121,5 +121,5 @@
 /* WindowFooterText */
 .window-footer-text {
     font-size: 8px;
-    color: var(--placeholder-font-color);
+    color: <placeholder-font-color>;
 }

@@ -3,7 +3,7 @@
 /* PaperWrittenText */
 .paper-written-text {
     font-size: 12px;
-    color: var(--black-amber);
+    color: <black-amber>;
 }
 
 /* ---------- Window / PDA text ---------- */
@@ -11,11 +11,11 @@
 /* PdaContentFooterText */
 .pda-content-footer-text {
     font-size: 10px;
-    color: var(--pda-footer-text);
+    color: <pda-footer-text>;
 }
 
 /* PdaWindowFooterText */
 .pda-window-footer-text {
     font-size: 10px;
-    color: var(--pda-window-footer-text);
+    color: <pda-window-footer-text>;
 }

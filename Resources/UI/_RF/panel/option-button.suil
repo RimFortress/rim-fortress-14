@@ -5,7 +5,7 @@
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
-    background-color: var(--gold-fortress);
+    background-color: <gold-fortress>;
     align-self: center;
 }
 
@@ -14,6 +14,6 @@ rf-option-button:checked .option-triangle {
 }
 
 .option-button-panel {
-    background-color: color-mix(in srgb, var(--signal-black) 90%, transparent);
-    border: solid 1px var(--graphite-black);
+    background-color: color-mix(in srgb, <signal-black> 90%, transparent);
+    border: solid 1px <graphite-black>;
 }

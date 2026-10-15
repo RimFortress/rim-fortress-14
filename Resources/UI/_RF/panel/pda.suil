@@ -4,7 +4,7 @@
 .pda-content-background {
     background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
     background-repeat: stretch;
-    background-color: var(--pda-content-background);
+    background-color: <pda-content-background>;
     patch-margin: 11px;
     padding: 7px 9px;
 }
@@ -13,7 +13,7 @@
 .pda-background {
     background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
     background-repeat: stretch;
-    background-color: var(--pda-background);
+    background-color: <pda-background>;
     patch-margin: 11px;
     padding: 7px 9px;
 }
@@ -22,7 +22,7 @@
 .pda-background-rect {
     background-image: texture("/Textures/Interface/Nano/button.svg.96dpi.png");
     background-repeat: stretch;
-    background-color: var(--pda-background-rect);
+    background-color: <pda-background-rect>;
     patch-margin: 10px;
     padding: 10px;
 }
@@ -37,5 +37,5 @@
 
 /* BackgroundDark */
 .background-dark {
-    background-color: var(--pda-content-background);
+    background-color: <pda-content-background>;
 }

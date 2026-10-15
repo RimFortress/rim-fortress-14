@@ -55,10 +55,10 @@ rf-humanoid-profile-editor {
 
 /* The hints of the traits tab */
 .profile-hint {
-    color: var(--gray-silver);
+    color: <gray-silver>;
 }
 
 /* A trait that doesn't fit in the points of its category (RfTraitPreferenceSelector) */
 rf-check-box.over-limit .label {
-    color: var(--light-bad);
+    color: <light-bad>;
 }

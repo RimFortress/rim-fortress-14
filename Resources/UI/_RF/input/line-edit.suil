@@ -15,13 +15,13 @@ rf-line-edit {
 /* LineEdit.StyleClassLineEditNotEditable: notEditable (it was a style property with the color, which never worked) */
 rf-line-edit:read-only,
 rf-text-edit:read-only {
-    color: var(--gray-silver);
+    color: <gray-silver>;
 }
 
 /* LineEdit.StylePseudoClassPlaceholder, TextEdit.StylePseudoClassPlaceholder: placeholder */
 rf-line-edit:placeholder-shown,
 rf-text-edit:placeholder-shown {
-    color: var(--placeholder-font-color);
+    color: <placeholder-font-color>;
 }
 
 /*

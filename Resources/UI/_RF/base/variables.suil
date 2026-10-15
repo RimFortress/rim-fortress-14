@@ -1,70 +1,68 @@
 /*
- * Variables of the Rim Fortress theme (StyleFortress.cs: Colors).
+ * Constants of the Rim Fortress theme (StyleFortress.cs: Colors). Imported into every file by /global-usings.
  */
-:root {
-    --main-font: "Source Code Pro";
-    --title-font: "Boxfont Round";
+let main-font = "Source Code Pro";
+let title-font = "Boxfont Round";
 
-    /* Base colors */
-    --gold-fortress: #B07D2B;
-    --rim-silver: #C0C0C0;
-    --gray-silver: #7F7F7F;
+/* Base colors */
+let gold-fortress = #B07D2B;
+let rim-silver = #C0C0C0;
+let gray-silver = #7F7F7F;
 
-    --signal-black: #2D2A23;
-    --wooden-fortress: #5E4B3A;
+let signal-black = #2D2A23;
+let wooden-fortress = #5E4B3A;
 
-    --black-amber: #0B0C0B;
-    --graphite-black: #1A1D1A;
-    --dark-forest: #293329;
-    --bright-green: #4E544E;
+let black-amber = #0B0C0B;
+let graphite-black = #1A1D1A;
+let dark-forest = #293329;
+let bright-green = #4E544E;
 
-    --light-good: #6EAD54;
-    --good: #61A53E;
-    --dark-good: #589338;
-    --darkest-good: #416D29;
+let light-good = #6EAD54;
+let good = #61A53E;
+let dark-good = #589338;
+let darkest-good = #416D29;
 
-    --light-bad: #BF2233;
-    --bad: #9B111E;
-    --dark-bad: #8B0000;
-    --darkest-bad: #681C23;
+let light-bad = #BF2233;
+let bad = #9B111E;
+let dark-bad = #8B0000;
+let darkest-bad = #681C23;
 
-    /* Buttons */
-    --button-color-default: #5E4B3A;
-    --button-color-hovered: #7A614B;
-    --button-color-pressed: #737A52;
-    --button-color-disabled: #352A21;
+/* Buttons */
+let button-color-default = #5E4B3A;
+let button-color-hovered = #7A614B;
+let button-color-pressed = #737A52;
+let button-color-disabled = #352A21;
 
-    --gold-button-color-default: #B07D2B;
-    --gold-button-color-hovered: #B28A52;
-    --gold-button-color-pressed: #CE9033;
-    --gold-button-color-disabled: #997746;
+let gold-button-color-default = #B07D2B;
+let gold-button-color-hovered = #B28A52;
+let gold-button-color-pressed = #CE9033;
+let gold-button-color-disabled = #997746;
 
-    --blue-button-color-default: #226794;
-    --blue-button-color-hovered: #4299D2;
-    --blue-button-color-pressed: #3896A3;
-    --blue-button-color-disabled: #1E5158;
+let blue-button-color-default = #226794;
+let blue-button-color-hovered = #4299D2;
+let blue-button-color-pressed = #3896A3;
+let blue-button-color-disabled = #1E5158;
 
-    --tree-menu-button-color-default: transparent;
-    --tree-menu-button-color-hovered: #2D2A23;
-    --tree-menu-button-color-pressed: #1A1D1A;
+let tree-menu-button-color-default = transparent;
+let tree-menu-button-color-hovered = #2D2A23;
+let tree-menu-button-color-pressed = #1A1D1A;
 
-    --scrollbar-grabber-default: #5E4B3A59;
-    --scrollbar-grabber-hovered: #7A614B59;
-    --scrollbar-grabber-pressed: #737A5259;
+let scrollbar-grabber-default = #5E4B3A59;
+let scrollbar-grabber-hovered = #7A614B59;
+let scrollbar-grabber-pressed = #737A5259;
 
-    /* Backgrounds */
-    --chat-background-color: #293329CC;
-    --default-paper-background-color: #EAEDDE;
+/* Backgrounds */
+let chat-background-color = #293329CC;
+let default-paper-background-color = #EAEDDE;
 
-    /* Text */
-    --disabled-button-font-color: #C0C0C082;
-    --placeholder-font-color: #7C7763;
-    --good-green-fore: #31843E;
+/* Text */
+let disabled-button-font-color = #C0C0C082;
+let placeholder-font-color = #7C7763;
+let good-green-fore = #31843E;
 
-    /* PDA */
-    --pda-content-background: #25252A;
-    --pda-background: #000000;
-    --pda-background-rect: #717059;
-    --pda-footer-text: #757575;
-    --pda-window-footer-text: #333D3B;
-}
+/* PDA */
+let pda-content-background = #25252A;
+let pda-background = #000000;
+let pda-background-rect = #717059;
+let pda-footer-text = #757575;
+let pda-window-footer-text = #333D3B;

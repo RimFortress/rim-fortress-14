@@ -13,9 +13,9 @@ namespace Content.Suil;
 /// Differences from SUIL:
 /// <list type="bullet">
 /// <item>comments are <c>//</c> and <c>/* */</c> and are turned into a whitespace token;</item>
-/// <item>strings are double-quoted and may contain <c>`variable`</c> references;</item>
-/// <item><c>`name`</c>, <c>$loc-key</c>, <c>%content%</c> and the single <c>_</c> are tokens of their own;</item>
-/// <item>there are no urls, at-keywords, escapes in idents, custom properties and CDO/CDC.</item>
+/// <item>strings are double-quoted and may contain <c>&lt;variable&gt;</c> references;</item>
+/// <item><c>&lt;name&gt;</c>, <c>$loc-key</c>, <c>%content%</c> and the single <c>_</c> are tokens of their own;</item>
+/// <item>there are no urls, at-keywords, escapes in idents and CDO/CDC.</item>
 /// </list>
 /// </summary>
 public static class SuilTokenizer
@@ -224,7 +224,7 @@ public static class SuilTokenizer
                     if (cp == 0x002E && NameHasVariable(ref stream))
                         return ConsumeInterpolatedName(ref stream, cp);
 
-                    // a name with a leading hyphen, like -rf-text-outline-width, and a custom property, like --gold
+                    // a name with a leading hyphen, like -rf-text-outline-width
                     if (cp == 0x002D && (IsIdentStart(stream.PeekNext())
                                          || stream.PeekNext() == 0x002D && IsIdentChar(stream.PeekNext(2))))
                     {
@@ -256,8 +256,11 @@ public static class SuilTokenizer
                 }
 
                 return new UnderscoreToken();
-            case 0x0060: // `
-                return new VariableToken(ConsumeVariableName(ref stream));
+            case 0x003C: // <
+                // `<name>` is a variable, a lone '<' is a delim
+                return VariableBodyAhead(ref stream, 1)
+                    ? new VariableToken(ConsumeVariableName(ref stream))
+                    : new DelimToken(cp);
             case 0x007B: // {
                 return new LeftCurlyBracket();
             case 0x007D: // }
@@ -284,7 +287,7 @@ public static class SuilTokenizer
 
     /// <summary>
     /// Consumes a string. The opening quote is already consumed. Besides the escapes the string may
-    /// contain <c>`variable`</c> references, so its value is a list of parts.
+    /// contain <c>&lt;variable&gt;</c> references, so its value is a list of parts.
     /// </summary>
     private static StringToken ConsumeString(ref SuilCodePointStream stream)
     {
@@ -293,6 +296,14 @@ public static class SuilTokenizer
 
         while (true)
         {
+            if (stream.PeekNext() == 0x003C && VariableBodyAhead(ref stream, 2)) // <
+            {
+                stream.ConsumeNext();
+                FlushLiteral(parts, text);
+                parts.Add(StringPart.Variable(ConsumeVariableName(ref stream)));
+                continue;
+            }
+
             var cp = stream.ConsumeNext();
 
             if (cp == 0x0022) // "
@@ -327,19 +338,12 @@ public static class SuilTokenizer
                 continue;
             }
 
-            if (cp == 0x0060) // `
-            {
-                FlushLiteral(parts, text);
-                parts.Add(StringPart.Variable(ConsumeVariableName(ref stream)));
-                continue;
-            }
-
             text.Append(CodePointToString(cp));
         }
     }
 
     /// <summary>
-    /// Whether the name that follows a '.' or '#' has a `variable` reference: ident code points go up to a backtick.
+    /// Whether the name that follows a '.' or '#' has a &lt;variable&gt; reference: ident code points go up to a '&lt;name&gt;'.
     /// Nothing is consumed.
     /// </summary>
     private static bool NameHasVariable(ref SuilCodePointStream stream)
@@ -348,8 +352,8 @@ public static class SuilTokenizer
         {
             var cp = stream.PeekNext(offset);
 
-            if (cp == 0x0060) // `
-                return true;
+            if (cp == 0x003C) // <
+                return VariableBodyAhead(ref stream, offset + 1);
 
             if (!IsIdentChar(cp))
                 return false;
@@ -357,7 +361,7 @@ public static class SuilTokenizer
     }
 
     /// <summary>
-    /// Consumes the name after '.' or '#' (already consumed) that has `variable` references.
+    /// Consumes the name after '.' or '#' (already consumed) that has &lt;variable&gt; references.
     /// </summary>
     private static InterpolatedNameToken ConsumeInterpolatedName(ref SuilCodePointStream stream, int sigil)
     {
@@ -374,7 +378,7 @@ public static class SuilTokenizer
                 continue;
             }
 
-            if (next != 0x0060) // `
+            if (next != 0x003C || !VariableBodyAhead(ref stream, 2)) // <
                 break;
 
             stream.ConsumeNext();
@@ -387,7 +391,28 @@ public static class SuilTokenizer
     }
 
     /// <summary>
-    /// Consumes <c>name`</c> after the opening backtick and returns the name.
+    /// Whether the body of a variable, <c>name&gt;</c>, starts at the offset (the opening '&lt;' is just before it).
+    /// Nothing is consumed.
+    /// </summary>
+    private static bool VariableBodyAhead(ref SuilCodePointStream stream, int offset)
+    {
+        if (!IsIdentStart(stream.PeekNext(offset)))
+            return false;
+
+        for (var i = offset + 1;; i++)
+        {
+            var cp = stream.PeekNext(i);
+
+            if (cp == 0x003E) // >
+                return true;
+
+            if (!IsIdentChar(cp))
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Consumes <c>name&gt;</c> after the opening '&lt;' and returns the name.
     /// </summary>
     private static string ConsumeVariableName(ref SuilCodePointStream stream)
     {
@@ -396,15 +421,15 @@ public static class SuilTokenizer
 
         var name = CodePointsToString(stream.ConsumeWhile(IsIdentChar));
 
-        if (stream.PeekNext() != 0x0060) // `
-            throw new SuilTokenizeError("consuming variable", stream.PeekNext(), stream.Position + 1, null, 0x0060);
+        if (stream.PeekNext() != 0x003E) // >
+            throw new SuilTokenizeError("consuming variable", stream.PeekNext(), stream.Position + 1, null, 0x003E);
 
         stream.ConsumeNext();
         return name;
     }
 
     /// <summary>
-    /// Consumes the key after <c>$</c>: ident code points, dots and `variable` references.
+    /// Consumes the key after <c>$</c>: ident code points, dots and &lt;variable&gt; references.
     /// </summary>
     private static LocToken ConsumeLocKey(ref SuilCodePointStream stream)
     {
@@ -429,7 +454,7 @@ public static class SuilTokenizer
                 continue;
             }
 
-            if (next != 0x0060) // `
+            if (next != 0x003C || !VariableBodyAhead(ref stream, 2)) // <
                 break;
 
             stream.ConsumeNext();

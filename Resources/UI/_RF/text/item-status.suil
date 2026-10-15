@@ -11,6 +11,6 @@
 .item-status-not-held {
     font-size: 10px;
     font-style: italic;
-    color: var(--gray-silver);
+    color: <gray-silver>;
     margin: 0 0 2px 4px;
 }

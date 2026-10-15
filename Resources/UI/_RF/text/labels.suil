@@ -12,69 +12,69 @@
 .label-heading {
     font-weight: bold;
     font-size: 16px;
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* LabelHeadingBigger */
 .label-heading-bigger {
     font-weight: bold;
     font-size: 20px;
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* StyleClass.LabelSubText: LabelSubText */
 .label-sub-text {
     font-size: 10px;
-    color: var(--gray-silver);
+    color: <gray-silver>;
 }
 
 /* LabelKeyText */
 .label-key-text {
     font-weight: bold;
     font-size: 12px;
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* LabelSecondaryColor */
 .label-secondary-color {
     font-size: 12px;
-    color: var(--gray-silver);
+    color: <gray-silver>;
 }
 
 /* StatusFieldTitle */
 .status-field-title {
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* Good */
 .good {
-    color: var(--good-green-fore);
+    color: <good-green-fore>;
 }
 
 /* Caution */
 .caution {
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* Danger */
 .danger {
-    color: var(--light-bad);
+    color: <light-bad>;
 }
 
 /* Disabled */
 .disabled {
-    color: var(--disabled-button-font-color);
+    color: <disabled-button-font-color>;
 }
 
 /* Placeholder.StyleClassPlaceholderText: PlaceholderText */
 .placeholder-text {
     font-size: 16px;
-    color: var(--placeholder-font-color);
+    color: <placeholder-font-color>;
 }
 
 /* SiliconLawContainer.StyleClassSiliconLawPositionLabel: SiliconLawPositionLabel */
 .silicon-law-position-label {
-    color: var(--gold-fortress);
+    color: <gold-fortress>;
 }
 
 /* hotbarSlotNumber */

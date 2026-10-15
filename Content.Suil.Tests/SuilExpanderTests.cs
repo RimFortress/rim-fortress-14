@@ -69,7 +69,7 @@ public sealed class SuilExpanderTests
     {
         var root = Root("""
             let pad = 3px 10px;
-            row (padding: 1px `pad` 2px)
+            row (padding: 1px <pad> 2px)
             """);
 
         Assert.That(Prop(root, "padding").Value, Is.EqualTo(new List<ISuilValue>
@@ -85,7 +85,7 @@ public sealed class SuilExpanderTests
         var file = Expand("""
             let c = #B07D2B;
             let p = "/a.png";
-            .a { color: `c`; image: texture(`p`); }
+            .a { color: <c>; image: texture(<p>); }
             """);
 
         var rule = (SuilRule) file.Items.Single();
@@ -100,8 +100,8 @@ public sealed class SuilExpanderTests
     {
         var root = Root("""
             let a = 1px;
-            let b = `a` 2px;
-            row (x: `b`)
+            let b = <a> 2px;
+            row (x: <b>)
             """);
 
         Assert.That(Prop(root, "x").Value, Has.Count.EqualTo(2));
@@ -115,7 +115,7 @@ public sealed class SuilExpanderTests
             let n = 3;
             let u = 4px;
             let id = abc;
-            row (text: "hello `name` `n` `u` `id` #`id`")
+            row (text: "hello <name> <n> <u> <id> #<id>")
             """);
 
         Assert.That(Text(Prop(root, "text").Value!.Single()), Is.EqualTo("hello world 3 4px abc #abc"));
@@ -127,7 +127,7 @@ public sealed class SuilExpanderTests
         var root = Root("""
             let p = "ui-lobby";
             let count = 5;
-            row (a: $`p`-button, b: $ui-count(n: `count`, label: `p`))
+            row (a: $<p>-button, b: $ui-count(n: <count>, label: <p>))
             """);
 
         var a = Prop(root, "a").Value!.Single();
@@ -147,16 +147,16 @@ public sealed class SuilExpanderTests
     }
 
     [Test]
-    [TestCase("row (x: `missing`)")]
-    [TestCase(".a { x: `later`; }\nlet later = 1;")]
-    [TestCase("let a = `a`;\nrow")]
+    [TestCase("row (x: <missing>)")]
+    [TestCase(".a { x: <later>; }\nlet later = 1;")]
+    [TestCase("let a = <a>;\nrow")]
     [TestCase("let a = 1;\nlet a = 2;\nrow")]
-    [TestCase(".a { x: `missing`; }")]
-    [TestCase("let t = { _ }\nrow (x: `t`)")]
-    [TestCase("let loc = $key;\nrow (x: \"a `loc`\")")]
-    [TestCase("let two = 1 2;\nrow (x: \"a `two`\")")]
-    [TestCase("let f = texture(\"a\");\nrow (x: \"a `f`\")")]
-    [TestCase("let e = \"\";\nrow (x: $`e`)")]
+    [TestCase(".a { x: <missing>; }")]
+    [TestCase("let t = { _ }\nrow (x: <t>)")]
+    [TestCase("let loc = $key;\nrow (x: \"a <loc>\")")]
+    [TestCase("let two = 1 2;\nrow (x: \"a <two>\")")]
+    [TestCase("let f = texture(\"a\");\nrow (x: \"a <f>\")")]
+    [TestCase("let e = \"\";\nrow (x: $<e>)")]
     public void Invalid_Variable_Use_Throws(string input)
     {
         Assert.Throws<SuilExpansionError>(() => Expand(input));
@@ -171,7 +171,7 @@ public sealed class SuilExpanderTests
             let icon = "sort-up";
             let n = 2;
             let p = btn;
-            button #`p`-`n` .icon-`icon` .`p` .plain
+            button #<p>-<n> .icon-<icon> .<p> .plain
             """);
 
         Assert.That(root.Id!.ToString(), Is.EqualTo("btn-2"));
@@ -184,7 +184,7 @@ public sealed class SuilExpanderTests
     {
         var root = Root("""
             let icon-button = (icon) {
-                button .icon-button (size: 36) { _ .icon .icon-`icon` }
+                button .icon-button (size: 36) { _ .icon .icon-<icon> }
             }
             col {
                 +icon-button #up (icon: sort-up)
@@ -202,7 +202,7 @@ public sealed class SuilExpanderTests
         var root = Root("""
             let name = "main";
             let t = (name) { button .base }
-            +t #`name`-id .`name` (name: "param")
+            +t #<name>-id .<name> (name: "param")
             """);
 
         Assert.That(root.Id!.ToString(), Is.EqualTo("main-id"));
@@ -215,21 +215,21 @@ public sealed class SuilExpanderTests
         var root = Root("""
             let wrap = (v) { col { %content% } }
             let v = "outer";
-            wrap (v: "inner") { label .`v` }
+            wrap (v: "inner") { label .<v> }
             """);
 
         Assert.That(Child(root, 0).Classes.Single().ToString(), Is.EqualTo("outer"));
     }
 
     [Test]
-    [TestCase("let n = 1;\nrow .`n`")]
-    [TestCase("let n = \"a b\";\nrow .x-`n`")]
-    [TestCase("let n = \"\";\nrow .`n`")]
-    [TestCase("let n = \"_a\";\nrow #`n`")]
-    [TestCase("let n = 1 2;\nrow .a`n`")]
-    [TestCase("let n = texture(\"a\");\nrow .a`n`")]
-    [TestCase("row .a-`missing`")]
-    [TestCase("let t = { _ }\n+t #`missing`")]
+    [TestCase("let n = 1;\nrow .<n>")]
+    [TestCase("let n = \"a b\";\nrow .x-<n>")]
+    [TestCase("let n = \"\";\nrow .<n>")]
+    [TestCase("let n = \"_a\";\nrow #<n>")]
+    [TestCase("let n = 1 2;\nrow .a<n>")]
+    [TestCase("let n = texture(\"a\");\nrow .a<n>")]
+    [TestCase("row .a-<missing>")]
+    [TestCase("let t = { _ }\n+t #<missing>")]
     public void Invalid_Name_Expansion_Throws(string input)
     {
         Assert.Throws<SuilExpansionError>(() => Expand(input));
@@ -242,7 +242,7 @@ public sealed class SuilExpanderTests
     {
         var root = Root("""
             let tab-scroll = (title) {
-                tab (title: `title`) { scroll .scroll-vertical { col } }
+                tab (title: <title>) { scroll .scroll-vertical { col } }
             }
             tab-scroll (title: "Appearance")
             """);
@@ -311,7 +311,7 @@ public sealed class SuilExpanderTests
             let wrap = { col { %content% } }
             let who2 = "x";
             row {
-                wrap { label (text: "`who`") }
+                wrap { label (text: "<who>") }
             }
             """);
 
@@ -323,7 +323,7 @@ public sealed class SuilExpanderTests
     {
         var root = Root("""
             let size = 1;
-            let t = (v) { label (size: `size`, value: `v`) }
+            let t = (v) { label (size: <size>, value: <v>) }
             t (v: 2)
             """);
 
@@ -336,7 +336,7 @@ public sealed class SuilExpanderTests
     {
         var root = Root("""
             let v = 1;
-            let t = (v) { label (value: `v`) }
+            let t = (v) { label (value: <v>) }
             t (v: 2)
             """);
 
@@ -347,7 +347,7 @@ public sealed class SuilExpanderTests
     public void Template_Does_Not_See_What_Is_Declared_Below_It()
     {
         Assert.Throws<SuilExpansionError>(() => Expand("""
-            let t = { label (x: `later`) }
+            let t = { label (x: <later>) }
             let later = 1;
             t
             """));
@@ -357,8 +357,8 @@ public sealed class SuilExpanderTests
     public void Template_Can_Use_Another_Template()
     {
         var root = Root("""
-            let inner = (n) { label (text: `n`) }
-            let outer = (m) { col { inner (n: `m`) } }
+            let inner = (n) { label (text: <n>) }
+            let outer = (m) { col { inner (n: <m>) } }
             outer (m: "deep")
             """);
 
@@ -401,7 +401,7 @@ public sealed class SuilExpanderTests
         var root = Root("""
             let row = { box (flex-direction: row, gap: 1) { %content% } }
             let gap-default = 3;
-            row (gap: `gap-default`, disabled, size: 4!) { label }
+            row (gap: <gap-default>, disabled, size: 4!) { label }
             """);
 
         Assert.That(root.Tag, Is.EqualTo("box"));
@@ -415,7 +415,7 @@ public sealed class SuilExpanderTests
     [Test]
     public void Parameters_Are_Not_Forwarded()
     {
-        var root = Root("let t = (a) { label (x: `a`) }\nt (a: 1, y: 2)");
+        var root = Root("let t = (a) { label (x: <a>) }\nt (a: 1, y: 2)");
 
         Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "x", "y" }));
     }
@@ -457,7 +457,7 @@ public sealed class SuilExpanderTests
     public void Template_Declaration_Alone_Is_Not_Validated_Until_Used()
     {
         // The body is checked where the template is used, an unused one is skipped.
-        Assert.DoesNotThrow(() => Expand("let t = { label (x: `nothing`) }\nrow"));
+        Assert.DoesNotThrow(() => Expand("let t = { label (x: <nothing>) }\nrow"));
     }
 
     // ---- Imports ----
@@ -467,13 +467,13 @@ public sealed class SuilExpanderTests
     {
         var file = Expand("""
             use "/lib.suil";
-            .own { x: `lib-var`; }
+            .own { x: <lib-var>; }
             lib-template (v: 1)
             """, new()
         {
             ["/lib.suil"] = """
                 let lib-var = 7;
-                let lib-template = (v) { label (value: `v`) }
+                let lib-template = (v) { label (value: <v>) }
                 .lib { x: 1; }
                 """,
         });
@@ -489,8 +489,8 @@ public sealed class SuilExpanderTests
     {
         var files = new Dictionary<string, string>
         {
-            ["/own.suil"] = "let hidden = 1;\nlet t = { label (x: `hidden`) }",
-            ["/leaky.suil"] = "let t = { label (x: `outer`) }",
+            ["/own.suil"] = "let hidden = 1;\nlet t = { label (x: <hidden>) }",
+            ["/leaky.suil"] = "let t = { label (x: <outer>) }",
         };
 
         Assert.DoesNotThrow(() => Expand("use \"/own.suil\";\nt", files));
@@ -506,8 +506,8 @@ public sealed class SuilExpanderTests
             ["/b.suil"] = "let fromB = 2;",
         };
 
-        Assert.DoesNotThrow(() => Expand("use \"/a.suil\";\nrow (x: `fromA`)", files));
-        Assert.Throws<SuilExpansionError>(() => Expand("use \"/a.suil\";\nrow (x: `fromB`)", files));
+        Assert.DoesNotThrow(() => Expand("use \"/a.suil\";\nrow (x: <fromA>)", files));
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/a.suil\";\nrow (x: <fromB>)", files));
     }
 
     [Test]
@@ -586,7 +586,7 @@ public sealed class SuilExpanderTests
         var loaded = new List<string>();
         var source = new DictionarySource(new() { ["/theme/buttons.suil"] = "let b = 1;" }, loaded);
 
-        var file = SuilExpander.Expand("use \"/theme/buttons\";\nrow (x: `b`)", source);
+        var file = SuilExpander.Expand("use \"/theme/buttons\";\nrow (x: <b>)", source);
 
         Assert.That(loaded, Is.EqualTo(new[] { "/theme/buttons.suil" }));
         Assert.That(file.Root, Is.Not.Null);
@@ -605,7 +605,7 @@ public sealed class SuilExpanderTests
             ["/other/d.suil"] = ".d { x: 1; }",
         }, loaded);
 
-        var file = SuilExpander.Expand("use \"/theme/*\";\n.own { x: `fromA`; y: `fromB`; }\nrow", source);
+        var file = SuilExpander.Expand("use \"/theme/*\";\n.own { x: <fromA>; y: <fromB>; }\nrow", source);
 
         Assert.That(loaded, Is.EqualTo(new[] { "/theme/a.suil", "/theme/b.suil" }));
         Assert.That(file.Items.Cast<SuilRule>().Select(r => r.Selectors[0].Steps[0].Compound.Classes[0]),
@@ -621,8 +621,8 @@ public sealed class SuilExpanderTests
             ["/theme/sub/c.suil"] = "let fromC = 3;",
         };
 
-        Assert.DoesNotThrow(() => Expand("use \"/theme/*\";\nrow (x: `fromA`)", files));
-        Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow (x: `fromC`)", files));
+        Assert.DoesNotThrow(() => Expand("use \"/theme/*\";\nrow (x: <fromA>)", files));
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/theme/*\";\nrow (x: <fromC>)", files));
     }
 
     [Test]
@@ -649,7 +649,7 @@ public sealed class SuilExpanderTests
     {
         var files = new Dictionary<string, string> { ["/theme/a.suil"] = "let fromA = 1;" };
 
-        Assert.DoesNotThrow(() => Expand("use \"/theme/a\";\nuse \"/theme/*\";\nrow (x: `fromA`)", files));
+        Assert.DoesNotThrow(() => Expand("use \"/theme/a\";\nuse \"/theme/*\";\nrow (x: <fromA>)", files));
     }
 
     [Test]
@@ -700,7 +700,7 @@ public sealed class SuilExpanderTests
     [Test]
     public void Global_Usings_Are_Imported_Into_Every_File()
     {
-        var file = Expand(".own { x: `g`; }\nlabel (x: `g`)", new()
+        var file = Expand(".own { x: <g>; }\nlabel (x: <g>)", new()
         {
             ["/theme.suil"] = "let g = 5;\n.theme { x: 1; }",
         }, "/theme.suil");
@@ -717,7 +717,7 @@ public sealed class SuilExpanderTests
         var file = Expand("use \"/lib.suil\";\nt", new()
         {
             ["/theme.suil"] = "let g = 5;",
-            ["/lib.suil"] = "let t = { label (x: `g`) }",
+            ["/lib.suil"] = "let t = { label (x: <g>) }",
         }, "/theme.suil");
 
         Assert.That(Prop(file.Root!, "x").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(5, true) }));
@@ -739,7 +739,7 @@ public sealed class SuilExpanderTests
     [Test]
     public void Using_A_Global_File_Again_Is_Harmless()
     {
-        Assert.DoesNotThrow(() => Expand("use \"/theme.suil\";\nrow (x: `g`)", new()
+        Assert.DoesNotThrow(() => Expand("use \"/theme.suil\";\nrow (x: <g>)", new()
         {
             ["/theme.suil"] = "let g = 5;",
         }, "/theme.suil"));
@@ -757,7 +757,7 @@ public sealed class SuilExpanderTests
         var files = new Dictionary<string, string>
         {
             ["/a.suil"] = "let fromA = 1;",
-            ["/b.suil"] = "let t = { label (x: `fromA`) }",
+            ["/b.suil"] = "let t = { label (x: <fromA>) }",
         };
 
         // /b.suil is global too, but /a.suil is not brought into it.
@@ -775,8 +775,8 @@ public sealed class SuilExpanderTests
         };
 
         // The library is imported by the global file for that file only, it is not re-exported.
-        Assert.DoesNotThrow(() => Expand("row (x: `g`)", files, "/theme.suil"));
-        Assert.Throws<SuilExpansionError>(() => Expand("row (x: `fromLib`)", files, "/theme.suil"));
+        Assert.DoesNotThrow(() => Expand("row (x: <g>)", files, "/theme.suil"));
+        Assert.Throws<SuilExpansionError>(() => Expand("row (x: <fromLib>)", files, "/theme.suil"));
     }
 
     [Test]
@@ -798,7 +798,7 @@ public sealed class SuilExpanderTests
     [Test]
     public void Global_Usings_Can_Be_A_Folder()
     {
-        var file = Expand("row (x: `a`, y: `b`)", new()
+        var file = Expand("row (x: <a>, y: <b>)", new()
         {
             ["/theme/a.suil"] = "let a = 1;",
             ["/theme/b.suil"] = "let b = 2;",
@@ -838,7 +838,7 @@ public sealed class SuilExpanderTests
     [Test]
     public void Library_File_Has_No_Root()
     {
-        var file = Expand("let a = 1;\n.x { y: `a`; }");
+        var file = Expand("let a = 1;\n.x { y: <a>; }");
 
         Assert.That(file.Root, Is.Null);
         Assert.That(file.Items, Has.Count.EqualTo(1));
@@ -874,7 +874,7 @@ public sealed class SuilExpanderTests
             let p = "character-setup-gui-character-picker-button";
 
             let icon-button = (label) {
-                button .icon-button .open-both (size: 36, text: `label`)
+                button .icon-button .open-both (size: 36, text: <label>)
             }
 
             .picker-row { gap: 4px; }
@@ -887,8 +887,8 @@ public sealed class SuilExpanderTests
                         +icon-button #down (label: "down")
                     }
                     +confirm-button #delete-button .open-both (
-                        text: $`p`-delete-button,
-                        confirm-text: $`p`-confirm-delete-button
+                        text: $<p>-delete-button,
+                        confirm-text: $<p>-confirm-delete-button
                     )
                 }
             }

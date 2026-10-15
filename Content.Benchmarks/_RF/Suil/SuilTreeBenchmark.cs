@@ -140,17 +140,6 @@ public class SuilTreeBenchmark
     }
 
     /// <summary>
-    /// A variable on the root that every control inherits: the root and then everything below it is restyled.
-    /// </summary>
-    [Benchmark]
-    public void Restyle_RootVariableChange()
-    {
-        Bind();
-        _flip = !_flip;
-        _root.SetSuilVariable("--benchmark-var", _flip ? "red" : "blue");
-    }
-
-    /// <summary>
     /// The id of the root is a part of the child combinators of the game styles, so the controls below it
     /// have to be matched again.
     /// </summary>

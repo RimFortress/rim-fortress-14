@@ -124,7 +124,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Class_With_A_Variable()
     {
-        Assert.That(Tokenize(".icon-`name`"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize(".icon-<name>"), Is.EqualTo(new List<ISuilToken>
         {
             Name('.', StringPart.Literal("icon-"), StringPart.Variable("name")),
         }));
@@ -133,7 +133,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Name_May_Start_And_Continue_After_A_Variable()
     {
-        Assert.That(Tokenize(".`a`-b`c`_d #`x`"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize(".<a>-b<c>_d #<x>"), Is.EqualTo(new List<ISuilToken>
         {
             Name('.', StringPart.Variable("a"), StringPart.Literal("-b"), StringPart.Variable("c"), StringPart.Literal("_d")),
             new WhitespaceToken(),
@@ -144,7 +144,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Id_With_A_Variable()
     {
-        Assert.That(Tokenize("#slot-`n`"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize("#slot-<n>"), Is.EqualTo(new List<ISuilToken>
         {
             Name('#', StringPart.Literal("slot-"), StringPart.Variable("n")),
         }));
@@ -153,7 +153,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Name_Ends_At_The_First_Non_Name_Code_Point()
     {
-        Assert.That(Tokenize(".a-`b` .c"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize(".a-<b> .c"), Is.EqualTo(new List<ISuilToken>
         {
             Name('.', StringPart.Literal("a-"), StringPart.Variable("b")), new WhitespaceToken(),
             new DelimToken('.'), new IdentToken("c"),
@@ -163,7 +163,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Plain_Names_Stay_Plain_Tokens()
     {
-        Assert.That(Tokenize(".a #b `c`"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize(".a #b <c>"), Is.EqualTo(new List<ISuilToken>
         {
             new DelimToken('.'), new IdentToken("a"), new WhitespaceToken(),
             new HashToken("b", true), new WhitespaceToken(), new VariableToken("c"),
@@ -171,12 +171,17 @@ public sealed class SuilTokenizerTests
     }
 
     [Test]
-    [TestCase(".a-`")]
-    [TestCase(".`1a`")]
-    [TestCase("#`")]
-    public void Invalid_Name_Variable_Throws(string input)
+    public void An_Angle_Bracket_That_Is_Not_A_Variable_Ends_The_Name()
     {
-        Assert.Throws<SuilTokenizeError>(() => Tokenize(input));
+        Assert.That(Tokenize(".a-<"), Is.EqualTo(new List<ISuilToken>
+        {
+            new DelimToken('.'), new IdentToken("a-"), new DelimToken('<'),
+        }));
+
+        Assert.That(Tokenize(".a<1b>"), Is.EqualTo(new List<ISuilToken>
+        {
+            new DelimToken('.'), new IdentToken("a"), new DelimToken('<'), new DimensionToken(1, true, "b"), new DelimToken('>'),
+        }));
     }
 
     [Test]
@@ -211,7 +216,8 @@ public sealed class SuilTokenizerTests
     [TestCase("\"quote\\\"inside\"", "quote\"inside")]
     [TestCase("\"back\\\\slash\"", "back\\slash")]
     [TestCase("\"line\\\ncontinuation\"", "linecontinuation")]
-    [TestCase("\"not \\`a var\\`\"", "not `a var`")]
+    [TestCase("\"not \\<a>\"", "not <a>")]
+    [TestCase("\"a <b c> <1d> <> <e\"", "a <b c> <1d> <> <e")]
     public void String_Token_Value_Is_Correctly_Unescaped(string input, string expected)
     {
         var parts = expected.Length == 0
@@ -224,7 +230,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void String_Interpolates_Variables()
     {
-        Assert.That(Tokenize("\"a `p`-b `q`\""), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize("\"a <p>-b <q>\""), Is.EqualTo(new List<ISuilToken>
         {
             Str(StringPart.Literal("a "), StringPart.Variable("p"), StringPart.Literal("-b "), StringPart.Variable("q")),
         }));
@@ -233,9 +239,6 @@ public sealed class SuilTokenizerTests
     [Test]
     [TestCase("\"never closed")]
     [TestCase("\"new\nline\"")]
-    [TestCase("\"`unclosed\"")]
-    [TestCase("\"``\"")]
-    [TestCase("\"`1a`\"")]
     public void Invalid_String_Throws(string input)
     {
         Assert.Throws<SuilTokenizeError>(() => Tokenize(input));
@@ -244,7 +247,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Variable_Outside_Of_String()
     {
-        Assert.That(Tokenize("title: `title`,"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize("title: <title>,"), Is.EqualTo(new List<ISuilToken>
         {
             new IdentToken("title"), new ColonToken(), new WhitespaceToken(),
             new VariableToken("title"), new CommaToken(),
@@ -252,12 +255,21 @@ public sealed class SuilTokenizerTests
     }
 
     [Test]
-    [TestCase("`")]
-    [TestCase("`name")]
-    [TestCase("``")]
-    public void Invalid_Variable_Throws(string input)
+    [TestCase("<")]
+    [TestCase("<name")]
+    [TestCase("<>")]
+    [TestCase("<1a>")]
+    [TestCase("<a b>")]
+    public void An_Unfinished_Variable_Is_Delims(string input)
     {
-        Assert.Throws<SuilTokenizeError>(() => Tokenize(input));
+        Assert.That(Tokenize(input), Has.None.InstanceOf<VariableToken>());
+        Assert.That(Tokenize(input)[0], Is.EqualTo(new DelimToken('<')));
+    }
+
+    [Test]
+    public void The_Backtick_Is_Not_A_Variable_Any_More()
+    {
+        Assert.That(Tokenize("`name`"), Has.None.InstanceOf<VariableToken>());
     }
 
     [Test]
@@ -281,7 +293,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Loc_Key_Interpolates_Variables()
     {
-        Assert.That(Tokenize("$`p`-delete-button)"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize("$<p>-delete-button)"), Is.EqualTo(new List<ISuilToken>
         {
             Loc(false, StringPart.Variable("p"), StringPart.Literal("-delete-button")), new RightParenthesisToken(),
         }));
@@ -290,7 +302,7 @@ public sealed class SuilTokenizerTests
     [Test]
     public void Loc_Key_With_Glued_Parenthesis_Has_Arguments()
     {
-        Assert.That(Tokenize("$ui-count(n: `count`)"), Is.EqualTo(new List<ISuilToken>
+        Assert.That(Tokenize("$ui-count(n: <count>)"), Is.EqualTo(new List<ISuilToken>
         {
             Loc(true, StringPart.Literal("ui-count")),
             new IdentToken("n"), new ColonToken(), new WhitespaceToken(),
@@ -414,7 +426,7 @@ public sealed class SuilTokenizerTests
             let p = "character-setup-gui-character-picker-button";
 
             let tab-scroll = (title) {
-                tab (title: `title`) { scroll .scroll-vertical { col { %content% } } }
+                tab (title: <title>) { scroll .scroll-vertical { col { %content% } } }
             }
 
             .picker-row { gap: 4px; }
@@ -423,8 +435,8 @@ public sealed class SuilTokenizerTests
                 row .picker-row {
                     +button #up .icon-button .open-both (size: 36, disabled) { _ .icon .icon-sort-up }
                     +confirm-button #delete-button (
-                        text: $`p`-delete-button,
-                        confirm-text: $`p`-confirm-delete-button
+                        text: $<p>-delete-button,
+                        confirm-text: $<p>-confirm-delete-button
                     )
                 }
             }

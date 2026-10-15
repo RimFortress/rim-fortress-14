@@ -10,7 +10,7 @@ test-suil-window-control {
     background-clip: content-box;
     border-radius: 40%;
     background-origin: content-box;
-    font-family: var(--main-font);
+    font-family: <main-font>;
     font-size: 24px;
     font-weight: bold;
     /*

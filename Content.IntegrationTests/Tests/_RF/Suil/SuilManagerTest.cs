@@ -240,43 +240,20 @@ public sealed class SuilManagerTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void VariableParseTest()
+    public void ConstantParseTest()
     {
         var control = new UiElement();
 
         Load("""
-            :root {
-                --test-var: red;
-            }
+            let test-var = red;
 
             _ {
-                background-color: var(--test-var);
+                background-color: <test-var>;
             }
             """);
 
         _suil.UpdateTestStyle(control);
         Assert.That(control.BackgroundColor, Is.EqualTo(Color.Red));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void VariableOverwriteTest()
-    {
-        var control = new UiElement();
-
-        Load("""
-            :root {
-                --test-var: red;
-            }
-
-            _ {
-                --test-var: blue;
-                background-color: var(--test-var);
-            }
-            """);
-
-        _suil.UpdateTestStyle(control);
-        Assert.That(control.BackgroundColor, Is.EqualTo(Color.Blue));
     }
 }
 

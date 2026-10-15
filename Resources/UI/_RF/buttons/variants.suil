@@ -17,20 +17,20 @@
 }
 
 .storage-button {
-    background-color: var(--button-color-default);
+    background-color: <button-color-default>;
 }
 
 .storage-button:hover {
-    background-color: var(--button-color-hovered);
+    background-color: <button-color-hovered>;
 }
 
 .storage-button:active,
 .storage-button:checked {
-    background-color: var(--button-color-pressed);
+    background-color: <button-color-pressed>;
 }
 
 .storage-button:disabled {
-    background-color: var(--button-color-disabled);
+    background-color: <button-color-disabled>;
 }
 
 /* ---------- ListContainer ---------- */
@@ -67,18 +67,18 @@
     background-repeat: stretch;
     patch-margin: 5px;
     padding: 7px;
-    background-color: var(--button-color-default);
+    background-color: <button-color-default>;
 }
 
 .chat-filter-option-button:hover {
-    background-color: var(--button-color-hovered);
+    background-color: <button-color-hovered>;
 }
 
 .chat-filter-option-button:active,
 .chat-filter-option-button:checked {
-    background-color: var(--button-color-pressed);
+    background-color: <button-color-pressed>;
 }
 
 .chat-filter-option-button:disabled {
-    background-color: var(--button-color-disabled);
+    background-color: <button-color-disabled>;
 }

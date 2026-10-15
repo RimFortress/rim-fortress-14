@@ -151,7 +151,7 @@ public sealed record SuilPseudoFunction(string Name, SuilAnb? Anb, List<SuilSele
 // ---- Elements ----
 
 /// <summary>
-/// The name of a class or an id of an element: text with `variable` references, like <c>icon-`name`</c>.
+/// The name of a class or an id of an element: text with &lt;variable&gt; references, like <c>icon-&lt;name&gt;</c>.
 /// After the expansion every name is literal.
 /// </summary>
 public sealed record SuilName(ImmutableArray<StringPart> Parts)
@@ -165,7 +165,7 @@ public sealed record SuilName(ImmutableArray<StringPart> Parts)
     /// <summary>
     /// The source form: variables are in backticks.
     /// </summary>
-    public override string ToString() => string.Concat(Parts.Select(p => p.IsVariable ? $"`{p.Text}`" : p.Text));
+    public override string ToString() => string.Concat(Parts.Select(p => p.IsVariable ? $"<{p.Text}>" : p.Text));
 
     public bool Equals(SuilName? other) => other != null && StringPart.SequenceEqual(Parts, other.Parts);
 

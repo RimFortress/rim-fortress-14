@@ -114,7 +114,7 @@ public sealed class SuilViewGeneratorTests
         var result = Run("""
             let p = "ui-picker";
             button {
-                confirm-button (text: $`p`-delete, confirmation-text: $`p`-sure(count: 3, who: "Bob", kind: plain))
+                confirm-button (text: $<p>-delete, confirmation-text: $<p>-sure(count: 3, who: "Bob", kind: plain))
             }
             """);
 
@@ -131,11 +131,11 @@ public sealed class SuilViewGeneratorTests
             """
             use "/lib/pair";
             let name = "up";
-            button { icon-button #`name` .extra (label: "A") }
+            button { icon-button #<name> .extra (label: "A") }
             """,
             more: new()
             {
-                ["/lib/pair.suil"] = "let icon-button = (label) { button .icon-button (text: `label`) { _ .`label` } }",
+                ["/lib/pair.suil"] = "let icon-button = (label) { button .icon-button (text: <label>) { _ .<label> } }",
             });
 
         AssertClean(result);

@@ -14,7 +14,7 @@ namespace Content.Suil;
 /// <para>
 /// Scopes are lexical and sequential: a <c>let</c> is visible below its declaration, a template sees what was
 /// declared above it and its parameters, the content of a template usage is expanded in the scope of the caller.
-/// Variables are separate from types: <c>`name`</c> looks for a variable, a tag looks for a template, and a tag
+/// Variables are separate from types: <c>&lt;name&gt;</c> looks for a variable, a tag looks for a template, and a tag
 /// that names a plain variable is just a type.
 /// </para>
 /// </summary>

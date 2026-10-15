@@ -123,40 +123,7 @@ public partial class SuilManager
         .ToList();
 
     /// <summary>
-    /// Collects custom properties declared in <c>:root</c> rules into the base set that every control inherits from.
-    /// All <c>:root</c> rules have the same specificity, so the later definition wins.
-    /// </summary>
-    private static SuilVariables BuildGlobalVariables(IEnumerable<PendingRule> pending)
-    {
-        var declared = new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
-
-        var rootRules = pending.Where(rule => rule.Selectors.Any(IsRootSelector)).ToList();
-
-        // Normal declarations first, then !important ones, so the latter always win.
-        for (var pass = 0; pass < 2; pass++)
-        {
-            var important = pass == 1;
-
-            foreach (var rule in rootRules)
-            {
-                foreach (var declaration in rule.Declarations)
-                {
-                    if (SuilVariables.IsCustomProperty(declaration.Name) && declaration.Important == important)
-                        declared[declaration.Name] = declaration.Value;
-                }
-            }
-        }
-
-        return new SuilVariables(null, declared);
-    }
-
-    private static bool IsRootSelector(Selector selector)
-        => selector is RootSelector or CompoundSelector { Selectors: [RootSelector] };
-
-    /// <summary>
-    /// Phase 2: parses declarations into typed properties. Declarations without <c>var()</c> are parsed
-    /// right here; declarations with <c>var()</c> are deferred until they are applied to a control,
-    /// because their value depends on the variables that control inherits.
+    /// Phase 2: parses declarations into typed properties.
     /// </summary>
     private List<SuilStyleRule> Compile(IEnumerable<PendingRule> pending)
     {
@@ -164,14 +131,6 @@ public partial class SuilManager
 
         foreach (var rule in pending)
         {
-            var customProperties = new List<SuilCustomProperty>();
-
-            foreach (var declaration in rule.Declarations)
-            {
-                if (SuilVariables.IsCustomProperty(declaration.Name))
-                    customProperties.Add(new SuilCustomProperty(declaration.Name, declaration.Value, declaration.Important));
-            }
-
             foreach (var selector in rule.Selectors)
             {
                 var elemType = SuilStylesheet.GetElementType(selector);
@@ -181,32 +140,10 @@ public partial class SuilManager
                     StringComparer.OrdinalIgnoreCase);
                 var importantValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
                     StringComparer.OrdinalIgnoreCase);
-                var deferred = new List<SuilDeferredDeclaration>();
 
                 for (var i = 0; i < rule.Declarations.Count; i++)
                 {
                     var declaration = rule.Declarations[i];
-
-                    if (SuilVariables.IsCustomProperty(declaration.Name))
-                        continue; // custom properties are not real properties, they must never be resolved as such
-
-                    if (SuilVariables.ContainsVar(declaration.Value))
-                    {
-                        // The value can't be parsed yet, but a typo in the property name can be caught now.
-                        if (!TryGetShorthandInfo(elemType, declaration.Name, out _)
-                            && !TryGetPropertyAccessor(elemType, declaration.Name, out _))
-                        {
-#if EXCEPTION_TOLERANCE
-                            _sawmill.Error($"unknown SUIL property '{declaration.Name}'");
-                            continue;
-#else
-                            throw new ArgumentException($"unknown SUIL property '{declaration.Name}'");
-#endif
-                        }
-
-                        deferred.Add(new SuilDeferredDeclaration(declaration, elemType, i));
-                        continue;
-                    }
 
                     var propertyValues = declaration.Important ? importantValues : normalValues;
 
@@ -230,12 +167,7 @@ public partial class SuilManager
                     propertyValues[name] = (value, accessor.Value, i);
                 }
 
-                // :root variables are global and form the base of the inheritance chain,
-                // so a :root selector doesn't contribute its custom properties to controls it matches.
-                var custom = IsRootSelector(selector) ? [] : customProperties;
-
-                // Rules that only declared :root variables produce nothing.
-                if (normalValues.Count == 0 && importantValues.Count == 0 && deferred.Count == 0 && custom.Count == 0)
+                if (normalValues.Count == 0 && importantValues.Count == 0)
                     continue;
 
                 var properties = normalValues
@@ -247,9 +179,7 @@ public partial class SuilManager
 
                 rules.Add(new SuilStyleRule(selector, properties)
                 {
-                    CustomProperties = custom,
-                    DeferredDeclarations = deferred,
-                    HasImportant = importantValues.Count > 0 || deferred.Any(d => d.Declaration.Important),
+                    HasImportant = importantValues.Count > 0,
                 });
             }
         }

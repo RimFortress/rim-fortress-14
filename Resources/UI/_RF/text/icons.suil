@@ -17,7 +17,7 @@
 .species-info-warning {
     background-image: texture("/Textures/Interface/info.svg.192dpi.png");
     background-repeat: no-repeat;
-    background-color: var(--gold-fortress);
+    background-color: <gold-fortress>;
 }
 
 /* DirectionIcon.StyleClassDirectionIconArrow: direction-icon-arrow (south pointing arrow) */

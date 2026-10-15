@@ -9,37 +9,37 @@
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    background-color: var(--gold-button-color-default);
+    background-color: <gold-button-color-default>;
 }
 
 .icon-button:hover > .icon {
-    background-color: var(--gold-button-color-hovered);
+    background-color: <gold-button-color-hovered>;
 }
 
 .icon-button:active > .icon,
 .icon-button:checked > .icon {
-    background-color: var(--gold-button-color-pressed);
+    background-color: <gold-button-color-pressed>;
 }
 
 .icon-button:disabled > .icon {
-    background-color: var(--gold-button-color-disabled);
+    background-color: <gold-button-color-disabled>;
 }
 
 .icon-button.gold > .icon {
-    background-color: var(--button-color-default);
+    background-color: <button-color-default>;
 }
 
 .icon-button.gold:hover > .icon {
-    background-color: var(--button-color-hovered);
+    background-color: <button-color-hovered>;
 }
 
 .icon-button.gold:active > .icon,
 .icon-button.gold:checked > .icon {
-    background-color: var(--button-color-pressed);
+    background-color: <button-color-pressed>;
 }
 
 .icon-button.gold:disabled > .icon {
-    background-color: var(--button-color-disabled);
+    background-color: <button-color-disabled>;
 }
 
 /* The icons of .icon-button */

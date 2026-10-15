@@ -10,38 +10,38 @@
 
 /* ContextMenuElement.StyleClassContextMenuButton: contextMenuButton */
 .context-menu-button {
-    background-color: var(--graphite-black);
+    background-color: <graphite-black>;
 }
 
 .context-menu-button:hover {
-    background-color: var(--signal-black);
+    background-color: <signal-black>;
 }
 
 .context-menu-button:active,
 .context-menu-button:checked {
-    background-color: var(--wooden-fortress);
+    background-color: <wooden-fortress>;
 }
 
 .context-menu-button:disabled {
-    background-color: var(--black-amber);
+    background-color: <black-amber>;
 }
 
 /* ConfirmationMenuElement.StyleClassConfirmationContextMenuButton: confirmationContextMenuButton */
 .confirmation-context-menu-button {
-    background-color: var(--bad);
+    background-color: <bad>;
 }
 
 .confirmation-context-menu-button:hover {
-    background-color: var(--light-bad);
+    background-color: <light-bad>;
 }
 
 .confirmation-context-menu-button:active,
 .confirmation-context-menu-button:checked {
-    background-color: var(--dark-bad);
+    background-color: <dark-bad>;
 }
 
 .confirmation-context-menu-button:disabled {
-    background-color: var(--darkest-bad);
+    background-color: <darkest-bad>;
 }
 
 /* Verb.DefaultTextStyleClass: Verb, InteractionVerb, AlternativeVerb, ActivationVerb */

@@ -233,7 +233,7 @@ public sealed class SuilSelectorTests
     {
         var file = SuilExpander.Expand("""
             let family = "Mono";
-            @font-face { font-family: `family`; }
+            @font-face { font-family: <family>; }
             """);
 
         var face = (SuilFontFace) file.Items.Single();

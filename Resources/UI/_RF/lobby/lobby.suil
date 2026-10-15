@@ -46,7 +46,7 @@ box#lobby-default-state {
 
 #lobby-start-time {
     flex-grow: 1;
-    color: var(--gray-silver);
+    color: <gray-silver>;
 }
 
 #lobby-ready-button {
