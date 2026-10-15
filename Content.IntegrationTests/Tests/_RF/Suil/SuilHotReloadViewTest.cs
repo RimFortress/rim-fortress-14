@@ -25,7 +25,7 @@ public sealed class SuilHotReloadViewTest : GameTest
         var built = Describe(view);
         var submit = view.HotSubmit;
 
-        Assert.That(((ISuilView) view).SuilPath, Is.EqualTo("/_RF/tests/hot-reload-view"));
+        Assert.That(((ISuilView) view).SuilPath, Is.EqualTo("/tests/hot-reload-view"));
 
         var result = _reload.Reload(view);
 
@@ -33,7 +33,7 @@ public sealed class SuilHotReloadViewTest : GameTest
         Assert.That(result.Warnings, Is.Empty);
         Assert.That(Describe(view), Is.EqualTo(built), "the same tree, built from the file by the interpreter");
         Assert.That(view.HotSubmit, Is.SameAs(submit), "the control with a field is kept");
-        Assert.That(result.Dependencies, Does.Contain("/_RF/tests/hot-reload-view.suil"));
+        Assert.That(result.Dependencies, Does.Contain("/tests/hot-reload-view.suil"));
         Assert.That(result.Dependencies, Does.Contain("/layout.suil"), "the globals are what the view depends on as well");
     }
 
@@ -78,10 +78,16 @@ public sealed class SuilHotReloadViewTest : GameTest
 
     private static void Press(RfButton button)
     {
-        var field = typeof(RfButton).GetField("OnPressed", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-        var args = new RfButtonEventArgs(button, new GUIBoundKeyEventArgs(
-            Robust.Shared.Input.EngineKeyFunctions.UIClick, Robust.Shared.Input.BoundKeyState.Down, default, true,
-            System.Numerics.Vector2.Zero, System.Numerics.Vector2.Zero));
+        var field = typeof(RfButton).GetField("OnPressed",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var args = new RfButtonEventArgs(button,
+            new GUIBoundKeyEventArgs(
+                Robust.Shared.Input.EngineKeyFunctions.UIClick,
+                Robust.Shared.Input.BoundKeyState.Down,
+                default,
+                true,
+                System.Numerics.Vector2.Zero,
+                System.Numerics.Vector2.Zero));
         ((Delegate?) field.GetValue(button))?.DynamicInvoke(args);
     }
 
@@ -105,7 +111,7 @@ public sealed class SuilHotReloadViewTest : GameTest
     }
 }
 
-[SuilView("/_RF/tests/hot-reload-view")]
+[SuilView("/tests/hot-reload-view")]
 public sealed partial class GeneratedHotReloadView : RfBoxContainer
 {
     public int Submitted;
