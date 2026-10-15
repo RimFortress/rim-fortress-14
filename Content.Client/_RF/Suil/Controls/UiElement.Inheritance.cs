@@ -72,7 +72,7 @@ public partial class UiElement
         if (InheritedByType.TryGetValue(type, out var cached))
             return cached;
 
-        // AutoSuilProperties() only lists the properties declared by one class, so the table comes from the manager,
+        // The generated tables list only the properties declared by one class, so the table comes from the manager,
         // which merges the whole chain of base classes.
         var accessors = Suil.GetPropertyAccessors(type);
         var all = accessors

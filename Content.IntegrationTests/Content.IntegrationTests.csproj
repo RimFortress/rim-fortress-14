@@ -23,6 +23,5 @@
   <Import Project="..\RobustToolbox\Imports\Server.props" />
   <Import Project="..\RobustToolbox\Imports\Shared.props" />
   <Import Project="..\RobustToolbox\Imports\Testing.props" />
-  <Import Project="..\MSBuild\RimFortress.SuilPropertyGenerator.targets" /> <!-- RimFortress -->
   <Import Project="..\MSBuild\RimFortress.SuilTables.targets" /> <!-- RimFortress -->
 </Project>

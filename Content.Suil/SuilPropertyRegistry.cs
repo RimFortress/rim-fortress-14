@@ -21,7 +21,7 @@ public sealed record SuilPropertyAccessor(
     bool Inherited);
 
 /// <summary>
-/// The generated tables of the controls of one assembly: their properties and their tags. Every assembly that the
+/// The generated tables of the controls of one assembly: their properties, their tags and their shorthands. Every assembly that the
 /// generator runs on has a class that implements it; the style manager finds them all and lets each register its controls.
 /// </summary>
 public interface ISuilControlTables
@@ -29,6 +29,8 @@ public interface ISuilControlTables
     void RegisterProperties(SuilPropertyRegistry registry);
 
     void RegisterTags(SuilTagTable tags);
+
+    void RegisterShorthands(SuilShorthandTable shorthands);
 }
 
 /// <summary>

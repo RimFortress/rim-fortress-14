@@ -24,6 +24,5 @@
   <Import Project="..\RobustToolbox\MSBuild\Robust.Properties.targets" />
   <Import Project="..\RobustToolbox\MSBuild\XamlIL.targets" />
   <Import Project="..\RobustToolbox\MSBuild\Robust.EntitySystemSubscriptionsGenerator.targets" />
-  <Import Project="..\MSBuild\RimFortress.SuilPropertyGenerator.targets" /> <!-- RimFortress -->
   <Import Project="..\MSBuild\RimFortress.Suil.targets" /> <!-- RimFortress -->
 </Project>

@@ -106,11 +106,23 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
         sb.AppendLine("        {");
 
         var partials = new StringBuilder();
+        var shorthandTypes = new List<(INamedTypeSymbol Type, List<ShorthandGroup> Groups, bool InPartial)>();
 
         foreach (var type in types.OrderBy(t => t.ToDisplayString(), StringComparer.Ordinal))
         {
             var members = Members(type, compilation, out var hidden);
             var hasHidden = hidden.Count > 0 && IsPartialChain(type);
+
+            // The shorthands are described by the members of the class; a class that is partial gets a method with the
+            // table, so the parsers that are private can be named in it.
+            var groups = Shorthands(type, compilation);
+            var shorthandsInPartial = groups.Count > 0 && IsPartialChain(type);
+
+            if (groups.Count > 0)
+                shorthandTypes.Add((type, groups, shorthandsInPartial));
+
+            if (hasHidden || shorthandsInPartial)
+                WritePartial(partials, type, hasHidden ? hidden : new List<Member>(), shorthandsInPartial ? groups : null);
 
             if (members.Count == 0 && !hasHidden)
                 continue;
@@ -130,9 +142,26 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
 
             sb.AppendLine("                return table;");
             sb.AppendLine("            });");
+        }
 
-            if (hasHidden)
-                WritePartial(partials, type, typeName, hidden);
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine("        public void RegisterShorthands(global::Content.Suil.SuilShorthandTable shorthands)");
+        sb.AppendLine("        {");
+
+        foreach (var (type, groups, inPartial) in shorthandTypes)
+        {
+            var typeName = type.ToDisplayString(Format);
+
+            if (inPartial)
+            {
+                sb.AppendLine($"            shorthands.Add(typeof({typeName}), {typeName}.SuilShorthands());");
+                continue;
+            }
+
+            sb.AppendLine("            {");
+            WriteShorthandTable(sb, "                ", typeName, groups, "shorthands.Add(typeof(" + typeName + "), table);");
+            sb.AppendLine("            }");
         }
 
         sb.AppendLine("        }");
@@ -250,10 +279,12 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// Adds a part to the class with the accessors of its members that are not public.
+    /// Adds a part to the class with the accessors of its members that are not public, and with the table of its
+    /// shorthands.
     /// </summary>
-    private static void WritePartial(StringBuilder sb, INamedTypeSymbol type, string typeName, List<Member> hidden)
+    private static void WritePartial(StringBuilder sb, INamedTypeSymbol type, List<Member> hidden, List<ShorthandGroup>? shorthands)
     {
+        var typeName = type.ToDisplayString(Format);
         var containers = new List<INamedTypeSymbol>();
         for (var current = type; current != null; current = current.ContainingType)
         {
@@ -275,15 +306,26 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
             sb.AppendLine("    {");
         }
 
-        sb.AppendLine("        internal static void SuilAddProperties(global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilPropertyAccessor> table)");
-        sb.AppendLine("        {");
-
-        foreach (var member in hidden)
+        if (hidden.Count > 0)
         {
-            WriteAccessor(sb, "            ", "table", typeName, member);
+            sb.AppendLine("        internal static void SuilAddProperties(global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilPropertyAccessor> table)");
+            sb.AppendLine("        {");
+
+            foreach (var member in hidden)
+            {
+                WriteAccessor(sb, "            ", "table", typeName, member);
+            }
+
+            sb.AppendLine("        }");
         }
 
-        sb.AppendLine("        }");
+        if (shorthands != null)
+        {
+            sb.AppendLine("        internal static global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilShorthandInfo> SuilShorthands()");
+            sb.AppendLine("        {");
+            WriteShorthandTable(sb, "            ", typeName, shorthands, "return table;");
+            sb.AppendLine("        }");
+        }
 
         foreach (var _ in containers)
         {
@@ -292,6 +334,164 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
 
         if (hasNamespace)
             sb.AppendLine("}");
+    }
+
+    private sealed record ShorthandMember(string SuilName, string TypeName, string? ParserMethod);
+
+    private sealed record ShorthandGroup(string Name, List<ShorthandMember> Members, string? ParserMethod);
+
+    /// <summary>
+    /// The shorthands the members of the class belong to, by [SuilShorthand]: a member can be in several, and a group
+    /// can have one parser method named by any of its members.
+    /// </summary>
+    private static List<ShorthandGroup> Shorthands(INamedTypeSymbol type, Compilation compilation)
+    {
+        var groups = new List<ShorthandGroup>();
+        var byName = new Dictionary<string, List<ShorthandMember>>(StringComparer.Ordinal);
+        var order = new List<string>();
+        var partial = IsPartialChain(type);
+
+        foreach (var symbol in type.GetMembers())
+        {
+            ITypeSymbol valueType;
+
+            switch (symbol)
+            {
+                case IPropertySymbol { IsStatic: false, IsIndexer: false } property:
+                    valueType = property.Type;
+                    break;
+                case IFieldSymbol { IsStatic: false, IsImplicitlyDeclared: false } field:
+                    valueType = field.Type;
+                    break;
+                default:
+                    continue;
+            }
+
+            var attributes = symbol.GetAttributes()
+                .Where(a => a.AttributeClass?.ToDisplayString() == SuilViewAttributeSource.ShorthandMetadataName)
+                .ToList();
+
+            if (attributes.Count == 0)
+                continue;
+
+            var name = SuilNaming.ToKebab(symbol.Name);
+            var propertyAttribute = symbol.GetAttributes()
+                .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == SuilViewAttributeSource.PropertyMetadataName);
+
+            if (propertyAttribute is { ConstructorArguments.Length: > 0 } && propertyAttribute.ConstructorArguments[0].Value is string custom)
+                name = custom;
+
+            foreach (var attribute in attributes)
+            {
+                if (attribute.ConstructorArguments.Length == 0 || attribute.ConstructorArguments[0].Value is not string shorthand)
+                    continue;
+
+                // a method that is missing, or is not the right shape, is the same as no method: the generated expander
+                var method = attribute.ConstructorArguments.Length > 1
+                             && attribute.ConstructorArguments[1].Value is string methodName
+                             && HasParserMethod(type, methodName, partial, compilation)
+                    ? methodName
+                    : null;
+
+                if (!byName.TryGetValue(shorthand, out var members))
+                {
+                    byName[shorthand] = members = new List<ShorthandMember>();
+                    order.Add(shorthand);
+                }
+
+                members.Add(new ShorthandMember(name, valueType.ToDisplayString(Format), method));
+            }
+        }
+
+        foreach (var shorthand in order)
+        {
+            var members = byName[shorthand];
+            groups.Add(new ShorthandGroup(shorthand, members, members.Select(m => m.ParserMethod).FirstOrDefault(m => m != null)));
+        }
+
+        return groups;
+    }
+
+    /// <summary>
+    /// Whether the class has a static method of that name with the three parameters of the parser. A class that is not
+    /// partial is written from outside, so the method must be reachable.
+    /// </summary>
+    private static bool HasParserMethod(INamedTypeSymbol type, string name, bool partial, Compilation compilation)
+        => type.GetMembers(name).OfType<IMethodSymbol>().Any(m =>
+            m is { IsStatic: true, Parameters.Length: 3 } && (partial || compilation.IsSymbolAccessibleWithin(m, compilation.Assembly)));
+
+    /// <summary>
+    /// Writes the statements that fill <c>table</c> with the shorthands of a class and then <paramref name="finish"/>.
+    /// </summary>
+    private static void WriteShorthandTable(StringBuilder sb, string indent, string typeName, List<ShorthandGroup> groups, string finish)
+    {
+        sb.AppendLine($"{indent}var table = new global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilShorthandInfo>();");
+
+        foreach (var group in groups)
+        {
+            var longhands = string.Join(", ", group.Members.Select(m => Literal(m.SuilName)).Distinct());
+
+            sb.AppendLine($"{indent}table[{Literal(group.Name)}] = new global::Content.Suil.SuilShorthandInfo(");
+            sb.AppendLine($"{indent}    new string[] {{ {longhands} }},");
+
+            if (group.ParserMethod != null)
+            {
+                sb.AppendLine($"{indent}    {typeName}.{group.ParserMethod});");
+                continue;
+            }
+
+            WriteGreedyExpander(sb, indent + "    ", group.Members);
+            sb.AppendLine(");");
+        }
+
+        sb.AppendLine($"{indent}{finish}");
+    }
+
+    /// <summary>
+    /// The expander that tries the parser of every longhand that has no value yet on the next value, in the order the
+    /// longhands are declared, until one of them takes it. A failed attempt gives the value back.
+    /// </summary>
+    private static void WriteGreedyExpander(StringBuilder sb, string indent, List<ShorthandMember> members)
+    {
+        var names = members.Select(m => m.SuilName).Distinct().ToList();
+
+        sb.AppendLine($"{indent}static (ref global::Content.Suil.SuilValueStream stream, global::Content.Suil.ISuilValues parsers, global::System.Collections.Generic.Dictionary<string, object> values) =>");
+        sb.AppendLine($"{indent}{{");
+        sb.AppendLine($"{indent}    var remaining = new global::System.Collections.Generic.HashSet<string> {{ {string.Join(", ", names.Select(Literal))} }};");
+        sb.AppendLine($"{indent}    while (!stream.AtEnd)");
+        sb.AppendLine($"{indent}    {{");
+        sb.AppendLine($"{indent}        var outer = stream.Mark();");
+        sb.AppendLine($"{indent}        var matched = false;");
+
+        var index = 0;
+
+        foreach (var member in members)
+        {
+            sb.AppendLine($"{indent}        if (!matched && remaining.Contains({Literal(member.SuilName)}))");
+            sb.AppendLine($"{indent}        {{");
+            sb.AppendLine($"{indent}            var mark{index} = stream.Mark();");
+            sb.AppendLine($"{indent}            if (parsers.TryParse<{member.TypeName}>(ref stream, out var value{index}))");
+            sb.AppendLine($"{indent}            {{");
+            sb.AppendLine($"{indent}                values[{Literal(member.SuilName)}] = value{index};");
+            sb.AppendLine($"{indent}                remaining.Remove({Literal(member.SuilName)});");
+            sb.AppendLine($"{indent}                matched = true;");
+            sb.AppendLine($"{indent}            }}");
+            sb.AppendLine($"{indent}            else");
+            sb.AppendLine($"{indent}            {{");
+            sb.AppendLine($"{indent}                stream.Reset(mark{index});");
+            sb.AppendLine($"{indent}            }}");
+            sb.AppendLine($"{indent}        }}");
+            index++;
+        }
+
+        sb.AppendLine($"{indent}        if (!matched)");
+        sb.AppendLine($"{indent}        {{");
+        sb.AppendLine($"{indent}            stream.Reset(outer);");
+        sb.AppendLine($"{indent}            return false;");
+        sb.AppendLine($"{indent}        }}");
+        sb.AppendLine($"{indent}    }}");
+        sb.AppendLine($"{indent}    return true;");
+        sb.Append($"{indent}}}");
     }
 
     /// <summary>

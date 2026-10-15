@@ -27,7 +27,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
     private readonly SuilPropertyRegistry _registry = new();
     private readonly SuilTagTable _tags = new();
-    private readonly Dictionary<Type, Dictionary<string, SuilShorthandInfo>> _shorthands = new();
+    private readonly SuilShorthandTable _shorthands = new();
 
     /// <summary>
     /// Parsed but not yet compiled rules, per file. Values are compiled only in <see cref="BuildStylesheet"/>,
@@ -774,18 +774,13 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         string declarationName,
         [NotNullWhen(true)] out SuilShorthandInfo? info)
     {
-        info = null;
-        var startType = elementType ?? typeof(UiElement);
-
-        for (var type = startType; type != null; type = type.BaseType)
+        if (_shorthands.TryGet(elementType ?? typeof(UiElement), declarationName, out var found))
         {
-            if (!_shorthands.TryGetValue(type, out var dict) || !dict.TryGetValue(declarationName, out var found))
-                continue;
-
             info = found;
             return true;
         }
 
+        info = null;
         return false;
     }
 
@@ -923,22 +918,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             var tables = _factory.CreateInstance<ISuilControlTables>(tablesType);
             tables.RegisterProperties(_registry);
             tables.RegisterTags(_tags);
-        }
-
-        // The shorthands are written by the generator into the classes that declare them.
-        var styled = _reflection.GetAllChildren<AutoUiElement>()
-            // Only the types that declare shorthands themselves (the generator overrides AutoSuilShorthands there):
-            // a subclass without any has nothing to register (the chain of base types is walked), and creating it may
-            // be impossible here (a XAML control needs the XAML proxy, a control may have constructor arguments).
-            .Where(type => !type.IsAbstract
-                           && _reflection.IsAttributeDefined(type, typeof(SuilStylingAttribute))
-                           && type.GetMethod(nameof(AutoUiElement.AutoSuilShorthands))?.DeclaringType == type)
-            .ToList();
-
-        foreach (var type in styled)
-        {
-            var control = _factory.CreateInstance<AutoUiElement>(type);
-            _shorthands.Add(type, control.AutoSuilShorthands());
+            tables.RegisterShorthands(_shorthands);
         }
 
         // The tables of the types are made on demand, and the inherited ones of the controls are built from them.
@@ -946,7 +926,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         _adapted.Clear();
         UiElement.ResetInheritedCache();
 
-        _sawmill.Info($"properties and {_shorthands.Sum(x => x.Value.Count)} shorthands registered at {sw.Elapsed}");
+        _sawmill.Info($"properties and {_shorthands.Count} shorthands registered at {sw.Elapsed}");
         sw.Stop();
     }
 }

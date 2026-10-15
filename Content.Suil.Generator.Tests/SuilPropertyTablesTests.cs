@@ -349,6 +349,177 @@ public sealed class SuilPropertyTablesTests
         Assert.That(tags.TryGet("not-a-control", out _, out _), Is.False);
     }
 
+    // ---- Shorthands ----
+
+    private const string ShorthandSample = """
+        using System;
+        using System.Collections.Generic;
+        using Content.Suil;
+        using Content.Client._RF.Suil;
+
+        namespace Game
+        {
+            public partial class Box : UiElement
+            {
+                [SuilShorthand("edge")] public int Top { get; set; }
+                [SuilShorthand("edge")] public int Bottom { get; set; }
+                [SuilShorthand("edge")] [SuilShorthand("title-edge", nameof(ParseTitleEdge))] public string Title { get; set; } = "";
+                [SuilProperty("renamed")] [SuilShorthand("edge")] protected int Hidden { get; set; }
+
+                // private: only the class itself can name it
+                private static bool ParseTitleEdge(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object> values)
+                {
+                    values["title"] = "custom";
+                    return true;
+                }
+            }
+
+            public class NotPartialBox : UiElement
+            {
+                [SuilShorthand("pair")] public int Left { get; set; }
+                [SuilShorthand("pair")] public int Right { get; set; }
+                [SuilShorthand("hidden-parser", nameof(Private))] public int Lost { get; set; }
+
+                private static bool Private(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object> values) => true;
+            }
+
+            public class Derived : Box { }
+        }
+        """;
+
+    private sealed class FakeValues : ISuilValues
+    {
+        public bool TryParse<T>(ref SuilValueStream stream, out T? value)
+        {
+            var ok = TryParse(ref stream, typeof(T), out var boxed);
+            value = ok ? (T?) boxed : default;
+            return ok;
+        }
+
+        public bool TryParse(ref SuilValueStream stream, Type type, out object? value)
+        {
+            value = null;
+
+            if (type == typeof(int) && stream.Peek() is SuilNumber number)
+            {
+                stream.ConsumeNext();
+                value = (int) number.Value;
+                return true;
+            }
+
+            if (type == typeof(string) && stream.Peek() is SuilIdent ident)
+            {
+                stream.ConsumeNext();
+                value = ident.Value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryParseWith(Type parserType, ref SuilValueStream stream, out object? value)
+        {
+            value = null;
+            return false;
+        }
+    }
+
+    private static (Assembly Assembly, SuilShorthandTable Table) MakeShorthands()
+    {
+        var result = GeneratorHarness.Run(ShorthandSample, new(), withDefaultTags: false);
+        Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors));
+
+        var assembly = result.Load();
+        var tables = (ISuilControlTables) Activator.CreateInstance(assembly.GetTypes().Single(t => typeof(ISuilControlTables).IsAssignableFrom(t)))!;
+        var table = new SuilShorthandTable();
+        tables.RegisterShorthands(table);
+        return (assembly, table);
+    }
+
+    private static Dictionary<string, object?> Expand(SuilShorthandTable table, Type type, string shorthand, params ISuilValue[] values)
+    {
+        Assert.That(table.TryGet(type, shorthand, out var info), Is.True, shorthand);
+
+        var stream = new SuilValueStream(values.ToList());
+        var result = new Dictionary<string, object?>();
+        Assert.That(info.Parser(ref stream, new FakeValues(), result), Is.True);
+        return result;
+    }
+
+    [Test]
+    public void A_Shorthand_Lists_Its_Longhands_By_Their_Suil_Names()
+    {
+        var (assembly, table) = MakeShorthands();
+        var box = assembly.GetType("Game.Box")!;
+
+        Assert.That(table.TryGet(box, "edge", out var edge), Is.True);
+        Assert.That(edge.Longhands, Is.EqualTo(new[] { "top", "bottom", "title", "renamed" }));
+        Assert.That(table.TryGet(box, "title-edge", out var title), Is.True);
+        Assert.That(title.Longhands, Is.EqualTo(new[] { "title" }));
+        Assert.That(table.TryGet(box, "unknown", out _), Is.False);
+        Assert.That(table.Count, Is.EqualTo(4));
+    }
+
+    [Test]
+    public void The_Generated_Expander_Gives_Every_Value_To_The_First_Longhand_That_Takes_It()
+    {
+        var (assembly, table) = MakeShorthands();
+
+        var values = Expand(table, assembly.GetType("Game.Box")!, "edge",
+            new SuilNumber(1, true), new SuilIdent("name"), new SuilNumber(2, true), new SuilNumber(3, true));
+
+        Assert.That(values, Is.EquivalentTo(new Dictionary<string, object?>
+        {
+            ["top"] = 1,
+            ["title"] = "name",
+            ["bottom"] = 2,
+            ["renamed"] = 3,
+        }));
+    }
+
+    [Test]
+    public void The_Expander_Rejects_A_Value_No_Longhand_Takes()
+    {
+        var (assembly, table) = MakeShorthands();
+        Assert.That(table.TryGet(assembly.GetType("Game.Box")!, "edge", out var info), Is.True);
+
+        var stream = new SuilValueStream(new List<ISuilValue> { new SuilNumber(1, true), new SuilPercentage(50) });
+        Assert.That(info.Parser(ref stream, new FakeValues(), new Dictionary<string, object?>()), Is.False);
+    }
+
+    [Test]
+    public void A_Private_Parser_Is_Named_From_The_Part_Of_The_Class()
+    {
+        var (assembly, table) = MakeShorthands();
+
+        var values = Expand(table, assembly.GetType("Game.Box")!, "title-edge");
+
+        Assert.That(values["title"], Is.EqualTo("custom"));
+    }
+
+    [Test]
+    public void A_Class_That_Is_Not_Partial_Still_Has_Its_Shorthands_But_Not_A_Private_Parser()
+    {
+        var (assembly, table) = MakeShorthands();
+        var notPartial = assembly.GetType("Game.NotPartialBox")!;
+
+        var pair = Expand(table, notPartial, "pair", new SuilNumber(4, true), new SuilNumber(5, true));
+        Assert.That(pair, Is.EquivalentTo(new Dictionary<string, object?> { ["left"] = 4, ["right"] = 5 }));
+
+        // the private method can't be named from outside, so the generated expander is used
+        var lost = Expand(table, notPartial, "hidden-parser", new SuilNumber(6, true));
+        Assert.That(lost["lost"], Is.EqualTo(6));
+    }
+
+    [Test]
+    public void A_Shorthand_Of_A_Base_Class_Applies_To_The_Derived_Class()
+    {
+        var (assembly, table) = MakeShorthands();
+
+        Assert.That(table.TryGet(assembly.GetType("Game.Derived")!, "edge", out _), Is.True);
+        Assert.That(table.TryGet(typeof(object), "edge", out _), Is.False);
+    }
+
     [Test]
     public void Nothing_Is_Written_Without_The_Ui()
     {
