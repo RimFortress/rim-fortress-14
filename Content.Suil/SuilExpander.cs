@@ -61,7 +61,7 @@ public static class SuilExpander
         if (raw.IndexOf('\\') >= 0)
             throw new SuilExpansionError(context, $"'{raw}': the path can't have backslashes, use '/'", position);
 
-        if (!raw.StartsWith('/'))
+        if (!raw.StartsWith("/", StringComparison.Ordinal))
             throw new SuilExpansionError(context, $"'{raw}': only absolute paths are allowed, start it with '/'", position);
 
         if (raw.Split('/').Contains(".."))
@@ -89,7 +89,7 @@ public static class SuilExpander
                 position);
         }
 
-        if (raw.EndsWith('/'))
+        if (raw.EndsWith("/", StringComparison.Ordinal))
         {
             throw new SuilExpansionError(context,
                 $"'{raw}': this is a directory, write '{raw}*' to import all of its files",
@@ -113,9 +113,18 @@ public static class SuilExpander
     /// <summary>
     /// <paramref name="scope"/> is the scope of the declaration: the template doesn't see anything below it.
     /// </summary>
-    private sealed class TemplateBinding(SuilTemplate template, Scope? scope) : Binding
+    private sealed class TemplateBinding(
+        SuilTemplate template,
+        Scope? scope,
+        Dictionary<string, List<ISuilValue>> defaults) : Binding
     {
         public SuilTemplate Template { get; } = template;
+
+        /// <summary>
+        /// The default values of the parameters, expanded where the template is declared: they are constants, and see
+        /// the variables declared before the template, not the parameters.
+        /// </summary>
+        public Dictionary<string, List<ISuilValue>> Defaults { get; } = defaults;
 
         public Scope? Scope { get; } = scope;
 
@@ -325,7 +334,11 @@ public static class SuilExpander
                             let.Position);
                     }
 
-                    return new TemplateBinding(template, scope);
+                    var defaults = template.Defaults.ToDictionary(
+                        pair => pair.Key,
+                        pair => ExpandValues(pair.Value, scope, let.Position));
+
+                    return new TemplateBinding(template, scope, defaults);
                 default:
                     throw new InvalidOperationException($"unknown let value {let.Value.GetType().Name}");
             }
@@ -508,6 +521,13 @@ public static class SuilExpander
                 }
 
                 arguments[property.Name] = ExpandValues(property.Value, callerScope, property.Position);
+            }
+
+            // What the usage leaves out takes its default value; every usage gets its own copy of the values.
+            foreach (var parameter in parameters)
+            {
+                if (!arguments.ContainsKey(parameter) && template.Defaults.TryGetValue(parameter, out var defaultValue))
+                    arguments[parameter] = new List<ISuilValue>(defaultValue);
             }
 
             var missing = parameters.Where(p => !arguments.ContainsKey(p)).ToList();

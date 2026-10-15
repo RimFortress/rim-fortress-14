@@ -46,7 +46,16 @@ public sealed record SuilUse(string Path, SuilPosition Position) : ISuilTopLevel
 /// </summary>
 public sealed record SuilLet(string Name, ISuilLetValue Value, SuilPosition Position) : ISuilTopLevelItem;
 
-public sealed record SuilTemplate(List<string> Parameters, List<ISuilElementNode> Body) : ISuilLetValue;
+/// <summary>
+/// <c>let name = (a, b: 5) { ... }</c>. A parameter with a default value (<c>b: 5</c>) may be left out of the usage.
+/// </summary>
+public sealed record SuilTemplate(List<string> Parameters, List<ISuilElementNode> Body) : ISuilLetValue
+{
+    /// <summary>
+    /// The default values of the parameters that have one, as written (they may have variables).
+    /// </summary>
+    public Dictionary<string, List<ISuilValue>> Defaults { get; init; } = new();
+}
 
 public sealed record SuilValueList(List<ISuilValue> Values) : ISuilLetValue;
 

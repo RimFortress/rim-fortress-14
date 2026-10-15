@@ -227,3 +227,178 @@ public sealed class SuilEventTests
         Assert.Throws<SuilExpansionError>(() => Expanded("button (on-pressed => { &(min-width: <missing>) })"));
     }
 }
+
+[TestFixture]
+public sealed class SuilTemplateDefaultsTests
+{
+    private static SuilElement Root(string input) => SuilExpander.Expand(input).Root!;
+
+    private static SuilFile Parse(string input) => SuilParser.ParseFile(input);
+
+    private static SuilProperty Prop(SuilElement element, string name) => element.Properties.Single(p => p.Name == name);
+
+    // ---- Parser ----
+
+    [Test]
+    public void A_Parameter_May_Have_A_Default_Value()
+    {
+        var template = (SuilTemplate) ((SuilLet) Parse("let t = (label, size: 12, tint: red green) { _ }").Items[0]).Value;
+
+        Assert.That(template.Parameters, Is.EqualTo(new[] { "label", "size", "tint" }));
+        Assert.That(template.Defaults.Keys, Is.EquivalentTo(new[] { "size", "tint" }));
+        Assert.That(template.Defaults["size"], Is.EqualTo(new List<ISuilValue> { new SuilNumber(12, true) }));
+        Assert.That(template.Defaults["tint"], Has.Count.EqualTo(2), "a default is a list of values like an argument");
+    }
+
+    [Test]
+    public void A_Template_Without_Defaults_Has_None()
+    {
+        var template = (SuilTemplate) ((SuilLet) Parse("let t = (a, b) { _ }").Items[0]).Value;
+
+        Assert.That(template.Defaults, Is.Empty);
+    }
+
+    [TestCase("let t = (a: 1, b) { _ }")]
+    [TestCase("let t = (a, b: 1, c) { _ }")]
+    [TestCase("let t = (a: ) { _ }")]
+    [TestCase("let t = (a: 1 b: 2) { _ }")]
+    public void Broken_Defaults_Are_Errors(string input)
+    {
+        Assert.Throws<SuilParserError>(() => Parse(input));
+    }
+
+    [Test]
+    public void The_Error_Of_The_Order_Says_What_To_Do()
+    {
+        var error = Assert.Throws<SuilParserError>(() => Parse("let t = (a: 1, b) { _ }"))!;
+
+        Assert.That(error.Message, Does.Contain("'b'").And.Contain("go last"));
+    }
+
+    // ---- Expander ----
+
+    [Test]
+    public void A_Usage_May_Leave_Out_A_Parameter_With_A_Default()
+    {
+        var root = Root("""
+            let btn = (label, size: 12) { button (text: <label>, min-width: <size>) }
+            btn (label: "Go")
+            """);
+
+        Assert.That(Prop(root, "text").Value, Is.EqualTo(new List<ISuilValue> { new SuilString([StringPart.Literal("Go")]) }));
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(12, true) }));
+    }
+
+    [Test]
+    public void An_Argument_By_Name_Replaces_The_Default()
+    {
+        var root = Root("""
+            let btn = (label, size: 12) { button (text: <label>, min-width: <size>) }
+            btn (size: 40, label: "Go")
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(40, true) }));
+    }
+
+    [Test]
+    public void Every_Parameter_May_Have_A_Default()
+    {
+        var root = Root("""
+            let btn = (label: "OK", size: 12) { button (text: <label>, min-width: <size>) }
+            btn
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(12, true) }));
+        Assert.That(Prop(root, "text").Value, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void A_Default_May_Be_A_Constant_Declared_Before_The_Template()
+    {
+        var root = Root("""
+            let base-size = 7;
+            let btn = (size: <base-size>) { button (min-width: <size>) }
+            btn
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(7, true) }));
+    }
+
+    [Test]
+    public void A_Default_Is_Fixed_Where_The_Template_Is_Declared()
+    {
+        // the constant of the caller is not the one the default saw
+        var root = Root("""
+            let size = 7;
+            let btn = (width: <size>) { button (min-width: <width>) }
+            box {
+                btn
+            }
+            """);
+
+        var button = (SuilElement) root.Children.Single();
+        Assert.That(Prop(button, "min-width").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(7, true) }));
+    }
+
+    [Test]
+    public void Two_Usages_Do_Not_Share_The_Values_Of_A_Default()
+    {
+        var root = Root("""
+            let btn = (tint: red) { button (text: <tint>) }
+            box { btn btn (tint: blue) btn }
+            """);
+
+        var names = root.Children.Cast<SuilElement>().Select(e => ((SuilIdent) Prop(e, "text").Value!.Single()).Value).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "red", "blue", "red" }));
+    }
+
+    [Test]
+    public void A_Required_Parameter_Still_Must_Be_Given()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Root("""
+            let btn = (label, size: 12) { button (text: <label>) }
+            btn
+            """))!;
+
+        Assert.That(error.Message, Does.Contain("label"));
+        Assert.That(error.Message, Does.Not.Contain("size"));
+    }
+
+    [TestCase("let btn = (size: <missing>) { button }\nbtn")]
+    [TestCase("let btn = (a: 1, b: <a>) { button }\nbtn")]
+    [TestCase("let btn = (size: <later>) { button }\nlet later = 1;\nbtn")]
+    public void A_Default_Sees_Only_What_Is_Declared_Before_The_Template(string input)
+    {
+        Assert.Throws<SuilExpansionError>(() => Root(input));
+    }
+
+    [Test]
+    public void A_Default_Is_Checked_Even_If_The_Template_Is_Not_Used()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("let btn = (size: <missing>) { button }\nbox"));
+    }
+
+    [Test]
+    public void An_Argument_That_Is_Not_A_Parameter_Still_Goes_To_The_Root()
+    {
+        var root = Root("""
+            let btn = (size: 12) { button (min-width: <size>) }
+            btn (disabled)
+            """);
+
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "min-width", "disabled" }));
+    }
+
+    [Test]
+    public void The_Content_Slot_Works_With_Defaults()
+    {
+        var root = Root("""
+            let panel = (gap: 4) { box (gap: <gap>) { %content% } }
+            panel { label }
+            """);
+
+        Assert.That(Prop(root, "gap").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(4, true) }));
+        Assert.That(root.Children, Has.Count.EqualTo(1));
+    }
+}

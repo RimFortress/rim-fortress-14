@@ -120,11 +120,15 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// template = [ "(" , [ ident , { "," , ident } ] , ")" ] , block
+    /// template = [ "(" , [ param , { "," , param } ] , ")" ] , block
+    /// param    = ident , [ ":" , value-list ]
+    /// A parameter with a default value may be left out of the usage. As in C#, a parameter without one can't follow
+    /// a parameter with one.
     /// </summary>
     private static SuilTemplate ConsumeTemplate(ref SuilTokenStream stream)
     {
         var parameters = new List<string>();
+        var defaults = new Dictionary<string, List<ISuilValue>>();
 
         if (stream.PeekNext() is LeftParenthesisToken)
         {
@@ -151,6 +155,20 @@ public static partial class SuilParser
                     parameters.Add(parameter.Value);
                     stream.SkipWhitespace();
 
+                    if (stream.PeekNext() is ColonToken)
+                    {
+                        stream.ConsumeNext();
+                        defaults[parameter.Value] = ConsumeValueList(ref stream, "consuming template parameters");
+                        stream.SkipWhitespace();
+                    }
+                    else if (defaults.Count > 0)
+                    {
+                        throw ErrorAtCurrent(ref stream,
+                            "consuming template parameters",
+                            $"the parameter '{parameter.Value}' has no default value, and it follows one that has: " +
+                            "the parameters with a default value go last");
+                    }
+
                     var token = stream.ConsumeNext();
                     if (token is CommaToken)
                         continue;
@@ -174,7 +192,7 @@ public static partial class SuilParser
                 $"expected '{{', not {Describe(stream.Current)}");
         }
 
-        return new SuilTemplate(parameters, ConsumeElementList(ref stream));
+        return new SuilTemplate(parameters, ConsumeElementList(ref stream)) { Defaults = defaults };
     }
 
     /// <summary>
