@@ -362,10 +362,27 @@ public static class SuilExpander
         {
             var result = new List<ISuilElementNode>();
 
+            // The names this block declares: a name can't be declared twice in one block, but a block may hide the name of
+            // the one around it.
+            HashSet<string>? declared = null;
+
             foreach (var node in nodes)
             {
                 switch (node)
                 {
+                    case SuilLocalLet local:
+                        declared ??= new HashSet<string>(StringComparer.Ordinal);
+
+                        if (!declared.Add(local.Let.Name))
+                        {
+                            throw new SuilExpansionError("declaring let",
+                                $"'{local.Let.Name}' is already defined in this block",
+                                local.Let.Position);
+                        }
+
+                        // from here to the end of the block; the let itself doesn't see its own name
+                        scope = new Scope(scope, local.Let.Name, ExpandLet(local.Let, scope));
+                        break;
                     case SuilContentSlot slot:
                         if (slot.Name != SlotName)
                         {

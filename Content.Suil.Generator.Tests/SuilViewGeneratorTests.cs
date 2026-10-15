@@ -105,6 +105,30 @@ public sealed class SuilViewGeneratorTests
         Assert.That(result.Source, Does.Contain("partial class Picker : global::Content.Suil.ISuilView"));
     }
 
+    [Test]
+    public void The_Local_Constants_Of_A_Block_And_A_Template_Reach_The_Generated_Code()
+    {
+        var result = Run("""
+            let labelled = (title) {
+                let pad = 5;
+                box (min-width: <pad>) { +button #<title>-button (text: "x") }
+            }
+            button {
+                let size = 7;
+                box (min-width: <size>)
+                labelled (title: first)
+                labelled (title: second)
+                box { let size = 9; box (min-width: <size>) }
+            }
+            """);
+
+        AssertClean(result);
+        Assert.That(result.Source, Does.Contain(".MinWidth = (int)7;"));
+        Assert.That(result.Source, Does.Contain(".MinWidth = (int)5;"));
+        Assert.That(result.Source, Does.Contain(".MinWidth = (int)9;"), "the inner block hides the outer name");
+        Assert.That(result.Source, Does.Contain("FirstButton").And.Contain("SecondButton"));
+    }
+
     // ---- Hard and soft properties ----
 
     [Test]

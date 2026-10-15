@@ -610,3 +610,288 @@ public sealed class SuilTemplateArgumentsTests
         Assert.That(root.Arguments, Is.Empty);
     }
 }
+
+[TestFixture]
+public sealed class SuilLocalLetTests
+{
+    private static SuilElement Root(string input) => SuilExpander.Expand(input).Root!;
+
+    private static SuilElement Child(SuilElement element, int index) => (SuilElement) element.Children[index];
+
+    private static SuilProperty Prop(SuilElement element, string name) => element.Properties.Single(p => p.Name == name);
+
+    private static List<ISuilValue> Num(double value) => new() { new SuilNumber(value, true) };
+
+    // ---- Parser ----
+
+    [Test]
+    public void A_Let_In_A_Block_Is_A_Node_Of_The_Block()
+    {
+        var root = SuilParser.ParseFile("box { let size = 4; button }").Root!;
+
+        Assert.That(root.Children, Has.Count.EqualTo(2));
+        var local = (SuilLocalLet) root.Children[0];
+        Assert.That(local.Let.Name, Is.EqualTo("size"));
+        Assert.That(root.Children[1], Is.InstanceOf<SuilElement>());
+    }
+
+    [Test]
+    public void A_Let_In_A_Template_Body_Is_A_Node_Of_The_Body()
+    {
+        var file = SuilParser.ParseFile("let t = (a) { let x = 1; box }");
+
+        var template = (SuilTemplate) ((SuilLet) file.Items[0]).Value;
+        Assert.That(template.Body[0], Is.InstanceOf<SuilLocalLet>());
+    }
+
+    [TestCase("box { let }")]
+    [TestCase("box { let x }")]
+    [TestCase("box { let x = ; }")]
+    [TestCase("box { let x = 1 }")]
+    public void A_Broken_Let_In_A_Block_Is_An_Error(string input)
+    {
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile(input));
+    }
+
+    // ---- Scope ----
+
+    [Test]
+    public void The_Elements_After_The_Let_See_It()
+    {
+        var root = Root("""
+            box {
+                let gap = 4;
+                button (min-width: <gap>)
+                box { label (min-width: <gap>) }
+            }
+            """);
+
+        Assert.That(root.Children, Has.Count.EqualTo(2), "a let leaves nothing in the tree");
+        Assert.That(Prop(Child(root, 0), "min-width").Value, Is.EqualTo(Num(4)));
+        Assert.That(Prop(Child(Child(root, 1), 0), "min-width").Value, Is.EqualTo(Num(4)), "and the nested blocks see it too");
+    }
+
+    [Test]
+    public void The_Elements_Before_The_Let_Do_Not_See_It()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("""
+            box {
+                button (min-width: <gap>)
+                let gap = 4;
+            }
+            """));
+    }
+
+    [Test]
+    public void The_Let_Is_Gone_After_The_Block()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("""
+            box {
+                box { let gap = 4; }
+                button (min-width: <gap>)
+            }
+            """));
+    }
+
+    [Test]
+    public void A_Sibling_Block_Does_Not_See_It_Either()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("""
+            box {
+                box { let gap = 4; button (min-width: <gap>) }
+                box { button (min-width: <gap>) }
+            }
+            """));
+    }
+
+    [Test]
+    public void A_Let_May_Use_The_Ones_Before_It_And_The_File_Ones()
+    {
+        var root = Root("""
+            let base = 3;
+            box {
+                let a = <base>;
+                let b = <a> <a>;
+                button (margin: <b>)
+            }
+            """);
+
+        Assert.That(Prop(Child(root, 0), "margin").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(3, true), new SuilNumber(3, true) }));
+    }
+
+    [Test]
+    public void A_Let_Does_Not_See_Its_Own_Name()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("box { let a = <a>; }"));
+    }
+
+    [Test]
+    public void A_Block_May_Hide_The_Name_Of_The_Block_Around_It()
+    {
+        var root = Root("""
+            let size = 1;
+            box {
+                button (min-width: <size>)
+                box {
+                    let size = 2;
+                    button (min-width: <size>)
+                }
+                button (min-width: <size>)
+            }
+            """);
+
+        Assert.That(Prop(Child(root, 0), "min-width").Value, Is.EqualTo(Num(1)));
+        Assert.That(Prop(Child(Child(root, 1), 0), "min-width").Value, Is.EqualTo(Num(2)), "hidden inside");
+        Assert.That(Prop(Child(root, 2), "min-width").Value, Is.EqualTo(Num(1)), "and back outside");
+    }
+
+    [Test]
+    public void The_Same_Name_Twice_In_One_Block_Is_An_Error()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Root("box { let a = 1; let a = 2; }"))!;
+
+        Assert.That(error.Message, Does.Contain("'a'").And.Contain("this block"));
+    }
+
+    // ---- Templates ----
+
+    [Test]
+    public void A_Template_May_Have_Constants_Of_Its_Own()
+    {
+        var root = Root("""
+            let btn = (label) {
+                let pad = 6;
+                let wide = <pad> <pad>;
+                button (text: <label>, margin: <wide>)
+            }
+            box { btn ("a") btn ("b") }
+            """);
+
+        foreach (var node in root.Children)
+        {
+            Assert.That(Prop((SuilElement) node, "margin").Value, Has.Count.EqualTo(2));
+        }
+    }
+
+    [Test]
+    public void A_Constant_Of_A_Template_Does_Not_Leak_Out()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("""
+            let btn = { let pad = 6; button }
+            box { btn button (margin: <pad>) }
+            """));
+    }
+
+    [Test]
+    public void A_Constant_May_Use_A_Parameter()
+    {
+        var root = Root("""
+            let btn = (size) {
+                let double = <size> <size>;
+                button (margin: <double>)
+            }
+            btn (5)
+            """);
+
+        Assert.That(Prop(root, "margin").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(5, true), new SuilNumber(5, true) }));
+    }
+
+    [Test]
+    public void A_Default_Does_Not_See_The_Constants_Of_The_Body()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("""
+            let btn = (size: <pad>) { let pad = 6; button (min-width: <size>) }
+            btn
+            """));
+    }
+
+    [Test]
+    public void The_Body_With_Constants_Is_Still_One_Root()
+    {
+        var root = Root("""
+            let btn = { let pad = 6; button (margin: <pad>) }
+            btn (disabled)
+            """);
+
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "margin", "disabled" }));
+    }
+
+    // ---- What a local let can be ----
+
+    [Test]
+    public void A_Local_Let_May_Be_A_Template()
+    {
+        var root = Root("""
+            box {
+                let item = (text) { label (text: <text>) }
+                item ("a")
+                item ("b")
+            }
+            """);
+
+        Assert.That(root.Children, Has.Count.EqualTo(2));
+        Assert.That(Child(root, 1).Tag, Is.EqualTo("label"));
+    }
+
+    [Test]
+    public void A_Local_Template_Sees_The_Constants_Before_It()
+    {
+        var root = Root("""
+            box {
+                let gap = 9;
+                let item = { label (min-width: <gap>) }
+                item
+            }
+            """);
+
+        Assert.That(Prop(Child(root, 0), "min-width").Value, Is.EqualTo(Num(9)));
+    }
+
+    [Test]
+    public void The_Names_Of_Elements_And_Handlers_See_The_Constants()
+    {
+        var root = Root("""
+            box {
+                let name = menu;
+                let width = 11;
+                button #<name>-button .<name> (on-pressed => { #<name>-button (min-width: <width>) })
+            }
+            """);
+
+        var button = Child(root, 0);
+        Assert.That(button.Id!.ToString(), Is.EqualTo("menu-button"));
+        Assert.That(button.Classes.Single().ToString(), Is.EqualTo("menu"));
+
+        var statement = (SuilTargetStatement) button.Events.Single().Statements.Single();
+        Assert.That(((SuilPropertyItem) statement.Items.Single()).Property.Value, Is.EqualTo(Num(11)));
+    }
+
+    [Test]
+    public void A_Local_Let_Works_In_The_Content_Of_A_Usage()
+    {
+        var root = Root("""
+            let panel = { box { %content% } }
+            panel {
+                let gap = 5;
+                button (min-width: <gap>)
+            }
+            """);
+
+        Assert.That(Prop(Child(root, 0), "min-width").Value, Is.EqualTo(Num(5)));
+    }
+
+    [Test]
+    public void The_Variables_Of_The_Caller_Are_Seen_By_The_Local_Lets_Of_Its_Content()
+    {
+        var root = Root("""
+            let base = 2;
+            let panel = { box { %content% } }
+            panel {
+                let twice = <base> <base>;
+                button (margin: <twice>)
+            }
+            """);
+
+        Assert.That(Prop(Child(root, 0), "margin").Value, Has.Count.EqualTo(2));
+    }
+}

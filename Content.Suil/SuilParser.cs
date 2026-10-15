@@ -197,7 +197,8 @@ public static partial class SuilParser
 
     /// <summary>
     /// Consumes elements up to the closing curly bracket, the opening one is already consumed.
-    /// block = "{" , { element } , "}"
+    /// block = "{" , { let | element } , "}"
+    /// A <c>let</c> in a block is visible from the place it is written to the end of the block.
     /// </summary>
     private static List<ISuilElementNode> ConsumeElementList(ref SuilTokenStream stream)
     {
@@ -214,6 +215,10 @@ public static partial class SuilParser
                     return elements;
                 case EofToken:
                     throw ErrorAtNext(ref stream, "consuming block", "expected '}', not end of file");
+                case IdentToken { Value: "let" }:
+                    // a constant or a template of the block, the elements after it see it
+                    elements.Add(new SuilLocalLet(ConsumeLet(ref stream)));
+                    break;
                 default:
                     elements.Add(ConsumeElement(ref stream));
                     break;

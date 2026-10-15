@@ -304,6 +304,12 @@ public sealed record SuilStyleItem(
 public sealed record SuilTarget(bool IsSender, SuilName? Id, List<string> Path, SuilPosition Position);
 
 /// <summary>
+/// A <c>let</c> inside a block of elements or a template: a constant or a template that the elements after it in the
+/// same block can use. It is gone after the expansion.
+/// </summary>
+public sealed record SuilLocalLet(SuilLet Let) : ISuilElementNode;
+
+/// <summary>
 /// <c>%content%</c>
 /// </summary>
 public sealed record SuilContentSlot(string Name, SuilPosition Position) : ISuilElementNode;
