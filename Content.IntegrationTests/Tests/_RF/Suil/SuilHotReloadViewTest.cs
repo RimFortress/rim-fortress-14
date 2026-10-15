@@ -111,7 +111,6 @@ public sealed class SuilHotReloadViewTest : GameTest
     }
 }
 
-[SuilView("/tests/hot-reload-view")]
 public sealed partial class GeneratedHotReloadView : RfBoxContainer
 {
     public int Submitted;

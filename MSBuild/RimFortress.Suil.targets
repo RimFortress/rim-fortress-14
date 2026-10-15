@@ -1,8 +1,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <!--
-  SUIL (Styled UI Layout): the source generator of [SuilView] and the files it reads.
-  The .suil files live in Resources/UI/, and the paths in `use` and in [SuilView] are relative to that folder:
+  SUIL (Styled UI Layout): the source generator of the views and the files it reads.
+  The .suil files live in Resources/UI/, and the paths in `use` are relative to that folder:
   Resources/UI/Lobby/Screen.suil is written as /Lobby/Screen (the extension is optional).
+  A view is a declaration `@Class => element` in any of the files; Resources/UI/tests/ holds the views of the tests,
+  which only the test project builds.
   -->
   <PropertyGroup>
     <!-- The tables of the game include the controls of the engine and of the referenced assemblies. -->
@@ -12,7 +14,7 @@
 
   <ItemGroup>
     <!-- The generator reads them as additional files; an edit of one of them regenerates the views. -->
-    <AdditionalFiles Include="$(SuilRoot)**/*.suil" />
+    <AdditionalFiles Include="$(SuilRoot)**/*.suil" Exclude="$(SuilRoot)tests/**" />
     <CompilerVisibleProperty Include="SuilRoot" />
     <CompilerVisibleProperty Include="SuilIncludeReferencedControls" />
   </ItemGroup>

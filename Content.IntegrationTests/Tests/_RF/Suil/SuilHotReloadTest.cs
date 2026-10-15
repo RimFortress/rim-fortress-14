@@ -36,7 +36,7 @@ public sealed class SuilHotReloadTest : GameTest
 
     private static MemorySource Files(string view, params (string Path, string Text)[] more)
     {
-        var files = new Dictionary<string, string> { ["/test/view.suil"] = view };
+        var files = new Dictionary<string, string> { ["/test/view.suil"] = SuilTestText.AsView(view) };
 
         foreach (var (path, text) in more)
         {
@@ -415,6 +415,8 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
     public void OnToggle(RfButtonToggledEventArgs args) => Calls.Add("toggle:" + args.Pressed);
 
     string ISuilView.SuilPath => "/test/view";
+
+    string ISuilView.SuilViewName => "Test";
 
     IReadOnlyList<string> ISuilView.SuilFieldIds { get; } = new[] { "submit" };
 

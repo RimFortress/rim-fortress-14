@@ -32,7 +32,7 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// file = { use | let | rule } , [ element ] , EOF
+    /// file = { use | let | rule | view } , [ element ] , EOF
     /// </summary>
     private static SuilFile ConsumeFile(ref SuilTokenStream stream)
     {
@@ -58,7 +58,10 @@ public static partial class SuilParser
                     items.Add(ConsumeUse(ref stream));
                     break;
                 case DelimToken { CodePoint: '@' }:
-                    items.Add(ConsumeAtRule(ref stream));
+                    items.Add(stream.PeekNext(2) is IdentToken { Value: var atName }
+                              && atName.Equals("font-face", StringComparison.OrdinalIgnoreCase)
+                        ? ConsumeAtRule(ref stream)
+                        : ConsumeViewDeclaration(ref stream));
                     break;
                 default:
                     if (LooksLikeRule(ref stream))
@@ -74,6 +77,55 @@ public static partial class SuilParser
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// view = "@" , class , "=&gt;" , element
+    /// class = ident , { "." , ident }
+    /// </summary>
+    private static SuilViewDeclaration ConsumeViewDeclaration(ref SuilTokenStream stream)
+    {
+        const string context = "consuming view";
+        var position = stream.PeekPosition();
+        stream.ConsumeNext(); // @
+
+        var name = new System.Text.StringBuilder();
+
+        while (true)
+        {
+            if (stream.ConsumeNext() is not IdentToken part)
+            {
+                throw ErrorAtCurrent(ref stream, context,
+                    $"expected the name of a class after '@', not {Describe(stream.Current)}");
+            }
+
+            name.Append(part.Value);
+
+            if (stream.PeekNext() is DelimToken { CodePoint: '.' })
+            {
+                stream.ConsumeNext();
+                name.Append('.');
+                continue;
+            }
+
+            break;
+        }
+
+        stream.SkipWhitespace();
+
+        if (!(stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is DelimToken { CodePoint: '>' }))
+        {
+            throw ErrorAtNext(ref stream, context,
+                $"expected '=>' after '@{name}', not {Describe(stream.PeekNext())}");
+        }
+
+        stream.ConsumeNext();
+        stream.ConsumeNext();
+
+        if (ConsumeElement(ref stream) is not SuilElement element)
+            throw ErrorAtCurrent(ref stream, context, "a content slot can't be the root of a view");
+
+        return new SuilViewDeclaration(name.ToString(), element, position);
     }
 
     /// <summary>

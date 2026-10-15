@@ -1,3 +1,8 @@
+/*
+ * A draft of IntCounter in the first notation of SUIL ($ for the owner, no longer valid), not used by anything.
+ * It was never read by the generator because it had no view; now every file is checked, so it is kept as a comment
+ * until IntCounter is described by an `@IntCounter => ...` view.
+ *
 row {
     button #plus .open-right (
         text: "+",
@@ -9,3 +14,4 @@ row {
         on-pressed => $.value -: 1
     )
 }
+*/

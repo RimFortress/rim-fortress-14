@@ -40,7 +40,7 @@ internal sealed partial class SuilViewEmitter(
     private readonly HashSet<string> _ids = new();
     private int _counter;
 
-    public string Emit(SuilElement root, string viewPath)
+    public string Emit(SuilElement root, string viewPath, string viewName)
     {
         var rootType = ResolveType(root);
 
@@ -57,7 +57,7 @@ internal sealed partial class SuilViewEmitter(
         // The handlers come last: they name elements of the whole view, which have their fields only now.
         EmitHandlers();
 
-        return Wrap(viewPath);
+        return Wrap(viewPath, viewName);
     }
 
     private INamedTypeSymbol ResolveType(SuilElement element)
@@ -472,7 +472,7 @@ internal sealed partial class SuilViewEmitter(
     /// The implementation of <c>ISuilView</c>: the path of the file and the fields by the ids of the elements, so the hot
     /// reload binds a new control to its field without reflection.
     /// </summary>
-    private void WriteViewMembers(StringBuilder sb, string viewPath)
+    private void WriteViewMembers(StringBuilder sb, string viewPath, string viewName)
     {
         const string view = "global::Content.Suil.ISuilView";
         var path = viewPath.EndsWith(".suil", StringComparison.Ordinal)
@@ -481,6 +481,7 @@ internal sealed partial class SuilViewEmitter(
         var ids = string.Join(", ", _fields.Select(f => Literal(f.Id)));
 
         sb.AppendLine($"        string {view}.SuilPath => {Literal(path)};");
+        sb.AppendLine($"        string {view}.SuilViewName => {Literal(viewName)};");
         sb.AppendLine();
         sb.AppendLine($"        private static readonly string[] __suilFieldIds = new string[] {{ {ids} }};");
         sb.AppendLine($"        global::System.Collections.Generic.IReadOnlyList<string> {view}.SuilFieldIds => __suilFieldIds;");
@@ -540,7 +541,7 @@ internal sealed partial class SuilViewEmitter(
 
     // ---- The file ----
 
-    private string Wrap(string viewPath)
+    private string Wrap(string viewPath, string viewName)
     {
         var sb = new StringBuilder();
 
@@ -597,7 +598,7 @@ internal sealed partial class SuilViewEmitter(
             : "            global::Content.Suil.SuilViewRegistry.Register(this);");
         sb.AppendLine("        }");
         sb.AppendLine();
-        WriteViewMembers(sb, viewPath);
+        WriteViewMembers(sb, viewPath, viewName);
         WriteMethodMembers(sb);
 
         for (var i = 0; i < containers.Count; i++)

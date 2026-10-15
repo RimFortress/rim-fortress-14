@@ -8,19 +8,22 @@ public sealed class SuilViewGeneratorTests
         using Content.Client._RF.UserInterface.Controls;
         namespace Game.Ui;
 
-        [SuilView("/Picker.suil")]
         public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
         """;
 
-    private static GeneratorHarness.Result Run(string suil, string code = Button, Dictionary<string, string>? more = null)
+    private static GeneratorHarness.Result Run(
+        string suil,
+        string code = Button,
+        Dictionary<string, string>? more = null,
+        string view = "Picker")
     {
-        var files = new Dictionary<string, string> { ["/Picker.suil"] = suil };
+        var files = new Dictionary<string, string> { ["/Picker.suil"] = GeneratorHarness.AsView(suil, view) };
 
         if (more != null)
         {
             foreach (var (path, text) in more)
             {
-                files[path] = text;
+                files[path] = GeneratorHarness.AsView(text, System.IO.Path.GetFileNameWithoutExtension(path));
             }
         }
 
@@ -95,7 +98,6 @@ public sealed class SuilViewGeneratorTests
 
             public partial class Outer
             {
-                [SuilView("/Picker.suil")]
                 public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
             }
             """);
@@ -291,8 +293,9 @@ public sealed class SuilViewGeneratorTests
             """
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
-            namespace Game { public static partial class Outer { [SuilView("/Picker.suil")] public sealed partial class Inner : RfButton { } } }
-            """.Replace("static partial class Outer", "partial class Outer"));
+            namespace Game { public static partial class Outer { public sealed partial class Inner : RfButton { } } }
+            """.Replace("static partial class Outer", "partial class Outer"),
+            view: "Outer.Inner");
 
         AssertClean(nested);
         Assert.That(nested.Source, Does.Contain("partial class Outer").And.Contain("partial class Inner"));
@@ -302,19 +305,11 @@ public sealed class SuilViewGeneratorTests
             """
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
+            public sealed partial class Picker : RfButton { }
             """);
 
         AssertClean(global);
         Assert.That(global.Source, Does.Not.Contain("namespace"));
-    }
-
-    [Test]
-    public void Path_Without_Extension_Is_Accepted()
-    {
-        var result = Run("button", Button.Replace("/Picker.suil", "/Picker"));
-
-        AssertClean(result);
     }
 
     [Test]
@@ -340,7 +335,7 @@ public sealed class SuilViewGeneratorTests
     {
         var result = Run("button { fancy #f }", TagsHeader + """
             [SuilTag("fancy")] public class FancyThing : UiElement { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
+            public sealed partial class Picker : RfButton { }
             """);
 
         AssertClean(result);
@@ -348,129 +343,34 @@ public sealed class SuilViewGeneratorTests
 
         var byClassName = Run("button { fancy-thing }", TagsHeader + """
             [SuilTag("fancy")] public class FancyThing : UiElement { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
+            public sealed partial class Picker : RfButton { }
             """);
         Assert.That(byClassName.Ids, Is.EqualTo(new[] { "SUIL008" }));
     }
 
     [Test]
-    public void Name_Of_A_View_Is_Its_Tag()
+    public void One_File_Can_Hold_Several_Views_And_They_Are_Tags()
     {
-        var result = Run(
-            "button { picker-card #card picker-plain #plain }",
+        var result = GeneratorHarness.Run(
             TagsHeader + """
-                [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
-                [SuilView("/Card.suil", Name = "picker-card")] public sealed partial class PickerCard : RfButton { public PickerCard() { InitializeComponent(); } }
-                [SuilView("/Plain.suil")] public sealed partial class PickerPlain : RfButton { public PickerPlain() { InitializeComponent(); } }
+                public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+                [SuilTag("picker-card")] public sealed partial class PickerCard : RfButton { public PickerCard() { InitializeComponent(); } }
+                public sealed partial class PickerPlain : RfButton { public PickerPlain() { InitializeComponent(); } }
                 """,
-            new() { ["/Card.suil"] = "button #inner", ["/Plain.suil"] = "button" });
+            new()
+            {
+                ["/Picker.suil"] = """
+                    @Picker => button { picker-card #card picker-plain #plain }
+                    @PickerCard => button #inner
+                    @PickerPlain => button
+                    """,
+            });
 
         Assert.That(result.GeneratorDiagnostics, Is.Empty, string.Join("\n", result.GeneratorDiagnostics));
         Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors));
         Assert.That(result.Sources, Has.Length.EqualTo(3));
         Assert.That(result.Sources.Select(s => s.SourceText.ToString()), Has.Some.Contain("PickerCard Card = default!;"));
         Assert.That(result.Sources.Select(s => s.SourceText.ToString()), Has.Some.Contain("PickerPlain Plain = default!;"));
-    }
-
-    [Test]
-    public void Default_Tag_Is_The_Class_Name_In_Kebab_Case()
-    {
-        // none of these is registered
-        var result = Run("""
-            button {
-                sprite-view #view
-                rf-scroll-container #list
-                rf-h-scroll-bar #bar
-                hud-panel #hud (ui-scale: 2)
-                rf-confirm-button
-            }
-            """.Replace("rf-confirm-button", "confirm-button"));
-
-        AssertClean(result);
-        Assert.That(result.Source, Does.Contain("SpriteView View = default!;"));
-        Assert.That(result.Source, Does.Contain("RfScrollContainer List = default!;"));
-        Assert.That(result.Source, Does.Contain("RfHScrollBar Bar = default!;"));
-        Assert.That(result.Source, Does.Contain("HUDPanel Hud = default!;"));
-        Assert.That(result.Source, Does.Contain(".UIScale = (float)2;"));
-    }
-
-    [Test]
-    [TestCase("SpriteView", "sprite-view")]
-    [TestCase("RfButton", "rf-button")]
-    [TestCase("ChatBox", "chat-box")]
-    [TestCase("UIScale", "ui-scale")]
-    [TestCase("HUDPanel", "hud-panel")]
-    [TestCase("RfHScrollBar", "rf-h-scroll-bar")]
-    [TestCase("Vector2", "vector2")]
-    [TestCase("Vector2D", "vector2-d")]
-    [TestCase("Label", "label")]
-    [TestCase("Snake_Case", "snake-case")]
-    public void Kebab_Case(string name, string expected)
-    {
-        Assert.That(SuilNaming.ToKebab(name), Is.EqualTo(expected));
-    }
-
-    [Test]
-    public void Custom_Name_Replaces_The_Default_One()
-    {
-        // RfButton is registered as "button", so it is only "button" now
-        foreach (var tag in new[] { "rf-button", "RfButton", "Button", "confirm" })
-        {
-            Assert.That(Run($"button {{ {tag} }}").Ids, Is.EqualTo(new[] { "SUIL008" }), tag);
-        }
-    }
-
-    [Test]
-    public void Explicit_Name_Wins_Over_A_Default_Name()
-    {
-        // HUDPanel is "hud-panel" by default; Other takes the tag "hud-panel" on purpose
-        var result = Run("button { hud-panel #x }", TagsHeader + """
-            [SuilTag("hud-panel")] public class Other : UiElement { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
-            """);
-
-        AssertClean(result);
-        Assert.That(result.Source, Does.Contain("Other X = default!;"));
-    }
-
-    [Test]
-    public void Equal_Default_Names_Are_Ambiguous_Until_One_Is_Renamed()
-    {
-        const string twins = """
-            namespace Content.One { public class Dup : Content.Client._RF.Suil.UiElement { } }
-            namespace Content.Two { public class Dup : Content.Client._RF.Suil.UiElement { } }
-            """;
-
-        var ambiguous = Run("button { dup }", """
-            using Content.Suil;
-            using Content.Client._RF.UserInterface.Controls;
-
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
-
-            """ + twins);
-        Assert.That(ambiguous.Ids, Is.EqualTo(new[] { "SUIL009" }));
-
-        var renamed = Run("button { dup }", """
-            using Content.Suil;
-            using Content.Client._RF.UserInterface.Controls;
-
-            [assembly: SuilTag("first", typeof(Content.One.Dup))]
-
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
-
-            """ + twins);
-        AssertClean(renamed);
-        Assert.That(renamed.Source, Does.Contain("Content.Two.Dup"));
-    }
-
-    [Test]
-    public void The_Tag_Of_An_Untyped_Element_Is_Registered_Too()
-    {
-        // the harness registers "_" for UiElement
-        var result = Run("button { _ .a }");
-
-        AssertClean(result);
-        Assert.That(result.Source, Does.Contain("new global::Content.Client._RF.Suil.UiElement();"));
     }
 
     [Test]
@@ -484,10 +384,9 @@ public sealed class SuilViewGeneratorTests
 
             [assembly: SuilTag("button", typeof(RfButton))]
 
-            [SuilView("/Picker.suil")]
             public sealed partial class Picker : RfButton { }
             """,
-            new() { ["/Picker.suil"] = "button { _ }" },
+            new() { ["/Picker.suil"] = "@Picker => button { _ }" },
             withDefaultTags: false);
 
         Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL008" }));
@@ -531,7 +430,7 @@ public sealed class SuilViewGeneratorTests
         var result = Run("button", TagsHeader + registration + """
 
             public abstract class Abstract : UiElement { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
+            public sealed partial class Picker : RfButton { }
             """);
 
         Assert.That(result.Ids, Does.Contain("SUIL017"));
@@ -542,7 +441,7 @@ public sealed class SuilViewGeneratorTests
     {
         var result = Run("button", TagsHeader + """
             [SuilTag("x", typeof(RfButton))] public class Wrong : UiElement { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
+            public sealed partial class Picker : RfButton { }
             """);
 
         Assert.That(result.Ids, Does.Contain("SUIL017"));
@@ -553,34 +452,88 @@ public sealed class SuilViewGeneratorTests
     [Test]
     public void Missing_Resource_Root()
     {
-        var result = GeneratorHarness.Run(Button, new() { ["/Picker.suil"] = "button" }, root: null);
+        var result = GeneratorHarness.Run(Button, new() { ["/Picker.suil"] = "@Picker => button" }, root: null);
 
         Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL001" }));
     }
 
     [Test]
-    public void Missing_File()
+    public void View_Of_An_Unknown_Class()
     {
-        var result = GeneratorHarness.Run(Button, new() { ["/Other.suil"] = "button" });
+        var result = Run("button", view: "Other");
 
-        Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL002" }));
+        Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL024" }));
+        Assert.That(result.GeneratorDiagnostics.Single().GetMessage(), Does.Contain("@Other"));
     }
 
     [Test]
-    [TestCase("/*")]
-    [TestCase("UI/Picker.suil")]
-    [TestCase("/../x.suil")]
-    public void Bad_View_Path(string path)
+    public void A_Name_Can_Be_A_Full_Name_Or_Its_Tail()
     {
-        var result = Run("button", Button.Replace("/Picker.suil", path));
+        foreach (var name in new[] { "Picker", "Ui.Picker", "Game.Ui.Picker" })
+        {
+            AssertClean(Run("button", view: name));
+        }
 
-        Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL016" }));
+        Assert.That(Run("button", view: "Gui.Picker").Ids, Is.EqualTo(new[] { "SUIL024" }));
+        Assert.That(Run("button", view: "ui.Picker").Ids, Is.EqualTo(new[] { "SUIL024" }), "the case matters");
+        Assert.That(Run("button", view: "i.Picker").Ids, Is.EqualTo(new[] { "SUIL024" }), "whole names of the namespaces only");
+    }
+
+    [Test]
+    public void A_Short_Name_Of_Two_Classes_Needs_The_Namespace()
+    {
+        var code = """
+            using Content.Suil;
+            using Content.Client._RF.UserInterface.Controls;
+            namespace Game.A { public sealed partial class Picker : RfButton { } }
+            namespace Game.B { public sealed partial class Picker : RfButton { } }
+            """;
+
+        var ambiguous = Run("button", code);
+        Assert.That(ambiguous.Ids, Is.EqualTo(new[] { "SUIL025" }));
+        Assert.That(ambiguous.GeneratorDiagnostics.Single().GetMessage(), Does.Contain("Game.A.Picker").And.Contain("Game.B.Picker"));
+
+        var full = Run("button", code, view: "A.Picker");
+        Assert.That(full.GeneratorDiagnostics, Is.Empty, string.Join("\n", full.GeneratorDiagnostics));
+    }
+
+    [Test]
+    public void A_Class_Has_One_View()
+    {
+        var result = GeneratorHarness.Run(Button, new()
+        {
+            ["/Picker.suil"] = "@Picker => button",
+            ["/More.suil"] = "@Game.Ui.Picker => button",
+        });
+
+        Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL026" }));
+    }
+
+    [Test]
+    public void The_Same_Name_Twice_In_A_File_Is_An_Error()
+    {
+        var result = GeneratorHarness.Run(Button, new() { ["/Picker.suil"] = "@Picker => button\n@Picker => button" });
+
+        Assert.That(result.Ids, Does.Contain("SUIL026"));
+    }
+
+    [Test]
+    public void A_View_In_An_Imported_File_Is_Not_Brought_In()
+    {
+        var result = GeneratorHarness.Run(Button, new()
+        {
+            ["/Picker.suil"] = "use \"/lib\";\n@Picker => button { lib-part }",
+            ["/lib.suil"] = "let lib-part = { button #from-lib }\n@Game.Ui.Picker => button",
+        });
+
+        // the declaration in the library is that file's own, it doesn't clash with the one of the importing file
+        Assert.That(result.GeneratorDiagnostics.Select(d => d.Id), Is.EqualTo(new[] { "SUIL026" }));
     }
 
     [Test]
     public void Syntax_Error_Is_Reported_Once_In_The_File()
     {
-        var result = Run("button (size: )", more: new() { ["/Second.suil"] = "button" });
+        var result = Run("button (size: )", more: new() { ["/Second.suil"] = "let x = 1;" });
         var diagnostic = result.GeneratorDiagnostics.Single();
 
         Assert.That(diagnostic.Id, Is.EqualTo("SUIL003"));
@@ -612,9 +565,12 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
-    public void File_Without_Root()
+    public void File_Without_Views_Generates_Nothing()
     {
-        Assert.That(Run("let a = 1;").Ids, Is.EqualTo(new[] { "SUIL005" }));
+        var result = Run("let a = 1;");
+
+        Assert.That(result.Sources, Is.Empty);
+        Assert.That(result.GeneratorDiagnostics, Is.Empty);
     }
 
     [Test]
@@ -654,7 +610,6 @@ public sealed class SuilViewGeneratorTests
             [assembly: SuilTag("twin", typeof(Content.One.RfTwin))]
             [assembly: SuilTag("twin", typeof(Content.Two.RfTwin))]
 
-            [SuilView("/Picker.suil")]
             public sealed partial class Picker : RfButton { }
 
             namespace Content.One { public class RfTwin : Content.Client._RF.Suil.UiElement { } }

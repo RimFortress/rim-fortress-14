@@ -1510,3 +1510,84 @@ internal static class SuilNumberTestExtensions
 {
     public static SuilNumBinary AsBinary(this SuilNumNode node) => (SuilNumBinary) node;
 }
+
+[TestFixture]
+public sealed class SuilViewDeclarationTests
+{
+    [Test]
+    public void A_File_Declares_Views_By_Class_Name()
+    {
+        var file = SuilParser.ParseFile("""
+            let gap = 3;
+            @Game.Ui.Picker => button #root (min-width: <gap>) { button #inner }
+            @Picker2 => box
+            """);
+
+        Assert.That(file.Root, Is.Null);
+        Assert.That(file.Views.Select(v => v.ClassName), Is.EqualTo(new[] { "Game.Ui.Picker", "Picker2" }));
+    }
+
+    [Test]
+    public void Views_See_The_Lets_Above_Them_And_Are_Expanded()
+    {
+        var file = SuilExpander.Expand("""
+            let gap = 3;
+            let pair = { button button }
+            @A => box (min-width: <gap>) { pair }
+            let late = 5;
+            @B => box (min-width: <late>)
+            """);
+
+        var views = file.Views.ToList();
+
+        Assert.That(views, Has.Count.EqualTo(2));
+        Assert.That(views[0].Root.Children, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void A_View_Can_Not_See_A_Let_Below_It()
+    {
+        Assert.Throws<SuilExpansionError>(() => SuilExpander.Expand("@A => box (min-width: <late>)\nlet late = 5;"));
+    }
+
+    [Test]
+    public void The_Same_Class_Twice_Is_An_Error()
+    {
+        Assert.Throws<SuilExpansionError>(() => SuilExpander.Expand("@A => box\n@A => box"));
+    }
+
+    [Test]
+    public void The_Views_Of_An_Imported_File_Stay_With_It()
+    {
+        var file = SuilExpander.Expand("use \"/lib\";\n@A => box", new Source());
+
+        Assert.That(file.Views.Select(v => v.ClassName), Is.EqualTo(new[] { "A" }));
+    }
+
+    [TestCase("@ => box")]
+    [TestCase("@A box")]
+    [TestCase("@A. => box")]
+    [TestCase("@A => %content%")]
+    [TestCase("@A =>")]
+    public void Mistakes_In_A_Declaration(string text)
+    {
+        Assert.Catch<SuilParserError>(() => SuilParser.ParseFile(text));
+    }
+
+    [Test]
+    public void Font_Face_Is_Still_An_At_Rule()
+    {
+        var file = SuilParser.ParseFile("@font-face { font-family: \"X\"; src: url(\"/x.ttf\") }\n@A => box");
+
+        Assert.That(file.Items.OfType<SuilFontFace>().Count(), Is.EqualTo(1));
+        Assert.That(file.Views.Count(), Is.EqualTo(1));
+    }
+
+    private sealed class Source : ISuilFileSource
+    {
+        public SuilFile Load(string path)
+            => SuilParser.ParseFile("let part = { button }\n@Lib => box", path);
+
+        public IReadOnlyList<string> List(string directory) => new[] { "/lib.suil" };
+    }
+}

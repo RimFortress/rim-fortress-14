@@ -41,6 +41,7 @@ public static class SuilGlobalUsings
                     SuilLet let => let.Position,
                     SuilRule rule => rule.Position,
                     SuilFontFace fontFace => fontFace.Position,
+                    SuilViewDeclaration view => view.Position,
                     _ => default,
                 };
 

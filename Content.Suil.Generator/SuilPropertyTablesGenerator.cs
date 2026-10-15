@@ -256,7 +256,7 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// The custom tags: [SuilTag] on the assembly and on the classes, and the Name of [SuilView].
+    /// The custom tags: [SuilTag] on the assembly and on the classes.
     /// </summary>
     private static List<SuilTagRegistration> CollectTagRegistrations(Compilation compilation, List<INamedTypeSymbol> types)
     {
@@ -280,10 +280,6 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
                     case SuilViewAttributeSource.TagMetadataName
                         when attribute.ConstructorArguments is [{ Value: string tag }]:
                         result.Add(new SuilTagRegistration(tag, type, Location.None));
-                        break;
-                    case SuilViewAttributeSource.MetadataName
-                        when attribute.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value is string name:
-                        result.Add(new SuilTagRegistration(name, type, Location.None));
                         break;
                 }
             }

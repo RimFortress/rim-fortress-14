@@ -167,10 +167,14 @@ public static class SuilExpander
         private readonly Dictionary<string, Module> _modules = new();
         private readonly HashSet<string> _loading = new();
         private int _globalDepth;
+        private bool _isMain;
+        private readonly HashSet<string> _viewNames = new();
 
         public SuilFile Run(SuilFile file)
         {
+            _isMain = true;
             var module = ExpandModule(file);
+            _isMain = false;
             SuilElement? root = null;
 
             if (file.Root == null)
@@ -193,6 +197,8 @@ public static class SuilExpander
         {
             Scope? scope = null;
             var exports = new Dictionary<string, Binding>();
+            var isMain = _isMain;
+            _isMain = false;
 
             // The global files are the first thing of every file, except for the ones they bring themselves.
             if (_globalDepth == 0)
@@ -227,6 +233,25 @@ public static class SuilExpander
                     case SuilRule rule:
                         _rules.Add(ExpandRule(rule, scope));
                         break;
+                    case SuilViewDeclaration view when isMain:
+                        if (!_viewNames.Add(view.ClassName))
+                        {
+                            throw new SuilExpansionError("expanding view",
+                                $"'{view.ClassName}' is declared twice in the file",
+                                view.Position);
+                        }
+
+                        if (ExpandElement(view.Root, scope, null) is not [SuilElement expandedRoot])
+                        {
+                            throw new SuilExpansionError("expanding view",
+                                "the root of a view must expand to exactly one element",
+                                view.Root.Position);
+                        }
+
+                        _rules.Add(new SuilViewDeclaration(view.ClassName, expandedRoot, view.Position));
+                        break;
+                    case SuilViewDeclaration:
+                        break; // the views of an imported file belong to that file
                     case SuilFontFace fontFace:
                         _rules.Add(new SuilFontFace(
                             fontFace.Descriptors

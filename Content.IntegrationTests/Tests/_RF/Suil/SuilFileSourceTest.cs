@@ -147,8 +147,8 @@ public sealed class SuilFileSourceTest : GameTest
 
         try
         {
-            // the leading slash and the extension are optional, like in [SuilView]
-            var results = _reload.ReloadPath("_RF/tests/hot-reload-view.suil").Where(r => ReferenceEquals(r.View, view)).ToList();
+            // the leading slash and the extension are optional, like in `use`
+            var results = _reload.ReloadPath("tests/hot-reload-view.suil").Where(r => ReferenceEquals(r.View, view)).ToList();
 
             Assert.That(results, Has.Count.EqualTo(1));
             Assert.That(results[0].Success, Is.True, string.Join("\n", results[0].Errors));

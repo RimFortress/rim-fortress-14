@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 namespace Content.Suil.Generator;
 
 /// <summary>
-/// One registration of a tag: a [SuilTag] on a class, a [SuilTag] on the assembly, or the Name of [SuilView].
+/// One registration of a tag: a [SuilTag] on a class, a [SuilTag] on the assembly.
 /// <paramref name="Problem"/> is set when the attribute itself is malformed.
 /// </summary>
 internal sealed record SuilTagRegistration(string Name, INamedTypeSymbol? Type, Location Location, string? Problem = null);
@@ -16,7 +16,7 @@ internal sealed record SuilTagRegistration(string Name, INamedTypeSymbol? Type, 
 /// <c>RfButton</c> is <c>rf-button</c>. Nothing is needed for this, so every engine and game control works as it is.
 /// </item>
 /// <item>
-/// A custom name is given with <c>[SuilTag]</c> or with the <c>Name</c> of <c>[SuilView]</c>. A class that has one is
+/// A custom name is given with <c>[SuilTag]</c>. A class that has one is
 /// known only by it, and an explicit name wins over the default name of another class.
 /// </item>
 /// </list>

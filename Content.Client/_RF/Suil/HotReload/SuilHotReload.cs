@@ -75,9 +75,11 @@ public sealed partial class SuilHotReload : ISuilHotReload
             dependencies.Add(file);
         }
 
-        if (expanded.Root == null)
+        var declaration = expanded.Views.FirstOrDefault(v => v.ClassName == view.SuilViewName);
+
+        if (declaration == null)
         {
-            errors.Add("the file has no root element");
+            errors.Add($"the file has no '@{view.SuilViewName} =>' view");
             return new SuilReloadResult(view, errors, warnings, dependencies);
         }
 
@@ -85,7 +87,7 @@ public sealed partial class SuilHotReload : ISuilHotReload
         var state = entry?.State as ViewState ?? new ViewState();
 
         // The whole tree is checked before a control is touched: a mistake in the file leaves the UI as it was.
-        var plan = BuildPlan(view, control, expanded.Root, errors, warnings);
+        var plan = BuildPlan(view, control, declaration.Root, errors, warnings);
 
         if (plan == null || errors.Count > 0)
         {

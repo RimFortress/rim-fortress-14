@@ -14,11 +14,6 @@ internal static class SuilDiagnostics
         "SUIL root is not set",
         "The build property SuilRoot is not set, so the .suil files can't be located (it is set by RimFortress.Suil.targets)");
 
-    public static readonly DiagnosticDescriptor FileNotFound = Error(
-        "SUIL002",
-        "SUIL file not found",
-        "The file '{0}' is not among the .suil files of the project (they are looked for in '{1}')");
-
     public static readonly DiagnosticDescriptor SyntaxError = Error(
         "SUIL003",
         "SUIL syntax error",
@@ -29,15 +24,10 @@ internal static class SuilDiagnostics
         "SUIL expansion error",
         "{0}");
 
-    public static readonly DiagnosticDescriptor NoRootElement = Error(
-        "SUIL005",
-        "SUIL file has no root element",
-        "The file '{0}' has no root element, so there is nothing to build");
-
     public static readonly DiagnosticDescriptor ClassNotPartial = Error(
         "SUIL006",
         "SUIL view class must be partial",
-        "The class '{0}' has [SuilView], so it must be a partial non-generic class");
+        "The class '{0}' is the class of a view, so it must be a partial non-generic class");
 
     public static readonly DiagnosticDescriptor RootTypeMismatch = Error(
         "SUIL007",
@@ -47,7 +37,7 @@ internal static class SuilDiagnostics
     public static readonly DiagnosticDescriptor UnknownTag = Error(
         "SUIL008",
         "Unknown SUIL element type",
-        "No control for the tag '{0}'. A tag is the name of the control class in kebab-case (SpriteView is sprite-view) or its custom name from [SuilTag] / the Name of [SuilView]; the tag '_' must be registered with [assembly: SuilTag(\"_\", typeof(...))]");
+        "No control for the tag '{0}'. A tag is the name of the control class in kebab-case (SpriteView is sprite-view) or its custom name from [SuilTag]; the tag '_' must be registered with [assembly: SuilTag(\"_\", typeof(...))]");
 
     public static readonly DiagnosticDescriptor AmbiguousTag = Error(
         "SUIL009",
@@ -89,10 +79,20 @@ internal static class SuilDiagnostics
         "Invalid SUIL tag registration",
         "{0}");
 
-    public static readonly DiagnosticDescriptor BadViewPath = Error(
-        "SUIL016",
-        "Invalid [SuilView] path",
-        "{0}");
+    public static readonly DiagnosticDescriptor ViewClassNotFound = Error(
+        "SUIL024",
+        "Class of a view not found",
+        "The view '@{0}' in '{1}' names no class of this project (write the name of a class, or its tail with the namespace)");
+
+    public static readonly DiagnosticDescriptor AmbiguousViewClass = Error(
+        "SUIL025",
+        "Ambiguous class of a view",
+        "The view '@{0}' could be any of: {1}. Write more of the namespace");
+
+    public static readonly DiagnosticDescriptor DuplicateView = Error(
+        "SUIL026",
+        "Class has several views",
+        "The class '{0}' already has a view at {1}");
 
     public static readonly DiagnosticDescriptor UnknownEvent = Error(
         "SUIL018",

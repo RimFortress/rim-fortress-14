@@ -35,7 +35,7 @@ public sealed class SuilHotReloadEventTest : GameTest
     }
 
     private SuilReloadResult Reload(ISuilView view, string suil)
-        => _reload.Reload(view, new MemorySource(new Dictionary<string, string> { ["/test/view.suil"] = suil }), SuilGlobals.None);
+        => _reload.Reload(view, new MemorySource(new Dictionary<string, string> { ["/test/view.suil"] = SuilTestText.AsView(suil) }), SuilGlobals.None);
 
     private static GUIBoundKeyEventArgs Click()
         => new(EngineKeyFunctions.UIClick, BoundKeyState.Down, default, true, Vector2.Zero, Vector2.Zero);
@@ -605,6 +605,8 @@ public sealed class TestInnerView : RfBoxContainer, ISuilView
     }
 
     string ISuilView.SuilPath => "/test/inner";
+
+    string ISuilView.SuilViewName => "Inner";
 
     IReadOnlyList<string> ISuilView.SuilFieldIds { get; } = new[] { "header" };
 

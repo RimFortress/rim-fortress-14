@@ -1,6 +1,6 @@
-// The view of SuilHotReloadViewTest: a real [SuilView] built by the generator, to see that the hot reload builds the
+// The view of SuilHotReloadViewTest: a real view built by the generator, to see that the hot reload builds the
 // same tree as the generated code and that its handlers replace the compiled ones.
-box .hot-reload-root #hot-reload-root (min-width: 40) {
+@GeneratedHotReloadView => box .hot-reload-root #hot-reload-root (min-width: 40) {
     +button #hot-submit .primary (text: "Go", disabled, on-pressed => {
         @OnHotSubmit;
         &(add .pressed);

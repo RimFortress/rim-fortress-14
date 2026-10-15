@@ -15,6 +15,35 @@ internal static class GeneratorHarness
     public const string Root = "/proj/Resources/UI";
 
     /// <summary>
+    /// Puts <c>@className =&gt;</c> before the root element of the text, the last item of a file. A text that has no root
+    /// (a library) stays as it is.
+    /// </summary>
+    public static string AsView(string text, string className)
+    {
+        SuilFile file;
+        try
+        {
+            file = SuilParser.ParseFile(text);
+        }
+        catch (Exception e) when (e is SuilParserError or SuilTokenizeError)
+        {
+            return "@" + className + " => " + text; // a broken text is the element of the view, so the break is still reported
+        }
+
+        if (file.Root is not { } root)
+            return text;
+
+        var offset = 0;
+        for (var line = 1; line < root.Position.Line; line++)
+        {
+            offset = text.IndexOf('\n', offset) + 1;
+        }
+
+        offset += root.Position.Column - 1;
+        return text.Substring(0, offset) + "@" + className + " => " + text.Substring(offset);
+    }
+
+    /// <summary>
     /// The types the generator looks for, with the members of the real ones that matter to it.
     /// </summary>
     public const string Stubs = """

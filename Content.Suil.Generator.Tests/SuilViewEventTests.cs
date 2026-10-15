@@ -16,11 +16,10 @@ public sealed class SuilViewEventTests
         namespace Game.Ui;
         """;
 
-    private static string View(string members, string name = "Picker", string path = "/Picker.suil")
+    private static string View(string members, string name = "Picker")
         => $$"""
             {{Usings}}
 
-            [SuilView("{{path}}")]
             public sealed partial class {{name}} : RfButton
             {
                 public {{name}}() { InitializeComponent(); }
@@ -30,13 +29,13 @@ public sealed class SuilViewEventTests
 
     private static GeneratorHarness.Result Run(string suil, string code, Dictionary<string, string>? more = null)
     {
-        var files = new Dictionary<string, string> { ["/Picker.suil"] = suil };
+        var files = new Dictionary<string, string> { ["/Picker.suil"] = GeneratorHarness.AsView(suil, "Picker") };
 
         if (more != null)
         {
             foreach (var (path, text) in more)
             {
-                files[path] = text;
+                files[path] = GeneratorHarness.AsView(text, System.IO.Path.GetFileNameWithoutExtension(path));
             }
         }
 
@@ -255,10 +254,9 @@ public sealed class SuilViewEventTests
         var code = $$"""
             {{Usings}}
 
-            [SuilView("/Picker.suil")]
             public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
 
-            [SuilView("/Inner.suil", Name = "inner")]
+            [SuilTag("inner")]
             public sealed partial class Inner : RfButton { public Inner() { InitializeComponent(); } }
             """;
 
@@ -285,10 +283,9 @@ public sealed class SuilViewEventTests
         var code = $$"""
             {{Usings}}
 
-            [SuilView("/Picker.suil")]
             public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
 
-            [SuilView("/Inner.suil", Name = "inner")]
+            [SuilTag("inner")]
             public sealed partial class Inner : RfButton { public Inner() { InitializeComponent(); } }
             """;
 
@@ -423,10 +420,9 @@ public sealed class SuilViewEventTests
         var code = $$"""
             {{Usings}}
 
-            [SuilView("/Picker.suil")]
             public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
 
-            [SuilView("/Inner.suil", Name = "inner")]
+            [SuilTag("inner")]
             public sealed partial class Inner : RfButton { public Inner() { InitializeComponent(); } }
             """;
 

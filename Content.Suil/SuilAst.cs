@@ -34,7 +34,19 @@ public interface ISuilValue : ISuilNode;
 /// <summary>
 /// A parsed file. <paramref name="Root"/> is null for a library file that is only imported with <c>use</c>.
 /// </summary>
-public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) : ISuilNode;
+public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) : ISuilNode
+{
+    /// <summary>
+    /// The <c>@Class =&gt; element</c> declarations of the file, in the order they are written.
+    /// </summary>
+    public IEnumerable<SuilViewDeclaration> Views => Items.OfType<SuilViewDeclaration>();
+}
+
+/// <summary>
+/// <c>@Game.Ui.Picker =&gt; button { ... }</c>: the tree of a C# class. <paramref name="ClassName"/> is as it is written,
+/// a full name or its tail (<c>Ui.Picker</c>, <c>Picker</c>) that names one class.
+/// </summary>
+public sealed record SuilViewDeclaration(string ClassName, SuilElement Root, SuilPosition Position) : ISuilTopLevelItem;
 
 /// <summary>
 /// <c>use "path";</c>

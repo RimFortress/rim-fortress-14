@@ -1,7 +1,7 @@
 namespace Content.Suil;
 
 /// <summary>
-/// A control built from a <c>.suil</c> file by <c>[SuilView]</c>. The generator implements it, so the hot reload can
+/// A control built from a <c>@Class =&gt; element</c> declaration of a <c>.suil</c> file. The generator implements it, so the hot reload can
 /// build the tree again and bind the fields of the class without reflection, which the sandbox doesn't allow.
 /// </summary>
 /// <remarks>
@@ -11,9 +11,15 @@ namespace Content.Suil;
 public interface ISuilView
 {
     /// <summary>
-    /// The path in <c>[SuilView]</c> without the extension, like <c>/Lobby/Screen</c>.
+    /// The path of the file with the declaration of the class, without the extension, like <c>/Lobby/Screen</c>.
     /// </summary>
     string SuilPath { get; }
+
+    /// <summary>
+    /// The name of the class exactly as the declaration writes it (<c>Game.Ui.Picker</c>, or just <c>Picker</c>): a file may
+    /// declare several views, and the hot reload finds the one of this control by it.
+    /// </summary>
+    string SuilViewName { get; }
 
     /// <summary>
     /// The ids of the elements that have a field in the class.

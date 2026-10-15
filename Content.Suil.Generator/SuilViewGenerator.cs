@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.Text;
 namespace Content.Suil.Generator;
 
 /// <summary>
-/// Implements <see cref="SuilViewAttribute"/>: for every partial class with it, reads the .suil file from the
-/// additional files of the project, expands it (<c>let</c>, templates, <c>use</c>, global usings) and writes
-/// the fields and <c>InitializeComponent()</c> of the class.
+/// Implements the <c>@Class =&gt; element</c> declarations of the .suil files of the project: finds the partial class
+/// of each, expands the file (<c>let</c>, templates, <c>use</c>, global usings) and writes the fields and
+/// <c>InitializeComponent()</c> of the class.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class SuilViewGenerator : IIncrementalGenerator
@@ -32,15 +32,6 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             .SelectMany(static (list, _) => list)
             .Collect();
 
-        var views = context.SyntaxProvider
-            .ForAttributeWithMetadataName(
-                SuilViewAttributeSource.MetadataName,
-                static (node, _) => node is ClassDeclarationSyntax,
-                static (ctx, _) => ViewCandidate.Create(ctx))
-            .Where(static v => v is not null)
-            .Select(static (v, _) => v!)
-            .Collect();
-
         // Parsed once per change of a file, the result is cached by the text.
         var files = context.AdditionalTextsProvider
             .Where(static t => t.Path.EndsWith(SuilPaths.Extension, StringComparison.OrdinalIgnoreCase))
@@ -50,33 +41,30 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         var root = context.AnalyzerConfigOptionsProvider
             .Select(static (o, _) => o.GlobalOptions.TryGetValue(RootProperty, out var value) ? value : null);
 
-        var all = views.Combine(tags).Combine(files).Combine(root).Combine(context.CompilationProvider);
+        var all = tags.Combine(files).Combine(root).Combine(context.CompilationProvider);
 
         context.RegisterSourceOutput(all, static (ctx, input) =>
         {
-            var ((((candidates, registrations), sourceFiles), suilRoot), compilation) = input;
-            Generate(ctx, candidates, registrations, sourceFiles, suilRoot, compilation);
+            var (((registrations, sourceFiles), suilRoot), compilation) = input;
+            Generate(ctx, registrations, sourceFiles, suilRoot, compilation);
         });
     }
 
     private static void Generate(
         SourceProductionContext context,
-        ImmutableArray<ViewCandidate> views,
         ImmutableArray<SuilTagRegistration> tagRegistrations,
         ImmutableArray<SuilSourceFile> files,
         string? root,
         Compilation compilation)
     {
-        if (views.IsEmpty)
+        // Most projects have no views at all, and then nothing else is looked at. A file that can't be read may have had
+        // some, so it counts.
+        if (!files.Any(f => f.Tree == null || f.Tree.Views.Any()))
             return;
 
         if (string.IsNullOrWhiteSpace(root))
         {
-            foreach (var view in views)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.ResourceRootMissing, view.AttributeLocation));
-            }
-
+            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.ResourceRootMissing, Location.None));
             return;
         }
 
@@ -94,24 +82,49 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         if (!TryLoadGlobals(context, source, out var globals))
             return;
 
+        var views = FindViews(context, compilation, map);
+
+        if (views.Count == 0)
+            return;
+
         var control = compilation.GetTypeByMetadataName(ControlName);
         if (control == null)
         {
-            foreach (var view in views)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.ControlNotFound, view.AttributeLocation));
-            }
-
+            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.ControlNotFound, Location.None));
             return;
         }
 
         var suilControl = compilation.GetTypeByMetadataName(UiElementName);
 
-        // The classes with [SuilView(Name = ...)] are tags as well.
-        var registrations = tagRegistrations
-            .Concat(views.Where(v => v.Name != null).Select(v => new SuilTagRegistration(v.Name!, v.Symbol, v.AttributeLocation)))
-            .Concat(SuilTagRegistry.FromReferences(compilation));
+        var registrations = tagRegistrations.Concat(SuilTagRegistry.FromReferences(compilation));
         var tags = SuilTagRegistry.Build(registrations, control, compilation, context.ReportDiagnostic);
+
+        // A file is expanded once for all of its views; one that can't be is reported once.
+        var expanded = new Dictionary<string, SuilFile?>(StringComparer.Ordinal);
+
+        SuilFile? ExpandedFile(string path)
+        {
+            if (expanded.TryGetValue(path, out var known))
+                return known;
+
+            try
+            {
+                return expanded[path] = SuilExpander.Expand(source.Load(path), source, globals);
+            }
+            catch (SuilSourceException)
+            {
+                // reported above
+            }
+            catch (SuilExpansionError e)
+            {
+                Report(context, SuilDiagnostics.ExpansionError, e.Position, null, e.Message);
+            }
+
+            return expanded[path] = null;
+        }
+
+        SuilViewDeclaration? ExpandedView(ViewCandidate view)
+            => ExpandedFile(view.FilePath)?.Views.FirstOrDefault(v => v.ClassName == view.Declaration.ClassName);
 
         // The fields of the views of this project, for the paths of the handlers that go through one view into another.
         var fieldTables = new Dictionary<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?>(SymbolEqualityComparer.Default);
@@ -122,132 +135,163 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
                 return known;
 
             var candidate = views.FirstOrDefault(v => SymbolEqualityComparer.Default.Equals(v.Symbol, type));
-            return fieldTables[type] = candidate == null ? null : BuildFieldTable(candidate, source, globals, tags);
+            var declaration = candidate == null ? null : ExpandedView(candidate);
+            return fieldTables[type] = declaration == null ? null : BuildFieldTable(declaration, tags);
         }
 
         foreach (var view in views)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
 
+            if (ExpandedView(view) is not { } declaration)
+                continue;
+
             try
             {
-                GenerateView(context, compilation, view, source, globals, root!, tags, suilControl, FieldsOfView);
-            }
-            catch (SuilSourceException)
-            {
-                // reported above
-            }
-            catch (SuilExpansionError e)
-            {
-                Report(context, SuilDiagnostics.ExpansionError, e.Position, view.AttributeLocation, e.Message);
+                var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol, FieldsOfView);
+                var text = emitter.Emit(declaration.Root, view.FilePath, view.Declaration.ClassName);
+
+                context.AddSource(HintName(view.Symbol), SourceText.From(text, Encoding.UTF8));
             }
             catch (SuilGenerationException e)
             {
-                Report(context, e.Descriptor, e.Position, view.AttributeLocation, e.Args);
+                Report(context, e.Descriptor, e.Position, null, e.Args);
             }
         }
-    }
-
-    private static void GenerateView(
-        SourceProductionContext context,
-        Compilation compilation,
-        ViewCandidate view,
-        AdditionalFilesSource source,
-        IReadOnlyList<string> globals,
-        string root,
-        SuilTagRegistry tags,
-        INamedTypeSymbol? suilControl,
-        Func<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?> fieldsOfView)
-    {
-        if (!view.IsPartialClass)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.ClassNotPartial, view.Location,
-                view.Symbol.ToDisplayString()));
-            return;
-        }
-
-        string path;
-        try
-        {
-            path = SuilExpander.ParseUsePath(view.Path, "reading [SuilView]", default);
-        }
-        catch (SuilExpansionError e)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.BadViewPath, view.AttributeLocation, e.Message));
-            return;
-        }
-
-        if (SuilPaths.IsFolder(path))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.BadViewPath, view.AttributeLocation,
-                $"'{view.Path}' is a folder, [SuilView] needs one file"));
-            return;
-        }
-
-        if (!source.Has(path))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.FileNotFound, view.AttributeLocation,
-                path, root));
-            return;
-        }
-
-        var expanded = SuilExpander.Expand(source.Load(path), source, globals);
-
-        if (expanded.Root == null)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(SuilDiagnostics.NoRootElement, view.AttributeLocation, path));
-            return;
-        }
-
-        var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol, fieldsOfView);
-
-        context.AddSource(HintName(view.Symbol), SourceText.From(emitter.Emit(expanded.Root, path), Encoding.UTF8));
     }
 
     /// <summary>
-    /// The fields a view gets from its file: the elements with an id, with their access and type. A file that can't be
-    /// read gives nothing here; it is reported when its own view is generated.
+    /// Finds the class of every <c>@Class =&gt; ...</c> declaration. A name is a full name or its tail, and it has to
+    /// name exactly one class of this project, which has to be partial.
     /// </summary>
-    private static IReadOnlyDictionary<string, ViewField>? BuildFieldTable(
-        ViewCandidate view,
-        AdditionalFilesSource source,
-        IReadOnlyList<string> globals,
-        SuilTagRegistry tags)
+    private static List<ViewCandidate> FindViews(
+        SourceProductionContext context,
+        Compilation compilation,
+        Dictionary<string, SuilSourceFile> map)
     {
-        try
+        Dictionary<string, List<INamedTypeSymbol>>? bySimpleName = null;
+        var result = new List<ViewCandidate>();
+        var claimed = new Dictionary<INamedTypeSymbol, ViewCandidate>(SymbolEqualityComparer.Default);
+
+        foreach (var entry in map.OrderBy(e => e.Key, StringComparer.Ordinal))
         {
-            var path = SuilExpander.ParseUsePath(view.Path, "reading [SuilView]", default);
+            if (entry.Value.Tree is not { } tree)
+                continue;
 
-            if (SuilPaths.IsFolder(path) || !source.Has(path))
-                return null;
-
-            var expanded = SuilExpander.Expand(source.Load(path), source, globals);
-            var fields = new Dictionary<string, ViewField>(StringComparer.Ordinal);
-
-            void Visit(SuilElement element, bool isRoot)
+            foreach (var declaration in tree.Views)
             {
-                if (!isRoot && element.Id != null
-                    && tags.TryResolve(element.Tag ?? SuilTagRegistry.UntypedTag, out var type, out _) && type != null)
+                bySimpleName ??= IndexClasses(compilation);
+
+                var name = declaration.ClassName;
+                var simple = name.Substring(name.LastIndexOf('.') + 1);
+                var matches = bySimpleName.TryGetValue(simple, out var named)
+                    ? named.Where(t => t.ToDisplayString() == name || t.ToDisplayString().EndsWith("." + name, StringComparison.Ordinal)).ToList()
+                    : new List<INamedTypeSymbol>();
+
+                if (matches.Count == 0)
                 {
-                    var id = element.Id.ToString();
-                    fields[id] = new ViewField(SuilNaming.ToPascal(id), element.Access, type);
+                    Report(context, SuilDiagnostics.ViewClassNotFound, declaration.Position, null, name, entry.Key);
+                    continue;
                 }
 
-                foreach (var child in element.Children.OfType<SuilElement>())
+                if (matches.Count > 1)
                 {
-                    Visit(child, false);
+                    Report(context, SuilDiagnostics.AmbiguousViewClass, declaration.Position, null, name,
+                        string.Join(", ", matches.Select(t => t.ToDisplayString()).OrderBy(n => n, StringComparer.Ordinal)));
+                    continue;
+                }
+
+                var symbol = matches[0];
+
+                if (!IsPartialClass(symbol))
+                {
+                    Report(context, SuilDiagnostics.ClassNotPartial, declaration.Position, null, symbol.ToDisplayString());
+                    continue;
+                }
+
+                var candidate = new ViewCandidate(symbol, declaration, entry.Key);
+
+                if (claimed.TryGetValue(symbol, out var first))
+                {
+                    Report(context, SuilDiagnostics.DuplicateView, declaration.Position, null, symbol.ToDisplayString(),
+                        first.FilePath + ":" + first.Declaration.Position.Line);
+                    continue;
+                }
+
+                claimed[symbol] = candidate;
+                result.Add(candidate);
+            }
+        }
+
+        return result;
+    }
+
+    private static bool IsPartialClass(INamedTypeSymbol symbol)
+        => symbol.TypeKind == TypeKind.Class
+           && symbol.TypeParameters.Length == 0
+           && symbol.DeclaringSyntaxReferences.Length > 0
+           && symbol.DeclaringSyntaxReferences.All(r =>
+               r.GetSyntax() is ClassDeclarationSyntax syntax && syntax.Modifiers.Any(m => m.Text == "partial"));
+
+    /// <summary>
+    /// The classes written in this project, by their simple names.
+    /// </summary>
+    private static Dictionary<string, List<INamedTypeSymbol>> IndexClasses(Compilation compilation)
+    {
+        var index = new Dictionary<string, List<INamedTypeSymbol>>(StringComparer.Ordinal);
+
+        void Visit(INamespaceOrTypeSymbol container)
+        {
+            foreach (var member in container.GetMembers())
+            {
+                switch (member)
+                {
+                    case INamespaceSymbol ns:
+                        Visit(ns);
+                        break;
+                    case INamedTypeSymbol type:
+                        if (type.TypeKind == TypeKind.Class && type.Locations.Any(l => l.IsInSource))
+                        {
+                            if (!index.TryGetValue(type.Name, out var list))
+                                index[type.Name] = list = new List<INamedTypeSymbol>();
+
+                            list.Add(type);
+                        }
+
+                        Visit(type);
+                        break;
                 }
             }
-
-            if (expanded.Root != null)
-                Visit(expanded.Root, true);
-
-            return fields;
         }
-        catch (Exception e) when (e is SuilSourceException or SuilExpansionError or SuilParserError or SuilTokenizeError)
+
+        Visit(compilation.Assembly.GlobalNamespace);
+        return index;
+    }
+
+    /// <summary>
+    /// The fields a view gets from its declaration: the elements with an id, with their access and type.
+    /// </summary>
+    private static IReadOnlyDictionary<string, ViewField>? BuildFieldTable(SuilViewDeclaration declaration, SuilTagRegistry tags)
+    {
+        var fields = new Dictionary<string, ViewField>(StringComparer.Ordinal);
+
+        void Visit(SuilElement element, bool isRoot)
         {
-            return null;
+            if (!isRoot && element.Id != null
+                && tags.TryResolve(element.Tag ?? SuilTagRegistry.UntypedTag, out var type, out _) && type != null)
+            {
+                var id = element.Id.ToString();
+                fields[id] = new ViewField(SuilNaming.ToPascal(id), element.Access, type);
+            }
+
+            foreach (var child in element.Children.OfType<SuilElement>())
+            {
+                Visit(child, false);
+            }
         }
+
+        Visit(declaration.Root, true);
+        return fields;
     }
 
     private static bool TryLoadGlobals(
@@ -360,44 +404,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// A class with [SuilView]. Holds symbols, so it is not cached: it is cheap to rebuild.
+    /// A class that a declaration names. Holds symbols, so it is not cached: it is cheap to rebuild.
     /// </summary>
-    private sealed class ViewCandidate
-    {
-        public INamedTypeSymbol Symbol { get; init; } = default!;
-
-        public string Path { get; init; } = default!;
-
-        public Location Location { get; init; } = default!;
-
-        public Location AttributeLocation { get; init; } = default!;
-
-        public bool IsPartialClass { get; init; }
-
-        public string? Name { get; init; }
-
-        public static ViewCandidate? Create(GeneratorAttributeSyntaxContext context)
-        {
-            if (context.TargetSymbol is not INamedTypeSymbol symbol)
-                return null;
-
-            var attribute = context.Attributes[0];
-
-            if (attribute.ConstructorArguments.Length != 1 || attribute.ConstructorArguments[0].Value is not string path)
-                return null;
-
-            var syntax = (ClassDeclarationSyntax) context.TargetNode;
-            var partial = syntax.Modifiers.Any(m => m.Text == "partial") && symbol.TypeParameters.Length == 0;
-
-            return new ViewCandidate
-            {
-                Symbol = symbol,
-                Path = path,
-                Location = syntax.Identifier.GetLocation(),
-                AttributeLocation = attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? syntax.Identifier.GetLocation(),
-                IsPartialClass = partial,
-                Name = attribute.NamedArguments.FirstOrDefault(a => a.Key == "Name").Value.Value as string,
-            };
-        }
-    }
+    private sealed record ViewCandidate(INamedTypeSymbol Symbol, SuilViewDeclaration Declaration, string FilePath);
 }
