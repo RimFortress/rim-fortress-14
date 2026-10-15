@@ -111,7 +111,7 @@ public static partial class SuilParser
         if (stream.PeekNext() is LeftParenthesisToken or LeftCurlyBracket)
             return new SuilLet(name.Value, ConsumeTemplate(ref stream), position);
 
-        var values = ConsumeValueList(ref stream, "consuming let");
+        var values = ConsumeValueList(ref stream, "consuming let", commas: true);
         ExpectSemicolon(ref stream, "consuming let");
         return new SuilLet(name.Value, new SuilValueList(values), position);
     }

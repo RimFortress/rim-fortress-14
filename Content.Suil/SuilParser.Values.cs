@@ -5,15 +5,23 @@ public static partial class SuilParser
     /// <summary>
     /// value-list = value , { value }
     /// Values are separated by whitespace. The list ends before ',' ')' ';' '}' '!' or EOF, which is left
-    /// for the caller. An empty list is an error.
+    /// for the caller. With <paramref name="commas"/> a comma is a value (<see cref="SuilComma"/>) and does not end
+    /// the list: the declarations of the rules and <c>let</c> are lists of this kind. An empty list is an error.
     /// </summary>
-    private static List<ISuilValue> ConsumeValueList(ref SuilTokenStream stream, string context)
+    private static List<ISuilValue> ConsumeValueList(ref SuilTokenStream stream, string context, bool commas = false)
     {
         var values = new List<ISuilValue>();
 
         while (true)
         {
             stream.SkipWhitespace();
+
+            if (commas && stream.PeekNext() is CommaToken)
+            {
+                stream.ConsumeNext();
+                values.Add(new SuilComma());
+                continue;
+            }
 
             if (stream.PeekNext() is CommaToken
                 or RightParenthesisToken
@@ -48,6 +56,10 @@ public static partial class SuilParser
         LocToken loc => new SuilLocalization(loc.Key,
             loc.HasArguments ? ConsumeNamedArguments(ref stream, context) : new List<SuilNamedArgument>()),
         FunctionToken function => ConsumeFunction(ref stream, function.Value, context),
+
+        // a group: (1px + 2px)
+        LeftParenthesisToken => ConsumeFunction(ref stream, string.Empty, context),
+        DelimToken { CodePoint: '/' or '+' or '-' or '*' } delim => new SuilDelim(delim.CodePoint),
         _ => throw ErrorAtCurrent(ref stream, context, $"unexpected {Describe(stream.Current)} in a value"),
     };
 

@@ -4,6 +4,7 @@ using System.Numerics;
 using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Parsers;
 using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Content.Client._RF.Graphics;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
@@ -38,7 +39,7 @@ public sealed class CssCalcTest : GameTest
     private static bool TryParseNode(string css, out CalcNode? node)
     {
         node = null;
-        return Tokens(css) is [CssFunction function] && CssCalc.TryParse(function, out node);
+        return CssValueConverter.Convert(Tokens(css)) is [SuilFunction function] && CssCalc.TryParse(function, out node);
     }
 
     private LengthUnit Length(string css)
@@ -401,7 +402,7 @@ public sealed class CssCalcTest : GameTest
 
     private static bool TryParseSize(string css, out RfStyleBoxTexture.StyleBoxSize size)
     {
-        var stream = new CssValueStream(Tokens(css));
+        var stream = CssValueConverter.Stream(Tokens(css));
         return new StyleBoxSizeParser().TryParse(ref stream, out size) && stream.AtEnd;
     }
 
@@ -435,12 +436,12 @@ public sealed class CssCalcTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Position_Takes_Math_Functions()
     {
-        var stream = new CssValueStream(Tokens("calc(50% + 10px)"));
+        var stream = CssValueConverter.Stream(Tokens("calc(50% + 10px)"));
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out _, out var abs, out var calc, true), Is.True);
         Assert.That(abs, Is.False);
         Assert.That(calc!.Eval(default, 100f), Is.EqualTo(60f));
 
-        stream = new CssValueStream(Tokens("calc(1in + 4px)"));
+        stream = CssValueConverter.Stream(Tokens("calc(1in + 4px)"));
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out var value, out abs, out calc, false), Is.True);
         Assert.Multiple(() =>
         {
@@ -454,13 +455,13 @@ public sealed class CssCalcTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Position_Takes_Any_Absolute_Unit()
     {
-        var stream = new CssValueStream(Tokens("1in"));
+        var stream = CssValueConverter.Stream(Tokens("1in"));
 
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out var value, out var abs, out _, true), Is.True);
         Assert.That(abs, Is.True);
         Assert.That(value, Is.EqualTo(96f));
 
-        stream = new CssValueStream(Tokens("1em"));
+        stream = CssValueConverter.Stream(Tokens("1em"));
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out _, out _, out _, true), Is.False);
     }
 

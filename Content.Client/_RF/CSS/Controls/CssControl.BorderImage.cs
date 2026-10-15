@@ -1,7 +1,6 @@
 using Content.Client._RF.CSS.Parsers;
-using Content.Client._RF.CSS.Streams;
-using Content.Client._RF.Graphics;
 using Content.Suil;
+using Content.Client._RF.Graphics;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS;
@@ -133,7 +132,7 @@ public partial class CssControl
     /// <c>&lt;source&gt; || &lt;slice&gt; [ / &lt;width&gt;? [ / &lt;outset&gt; ]? ]? || &lt;repeat&gt;</c>.
     /// Every longhand is written with its initial value up front.
     /// </summary>
-    private static bool ParseBorderImageShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBorderImageShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
         Texture? source = null;
         var slice = BorderImageSlice.Default;
@@ -149,40 +148,40 @@ public partial class CssControl
         {
             switch (stream.Peek())
             {
-                case IdentToken { Value: "none" } when !sawSource:
+                case SuilIdent { Value: "none" } when !sawSource:
                     stream.ConsumeNext();
                     sawSource = true;
                     continue;
-                case UrlToken or CssFunction { Name: "texture" } when !sawSource:
-                    if (!css.TryParseValue<Texture>(ref stream, out source))
+                case SuilFunction { Name: "url" or "texture" } when !sawSource:
+                    if (!parsers.TryParse<Texture>(ref stream, out source))
                         return false;
 
                     sawSource = true;
                     continue;
-                case IdentToken { Value: "stretch" or "repeat" or "round" or "space" } when !sawRepeat:
+                case SuilIdent { Value: "stretch" or "repeat" or "round" or "space" } when !sawRepeat:
                     if (!BorderImageParsing.TryParseRepeat(ref stream, out repeat))
                         return false;
 
                     sawRepeat = true;
                     continue;
-                case NumberToken or PercentageToken or IdentToken { Value: "fill" } when !sawSlice:
+                case SuilNumber or SuilPercentage or SuilIdent { Value: "fill" } when !sawSlice:
                     if (!BorderImageParsing.TryParseSlice(ref stream, out slice))
                         return false;
 
                     sawSlice = true;
 
-                    if (stream.Peek() is not DelimToken { CodePoint: '/' })
+                    if (stream.Peek() is not SuilDelim { CodePoint: '/' })
                         continue;
 
                     stream.ConsumeNext();
 
-                    var hasWidth = BorderImageParsing.TryParseWidth(ref stream, css, out width);
+                    var hasWidth = BorderImageParsing.TryParseWidth(ref stream, parsers, out width);
 
-                    if (stream.Peek() is DelimToken { CodePoint: '/' })
+                    if (stream.Peek() is SuilDelim { CodePoint: '/' })
                     {
                         stream.ConsumeNext();
 
-                        if (!BorderImageParsing.TryParseOutset(ref stream, css, out outset))
+                        if (!BorderImageParsing.TryParseOutset(ref stream, parsers, out outset))
                             return false;
                     }
                     else if (!hasWidth)

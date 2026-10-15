@@ -155,6 +155,11 @@ public sealed record SuilIdent(string Value) : ISuilValue;
 
 public sealed record SuilString(ImmutableArray<StringPart> Parts) : ISuilValue
 {
+    /// <summary>
+    /// The text of the string. A string with variables is expanded before anything reads it.
+    /// </summary>
+    public string Text => string.Concat(Parts.Select(p => p.Text));
+
     public bool Equals(SuilString? other) => other != null && StringPart.SequenceEqual(Parts, other.Parts);
 
     public override int GetHashCode() => StringPart.Hash(Parts);
@@ -166,4 +171,19 @@ public sealed record SuilLocalization(ImmutableArray<StringPart> Key, List<SuilN
 
 public sealed record SuilNamedArgument(string Name, List<ISuilValue> Value);
 
+/// <summary>
+/// <c>name(arguments)</c>. A parenthesized group <c>(1px + 2px)</c> is a function with an empty name.
+/// </summary>
 public sealed record SuilFunction(string Name, List<List<ISuilValue>> Arguments) : ISuilValue;
+
+/// <summary>
+/// A comma between values of a list (<c>font-family: "A", B</c>). It only appears in the declarations of the rules and
+/// in the values read as a stream (<see cref="SuilValueStream"/>), where the arguments of a function are separated by it.
+/// </summary>
+public sealed record SuilComma : ISuilValue;
+
+/// <summary>
+/// A lone operator in a value: <c>/</c> (<c>background: a / b</c>, <c>12px/1.5</c>) or one of <c>+ - * /</c> in
+/// <c>calc()</c>.
+/// </summary>
+public sealed record SuilDelim(int CodePoint) : ISuilValue;

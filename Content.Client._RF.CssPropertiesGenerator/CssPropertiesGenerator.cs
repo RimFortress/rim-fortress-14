@@ -27,8 +27,8 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
     private const string CssStylingAttributeName = "Content.Client._RF.CSS.CssStylingAttribute";
     private const string CssPropertyAccessorName = "Content.Client._RF.CSS.CssPropertyAccessor";
     private const string CssShorthandInfoName = "Content.Client._RF.CSS.CssShorthandInfo";
-    private const string CssManagerName = "Content.Client._RF.CSS.ICssManager";
-    private const string CssValueStreamName = "Content.Client._RF.CSS.CssValueStream";
+    private const string CssManagerName = "Content.Suil.ISuilValues";
+    private const string CssValueStreamName = "Content.Suil.SuilValueStream";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -309,7 +309,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
                                     if (!matched && remaining.Contains("{{m.CssName}}"))
                                     {
                                         var innerMark{{i}} = stream.Mark();
-                                        if (css.TryParseValue<{{m.ClrTypeFqn}}>(ref stream, out var v{{i}}))
+                                        if (css.TryParse<{{m.ClrTypeFqn}}>(ref stream, out var v{{i}}))
                                         {
                                             values["{{m.CssName}}"] = v{{i}};
                                             remaining.Remove("{{m.CssName}}");

@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 
 namespace Content.Client._RF.CSS;
 
@@ -70,11 +70,11 @@ public static class CssWideKeywordExtensions
         /// </summary>
         /// <param name="stream">CSS values stream.</param>
         /// <param name="keyword">The keyword.</param>
-        public static bool TryParse(ref CssValueStream stream, out CssWideKeyword keyword)
+        public static bool TryParse(ref SuilValueStream stream, out CssWideKeyword keyword)
         {
             keyword = default;
 
-            if (stream.Peek() is not IdentToken ident)
+            if (stream.Peek() is not SuilIdent ident)
                 return false;
 
             var mark = stream.Mark();

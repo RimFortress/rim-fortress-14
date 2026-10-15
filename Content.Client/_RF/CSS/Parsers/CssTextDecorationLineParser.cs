@@ -1,6 +1,5 @@
-using Content.Client._RF.CSS.Streams;
-using Content.Client._RF.CSS.Text;
 using Content.Suil;
+using Content.Client._RF.CSS.Text;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
@@ -15,7 +14,7 @@ namespace Content.Client._RF.CSS.Parsers;
 /// <c>blink</c> is not supported and makes the value invalid.
 /// </remarks>
 [UsedImplicitly]
-public sealed class CssTextDecorationLineParser : CssValueParser<CssTextDecorationLine>
+public sealed class CssTextDecorationLineParser : SuilValueParser<CssTextDecorationLine>
 {
     public override bool Default => false;
 
@@ -57,11 +56,11 @@ public sealed class CssTextDecorationLineParser : CssValueParser<CssTextDecorati
     /// <c>false</c> if no keyword was consumed, a keyword was repeated,
     /// or <c>none</c> was combined with other keywords.
     /// </returns>
-    public static bool TryParseLine(ref CssValueStream stream, out CssTextDecorationLine value)
+    public static bool TryParseLine(ref SuilValueStream stream, out CssTextDecorationLine value)
     {
         value = CssTextDecorationLine.None;
 
-        if (stream.Peek() is IdentToken { Value: var first }
+        if (stream.Peek() is SuilIdent { Value: var first }
             && first.Equals("none", StringComparison.OrdinalIgnoreCase))
         {
             stream.ConsumeNext();
@@ -70,7 +69,7 @@ public sealed class CssTextDecorationLineParser : CssValueParser<CssTextDecorati
 
         var seen = false;
 
-        while (stream.Peek() is IdentToken { Value: var ident }
+        while (stream.Peek() is SuilIdent { Value: var ident }
                && TryParseKeyword(ident, out var flag)
                && flag != CssTextDecorationLine.None)
         {
@@ -89,6 +88,6 @@ public sealed class CssTextDecorationLineParser : CssValueParser<CssTextDecorati
     }
 
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out CssTextDecorationLine value)
+    public override bool TryParse(ref SuilValueStream stream, out CssTextDecorationLine value)
         => TryParseLine(ref stream, out value) && stream.AtEnd;
 }

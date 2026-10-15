@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
@@ -9,33 +9,33 @@ namespace Content.Client._RF.CSS.Parsers;
 /// receives the value.
 /// </summary>
 [UsedImplicitly]
-public sealed class LengthUnitParser : CssValueParser<LengthUnit>
+public sealed class LengthUnitParser : SuilValueParser<LengthUnit>
 {
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out LengthUnit value)
+    public override bool TryParse(ref SuilValueStream stream, out LengthUnit value)
     {
         value = LengthUnit.Zero;
 
         switch (stream.Peek())
         {
-            case PercentageToken percentage:
+            case SuilPercentage percentage:
                 stream.ConsumeNext();
                 value = new LengthUnit((float)percentage.Value, LengthUnitType.Percent);
                 return true;
-            case DimensionToken dimension:
+            case SuilDimension dimension:
                 if (!LengthUnitType.TryParse(dimension.Unit, out var unit))
                     return false;
 
                 stream.ConsumeNext();
                 value = new LengthUnit((float)dimension.Value, unit.Value);
                 return true;
-            case CssFunction function when CssCalc.IsMathFunction(function.Name):
+            case SuilFunction function when CssCalc.IsMathFunction(function.Name):
                 if (!CssCalc.TryParseLength(function, out value))
                     return false;
 
                 stream.ConsumeNext();
                 return true;
-            case NumberToken { Value: 0 }: // unitless zero is a valid length
+            case SuilNumber { Value: 0 }: // unitless zero is a valid length
                 stream.ConsumeNext();
                 return true;
             default:

@@ -1,20 +1,20 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 [UsedImplicitly]
-public sealed class StringParser : CssValueParser<string>
+public sealed class StringParser : SuilValueParser<string>
 {
-    public override bool TryParse(ref CssValueStream stream, [NotNullWhen(true)] out string? value)
+    public override bool TryParse(ref SuilValueStream stream, [NotNullWhen(true)] out string? value)
     {
         switch (stream.ConsumeNext())
         {
-            case StringToken str:
-                value = str.Value;
+            case SuilString str:
+                value = str.Text;
                 return true;
-            case IdentToken ident:
+            case SuilIdent ident:
                 value = ident.Value;
                 return true;
             default:

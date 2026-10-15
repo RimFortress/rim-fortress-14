@@ -1,11 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
 
-public interface ICssManager : ICssPropertyResolver
+public interface ICssManager : ICssPropertyResolver, ISuilValues
 {
     void Initialize();
 

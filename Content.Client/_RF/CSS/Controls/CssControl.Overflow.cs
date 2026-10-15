@@ -1,4 +1,3 @@
-using Content.Client._RF.CSS.Streams;
 using Content.Suil;
 
 namespace Content.Client._RF.CSS;
@@ -138,13 +137,13 @@ public partial class CssControl
     }
 
     // "overflow: <x> [<y>]", a single value sets both axes.
-    private static bool ParseOverflowShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseOverflowShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
-        if (!css.TryParseValue<CssOverflow>(ref stream, out var x))
+        if (!parsers.TryParse<CssOverflow>(ref stream, out var x))
             return false;
 
         var y = x;
-        if (!stream.AtEnd && !css.TryParseValue(ref stream, out y))
+        if (!stream.AtEnd && !parsers.TryParse(ref stream, out y))
             return false;
 
         values["overflow-x"] = x;

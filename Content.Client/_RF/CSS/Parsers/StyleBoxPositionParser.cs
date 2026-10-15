@@ -1,12 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 public static class BackgroundPositionParsing
 {
-    public static bool TryParseComponent(ref CssValueStream stream, out float value, out bool isAbsolute, out CalcNode? calc, bool isXAxis)
+    public static bool TryParseComponent(ref SuilValueStream stream, out float value, out bool isAbsolute, out CalcNode? calc, bool isXAxis)
     {
         value = 0;
         isAbsolute = false;
@@ -14,20 +14,20 @@ public static class BackgroundPositionParsing
 
         switch (stream.ConsumeNext())
         {
-            case IdentToken { Value: "center" }:
+            case SuilIdent { Value: "center" }:
                 value = 0.5f;
                 return true;
-            case IdentToken { Value: "left" } when isXAxis:
-            case IdentToken { Value: "top" } when !isXAxis:
+            case SuilIdent { Value: "left" } when isXAxis:
+            case SuilIdent { Value: "top" } when !isXAxis:
                 return true;
-            case IdentToken { Value: "right" } when isXAxis:
-            case IdentToken { Value: "bottom" } when !isXAxis:
+            case SuilIdent { Value: "right" } when isXAxis:
+            case SuilIdent { Value: "bottom" } when !isXAxis:
                 value = 1f;
                 return true;
-            case PercentageToken pct:
+            case SuilPercentage pct:
                 value = (float)(pct.Value / 100.0);
                 return true;
-            case DimensionToken dim:
+            case SuilDimension dim:
                 if (!LengthUnitType.TryParse(dim.Unit, out var unit)
                     || !LengthUnitType.AbsoluteUnits.Contains(unit.Value))
                     return false;
@@ -35,7 +35,7 @@ public static class BackgroundPositionParsing
                 value = (float)dim.Value * LengthUnitType.AbsoluteToPxRatio[unit.Value];
                 isAbsolute = true;
                 return true;
-            case CssFunction function when CssCalc.IsMathFunction(function.Name):
+            case SuilFunction function when CssCalc.IsMathFunction(function.Name):
                 if (!CssCalc.TryParse(function, out var node) || node.Kind != CalcKind.Length)
                     return false;
 
@@ -57,9 +57,9 @@ public static class BackgroundPositionParsing
 }
 
 [UsedImplicitly]
-public sealed class StyleBoxPositionXParser : CssValueParser<StyleBoxPositionComponent>
+public sealed class StyleBoxPositionXParser : SuilValueParser<StyleBoxPositionComponent>
 {
-    public override bool TryParse(ref CssValueStream stream, out StyleBoxPositionComponent value)
+    public override bool TryParse(ref SuilValueStream stream, out StyleBoxPositionComponent value)
     {
         value = default;
 
@@ -72,9 +72,9 @@ public sealed class StyleBoxPositionXParser : CssValueParser<StyleBoxPositionCom
 }
 
 [UsedImplicitly]
-public sealed class StyleBoxPositionYParser : CssValueParser<StyleBoxPositionComponent>
+public sealed class StyleBoxPositionYParser : SuilValueParser<StyleBoxPositionComponent>
 {
-    public override bool TryParse(ref CssValueStream stream, out StyleBoxPositionComponent value)
+    public override bool TryParse(ref SuilValueStream stream, out StyleBoxPositionComponent value)
     {
         value = default;
 

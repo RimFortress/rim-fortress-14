@@ -1,7 +1,7 @@
 #nullable enable
 using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Parsers;
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Content.Client._RF.Graphics;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
@@ -28,8 +28,8 @@ public sealed class CssBorderImageTest : GameTest
         return control;
     }
 
-    private static CssValueStream Stream(string css)
-        => new(((CssDeclaration) CssParser.ParseListOfDeclarations($"x: {css};")[0]).Value);
+    private static SuilValueStream Stream(string css)
+        => CssValueConverter.Stream(((CssDeclaration) CssParser.ParseListOfDeclarations($"x: {css};")[0]).Value);
 
     [TestCase("30", 30f, BorderImageEdgeKind.Number)]
     [TestCase("25%", 25f, BorderImageEdgeKind.Percent)]

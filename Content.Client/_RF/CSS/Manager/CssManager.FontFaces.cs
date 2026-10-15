@@ -47,12 +47,12 @@ public sealed partial class CssManager
             if (item is not CssDeclaration declaration)
                 continue;
 
-            var stream = new CssValueStream(declaration.Value);
+            var stream = CssValueConverter.Stream(declaration.Value);
 
             switch (declaration.Name.ToLowerInvariant())
             {
                 case "font-family":
-                    if (!TryParseValue<CssFontFamily>(ref stream, out var parsedFamily)
+                    if (!_values.TryParse<CssFontFamily>(ref stream, out var parsedFamily)
                         || parsedFamily is not { Names.Count: 1 }
                         || !stream.AtEnd)
                         return FontFaceError("@font-face: font-family must be a single family name");
@@ -60,7 +60,7 @@ public sealed partial class CssManager
                     family = parsedFamily.Names[0];
                     break;
                 case "font-weight":
-                    if (!_customParsers[typeof(CssFontWeightParser)].TryParse(ref stream, out var parsedWeight)
+                    if (!_values.TryParseWith(typeof(CssFontWeightParser), ref stream, out var parsedWeight)
                         || !stream.AtEnd)
                     {
                         return FontFaceError(
@@ -70,7 +70,7 @@ public sealed partial class CssManager
                     weight = (int) (FontWeight) parsedWeight;
                     break;
                 case "font-style":
-                    if (!TryParseValue<FontSlant>(ref stream, out var parsedSlant) || !stream.AtEnd)
+                    if (!_values.TryParse<FontSlant>(ref stream, out var parsedSlant) || !stream.AtEnd)
                         return FontFaceError("@font-face: font-style must be normal, italic or oblique");
 
                     slant = parsedSlant;

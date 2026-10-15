@@ -1,6 +1,5 @@
-using Content.Client._RF.CSS.Streams;
-using Content.Client._RF.CSS.Text;
 using Content.Suil;
+using Content.Client._RF.CSS.Text;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
 
@@ -11,10 +10,10 @@ namespace Content.Client._RF.CSS.Parsers;
 /// (<c>"Noto Sans", Arial, sans-serif</c>).
 /// </summary>
 [UsedImplicitly]
-public sealed class CssFontFamilyParser : CssValueParser<CssFontFamily>
+public sealed class CssFontFamilyParser : SuilValueParser<CssFontFamily>
 {
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out CssFontFamily value)
+    public override bool TryParse(ref SuilValueStream stream, out CssFontFamily value)
     {
         value = default!;
         var names = new List<string>();
@@ -24,16 +23,16 @@ public sealed class CssFontFamilyParser : CssValueParser<CssFontFamily>
         {
             switch (stream.Peek())
             {
-                case StringToken str:
+                case SuilString str:
                     Flush();
-                    names.Add(str.Value);
+                    names.Add(str.Text);
                     stream.ConsumeNext();
                     break;
-                case IdentToken ident:
+                case SuilIdent ident:
                     words.Add(ident.Value);
                     stream.ConsumeNext();
                     break;
-                case CommaToken:
+                case SuilComma:
                     Flush();
                     stream.ConsumeNext();
                     break;
@@ -70,18 +69,18 @@ public sealed class CssFontFamilyParser : CssValueParser<CssFontFamily>
 /// <c>[SuilProperty(parser: typeof(CssFontWeightParser))]</c>.
 /// </remarks>
 [UsedImplicitly]
-public sealed class CssFontWeightParser : CssValueParser<FontWeight>
+public sealed class CssFontWeightParser : SuilValueParser<FontWeight>
 {
     public override bool Default => false;
 
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out FontWeight value)
+    public override bool TryParse(ref SuilValueStream stream, out FontWeight value)
     {
         value = FontWeight.Normal;
 
         switch (stream.Peek())
         {
-            case IdentToken { Value: var ident }:
+            case SuilIdent { Value: var ident }:
                 if (ident.Equals("normal", StringComparison.OrdinalIgnoreCase))
                     value = FontWeight.Normal;
                 else if (ident.Equals("bold", StringComparison.OrdinalIgnoreCase))
@@ -91,7 +90,7 @@ public sealed class CssFontWeightParser : CssValueParser<FontWeight>
 
                 stream.ConsumeNext();
                 return true;
-            case NumberToken number:
+            case SuilNumber number:
                 var weight = (int) number.Value;
 
                 if (weight is < 1 or > 1000)
@@ -115,7 +114,7 @@ public sealed class CssFontWeightParser : CssValueParser<FontWeight>
 /// <c>[SuilProperty(parser: typeof(CssFontSizeParser))]</c>.
 /// </remarks>
 [UsedImplicitly]
-public sealed class CssFontSizeParser : CssValueParser<LengthUnit>
+public sealed class CssFontSizeParser : SuilValueParser<LengthUnit>
 {
     public override bool Default => false;
 
@@ -125,15 +124,15 @@ public sealed class CssFontSizeParser : CssValueParser<LengthUnit>
     /// <param name="stream">CSS values stream.</param>
     /// <param name="css">The manager that parses plain lengths.</param>
     /// <param name="value">The parsed size.</param>
-    public static bool TryParseSize(ref CssValueStream stream, ICssManager css, out LengthUnit value)
+    public static bool TryParseSize(ref SuilValueStream stream, ISuilValues parsers, out LengthUnit value)
     {
-        if (stream.Peek() is IdentToken { Value: var ident } && TryGetKeyword(ident, out value))
+        if (stream.Peek() is SuilIdent { Value: var ident } && TryGetKeyword(ident, out value))
         {
             stream.ConsumeNext();
             return true;
         }
 
-        return css.TryParseValue(ref stream, out value);
+        return parsers.TryParse(ref stream, out value);
     }
 
     private static bool TryGetKeyword(string ident, out LengthUnit value)
@@ -172,37 +171,37 @@ public sealed class CssFontSizeParser : CssValueParser<LengthUnit>
     }
 
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out LengthUnit value)
-        => TryParseSize(ref stream, Css, out value);
+    public override bool TryParse(ref SuilValueStream stream, out LengthUnit value)
+        => TryParseSize(ref stream, Values, out value);
 }
 
 /// <summary>
 /// Parses <c>line-height</c>: <c>normal</c>, a number, a percentage (as a multiplier), or a length in any unit.
 /// </summary>
 [UsedImplicitly]
-public sealed class CssLineHeightParser : CssValueParser<CssLineHeight>
+public sealed class CssLineHeightParser : SuilValueParser<CssLineHeight>
 {
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out CssLineHeight value)
+    public override bool TryParse(ref SuilValueStream stream, out CssLineHeight value)
     {
         value = CssLineHeight.Normal;
 
         switch (stream.Peek())
         {
-            case IdentToken { Value: var ident } when ident.Equals("normal", StringComparison.OrdinalIgnoreCase):
+            case SuilIdent { Value: var ident } when ident.Equals("normal", StringComparison.OrdinalIgnoreCase):
                 stream.ConsumeNext();
                 return true;
-            case NumberToken number:
+            case SuilNumber number:
                 value = CssLineHeight.FromMultiplier((float) number.Value);
                 stream.ConsumeNext();
                 return true;
-            case PercentageToken percent:
+            case SuilPercentage percent:
                 value = CssLineHeight.FromMultiplier((float) percent.Value / 100f);
                 stream.ConsumeNext();
                 return true;
         }
 
-        if (!Css.TryParseValue<LengthUnit>(ref stream, out var length))
+        if (!Values.TryParse<LengthUnit>(ref stream, out var length))
             return false;
 
         value = CssLineHeight.FromLength(length);
@@ -218,21 +217,21 @@ public sealed class CssLineHeightParser : CssValueParser<CssLineHeight>
 /// <c>[SuilProperty(parser: typeof(CssLineClampParser))]</c>.
 /// </remarks>
 [UsedImplicitly]
-public sealed class CssLineClampParser : CssValueParser<int>
+public sealed class CssLineClampParser : SuilValueParser<int>
 {
     public override bool Default => false;
 
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out int value)
+    public override bool TryParse(ref SuilValueStream stream, out int value)
     {
         value = 0;
 
         switch (stream.Peek())
         {
-            case IdentToken { Value: var ident } when ident.Equals("none", StringComparison.OrdinalIgnoreCase):
+            case SuilIdent { Value: var ident } when ident.Equals("none", StringComparison.OrdinalIgnoreCase):
                 stream.ConsumeNext();
                 return true;
-            case NumberToken number when number.Value >= 1:
+            case SuilNumber number when number.Value >= 1:
                 value = (int) number.Value;
                 stream.ConsumeNext();
                 return true;
@@ -247,14 +246,14 @@ public sealed class CssLineClampParser : CssValueParser<int>
 /// <c>offset-x offset-y [blur] [color]</c> layers (the color may also come first).
 /// </summary>
 [UsedImplicitly]
-public sealed class CssTextShadowParser : CssValueParser<CssTextShadow[]>
+public sealed class CssTextShadowParser : SuilValueParser<CssTextShadow[]>
 {
     /// <inheritdoc/>
-    public override bool TryParse(ref CssValueStream stream, out CssTextShadow[] value)
+    public override bool TryParse(ref SuilValueStream stream, out CssTextShadow[] value)
     {
         value = Array.Empty<CssTextShadow>();
 
-        if (stream.Peek() is IdentToken { Value: var ident } && ident.Equals("none", StringComparison.OrdinalIgnoreCase))
+        if (stream.Peek() is SuilIdent { Value: var ident } && ident.Equals("none", StringComparison.OrdinalIgnoreCase))
         {
             stream.ConsumeNext();
             value = [];
@@ -268,11 +267,11 @@ public sealed class CssTextShadowParser : CssValueParser<CssTextShadow[]>
             var lengths = new List<LengthUnit>(3);
             Color? color = null;
 
-            while (!stream.AtEnd && stream.Peek() is not CommaToken)
+            while (!stream.AtEnd && stream.Peek() is not SuilComma)
             {
                 var mark = stream.Mark();
 
-                if (lengths.Count < 3 && Css.TryParseValue<LengthUnit>(ref stream, out var length))
+                if (lengths.Count < 3 && Values.TryParse<LengthUnit>(ref stream, out var length))
                 {
                     lengths.Add(length);
                     continue;
@@ -280,7 +279,7 @@ public sealed class CssTextShadowParser : CssValueParser<CssTextShadow[]>
 
                 stream.Reset(mark);
 
-                if (color == null && Css.TryParseValue<Color>(ref stream, out var parsed))
+                if (color == null && Values.TryParse<Color>(ref stream, out var parsed))
                 {
                     color = parsed;
                     continue;

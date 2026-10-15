@@ -1,16 +1,16 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 [UsedImplicitly]
-public sealed class BoolParser : CssValueParser<bool>
+public sealed class BoolParser : SuilValueParser<bool>
 {
-    public override bool TryParse(ref CssValueStream stream, out bool value)
+    public override bool TryParse(ref SuilValueStream stream, out bool value)
     {
         value = false;
 
-        if (stream.ConsumeNext() is not IdentToken ident
+        if (stream.ConsumeNext() is not SuilIdent ident
             || !bool.TryParse(ident.Value, out var @bool))
             return false;
 

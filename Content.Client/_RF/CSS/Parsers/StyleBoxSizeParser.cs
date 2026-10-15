@@ -1,24 +1,24 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Content.Client._RF.Graphics;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 [UsedImplicitly]
-public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleBoxSize>
+public sealed class StyleBoxSizeParser : SuilValueParser<RfStyleBoxTexture.StyleBoxSize>
 {
-    public override bool TryParse(ref CssValueStream stream, out RfStyleBoxTexture.StyleBoxSize value)
+    public override bool TryParse(ref SuilValueStream stream, out RfStyleBoxTexture.StyleBoxSize value)
     {
         value = default;
 
-        if (stream.Peek() is IdentToken { Value: "cover" })
+        if (stream.Peek() is SuilIdent { Value: "cover" })
         {
             stream.ConsumeNext();
             value = RfStyleBoxTexture.StyleBoxSize.Cover;
             return stream.AtEnd;
         }
 
-        if (stream.Peek() is IdentToken { Value: "contain" })
+        if (stream.Peek() is SuilIdent { Value: "contain" })
         {
             stream.ConsumeNext();
             value = RfStyleBoxTexture.StyleBoxSize.Contain;
@@ -51,7 +51,7 @@ public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleB
         return true;
     }
 
-    private static bool TryParseComponent(ref CssValueStream stream, out float value, out bool isPercent, out bool isAuto, out CalcNode? calc)
+    private static bool TryParseComponent(ref SuilValueStream stream, out float value, out bool isPercent, out bool isAuto, out CalcNode? calc)
     {
         value = 0;
         isPercent = false;
@@ -60,21 +60,21 @@ public sealed class StyleBoxSizeParser : CssValueParser<RfStyleBoxTexture.StyleB
 
         switch (stream.ConsumeNext())
         {
-            case IdentToken { Value: "auto" }:
+            case SuilIdent { Value: "auto" }:
                 isAuto = true;
                 return true;
-            case PercentageToken pct:
+            case SuilPercentage pct:
                 isPercent = true;
                 value = (float)(pct.Value / 100.0);
                 return true;
-            case DimensionToken dim:
+            case SuilDimension dim:
                 if (!LengthUnitType.TryParse(dim.Unit, out var unit)
                     || !LengthUnitType.AbsoluteUnits.Contains(unit.Value))
                     return false;
 
                 value = (float)dim.Value * LengthUnitType.AbsoluteToPxRatio[unit.Value];
                 return true;
-            case CssFunction function when CssCalc.IsMathFunction(function.Name):
+            case SuilFunction function when CssCalc.IsMathFunction(function.Name):
                 if (!CssCalc.TryParse(function, out var node) || node.Kind != CalcKind.Length)
                     return false;
 

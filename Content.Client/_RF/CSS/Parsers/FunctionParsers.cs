@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
@@ -10,51 +10,51 @@ namespace Content.Client._RF.CSS.Parsers;
 /// A base class for CSS function parsers that provides a built-in function name check.
 /// </summary>
 /// <typeparam name="T">Function output data type.</typeparam>
-public abstract class FunctionParsers<T> : CssValueParser<T>
+public abstract class FunctionParsers<T> : SuilValueParser<T>
 {
     /// <summary>
     /// The name of the function that this class parses.
     /// </summary>
     protected abstract string FuncName { get; }
 
-    public override bool TryParse(ref CssValueStream stream, [NotNullWhen(true)] out T? value)
+    public override bool TryParse(ref SuilValueStream stream, [NotNullWhen(true)] out T? value)
     {
         value = default;
 
-        if (stream.ConsumeNext() is not CssFunction func
+        if (stream.ConsumeNext() is not SuilFunction func
             || !func.Name.Equals(FuncName, StringComparison.InvariantCultureIgnoreCase))
             return false;
 
         return TryParseFunc(ref stream, out value);
     }
 
-    /// <inheritdoc cref="CssValueParser{T}.TryParse(ref CssValueStream, out T?)"/>
-    protected abstract bool TryParseFunc(ref CssValueStream stream, [NotNullWhen(true)] out T? value);
+    /// <inheritdoc cref="SuilValueParser{T}.TryParse(ref SuilValueStream, out T?)"/>
+    protected abstract bool TryParseFunc(ref SuilValueStream stream, [NotNullWhen(true)] out T? value);
 }
 
 /// <summary>
 /// A base class for CSS parsers whose functions can take only a
-/// single token as an argument (most often a <see cref="StringToken"/>).
+/// single token as an argument (most often a <see cref="SuilString"/>).
 /// </summary>
 /// <typeparam name="TToken">A token type that can be a function argument.</typeparam>
 /// <typeparam name="TOut">Function output data type.</typeparam>
-public abstract class SimpleFunctionParser<TToken, TOut> : CssValueParser<TOut>
-    where TToken : ICssComponentValue
+public abstract class SimpleFunctionParser<TToken, TOut> : SuilValueParser<TOut>
+    where TToken : ISuilValue
 {
     /// <summary>
     /// The name of the function that this class parses.
     /// </summary>
     protected abstract string FuncName { get; }
 
-    public override bool TryParse(ref CssValueStream stream, [NotNullWhen(true)] out TOut? value)
+    public override bool TryParse(ref SuilValueStream stream, [NotNullWhen(true)] out TOut? value)
     {
         value = default;
 
-        if (stream.ConsumeNext() is not CssFunction func
+        if (stream.ConsumeNext() is not SuilFunction func
             || !func.Name.Equals(FuncName, StringComparison.InvariantCultureIgnoreCase))
             return false;
 
-        var argsStream = new CssValueStream(func.Value);
+        var argsStream = SuilValueStream.OfArguments(func);
         var val = argsStream.ConsumeNext();
 
         if (val is not TToken token || argsStream.ConsumeNext() != null)
@@ -73,27 +73,27 @@ public abstract class SimpleFunctionParser<TToken, TOut> : CssValueParser<TOut>
 }
 
 [UsedImplicitly]
-public sealed class LocaleFunctionParser : SimpleFunctionParser<StringToken, string>
+public sealed class LocaleFunctionParser : SimpleFunctionParser<SuilString, string>
 {
     protected override string FuncName => "loc";
 
-    protected override bool TryParseFunc(StringToken token, [NotNullWhen(true)] out string? value)
+    protected override bool TryParseFunc(SuilString token, [NotNullWhen(true)] out string? value)
     {
-        value = Loc.GetString(token.Value);
+        value = Loc.GetString(token.Text);
         return true;
     }
 }
 
 [UsedImplicitly]
-public sealed partial class TextureFunctionParser : SimpleFunctionParser<StringToken, Texture>
+public sealed partial class TextureFunctionParser : SimpleFunctionParser<SuilString, Texture>
 {
     [Dependency] private IResourceCache _resource = default!;
 
     protected override string FuncName => "texture";
 
-    protected override bool TryParseFunc(StringToken token, [NotNullWhen(true)] out Texture? value)
+    protected override bool TryParseFunc(SuilString token, [NotNullWhen(true)] out Texture? value)
     {
-        value = _resource.GetResource<TextureResource>(token.Value);
+        value = _resource.GetResource<TextureResource>(token.Text);
         return true;
     }
 }

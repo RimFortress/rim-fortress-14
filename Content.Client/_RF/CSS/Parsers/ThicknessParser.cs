@@ -1,16 +1,16 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 [UsedImplicitly]
-public sealed class ThicknessParser : CssValueParser<Thickness>
+public sealed class ThicknessParser : SuilValueParser<Thickness>
 {
-    public override bool TryParse(ref CssValueStream stream, out Thickness value)
+    public override bool TryParse(ref SuilValueStream stream, out Thickness value)
     {
         var values = new List<float>();
 
-        while (values.Count < 4 && Css.TryParseValue<float>(ref stream, out var length))
+        while (values.Count < 4 && Values.TryParse<float>(ref stream, out var length))
         {
             values.Add(length);
         }

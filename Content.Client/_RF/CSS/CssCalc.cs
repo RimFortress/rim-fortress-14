@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Suil;
 using JetBrains.Annotations;
 using Robust.Shared.Utility;
 
@@ -248,9 +249,9 @@ public static class CssCalc
     /// Parses a math function. Anything that is not valid CSS (mixed types, a missing operator,
     /// a wrong number of arguments, ...) fails.
     /// </summary>
-    public static bool TryParse(CssFunction function, [NotNullWhen(true)] out CalcNode? node)
+    public static bool TryParse(SuilFunction function, [NotNullWhen(true)] out CalcNode? node)
     {
-        var parser = new Parser(function.Value);
+        var parser = new Parser(SuilValueStream.Flatten(function.Arguments));
         return parser.TryParseFunction(function.Name, out node) && parser.AtEnd;
     }
 
@@ -258,7 +259,7 @@ public static class CssCalc
     /// Parses a math function that must evaluate to a length and returns it as a <see cref="LengthUnit"/>.
     /// An expression that needs no context is folded to pixels at once.
     /// </summary>
-    public static bool TryParseLength(CssFunction function, out LengthUnit value)
+    public static bool TryParseLength(SuilFunction function, out LengthUnit value)
     {
         value = LengthUnit.Zero;
 
@@ -279,14 +280,14 @@ public static class CssCalc
     /// Parses a math function that must evaluate to a length without a context (absolute units only)
     /// and returns it in virtual pixels.
     /// </summary>
-    public static bool TryParseFloat(CssFunction function, out float value)
+    public static bool TryParseFloat(SuilFunction function, out float value)
         => TryParseFloat(function, CalcKind.Length, out value);
 
     /// <summary>
     /// Parses a math function of the given <paramref name="kind"/> that needs no context
     /// (numbers and absolute units only) and returns it as a <see cref="float"/> (virtual pixels for a length).
     /// </summary>
-    public static bool TryParseFloat(CssFunction function, CalcKind kind, out float value)
+    public static bool TryParseFloat(SuilFunction function, CalcKind kind, out float value)
     {
         value = 0f;
 
@@ -297,39 +298,15 @@ public static class CssCalc
         return true;
     }
 
-    private ref struct Parser(List<ICssComponentValue> items)
+    private ref struct Parser(IReadOnlyList<ISuilValue> items)
     {
         private int _position;
 
         public bool AtEnd => Peek() == null;
 
-        private ICssComponentValue? Peek()
-        {
-            var i = _position;
+        private ISuilValue? Peek() => _position < items.Count ? items[_position] : null;
 
-            while (i < items.Count && items[i] is WhitespaceToken)
-            {
-                i++;
-            }
-
-            return i < items.Count ? items[i] : null;
-        }
-
-        private ICssComponentValue? Next()
-        {
-            var item = Peek();
-
-            if (item == null)
-                return null;
-
-            while (items[_position] is WhitespaceToken)
-            {
-                _position++;
-            }
-
-            _position++;
-            return item;
-        }
+        private ISuilValue? Next() => _position < items.Count ? items[_position++] : null;
 
         public bool TryParseFunction(string name, out CalcNode? node)
         {
@@ -369,7 +346,7 @@ public static class CssCalc
 
                 args.Add(arg!);
 
-                if (Peek() is not CommaToken)
+                if (Peek() is not SuilComma)
                     return true;
 
                 Next();
@@ -381,7 +358,7 @@ public static class CssCalc
             if (!TryParseProduct(out node))
                 return false;
 
-            while (Peek() is DelimToken { CodePoint: '+' or '-' } delim)
+            while (Peek() is SuilDelim { CodePoint: '+' or '-' } delim)
             {
                 Next();
 
@@ -399,7 +376,7 @@ public static class CssCalc
             if (!TryParseValue(out node))
                 return false;
 
-            while (Peek() is DelimToken { CodePoint: '*' or '/' } delim)
+            while (Peek() is SuilDelim { CodePoint: '*' or '/' } delim)
             {
                 Next();
 
@@ -429,19 +406,19 @@ public static class CssCalc
 
             switch (Next())
             {
-                case NumberToken number:
+                case SuilNumber number:
                     node = new CalcNumber((float) number.Value);
                     return true;
-                case PercentageToken percent:
+                case SuilPercentage percent:
                     node = new CalcLength(new LengthUnit((float) percent.Value, LengthUnitType.Percent));
                     return true;
-                case DimensionToken dimension:
+                case SuilDimension dimension:
                     if (!LengthUnitType.TryParse(dimension.Unit, out var unit))
                         return false;
 
                     node = new CalcLength(new LengthUnit((float) dimension.Value, unit.Value));
                     return true;
-                case IdentToken ident:
+                case SuilIdent ident:
                     switch (ident.Value.ToLowerInvariant())
                     {
                         case "pi":
@@ -453,14 +430,14 @@ public static class CssCalc
                         default:
                             return false;
                     }
-                case CssSimpleBlock { AssociatedToken: LeftParenthesisToken } block: // ( <sum> )
-                    var inner = new Parser(block.Value);
+                case SuilFunction { Name: "" } group: // ( <sum> )
+                    var inner = new Parser(SuilValueStream.Flatten(group.Arguments));
                     return inner.TryParseSum(out node) && inner.AtEnd;
-                case CssFunction function:
+                case SuilFunction function:
                     if (!IsMathFunction(function.Name))
                         return false;
 
-                    var nested = new Parser(function.Value);
+                    var nested = new Parser(SuilValueStream.Flatten(function.Arguments));
                     return nested.TryParseFunction(function.Name, out node) && nested.AtEnd;
                 default:
                     return false;

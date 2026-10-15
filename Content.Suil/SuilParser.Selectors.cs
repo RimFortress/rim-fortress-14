@@ -112,7 +112,7 @@ public static partial class SuilParser
                     $"expected ':', not {Describe(stream.Current)}");
             }
 
-            var value = ConsumeValueList(ref stream, "consuming declaration");
+            var value = ConsumeValueList(ref stream, "consuming declaration", commas: true);
             declarations.Add(new SuilDeclaration(name.Value, value, declarationPosition));
             stream.SkipWhitespace();
 

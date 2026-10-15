@@ -1,11 +1,10 @@
 using System.Linq;
 using Content.Client._RF.CSS.Parsers;
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Content.Client._RF.CSS.Text;
 using Content.Shared._RF.Utilities;
 using Robust.Client.Graphics;
 using Content.Client._RF.CSS.Markup;
-using Content.Suil;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.CSS;
@@ -582,8 +581,8 @@ public partial class CssControl
     /// Not supported: system fonts (<c>font: menu</c>), keyword and percentage sizes, <c>font-stretch</c>.
     /// </remarks>
     private static bool ParseFontShorthand(
-        ref CssValueStream stream,
-        ICssManager css,
+        ref SuilValueStream stream,
+        ISuilValues parsers,
         Dictionary<string, object?> values)
     {
         var style = FontSlant.Normal;
@@ -593,7 +592,7 @@ public partial class CssControl
         // Optional style / variant / weight, in any order.
         while (!stream.AtEnd)
         {
-            if (stream.Peek() is IdentToken { Value: var ident })
+            if (stream.Peek() is SuilIdent { Value: var ident })
             {
                 if (ident.Equals("normal", StringComparison.OrdinalIgnoreCase)
                     || ident.Equals("small-caps", StringComparison.OrdinalIgnoreCase))
@@ -627,7 +626,7 @@ public partial class CssControl
             }
 
             // A unitless number before the size is a weight; "0" and lengths are sizes.
-            if (stream.Peek() is NumberToken { Value: >= 1 and <= 1000 } number)
+            if (stream.Peek() is SuilNumber { Value: >= 1 and <= 1000 } number)
             {
                 stream.ConsumeNext();
                 weight = (FontWeight) (ushort) number.Value;
@@ -637,18 +636,18 @@ public partial class CssControl
             break;
         }
 
-        if (!CssFontSizeParser.TryParseSize(ref stream, css, out var size))
+        if (!CssFontSizeParser.TryParseSize(ref stream, parsers, out var size))
             return false;
 
-        if (stream.Peek() is DelimToken { CodePoint: '/' })
+        if (stream.Peek() is SuilDelim { CodePoint: '/' })
         {
             stream.ConsumeNext();
 
-            if (!css.TryParseValue(ref stream, out lineHeight))
+            if (!parsers.TryParse(ref stream, out lineHeight))
                 return false;
         }
 
-        if (!css.TryParseValue<CssFontFamily>(ref stream, out var family) || family == null || !stream.AtEnd)
+        if (!parsers.TryParse<CssFontFamily>(ref stream, out var family) || family == null || !stream.AtEnd)
             return false;
 
         values["font-style"] = style;
@@ -665,8 +664,8 @@ public partial class CssControl
     /// Omitted components are reset to their defaults by the caller.
     /// </summary>
     private static bool ParseTextDecorationShorthand(
-        ref CssValueStream stream,
-        ICssManager css,
+        ref SuilValueStream stream,
+        ISuilValues parsers,
         Dictionary<string, object?> values)
     {
         var line = CssTextDecorationLine.None;
@@ -676,7 +675,7 @@ public partial class CssControl
 
         while (!stream.AtEnd)
         {
-            if (stream.Peek() is IdentToken { Value: var ident })
+            if (stream.Peek() is SuilIdent { Value: var ident })
             {
                 if (CssTextDecorationLineParser.TryParseKeyword(ident, out _))
                 {
@@ -697,7 +696,7 @@ public partial class CssControl
 
             var mark = stream.Mark();
 
-            if (css.TryParseValue<LengthUnit>(ref stream, out var width))
+            if (parsers.TryParse<LengthUnit>(ref stream, out var width))
             {
                 thickness = width;
                 continue;
@@ -705,7 +704,7 @@ public partial class CssControl
 
             stream.Reset(mark);
 
-            if (css.TryParseValue<Color>(ref stream, out var parsedColor))
+            if (parsers.TryParse<Color>(ref stream, out var parsedColor))
             {
                 color = parsedColor;
                 continue;

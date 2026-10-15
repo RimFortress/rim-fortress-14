@@ -1,5 +1,4 @@
 using System.Numerics;
-using Content.Client._RF.CSS.Streams;
 using Content.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
@@ -291,8 +290,8 @@ public abstract class AutoCssControl : Control
 /// omitted optional component).
 /// </summary>
 public delegate bool CssShorthandParserDelegate(
-    ref CssValueStream stream,
-    ICssManager css,
+    ref SuilValueStream stream,
+    ISuilValues parsers,
     Dictionary<string, object?> values);
 
 /// <summary>

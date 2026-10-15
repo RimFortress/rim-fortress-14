@@ -1,7 +1,6 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Content.Client._RF.Graphics;
 using Content.Shared._RF.Utilities;
-using Content.Suil;
 
 namespace Content.Client._RF.CSS;
 
@@ -308,25 +307,25 @@ public partial class CssControl
     /// "border" shorthand — sets color/width/style uniformly on all four
     /// sides at once. Order-independent, any component may be omitted.
     /// </summary>
-    private static bool ParseBorderShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
-        => ParseBorderTriple(ref stream, css, values, "top", "right", "bottom", "left");
+    private static bool ParseBorderShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
+        => ParseBorderTriple(ref stream, parsers, values, "top", "right", "bottom", "left");
 
     /// <summary>
     /// "border-top"/"-right"/"-bottom"/"-left" — sets ONE side's color/width/style.
     /// </summary>
-    private static bool ParseBorderTopShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
-        => ParseBorderTriple(ref stream, css, values, "top");
+    private static bool ParseBorderTopShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
+        => ParseBorderTriple(ref stream, parsers, values, "top");
 
-    private static bool ParseBorderRightShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
-        => ParseBorderTriple(ref stream, css, values, "right");
+    private static bool ParseBorderRightShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
+        => ParseBorderTriple(ref stream, parsers, values, "right");
 
-    private static bool ParseBorderBottomShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
-        => ParseBorderTriple(ref stream, css, values, "bottom");
+    private static bool ParseBorderBottomShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
+        => ParseBorderTriple(ref stream, parsers, values, "bottom");
 
-    private static bool ParseBorderLeftShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
-        => ParseBorderTriple(ref stream, css, values, "left");
+    private static bool ParseBorderLeftShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
+        => ParseBorderTriple(ref stream, parsers, values, "left");
 
-    private static bool ParseBorderTriple(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values, params string[] sides)
+    private static bool ParseBorderTriple(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values, params string[] sides)
     {
         Color? color = null;
         LengthUnit? width = null;
@@ -334,7 +333,7 @@ public partial class CssControl
 
         while (!stream.AtEnd)
         {
-            if (stream.Peek() is IdentToken { Value: var s }
+            if (stream.Peek() is SuilIdent { Value: var s }
                 && Enum.TryParse<CssBorderStyle>(RfCaseConversion.KebabToPascal(s), ignoreCase: true, out var parsedStyle))
             {
                 stream.ConsumeNext();
@@ -343,14 +342,14 @@ public partial class CssControl
             }
 
             var mark = stream.Mark();
-            if (css.TryParseValue<LengthUnit>(ref stream, out var w))
+            if (parsers.TryParse<LengthUnit>(ref stream, out var w))
             {
                 width = w;
                 continue;
             }
             stream.Reset(mark);
 
-            if (css.TryParseValue<Color>(ref stream, out var c))
+            if (parsers.TryParse<Color>(ref stream, out var c))
             {
                 color = c;
                 continue;
@@ -373,12 +372,12 @@ public partial class CssControl
     /// "border-color" — 1/2/4-value CSS clockwise expansion
     /// (top, right, bottom, left), same packing rule as "margin"/"padding".
     /// </summary>
-    private static bool ParseBorderColorShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBorderColorShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
         var colors = new List<Color>();
         while (colors.Count < 4 && !stream.AtEnd)
         {
-            if (!css.TryParseValue<Color>(ref stream, out var c))
+            if (!parsers.TryParse<Color>(ref stream, out var c))
                 break;
 
             colors.Add(c);
@@ -405,12 +404,12 @@ public partial class CssControl
     /// <summary>
     /// "border-width" — same 1/2/4-value clockwise expansion as "border-color".
     /// </summary>
-    private static bool ParseBorderWidthShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBorderWidthShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
         var widths = new List<LengthUnit>();
         while (widths.Count < 4 && !stream.AtEnd)
         {
-            if (!css.TryParseValue<LengthUnit>(ref stream, out var w))
+            if (!parsers.TryParse<LengthUnit>(ref stream, out var w))
                 break;
 
             widths.Add(w);
@@ -434,12 +433,12 @@ public partial class CssControl
         return true;
     }
 
-    private static bool ParseBorderStyleShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBorderStyleShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
         var styles = new List<CssBorderStyle>();
         while (styles.Count < 4 && !stream.AtEnd)
         {
-            if (stream.Peek() is not IdentToken { Value: var s }
+            if (stream.Peek() is not SuilIdent { Value: var s }
                 || !Enum.TryParse<CssBorderStyle>(RfCaseConversion.KebabToPascal(s), ignoreCase: true, out var parsed))
                 break;
             stream.ConsumeNext();
@@ -465,16 +464,16 @@ public partial class CssControl
         return true;
     }
 
-    private static bool ParseBorderRadiusShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBorderRadiusShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
-        if (!TryParseLengthPercentageGroup(ref stream, css, out var horizontal))
+        if (!TryParseLengthPercentageGroup(ref stream, parsers, out var horizontal))
             return false;
 
         var vertical = horizontal;
-        if (stream.Peek() is DelimToken { CodePoint: '/' })
+        if (stream.Peek() is SuilDelim { CodePoint: '/' })
         {
             stream.ConsumeNext();
-            if (!TryParseLengthPercentageGroup(ref stream, css, out vertical))
+            if (!TryParseLengthPercentageGroup(ref stream, parsers, out vertical))
                 return false;
         }
 
@@ -488,20 +487,20 @@ public partial class CssControl
         return true;
     }
 
-    private static bool TryParseLengthPercentageGroup(ref CssValueStream stream, ICssManager css, out LengthUnit[] group)
+    private static bool TryParseLengthPercentageGroup(ref SuilValueStream stream, ISuilValues parsers, out LengthUnit[] group)
     {
         var values = new List<LengthUnit>();
 
-        while (values.Count < 4 && stream.Peek() is not (null or DelimToken { CodePoint: '/' }))
+        while (values.Count < 4 && stream.Peek() is not (null or SuilDelim { CodePoint: '/' }))
         {
-            if (stream.Peek() is PercentageToken percent)
+            if (stream.Peek() is SuilPercentage percent)
             {
                 values.Add(new LengthUnit((float)percent.Value, LengthUnitType.Percent));
                 stream.ConsumeNext();
                 continue;
             }
 
-            if (!css.TryParseValue<LengthUnit>(ref stream, out var length))
+            if (!parsers.TryParse<LengthUnit>(ref stream, out var length))
                 break;
 
             values.Add(length);

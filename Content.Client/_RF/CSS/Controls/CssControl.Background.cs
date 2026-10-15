@@ -1,7 +1,6 @@
 using Content.Client._RF.CSS.Parsers;
-using Content.Client._RF.CSS.Streams;
-using Content.Client._RF.Graphics;
 using Content.Suil;
+using Content.Client._RF.Graphics;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS;
@@ -474,7 +473,7 @@ public partial class CssControl
     /// defaults (e.g. BackgroundRepeat's default is Repeat, not necessarily
     /// the zero value of its enum).
     /// </summary>
-    private static bool ParseBackgroundShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBackgroundShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
         Color? color = null;
         Texture? image = null;
@@ -488,39 +487,39 @@ public partial class CssControl
 
         while (!stream.AtEnd)
         {
-            if (stream.Peek() is UrlToken)
+            if (stream.Peek() is SuilFunction { Name: "url" })
             {
-                if (!css.TryParseValue<Texture>(ref stream, out var v))
+                if (!parsers.TryParse<Texture>(ref stream, out var v))
                     return false;
 
                 image = v;
                 continue;
             }
 
-            if (stream.Peek() is IdentToken { Value: "none" })
+            if (stream.Peek() is SuilIdent { Value: "none" })
             {
                 stream.ConsumeNext();
                 continue; // image stays null
             }
 
-            if (stream.Peek() is IdentToken { Value: "repeat" or "repeat-x" or "repeat-y" or "no-repeat" })
+            if (stream.Peek() is SuilIdent { Value: "repeat" or "repeat-x" or "repeat-y" or "no-repeat" })
             {
-                if (!css.TryParseValue<RfStyleBoxTexture.StretchMode>(ref stream, out var v))
+                if (!parsers.TryParse<RfStyleBoxTexture.StretchMode>(ref stream, out var v))
                     return false;
 
                 repeat = v;
                 continue;
             }
 
-            if (stream.Peek() is IdentToken { Value: "border-box" or "padding-box" or "content-box" })
+            if (stream.Peek() is SuilIdent { Value: "border-box" or "padding-box" or "content-box" })
             {
-                if (!css.TryParseValue<StyleBoxBackgroundOrigin>(ref stream, out var o))
+                if (!parsers.TryParse<StyleBoxBackgroundOrigin>(ref stream, out var o))
                     return false;
 
                 origin = o;
 
-                if (stream.Peek() is IdentToken { Value: "border-box" or "padding-box" or "content-box" }
-                    && css.TryParseValue<StyleBoxBackgroundClip>(ref stream, out var cl))
+                if (stream.Peek() is SuilIdent { Value: "border-box" or "padding-box" or "content-box" }
+                    && parsers.TryParse<StyleBoxBackgroundClip>(ref stream, out var cl))
                     clip = cl;
 
                 continue;
@@ -535,11 +534,11 @@ public partial class CssControl
                 positionY = y;
                 sawPosition = true;
 
-                if (stream.Peek() is DelimToken { CodePoint: '/' })
+                if (stream.Peek() is SuilDelim { CodePoint: '/' })
                 {
                     stream.ConsumeNext();
 
-                    if (!css.TryParseValue<RfStyleBoxTexture.StyleBoxSize>(ref stream, out var s))
+                    if (!parsers.TryParse<RfStyleBoxTexture.StyleBoxSize>(ref stream, out var s))
                         return false;
 
                     size = s;
@@ -547,7 +546,7 @@ public partial class CssControl
                 continue;
             }
 
-            if (!css.TryParseValue<Color>(ref stream, out var c))
+            if (!parsers.TryParse<Color>(ref stream, out var c))
                 return false;
 
             color = c;
@@ -575,7 +574,7 @@ public partial class CssControl
     /// at all (the property's own reset default is 0%, not center — center
     /// only applies to the axis a single-value declaration leaves unstated).
     /// </summary>
-    private static bool ParseBackgroundPositionShorthand(ref CssValueStream stream, ICssManager css, Dictionary<string, object?> values)
+    private static bool ParseBackgroundPositionShorthand(ref SuilValueStream stream, ISuilValues parsers, Dictionary<string, object?> values)
     {
         if (!TryParsePositionComponents(ref stream, out var x, out var y))
             return false;
@@ -588,7 +587,7 @@ public partial class CssControl
         return true;
     }
 
-    private static bool TryParsePositionComponents(ref CssValueStream stream, out StyleBoxPositionComponent x, out StyleBoxPositionComponent y)
+    private static bool TryParsePositionComponents(ref SuilValueStream stream, out StyleBoxPositionComponent x, out StyleBoxPositionComponent y)
     {
         x = StyleBoxPositionComponent.Zero;
         y = StyleBoxPositionComponent.Zero;
@@ -611,22 +610,22 @@ public partial class CssControl
         return true;
     }
 
-    private static bool LooksLikePositionStart(CssValueStream stream) => stream.Peek() is
-        IdentToken { Value: "left" or "right" or "top" or "bottom" or "center" }
-        or PercentageToken
-        or DimensionToken
-        or CssFunction
-        or NumberToken { Value: 0 };
+    private static bool LooksLikePositionStart(SuilValueStream stream) => stream.Peek() is
+        SuilIdent { Value: "left" or "right" or "top" or "bottom" or "center" }
+        or SuilPercentage
+        or SuilDimension
+        or SuilFunction
+        or SuilNumber { Value: 0 };
 
     // Used inside the "background" shorthand, where position parsing must
     // stop at "/" (the size separator) or a non-position token (color etc.),
     // rather than requiring the whole stream to end.
-    private static bool LooksLikePositionEnd(CssValueStream stream) =>
-        stream.Peek() is DelimToken { CodePoint: '/' } || !LooksLikePositionStart(stream);
+    private static bool LooksLikePositionEnd(SuilValueStream stream) =>
+        stream.Peek() is SuilDelim { CodePoint: '/' } || !LooksLikePositionStart(stream);
 
     private static bool ParsePaddingShorthand(
-        ref CssValueStream stream,
-        ICssManager css,
+        ref SuilValueStream stream,
+        ISuilValues parsers,
         Dictionary<string, object?> values)
         => ParseMarginLikeShorthand<LengthUnit>(
             "padding-top",
@@ -634,12 +633,12 @@ public partial class CssControl
             "padding-bottom",
             "padding-left",
             ref stream,
-            css,
+            parsers,
             values);
 
     private static bool ParseExpandMarginShorthand(
-        ref CssValueStream stream,
-        ICssManager css,
+        ref SuilValueStream stream,
+        ISuilValues parsers,
         Dictionary<string, object?> values)
         => ParseMarginLikeShorthand<float>(
             "expand-margin-top",
@@ -647,12 +646,12 @@ public partial class CssControl
             "expand-margin-bottom",
             "expand-margin-left",
             ref stream,
-            css,
+            parsers,
             values);
 
     private static bool ParsePatchMarginShorthand(
-        ref CssValueStream stream,
-        ICssManager css,
+        ref SuilValueStream stream,
+        ISuilValues parsers,
         Dictionary<string, object?> values)
         => ParseMarginLikeShorthand<float>(
             "patch-margin-top",
@@ -660,7 +659,7 @@ public partial class CssControl
             "patch-margin-bottom",
             "patch-margin-left",
             ref stream,
-            css,
+            parsers,
             values);
 
     private static bool ParseMarginLikeShorthand<T>(
@@ -668,15 +667,15 @@ public partial class CssControl
         string property2,
         string property3,
         string property4,
-        ref CssValueStream stream,
-        ICssManager css,
+        ref SuilValueStream stream,
+        ISuilValues parsers,
         Dictionary<string, object?> values)
     {
         var lengths = new List<T>();
 
         while (lengths.Count < 4 && !stream.AtEnd)
         {
-            if (!css.TryParseValue<T>(ref stream, out var v))
+            if (!parsers.TryParse<T>(ref stream, out var v))
                 break;
 
             lengths.Add(v!);

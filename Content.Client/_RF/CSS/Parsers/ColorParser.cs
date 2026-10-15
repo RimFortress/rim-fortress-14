@@ -1,31 +1,31 @@
-using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.CSS.Parsers;
 
 [UsedImplicitly]
-public sealed class ColorParser : CssValueParser<Color>
+public sealed class ColorParser : SuilValueParser<Color>
 {
-    public override bool TryParse(ref CssValueStream stream, out Color value)
+    public override bool TryParse(ref SuilValueStream stream, out Color value)
     {
         value = default;
 
         switch (stream.Peek())
         {
-            case HashToken hash:
-                if (!Color.TryFromHex($"#{hash.Value}", out value))
+            case SuilColor hash:
+                if (!Color.TryFromHex($"#{hash.Hex}", out value))
                     return false;
 
                 stream.ConsumeNext();
                 return true;
-            case IdentToken ident:
+            case SuilIdent ident:
                 if (!Color.TryFromName(ident.Value, out value))
                     return false;
 
                 stream.ConsumeNext();
                 return true;
-            case CssFunction func when func.Name.ToLowerInvariant() is "rgb" or "rgba":
-                var inner = new CssValueStream(func.Value);
+            case SuilFunction func when func.Name.ToLowerInvariant() is "rgb" or "rgba":
+                var inner = SuilValueStream.OfArguments(func);
 
                 if (!TryByte(ref inner, out var r))
                     return false;
@@ -41,7 +41,7 @@ public sealed class ColorParser : CssValueParser<Color>
                     return false;
 
                 byte a = 255;
-                if (inner.TryConsumeComma() && inner.Peek() is NumberToken alpha)
+                if (inner.TryConsumeComma() && inner.Peek() is SuilNumber alpha)
                 {
                     inner.ConsumeNext();
                     a = (byte)Math.Clamp(alpha.Value * 255, 0, 255);
@@ -50,8 +50,8 @@ public sealed class ColorParser : CssValueParser<Color>
                 stream.ConsumeNext(); // consume the function itself from the outer stream
                 value = new Color(r, g, b, a);
                 return true;
-            case CssFunction func when func.Name.Equals("color-mix", StringComparison.OrdinalIgnoreCase):
-                var args = new CssValueStream(func.Value);
+            case SuilFunction func when func.Name.Equals("color-mix", StringComparison.OrdinalIgnoreCase):
+                var args = SuilValueStream.OfArguments(func);
 
                 if (!TryColorMix(ref args, out value) || !args.AtEnd)
                     return false;
@@ -69,13 +69,13 @@ public sealed class ColorParser : CssValueParser<Color>
     /// one percentage defines the other (100% minus it); if both are given and their sum is not 100% they are
     /// normalized, and a sum below 100% makes the result proportionally transparent.
     /// </summary>
-    private bool TryColorMix(ref CssValueStream args, out Color value)
+    private bool TryColorMix(ref SuilValueStream args, out Color value)
     {
         value = default;
 
-        if (args.ConsumeNext() is not IdentToken { Value: var inKeyword }
+        if (args.ConsumeNext() is not SuilIdent { Value: var inKeyword }
             || !inKeyword.Equals("in", StringComparison.OrdinalIgnoreCase)
-            || args.ConsumeNext() is not IdentToken { Value: var space }
+            || args.ConsumeNext() is not SuilIdent { Value: var space }
             || !space.Equals("srgb", StringComparison.OrdinalIgnoreCase)
             || !args.TryConsumeComma())
             return false;
@@ -122,20 +122,20 @@ public sealed class ColorParser : CssValueParser<Color>
         return true;
     }
 
-    private static double? TryShare(ref CssValueStream stream)
+    private static double? TryShare(ref SuilValueStream stream)
     {
-        if (stream.Peek() is not PercentageToken percentage)
+        if (stream.Peek() is not SuilPercentage percentage)
             return null;
 
         stream.ConsumeNext();
         return percentage.Value;
     }
 
-    private static bool TryByte(ref CssValueStream stream, out byte value)
+    private static bool TryByte(ref SuilValueStream stream, out byte value)
     {
         value = 0;
 
-        if (stream.Peek() is not NumberToken number)
+        if (stream.Peek() is not SuilNumber number)
             return false;
 
         stream.ConsumeNext();

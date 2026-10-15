@@ -22,8 +22,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     [Dependency] private IUserInterfaceManager _ui = null!;
     [Dependency] private ICssFontManager _fonts = null!;
 
-    private readonly Dictionary<Type, List<ICssValueParser>> _defaultParsers = new(); // parsing value type : parsers
-    private readonly Dictionary<Type, ICssValueParser> _customParsers = new(); // parser type : parser
+    private readonly SuilValueParsers _values = new();
 
     private readonly Dictionary<Type, Dictionary<string, CssPropertyAccessor>> _properties = new();
     private readonly Dictionary<Type, Dictionary<string, CssShorthandInfo>> _shorthands = new();
@@ -76,6 +75,17 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     }
 
     /// <inheritdoc/>
+    public bool TryParseWith(Type parserType, ref SuilValueStream stream, [NotNullWhen(true)] out object? value)
+        => _values.TryParseWith(parserType, ref stream, out value);
+
+    /// <inheritdoc/>
+    public bool TryParse<T>(ref SuilValueStream stream, out T? value) => _values.TryParse(ref stream, out value);
+
+    /// <inheritdoc/>
+    public bool TryParse(ref SuilValueStream stream, Type type, out object? value)
+        => _values.TryParse(ref stream, type, out value);
+
+    /// <inheritdoc/>
     public bool TryParseValue<T>(ref CssValueStream stream, out T? value)
     {
         if (!TryParseValue(ref stream, typeof(T), out var obj))
@@ -91,47 +101,30 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
     /// <inheritdoc/>
     public bool TryParseValue(ref CssValueStream stream, Type type, out object? value)
     {
-        var parserValue = type;
+        // The parsers read the values of SUIL: the rest of the stream is converted item by item, so what a parser
+        // consumed is the same number of items of the CSS stream.
+        var start = stream.Mark();
+        var rest = new List<ICssComponentValue>();
 
-        if (type.IsNullable(out var t))
+        for (var i = start; i < stream.Items.Count; i++)
         {
-            parserValue = t;
-
-            if (stream.Peek() is IdentToken ident
-                && ident.Value.Equals("none", StringComparison.InvariantCultureIgnoreCase))
-            {
-                stream.ConsumeNext();
-                value = null;
-                return true;
-            }
+            rest.Add(stream.Items[i]);
         }
 
-        if (!_defaultParsers.TryGetValue(parserValue, out var parsers) || parsers.Count == 0)
-        {
-            // We don't want to create a different parsers for each enum
-            if (parserValue != typeof(Enum) && parserValue.IsAssignableTo(typeof(Enum)))
-                return TryParseEnum(parserValue, ref stream, out value);
+        var converted = CssValueConverter.Stream(rest);
 
-#if EXCEPTION_TOLERANCE
-            value = null;
+        if (!_values.TryParse(ref converted, type, out value))
+        {
+            stream.Reset(start);
             return false;
-#else
-            throw new ArgumentException($"default CSS parser for type {parserValue.FullName} not found");
-#endif
         }
 
-        var mark = stream.Mark();
-
-        foreach (var parser in parsers)
+        for (var i = converted.Mark(); i > 0; i--)
         {
-            if (parser.TryParse(ref stream, out value))
-                return true;
-
-            stream.Reset(mark);
+            stream.ConsumeNext();
         }
 
-        value = null;
-        return false;
+        return true;
     }
 
     /// <inheritdoc/>
@@ -360,9 +353,9 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (control.CssComputedVariables is not { } variables || !variables.TryGet(name, out var tokens))
             return false;
 
-        var stream = new CssValueStream(tokens);
+        var stream = CssValueConverter.Stream(tokens);
 
-        if (TryParseValue(ref stream, out value) && stream.AtEnd)
+        if (_values.TryParse(ref stream, out value) && stream.AtEnd)
             return true;
 
         value = default;
@@ -804,17 +797,6 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     #endregion
 
-    private static bool TryParseEnum(Type type, ref CssValueStream stream, [NotNullWhen(true)] out object? value)
-    {
-        value = null;
-
-        if (stream.ConsumeNext() is not IdentToken ident)
-            return false;
-
-        var pascalCase = RfCaseConversion.KebabToPascal(ident.Value);
-        return Enum.TryParse(type, pascalCase, ignoreCase: true, out value);
-    }
-
     /// <summary>
     /// Resolves the <see cref="CssShorthandInfo"/> registered for a shorthand
     /// declaration name, walking from <paramref name="elementType"/> up through
@@ -862,7 +844,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (!TryGetShorthandInfo(targetType, decl.Name, out var info))
             return false; // not a shorthand for this type — not an error, let the caller try a regular declaration
 
-        var stream = new CssValueStream(decl.Value);
+        var stream = CssValueConverter.Stream(decl.Value);
         var values = new Dictionary<string, object?>();
 
         // A CSS-wide keyword applies to every longhand of the shorthand.
@@ -880,7 +862,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
             return true;
         }
 
-        if (!info.Value.Parser(ref stream, this, values))
+        if (!info.Value.Parser(ref stream, _values, values))
         {
     #if EXCEPTION_TOLERANCE
             return false;
@@ -939,7 +921,7 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         if (accessor == null)
             return false;
 
-        var stream = new CssValueStream(decl.Value);
+        var stream = CssValueConverter.Stream(decl.Value);
 
         // CSS-wide keywords are valid for every property and are resolved when the style is applied.
         if (CssWideKeyword.TryParse(ref stream, out var keyword))
@@ -950,8 +932,8 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
         }
 
         var ok = accessor.Value.CustomParser is not null
-            ? _customParsers[accessor.Value.CustomParser].TryParse(ref stream, out value)
-            : TryParseValue(ref stream, accessor.Value.ClrType, out value);
+            ? _values.TryParseWith(accessor.Value.CustomParser, ref stream, out value)
+            : _values.TryParse(ref stream, accessor.Value.ClrType, out value);
 
         if (!ok)
             return false;
@@ -963,19 +945,11 @@ public sealed partial class CssManager : IPostInjectInit, ICssManager
 
     private void RegisterParsers()
     {
-        var types = _reflection.GetAllChildren<ICssValueParser>().Where(x => !x.IsAbstract).ToList();
+        var types = _reflection.GetAllChildren<ISuilValueParser>().Where(x => !x.IsAbstract).ToList();
 
         foreach (var parserType in types)
         {
-            var instance = _factory.CreateInstance<ICssValueParser>(parserType);
-
-            if (!instance.Default)
-            {
-                _customParsers.Add(instance.GetType(), instance);
-                continue;
-            }
-
-            _defaultParsers.GetOrNew(instance.ValueType).Add(instance);
+            _values.Register(_factory.CreateInstance<ISuilValueParser>(parserType));
         }
     }
 

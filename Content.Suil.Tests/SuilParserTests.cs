@@ -378,7 +378,6 @@ public sealed class SuilParserTests
     [TestCase("use \"a`b`\";")]
     [TestCase("use a;")]
     [TestCase(".a { v: #12; }")]
-    [TestCase(".a { v: 1 + 2; }")]
     [TestCase(".a { v: 1! }")]
     [TestCase(".a { v: 1 w: 2; }")]
     [TestCase(".a { : 1; }")]
