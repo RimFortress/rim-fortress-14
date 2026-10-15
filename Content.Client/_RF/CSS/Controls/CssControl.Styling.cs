@@ -1,3 +1,4 @@
+using Content.Suil;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface;
 
@@ -38,13 +39,13 @@ public partial class CssControl
     /// plus everything inherited from ancestors. Shared with the parent when this control declares none.
     /// </summary>
     /// <remarks>
-    /// Owned and updated by <see cref="ICssManager"/>. Reference changes signal that
+    /// Owned and updated by <see cref="ISuilManager"/>. Reference changes signal that
     /// descendants must be restyled, so never replace this value from anywhere else.
     /// </remarks>
     internal CssVariables? CssComputedVariables;
 
     /// <summary>
-    /// The control has changed since it was last restyled, see <see cref="ICssManager.QueueStyleUpdate(CssControl)"/>.
+    /// The control has changed since it was last restyled, see <see cref="ISuilManager.QueueStyleUpdate(CssControl)"/>.
     /// </summary>
     internal bool CssStyleDirty;
 

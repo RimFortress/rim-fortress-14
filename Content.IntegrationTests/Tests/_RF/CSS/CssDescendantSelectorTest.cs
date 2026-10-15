@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client._RF.CSS;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
@@ -13,12 +14,12 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture, TestOf(typeof(CssDescendantSelector))]
 public sealed class CssDescendantSelectorTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     private CssStylesheet Load(string text)
     {
         _css.ClearTestStylesheet();
-        _css.LoadString(text);
+        _css.LoadSuilString(text);
         return _css.BuildTestStylesheet();
     }
 
@@ -166,7 +167,7 @@ public sealed class CssDescendantSelectorTest : GameTest
     [RunOnSide(Side.Client)]
     public void Without_Combinators_Nothing_Is_Tracked()
     {
-        var sheet = Load(".a { color: red; } css-control:hover { color: blue; }");
+        var sheet = Load(".a { color: red; } _:hover { color: blue; }");
 
         Assert.Multiple(() =>
         {

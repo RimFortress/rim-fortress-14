@@ -1,3 +1,4 @@
+using Content.Suil;
 using Content.Client.Administration.Managers;
 using Content.Client.Changelog;
 using Content.Client.Chat.Managers;
@@ -82,7 +83,7 @@ namespace Content.Client.Entry
         [Dependency] private IEntitySystemManager _entitySystemManager = default!;
         [Dependency] private ClientsidePlaytimeTrackingManager _clientsidePlaytimeManager = default!;
         [Dependency] private ClientFeedbackManager _feedbackManager = null!;
-        [Dependency] private ICssManager _css = null!; // RimFortress
+        [Dependency] private ISuilManager _css = null!; // RimFortress
 
         public override void PreInit()
         {

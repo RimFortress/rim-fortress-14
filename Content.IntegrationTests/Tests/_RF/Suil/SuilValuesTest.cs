@@ -21,7 +21,7 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 [TestFixture]
 public sealed class SuilValuesTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     // em = 16, rem = 16, viewport 800x600
     private static readonly LengthContext Context =

@@ -14,7 +14,7 @@ public static partial class SuilParser
         {
             case DelimToken { CodePoint: '.' or '*' or '[' } or HashToken or ColonToken or InterpolatedNameToken:
                 return true;
-            case IdentToken:
+            case IdentToken or UnderscoreToken:
                 break;
             default:
                 return false; // an element, or an error that ConsumeElement reports
@@ -241,6 +241,12 @@ public static partial class SuilParser
         {
             stream.ConsumeNext();
             type = typeToken.Value;
+        }
+        else if (stream.PeekNext() is UnderscoreToken)
+        {
+            // the tag of the element without a type
+            stream.ConsumeNext();
+            type = "_";
         }
         else if (stream.PeekNext() is DelimToken { CodePoint: '*' })
         {

@@ -1,9 +1,10 @@
+using Content.Suil;
 using Robust.Client.Graphics;
 
 namespace Content.Client._RF.CSS.Text;
 
 // NOTE: enum member names are chosen so that the generic kebab-case -> PascalCase enum parser
-// in CssManager.TryParseEnum works out of the box ("pre-wrap" -> PreWrap, "break-all" -> BreakAll, ...).
+// in SuilManager.TryParseEnum works out of the box ("pre-wrap" -> PreWrap, "break-all" -> BreakAll, ...).
 
 /// <summary>
 /// CSS <c>text-align</c>. <c>Start</c>/<c>End</c> are treated as left/right (no RTL support yet).

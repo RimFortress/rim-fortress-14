@@ -1,0 +1,36 @@
+/*
+ * MainMenuControl.xaml (the main menu: logo, fields and the buttons).
+ *
+ * The buttons get their shape (open-left, open-both, open-right), the colors and the `negative` class from
+ * buttons/*.css; MainMenuControl.xaml.cs adds those classes. Only what is specific to the main menu is here.
+ */
+
+/* The logo and the panel under it */
+#main-menu {
+    gap: 24px;
+}
+
+/* The username and the address with their labels */
+#main-menu-fields {
+    gap: 4px;
+    margin: 4px 4px;
+}
+
+#main-menu-fields > box {
+    gap: 4px;
+}
+
+#main-menu-fields > box > _ {
+    align-self: center;
+}
+
+/* mainMenu: bigger buttons */
+.main-menu-button {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* The changelog button while there are new entries */
+.main-menu-button.positive {
+    color: var(--light-good);
+}

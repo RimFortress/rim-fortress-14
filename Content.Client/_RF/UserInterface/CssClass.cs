@@ -1,7 +1,7 @@
 namespace Content.Client._RF.UserInterface;
 
 /// <summary>
-/// Names of the CSS style classes (<c>.name</c> in <c>Resources/CSS/_RF</c>), grouped by the folder of the stylesheet that defines them.
+/// Names of the CSS style classes (<c>.name</c> in <c>Resources/UI/_RF</c>), grouped by the folder of the stylesheet that defines them.
 /// Use them instead of string literals in code: <c>control.AddCssStyleClass(CssClass.Gold)</c>.
 /// </summary>
 public static class CssClass

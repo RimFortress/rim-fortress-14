@@ -12,7 +12,7 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture, TestOf(typeof(NthChildSelector)), TestOf(typeof(NthOfTypeSelector))]
 public sealed class CssNthSelectorsTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     [Test]
     [RunOnSide(Side.Client)]
@@ -26,7 +26,7 @@ public sealed class CssNthSelectorsTest : GameTest
             parent.AddChild(child);
         }
 
-        var selector = new NthChildSelector(new CssAnb(2, 1)); // odd: positions 1,3,5
+        var selector = new NthChildSelector(new SuilAnb(2, 1)); // odd: positions 1,3,5
 
         Assert.That(selector.Matches(children[0]), Is.True);  // position 1
         Assert.That(selector.Matches(children[1]), Is.False); // position 2
@@ -50,7 +50,7 @@ public sealed class CssNthSelectorsTest : GameTest
         parent.AddChild(button);
         parent.AddChild(panel);
 
-        var thirdChild = new NthChildSelector(new CssAnb(0, 3));
+        var thirdChild = new NthChildSelector(new SuilAnb(0, 3));
 
         Assert.That(thirdChild.Matches(label), Is.False);
         Assert.That(thirdChild.Matches(button), Is.False);
@@ -72,10 +72,10 @@ public sealed class CssNthSelectorsTest : GameTest
         parent.AddChild(label2);  // Label #2
         parent.AddChild(label3);  // Label #3
 
-        var secondOfType = new NthOfTypeSelector(new CssAnb(0, 2));
+        var secondOfType = new NthOfTypeSelector(new SuilAnb(0, 2));
 
         Assert.That(secondOfType.Matches(label1), Is.False); // Label index 1
-        Assert.That(secondOfType.Matches(button), Is.False); // Button index 1, but CssAnb is checked regardless of type match at this position — see note below
+        Assert.That(secondOfType.Matches(button), Is.False); // Button index 1, but SuilAnb is checked regardless of type match at this position — see note below
         Assert.That(secondOfType.Matches(label2), Is.True);  // Label index 2
         Assert.That(secondOfType.Matches(label3), Is.False); // Label index 3
     }
@@ -85,7 +85,7 @@ public sealed class CssNthSelectorsTest : GameTest
     public void NthOfType_With_No_Parent_Never_Matches()
     {
         var orphan = new Label();
-        var selector = new NthOfTypeSelector(new CssAnb(2, 1)); // odd — would match position 1
+        var selector = new NthOfTypeSelector(new SuilAnb(2, 1)); // odd — would match position 1
 
         Assert.That(selector.Matches(orphan), Is.False);
     }
@@ -94,8 +94,8 @@ public sealed class CssNthSelectorsTest : GameTest
     [RunOnSide(Side.Client)]
     public void NthChild_And_NthOfType_Specificity_Is_One_Pseudo_Class()
     {
-        var nthChild = new NthChildSelector(new CssAnb(2, 0));
-        var nthOfType = new NthOfTypeSelector(new CssAnb(2, 0));
+        var nthChild = new NthChildSelector(new SuilAnb(2, 0));
+        var nthOfType = new NthOfTypeSelector(new SuilAnb(2, 0));
 
         Assert.That(nthChild.CalculateSpecificity(), Is.EqualTo(new StyleSpecificity(0, 1, 0)));
         Assert.That(nthOfType.CalculateSpecificity(), Is.EqualTo(new StyleSpecificity(0, 1, 0)));
@@ -114,8 +114,8 @@ public sealed class CssNthSelectorsTest : GameTest
         parent.AddChild(middle);
         parent.AddChild(last);
 
-        var firstChild = new NthChildSelector(new CssAnb(0, 1));
-        var lastChild = new NthChildSelector(new CssAnb(0, 3));
+        var firstChild = new NthChildSelector(new SuilAnb(0, 1));
+        var lastChild = new NthChildSelector(new SuilAnb(0, 3));
 
         Assert.That(firstChild.Matches(first), Is.True);
         Assert.That(firstChild.Matches(middle), Is.False);
@@ -128,7 +128,7 @@ public sealed class CssNthSelectorsTest : GameTest
     public void NthStyleUpdateTest()
     {
         _css.ClearTestStylesheet();
-        _css.LoadString("""
+        _css.LoadSuilString("""
             nth-test-control:nth-child(odd) {
                 color: red;
             }

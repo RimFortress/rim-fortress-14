@@ -13,7 +13,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// </summary>
 /// <remarks>
 /// The tabs are <see cref="CssTabContainer"/>s (<c>.marking-tabs</c>), the layout is in <c>RfMarkingPicker.xaml</c>,
-/// the styles are in <c>Resources/CSS/_RF/lobby/markings.css</c>.
+/// the styles are in <c>Resources/UI/_RF/lobby/markings.suil</c>.
 /// </remarks>
 [GenerateTypedNameReferences]
 public sealed partial class RfMarkingPicker : CssBoxContainer

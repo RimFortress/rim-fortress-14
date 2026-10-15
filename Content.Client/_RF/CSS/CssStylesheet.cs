@@ -28,6 +28,18 @@ public enum CssAncestorReach : byte
 
 public sealed class CssStylesheet
 {
+    /// <summary>
+    /// The control type a selector is about: the one of the rightmost compound (<c>A > B</c> and <c>A B</c> apply to B).
+    /// </summary>
+    public static Type? GetElementType(Selector selector) => selector switch
+    {
+        CssElementSelector elem => elem.ElementType,
+        CompoundSelector compound => compound.Selectors.OfType<CssElementSelector>().FirstOrDefault()?.ElementType,
+        SelectorChild child => GetElementType(child.Child),
+        CssDescendantSelector descendant => GetElementType(descendant.Descendant),
+        _ => null,
+    };
+
     // ".class", ":pseudo-class" and "#id" of the ancestor parts of the combinator selectors.
     private readonly Dictionary<string, CssAncestorReach> _ancestorKeys = new();
     private readonly HashSet<Type> _ancestorDependentTypes = new();
@@ -88,7 +100,7 @@ public sealed class CssStylesheet
         for (var i = 0; i < rules.Count; i++)
         {
             var rule = rules[i];
-            var elementType = CssParser.GetElementType(rule.Selector);
+            var elementType = GetElementType(rule.Selector);
 
             if (CollectAncestorKeys(rule.Selector, 0, _ancestorKeys))
             {

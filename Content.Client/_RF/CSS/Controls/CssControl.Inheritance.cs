@@ -61,7 +61,7 @@ public partial class CssControl
 
     /// <summary>
     /// The properties whose winning declaration is <c>inherit</c> (or <c>unset</c> on an inherited property).
-    /// They follow the parent like the properties marked <c>Inherited</c>. Set by <see cref="ICssManager"/>.
+    /// They follow the parent like the properties marked <c>Inherited</c>. Set by <see cref="ISuilManager"/>.
     /// </summary>
     internal HashSet<string>? CssInheritKeywordProperties { get; set; }
 
@@ -88,7 +88,7 @@ public partial class CssControl
     /// its children inherit from it changed, refreshes the children too.
     /// </summary>
     /// <remarks>
-    /// Must be called by <see cref="ICssManager"/> at the end of every style update of the control
+    /// Must be called by <see cref="ISuilManager"/> at the end of every style update of the control
     /// (a full one and the selector-specific ones), because a reset of a property by the cascade
     /// has to fall back to the inherited value, not to the initial one.
     /// </remarks>

@@ -22,12 +22,12 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture, TestOf(typeof(CssControl))]
 public sealed class CssInheritanceTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     private CssStylesheet Load(string text)
     {
         _css.ClearTestStylesheet();
-        _css.LoadString(text);
+        _css.LoadSuilString(text);
         return _css.BuildTestStylesheet();
     }
 

@@ -1,7 +1,7 @@
 namespace Content.Client._RF.UserInterface;
 
 /// <summary>
-/// Style identifiers (<c>#name</c> in <c>Resources/CSS/_RF</c>), grouped by the folder of the stylesheet that defines them.
+/// Style identifiers (<c>#name</c> in <c>Resources/UI/_RF</c>), grouped by the folder of the stylesheet that defines them.
 /// Set them with <c>CssControl.CssStyleIdentifier</c>.
 /// </summary>
 public static class CssId

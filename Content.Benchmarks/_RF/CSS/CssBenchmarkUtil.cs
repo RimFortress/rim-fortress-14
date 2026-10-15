@@ -14,7 +14,7 @@ namespace Content.Benchmarks._RF.CSS;
 internal static class CssBenchmarkUtil
 {
     /// <summary>
-    /// Text of every CSS file of the game (<c>Resources/CSS</c>), the same corpus the client loads on start.
+    /// Text of every SUIL file of the game (<c>Resources/UI</c>), the same corpus the client loads on start.
     /// </summary>
     public static string[] ReadCorpus()
     {
@@ -22,22 +22,23 @@ internal static class CssBenchmarkUtil
 
         while (dir != null)
         {
-            var css = Path.Combine(dir, "Resources", "CSS");
+            var css = Path.Combine(dir, "Resources", "UI");
 
             if (Directory.Exists(css))
             {
                 // test.css and unsupported.css are not loaded as the game styles (see the Sawmill "css" in the client).
-                return Directory.EnumerateFiles(css, "*.css", SearchOption.AllDirectories)
+                return Directory.EnumerateFiles(css, "*.suil", SearchOption.AllDirectories)
                     .Where(f => !Path.GetFileName(f).StartsWith('.'))
                     .OrderBy(f => f, StringComparer.Ordinal)
                     .Select(File.ReadAllText)
+                    .Where(text => !text.Contains("use \"")) // the lists of imports need a source of files
                     .ToArray();
             }
 
             dir = Path.GetDirectoryName(dir);
         }
 
-        throw new DirectoryNotFoundException("Resources/CSS not found above " + AppContext.BaseDirectory);
+        throw new DirectoryNotFoundException("Resources/UI not found above " + AppContext.BaseDirectory);
     }
 
     /// <summary>

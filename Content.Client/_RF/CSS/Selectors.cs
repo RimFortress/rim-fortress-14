@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Linq;
 using Robust.Client.UserInterface;
 using Robust.Shared.Utility;
@@ -124,7 +125,7 @@ public sealed class CssDescendantSelector(Selector ancestor, Selector descendant
 /// Selector for CSS :nth-child() pseudoclasses.
 /// </summary>
 /// <param name="anb">Result of parsing CSS An+B syntax.</param>
-public sealed class NthChildSelector(CssAnb anb) : Selector
+public sealed class NthChildSelector(SuilAnb anb) : Selector
 {
     public override bool Matches(Control control) => anb.Matches(control.GetPositionInParent() + 1);
 
@@ -135,7 +136,7 @@ public sealed class NthChildSelector(CssAnb anb) : Selector
 /// Selector for CSS :nth-of-type() pseudoclasses.
 /// </summary>
 /// <param name="anb">Result of parsing CSS An+B syntax.</param>
-public sealed class NthOfTypeSelector(CssAnb anb) : Selector
+public sealed class NthOfTypeSelector(SuilAnb anb) : Selector
 {
     public override bool Matches(Control control)
     {
@@ -163,7 +164,7 @@ public sealed class NthOfTypeSelector(CssAnb anb) : Selector
 /// <summary>
 /// A control, the n-th child of its parent matching <paramref name="anb"/>, counting from the last one.
 /// </summary>
-public sealed class NthLastChildSelector(CssAnb anb) : Selector
+public sealed class NthLastChildSelector(SuilAnb anb) : Selector
 {
     public override bool Matches(Control control)
         => control.Parent != null && anb.Matches(control.Parent.ChildCount - control.GetPositionInParent());
@@ -174,7 +175,7 @@ public sealed class NthLastChildSelector(CssAnb anb) : Selector
 /// <summary>
 /// A control, the n-th sibling of its type, counting from the last one.
 /// </summary>
-public sealed class NthLastOfTypeSelector(CssAnb anb) : Selector
+public sealed class NthLastOfTypeSelector(SuilAnb anb) : Selector
 {
     public override bool Matches(Control control)
     {

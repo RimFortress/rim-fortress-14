@@ -1,3 +1,4 @@
+using Content.Suil;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace Content.Benchmarks._RF.CSS;
 public class CssTreeBenchmark
 {
     private TestPair _pair = default!;
-    private ICssManager _css = default!;
+    private ISuilManager _css = default!;
     private IUserInterfaceManager _ui = default!;
 
     private CssBoxContainer _root = default!;
@@ -46,7 +47,7 @@ public class CssTreeBenchmark
         _deps = client.InstanceDependencyCollection;
         Bind();
 
-        _css = client.ResolveDependency<ICssManager>();
+        _css = client.ResolveDependency<ISuilManager>();
         _ui = client.ResolveDependency<IUserInterfaceManager>();
 
         if (_css.Stylesheet.Rules.Count == 0)

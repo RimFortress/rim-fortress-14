@@ -143,6 +143,10 @@ internal sealed class SuilTagRegistry
 
         foreach (var pair in _defaults)
         {
+            // a registered name wins over the default name of another class, the same way as TryResolve does
+            if (_byTag.ContainsKey(pair.Key))
+                continue;
+
             foreach (var type in pair.Value)
             {
                 if (_explicitTypes.Contains(type))

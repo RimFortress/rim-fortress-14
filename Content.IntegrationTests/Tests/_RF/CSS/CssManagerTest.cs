@@ -3,6 +3,7 @@ using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Streams;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.IntegrationTests.Tests._RF.Suil;
 using Content.Suil;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
@@ -11,16 +12,16 @@ using Robust.Shared.Maths;
 
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
-[TestFixture, TestOf(typeof(ICssManager))]
-public sealed class CssManagerTest : GameTest
+[TestFixture, TestOf(typeof(ISuilManager))]
+public sealed class SuilManagerTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
     [SidedDependency(Side.Client)] private readonly ILocalizationManager _loc = null!;
 
     private CssStylesheet Load(string text)
     {
         _css.ClearTestStylesheet();
-        _css.LoadString(text);
+        _css.LoadSuilString(text);
         return _css.BuildTestStylesheet();
     }
 
@@ -54,7 +55,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Unknown_Type_Selector_Throws()
     {
-        Assert.Throws<CssParserError>(() => _css.LoadString("not-a-real-control { min-height: 1px; }"));
+        Assert.Throws<CssParserError>(() => _css.LoadSuilString("not-a-real-control { min-height: 1px; }"));
     }
 
     [Test]
@@ -85,7 +86,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Applying_The_Stylesheet_Updates_A_Real_Engine_Control()
     {
-        Load("css-control { min-height: 25px; }");
+        Load("_ { min-height: 25px; }");
         var control = new CssControl();
         _css.UpdateTestStyle(control);
 
@@ -140,13 +141,12 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void TryParseValue_Generic_And_NonGeneric_Overloads_Agree()
     {
-        var tokens = CssTokenizer.Tokenize("center");
-        var stream = new CssValueStream(tokens.Cast<ICssComponentValue>().ToList());
+        var stream = SuilTestValues.Stream("center");
 
-        var genericOk = _css.TryParseValue<Control.HAlignment>(ref stream, out var viaGeneric);
+        var genericOk = _css.TryParse<Control.HAlignment>(ref stream, out var viaGeneric);
 
-        stream = new CssValueStream(tokens.Cast<ICssComponentValue>().ToList());
-        var nonGenericOk = _css.TryParseValue(ref stream, typeof(Control.HAlignment), out var viaNonGeneric);
+        stream = SuilTestValues.Stream("center");
+        var nonGenericOk = _css.TryParse(ref stream, typeof(Control.HAlignment), out var viaNonGeneric);
 
         Assert.That(genericOk, Is.EqualTo(nonGenericOk));
         Assert.That(viaGeneric, Is.EqualTo(viaNonGeneric));
@@ -157,7 +157,7 @@ public sealed class CssManagerTest : GameTest
     public void ChildSelectorParseTest()
     {
         var sheet = Load("""
-            css-control > test-locale-css-control {
+            _ > test-locale-css-control {
                 min-height: 10px;
             }
             """);
@@ -194,7 +194,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Shorthand_Expands_Into_Separate_StyleProperty_Entries()
     {
-        var sheet = Load("css-control { background: red no-repeat; }");
+        var sheet = Load("_ { background: red no-repeat; }");
         var properties = sheet.Rules.Single().Properties;
         var names = properties.Select(p => p.Name).ToArray();
 
@@ -207,7 +207,7 @@ public sealed class CssManagerTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Position_Shorthand_Expands_Into_X_And_Y()
     {
-        var sheet = Load("css-control { background-position: right bottom; }");
+        var sheet = Load("_ { background-position: right bottom; }");
         var properties = sheet.Rules.Single().Properties;
 
         Assert.That(
@@ -249,7 +249,7 @@ public sealed class CssManagerTest : GameTest
                 --test-var: red;
             }
 
-            css-control {
+            _ {
                 background-color: var(--test-var);
             }
             """);
@@ -269,7 +269,7 @@ public sealed class CssManagerTest : GameTest
                 --test-var: red;
             }
 
-            css-control {
+            _ {
                 --test-var: blue;
                 background-color: var(--test-var);
             }

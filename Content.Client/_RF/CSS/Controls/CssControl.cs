@@ -21,7 +21,7 @@ namespace Content.Client._RF.CSS;
 [SuilTag("_")]
 public partial class CssControl : AutoCssControl
 {
-    [Dependency] protected ICssManager Css = null!;
+    [Dependency] protected ISuilManager Css = null!;
 
     private bool _marginSpecified;
 

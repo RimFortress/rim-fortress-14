@@ -1,3 +1,4 @@
+using Content.Suil;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,15 +12,15 @@ using Robust.Shared.Analyzers;
 namespace Content.Benchmarks._RF.CSS;
 
 /// <summary>
-/// The stylesheet side of <see cref="ICssManager"/>: loading the files, compiling the rules and cascading them
+/// The stylesheet side of <see cref="ISuilManager"/>: loading the files, compiling the rules and cascading them
 /// onto a single control, with the real game stylesheets.
 /// </summary>
 [Virtual]
 [MemoryDiagnoser]
-public class CssManagerBenchmark
+public class SuilManagerBenchmark
 {
     private TestPair _pair = default!;
-    private ICssManager _css = default!;
+    private ISuilManager _css = default!;
     private string[] _files = default!;
 
     private Dictionary<Kind, CssControl> _controls = default!;
@@ -43,7 +44,7 @@ public class CssManagerBenchmark
         var client = _pair.Client;
         CssBenchmarkUtil.BindThread(client.InstanceDependencyCollection);
 
-        _css = client.ResolveDependency<ICssManager>();
+        _css = client.ResolveDependency<ISuilManager>();
         _files = CssBenchmarkUtil.ReadCorpus();
 
         if (_css.Stylesheet.Rules.Count == 0)
@@ -77,7 +78,7 @@ public class CssManagerBenchmark
     }
 
     /// <summary>
-    /// Reading and parsing every game CSS file (the part of <see cref="ICssManager.Reload"/> before the compile).
+    /// Reading and parsing every game CSS file (the part of <see cref="ISuilManager.Reload"/> before the compile).
     /// </summary>
     [Benchmark]
     public void LoadDirectory() => _css.LoadDirectory(_css.StylesPath);
@@ -98,7 +99,7 @@ public class CssManagerBenchmark
 
         foreach (var file in _files)
         {
-            _css.LoadString(file);
+            _css.LoadSuilString(file);
         }
 
         return _css.BuildTestStylesheet();

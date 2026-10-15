@@ -1,3 +1,4 @@
+using Content.Suil;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace Content.Benchmarks._RF.CSS;
 public class CssListBenchmark
 {
     private TestPair _pair = default!;
-    private ICssManager _css = default!;
+    private ISuilManager _css = default!;
     private IUserInterfaceManager _ui = default!;
     private IDependencyCollection _deps = default!;
 
@@ -39,7 +40,7 @@ public class CssListBenchmark
         _deps = client.InstanceDependencyCollection;
         Bind();
 
-        _css = client.ResolveDependency<ICssManager>();
+        _css = client.ResolveDependency<ISuilManager>();
         _ui = client.ResolveDependency<IUserInterfaceManager>();
 
         _box = new CssBoxContainer { FlexDirection = CssFlexDirection.Column };

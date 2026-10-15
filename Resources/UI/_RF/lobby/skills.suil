@@ -1,0 +1,39 @@
+/* ---------- CharacterSkillsTab and CharacterSkill ---------- */
+
+#skills-header {
+    gap: 10px;
+}
+
+#skills-header > _ {
+    margin: 3px 5px;
+}
+
+#skills-left-levels {
+    flex-grow: 1;
+    text-align: right;
+}
+
+#skills-divider {
+    margin: 2px 1px 5px 1px;
+}
+
+character-skill {
+    margin: 0 0 5px 0;
+}
+
+/* The icon is 24x24 inside of the 36x36 panel */
+box#skill-icon {
+    padding: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+#skill-divider {
+    margin: 2px 5px;
+}
+
+#skill-cost {
+    flex-grow: 1;
+    align-self: center;
+    text-align: right;
+}

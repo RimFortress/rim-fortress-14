@@ -9,7 +9,7 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture]
 public sealed class CssPropertyGeneratorTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     [Test]
     [RunOnSide(Side.Client)]
@@ -42,7 +42,7 @@ public sealed class CssPropertyGeneratorTest : GameTest
     public void GeneratorGetterTest()
     {
         _css.ClearTestStylesheet();
-        _css.LoadString("""
+        _css.LoadSuilString("""
             test-css-control {
                 test: 1337px;
                 min-height: 11px;

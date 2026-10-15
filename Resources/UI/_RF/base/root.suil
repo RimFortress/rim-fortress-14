@@ -1,0 +1,22 @@
+/*
+ * StyleBase.cs
+ *
+ * The default font of StyleBase (NotoSans 12) and its window close button are overridden by StyleFortress
+ * (SourceCodePro 12 and window/*.css), so only what survives in the final stylesheet is here.
+ */
+
+/* Default font (Element()) */
+:root {
+    font-family: var(--main-font);
+    font-size: 12px;
+}
+
+/* StyleClass.Italic */
+.italic {
+    font-style: italic;
+}
+
+/* BoxContainer (box): the default gap */
+box {
+    gap: 3px;
+}

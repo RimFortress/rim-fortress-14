@@ -1,6 +1,7 @@
 #nullable enable
 using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Parsers;
+using Content.IntegrationTests.Tests._RF.Suil;
 using Content.Suil;
 using Content.Client._RF.Graphics;
 using Content.IntegrationTests.Fixtures;
@@ -14,12 +15,12 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture]
 public sealed class CssBorderImageTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     private TestBorderImageControl Styled(string rules)
     {
         _css.ClearTestStylesheet();
-        _css.LoadString(rules);
+        _css.LoadSuilString(rules);
         _css.BuildTestStylesheet();
 
         var control = new TestBorderImageControl();
@@ -29,7 +30,7 @@ public sealed class CssBorderImageTest : GameTest
     }
 
     private static SuilValueStream Stream(string css)
-        => CssValueConverter.Stream(((CssDeclaration) CssParser.ParseListOfDeclarations($"x: {css};")[0]).Value);
+        => SuilTestValues.Stream(css);
 
     [TestCase("30", 30f, BorderImageEdgeKind.Number)]
     [TestCase("25%", 25f, BorderImageEdgeKind.Percent)]

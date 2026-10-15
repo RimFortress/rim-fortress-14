@@ -8,7 +8,7 @@ namespace Content.Client._RF.CSS.Parsers;
 /// Parses <c>text-decoration-line</c>: <c>none | [ underline || overline || line-through ]</c>.
 /// </summary>
 /// <remarks>
-/// Enums never reach the registered parsers (<see cref="CssManager"/> sends every enum type to its generic
+/// Enums never reach the registered parsers (<see cref="SuilManager"/> sends every enum type to its generic
 /// single-ident enum parser), so this parser is not a default one and has to be attached explicitly:
 /// <c>[SuilProperty(parser: typeof(CssTextDecorationLineParser))]</c>.
 /// <c>blink</c> is not supported and makes the value invalid.

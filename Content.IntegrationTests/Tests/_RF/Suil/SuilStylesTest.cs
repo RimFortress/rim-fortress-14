@@ -19,7 +19,7 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 [TestFixture]
 public sealed class SuilStylesTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     private void Load(string suil)
     {

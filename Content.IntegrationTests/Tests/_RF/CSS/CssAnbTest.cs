@@ -1,10 +1,11 @@
+using Content.Suil;
 using System.Linq;
 using Content.Client._RF.CSS;
 
 namespace Content.IntegrationTests.Tests._RF.CSS;
 
-[TestFixture, TestOf(typeof(CssAnb))]
-public sealed class CssAnbTest
+[TestFixture, TestOf(typeof(SuilAnb))]
+public sealed class SuilAnbTest
 {
     [TestCase(2, 1, 1, true)]  // odd: 1,3,5,7...
     [TestCase(2, 1, 2, false)]
@@ -25,7 +26,7 @@ public sealed class CssAnbTest
     [TestCase(-1, 3, 0, false)] // position 0 is invalid, but check formula doesn't false-positive
     public void Matches_Follows_The_An_Plus_B_Formula(int a, int b, int position, bool expected)
     {
-        var anb = new CssAnb(a, b);
+        var anb = new SuilAnb(a, b);
 
         Assert.That(anb.Matches(position), Is.EqualTo(expected));
     }
@@ -33,7 +34,7 @@ public sealed class CssAnbTest
     [Test]
     public void Zero_A_Never_Matches_Anything_Except_Exact_B()
     {
-        var anb = new CssAnb(0, 3);
+        var anb = new SuilAnb(0, 3);
 
         for (var p = 1; p <= 10; p++)
         {
@@ -45,7 +46,7 @@ public sealed class CssAnbTest
     public void Negative_A_Produces_A_Bounded_Descending_Sequence()
     {
         // -2n+5: 5,3,1 (n=0,1,2), then n=3 would give -1, rejected
-        var anb = new CssAnb(-2, 5);
+        var anb = new SuilAnb(-2, 5);
         var matches = Enumerable.Range(1, 10).Where(anb.Matches).ToArray();
 
         Assert.That(matches, Is.EqualTo([1, 3, 5]));

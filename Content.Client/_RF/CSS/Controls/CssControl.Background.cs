@@ -468,7 +468,7 @@ public partial class CssControl
     /// linked by an optional "/" separator rather than being independently
     /// recognizable. Every longhand this shorthand covers is written into
     /// <paramref name="values"/> with its CSS-spec initial value up front —
-    /// not left to CssManager's blind default(ClrType) fallback — because
+    /// not left to SuilManager's blind default(ClrType) fallback — because
     /// that fallback wouldn't reliably match this class's own declared
     /// defaults (e.g. BackgroundRepeat's default is Repeat, not necessarily
     /// the zero value of its enum).

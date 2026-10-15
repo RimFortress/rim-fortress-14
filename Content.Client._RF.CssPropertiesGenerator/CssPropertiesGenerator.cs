@@ -27,7 +27,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
     private const string CssStylingAttributeName = "Content.Client._RF.CSS.CssStylingAttribute";
     private const string CssPropertyAccessorName = "Content.Client._RF.CSS.CssPropertyAccessor";
     private const string CssShorthandInfoName = "Content.Client._RF.CSS.CssShorthandInfo";
-    private const string CssManagerName = "Content.Suil.ISuilValues";
+    private const string SuilManagerName = "Content.Suil.ISuilValues";
     private const string CssValueStreamName = "Content.Suil.SuilValueStream";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -295,7 +295,7 @@ public sealed class CssPropertyGenerator : IIncrementalGenerator
     private static string GenerateGreedyExpander(List<ShorthandMember> members)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"(ref {CssValueStreamName} stream, {CssManagerName} css, System.Collections.Generic.Dictionary<string, object?> values) =>");
+        sb.AppendLine($"(ref {CssValueStreamName} stream, {SuilManagerName} css, System.Collections.Generic.Dictionary<string, object?> values) =>");
         sb.AppendLine("            {");
         sb.AppendLine($"                var remaining = new System.Collections.Generic.HashSet<string> {{ {string.Join(", ", members.Select(m => $"\"{m.CssName}\""))} }};");
         sb.AppendLine("                while (!stream.AtEnd)");

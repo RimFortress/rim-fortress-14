@@ -4,6 +4,7 @@ using System.Numerics;
 using Content.Client._RF.CSS;
 using Content.Client._RF.CSS.Parsers;
 using Content.Client._RF.CSS.Streams;
+using Content.IntegrationTests.Tests._RF.Suil;
 using Content.Suil;
 using Content.Client._RF.Graphics;
 using Content.IntegrationTests.Fixtures;
@@ -20,26 +21,25 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture]
 public sealed class CssCalcTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
     [SidedDependency(Side.Client)] private readonly IUserInterfaceManager _ui = null!;
 
     // em = 16, rem = 16, ex = 8, ch = 9, lh = 20, viewport 800x600, cap = 11, ic = 16, rlh = 24
     private static readonly LengthContext Context =
         new(16f, 16f, 8f, 9f, 20f, new Vector2(800f, 600f), 11f, 16f, 24f);
 
-    private static List<ICssComponentValue> Tokens(string css)
-        => ((CssDeclaration) CssParser.ParseListOfDeclarations($"x: {css};")[0]).Value;
+    private static List<ISuilValue> Tokens(string css) => SuilTestValues.Values(css);
 
     private bool TryParse<T>(string css, out T? value)
     {
-        var stream = new CssValueStream(Tokens(css));
-        return _css.TryParseValue(ref stream, out value) && stream.AtEnd;
+        var stream = new SuilValueStream(Tokens(css));
+        return _css.TryParse(ref stream, out value) && stream.AtEnd;
     }
 
     private static bool TryParseNode(string css, out CalcNode? node)
     {
         node = null;
-        return CssValueConverter.Convert(Tokens(css)) is [SuilFunction function] && CssCalc.TryParse(function, out node);
+        return Tokens(css) is [SuilFunction function] && CssCalc.TryParse(function, out node);
     }
 
     private LengthUnit Length(string css)
@@ -156,7 +156,6 @@ public sealed class CssCalcTest : GameTest
     [TestCase("calc(foo)")]
     [TestCase("min()")]
     [TestCase("min(1px, 2)")]
-    [TestCase("max(1px,)")]
     [TestCase("clamp(1px, 2px)")]
     [TestCase("clamp(1px, 2px, 3px, 4px)")]
     [TestCase("foo(1px)")]
@@ -170,20 +169,21 @@ public sealed class CssCalcTest : GameTest
     [RunOnSide(Side.Client)]
     public void Unclosed_Math_Function_Is_A_Parse_Error()
     {
-        Assert.Throws<CssParserError>(() => Tokens("calc((1px)"));
+        Assert.Throws<SuilParserError>(() => Tokens("max(1px,)"));
+        Assert.Throws<SuilParserError>(() => Tokens("calc((1px)"));
     }
 
     [Test]
     [RunOnSide(Side.Client)]
     public void A_Math_Function_Is_Consumed_As_One_Value()
     {
-        var stream = new CssValueStream(Tokens("calc(1px + 1px) 3px"));
+        var stream = new SuilValueStream(Tokens("calc(1px + 1px) 3px"));
 
         Assert.Multiple(() =>
         {
-            Assert.That(_css.TryParseValue<LengthUnit>(ref stream, out var first), Is.True);
+            Assert.That(_css.TryParse<LengthUnit>(ref stream, out var first), Is.True);
             Assert.That(first, Is.EqualTo(LengthUnit.Px(2f)));
-            Assert.That(_css.TryParseValue<LengthUnit>(ref stream, out var second), Is.True);
+            Assert.That(_css.TryParse<LengthUnit>(ref stream, out var second), Is.True);
             Assert.That(second, Is.EqualTo(LengthUnit.Px(3f)));
             Assert.That(stream.AtEnd, Is.True);
         });
@@ -193,9 +193,9 @@ public sealed class CssCalcTest : GameTest
     [RunOnSide(Side.Client)]
     public void A_Failed_Math_Function_Is_Not_Consumed()
     {
-        var stream = new CssValueStream(Tokens("calc(1px + 2)"));
+        var stream = new SuilValueStream(Tokens("calc(1px + 2)"));
 
-        Assert.That(_css.TryParseValue<LengthUnit>(ref stream, out _), Is.False);
+        Assert.That(_css.TryParse<LengthUnit>(ref stream, out _), Is.False);
         Assert.That(stream.AtEnd, Is.False);
     }
 
@@ -402,7 +402,7 @@ public sealed class CssCalcTest : GameTest
 
     private static bool TryParseSize(string css, out RfStyleBoxTexture.StyleBoxSize size)
     {
-        var stream = CssValueConverter.Stream(Tokens(css));
+        var stream = new SuilValueStream(Tokens(css));
         return new StyleBoxSizeParser().TryParse(ref stream, out size) && stream.AtEnd;
     }
 
@@ -436,12 +436,12 @@ public sealed class CssCalcTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Position_Takes_Math_Functions()
     {
-        var stream = CssValueConverter.Stream(Tokens("calc(50% + 10px)"));
+        var stream = new SuilValueStream(Tokens("calc(50% + 10px)"));
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out _, out var abs, out var calc, true), Is.True);
         Assert.That(abs, Is.False);
         Assert.That(calc!.Eval(default, 100f), Is.EqualTo(60f));
 
-        stream = CssValueConverter.Stream(Tokens("calc(1in + 4px)"));
+        stream = new SuilValueStream(Tokens("calc(1in + 4px)"));
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out var value, out abs, out calc, false), Is.True);
         Assert.Multiple(() =>
         {
@@ -455,13 +455,13 @@ public sealed class CssCalcTest : GameTest
     [RunOnSide(Side.Client)]
     public void Background_Position_Takes_Any_Absolute_Unit()
     {
-        var stream = CssValueConverter.Stream(Tokens("1in"));
+        var stream = new SuilValueStream(Tokens("1in"));
 
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out var value, out var abs, out _, true), Is.True);
         Assert.That(abs, Is.True);
         Assert.That(value, Is.EqualTo(96f));
 
-        stream = CssValueConverter.Stream(Tokens("1em"));
+        stream = new SuilValueStream(Tokens("1em"));
         Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out _, out _, out _, true), Is.False);
     }
 
@@ -472,7 +472,7 @@ public sealed class CssCalcTest : GameTest
     private TestUnitsControl Styled(string rules, params string[] classes)
     {
         _css.ClearTestStylesheet();
-        _css.LoadString(rules);
+        _css.LoadSuilString(rules);
         _css.BuildTestStylesheet();
 
         var control = new TestUnitsControl();

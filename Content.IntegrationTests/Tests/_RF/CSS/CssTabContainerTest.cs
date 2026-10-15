@@ -1,3 +1,4 @@
+using Content.Suil;
 #nullable enable
 using Content.Client._RF.CSS;
 using Content.Client._RF.UserInterface;
@@ -14,7 +15,7 @@ namespace Content.IntegrationTests.Tests._RF.CSS;
 [TestFixture]
 public sealed class CssTabContainerTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ICssManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
 
     private static CssTabContainer Make(out CssTab first, out CssTab second, out CssTab third)
     {
@@ -193,7 +194,7 @@ public sealed class CssTabContainerTest : GameTest
         var tabs = Make(out var first, out var second, out _);
 
         _css.ClearTestStylesheet();
-        _css.LoadString("css-tab-container > .tab-bar > .tab { flex-grow: 7; } css-tab-container > .tab-bar > .tab:checked { flex-grow: 9; }");
+        _css.LoadSuilString("css-tab-container > .tab-bar > .tab { flex-grow: 7; } css-tab-container > .tab-bar > .tab:checked { flex-grow: 9; }");
         _css.BuildTestStylesheet();
         _css.UpdateTestStyle(first.Button);
         _css.UpdateTestStyle(second.Button);
