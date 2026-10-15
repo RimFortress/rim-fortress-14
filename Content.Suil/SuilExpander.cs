@@ -401,6 +401,13 @@ public static class SuilExpander
             if (element.Tag != null && Scope.Lookup(scope, element.Tag) is TemplateBinding template)
                 return Instantiate(element, template, scope, slotContent);
 
+            if (element.Arguments.Count > 0)
+            {
+                throw new SuilExpansionError("expanding element",
+                    $"'{element.Tag ?? "_"}' is not a template, so it takes no arguments by position: {element.Arguments.Count} given",
+                    element.Arguments[0].Position);
+            }
+
             var properties = element.Properties
                 .Select(p => new SuilProperty(
                     p.Name,
@@ -479,6 +486,19 @@ public static class SuilExpander
             var parameters = template.Template.Parameters;
             var arguments = new Dictionary<string, List<ISuilValue>>();
             var forwarded = new List<SuilProperty>();
+
+            // by position: the first value is the first parameter, and so on
+            if (usage.Arguments.Count > parameters.Count)
+            {
+                throw new SuilExpansionError(context,
+                    $"the template '{tag}' has {parameters.Count} parameter(s), and {usage.Arguments.Count} arguments by position are given",
+                    usage.Arguments[parameters.Count].Position);
+            }
+
+            for (var i = 0; i < usage.Arguments.Count; i++)
+            {
+                arguments[parameters[i]] = ExpandValues(usage.Arguments[i].Values, callerScope, usage.Arguments[i].Position);
+            }
 
             foreach (var property in usage.Properties)
             {
@@ -620,6 +640,7 @@ public static class SuilExpander
             {
                 Classes = new List<SuilName>(element.Classes),
                 Events = new List<SuilEventHandler>(element.Events),
+                Arguments = new List<SuilArgument>(element.Arguments),
                 Properties = element.Properties
                     .Select(p => p with { Value = p.Value == null ? null : new List<ISuilValue>(p.Value) })
                     .ToList(),

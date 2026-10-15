@@ -205,7 +205,18 @@ public sealed record SuilElement(
     /// The handlers of the events of the element, <c>on-pressed =&gt; @OnSubmit</c> in the parentheses.
     /// </summary>
     public List<SuilEventHandler> Events { get; init; } = new();
+
+    /// <summary>
+    /// The positional arguments of a usage of a template, <c>btn ("Go", 12)</c>: the values before the named ones, in
+    /// the order of the parameters of the template. Only a template takes them.
+    /// </summary>
+    public List<SuilArgument> Arguments { get; init; } = new();
 }
+
+/// <summary>
+/// A positional argument: the values of one parameter.
+/// </summary>
+public sealed record SuilArgument(List<ISuilValue> Values, SuilPosition Position);
 
 // ---- Event handlers ----
 

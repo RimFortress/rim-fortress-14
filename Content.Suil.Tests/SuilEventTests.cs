@@ -402,3 +402,211 @@ public sealed class SuilTemplateDefaultsTests
         Assert.That(root.Children, Has.Count.EqualTo(1));
     }
 }
+
+[TestFixture]
+public sealed class SuilTemplateArgumentsTests
+{
+    private static SuilElement Root(string input) => SuilExpander.Expand(input).Root!;
+
+    private static SuilElement Parsed(string input) => SuilParser.ParseFile(input).Root!;
+
+    private static SuilProperty Prop(SuilElement element, string name) => element.Properties.Single(p => p.Name == name);
+
+    private static List<ISuilValue> Num(double value) => new() { new SuilNumber(value, true) };
+
+    // ---- Parser ----
+
+    [Test]
+    public void An_Item_That_Is_Not_A_Name_Is_An_Argument()
+    {
+        var root = Parsed("btn (\"Go\", 12, 4px 8px, #B07D2B, <size>, $key, rgb(1, 2, 3), 50%)");
+
+        Assert.That(root.Properties, Is.Empty);
+        Assert.That(root.Arguments, Has.Count.EqualTo(8));
+        Assert.That(root.Arguments[2].Values, Has.Count.EqualTo(2), "an argument is a list of values like the value of a property");
+    }
+
+    [Test]
+    public void The_Arguments_Go_First_And_The_Named_Ones_After()
+    {
+        var root = Parsed("btn (\"Go\", 12, tint: red, disabled)");
+
+        Assert.That(root.Arguments, Has.Count.EqualTo(2));
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "tint", "disabled" }));
+    }
+
+    [Test]
+    public void Arguments_May_Be_Glued_To_The_Tag()
+    {
+        var root = Parsed("btn(\"Go\", size: 4)");
+
+        Assert.That(root.Arguments, Has.Count.EqualTo(1));
+        Assert.That(root.Properties.Single().Name, Is.EqualTo("size"));
+    }
+
+    [TestCase("btn (tint: red, \"Go\")")]
+    [TestCase("btn (disabled, 12)")]
+    [TestCase("btn (on-pressed => @A, 12)")]
+    public void An_Argument_After_A_Named_One_Is_An_Error(string input)
+    {
+        var error = Assert.Throws<SuilParserError>(() => Parsed(input))!;
+
+        Assert.That(error.Message, Does.Contain("positional"));
+    }
+
+    [TestCase("btn (12 12:)")]
+    [TestCase("btn (, 1)")]
+    [TestCase("btn (1,)")]
+    public void Broken_Arguments_Are_Errors(string input)
+    {
+        Assert.Throws<SuilParserError>(() => Parsed(input));
+    }
+
+    [Test]
+    public void A_Statement_Has_No_Arguments()
+    {
+        Assert.Throws<SuilParserError>(() => Parsed("button (on-pressed => { #x (12) })"));
+    }
+
+    // ---- Expander ----
+
+    [Test]
+    public void The_Arguments_Go_To_The_Parameters_In_Order()
+    {
+        var root = Root("""
+            let btn = (label, size, tint) { button (text: <label>, min-width: <size>, tint: <tint>) }
+            btn ("Go", 12, tint: red)
+            """);
+
+        Assert.That(Prop(root, "text").Value, Is.EqualTo(new List<ISuilValue> { new SuilString([StringPart.Literal("Go")]) }));
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(Num(12)));
+        Assert.That(((SuilIdent) Prop(root, "tint").Value!.Single()).Value, Is.EqualTo("red"));
+    }
+
+    [Test]
+    public void Positional_And_Named_Arguments_Mix_And_Defaults_Fill_The_Rest()
+    {
+        var root = Root("""
+            let btn = (label, size: 12, gap: 3) { button (text: <label>, min-width: <size>, min-height: <gap>) }
+            btn ("Go", gap: 9)
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(Num(12)), "the default");
+        Assert.That(Prop(root, "min-height").Value, Is.EqualTo(Num(9)), "by name");
+    }
+
+    [Test]
+    public void An_Argument_By_Position_Replaces_A_Default()
+    {
+        var root = Root("""
+            let btn = (size: 12) { button (min-width: <size>) }
+            btn (40)
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(Num(40)));
+    }
+
+    [Test]
+    public void An_Argument_May_Be_A_Variable_Of_The_Caller()
+    {
+        var root = Root("""
+            let wide = 77;
+            let btn = (size) { button (min-width: <size>) }
+            btn (<wide>)
+            """);
+
+        Assert.That(Prop(root, "min-width").Value, Is.EqualTo(Num(77)));
+    }
+
+    [Test]
+    public void Arguments_May_Be_Lists_Of_Values()
+    {
+        var root = Root("""
+            let btn = (margin) { button (margin: <margin>) }
+            btn (4px 8px)
+            """);
+
+        Assert.That(Prop(root, "margin").Value, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void The_Properties_That_Are_Not_Parameters_Still_Go_To_The_Root()
+    {
+        var root = Root("""
+            let btn = (size) { button (min-width: <size>) }
+            btn (5, disabled, min-height: 2)
+            """);
+
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "min-width", "disabled", "min-height" }));
+    }
+
+    [Test]
+    public void Too_Many_Arguments_Are_An_Error_That_Counts_Them()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Root("""
+            let btn = (a, b) { button }
+            btn (1, 2, 3)
+            """))!;
+
+        Assert.That(error.Message, Does.Contain("2 parameter").And.Contain("3 arguments"));
+    }
+
+    [Test]
+    public void A_Parameter_Given_By_Position_And_By_Name_Is_An_Error()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Root("""
+            let btn = (a, b) { button }
+            btn (1, a: 2, b: 3)
+            """))!;
+
+        Assert.That(error.Message, Does.Contain("'a'").And.Contain("twice"));
+    }
+
+    [Test]
+    public void A_Required_Parameter_Left_Out_Is_Still_An_Error()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Root("""
+            let btn = (a, b, c: 1) { button }
+            btn (1)
+            """))!;
+
+        Assert.That(error.Message, Does.Contain("b"));
+    }
+
+    [Test]
+    public void Only_A_Template_Takes_Arguments_By_Position()
+    {
+        var error = Assert.Throws<SuilExpansionError>(() => Root("button (12)"))!;
+
+        Assert.That(error.Message, Does.Contain("not a template"));
+    }
+
+    [Test]
+    public void A_Template_Without_Parameters_Takes_None()
+    {
+        Assert.Throws<SuilExpansionError>(() => Root("let t = { button }\nt (1)"));
+    }
+
+    [Test]
+    public void Arguments_Work_In_Nested_Usages_And_With_The_Content_Slot()
+    {
+        var root = Root("""
+            let panel = (gap, title: "x") { box (gap: <gap>) { label (text: <title>) %content% } }
+            panel (6) { button }
+            """);
+
+        Assert.That(Prop(root, "gap").Value, Is.EqualTo(Num(6)));
+        Assert.That(root.Children, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void The_Arguments_Of_A_Usage_Do_Not_Leak_Into_The_Expanded_Element()
+    {
+        var root = Root("""
+            let btn = (size) { button (min-width: <size>) }
+            btn (3)
+            """);
+
+        Assert.That(root.Arguments, Is.Empty);
+    }
+}

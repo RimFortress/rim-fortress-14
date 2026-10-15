@@ -245,6 +245,7 @@ public static partial class SuilParser
         string? tag;
         var properties = new List<SuilProperty>();
         var events = new List<SuilEventHandler>();
+        var arguments = new List<SuilArgument>();
         var propertiesConsumed = false;
 
         switch (token)
@@ -257,7 +258,7 @@ public static partial class SuilParser
                 break;
             case FunctionToken function: // row(size: 1): the properties are glued to the tag
                 tag = function.Value;
-                properties = ConsumeProperties(ref stream, events);
+                properties = ConsumeProperties(ref stream, events, arguments);
                 propertiesConsumed = true;
                 break;
             default:
@@ -323,7 +324,7 @@ public static partial class SuilParser
         if (!propertiesConsumed && stream.PeekNext() is LeftParenthesisToken)
         {
             stream.ConsumeNext();
-            properties = ConsumeProperties(ref stream, events);
+            properties = ConsumeProperties(ref stream, events, arguments);
         }
 
         var children = new List<ISuilElementNode>();
@@ -336,18 +337,26 @@ public static partial class SuilParser
             children = ConsumeElementList(ref stream);
         }
 
-        return new SuilElement(access, tag, id, classes, properties, children, position) { Events = events };
+        return new SuilElement(access, tag, id, classes, properties, children, position) { Events = events, Arguments = arguments };
     }
 
     /// <summary>
     /// Consumes properties up to the closing parenthesis, the opening one is already consumed.
-    /// props = "(" , [ prop , { "," , prop } ] , ")"
+    /// props = "(" , [ item , { "," , item } ] , ")"
+    /// item  = arg | prop
+    /// arg   = value-list, that doesn't start with an ident
     /// prop  = ident , [ ":" , [ "?" ] , value-list ]
     ///       | ident , "=>" , handler
+    /// An item that is not a property is an argument of a template, like in a call in C#: <c>btn ("Go", 12, tint: red)</c>.
+    /// The arguments go first, the named ones after them. An ident alone is a flag (<c>disabled</c>), so an argument can't
+    /// be an ident: it is given by name.
     /// A property is hard by default: the styles can't change it. A "?" before the value makes it soft, the styles
     /// override it like any other property.
     /// </summary>
-    private static List<SuilProperty> ConsumeProperties(ref SuilTokenStream stream, List<SuilEventHandler>? events)
+    private static List<SuilProperty> ConsumeProperties(
+        ref SuilTokenStream stream,
+        List<SuilEventHandler>? events,
+        List<SuilArgument>? arguments)
     {
         var properties = new List<SuilProperty>();
 
@@ -364,12 +373,40 @@ public static partial class SuilParser
             stream.SkipWhitespace();
 
             var position = stream.PeekPosition();
-            if (stream.ConsumeNext() is not IdentToken name)
+
+            // a value that is not a name: a positional argument of a template
+            if (stream.PeekNext() is not IdentToken)
             {
+                if (arguments == null)
+                {
+                    throw ErrorAtNext(ref stream,
+                        "consuming properties",
+                        $"expected a property name, not {Describe(stream.PeekNext())}");
+                }
+
+                if (properties.Count > 0 || events?.Count > 0)
+                {
+                    throw ErrorAtNext(ref stream,
+                        "consuming properties",
+                        "a positional argument can't follow a named one: the arguments by position go first");
+                }
+
+                arguments.Add(new SuilArgument(ConsumeValueList(ref stream, "consuming arguments"), position));
+                stream.SkipWhitespace();
+
+                var after = stream.ConsumeNext();
+                if (after is CommaToken)
+                    continue;
+
+                if (after is RightParenthesisToken)
+                    return properties;
+
                 throw ErrorAtCurrent(ref stream,
                     "consuming properties",
-                    $"expected a property name, not {Describe(stream.Current)}");
+                    $"expected ',' or ')' after an argument, not {Describe(after)}");
             }
+
+            var name = (IdentToken) stream.ConsumeNext();
 
             stream.SkipWhitespace();
 
