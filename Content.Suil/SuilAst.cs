@@ -1,12 +1,12 @@
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
-/// The position of the first token of a node (both 1-based).
+/// The position of the first token of a node (both 1-based) and the file it is in, if the file has a name.
 /// </summary>
-public readonly record struct SuilPosition(int Line, int Column);
+public readonly record struct SuilPosition(int Line, int Column, string? File = null);
 
 /// <summary>
 /// A basic interface for any SUIL parsing result.

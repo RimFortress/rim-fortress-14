@@ -1,0 +1,20 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <!--
+  SUIL (Styled UI Layout): the source generator of [SuilView] and the files it reads.
+  The .suil files live in Resources/UI/, and the paths in `use` and in [SuilView] are relative to that folder:
+  Resources/UI/Lobby/Screen.suil is written as /Lobby/Screen (the extension is optional).
+  -->
+  <PropertyGroup>
+    <SuilRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'Resources', 'UI'))</SuilRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The generator reads them as additional files; an edit of one of them regenerates the views. -->
+    <AdditionalFiles Include="$(SuilRoot)**/*.suil" />
+    <CompilerVisibleProperty Include="SuilRoot" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)\..\Content.Suil.Generator\Content.Suil.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+  </ItemGroup>
+</Project>

@@ -2,10 +2,9 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using JetBrains.Annotations;
-using Robust.Shared.Utility;
+using System.Diagnostics.Contracts;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
 /// The pass that removes <c>let</c> from a parsed file: substitutes the variables, inlines the templates
@@ -32,21 +31,21 @@ public static class SuilExpander
     /// don't get them, so a global file can't depend on another global one.
     /// </param>
     /// <exception cref="SuilExpansionError">If the file refers to something that doesn't exist or is misused.</exception>
-    [PublicAPI, Pure]
+    [Pure]
     public static SuilFile Expand(
         SuilFile file,
         ISuilFileSource? source = null,
-        IReadOnlyList<ResPath>? globalUsings = null)
-        => new Expansion(source, globalUsings ?? []).Run(file);
+        IReadOnlyList<string>? globalUsings = null)
+        => new Expansion(source, globalUsings ?? new List<string>()).Run(file);
 
     /// <summary>
     /// Parses and expands SUIL text.
     /// </summary>
-    [PublicAPI, Pure]
+    [Pure]
     public static SuilFile Expand(
         string text,
         ISuilFileSource? source = null,
-        IReadOnlyList<ResPath>? globalUsings = null)
+        IReadOnlyList<string>? globalUsings = null)
         => Expand(SuilParser.ParseFile(text), source, globalUsings);
 
     /// <summary>
@@ -57,12 +56,12 @@ public static class SuilExpander
     /// <item><c>/dir/*</c> is every file directly in <c>/dir</c>, see <see cref="IsFolder"/>.</item>
     /// </list>
     /// </summary>
-    internal static ResPath ParseUsePath(string raw, string context, SuilPosition position)
+    internal static string ParseUsePath(string raw, string context, SuilPosition position)
     {
-        if (!ResPath.IsValidPath(raw))
+        if (raw.IndexOf('\\') >= 0)
             throw new SuilExpansionError(context, $"'{raw}': the path can't have backslashes, use '/'", position);
 
-        if (!raw.StartsWith('/'))
+        if (!raw.StartsWith("/", StringComparison.Ordinal))
             throw new SuilExpansionError(context, $"'{raw}': only absolute paths are allowed, start it with '/'", position);
 
         if (raw.Split('/').Contains(".."))
@@ -70,44 +69,32 @@ public static class SuilExpander
 
         if (raw == "/*" || raw.EndsWith("/*", StringComparison.Ordinal))
         {
-            var directory = raw[..^2];
+            var directory = raw.Substring(0, raw.Length - 2);
 
-            if (directory.Contains('*'))
+            if (directory.IndexOf('*') >= 0)
             {
                 throw new SuilExpansionError(context,
                     $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'", position);
             }
 
-            var cleaned = new ResPath(directory.Length == 0 ? "/" : directory).Clean().CanonPath;
-            return new ResPath(cleaned == "/" ? "/*" : cleaned + "/*");
+            var cleaned = SuilPaths.Clean(directory.Length == 0 ? "/" : directory);
+            return cleaned == "/" ? "/*" : cleaned + "/*";
         }
 
-        if (raw.Contains('*'))
+        if (raw.IndexOf('*') >= 0)
         {
             throw new SuilExpansionError(context,
                 $"'{raw}': '*' is only allowed as the last segment, as in '/dir/*'", position);
         }
 
-        if (raw.EndsWith('/'))
+        if (raw.EndsWith("/", StringComparison.Ordinal))
         {
             throw new SuilExpansionError(context,
                 $"'{raw}': this is a directory, write '{raw}*' to import all of its files", position);
         }
 
-        var file = raw.EndsWith(".suil", StringComparison.Ordinal) ? raw : raw + ".suil";
-        return new ResPath(file).Clean();
-    }
-
-    /// <summary>
-    /// Whether a path from <see cref="ParseUsePath"/> is a directory (<c>/dir/*</c>) and not a file.
-    /// </summary>
-    internal static bool IsFolder(ResPath path) => path.CanonPath.EndsWith("/*", StringComparison.Ordinal);
-
-    private static string ParentOf(ResPath path)
-    {
-        var canon = path.CanonPath;
-        var index = canon.LastIndexOf('/');
-        return index <= 0 ? "/" : canon[..index];
+        var file = raw.EndsWith(SuilPaths.Extension, StringComparison.Ordinal) ? raw : raw + SuilPaths.Extension;
+        return SuilPaths.Clean(file);
     }
 
     private abstract class Binding;
@@ -160,13 +147,13 @@ public static class SuilExpander
     private static bool ContainsSlot(List<ISuilElementNode> nodes)
         => nodes.Any(n => n is SuilContentSlot || n is SuilElement element && ContainsSlot(element.Children));
 
-    private sealed class Expansion(ISuilFileSource? source, IReadOnlyList<ResPath> globalUsings)
+    private sealed class Expansion(ISuilFileSource? source, IReadOnlyList<string> globalUsings)
     {
         private const string SlotName = "content";
 
         private readonly List<ISuilTopLevelItem> _rules = new();
-        private readonly Dictionary<ResPath, Module> _modules = new();
-        private readonly HashSet<ResPath> _loading = new();
+        private readonly Dictionary<string, Module> _modules = new();
+        private readonly HashSet<string> _loading = new();
         private int _globalDepth;
 
         public SuilFile Run(SuilFile file)
@@ -237,9 +224,9 @@ public static class SuilExpander
         /// <summary>
         /// Brings the exports of a file, or of every file of a directory, into the scope.
         /// </summary>
-        private void ImportInto(ref Scope? scope, ResPath path, string context, SuilPosition position)
+        private void ImportInto(ref Scope? scope, string path, string context, SuilPosition position)
         {
-            if (!IsFolder(path))
+            if (!SuilPaths.IsFolder(path))
             {
                 DeclareExports(ref scope, Import(path, context, position), position);
                 return;
@@ -248,12 +235,12 @@ public static class SuilExpander
             if (source == null)
                 throw new SuilExpansionError(context, "no file source was provided", position);
 
-            var directory = new ResPath(path.CanonPath == "/*" ? "/" : path.CanonPath[..^2]);
+            var directory = SuilPaths.FolderDirectory(path);
             var files = source.List(directory)
-                .Select(f => f.Clean())
-                .Where(f => f.CanonPath.EndsWith(".suil", StringComparison.Ordinal) && ParentOf(f) == directory.CanonPath)
+                .Select(SuilPaths.Clean)
+                .Where(f => f.EndsWith(SuilPaths.Extension, StringComparison.Ordinal) && SuilPaths.ParentOf(f) == directory)
                 .Distinct()
-                .OrderBy(f => f.CanonPath, StringComparer.Ordinal)
+                .OrderBy(f => f, StringComparer.Ordinal)
                 .ToList();
 
             if (files.Count == 0)
@@ -265,7 +252,7 @@ public static class SuilExpander
             }
         }
 
-        private Module Import(ResPath path, string context, SuilPosition position)
+        private Module Import(string path, string context, SuilPosition position)
         {
             if (source == null)
                 throw new SuilExpansionError(context, "no file source was provided", position);
@@ -293,9 +280,9 @@ public static class SuilExpander
 
         private static void DeclareExports(ref Scope? scope, Module module, SuilPosition position = default)
         {
-            foreach (var (name, binding) in module.Exports)
+            foreach (var export in module.Exports)
             {
-                Declare(ref scope, name, binding, position);
+                Declare(ref scope, export.Key, export.Value, position);
             }
         }
 
@@ -422,14 +409,25 @@ public static class SuilExpander
             var tag = usage.Tag!;
             var parameters = template.Template.Parameters;
             var arguments = new Dictionary<string, List<ISuilValue>>();
+            var forwarded = new List<SuilProperty>();
 
             foreach (var property in usage.Properties)
             {
+                // What is not a parameter belongs to the root element of the template, like the id and the classes.
                 if (!parameters.Contains(property.Name))
                 {
-                    throw new SuilExpansionError(context,
-                        $"the template '{tag}' has no parameter '{property.Name}'",
-                        property.Position);
+                    if (forwarded.Any(f => f.Name == property.Name))
+                    {
+                        throw new SuilExpansionError(context,
+                            $"the property '{property.Name}' of '{tag}' is given twice",
+                            property.Position);
+                    }
+
+                    forwarded.Add(property with
+                    {
+                        Value = property.Value == null ? null : ExpandValues(property.Value, callerScope, property.Position),
+                    });
+                    continue;
                 }
 
                 if (property.Value == null)
@@ -446,12 +444,14 @@ public static class SuilExpander
                         property.Position);
                 }
 
-                if (!arguments.TryAdd(property.Name, ExpandValues(property.Value, callerScope, property.Position)))
+                if (arguments.ContainsKey(property.Name))
                 {
                     throw new SuilExpansionError(context,
                         $"the argument '{property.Name}' of '{tag}' is given twice",
                         property.Position);
                 }
+
+                arguments[property.Name] = ExpandValues(property.Value, callerScope, property.Position);
             }
 
             var missing = parameters.Where(p => !arguments.ContainsKey(p)).ToList();
@@ -481,25 +481,27 @@ public static class SuilExpander
             var id = usage.Id == null ? null : ExpandName(usage.Id, "id", callerScope, usage.Position);
             var classes = usage.Classes.Select(c => ExpandName(c, "class", callerScope, usage.Position)).ToList();
 
-            return ApplyUsageHead(usage, id, classes, ExpandNodes(template.Template.Body, scope, content));
+            return ApplyUsageHead(usage, id, classes, forwarded, ExpandNodes(template.Template.Body, scope, content));
         }
 
         /// <summary>
-        /// The access sigil, the id and the classes of a usage go to the only root element of the template.
+        /// The access sigil, the id, the classes and the properties that are not parameters go to the only root
+        /// element of the template. A forwarded property replaces the property of the root with the same name.
         /// </summary>
         private static List<ISuilElementNode> ApplyUsageHead(
             SuilElement usage,
             SuilName? id,
             List<SuilName> classes,
+            List<SuilProperty> forwarded,
             List<ISuilElementNode> expanded)
         {
-            if (usage.Access == SuilAccess.Private && id == null && classes.Count == 0)
+            if (usage.Access == SuilAccess.Private && id == null && classes.Count == 0 && forwarded.Count == 0)
                 return expanded;
 
             if (expanded.Count != 1 || expanded[0] is not SuilElement root)
             {
                 throw new SuilExpansionError("expanding template",
-                    $"'{usage.Tag}' is used with an access sigil, an id or classes, so the template must have exactly one root element",
+                    $"'{usage.Tag}' is used with an access sigil, an id, classes or properties that are not its parameters, so the template must have exactly one root element",
                     usage.Position);
             }
 
@@ -510,6 +512,11 @@ public static class SuilExpander
                     usage.Position);
             }
 
+            var properties = root.Properties
+                .Where(p => forwarded.All(f => f.Name != p.Name))
+                .Concat(forwarded)
+                .ToList();
+
             return
             [
                 root with
@@ -517,6 +524,7 @@ public static class SuilExpander
                     Access = usage.Access != SuilAccess.Private ? usage.Access : root.Access,
                     Id = id ?? root.Id,
                     Classes = [.. root.Classes, .. classes],
+                    Properties = properties,
                 },
             ];
         }
@@ -558,12 +566,16 @@ public static class SuilExpander
             return SuilName.Literal(text);
         }
 
+        private static bool IsAsciiLetter(char c) => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z';
+
+        private static bool IsAsciiLetterOrDigit(char c) => IsAsciiLetter(c) || c is >= '0' and <= '9';
+
         private static bool IsValidName(string text)
         {
-            if (text.Length == 0 || !(char.IsAsciiLetter(text[0]) || text[0] > 0x7F))
+            if (text.Length == 0 || !(IsAsciiLetter(text[0]) || text[0] > 0x7F))
                 return false;
 
-            return text.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' || c > 0x7F);
+            return text.All(c => IsAsciiLetterOrDigit(c) || c is '-' or '_' || c > 0x7F);
         }
 
         /// <summary>

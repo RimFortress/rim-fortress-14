@@ -1,31 +1,30 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Content.Client._RF.Suil;
-using Robust.Shared.Utility;
+using Content.Suil;
 // ReSharper disable ReturnValueOfPureMethodIsNotUsed
 
-namespace Content.IntegrationTests.Tests._RF.Suil;
+namespace Content.Suil.Tests;
 
 [TestFixture, TestOf(typeof(SuilExpander))]
 public sealed class SuilExpanderTests
 {
     private sealed class DictionarySource(Dictionary<string, string> files, List<string>? log = null) : ISuilFileSource
     {
-        public SuilFile Load(ResPath path)
+        public SuilFile Load(string path)
         {
-            log?.Add(path.ToString());
+            log?.Add(path);
 
-            return SuilParser.ParseFile(files.TryGetValue(path.ToString(), out var text)
+            return SuilParser.ParseFile(files.TryGetValue(path, out var text)
                 ? text
-                : throw new FileNotFoundException(path.ToString()));
+                : throw new FileNotFoundException(path));
         }
 
         // Nested files are returned too: the expander has to keep only the direct ones.
-        public IReadOnlyList<ResPath> List(ResPath directory)
+        public IReadOnlyList<string> List(string directory)
         {
-            var prefix = directory.CanonPath.TrimEnd('/') + "/";
-            return files.Keys.Where(k => k.StartsWith(prefix)).Select(k => new ResPath(k)).ToList();
+            var prefix = directory.TrimEnd('/') + "/";
+            return files.Keys.Where(k => k.StartsWith(prefix)).ToList();
         }
     }
 
@@ -36,7 +35,7 @@ public sealed class SuilExpanderTests
     {
         ISuilFileSource? source = files == null ? null : new DictionarySource(files);
 
-        return SuilExpander.Expand(input, source, globals.Select(g => new ResPath(g)).ToList());
+        return SuilExpander.Expand(input, source, globals);
     }
 
     private static SuilElement Root(string input) => Expand(input).Root!;
@@ -397,6 +396,31 @@ public sealed class SuilExpanderTests
     }
 
     [Test]
+    public void Properties_That_Are_Not_Parameters_Go_To_The_Root()
+    {
+        var root = Root("""
+            let row = { box (flex-direction: row, gap: 1) { %content% } }
+            let gap-default = 3;
+            row (gap: `gap-default`, disabled, size: 4!) { label }
+            """);
+
+        Assert.That(root.Tag, Is.EqualTo("box"));
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "flex-direction", "gap", "disabled", "size" }));
+        Assert.That(Prop(root, "gap").Value, Is.EqualTo(new List<ISuilValue> { new SuilNumber(3, true) }));
+        Assert.That(Prop(root, "disabled").Value, Is.Null);
+        Assert.That(Prop(root, "size").IsHard, Is.True);
+        Assert.That(root.Children, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void Parameters_Are_Not_Forwarded()
+    {
+        var root = Root("let t = (a) { label (x: `a`) }\nt (a: 1, y: 2)");
+
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "x", "y" }));
+    }
+
+    [Test]
     public void Template_Usage_Keeps_Properties_Of_Plain_Elements_Around_It()
     {
         var root = Root("""
@@ -410,7 +434,8 @@ public sealed class SuilExpanderTests
 
     [Test]
     [TestCase("let t = (a) { _ }\nt")]
-    [TestCase("let t = (a) { _ }\nt (a: 1, b: 2)")]
+    [TestCase("let t = (a) { _ _ }\nt (a: 1, b: 2)")]
+    [TestCase("let t = { _ }\nt (b: 1, b: 2)")]
     [TestCase("let t = (a) { _ }\nt (a)")]
     [TestCase("let t = (a) { _ }\nt (a: 1!)")]
     [TestCase("let t = (a) { _ }\nt (a: 1, a: 2)")]
@@ -767,7 +792,7 @@ public sealed class SuilExpanderTests
     [Test]
     public void Global_Usings_Need_A_Resolver()
     {
-        Assert.Throws<SuilExpansionError>(() => SuilExpander.Expand("row", null, [new ResPath("/theme.suil")]));
+        Assert.Throws<SuilExpansionError>(() => SuilExpander.Expand("row", null, new[] { "/theme.suil" }));
     }
 
     [Test]
@@ -794,7 +819,7 @@ public sealed class SuilExpanderTests
 
         Assert.That(paths.Select(p => p.ToString()),
             Is.EqualTo(new[] { "/UI/theme/variables.suil", "/UI/theme/buttons.suil", "/UI/common/*" }));
-        Assert.That(SuilGlobalUsings.DefaultPath.ToString(), Is.EqualTo("/UI/global-usings.suil"));
+        Assert.That(SuilGlobalUsings.DefaultPath, Is.EqualTo("/global-usings.suil"));
     }
 
     [Test]

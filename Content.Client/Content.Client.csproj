@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>..\bin\Content.Client\</OutputPath>
@@ -25,4 +25,5 @@
   <Import Project="..\RobustToolbox\MSBuild\XamlIL.targets" />
   <Import Project="..\RobustToolbox\MSBuild\Robust.EntitySystemSubscriptionsGenerator.targets" />
   <Import Project="..\MSBuild\RimFortress.CssPropertyGenerator.targets" /> <!-- RimFortress -->
+  <Import Project="..\MSBuild\RimFortress.Suil.targets" /> <!-- RimFortress -->
 </Project>

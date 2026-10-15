@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+  SUIL (Styled UI Layout): the tokenizer, the parser and the expander of the language.
+  It knows nothing about the engine, so the source generator can use it: Content.Suil.Generator
+  compiles these files in by itself (see the comment in Robust.Roslyn.Shared.props about why not a library).
+  Nothing of the game references this project yet: the generated code doesn't need it at run time.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\bin\Content.Suil\</OutputPath>
+    <IsPackable>false</IsPackable>
+    <PolySharpIncludeGeneratedTypes>System.Index;System.Range;System.Diagnostics.CodeAnalysis.NotNullWhenAttribute;System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute;System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute;System.Runtime.CompilerServices.IsExternalInit;System.Runtime.CompilerServices.CollectionBuilderAttribute</PolySharpIncludeGeneratedTypes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
 /// A marker interface for any SUIL (Styled UI Layout) token.
@@ -40,17 +40,17 @@ public readonly record struct StringPart(string Text, bool IsVariable)
 
     internal static int Hash(ImmutableArray<StringPart> parts)
     {
-        var hash = new HashCode();
+        var hash = 17;
 
         if (!parts.IsDefault)
         {
             foreach (var part in parts)
             {
-                hash.Add(part);
+                hash = unchecked(hash * 31 + part.GetHashCode());
             }
         }
 
-        return hash.ToHashCode();
+        return hash;
     }
 }
 
@@ -97,7 +97,7 @@ public readonly record struct InterpolatedNameToken(int Sigil, ImmutableArray<St
 {
     public bool Equals(InterpolatedNameToken other) => Sigil == other.Sigil && StringPart.SequenceEqual(Parts, other.Parts);
 
-    public override int GetHashCode() => HashCode.Combine(Sigil, StringPart.Hash(Parts));
+    public override int GetHashCode() => unchecked(Sigil * 397 ^ StringPart.Hash(Parts));
 }
 
 public readonly record struct NumberToken(double Value, bool IsInteger) : ISuilToken;
@@ -129,7 +129,7 @@ public readonly record struct LocToken(ImmutableArray<StringPart> Key, bool HasA
 {
     public bool Equals(LocToken other) => HasArguments == other.HasArguments && StringPart.SequenceEqual(Key, other.Key);
 
-    public override int GetHashCode() => HashCode.Combine(StringPart.Hash(Key), HasArguments);
+    public override int GetHashCode() => unchecked(StringPart.Hash(Key) * 397 ^ (HasArguments ? 1 : 0));
 }
 
 /// <summary>

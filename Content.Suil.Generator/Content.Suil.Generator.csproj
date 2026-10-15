@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+  The source generator of [SuilView]. The files of Content.Suil are compiled into it by a link and not used as a library,
+  see the comment in Robust.Roslyn.Shared.props about the load failures of shared libraries.
+  -->
+
+  <Import Project="..\RobustToolbox\Robust.Roslyn.Shared\Robust.Roslyn.Shared.props" />
+
+  <PropertyGroup>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\bin\Content.Suil.Generator\</OutputPath>
+    <PolySharpIncludeGeneratedTypes>System.Index;System.Range;System.Diagnostics.CodeAnalysis.NotNullWhenAttribute;System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute;System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute;System.Runtime.CompilerServices.IsExternalInit;System.Runtime.CompilerServices.CollectionBuilderAttribute</PolySharpIncludeGeneratedTypes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Content.Suil.Generator.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../RobustToolbox/Robust.Roslyn.Shared/**/*.cs" Exclude="../RobustToolbox/Robust.Roslyn.Shared/obj/**/*.cs">
+      <Link>Robust.Roslyn.Shared/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="../Content.Suil/**/*.cs" Exclude="../Content.Suil/obj/**/*.cs;../Content.Suil/bin/**/*.cs">
+      <Link>Content.Suil/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+</Project>

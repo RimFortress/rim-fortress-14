@@ -1,0 +1,2 @@
+// Imported into every .suil file as if each of them started with these lines.
+use "/layout";

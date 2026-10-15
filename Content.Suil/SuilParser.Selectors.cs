@@ -1,4 +1,4 @@
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 public static partial class SuilParser
 {

@@ -1,6 +1,6 @@
-using JetBrains.Annotations;
+using System.Diagnostics.Contracts;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
 /// A SUIL token parser, a recursive descent over the grammar of the language
@@ -15,17 +15,19 @@ public static partial class SuilParser
     /// Parses SUIL text into a file tree.
     /// This is the function you want to use to parse .suil files.
     /// </summary>
-    [PublicAPI, Pure]
-    public static SuilFile ParseFile(string text)
-        => ParseFile(SuilTokenizer.Tokenize(text));
+    /// <param name="text">The text of the file.</param>
+    /// <param name="fileName">Put into the positions of the tree and of the errors, to tell the files apart.</param>
+    [Pure]
+    public static SuilFile ParseFile(string text, string? fileName = null)
+        => ParseFile(SuilTokenizer.Tokenize(text, fileName), fileName);
 
     /// <summary>
     /// Parses SUIL tokens into a file tree.
     /// </summary>
-    [PublicAPI, Pure]
-    public static SuilFile ParseFile(List<SuilToken> tokens)
+    [Pure]
+    public static SuilFile ParseFile(List<SuilToken> tokens, string? fileName = null)
     {
-        var stream = new SuilTokenStream(tokens);
+        var stream = new SuilTokenStream(tokens, fileName);
         return ConsumeFile(ref stream);
     }
 

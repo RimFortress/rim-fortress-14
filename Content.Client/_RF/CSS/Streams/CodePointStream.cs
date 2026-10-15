@@ -7,11 +7,6 @@ public record struct CodePointStream(int[] CodePoints)
     private int _position = -1; // index of the last code point to have been consumed
 
     /// <summary>
-    /// The index of the last code point to have been consumed (-1 before the first one).
-    /// </summary>
-    public int Position => _position;
-
-    /// <summary>
     /// The last code point to have been consumed.
     /// </summary>
     public int Current => _position >= 0 && _position < CodePoints.Length

@@ -1,4 +1,4 @@
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 public static partial class SuilParser
 {
@@ -140,7 +140,7 @@ public static partial class SuilParser
 
         foreach (var c in hex)
         {
-            if (!char.IsAsciiHexDigit(c))
+            if (!(c is >= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F'))
                 return false;
         }
 

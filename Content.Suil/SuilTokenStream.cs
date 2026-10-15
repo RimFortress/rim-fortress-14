@@ -1,17 +1,17 @@
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
 /// The SUIL equivalent of <see cref="Content.Client._RF.CSS.Streams.CssTokenStream"/>. The tokens keep
 /// their positions, so errors can point at the place of the file.
 /// </summary>
-public record struct SuilTokenStream(SuilToken[] Tokens)
+public record struct SuilTokenStream(SuilToken[] Tokens, string? File = null)
 {
     private int _position = -1; // index of the last token to have been consumed
 
     /// <summary>
     /// Convenience constructor for feeding raw tokenizer output directly in.
     /// </summary>
-    public SuilTokenStream(List<SuilToken> tokens) : this(tokens.ToArray())
+    public SuilTokenStream(List<SuilToken> tokens, string? file = null) : this(tokens.ToArray(), file)
     {
     }
 
@@ -65,17 +65,17 @@ public record struct SuilTokenStream(SuilToken[] Tokens)
     private SuilPosition PositionAt(int index)
     {
         if (Tokens.Length == 0)
-            return new SuilPosition(1, 1);
+            return new SuilPosition(1, 1, File);
 
         if (index < 0)
-            return new SuilPosition(Tokens[0].Line, Tokens[0].Column);
+            return new SuilPosition(Tokens[0].Line, Tokens[0].Column, File);
 
         if (index < Tokens.Length)
-            return new SuilPosition(Tokens[index].Line, Tokens[index].Column);
+            return new SuilPosition(Tokens[index].Line, Tokens[index].Column, File);
 
         // After the last token: EOF
-        var last = Tokens[^1];
-        return new SuilPosition(last.Line, last.Column + 1);
+        var last = Tokens[Tokens.Length - 1];
+        return new SuilPosition(last.Line, last.Column + 1, File);
     }
 
     /// <summary>

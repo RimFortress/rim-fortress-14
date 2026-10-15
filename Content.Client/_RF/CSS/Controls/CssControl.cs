@@ -1,5 +1,6 @@
 using System.Numerics;
 using Content.Client._RF.CSS.Streams;
+using Content.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 
@@ -10,9 +11,15 @@ namespace Content.Client._RF.CSS;
 /// You should always use this class instead of <see cref="Control"/> when creating a UI for RimFortress.
 /// </summary>
 /// <remarks>
+/// <para>
 /// To allow the field's value to be set via CSS, you need to mark it using the <see cref="CssPropertyAttribute"/>.
+/// </para>
+/// <para>
+/// In SUIL it is the element written as <c>_</c>: an element without a type.
+/// </para>
 /// </remarks>
 [Virtual]
+[SuilTag("_")]
 public partial class CssControl : AutoCssControl
 {
     [Dependency] protected ICssManager Css = null!;

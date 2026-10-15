@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 public sealed class SuilTokenizeError(string context, int errorCp, int position, string? expected, params int[] expectedCp)
     : Exception
@@ -11,6 +11,8 @@ public sealed class SuilTokenizeError(string context, int errorCp, int position,
     public int Position { get; } = position;
 
     public int Line { get; internal set; }
+
+    public string? File { get; internal set; }
 
     public int Column { get; internal set; }
 

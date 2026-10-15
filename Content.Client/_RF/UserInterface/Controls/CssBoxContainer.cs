@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Numerics;
 using Content.Client._RF.CSS;
+using Content.Suil;
 using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.UserInterface.Controls;
@@ -45,6 +46,7 @@ public enum CssJustifyContent : byte
 /// </para>
 /// </remarks>
 [Virtual]
+[SuilTag("box")]
 public partial class CssBoxContainer : CssControl
 {
     [CssProperty]

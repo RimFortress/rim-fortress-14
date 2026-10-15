@@ -1,6 +1,6 @@
-using Robust.Shared.Utility;
+using System.Collections.Generic;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
 /// Where the files named in <c>use</c> come from. The paths it gets are already validated and cleaned:
@@ -11,12 +11,12 @@ public interface ISuilFileSource
     /// <summary>
     /// Reads and parses a file. It should throw if the file doesn't exist.
     /// </summary>
-    SuilFile Load(ResPath path);
+    SuilFile Load(string path);
 
     /// <summary>
     /// The <c>.suil</c> files of a directory, for <c>use "/dir/*"</c>. The expander keeps only the files that are
     /// directly in the directory, so a source that returns nested ones as well does no harm.
     /// An absent directory is an empty list.
     /// </summary>
-    IReadOnlyList<ResPath> List(ResPath directory);
+    IReadOnlyList<string> List(string directory);
 }

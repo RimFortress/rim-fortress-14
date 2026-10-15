@@ -2,13 +2,12 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Content.Client._RF.CSS.Streams;
-using JetBrains.Annotations;
+using System.Diagnostics.Contracts;
 
-namespace Content.Client._RF.Suil;
+namespace Content.Suil;
 
 /// <summary>
-/// SUIL (Styled UI Layout) text tokenizer. It is built on <see cref="CodePointStream"/> in the same way as
+/// SUIL (Styled UI Layout) text tokenizer. It is built on <see cref="SuilCodePointStream"/> in the same way as
 /// <see cref="Content.Client._RF.CSS.CssTokenizer"/> and keeps its zero tolerance for syntax errors:
 /// a <see cref="SuilTokenizeError"/> is thrown for anything the language can't contain.
 /// Differences from CSS:
@@ -79,6 +78,37 @@ public static class SuilTokenizer
         }
     }
 
+    /// <summary>
+    /// Splits text into Unicode code points. A lone surrogate becomes U+FFFD, as the CSS preprocessing does.
+    /// </summary>
+    private static int[] ToCodePoints(string text)
+    {
+        var result = new List<int>(text.Length);
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+
+            if (char.IsHighSurrogate(c) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1]))
+            {
+                result.Add(char.ConvertToUtf32(c, text[i + 1]));
+                i++;
+            }
+            else if (char.IsSurrogate(c))
+            {
+                result.Add(0xFFFD);
+            }
+            else
+            {
+                result.Add(c);
+            }
+        }
+
+        return result.ToArray();
+    }
+
+    private static string CodePointToString(int codePoint) => char.ConvertFromUtf32(codePoint);
+
     private static string Preprocess(string input)
     {
         var sb = new StringBuilder(input.Length);
@@ -106,12 +136,12 @@ public static class SuilTokenizer
     /// <summary>
     /// Processes the input text and returns a set of SUIL tokens extracted from it.
     /// </summary>
-    [PublicAPI, Pure]
-    public static List<SuilToken> Tokenize(string input)
+    [Pure]
+    public static List<SuilToken> Tokenize(string input, string? fileName = null)
     {
-        var codePoints = Preprocess(input).EnumerateRunes().Select(r => r.Value).ToArray();
+        var codePoints = ToCodePoints(Preprocess(input));
         var lines = new LineMap(codePoints);
-        var stream = new CodePointStream(codePoints);
+        var stream = new SuilCodePointStream(codePoints);
         var tokens = new List<SuilToken>();
 
         try
@@ -136,13 +166,14 @@ public static class SuilTokenizer
         catch (SuilTokenizeError e)
         {
             (e.Line, e.Column) = lines.Locate(e.Position);
+            e.File = fileName;
             throw;
         }
 
         return tokens;
     }
 
-    private static ISuilToken ConsumeToken(ref CodePointStream stream)
+    private static ISuilToken ConsumeToken(ref SuilCodePointStream stream)
     {
         var cp = stream.ConsumeNext();
 
@@ -233,7 +264,7 @@ public static class SuilTokenizer
     /// Consumes a string. The opening quote is already consumed. Besides the escapes the string may
     /// contain <c>`variable`</c> references, so its value is a list of parts.
     /// </summary>
-    private static StringToken ConsumeString(ref CodePointStream stream)
+    private static StringToken ConsumeString(ref SuilCodePointStream stream)
     {
         var parts = ImmutableArray.CreateBuilder<StringPart>();
         var text = new StringBuilder();
@@ -265,7 +296,7 @@ public static class SuilTokenizer
                 }
 
                 var escaped = stream.ConsumeNext();
-                text.Append(new Rune(escaped switch
+                text.Append(CodePointToString(escaped switch
                 {
                     0x006E => 0x000A, // \n
                     0x0074 => 0x0009, // \t
@@ -281,7 +312,7 @@ public static class SuilTokenizer
                 continue;
             }
 
-            text.Append(new Rune(cp));
+            text.Append(CodePointToString(cp));
         }
     }
 
@@ -289,7 +320,7 @@ public static class SuilTokenizer
     /// Whether the name that follows a '.' or '#' has a `variable` reference: ident code points go up to a backtick.
     /// Nothing is consumed.
     /// </summary>
-    private static bool NameHasVariable(ref CodePointStream stream)
+    private static bool NameHasVariable(ref SuilCodePointStream stream)
     {
         for (var offset = 1;; offset++)
         {
@@ -306,7 +337,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consumes the name after '.' or '#' (already consumed) that has `variable` references.
     /// </summary>
-    private static InterpolatedNameToken ConsumeInterpolatedName(ref CodePointStream stream, int sigil)
+    private static InterpolatedNameToken ConsumeInterpolatedName(ref SuilCodePointStream stream, int sigil)
     {
         var parts = ImmutableArray.CreateBuilder<StringPart>();
         var text = new StringBuilder();
@@ -317,7 +348,7 @@ public static class SuilTokenizer
 
             if (IsIdentChar(next))
             {
-                text.Append(new Rune(stream.ConsumeNext()));
+                text.Append(CodePointToString(stream.ConsumeNext()));
                 continue;
             }
 
@@ -336,7 +367,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consumes <c>name`</c> after the opening backtick and returns the name.
     /// </summary>
-    private static string ConsumeVariableName(ref CodePointStream stream)
+    private static string ConsumeVariableName(ref SuilCodePointStream stream)
     {
         if (!IsIdentStart(stream.PeekNext()))
             throw new SuilTokenizeError("consuming variable", stream.PeekNext(), stream.Position + 1, "a variable name");
@@ -353,7 +384,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consumes the key after <c>$</c>: ident code points, dots and `variable` references.
     /// </summary>
-    private static LocToken ConsumeLocKey(ref CodePointStream stream)
+    private static LocToken ConsumeLocKey(ref SuilCodePointStream stream)
     {
         if (stream.PeekNext() == 0x002E)
         {
@@ -372,7 +403,7 @@ public static class SuilTokenizer
 
             if (IsLocChar(next))
             {
-                text.Append(new Rune(stream.ConsumeNext()));
+                text.Append(CodePointToString(stream.ConsumeNext()));
                 continue;
             }
 
@@ -399,7 +430,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consumes <c>name%</c> after <c>%</c>. A percent sign that isn't a part of <c>%name%</c> is a delim.
     /// </summary>
-    private static ISuilToken ConsumeContentSlot(ref CodePointStream stream)
+    private static ISuilToken ConsumeContentSlot(ref SuilCodePointStream stream)
     {
         if (!IsIdentStart(stream.PeekNext()))
             return new DelimToken(0x0025);
@@ -418,7 +449,7 @@ public static class SuilTokenizer
         return new ContentSlotToken(name);
     }
 
-    private static ISuilToken ConsumeNumericToken(ref CodePointStream stream)
+    private static ISuilToken ConsumeNumericToken(ref SuilCodePointStream stream)
     {
         var number = ConsumeNumber(ref stream);
 
@@ -440,7 +471,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consumes an ident, and a function token if the ident is glued to <c>(</c>.
     /// </summary>
-    private static ISuilToken ConsumeIdentLikeToken(ref CodePointStream stream)
+    private static ISuilToken ConsumeIdentLikeToken(ref SuilCodePointStream stream)
     {
         var value = CodePointsToString(stream.ConsumeWhile(IsIdentChar));
 
@@ -456,7 +487,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consume a number (CSS Syntax §4.3.13). Assumes the caller has already verified that a number follows.
     /// </summary>
-    private static ConsumedNumber ConsumeNumber(ref CodePointStream stream)
+    private static ConsumedNumber ConsumeNumber(ref SuilCodePointStream stream)
     {
         var repr = new List<int>();
         var isInteger = true;
@@ -508,7 +539,7 @@ public static class SuilTokenizer
     /// <summary>
     /// Consumes comments: <c>/* ... */</c> and <c>// ... </c> up to the end of the line (the newline stays).
     /// </summary>
-    private static bool ConsumeComments(ref CodePointStream stream)
+    private static bool ConsumeComments(ref SuilCodePointStream stream)
     {
         var consumedAny = false;
 
@@ -556,7 +587,7 @@ public static class SuilTokenizer
         var sb = new StringBuilder();
         foreach (var cp in codePoints)
         {
-            sb.Append(new Rune(cp));
+            sb.Append(CodePointToString(cp));
         }
         return sb.ToString();
     }
@@ -565,7 +596,7 @@ public static class SuilTokenizer
     /// "Starts with a number" as called on the stream itself: the current (already consumed) code point
     /// plus the next two.
     /// </summary>
-    private static bool WouldStartNumber(ref CodePointStream stream)
+    private static bool WouldStartNumber(ref SuilCodePointStream stream)
         => WouldStartNumber(stream.Current, stream.PeekNext(), stream.PeekNext(2));
 
     private static bool WouldStartNumber(int cp1, int cp2, int cp3)

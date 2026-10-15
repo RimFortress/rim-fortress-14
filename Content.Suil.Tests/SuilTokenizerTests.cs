@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Content.Client._RF.Suil;
+using Content.Suil;
 // ReSharper disable ReturnValueOfPureMethodIsNotUsed
 
-namespace Content.IntegrationTests.Tests._RF.Suil;
+namespace Content.Suil.Tests;
 
 [TestFixture, TestOf(typeof(SuilTokenizer))]
 public sealed class SuilTokenizerTests
