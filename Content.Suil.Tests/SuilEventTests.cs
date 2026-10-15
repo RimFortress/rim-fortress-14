@@ -64,11 +64,11 @@ public sealed class SuilEventTests
 
         var set = (SuilStyleItem) self.Items[1];
         Assert.That(set.Op, Is.EqualTo(SuilStyleOp.Set));
-        Assert.That(set.State, Is.EqualTo(new SuilStateValue(true, null)));
+        Assert.That(set.State!.Expression, Is.EqualTo(new SuilBoolConst(true)));
 
         var fromArgs = (SuilStyleItem) self.Items[2];
         Assert.That(fromArgs.Refs.Single().IsPseudo, Is.True);
-        Assert.That(fromArgs.State, Is.EqualTo(new SuilStateValue(null, "pressed")));
+        Assert.That(((SuilBoolArgs) fromArgs.State!.Expression).Member, Is.EqualTo("pressed"));
 
         Assert.That(((SuilStyleItem) ((SuilTargetStatement) statements[3]).Items.Single()).Refs, Has.Count.EqualTo(2));
     }
@@ -893,5 +893,320 @@ public sealed class SuilLocalLetTests
             """);
 
         Assert.That(Prop(Child(root, 0), "margin").Value, Has.Count.EqualTo(2));
+    }
+}
+
+[TestFixture]
+public sealed class SuilBoolExpressionTests
+{
+    private static SuilElement Parsed(string input) => SuilParser.ParseFile(input).Root!;
+
+    private static SuilElement Root(string input) => SuilExpander.Expand(input).Root!;
+
+    private static SuilProperty Prop(SuilElement element, string name) => element.Properties.Single(p => p.Name == name);
+
+    private static SuilBoolNode Expression(SuilProperty property) => ((SuilBoolValue) property.Value!.Single()).Root;
+
+    private static bool IsTrue(SuilProperty property) => property.Value is [SuilIdent { Value: "true" }];
+
+    private static bool IsFalse(SuilProperty property) => property.Value is [SuilIdent { Value: "false" }];
+
+    private static SuilBoolNode Of(string state)
+    {
+        var root = Parsed($"button (on-pressed => {{ &(set .a {state}) }})");
+        var statement = (SuilTargetStatement) root.Events.Single().Statements.Single();
+        return ((SuilStyleItem) statement.Items.Single()).State!.Expression;
+    }
+
+    // ---- Parser ----
+
+    [Test]
+    public void An_Operator_Makes_A_Value_An_Expression()
+    {
+        var root = Parsed("button (visible: !<a>, disabled: <a> && <b>, toggle-mode: <a> || <b>)");
+
+        Assert.That(Expression(Prop(root, "visible")), Is.InstanceOf<SuilBoolNot>());
+        Assert.That(Expression(Prop(root, "disabled")), Is.InstanceOf<SuilBoolAnd>());
+        Assert.That(Expression(Prop(root, "toggle-mode")), Is.InstanceOf<SuilBoolOr>());
+    }
+
+    [Test]
+    public void A_Value_Without_Operators_Is_Still_An_Ordinary_Value()
+    {
+        var root = Parsed("button (visible: <a>, disabled: true, margin: 1px 2px, tint: #B07D2B)");
+
+        Assert.That(Prop(root, "visible").Value!.Single(), Is.InstanceOf<SuilVariable>());
+        Assert.That(Prop(root, "disabled").Value!.Single(), Is.InstanceOf<SuilIdent>());
+        Assert.That(Prop(root, "margin").Value, Has.Count.EqualTo(2));
+        Assert.That(Prop(root, "tint").Value!.Single(), Is.InstanceOf<SuilColor>(), "a color is not a reference to an element");
+    }
+
+    [Test]
+    public void Not_Binds_Tighter_Than_And_And_And_Tighter_Than_Or()
+    {
+        // a || b && !c  is  a || (b && (!c))
+        var or = (SuilBoolOr) Of("true || <b> && !<c>");
+
+        Assert.That(or.Left, Is.EqualTo(new SuilBoolConst(true)));
+        var and = (SuilBoolAnd) or.Right;
+        Assert.That(and.Left, Is.InstanceOf<SuilBoolVariable>());
+        Assert.That(and.Right, Is.InstanceOf<SuilBoolNot>());
+    }
+
+    [Test]
+    public void Operators_Of_The_Same_Kind_Go_From_The_Left()
+    {
+        var or = (SuilBoolOr) Of("<a> || <b> || <c>");
+
+        Assert.That(or.Left, Is.InstanceOf<SuilBoolOr>());
+        Assert.That(or.Right, Is.InstanceOf<SuilBoolVariable>());
+    }
+
+    [Test]
+    public void Parentheses_Group()
+    {
+        var and = (SuilBoolAnd) Of("(<a> || <b>) && <c>");
+
+        Assert.That(and.Left, Is.InstanceOf<SuilBoolOr>());
+        Assert.That(((SuilBoolNot) Of("!(<a> && <b>)")).Operand, Is.InstanceOf<SuilBoolAnd>());
+        Assert.That(((SuilBoolNot) ((SuilBoolNot) Of("!!<a>")).Operand).Operand, Is.InstanceOf<SuilBoolVariable>());
+    }
+
+    [Test]
+    public void A_Reference_Names_An_Element_And_A_Property()
+    {
+        var reference = (SuilBoolReference) Of("#menu/header.visible");
+
+        Assert.That(reference.Target.Id!.ToString(), Is.EqualTo("menu"));
+        Assert.That(reference.Target.Path, Is.EqualTo(new[] { "header" }));
+        Assert.That(reference.Property, Is.EqualTo("visible"));
+
+        var sender = (SuilBoolReference) Of("&.disabled");
+        Assert.That(sender.Target.IsSender, Is.True);
+        Assert.That(sender.Property, Is.EqualTo("disabled"));
+
+        Assert.That(((SuilBoolArgs) Of("args.pressed")).Member, Is.EqualTo("pressed"));
+    }
+
+    [Test]
+    public void A_Handler_May_Assign_An_Expression_To_A_Property()
+    {
+        var root = Parsed("button (on-pressed => { #panel (visible: !#menu.visible && args.pressed || <flag>) })");
+
+        var statement = (SuilTargetStatement) root.Events.Single().Statements.Single();
+        var value = ((SuilPropertyItem) statement.Items.Single()).Property.Value!.Single();
+
+        Assert.That(((SuilBoolValue) value).Root, Is.InstanceOf<SuilBoolOr>());
+    }
+
+    [Test]
+    public void The_Expressions_Of_A_Let_And_An_Argument_And_A_Default_Are_Parsed()
+    {
+        var file = SuilParser.ParseFile("let both = <a> && <b>;\nlet t = (x: !<a>) { box }\nt (<a> || <b>)");
+
+        var let = (SuilLet) file.Items[0];
+        Assert.That(((SuilValueList) let.Value).Values.Single(), Is.InstanceOf<SuilBoolValue>());
+
+        var template = (SuilTemplate) ((SuilLet) file.Items[1]).Value;
+        Assert.That(template.Defaults["x"].Single(), Is.InstanceOf<SuilBoolValue>());
+
+        Assert.That(file.Root!.Arguments.Single().Values.Single(), Is.InstanceOf<SuilBoolValue>());
+    }
+
+    [TestCase("button (visible: <a> &&)")]
+    [TestCase("button (visible: && <a>)")]
+    [TestCase("button (visible: <a> & <b>)")]
+    [TestCase("button (visible: <a> | <b>)")]
+    [TestCase("button (visible: <a> && (<b>)")]
+    [TestCase("button (visible: !)")]
+    [TestCase("button (visible: <a> && red)")]
+    [TestCase("button (visible: <a> && 5)")]
+    [TestCase("button (visible: <a> && <b> <c>)")]
+    [TestCase("button (visible: !<a> 5)")]
+    public void Broken_Expressions_Are_Errors(string input)
+    {
+        Assert.Throws<SuilParserError>(() => Parsed(input));
+    }
+
+    [TestCase("button (visible: #menu.visible)")]
+    [TestCase("button (visible: &.disabled)")]
+    [TestCase("button (visible: args.pressed)")]
+    [TestCase("button (visible: <a> && #menu/x.visible)")]
+    [TestCase("let c = #menu.visible;")]
+    public void An_Element_Can_Not_Declare_A_Property_From_The_State_Of_Another(string input)
+    {
+        var error = Assert.Throws<SuilParserError>(() => Parsed(input))!;
+
+        Assert.That(error.Message, Does.Contain("handlers"));
+    }
+
+    [Test]
+    public void The_Old_Exclamation_Mark_After_A_Value_Is_Still_Told_Apart()
+    {
+        var error = Assert.Throws<SuilParserError>(() => Parsed("button (size: 32 32!)"))!;
+
+        Assert.That(error.Message, Does.Contain("hard by default"));
+    }
+
+    [Test]
+    public void A_Reference_Needs_A_Property()
+    {
+        Assert.Throws<SuilParserError>(() => Of("#menu"));
+        Assert.Throws<SuilParserError>(() => Of("#menu."));
+        Assert.Throws<SuilParserError>(() => Of("&."));
+    }
+
+    // ---- Expander ----
+
+    [Test]
+    public void Constants_And_Variables_Are_Folded_To_True_Or_False()
+    {
+        var root = Root("""
+            let on = true;
+            let off = false;
+            button (
+                visible: <on> && !<off>,
+                disabled: <off> || <off>,
+                toggle-mode: !(<on> && <off>) && true
+            )
+            """);
+
+        Assert.That(IsTrue(Prop(root, "visible")), Is.True);
+        Assert.That(IsFalse(Prop(root, "disabled")), Is.True);
+        Assert.That(IsTrue(Prop(root, "toggle-mode")), Is.True);
+    }
+
+    [TestCase("true && true", true)]
+    [TestCase("true && false", false)]
+    [TestCase("false || true", true)]
+    [TestCase("false || false", false)]
+    [TestCase("!true", false)]
+    [TestCase("!false", true)]
+    [TestCase("true || false && false", true)]
+    [TestCase("(true || false) && false", false)]
+    [TestCase("!(true && false) || false", true)]
+    public void The_Table_Of_Truth(string expression, bool expected)
+    {
+        var root = Root($"let a = true;\nbutton (visible: {expression.Replace("true", "<a>").Replace("false", "!<a>")})");
+
+        Assert.That(IsTrue(Prop(root, "visible")), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void A_Let_May_Be_An_Expression()
+    {
+        var root = Root("""
+            let a = true;
+            let b = false;
+            let both = <a> && <b>;
+            let either = <a> || <b>;
+            button (visible: <either> && !<both>, disabled: <both>)
+            """);
+
+        Assert.That(IsTrue(Prop(root, "visible")), Is.True);
+        Assert.That(IsFalse(Prop(root, "disabled")), Is.True);
+    }
+
+    [Test]
+    public void A_Template_Takes_Bool_Arguments_And_Defaults()
+    {
+        var root = Root("""
+            let flags = (shown, locked: false) {
+                button (visible: <shown> && !<locked>, disabled: <locked> || !<shown>)
+            }
+            box {
+                flags (true)
+                flags (true, locked: true)
+                flags (!true)
+                flags (true && !false)
+            }
+            """);
+
+        var buttons = root.Children.Cast<SuilElement>().ToArray();
+
+        Assert.That(IsTrue(Prop(buttons[0], "visible")), Is.True);
+        Assert.That(IsFalse(Prop(buttons[0], "disabled")), Is.True);
+        Assert.That(IsFalse(Prop(buttons[1], "visible")), Is.True);
+        Assert.That(IsTrue(Prop(buttons[1], "disabled")), Is.True);
+        Assert.That(IsFalse(Prop(buttons[2], "visible")), Is.True);
+        Assert.That(IsTrue(Prop(buttons[3], "visible")), Is.True);
+    }
+
+    [Test]
+    public void A_Local_Let_May_Be_An_Expression_Too()
+    {
+        var root = Root("""
+            let on = true;
+            box {
+                let off = !<on>;
+                button (visible: <off> || <on>)
+            }
+            """);
+
+        Assert.That(IsTrue(Prop((SuilElement) root.Children.Single(), "visible")), Is.True);
+    }
+
+    [TestCase("let n = 5;\nbutton (visible: !<n>)")]
+    [TestCase("let n = red;\nbutton (visible: <n> && true)")]
+    [TestCase("let n = true false;\nbutton (visible: <n> || true)")]
+    [TestCase("button (visible: !<missing>)")]
+    [TestCase("let t = { box }\nbutton (visible: <t> && true)")]
+    public void A_Variable_In_An_Expression_Must_Hold_True_Or_False(string input)
+    {
+        Assert.Throws<SuilExpansionError>(() => Root(input));
+    }
+
+    // ---- In the handlers ----
+
+    [Test]
+    public void A_Handler_Keeps_What_Depends_On_The_Elements_And_Folds_The_Rest()
+    {
+        var root = Root("""
+            let locked = false;
+            let open = true;
+            button (on-pressed => {
+                #panel (visible: !#menu.visible && !<locked>, disabled: #menu.visible || <open>, toggle-mode: #menu.visible && <locked>);
+                &(set .shown args.pressed && <open>);
+            })
+            """);
+
+        var statements = root.Events.Single().Statements;
+        var panel = (SuilTargetStatement) statements[0];
+        var properties = panel.Items.Cast<SuilPropertyItem>().Select(i => i.Property).ToArray();
+
+        // `!#menu.visible && true` is `!#menu.visible`
+        Assert.That(((SuilBoolValue) properties[0].Value!.Single()).Root, Is.InstanceOf<SuilBoolNot>());
+        // `#menu.visible || true` is true, whatever the menu is
+        Assert.That(properties[1].Value, Is.EqualTo(new List<ISuilValue> { new SuilIdent("true") }));
+        // `#menu.visible && false` is false
+        Assert.That(properties[2].Value, Is.EqualTo(new List<ISuilValue> { new SuilIdent("false") }));
+
+        var set = (SuilStyleItem) ((SuilTargetStatement) statements[1]).Items.Single();
+        Assert.That(set.State!.Expression, Is.InstanceOf<SuilBoolArgs>(), "args.pressed && true");
+    }
+
+    [Test]
+    public void The_Ids_In_A_Reference_Take_The_Variables_Of_The_File()
+    {
+        var root = Root("""
+            let which = menu;
+            button (on-pressed => { &(set .a #<which>/header.visible) })
+            """);
+
+        var set = (SuilStyleItem) ((SuilTargetStatement) root.Events.Single().Statements.Single()).Items.Single();
+        var reference = (SuilBoolReference) set.State!.Expression;
+
+        Assert.That(reference.Target.Id!.ToString(), Is.EqualTo("menu"));
+        Assert.That(reference.Target.Path, Is.EqualTo(new[] { "header" }));
+    }
+
+    [Test]
+    public void A_Reference_Can_Not_Travel_Through_An_Argument_Of_A_Template()
+    {
+        // an argument is a value of the file, the elements are not there yet
+        Assert.Throws<SuilParserError>(() => Root("""
+            let t = (flag) { button (visible: <flag>) }
+            t (#menu.visible)
+            """));
     }
 }

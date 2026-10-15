@@ -324,7 +324,7 @@ public static class SuilExpander
             switch (let.Value)
             {
                 case SuilValueList list:
-                    return new ValueBinding(ExpandValues(list.Values, scope, let.Position));
+                    return new ValueBinding(NoRuntime(ExpandValues(list.Values, scope, let.Position), let.Position));
                 case SuilTemplate template:
                     var duplicate = template.Parameters.GroupBy(p => p).FirstOrDefault(g => g.Count() > 1);
                     if (duplicate != null)
@@ -336,7 +336,7 @@ public static class SuilExpander
 
                     var defaults = template.Defaults.ToDictionary(
                         pair => pair.Key,
-                        pair => ExpandValues(pair.Value, scope, let.Position));
+                        pair => NoRuntime(ExpandValues(pair.Value, scope, let.Position), let.Position));
 
                     return new TemplateBinding(template, scope, defaults);
                 default:
@@ -428,7 +428,7 @@ public static class SuilExpander
             var properties = element.Properties
                 .Select(p => new SuilProperty(
                     p.Name,
-                    p.Value == null ? null : ExpandValues(p.Value, scope, p.Position),
+                    p.Value == null ? null : NoRuntime(ExpandValues(p.Value, scope, p.Position), p.Position),
                     p.IsSoft,
                     p.Position))
                 .ToList();
@@ -480,6 +480,9 @@ public static class SuilExpander
             }),
             SuilStyleItem style => style with
             {
+                State = style.State == null
+                    ? null
+                    : new SuilStateValue(Fold(style.State.Expression, scope, style.Position)),
                 Refs = style.Refs.Select(r => r with
                     {
                         Name = ExpandName(r.Name, r.IsPseudo ? "pseudo-class" : "class", scope, style.Position)
@@ -514,7 +517,9 @@ public static class SuilExpander
 
             for (var i = 0; i < usage.Arguments.Count; i++)
             {
-                arguments[parameters[i]] = ExpandValues(usage.Arguments[i].Values, callerScope, usage.Arguments[i].Position);
+                arguments[parameters[i]] = NoRuntime(
+                    ExpandValues(usage.Arguments[i].Values, callerScope, usage.Arguments[i].Position),
+                    usage.Arguments[i].Position);
             }
 
             foreach (var property in usage.Properties)
@@ -531,7 +536,9 @@ public static class SuilExpander
 
                     forwarded.Add(property with
                     {
-                        Value = property.Value == null ? null : ExpandValues(property.Value, callerScope, property.Position),
+                        Value = property.Value == null
+                            ? null
+                            : NoRuntime(ExpandValues(property.Value, callerScope, property.Position), property.Position),
                     });
                     continue;
                 }
@@ -557,7 +564,7 @@ public static class SuilExpander
                         property.Position);
                 }
 
-                arguments[property.Name] = ExpandValues(property.Value, callerScope, property.Position);
+                arguments[property.Name] = NoRuntime(ExpandValues(property.Value, callerScope, property.Position), property.Position);
             }
 
             // What the usage leaves out takes its default value; every usage gets its own copy of the values.
@@ -731,6 +738,9 @@ public static class SuilExpander
                                 .Select(a => new SuilNamedArgument(a.Name, ExpandValues(a.Value, scope, position)))
                                 .ToList()));
                         break;
+                    case SuilBoolValue boolValue:
+                        result.Add(FoldValue(boolValue, scope, position));
+                        break;
                     case SuilFunction function:
                         result.Add(function with
                         {
@@ -746,6 +756,96 @@ public static class SuilExpander
             }
 
             return result;
+        }
+
+        // ---- Bool expressions ----
+
+        /// <summary>
+        /// Replaces the variables of a bool expression and folds the constants. What is left of it depends on the elements
+        /// and is for the handlers of the events; a value that is all constants becomes <c>true</c> or <c>false</c>.
+        /// </summary>
+        private ISuilValue FoldValue(SuilBoolValue value, Scope? scope, SuilPosition position)
+        {
+            var folded = Fold(value.Root, scope, value.Position.Line > 0 ? value.Position : position);
+
+            return folded is SuilBoolConst constant
+                ? new SuilIdent(constant.Value ? "true" : "false")
+                : new SuilBoolValue(folded, value.Position);
+        }
+
+        private SuilBoolNode Fold(SuilBoolNode node, Scope? scope, SuilPosition position)
+        {
+            switch (node)
+            {
+                case SuilBoolVariable variable:
+                    return new SuilBoolConst(LookupBool(variable.Name, scope, variable.Position.Line > 0 ? variable.Position : position));
+                case SuilBoolNot not:
+                {
+                    var operand = Fold(not.Operand, scope, position);
+                    return operand is SuilBoolConst c ? new SuilBoolConst(!c.Value) : new SuilBoolNot(operand);
+                }
+                case SuilBoolAnd and:
+                {
+                    var left = Fold(and.Left, scope, position);
+                    var right = Fold(and.Right, scope, position);
+
+                    if (left is SuilBoolConst l)
+                        return l.Value ? right : l;
+
+                    if (right is SuilBoolConst r)
+                        return r.Value ? left : r;
+
+                    return new SuilBoolAnd(left, right);
+                }
+                case SuilBoolOr or:
+                {
+                    var left = Fold(or.Left, scope, position);
+                    var right = Fold(or.Right, scope, position);
+
+                    if (left is SuilBoolConst l)
+                        return l.Value ? l : right;
+
+                    if (right is SuilBoolConst r)
+                        return r.Value ? r : left;
+
+                    return new SuilBoolOr(left, right);
+                }
+                case SuilBoolReference reference:
+                    return reference with { Target = ExpandTarget(reference.Target, scope) };
+                default:
+                    return node;
+            }
+        }
+
+        private static bool LookupBool(string name, Scope? scope, SuilPosition position)
+        {
+            var values = LookupValues(name, scope, position);
+
+            if (values is [SuilIdent { Value: "true" }])
+                return true;
+
+            if (values is [SuilIdent { Value: "false" }])
+                return false;
+
+            throw new SuilExpansionError("expanding bool expression",
+                $"variable '{name}' must hold true or false to be used with '!', '&&' and '||'",
+                position);
+        }
+
+        /// <summary>
+        /// The properties of an element, the arguments of a template and <c>let</c> may use only true, false and the
+        /// variables: the elements don't exist yet when the file is expanded. What reads them is a handler of an event.
+        /// </summary>
+        private static List<ISuilValue> NoRuntime(List<ISuilValue> values, SuilPosition position)
+        {
+            if (values.Any(v => v is SuilBoolValue))
+            {
+                throw new SuilExpansionError("expanding bool expression",
+                    "here only true, false and the variables can be used: the properties of elements and the arguments of the event are read when an event is raised, so only the handler of an event can use them",
+                    position);
+            }
+
+            return values;
         }
 
         private static List<ISuilValue> LookupValues(string name, Scope? scope, SuilPosition position)

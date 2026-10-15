@@ -114,7 +114,7 @@ public static partial class SuilParser
         if (stream.PeekNext() is LeftParenthesisToken or LeftCurlyBracket)
             return new SuilLet(name.Value, ConsumeTemplate(ref stream), position);
 
-        var values = ConsumeValueList(ref stream, "consuming let", commas: true);
+        var values = ConsumeValueOrBool(ref stream, "consuming let", references: false, commasEnd: false);
         ExpectSemicolon(ref stream, "consuming let");
         return new SuilLet(name.Value, new SuilValueList(values), position);
     }
@@ -158,7 +158,7 @@ public static partial class SuilParser
                     if (stream.PeekNext() is ColonToken)
                     {
                         stream.ConsumeNext();
-                        defaults[parameter.Value] = ConsumeValueList(ref stream, "consuming template parameters");
+                        defaults[parameter.Value] = ConsumeValueOrBool(ref stream, "consuming template parameters", references: false);
                         stream.SkipWhitespace();
                     }
                     else if (defaults.Count > 0)
@@ -354,7 +354,7 @@ public static partial class SuilParser
     ///       | ident , "=>" , handler
     /// An item that is not a property is an argument of a template, like in a call in C#: <c>btn ("Go", 12, tint: red)</c>.
     /// The arguments go first, the named ones after them. An ident alone is a flag (<c>disabled</c>), so an argument can't
-    /// be an ident: it is given by name.
+    /// be an ident, except <c>true</c> and <c>false</c>: any other is given by name.
     /// A property is hard by default: the styles can't change it. A "?" before the value makes it soft, the styles
     /// override it like any other property.
     /// </summary>
@@ -379,8 +379,8 @@ public static partial class SuilParser
 
             var position = stream.PeekPosition();
 
-            // a value that is not a name: a positional argument of a template
-            if (stream.PeekNext() is not IdentToken)
+            // a value that is not a name: a positional argument of a template; true and false are values, not flags
+            if (stream.PeekNext() is not IdentToken || stream.PeekNext() is IdentToken { Value: "true" or "false" })
             {
                 if (arguments == null)
                 {
@@ -396,7 +396,7 @@ public static partial class SuilParser
                         "a positional argument can't follow a named one: the arguments by position go first");
                 }
 
-                arguments.Add(new SuilArgument(ConsumeValueList(ref stream, "consuming arguments"), position));
+                arguments.Add(new SuilArgument(ConsumeValueOrBool(ref stream, "consuming arguments", references: false), position));
                 stream.SkipWhitespace();
 
                 var after = stream.ConsumeNext();
@@ -456,7 +456,7 @@ public static partial class SuilParser
                     isSoft = true;
                 }
 
-                value = ConsumeValueList(ref stream, "consuming properties");
+                value = ConsumeValueOrBool(ref stream, "consuming properties", references: false);
                 stream.SkipWhitespace();
 
                 if (stream.PeekNext() is DelimToken { CodePoint: '!' })

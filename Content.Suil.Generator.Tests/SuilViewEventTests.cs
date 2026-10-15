@@ -302,6 +302,172 @@ public sealed class SuilViewEventTests
         Assert.That(Ids(result), Is.EqualTo(new[] { "SUIL022" }));
     }
 
+    // ---- Bool expressions ----
+
+    private static object Get(object target, string name) => target.GetType().GetProperty(name)!.GetValue(target)!;
+
+    private static void SetBool(object target, string name, bool value) => target.GetType().GetProperty(name)!.SetValue(target, value);
+
+    [Test]
+    public void An_Element_Declares_A_Property_From_Constants_And_Variables()
+    {
+        var result = Run("""
+            let locked = true;
+            let free = false;
+            button (disabled: <locked> && !<free>, toggle-mode: <free> || <free>)
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        Assert.That(Get(view, "Disabled"), Is.EqualTo(true));
+        Assert.That(Get(view, "ToggleMode"), Is.EqualTo(false));
+    }
+
+    [Test]
+    public void A_Handler_Assigns_A_Property_From_The_Properties_Of_Other_Elements()
+    {
+        var result = Run("""
+            button {
+                +button #source
+                +button #target
+                +button #go (on-pressed => {
+                    #target (disabled: !#source.disabled, toggle-mode: #source.toggle-mode && args.pressed || #target.toggle-mode)
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var source = Field(view, "Source");
+        var target = Field(view, "Target");
+        var go = Field(view, "Go");
+
+        // source.disabled = false: target is enabled, no toggle
+        Raise(go, "RaisePressed", Args(view, pressed: true));
+        Assert.That(Get(target, "Disabled"), Is.EqualTo(true), "!false");
+        Assert.That(Get(target, "ToggleMode"), Is.EqualTo(false));
+
+        SetBool(source, "Disabled", true);
+        SetBool(source, "ToggleMode", true);
+        Raise(go, "RaisePressed", Args(view, pressed: true));
+        Assert.That(Get(target, "Disabled"), Is.EqualTo(false), "!true");
+        Assert.That(Get(target, "ToggleMode"), Is.EqualTo(true), "true && true");
+
+        Raise(go, "RaisePressed", Args(view, pressed: false));
+        Assert.That(Get(target, "ToggleMode"), Is.EqualTo(true), "false || the old value of the target");
+
+        SetBool(target, "ToggleMode", false);
+        Raise(go, "RaisePressed", Args(view, pressed: false));
+        Assert.That(Get(target, "ToggleMode"), Is.EqualTo(false));
+    }
+
+    [Test]
+    public void The_Variables_Of_The_File_Are_Folded_Into_The_Expression_Of_A_Handler()
+    {
+        var result = Run("""
+            let always = true;
+            let never = false;
+            button {
+                +button #source
+                +button #go (on-pressed => { &(disabled: #source.disabled && <always>, toggle-mode: #source.disabled && <never> || <always>) })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+        var source = string.Join("\n", result.Sources.Select(x => x.SourceText.ToString()));
+        Assert.That(source, Does.Not.Contain("&& true").And.Not.Contain("&& false").And.Not.Contain("|| true"), "folded when the file is expanded");
+
+        var view = New(result);
+        var go = Field(view, "Go");
+        SetBool(Field(view, "Source"), "Disabled", true);
+        Raise(go, "RaisePressed", Args(view));
+
+        Assert.That(Get(go, "Disabled"), Is.EqualTo(true));
+        Assert.That(Get(go, "ToggleMode"), Is.EqualTo(true));
+    }
+
+    [Test]
+    public void Set_Takes_Its_State_From_An_Expression()
+    {
+        var result = Run("""
+            button {
+                +button #menu
+                +button #panel
+                +button #go (on-toggled => { #panel (set .open !#menu.disabled && args.pressed, set :busy #menu.toggle-mode || false) })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var panel = Field(view, "Panel");
+        var menu = Field(view, "Menu");
+        var go = Field(view, "Go");
+
+        Raise(go, "RaiseToggled", Args(view, pressed: true));
+        Assert.That(Classes(panel), Is.EquivalentTo(new[] { "open" }));
+        Assert.That(Pseudo(panel), Is.Empty);
+
+        SetBool(menu, "Disabled", true);
+        SetBool(menu, "ToggleMode", true);
+        Raise(go, "RaiseToggled", Args(view, pressed: true));
+        Assert.That(Classes(panel), Is.Empty, "the menu is disabled");
+        Assert.That(Pseudo(panel), Is.EquivalentTo(new[] { "busy" }));
+    }
+
+    [Test]
+    public void A_Reference_May_Go_Through_The_Fields_Of_A_View_And_Name_The_Sender()
+    {
+        var code = $$"""
+            {{Usings}}
+
+            [SuilView("/Picker.suil")]
+            public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+
+            [SuilView("/Inner.suil", Name = "inner")]
+            public sealed partial class Inner : RfButton { public Inner() { InitializeComponent(); } }
+            """;
+
+        var result = Run("""
+            button {
+                +inner #panel
+                +button #go (on-pressed => { &(disabled: !#panel/header.disabled && !&.toggle-mode) })
+            }
+            """, code, new Dictionary<string, string> { ["/Inner.suil"] = "button {\n +button #header\n}" });
+
+        AssertClean(result);
+
+        var view = New(result);
+        var go = Field(view, "Go");
+        var header = Field(Field(view, "Panel"), "Header");
+
+        Raise(go, "RaisePressed", Args(view));
+        Assert.That(Get(go, "Disabled"), Is.EqualTo(true));
+
+        SetBool(header, "Disabled", true);
+        Raise(go, "RaisePressed", Args(view));
+        Assert.That(Get(go, "Disabled"), Is.EqualTo(false));
+    }
+
+    [TestCase("button { +button #x; button (on-pressed => { &(disabled: #x.text) }) }", "SUIL003")]
+    [TestCase("button { +button #x\n button (on-pressed => { &(disabled: #x.text) }) }", "SUIL023")]
+    [TestCase("button { +button #x\n button (on-pressed => { &(disabled: #x.no-such) }) }", "SUIL023")]
+    [TestCase("button { +button #x\n button (on-pressed => { &(disabled: #nowhere.disabled) }) }", "SUIL022")]
+    [TestCase("button (on-closed => { &(disabled: args.pressed) })", "SUIL023")]
+    [TestCase("button (on-pressed => { &(disabled: args.text) })", "SUIL023")]
+    [TestCase("button (on-pressed => { &(min-width: !&.disabled) })", "SUIL011")]
+    [TestCase("button (on-pressed => { &(set .a &.text) })", "SUIL023")]
+    [TestCase("button (disabled: &.toggle-mode)", "SUIL003")]
+    [TestCase("button (disabled: !args.pressed)", "SUIL003")]
+    public void Mistakes_In_The_Expressions_Are_Reported_At_The_Build(string suil, string id)
+    {
+        var result = Run(suil, View(string.Empty));
+
+        Assert.That(Ids(result), Is.EqualTo(new[] { id }), suil);
+    }
+
     // ---- Mistakes ----
 
     [TestCase("button (on-nope => @A)", "SUIL018")]

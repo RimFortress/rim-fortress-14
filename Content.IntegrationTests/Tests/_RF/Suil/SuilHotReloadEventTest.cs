@@ -196,6 +196,135 @@ public sealed class SuilHotReloadEventTest : GameTest
         Assert.That(((RfBoxContainer) view.GetChild(1)).MinWidth, Is.EqualTo(5f));
     }
 
+    // ---- Bool expressions ----
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Handler_Assigns_A_Property_From_The_Properties_Of_Other_Elements()
+    {
+        var view = new TestView();
+        var result = Reload(view, """
+            box {
+                button #submit (on-toggled => {
+                    #target (disabled: !#source.disabled, toggle-mode: #source.toggle-mode && args.pressed || #target.toggle-mode)
+                })
+                button #source
+                button #target
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        var source = (RfButton) view.GetChild(1);
+        var target = (RfButton) view.GetChild(2);
+
+        Toggle(view.Submit!, true);
+        Assert.That(target.Disabled, Is.True, "!false");
+        Assert.That(target.ToggleMode, Is.False);
+
+        source.Disabled = true;
+        source.ToggleMode = true;
+        Toggle(view.Submit!, true);
+        Assert.That(target.Disabled, Is.False, "!true");
+        Assert.That(target.ToggleMode, Is.True);
+
+        Toggle(view.Submit!, false);
+        Assert.That(target.ToggleMode, Is.True, "false || the old value of the target");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Variables_Of_The_File_Are_Folded_Before_The_Handler_Runs()
+    {
+        var view = new TestView();
+        Reload(view, """
+            let always = true;
+            let never = false;
+            box {
+                button #submit (on-pressed => { &(disabled: #peer.disabled && <always>, toggle-mode: #peer.disabled && <never> || <always>) })
+                button #peer
+            }
+            """);
+
+        ((RfButton) view.GetChild(1)).Disabled = true;
+        Press(view.Submit!);
+
+        Assert.That(view.Submit!.Disabled, Is.True);
+        Assert.That(view.Submit.ToggleMode, Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Set_Takes_Its_State_From_An_Expression()
+    {
+        var view = new TestView();
+        Reload(view, """
+            box {
+                button #submit (toggle-mode: true, on-toggled => { #panel (set .open !#menu.disabled && args.pressed, set :busy #menu.toggle-mode || false) })
+                button #menu
+                box #panel
+            }
+            """);
+
+        var menu = (RfButton) view.GetChild(1);
+        var panel = (RfBoxContainer) view.GetChild(2);
+
+        Toggle(view.Submit!, true);
+        Assert.That(panel.HasSuilStyleClass("open"), Is.True);
+        Assert.That(panel.HasSuilPseudoStyleClass("busy"), Is.False);
+
+        menu.Disabled = true;
+        menu.ToggleMode = true;
+        Toggle(view.Submit!, true);
+        Assert.That(panel.HasSuilStyleClass("open"), Is.False, "the menu is disabled");
+        Assert.That(panel.HasSuilPseudoStyleClass("busy"), Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Reference_May_Go_Through_The_Fields_Of_A_View_And_Name_The_Sender()
+    {
+        var view = new TestView();
+        Reload(view, """
+            box {
+                button #submit (on-pressed => { &(disabled: !#panel/header.disabled && !&.toggle-mode) })
+                test-inner #panel
+            }
+            """);
+
+        var header = ((TestInnerView) view.GetChild(1)).Header;
+
+        Press(view.Submit!);
+        Assert.That(view.Submit!.Disabled, Is.True);
+
+        header.Disabled = true;
+        Press(view.Submit);
+        Assert.That(view.Submit.Disabled, Is.False);
+    }
+
+    [TestCase("box { button #submit (on-pressed => { &(disabled: #peer.no-such) }) button #peer }", "no readable bool property")]
+    [TestCase("box { button #submit (on-pressed => { &(disabled: #peer.min-width) }) button #peer }", "no readable bool property")]
+    [TestCase("box { button #submit (on-pressed => { &(disabled: #nowhere.disabled) }) }", "no element with the id")]
+    [TestCase("box { button #submit (on-pressed => { &(min-width: !&.disabled) }) }", "bool property")]
+    [TestCase("box { button #submit (on-pressed => { &(no-such: !&.disabled) }) }", "no property")]
+    [TestCase("box { button #submit (on-pressed => { &(set .a #peer.nothing) }) button #peer }", "no readable bool property")]
+    [TestCase("box { button #submit (on-pressed => { &(disabled: args.nope) }) }", "args.nope")]
+    [RunOnSide(Side.Client)]
+    public void A_Mistake_In_An_Expression_Leaves_Everything_As_It_Was(string suil, string expected)
+    {
+        var view = new TestView();
+        Reload(view, "box { button #submit (on-pressed => @Refresh) }");
+        var submit = view.Submit!;
+
+        var result = Reload(view, suil);
+
+        Assert.That(result.Success, Is.False, suil);
+        Assert.That(string.Join("\n", result.Errors), Does.Contain(expected), suil);
+        Assert.That(view.Submit, Is.SameAs(submit));
+        Press(view.Submit!);
+        Assert.That(view.Calls, Is.EqualTo(new[] { "refresh" }));
+    }
+
     // ---- Reloading ----
 
     [Test]

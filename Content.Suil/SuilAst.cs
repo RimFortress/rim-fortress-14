@@ -281,9 +281,48 @@ public enum SuilStyleOp
 public sealed record SuilStyleRef(bool IsPseudo, SuilName Name);
 
 /// <summary>
-/// The state of <c>set</c>: a constant, or a member of the arguments of the event (<c>args.pressed</c>).
+/// The state of <c>set</c>: a bool expression, like <c>true</c>, <c>args.pressed</c> or <c>!#menu.visible</c>.
 /// </summary>
-public sealed record SuilStateValue(bool? Constant, string? ArgsMember);
+public sealed record SuilStateValue(SuilBoolNode Expression);
+
+// ---- Bool expressions ----
+
+/// <summary>
+/// A node of a bool expression: <c>!</c>, <c>&amp;&amp;</c> and <c>||</c> of <c>true</c>, <c>false</c>, the variables
+/// (<c>&lt;flag&gt;</c>) and, in the handlers of the events only, the bool properties of the elements.
+/// </summary>
+public abstract record SuilBoolNode;
+
+public sealed record SuilBoolConst(bool Value) : SuilBoolNode;
+
+/// <summary>
+/// <c>&lt;flag&gt;</c>: a variable that holds <c>true</c> or <c>false</c>. It is replaced when the file is expanded.
+/// </summary>
+public sealed record SuilBoolVariable(string Name, SuilPosition Position) : SuilBoolNode;
+
+public sealed record SuilBoolNot(SuilBoolNode Operand) : SuilBoolNode;
+
+public sealed record SuilBoolAnd(SuilBoolNode Left, SuilBoolNode Right) : SuilBoolNode;
+
+public sealed record SuilBoolOr(SuilBoolNode Left, SuilBoolNode Right) : SuilBoolNode;
+
+/// <summary>
+/// <c>#menu/header.visible</c> or <c>&amp;.disabled</c>: a bool property of an element, read when the handler runs.
+/// </summary>
+/// <param name="Target">The element, the same way a statement names it.</param>
+/// <param name="Property">The property as written (kebab-case).</param>
+public sealed record SuilBoolReference(SuilTarget Target, string Property) : SuilBoolNode;
+
+/// <summary>
+/// <c>args.pressed</c>: a bool member of the arguments of the event.
+/// </summary>
+public sealed record SuilBoolArgs(string Member, SuilPosition Position) : SuilBoolNode;
+
+/// <summary>
+/// A bool expression as the value of a property. When the file is expanded the variables are replaced and the constants
+/// are folded: what stays an expression is only what depends on the elements, which the handlers of the events can use.
+/// </summary>
+public sealed record SuilBoolValue(SuilBoolNode Root, SuilPosition Position) : ISuilValue;
 
 /// <summary>
 /// <c>add .open :loading</c>, <c>remove .closed</c>, <c>set .open true</c>.

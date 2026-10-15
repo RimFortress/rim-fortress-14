@@ -258,12 +258,19 @@ internal sealed partial class SuilViewEmitter(
             return Fail("expected a string, an ident or a $localization key");
         }
 
+        if (values.Any(v => v is SuilBoolValue) && target.SpecialType != SpecialType.System_Boolean)
+            return Fail("a bool expression can only be assigned to a bool property");
+
         if (target.SpecialType == SpecialType.System_Boolean)
         {
             if (values.Count == 1 && values[0] is SuilIdent { Value: "true" or "false" } boolean)
                 return boolean.Value;
 
-            return Fail("expected true or false");
+            // `!#menu.visible && args.pressed`: read when the event is raised
+            if (values.Count == 1 && values[0] is SuilBoolValue expression && _boolContext != null)
+                return _boolContext(expression.Root);
+
+            return Fail("expected true or false, or a bool expression in a handler of an event");
         }
 
         if (IsNumeric(target.SpecialType, out var isIntegral))

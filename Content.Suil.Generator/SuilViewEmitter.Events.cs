@@ -14,6 +14,9 @@ internal sealed partial class SuilViewEmitter
     private string? _rootId;
     private int _handlerCounter;
 
+    // How a bool expression becomes C# in the handler that is being written; null outside of one.
+    private Func<SuilBoolNode, string>? _boolContext;
+
     private sealed record PendingHandlers(string Variable, INamedTypeSymbol Type, SuilElement Element);
 
     private void EmitHandlers()
@@ -52,10 +55,14 @@ internal sealed partial class SuilViewEmitter
 
         var lambda = new StringBuilder();
 
+        _boolContext = node => BoolOf(node, pending, argsType);
+
         foreach (var statement in handler.Statements)
         {
             EmitStatement(lambda, "                ", statement, pending, argsType);
         }
+
+        _boolContext = null;
 
         _body.AppendLine($"            {delegateName} {name} = {(argsType == null ? "()" : "__args")} =>");
         _body.AppendLine("            {");
@@ -109,7 +116,7 @@ internal sealed partial class SuilViewEmitter
                             sb.AppendLine($"{indent}{AssignmentOf(expression, type, property.Property)}");
                             break;
                         case SuilStyleItem style:
-                            EmitStyle(sb, indent, expression, type, style, argsType);
+                            EmitStyle(sb, indent, expression, type, style, pending, argsType);
                             break;
                     }
                 }
@@ -255,7 +262,14 @@ internal sealed partial class SuilViewEmitter
 
     // ---- Classes ----
 
-    private void EmitStyle(StringBuilder sb, string indent, string expression, INamedTypeSymbol type, SuilStyleItem style, ITypeSymbol? argsType)
+    private void EmitStyle(
+        StringBuilder sb,
+        string indent,
+        string expression,
+        INamedTypeSymbol type,
+        SuilStyleItem style,
+        PendingHandlers pending,
+        ITypeSymbol? argsType)
     {
         var isSuil = suilControl != null && SuilTagRegistry.Derives(type, suilControl);
 
@@ -295,21 +309,19 @@ internal sealed partial class SuilViewEmitter
                 break;
             default:
             {
-                var state = style.State!;
+                var expression2 = style.State!.Expression;
 
-                if (state.Constant is { } constant)
+                if (expression2 is SuilBoolConst constant)
                 {
                     foreach (var reference in style.Refs)
                     {
-                        sb.AppendLine($"{indent}{Change(reference, constant)}");
+                        sb.AppendLine($"{indent}{Change(reference, constant.Value)}");
                     }
 
                     break;
                 }
 
-                var member = ArgsMember(argsType, state.ArgsMember!, style.Position);
-
-                sb.AppendLine($"{indent}if (__args.{member})");
+                sb.AppendLine($"{indent}if ({BoolOf(expression2, pending, argsType)})");
                 sb.AppendLine($"{indent}{{");
 
                 foreach (var reference in style.Refs)
@@ -330,6 +342,74 @@ internal sealed partial class SuilViewEmitter
                 break;
             }
         }
+    }
+
+    // ---- Bool expressions ----
+
+    /// <summary>
+    /// The C# expression of a bool expression of a handler: the elements and the arguments are read where the handler runs.
+    /// </summary>
+    private string BoolOf(SuilBoolNode node, PendingHandlers pending, ITypeSymbol? argsType)
+    {
+        switch (node)
+        {
+            case SuilBoolConst constant:
+                return constant.Value ? "true" : "false";
+            case SuilBoolNot not:
+                return $"!({BoolOf(not.Operand, pending, argsType)})";
+            case SuilBoolAnd and:
+                return $"({BoolOf(and.Left, pending, argsType)} && {BoolOf(and.Right, pending, argsType)})";
+            case SuilBoolOr or:
+                return $"({BoolOf(or.Left, pending, argsType)} || {BoolOf(or.Right, pending, argsType)})";
+            case SuilBoolArgs args:
+                return $"__args.{ArgsMember(argsType, args.Member, args.Position)}";
+            case SuilBoolReference reference:
+            {
+                var (expression, type) = ResolveTarget(reference.Target, pending);
+                var member = FindReadableBool(type, reference.Property);
+
+                if (member == null)
+                {
+                    throw new SuilGenerationException(SuilDiagnostics.BadStatement, reference.Target.Position,
+                        $"'{type.ToDisplayString()}' has no public bool property '{reference.Property}' to read");
+                }
+
+                return $"{expression}.{member}";
+            }
+            default:
+                throw new SuilGenerationException(SuilDiagnostics.BadStatement, default,
+                    "a variable is left in a bool expression: it must hold true or false");
+        }
+    }
+
+    /// <summary>
+    /// The public bool property or field whose name in kebab-case is the one written, of the type or its bases.
+    /// </summary>
+    private static string? FindReadableBool(INamedTypeSymbol type, string written)
+    {
+        for (INamedTypeSymbol? current = type; current != null; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (member.IsStatic || member.DeclaredAccessibility != Accessibility.Public
+                    || SuilNaming.ToKebab(member.Name) != written)
+                {
+                    continue;
+                }
+
+                var memberType = member switch
+                {
+                    IPropertySymbol { IsIndexer: false, GetMethod: { DeclaredAccessibility: Accessibility.Public } } p => p.Type,
+                    IFieldSymbol f => f.Type,
+                    _ => null,
+                };
+
+                if (memberType?.SpecialType == SpecialType.System_Boolean)
+                    return member.Name;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

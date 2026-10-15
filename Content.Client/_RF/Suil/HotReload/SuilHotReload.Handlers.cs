@@ -27,12 +27,23 @@ public sealed partial class SuilHotReload
     /// <param name="Raw">Converted when the handler runs, for a target that is reached through the fields of a view.</param>
     private sealed record PlannedAssign(List<PlannedProperty>? Properties, List<SuilProperty>? Raw) : PlannedItem;
 
-    /// <param name="State">What <c>set</c> reads from the arguments of the event, if it does.</param>
+    /// <param name="Condition">What <c>set</c> asks: the state to put the classes in.</param>
     private sealed record PlannedStyle(
         SuilStyleOp Op,
         List<(bool IsPseudo, string Name)> Refs,
-        bool? Constant,
-        Func<object, bool>? State) : PlannedItem;
+        Func<EvalContext, bool>? Condition) : PlannedItem;
+
+    /// <summary>
+    /// <c>visible: !#menu.visible</c>: the value of a bool property is worked out when the handler runs.
+    /// </summary>
+    /// <param name="Accessor">The property, if the type of the target is known; otherwise it is found by the control.</param>
+    private sealed record PlannedAssignBool(string Name, SuilStyleAccessor? Accessor, Func<EvalContext, bool> Condition)
+        : PlannedItem;
+
+    /// <summary>
+    /// What a bool expression needs to be worked out when an event is raised.
+    /// </summary>
+    private readonly record struct EvalContext(ViewState State, Control Sender, object? Argument);
 
     private sealed record PlannedTarget(bool Sender, string? Id, IReadOnlyList<string> Path);
 
@@ -130,6 +141,34 @@ public sealed partial class SuilHotReload
                 {
                     switch (item)
                     {
+                        case SuilPropertyItem { Property.Value: [SuilBoolValue expression] } property:
+                        {
+                            var condition = CompileBool(expression.Root, element, evt, ids, errors);
+                            SuilStyleAccessor? boolAccessor = null;
+
+                            if (type != null)
+                            {
+                                if (!_suil.TryGetPropertyAccessor(type, property.Property.Name, out var found))
+                                {
+                                    errors.Add(At(property.Position, $"{type.Name} has no property '{property.Property.Name}'"));
+                                    break;
+                                }
+
+                                if ((Nullable.GetUnderlyingType(found.Value.ClrType) ?? found.Value.ClrType) != typeof(bool))
+                                {
+                                    errors.Add(At(property.Position,
+                                        $"'{property.Property.Name}' is {found.Value.ClrType.Name}: a bool expression can only be assigned to a bool property"));
+                                    break;
+                                }
+
+                                boolAccessor = found.Value;
+                            }
+
+                            if (condition != null)
+                                items.Add(new PlannedAssignBool(property.Property.Name, boolAccessor, condition));
+
+                            break;
+                        }
                         case SuilPropertyItem property when type == null:
                             items.Add(new PlannedAssign(null, new List<SuilProperty> { property.Property }));
                             break;
@@ -151,7 +190,7 @@ public sealed partial class SuilHotReload
                                 null));
                             break;
                         case SuilStyleItem style:
-                            var planned = PlanStyle(style, type, evt, errors);
+                            var planned = PlanStyle(style, type, element, evt, ids, errors);
 
                             if (planned != null)
                                 items.Add(planned);
@@ -167,7 +206,13 @@ public sealed partial class SuilHotReload
         }
     }
 
-    private PlannedStyle? PlanStyle(SuilStyleItem style, Type? type, SuilEventAccessor evt, List<string> errors)
+    private PlannedStyle? PlanStyle(
+        SuilStyleItem style,
+        Type? type,
+        PlannedElement owner,
+        SuilEventAccessor evt,
+        Dictionary<string, Type> ids,
+        List<string> errors)
     {
         var refs = style.Refs.Select(r => (r.IsPseudo, r.Name.ToString())).ToList();
 
@@ -177,20 +222,130 @@ public sealed partial class SuilHotReload
             return null;
         }
 
-        Func<object, bool>? flag = null;
+        Func<EvalContext, bool>? condition = null;
 
-        if (style.State?.ArgsMember is { } member)
+        if (style.State != null)
         {
-            if (evt.ArgumentType == null || !_suil.Events.TryGetFlag(evt.ArgumentType, member, out flag))
-            {
-                errors.Add(At(style.Position,
-                    $"'args.{member}': {evt.Name} gives " +
-                    (evt.ArgumentType == null ? "no arguments" : $"{evt.ArgumentType.Name}, which has no public bool member '{member}'")));
+            condition = CompileBool(style.State.Expression, owner, evt, ids, errors);
+
+            if (condition == null)
                 return null;
-            }
         }
 
-        return new PlannedStyle(style.Op, refs, style.State?.Constant, flag);
+        return new PlannedStyle(style.Op, refs, condition);
+    }
+
+    // ---- Bool expressions ----
+
+    /// <summary>
+    /// Turns a bool expression into a function that works it out when the event is raised. Everything it names is checked
+    /// here: the elements, their properties, the arguments of the event. <c>null</c> if something is wrong.
+    /// </summary>
+    private Func<EvalContext, bool>? CompileBool(
+        SuilBoolNode node,
+        PlannedElement owner,
+        SuilEventAccessor evt,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        switch (node)
+        {
+            case SuilBoolConst constant:
+            {
+                var value = constant.Value;
+                return _ => value;
+            }
+            case SuilBoolNot not:
+            {
+                var operand = CompileBool(not.Operand, owner, evt, ids, errors);
+                return operand == null ? null : context => !operand(context);
+            }
+            case SuilBoolAnd and:
+            {
+                var left = CompileBool(and.Left, owner, evt, ids, errors);
+                var right = CompileBool(and.Right, owner, evt, ids, errors);
+                return left == null || right == null ? null : context => left(context) && right(context);
+            }
+            case SuilBoolOr or:
+            {
+                var left = CompileBool(or.Left, owner, evt, ids, errors);
+                var right = CompileBool(or.Right, owner, evt, ids, errors);
+                return left == null || right == null ? null : context => left(context) || right(context);
+            }
+            case SuilBoolArgs args:
+            {
+                if (evt.ArgumentType == null)
+                {
+                    errors.Add(At(args.Position, $"'args.{args.Member}': {evt.Name} gives no arguments"));
+                    return null;
+                }
+
+                if (!_suil.Events.TryGetFlag(evt.ArgumentType, args.Member, out var reader))
+                {
+                    errors.Add(At(args.Position,
+                        $"'args.{args.Member}': {evt.ArgumentType.Name} has no public bool member '{args.Member}'"));
+                    return null;
+                }
+
+                return context => context.Argument != null && reader(context.Argument);
+            }
+            case SuilBoolReference reference:
+                return CompileReference(reference, owner, ids, errors);
+            default:
+                errors.Add("a variable is left in a bool expression: it must hold true or false");
+                return null;
+        }
+    }
+
+    private Func<EvalContext, bool>? CompileReference(
+        SuilBoolReference reference,
+        PlannedElement owner,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        if (!PlanTarget(reference.Target, owner, ids, errors, out var target, out var type))
+            return null;
+
+        var property = reference.Property;
+
+        // The type is known for an element of this file; behind the fields of a view the property is found by the control.
+        if (type == null)
+        {
+            return context =>
+            {
+                var control = Resolve(context.State, target, context.Sender);
+                return control != null && ReadBool(control, property);
+            };
+        }
+
+        if (!_suil.TryGetPropertyAccessor(type, property, out var accessor)
+            || accessor.Value.Getter == null
+            || accessor.Value.ClrType != typeof(bool))
+        {
+            errors.Add(At(reference.Target.Position, $"{type.Name} has no readable bool property '{property}'"));
+            return null;
+        }
+
+        var getter = accessor.Value.Getter;
+
+        return context =>
+        {
+            var control = Resolve(context.State, target, context.Sender);
+            return control != null && getter(control) is true;
+        };
+    }
+
+    private bool ReadBool(Control control, string property)
+    {
+        if (_suil.TryGetPropertyAccessor(control.GetType(), property, out var accessor)
+            && accessor.Value.Getter is { } getter
+            && accessor.Value.ClrType == typeof(bool))
+        {
+            return getter(control) is true;
+        }
+
+        _sawmill.Error($"{control.GetType().Name} has no readable bool property '{property}'");
+        return false;
     }
 
     /// <summary>
@@ -240,11 +395,13 @@ public sealed partial class SuilHotReload
 
     private void Run(ISuilView view, ViewState state, PlannedHandler handler, Control sender, object? argument)
     {
+        var context = new EvalContext(state, sender, argument);
+
         foreach (var statement in handler.Statements)
         {
             try
             {
-                RunStatement(view, state, statement, sender, argument);
+                RunStatement(view, context, statement);
             }
             catch (Exception e)
             {
@@ -253,16 +410,16 @@ public sealed partial class SuilHotReload
         }
     }
 
-    private void RunStatement(ISuilView view, ViewState state, PlannedStatement statement, Control sender, object? argument)
+    private void RunStatement(ISuilView view, EvalContext context, PlannedStatement statement)
     {
         switch (statement)
         {
             case PlannedCall call:
-                view.SuilInvoke(call.Method, call.PassArgument ? argument : null);
+                view.SuilInvoke(call.Method, call.PassArgument ? context.Argument : null);
                 break;
             case PlannedTargetStatement onTarget:
             {
-                var target = Resolve(state, onTarget.Target, sender);
+                var target = Resolve(context.State, onTarget.Target, context.Sender);
 
                 if (target == null)
                 {
@@ -272,7 +429,7 @@ public sealed partial class SuilHotReload
 
                 foreach (var item in onTarget.Items)
                 {
-                    RunItem(view, item, target, argument);
+                    RunItem(view, item, target, context);
                 }
 
                 break;
@@ -280,7 +437,7 @@ public sealed partial class SuilHotReload
         }
     }
 
-    private void RunItem(ISuilView view, PlannedItem item, Control target, object? argument)
+    private void RunItem(ISuilView view, PlannedItem item, Control target, EvalContext context)
     {
         switch (item)
         {
@@ -306,20 +463,44 @@ public sealed partial class SuilHotReload
                 }
 
                 break;
+            case PlannedAssignBool assign:
+            {
+                var accessor = assign.Accessor;
+
+                if (accessor == null)
+                {
+                    if (!_suil.TryGetPropertyAccessor(target.GetType(), assign.Name, out var found)
+                        || (Nullable.GetUnderlyingType(found.Value.ClrType) ?? found.Value.ClrType) != typeof(bool))
+                    {
+                        _sawmill.Error($"{view.SuilPath}: {target.GetType().Name} has no bool property '{assign.Name}' to assign");
+                        break;
+                    }
+
+                    accessor = found.Value;
+                }
+
+                accessor.Value.Setter(target, assign.Condition(context));
+                break;
+            }
             case PlannedStyle style:
+            {
+                // `set` asks once for all of its classes
+                var state = style.Op == SuilStyleOp.Set && style.Condition!(context);
+
                 foreach (var (isPseudo, name) in style.Refs)
                 {
                     var on = style.Op switch
                     {
                         SuilStyleOp.Add => true,
                         SuilStyleOp.Remove => false,
-                        _ => style.Constant ?? style.State!(argument!),
+                        _ => state,
                     };
 
                     ChangeClass(view, target, isPseudo, name, on);
                 }
 
                 break;
+            }
         }
     }
 

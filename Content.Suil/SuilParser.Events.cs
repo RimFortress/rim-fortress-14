@@ -195,7 +195,7 @@ public static partial class SuilParser
                             "a statement changes the property for good, '?' is only for the properties of an element");
                     }
 
-                    value = ConsumeValueList(ref stream, context);
+                    value = ConsumeValueOrBool(ref stream, context, references: true);
                 }
 
                 items.Add(new SuilPropertyItem(new SuilProperty(name.Value, value, false, position)));
@@ -283,27 +283,24 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// The state of <c>set</c>: <c>true</c>, <c>false</c> or <c>args.member</c>.
+    /// The state of <c>set</c>: a bool expression, <c>true</c>, <c>args.pressed</c>, <c>!#menu.visible &amp;&amp; args.pressed</c>.
     /// </summary>
     private static SuilStateValue ConsumeState(ref SuilTokenStream stream, string context)
     {
         stream.SkipWhitespace();
 
-        switch (stream.ConsumeNext())
-        {
-            case IdentToken { Value: "true" }:
-                return new SuilStateValue(true, null);
-            case IdentToken { Value: "false" }:
-                return new SuilStateValue(false, null);
-            case IdentToken { Value: "args" }:
-                if (stream.ConsumeNext() is not DelimToken { CodePoint: '.' } || stream.ConsumeNext() is not IdentToken member)
-                    throw ErrorAtCurrent(ref stream, context, "expected a member of the arguments of the event after 'args', like 'args.pressed'");
+        if (AtEndOfValue(stream.PeekNext(), true))
+            throw ErrorAtNext(ref stream, context, "'set' needs a state: a bool expression like 'true', 'false' or 'args.pressed'");
 
-                return new SuilStateValue(null, member.Value);
-            default:
-                throw ErrorAtCurrent(ref stream,
-                    context,
-                    $"'set' needs a state: 'true', 'false' or 'args.member', not {Describe(stream.Current)}");
+        var expression = ConsumeBool(ref stream, context, references: true);
+        stream.SkipWhitespace();
+
+        if (!AtEndOfValue(stream.PeekNext(), true))
+        {
+            throw ErrorAtNext(ref stream, context,
+                $"expected '&&', '||' or the end of the state, not {Describe(stream.PeekNext())}");
         }
+
+        return new SuilStateValue(expression);
     }
 }
