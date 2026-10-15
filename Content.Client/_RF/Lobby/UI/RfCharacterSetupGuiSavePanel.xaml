@@ -2,13 +2,13 @@
                xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
                Title="{Loc 'character-setup-gui-save-panel-title'}"
                Resizable="False">
-    <!-- The window itself has no CSS version yet, the content is styled by Resources/CSS/_RF/lobby/ -->
-    <controls:CssBoxContainer FlexDirection="Row" MinSize="200 40" CssStyleIdentifier="save-panel">
-        <controls:CssButton Name="SaveButton" Access="Public" Text="{Loc 'character-setup-gui-save-panel-save'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="NoSaveButton" Access="Public" Text="{Loc 'character-setup-gui-save-panel-nosave'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="CancelButton" Access="Public" Text="{Loc 'character-setup-gui-save-panel-cancel'}"
-                            CssStyleClasses="font-big" />
-    </controls:CssBoxContainer>
+    <!-- The window itself has no SUIL version yet, the content is styled by Resources/UI/_RF/lobby/ -->
+    <controls:RfBoxContainer FlexDirection="Row" MinSize="200 40" SuilStyleIdentifier="save-panel">
+        <controls:RfButton Name="SaveButton" Access="Public" Text="{Loc 'character-setup-gui-save-panel-save'}"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="NoSaveButton" Access="Public" Text="{Loc 'character-setup-gui-save-panel-nosave'}"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="CancelButton" Access="Public" Text="{Loc 'character-setup-gui-save-panel-cancel'}"
+                            SuilStyleClasses="font-big" />
+    </controls:RfBoxContainer>
 </DefaultWindow>

@@ -10,7 +10,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Client._RF.Lobby.UI;
 
 [GenerateTypedNameReferences]
-public sealed partial class RfExpeditionEquipmentEditor : CssBoxContainer
+public sealed partial class RfExpeditionEquipmentEditor : RfBoxContainer
 {
     [Dependency] private IPrototypeManager _protoManager = default!;
     [Dependency] private IPlayerEquipmentManager _equipment = default!;
@@ -63,7 +63,7 @@ public sealed partial class RfExpeditionEquipmentEditor : CssBoxContainer
         CategoryBox.RemoveAllChildren();
 
         var prototypes = _protoManager.EnumeratePrototypes<ExpeditionEquipmentPrototype>().ToList();
-        var categoryGroup = new CssButtonGroup();
+        var categoryGroup = new RfButtonGroup();
 
         if (_selectedCategory != null && !prototypes.Contains(_selectedCategory))
             _selectedCategory = null;
@@ -78,7 +78,7 @@ public sealed partial class RfExpeditionEquipmentEditor : CssBoxContainer
                 _costs.Add(entProto, cost);
             }
 
-            var categoryButton = new CssButton
+            var categoryButton = new RfButton
             {
                 Group = categoryGroup,
                 Text = CategoryPoints(proto) is var points && points != 0
@@ -92,7 +92,7 @@ public sealed partial class RfExpeditionEquipmentEditor : CssBoxContainer
                 BuildItems();
             };
 
-            categoryButton.AddCssStyleClass(CssClass.FontBig);
+            categoryButton.AddSuilStyleClass(SuilClass.FontBig);
             CategoryBox.AddChild(categoryButton);
         }
 

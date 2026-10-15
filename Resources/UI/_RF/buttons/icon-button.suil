@@ -2,7 +2,7 @@
 
 /*
  * IconButton: the button (any shape: square, open-both) with the icon in its center. The icon is a child
- * CssControl with the `icon` class and the texture (background-image) set per button, scaled to fit (as KeepAspectCentered); it is gold and follows the
+ * UiElement with the `icon` class and the texture (background-image) set per button, scaled to fit (as KeepAspectCentered); it is gold and follows the
  * state of the button, `gold` swaps the colors as in the old control.
  */
 .icon-button > .icon {

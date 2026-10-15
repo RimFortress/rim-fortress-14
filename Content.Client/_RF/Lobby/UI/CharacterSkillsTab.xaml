@@ -1,19 +1,19 @@
 <ui:CharacterSkillsTab
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     FlexDirection="Column">
-    <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="skills-scroll">
-        <controls:CssBoxContainer FlexDirection="Column">
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="skills-header">
-                <css:CssControl Name="LeftLevels" CssStyleIdentifier="skills-left-levels" />
-                <css:CssControl Name="LeftPoints" />
-            </controls:CssBoxContainer>
+    <controls:RfScrollContainer SuilStyleClasses="scroll-vertical" SuilStyleIdentifier="skills-scroll">
+        <controls:RfBoxContainer FlexDirection="Column">
+            <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="skills-header">
+                <suil:UiElement Name="LeftLevels" SuilStyleIdentifier="skills-left-levels" />
+                <suil:UiElement Name="LeftPoints" />
+            </controls:RfBoxContainer>
 
-            <css:CssControl CssStyleClasses="low-divider-dark" CssStyleIdentifier="skills-divider" />
+            <suil:UiElement SuilStyleClasses="low-divider-dark" SuilStyleIdentifier="skills-divider" />
 
-            <controls:CssBoxContainer Name="Container" FlexDirection="Column" />
-        </controls:CssBoxContainer>
-    </controls:CssScrollContainer>
+            <controls:RfBoxContainer Name="Container" FlexDirection="Column" />
+        </controls:RfBoxContainer>
+    </controls:RfScrollContainer>
 </ui:CharacterSkillsTab>

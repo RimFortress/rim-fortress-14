@@ -1,20 +1,20 @@
-<controls:CssBoxContainer
+<controls:RfBoxContainer
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     FlexDirection="Column" MouseFilter="Pass">
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="marking-item-row">
-        <controls:CssLayeredTexture Name="MarkingTexture" SetSize="64 64" MouseFilter="Ignore" AlignSelf="Center"
-                                    CssStyleClasses="panel-dark-bordered marking-preview" />
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="marking-item-row">
+        <controls:RfLayeredTexture Name="MarkingTexture" SetSize="64 64" MouseFilter="Ignore" AlignSelf="Center"
+                                    SuilStyleClasses="panel-dark-bordered marking-preview" />
 
-        <controls:CssButton Name="SelectButton" ToggleMode="True" FlexGrow="1" />
+        <controls:RfButton Name="SelectButton" ToggleMode="True" FlexGrow="1" />
 
-        <controls:CssButton Name="ColorsButton" ToggleMode="True" Visible="False" SetSize="36 36"
-                            CssStyleClasses="icon-button square">
-            <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-palette" />
-        </controls:CssButton>
-    </controls:CssBoxContainer>
+        <controls:RfButton Name="ColorsButton" ToggleMode="True" Visible="False" SetSize="36 36"
+                            SuilStyleClasses="icon-button square">
+            <suil:UiElement MouseFilter="Ignore" SuilStyleClasses="icon icon-palette" />
+        </controls:RfButton>
+    </controls:RfBoxContainer>
 
-    <controls:CssBoxContainer Name="ColorsContainer" Visible="False" FlexDirection="Column"
-                              CssStyleClasses="marking-colors" />
-</controls:CssBoxContainer>
+    <controls:RfBoxContainer Name="ColorsContainer" Visible="False" FlexDirection="Column"
+                              SuilStyleClasses="marking-colors" />
+</controls:RfBoxContainer>

@@ -10,7 +10,7 @@ namespace Content.Client._RF.Lobby.UI;
 /// Holds character data on the side of the setup GUI.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class RfCharacterPickerButton : CssButton
+public sealed partial class RfCharacterPickerButton : RfButton
 {
     [Dependency] private IEntityManager _entManager = default!;
 
@@ -21,7 +21,7 @@ public sealed partial class RfCharacterPickerButton : CssButton
     /// </summary>
     public event Action? OnDeletePressed;
 
-    public RfCharacterPickerButton(CssButtonGroup group, HumanoidCharacterProfile profile, bool isSelected)
+    public RfCharacterPickerButton(RfButtonGroup group, HumanoidCharacterProfile profile, bool isSelected)
     {
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);

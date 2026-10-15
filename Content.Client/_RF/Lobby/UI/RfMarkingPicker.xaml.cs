@@ -7,16 +7,16 @@ using Robust.Shared.Timing;
 namespace Content.Client._RF.Lobby.UI;
 
 /// <summary>
-/// The picker of the markings of a character, the <see cref="CssBoxContainer"/> version of
+/// The picker of the markings of a character, the <see cref="RfBoxContainer"/> version of
 /// <see cref="MarkingPicker"/>: a tab for every organ that has markings, in every one the
 /// <see cref="RfOrganMarkingPicker"/>.
 /// </summary>
 /// <remarks>
-/// The tabs are <see cref="CssTabContainer"/>s (<c>.marking-tabs</c>), the layout is in <c>RfMarkingPicker.xaml</c>,
+/// The tabs are <see cref="RfTabContainer"/>s (<c>.marking-tabs</c>), the layout is in <c>RfMarkingPicker.xaml</c>,
 /// the styles are in <c>Resources/UI/_RF/lobby/markings.suil</c>.
 /// </remarks>
 [GenerateTypedNameReferences]
-public sealed partial class RfMarkingPicker : CssBoxContainer
+public sealed partial class RfMarkingPicker : RfBoxContainer
 {
     private MarkingsViewModel? _markingsModel;
     private bool _dirty = true;

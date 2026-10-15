@@ -10,7 +10,7 @@
                       PlaceHolder="{Loc 'world-marker-user-interface-text-placeholder'}"/>
             <PanelContainer Name="ColorPanel" SetSize="32 32" HorizontalAlignment="Right"/>
         </BoxContainer>
-        <rf:CssColorSelectorSliders Name="ColorSelectors" SelectorType="Rgb" IsAlphaVisible="False"/>
+        <rf:RfColorSelectorSliders Name="ColorSelectors" SelectorType="Rgb" IsAlphaVisible="False"/>
         <Button Name="SubmitButton" Text="{Loc 'world-marker-user-interface-submit'}" StyleClasses="ButtonColorGreen"/>
     </BoxContainer>
 </controls:FancyWindow>

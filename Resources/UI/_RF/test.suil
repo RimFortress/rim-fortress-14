@@ -1,4 +1,4 @@
-test-css-window-control {
+test-suil-window-control {
     background-color: white;
     margin: 10px 20px;
     background-image: texture("/Textures/_RF/Logo/logo.png");
@@ -27,11 +27,11 @@ test-css-window-control {
      */
 }
 
-test-css-window-control:hover {
+test-suil-window-control:hover {
     background-color: orange;
     margin: 30px;
 }
 
-test-css-window-control:red {
+test-suil-window-control:red {
     background-color: red;
 }

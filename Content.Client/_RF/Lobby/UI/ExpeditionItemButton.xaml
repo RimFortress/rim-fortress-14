@@ -1,20 +1,20 @@
-<controls:CssBoxContainer
+<controls:RfBoxContainer
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     FlexDirection="Row"
-    CssStyleClasses="panel-dark-bordered">
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="panel-light-bordered">
+    SuilStyleClasses="panel-dark-bordered">
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="panel-light-bordered">
         <EntityPrototypeView Name="View" Scale="2 2" SetSize="36 36" />
-    </controls:CssBoxContainer>
+    </controls:RfBoxContainer>
 
-    <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="expedition-item-divider" />
+    <suil:UiElement SuilStyleClasses="low-divider" SuilStyleIdentifier="expedition-item-divider" />
 
-    <css:CssControl Name="NameLabel" MouseFilter="Pass"
-                    CssStyleClasses="placeholder-text" CssStyleIdentifier="expedition-item-name" />
-    <css:CssControl Name="CostLabel"
-                    CssStyleClasses="placeholder-text" CssStyleIdentifier="expedition-item-cost" />
+    <suil:UiElement Name="NameLabel" MouseFilter="Pass"
+                    SuilStyleClasses="placeholder-text" SuilStyleIdentifier="expedition-item-name" />
+    <suil:UiElement Name="CostLabel"
+                    SuilStyleClasses="placeholder-text" SuilStyleIdentifier="expedition-item-cost" />
 
-    <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="expedition-item-divider" />
+    <suil:UiElement SuilStyleClasses="low-divider" SuilStyleIdentifier="expedition-item-divider" />
     <controls:IntCounter Name="Counter" Access="Public" MinValue="0" />
-</controls:CssBoxContainer>
+</controls:RfBoxContainer>

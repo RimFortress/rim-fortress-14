@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using System.Numerics;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
@@ -33,7 +33,7 @@ public sealed class RfStyleBoxTexture : RfStyleBox
     public ShaderInstance TilingShader { get; set; }
 
     /// <summary>
-    /// Mirrors CSS background-size. Auto = native size (TextureScale-based,
+    /// Mirrors SUIL background-size. Auto = native size (TextureScale-based,
     /// current default). Cover/Contain preserve aspect ratio relative to the
     /// drawn area. Explicit sets width/height directly (px or % of the area).
     /// </summary>
@@ -306,7 +306,7 @@ public sealed class RfStyleBoxTexture : RfStyleBox
                 originBox: bottomBox);
         }
 
-        // Центр — единственное место, напрямую соответствующее обычному CSS
+        // Центр — единственное место, напрямую соответствующее обычному SUIL
         // background-image без 9-patch (при PatchMargin=0 центр совпадает со
         // всей областью заливки). Здесь background-position/size/фаза тайлинга
         // обязаны резолвиться от originBox, а не от локального centerBox.
@@ -336,7 +336,7 @@ public sealed class RfStyleBoxTexture : RfStyleBox
     /// Draws one patch (edge/center) with the given fill mode.
     /// <paramref name="originBox"/> is where position/size percentages and
     /// tiling phase are resolved from — pass the patch's own <paramref name="area"/>
-    /// for RF's 9-patch edge strips (self-contained tiling, no CSS equivalent),
+    /// for RF's 9-patch edge strips (self-contained tiling, no SUIL equivalent),
     /// or the real background-origin box for the center patch.
     /// </summary>
     private void DrawStretchingArea(DrawingHandleScreen handle, UIBox2 area, UIBox2 texCoords, float uiScale, UIBox2 originBox)

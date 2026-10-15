@@ -41,11 +41,11 @@ rf-expedition-equipment-editor {
     gap: 2px;
 }
 
-#equipment-search-row > css-line-edit {
+#equipment-search-row > rf-line-edit {
     margin: 4px 0 3px 4px;
 }
 
-#equipment-search-row > css-button {
+#equipment-search-row > rf-button {
     margin: 2px;
 }
 
@@ -84,11 +84,11 @@ expedition-item-button {
 
 /* ---------- IntCounter ---------- */
 
-int-counter > css-button {
+int-counter > rf-button {
     margin: 2px 1px;
 }
 
-int-counter > css-line-edit {
+int-counter > rf-line-edit {
     min-width: 50px;
     margin: 5px 0;
 }

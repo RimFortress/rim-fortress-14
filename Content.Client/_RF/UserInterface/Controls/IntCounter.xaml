@@ -2,8 +2,8 @@
     xmlns="https://spacestation14.io"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     FlexDirection="Row">
-    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
-    <controls:CssButton Name="Plus" Text="+" CssStyleClasses="open-right" />
-    <controls:CssLineEdit Name="CountLine" />
-    <controls:CssButton Name="Minus" Text="–" CssStyleClasses="open-left" />
+    <!-- RimFortress: styled by Resources/UI/_RF/lobby/ -->
+    <controls:RfButton Name="Plus" Text="+" SuilStyleClasses="open-right" />
+    <controls:RfLineEdit Name="CountLine" />
+    <controls:RfButton Name="Minus" Text="–" SuilStyleClasses="open-left" />
 </controls:IntCounter>

@@ -1,28 +1,28 @@
-<controls:CssButton
+<controls:RfButton
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
-    <controls:CssBoxContainer FlexDirection="Row" MouseFilter="Ignore" CssStyleIdentifier="picker-row">
-        <controls:CssBoxContainer FlexDirection="Column" MouseFilter="Ignore">
-            <controls:CssButton Name="Up" Access="Public" Disabled="True" SetSize="36 36"
-                                CssStyleClasses="icon-button open-both">
-                <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-sort-up" />
-            </controls:CssButton>
-            <css:CssControl CssStyleClasses="flex-fill" />
-            <controls:CssButton Name="Down" Access="Public" Disabled="True" SetSize="36 36"
-                                CssStyleClasses="icon-button open-both">
-                <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-sort-down" />
-            </controls:CssButton>
-        </controls:CssBoxContainer>
+    <controls:RfBoxContainer FlexDirection="Row" MouseFilter="Ignore" SuilStyleIdentifier="picker-row">
+        <controls:RfBoxContainer FlexDirection="Column" MouseFilter="Ignore">
+            <controls:RfButton Name="Up" Access="Public" Disabled="True" SetSize="36 36"
+                                SuilStyleClasses="icon-button open-both">
+                <suil:UiElement MouseFilter="Ignore" SuilStyleClasses="icon icon-sort-up" />
+            </controls:RfButton>
+            <suil:UiElement SuilStyleClasses="flex-fill" />
+            <controls:RfButton Name="Down" Access="Public" Disabled="True" SetSize="36 36"
+                                SuilStyleClasses="icon-button open-both">
+                <suil:UiElement MouseFilter="Ignore" SuilStyleClasses="icon icon-sort-down" />
+            </controls:RfButton>
+        </controls:RfBoxContainer>
         <SpriteView Scale="2 2" Margin="0 4 4 4"
                     Name="View" SetSize="64 64"
                     OverrideDirection="South" />
-        <css:CssControl Name="DescriptionLabel"
+        <suil:UiElement Name="DescriptionLabel"
                         MouseFilter="Ignore"
-                        CssStyleClasses="text-center"
-                        CssStyleIdentifier="picker-description" />
-        <controls:CssConfirmButton Name="DeleteButton" CssStyleClasses="open-both"
+                        SuilStyleClasses="text-center"
+                        SuilStyleIdentifier="picker-description" />
+        <controls:RfConfirmButton Name="DeleteButton" SuilStyleClasses="open-both"
                                    Text="{Loc 'character-setup-gui-character-picker-button-delete-button'}"
                                    ConfirmationText="{Loc 'character-setup-gui-character-picker-button-confirm-delete-button'}" />
-    </controls:CssBoxContainer>
-</controls:CssButton>
+    </controls:RfBoxContainer>
+</controls:RfButton>

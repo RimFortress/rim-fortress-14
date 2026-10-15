@@ -9,7 +9,7 @@ public sealed class SuilViewGeneratorTests
         namespace Game.Ui;
 
         [SuilView("/Picker.suil")]
-        public sealed partial class Picker : CssButton { public Picker() { InitializeComponent(); } }
+        public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
         """;
 
     private static GeneratorHarness.Result Run(string suil, string code = Button, Dictionary<string, string>? more = null)
@@ -50,14 +50,14 @@ public sealed class SuilViewGeneratorTests
             """.Replace("overridedirection", "override-direction"));
 
         AssertClean(result);
-        Assert.That(result.Source, Does.Contain("public global::Content.Client._RF.UserInterface.Controls.CssButton Up = default!;"));
-        Assert.That(result.Source, Does.Contain("protected global::Content.Client._RF.UserInterface.Controls.CssButton DownButton = default!;"));
-        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.CssBoxContainer TopRow = default!;"));
+        Assert.That(result.Source, Does.Contain("public global::Content.Client._RF.UserInterface.Controls.RfButton Up = default!;"));
+        Assert.That(result.Source, Does.Contain("protected global::Content.Client._RF.UserInterface.Controls.RfButton DownButton = default!;"));
+        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.RfBoxContainer TopRow = default!;"));
         Assert.That(result.Source, Does.Contain("private global::Robust.Client.UserInterface.Controls.SpriteView View = default!;"));
-        Assert.That(result.Source, Does.Contain("this.AddCssStyleClass(\"picker\");"));
+        Assert.That(result.Source, Does.Contain("this.AddSuilStyleClass(\"picker\");"));
         Assert.That(result.Source, Does.Contain("this.Disabled = true;"));
-        Assert.That(result.Source, Does.Contain(".CssStyleIdentifier = \"top-row\";"));
-        Assert.That(result.Source, Does.Contain(".FlexDirection = global::Content.Client._RF.UserInterface.Controls.CssFlexDirection.Row;"));
+        Assert.That(result.Source, Does.Contain(".SuilStyleIdentifier = \"top-row\";"));
+        Assert.That(result.Source, Does.Contain(".FlexDirection = global::Content.Client._RF.UserInterface.Controls.SuilFlexDirection.Row;"));
         Assert.That(result.Source, Does.Contain(".Text = \"Up\";"));
         Assert.That(result.Source, Does.Contain("namespace Game.Ui"));
     }
@@ -70,7 +70,7 @@ public sealed class SuilViewGeneratorTests
         AssertClean(result);
         Assert.That(result.Source, Does.Contain(".Name = \"view\";"));
         Assert.That(result.Source, Does.Contain(".AddStyleClass(\"big\");"));
-        Assert.That(result.Source, Does.Not.Contain("CssStyleIdentifier = \"view\""));
+        Assert.That(result.Source, Does.Not.Contain("SuilStyleIdentifier = \"view\""));
     }
 
     [Test]
@@ -100,7 +100,7 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
-    public void Thickness_Follows_The_Css_Order()
+    public void Thickness_Follows_The_Suil_Order()
     {
         var result = Run("button { sprite-view (margin: 1 2 3 4) }");
 
@@ -139,9 +139,9 @@ public sealed class SuilViewGeneratorTests
             });
 
         AssertClean(result);
-        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.CssButton Up"));
-        Assert.That(result.Source, Does.Contain(".AddCssStyleClass(\"icon-button\");"));
-        Assert.That(result.Source, Does.Contain(".AddCssStyleClass(\"extra\");"));
+        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.RfButton Up"));
+        Assert.That(result.Source, Does.Contain(".AddSuilStyleClass(\"icon-button\");"));
+        Assert.That(result.Source, Does.Contain(".AddSuilStyleClass(\"extra\");"));
         Assert.That(result.Source, Does.Contain(".Text = \"A\";"));
     }
 
@@ -158,7 +158,7 @@ public sealed class SuilViewGeneratorTests
             });
 
         AssertClean(result);
-        Assert.That(result.Source, Does.Contain(".AddCssStyleClass(\"mark\");"));
+        Assert.That(result.Source, Does.Contain(".AddSuilStyleClass(\"mark\");"));
     }
 
     [Test]
@@ -169,7 +169,7 @@ public sealed class SuilViewGeneratorTests
             """
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
-            namespace Game { public static partial class Outer { [SuilView("/Picker.suil")] public sealed partial class Inner : CssButton { } } }
+            namespace Game { public static partial class Outer { [SuilView("/Picker.suil")] public sealed partial class Inner : RfButton { } } }
             """.Replace("static partial class Outer", "partial class Outer"));
 
         AssertClean(nested);
@@ -180,7 +180,7 @@ public sealed class SuilViewGeneratorTests
             """
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
             """);
 
         AssertClean(global);
@@ -208,7 +208,7 @@ public sealed class SuilViewGeneratorTests
 
     private const string TagsHeader = """
         using Content.Suil;
-        using Content.Client._RF.CSS;
+        using Content.Client._RF.Suil;
         using Content.Client._RF.UserInterface.Controls;
 
         """;
@@ -217,16 +217,16 @@ public sealed class SuilViewGeneratorTests
     public void Tag_On_A_Class()
     {
         var result = Run("button { fancy #f }", TagsHeader + """
-            [SuilTag("fancy")] public class FancyThing : CssControl { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilTag("fancy")] public class FancyThing : UiElement { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
             """);
 
         AssertClean(result);
         Assert.That(result.Source, Does.Contain("FancyThing F = default!;"));
 
         var byClassName = Run("button { fancy-thing }", TagsHeader + """
-            [SuilTag("fancy")] public class FancyThing : CssControl { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilTag("fancy")] public class FancyThing : UiElement { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
             """);
         Assert.That(byClassName.Ids, Is.EqualTo(new[] { "SUIL008" }));
     }
@@ -237,9 +237,9 @@ public sealed class SuilViewGeneratorTests
         var result = Run(
             "button { picker-card #card picker-plain #plain }",
             TagsHeader + """
-                [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { public Picker() { InitializeComponent(); } }
-                [SuilView("/Card.suil", Name = "picker-card")] public sealed partial class PickerCard : CssButton { public PickerCard() { InitializeComponent(); } }
-                [SuilView("/Plain.suil")] public sealed partial class PickerPlain : CssButton { public PickerPlain() { InitializeComponent(); } }
+                [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+                [SuilView("/Card.suil", Name = "picker-card")] public sealed partial class PickerCard : RfButton { public PickerCard() { InitializeComponent(); } }
+                [SuilView("/Plain.suil")] public sealed partial class PickerPlain : RfButton { public PickerPlain() { InitializeComponent(); } }
                 """,
             new() { ["/Card.suil"] = "button #inner", ["/Plain.suil"] = "button" });
 
@@ -257,28 +257,28 @@ public sealed class SuilViewGeneratorTests
         var result = Run("""
             button {
                 sprite-view #view
-                css-scroll-container #list
-                css-h-scroll-bar #bar
+                rf-scroll-container #list
+                rf-h-scroll-bar #bar
                 hud-panel #hud (ui-scale: 2)
-                css-confirm-button
+                rf-confirm-button
             }
-            """.Replace("css-confirm-button", "confirm-button"));
+            """.Replace("rf-confirm-button", "confirm-button"));
 
         AssertClean(result);
         Assert.That(result.Source, Does.Contain("SpriteView View = default!;"));
-        Assert.That(result.Source, Does.Contain("CssScrollContainer List = default!;"));
-        Assert.That(result.Source, Does.Contain("CssHScrollBar Bar = default!;"));
+        Assert.That(result.Source, Does.Contain("RfScrollContainer List = default!;"));
+        Assert.That(result.Source, Does.Contain("RfHScrollBar Bar = default!;"));
         Assert.That(result.Source, Does.Contain("HUDPanel Hud = default!;"));
         Assert.That(result.Source, Does.Contain(".UIScale = (float)2;"));
     }
 
     [Test]
     [TestCase("SpriteView", "sprite-view")]
-    [TestCase("CssButton", "css-button")]
+    [TestCase("RfButton", "rf-button")]
     [TestCase("ChatBox", "chat-box")]
     [TestCase("UIScale", "ui-scale")]
     [TestCase("HUDPanel", "hud-panel")]
-    [TestCase("CssHScrollBar", "css-h-scroll-bar")]
+    [TestCase("RfHScrollBar", "rf-h-scroll-bar")]
     [TestCase("Vector2", "vector2")]
     [TestCase("Vector2D", "vector2-d")]
     [TestCase("Label", "label")]
@@ -291,8 +291,8 @@ public sealed class SuilViewGeneratorTests
     [Test]
     public void Custom_Name_Replaces_The_Default_One()
     {
-        // CssButton is registered as "button", so it is only "button" now
-        foreach (var tag in new[] { "css-button", "CssButton", "Button", "confirm" })
+        // RfButton is registered as "button", so it is only "button" now
+        foreach (var tag in new[] { "rf-button", "RfButton", "Button", "confirm" })
         {
             Assert.That(Run($"button {{ {tag} }}").Ids, Is.EqualTo(new[] { "SUIL008" }), tag);
         }
@@ -303,8 +303,8 @@ public sealed class SuilViewGeneratorTests
     {
         // HUDPanel is "hud-panel" by default; Other takes the tag "hud-panel" on purpose
         var result = Run("button { hud-panel #x }", TagsHeader + """
-            [SuilTag("hud-panel")] public class Other : CssControl { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilTag("hud-panel")] public class Other : UiElement { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
             """);
 
         AssertClean(result);
@@ -315,15 +315,15 @@ public sealed class SuilViewGeneratorTests
     public void Equal_Default_Names_Are_Ambiguous_Until_One_Is_Renamed()
     {
         const string twins = """
-            namespace Content.One { public class Dup : Content.Client._RF.CSS.CssControl { } }
-            namespace Content.Two { public class Dup : Content.Client._RF.CSS.CssControl { } }
+            namespace Content.One { public class Dup : Content.Client._RF.Suil.UiElement { } }
+            namespace Content.Two { public class Dup : Content.Client._RF.Suil.UiElement { } }
             """;
 
         var ambiguous = Run("button { dup }", """
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
 
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
 
             """ + twins);
         Assert.That(ambiguous.Ids, Is.EqualTo(new[] { "SUIL009" }));
@@ -334,7 +334,7 @@ public sealed class SuilViewGeneratorTests
 
             [assembly: SuilTag("first", typeof(Content.One.Dup))]
 
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
 
             """ + twins);
         AssertClean(renamed);
@@ -344,11 +344,11 @@ public sealed class SuilViewGeneratorTests
     [Test]
     public void The_Tag_Of_An_Untyped_Element_Is_Registered_Too()
     {
-        // the harness registers "_" for CssControl
+        // the harness registers "_" for UiElement
         var result = Run("button { _ .a }");
 
         AssertClean(result);
-        Assert.That(result.Source, Does.Contain("new global::Content.Client._RF.CSS.CssControl();"));
+        Assert.That(result.Source, Does.Contain("new global::Content.Client._RF.Suil.UiElement();"));
     }
 
     [Test]
@@ -360,10 +360,10 @@ public sealed class SuilViewGeneratorTests
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
 
-            [assembly: SuilTag("button", typeof(CssButton))]
+            [assembly: SuilTag("button", typeof(RfButton))]
 
             [SuilView("/Picker.suil")]
-            public sealed partial class Picker : CssButton { }
+            public sealed partial class Picker : RfButton { }
             """,
             new() { ["/Picker.suil"] = "button { _ }" },
             withDefaultTags: false);
@@ -392,24 +392,24 @@ public sealed class SuilViewGeneratorTests
             });
 
         AssertClean(result);
-        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.CssBoxContainer TopRow"));
-        Assert.That(result.Source, Does.Contain("CssFlexDirection.Row;"));
-        Assert.That(result.Source, Does.Contain("CssFlexDirection.Column;"));
+        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.RfBoxContainer TopRow"));
+        Assert.That(result.Source, Does.Contain("SuilFlexDirection.Row;"));
+        Assert.That(result.Source, Does.Contain("SuilFlexDirection.Column;"));
         Assert.That(result.Source, Does.Contain(".MinWidth = (int)3;"));
     }
 
     [Test]
-    [TestCase("[assembly: SuilTag(\"Bad Name\", typeof(CssButton))]")]
-    [TestCase("[assembly: SuilTag(\"1st\", typeof(CssButton))]")]
+    [TestCase("[assembly: SuilTag(\"Bad Name\", typeof(RfButton))]")]
+    [TestCase("[assembly: SuilTag(\"1st\", typeof(RfButton))]")]
     [TestCase("[assembly: SuilTag(\"nope\", typeof(string))]")]
-    [TestCase("[assembly: SuilTag(\"nope\", typeof(Content.Client._RF.CSS.CssControl))] [assembly: SuilTag(\"abs\", typeof(Abstract))]")]
+    [TestCase("[assembly: SuilTag(\"nope\", typeof(Content.Client._RF.Suil.UiElement))] [assembly: SuilTag(\"abs\", typeof(Abstract))]")]
     [TestCase("[assembly: SuilTag(\"nope\")]")]
     public void Invalid_Tag_Registration(string registration)
     {
         var result = Run("button", TagsHeader + registration + """
 
-            public abstract class Abstract : CssControl { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            public abstract class Abstract : UiElement { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
             """);
 
         Assert.That(result.Ids, Does.Contain("SUIL017"));
@@ -419,8 +419,8 @@ public sealed class SuilViewGeneratorTests
     public void Tag_On_A_Class_Needs_No_Type()
     {
         var result = Run("button", TagsHeader + """
-            [SuilTag("x", typeof(CssButton))] public class Wrong : CssControl { }
-            [SuilView("/Picker.suil")] public sealed partial class Picker : CssButton { }
+            [SuilTag("x", typeof(RfButton))] public class Wrong : UiElement { }
+            [SuilView("/Picker.suil")] public sealed partial class Picker : RfButton { }
             """);
 
         Assert.That(result.Ids, Does.Contain("SUIL017"));
@@ -529,14 +529,14 @@ public sealed class SuilViewGeneratorTests
             using Content.Suil;
             using Content.Client._RF.UserInterface.Controls;
 
-            [assembly: SuilTag("twin", typeof(Content.One.CssTwin))]
-            [assembly: SuilTag("twin", typeof(Content.Two.CssTwin))]
+            [assembly: SuilTag("twin", typeof(Content.One.RfTwin))]
+            [assembly: SuilTag("twin", typeof(Content.Two.RfTwin))]
 
             [SuilView("/Picker.suil")]
-            public sealed partial class Picker : CssButton { }
+            public sealed partial class Picker : RfButton { }
 
-            namespace Content.One { public class CssTwin : Content.Client._RF.CSS.CssControl { } }
-            namespace Content.Two { public class CssTwin : Content.Client._RF.CSS.CssControl { } }
+            namespace Content.One { public class RfTwin : Content.Client._RF.Suil.UiElement { } }
+            namespace Content.Two { public class RfTwin : Content.Client._RF.Suil.UiElement { } }
             """);
 
         Assert.That(result.Ids, Is.EqualTo(new[] { "SUIL009" }));
@@ -579,6 +579,6 @@ public sealed class SuilViewGeneratorTests
     [Test]
     public void Element_Needs_A_Default_Constructor()
     {
-        Assert.That(Run("button { css-no-default }").Ids, Is.EqualTo(new[] { "SUIL014" }));
+        Assert.That(Run("button { rf-no-default }").Ids, Is.EqualTo(new[] { "SUIL014" }));
     }
 }

@@ -1,7 +1,7 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Client._RF.CSS.Parsers;
+using Content.Client._RF.Suil.Parsers;
 using Content.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
@@ -15,12 +15,12 @@ public sealed partial class SuilManager
     /// <summary>
     /// Font faces declared by <c>@font-face</c> rules, per file.
     /// </summary>
-    private readonly Dictionary<ResPath, List<CssFontFace>> _fontFacesByFile = new();
+    private readonly Dictionary<ResPath, List<SuilFontFaceEntry>> _fontFacesByFile = new();
 
     /// <summary>
     /// All faces declared by <c>@font-face</c> rules, ordered by file path (later declarations win).
     /// </summary>
-    private List<CssFontFace> GetFontFaces() => _fontFacesByFile
+    private List<SuilFontFaceEntry> GetFontFaces() => _fontFacesByFile
         .OrderBy(kv => kv.Key.ToString(), StringComparer.Ordinal)
         .SelectMany(kv => kv.Value)
         .ToList();
@@ -31,7 +31,7 @@ public sealed partial class SuilManager
     /// are ignored), <c>font-weight</c> and <c>font-style</c>. Other descriptors are ignored with a warning.
     /// <c>var()</c> is not supported inside <c>@font-face</c>.
     /// </summary>
-    private bool TryParseFontFace(IReadOnlyList<SuilDeclaration> descriptors, [NotNullWhen(true)] out CssFontFace? face)
+    private bool TryParseFontFace(IReadOnlyList<SuilDeclaration> descriptors, [NotNullWhen(true)] out SuilFontFaceEntry? face)
     {
         face = null;
 
@@ -47,7 +47,7 @@ public sealed partial class SuilManager
             switch (declaration.Name.ToLowerInvariant())
             {
                 case "font-family":
-                    if (!_values.TryParse<CssFontFamily>(ref stream, out var parsedFamily)
+                    if (!_values.TryParse<SuilFontFamily>(ref stream, out var parsedFamily)
                         || parsedFamily is not { Names.Count: 1 }
                         || !stream.AtEnd)
                         return FontFaceError("@font-face: font-family must be a single family name");
@@ -55,7 +55,7 @@ public sealed partial class SuilManager
                     family = parsedFamily.Names[0];
                     break;
                 case "font-weight":
-                    if (!_values.TryParseWith(typeof(CssFontWeightParser), ref stream, out var parsedWeight)
+                    if (!_values.TryParseWith(typeof(SuilFontWeightParser), ref stream, out var parsedWeight)
                         || !stream.AtEnd)
                     {
                         return FontFaceError(
@@ -87,7 +87,7 @@ public sealed partial class SuilManager
         if (source == null)
             return FontFaceError("@font-face: src is missing");
 
-        face = new CssFontFace(family, weight, slant, source.Value);
+        face = new SuilFontFaceEntry(family, weight, slant, source.Value);
         return true;
     }
 
@@ -137,8 +137,8 @@ public sealed partial class SuilManager
     /// </summary>
     private static void RefreshFonts(Control control)
     {
-        if (control is CssControl css)
-            css.RefreshFonts();
+        if (control is UiElement suil)
+            suil.RefreshFonts();
 
         foreach (var child in control.Children)
         {

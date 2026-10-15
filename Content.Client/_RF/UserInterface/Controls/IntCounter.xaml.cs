@@ -4,7 +4,7 @@ using Robust.Client.UserInterface.XAML;
 namespace Content.Client._RF.UserInterface.Controls;
 
 [GenerateTypedNameReferences]
-public sealed partial class IntCounter : CssBoxContainer
+public sealed partial class IntCounter : RfBoxContainer
 {
     private int _value;
     private int? _maxValue;

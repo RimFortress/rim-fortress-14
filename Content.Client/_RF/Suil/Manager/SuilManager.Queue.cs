@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Robust.Client.UserInterface;
 using Robust.Shared;
 using Robust.Shared.Configuration;
@@ -20,26 +20,26 @@ public sealed partial class SuilManager
 
     [Dependency] private IConfigurationManager _cfg = null!;
 
-    private readonly Queue<CssControl> _queue = new();
-    private readonly List<(int Depth, CssControl Control)> _batch = new();
-    private CssStyleFlusher? _flusher;
+    private readonly Queue<UiElement> _queue = new();
+    private readonly List<(int Depth, UiElement Control)> _batch = new();
+    private RfStyleFlusher? _flusher;
     private bool _flushing;
 
     /// <inheritdoc/>
-    public void QueueStyleUpdate(CssControl control) => Enqueue(control, CssAncestorReach.None);
+    public void QueueStyleUpdate(UiElement control) => Enqueue(control, SuilAncestorReach.None);
 
     /// <inheritdoc/>
-    public void QueueStyleUpdate(CssControl control, string? key)
+    public void QueueStyleUpdate(UiElement control, string? key)
         => Enqueue(control, Stylesheet.GetAncestorReach(key));
 
-    private void Enqueue(CssControl control, CssAncestorReach reach)
+    private void Enqueue(UiElement control, SuilAncestorReach reach)
     {
-        control.CssStyleDirty = true;
+        control.SuilStyleDirty = true;
 
-        if (reach > control.CssPendingReach)
-            control.CssPendingReach = reach;
+        if (reach > control.SuilPendingReach)
+            control.SuilPendingReach = reach;
 
-        if (control.CssQueued)
+        if (control.SuilQueued)
             return;
 
         if (!EnsureFlusher())
@@ -49,7 +49,7 @@ public sealed partial class SuilManager
             return;
         }
 
-        control.CssQueued = true;
+        control.SuilQueued = true;
         _queue.Enqueue(control);
     }
 
@@ -61,7 +61,7 @@ public sealed partial class SuilManager
         if (_ui.RootControl is not { } root)
             return false;
 
-        _flusher = new CssStyleFlusher(FlushStyleUpdates);
+        _flusher = new RfStyleFlusher(FlushStyleUpdates);
         root.AddChild(_flusher);
         return true;
     }
@@ -85,7 +85,7 @@ public sealed partial class SuilManager
                 while (_queue.TryDequeue(out var control))
                 {
                     // Whatever changes the control from now on is queued again, for the next pass.
-                    control.CssQueued = false;
+                    control.SuilQueued = false;
                     _batch.Add((Depth(control), control));
                 }
 
@@ -102,7 +102,7 @@ public sealed partial class SuilManager
                         // Keep what is left, in the order it was, for the next frame.
                         for (var j = i; j < _batch.Count; j++)
                         {
-                            _batch[j].Control.CssQueued = true;
+                            _batch[j].Control.SuilQueued = true;
                             _queue.Enqueue(_batch[j].Control);
                         }
 
@@ -132,32 +132,32 @@ public sealed partial class SuilManager
     }
 
     /// <inheritdoc/>
-    public void FlushStyleUpdate(CssControl control)
+    public void FlushStyleUpdate(UiElement control)
     {
-        if (control.CssStyleDirty || control.CssPendingReach != CssAncestorReach.None)
+        if (control.SuilStyleDirty || control.SuilPendingReach != SuilAncestorReach.None)
             Process(control);
     }
 
-    private void Process(CssControl control)
+    private void Process(UiElement control)
     {
         if (control.Disposed)
         {
-            control.CssStyleDirty = false;
-            control.CssPendingReach = CssAncestorReach.None;
+            control.SuilStyleDirty = false;
+            control.SuilPendingReach = SuilAncestorReach.None;
             return;
         }
 
         // Might be done already: restyled by an ancestor, or on demand by FlushStyleUpdate.
-        if (control.CssStyleDirty)
+        if (control.SuilStyleDirty)
             ApplyStyle(control, Stylesheet, propagate: true);
 
-        var reach = control.CssPendingReach;
+        var reach = control.SuilPendingReach;
 
-        if (reach == CssAncestorReach.None)
+        if (reach == SuilAncestorReach.None)
             return;
 
-        control.CssPendingReach = CssAncestorReach.None;
-        UpdateDependents(control, Stylesheet, reach == CssAncestorReach.Descendants);
+        control.SuilPendingReach = SuilAncestorReach.None;
+        UpdateDependents(control, Stylesheet, reach == SuilAncestorReach.Descendants);
     }
 
     private static int Depth(Control control)
@@ -174,14 +174,14 @@ public sealed partial class SuilManager
 }
 
 /// <summary>
-/// Sits in the root of the UI to flush the queued CSS style updates every frame, in the frame update, before the
+/// Sits in the root of the UI to flush the queued SUIL style updates every frame, in the frame update, before the
 /// UI manager measures and arranges the controls the new styles have changed.
 /// </summary>
-internal sealed class CssStyleFlusher : Control
+internal sealed class RfStyleFlusher : Control
 {
     private readonly Action _flush;
 
-    public CssStyleFlusher(Action flush)
+    public RfStyleFlusher(Action flush)
     {
         _flush = flush;
         MouseFilter = MouseFilterMode.Ignore;

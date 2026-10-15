@@ -15,7 +15,7 @@
   </Folder>
   <Folder Name="/MSBuild/">
     <File Path="MSBuild/Content.props" />
-    <File Path="MSBuild\RimFortress.CssPropertyGenerator.targets" />
+    <File Path="MSBuild\RimFortress.SuilPropertyGenerator.targets" />
   </Folder>
   <Folder Name="/Project Files/">
     <File Path=".editorconfig" />
@@ -25,7 +25,7 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="Content.Benchmarks/Content.Benchmarks.csproj" />
-  <Project Path="Content.Client._RF.CssPropertiesGenerator/Content.Client._RF.CssPropertiesGenerator.csproj">
+  <Project Path="Content.Client._RF.SuilPropertiesGenerator/Content.Client._RF.SuilPropertiesGenerator.csproj">
     <BuildType Solution="DebugOpt|*" Project="Debug" />
     <BuildType Solution="Tools|*" Project="Debug" />
   </Project>

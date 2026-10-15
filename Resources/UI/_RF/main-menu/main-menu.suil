@@ -2,7 +2,7 @@
  * MainMenuControl.xaml (the main menu: logo, fields and the buttons).
  *
  * The buttons get their shape (open-left, open-both, open-right), the colors and the `negative` class from
- * buttons/*.css; MainMenuControl.xaml.cs adds those classes. Only what is specific to the main menu is here.
+ * buttons/*.suil; MainMenuControl.xaml.cs adds those classes. Only what is specific to the main menu is here.
  */
 
 /* The logo and the panel under it */

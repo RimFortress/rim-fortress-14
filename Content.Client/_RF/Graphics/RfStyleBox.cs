@@ -12,7 +12,7 @@ public abstract class RfStyleBox : StyleBox
 
     /// <summary>
     /// The reference box for resolving background-position/background-size
-    /// percentages and the tiling pattern's starting phase — mirrors CSS
+    /// percentages and the tiling pattern's starting phase — mirrors SUIL
     /// <c>background-origin</c>. Independent of <see cref="BackgroundClip"/>:
     /// origin decides WHERE positioning/sizing math is anchored, clip decides
     /// what's actually painted/visible — the two commonly differ (e.g. a
@@ -128,7 +128,7 @@ public abstract class RfStyleBox : StyleBox
 }
 
 /// <summary>
-/// Mirrors CSS background-clip: which box the background is painted within,
+/// Mirrors SUIL background-clip: which box the background is painted within,
 /// relative to the padding and the content margins.
 /// </summary>
 public enum StyleBoxBackgroundClip : byte
@@ -147,7 +147,7 @@ public enum StyleBoxBackgroundClip : byte
 }
 
 /// <summary>
-/// Mirrors CSS background-origin: the reference box for resolving
+/// Mirrors SUIL background-origin: the reference box for resolving
 /// background-position/background-size percentages and where a tiled
 /// pattern's phase starts counting from zero. Has no visible effect on
 /// <see cref="RfStyleBoxFlat"/> (a flat color has no position/size to
@@ -161,7 +161,7 @@ public enum StyleBoxBackgroundOrigin : byte
     BorderBox,
 
     /// <summary>
-    /// Position/size/tiling phase are relative to where the border ends (default, matches CSS).
+    /// Position/size/tiling phase are relative to where the border ends (default, matches SUIL).
     /// </summary>
     PaddingBox,
 

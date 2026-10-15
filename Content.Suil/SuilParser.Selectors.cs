@@ -57,7 +57,7 @@ public static partial class SuilParser
     /// <summary>
     /// rule = selector-list , "{" , { declaration } , "}"
     /// declaration = ident , ":" , value-list , ";"
-    /// The last ';' before '}' may be omitted, as in CSS.
+    /// The last ';' before '}' may be omitted, as in SUIL.
     /// </summary>
     private static SuilRule ConsumeRule(ref SuilTokenStream stream)
     {
@@ -113,7 +113,7 @@ public static partial class SuilParser
     /// <summary>
     /// The declarations of a block up to the closing curly bracket, the opening one is already consumed.
     /// declaration = ident , ":" , value-list , [ "!" , "important" ] , ";"
-    /// The last ';' before '}' may be omitted, as in CSS.
+    /// The last ';' before '}' may be omitted, as in SUIL.
     /// </summary>
     private static List<SuilDeclaration> ConsumeDeclarations(ref SuilTokenStream stream)
     {

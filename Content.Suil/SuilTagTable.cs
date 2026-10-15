@@ -1,7 +1,7 @@
 namespace Content.Suil;
 
 /// <summary>
-/// The control types by their tags: <c>css-button</c> is <c>CssButton</c>, or whatever a custom name was given to.
+/// The control types by their tags: <c>rf-button</c> is <c>RfButton</c>, or whatever a custom name was given to.
 /// The generator writes it for every assembly, the runtime has no reflection to find the names by.
 /// </summary>
 public sealed class SuilTagTable

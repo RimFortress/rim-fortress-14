@@ -1,61 +1,61 @@
 <ui:RfExpeditionEquipmentEditor
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     FlexDirection="Column"
-    CssStyleClasses="angle-rect-transparent">
-    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
+    SuilStyleClasses="angle-rect-transparent">
+    <!-- RimFortress: styled by Resources/UI/_RF/lobby/ -->
     <!-- Top panel -->
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" CssStyleIdentifier="setup-header">
-        <css:CssControl Text="{Loc 'expedition-equipment-editor-label'}"
-                        CssStyleClasses="label-heading-bigger" CssStyleIdentifier="setup-title" />
-        <css:CssControl CssStyleClasses="flex-fill" />
-        <controls:CssButton Name="SaveButton" Access="Public"
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="fancy-back" SuilStyleIdentifier="setup-header">
+        <suil:UiElement Text="{Loc 'expedition-equipment-editor-label'}"
+                        SuilStyleClasses="label-heading-bigger" SuilStyleIdentifier="setup-title" />
+        <suil:UiElement SuilStyleClasses="flex-fill" />
+        <controls:RfButton Name="SaveButton" Access="Public"
                             Text="{Loc 'expedition-equipment-editor-save-button'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="ResetButton" Access="Public"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="ResetButton" Access="Public"
                             Text="{Loc 'expedition-equipment-editor-reset-button'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="CloseButton" Access="Public"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="CloseButton" Access="Public"
                             Text="{Loc 'expedition-equipment-editor-close-button'}"
-                            CssStyleClasses="font-big" />
-    </controls:CssBoxContainer>
+                            SuilStyleClasses="font-big" />
+    </controls:RfBoxContainer>
 
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="equipment-body">
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="equipment-body">
         <!-- Left panel -->
-        <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="equipment-categories">
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" MinHeight="30">
-                <css:CssControl Text="{Loc 'expedition-equipment-editor-categories'}"
-                                CssStyleClasses="placeholder-text text-center" CssStyleIdentifier="equipment-categories-label" />
-            </controls:CssBoxContainer>
-            <controls:CssScrollContainer CssStyleClasses="scroll-vertical panel-light-transparent equipment-list"
-                                         CssStyleIdentifier="equipment-categories-list">
-                <controls:CssBoxContainer Name="CategoryBox" FlexDirection="Column" />
-            </controls:CssScrollContainer>
-        </controls:CssBoxContainer>
+        <controls:RfBoxContainer FlexDirection="Column" SuilStyleIdentifier="equipment-categories">
+            <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="fancy-back" MinHeight="30">
+                <suil:UiElement Text="{Loc 'expedition-equipment-editor-categories'}"
+                                SuilStyleClasses="placeholder-text text-center" SuilStyleIdentifier="equipment-categories-label" />
+            </controls:RfBoxContainer>
+            <controls:RfScrollContainer SuilStyleClasses="scroll-vertical panel-light-transparent equipment-list"
+                                         SuilStyleIdentifier="equipment-categories-list">
+                <controls:RfBoxContainer Name="CategoryBox" FlexDirection="Column" />
+            </controls:RfScrollContainer>
+        </controls:RfBoxContainer>
 
         <!-- Right panel -->
-        <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="equipment-items">
-            <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
-                                      CssStyleIdentifier="equipment-search-panel">
-                <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="equipment-search-row">
-                    <controls:CssLineEdit Name="Search" FlexGrow="1"
+        <controls:RfBoxContainer FlexDirection="Column" SuilStyleIdentifier="equipment-items">
+            <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted"
+                                      SuilStyleIdentifier="equipment-search-panel">
+                <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="equipment-search-row">
+                    <controls:RfLineEdit Name="Search" FlexGrow="1"
                                           PlaceHolder="{Loc 'expedition-equipment-editor-search'}" />
-                    <controls:CssButton Name="ClearSearch" SetSize="36 36"
-                                        CssStyleClasses="icon-button square">
-                        <css:CssControl MouseFilter="Ignore" CssStyleClasses="icon icon-cross" />
-                    </controls:CssButton>
-                </controls:CssBoxContainer>
+                    <controls:RfButton Name="ClearSearch" SetSize="36 36"
+                                        SuilStyleClasses="icon-button square">
+                        <suil:UiElement MouseFilter="Ignore" SuilStyleClasses="icon icon-cross" />
+                    </controls:RfButton>
+                </controls:RfBoxContainer>
 
-                <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="equipment-search-divider" />
+                <suil:UiElement SuilStyleClasses="low-divider" SuilStyleIdentifier="equipment-search-divider" />
 
-                <css:CssControl Name="PointsLabel" CssStyleIdentifier="equipment-points" />
-            </controls:CssBoxContainer>
-            <controls:CssScrollContainer CssStyleClasses="scroll-vertical panel-light-transparent equipment-list"
-                                         CssStyleIdentifier="equipment-items-list">
-                <controls:CssBoxContainer Name="ItemBox" FlexDirection="Column" />
-            </controls:CssScrollContainer>
-        </controls:CssBoxContainer>
-    </controls:CssBoxContainer>
+                <suil:UiElement Name="PointsLabel" SuilStyleIdentifier="equipment-points" />
+            </controls:RfBoxContainer>
+            <controls:RfScrollContainer SuilStyleClasses="scroll-vertical panel-light-transparent equipment-list"
+                                         SuilStyleIdentifier="equipment-items-list">
+                <controls:RfBoxContainer Name="ItemBox" FlexDirection="Column" />
+            </controls:RfScrollContainer>
+        </controls:RfBoxContainer>
+    </controls:RfBoxContainer>
 </ui:RfExpeditionEquipmentEditor>

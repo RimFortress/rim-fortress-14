@@ -10,19 +10,19 @@ public sealed class SuilPropertyTablesTests
     private const string Sample = """
         using System;
         using Content.Suil;
-        using Content.Client._RF.CSS;
+        using Content.Client._RF.Suil;
         using Content.Client._RF.UserInterface.Controls;
 
         namespace Game
         {
             public class FakeParser { }
 
-            public class Sample : CssControl
+            public class Sample : UiElement
             {
                 public int Count { get; set; }
                 public string Title;
                 public float UIScale { get; set; }
-                public CssFlexDirection Direction { get; set; }
+                public SuilFlexDirection Direction { get; set; }
                 public int? Optional { get; set; }
                 public int Computed { get => 1; set { } }
                 public int WriteOnly { set { } }
@@ -51,7 +51,7 @@ public sealed class SuilPropertyTablesTests
                 public int Extra { get; set; }
             }
 
-            public partial class Hidden : CssControl
+            public partial class Hidden : UiElement
             {
                 public int Open { get; set; }
 
@@ -66,14 +66,14 @@ public sealed class SuilPropertyTablesTests
                 public int Peek => Guarded;
                 public int PrivateSetValue => PublicWithPrivateSet;
 
-                public partial class Nested : CssControl
+                public partial class Nested : UiElement
                 {
                     [SuilProperty] protected int Deep { get; set; } = 9;
                     public int Peek => Deep;
                 }
             }
 
-            public class NotPartial : CssControl
+            public class NotPartial : UiElement
             {
                 public int Open { get; set; }
                 [SuilProperty] protected int Lost { get; set; }
@@ -82,8 +82,8 @@ public sealed class SuilPropertyTablesTests
             public abstract class Base2 : Sample { public int FromAbstract { get; set; } }
             public class Concrete : Base2 { }
 
-            public class Generic<T> : CssControl { public int Hidden { get; set; } }
-            [Obsolete] public class Old : CssControl { public int Hidden { get; set; } }
+            public class Generic<T> : UiElement { public int Hidden { get; set; } }
+            [Obsolete] public class Old : UiElement { public int Hidden { get; set; } }
             public class NotAControl { public int Hidden { get; set; } }
         }
         """;
@@ -305,20 +305,20 @@ public sealed class SuilPropertyTablesTests
     {
         var result = GeneratorHarness.Run("""
             using Content.Suil;
-            using Content.Client._RF.CSS;
+            using Content.Client._RF.Suil;
 
-            [assembly: SuilTag("untyped", typeof(Content.Client._RF.CSS.CssControl))]
+            [assembly: SuilTag("untyped", typeof(Content.Client._RF.Suil.UiElement))]
 
             namespace Game
             {
-                public class Plain : CssControl { }
-                public class MiniHUDView : CssControl { }
-                [SuilTag("fancy")] public class Renamed : CssControl { }
-                public abstract class Abstract : CssControl { }
+                public class Plain : UiElement { }
+                public class MiniHUDView : UiElement { }
+                [SuilTag("fancy")] public class Renamed : UiElement { }
+                public abstract class Abstract : UiElement { }
                 public class NotAControl { }
             }
 
-            namespace Other { public class Plain : CssControl { } }
+            namespace Other { public class Plain : UiElement { } }
             """, new(), withDefaultTags: false);
 
         Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors));
@@ -335,10 +335,10 @@ public sealed class SuilPropertyTablesTests
         Assert.That(fancy!.FullName, Is.EqualTo("Game.Renamed"));
         Assert.That(tags.TryGet("renamed", out _, out _), Is.False, "a custom name replaces the default one");
 
-        // the stub CssControl lives in the same compilation here, so it has a tag of its own
+        // the stub UiElement lives in the same compilation here, so it has a tag of its own
         Assert.That(tags.TryGet("untyped", out var untyped, out _), Is.True);
-        Assert.That(untyped!.Name, Is.EqualTo("CssControl"));
-        Assert.That(tags.TryGet("css-control", out _, out _), Is.False);
+        Assert.That(untyped!.Name, Is.EqualTo("UiElement"));
+        Assert.That(tags.TryGet("ui-element", out _, out _), Is.False);
 
         // two classes with one default name are not resolved
         Assert.That(tags.TryGet("plain", out var plain, out var candidates), Is.False);

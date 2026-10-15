@@ -1,5 +1,5 @@
 using System.Numerics;
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Robust.Client.Graphics;
 using Robust.Shared.Prototypes;
 
@@ -29,7 +29,7 @@ public abstract class StyleBoxBorder(
 }
 
 /// <summary>
-/// Draws the sides and the corners of the border in their <see cref="CssBorderStyle"/>.
+/// Draws the sides and the corners of the border in their <see cref="SuilBorderStyle"/>.
 /// </summary>
 public sealed class StyleBoxBorderStroke(
     CornerRadius radius,
@@ -110,7 +110,7 @@ public sealed class StyleBoxBorderStroke(
     }
 
     /// <summary>
-    /// CSS border-radius clamping: if the two radii sharing an edge would
+    /// SUIL border-radius clamping: if the two radii sharing an edge would
     /// sum to more than that edge's length, every corner radius on that axis
     /// is scaled down by the same factor — per spec, this keeps opposing
     /// corners from overlapping ("blooming") instead of letting their arcs
@@ -209,7 +209,7 @@ public sealed class StyleBoxBorderStroke(
 
     private static void DrawSide(DrawingHandleScreen handle, SideQuad quad, BorderSide sideData, float thickness)
     {
-        if (sideData.Style is CssBorderStyle.None or CssBorderStyle.Hidden)
+        if (sideData.Style is SuilBorderStyle.None or SuilBorderStyle.Hidden)
             return;
 
         var sideLength = (quad.OuterB - quad.OuterA).Length();
@@ -217,13 +217,13 @@ public sealed class StyleBoxBorderStroke(
 
         switch (sideData.Style)
         {
-            case CssBorderStyle.Solid:
+            case SuilBorderStyle.Solid:
                 handle.DrawPrimitives(
                     DrawPrimitiveTopology.TriangleFan,
                     new[] { quad.OuterA, quad.OuterB, quad.InnerB, quad.InnerA },
                     Flat(sideData.Color));
                 return;
-            case CssBorderStyle.Dashed:
+            case SuilBorderStyle.Dashed:
                 var segment = thickness * 2.5f;
                 var gap = segment * 0.6f;
                 var period = segment + gap;
@@ -242,7 +242,7 @@ public sealed class StyleBoxBorderStroke(
                 DashedShader.SetParameter("gap_length", gap);
                 handle.UseShader(DashedShader);
                 break;
-            case CssBorderStyle.Dotted:
+            case SuilBorderStyle.Dotted:
                 period = thickness * 2.0f;
                 var cornerFade = thickness * 1.5f;
 
@@ -260,25 +260,25 @@ public sealed class StyleBoxBorderStroke(
                 DottedShader.SetParameter("corner_fade", cornerFade);
                 handle.UseShader(DottedShader);
                 break;
-            case CssBorderStyle.Double:
+            case SuilBorderStyle.Double:
                 handle.UseShader(DoubleShader);
                 break;
-            case CssBorderStyle.Groove:
-            case CssBorderStyle.Ridge:
+            case SuilBorderStyle.Groove:
+            case SuilBorderStyle.Ridge:
                 var (dark, light) = GetShades(sideData.Color);
-                var (outer, inner) = sideData.Style == CssBorderStyle.Groove ? (dark, light) : (light, dark);
+                var (outer, inner) = sideData.Style == SuilBorderStyle.Groove ? (dark, light) : (light, dark);
                 BevelShader.SetParameter("outer_color", new Vector4(outer.R, outer.G, outer.B, outer.A));
                 BevelShader.SetParameter("inner_color", new Vector4(inner.R, inner.G, inner.B, inner.A));
                 handle.UseShader(BevelShader);
                 handle.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, Texture.White, quad.ToVertices(), Color.White);
                 return;
-            case CssBorderStyle.Inset:
+            case SuilBorderStyle.Inset:
                 handle.DrawPrimitives(
                     DrawPrimitiveTopology.TriangleFan,
                     new[] { quad.OuterA, quad.OuterB, quad.InnerB, quad.InnerA },
                     GetShades(sideData.Color).Dark);
                 return;
-            case CssBorderStyle.Outset:
+            case SuilBorderStyle.Outset:
                 handle.DrawPrimitives(
                     DrawPrimitiveTopology.TriangleFan,
                     new[] { quad.OuterA, quad.OuterB, quad.InnerB, quad.InnerA },
@@ -327,7 +327,7 @@ public sealed class StyleBoxBorderStroke(
         float a1,
         BorderSide side)
     {
-        if (side.Style is CssBorderStyle.None or CssBorderStyle.Hidden)
+        if (side.Style is SuilBorderStyle.None or SuilBorderStyle.Hidden)
             return;
 
         var verts = CornerWedge.Build(center, outerR, innerR, a0, a1);
@@ -335,42 +335,42 @@ public sealed class StyleBoxBorderStroke(
 
         switch (side.Style)
         {
-            case CssBorderStyle.Solid:
+            case SuilBorderStyle.Solid:
             // A true curved dash/dot pattern around the arc isn't implemented
             // (needs perimeter-arc-length unwrapping — a separately scoped,
             // larger task) — falls back to a solid fill in the side's own
             // color so the border no longer vanishes at the corner, even
             // though the pattern doesn't continue around it.
-            case CssBorderStyle.Dashed:
-            case CssBorderStyle.Dotted:
+            case SuilBorderStyle.Dashed:
+            case SuilBorderStyle.Dotted:
                 handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, Flat(side.Color));
                 return;
-            case CssBorderStyle.Double:
+            case SuilBorderStyle.Double:
                 handle.UseShader(DoubleShader);
                 handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, Flat(side.Color));
                 handle.UseShader(prev);
                 return;
-            case CssBorderStyle.Groove:
-            case CssBorderStyle.Ridge:
+            case SuilBorderStyle.Groove:
+            case SuilBorderStyle.Ridge:
                 var (dark, light) = GetShades(side.Color);
-                var (outer, inner) = side.Style == CssBorderStyle.Groove ? (dark, light) : (light, dark);
+                var (outer, inner) = side.Style == SuilBorderStyle.Groove ? (dark, light) : (light, dark);
                 BevelShader.SetParameter("outer_color", new Vector4(outer.R, outer.G, outer.B, outer.A));
                 BevelShader.SetParameter("inner_color", new Vector4(inner.R, inner.G, inner.B, inner.A));
                 handle.UseShader(BevelShader);
                 handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, Color.White);
                 handle.UseShader(prev);
                 return;
-            case CssBorderStyle.Inset:
+            case SuilBorderStyle.Inset:
                 handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, GetShades(side.Color).Dark);
                 return;
-            case CssBorderStyle.Outset:
+            case SuilBorderStyle.Outset:
                 handle.DrawPrimitives(DrawPrimitiveTopology.TriangleStrip, Texture.White, verts, GetShades(side.Color).Light);
                 return;
         }
     }
 
     /// <summary>
-    /// The radii of the corners of <paramref name="box"/> in pixels, scaled down by the CSS rule when they don't fit.
+    /// The radii of the corners of <paramref name="box"/> in pixels, scaled down by the SUIL rule when they don't fit.
     /// </summary>
     public static (Vector2 Tl, Vector2 Tr, Vector2 Br, Vector2 Bl) ResolveRadii(CornerRadius radius, UIBox2 box, float uiScale)
         => ClampRadii(
@@ -416,7 +416,7 @@ public sealed class StyleBoxBorderStroke(
 /// <summary>
 /// A border side's paintable quad — a rectangle when both neighboring sides
 /// are absent (zero thickness), a trapezoid mitered at 45° toward whichever
-/// neighbor(s) are present, matching how CSS border corners meet. Points are
+/// neighbor(s) are present, matching how SUIL border corners meet. Points are
 /// given in perimeter order (OuterA → OuterB → InnerB → InnerA) with UV
 /// (0,0)/(1,0)/(1,1)/(0,1) assigned respectively — U runs along the side's
 /// length, V runs from the outer edge (0) to the inner edge (1) — so a
@@ -479,10 +479,10 @@ public static class CornerWedge
 /// <summary>
 /// Per-side border data — style, color, and this side's own thickness.
 /// </summary>
-public readonly record struct BorderSide(CssBorderStyle Style, Color Color, float Width);
+public readonly record struct BorderSide(SuilBorderStyle Style, Color Color, float Width);
 
 /// <summary>
-/// Per-corner radius for rounding a <see cref="RfStyleBox"/>'s outer edge, mirroring CSS <c>border-radius</c>.
+/// Per-corner radius for rounding a <see cref="RfStyleBox"/>'s outer edge, mirroring SUIL <c>border-radius</c>.
 /// </summary>
 public readonly record struct CornerRadius(UnitVector2 TopLeft, UnitVector2 TopRight, UnitVector2 BottomRight, UnitVector2 BottomLeft)
 {

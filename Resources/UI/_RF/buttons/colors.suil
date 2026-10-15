@@ -1,22 +1,22 @@
 /* ---------- Colors of the buttons ---------- */
 
-css-button {
+rf-button {
     border-color: var(--button-color-default);
     background-color: var(--button-color-default);
 }
 
-css-button:hover {
+rf-button:hover {
     border-color: var(--button-color-hovered);
     background-color: var(--button-color-hovered);
 }
 
-css-button:active,
-css-button:checked {
+rf-button:active,
+rf-button:checked {
     border-color: var(--button-color-pressed);
     background-color: var(--button-color-pressed);
 }
 
-css-button:disabled {
+rf-button:disabled {
     color: var(--disabled-button-font-color);
     border-color: var(--button-color-disabled);
     background-color: var(--button-color-disabled);
@@ -44,51 +44,51 @@ css-button:disabled {
     background-color: color-mix(in srgb, var(--button-color-disabled) 78.43%, transparent);
 }
 
-/* negative: the caution buttons; confirming: CssConfirmButton waiting for the second click */
-css-button.negative,
-css-button.confirming {
+/* negative: the caution buttons; confirming: RfConfirmButton waiting for the second click */
+rf-button.negative,
+rf-button.confirming {
     border-color: var(--bad);
     background-color: var(--bad);
 }
 
-css-button.negative:hover,
-css-button.confirming:hover {
+rf-button.negative:hover,
+rf-button.confirming:hover {
     border-color: var(--light-bad);
     background-color: var(--light-bad);
 }
 
-css-button.negative:active,
-css-button.negative:checked,
-css-button.confirming:active,
-css-button.confirming:checked {
+rf-button.negative:active,
+rf-button.negative:checked,
+rf-button.confirming:active,
+rf-button.confirming:checked {
     border-color: var(--dark-bad);
     background-color: var(--dark-bad);
 }
 
-css-button.negative:disabled,
-css-button.confirming:disabled {
+rf-button.negative:disabled,
+rf-button.confirming:disabled {
     border-color: var(--darkest-bad);
     background-color: var(--darkest-bad);
 }
 
 /* ButtonColorBlue */
-css-button.blue {
+rf-button.blue {
     border-color: var(--blue-button-color-default);
     background-color: var(--blue-button-color-default);
 }
 
-css-button.blue:hover {
+rf-button.blue:hover {
     border-color: var(--blue-button-color-hovered);
     background-color: var(--blue-button-color-hovered);
 }
 
-css-button.blue:active,
-css-button.blue:checked {
+rf-button.blue:active,
+rf-button.blue:checked {
     border-color: var(--blue-button-color-pressed);
     background-color: var(--blue-button-color-pressed);
 }
 
-css-button.blue:disabled {
+rf-button.blue:disabled {
     border-color: var(--blue-button-color-disabled);
     background-color: var(--blue-button-color-disabled);
 }

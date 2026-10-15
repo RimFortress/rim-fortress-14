@@ -16,10 +16,10 @@ namespace Content.Client._RF.Lobby.UI;
 /// <summary>
 /// The markings of one layer: a search field, a grid of <see cref="RfLayerMarkingItem"/> to choose from (or the
 /// <see cref="RfLayerMarkingOrderer"/> while reordering) and the limits of the layer. The
-/// <see cref="CssBoxContainer"/> version of <see cref="LayerMarkingPicker"/>.
+/// <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingPicker"/>.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class RfLayerMarkingPicker : CssBoxContainer
+public sealed partial class RfLayerMarkingPicker : RfBoxContainer
 {
     private const int ColumnWidth = 500;
     private const long FrameBudgetMs = 6;

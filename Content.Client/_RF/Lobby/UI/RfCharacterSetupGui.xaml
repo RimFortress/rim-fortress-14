@@ -1,49 +1,49 @@
-<controls:CssBoxContainer
+<controls:RfBoxContainer
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     FlexDirection="Column"
-    CssStyleClasses="angle-rect-transparent">
-    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" CssStyleIdentifier="setup-header">
-        <css:CssControl Text="{Loc 'character-setup-gui-character-setup-label'}"
-                        CssStyleClasses="label-heading-bigger" CssStyleIdentifier="setup-title" />
-        <css:CssControl CssStyleClasses="flex-fill" />
-        <controls:CssButton Name="ResetButton" Access="Public"
+    SuilStyleClasses="angle-rect-transparent">
+    <!-- RimFortress: styled by Resources/UI/_RF/lobby/ -->
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="fancy-back" SuilStyleIdentifier="setup-header">
+        <suil:UiElement Text="{Loc 'character-setup-gui-character-setup-label'}"
+                        SuilStyleClasses="label-heading-bigger" SuilStyleIdentifier="setup-title" />
+        <suil:UiElement SuilStyleClasses="flex-fill" />
+        <controls:RfButton Name="ResetButton" Access="Public"
                             Text="{Loc 'humanoid-profile-editor-reset-button'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="SaveProfilesButton" Access="Public"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="SaveProfilesButton" Access="Public"
                             Text="{Loc 'character-setup-gui-character-setup-save-profiles-button'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="StatsButton"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="StatsButton"
                             Text="{Loc 'character-setup-gui-character-setup-stats-button'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssCommandButton Name="AdminRemarksButton"
+                            SuilStyleClasses="font-big" />
+        <controls:RfCommandButton Name="AdminRemarksButton"
                                    Command="adminremarks"
                                    Text="{Loc 'character-setup-gui-character-setup-adminremarks-button'}"
-                                   CssStyleClasses="font-big" />
-        <controls:CssButton Name="RulesButton"
+                                   SuilStyleClasses="font-big" />
+        <controls:RfButton Name="RulesButton"
                             Text="{Loc 'character-setup-gui-character-setup-rules-button'}"
-                            CssStyleClasses="font-big" />
-        <controls:CssButton Name="CloseButton" Access="Public"
+                            SuilStyleClasses="font-big" />
+        <controls:RfButton Name="CloseButton" Access="Public"
                             Text="{Loc 'character-setup-gui-character-setup-close-button'}"
-                            CssStyleClasses="font-big" />
-    </controls:CssBoxContainer>
+                            SuilStyleClasses="font-big" />
+    </controls:RfBoxContainer>
 
-    <css:CssControl CssStyleClasses="low-divider" />
+    <suil:UiElement SuilStyleClasses="low-divider" />
 
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="setup-body">
-        <controls:CssBoxContainer FlexDirection="Column" CssStyleIdentifier="setup-characters">
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back" MinHeight="30">
-                <css:CssControl Name="CharactersCount" CssStyleClasses="text-center"/>
-            </controls:CssBoxContainer>
-            <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="setup-characters-scroll">
-                <controls:CssBoxContainer Name="Characters" FlexDirection="Column" />
-            </controls:CssScrollContainer>
-        </controls:CssBoxContainer>
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="setup-body">
+        <controls:RfBoxContainer FlexDirection="Column" SuilStyleIdentifier="setup-characters">
+            <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="fancy-back" MinHeight="30">
+                <suil:UiElement Name="CharactersCount" SuilStyleClasses="text-center"/>
+            </controls:RfBoxContainer>
+            <controls:RfScrollContainer SuilStyleClasses="scroll-vertical" SuilStyleIdentifier="setup-characters-scroll">
+                <controls:RfBoxContainer Name="Characters" FlexDirection="Column" />
+            </controls:RfScrollContainer>
+        </controls:RfBoxContainer>
 
-        <css:CssControl CssStyleClasses="low-divider" />
+        <suil:UiElement SuilStyleClasses="low-divider" />
 
-        <controls:CssBoxContainer Name="CharEditor" FlexDirection="Row" CssStyleIdentifier="setup-editor" />
-    </controls:CssBoxContainer>
-</controls:CssBoxContainer>
+        <controls:RfBoxContainer Name="CharEditor" FlexDirection="Row" SuilStyleIdentifier="setup-editor" />
+    </controls:RfBoxContainer>
+</controls:RfBoxContainer>

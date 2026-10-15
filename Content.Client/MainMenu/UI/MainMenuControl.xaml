@@ -1,7 +1,7 @@
 <Control xmlns="https://spacestation14.io"
          xmlns:pllax="clr-namespace:Content.Client.Parallax"
          xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
-         xmlns:css="clr-namespace:Content.Client._RF.CSS">
+         xmlns:suil="clr-namespace:Content.Client._RF.Suil">
     <pllax:ParallaxControl
         Name="BackgroundParallax"
         StyleClasses=""
@@ -9,10 +9,10 @@
         SpeedY="20"
         ScaleX="3"
         ScaleY="3" />
-    <!-- RimFortress: styled by Resources/CSS/_RF/main-menu/main-menu.css -->
-    <controls:CssBoxContainer Name="VBox"
+    <!-- RimFortress: styled by Resources/UI/_RF/main-menu/main-menu.suil -->
+    <controls:RfBoxContainer Name="VBox"
                               FlexDirection="Column"
-                              CssStyleIdentifier="main-menu"
+                              SuilStyleIdentifier="main-menu"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               HorizontalExpand="True"
@@ -21,45 +21,45 @@
                      TexturePath="/Textures/_RF/Logo/logo.png"
                      TextureScale="3 3"
                      Stretch="KeepCentered" />
-        <controls:CssBoxContainer Name="Panel"
+        <controls:RfBoxContainer Name="Panel"
                                   FlexDirection="Column"
-                                  CssStyleClasses="angle-rect-transparent">
-            <controls:CssBoxContainer Name="Fields"
+                                  SuilStyleClasses="angle-rect-transparent">
+            <controls:RfBoxContainer Name="Fields"
                                       FlexDirection="Column"
-                                      CssStyleIdentifier="main-menu-fields">
-                <controls:CssBoxContainer FlexDirection="Row">
-                    <css:CssControl Name="UsernameLabel"
+                                      SuilStyleIdentifier="main-menu-fields">
+                <controls:RfBoxContainer FlexDirection="Row">
+                    <suil:UiElement Name="UsernameLabel"
                                     Text="{Loc 'main-menu-username-label'}" />
-                    <controls:CssLineEdit Name="UsernameBox"
+                    <controls:RfLineEdit Name="UsernameBox"
                                           Access="Public"
                                           PlaceHolder="{Loc 'main-menu-username-text'}"
                                           FlexGrow="1" />
-                </controls:CssBoxContainer>
-                <controls:CssBoxContainer FlexDirection="Row">
-                    <css:CssControl Name="AddressLabel"
+                </controls:RfBoxContainer>
+                <controls:RfBoxContainer FlexDirection="Row">
+                    <suil:UiElement Name="AddressLabel"
                                     Text="{Loc 'main-menu-address-label'}" />
-                    <controls:CssLineEdit Name="AddressBox"
+                    <controls:RfLineEdit Name="AddressBox"
                                           Access="Public"
                                           Text="localhost"
                                           PlaceHolder="server address:port"
                                           FlexGrow="1" />
-                </controls:CssBoxContainer>
-            </controls:CssBoxContainer>
-            <controls:CssButton Name="DirectConnectButton"
+                </controls:RfBoxContainer>
+            </controls:RfBoxContainer>
+            <controls:RfButton Name="DirectConnectButton"
                                 Access="Public"
-                                CssStyleClasses="main-menu-button open-both"
+                                SuilStyleClasses="main-menu-button open-both"
                                 Text="{Loc 'main-menu-direct-connect-button'}" />
-            <controls:CssChangelogButton Name="ChangelogButton"
-                                         CssStyleClasses="main-menu-button open-both"
+            <controls:RfChangelogButton Name="ChangelogButton"
+                                         SuilStyleClasses="main-menu-button open-both"
                                          Access="Public" />
-            <controls:CssButton Name="OptionsButton"
+            <controls:RfButton Name="OptionsButton"
                                 Access="Public"
-                                CssStyleClasses="main-menu-button open-both"
+                                SuilStyleClasses="main-menu-button open-both"
                                 Text="{Loc 'main-menu-options-button'}" />
-            <controls:CssButton Name="QuitButton"
+            <controls:RfButton Name="QuitButton"
                                 Access="Public"
-                                CssStyleClasses="main-menu-button open-both negative"
+                                SuilStyleClasses="main-menu-button open-both negative"
                                 Text="{Loc 'main-menu-quit-button'}" />
-        </controls:CssBoxContainer>
-    </controls:CssBoxContainer>
+        </controls:RfBoxContainer>
+    </controls:RfBoxContainer>
 </Control>

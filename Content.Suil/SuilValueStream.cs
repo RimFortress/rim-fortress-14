@@ -2,7 +2,7 @@ namespace Content.Suil;
 
 /// <summary>
 /// The values of a declaration (or of the arguments of a function) as a stream that the value parsers read, the SUIL
-/// counterpart of <c>CssValueStream</c>. A comma is the value <see cref="SuilComma"/>; the arguments of a function
+/// counterpart of <c>SuilValueStream</c>. A comma is the value <see cref="SuilComma"/>; the arguments of a function
 /// are separated by it when a function is read as a stream (<see cref="OfArguments"/>).
 /// </summary>
 public struct SuilValueStream(IReadOnlyList<ISuilValue> items)

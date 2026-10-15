@@ -12,7 +12,7 @@
                     <BoxContainer Orientation="Vertical">
                         <CheckBox Name="BorderColorButton" Margin="0 0 0 5"
                                   Text="{Loc 'zone-visuals-border-color-button'}"/>
-                        <rf:CssColorSelectorSliders Name="BorderColor" SelectorType="Rgb" IsAlphaVisible="True"/>
+                        <rf:RfColorSelectorSliders Name="BorderColor" SelectorType="Rgb" IsAlphaVisible="True"/>
                     </BoxContainer>
                 </PanelContainer>
 
@@ -22,7 +22,7 @@
                     <BoxContainer Orientation="Vertical">
                         <CheckBox Name="ZoneColorButton" Margin="0 0 0 5"
                                   Text="{Loc 'zone-visuals-zone-color-button'}"/>
-                        <rf:CssColorSelectorSliders Name="ZoneColor" SelectorType="Rgb" IsAlphaVisible="True"/>
+                        <rf:RfColorSelectorSliders Name="ZoneColor" SelectorType="Rgb" IsAlphaVisible="True"/>
                     </BoxContainer>
                 </PanelContainer>
 

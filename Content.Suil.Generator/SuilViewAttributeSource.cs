@@ -28,7 +28,7 @@ internal static class SuilViewAttributeSource
             /// the fields of the elements with an id and the <c>InitializeComponent()</c> method that builds the tree:
             /// <code>
             /// [SuilView("/Lobby/CharacterPickerButton.suil")]
-            /// public sealed partial class CharacterPickerButton : CssButton
+            /// public sealed partial class CharacterPickerButton : RfButton
             /// {
             ///     public CharacterPickerButton() { InitializeComponent(); }
             /// }
@@ -115,7 +115,7 @@ internal static class SuilViewAttributeSource
                 public global::System.Type? Parser { get; }
 
                 /// <summary>
-                /// Is the property inherited, like <c>color</c> or <c>font-family</c> in CSS? A control that doesn't declare
+                /// Is the property inherited, like <c>color</c> or <c>font-family</c> in SUIL? A control that doesn't declare
                 /// an inherited property takes the computed value of its nearest styled ancestor.
                 /// </summary>
                 public bool Inherited { get; set; }

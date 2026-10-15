@@ -21,7 +21,7 @@ using Direction = Robust.Shared.Maths.Direction;
 namespace Content.Client._RF.Lobby.UI
 {
     [GenerateTypedNameReferences]
-    public sealed partial class RfHumanoidProfileEditor : CssBoxContainer
+    public sealed partial class RfHumanoidProfileEditor : RfBoxContainer
     {
         [Dependency] private IClientPreferencesManager _preferencesManager = default!;
         [Dependency] private IConfigurationManager _cfgManager = default!;
@@ -163,8 +163,8 @@ namespace Content.Client._RF.Lobby.UI
                 OnSkinColorOnValueChanged();
             };
 
-            RgbSkinColorContainer.AddChild(_rgbSkinColorSelector = new CssColorSelectorSliders());
-            _rgbSkinColorSelector.SelectorType = CssColorSelectorSliders.ColorSelectorType.Hsv; // defaults color selector to HSV
+            RgbSkinColorContainer.AddChild(_rgbSkinColorSelector = new RfColorSelectorSliders());
+            _rgbSkinColorSelector.SelectorType = RfColorSelectorSliders.ColorSelectorType.Hsv; // defaults color selector to HSV
             _rgbSkinColorSelector.OnColorChanged += _ =>
             {
                 OnSkinColorOnValueChanged();

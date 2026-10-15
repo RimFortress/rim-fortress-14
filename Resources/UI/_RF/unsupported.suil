@@ -1,5 +1,5 @@
 /*
- * Rules that can't be written yet: the old StyleFortress rules that have no CSS counterpart.
+ * Rules that can't be written yet: the old StyleFortress rules that have no SUIL counterpart.
  * This file has no rules, it is only a list.
  */
 
@@ -7,27 +7,27 @@
 /* ---------- Rules that can't be written yet ----------
  *
  * ProgressButton (type): Prop(ProgressButton.StylePropertyForeground, StyleBoxFlat black 20% alpha)
- *   -> the foreground of a progress button, there is no CSS property for it.
+ *   -> the foreground of a progress button, there is no SUIL property for it.
  *
  * TreeMenuButton: StylePropertyMarkerTexture (tree_menu_button_marker.png, ..._hovered.png when hovered)
  *   and StylePropertyMarkerColor (gold-button-color-default)
- *   -> the marker of a tree menu button, there is no CSS property for it.
+ *   -> the marker of a tree menu button, there is no SUIL property for it.
  *
- * MenuButton (type): the colors are the same as css-button, a Css counterpart of MenuButton is a CssButton.
+ * MenuButton (type): the colors are the same as rf-button, a Suil counterpart of MenuButton is a RfButton.
  *
- * OptionButton (type): the Css replacement is CssOptionButton, a CssButton, so css-button styles it.
+ * OptionButton (type): the Suil replacement is RfOptionButton, a RfButton, so rf-button styles it.
  *
- * Label.StylePropertyAlignMode (Label.AlignMode.Center) of css-button and `.option-button` is text-align: center.
+ * Label.StylePropertyAlignMode (Label.AlignMode.Center) of rf-button and `.option-button` is text-align: center.
  */
 
-/* ---- from unsupported.css ---- */
+/* ---- from unsupported.suil ---- */
 /*
  * Rules that can't be written yet.
  *
- * ---- The control has no Css counterpart (a rule selects it by type) ----
+ * ---- The control has no Suil counterpart (a rule selects it by type) ----
  *
  * CheckBox: BoxContainer.Class(checkBox).Prop(separation, 10)
- *   -> the 10px between the box and the label; CssCheckBox is not a CssBoxContainer, so there is no `gap`.
+ *   -> the 10px between the box and the label; RfCheckBox is not a RfBoxContainer, so there is no `gap`.
  *
  * TabContainer
  *   panel:         tabcontainer_panel.png, patch margin 2, content margin top 2
@@ -68,7 +68,7 @@
  * Tooltip (the engine control)
  *   panel: the same box as .tooltip-box
  *
- * ---- There is no CSS property for it ----
+ * ---- There is no SUIL property for it ----
  *
  * PdaSettingsButton / PdaProgramItem (StylePropertyBgColor, StylePropertyFgColor):
  *   normal:   bg #25252A (PdaSettingsButton.NormalBgColor), fg PdaSettingsButton.EnabledFgColor

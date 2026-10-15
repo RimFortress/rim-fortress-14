@@ -3,7 +3,7 @@
 /*
  * FancyBack: the striped bar with the golden edges on top and on the bottom.
  * The edge was drawn after `pad-size` (4) of empty space, it is the margin here. The tile of the shader is the
- * repeating background. Put the content right into the element (a row, as a CssBoxContainer), no wrapper is needed.
+ * repeating background. Put the content right into the element (a row, as a RfBoxContainer), no wrapper is needed.
  */
 .fancy-back {
     background-image: texture("/Textures/_RF/Interface/Style/stripeback.png");

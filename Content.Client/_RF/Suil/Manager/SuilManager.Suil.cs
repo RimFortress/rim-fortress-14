@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Suil;
@@ -6,7 +6,7 @@ using Robust.Client.UserInterface;
 
 namespace Content.Suil;
 
-// The rules written in SUIL: they become the same selectors and pending rules as the ones of CSS text.
+// The rules written in SUIL: they become the same selectors and pending rules as the ones of SUIL text.
 public sealed partial class SuilManager
 {
     /// <inheritdoc/>
@@ -20,7 +20,7 @@ public sealed partial class SuilManager
     /// Phase 1 for SUIL: turns the selectors and the declarations of an expanded file into pending rules, and its
     /// <c>@font-face</c> rules into font faces.
     /// </summary>
-    private List<PendingRule> BuildPendingRules(SuilFile file, List<CssFontFace>? fontFaces)
+    private List<PendingRule> BuildPendingRules(SuilFile file, List<SuilFontFaceEntry>? fontFaces)
     {
         var rules = new List<PendingRule>();
 
@@ -68,7 +68,7 @@ public sealed partial class SuilManager
 
             current = step.Combinator switch
             {
-                SuilCombinator.Descendant => new CssDescendantSelector(current!, compound),
+                SuilCombinator.Descendant => new SuilDescendantSelector(current!, compound),
                 SuilCombinator.Child => new SelectorChild(current!, compound),
                 _ => compound,
             };
@@ -127,14 +127,14 @@ public sealed partial class SuilManager
         {
             if (function.Anb is { } anb)
             {
-                var cssAnb = new SuilAnb(anb.A, anb.B);
+                var suilAnb = new SuilAnb(anb.A, anb.B);
 
                 extra.Add(function.Name switch
                 {
-                    "nth-child" => new NthChildSelector(cssAnb),
-                    "nth-of-type" => new NthOfTypeSelector(cssAnb),
-                    "nth-last-child" => new NthLastChildSelector(cssAnb),
-                    _ => new NthLastOfTypeSelector(cssAnb),
+                    "nth-child" => new NthChildSelector(suilAnb),
+                    "nth-of-type" => new NthOfTypeSelector(suilAnb),
+                    "nth-last-child" => new NthLastChildSelector(suilAnb),
+                    _ => new NthLastOfTypeSelector(suilAnb),
                 });
                 continue;
             }
@@ -168,8 +168,8 @@ public sealed partial class SuilManager
             return true;
         }
 
-        var element = new CssElementSelector(
-            type != typeof(Control) && type != typeof(CssControl) ? type : null,
+        var element = new SuilElementSelector(
+            type != typeof(Control) && type != typeof(UiElement) ? type : null,
             classes.Count > 0 ? classes : null,
             compound.Id,
             pseudoClasses.Count > 0 ? pseudoClasses : null);
@@ -195,7 +195,7 @@ public sealed partial class SuilManager
     private bool TryBuildAttribute(SuilAttributeSelector attribute, Type? type, [NotNullWhen(true)] out Selector? result)
     {
         result = null;
-        var resolveType = type ?? typeof(CssControl);
+        var resolveType = type ?? typeof(UiElement);
 
         if (!TryGetPropertyAccessor(resolveType, attribute.Name, out var accessor))
             return SelectorError($"unknown attribute `{attribute.Name}` for {resolveType.FullName}");
@@ -247,7 +247,7 @@ public sealed partial class SuilManager
         _sawmill.Error($"error while resolving selector: {message}");
         return false;
 #else
-        throw new CssParserError("resolving selector", message);
+        throw new SuilStyleError("resolving selector", message);
 #endif
     }
 }

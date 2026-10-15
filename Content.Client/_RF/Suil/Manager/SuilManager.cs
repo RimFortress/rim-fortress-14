@@ -1,8 +1,8 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Client._RF.CSS.Streams;
-using Content.Client._RF.CSS.Text;
+using Content.Client._RF.Suil.Streams;
+using Content.Client._RF.Suil.Text;
 using Content.Shared._RF.Utilities;
 using Content.Suil;
 using Robust.Client.ResourceManagement;
@@ -21,17 +21,17 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     [Dependency] private IResourceCache _resource = null!;
     [Dependency] private IRobustRandom _random = null!;
     [Dependency] private IUserInterfaceManager _ui = null!;
-    [Dependency] private ICssFontManager _fonts = null!;
+    [Dependency] private ISuilFontManager _fonts = null!;
 
     private readonly SuilValueParsers _values = new();
 
     private readonly SuilPropertyRegistry _registry = new();
     private readonly SuilTagTable _tags = new();
-    private readonly Dictionary<Type, Dictionary<string, CssShorthandInfo>> _shorthands = new();
+    private readonly Dictionary<Type, Dictionary<string, SuilShorthandInfo>> _shorthands = new();
 
     /// <summary>
     /// Parsed but not yet compiled rules, per file. Values are compiled only in <see cref="BuildStylesheet"/>,
-    /// when every CSS file (and therefore every <c>:root</c> variable definition) is known.
+    /// when every SUIL file (and therefore every <c>:root</c> variable definition) is known.
     /// </summary>
     private readonly Dictionary<ResPath, List<PendingRule>> _pendingByFile = new();
 
@@ -43,16 +43,16 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// <summary>
     /// <see cref="GetPropertyAccessors"/> results: every accessor of a control type, base types included.
     /// </summary>
-    private readonly Dictionary<Type, IReadOnlyDictionary<string, CssPropertyAccessor>> _accessorCache = new();
+    private readonly Dictionary<Type, IReadOnlyDictionary<string, SuilStyleAccessor>> _accessorCache = new();
 
     /// <summary>
     /// The accessors of the registry as the engine needs them, made once.
     /// </summary>
-    private readonly Dictionary<SuilPropertyAccessor, CssPropertyAccessor> _adapted =
+    private readonly Dictionary<SuilPropertyAccessor, SuilStyleAccessor> _adapted =
         new(ReferenceEqualityComparer.Instance);
 
 
-    private CssStylesheet? _testStylesheet;
+    private SuilStylesheet? _testStylesheet;
 
     private ISawmill _sawmill = null!;
 
@@ -60,7 +60,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     public ResPath StylesPath => new("/UI/");
 
     /// <inheritdoc/>
-    public CssStylesheet Stylesheet { get; private set; } = new(new List<CssStyleRule>());
+    public SuilStylesheet Stylesheet { get; private set; } = new(new List<SuilStyleRule>());
 
     /// <summary>
     /// A rule after tokenizing and selector parsing, but before its declarations are compiled.
@@ -71,7 +71,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
     public void PostInject()
     {
-        _sawmill = Logger.GetSawmill("css");
+        _sawmill = Logger.GetSawmill("suil");
 
         RegisterParsers();
         RegisterProperties();
@@ -98,9 +98,9 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     public bool TryGetPropertyAccessor(
         Type? elementType,
         string propertyName,
-        [NotNullWhen(true)] out CssPropertyAccessor? accessor)
+        [NotNullWhen(true)] out SuilStyleAccessor? accessor)
     {
-        if (!_registry.TryGet(elementType ?? typeof(CssControl), propertyName, out var found))
+        if (!_registry.TryGet(elementType ?? typeof(UiElement), propertyName, out var found))
         {
             accessor = null;
             return false;
@@ -111,12 +111,12 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     /// <inheritdoc/>
-    public IReadOnlyDictionary<string, CssPropertyAccessor> GetPropertyAccessors(Type elementType)
+    public IReadOnlyDictionary<string, SuilStyleAccessor> GetPropertyAccessors(Type elementType)
     {
         if (_accessorCache.TryGetValue(elementType, out var cached))
             return cached;
 
-        var all = new Dictionary<string, CssPropertyAccessor>(StringComparer.OrdinalIgnoreCase);
+        var all = new Dictionary<string, SuilStyleAccessor>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (name, accessor) in _registry.GetAll(elementType))
         {
@@ -126,14 +126,14 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         return _accessorCache[elementType] = all;
     }
 
-    private CssPropertyAccessor Adapt(SuilPropertyAccessor accessor)
+    private SuilStyleAccessor Adapt(SuilPropertyAccessor accessor)
     {
         if (_adapted.TryGetValue(accessor, out var adapted))
             return adapted;
 
         var getter = accessor.Getter;
 
-        return _adapted[accessor] = new CssPropertyAccessor(
+        return _adapted[accessor] = new SuilStyleAccessor(
             accessor.ClrType,
             (control, value) => accessor.Setter(control, value),
             getter == null ? null : control => getter(control),
@@ -151,15 +151,15 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     /// <inheritdoc/>
-    public CssStylesheet BuildStylesheet()
+    public SuilStylesheet BuildStylesheet()
     {
         var pending = GetFilePendingRules();
 
-        return new CssStylesheet(Compile(pending), BuildGlobalVariables(pending));
+        return new SuilStylesheet(Compile(pending), BuildGlobalVariables(pending));
     }
 
     /// <inheritdoc/>
-    public CssStylesheet BuildTestStylesheet()
+    public SuilStylesheet BuildTestStylesheet()
     {
         if (_testStylesheet != null)
             return _testStylesheet;
@@ -167,28 +167,28 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         // Test rules may use variables declared in the real files, and may declare their own.
         var globals = BuildGlobalVariables(GetFilePendingRules().Concat(_pendingTest));
 
-        return _testStylesheet = new CssStylesheet(Compile(_pendingTest), globals);
+        return _testStylesheet = new SuilStylesheet(Compile(_pendingTest), globals);
     }
 
     /// <inheritdoc/>
-    public void UpdateStyle<T>(CssControl control) where T : Selector => UpdateStyle(control, typeof(T));
+    public void UpdateStyle<T>(UiElement control) where T : Selector => UpdateStyle(control, typeof(T));
 
     /// <inheritdoc/>
-    public void UpdateStyleOnSiblingsChanged(CssControl control)
+    public void UpdateStyleOnSiblingsChanged(UiElement control)
     {
         if (Stylesheet.IsSiblingDependent(control.GetType()))
             QueueStyleUpdate(control);
     }
 
     /// <inheritdoc/>
-    public void UpdateStyleOnSiblingsReordered(CssControl control)
+    public void UpdateStyleOnSiblingsReordered(UiElement control)
     {
         if (Stylesheet.IsOrderDependent(control.GetType()))
             QueueStyleUpdate(control);
     }
 
     /// <inheritdoc/>
-    public void UpdateStyle(CssControl control, params Type[] selectors)
+    public void UpdateStyle(UiElement control, params Type[] selectors)
     {
         foreach (var kind in selectors)
         {
@@ -213,30 +213,30 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     /// <inheritdoc/>
-    public void UpdateStyle(CssControl control) => ApplyStyle(control, Stylesheet, propagate: true);
+    public void UpdateStyle(UiElement control) => ApplyStyle(control, Stylesheet, propagate: true);
 
     /// <inheritdoc/>
-    public void UpdateStyleOnEnter(CssControl control) => ApplyStyle(control, Stylesheet, propagate: false);
+    public void UpdateStyleOnEnter(UiElement control) => ApplyStyle(control, Stylesheet, propagate: false);
 
     /// <inheritdoc/>
-    public void UpdateDependents(CssControl control, string? key)
+    public void UpdateDependents(UiElement control, string? key)
     {
-        var stylesheet = control.CssComputedStylesheet ?? Stylesheet;
+        var stylesheet = control.SuilComputedStylesheet ?? Stylesheet;
         var reach = stylesheet.GetAncestorReach(key);
 
-        if (reach == CssAncestorReach.None)
+        if (reach == SuilAncestorReach.None)
             return;
 
-        UpdateDependents(control, stylesheet, reach == CssAncestorReach.Descendants);
+        UpdateDependents(control, stylesheet, reach == SuilAncestorReach.Descendants);
     }
 
-    private void UpdateDependents(Control parent, CssStylesheet stylesheet, bool deep)
+    private void UpdateDependents(Control parent, SuilStylesheet stylesheet, bool deep)
     {
         foreach (var child in parent.Children)
         {
             // Only the controls that a rule with an ancestor part can apply to are worth matching again.
-            if (child is CssControl css && stylesheet.IsAncestorDependent(css.GetType()))
-                ApplyStyle(css, stylesheet, propagate: true);
+            if (child is UiElement suil && stylesheet.IsAncestorDependent(suil.GetType()))
+                ApplyStyle(suil, stylesheet, propagate: true);
 
             if (deep)
                 UpdateDependents(child, stylesheet, true);
@@ -244,7 +244,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     /// <inheritdoc/>
-    public void UpdateTestStyle(CssControl control) => ApplyStyle(control, BuildTestStylesheet(), propagate: true);
+    public void UpdateTestStyle(UiElement control) => ApplyStyle(control, BuildTestStylesheet(), propagate: true);
 
     /// <inheritdoc/>
     public void ClearTestStylesheet()
@@ -256,12 +256,12 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// <inheritdoc/>
     public void UpdateStyleRecursively(Control control) => UpdateStyleRecursively(control, Stylesheet);
 
-    private void UpdateStyleRecursively(Control control, CssStylesheet stylesheet)
+    private void UpdateStyleRecursively(Control control, SuilStylesheet stylesheet)
     {
         // Parents are always styled before their children, so every child sees fresh inherited variables.
         // No propagation is needed here: the recursion itself visits all descendants.
-        if (control is CssControl css)
-            ApplyStyle(css, stylesheet, propagate: false);
+        if (control is UiElement suil)
+            ApplyStyle(suil, stylesheet, propagate: false);
 
         foreach (var child in control.Children)
         {
@@ -272,46 +272,46 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     #region Variables API
 
     /// <inheritdoc/>
-    public void SetVariable(CssControl control, string name, string cssValue, bool important = false)
+    public void SetVariable(UiElement control, string name, string suilValue, bool important = false)
     {
-        if (!CssVariables.IsCustomProperty(name))
-            throw new ArgumentException($"CSS variable name must start with '--': '{name}'", nameof(name));
+        if (!SuilVariables.IsCustomProperty(name))
+            throw new ArgumentException($"SUIL variable name must start with '--': '{name}'", nameof(name));
 
-        if (!TryTokenizeValue(cssValue, out var tokens, out var valueImportant))
+        if (!TryTokenizeValue(suilValue, out var tokens, out var valueImportant))
         {
 #if EXCEPTION_TOLERANCE
-            _sawmill.Error($"invalid CSS value for variable '{name}': '{cssValue}'");
+            _sawmill.Error($"invalid SUIL value for variable '{name}': '{suilValue}'");
             return;
 #else
-            throw new ArgumentException($"invalid CSS value for variable '{name}': '{cssValue}'", nameof(cssValue));
+            throw new ArgumentException($"invalid SUIL value for variable '{name}': '{suilValue}'", nameof(suilValue));
 #endif
         }
 
-        control.CssInlineVariables ??= new Dictionary<string, CssCustomProperty>(StringComparer.Ordinal);
-        control.CssInlineVariables[name] = new CssCustomProperty(name, tokens, important || valueImportant);
+        control.SuilInlineVariables ??= new Dictionary<string, SuilCustomProperty>(StringComparer.Ordinal);
+        control.SuilInlineVariables[name] = new SuilCustomProperty(name, tokens, important || valueImportant);
 
         UpdateStyle(control);
     }
 
     /// <inheritdoc/>
-    public bool RemoveVariable(CssControl control, string name)
+    public bool RemoveVariable(UiElement control, string name)
     {
-        if (control.CssInlineVariables is not { } inline || !inline.Remove(name))
+        if (control.SuilInlineVariables is not { } inline || !inline.Remove(name))
             return false;
 
         if (inline.Count == 0)
-            control.CssInlineVariables = null;
+            control.SuilInlineVariables = null;
 
         UpdateStyle(control);
         return true;
     }
 
     /// <inheritdoc/>
-    public bool TryGetVariable<T>(CssControl control, string name, out T? value)
+    public bool TryGetVariable<T>(UiElement control, string name, out T? value)
     {
         value = default;
 
-        if (control.CssComputedVariables is not { } variables || !variables.TryGet(name, out var tokens))
+        if (control.SuilComputedVariables is not { } variables || !variables.TryGet(name, out var tokens))
             return false;
 
         var stream = new SuilValueStream(tokens);
@@ -367,23 +367,23 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// If the control's computed variables changed, restyle all of its descendants.
     /// Pass <c>false</c> when the caller already walks the whole subtree.
     /// </param>
-    private void ApplyStyle(CssControl control, CssStylesheet stylesheet, bool propagate)
+    private void ApplyStyle(UiElement control, SuilStylesheet stylesheet, bool propagate)
     {
         // Whatever was waiting in the queue is satisfied by this.
-        control.CssStyleDirty = false;
+        control.SuilStyleDirty = false;
 
         var ordered = GetOrderedRules(control, stylesheet);
 
         var variables = ComputeVariables(control, ordered, stylesheet);
-        var variablesChanged = !ReferenceEquals(control.CssComputedVariables, variables);
-        control.CssComputedVariables = variables;
-        control.CssComputedStylesheet = stylesheet;
+        var variablesChanged = !ReferenceEquals(control.SuilComputedVariables, variables);
+        control.SuilComputedVariables = variables;
+        control.SuilComputedStylesheet = stylesheet;
 
-        var previouslyApplied = control.CssLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var previouslyApplied = control.SuilLastAppliedProperties ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // The set of the update before the last one is free by now: reused, a control is restyled often.
-        var applied = control.CssSpareAppliedProperties ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        control.CssSpareAppliedProperties = null;
+        var applied = control.SuilSpareAppliedProperties ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        control.SuilSpareAppliedProperties = null;
         applied.Clear();
 
         // Properties whose winning declaration is inherit (or unset on an inherited property): they follow the parent.
@@ -402,15 +402,15 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             }
         }
 
-        control.CssLastAppliedProperties = applied;
-        control.CssInheritKeywordProperties = inheriting is { Count: > 0 } ? inheriting : null;
+        control.SuilLastAppliedProperties = applied;
+        control.SuilInheritKeywordProperties = inheriting is { Count: > 0 } ? inheriting : null;
         var controlType = control.GetType();
 
         foreach (var name in previouslyApplied)
         {
             // A property that can't be read has no original to go back to.
             if (TryGetPropertyAccessor(controlType, name, out var accessor)
-                && control.CssOriginalValues is { } originals
+                && control.SuilOriginalValues is { } originals
                 && originals.TryGetValue(name, out var original))
             {
                 accessor.Value.Setter(control, original!);
@@ -418,7 +418,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         }
 
         previouslyApplied.Clear();
-        control.CssSpareAppliedProperties = previouslyApplied;
+        control.SuilSpareAppliedProperties = previouslyApplied;
 
         // Whatever the cascade doesn't declare (or just reset) falls back to the inherited value, not to the initial one.
         control.RefreshInheritedProperties();
@@ -433,16 +433,16 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
         return;
 
-        void Apply(CssStyleProperty property)
+        void Apply(SuilStyleProperty property)
         {
             previouslyApplied.Remove(property.Name);
             control.RememberOriginal(property.Name, property.Accessor);
 
             var value = property.Value;
 
-            if (value is CssWideValue wide)
+            if (value is SuilWideValue wide)
             {
-                value = ResolveCssWide(control, property, wide.Keyword, out var inherits);
+                value = ResolveSuilWide(control, property, wide.Keyword, out var inherits);
 
                 if (inherits)
                     (inheriting ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase)).Add(property.Name);
@@ -458,7 +458,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             applied.Add(property.Name);
         }
 
-        void ApplyRule(CssStyleRule rule, bool important)
+        void ApplyRule(SuilStyleRule rule, bool important)
         {
             if (important && !rule.HasImportant)
                 return;
@@ -489,14 +489,14 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// The result only depends on the rule and on the variables, and the variables are shared by reference between all
     /// the controls that inherit them, so it is cached on them: a restyle does not parse the same values again.
     /// </remarks>
-    private CssStyleProperty[] ResolveDeferredProperties(CssStyleRule rule, bool important, CssVariables variables)
+    private SuilStyleProperty[] ResolveDeferredProperties(SuilStyleRule rule, bool important, SuilVariables variables)
     {
         var key = (rule.DeferredDeclarations, important);
 
         if (variables.ResolvedRules.TryGetValue(key, out var cached))
             return cached;
 
-        var deferred = new List<CssStyleProperty>();
+        var deferred = new List<SuilStyleProperty>();
 
         foreach (var declaration in rule.DeferredDeclarations)
         {
@@ -506,7 +506,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
         // Declaration order decides which value wins; both lists are in it already, and never share an order.
         var plain = rule.Properties;
-        var result = new List<CssStyleProperty>(plain.Count + deferred.Count);
+        var result = new List<SuilStyleProperty>(plain.Count + deferred.Count);
         var d = 0;
 
         foreach (var property in plain)
@@ -536,9 +536,9 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// </summary>
     // (rule, place in the cascade): the candidates being sorted. Belongs to the manager, since there may be several
     // clients (the tests run many in one process); not used while a rule is matched, so it can't be re-entered.
-    private readonly List<(CssStyleRule Rule, long Order)> _candidates = new();
+    private readonly List<(SuilStyleRule Rule, long Order)> _candidates = new();
 
-    private List<CssStyleRule> GetOrderedRules(CssControl control, CssStylesheet stylesheet)
+    private List<SuilStyleRule> GetOrderedRules(UiElement control, SuilStylesheet stylesheet)
     {
         var candidates = _candidates;
         candidates.Clear();
@@ -575,7 +575,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             candidates[j + 1] = candidate;
         }
 
-        var result = new List<CssStyleRule>(candidates.Count);
+        var result = new List<SuilStyleRule>(candidates.Count);
 
         foreach (var (rule, _) in candidates)
         {
@@ -586,17 +586,17 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         return result;
     }
 
-    private static int Compare((CssStyleRule Rule, long Order) a, (CssStyleRule Rule, long Order) b)
+    private static int Compare((SuilStyleRule Rule, long Order) a, (SuilStyleRule Rule, long Order) b)
     {
         var cmp = a.Rule.Specificity.CompareTo(b.Rule.Specificity);
         return cmp != 0 ? cmp : a.Order.CompareTo(b.Order);
     }
 
     private static void AddMatching(
-        CssControl control,
-        CssRuleIndex index,
+        UiElement control,
+        SuilRuleIndex index,
         long level,
-        List<(CssStyleRule Rule, long Order)> output)
+        List<(SuilStyleRule Rule, long Order)> output)
     {
         var always = index.Always;
 
@@ -608,10 +608,10 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
                 output.Add((entry.Rule, (level << 32) | (uint) entry.Position));
         }
 
-        if (control.CssStyleIdentifier is { } id && index.TryGet("#" + id, out var byId))
+        if (control.SuilStyleIdentifier is { } id && index.TryGet("#" + id, out var byId))
             AddMatching(control, byId, level, output);
 
-        foreach (var name in control.CssStyleClasses.Values)
+        foreach (var name in control.SuilStyleClasses.Values)
         {
             if (index.TryGet("." + name, out var byClass))
                 AddMatching(control, byClass, level, output);
@@ -619,10 +619,10 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     }
 
     private static void AddMatching(
-        CssControl control,
-        List<CssRuleIndex.Entry> entries,
+        UiElement control,
+        List<SuilRuleIndex.Entry> entries,
         long level,
-        List<(CssStyleRule Rule, long Order)> output)
+        List<(SuilStyleRule Rule, long Order)> output)
     {
         for (var i = 0; i < entries.Count; i++)
         {
@@ -641,7 +641,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// Returns the parent's set itself when the control declares nothing, and the previous set
     /// when none of the inputs changed, so reference equality reliably tells whether anything changed.
     /// </remarks>
-    private CssVariables ComputeVariables(CssControl control, List<CssStyleRule> ordered, CssStylesheet stylesheet)
+    private SuilVariables ComputeVariables(UiElement control, List<SuilStyleRule> ordered, SuilStylesheet stylesheet)
     {
         var inherited = GetInheritedVariables(control, stylesheet);
         Dictionary<string, List<ISuilValue>>? declared = null;
@@ -664,7 +664,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
                 }
             }
 
-            if (control.CssInlineVariables is not { } inline)
+            if (control.SuilInlineVariables is not { } inline)
                 continue;
 
             foreach (var custom in inline.Values)
@@ -680,34 +680,34 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         if (declared == null)
             return inherited;
 
-        var previous = control.CssComputedVariables;
+        var previous = control.SuilComputedVariables;
 
         return previous != null && previous.HasSameInputs(inherited, declared)
             ? previous
-            : new CssVariables(inherited, declared);
+            : new SuilVariables(inherited, declared);
     }
 
     /// <summary>
-    /// The variables inherited by the control: the computed set of the nearest <see cref="CssControl"/>
-    /// ancestor (controls of other types don't take part in CSS), or the global <c>:root</c> variables.
+    /// The variables inherited by the control: the computed set of the nearest <see cref="UiElement"/>
+    /// ancestor (controls of other types don't take part in SUIL), or the global <c>:root</c> variables.
     /// </summary>
-    private CssVariables GetInheritedVariables(Control control, CssStylesheet stylesheet)
+    private SuilVariables GetInheritedVariables(Control control, SuilStylesheet stylesheet)
     {
         for (var parent = control.Parent; parent != null; parent = parent.Parent)
         {
-            if (parent is not CssControl css)
+            if (parent is not UiElement suil)
                 continue;
 
             // An ancestor that was never styled (e.g. a subtree assembled before being attached), or whose
-            // variables were computed against another stylesheet (e.g. built before the CSS was loaded or reloaded
+            // variables were computed against another stylesheet (e.g. built before the SUIL was loaded or reloaded
             // while it was detached from every root): its cache has no :root variables of this stylesheet.
-            if (css.CssComputedVariables == null || !ReferenceEquals(css.CssComputedStylesheet, stylesheet))
+            if (suil.SuilComputedVariables == null || !ReferenceEquals(suil.SuilComputedStylesheet, stylesheet))
             {
-                css.CssComputedVariables = ComputeVariables(css, GetOrderedRules(css, stylesheet), stylesheet);
-                css.CssComputedStylesheet = stylesheet;
+                suil.SuilComputedVariables = ComputeVariables(suil, GetOrderedRules(suil, stylesheet), stylesheet);
+                suil.SuilComputedStylesheet = stylesheet;
             }
 
-            return css.CssComputedVariables;
+            return suil.SuilComputedVariables;
         }
 
         return stylesheet.GlobalVariables;
@@ -717,10 +717,10 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// Expands <c>var()</c> in a deferred declaration using the control's variables and parses the result.
     /// </summary>
     /// <returns>
-    /// <c>false</c> if a referenced variable is missing, invalid or has no fallback. Per CSS the declaration
+    /// <c>false</c> if a referenced variable is missing, invalid or has no fallback. Per SUIL the declaration
     /// is then "invalid at computed-value time"; here it is ignored.
     /// </returns>
-    private bool TryResolveDeferred(CssDeferredDeclaration deferred, CssVariables variables, List<CssStyleProperty> output)
+    private bool TryResolveDeferred(SuilDeferredDeclaration deferred, SuilVariables variables, List<SuilStyleProperty> output)
     {
         var declaration = deferred.Declaration;
 
@@ -757,25 +757,25 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 #endif
         }
 
-        output.Add(new CssStyleProperty(name, value, accessor.Value, deferred.Order, declaration.Important));
+        output.Add(new SuilStyleProperty(name, value, accessor.Value, deferred.Order, declaration.Important));
         return true;
     }
 
     #endregion
 
     /// <summary>
-    /// Resolves the <see cref="CssShorthandInfo"/> registered for a shorthand
+    /// Resolves the <see cref="SuilShorthandInfo"/> registered for a shorthand
     /// declaration name, walking from <paramref name="elementType"/> up through
     /// its base types (mirrors <see cref="TryGetPropertyAccessor"/> — a shorthand
-    /// registered on a base CssControl class applies to every derived control).
+    /// registered on a base UiElement class applies to every derived control).
     /// </summary>
     private bool TryGetShorthandInfo(
         Type? elementType,
         string declarationName,
-        [NotNullWhen(true)] out CssShorthandInfo? info)
+        [NotNullWhen(true)] out SuilShorthandInfo? info)
     {
         info = null;
-        var startType = elementType ?? typeof(CssControl);
+        var startType = elementType ?? typeof(UiElement);
 
         for (var type = startType; type != null; type = type.BaseType)
         {
@@ -791,19 +791,19 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
     /// <summary>
     /// Expands a shorthand declaration (e.g. "background: red no-repeat;") into
-    /// its constituent longhand <see cref="CssStyleProperty"/> entries, ready to
+    /// its constituent longhand <see cref="SuilStyleProperty"/> entries, ready to
     /// be merged into a rule's property set the same way a regular declaration
     /// is. Returns <c>false</c> if <paramref name="decl"/>'s name isn't a
     /// registered shorthand for <paramref name="targetType"/> at all — callers
     /// should fall through to regular declaration handling in that case, not
     /// treat it as an error. Any longhand the shorthand's own grammar allowed to
-    /// be omitted is reset to <c>default</c> for its CLR type, per CSS's "a
+    /// be omitted is reset to <c>default</c> for its CLR type, per SUIL's "a
     /// shorthand resets every longhand it covers" rule.
     /// </summary>
     private bool TryResolveShorthandValue(
         Type? targetType,
         SuilDeclaration decl,
-        [NotNullWhen(true)] out List<CssStyleProperty>? expanded)
+        [NotNullWhen(true)] out List<SuilStyleProperty>? expanded)
     {
         expanded = null;
 
@@ -813,15 +813,15 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         var stream = new SuilValueStream(decl.Value);
         var values = new Dictionary<string, object?>();
 
-        // A CSS-wide keyword applies to every longhand of the shorthand.
-        if (CssWideKeyword.TryParse(ref stream, out var wideKeyword))
+        // A SUIL-wide keyword applies to every longhand of the shorthand.
+        if (SuilWideKeyword.TryParse(ref stream, out var wideKeyword))
         {
-            var wideResult = new List<CssStyleProperty>(info.Value.Longhands.Count);
+            var wideResult = new List<SuilStyleProperty>(info.Value.Longhands.Count);
 
             foreach (var longhand in info.Value.Longhands)
             {
                 if (TryGetPropertyAccessor(targetType, longhand, out var longhandAccessor))
-                    wideResult.Add(new CssStyleProperty(longhand, CssWideValue.For(wideKeyword), longhandAccessor.Value));
+                    wideResult.Add(new SuilStyleProperty(longhand, SuilWideValue.For(wideKeyword), longhandAccessor.Value));
             }
 
             expanded = wideResult;
@@ -837,7 +837,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     #endif
         }
 
-        var result = new List<CssStyleProperty>(info.Value.Longhands.Count);
+        var result = new List<SuilStyleProperty>(info.Value.Longhands.Count);
 
         foreach (var longhand in info.Value.Longhands)
         {
@@ -851,12 +851,12 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             }
 
             // A longhand the shorthand does not mention is reset to its initial value. The factory cannot create
-            // non-content types (float, ...), and `initial` is what CSS prescribes here anyway.
+            // non-content types (float, ...), and `initial` is what SUIL prescribes here anyway.
             var value = values.TryGetValue(longhand, out var found) && found != null
                 ? found
-                : CssWideValue.For(CssWideKeyword.Initial);
+                : SuilWideValue.For(SuilWideKeyword.Initial);
 
-            result.Add(new CssStyleProperty(longhand, value, accessor.Value));
+            result.Add(new SuilStyleProperty(longhand, value, accessor.Value));
         }
 
         expanded = result;
@@ -866,7 +866,7 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     private bool TryResolveDeclarationValue(
         Type? targetType,
         SuilDeclaration decl,
-        [NotNullWhen(true)] out CssPropertyAccessor? accessor,
+        [NotNullWhen(true)] out SuilStyleAccessor? accessor,
         [NotNullWhen(true)] out string? name,
         [NotNullWhen(true)] out object? value)
     {
@@ -879,11 +879,11 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
         var stream = new SuilValueStream(decl.Value);
 
-        // CSS-wide keywords are valid for every property and are resolved when the style is applied.
-        if (CssWideKeyword.TryParse(ref stream, out var keyword))
+        // SUIL-wide keywords are valid for every property and are resolved when the style is applied.
+        if (SuilWideKeyword.TryParse(ref stream, out var keyword))
         {
             name = decl.Name;
-            value = CssWideValue.For(keyword);
+            value = SuilWideValue.For(keyword);
             return true;
         }
 
@@ -926,25 +926,25 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         }
 
         // The shorthands are written by the generator into the classes that declare them.
-        var styled = _reflection.GetAllChildren<AutoCssControl>()
-            // Only the types that declare shorthands themselves (the generator overrides AutoCssShorthands there):
+        var styled = _reflection.GetAllChildren<AutoUiElement>()
+            // Only the types that declare shorthands themselves (the generator overrides AutoSuilShorthands there):
             // a subclass without any has nothing to register (the chain of base types is walked), and creating it may
             // be impossible here (a XAML control needs the XAML proxy, a control may have constructor arguments).
             .Where(type => !type.IsAbstract
-                           && _reflection.IsAttributeDefined(type, typeof(CssStylingAttribute))
-                           && type.GetMethod(nameof(AutoCssControl.AutoCssShorthands))?.DeclaringType == type)
+                           && _reflection.IsAttributeDefined(type, typeof(SuilStylingAttribute))
+                           && type.GetMethod(nameof(AutoUiElement.AutoSuilShorthands))?.DeclaringType == type)
             .ToList();
 
         foreach (var type in styled)
         {
-            var control = _factory.CreateInstance<AutoCssControl>(type);
-            _shorthands.Add(type, control.AutoCssShorthands());
+            var control = _factory.CreateInstance<AutoUiElement>(type);
+            _shorthands.Add(type, control.AutoSuilShorthands());
         }
 
         // The tables of the types are made on demand, and the inherited ones of the controls are built from them.
         _accessorCache.Clear();
         _adapted.Clear();
-        CssControl.ResetInheritedCache();
+        UiElement.ResetInheritedCache();
 
         _sawmill.Info($"properties and {_shorthands.Sum(x => x.Value.Count)} shorthands registered at {sw.Elapsed}");
         sw.Stop();

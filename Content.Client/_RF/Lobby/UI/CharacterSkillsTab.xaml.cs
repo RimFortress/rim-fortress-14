@@ -13,7 +13,7 @@ using Robust.Shared.Utility;
 namespace Content.Client._RF.Lobby.UI;
 
 [GenerateTypedNameReferences]
-public sealed partial class CharacterSkillsTab : CssBoxContainer
+public sealed partial class CharacterSkillsTab : RfBoxContainer
 {
     [Dependency] private IPrototypeManager _prototype = default!;
     [Dependency] private IEntityManager _entity = default!;

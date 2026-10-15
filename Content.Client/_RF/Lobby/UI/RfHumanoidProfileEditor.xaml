@@ -1,127 +1,127 @@
 <ui:RfHumanoidProfileEditor
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     xmlns:profile="clr-namespace:Content.Client.Lobby.UI.ProfileEditorControls"
     FlexDirection="Column">
-    <!-- Styled by Resources/CSS/_RF/lobby/ -->
+    <!-- Styled by Resources/UI/_RF/lobby/ -->
     <!-- Middle container -->
-    <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-top">
+    <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="profile-top">
         <!-- Name box-->
-        <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
-                                  CssStyleIdentifier="profile-name-panel">
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-name-row">
-                <css:CssControl Text="{Loc 'humanoid-profile-editor-name-label'}" />
-                <controls:CssLineEdit Name="NameEdit" />
-                <controls:CssButton Name="NameRandomize" Text="{Loc 'humanoid-profile-editor-randomize'}" />
-            </controls:CssBoxContainer>
-            <controls:CssButton Name="RandomizeEverythingButton" CssStyleIdentifier="profile-randomize-all"
+        <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted"
+                                  SuilStyleIdentifier="profile-name-panel">
+            <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="profile-name-row">
+                <suil:UiElement Text="{Loc 'humanoid-profile-editor-name-label'}" />
+                <controls:RfLineEdit Name="NameEdit" />
+                <controls:RfButton Name="NameRandomize" Text="{Loc 'humanoid-profile-editor-randomize'}" />
+            </controls:RfBoxContainer>
+            <controls:RfButton Name="RandomizeEverythingButton" SuilStyleIdentifier="profile-randomize-all"
                                 Text="{Loc 'humanoid-profile-editor-randomize-everything'}" />
-            <css:CssControl Name="WarningLabel" CssStyleClasses="danger" CssStyleIdentifier="profile-warning" />
-        </controls:CssBoxContainer>
+            <suil:UiElement Name="WarningLabel" SuilStyleClasses="danger" SuilStyleIdentifier="profile-warning" />
+        </controls:RfBoxContainer>
 
-        <css:CssControl CssStyleClasses="flex-fill" />
+        <suil:UiElement SuilStyleClasses="flex-fill" />
 
         <!-- Import/Export -->
-        <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-dark-bordered"
-                                  CssStyleIdentifier="profile-export-panel">
-            <controls:CssButton Name="ImportButton" Text="{Loc 'humanoid-profile-editor-import-button'}" />
-            <controls:CssButton Name="ExportButton" Text="{Loc 'humanoid-profile-editor-export-button'}" />
-            <controls:CssButton Name="ExportImageButton" Text="{Loc 'humanoid-profile-editor-export-image-button'}" />
-            <controls:CssButton Name="OpenImagesButton" Text="{Loc 'humanoid-profile-editor-open-image-button'}" />
-        </controls:CssBoxContainer>
-    </controls:CssBoxContainer>
+        <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-dark-bordered"
+                                  SuilStyleIdentifier="profile-export-panel">
+            <controls:RfButton Name="ImportButton" Text="{Loc 'humanoid-profile-editor-import-button'}" />
+            <controls:RfButton Name="ExportButton" Text="{Loc 'humanoid-profile-editor-export-button'}" />
+            <controls:RfButton Name="ExportImageButton" Text="{Loc 'humanoid-profile-editor-export-image-button'}" />
+            <controls:RfButton Name="OpenImagesButton" Text="{Loc 'humanoid-profile-editor-open-image-button'}" />
+        </controls:RfBoxContainer>
+    </controls:RfBoxContainer>
 
-    <css:CssControl MinHeight="10" />
+    <suil:UiElement MinHeight="10" />
 
     <!-- tabContainer -->
-    <controls:CssTabContainer Name="Tabs" FlexGrow="1">
-        <controls:CssBoxContainer Name="AppearanceTab" FlexDirection="Row"
-                                  controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-appearance-tab'}">
-            <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="profile-appearance-scroll">
-                <controls:CssBoxContainer FlexDirection="Column">
+    <controls:RfTabContainer Name="Tabs" FlexGrow="1">
+        <controls:RfBoxContainer Name="AppearanceTab" FlexDirection="Row"
+                                  controls:RfTabContainer.TabTitle="{Loc 'humanoid-profile-editor-appearance-tab'}">
+            <controls:RfScrollContainer SuilStyleClasses="scroll-vertical" SuilStyleIdentifier="profile-appearance-scroll">
+                <controls:RfBoxContainer FlexDirection="Column">
                     <!-- Skin -->
-                    <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-skin-color-label'}" />
-                        <controls:CssSlider Name="Skin" MinValue="0" MaxValue="100" Value="20" />
-                        <controls:CssBoxContainer Name="RgbSkinColorContainer" Visible="False" FlexDirection="Column" />
-                    </controls:CssBoxContainer>
+                    <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted profile-block">
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-skin-color-label'}" />
+                        <controls:RfSlider Name="Skin" MinValue="0" MaxValue="100" Value="20" />
+                        <controls:RfBoxContainer Name="RgbSkinColorContainer" Visible="False" FlexDirection="Column" />
+                    </controls:RfBoxContainer>
                     <!-- Eyes -->
-                    <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted profile-block">
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-eyes-label'}" />
-                        <controls:CssColorSelectorSliders Name="EyeColorPicker" SelectorType="Hsv" Margin="0 0 0 10" />
-                    </controls:CssBoxContainer>
+                    <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted profile-block">
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-eyes-label'}" />
+                        <controls:RfColorSelectorSliders Name="EyeColorPicker" SelectorType="Hsv" Margin="0 0 0 10" />
+                    </controls:RfBoxContainer>
                     <!-- Markings -->
-                    <controls:CssBoxContainer FlexDirection="Column"
-                                              CssStyleClasses="panel-highlighted profile-block profile-markings">
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-markings-tab'}" />
+                    <controls:RfBoxContainer FlexDirection="Column"
+                                              SuilStyleClasses="panel-highlighted profile-block profile-markings">
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-markings-tab'}" />
                         <ui:RfMarkingPicker Name="Markings" FlexGrow="1" />
-                    </controls:CssBoxContainer>
-                </controls:CssBoxContainer>
-            </controls:CssScrollContainer>
+                    </controls:RfBoxContainer>
+                </controls:RfBoxContainer>
+            </controls:RfScrollContainer>
 
-            <css:CssControl CssStyleClasses="high-divider profile-divider" />
+            <suil:UiElement SuilStyleClasses="high-divider profile-divider" />
 
-            <controls:CssBoxContainer FlexDirection="Column">
-                <controls:CssBoxContainer FlexDirection="Row">
+            <controls:RfBoxContainer FlexDirection="Column">
+                <controls:RfBoxContainer FlexDirection="Row">
                     <!-- Sprite view -->
-                    <controls:CssBoxContainer FlexDirection="Column"
-                                              CssStyleClasses="panel-dark-bordered"
-                                              CssStyleIdentifier="profile-sprite-panel">
+                    <controls:RfBoxContainer FlexDirection="Column"
+                                              SuilStyleClasses="panel-dark-bordered"
+                                              SuilStyleIdentifier="profile-sprite-panel">
                         <profile:ProfilePreviewSpriteView Name="SpriteView" Stretch="Fill"
                                                           MinSize="250 250" SizeFlagsStretchRatio="1"
                                                           VerticalExpand="True" HorizontalExpand="True" />
-                        <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="profile-rotate">
-                            <controls:CssButton Name="SpriteRotateLeft" Text="◀" CssStyleClasses="open-right" />
-                            <controls:CssButton Name="SpriteRotateRight" Text="▶" CssStyleClasses="open-left" />
-                        </controls:CssBoxContainer>
-                    </controls:CssBoxContainer>
+                        <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="profile-rotate">
+                            <controls:RfButton Name="SpriteRotateLeft" Text="◀" SuilStyleClasses="open-right" />
+                            <controls:RfButton Name="SpriteRotateRight" Text="▶" SuilStyleClasses="open-left" />
+                        </controls:RfBoxContainer>
+                    </controls:RfBoxContainer>
 
-                    <css:CssControl CssStyleClasses="flex-fill"/>
+                    <suil:UiElement SuilStyleClasses="flex-fill"/>
 
-                    <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
-                                              CssStyleIdentifier="profile-options-panel">
+                    <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted"
+                                              SuilStyleIdentifier="profile-options-panel">
                         <!-- Species -->
-                        <controls:CssBoxContainer FlexDirection="Row">
-                            <css:CssControl Text="{Loc 'humanoid-profile-editor-species-label'}" />
-                            <css:CssControl CssStyleClasses="flex-fill" />
+                        <controls:RfBoxContainer FlexDirection="Row">
+                            <suil:UiElement Text="{Loc 'humanoid-profile-editor-species-label'}" />
+                            <suil:UiElement SuilStyleClasses="flex-fill" />
                             <TextureButton Name="SpeciesInfoButton" Scale="0.3 0.3"
                                            VerticalAlignment="Center"
                                            ToolTip="{Loc 'humanoid-profile-editor-guidebook-button-tooltip'}" />
-                        </controls:CssBoxContainer>
-                        <controls:CssOptionButton Name="SpeciesButton" />
-                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        </controls:RfBoxContainer>
+                        <controls:RfOptionButton Name="SpeciesButton" />
+                        <suil:UiElement SuilStyleClasses="low-divider profile-divider" />
                         <!-- Age -->
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-age-label'}" />
-                        <controls:CssLineEdit Name="AgeEdit" MinSize="40 0" />
-                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-age-label'}" />
+                        <controls:RfLineEdit Name="AgeEdit" MinSize="40 0" />
+                        <suil:UiElement SuilStyleClasses="low-divider profile-divider" />
                         <!-- Sex -->
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-sex-label'}" />
-                        <controls:CssOptionButton Name="SexButton" />
-                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-sex-label'}" />
+                        <controls:RfOptionButton Name="SexButton" />
+                        <suil:UiElement SuilStyleClasses="low-divider profile-divider" />
                         <!-- Pronouns -->
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-pronouns-label'}" />
-                        <controls:CssOptionButton Name="PronounsButton" />
-                        <css:CssControl CssStyleClasses="low-divider profile-divider" />
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-pronouns-label'}" />
+                        <controls:RfOptionButton Name="PronounsButton" />
+                        <suil:UiElement SuilStyleClasses="low-divider profile-divider" />
                         <!-- Show clothing -->
-                        <css:CssControl Text="{Loc 'humanoid-profile-editor-clothing'}" />
-                        <controls:CssButton Name="ShowClothes" Pressed="True" ToggleMode="True"
+                        <suil:UiElement Text="{Loc 'humanoid-profile-editor-clothing'}" />
+                        <controls:RfButton Name="ShowClothes" Pressed="True" ToggleMode="True"
                                             Text="{Loc 'humanoid-profile-editor-clothing-show'}" />
-                    </controls:CssBoxContainer>
-                </controls:CssBoxContainer>
+                    </controls:RfBoxContainer>
+                </controls:RfBoxContainer>
 
-                <css:CssControl CssStyleClasses="flex-fill"/>
-            </controls:CssBoxContainer>
-        </controls:CssBoxContainer>
+                <suil:UiElement SuilStyleClasses="flex-fill"/>
+            </controls:RfBoxContainer>
+        </controls:RfBoxContainer>
         <ui:CharacterSkillsTab Name="SkillsTab" Margin="10"
-                               controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-skills-tab'}" />
-        <controls:CssBoxContainer Name="TraitsTab" FlexDirection="Column" Margin="10"
-                                  controls:CssTabContainer.TabTitle="{Loc 'humanoid-profile-editor-traits-tab'}">
+                               controls:RfTabContainer.TabTitle="{Loc 'humanoid-profile-editor-skills-tab'}" />
+        <controls:RfBoxContainer Name="TraitsTab" FlexDirection="Column" Margin="10"
+                                  controls:RfTabContainer.TabTitle="{Loc 'humanoid-profile-editor-traits-tab'}">
             <!-- Traits -->
-            <controls:CssScrollContainer CssStyleClasses="scroll-vertical" CssStyleIdentifier="profile-traits-scroll">
-                <controls:CssBoxContainer Name="TraitsList" FlexDirection="Column" />
-            </controls:CssScrollContainer>
-        </controls:CssBoxContainer>
-    </controls:CssTabContainer>
+            <controls:RfScrollContainer SuilStyleClasses="scroll-vertical" SuilStyleIdentifier="profile-traits-scroll">
+                <controls:RfBoxContainer Name="TraitsList" FlexDirection="Column" />
+            </controls:RfScrollContainer>
+        </controls:RfBoxContainer>
+    </controls:RfTabContainer>
 </ui:RfHumanoidProfileEditor>

@@ -1,9 +1,9 @@
 #nullable enable
 using System.Linq;
 using System.Numerics;
-using Content.Client._RF.CSS;
-using Content.Client._RF.CSS.Parsers;
-using Content.Client._RF.CSS.Text;
+using Content.Client._RF.Suil;
+using Content.Client._RF.Suil.Parsers;
+using Content.Client._RF.Suil.Text;
 using Content.Client._RF.Graphics;
 using Content.Client._RF.UserInterface.Controls;
 using Content.IntegrationTests.Fixtures;
@@ -15,13 +15,13 @@ using Robust.Shared.Maths;
 namespace Content.IntegrationTests.Tests._RF.Suil;
 
 /// <summary>
-/// The value parsers of the game fed with the values written in SUIL, not in CSS: the text is parsed by
+/// The value parsers of the game fed with the values written in SUIL, not in SUIL: the text is parsed by
 /// <see cref="SuilParser"/> and the parsers read its values.
 /// </summary>
 [TestFixture]
 public sealed class SuilValuesTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _suil = null!;
 
     // em = 16, rem = 16, viewport 800x600
     private static readonly LengthContext Context =
@@ -36,7 +36,7 @@ public sealed class SuilValuesTest : GameTest
     private bool TryParse<T>(string value, out T? result)
     {
         var stream = Stream(value);
-        return _css.TryParse(ref stream, out result) && stream.AtEnd;
+        return _suil.TryParse(ref stream, out result) && stream.AtEnd;
     }
 
     private T Parse<T>(string value)
@@ -135,7 +135,7 @@ public sealed class SuilValuesTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Thickness_Follows_The_Css_Order()
+    public void Thickness_Follows_The_Suil_Order()
     {
         Assert.Multiple(() =>
         {
@@ -178,9 +178,9 @@ public sealed class SuilValuesTest : GameTest
     {
         Assert.Multiple(() =>
         {
-            Assert.That(Parse<CssFontFamily>("\"Noto Sans\", Arial, sans-serif").Names,
+            Assert.That(Parse<SuilFontFamily>("\"Noto Sans\", Arial, sans-serif").Names,
                 Is.EqualTo(new[] { "Noto Sans", "Arial", "sans-serif" }));
-            Assert.That(Parse<CssFontFamily>("Source Code Pro").Names, Is.EqualTo(new[] { "Source Code Pro" }));
+            Assert.That(Parse<SuilFontFamily>("Source Code Pro").Names, Is.EqualTo(new[] { "Source Code Pro" }));
         });
     }
 
@@ -190,10 +190,10 @@ public sealed class SuilValuesTest : GameTest
     {
         Assert.Multiple(() =>
         {
-            Assert.That(Parse<CssLineHeight>("normal"), Is.EqualTo(CssLineHeight.Normal));
-            Assert.That(Parse<CssLineHeight>("1.5"), Is.EqualTo(CssLineHeight.FromMultiplier(1.5f)));
-            Assert.That(Parse<CssLineHeight>("120%"), Is.EqualTo(CssLineHeight.FromMultiplier(1.2f)));
-            Assert.That(Parse<CssLineHeight>("20px"), Is.EqualTo(CssLineHeight.FromLength(LengthUnit.Px(20f))));
+            Assert.That(Parse<SuilLineHeight>("normal"), Is.EqualTo(SuilLineHeight.Normal));
+            Assert.That(Parse<SuilLineHeight>("1.5"), Is.EqualTo(SuilLineHeight.FromMultiplier(1.5f)));
+            Assert.That(Parse<SuilLineHeight>("120%"), Is.EqualTo(SuilLineHeight.FromMultiplier(1.2f)));
+            Assert.That(Parse<SuilLineHeight>("20px"), Is.EqualTo(SuilLineHeight.FromLength(LengthUnit.Px(20f))));
         });
     }
 
@@ -201,7 +201,7 @@ public sealed class SuilValuesTest : GameTest
     [RunOnSide(Side.Client)]
     public void Text_Shadow_Layers_Are_Separated_By_Commas()
     {
-        var shadows = Parse<CssTextShadow[]>("1px 2px 3px red, -1px -2px blue");
+        var shadows = Parse<SuilTextShadow[]>("1px 2px 3px red, -1px -2px blue");
 
         Assert.Multiple(() =>
         {
@@ -211,7 +211,7 @@ public sealed class SuilValuesTest : GameTest
             Assert.That(shadows[0].Color, Is.EqualTo(Color.Red));
             Assert.That(shadows[1].Offset, Is.EqualTo(new UnitVector2(LengthUnit.Px(-1f), LengthUnit.Px(-2f))));
             Assert.That(shadows[1].Color, Is.EqualTo(Color.Blue));
-            Assert.That(Parse<CssTextShadow[]>("none"), Is.Null, "none is the null of a reference type, as it always was");
+            Assert.That(Parse<SuilTextShadow[]>("none"), Is.Null, "none is the null of a reference type, as it always was");
         });
     }
 
@@ -236,10 +236,10 @@ public sealed class SuilValuesTest : GameTest
     {
         Assert.Multiple(() =>
         {
-            Assert.That(Parse<CssJustifyContent>("flex-start"), Is.EqualTo(CssJustifyContent.FlexStart));
-            Assert.That(Parse<CssJustifyContent>("space-between"), Is.EqualTo(CssJustifyContent.SpaceBetween));
-            Assert.That(Parse<CssFlexDirection>("column"), Is.EqualTo(CssFlexDirection.Column));
-            Assert.That(TryParse<CssFlexDirection>("diagonal", out _), Is.False);
+            Assert.That(Parse<SuilJustifyContent>("flex-start"), Is.EqualTo(SuilJustifyContent.FlexStart));
+            Assert.That(Parse<SuilJustifyContent>("space-between"), Is.EqualTo(SuilJustifyContent.SpaceBetween));
+            Assert.That(Parse<SuilFlexDirection>("column"), Is.EqualTo(SuilFlexDirection.Column));
+            Assert.That(TryParse<SuilFlexDirection>("diagonal", out _), Is.False);
         });
     }
 
@@ -248,19 +248,19 @@ public sealed class SuilValuesTest : GameTest
     public void Custom_Parsers_Are_Named_By_Type()
     {
         var bold = Stream("bold");
-        Assert.That(_css.TryParseWith(typeof(CssFontWeightParser), ref bold, out var weight), Is.True);
+        Assert.That(_suil.TryParseWith(typeof(SuilFontWeightParser), ref bold, out var weight), Is.True);
         Assert.That(weight, Is.EqualTo(FontWeight.Bold));
 
         var number = Stream("600");
-        Assert.That(_css.TryParseWith(typeof(CssFontWeightParser), ref number, out weight), Is.True);
+        Assert.That(_suil.TryParseWith(typeof(SuilFontWeightParser), ref number, out weight), Is.True);
         Assert.That(weight, Is.EqualTo((FontWeight) 600));
 
         var even = Stream("0");
-        Assert.That(_css.TryParseWith(typeof(CssNonNegativeNumberParser), ref even, out var zero), Is.True);
+        Assert.That(_suil.TryParseWith(typeof(SuilNonNegativeNumberParser), ref even, out var zero), Is.True);
         Assert.That(zero, Is.EqualTo(0f));
 
         var negative = Stream("-1");
-        Assert.That(_css.TryParseWith(typeof(CssNonNegativeNumberParser), ref negative, out _), Is.False);
+        Assert.That(_suil.TryParseWith(typeof(SuilNonNegativeNumberParser), ref negative, out _), Is.False);
     }
 
     [Test]
@@ -279,9 +279,9 @@ public sealed class SuilValuesTest : GameTest
 
         Assert.Multiple(() =>
         {
-            Assert.That(_css.TryParse<Color>(ref color, out var c) && color.AtEnd, Is.True);
+            Assert.That(_suil.TryParse<Color>(ref color, out var c) && color.AtEnd, Is.True);
             Assert.That(c, Is.EqualTo(Color.FromHex("#B07D2B")));
-            Assert.That(_css.TryParse<Thickness>(ref padding, out var t) && padding.AtEnd, Is.True);
+            Assert.That(_suil.TryParse<Thickness>(ref padding, out var t) && padding.AtEnd, Is.True);
             Assert.That(t, Is.EqualTo(new Thickness(10f, 3f, 10f, 3f)));
         });
     }

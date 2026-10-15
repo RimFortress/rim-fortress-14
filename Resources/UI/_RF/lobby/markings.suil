@@ -1,7 +1,7 @@
 /* ---------- Markings (RfMarkingPicker, RfOrganMarkingPicker, RfLayerMarkingPicker, RfLayerMarkingItem, RfLayerMarkingOrderer) ---------- */
 
 /*
- * MarkingPicker: the organs are tabs (.marking-tabs, see input/tab-container.css), in every one the layers are tabs.
+ * MarkingPicker: the organs are tabs (.marking-tabs, see input/tab-container.suil), in every one the layers are tabs.
  * A layer is a search field, the grid of markings (.marking-items) or the list to reorder (.marking-orderer) and the
  * row with the limits (.marking-status-row).
  * A marking (.marking-item-row) is the preview (.marking-preview), the button that selects it and the button with the

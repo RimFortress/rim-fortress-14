@@ -1,21 +1,21 @@
 <ui:RfLobbyCharacterPreviewPanel
     xmlns="https://spacestation14.io"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
     xmlns:ui="clr-namespace:Content.Client._RF.Lobby.UI"
     FlexDirection="Column">
-    <css:CssControl Text="{Loc 'lobby-characters-preview-panel-header'}"
-                    CssStyleClasses="rim-heading label-heading" />
-    <controls:CssBoxContainer Name="Loaded" FlexDirection="Column" Visible="False">
-        <controls:CssBoxContainer Name="ViewBox" FlexDirection="Row" CssStyleIdentifier="preview-view-box" />
-        <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="preview-buttons">
-            <controls:CssButton Name="CharacterSetup"
+    <suil:UiElement Text="{Loc 'lobby-characters-preview-panel-header'}"
+                    SuilStyleClasses="rim-heading label-heading" />
+    <controls:RfBoxContainer Name="Loaded" FlexDirection="Column" Visible="False">
+        <controls:RfBoxContainer Name="ViewBox" FlexDirection="Row" SuilStyleIdentifier="preview-view-box" />
+        <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="preview-buttons">
+            <controls:RfButton Name="CharacterSetup"
                                 Text="{Loc 'lobby-character-preview-panel-characters-setup-button'}"
-                                CssStyleClasses="open-right" />
-            <controls:CssButton Name="EquipmentSetup"
+                                SuilStyleClasses="open-right" />
+            <controls:RfButton Name="EquipmentSetup"
                                 Text="{Loc 'lobby-character-preview-panel-equipment-setup-button'}"
-                                CssStyleClasses="open-left" />
-        </controls:CssBoxContainer>
-    </controls:CssBoxContainer>
-    <css:CssControl Name="Unloaded" Text="{Loc 'lobby-character-preview-panel-unloaded-preferences-label'}" />
+                                SuilStyleClasses="open-left" />
+        </controls:RfBoxContainer>
+    </controls:RfBoxContainer>
+    <suil:UiElement Name="Unloaded" Text="{Loc 'lobby-character-preview-panel-unloaded-preferences-label'}" />
 </ui:RfLobbyCharacterPreviewPanel>

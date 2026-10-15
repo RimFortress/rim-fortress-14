@@ -1,0 +1,10 @@
+<controls:RfTabContainer
+    xmlns="https://spacestation14.io"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
+    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
+    FlexDirection="Column">
+    <controls:RfBoxContainer Name="TabBar" Access="Public" FlexDirection="Row"
+                              SuilStyleClasses="tab-bar" />
+    <suil:UiElement Name="Panel" Access="Public" FlexGrow="1"
+                    SuilStyleClasses="tab-panel" />
+</controls:RfTabContainer>

@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Numerics;
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Humanoid;
 using Content.Client.Interaction;
@@ -18,14 +18,14 @@ namespace Content.Client._RF.Lobby.UI;
 
 /// <summary>
 /// The selected markings of a layer in their order, which the player changes by dragging a marking between the
-/// others. The <see cref="CssBoxContainer"/> version of <see cref="LayerMarkingOrderer"/>.
+/// others. The <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingOrderer"/>.
 /// </summary>
 /// <remarks>
 /// A marking is in an <c>.marking-item-slot</c>, between the <c>.marking-drop-beacon</c>s; the beacon that the
 /// marking would be dropped on gets <c>.drop-target</c>.
 /// </remarks>
 [GenerateTypedNameReferences]
-public sealed partial class RfLayerMarkingOrderer : CssBoxContainer
+public sealed partial class RfLayerMarkingOrderer : RfBoxContainer
 {
     private const float ItemHeight = 64f;
 
@@ -161,16 +161,16 @@ public sealed partial class RfLayerMarkingOrderer : CssBoxContainer
 
 internal readonly record struct RfLayerMarkingDragged(RfLayerMarkingItem Item, RfLayerMarkingItemSlot Container);
 
-internal sealed class RfLayerMarkingItemSlot : CssControl
+internal sealed class RfLayerMarkingItemSlot : UiElement
 {
     public RfLayerMarkingItemSlot()
     {
         SetHeight = 64;
-        AddCssStyleClass("marking-item-slot");
+        AddSuilStyleClass("marking-item-slot");
     }
 }
 
-internal sealed class RfLayerDragDropBeacon : CssControl
+internal sealed class RfLayerDragDropBeacon : UiElement
 {
     public readonly CandidatePosition CandidatePosition;
     public readonly int Index;
@@ -179,18 +179,18 @@ internal sealed class RfLayerDragDropBeacon : CssControl
     {
         CandidatePosition = position;
         Index = index;
-        AddCssStyleClass("marking-drop-beacon");
+        AddSuilStyleClass("marking-drop-beacon");
     }
 
     public void BecomeTarget(float height)
     {
         SetHeight = height;
-        AddCssStyleClass("drop-target");
+        AddSuilStyleClass("drop-target");
     }
 
     public void UnbecomeTarget()
     {
         SetHeight = float.NaN;
-        RemoveCssStyleClass("drop-target");
+        RemoveSuilStyleClass("drop-target");
     }
 }

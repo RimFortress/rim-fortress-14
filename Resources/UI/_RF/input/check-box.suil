@@ -1,15 +1,15 @@
-/* ---------- CheckBox (CssCheckBox: the .indicator is the box, .checked is set while it is checked) ---------- */
+/* ---------- CheckBox (RfCheckBox: the .indicator is the box, .checked is set while it is checked) ---------- */
 
 /*
  * The indicator and the label are not the children of the check box but of its inner box, so they are
- * selected as descendants (`css-check-box .indicator`).
+ * selected as descendants (`rf-check-box .indicator`).
  *
- * css-check-box is a css-button, so it would take the look of a button (the colors of css-button:hover, :active, :checked
+ * rf-check-box is a rf-button, so it would take the look of a button (the colors of rf-button:hover, :active, :checked
  * and :disabled): it is reset here to a transparent control, the rules are of the same specificity and come later.
  */
 
 /* CheckBox.StyleClassCheckBox: checkBox */
-css-check-box {
+rf-check-box {
     border: none;
     border-image: none;
     background-image: none;
@@ -21,27 +21,27 @@ css-check-box {
 
 /*
  * The indicator and the label are laid out by the box inside of the check box, and the box is a box,
- * which has a gap of its own (root.css). Without this rule, every restyle of the box (on :hover of the check box, for
+ * which has a gap of its own (root.suil). Without this rule, every restyle of the box (on :hover of the check box, for
  * one) brings that gap back and the gap of the check box is lost.
  */
-css-check-box > box {
+rf-check-box > box {
     gap: inherit;
 }
 
-css-check-box:hover,
-css-check-box:active,
-css-check-box:checked {
+rf-check-box:hover,
+rf-check-box:active,
+rf-check-box:checked {
     border-color: transparent;
     background-color: transparent;
 }
 
-css-check-box:disabled {
+rf-check-box:disabled {
     border-color: transparent;
     background-color: transparent;
 }
 
 /* The indicator has no content, so its size (the size of the textures) is set here. */
-css-check-box .indicator {
+rf-check-box .indicator {
     min-width: 20px;
     min-height: 20px;
     background-image: texture("/Textures/_RF/Interface/Style/checkbox_unchecked.png");
@@ -49,6 +49,6 @@ css-check-box .indicator {
 }
 
 /* CheckBox.StyleClassCheckBoxChecked: checkBoxChecked */
-css-check-box .indicator.checked {
+rf-check-box .indicator.checked {
     background-image: texture("/Textures/_RF/Interface/Style/checkbox_checked.png");
 }

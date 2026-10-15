@@ -5,7 +5,7 @@ namespace Content.Suil;
 /// <summary>
 /// A SUIL token parser, a recursive descent over the grammar of the language
 /// (see <see cref="SuilTokenizer"/> for the tokens). Written in the manner of
-/// <see cref="Content.Client._RF.CSS.CssParser"/>: <c>Consume*</c> methods take the token stream by reference,
+/// <see cref="Content.Client._RF.Suil.SuilParser"/>: <c>Consume*</c> methods take the token stream by reference,
 /// and the first error aborts the parsing with a <see cref="SuilParserError"/>.
 /// This file holds the file level and the elements, the selectors and the values are in the other parts.
 /// </summary>

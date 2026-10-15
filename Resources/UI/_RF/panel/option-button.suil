@@ -9,7 +9,7 @@
     align-self: center;
 }
 
-css-option-button:checked .option-triangle {
+rf-option-button:checked .option-triangle {
     background-image: texture("/Textures/_RF/Interface/chevron-down-solid-full.svg.192dpi.png");
 }
 

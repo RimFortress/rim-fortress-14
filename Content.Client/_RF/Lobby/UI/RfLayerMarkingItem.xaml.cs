@@ -1,5 +1,5 @@
 using System.Linq;
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Guidebook.Controls;
 using Content.Client.Humanoid;
@@ -18,10 +18,10 @@ namespace Content.Client._RF.Lobby.UI;
 
 /// <summary>
 /// A marking in the list of a layer: its preview, the button that selects it and the button that opens the colors of
-/// its sprites. The <see cref="CssBoxContainer"/> version of <see cref="LayerMarkingItem"/>.
+/// its sprites. The <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingItem"/>.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class RfLayerMarkingItem : CssBoxContainer, ISearchableControl
+public sealed partial class RfLayerMarkingItem : RfBoxContainer, ISearchableControl
 {
     [Dependency] private IEntityManager _entity = default!;
 
@@ -33,7 +33,7 @@ public sealed partial class RfLayerMarkingItem : CssBoxContainer, ISearchableCon
     private readonly HumanoidVisualLayers _layer;
     private readonly bool _interactive;
 
-    private List<CssColorSelectorSliders>? _colorSliders;
+    private List<RfColorSelectorSliders>? _colorSliders;
 
     public event Action<GUIBoundKeyEventArgs, RfLayerMarkingItem>? Pressed;
     public event Action<GUIBoundKeyEventArgs, RfLayerMarkingItem>? Unpressed;
@@ -168,13 +168,13 @@ public sealed partial class RfLayerMarkingItem : CssBoxContainer, ISearchableCon
 
         for (var i = 0; i < _markingPrototype.Sprites.Count; i++)
         {
-            var container = new CssBoxContainer { FlexDirection = CssFlexDirection.Column };
-            container.AddCssStyleClass("marking-color");
+            var container = new RfBoxContainer { FlexDirection = SuilFlexDirection.Column };
+            container.AddSuilStyleClass("marking-color");
             ColorsContainer.AddChild(container);
 
-            var selector = new CssColorSelectorSliders
+            var selector = new RfColorSelectorSliders
             {
-                SelectorType = CssColorSelectorSliders.ColorSelectorType.Hsv,
+                SelectorType = RfColorSelectorSliders.ColorSelectorType.Hsv,
             };
 
             var label = _markingPrototype.Sprites[i] switch
@@ -184,7 +184,7 @@ public sealed partial class RfLayerMarkingItem : CssBoxContainer, ISearchableCon
                 _ => throw new InvalidOperationException("SpriteSpecifier not of known type"),
             };
 
-            var labelControl = new CssControl();
+            var labelControl = new UiElement();
             labelControl.SetPlainText(label);
             container.AddChild(labelControl);
             container.AddChild(selector);

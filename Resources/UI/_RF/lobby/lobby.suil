@@ -3,12 +3,12 @@
  *
  * The look of the elements (panels, buttons, headings, dividers) is in the shared classes of the other files:
  * angle-rect, panel-highlighted, fancy-back, rim-heading, low-divider, big, icon-button, etc. Only the
- * layout (sizes, margins, gaps, growth) of the lobby is here, each block by its CssStyleIdentifier.
+ * layout (sizes, margins, gaps, growth) of the lobby is here, each block by its SuilStyleIdentifier.
  *
  * The margins written here replace the Margin of the old XAML. The Margin order of XAML is left, top, right, bottom,
- * the order of CSS is top, right, bottom, left.
+ * the order of SUIL is top, right, bottom, left.
  * Do not set `margin` of a .fancy-back element, it has its own.
- * justify-content and align-items belong to the CssBoxContainer, so the rules with them select the type too.
+ * justify-content and align-items belong to the RfBoxContainer, so the rules with them select the type too.
  */
 
 /* ---------- RfLobbyGui ---------- */

@@ -32,8 +32,8 @@ using Content.Shared.Players.RateLimiting;
 
 // RimFortress Start
 using Content.Suil;
-using Content.Client._RF.CSS.Markup;
-using Content.Client._RF.CSS.Text;
+using Content.Client._RF.Suil.Markup;
+using Content.Client._RF.Suil.Text;
 using Content.Client._RF.Lobby;
 // RimFortress End
 
@@ -47,7 +47,7 @@ namespace Content.Client.IoC
             // RimFortress Start
             collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>();
             collection.Register<ISuilManager, SuilManager>();
-            collection.Register<ICssFontManager, CssFontManager>();
+            collection.Register<ISuilFontManager, SuilFontManager>();
             collection.Register<IRfMarkupTagManager, RfMarkupTagManager>();
             // RimFortress End
             collection.Register<IParallaxManager, ParallaxManager>();

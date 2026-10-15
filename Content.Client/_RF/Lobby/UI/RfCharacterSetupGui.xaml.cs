@@ -1,6 +1,6 @@
 using Content.Client._RF.UserInterface;
 using System.Linq;
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Info;
 using Content.Client.Info.PlaytimeStats;
@@ -21,12 +21,12 @@ namespace Content.Client._RF.Lobby.UI;
 /// Holds the entire character setup GUI, from character picks to individual character editing.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class RfCharacterSetupGui : CssBoxContainer
+public sealed partial class RfCharacterSetupGui : RfBoxContainer
 {
     [Dependency] private IClientPreferencesManager _preferencesManager = default!;
     [Dependency] private IConfigurationManager _cfg = default!;
 
-    private readonly CssButton _createNewCharacterButton;
+    private readonly RfButton _createNewCharacterButton;
 
     public event Action<int>? OnSelected;
     public event Action? OnDirty;
@@ -77,7 +77,7 @@ public sealed partial class RfCharacterSetupGui : CssBoxContainer
 
         Profiles = _preferencesManager.Preferences?.Characters.ToDictionary();
 
-        _createNewCharacterButton = new CssButton
+        _createNewCharacterButton = new RfButton
         {
             Text = Loc.GetString("character-setup-gui-create-new-character-button"),
         };
@@ -123,7 +123,7 @@ public sealed partial class RfCharacterSetupGui : CssBoxContainer
         Characters.DisposeAllChildren();
 
         var numberOfFullSlots = 0;
-        var characterButtonsGroup = new CssButtonGroup();
+        var characterButtonsGroup = new RfButtonGroup();
 
         if (!_preferencesManager.ServerDataLoaded
             || _preferencesManager.Preferences == null)
@@ -160,8 +160,8 @@ public sealed partial class RfCharacterSetupGui : CssBoxContainer
 
             if (numberOfFullSlots > maxPops && !separatorAdded)
             {
-                var divider = new CssControl { Margin = new Thickness(0, 10f) };
-                divider.AddCssStyleClass(CssClass.HighDivider);
+                var divider = new UiElement { Margin = new Thickness(0, 10f) };
+                divider.AddSuilStyleClass(SuilClass.HighDivider);
                 Characters.AddChild(divider);
 
                 separatorAdded = true;

@@ -25,7 +25,7 @@ internal sealed class SuilGenerationException(DiagnosticDescriptor descriptor, S
 internal sealed class SuilViewEmitter(
     Compilation compilation,
     SuilTagRegistry tags,
-    INamedTypeSymbol? cssControl,
+    INamedTypeSymbol? suilControl,
     INamedTypeSymbol viewClass)
 {
     private readonly StringBuilder _body = new();
@@ -66,20 +66,20 @@ internal sealed class SuilViewEmitter(
 
     private void EmitElement(SuilElement element, string variable, INamedTypeSymbol type)
     {
-        var isCss = cssControl != null && SuilTagRegistry.Derives(type, cssControl);
+        var isSuil = suilControl != null && SuilTagRegistry.Derives(type, suilControl);
 
         if (element.Id != null)
         {
             var id = element.Id.ToString();
-            _body.AppendLine(isCss
-                ? $"            {variable}.CssStyleIdentifier = {Literal(id)};"
+            _body.AppendLine(isSuil
+                ? $"            {variable}.SuilStyleIdentifier = {Literal(id)};"
                 : $"            {variable}.Name = {Literal(id)};");
         }
 
         foreach (var cls in element.Classes)
         {
-            _body.AppendLine(isCss
-                ? $"            {variable}.AddCssStyleClass({Literal(cls.ToString())});"
+            _body.AppendLine(isSuil
+                ? $"            {variable}.AddSuilStyleClass({Literal(cls.ToString())});"
                 : $"            {variable}.AddStyleClass({Literal(cls.ToString())});");
         }
 
@@ -270,7 +270,7 @@ internal sealed class SuilViewEmitter(
             }
             case "Robust.Shared.Maths.Thickness":
             {
-                // As in CSS: one value is all sides, two are vertical and horizontal, four are top, right, bottom, left.
+                // As in SUIL: one value is all sides, two are vertical and horizontal, four are top, right, bottom, left.
                 var n = Numbers(values);
                 var thickness = "new global::Robust.Shared.Maths.Thickness";
 
@@ -283,7 +283,7 @@ internal sealed class SuilViewEmitter(
                 if (n is { Count: 4 })
                     return $"{thickness}({FloatLiteral(n[3])}, {FloatLiteral(n[0])}, {FloatLiteral(n[1])}, {FloatLiteral(n[2])})";
 
-                return Fail("expected one, two or four numbers (top right bottom left, as in CSS)");
+                return Fail("expected one, two or four numbers (top right bottom left, as in SUIL)");
             }
         }
 

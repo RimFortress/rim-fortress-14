@@ -3,7 +3,7 @@ using System;
 namespace Content.Suil;
 
 /// <summary>
-/// The stream of Unicode code points the tokenizer reads, with the CSS tokenizer's interface:
+/// The stream of Unicode code points the tokenizer reads, with the SUIL tokenizer's interface:
 /// consume, peek, reconsume. -1 is the end of the input.
 /// </summary>
 public struct SuilCodePointStream(int[] codePoints)

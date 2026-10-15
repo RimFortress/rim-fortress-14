@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.Client.Info;
 using Content.Client.UserInterface.Systems.EscapeMenu;
 using Content.Client.UserInterface.Systems.Guidebook;
@@ -14,24 +14,24 @@ namespace Content.Client._RF.Info.Controls;
 
 /// <summary>
 /// A row of buttons that open the rules, the guidebook, the changelog and the links to the community of the server,
-/// the <see cref="CssControl"/> version of <see cref="Content.Client.Info.LinkBanner"/>.
+/// the <see cref="UiElement"/> version of <see cref="Content.Client.Info.LinkBanner"/>.
 /// </summary>
 /// <remarks>
-/// It is a <see cref="CssBoxContainer"/> (<c>rf-link-banner</c>, a row by default), so the space between the
-/// buttons is <c>gap</c>, the buttons are plain <c>css-button</c>s. A link whose CVar is empty is hidden.
+/// It is a <see cref="RfBoxContainer"/> (<c>rf-link-banner</c>, a row by default), so the space between the
+/// buttons is <c>gap</c>, the buttons are plain <c>rf-button</c>s. A link whose CVar is empty is hidden.
 /// </remarks>
 [UsedImplicitly]
-public sealed partial class RfLinkBanner : CssBoxContainer
+public sealed partial class RfLinkBanner : RfBoxContainer
 {
     [Dependency] private IConfigurationManager _cfg = null!;
     [Dependency] private IUriOpener _uriOpener = null!;
 
-    private readonly List<(CVarDef<string> CVar, CssButton Button)> _infoLinks = new();
+    private readonly List<(CVarDef<string> CVar, RfButton Button)> _infoLinks = new();
 
     public RfLinkBanner()
     {
         IoCManager.InjectDependencies(this);
-        FlexDirection = CssFlexDirection.Row;
+        FlexDirection = SuilFlexDirection.Row;
 
         var rulesButton = AddButton("server-info-rules-button");
         rulesButton.OnPressed += _ => new RulesAndInfoWindow().Open();
@@ -45,16 +45,16 @@ public sealed partial class RfLinkBanner : CssBoxContainer
         var guidebookButton = AddButton("server-info-guidebook-button");
         guidebookButton.OnPressed += _ => UserInterfaceManager.GetUIController<GuidebookUIController>().ToggleGuidebook();
 
-        var changelogButton = new CssChangelogButton();
-        changelogButton.AddCssStyleClass(CssClass.RowButton);
+        var changelogButton = new RfChangelogButton();
+        changelogButton.AddSuilStyleClass(SuilClass.RowButton);
         changelogButton.OnPressed += _ => UserInterfaceManager.GetUIController<ChangelogUIController>().ToggleWindow();
         AddChild(changelogButton);
     }
 
-    private CssButton AddButton(string loc)
+    private RfButton AddButton(string loc)
     {
-        var button = new CssButton { Text = Loc.GetString(loc) };
-        button.AddCssStyleClass(CssClass.RowButton);
+        var button = new RfButton { Text = Loc.GetString(loc) };
+        button.AddSuilStyleClass(SuilClass.RowButton);
         AddChild(button);
         return button;
     }

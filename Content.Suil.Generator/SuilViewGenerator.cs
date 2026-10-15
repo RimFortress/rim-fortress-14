@@ -16,7 +16,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
 {
     private const string RootProperty = "build_property.SuilRoot";
     private const string ControlName = "Robust.Client.UserInterface.Control";
-    private const string CssControlName = "Content.Client._RF.CSS.CssControl";
+    private const string UiElementName = "Content.Client._RF.Suil.UiElement";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -105,7 +105,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             return;
         }
 
-        var cssControl = compilation.GetTypeByMetadataName(CssControlName);
+        var suilControl = compilation.GetTypeByMetadataName(UiElementName);
 
         // The classes with [SuilView(Name = ...)] are tags as well.
         var registrations = tagRegistrations
@@ -118,7 +118,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
 
             try
             {
-                GenerateView(context, compilation, view, source, globals, root!, tags, cssControl);
+                GenerateView(context, compilation, view, source, globals, root!, tags, suilControl);
             }
             catch (SuilSourceException)
             {
@@ -143,7 +143,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         IReadOnlyList<string> globals,
         string root,
         SuilTagRegistry tags,
-        INamedTypeSymbol? cssControl)
+        INamedTypeSymbol? suilControl)
     {
         if (!view.IsPartialClass)
         {
@@ -185,7 +185,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             return;
         }
 
-        var emitter = new SuilViewEmitter(compilation, tags, cssControl, view.Symbol);
+        var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol);
 
         context.AddSource(HintName(view.Symbol), SourceText.From(emitter.Emit(expanded.Root, path), Encoding.UTF8));
     }

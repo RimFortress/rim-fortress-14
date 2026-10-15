@@ -1,4 +1,4 @@
-/* ---------- Scroll bars (CssScrollBar: .scrollbar, .vertical or .horizontal, and the .grabber inside) ---------- */
+/* ---------- Scroll bars (RfScrollBar: .scrollbar, .vertical or .horizontal, and the .grabber inside) ---------- */
 
 .scrollbar.vertical > .grabber {
     background-color: var(--scrollbar-grabber-default);

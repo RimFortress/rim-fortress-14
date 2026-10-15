@@ -1,11 +1,11 @@
 /*
- * StyleFortress.cs: LineEdit, TextEdit, Scroll bars, CheckBox and the controls that have no Css counterpart yet.
+ * StyleFortress.cs: LineEdit, TextEdit, Scroll bars, CheckBox and the controls that have no Suil counterpart yet.
  */
 
 /* ---------- LineEdit / TextEdit ---------- */
 
 /* Fancy LineEdit (the stylebox lineedit.png: patch margin 3, content margin 3 on the vertical and 5 on the horizontal) */
-css-line-edit {
+rf-line-edit {
     background-image: texture("/Textures/_RF/Interface/Style/lineedit.png");
     background-repeat: stretch;
     patch-margin: 3px;
@@ -13,14 +13,14 @@ css-line-edit {
 }
 
 /* LineEdit.StyleClassLineEditNotEditable: notEditable (it was a style property with the color, which never worked) */
-css-line-edit:read-only,
-css-text-edit:read-only {
+rf-line-edit:read-only,
+rf-text-edit:read-only {
     color: var(--gray-silver);
 }
 
 /* LineEdit.StylePseudoClassPlaceholder, TextEdit.StylePseudoClassPlaceholder: placeholder */
-css-line-edit:placeholder-shown,
-css-text-edit:placeholder-shown {
+rf-line-edit:placeholder-shown,
+rf-text-edit:placeholder-shown {
     color: var(--placeholder-font-color);
 }
 

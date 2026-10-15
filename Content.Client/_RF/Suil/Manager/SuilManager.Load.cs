@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using System.IO;
 using System.Linq;
 using Content.Suil;
@@ -64,7 +64,7 @@ public partial class SuilManager
         if (suilPath == SuilGlobalUsings.DefaultPath)
             return;
 
-        var faces = new List<CssFontFace>();
+        var faces = new List<SuilFontFaceEntry>();
         var expanded = SuilExpander.Expand(source.Load(suilPath), source, globals.Files.Contains(suilPath) ? null : globals.Paths);
 
         // The expansion brings the rules of the files that are imported as well, those are loaded as files themselves.
@@ -126,7 +126,7 @@ public partial class SuilManager
     /// Collects custom properties declared in <c>:root</c> rules into the base set that every control inherits from.
     /// All <c>:root</c> rules have the same specificity, so the later definition wins.
     /// </summary>
-    private static CssVariables BuildGlobalVariables(IEnumerable<PendingRule> pending)
+    private static SuilVariables BuildGlobalVariables(IEnumerable<PendingRule> pending)
     {
         var declared = new Dictionary<string, List<ISuilValue>>(StringComparer.Ordinal);
 
@@ -141,13 +141,13 @@ public partial class SuilManager
             {
                 foreach (var declaration in rule.Declarations)
                 {
-                    if (CssVariables.IsCustomProperty(declaration.Name) && declaration.Important == important)
+                    if (SuilVariables.IsCustomProperty(declaration.Name) && declaration.Important == important)
                         declared[declaration.Name] = declaration.Value;
                 }
             }
         }
 
-        return new CssVariables(null, declared);
+        return new SuilVariables(null, declared);
     }
 
     private static bool IsRootSelector(Selector selector)
@@ -158,53 +158,53 @@ public partial class SuilManager
     /// right here; declarations with <c>var()</c> are deferred until they are applied to a control,
     /// because their value depends on the variables that control inherits.
     /// </summary>
-    private List<CssStyleRule> Compile(IEnumerable<PendingRule> pending)
+    private List<SuilStyleRule> Compile(IEnumerable<PendingRule> pending)
     {
-        var rules = new List<CssStyleRule>();
+        var rules = new List<SuilStyleRule>();
 
         foreach (var rule in pending)
         {
-            var customProperties = new List<CssCustomProperty>();
+            var customProperties = new List<SuilCustomProperty>();
 
             foreach (var declaration in rule.Declarations)
             {
-                if (CssVariables.IsCustomProperty(declaration.Name))
-                    customProperties.Add(new CssCustomProperty(declaration.Name, declaration.Value, declaration.Important));
+                if (SuilVariables.IsCustomProperty(declaration.Name))
+                    customProperties.Add(new SuilCustomProperty(declaration.Name, declaration.Value, declaration.Important));
             }
 
             foreach (var selector in rule.Selectors)
             {
-                var elemType = CssStylesheet.GetElementType(selector);
+                var elemType = SuilStylesheet.GetElementType(selector);
                 // Kept apart so that "color: red !important; color: blue;" keeps both: importance, not
                 // source order, decides the winner, and the cascade applies the important pass last.
-                var normalValues = new Dictionary<string, (object Value, CssPropertyAccessor Accessor, int Order)>(
+                var normalValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
                     StringComparer.OrdinalIgnoreCase);
-                var importantValues = new Dictionary<string, (object Value, CssPropertyAccessor Accessor, int Order)>(
+                var importantValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
                     StringComparer.OrdinalIgnoreCase);
-                var deferred = new List<CssDeferredDeclaration>();
+                var deferred = new List<SuilDeferredDeclaration>();
 
                 for (var i = 0; i < rule.Declarations.Count; i++)
                 {
                     var declaration = rule.Declarations[i];
 
-                    if (CssVariables.IsCustomProperty(declaration.Name))
+                    if (SuilVariables.IsCustomProperty(declaration.Name))
                         continue; // custom properties are not real properties, they must never be resolved as such
 
-                    if (CssVariables.ContainsVar(declaration.Value))
+                    if (SuilVariables.ContainsVar(declaration.Value))
                     {
                         // The value can't be parsed yet, but a typo in the property name can be caught now.
                         if (!TryGetShorthandInfo(elemType, declaration.Name, out _)
                             && !TryGetPropertyAccessor(elemType, declaration.Name, out _))
                         {
 #if EXCEPTION_TOLERANCE
-                            _sawmill.Error($"unknown CSS property '{declaration.Name}'");
+                            _sawmill.Error($"unknown SUIL property '{declaration.Name}'");
                             continue;
 #else
-                            throw new ArgumentException($"unknown CSS property '{declaration.Name}'");
+                            throw new ArgumentException($"unknown SUIL property '{declaration.Name}'");
 #endif
                         }
 
-                        deferred.Add(new CssDeferredDeclaration(declaration, elemType, i));
+                        deferred.Add(new SuilDeferredDeclaration(declaration, elemType, i));
                         continue;
                     }
 
@@ -239,13 +239,13 @@ public partial class SuilManager
                     continue;
 
                 var properties = normalValues
-                    .Select(kv => new CssStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order))
+                    .Select(kv => new SuilStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order))
                     .Concat(importantValues.Select(kv =>
-                        new CssStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order, Important: true)))
+                        new SuilStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order, Important: true)))
                     .OrderBy(p => p.Order)
                     .ToList();
 
-                rules.Add(new CssStyleRule(selector, properties)
+                rules.Add(new SuilStyleRule(selector, properties)
                 {
                     CustomProperties = custom,
                     DeferredDeclarations = deferred,

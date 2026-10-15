@@ -1,6 +1,6 @@
 #nullable enable
 using System.Linq;
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Suil;
@@ -10,7 +10,7 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 
 /// <summary>
 /// The style engine fed with rules written in SUIL: selectors, the cascade, variables, inheritance and the keywords.
-/// The scenarios are the ones of the CSS tests, so the two syntaxes can be told to do the same.
+/// The scenarios are the ones of the SUIL tests, so the two syntaxes can be told to do the same.
 /// </summary>
 /// <remarks>
 /// Controls are selected by <c>.p</c> (the parent), <c>.c</c> (the child) and so on. A tree is styled parent first,
@@ -19,13 +19,13 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 [TestFixture]
 public sealed class SuilStylesTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ISuilManager _css = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _suil = null!;
 
     private void Load(string suil)
     {
-        _css.ClearTestStylesheet();
-        _css.LoadSuilString(suil);
-        _css.BuildTestStylesheet();
+        _suil.ClearTestStylesheet();
+        _suil.LoadSuilString(suil);
+        _suil.BuildTestStylesheet();
     }
 
     private static SuilStylesControl Node(params string[] classes)
@@ -34,17 +34,17 @@ public sealed class SuilStylesTest : GameTest
 
         foreach (var name in classes)
         {
-            control.AddCssStyleClass(name);
+            control.AddSuilStyleClass(name);
         }
 
         return control;
     }
 
-    private void Style(params CssControl[] controls)
+    private void Style(params UiElement[] controls)
     {
         foreach (var control in controls)
         {
-            _css.UpdateTestStyle(control);
+            _suil.UpdateTestStyle(control);
         }
     }
 
@@ -82,7 +82,7 @@ public sealed class SuilStylesTest : GameTest
         var plain = Node();
         var classed = Node("a");
         var identified = Node("a");
-        identified.CssStyleIdentifier = "b";
+        identified.SuilStyleIdentifier = "b";
         Style(plain, classed, identified);
 
         Assert.Multiple(() =>
@@ -107,7 +107,7 @@ public sealed class SuilStylesTest : GameTest
 
         var later = Node("a");
         var important = Node("b");
-        important.CssStyleIdentifier = "i";
+        important.SuilStyleIdentifier = "i";
         var mixed = Node("c");
         Style(later, important, mixed);
 
@@ -131,7 +131,7 @@ public sealed class SuilStylesTest : GameTest
         Style(control);
         Assert.That(control.Count, Is.EqualTo(7f), "no rule matches yet");
 
-        control.AddCssStyleClass("a");
+        control.AddSuilStyleClass("a");
         Style(control);
         Assert.Multiple(() =>
         {
@@ -139,7 +139,7 @@ public sealed class SuilStylesTest : GameTest
             Assert.That(control.Label, Is.EqualTo("styled"));
         });
 
-        control.RemoveCssStyleClass("a");
+        control.RemoveSuilStyleClass("a");
         Style(control);
         Assert.Multiple(() =>
         {
@@ -392,7 +392,7 @@ public sealed class SuilStylesTest : GameTest
         Assert.Multiple(() =>
         {
             Assert.That(control.Hidden, Is.EqualTo(2f), "a custom name of a member");
-            Assert.That(control.FontFamilyValue.Names, Is.EqualTo(new[] { "Foo" }), "a protected member of CssControl");
+            Assert.That(control.FontFamilyValue.Names, Is.EqualTo(new[] { "Foo" }), "a protected member of UiElement");
             Assert.That(control.PaddingTopValue, Is.EqualTo(LengthUnit.Px(1f)), "a shorthand");
             Assert.That(control.PaddingRightValue, Is.EqualTo(LengthUnit.Px(2f)));
             Assert.That(control.ColorValue, Is.EqualTo(Color.Red));
@@ -443,7 +443,7 @@ public sealed class SuilStylesTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void CSS_Wide_Keywords()
+    public void SUIL_Wide_Keywords()
     {
         Load("""
             suil-styles-control.p { count: 5; color: red; }
@@ -474,11 +474,11 @@ public sealed class SuilStylesTest : GameTest
     [RunOnSide(Side.Client)]
     public void Unknown_Tag_Property_And_Value_Are_Errors()
     {
-        Assert.Throws<CssParserError>(() => Load("no-such-control { count: 1; }"));
+        Assert.Throws<SuilStyleError>(() => Load("no-such-control { count: 1; }"));
         Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { no-such-property: 1; }"));
         Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { count: not-a-number; }"));
-        Assert.Throws<CssParserError>(() => Load("suil-styles-control[unknown=1] { count: 1; }"));
-        Assert.Throws<CssParserError>(() => Load("suil-styles-control[count^=\"a\"] { count: 1; }"));
+        Assert.Throws<SuilStyleError>(() => Load("suil-styles-control[unknown=1] { count: 1; }"));
+        Assert.Throws<SuilStyleError>(() => Load("suil-styles-control[count^=\"a\"] { count: 1; }"));
     }
 
     [Test]
@@ -500,7 +500,7 @@ public enum SuilStylesMode
 /// A control for the tests of the SUIL styles: its public members are stylable as they are, a member of the base class
 /// is not public (the font), and one has a custom name.
 /// </summary>
-public sealed partial class SuilStylesControl : CssControl
+public sealed partial class SuilStylesControl : UiElement
 {
     public int Count { get; set; }
 
@@ -518,7 +518,7 @@ public sealed partial class SuilStylesControl : CssControl
     public int Hidden { get; set; }
 
     public Color ColorValue => TextColor;
-    public CssFontFamily FontFamilyValue => FontFamily;
+    public SuilFontFamily FontFamilyValue => FontFamily;
     public LengthUnit PaddingTopValue => PaddingTop;
     public LengthUnit PaddingRightValue => PaddingRight;
 }

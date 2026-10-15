@@ -11,10 +11,10 @@ namespace Content.Client._RF.Lobby.UI;
 
 /// <summary>
 /// The markings of one organ: a tab for every layer that has markings, in every one the
-/// <see cref="RfLayerMarkingPicker"/>. The <see cref="CssBoxContainer"/> version of <see cref="OrganMarkingPicker"/>.
+/// <see cref="RfLayerMarkingPicker"/>. The <see cref="RfBoxContainer"/> version of <see cref="OrganMarkingPicker"/>.
 /// </summary>
 [GenerateTypedNameReferences]
-public sealed partial class RfOrganMarkingPicker : CssBoxContainer
+public sealed partial class RfOrganMarkingPicker : RfBoxContainer
 {
     [Dependency] private MarkingManager _marking = default!;
 

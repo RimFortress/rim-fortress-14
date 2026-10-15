@@ -4,5 +4,5 @@
     xmlns:rf="clr-namespace:Content.Client._RF.UserInterface.Controls"
     Title="{Loc 'color-picker-window-title'}"
     SetWidth="100" Resizable="False">
-    <rf:CssColorSelectorSliders Name="Selector" Access="Public" SelectorType="Rgb" IsAlphaVisible="False"/>
+    <rf:RfColorSelectorSliders Name="Selector" Access="Public" SelectorType="Rgb" IsAlphaVisible="False"/>
 </controls:FancyWindow>

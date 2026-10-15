@@ -1,4 +1,4 @@
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared.Traits;
@@ -6,13 +6,13 @@ using Content.Shared.Traits;
 namespace Content.Client._RF.Lobby.UI;
 
 /// <summary>
-/// The check box of a trait in the traits tab of the profile editor, the <see cref="CssCheckBox"/> version of
+/// The check box of a trait in the traits tab of the profile editor, the <see cref="RfCheckBox"/> version of
 /// <see cref="Content.Client.Lobby.UI.Roles.TraitPreferenceSelector"/>.
 /// </summary>
 /// <remarks>
 /// While <see cref="OverLimit"/> is set the check box has the class <c>over-limit</c>.
 /// </remarks>
-public sealed class RfTraitPreferenceSelector : CssCheckBox
+public sealed class RfTraitPreferenceSelector : RfCheckBox
 {
     public int Cost { get; }
 
@@ -32,9 +32,9 @@ public sealed class RfTraitPreferenceSelector : CssCheckBox
         {
             field = value;
             if (value)
-                AddCssStyleClass(CssClass.OverLimit);
+                AddSuilStyleClass(SuilClass.OverLimit);
             else
-                RemoveCssStyleClass(CssClass.OverLimit);
+                RemoveSuilStyleClass(SuilClass.OverLimit);
         }
     }
 
@@ -42,7 +42,7 @@ public sealed class RfTraitPreferenceSelector : CssCheckBox
 
     public RfTraitPreferenceSelector(TraitPrototype trait)
     {
-        AlignSelf = CssAlignSelf.FlexStart;
+        AlignSelf = SuilAlignSelf.FlexStart;
 
         var text = trait.Cost != 0 ? $"[{trait.Cost}] " : "";
         text += Loc.GetString(trait.Name);

@@ -8,9 +8,9 @@ namespace Content.Suil;
 
 /// <summary>
 /// SUIL (Styled UI Layout) text tokenizer. It is built on <see cref="SuilCodePointStream"/> in the same way as
-/// <see cref="Content.Client._RF.CSS.CssTokenizer"/> and keeps its zero tolerance for syntax errors:
+/// <see cref="Content.Client._RF.Suil.SuilTokenizer"/> and keeps its zero tolerance for syntax errors:
 /// a <see cref="SuilTokenizeError"/> is thrown for anything the language can't contain.
-/// Differences from CSS:
+/// Differences from SUIL:
 /// <list type="bullet">
 /// <item>comments are <c>//</c> and <c>/* */</c> and are turned into a whitespace token;</item>
 /// <item>strings are double-quoted and may contain <c>`variable`</c> references;</item>
@@ -89,7 +89,7 @@ public static class SuilTokenizer
     }
 
     /// <summary>
-    /// Splits text into Unicode code points. A lone surrogate becomes U+FFFD, as the CSS preprocessing does.
+    /// Splits text into Unicode code points. A lone surrogate becomes U+FFFD, as the SUIL preprocessing does.
     /// </summary>
     private static int[] ToCodePoints(string text)
     {
@@ -507,7 +507,7 @@ public static class SuilTokenizer
     }
 
     /// <summary>
-    /// Consume a number (CSS Syntax §4.3.13). Assumes the caller has already verified that a number follows.
+    /// Consume a number (SUIL Syntax §4.3.13). Assumes the caller has already verified that a number follows.
     /// </summary>
     private static ConsumedNumber ConsumeNumber(ref SuilCodePointStream stream)
     {

@@ -13,7 +13,7 @@ internal sealed record SuilTagRegistration(string Name, INamedTypeSymbol? Type, 
 /// <list type="bullet">
 /// <item>
 /// By default the tag of a class is its name in kebab-case: <c>SpriteView</c> is <c>sprite-view</c>,
-/// <c>CssButton</c> is <c>css-button</c>. Nothing is needed for this, so every engine and game control works as it is.
+/// <c>RfButton</c> is <c>rf-button</c>. Nothing is needed for this, so every engine and game control works as it is.
 /// </item>
 /// <item>
 /// A custom name is given with <c>[SuilTag]</c> or with the <c>Name</c> of <c>[SuilView]</c>. A class that has one is
@@ -238,7 +238,7 @@ internal static class SuilNaming
 {
     /// <summary>
     /// <c>SpriteView</c> to <c>sprite-view</c>. A run of capitals is one word until the last of them starts the next:
-    /// <c>UIScale</c> is <c>ui-scale</c>, <c>CssHScrollBar</c> is <c>css-h-scroll-bar</c>. Digits stay with the word before.
+    /// <c>UIScale</c> is <c>ui-scale</c>, <c>RfHScrollBar</c> is <c>rf-h-scroll-bar</c>. Digits stay with the word before.
     /// </summary>
     public static string ToKebab(string name)
     {

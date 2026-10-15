@@ -2,7 +2,7 @@
  * StyleFortress.cs: Labels, Tooltips, Item status, PDA text.
  *
  * Label.StylePropertyFont is font-family, font-size, font-weight and font-style; Label.StylePropertyFontColor and
- * ModulateSelf of a text are `color`. The font of every control is Source Code Pro (base/variables.css), so only the
+ * ModulateSelf of a text are `color`. The font of every control is Source Code Pro (base/variables.suil), so only the
  * size, the weight and the style are written here.
  */
 

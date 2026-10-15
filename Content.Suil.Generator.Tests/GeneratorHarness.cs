@@ -18,10 +18,10 @@ internal static class GeneratorHarness
     /// The types the generator looks for, with the members of the real ones that matter to it.
     /// </summary>
     public const string Stubs = """
-        [assembly: Content.Suil.SuilTag("_", typeof(Content.Client._RF.CSS.CssControl))]
-        [assembly: Content.Suil.SuilTag("box", typeof(Content.Client._RF.UserInterface.Controls.CssBoxContainer))]
-        [assembly: Content.Suil.SuilTag("button", typeof(Content.Client._RF.UserInterface.Controls.CssButton))]
-        [assembly: Content.Suil.SuilTag("confirm-button", typeof(Content.Client._RF.UserInterface.Controls.CssConfirmButton))]
+        [assembly: Content.Suil.SuilTag("_", typeof(Content.Client._RF.Suil.UiElement))]
+        [assembly: Content.Suil.SuilTag("box", typeof(Content.Client._RF.UserInterface.Controls.RfBoxContainer))]
+        [assembly: Content.Suil.SuilTag("button", typeof(Content.Client._RF.UserInterface.Controls.RfButton))]
+        [assembly: Content.Suil.SuilTag("confirm-button", typeof(Content.Client._RF.UserInterface.Controls.RfConfirmButton))]
 
         namespace Robust.Shared.Maths { public struct Thickness { public Thickness(float left, float top, float right, float bottom) { } } }
         namespace Robust.Shared.Localization
@@ -52,27 +52,27 @@ internal static class GeneratorHarness
             public enum Direction { South, North, SouthEast }
             public class SpriteView : Robust.Client.UserInterface.Control { public Direction OverrideDirection { get; set; } }
         }
-        namespace Content.Client._RF.CSS
+        namespace Content.Client._RF.Suil
         {
-            public class CssControl : Robust.Client.UserInterface.Control
+            public class UiElement : Robust.Client.UserInterface.Control
             {
-                public string? CssStyleIdentifier { get; set; }
+                public string? SuilStyleIdentifier { get; set; }
                 public string? Text { get; set; }
-                public void AddCssStyleClass(string name) { }
+                public void AddSuilStyleClass(string name) { }
             }
         }
         namespace Content.Client._RF.UserInterface.Controls
         {
-            using Content.Client._RF.CSS;
-            public enum CssFlexDirection { Row, Column }
-            public class CssBoxContainer : CssControl { public CssFlexDirection FlexDirection { get; set; } }
-            public class CssButton : CssControl { public bool Disabled { get; set; } public bool ToggleMode { get; set; } }
-            public class CssConfirmButton : CssButton { public string? ConfirmationText { get; set; } }
-            public class CssScrollContainer : CssBoxContainer { }
-            public class CssTabContainer : CssBoxContainer { }
-            public class CssNoDefault : CssControl { public CssNoDefault(int x) { } }
-            public class HUDPanel : CssControl { }
-            public class CssHScrollBar : CssControl { }
+            using Content.Client._RF.Suil;
+            public enum SuilFlexDirection { Row, Column }
+            public class RfBoxContainer : UiElement { public SuilFlexDirection FlexDirection { get; set; } }
+            public class RfButton : UiElement { public bool Disabled { get; set; } public bool ToggleMode { get; set; } }
+            public class RfConfirmButton : RfButton { public string? ConfirmationText { get; set; } }
+            public class RfScrollContainer : RfBoxContainer { }
+            public class RfTabContainer : RfBoxContainer { }
+            public class RfNoDefault : UiElement { public RfNoDefault(int x) { } }
+            public class HUDPanel : UiElement { }
+            public class RfHScrollBar : UiElement { }
         }
         """;
 

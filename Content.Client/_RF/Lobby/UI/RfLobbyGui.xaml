@@ -6,110 +6,110 @@
     xmlns:rfInfo="clr-namespace:Content.Client._RF.Info.Controls"
     xmlns:widgets="clr-namespace:Content.Client.UserInterface.Systems.Chat.Widgets"
     xmlns:ui="clr-namespace:Content.Client.Lobby.UI"
-    xmlns:css="clr-namespace:Content.Client._RF.CSS"
+    xmlns:suil="clr-namespace:Content.Client._RF.Suil"
     xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls">
-    <!-- RimFortress: styled by Resources/CSS/_RF/lobby/ -->
+    <!-- RimFortress: styled by Resources/UI/_RF/lobby/ -->
     <!-- Background -->
     <TextureRect Access="Public" VerticalExpand="True" HorizontalExpand="True" Name="Background"
                  Stretch="KeepAspectCovered" />
-    <controls:CssBoxContainer Name="MainContainer" FlexDirection="Row" CssStyleIdentifier="lobby-main">
+    <controls:RfBoxContainer Name="MainContainer" FlexDirection="Row" SuilStyleIdentifier="lobby-main">
         <!-- LHS Controls -->
-        <controls:CssBoxContainer Name="LeftSide" FlexDirection="Column" CssStyleIdentifier="lobby-left">
-            <controls:CssBoxContainer Name="DefaultState" FlexDirection="Column"
-                                      CssStyleIdentifier="lobby-default-state">
-                <controls:CssBoxContainer Name="TopLeft" FlexDirection="Column">
+        <controls:RfBoxContainer Name="LeftSide" FlexDirection="Column" SuilStyleIdentifier="lobby-left">
+            <controls:RfBoxContainer Name="DefaultState" FlexDirection="Column"
+                                      SuilStyleIdentifier="lobby-default-state">
+                <controls:RfBoxContainer Name="TopLeft" FlexDirection="Column">
                     <!-- Left Top Panel -->
-                    <controls:CssBoxContainer Name="LeftSideTop" FlexDirection="Column"
-                                              CssStyleClasses="angle-rect"
-                                              CssStyleIdentifier="lobby-left-top">
+                    <controls:RfBoxContainer Name="LeftSideTop" FlexDirection="Column"
+                                              SuilStyleClasses="angle-rect"
+                                              SuilStyleIdentifier="lobby-left-top">
                         <rfInfo:RfLinkBanner Name="LinkBanner" AlignSelf="Center" Margin="3 3 3 3" />
-                        <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="fancy-back"
-                                                  CssStyleIdentifier="lobby-start-row">
-                            <controls:CssUICommandButton Command="observe" Name="ObserveButton" Access="Public"
+                        <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="fancy-back"
+                                                  SuilStyleIdentifier="lobby-start-row">
+                            <controls:RfUICommandButton Command="observe" Name="ObserveButton" Access="Public"
                                                          Text="{Loc 'ui-lobby-observe-button'}"
-                                                         CssStyleClasses="font-big"
+                                                         SuilStyleClasses="font-big"
                                                          WindowType="{x:Type ui:ObserveWarningWindow}" />
-                            <css:CssControl Name="StartTime" Access="Public"
-                                            CssStyleClasses="font-big text-center"
-                                            CssStyleIdentifier="lobby-start-time" />
-                            <controls:CssButton Name="ReadyButton" Access="Public" ToggleMode="True"
+                            <suil:UiElement Name="StartTime" Access="Public"
+                                            SuilStyleClasses="font-big text-center"
+                                            SuilStyleIdentifier="lobby-start-time" />
+                            <controls:RfButton Name="ReadyButton" Access="Public" ToggleMode="True"
                                                 Text="{Loc 'ui-lobby-ready-up-button'}"
-                                                CssStyleClasses="font-big"
-                                                CssStyleIdentifier="lobby-ready-button" />
-                        </controls:CssBoxContainer>
-                    </controls:CssBoxContainer>
+                                                SuilStyleClasses="font-big"
+                                                SuilStyleIdentifier="lobby-ready-button" />
+                        </controls:RfBoxContainer>
+                    </controls:RfBoxContainer>
                     <!-- Voting Popups -->
-                    <controls:CssBoxContainer Name="VoteContainer" Access="Public" FlexDirection="Column"
-                                              CssStyleIdentifier="lobby-votes" />
-                </controls:CssBoxContainer>
+                    <controls:RfBoxContainer Name="VoteContainer" Access="Public" FlexDirection="Column"
+                                              SuilStyleIdentifier="lobby-votes" />
+                </controls:RfBoxContainer>
                 <!-- Left Bot Panel -->
-                <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="lobby-left-bottom">
+                <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="lobby-left-bottom">
                     <rfInfo:RfDevInfoBanner Name="DevInfoBanner" Margin="3 3 3 3" />
-                    <controls:CssBoxContainer FlexDirection="Row" CssStyleClasses="angle-rect"
-                                              CssStyleIdentifier="lobby-credits">
-                        <css:CssControl Name="LobbySong" Access="Public" />
-                        <css:CssControl Name="LobbyBackground" Access="Public" />
-                    </controls:CssBoxContainer>
-                </controls:CssBoxContainer>
-            </controls:CssBoxContainer>
+                    <controls:RfBoxContainer FlexDirection="Row" SuilStyleClasses="angle-rect"
+                                              SuilStyleIdentifier="lobby-credits">
+                        <suil:UiElement Name="LobbySong" Access="Public" />
+                        <suil:UiElement Name="LobbyBackground" Access="Public" />
+                    </controls:RfBoxContainer>
+                </controls:RfBoxContainer>
+            </controls:RfBoxContainer>
             <!-- Character setup state -->
             <!-- This is injected on startup. Funky! -->
-            <controls:CssBoxContainer Access="Public" Visible="False" Name="CharacterSetupState"
-                                      FlexDirection="Column" CssStyleIdentifier="lobby-setup-state" />
+            <controls:RfBoxContainer Access="Public" Visible="False" Name="CharacterSetupState"
+                                      FlexDirection="Column" SuilStyleIdentifier="lobby-setup-state" />
             <!-- Equipment editor state -->
-            <controls:CssBoxContainer Access="Public" Visible="False" Name="EquipmentEditorState"
-                                      FlexDirection="Column" CssStyleIdentifier="lobby-setup-state" />
-        </controls:CssBoxContainer>
+            <controls:RfBoxContainer Access="Public" Visible="False" Name="EquipmentEditorState"
+                                      FlexDirection="Column" SuilStyleIdentifier="lobby-setup-state" />
+        </controls:RfBoxContainer>
 
         <!-- Right Panel -->
-        <controls:CssBoxContainer Name="RightSide" Access="Public" FlexDirection="Column"
-                                  CssStyleClasses="angle-rect-transparent"
-                                  CssStyleIdentifier="lobby-right">
+        <controls:RfBoxContainer Name="RightSide" Access="Public" FlexDirection="Column"
+                                  SuilStyleClasses="angle-rect-transparent"
+                                  SuilStyleIdentifier="lobby-right">
             <!-- Top row -->
-            <controls:CssBoxContainer Name="HeaderContainer" Access="Public" FlexDirection="Row"
-                                      CssStyleClasses="fancy-back" CssStyleIdentifier="lobby-header">
-                <css:CssControl Name="ServerName" Access="Public" CssStyleClasses="label-heading-bigger" />
-            </controls:CssBoxContainer>
+            <controls:RfBoxContainer Name="HeaderContainer" Access="Public" FlexDirection="Row"
+                                      SuilStyleClasses="fancy-back" SuilStyleIdentifier="lobby-header">
+                <suil:UiElement Name="ServerName" Access="Public" SuilStyleClasses="label-heading-bigger" />
+            </controls:RfBoxContainer>
 
-            <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="lobby-divider" />
+            <suil:UiElement SuilStyleClasses="low-divider" SuilStyleIdentifier="lobby-divider" />
 
-            <controls:CssBoxContainer FlexDirection="Row" CssStyleIdentifier="lobby-info-row">
+            <controls:RfBoxContainer FlexDirection="Row" SuilStyleIdentifier="lobby-info-row">
                 <!-- Server info -->
-                <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
-                                          CssStyleIdentifier="lobby-server-info">
-                    <css:CssControl Text="{Loc 'ui-lobby-server-info-block'}"
-                                    CssStyleClasses="rim-heading label-heading" />
+                <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted"
+                                          SuilStyleIdentifier="lobby-server-info">
+                    <suil:UiElement Text="{Loc 'ui-lobby-server-info-block'}"
+                                    SuilStyleClasses="rim-heading label-heading" />
 
                     <info:ServerInfo Name="ServerInfo" Access="Public" MaxWidth="400"
                                      Margin="3" HorizontalAlignment="Left" />
 
-                    <css:CssControl Name="StationTime" Access="Public"
-                                    CssStyleIdentifier="lobby-station-time" />
-                </controls:CssBoxContainer>
+                    <suil:UiElement Name="StationTime" Access="Public"
+                                    SuilStyleIdentifier="lobby-station-time" />
+                </controls:RfBoxContainer>
 
-                <css:CssControl CssStyleClasses="high-divider" />
+                <suil:UiElement SuilStyleClasses="high-divider" />
 
                 <!-- Voting & misc buttons -->
-                <controls:CssBoxContainer FlexDirection="Column" CssStyleClasses="panel-highlighted"
-                                          CssStyleIdentifier="lobby-actions">
-                    <controls:CssButton Name="AHelpButton" Access="Public" Text="{Loc 'ui-lobby-ahelp-button'}"
-                                        CssStyleClasses="font-big" />
-                    <controls:CssVoteCallMenuButton Name="CallVoteButton" CssStyleClasses="font-big" />
+                <controls:RfBoxContainer FlexDirection="Column" SuilStyleClasses="panel-highlighted"
+                                          SuilStyleIdentifier="lobby-actions">
+                    <controls:RfButton Name="AHelpButton" Access="Public" Text="{Loc 'ui-lobby-ahelp-button'}"
+                                        SuilStyleClasses="font-big" />
+                    <controls:RfVoteCallMenuButton Name="CallVoteButton" SuilStyleClasses="font-big" />
 
-                    <css:CssControl CssStyleClasses="flex-fill" />
+                    <suil:UiElement SuilStyleClasses="flex-fill" />
 
-                    <controls:CssButton Name="OptionsButton" Access="Public" CssStyleClasses="font-big"
+                    <controls:RfButton Name="OptionsButton" Access="Public" SuilStyleClasses="font-big"
                                         Text="{Loc 'ui-lobby-options-button'}" />
-                    <controls:CssButton Name="LeaveButton" Access="Public" CssStyleClasses="font-big"
+                    <controls:RfButton Name="LeaveButton" Access="Public" SuilStyleClasses="font-big"
                                         Text="{Loc 'ui-lobby-leave-button'}" />
-                </controls:CssBoxContainer>
-            </controls:CssBoxContainer>
+                </controls:RfBoxContainer>
+            </controls:RfBoxContainer>
 
             <lobbyUi:RfLobbyCharacterPreviewPanel Name="CharacterPreview" Access="Public" Margin="10" />
 
-            <css:CssControl CssStyleClasses="low-divider" CssStyleIdentifier="lobby-divider" />
+            <suil:UiElement SuilStyleClasses="low-divider" SuilStyleIdentifier="lobby-divider" />
 
             <widgets:ChatBox Name="Chat" Access="Public" VerticalExpand="True" Margin="3 3 3 3" MinHeight="50" />
-        </controls:CssBoxContainer>
-    </controls:CssBoxContainer>
+        </controls:RfBoxContainer>
+    </controls:RfBoxContainer>
 </lobbyUi:RfLobbyGui>

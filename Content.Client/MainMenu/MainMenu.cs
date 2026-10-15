@@ -62,28 +62,28 @@ namespace Content.Client.MainMenu
             _mainMenuControl.Dispose();
         }
 
-        private void ChangelogButtonPressed(CssButtonEventArgs args) // RimFortress
+        private void ChangelogButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             _userInterfaceManager.GetUIController<ChangelogUIController>().ToggleWindow();
         }
 
-        private void OptionsButtonPressed(CssButtonEventArgs args) // RimFortress
+        private void OptionsButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             _userInterfaceManager.GetUIController<OptionsUIController>().ToggleWindow();
         }
 
-        private void QuitButtonPressed(CssButtonEventArgs args) // RimFortress
+        private void QuitButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             _controllerProxy.Shutdown();
         }
 
-        private void DirectConnectButtonPressed(CssButtonEventArgs args) // RimFortress
+        private void DirectConnectButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             var input = _mainMenuControl.AddressBox;
             TryConnect(input.Text);
         }
 
-        private void AddressBoxEntered(CssLineEdit.LineEditEventArgs args) // RimFortress
+        private void AddressBoxEntered(RfLineEdit.LineEditEventArgs args) // RimFortress
         {
             if (_isConnecting)
             {

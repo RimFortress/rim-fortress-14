@@ -17,8 +17,8 @@ public sealed partial class SocializationEffectInfo : ContainerButton
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private IEntityManager _entity = default!;
 
-    public const string OddRowStyleClass = CssClass.OddRow;
-    public const string EvenRowStyleClass = CssClass.EvenRow;
+    public const string OddRowStyleClass = SuilClass.OddRow;
+    public const string EvenRowStyleClass = SuilClass.EvenRow;
 
     public ProtoId<SocialEffectPrototype> Proto { get; private set; }
     public int Value { get; private set; }

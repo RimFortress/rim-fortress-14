@@ -13,7 +13,7 @@ namespace Content.Client._RF.Lobby.UI;
 
 public sealed partial class RfHumanoidProfileEditor
 {
-    private CssColorSelectorSliders _rgbSkinColorSelector;
+    private RfColorSelectorSliders _rgbSkinColorSelector;
     private List<SpeciesPrototype> _species = new();
     private static readonly ProtoId<GuideEntryPrototype> DefaultSpeciesGuidebook = "Species";
 

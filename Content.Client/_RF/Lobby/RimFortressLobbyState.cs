@@ -35,7 +35,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
     protected override Type? LinkedScreenType { get; } = typeof(RfLobbyGui);
     public RfLobbyGui? Lobby;
 
-    // Setting the text of a CssControl rebuilds it, so the per-frame texts are set only when they change.
+    // Setting the text of a UiElement rebuilds it, so the per-frame texts are set only when they change.
     private string? _startTimeText;
     private string? _stationTimeText;
 
@@ -106,19 +106,19 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         Lobby?.SwitchState(state);
     }
 
-    private void OnSetupPressed(CssButtonEventArgs args)
+    private void OnSetupPressed(RfButtonEventArgs args)
     {
         SetReady(false);
         Lobby?.SwitchState(RfLobbyGui.LobbyGuiState.CharacterSetup);
     }
 
-    private void OnEquipmentSetupPressed(CssButtonEventArgs args)
+    private void OnEquipmentSetupPressed(RfButtonEventArgs args)
     {
         SetReady(false);
         Lobby?.SwitchState(RfLobbyGui.LobbyGuiState.EquipmentSetup);
     }
 
-    private void OnReadyPressed(CssButtonEventArgs args)
+    private void OnReadyPressed(RfButtonEventArgs args)
     {
         if (!_gameTicker.IsGameStarted)
         {
@@ -129,7 +129,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
         _consoleHost.ExecuteCommand("scene RimFortressState");
     }
 
-    private void OnReadyToggled(CssButtonToggledEventArgs args)
+    private void OnReadyToggled(RfButtonToggledEventArgs args)
     {
         SetReady(args.Pressed);
     }

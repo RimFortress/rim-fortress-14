@@ -1,6 +1,6 @@
 using Content.Client._RF.UserInterface;
 using System.Linq;
-using Content.Client._RF.CSS;
+using Content.Client._RF.Suil;
 using Content.Shared.Traits;
 using Robust.Shared.Utility;
 
@@ -22,7 +22,7 @@ public sealed partial class RfHumanoidProfileEditor
 
         if (traits.Count < 1)
         {
-            TraitsList.AddChild(CreateLabel(Loc.GetString("humanoid-profile-editor-no-traits"), CssClass.ProfileHint));
+            TraitsList.AddChild(CreateLabel(Loc.GetString("humanoid-profile-editor-no-traits"), SuilClass.ProfileHint));
             return;
         }
 
@@ -55,7 +55,7 @@ public sealed partial class RfHumanoidProfileEditor
             {
                 category = _prototypeManager.Index<TraitCategoryPrototype>(categoryId);
                 // Label
-                var label = CreateLabel(Loc.GetString(category.Name), CssClass.LabelHeading);
+                var label = CreateLabel(Loc.GetString(category.Name), SuilClass.LabelHeading);
                 label.Margin = new Thickness(0, 10, 0, 0);
                 TraitsList.AddChild(label);
             }
@@ -94,7 +94,7 @@ public sealed partial class RfHumanoidProfileEditor
             {
                 TraitsList.AddChild(CreateLabel(
                     Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints)),
-                    CssClass.ProfileHint));
+                    SuilClass.ProfileHint));
             }
 
             foreach (var selector in selectors)
@@ -113,10 +113,10 @@ public sealed partial class RfHumanoidProfileEditor
         }
     }
 
-    private static CssControl CreateLabel(string text, string styleClass)
+    private static UiElement CreateLabel(string text, string styleClass)
     {
-        var label = new CssControl { Text = text };
-        label.AddCssStyleClass(styleClass);
+        var label = new UiElement { Text = text };
+        label.AddSuilStyleClass(styleClass);
         return label;
     }
 }

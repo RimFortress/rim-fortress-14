@@ -2,7 +2,7 @@
  * StyleBase.cs
  *
  * The default font of StyleBase (NotoSans 12) and its window close button are overridden by StyleFortress
- * (SourceCodePro 12 and window/*.css), so only what survives in the final stylesheet is here.
+ * (SourceCodePro 12 and window/*.suil), so only what survives in the final stylesheet is here.
  */
 
 /* Default font (Element()) */
