@@ -4,6 +4,7 @@ using System.Linq;
 using Content.Client._RF.Suil;
 using Content.Client._RF.Suil.HotReload;
 using Content.Client._RF.UserInterface.Controls;
+using Content.Client._RF.UserInterface.Controls.Chat;
 using Content.Client._RF.UserInterface.Controls.Notifications;
 using Content.Client._RF.UserInterface.Controls.NpcJobs;
 using Content.Client._RF.UserInterface.Controls.Stockpile;
@@ -397,5 +398,37 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(icon.HasSuilStyleClass("negative"), Is.False);
 
         Assert.That(_reload.Reload(view).Success, Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Chat_And_The_Color_Window_Are_Built_And_Reload()
+    {
+        var bubble = new ChatMessagesBubble();
+        bubble.Count = 3;
+        Assert.That(bubble.Visible, Is.True);
+        Assert.That(((UiElement) ((ISuilView) bubble).SuilGetField("label")!).Text, Is.EqualTo("3"));
+        Assert.That(bubble.BackgroundImage, Is.Not.Null, "the style is in the element");
+        bubble.Count = 0;
+        Assert.That(bubble.Visible, Is.False);
+
+        var chat = new FoldableChatBox();
+        var view = (ISuilView) chat;
+        var container = (UiElement) view.SuilGetField("container")!;
+
+        Assert.That(chat.ChatWindowPanel.Parent, Is.SameAs(container), "the panel of the chat is moved under the row of the buttons");
+        Assert.That(chat.ChatWindowPanel.Visible, Is.False, "folded");
+
+        var result = _reload.Reload(view);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(chat.ChatWindowPanel.Parent, Is.SameAs(view.SuilGetField("container")), "and is put back after the reload");
+
+        var window = new ColorPickerWindow();
+        Assert.That(window.Selector, Is.Not.Null);
+        Assert.That(window.Selector.IsAlphaVisible, Is.False);
+        Assert.That(window.Selector.SelectorType, Is.EqualTo(RfColorSelectorSliders.ColorSelectorType.Rgb));
+        Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
+        Assert.That(_reload.Reload(window).Success, Is.True);
+        Assert.That(window.Selector, Is.Not.Null);
     }
 }

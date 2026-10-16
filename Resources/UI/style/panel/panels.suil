@@ -73,13 +73,6 @@
     padding: 9px;
 }
 
-/* FoldableChatPanel: the highlighted panel with the content margin 3 */
-.foldable-chat-panel {
-    background-color: <graphite-black>;
-    border: 1px solid <black-amber>;
-    padding: 2px;
-}
-
 /* ChatPanel: chat subpanels (chat LineEdit backing, popup backings) */
 .chat-panel {
     background-color: <chat-background-color>;

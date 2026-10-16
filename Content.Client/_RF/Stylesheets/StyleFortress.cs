@@ -148,7 +148,6 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
 
-    public const string StyleClassFoldableChatPanel = "FoldableChatPanel";
 
     // FancyBack
     public const string StyleClassFancyBackNone = "NoneBack";
@@ -523,17 +522,6 @@ public sealed class StyleFortress : StyleBase
 
         var angleRectGolden = StyleBoxTex("angle_rect_golden_panel.png", angleRect);
         var angleRectTransparent = StyleBoxTex("angle_rect_panel_transparent.png", angleRect);
-
-        var chatBubble = new StyleBoxTexture
-        {
-            Texture = GetTex("chat_messages_bubble.png"),
-            Modulate = LightBad,
-        };
-        chatBubble.SetPatchMargin(StyleBox.Margin.All, 3);
-        chatBubble.SetContentMarginOverride(StyleBox.Margin.Horizontal, 3);
-
-        var foldableChatPanel = new StyleBoxFlat(highlightedPanel);
-        foldableChatPanel.SetContentMarginOverride(StyleBox.Margin.All, 3);
 
         #endregion
 
@@ -1595,14 +1583,6 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(StyleClassPanelAngleRectTransparent)
                 .Prop(PanelContainer.StylePropertyPanel, angleRectTransparent),
-
-            Element<ChatMessagesBubble>()
-                .Class(ChatMessagesBubble.StyleClassChatMessagesBubble)
-                .Prop(PanelContainer.StylePropertyPanel, chatBubble),
-
-            Element<PanelContainer>()
-                .Class(StyleClassFoldableChatPanel)
-                .Prop(PanelContainer.StylePropertyPanel, foldableChatPanel),
 
             #endregion
 

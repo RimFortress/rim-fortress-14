@@ -96,12 +96,10 @@ public static class SuilClass
     public const string BackgroundOpenLeft = "background-open-left";
     public const string BackgroundOpenRight = "background-open-right";
     public const string BubbleContent = "bubble-content";
-    public const string ChatMessagesBubble = "chat-messages-bubble";
     public const string ChatPanel = "chat-panel";
     public const string EmoteBox = "emote-box";
     public const string EntityTooltip = "entity-tooltip";
     public const string FancyBack = "fancy-back";
-    public const string FoldableChatPanel = "foldable-chat-panel";
     public const string HandSlotHighlight = "hand-slot-highlight";
     public const string HighDivider = "high-divider";
     public const string HighDividerDark = "high-divider-dark";
