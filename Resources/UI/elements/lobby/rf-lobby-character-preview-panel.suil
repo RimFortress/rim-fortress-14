@@ -1,0 +1,11 @@
+@RfLobbyCharacterPreviewPanel => col {
+    _ .rim-heading .label-heading (text: $lobby-characters-preview-panel-header)
+    col #loaded (visible: false) {
+        row #view-box (align-self: center)
+        row (align-self: center, margin: 5px 0 0 0) {
+            button #character-setup .open-right (text: $lobby-character-preview-panel-characters-setup-button)
+            button #equipment-setup .open-left (text: $lobby-character-preview-panel-equipment-setup-button)
+        }
+    }
+    _ #unloaded (text: $lobby-character-preview-panel-unloaded-preferences-label)
+}

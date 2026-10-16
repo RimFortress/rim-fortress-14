@@ -58,22 +58,3 @@
 .color-selector-row > int-counter > line-edit {
     min-width: 40px;
 }
-
-/* ---------- ColorSelectorSliders (RfColorSelectorSliders) ---------- */
-
-color-selector-sliders {
-    gap: 3px;
-}
-
-.color-selector-row {
-    gap: 4px;
-}
-
-.color-selector-header {
-    gap: 6px;
-}
-
-/* The texts at the start of the rows take the width of their text, the sliders start right after them */
-.color-selector-label {
-    align-self: center;
-}

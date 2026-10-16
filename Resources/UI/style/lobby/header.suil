@@ -1,9 +1,0 @@
-/* The title in the header of the character setup and the equipment editor */
-#setup-title {
-    align-self: center;
-    margin: 0 0 0 8px;
-}
-
-#setup-header {
-    min-height: 40px;
-}

@@ -1,0 +1,7 @@
+@RfCharacterSetupGuiSavePanel => default-window (title: $character-setup-gui-save-panel-title, resizable: false) {
+    row (min-size: 200 40, gap: 4px) {
+        +button #save-button .font-big (text: $character-setup-gui-save-panel-save)
+        +button #no-save-button .font-big (text: $character-setup-gui-save-panel-nosave)
+        +button #cancel-button .font-big (text: $character-setup-gui-save-panel-cancel)
+    }
+}

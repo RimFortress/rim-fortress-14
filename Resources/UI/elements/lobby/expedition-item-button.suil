@@ -1,0 +1,22 @@
+@ExpeditionItemButton => row .panel-dark-bordered (margin: 0 0 3px 0) {
+    row .panel-light-bordered {
+        entity-prototype-view #view (scale: 2 2, set-size: 36 36)
+    }
+    _ .low-divider (margin: 5px 10px)
+    _ #name-label .placeholder-text (
+        mouse-filter: pass,
+        flex-grow: 1,
+        align-self: center,
+        color: #FFFFFF,
+        white-space: nowrap,
+        overflow: hidden,
+        text-overflow: ellipsis
+    )
+    _ #cost-label .placeholder-text (
+        min-width: 150px,
+        align-self: center,
+        color: #FFFFFF
+    )
+    _ .low-divider (margin: 5px 10px)
+    +int-counter #counter (min-value: 0)
+}

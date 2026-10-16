@@ -1,0 +1,30 @@
+use "/elements/lobby/parts";
+
+@RfCharacterSetupGui => col .angle-rect-transparent (flex-grow: 1) {
+    setup-header {
+        setup-title ($character-setup-gui-character-setup-label)
+        _ .flex-fill
+        +button #reset-button .font-big (text: $humanoid-profile-editor-reset-button)
+        +button #save-profiles-button .font-big (text: $character-setup-gui-character-setup-save-profiles-button)
+        button #stats-button .font-big (text: $character-setup-gui-character-setup-stats-button)
+        command-button #admin-remarks-button .font-big (
+            command: "adminremarks",
+            text: $character-setup-gui-character-setup-adminremarks-button
+        )
+        button #rules-button .font-big (text: $character-setup-gui-character-setup-rules-button)
+        +button #close-button .font-big (text: $character-setup-gui-character-setup-close-button)
+    }
+    _ .low-divider
+    row (flex-grow: 1) {
+        col (min-width: 350px, margin: 5px 0 0 5px) {
+            row .fancy-back (min-height: 30) {
+                _ #characters-count .text-center
+            }
+            scroll-container .scroll-vertical {
+                col #characters
+            }
+        }
+        _ .low-divider
+        row #char-editor (flex-grow: 1)
+    }
+}

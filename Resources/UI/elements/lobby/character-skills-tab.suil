@@ -1,0 +1,12 @@
+@CharacterSkillsTab => col {
+    scroll-container .scroll-vertical {
+        col {
+            row (gap: 10px) {
+                _ #left-levels (flex-grow: 1, text-align: right, margin: 3px 5px)
+                _ #left-points (margin: 3px 5px)
+            }
+            _ .low-divider-dark (margin: 2px 1px 5px 1px)
+            col #container
+        }
+    }
+}

@@ -1,3 +1,4 @@
+using Content.Client._RF.Stylesheets;
 using Content.Client._RF.UserInterface;
 using System.Linq;
 using Content.Client._RF.Suil;
@@ -22,7 +23,7 @@ public sealed partial class RfHumanoidProfileEditor
 
         if (traits.Count < 1)
         {
-            TraitsList.AddChild(CreateLabel(Loc.GetString("humanoid-profile-editor-no-traits"), SuilClass.ProfileHint));
+            TraitsList.AddChild(CreateHint(Loc.GetString("humanoid-profile-editor-no-traits")));
             return;
         }
 
@@ -92,9 +93,8 @@ public sealed partial class RfHumanoidProfileEditor
             // Selection counter
             if (category is { MaxTraitPoints: >= 0 })
             {
-                TraitsList.AddChild(CreateLabel(
-                    Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints)),
-                    SuilClass.ProfileHint));
+                TraitsList.AddChild(CreateHint(
+                    Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints))));
             }
 
             foreach (var selector in selectors)
@@ -111,6 +111,13 @@ public sealed partial class RfHumanoidProfileEditor
                 TraitsList.AddChild(selector);
             }
         }
+    }
+
+    private static UiElement CreateHint(string text)
+    {
+        var label = new UiElement { Text = text, TextColor = StyleFortress.GraySilver };
+        label.SuilSetHard("color");
+        return label;
     }
 
     private static UiElement CreateLabel(string text, string styleClass)

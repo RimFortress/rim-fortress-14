@@ -41,20 +41,3 @@
 .icon-button.gold:disabled > .icon {
     background-color: <button-color-disabled>;
 }
-
-/* The icons of .icon-button */
-.icon-sort-up {
-    background-image: texture("/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png");
-}
-
-.icon-sort-down {
-    background-image: texture("/Textures/_RF/Interface/sort-down-solid.svg.192dpi.png");
-}
-
-.icon-cross {
-    background-image: texture("/Textures/_RF/Interface/Style/cross.png");
-}
-
-.icon-palette {
-    background-image: texture("/Textures/Interface/palette.svg.png");
-}

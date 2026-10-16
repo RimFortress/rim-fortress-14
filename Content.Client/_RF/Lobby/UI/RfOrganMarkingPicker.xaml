@@ -1,6 +1,0 @@
-<controls:RfBoxContainer
-    xmlns="https://spacestation14.io"
-    xmlns:controls="clr-namespace:Content.Client._RF.UserInterface.Controls"
-    FlexDirection="Column">
-    <controls:RfTabContainer Name="LayerTabs" FlexGrow="1" SuilStyleClasses="marking-tabs" />
-</controls:RfBoxContainer>

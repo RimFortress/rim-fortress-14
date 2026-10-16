@@ -1,36 +1,40 @@
-/* Styled by style/input/color-selector.suil */
-@RfColorSelectorSliders => box (flex-direction: column) {
-    row .color-selector-header {
+/* A row of the sliders and the text at its start, which takes the width of its text: the sliders start right after it. */
+let selector-row = { row .color-selector-row (gap: 4px) { %content% } }
+let selector-label = { _ (align-self: center) }
+
+/* The rules for the number boxes in the rows are in style/input/color-selector.suil */
+@RfColorSelectorSliders => box (flex-direction: column, gap: 3px) {
+    row (gap: 6px) {
         option-button #type-selector
         _ #description-label (flex-grow: 1, align-self: center)
     }
 
-    row .color-selector-row {
-        _ #top-label .color-selector-label
+    selector-row {
+        selector-label #top-label
         color-slider #top-slider (flex-grow: 1, align-self: center)
         int-counter #top-input
     }
 
-    row .color-selector-row {
-        _ #middle-label .color-selector-label
+    selector-row {
+        selector-label #middle-label
         color-slider #middle-slider (flex-grow: 1, align-self: center)
         int-counter #middle-input
     }
 
-    row .color-selector-row {
-        _ #bottom-label .color-selector-label
+    selector-row {
+        selector-label #bottom-label
         color-slider #bottom-slider (flex-grow: 1, align-self: center)
         int-counter #bottom-input
     }
 
-    row #alpha-row .color-selector-row (visible: false) {
-        _ #alpha-label .color-selector-label (text: $color-selector-sliders-alpha)
+    selector-row #alpha-row (visible: false) {
+        selector-label #alpha-label (text: $color-selector-sliders-alpha)
         slider #alpha-slider (flex-grow: 1, align-self: center, max-value: 1)
         int-counter #alpha-input
     }
 
-    row .color-selector-row {
-        _ #hex-label .color-selector-label (text: $color-selector-input-hex)
+    selector-row {
+        selector-label #hex-label (text: $color-selector-input-hex)
         line-edit #hex-edit (flex-grow: 1, align-self: center)
     }
 }

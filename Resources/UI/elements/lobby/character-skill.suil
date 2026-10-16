@@ -1,0 +1,15 @@
+@CharacterSkill => row .panel-highlighted (margin: 0 0 5px 0) {
+    row .panel-light-bordered (
+        set-size: 36 36,
+        padding: 5px,
+        justify-content: center,
+        align-items: center
+    ) {
+        texture-rect #texture (set-size: 24 24, stretch: keep-aspect-centered)
+    }
+    _ .low-divider (margin: 2px 5px)
+    _ #name-label (align-self: center)
+    _ #cost-label (flex-grow: 1, align-self: center, text-align: right)
+    _ .low-divider (margin: 2px 5px)
+    +int-counter #levels
+}

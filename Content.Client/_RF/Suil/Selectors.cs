@@ -127,7 +127,7 @@ public sealed class SuilDescendantSelector(Selector ancestor, Selector descendan
 /// <param name="anb">Result of parsing SUIL An+B syntax.</param>
 public sealed class NthChildSelector(SuilAnb anb) : Selector
 {
-    public override bool Matches(Control control) => anb.Matches(control.GetPositionInParent() + 1);
+    public override bool Matches(Control control) => control.Parent != null && anb.Matches(control.GetPositionInParent() + 1);
 
     public override StyleSpecificity CalculateSpecificity() => new(0, 1, 0);
 }

@@ -1,0 +1,24 @@
+@RfCharacterPickerButton => button {
+    row (mouse-filter: ignore) {
+        col (mouse-filter: ignore) {
+            +button #up .icon-button .open-both (disabled, set-size: 36 36) {
+                _ .icon (mouse-filter: ignore, background-image: texture("/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png"))
+            }
+            _ .flex-fill
+            +button #down .icon-button .open-both (disabled, set-size: 36 36) {
+                _ .icon (mouse-filter: ignore, background-image: texture("/Textures/_RF/Interface/sort-down-solid.svg.192dpi.png"))
+            }
+        }
+        sprite-view #view (scale: 2 2, margin: 4 4 4 0, set-size: 64 64, override-direction: south)
+        _ #description-label .text-center (
+            mouse-filter: ignore,
+            max-width: 150px,
+            align-self: flex-start,
+            white-space: pre-line
+        )
+        confirm-button #delete-button .open-both (
+            text: $character-setup-gui-character-picker-button-delete-button,
+            confirmation-text: $character-setup-gui-character-picker-button-confirm-delete-button
+        )
+    }
+}

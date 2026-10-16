@@ -24,10 +24,6 @@ public static class SuilClass
     public const string HelpButton = "help-button";
     public const string Icon = "icon";
     public const string IconButton = "icon-button";
-    public const string IconCross = "icon-cross";
-    public const string IconPalette = "icon-palette";
-    public const string IconSortDown = "icon-sort-down";
-    public const string IconSortUp = "icon-sort-up";
     public const string ListContainerButton = "list-container-button";
     public const string Negative = "negative";
     public const string OddRow = "odd-row";
@@ -80,9 +76,6 @@ public static class SuilClass
     public const string EquipmentList = "equipment-list";
     public const string LabelHeadingBigger = "label-heading-bigger";
     public const string OverLimit = "over-limit";
-    public const string ProfileBlock = "profile-block";
-    public const string ProfileDivider = "profile-divider";
-    public const string ProfileHint = "profile-hint";
 
     // Main menu
     public const string MainMenuButton = "main-menu-button";

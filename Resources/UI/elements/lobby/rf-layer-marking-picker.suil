@@ -1,0 +1,11 @@
+@RfLayerMarkingPicker => col (gap: 4px, min-height: 400px) {
+    line-edit #search-bar (place-holder: $markings-search)
+    scroll-container #selection-items .scroll-vertical {
+    grid #items (columns: 2, gap: 4px, padding: 4px)
+    }
+    scroll-container #ordering-items .scroll-vertical (visible: false)
+  row (gap: 4px, padding: 4px) {
+        _ #markings-status (flex-grow: 1, align-self: center)
+        button #reorder-button (toggle-mode, text: $markings-reorder)
+    }
+}
