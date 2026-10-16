@@ -1623,3 +1623,42 @@ public sealed class SuilSingleStatementHandlerTests
         Assert.Catch<SuilParserError>(() => SuilParser.ParseFile("@A => " + text));
     }
 }
+
+[TestFixture]
+public sealed class SuilViewContentSlotTests
+{
+    [Test]
+    public void A_View_Keeps_The_Slot_Where_The_Children_Of_The_Class_Go()
+    {
+        var file = SuilExpander.Expand("@A => box { box #inner { %content% } button }");
+        var root = file.Views.Single().Root;
+        var inner = (SuilElement) root.Children[0];
+
+        Assert.That(inner.Children.OfType<SuilContentSlot>().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void The_Slot_Can_Come_Through_The_Children_Of_A_Template_Usage()
+    {
+        var file = SuilExpander.Expand("""
+            let wrap = { box #frame { %content% } }
+            @A => box { wrap { %content% } }
+            """);
+        var frame = (SuilElement) file.Views.Single().Root.Children[0];
+
+        Assert.That(frame.Id!.ToString(), Is.EqualTo("frame"));
+        Assert.That(frame.Children.OfType<SuilContentSlot>().Count(), Is.EqualTo(1), "the slot of the view landed in the slot of the template");
+    }
+
+    [Test]
+    public void A_View_Has_One_Slot()
+    {
+        Assert.Throws<SuilExpansionError>(() => SuilExpander.Expand("@A => box { box { %content% } box { %content% } }"));
+    }
+
+    [Test]
+    public void A_Slot_Is_Still_Only_For_Templates_And_Views()
+    {
+        Assert.Throws<SuilExpansionError>(() => SuilExpander.Expand("box { %content% }"));
+    }
+}

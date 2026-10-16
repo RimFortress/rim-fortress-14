@@ -168,6 +168,7 @@ public static class SuilExpander
         private readonly HashSet<string> _loading = new();
         private int _globalDepth;
         private bool _isMain;
+        private bool _inView;
         private readonly HashSet<string> _viewNames = new();
 
         public SuilFile Run(SuilFile file)
@@ -191,6 +192,26 @@ public static class SuilExpander
 
             root = element;
             return new SuilFile(_rules, root);
+        }
+
+        /// <summary>
+        /// A view has at most one <c>%content%</c>: the one place the children given to the class go to.
+        /// </summary>
+        private static void CheckSlots(SuilElement element, ref int slots)
+        {
+            foreach (var child in element.Children)
+            {
+                switch (child)
+                {
+                    case SuilContentSlot slot when ++slots > 1:
+                        throw new SuilExpansionError("expanding content slot",
+                            "a view can have only one '%content%': the children given to the class go to one place",
+                            slot.Position);
+                    case SuilElement nested:
+                        CheckSlots(nested, ref slots);
+                        break;
+                }
+            }
         }
 
         private Module ExpandModule(SuilFile file)
@@ -234,6 +255,8 @@ public static class SuilExpander
                         _rules.Add(ExpandRule(rule, scope));
                         break;
                     case SuilViewDeclaration view when isMain:
+                        var slots = 0;
+
                         if (!_viewNames.Add(view.ClassName))
                         {
                             throw new SuilExpansionError("expanding view",
@@ -241,13 +264,25 @@ public static class SuilExpander
                                 view.Position);
                         }
 
-                        if (ExpandElement(view.Root, scope, null) is not [SuilElement expandedRoot])
+                        _inView = true;
+                        List<ISuilElementNode> expandedNodes;
+                        try
+                        {
+                            expandedNodes = ExpandElement(view.Root, scope, null);
+                        }
+                        finally
+                        {
+                            _inView = false;
+                        }
+
+                        if (expandedNodes is not [SuilElement expandedRoot])
                         {
                             throw new SuilExpansionError("expanding view",
                                 "the root of a view must expand to exactly one element",
                                 view.Root.Position);
                         }
 
+                        CheckSlots(expandedRoot, ref slots);
                         _rules.Add(new SuilViewDeclaration(view.ClassName, expandedRoot, view.Position));
                         break;
                     case SuilViewDeclaration:
@@ -414,6 +449,13 @@ public static class SuilExpander
                             throw new SuilExpansionError("expanding content slot",
                                 $"unknown slot '%{slot.Name}%', only '%{SlotName}%' exists",
                                 slot.Position);
+                        }
+
+                        // In a view the slot is the place of the children that are given to the class (its XamlChildren).
+                        if (slotContent == null && _inView)
+                        {
+                            result.Add(slot);
+                            break;
                         }
 
                         if (slotContent == null)

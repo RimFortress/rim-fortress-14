@@ -311,4 +311,41 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
         Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Content_Slot_Sends_The_Children_Of_The_Class_To_Its_Place_And_The_Reload_Keeps_Them()
+    {
+        var panel = new TreeMenuPanel();
+        var view = (ISuilView) panel;
+        var first = new UiElement();
+        var second = new UiElement();
+
+        // what XAML does with <TreeMenuPanel><first/><second/></TreeMenuPanel>
+        panel.XamlChildren.Add(first);
+        panel.XamlChildren.Add(second);
+
+        Assert.That(panel.Content.Children, Is.EqualTo(new Control[] { first, second }), "%content% is the box of the buttons");
+        Assert.That(view.SuilContent, Is.SameAs(panel.Content.XamlChildren));
+        Assert.That(panel.Children.Count(), Is.EqualTo(2), "the parts of the panel are not touched: the panel and the gap");
+
+        var result = _reload.Reload(view);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(result.Warnings, Is.Empty);
+        Assert.That(panel.Content.Children, Is.EqualTo(new Control[] { first, second }), "the children of the class survived");
+        Assert.That(panel.XamlChildren, Is.SameAs(panel.Content.XamlChildren));
+
+        var third = new UiElement();
+        panel.XamlChildren.Add(third);
+        Assert.That(_reload.Reload(view).Success, Is.True);
+        Assert.That(panel.Content.Children, Is.EqualTo(new Control[] { first, second, third }), "and the second reload keeps them too");
+
+        // a button takes the children into the panel it opens
+        var button = new TreeMenuButton();
+        var item = new TreeMenuButton();
+        button.XamlChildren.Add(item);
+        Assert.That(button.Content.Content.Children, Does.Contain(item));
+        Assert.That(_reload.Reload(button).Success, Is.True);
+        Assert.That(button.Content.Content.Children, Does.Contain(item));
+    }
 }

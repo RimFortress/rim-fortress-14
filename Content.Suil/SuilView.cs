@@ -30,6 +30,23 @@ public interface ISuilView
     object? SuilRootChildren { get; }
 
     /// <summary>
+    /// Where the children given to the class go (its <c>XamlChildren</c>): the one the <c>%content%</c> of the file
+    /// marks, <c>null</c> if the file has none.
+    /// </summary>
+    object? SuilContent { get; }
+
+    /// <summary>
+    /// What was in <see cref="SuilContent"/> when the tree was built: the children of the file. The rest of it was given
+    /// to the class afterwards, and the hot reload keeps it when it builds the tree again.
+    /// </summary>
+    object? SuilContentBuilt { get; }
+
+    /// <summary>
+    /// Makes the collection the <c>XamlChildren</c> of the class, <c>null</c> for the children of the control.
+    /// </summary>
+    void SuilSetContent(object? collection);
+
+    /// <summary>
     /// The ids of the elements that have a field in the class.
     /// </summary>
     IReadOnlyList<string> SuilFieldIds { get; }

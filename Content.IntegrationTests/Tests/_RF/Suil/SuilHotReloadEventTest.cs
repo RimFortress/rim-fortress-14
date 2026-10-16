@@ -635,6 +635,12 @@ public sealed class TestInnerView : RfBoxContainer, ISuilView
 
     object? ISuilView.SuilRootChildren => null;
 
+    object? ISuilView.SuilContent => null;
+
+    object? ISuilView.SuilContentBuilt => null;
+
+    void ISuilView.SuilSetContent(object? collection) { }
+
     IReadOnlyList<string> ISuilView.SuilFieldIds { get; } = new[] { "header" };
 
     Type? ISuilView.SuilFieldType(string id) => id == "header" ? typeof(RfButton) : null;

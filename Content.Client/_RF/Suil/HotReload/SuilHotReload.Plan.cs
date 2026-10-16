@@ -18,6 +18,7 @@ public sealed partial class SuilHotReload
         public string? Id;
         public readonly List<PlannedHandler> Handlers = new();
         public readonly List<string> Classes = new();
+        public bool HasContentSlot;
         public readonly List<PlannedProperty> Properties = new();
         public readonly List<PlannedElement> Children = new();
     }
@@ -148,6 +149,12 @@ public sealed partial class SuilHotReload
 
         foreach (var node in element.Children)
         {
+            if (node is SuilContentSlot)
+            {
+                plan.HasContentSlot = true;
+                continue;
+            }
+
             if (node is not SuilElement child)
             {
                 errors.Add(At(node is SuilContentSlot slot ? slot.Position : element.Position, "a content slot is left in the tree"));

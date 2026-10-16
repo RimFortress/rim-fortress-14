@@ -74,6 +74,7 @@ internal static class GeneratorHarness
                 public bool Visible { get; set; }
                 public void AddChild(Control child) { Kids.Add(child); }
                 public System.Collections.Generic.List<Control> Kids { get; } = new();
+                public System.Collections.Generic.ICollection<Control> Children => Kids;
                 public virtual System.Collections.Generic.ICollection<Control> XamlChildren { get; protected set; } = null!;
                 public Control() { XamlChildren = Kids; }
                 public System.Collections.Generic.HashSet<string> StyleClasses { get; } = new();

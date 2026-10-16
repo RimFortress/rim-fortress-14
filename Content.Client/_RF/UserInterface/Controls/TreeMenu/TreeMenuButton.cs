@@ -45,8 +45,6 @@ public sealed partial class TreeMenuButton : RfButton
     {
         IoCManager.InjectDependencies(this);
         InitializeComponent();
-
-        XamlChildren = Content.Content.Children;
         Content.ParentButton = this;
     }
 

@@ -39,6 +39,7 @@ internal sealed partial class SuilViewEmitter(
     private readonly List<(string Id, string Name, string Type, string Access)> _fields = new();
     private readonly HashSet<string> _ids = new();
     private int _counter;
+    private string? _contentVariable;
 
     public string Emit(SuilElement root, string viewPath, string viewName)
     {
@@ -113,6 +114,13 @@ internal sealed partial class SuilViewEmitter(
 
         foreach (var node in element.Children)
         {
+            if (node is SuilContentSlot)
+            {
+                // the children given to the class go here: its XamlChildren is the one of this element
+                _contentVariable = variable;
+                continue;
+            }
+
             if (node is not SuilElement child)
                 continue;
 
@@ -597,6 +605,16 @@ internal sealed partial class SuilViewEmitter(
         sb.AppendLine("        private global::System.Collections.Generic.ICollection<global::Robust.Client.UserInterface.Control>? __suilRootChildren;");
         sb.AppendLine($"        object? {view}.SuilRootChildren => __suilRootChildren;");
         sb.AppendLine();
+        sb.AppendLine("        private global::System.Collections.Generic.ICollection<global::Robust.Client.UserInterface.Control>? __suilContent;");
+        sb.AppendLine("        private global::System.Collections.Generic.IReadOnlyList<global::Robust.Client.UserInterface.Control>? __suilContentBuilt;");
+        sb.AppendLine($"        object? {view}.SuilContent => __suilContent;");
+        sb.AppendLine($"        object? {view}.SuilContentBuilt => __suilContentBuilt;");
+        sb.AppendLine($"        void {view}.SuilSetContent(object? collection)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            __suilContent = collection as global::System.Collections.Generic.ICollection<global::Robust.Client.UserInterface.Control>;");
+        sb.AppendLine("            this.XamlChildren = __suilContent ?? this.Children;");
+        sb.AppendLine("        }");
+        sb.AppendLine();
         sb.AppendLine($"        private static readonly string[] __suilFieldIds = new string[] {{ {ids} }};");
         sb.AppendLine($"        global::System.Collections.Generic.IReadOnlyList<string> {view}.SuilFieldIds => __suilFieldIds;");
         sb.AppendLine();
@@ -710,6 +728,16 @@ internal sealed partial class SuilViewEmitter(
             sb.AppendLine("            var __unsub = new global::System.Collections.Generic.List<global::System.Action>();");
 
         sb.Append(_body);
+
+        if (_contentVariable != null)
+        {
+            var collection = _contentVariable == "this" ? "__suilRootChildren" : $"{_contentVariable}.XamlChildren";
+
+            sb.AppendLine($"            __suilContent = {collection};");
+            sb.AppendLine("            __suilContentBuilt = new global::System.Collections.Generic.List<global::Robust.Client.UserInterface.Control>(__suilContent);");
+            sb.AppendLine("            this.XamlChildren = __suilContent;");
+        }
+
         sb.AppendLine(_handlers.Count > 0
             ? "            global::Content.Suil.SuilViewRegistry.Register(this, __unsub);"
             : "            global::Content.Suil.SuilViewRegistry.Register(this);");

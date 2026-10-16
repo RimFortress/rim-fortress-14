@@ -1,3 +1,4 @@
+using System.Linq;
 using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.UserInterface.Controls.TreeMenu;
@@ -6,10 +7,12 @@ public sealed partial class TreeMenu : RfBoxContainer
 {
     public LayoutOrientation Orientation { get; set; }
 
+    // The buttons whose events are subscribed, so that building the tree again doesn't do it twice.
+    private readonly HashSet<TreeMenuButton> _built = new();
+
     public TreeMenu()
     {
         InitializeComponent();
-        XamlChildren = RootPanel.XamlChildren;
 
         FlexDirection = Orientation.ToFlexDirection();
         RootPanel.Orientation = Orientation.Opposite();
@@ -29,8 +32,12 @@ public sealed partial class TreeMenu : RfBoxContainer
         button.Content.ParentPanel = parent;
 
         // bruuuh
-        button.RemoveChild(button.Content);
+        // (the panel is in the button the first time and in the menu when the tree is built again, e.g. by the hot reload)
+        button.Content.Orphan();
         AddChild(button.Content);
+
+        if (!_built.Add(button))
+            return;
 
         button.OnMouseEntered += _ =>
         {
@@ -39,7 +46,7 @@ public sealed partial class TreeMenu : RfBoxContainer
         };
         button.OnMouseExited += _ => RootPanel.ValidateVisibility();
 
-        foreach (var child in button.Content.Content.Children)
+        foreach (var child in button.Content.Content.Children.ToList())
         {
             if (child is TreeMenuButton buttonChild)
                 BuildTree(buttonChild, button.Content);

@@ -95,6 +95,9 @@ public sealed partial class SuilHotReload
             target.Remove(child);
         }
 
+        if (plan.HasContentSlot)
+            state.Content = target;
+
         foreach (var childPlan in plan.Children)
         {
             Control child;

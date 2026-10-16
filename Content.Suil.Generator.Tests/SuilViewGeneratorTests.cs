@@ -154,6 +154,31 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
+    public void The_Slot_Makes_The_Children_Of_The_Class_Go_To_An_Element()
+    {
+        var result = Run("button { box #inner { %content% } box #other }");
+
+        AssertClean(result);
+
+        var type = result.Load().GetType("Game.Ui.Picker")!;
+        var picker = Activator.CreateInstance(type)!;
+        var view = (ISuilView) picker;
+        var inner = view.SuilGetField("inner")!;
+        var xaml = type.GetProperty("XamlChildren")!.GetValue(picker)!;
+        var kids = (System.Collections.ICollection) inner.GetType().GetProperty("Kids")!.GetValue(inner)!;
+
+        Assert.That(view.SuilContent, Is.SameAs(((dynamic) inner).XamlChildren), "the collection of the element");
+        Assert.That(xaml, Is.SameAs(view.SuilContent), "XamlChildren of the class is the one of the element");
+
+        ((dynamic) xaml).Add((dynamic) Activator.CreateInstance(type.Assembly.GetType("Robust.Client.UserInterface.Control")!)!);
+        Assert.That(kids.Count, Is.EqualTo(1));
+        Assert.That(((System.Collections.ICollection) view.SuilContentBuilt!).Count, Is.EqualTo(0), "what the file built is nothing");
+
+        view.SuilSetContent(null);
+        Assert.That(view.SuilContent, Is.Null);
+    }
+
+    [Test]
     public void The_View_Is_Registered_When_It_Is_Built()
     {
         var result = Run("button #up");

@@ -102,6 +102,24 @@ public sealed partial class SuilHotReload : ISuilHotReload
 
         state.Unsubscribe();
 
+        // The children given to the class (%content%) are not the file's: they wait out the rebuilding and go to the
+        // new place.
+        var oldContent = state.Content ?? view.SuilContent as ICollection<Control>;
+        var oldBuilt = (IReadOnlyCollection<Control>?) state.ContentBuilt ?? view.SuilContentBuilt as IReadOnlyCollection<Control>;
+        var given = new List<Control>();
+
+        if (oldContent != null)
+        {
+            given.AddRange(oldContent.Where(c => oldBuilt == null || !oldBuilt.Contains(c)));
+
+            foreach (var child in given)
+            {
+                oldContent.Remove(child);
+            }
+        }
+
+        state.Content = null;
+
         try
         {
             Apply(view, control, plan, state, errors, warnings);
@@ -109,6 +127,28 @@ public sealed partial class SuilHotReload : ISuilHotReload
         catch (Exception e)
         {
             errors.Add($"the tree could not be built: {e}");
+        }
+
+        if (state.Content is { } content)
+        {
+            state.ContentBuilt = new List<Control>(content);
+
+            foreach (var child in given)
+            {
+                content.Add(child);
+            }
+
+            view.SuilSetContent(content);
+        }
+        else
+        {
+            state.ContentBuilt = null;
+            view.SuilSetContent(null);
+
+            if (given.Count > 0)
+            {
+                warnings.Add($"the file has no '%content%' any more: the {given.Count} children given to the class are out of the tree");
+            }
         }
 
         state.Plan = plan;
@@ -297,6 +337,12 @@ public sealed partial class SuilHotReload : ISuilHotReload
         public PlannedElement? Plan;
 
         public HashSet<string>? Dependencies;
+
+        /// <summary>The place of the children given to the class (<c>%content%</c>) as of the last reload.</summary>
+        public ICollection<Control>? Content;
+
+        /// <summary>What the file itself put there, the rest was given to the class.</summary>
+        public List<Control>? ContentBuilt;
 
         /// <summary>The values the controls had before the file set the properties, by id ("" is the root).</summary>
         public readonly Dictionary<string, Dictionary<string, object?>> Originals = new(StringComparer.Ordinal);

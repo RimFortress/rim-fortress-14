@@ -29,8 +29,6 @@ public sealed partial class TreeMenuPanel : RfBoxContainer
     {
         IoCManager.InjectDependencies(this);
         InitializeComponent();
-
-        XamlChildren = Content.Children;
     }
 
     /// <summary>
