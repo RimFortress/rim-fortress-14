@@ -174,6 +174,17 @@ public interface ISuilManager : ISuilPropertyResolver, ISuilValues
 public interface ISuilPropertyResolver
 {
     /// <summary>
+    /// Expands a shorthand (<c>padding</c>, <c>border-bottom</c>, <c>background</c>) written in a file for an element into
+    /// the longhands it covers, with their values. <c>false</c> if the name is not a shorthand of the type or the
+    /// value doesn't fit its grammar.
+    /// </summary>
+    bool TryExpandShorthand(
+        Type? elementType,
+        string name,
+        IReadOnlyList<Content.Suil.ISuilValue> values,
+        [NotNullWhen(true)] out List<SuilStyleProperty>? expanded);
+
+    /// <summary>
     /// Returns the accessor for a SUIL property.
     /// </summary>
     /// <param name="elementType">The control type that contains this property.</param>

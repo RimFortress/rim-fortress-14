@@ -512,6 +512,24 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// be omitted is reset to <c>default</c> for its CLR type, per SUIL's "a
     /// shorthand resets every longhand it covers" rule.
     /// </summary>
+    /// <inheritdoc/>
+    public bool TryExpandShorthand(
+        Type? elementType,
+        string name,
+        IReadOnlyList<Content.Suil.ISuilValue> values,
+        [NotNullWhen(true)] out List<SuilStyleProperty>? expanded)
+    {
+        try
+        {
+            return TryResolveShorthandValue(elementType, new Content.Suil.SuilDeclaration(name, values.ToList(), default), out expanded);
+        }
+        catch (ArgumentException)
+        {
+            expanded = null;
+            return false;
+        }
+    }
+
     private bool TryResolveShorthandValue(
         Type? targetType,
         SuilDeclaration decl,

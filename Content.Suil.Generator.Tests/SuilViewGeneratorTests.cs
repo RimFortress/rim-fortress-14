@@ -127,6 +127,33 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
+    public void A_Shorthand_And_A_Protected_Property_Go_Through_The_Run_Time_Helpers()
+    {
+        var result = Run("button { padded #a (pad: 1px 2px, hidden: 4) padded #b (pad: ?1px) }", TagsHeader + """
+            [SuilTag("padded")]
+            public class Padded : UiElement
+            {
+                [SuilShorthand("pad")] protected int PadTop { get; set; }
+                [SuilProperty] protected int Hidden { get; set; }
+            }
+            public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+            """);
+
+        AssertClean(result);
+        Assert.That(result.Source, Does.Contain("SuilElementValues.ApplyShorthand(__e0, \"pad\""));
+        Assert.That(result.Source, Does.Contain("SuilElementValues.Apply(__e0, \"hidden\""));
+        Assert.That(result.Source, Does.Not.Contain("SuilSetHard(\"pad\")"), "the shorthand hardens its longhands by itself");
+        Assert.That(result.Source, Does.Contain("SuilSetHard(\"hidden\")"));
+
+        var view = (ISuilView) Activator.CreateInstance(result.Load().GetType("Picker")!)!;
+        var calls = (System.Collections.Generic.List<string>) view.SuilGetField("a")!.GetType().GetProperty("Calls")!.GetValue(view.SuilGetField("a"))!;
+        var soft = (System.Collections.Generic.List<string>) view.SuilGetField("b")!.GetType().GetProperty("Calls")!.GetValue(view.SuilGetField("b"))!;
+
+        Assert.That(calls, Is.EqualTo(new[] { "shorthand:pad:False", "apply:hidden" }));
+        Assert.That(soft, Is.EqualTo(new[] { "shorthand:pad:True" }));
+    }
+
+    [Test]
     public void The_View_Is_Registered_When_It_Is_Built()
     {
         var result = Run("button #up");

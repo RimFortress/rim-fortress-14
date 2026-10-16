@@ -92,7 +92,7 @@ public sealed partial class SuilHotReload
 
         foreach (var child in new List<Control>(target))
         {
-            child.Orphan();
+            target.Remove(child);
         }
 
         foreach (var childPlan in plan.Children)

@@ -112,7 +112,26 @@ public sealed partial class SuilHotReload
             // the root is the view itself, so its own properties can be named too
             var propertyOwner = isRoot ? view.GetType() : type;
 
-            if (!_suil.TryGetPropertyAccessor(propertyOwner, property.Name, out var accessor))
+            // a shorthand sets the longhands it covers
+            if (!_suil.TryGetPropertyAccessor(propertyOwner, property.Name, out var accessor)
+                && property.Value != null
+                && _suil.TryExpandShorthand(propertyOwner, property.Name, property.Value, out var expanded))
+            {
+                foreach (var longhand in expanded)
+                {
+                    if (longhand.Value is SuilWideValue)
+                    {
+                        errors.Add(At(property.Position, $"'{property.Name}': a keyword like inherit can't be assigned in a file"));
+                        continue;
+                    }
+
+                    plan.Properties.Add(new PlannedProperty(longhand.Name, longhand.Accessor, longhand.Value, property.IsSoft));
+                }
+
+                continue;
+            }
+
+            if (accessor == null)
             {
                 errors.Add(At(property.Position, $"{propertyOwner.Name} has no property '{property.Name}'"));
                 continue;

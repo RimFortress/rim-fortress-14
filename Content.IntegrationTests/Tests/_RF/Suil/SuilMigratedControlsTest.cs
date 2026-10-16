@@ -6,7 +6,9 @@ using Content.Client._RF.Suil.HotReload;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client._RF.UserInterface.Controls.Notifications;
 using Content.Client._RF.UserInterface.Controls.NpcJobs;
+using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Table;
+using Content.Client._RF.UserInterface.Controls.TopInfoPanel;
 using Content.Client._RF.UserInterface.Controls.TreeMenu;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
@@ -265,5 +267,48 @@ public sealed class SuilMigratedControlsTest : GameTest
             Assert.That(window.Children.Count(), Is.EqualTo(chrome), name + ": the parts of the window are not touched");
             Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1), name + ": built again in the contents");
         }
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void TopInfoPanel_Has_Its_Style_In_The_Element_And_Reloads()
+    {
+        var widget = new TopPanelWidget();
+        var view = (ISuilView) widget;
+        var panel = (UiElement) widget.Children.Single();
+
+        Assert.That(panel.BackgroundImage, Is.Not.Null, "background-image of the element");
+        Assert.That(panel.SuilIsHard("padding-top"), Is.True, "the shorthand hardens its longhands");
+        Assert.That(panel.SuilIsHard("background-image"), Is.True);
+
+        var cell = new InfoPanelCell { Text = "5", TexturePath = "/Textures/_RF/Interface/sun-solid.svg.192dpi.png" };
+        var icon = (UiElement) ((ISuilView) cell).SuilGetField("icon")!;
+        Assert.That(icon.BackgroundImage, Is.Not.Null);
+        Assert.That(icon.BackgroundColor, Is.Not.Null);
+
+        Assert.That(((UiElement) view.SuilGetField("population")!), Is.Not.Null);
+        Assert.That(_reload.Reload(widget).Success, Is.True);
+        Assert.That(_reload.Reload(cell).Success, Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Stockpile_Controls_Are_Built_And_Reload()
+    {
+        var item = new StockpileItemButton();
+        Assert.That(item.Counter.MinValue, Is.EqualTo(0));
+        Assert.That(item.UnlimitedCheck.ToolTip, Is.Not.Null.And.Not.Empty);
+        Assert.That(item.Texture, Is.Not.Null);
+
+        item.UnlimitedCheck.Pressed = true;
+        Assert.That(_reload.Reload(item).Success, Is.True);
+
+        var window = new StockpileSettingsWindow();
+        Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
+        Assert.That(((ISuilView) window).SuilFieldIds, Is.SupersetOf(new[] { "tab", "search", "item-list", "delete-stock-button" }));
+
+        var result = _reload.Reload(window);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
     }
 }

@@ -92,6 +92,12 @@ internal static class GeneratorHarness
 
             public static class SuilElementValues
             {
+                public static void Apply(Robust.Client.UserInterface.Control target, string name, Content.Suil.ISuilValue[] values)
+                    => ((UiElement) target).Calls.Add("apply:" + name);
+
+                public static void ApplyShorthand(Robust.Client.UserInterface.Control target, string name, Content.Suil.ISuilValue[] values, bool soft = false)
+                    => ((UiElement) target).Calls.Add("shorthand:" + name + ":" + soft);
+
                 public static object? Read(System.Type owner, string name, Content.Suil.ISuilValue[] values)
                     => new Tint { Text = owner.Name + "." + name + ":" + string.Join(",", System.Linq.Enumerable.Select(values, v => v.ToString())) };
             }
@@ -104,6 +110,7 @@ internal static class GeneratorHarness
                 public byte Level { get; set; }
                 public long Big { get; set; }
                 public Tint? Tint { get; set; }
+                public System.Collections.Generic.List<string> Calls { get; } = new();
                 public int WriteOnly { set { } }
                 public System.Collections.Generic.HashSet<string> Classes { get; } = new();
                 public System.Collections.Generic.HashSet<string> Pseudo { get; } = new();

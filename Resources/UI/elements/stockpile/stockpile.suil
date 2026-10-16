@@ -1,0 +1,108 @@
+/* An item of the stockpile settings: the picture, the name, how many to keep or "no limit". */
+@StockpileItemButton => button .square (
+    margin: 0 2 5 2,
+    min-height: 50,
+    horizontal-expand,
+    tracking-tooltip
+) {
+    box .panel-highlighted {
+        row (flex-grow: 1) {
+            _ .low-divider-dark (margin: 2)
+
+            box .panel-light-bordered (set-size: 52, justify-content: center, align-items: center) {
+                +layered-texture #texture (set-size: 48)
+            }
+
+            _ .high-divider (margin: 2 5)
+
+            _ #name-label (flex-grow: 1)
+
+            row {
+                +int-counter #counter (min-value: 0)
+                +checkbox #unlimited-check (
+                    margin: 0 3,
+                    tracking-tooltip,
+                    tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
+                    on-pressed => @OnUnlimitedPressed
+                )
+            }
+        }
+    }
+}
+
+/* The window of a stockpile: the items to keep (with the search) and the look of the zone, and the buttons under them. */
+@StockpileSettingsWindow => fancy-window (min-size: 500 750) {
+    col {
+        tab #tab (flex-grow: 1) {
+            col {
+                box #address-box .panel-light {
+                    _ #address .label-heading (margin: 0 0 0 8, align-self: center)
+                }
+
+                box #search-bar .panel-dark {
+                    row {
+                        button #back-button .icon-button .empty (set-size: 32, on-pressed => @OnBackPressed) {
+                            _ .icon (background-image: texture("/Textures/Interface/VerbIcons/close.svg.192dpi.png"))
+                        }
+
+                        line-edit #search (
+                            margin: 2 3,
+                            flex-grow: 1,
+                            place-holder: $stockpile-settings-menu-search-placeholder,
+                            on-text-changed => @OnSearchChanged
+                        )
+                    }
+                }
+
+                scroll-container (flex-grow: 1) {
+                    col #item-list (flex-grow: 1)
+                }
+            }
+
+            scroll-container {
+                col {
+                    zone-change-name-control #name-change
+                    _ .low-divider (margin: 5 3)
+                    zone-visuals-control #visuals-control
+                }
+            }
+        }
+
+        _ .high-divider
+
+        row (margin: 3, gap: 5px) {
+            button #expand-stock-button .icon-button .square (
+                set-size: 48,
+                tool-tip: $expand-stockpile-button-tooltip,
+                on-pressed => @OnExpandPressed
+            ) {
+                _ .icon (background-image: texture("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"))
+            }
+
+            button #shrink-stock-button .icon-button .square (
+                set-size: 48,
+                tool-tip: $shrink-stockpile-button-tooltip,
+                on-pressed => @OnShrinkPressed
+            ) {
+                _ .icon (background-image: texture("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"))
+            }
+
+            button #suppliers-button .icon-button .square (
+                set-size: 48,
+                tool-tip: $stockpile-suppliers-button-tooltip,
+                on-pressed => @OnSuppliersPressed
+            ) {
+                _ .icon (background-image: texture("/Textures/_RF/Interface/right-to-bracket-solid-full.svg.192dpi.png"))
+            }
+
+            confirm-button #delete-stock-button .icon-button .square (
+                set-size: 48,
+                confirmation-text: "",
+                tool-tip: $delete-stockpile-button-tooltip,
+                on-pressed => @OnDeletePressed
+            ) {
+                _ .icon (background-image: texture("/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"))
+            }
+        }
+    }
+}

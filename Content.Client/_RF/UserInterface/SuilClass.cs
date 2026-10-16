@@ -128,8 +128,6 @@ public static class SuilClass
     public const string SayBox = "say-box";
     public const string SpeechBox = "speech-box";
     public const string TooltipBox = "tooltip-box";
-    public const string TopInfoCellPanel = "top-info-cell-panel";
-    public const string TopInfoPanel = "top-info-panel";
     public const string WhisperBox = "whisper-box";
     public const string WoodenBack = "wooden-back";
 

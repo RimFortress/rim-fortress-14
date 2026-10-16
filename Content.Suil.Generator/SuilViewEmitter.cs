@@ -104,7 +104,7 @@ internal sealed partial class SuilViewEmitter(
 
             // The file assigned it, so the styles must leave it alone, unless it is soft: `?` before the value.
             // Only a control of SUIL is styled, an engine one has nothing to protect.
-            if (isSuil && !property.IsSoft)
+            if (isSuil && !property.IsSoft && !IsShorthandOnly(variable == "this" ? viewClass : type, property.Name))
                 _body.AppendLine($"            {variable}.SuilSetHard({Literal(property.Name)});");
         }
 
@@ -182,11 +182,15 @@ internal sealed partial class SuilViewEmitter(
 
         if (member == null || memberType == null)
         {
-            // A member that is not public but is marked [SuilProperty] (the styles reach it, so a file may too).
-            if (property.Value != null && FindMarkedMember(type, property.Name))
+            // A member that is not public but is marked [SuilProperty] (the styles reach it, so a file may too), or a
+            // shorthand (`padding`, `border-bottom`, `background`), which sets several of them.
+            if (property.Value != null && (FindMarkedMember(type, property.Name) || FindShorthand(type, property.Name)))
             {
-                return "global::Content.Client._RF.Suil.SuilElementValues.Apply(" + target + ", " + Literal(property.Name)
-                       + ", new global::Content.Suil.ISuilValue[] { " + string.Join(", ", property.Value.Select(ValueOf)) + " });";
+                var written = string.Join(", ", property.Value.Select(ValueOf));
+                var call = FindMarkedMember(type, property.Name) ? "Apply" : "ApplyShorthand";
+                var soft = call == "Apply" ? string.Empty : $", {(property.IsSoft ? "true" : "false")}";
+
+                return $"global::Content.Client._RF.Suil.SuilElementValues.{call}({target}, {Literal(property.Name)}, new global::Content.Suil.ISuilValue[] {{ {written} }}{soft});";
             }
 
             throw new SuilGenerationException(SuilDiagnostics.UnknownProperty, property.Position,
@@ -195,6 +199,33 @@ internal sealed partial class SuilViewEmitter(
 
         var value = Convert(memberType, property, member.Name, type);
         return $"{target}.{member.Name} = {value};";
+    }
+
+    /// <summary>
+    /// Whether the name is a shorthand of the type and not a property of it: it hardens its longhands by itself.
+    /// </summary>
+    private static bool IsShorthandOnly(INamedTypeSymbol type, string name)
+        => FindWritableMember(type, name, out _) == null && !FindMarkedMember(type, name) && FindShorthand(type, name);
+
+    private static bool FindShorthand(INamedTypeSymbol type, string name)
+    {
+        for (INamedTypeSymbol? current = type; current != null; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                foreach (var attribute in member.GetAttributes())
+                {
+                    if (attribute.AttributeClass?.ToDisplayString() == SuilViewAttributeSource.ShorthandMetadataName
+                        && attribute.ConstructorArguments is [{ Value: string shorthand }, ..]
+                        && shorthand == name)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     private static bool FindMarkedMember(INamedTypeSymbol type, string propertyName)

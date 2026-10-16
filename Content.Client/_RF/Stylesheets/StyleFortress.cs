@@ -147,8 +147,6 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassPanelAngleRectGolden = "AngleRectGolden";
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
-    public const string StyleClassTopInfoPanel = "TopInfoPanel";
-    public const string StyleClassTopInfoCellPanel = "TopInfoCellPanel";
 
     public const string StyleClassFoldableChatPanel = "FoldableChatPanel";
 
@@ -525,24 +523,6 @@ public sealed class StyleFortress : StyleBase
 
         var angleRectGolden = StyleBoxTex("angle_rect_golden_panel.png", angleRect);
         var angleRectTransparent = StyleBoxTex("angle_rect_panel_transparent.png", angleRect);
-
-        var topInfoPanel = new StyleBoxTexture
-        {
-            Texture = GetTex("top_info_panel.png"),
-            PatchMarginLeft = 4,
-            PatchMarginTop = 4,
-            PatchMarginRight = 8,
-            PatchMarginBottom = 9,
-        };
-        topInfoPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
-        topInfoPanel.SetContentMarginOverride(StyleBox.Margin.Bottom, 9);
-
-        var topInfoPanelCell = new StyleBoxFlat
-        {
-            BackgroundColor = GraphiteBlack,
-            BorderColor = BlackAmber,
-            BorderThickness = new Thickness(0, 0, 0, 1),
-        };
 
         var chatBubble = new StyleBoxTexture
         {
@@ -1615,14 +1595,6 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(StyleClassPanelAngleRectTransparent)
                 .Prop(PanelContainer.StylePropertyPanel, angleRectTransparent),
-
-            Element<PanelContainer>()
-                .Class(StyleClassTopInfoPanel)
-                .Prop(PanelContainer.StylePropertyPanel, topInfoPanel),
-
-            Element<PanelContainer>()
-                .Class(StyleClassTopInfoCellPanel)
-                .Prop(PanelContainer.StylePropertyPanel, topInfoPanelCell),
 
             Element<ChatMessagesBubble>()
                 .Class(ChatMessagesBubble.StyleClassChatMessagesBubble)
