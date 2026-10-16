@@ -249,6 +249,28 @@ public sealed class SuilViewEventTests
     // ---- Paths ----
 
     [Test]
+    public void Ampersand_Is_The_View_Itself_Not_The_Element_Of_The_Event()
+    {
+        var result = Run("""
+            button (min-width: 5) {
+                +button #inc (on-pressed => { &(min-width +: 1, add .touched, disabled: !&.disabled); #inc(min-width: 9) })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var inc = Field(view, "Inc");
+
+        Raise(inc, "RaisePressed", Args(view));
+
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(6), "the view, which is the code-behind class");
+        Assert.That(Get(view, "Disabled"), Is.EqualTo(true));
+        Assert.That(Classes(view), Is.EquivalentTo(new[] { "touched" }));
+        Assert.That(Get(inc, "MinWidth"), Is.EqualTo(9));
+    }
+
+    [Test]
     public void A_Path_Goes_Through_The_Public_Fields_Of_A_View_Inside()
     {
         var code = $$"""
@@ -368,7 +390,7 @@ public sealed class SuilViewEventTests
             let never = false;
             button {
                 +button #source
-                +button #go (on-pressed => { &(disabled: #source.disabled && <always>, toggle-mode: #source.disabled && <never> || <always>) })
+                +button #go (on-pressed => { #go(disabled: #source.disabled && <always>, toggle-mode: #source.disabled && <never> || <always>) })
             }
             """, View(string.Empty));
 
@@ -415,7 +437,7 @@ public sealed class SuilViewEventTests
     }
 
     [Test]
-    public void A_Reference_May_Go_Through_The_Fields_Of_A_View_And_Name_The_Sender()
+    public void A_Reference_May_Go_Through_The_Fields_Of_A_View_And_Name_The_Element()
     {
         var code = $$"""
             {{Usings}}
@@ -429,7 +451,7 @@ public sealed class SuilViewEventTests
         var result = Run("""
             button {
                 +inner #panel
-                +button #go (on-pressed => { &(disabled: !#panel/header.disabled && !&.toggle-mode) })
+                +button #go (on-pressed => { #go(disabled: !#panel/header.disabled && !#go.toggle-mode) })
             }
             """, code, new Dictionary<string, string> { ["/Inner.suil"] = "button {\n +button #header\n}" });
 
@@ -536,7 +558,7 @@ public sealed class SuilViewEventTests
             button {
                 +button #other (min-width: 4, scale: 2)
                 +button #go (min-width: 10, scale: 1.5, ratio: 8, level: 10, on-pressed => {
-                    &(min-width +: 5, scale *: 2, ratio /: #other.min-width, level -: calc(#other.scale * 3))
+                    #go(min-width +: 5, scale *: 2, ratio /: #other.min-width, level -: calc(#other.scale * 3))
                 })
             }
             """, View(string.Empty));
@@ -565,8 +587,8 @@ public sealed class SuilViewEventTests
         var result = Run("""
             button {
                 +button #zero
-                +button #go (min-width: 7, on-pressed => { &(min-width /: 2, big +: 0) })
-                +button #inf (min-width: 7, on-pressed => { &(min-width /: #zero.min-width) })
+                +button #go (min-width: 7, on-pressed => { #go(min-width /: 2, big +: 0) })
+                +button #inf (min-width: 7, on-pressed => { #inf(min-width /: #zero.min-width) })
             }
             """, View(string.Empty));
 
@@ -590,7 +612,7 @@ public sealed class SuilViewEventTests
             let gap = 3;
             button {
                 +button #other (min-width: 4)
-                +button #go (min-width: 1, on-pressed => { &(min-width: calc(#other.min-width * (<gap> + 1)), scale +: calc(<gap> * 2)) })
+                +button #go (min-width: 1, on-pressed => { #go(min-width: calc(#other.min-width * (<gap> + 1)), scale +: calc(<gap> * 2)) })
             }
             """, View(string.Empty));
 

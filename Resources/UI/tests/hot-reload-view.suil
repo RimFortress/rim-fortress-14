@@ -3,8 +3,8 @@
 @GeneratedHotReloadView => box .hot-reload-root #hot-reload-root (min-width: 40) {
     +button #hot-submit .primary (text: "Go", disabled, on-pressed => {
         @OnHotSubmit;
-        &(add .pressed);
-        #hot-nested (min-height: calc(&.min-width + 3px), visible: !&.disabled, min-width +: 4)
+        #hot-submit(add .pressed);
+        #hot-nested (min-height: calc(#hot-submit.min-width + 3px), visible: !#hot-submit.disabled, min-width +: 4)
     })
     +box #hot-nested .nested {
         button .plain (text: "Plain")

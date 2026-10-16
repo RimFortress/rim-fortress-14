@@ -170,6 +170,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         Dictionary<string, SuilSourceFile> map)
     {
         Dictionary<string, List<INamedTypeSymbol>>? bySimpleName = null;
+        Dictionary<string, List<INamedTypeSymbol>>? referenced = null;
         var result = new List<ViewCandidate>();
         var claimed = new Dictionary<INamedTypeSymbol, ViewCandidate>(SymbolEqualityComparer.Default);
 
@@ -190,6 +191,15 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
 
                 if (matches.Count == 0)
                 {
+                    // The file is shared by the projects that build views, and each builds the views of its own classes.
+                    referenced ??= IndexReferencedViewClasses(compilation);
+
+                    if (referenced.TryGetValue(simple, out var others)
+                        && others.Any(t => t.ToDisplayString() == name || t.ToDisplayString().EndsWith("." + name, StringComparison.Ordinal)))
+                    {
+                        continue;
+                    }
+
                     Report(context, SuilDiagnostics.ViewClassNotFound, declaration.Position, null, name, entry.Key);
                     continue;
                 }
@@ -224,6 +234,50 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// The classes of the referenced projects that build views themselves, which is to say that have the language compiled
+    /// into them. Read only for a name that this project doesn't have.
+    /// </summary>
+    private static Dictionary<string, List<INamedTypeSymbol>> IndexReferencedViewClasses(Compilation compilation)
+    {
+        var index = new Dictionary<string, List<INamedTypeSymbol>>(StringComparer.Ordinal);
+
+        void Visit(INamespaceOrTypeSymbol container)
+        {
+            foreach (var member in container.GetMembers())
+            {
+                switch (member)
+                {
+                    case INamespaceSymbol ns:
+                        Visit(ns);
+                        break;
+                    case INamedTypeSymbol type:
+                        if (type.TypeKind == TypeKind.Class)
+                        {
+                            if (!index.TryGetValue(type.Name, out var list))
+                                index[type.Name] = list = new List<INamedTypeSymbol>();
+
+                            list.Add(type);
+                        }
+
+                        Visit(type);
+                        break;
+                }
+            }
+        }
+
+        foreach (var reference in compilation.References)
+        {
+            if (compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly
+                && assembly.GetTypeByMetadataName("Content.Suil.ISuilView") != null)
+            {
+                Visit(assembly.GlobalNamespace);
+            }
+        }
+
+        return index;
     }
 
     private static bool IsPartialClass(INamedTypeSymbol symbol)

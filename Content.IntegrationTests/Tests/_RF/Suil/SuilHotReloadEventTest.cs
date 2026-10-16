@@ -88,6 +88,31 @@ public sealed class SuilHotReloadEventTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
+    public void Ampersand_Is_The_View_Itself()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, """
+            box (min-width: 5) {
+                button #submit (on-pressed => { &(min-width +: 2, add .touched, visible: !&.visible); #submit(min-width: 9) })
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        Press(view.Submit!);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(view.MinWidth, Is.EqualTo(7f));
+            Assert.That(view.HasSuilStyleClass("touched"), Is.True);
+            Assert.That(view.Visible, Is.False);
+            Assert.That(view.Submit!.MinWidth, Is.EqualTo(9f));
+        });
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
     public void A_Block_Runs_Its_Statements_In_Order()
     {
         var view = new TestView();
@@ -97,7 +122,7 @@ public sealed class SuilHotReloadEventTest : GameTest
                 button #submit (on-pressed => {
                     @Refresh;
                     #target (min-width: 33, add .open :loading, remove .gone);
-                    &(min-height: 7, add .pressed);
+                    #submit(min-height: 7, add .pressed);
                     @Refresh
                 })
                 box #target .gone
@@ -115,7 +140,7 @@ public sealed class SuilHotReloadEventTest : GameTest
         {
             Assert.That(view.Calls, Is.EqualTo(new[] { "refresh", "refresh" }));
             Assert.That(target.MinWidth, Is.EqualTo(33f));
-            Assert.That(view.Submit!.MinHeight, Is.EqualTo(7f), "& is the control of the event");
+            Assert.That(view.Submit!.MinHeight, Is.EqualTo(7f), "#submit is the control of the event");
             Assert.That(target.HasSuilStyleClass("open"), Is.True);
             Assert.That(target.HasSuilPseudoStyleClass("loading"), Is.True);
             Assert.That(target.HasSuilStyleClass("gone"), Is.False);
@@ -241,7 +266,7 @@ public sealed class SuilHotReloadEventTest : GameTest
             let always = true;
             let never = false;
             box {
-                button #submit (on-pressed => { &(disabled: #peer.disabled && <always>, toggle-mode: #peer.disabled && <never> || <always>) })
+                button #submit (on-pressed => { #submit(disabled: #peer.disabled && <always>, toggle-mode: #peer.disabled && <never> || <always>) })
                 button #peer
             }
             """);
@@ -287,7 +312,7 @@ public sealed class SuilHotReloadEventTest : GameTest
         var view = new TestView();
         Reload(view, """
             box {
-                button #submit (on-pressed => { &(disabled: !#panel/header.disabled && !&.toggle-mode) })
+                button #submit (on-pressed => { #submit(disabled: !#panel/header.disabled && !#submit.toggle-mode) })
                 test-inner #panel
             }
             """);
@@ -302,13 +327,13 @@ public sealed class SuilHotReloadEventTest : GameTest
         Assert.That(view.Submit.Disabled, Is.False);
     }
 
-    [TestCase("box { button #submit (on-pressed => { &(disabled: #peer.no-such) }) button #peer }", "no readable bool property")]
-    [TestCase("box { button #submit (on-pressed => { &(disabled: #peer.min-width) }) button #peer }", "no readable bool property")]
-    [TestCase("box { button #submit (on-pressed => { &(disabled: #nowhere.disabled) }) }", "no element with the id")]
-    [TestCase("box { button #submit (on-pressed => { &(min-width: !&.disabled) }) }", "bool property")]
-    [TestCase("box { button #submit (on-pressed => { &(no-such: !&.disabled) }) }", "no property")]
-    [TestCase("box { button #submit (on-pressed => { &(set .a #peer.nothing) }) button #peer }", "no readable bool property")]
-    [TestCase("box { button #submit (on-pressed => { &(disabled: args.nope) }) }", "args.nope")]
+    [TestCase("box { button #submit (on-pressed => { #submit(disabled: #peer.no-such) }) button #peer }", "no readable bool property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(disabled: #peer.min-width) }) button #peer }", "no readable bool property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(disabled: #nowhere.disabled) }) }", "no element with the id")]
+    [TestCase("box { button #submit (on-pressed => { #submit(min-width: !#submit.disabled) }) }", "bool property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(no-such: !#submit.disabled) }) }", "no property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(set .a #peer.nothing) }) button #peer }", "no readable bool property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(disabled: args.nope) }) }", "args.nope")]
     [RunOnSide(Side.Client)]
     public void A_Mistake_In_An_Expression_Leaves_Everything_As_It_Was(string suil, string expected)
     {
@@ -369,7 +394,7 @@ public sealed class SuilHotReloadEventTest : GameTest
             let step = 2;
             box {
                 button #submit (min-width: 10, min-height: 8, max-width: 6, max-height: 20, on-pressed => {
-                    &(min-width +: 5, min-height *: <step>, max-width -: calc(#other.min-width * 3), max-height /: #other.min-width)
+                    #submit(min-width +: 5, min-height *: <step>, max-width -: calc(#other.min-width * 3), max-height /: #other.min-width)
                 })
                 button #other (min-width: 4)
             }
@@ -394,7 +419,7 @@ public sealed class SuilHotReloadEventTest : GameTest
         Reload(view, """
             let gap = 3;
             box {
-                button #submit (min-width: 1, on-pressed => { &(min-width: calc(#other.min-width * (<gap> + 1)), min-height +: calc(<gap> * 2)) })
+                button #submit (min-width: 1, on-pressed => { #submit(min-width: calc(#other.min-width * (<gap> + 1)), min-height +: calc(<gap> * 2)) })
                 button #other (min-width: 4)
             }
             """);
@@ -412,7 +437,7 @@ public sealed class SuilHotReloadEventTest : GameTest
         var view = new TestView();
         Reload(view, """
             box {
-                button #submit (on-pressed => { &(min-width: calc(#panel/header.min-width + 1), min-height +: #panel/header.min-width) })
+                button #submit (on-pressed => { #submit(min-width: calc(#panel/header.min-width + 1), min-height +: #panel/header.min-width) })
                 test-inner #panel
             }
             """);
@@ -429,7 +454,7 @@ public sealed class SuilHotReloadEventTest : GameTest
     public void A_Number_That_Is_Not_A_Number_Of_The_Property_Is_Held_To_Its_Type()
     {
         var view = new TestView();
-        Reload(view, "box { button #submit (toggle-mode: true, on-pressed => { &(min-width: calc(#other.min-width / 3)) }) button #other }");
+        Reload(view, "box { button #submit (toggle-mode: true, on-pressed => { #submit(min-width: calc(#other.min-width / 3)) }) button #other }");
 
         ((RfButton) view.GetChild(1)).MinWidth = 10;
         Press(view.Submit!);
@@ -437,15 +462,15 @@ public sealed class SuilHotReloadEventTest : GameTest
         Assert.That(view.Submit!.MinWidth, Is.EqualTo(10f / 3f).Within(1e-5), "min-width is a float: no rounding");
     }
 
-    [TestCase("box { button #submit (on-pressed => { &(min-width: calc(#peer.disabled)) }) button #peer }", "no readable numeric property")]
-    [TestCase("box { button #submit (on-pressed => { &(min-width: calc(#peer.no-such)) }) button #peer }", "no readable numeric property")]
-    [TestCase("box { button #submit (on-pressed => { &(min-width: calc(#nowhere.min-width)) }) }", "no element with the id")]
-    [TestCase("box { button #submit (on-pressed => { &(disabled: calc(1 + 2)) }) }", "'disabled'")]
-    [TestCase("box { button #submit (on-pressed => { &(text: calc(1 + 2)) }) }", "'text'")]
-    [TestCase("box { button #submit (on-pressed => { &(disabled +: 1) }) }", "works on a numeric property")]
-    [TestCase("box { button #submit (on-pressed => { &(text *: 2) }) }", "works on a numeric property")]
-    [TestCase("box { button #submit (on-pressed => { &(no-such +: 1) }) }", "no property")]
-    [TestCase("box { button #submit (on-pressed => { &(min-width +: #nowhere.min-width) }) }", "no element with the id")]
+    [TestCase("box { button #submit (on-pressed => { #submit(min-width: calc(#peer.disabled)) }) button #peer }", "no readable numeric property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(min-width: calc(#peer.no-such)) }) button #peer }", "no readable numeric property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(min-width: calc(#nowhere.min-width)) }) }", "no element with the id")]
+    [TestCase("box { button #submit (on-pressed => { #submit(disabled: calc(1 + 2)) }) }", "'disabled'")]
+    [TestCase("box { button #submit (on-pressed => { #submit(text: calc(1 + 2)) }) }", "'text'")]
+    [TestCase("box { button #submit (on-pressed => { #submit(disabled +: 1) }) }", "works on a numeric property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(text *: 2) }) }", "works on a numeric property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(no-such +: 1) }) }", "no property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(min-width +: #nowhere.min-width) }) }", "no element with the id")]
     [RunOnSide(Side.Client)]
     public void A_Mistake_In_A_Number_Expression_Leaves_Everything_As_It_Was(string suil, string expected)
     {
@@ -554,12 +579,12 @@ public sealed class SuilHotReloadEventTest : GameTest
     [TestCase("box { button #submit (on-pressed => @OnToggle) }", "takes")]
     [TestCase("box { button #submit (on-pressed => { #nowhere (min-width: 1) }) }", "no element with the id")]
     [TestCase("box { button #submit (on-pressed => { #nowhere (add .a) }) }", "no element with the id")]
-    [TestCase("box { button #submit (on-pressed => { &(no-such-property: 1) }) }", "no property")]
-    [TestCase("box { button #submit (on-pressed => { &(min-width: red) }) }", "min-width")]
-    [TestCase("box { button #submit (on-pressed => { &(set .a args.pressed) }) }", "args.pressed")]
-    [TestCase("box { button #submit (on-toggled => { &(set .a args.nope) }) }", "args.nope")]
+    [TestCase("box { button #submit (on-pressed => { #submit(no-such-property: 1) }) }", "no property")]
+    [TestCase("box { button #submit (on-pressed => { #submit(min-width: red) }) }", "min-width")]
+    [TestCase("box { button #submit (on-pressed => { #submit(set .a args.pressed) }) }", "args.pressed")]
+    [TestCase("box { button #submit (on-toggled => { #submit(set .a args.nope) }) }", "args.nope")]
     [TestCase("box { box #x (on-pressed => @Refresh) }", "no event")]
-    [TestCase("box { box #x (on-pressed => { &(add :loading) }) }", "no event")]
+    [TestCase("box { box #x (on-pressed => { #x(add :loading) }) }", "no event")]
     [RunOnSide(Side.Client)]
     public void A_Mistake_In_A_Handler_Leaves_Everything_As_It_Was(string suil, string expected)
     {

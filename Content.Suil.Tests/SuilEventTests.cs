@@ -44,7 +44,7 @@ public sealed class SuilEventTests
         Assert.That(((SuilCallStatement) statements[0]).Method, Is.EqualTo("Refresh"));
 
         var details = (SuilTargetStatement) statements[1];
-        Assert.That(details.Target.IsSender, Is.False);
+        Assert.That(details.Target.IsView, Is.False);
         Assert.That(details.Target.Id!.ToString(), Is.EqualTo("details"));
         Assert.That(details.Items, Has.Count.EqualTo(4));
         Assert.That(((SuilPropertyItem) details.Items[0]).Property.Name, Is.EqualTo("visible"));
@@ -59,7 +59,7 @@ public sealed class SuilEventTests
         Assert.That(remove.Refs.Single().Name.ToString(), Is.EqualTo("closed"));
 
         var self = (SuilTargetStatement) statements[2];
-        Assert.That(self.Target.IsSender, Is.True);
+        Assert.That(self.Target.IsView, Is.True);
         Assert.That(((SuilPropertyItem) self.Items[0]).Property.Name, Is.EqualTo("text"));
 
         var set = (SuilStyleItem) self.Items[1];
@@ -982,7 +982,7 @@ public sealed class SuilBoolExpressionTests
         Assert.That(reference.Property, Is.EqualTo("visible"));
 
         var sender = (SuilBoolReference) Of("&.disabled");
-        Assert.That(sender.Target.IsSender, Is.True);
+        Assert.That(sender.Target.IsView, Is.True);
         Assert.That(sender.Property, Is.EqualTo("disabled"));
 
         Assert.That(((SuilBoolArgs) Of("args.pressed")).Member, Is.EqualTo("pressed"));

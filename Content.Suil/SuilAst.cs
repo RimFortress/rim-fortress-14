@@ -388,13 +388,13 @@ public sealed record SuilStyleItem(
     SuilPosition Position) : ISuilTargetItem;
 
 /// <summary>
-/// The element a statement works on: <c>&amp;</c> is the element the event was raised on, <c>#id</c> is the element
+/// The element a statement works on: <c>&amp;</c> is the view itself, the C# class of the declaration with its members, <c>#id</c> is the element
 /// of the view with that id, and <c>#id/field/field</c> goes on through the public fields of a view inside it.
 /// </summary>
-/// <param name="IsSender"><c>&amp;</c>.</param>
+/// <param name="IsView"><c>&amp;</c>.</param>
 /// <param name="Id">The id, for a target that isn't <c>&amp;</c>.</param>
 /// <param name="Path">The fields after the id, as written (kebab-case).</param>
-public sealed record SuilTarget(bool IsSender, SuilName? Id, List<string> Path, SuilPosition Position);
+public sealed record SuilTarget(bool IsView, SuilName? Id, List<string> Path, SuilPosition Position);
 
 /// <summary>
 /// A <c>let</c> inside a block of elements or a template: a constant or a template that the elements after it in the

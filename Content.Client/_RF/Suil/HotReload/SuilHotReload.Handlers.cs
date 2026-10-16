@@ -56,9 +56,9 @@ public sealed partial class SuilHotReload
     /// <summary>
     /// What a bool expression needs to be worked out when an event is raised.
     /// </summary>
-    private readonly record struct EvalContext(ViewState State, Control Sender, object? Argument);
+    private readonly record struct EvalContext(ViewState State, Control View, object? Argument);
 
-    private sealed record PlannedTarget(bool Sender, string? Id, IReadOnlyList<string> Path);
+    private sealed record PlannedTarget(bool View, string? Id, IReadOnlyList<string> Path);
 
     // ---- Planning ----
 
@@ -69,8 +69,14 @@ public sealed partial class SuilHotReload
     {
         var ids = new Dictionary<string, Type>(StringComparer.Ordinal);
         CollectTypes(root, ids);
+        ids[ViewKey] = view.GetType();
         PlanHandlersOf(view, root, ids, errors);
     }
+
+    /// <summary>
+    /// The key of the type of the view itself among the ids of the elements: not a valid id, so no element has it.
+    /// </summary>
+    private const string ViewKey = "&";
 
     private static void CollectTypes(PlannedElement element, Dictionary<string, Type> into)
     {
@@ -477,7 +483,7 @@ public sealed partial class SuilHotReload
         {
             return context =>
             {
-                var control = Resolve(context.State, target, context.Sender);
+                var control = Resolve(context.State, target, context.View);
                 return control == null ? 0 : ReadNumber(control, property);
             };
         }
@@ -494,7 +500,7 @@ public sealed partial class SuilHotReload
 
         return context =>
         {
-            var control = Resolve(context.State, target, context.Sender);
+            var control = Resolve(context.State, target, context.View);
             return control == null ? 0 : SuilMath.ToDouble(getter(control));
         };
     }
@@ -528,7 +534,7 @@ public sealed partial class SuilHotReload
         {
             return context =>
             {
-                var control = Resolve(context.State, target, context.Sender);
+                var control = Resolve(context.State, target, context.View);
                 return control != null && ReadBool(control, property);
             };
         }
@@ -545,7 +551,7 @@ public sealed partial class SuilHotReload
 
         return context =>
         {
-            var control = Resolve(context.State, target, context.Sender);
+            var control = Resolve(context.State, target, context.View);
             return control != null && getter(control) is true;
         };
     }
@@ -575,10 +581,10 @@ public sealed partial class SuilHotReload
         out PlannedTarget planned,
         out Type? type)
     {
-        if (target.IsSender)
+        if (target.IsView)
         {
             planned = new PlannedTarget(true, null, Array.Empty<string>());
-            type = owner.Type;
+            type = ids[ViewKey];
             return true;
         }
 
@@ -610,7 +616,7 @@ public sealed partial class SuilHotReload
 
     private void Run(ISuilView view, ViewState state, PlannedHandler handler, Control sender, object? argument)
     {
-        var context = new EvalContext(state, sender, argument);
+        var context = new EvalContext(state, (Control) view, argument);
 
         foreach (var statement in handler.Statements)
         {
@@ -634,7 +640,7 @@ public sealed partial class SuilHotReload
                 break;
             case PlannedTargetStatement onTarget:
             {
-                var target = Resolve(context.State, onTarget.Target, context.Sender);
+                var target = Resolve(context.State, onTarget.Target, context.View);
 
                 if (target == null)
                 {
@@ -801,12 +807,12 @@ public sealed partial class SuilHotReload
     }
 
     /// <summary>
-    /// The control of a target: the one the event was raised on, the one with the id, or the one behind the fields of a view.
+    /// The control of a target: the view itself, the one with the id, or the one behind the fields of a view.
     /// </summary>
-    private static Control? Resolve(ViewState state, PlannedTarget target, Control sender)
+    private static Control? Resolve(ViewState state, PlannedTarget target, Control view)
     {
-        if (target.Sender)
-            return sender;
+        if (target.View)
+            return view;
 
         if (!state.Controls.TryGetValue(target.Id!, out var current))
             return null;

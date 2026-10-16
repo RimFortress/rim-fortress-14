@@ -1,17 +1,11 @@
-/*
- * A draft of IntCounter in the first notation of SUIL ($ for the owner, no longer valid), not used by anything.
- * It was never read by the generator because it had no view; now every file is checked, so it is kept as a comment
- * until IntCounter is described by an `@IntCounter => ...` view.
- *
-row {
+@IntCounter => row #root {
     button #plus .open-right (
         text: "+",
-        on-pressed => $.value +: 1
+        on-pressed => { &(value +: 1) }
     )
     line-edit #count-line
     button #minus .open-left (
         text: "-",
-        on-pressed => $.value -: 1
+        on-pressed => { &(value -: 1) }
     )
 }
-*/

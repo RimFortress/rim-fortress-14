@@ -197,8 +197,8 @@ internal sealed partial class SuilViewEmitter
     /// </summary>
     private (string Expression, INamedTypeSymbol Type) ResolveTarget(SuilTarget target, PendingHandlers pending)
     {
-        if (target.IsSender)
-            return (pending.Variable, pending.Type);
+        if (target.IsView)
+            return ("this", viewClass);
 
         var id = target.Id!.ToString();
         string expression;
