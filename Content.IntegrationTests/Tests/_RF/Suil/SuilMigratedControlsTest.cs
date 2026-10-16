@@ -348,4 +348,54 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(_reload.Reload(button).Success, Is.True);
         Assert.That(button.Content.Content.Children, Does.Contain(item));
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Pops_And_The_Hotbar_Are_Built_From_The_Files_And_Reload()
+    {
+        var list = new PopList();
+        var combat = (RfButton) ((ISuilView) list).SuilGetField("combat-button")!;
+        var combatIcon = (UiElement) ((ISuilView) list).SuilGetField("combat-icon")!;
+
+        Assert.That(combat.ToggleMode, Is.True);
+        Assert.That(combat.SetSize, Is.EqualTo(new System.Numerics.Vector2(40, 40)));
+        Assert.That(combatIcon.BackgroundImage, Is.Not.Null, "the icon of the combat mode off");
+        Assert.That(_reload.Reload(list).Success, Is.True);
+
+        var hotbar = new ActionsHotbarWidget();
+        var view = (ISuilView) hotbar;
+        var tree = (TreeMenu) view.SuilGetField("tree")!;
+
+        Assert.That(tree.Orientation, Is.EqualTo(LayoutOrientation.Horizontal));
+        Assert.That(hotbar.BuildButton.Texture, Is.Not.Null, "texture-path of the file");
+        Assert.That(hotbar.BuildButton.ToolTip, Is.Not.Null.And.Not.Empty);
+        Assert.That(tree.RootPanel.Content.Children.OfType<TreeMenuButton>().Count(), Is.EqualTo(5), "the buttons went to the tree through its %content%");
+        Assert.That(tree.RootPanel.Content.Children.OfType<UiElement>().Count(c => c.HasSuilStyleClass("low-divider")), Is.EqualTo(2));
+
+        var result = _reload.Reload(view);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(tree.RootPanel.Content.Children.OfType<TreeMenuButton>().Count(), Is.EqualTo(5), "and stay there");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void PopIcon_Is_A_Square_Toggle_Button_With_Its_Parts()
+    {
+        var icon = new PopIcon(Robust.Shared.GameObjects.EntityUid.Invalid, "Bob");
+        var view = (ISuilView) icon;
+
+        Assert.That(icon.ToggleMode, Is.True);
+        Assert.That(icon.HasSuilStyleClass("square"), Is.True);
+        Assert.That(icon.HasSuilStyleClass("transparent"), Is.True, "added by the code");
+        Assert.That(icon.ToolTip, Is.EqualTo("Bob"));
+        Assert.That(icon.SetSize, Is.EqualTo(new System.Numerics.Vector2(80, 80)));
+        Assert.That(view.SuilFieldIds, Is.SupersetOf(new[] { "icon", "status-container", "mood-label" }));
+
+        icon.CombatMode = true;
+        Assert.That(icon.HasSuilStyleClass("negative"), Is.True);
+        icon.CombatMode = false;
+        Assert.That(icon.HasSuilStyleClass("negative"), Is.False);
+
+        Assert.That(_reload.Reload(view).Success, Is.True);
+    }
 }
