@@ -95,6 +95,38 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
+    public void The_Children_Go_To_The_XamlChildren_Of_The_Element_Like_In_XAML()
+    {
+        var result = Run("shell { +button #b }", """
+            using System.Collections.Generic;
+            using Content.Suil;
+            using Content.Client._RF.UserInterface.Controls;
+            using Robust.Client.UserInterface;
+            namespace Game.Ui;
+
+            [SuilTag("shell")]
+            public class Shell : Control
+            {
+                public List<Control> Contents { get; } = new();
+                public Shell() { XamlChildren = Contents; }
+            }
+
+            public sealed partial class Picker : Shell { public Picker() { InitializeComponent(); } }
+            """);
+
+        AssertClean(result);
+
+        var type = result.Load().GetType("Game.Ui.Picker")!;
+        var picker = Activator.CreateInstance(type)!;
+        var contents = (System.Collections.ICollection) type.GetProperty("Contents")!.GetValue(picker)!;
+        var own = (System.Collections.ICollection) type.GetProperty("Kids")!.GetValue(picker)!;
+
+        Assert.That(contents.Count, Is.EqualTo(1), "the button is in the contents of the shell");
+        Assert.That(own.Count, Is.EqualTo(0), "not among the parts of the shell");
+        Assert.That(((ISuilView) picker).SuilRootChildren, Is.SameAs(contents));
+    }
+
+    [Test]
     public void The_View_Is_Registered_When_It_Is_Built()
     {
         var result = Run("button #up");

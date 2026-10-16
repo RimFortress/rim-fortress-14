@@ -240,4 +240,30 @@ public sealed class SuilMigratedControlsTest : GameTest
         var cell = new NpcJobsPopCell();
         Assert.That(_reload.Reload(cell).Success, Is.True);
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Windows_Keep_Their_Chrome_And_Put_The_Tree_In_The_Contents()
+    {
+        foreach (var window in new Content.Client.UserInterface.Controls.FancyWindow[]
+                 {
+                     new NotificationsSettingsWindow(),
+                     new NpcJobsPriorityWindow(),
+                     new NpcJobsSettingsWindow(),
+                 })
+        {
+            var name = window.GetType().Name;
+            var view = (ISuilView) window;
+            var chrome = window.Children.Count();
+
+            Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1), name + ": the tree is in the contents");
+            Assert.That(view.SuilRootChildren, Is.Not.Null, name);
+            Assert.That(window.Title, Is.Not.Null.And.Not.Empty, name + ": the title of the file");
+
+            var result = _reload.Reload(view);
+            Assert.That(result.Success, Is.True, name + ": " + string.Join("\n", result.Errors));
+            Assert.That(window.Children.Count(), Is.EqualTo(chrome), name + ": the parts of the window are not touched");
+            Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1), name + ": built again in the contents");
+        }
+    }
 }

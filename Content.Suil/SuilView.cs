@@ -22,6 +22,14 @@ public interface ISuilView
     string SuilViewName { get; }
 
     /// <summary>
+    /// Where the children of the root went when the tree was built: its <c>XamlChildren</c> at that moment, as XAML would
+    /// have it (a window keeps them in its contents, not among its own parts). The hot reload builds the children again
+    /// in the same place. <c>null</c> for a view that was not built by <c>InitializeComponent()</c>: the children of the
+    /// control.
+    /// </summary>
+    object? SuilRootChildren { get; }
+
+    /// <summary>
     /// The ids of the elements that have a field in the class.
     /// </summary>
     IReadOnlyList<string> SuilFieldIds { get; }

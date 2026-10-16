@@ -418,6 +418,8 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
     string ISuilView.SuilViewName => "Test";
 
+    object? ISuilView.SuilRootChildren => null;
+
     IReadOnlyList<string> ISuilView.SuilFieldIds { get; } = new[] { "submit" };
 
     Type? ISuilView.SuilFieldType(string id) => id == "submit" ? typeof(RfButton) : null;

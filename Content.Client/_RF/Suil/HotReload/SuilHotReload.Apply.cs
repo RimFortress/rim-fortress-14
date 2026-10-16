@@ -84,7 +84,13 @@ public sealed partial class SuilHotReload
         Subscribe(view, control, plan, state);
 
         // Everything below is built again. The controls that are kept are taken out first, so nothing is added twice.
-        foreach (var child in new List<Control>(control.Children))
+        // The children go where XAML would put them: the root's place is the one the generated code used, the others
+        // are new or already built, and have their XamlChildren as they were left by the constructor.
+        var target = ReferenceEquals(control, view) && view.SuilRootChildren is ICollection<Control> root
+            ? root
+            : control.XamlChildren;
+
+        foreach (var child in new List<Control>(target))
         {
             child.Orphan();
         }
@@ -118,7 +124,7 @@ public sealed partial class SuilHotReload
 
             ApplyElement(view, child, childPlan, childPlan.Id, previous, state, reusable, errors, warnings);
 
-            control.AddChild(child);
+            target.Add(child);
 
             if (childPlan.Id != null && !view.SuilSetField(childPlan.Id, child) && view.SuilFieldType(childPlan.Id) != null)
                 errors.Add($"the field of '{childPlan.Id}' did not accept {child.GetType().Name}");

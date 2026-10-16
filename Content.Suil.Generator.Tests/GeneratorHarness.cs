@@ -72,7 +72,10 @@ internal static class GeneratorHarness
                 public float Scale { get; set; }
                 public float UIScale { get; set; }
                 public bool Visible { get; set; }
-                public void AddChild(Control child) { }
+                public void AddChild(Control child) { Kids.Add(child); }
+                public System.Collections.Generic.List<Control> Kids { get; } = new();
+                public virtual System.Collections.Generic.ICollection<Control> XamlChildren { get; protected set; } = null!;
+                public Control() { XamlChildren = Kids; }
                 public System.Collections.Generic.HashSet<string> StyleClasses { get; } = new();
                 public void AddStyleClass(string name) => StyleClasses.Add(name);
                 public void RemoveStyleClass(string name) => StyleClasses.Remove(name);

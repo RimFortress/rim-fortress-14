@@ -56,3 +56,66 @@
         }
     }
 }
+
+/* The table of the priorities of the jobs of the pops. */
+@NpcJobsPriorityWindow => fancy-window (title: $npc-jobs-priority-window-title, min-size: 940 590) {
+    col {
+        table-control #table (flex-grow: 1)
+
+        fancy-back (margin: 0 0 5 0) {
+            row {
+                button #job-settings-button (
+                    margin: 0 3,
+                    text: $npc-jobs-priority-window-settings-button-text,
+                    on-pressed => @OnJobSettingsPressed
+                )
+            }
+        }
+    }
+}
+
+/* The jobs (left) and the tasks of the chosen job (right). */
+@NpcJobsSettingsWindow => fancy-window (title: $npc-jobs-settings-window-title, min-size: 700 600) {
+    row {
+        box .panel-dark-bordered {
+            col {
+                scroll-container (flex-grow: 1) {
+                    col #jobs-container (flex-grow: 1)
+                }
+
+                box .panel-highlighted {
+                    row {
+                        button #save-button .accept (
+                            flex-grow: 1,
+                            text: $npc-jobs-settings-window-save-button,
+                            on-pressed => @OnSavePressed
+                        )
+                        button #create-role-button (
+                            flex-grow: 1,
+                            text: $npc-jobs-settings-window-create-button,
+                            on-pressed => @OnCreateRolePressed
+                        )
+                    }
+                }
+            }
+        }
+
+        _ .low-divider-dark (margin: 2 1)
+
+        box .panel-light-bordered (flex-grow: 1) {
+            col (flex-grow: 1) {
+                box .panel-highlighted {
+                    _ .fancy-window-title (text: $npc-jobs-settings-window-tasks-label, flex-grow: 1, align-self: center)
+                }
+
+                _ .low-divider-dark (margin: 1 2)
+
+                scroll-container (flex-grow: 1) {
+                    box .panel-highlighted (flex-grow: 1) {
+                        col #tasks-container (flex-grow: 1)
+                    }
+                }
+            }
+        }
+    }
+}

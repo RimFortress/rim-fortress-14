@@ -135,7 +135,9 @@ internal sealed partial class SuilViewEmitter(
             if (child.Id != null)
                 AddField(child, childVariable, typeName, childType);
 
-            _body.AppendLine($"            {variable}.AddChild({childVariable});");
+            _body.AppendLine(variable == "this"
+                ? $"            __suilRootChildren.Add({childVariable});"
+                : $"            {variable}.XamlChildren.Add({childVariable});");
         }
     }
 
@@ -561,6 +563,9 @@ internal sealed partial class SuilViewEmitter(
         sb.AppendLine($"        string {view}.SuilPath => {Literal(path)};");
         sb.AppendLine($"        string {view}.SuilViewName => {Literal(viewName)};");
         sb.AppendLine();
+        sb.AppendLine("        private global::System.Collections.Generic.ICollection<global::Robust.Client.UserInterface.Control>? __suilRootChildren;");
+        sb.AppendLine($"        object? {view}.SuilRootChildren => __suilRootChildren;");
+        sb.AppendLine();
         sb.AppendLine($"        private static readonly string[] __suilFieldIds = new string[] {{ {ids} }};");
         sb.AppendLine($"        global::System.Collections.Generic.IReadOnlyList<string> {view}.SuilFieldIds => __suilFieldIds;");
         sb.AppendLine();
@@ -666,6 +671,9 @@ internal sealed partial class SuilViewEmitter(
         sb.AppendLine("        /// <summary>Builds the tree of the view. Call it from the constructor.</summary>");
         sb.AppendLine("        private void InitializeComponent()");
         sb.AppendLine("        {");
+        // What XAML does: the children of an element are added to its XamlChildren, which a base class can have sent
+        // to a place of its own (the contents of a window). The class itself sets it for its users after this.
+        sb.AppendLine("            __suilRootChildren = this.XamlChildren;");
 
         if (_handlers.Count > 0)
             sb.AppendLine("            var __unsub = new global::System.Collections.Generic.List<global::System.Action>();");
