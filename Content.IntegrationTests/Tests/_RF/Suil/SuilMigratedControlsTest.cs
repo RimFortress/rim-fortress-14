@@ -431,4 +431,31 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(_reload.Reload(window).Success, Is.True);
         Assert.That(window.Selector, Is.Not.Null);
     }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Screen_Has_All_Its_Widgets_Where_The_Code_Put_Them_And_Reloads()
+    {
+        var screen = new RimFortressScreen();
+        var view = (ISuilView) screen;
+
+        Assert.That(view.SuilFieldIds, Is.SupersetOf(new[]
+        {
+            "viewport-container", "main-viewport", "top-left", "vote-menu", "hotbar", "top-right", "chat", "notifications", "pop-list",
+            "menu-bar",
+        }));
+        Assert.That(screen.ChatBox, Is.SameAs(view.SuilGetField("chat")));
+        Assert.That(((Content.Client.UserInterface.Systems.MenuBar.Widgets.GameTopMenuBar) view.SuilGetField("menu-bar")!).CharacterButton.Visible, Is.False, "what the code hid");
+        Assert.That(screen.VoteMenu.Parent, Is.SameAs(view.SuilGetField("top-left")));
+        Assert.That(screen.Children.Count(), Is.EqualTo(7));
+
+        var hotbar = (Control) view.SuilGetField("hotbar")!;
+        var margin = hotbar.GetValue(Robust.Client.UserInterface.Controls.LayoutContainer.MarginLeftProperty);
+
+        var result = _reload.Reload(view);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(view.SuilGetField("hotbar"), Is.SameAs(hotbar), "the control with an id is kept");
+        Assert.That(hotbar.GetValue(Robust.Client.UserInterface.Controls.LayoutContainer.MarginLeftProperty), Is.EqualTo(margin), "with its place in the layout");
+        Assert.That(screen.Children.Count(), Is.EqualTo(7));
+    }
 }
