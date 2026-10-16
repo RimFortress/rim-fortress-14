@@ -22,7 +22,7 @@ public sealed partial class NpcJobsSettingsWindow : FancyWindow
 
     private readonly HashSet<NpcJobButton> _dirtyButtons = new();
     private readonly HashSet<int> _deleteJobs = new();
-    private readonly ButtonGroup _jobButtonGroup = new();
+    private readonly RfButtonGroup _jobButtonGroup = new();
 
     private int? _selectedJob;
 

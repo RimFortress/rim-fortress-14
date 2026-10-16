@@ -1,0 +1,7 @@
+/* The label and the triangle of the button; the list is option-button-popup.suil */
+@RfOptionButton => button {
+    row (mouse-filter: ignore) {
+        _ #label-control .option-button (mouse-filter: ignore, flex-grow: 1, align-self: center)
+        _ #triangle .option-triangle (mouse-filter: ignore, align-self: center)
+    }
+}

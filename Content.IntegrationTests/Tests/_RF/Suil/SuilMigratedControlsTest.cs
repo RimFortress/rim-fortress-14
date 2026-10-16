@@ -1,0 +1,243 @@
+#nullable enable
+using System.Collections.Generic;
+using System.Linq;
+using Content.Client._RF.Suil;
+using Content.Client._RF.Suil.HotReload;
+using Content.Client._RF.UserInterface.Controls;
+using Content.Client._RF.UserInterface.Controls.Notifications;
+using Content.Client._RF.UserInterface.Controls.NpcJobs;
+using Content.Client._RF.UserInterface.Controls.Table;
+using Content.Client._RF.UserInterface.Controls.TreeMenu;
+using Content.IntegrationTests.Fixtures;
+using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Suil;
+using Robust.Client.UserInterface;
+
+namespace Content.IntegrationTests.Tests._RF.Suil;
+
+/// <summary>
+/// The controls that were XAML and are SUIL now: they are built by the generated code, and the hot reload builds the same.
+/// </summary>
+[TestFixture]
+public sealed class SuilMigratedControlsTest : GameTest
+{
+    [SidedDependency(Side.Client)] private readonly ISuilHotReload _reload = null!;
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void ColorPicker_Is_Built_With_The_Texture_Of_The_File()
+    {
+        var picker = new ColorPicker();
+        var button = (RfButton) ((ISuilView) picker).SuilGetField("pick-color")!;
+        var icon = (UiElement) button.Children.Single();
+
+        Assert.That(button.HasSuilStyleClass("icon-button"), Is.True);
+        Assert.That(button.HasSuilStyleClass("square"), Is.True);
+        Assert.That(button.MinWidth, Is.EqualTo(32f));
+        Assert.That(button.ToolTip, Is.Not.Null.And.Not.Empty);
+        Assert.That(icon.HasSuilStyleClass("icon"), Is.True);
+        Assert.That(icon.SuilIsHard("background-image"), Is.True, "what the file sets is out of reach of the styles");
+
+        var color = new Robust.Shared.Maths.Color(0.2f, 0.4f, 0.6f);
+        picker.Color = color;
+        Assert.That(((UiElement) ((ISuilView) picker).SuilGetField("color-panel")!).BackgroundColor, Is.EqualTo(color));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void ColorPicker_Is_The_Same_After_A_Reload()
+    {
+        var picker = new ColorPicker();
+        var result = _reload.Reload(picker);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        var button = (RfButton) ((ISuilView) picker).SuilGetField("pick-color")!;
+        var icon = (UiElement) button.Children.Single();
+        Assert.That(icon.SuilIsHard("background-image"), Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void ColorSelectorSliders_Has_Its_Rows_And_Reloads()
+    {
+        var sliders = new RfColorSelectorSliders();
+        var view = (ISuilView) sliders;
+
+        Assert.That(view.SuilFieldIds, Is.SupersetOf(new[]
+        {
+            "type-selector", "description-label", "top-label", "top-slider", "top-input", "middle-slider", "bottom-input",
+            "alpha-row", "alpha-label", "alpha-slider", "alpha-input", "hex-label", "hex-edit",
+        }));
+
+        Assert.That(sliders.IsAlphaVisible, Is.False, "the alpha row is hidden by the file");
+        sliders.IsAlphaVisible = true;
+        Assert.That(((UiElement) view.SuilGetField("alpha-row")!).Visible, Is.True);
+        Assert.That(((UiElement) view.SuilGetField("alpha-label")!).Text, Is.Not.Null.And.Not.Empty, "the localized text");
+        Assert.That(((RfSlider) view.SuilGetField("alpha-slider")!).MaxValue, Is.EqualTo(1f));
+
+        var result = _reload.Reload(sliders);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void OptionButton_Has_Its_Label_And_Triangle_And_Reloads()
+    {
+        var button = new RfOptionButton();
+        button.AddItem("One", 1);
+        button.AddItem("Two", 2);
+        button.SelectValue(2);
+
+        var view = (ISuilView) button;
+        var label = (UiElement) view.SuilGetField("label-control")!;
+        var triangle = (UiElement) view.SuilGetField("triangle")!;
+
+        Assert.That(label.HasSuilStyleClass("option-button"), Is.True);
+        Assert.That(triangle.HasSuilStyleClass("option-triangle"), Is.True);
+        Assert.That(label.MouseFilter, Is.EqualTo(Robust.Client.UserInterface.Control.MouseFilterMode.Ignore));
+        Assert.That(button.HideTriangle, Is.False);
+
+        var result = _reload.Reload(button);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+        Assert.That(button.SelectedValue, Is.EqualTo(2), "the items are kept");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void TabContainer_Has_A_Bar_And_A_Panel_And_Reloads()
+    {
+        var tabs = new RfTabContainer();
+        var view = (ISuilView) tabs;
+
+        Assert.That(tabs.TabBar.HasSuilStyleClass("tab-bar"), Is.True);
+        Assert.That(tabs.Panel.HasSuilStyleClass("tab-panel"), Is.True);
+        Assert.That(tabs.Panel.FlexGrow, Is.EqualTo(1f));
+
+        var result = _reload.Reload(tabs);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void TreeMenuButton_Has_An_Icon_A_Panel_And_Reloads()
+    {
+        var button = new TreeMenuButton { TexturePath = "/Textures/_RF/Interface/hammer-solid.svg.192dpi.png" };
+        var icon = (UiElement) ((ISuilView) button).SuilGetField("icon")!;
+
+        Assert.That(icon.BackgroundImage, Is.Not.Null.And.SameAs(button.Texture), "the icon of the button is the background of the icon");
+        Assert.That(button.HasSuilStyleClass("tree-menu-button"), Is.True);
+        Assert.That(button.SetSize, Is.EqualTo(new System.Numerics.Vector2(48, 48)));
+        Assert.That(button.TrackingTooltip, Is.True);
+        Assert.That(button.Content.Visible, Is.False);
+
+        var result = _reload.Reload(button);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void TreeMenu_Takes_The_Panels_Of_Its_Buttons_To_Itself()
+    {
+        var menu = new TreeMenu();
+        var root = new TreeMenuButton();
+        var child = new TreeMenuButton();
+
+        root.AddContent(child);
+        menu.RootPanel.Content.AddChild(root);
+
+        Assert.That(root.Content.Parent, Is.SameAs(menu), "the panel of a button is beside the root panel");
+        Assert.That(root.Content.ParentPanel, Is.SameAs(menu.RootPanel));
+        Assert.That(root.Content.Content.Children, Does.Contain(child));
+        Assert.That(menu.RootPanel.Closable, Is.False);
+        Assert.That(menu.RootPanel.Orientation, Is.EqualTo(LayoutOrientation.Vertical), "the root panel goes the other way than the menu");
+
+        var panel = new TreeMenuPanel();
+        panel.Orientation = LayoutOrientation.Horizontal;
+        Assert.That(panel.Orientation, Is.EqualTo(LayoutOrientation.Horizontal));
+        Assert.That(panel.FlexDirection, Is.EqualTo(SuilFlexDirection.Column));
+
+        Assert.That(_reload.Reload(menu).Success, Is.True);
+        Assert.That(_reload.Reload(panel).Success, Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Table_Has_A_Header_And_Rows_With_Dividers()
+    {
+        var table = new TableControl();
+        var header = table.CreateRow(new List<Control> { new UiElement(), new UiElement() });
+
+        table.CreateRow(new List<Control> { new UiElement(), new UiElement() });
+
+        Assert.That(table.Rows, Is.EqualTo(2));
+        Assert.That(table.Columns, Is.EqualTo(2));
+        Assert.That(header.Children.Count(), Is.EqualTo(3), "two cells and a divider between them");
+        Assert.That(header.Children.OfType<UiElement>().Count(c => c.HasSuilStyleClass("low-divider")), Is.EqualTo(1));
+        Assert.That(header.HasSuilStyleClass("panel-highlighted"), Is.True);
+        Assert.That(table.GetCell(1, 1), Is.Not.Null);
+
+        Assert.That(_reload.Reload(table).Success, Is.True);
+        Assert.That(_reload.Reload(header).Success, Is.True);
+        Assert.That(_reload.Reload(header.Cells[0]).Success, Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void NotificationButton_Takes_The_Style_Of_The_Prototype_And_Reloads()
+    {
+        var notification = new Content.Shared._RF.Notifications.Notification(
+            1, "CatMigration", "text", TimeSpan.Zero, expireAt: TimeSpan.FromSeconds(10));
+        var button = new NotificationButton(notification);
+        var view = (ISuilView) button;
+        var inner = (RfButton) view.SuilGetField("button")!;
+        var progress = (UiElement) view.SuilGetField("progress-bar")!;
+
+        Assert.That(progress.Visible, Is.True, "the notification expires");
+        Assert.That(progress.BackgroundColor, Is.Not.Null);
+
+        button.EnsureSetup();
+        Assert.That(inner.HasSuilStyleClass("blue"), Is.True, "style: blue in the prototype");
+
+        button.Pressed = true;
+        Assert.That(((UiElement) view.SuilGetField("desc-container")!).Visible, Is.True);
+
+        Assert.That(_reload.Reload(button).Success, Is.True);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void NpcJobs_Controls_Are_Built_And_Reload()
+    {
+        var priority = new NpcJobPriorityButton();
+        Assert.That(priority.MinValue, Is.EqualTo(0));
+        Assert.That(priority.MaxValue, Is.EqualTo(10), "max-value of the file");
+        Assert.That(priority.MaxColor, Is.EqualTo(Robust.Shared.Maths.Color.FromHex("#CD5C5C")));
+        Assert.That(priority.SetSize, Is.EqualTo(new System.Numerics.Vector2(32, 32)));
+
+        priority.Priority = 3;
+        var label = (UiElement) ((ISuilView) priority).SuilGetField("label")!;
+        Assert.That(label.Visible, Is.True);
+        Assert.That(label.Text, Is.EqualTo("3"));
+        Assert.That(_reload.Reload(priority).Success, Is.True);
+
+        var job = new NpcJobButton { JobName = "Cook" };
+        Assert.That(job.JobName, Is.EqualTo("Cook"));
+        Assert.That(job.Icon.CurrentTexturePath, Is.Not.Null, "the icons of the file");
+        Assert.That(job.ToggleMode, Is.True);
+
+        var deleted = 0;
+        job.OnDeleted += () => deleted++;
+        var delete = (RfConfirmButton) ((ISuilView) job).SuilGetField("delete-button")!;
+        Assert.That(delete.HasSuilStyleClass("icon-button"), Is.True);
+        Assert.That(_reload.Reload(job).Success, Is.True);
+
+        var task = new NpcTaskButton();
+        Assert.That(task.CheckBox, Is.Not.Null);
+        Assert.That(task.TrackingTooltip, Is.True);
+        Assert.That(_reload.Reload(task).Success, Is.True);
+
+        var cell = new NpcJobsPopCell();
+        Assert.That(_reload.Reload(cell).Success, Is.True);
+    }
+}

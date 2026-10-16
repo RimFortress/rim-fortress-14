@@ -85,6 +85,14 @@ internal static class GeneratorHarness
         }
         namespace Content.Client._RF.Suil
         {
+            public sealed class Tint { public string Text = ""; }
+
+            public static class SuilElementValues
+            {
+                public static object? Read(System.Type owner, string name, Content.Suil.ISuilValue[] values)
+                    => new Tint { Text = owner.Name + "." + name + ":" + string.Join(",", System.Linq.Enumerable.Select(values, v => v.ToString())) };
+            }
+
             public class UiElement : Robust.Client.UserInterface.Control
             {
                 public string? SuilStyleIdentifier { get; set; }
@@ -92,6 +100,7 @@ internal static class GeneratorHarness
                 public double Ratio { get; set; }
                 public byte Level { get; set; }
                 public long Big { get; set; }
+                public Tint? Tint { get; set; }
                 public int WriteOnly { set { } }
                 public System.Collections.Generic.HashSet<string> Classes { get; } = new();
                 public System.Collections.Generic.HashSet<string> Pseudo { get; } = new();

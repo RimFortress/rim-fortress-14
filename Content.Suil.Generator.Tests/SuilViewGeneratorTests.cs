@@ -77,6 +77,24 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
+    public void A_Value_Without_A_Literal_Is_Read_By_The_Parsers_At_Run_Time()
+    {
+        var result = Run("""
+            let tone = #AABBCC;
+            button { _ #t (tint: calc(1px + 2px), text: "x") _ #u (tint: texture("/a.png") <tone> 50% 3px red, background: $key(n: 1)) }
+            """.Replace("calc(1px + 2px)", "rgb(1, 2, 3)").Replace(", background: $key(n: 1)", string.Empty));
+
+        AssertClean(result);
+        Assert.That(result.Source, Does.Contain("SuilElementValues.Read(typeof(global::Content.Client._RF.Suil.UiElement), \"tint\""));
+
+        var view = (ISuilView) Activator.CreateInstance(result.Load().GetType("Game.Ui.Picker")!)!;
+        var tint = view.SuilGetField("u")!;
+        var text = tint.GetType().GetProperty("Tint")!.GetValue(tint)!.GetType().GetField("Text")!.GetValue(tint.GetType().GetProperty("Tint")!.GetValue(tint))!.ToString()!;
+
+        Assert.That(text, Does.Contain("SuilFunction").And.Contain("SuilColor").And.Contain("SuilPercentage").And.Contain("SuilDimension").And.Contain("SuilIdent"));
+    }
+
+    [Test]
     public void The_View_Is_Registered_When_It_Is_Built()
     {
         var result = Run("button #up");

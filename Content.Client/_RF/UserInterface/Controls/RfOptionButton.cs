@@ -1,0 +1,523 @@
+using Content.Suil;
+using System.Numerics;
+using Content.Client._RF.Suil;
+using JetBrains.Annotations;
+
+namespace Content.Client._RF.UserInterface.Controls;
+
+/// <summary>
+/// A button that opens a list of items to choose from, the <see cref="UiElement"/> version of
+/// <see cref="Robust.Client.UserInterface.Controls.OptionButton"/>.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The layout is in <c>elements/common/option-button.suil</c> (the label and the triangle) and
+/// <c>option-button-popup.suil</c> (the list). The button is a toggle: it is <see cref="RfButton.Pressed"/>
+/// (<c>:checked</c>) while the list is open, and pressing it again closes the list.
+/// </para>
+/// <para>
+/// Items are identified by the <see cref="RfOptionItem"/> that <see cref="AddItem"/> returns, there are no
+/// ids or indices. What the item stands for goes into <see cref="RfOptionItem.Value"/>:
+/// <code>
+/// var button = new RfOptionButton();
+/// button.AddItem("Male", Sex.Male);
+/// button.OnItemSelected += args => Use((Sex) args.Value!);
+/// button.SelectValue(Sex.Female);
+/// </code>
+/// </para>
+/// <para>
+/// The label is <c>.option-button</c>, the triangle is <c>.option-triangle</c> (plus <c>.checked</c> while the
+/// list is open), the list is
+/// <c>.option-button-panel</c> and its items are <c>.option-item</c> (a <c>button</c>, the selected one
+/// is <c>:checked</c>).
+/// </para>
+/// </remarks>
+[Virtual, UsedImplicitly]
+[SuilTag("option-button")]
+public partial class RfOptionButton : RfButton
+{
+
+    private readonly RfOptionButtonPopup _popup = new();
+    private readonly List<RfOptionItem> _items = new();
+
+    /// <summary>
+    /// The items, in the order they are shown.
+    /// </summary>
+    [PublicAPI, ViewVariables]
+    public IReadOnlyList<RfOptionItem> Items => _items;
+
+    /// <summary>
+    /// The chosen item, <c>null</c> when there are no items.
+    /// </summary>
+    [PublicAPI, ViewVariables]
+    public RfOptionItem? Selected { get; private set; }
+
+    /// <summary>
+    /// <see cref="RfOptionItem.Value"/> of the <see cref="Selected"/> item.
+    /// </summary>
+    [PublicAPI, ViewVariables]
+    public object? SelectedValue => Selected?.Value;
+
+    /// <summary>
+    /// Is the list of items open.
+    /// </summary>
+    [PublicAPI, ViewVariables]
+    public bool IsOpen => _popup.Visible;
+
+    /// <summary>
+    /// The text shown before the text of the selected item.
+    /// </summary>
+    [PublicAPI]
+    public string Prefix
+    {
+        get;
+        set
+        {
+            field = value;
+            UpdateLabel();
+        }
+    } = string.Empty;
+
+    /// <summary>
+    /// If true, hides the triangle to the right of the label.
+    /// </summary>
+    [PublicAPI]
+    public bool HideTriangle
+    {
+        get;
+        set
+        {
+            field = value;
+            Triangle.Visible = !value;
+        }
+    }
+
+    /// <summary>
+    /// If true, the list has a field that hides the items which don't contain its text.
+    /// </summary>
+    [PublicAPI]
+    public bool Filterable
+    {
+        get;
+        set
+        {
+            field = value;
+            _popup.FilterBox.Visible = value;
+            UpdateFilters();
+        }
+    }
+
+    /// <summary>
+    /// SUIL style classes of the buttons of all items, the existing and the added afterwards
+    /// (<see cref="SuilClass.OptionItem"/> is always there). Assign a new collection to change them, in XAML:
+    /// <c>ItemSuilStyleClasses="open-both gold"</c>. The classes of one item are <see cref="RfOptionItem.SuilStyleClasses"/>.
+    /// </summary>
+    /// <remarks>
+    /// The list lives in the modal root, not inside the button, so a selector like <c>option-button .option-item</c>
+    /// does not reach it: select the items by their own classes.
+    /// </remarks>
+    [PublicAPI]
+    public SuilStyleClassCollection ItemSuilStyleClasses
+    {
+        get;
+        set
+        {
+            var old = field;
+            field = value;
+
+            foreach (var item in _items)
+            {
+                foreach (var styleClass in old)
+                {
+                    item.Button.RemoveSuilStyleClass(styleClass);
+                }
+
+                foreach (var styleClass in value)
+                {
+                    item.Button.AddSuilStyleClass(styleClass);
+                }
+            }
+        }
+    } = new();
+
+    /// <summary>
+    /// SUIL style identifier (<c>#id</c>) of the buttons of all items.
+    /// </summary>
+    [PublicAPI]
+    public string? ItemSuilStyleIdentifier
+    {
+        get;
+        set
+        {
+            field = value;
+
+            foreach (var item in _items)
+            {
+                item.Button.SuilStyleIdentifier = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// SUIL style classes of the list that holds the items, <see cref="SuilClass.OptionButtonPanel"/> is there by
+    /// default. Setting adds the classes to the existing ones.
+    /// </summary>
+    [PublicAPI]
+    public SuilStyleClassCollection PopupSuilStyleClasses
+    {
+        get => _popup.Scroll.SuilStyleClasses;
+        set
+        {
+            foreach (var styleClass in value)
+            {
+                _popup.Scroll.AddSuilStyleClass(styleClass);
+            }
+        }
+    }
+
+    /// <summary>
+    /// SUIL style identifier (<c>#id</c>) of the list that holds the items.
+    /// </summary>
+    [PublicAPI]
+    public string? PopupSuilStyleIdentifier
+    {
+        get => _popup.Scroll.SuilStyleIdentifier;
+        set => _popup.Scroll.SuilStyleIdentifier = value;
+    }
+
+    /// <summary>
+    /// The field that filters the items, see <see cref="Filterable"/>.
+    /// </summary>
+    [PublicAPI]
+    public RfLineEdit FilterBox => _popup.FilterBox;
+
+    /// <summary>
+    /// Fired when the player chooses an item, also if it is the one that was already selected. It is not fired by
+    /// <see cref="Select"/> and the like.
+    /// </summary>
+    [PublicAPI]
+    public event Action<SuilOptionSelectedEventArgs>? OnItemSelected;
+
+    public RfOptionButton()
+    {
+        InitializeComponent();
+
+        ItemSuilStyleClasses = SuilStyleClassCollection.Parse("open-both font-small option-button-item");
+        ToggleMode = true;
+        OnToggled += OnToggledInternal;
+
+        _popup.Anchor = this;
+        _popup.OnPopupHide += OnPopupHide;
+        _popup.FilterBox.OnTextChanged += _ => UpdateFilters();
+    }
+
+    /// <summary>
+    /// Adds an item to the end of the list. The first item added becomes selected.
+    /// </summary>
+    /// <param name="text">The text of the item, it is not markup.</param>
+    /// <param name="value">What the item stands for, see <see cref="RfOptionItem.Value"/>.</param>
+    [PublicAPI]
+    public RfOptionItem AddItem(string text, object? value = null)
+    {
+        var item = new RfOptionItem(this, text, value);
+        item.Button.AddSuilStyleClass(SuilClass.OptionItem);
+        item.Button.SuilStyleIdentifier = ItemSuilStyleIdentifier;
+        foreach (var styleClass in ItemSuilStyleClasses)
+        {
+            item.Button.AddSuilStyleClass(styleClass);
+        }
+
+        item.Button.OnPressed += _ => ItemPressed(item);
+        _items.Add(item);
+        _popup.ItemsBox.AddChild(item.Button);
+        UpdateFilter(item);
+
+        if (_items.Count == 1)
+            Select(item);
+
+        OnItemAdded(item);
+        return item;
+    }
+
+    /// <summary>
+    /// Called after an item was added, for overriding classes that restyle item buttons.
+    /// </summary>
+    protected virtual void OnItemAdded(RfOptionItem item) { }
+
+    /// <summary>
+    /// Removes the item. If it was selected, nothing is selected afterwards.
+    /// </summary>
+    [PublicAPI]
+    public void RemoveItem(RfOptionItem item)
+    {
+        if (item.Owner != this)
+            throw new ArgumentException("The item belongs to another button.", nameof(item));
+
+        _items.Remove(item);
+        _popup.ItemsBox.RemoveChild(item.Button);
+        item.Owner = null;
+
+        if (Selected == item)
+        {
+            Selected = null;
+            UpdateLabel();
+        }
+    }
+
+    /// <summary>
+    /// Removes all items.
+    /// </summary>
+    [PublicAPI]
+    public void Clear()
+    {
+        foreach (var item in _items)
+        {
+            item.Owner = null;
+        }
+
+        _items.Clear();
+        _popup.ItemsBox.RemoveAllChildren();
+        Selected = null;
+        UpdateLabel();
+    }
+
+    /// <summary>
+    /// Selects the item without firing <see cref="OnItemSelected"/>.
+    /// </summary>
+    [PublicAPI]
+    public void Select(RfOptionItem item)
+    {
+        if (item.Owner != this)
+            throw new ArgumentException("The item belongs to another button.", nameof(item));
+
+        if (Selected != null)
+            Selected.Button.Pressed = false;
+
+        Selected = item;
+        item.Button.Pressed = true;
+        UpdateLabel();
+    }
+
+    /// <summary>
+    /// Selects the first item whose <see cref="RfOptionItem.Value"/> equals <paramref name="value"/>, without
+    /// firing <see cref="OnItemSelected"/>.
+    /// </summary>
+    /// <returns>false if there is no such item.</returns>
+    [PublicAPI]
+    public bool TrySelectValue(object? value)
+    {
+        var item = FindByValue(value);
+        if (item == null)
+            return false;
+
+        Select(item);
+        return true;
+    }
+
+    /// <summary>
+    /// Same as <see cref="TrySelectValue"/>, but throws when there is no such item.
+    /// </summary>
+    [PublicAPI]
+    public void SelectValue(object? value)
+    {
+        if (!TrySelectValue(value))
+            throw new ArgumentException($"No item with the value {value}.", nameof(value));
+    }
+
+    /// <summary>
+    /// The first item whose <see cref="RfOptionItem.Value"/> equals <paramref name="value"/>.
+    /// </summary>
+    [PublicAPI]
+    public RfOptionItem? FindByValue(object? value)
+        => _items.Find(item => Equals(item.Value, value));
+
+    /// <summary>
+    /// Opens the list of items.
+    /// </summary>
+    [PublicAPI]
+    public void Open()
+    {
+        if (IsOpen)
+            return;
+
+        if (Root is not { } root)
+            throw new InvalidOperationException("No UI root! We can't pop up!");
+
+        var globalPos = GlobalPosition;
+        globalPos.Y += Size.Y + 1; // Place it below us, with a safety margin.
+        globalPos.Y -= Margin.SumVertical;
+
+        _popup.Scroll.Measure(Window?.Size ?? Vector2Helpers.Infinity);
+        var desired = _popup.Scroll.DesiredSize;
+        var box = UIBox2.FromDimensions(globalPos, new Vector2(Math.Max(desired.X, Width), desired.Y));
+
+        root.ModalRoot.AddChild(_popup);
+        _popup.Open(box);
+        Pressed = true;
+
+        if (Filterable)
+            _popup.FilterBox.GrabKeyboardFocus();
+    }
+
+    /// <summary>
+    /// Closes the list of items.
+    /// </summary>
+    [PublicAPI]
+    public void Close()
+    {
+        _popup.Close();
+    }
+
+    private void OnToggledInternal(RfButtonToggledEventArgs args)
+    {
+        // A press on the button doesn't close the list by itself (see RfOptionButtonPopup.Anchor), this does.
+        if (args.Pressed)
+            Open();
+        else
+            Close();
+    }
+
+    private void OnPopupHide()
+    {
+        _popup.Orphan();
+        Pressed = false;
+    }
+
+    private void ItemPressed(RfOptionItem item)
+    {
+        Close();
+        Select(item);
+        OnItemSelected?.Invoke(new SuilOptionSelectedEventArgs(this, item));
+    }
+
+    private void UpdateLabel()
+    {
+        var text = Selected?.Text ?? string.Empty;
+        LabelControl.SetPlainText(Prefix.Length == 0 ? text : $"{Prefix} {text}");
+    }
+
+    internal void ItemTextChanged(RfOptionItem item)
+    {
+        if (Selected == item)
+            UpdateLabel();
+
+        UpdateFilter(item);
+    }
+
+    private void UpdateFilters()
+    {
+        foreach (var item in _items)
+        {
+            UpdateFilter(item);
+        }
+    }
+
+    private void UpdateFilter(RfOptionItem item)
+    {
+        item.Button.Visible
+            = !Filterable || item.Text.Contains(_popup.FilterBox.Text, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    protected override void ExitedTree()
+    {
+        base.ExitedTree();
+
+        Close();
+    }
+}
+
+/// <summary>
+/// An item of a <see cref="RfOptionButton"/>.
+/// </summary>
+public sealed class RfOptionItem
+{
+    internal RfOptionButton? Owner;
+
+    /// <summary>
+    /// The button of the item in the list, for what <see cref="SuilStyleClasses"/> and the like don't cover.
+    /// </summary>
+    public RfButton Button { get; }
+
+    internal RfOptionItem(RfOptionButton owner, string text, object? value)
+    {
+        Owner = owner;
+        Value = value;
+        Button = new RfButton { ToggleMode = true };
+        Text = text;
+    }
+
+    /// <summary>
+    /// The button this item belongs to, <c>null</c> after it was removed.
+    /// </summary>
+    [PublicAPI]
+    public RfOptionButton? Parent => Owner;
+
+    /// <summary>
+    /// What the item stands for. Not shown to the player.
+    /// </summary>
+    [PublicAPI]
+    public object? Value { get; set; }
+
+    /// <summary>
+    /// The text of the item, it is not markup.
+    /// </summary>
+    [PublicAPI]
+    public string Text
+    {
+        get;
+        set
+        {
+            field = value;
+            Button.SetPlainText(value);
+            Owner?.ItemTextChanged(this);
+        }
+    }
+
+    /// <summary>
+    /// SUIL style classes of the button of the item, in addition to <see cref="RfOptionButton.ItemSuilStyleClasses"/>.
+    /// </summary>
+    public SuilStyleClassCollection SuilStyleClasses => Button.SuilStyleClasses;
+
+    /// <summary>
+    /// SUIL style identifier (<c>#id</c>) of the button of the item.
+    /// </summary>
+    public string? SuilStyleIdentifier
+    {
+        get => Button.SuilStyleIdentifier;
+        set => Button.SuilStyleIdentifier = value;
+    }
+
+    /// <summary>
+    /// A disabled item can't be chosen.
+    /// </summary>
+    [PublicAPI]
+    public bool Disabled
+    {
+        get => Button.Disabled;
+        set => Button.Disabled = value;
+    }
+
+    [PublicAPI]
+    public bool IsSelected => Owner?.Selected == this;
+
+    /// <summary>
+    /// <see cref="Value"/> as <typeparamref name="T"/>, <c>default</c> if it is of another type.
+    /// </summary>
+    [PublicAPI]
+    public T? ValueAs<T>() => Value is T value ? value : default;
+}
+
+/// <summary>
+/// Fired when the player chooses an item of a <see cref="RfOptionButton"/>.
+/// </summary>
+public sealed class SuilOptionSelectedEventArgs(RfOptionButton button, RfOptionItem item) : EventArgs
+{
+    public RfOptionButton Button { get; } = button;
+
+    public RfOptionItem Item { get; } = item;
+
+    /// <summary>
+    /// <see cref="RfOptionItem.Value"/> of the item.
+    /// </summary>
+    public object? Value => Item.Value;
+}

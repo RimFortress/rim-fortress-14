@@ -188,7 +188,7 @@ public sealed partial class SuilHotReload
                                 break;
                             }
 
-                            if (!TryConvert(accessor.Value, property.Property, out var value, out var error))
+                            if (!SuilValueConverter.TryConvert(_suil, accessor.Value, property.Property, out var value, out var error))
                             {
                                 errors.Add(At(property.Position, $"'{property.Property.Name}': {error}"));
                                 break;
@@ -673,7 +673,7 @@ public sealed partial class SuilHotReload
                 foreach (var property in raw)
                 {
                     if (_suil.TryGetPropertyAccessor(target.GetType(), property.Name, out var accessor)
-                        && TryConvert(accessor.Value, property, out var value, out _))
+                        && SuilValueConverter.TryConvert(_suil, accessor.Value, property, out var value, out _))
                     {
                         accessor.Value.Setter(target, value!);
                     }

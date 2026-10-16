@@ -1,0 +1,58 @@
+/* A task of a job in the settings: its name and the check box. */
+@NpcTaskButton => row (tracking-tooltip, margin: 3 2) {
+    _ #label .label-key-text (flex-grow: 1)
+    +checkbox #check-box
+}
+
+/* The priority of a job: a square that shows the number, the click raises it, the right click lowers it. */
+@NpcJobPriorityButton => box .bordered-window-panel (
+    set-size: 32,
+    min-value: 0,
+    max-value: 10,
+    min-color: #228B22,
+    max-color: #CD5C5C,
+    mouse-filter: stop,
+    justify-content: center,
+    align-items: center
+) {
+    _ #label
+}
+
+/* A cell of the table of priorities: the portrait of a pop and its name. */
+@NpcJobsPopCell => row {
+    box .panel-highlighted {
+        sprite-view #icon (override-direction: south, set-size: 48, stretch: fill, margin: 2)
+    }
+
+    _ #name-label (margin: 0 5, flex-grow: 1)
+}
+
+/* A job in the settings: the icon (click to change), the name (can be edited), the buttons to rename and to delete. */
+@NpcJobButton => button .square (horizontal-expand, toggle-mode) {
+    row {
+        box .panel-highlighted {
+            +texture-switch-button #icon (
+                set-size: 24,
+                horizontal-alignment: center,
+                vertical-alignment: center,
+                textures-collection: "/Textures/_RF/Interface/VerbIcons/list-check-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png /Textures/_RF/Interface/cubes-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png /Textures/_RF/Interface/hammer-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png"
+            )
+        }
+
+        _ .low-divider-dark (margin: 2)
+
+        box #label-container .panel-dark-bordered (flex-grow: 1) {
+            _ #name-label (flex-grow: 1, align-self: center)
+        }
+
+        line-edit #name-edit (flex-grow: 1, visible: false, on-text-entered => @OnNameEntered)
+
+        button #edit-name-button .icon-button .square (set-size: 35, on-pressed => @OnEditNamePressed) {
+            _ .icon (background-image: texture("/Textures/_RF/Interface/eye-dropper-solid.svg.192dpi.png"))
+        }
+
+        confirm-button #delete-button .icon-button .square (set-size: 35, confirmation-text: "", on-pressed => @OnDeletePressed) {
+            _ .icon (background-image: texture("/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"))
+        }
+    }
+}

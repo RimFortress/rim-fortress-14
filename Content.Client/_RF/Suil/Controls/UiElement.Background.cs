@@ -52,7 +52,7 @@ public partial class UiElement
     /// </summary>
     [SuilProperty]
     [SuilShorthand(BackgroundShorthandName)]
-    protected Texture? BackgroundImage
+    public Texture? BackgroundImage
     {
         get;
         set

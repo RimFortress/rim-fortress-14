@@ -1,0 +1,25 @@
+/*
+ * The menu of buttons that open the panels of more buttons (Orientation and the logic are in the code).
+ * Styled by style/buttons/tree-menu.suil.
+ */
+@TreeMenu => box (mouse-filter: pass) {
+    +tree-menu-panel #root-panel (closable: false)
+}
+
+/* A panel of the menu: the buttons and a gap on the side the next panel opens to. */
+@TreeMenuPanel => box {
+    box .panel-highlighted {
+        +box #content (gap: 5px)
+    }
+
+    _ (min-width: 3, min-height: 3)
+}
+
+/* The separator between the panels. */
+@TreeMenuSeparator => box (min-width: 3, min-height: 3)
+
+/* The button of the menu: the icon and the panel that it opens, which the menu takes away to its own place. */
+@TreeMenuButton => button .icon-button .tree-menu-button (set-size: 48, tracking-tooltip, tooltip-delay: 0) {
+    _ #icon .icon (mouse-filter: ignore)
+    +tree-menu-panel #content (visible: false)
+}

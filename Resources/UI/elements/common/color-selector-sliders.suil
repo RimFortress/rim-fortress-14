@@ -1,0 +1,36 @@
+/* Styled by style/input/color-selector.suil */
+@RfColorSelectorSliders => box (flex-direction: column) {
+    row .color-selector-header {
+        option-button #type-selector
+        _ #description-label (flex-grow: 1, align-self: center)
+    }
+
+    row .color-selector-row {
+        _ #top-label .color-selector-label
+        color-slider #top-slider (flex-grow: 1, align-self: center)
+        int-counter #top-input
+    }
+
+    row .color-selector-row {
+        _ #middle-label .color-selector-label
+        color-slider #middle-slider (flex-grow: 1, align-self: center)
+        int-counter #middle-input
+    }
+
+    row .color-selector-row {
+        _ #bottom-label .color-selector-label
+        color-slider #bottom-slider (flex-grow: 1, align-self: center)
+        int-counter #bottom-input
+    }
+
+    row #alpha-row .color-selector-row (visible: false) {
+        _ #alpha-label .color-selector-label (text: $color-selector-sliders-alpha)
+        slider #alpha-slider (flex-grow: 1, align-self: center, max-value: 1)
+        int-counter #alpha-input
+    }
+
+    row .color-selector-row {
+        _ #hex-label .color-selector-label (text: $color-selector-input-hex)
+        line-edit #hex-edit (flex-grow: 1, align-self: center)
+    }
+}

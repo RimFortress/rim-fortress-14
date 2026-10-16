@@ -99,7 +99,8 @@ internal sealed partial class SuilViewEmitter(
 
         foreach (var property in properties)
         {
-            EmitProperty(variable, type, property);
+            // the root is the view itself, so its own properties can be named too
+            EmitProperty(variable, variable == "this" ? viewClass : type, property);
 
             // The file assigned it, so the styles must leave it alone, unless it is soft: `?` before the value.
             // Only a control of SUIL is styled, an engine one has nothing to protect.
@@ -179,12 +180,44 @@ internal sealed partial class SuilViewEmitter(
 
         if (member == null || memberType == null)
         {
+            // A member that is not public but is marked [SuilProperty] (the styles reach it, so a file may too).
+            if (property.Value != null && FindMarkedMember(type, property.Name))
+            {
+                return "global::Content.Client._RF.Suil.SuilElementValues.Apply(" + target + ", " + Literal(property.Name)
+                       + ", new global::Content.Suil.ISuilValue[] { " + string.Join(", ", property.Value.Select(ValueOf)) + " });";
+            }
+
             throw new SuilGenerationException(SuilDiagnostics.UnknownProperty, property.Position,
                 type.ToDisplayString(), property.Name);
         }
 
-        var value = Convert(memberType, property, member.Name);
+        var value = Convert(memberType, property, member.Name, type);
         return $"{target}.{member.Name} = {value};";
+    }
+
+    private static bool FindMarkedMember(INamedTypeSymbol type, string propertyName)
+    {
+        for (INamedTypeSymbol? current = type; current != null; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (member is not (IPropertySymbol or IFieldSymbol))
+                    continue;
+
+                foreach (var attribute in member.GetAttributes())
+                {
+                    if (attribute.AttributeClass?.ToDisplayString() != SuilViewAttributeSource.PropertyMetadataName)
+                        continue;
+
+                    var name = attribute.ConstructorArguments is [{ Value: string custom }, ..] ? custom : null;
+
+                    if ((name ?? SuilNaming.ToKebab(member.Name)) == propertyName)
+                        return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -219,7 +252,7 @@ internal sealed partial class SuilViewEmitter(
     /// <summary>
     /// Writes a C# expression of the given type for the values of a property.
     /// </summary>
-    private string Convert(ITypeSymbol target, SuilProperty property, string memberName)
+    private string Convert(ITypeSymbol target, SuilProperty property, string memberName, INamedTypeSymbol owner)
     {
         var values = property.Value;
 
@@ -335,7 +368,52 @@ internal sealed partial class SuilViewEmitter(
             }
         }
 
-        return Fail("this type is not supported by SUIL yet (string, bool, numbers, enums, Vector2 and Thickness are)");
+        // A color, a texture, a border image and the like: read at run time by the parsers of the styles. The values are
+        // written as they are in the file, so a mistake in them is found when the control is built (and by the hot reload).
+        var targetName = target.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var written = string.Join(", ", values.Select(ValueOf));
+
+        return $"({targetName}) global::Content.Client._RF.Suil.SuilElementValues.Read(typeof({owner.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}), {Literal(property.Name)}, new global::Content.Suil.ISuilValue[] {{ {written} }})!";
+    }
+
+    /// <summary>
+    /// The C# expression that builds a value of the file again.
+    /// </summary>
+    private static string ValueOf(ISuilValue value)
+    {
+        const string ns = "global::Content.Suil.";
+
+        string Parts(System.Collections.Immutable.ImmutableArray<StringPart> parts)
+            => $"global::System.Collections.Immutable.ImmutableArray.Create(new {ns}StringPart[] {{ {string.Join(", ", parts.Select(p => $"new {ns}StringPart({Literal(p.Text)}, {(p.IsVariable ? "true" : "false")})"))} }})";
+
+        string List(IEnumerable<ISuilValue> values)
+            => $"new global::System.Collections.Generic.List<{ns}ISuilValue> {{ {string.Join(", ", values.Select(ValueOf))} }}";
+
+        switch (value)
+        {
+            case SuilNumber n:
+                return $"new {ns}SuilNumber({NumberLiteral(n.Value, false)}, {(n.IsInteger ? "true" : "false")})";
+            case SuilPercentage p:
+                return $"new {ns}SuilPercentage({NumberLiteral(p.Value, false)})";
+            case SuilDimension d:
+                return $"new {ns}SuilDimension({NumberLiteral(d.Value, false)}, {(d.IsInteger ? "true" : "false")}, {Literal(d.Unit)})";
+            case SuilColor c:
+                return $"new {ns}SuilColor({Literal(c.Hex)})";
+            case SuilIdent i:
+                return $"new {ns}SuilIdent({Literal(i.Value)})";
+            case SuilString str:
+                return $"new {ns}SuilString({Parts(str.Parts)})";
+            case SuilLocalization loc:
+                return $"new {ns}SuilLocalization({Parts(loc.Key)}, new global::System.Collections.Generic.List<{ns}SuilNamedArgument> {{ {string.Join(", ", loc.Arguments.Select(a => $"new {ns}SuilNamedArgument({Literal(a.Name)}, {List(a.Value)})"))} }})";
+            case SuilFunction f:
+                return $"new {ns}SuilFunction({Literal(f.Name)}, new global::System.Collections.Generic.List<global::System.Collections.Generic.List<{ns}ISuilValue>> {{ {string.Join(", ", f.Arguments.Select(List))} }})";
+            case SuilComma:
+                return $"new {ns}SuilComma()";
+            case SuilDelim delim:
+                return $"new {ns}SuilDelim({delim.CodePoint})";
+            default:
+                throw new InvalidOperationException($"A value of the kind {value.GetType().Name} can't be written into the code");
+        }
     }
 
     private static string EnumMember(INamedTypeSymbol enumType, List<ISuilValue> values, Func<string, string> fail)

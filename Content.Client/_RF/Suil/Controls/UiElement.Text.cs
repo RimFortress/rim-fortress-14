@@ -167,7 +167,7 @@ public partial class UiElement
     /// SUIL <c>color</c>.
     /// </summary>
     [SuilProperty("color", Inherited = true)]
-    protected Color TextColor
+    public Color TextColor
     {
         get;
         set

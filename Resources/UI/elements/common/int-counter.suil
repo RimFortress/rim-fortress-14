@@ -1,11 +1,11 @@
 @IntCounter => row #root {
     button #plus .open-right (
         text: "+",
-        on-pressed => { &(value +: 1) }
+        on-pressed => &(value +: 1)
     )
     line-edit #count-line
     button #minus .open-left (
         text: "-",
-        on-pressed => { &(value -: 1) }
+        on-pressed => &(value -: 1)
     )
 }

@@ -6,16 +6,16 @@
   id: BaseInfoNotification
   parent: BaseNotification
   abstract: true
-  style: ButtonColorBlue
+  style: blue
 
 - type: notification
   id: BaseGoodNotification
   parent: BaseNotification
   abstract: true
-  style: ButtonColorGreen
+  style: green
 
 - type: notification
   id: BaseDangerNotification
   parent: BaseNotification
   abstract: true
-  style: Caution
+  style: caution

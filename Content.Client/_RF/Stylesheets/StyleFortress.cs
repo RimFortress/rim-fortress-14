@@ -2,7 +2,6 @@ using System.Linq;
 using Content.Client._RF.Info.Controls;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client._RF.UserInterface.Controls.Chat;
-using Content.Client._RF.UserInterface.Controls.TreeMenu;
 using Content.Client.ContextMenu.UI;
 using Content.Client.Examine;
 using Content.Client.PDA;
@@ -66,9 +65,6 @@ public sealed class StyleFortress : StyleBase
     public static readonly Color BlueButtonColorPressed = Color.FromHex("#3896A3");
     public static readonly Color BlueButtonColorDisabled = Color.FromHex("#1E5158");
 
-    public static readonly Color TreeMenuButtonColorDefault = Color.Transparent;
-    public static readonly Color TreeMenuButtonColorHovered = SignalBlack;
-    public static readonly Color TreeMenuButtonColorPressed = GraphiteBlack;
     //
 
     public static readonly Color ChatBackgroundColor = DarkForest.WithAlpha(0.8f);
@@ -309,8 +305,6 @@ public sealed class StyleFortress : StyleBase
         chatFilterButton.SetPatchMargin(StyleBox.Margin.All, 5);
         chatFilterButton.SetPadding(StyleBox.Margin.All, 2);
 
-        var treeMenuButton = StyleBoxTex("rounded_button_bordered.png");
-        treeMenuButton.SetPatchMargin(StyleBox.Margin.All, 5);
 
         var empty = new StyleBoxEmpty();
 
@@ -830,31 +824,6 @@ public sealed class StyleFortress : StyleBase
                 .Class(ExamineButton.StyleClassExamineButton)
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
-
-            // Tree menu
-            Element<TreeMenuButton>()
-                .Class(TreeMenuButton.StyleClassTreeMenuButton)
-                .Prop(ContainerButton.StylePropertyStyleBox, treeMenuButton)
-                .Prop(TreeMenuButton.StylePropertyMarkerTexture, GetTex("tree_menu_button_marker.png"))
-                .Prop(TreeMenuButton.StylePropertyMarkerColor, GoldButtonColorDefault),
-
-            Element<TreeMenuButton>()
-                .Class(TreeMenuButton.StyleClassTreeMenuButton)
-                .Pseudo(ContainerButton.StylePseudoClassNormal)
-                .Prop(ContainerButton.StylePropertyStyleBox,
-                    new StyleBoxTexture(treeMenuButton) { Modulate = TreeMenuButtonColorDefault }),
-
-            Element<TreeMenuButton>()
-                .Class(TreeMenuButton.StyleClassTreeMenuButton)
-                .Pseudo(ContainerButton.StylePseudoClassHover)
-                .Prop(Control.StylePropertyModulateSelf, TreeMenuButtonColorHovered)
-                .Prop(TreeMenuButton.StylePropertyMarkerTexture, GetTex("tree_menu_button_marker_hovered.png"))
-                .Prop(TreeMenuButton.StylePropertyMarkerColor, GoldButtonColorDefault),
-
-            Element<TreeMenuButton>()
-                .Class(TreeMenuButton.StyleClassTreeMenuButton)
-                .Pseudo(ContainerButton.StylePseudoClassPressed)
-                .Prop(Control.StylePropertyModulateSelf, TreeMenuButtonColorPressed),
 
             // Mood info button
             Element<SocializationEffectInfo>()
