@@ -3,9 +3,9 @@ namespace Content.Suil;
 public static partial class SuilParser
 {
     /// <summary>
-    /// The handler after <c>name =&gt;</c> (the arrow is already consumed): a call of a method, or a block of statements.
+    /// The handler after <c>name =&gt;</c> (the arrow is already consumed): one statement, or a block of statements.
     /// <code>
-    /// handler   = call | "{" , { statement , ";" } , "}"
+    /// handler   = statement | "{" , { statement , ";" } , "}"
     /// statement = call | target , "(" , item , { "," , item } , ")"
     /// call      = "@" , ident
     /// item      = ident , [ ":" , value-list ]
@@ -25,14 +25,15 @@ public static partial class SuilParser
 
         if (stream.PeekNext() is not LeftCurlyBracket)
         {
-            if (stream.PeekNext() is not DelimToken { CodePoint: '@' })
+            // a single statement needs no block: "@Method", "&(value -: 1)", "#id(add .open)"
+            if (stream.PeekNext() is not (DelimToken { CodePoint: '@' or '&' } or HashToken or InterpolatedNameToken { Sigil: '#' }))
             {
                 throw ErrorAtNext(ref stream,
                     context,
-                    $"expected '@Method' or a block '{{ ... }}' after '{name} =>', not {Describe(stream.PeekNext())}");
+                    $"expected a statement or a block '{{ ... }}' after '{name} =>', not {Describe(stream.PeekNext())}");
             }
 
-            statements.Add(ConsumeCall(ref stream, context));
+            statements.Add(ConsumeStatement(ref stream, context));
             return new SuilEventHandler(name, statements, position);
         }
 

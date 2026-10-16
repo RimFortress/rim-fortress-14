@@ -1591,3 +1591,35 @@ public sealed class SuilViewDeclarationTests
         public IReadOnlyList<string> List(string directory) => new[] { "/lib.suil" };
     }
 }
+
+[TestFixture]
+public sealed class SuilSingleStatementHandlerTests
+{
+    [TestCase("button (on-pressed => &(value -: 1))")]
+    [TestCase("button (on-pressed => #other(add .open, disabled: true))")]
+    [TestCase("button (on-pressed => @Refresh)")]
+    public void A_Handler_May_Be_One_Statement_Without_A_Block(string text)
+    {
+        var handler = SuilParser.ParseFile("@A => " + text).Views.Single().Root.Events.Single();
+
+        Assert.That(handler.Statements, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void It_Is_The_Same_As_The_Block_Of_One_Statement()
+    {
+        var single = SuilParser.ParseFile("@A => button (on-pressed => &(value -: 1), text: \"x\")").Views.Single().Root;
+        var block = SuilParser.ParseFile("@A => button (on-pressed => { &(value -: 1) }, text: \"x\")").Views.Single().Root;
+
+        Assert.That(single.Events.Single().Statements.Count, Is.EqualTo(block.Events.Single().Statements.Count));
+        Assert.That(single.Properties.Count, Is.EqualTo(block.Properties.Count), "the next argument still follows");
+    }
+
+    [TestCase("button (on-pressed => )")]
+    [TestCase("button (on-pressed => 5)")]
+    [TestCase("button (on-pressed => &(value -: 1) &(value +: 1))")]
+    public void Mistakes(string text)
+    {
+        Assert.Catch<SuilParserError>(() => SuilParser.ParseFile("@A => " + text));
+    }
+}
