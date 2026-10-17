@@ -2,3 +2,9 @@
 // goes to the box.
 let row = { box (flex-direction: row) { %content% } }
 let col = { box (flex-direction: column) { %content% } }
+
+let icon-button = (texture) {
+    button .empty {
+        _ .icon (margin: 2px, background-image: texture(<texture>))
+    }
+}

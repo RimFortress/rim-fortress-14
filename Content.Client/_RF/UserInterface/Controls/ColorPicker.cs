@@ -1,3 +1,4 @@
+using Content.Suil;
 using System.Numerics;
 using Robust.Client.UserInterface;
 
@@ -13,6 +14,7 @@ public sealed partial class ColorPicker : RfBoxContainer
 
     private readonly ColorPickerWindow _window;
 
+    [SuilProperty("chosen-color")]
     public Color Color
     {
         get => _window.Selector.Color;

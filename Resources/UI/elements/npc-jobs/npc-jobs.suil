@@ -58,7 +58,7 @@
 }
 
 /* The table of the priorities of the jobs of the pops. */
-@NpcJobsPriorityWindow => fancy-window (title: $npc-jobs-priority-window-title, min-size: 940 590) {
+@NpcJobsPriorityWindow => window (title: $npc-jobs-priority-window-title, min-size: 940 590) {
     col {
         table-control #table (flex-grow: 1)
 
@@ -75,16 +75,16 @@
 }
 
 /* The jobs (left) and the tasks of the chosen job (right). */
-@NpcJobsSettingsWindow => fancy-window (title: $npc-jobs-settings-window-title, min-size: 700 600) {
+@NpcJobsSettingsWindow => window (title: $npc-jobs-settings-window-title, min-size: 700 600) {
     row {
         box .panel-dark-bordered {
-            col {
+            col (flex-grow: 1) {
                 scroll-container (flex-grow: 1) {
                     col #jobs-container (flex-grow: 1)
                 }
 
                 box .panel-highlighted {
-                    row {
+                    row (flex-grow: 1) {
                         button #save-button .accept (
                             flex-grow: 1,
                             text: $npc-jobs-settings-window-save-button,

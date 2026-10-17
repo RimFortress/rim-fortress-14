@@ -6,7 +6,7 @@ using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls.TopInfoPanel;
 
-public sealed partial class TopPanelWidget : UIWidget
+public sealed partial class TopPanelWidget : RfBoxContainer
 {
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPlayerManager _player = default!;

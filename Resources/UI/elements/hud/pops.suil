@@ -14,7 +14,7 @@
 
 /* The panel of the pops: the combat mode button and the portraits. */
 @PopList => box-container {
-    button #combat-button .icon-button .empty (
+    button #combat-button .empty (
         toggle-mode,
         tool-tip: $pop-list-combat-mode-tooltip,
         margin: 0 5,
@@ -22,45 +22,8 @@
         vertical-alignment: bottom,
         on-pressed => @OnCombatPressed
     ) {
-        _ #combat-icon .icon
+        _ #combat-icon (background-repeat: stretch)
     }
 
-    =grid #icons (columns: 8)
-}
-
-/* The hotbar: the tree of the buttons of the commands. */
-@ActionsHotbarWidget => box-container {
-    tree-menu #tree (orientation: horizontal) {
-        +tree-menu-button #build-button (
-            tool-tip: $actions-hotbar-widgets-build-tooltip,
-            texture-path: "/Textures/_RF/Interface/hammer-solid.svg.192dpi.png",
-            on-pressed => @OnBuildPressed
-        )
-
-        +tree-menu-button #passive-tasks-button (
-            tool-tip: $actions-hotbar-widgets-passive-tasks-tooltip,
-            texture-path: "/Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png"
-        )
-
-        +tree-menu-button #npc-jobs-button (
-            tool-tip: $actions-hotbar-widgets-npc-jobs-tooltip,
-            texture-path: "/Textures/_RF/Interface/arrow-down-wide-short-solid-full.192dpi.png",
-            on-pressed => @OnNpcJobsPressed
-        )
-
-        _ .low-divider (margin: 10 5)
-
-        tree-menu-button #zoning-button (
-            tool-tip: $actions-hotbar-widgets-zoning-tooltip,
-            texture-path: "/Textures/_RF/Interface/vector-square-solid.svg.192dpi.png"
-        )
-
-        _ .low-divider (margin: 10 5)
-
-        +tree-menu-button #world-map-button (
-            tool-tip: $actions-hotbar-widgets-world-map-tooltip,
-            texture-path: "/Textures/_RF/Interface/map-location-dot-solid.svg.192dpi.png",
-            on-pressed => @OnWorldMapPressed
-        )
-    }
+    =grid #icons (columns: 8, fit-content)
 }

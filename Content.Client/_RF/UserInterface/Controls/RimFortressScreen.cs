@@ -18,6 +18,10 @@ public sealed partial class RimFortressScreen : InGameScreen
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
+        // The engine finds the controls of a screen by name (ChatUIController does), which SUIL views don't register.
+        NameScope = new();
+        NameScope.Register("ViewportContainer", ViewportContainer);
+
         AutoscaleMaxResolution = new Vector2i(1080, 770);
 
         SetAnchorPreset(MainViewport, LayoutPreset.Wide);

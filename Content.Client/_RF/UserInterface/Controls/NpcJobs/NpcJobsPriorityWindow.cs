@@ -10,7 +10,7 @@ using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
 
-public sealed partial class NpcJobsPriorityWindow : FancyWindow
+public sealed partial class NpcJobsPriorityWindow : RfWindow
 {
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPlayerManager _player = default!;

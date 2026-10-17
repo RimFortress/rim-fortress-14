@@ -4,11 +4,11 @@
  * TreeMenuButton: the rounded button with the icon (.icon-button).
  */
 .tree-menu-button {
-    background-image: texture("/Textures/_RF/Interface/Style/rounded_button_bordered.png");
+    border: transparent;
+    border-radius: 5px;
+    background: <tree-menu-button-color-default>;
     background-repeat: stretch;
-    patch-margin: 5px;
     padding: 5px;
-    background-color: <tree-menu-button-color-default>;
 }
 
 .tree-menu-button:hover {

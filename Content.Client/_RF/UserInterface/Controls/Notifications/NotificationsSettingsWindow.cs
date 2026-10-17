@@ -7,7 +7,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.UserInterface.Controls.Notifications;
 
-public sealed partial class NotificationsSettingsWindow : FancyWindow
+public sealed partial class NotificationsSettingsWindow : RfWindow
 {
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPrototypeManager _proto = default!;

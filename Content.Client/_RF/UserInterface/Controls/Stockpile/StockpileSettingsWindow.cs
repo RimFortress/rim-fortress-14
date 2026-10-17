@@ -10,7 +10,7 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controls.Stockpile;
 
-public sealed partial class StockpileSettingsWindow : FancyWindow
+public sealed partial class StockpileSettingsWindow : RfWindow
 {
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPrototypeManager _prototype = default!;
@@ -55,8 +55,6 @@ public sealed partial class StockpileSettingsWindow : FancyWindow
             else
                 stockpile.AddSuppliedStock(stock.AsNullable(), supplied.AsNullable());
         };
-
-        CloseButton.OnPressed += _ => Close();
 
         _prototype.PrototypesReloaded += args =>
         {

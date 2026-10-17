@@ -1,4 +1,4 @@
 /* The window with the sliders of the color picker. */
-@ColorPickerWindow => fancy-window (title: $color-picker-window-title, set-width: 100, resizable: false) {
+@ColorPickerWindow => window (title: $color-picker-window-title, set-width: 100, resizable: false) {
     +color-selector-sliders #selector (selector-type: rgb, is-alpha-visible: false)
 }

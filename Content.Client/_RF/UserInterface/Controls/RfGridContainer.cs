@@ -38,6 +38,24 @@ public class RfGridContainer : UiElement
         }
     } = 1;
 
+    /// <summary>
+    /// Whether the container is only as wide as its cells need (<c>width: fit-content</c>) instead of taking all
+    /// the width it is given.
+    /// </summary>
+    [SuilProperty]
+    public bool FitContent
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+            InvalidateMeasure();
+        }
+    }
+
     private List<Control> VisibleChildren()
     {
         var children = new List<Control>(ChildCount);
@@ -58,7 +76,7 @@ public class RfGridContainer : UiElement
         var children = VisibleChildren();
         var columns = Math.Min(Columns, Math.Max(1, children.Count));
 
-        var cellWidth = float.IsInfinity(availableSize.X)
+        var cellWidth = float.IsInfinity(availableSize.X) || FitContent
             ? float.PositiveInfinity
             : MathF.Max(0f, (availableSize.X - insetSize.X - gap * (columns - 1)) / columns);
 
@@ -82,6 +100,8 @@ public class RfGridContainer : UiElement
 
         height += gap * Math.Max(0, rows - 1);
         var width = float.IsInfinity(cellWidth) ? widest * columns + gap * (columns - 1) : availableSize.X - insetSize.X;
+        if (FitContent)
+            width = MathF.Min(width, MathF.Max(0f, availableSize.X - insetSize.X));
 
         return new Vector2(width, height) + insetSize;
     }

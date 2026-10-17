@@ -248,7 +248,7 @@ public sealed class SuilMigratedControlsTest : GameTest
     [RunOnSide(Side.Client)]
     public void Windows_Keep_Their_Chrome_And_Put_The_Tree_In_The_Contents()
     {
-        foreach (var window in new Content.Client.UserInterface.Controls.FancyWindow[]
+        foreach (var window in new Content.Client._RF.UserInterface.Controls.RfWindow[]
                  {
                      new NotificationsSettingsWindow(),
                      new NpcJobsPriorityWindow(),
@@ -257,17 +257,32 @@ public sealed class SuilMigratedControlsTest : GameTest
         {
             var name = window.GetType().Name;
             var view = (ISuilView) window;
-            var chrome = window.Children.Count();
+            var chrome = window.Contents.Parent!.ChildCount;
 
-            Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1), name + ": the tree is in the contents");
+            Assert.That(window.Contents.ChildCount, Is.EqualTo(1), name + ": the tree is in the contents");
             Assert.That(view.SuilRootChildren, Is.Not.Null, name);
             Assert.That(window.Title, Is.Not.Null.And.Not.Empty, name + ": the title of the file");
 
             var result = _reload.Reload(view);
             Assert.That(result.Success, Is.True, name + ": " + string.Join("\n", result.Errors));
-            Assert.That(window.Children.Count(), Is.EqualTo(chrome), name + ": the parts of the window are not touched");
-            Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1), name + ": built again in the contents");
+            Assert.That(window.Contents.Parent!.ChildCount, Is.EqualTo(chrome), name + ": the parts of the window are not touched");
+            Assert.That(window.Contents.ChildCount, Is.EqualTo(1), name + ": built again in the contents");
         }
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void RfWindow_Has_Title_Close_Button_And_Hidden_Help()
+    {
+        var window = new Content.Client._RF.UserInterface.Controls.RfWindow { Title = "Test" };
+
+        Assert.That(window.Title, Is.EqualTo("Test"));
+        Assert.That(window.Contents, Is.Not.Null);
+        Assert.That(window.CloseButtonVisible, Is.True);
+        Assert.That(window.HelpGuidebookIds, Is.Null);
+
+        window.CloseButtonVisible = false;
+        Assert.That(window.CloseButtonVisible, Is.False);
     }
 
     [Test]
@@ -276,7 +291,7 @@ public sealed class SuilMigratedControlsTest : GameTest
     {
         var widget = new TopPanelWidget();
         var view = (ISuilView) widget;
-        var panel = (UiElement) widget.Children.Single();
+        UiElement panel = widget;
 
         Assert.That(panel.BackgroundImage, Is.Not.Null, "background-image of the element");
         Assert.That(panel.SuilIsHard("padding-top"), Is.True, "the shorthand hardens its longhands");
@@ -288,6 +303,11 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(icon.BackgroundColor, Is.Not.Null);
 
         Assert.That(((UiElement) view.SuilGetField("population")!), Is.Not.Null);
+
+        widget.Measure(new System.Numerics.Vector2(900, 100));
+        widget.Arrange(new Robust.Shared.Maths.UIBox2(0, 0, 900, 100));
+        var temperature = (Control) view.SuilGetField("temperature")!;
+        Assert.That(temperature.Position.X + temperature.Width, Is.GreaterThan(850), "the spacer pushes the cells to the right edge");
         Assert.That(_reload.Reload(widget).Success, Is.True);
         Assert.That(_reload.Reload(cell).Success, Is.True);
     }
@@ -305,12 +325,12 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(_reload.Reload(item).Success, Is.True);
 
         var window = new StockpileSettingsWindow();
-        Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
+        Assert.That(window.Contents.ChildCount, Is.EqualTo(1));
         Assert.That(((ISuilView) window).SuilFieldIds, Is.SupersetOf(new[] { "tab", "search", "item-list", "delete-stock-button" }));
 
         var result = _reload.Reload(window);
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
-        Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
+        Assert.That(window.Contents.ChildCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -348,6 +368,36 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(button.Content.Content.Children, Does.Contain(item));
         Assert.That(_reload.Reload(button).Success, Is.True);
         Assert.That(button.Content.Content.Children, Does.Contain(item));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Chosen_Color_Of_The_Sliders_Does_Not_Become_The_Color_Of_The_Text()
+    {
+        var window = new ColorPickerWindow();
+        window.Selector.Color = Robust.Shared.Maths.Color.Red;
+        var label = (UiElement) ((ISuilView) window.Selector).SuilGetField("hex-label")!;
+        var before = label.TextColor;
+
+        Assert.That(_reload.Reload(window).Success, Is.True);
+        label = (UiElement) ((ISuilView) window.Selector).SuilGetField("hex-label")!;
+        Assert.That(label.TextColor, Is.EqualTo(before));
+        Assert.That(label.TextColor, Is.Not.EqualTo(Robust.Shared.Maths.Color.Red));
+        Assert.That(window.Selector.Color, Is.EqualTo(Robust.Shared.Maths.Color.Red));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void PopList_Is_Compact_And_Centered_At_The_Bottom()
+    {
+        var screen = new RimFortressScreen();
+        var list = (PopList) ((ISuilView) screen).SuilGetField("pop-list")!;
+        Assert.That(list.HorizontalAlignment, Is.EqualTo(Robust.Client.UserInterface.Control.HAlignment.Center));
+        Assert.That(list.VerticalAlignment, Is.EqualTo(Robust.Client.UserInterface.Control.VAlignment.Bottom));
+
+        screen.Measure(new System.Numerics.Vector2(1080, 770));
+        screen.Arrange(new Robust.Shared.Maths.UIBox2(0, 0, 1080, 770));
+        Assert.That(list.Width, Is.LessThan(500), "only as wide as its content: " + list.Size);
     }
 
     [Test]
@@ -427,7 +477,7 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(window.Selector, Is.Not.Null);
         Assert.That(window.Selector.IsAlphaVisible, Is.False);
         Assert.That(window.Selector.SelectorType, Is.EqualTo(RfColorSelectorSliders.ColorSelectorType.Rgb));
-        Assert.That(window.ContentsContainer.ChildCount, Is.EqualTo(1));
+        Assert.That(window.Contents.ChildCount, Is.EqualTo(1));
         Assert.That(_reload.Reload(window).Success, Is.True);
         Assert.That(window.Selector, Is.Not.Null);
     }
@@ -437,6 +487,7 @@ public sealed class SuilMigratedControlsTest : GameTest
     public void The_Screen_Has_All_Its_Widgets_Where_The_Code_Put_Them_And_Reloads()
     {
         var screen = new RimFortressScreen();
+        Assert.That(screen.FindControl<Robust.Client.UserInterface.Controls.LayoutContainer>("ViewportContainer"), Is.SameAs(((ISuilView) screen).SuilGetField("viewport-container")), "the engine finds the viewport by name");
         var view = (ISuilView) screen;
 
         Assert.That(view.SuilFieldIds, Is.SupersetOf(new[]

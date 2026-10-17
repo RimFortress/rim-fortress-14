@@ -25,8 +25,12 @@
 @TreeMenuSeparator => box (min-width: 3, min-height: 3)
 
 /* The button of the menu: the icon and the panel that it opens, which the menu takes away to its own place. */
-@TreeMenuButton => button .icon-button .tree-menu-button (set-size: 48, tracking-tooltip, tooltip-delay: 0) {
-    _ #icon .icon (mouse-filter: ignore)
+@TreeMenuButton => button .tree-menu-button (
+    set-size: 48,
+    tracking-tooltip,
+    tooltip-delay: 0
+) {
+    _ #icon .icon
     +tree-menu-panel #content (visible: false) {
         %content%
     }

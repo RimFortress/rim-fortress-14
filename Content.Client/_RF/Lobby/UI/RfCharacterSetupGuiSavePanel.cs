@@ -1,10 +1,11 @@
+using Content.Client._RF.UserInterface.Controls;
 using Content.Suil;
 using Robust.Client.UserInterface.CustomControls;
 
 namespace Content.Client._RF.Lobby.UI;
 
 [SuilTag("character-setup-gui-save-panel")]
-public sealed partial class RfCharacterSetupGuiSavePanel : DefaultWindow
+public sealed partial class RfCharacterSetupGuiSavePanel : RfWindow
 {
     public RfCharacterSetupGuiSavePanel()
     {
@@ -15,6 +16,6 @@ public sealed partial class RfCharacterSetupGuiSavePanel : DefaultWindow
             Close();
         };
 
-        CloseButton.Visible = false;
+        CloseButtonVisible = false;
     }
 }

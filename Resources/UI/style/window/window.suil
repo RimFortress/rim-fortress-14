@@ -1,51 +1,15 @@
-/*
- * StyleFortress.cs: Window, Context Menu
- *
- * Old name of every class is in the comment above the rule.
- */
-
-/* ---------- Window ---------- */
-
-/* DefaultWindow.StyleClassWindowTitle: windowTitle */
 .window-title {
     color: <gold-fortress>;
     font-weight: bold;
     font-size: 14px;
 }
 
-/* windowTitleAlert */
 .window-title-alert {
     color: <rim-silver>;
     font-weight: bold;
     font-size: 14px;
 }
 
-/* DefaultWindow.StyleClassWindowPanel: windowPanel */
-.window-panel {
-    background-image: texture("/Textures/_RF/Interface/Style/window_background.png");
-    background-repeat: stretch;
-    patch-margin: 0 2px 2px 2px;
-    expand-patch-margin: 0 2px 2px 2px;
-    padding: 0 2px 2px 2px;
-}
-
-/* BorderedWindowPanel */
-.bordered-window-panel {
-    background-image: texture("/Textures/_RF/Interface/Style/window_background_bordered.png");
-    background-repeat: stretch;
-    patch-margin: 2px;
-    padding: 2px;
-}
-
-/* TransparentBorderedWindowPanel */
-.transparent-bordered-window-panel {
-    background-image: texture("/Textures/_RF/Interface/Style/transparent_window_background_bordered.png");
-    background-repeat: stretch;
-    patch-margin: 2px;
-    padding: 2px;
-}
-
-/* DefaultWindow.StyleClassWindowHeader: windowHeader */
 .window-header {
     background-image: texture("/Textures/_RF/Interface/Style/window_header.png");
     background-repeat: stretch;
@@ -54,7 +18,6 @@
     padding: 0;
 }
 
-/* windowHeaderAlert */
 .window-header-alert {
     background-image: texture("/Textures/_RF/Interface/Style/window_header_alert.png");
     background-repeat: stretch;
@@ -63,7 +26,6 @@
     padding: 0;
 }
 
-/* FancyWindow.StyleClassWindowHelpButton: windowHelpButton */
 .window-help-button {
     background-image: texture("/Textures/Interface/Nano/help.png");
     background-repeat: no-repeat;
@@ -79,46 +41,13 @@
     background-color: <darkest-bad>;
 }
 
-/* DefaultWindow.StyleClassWindowCloseButton: windowCloseButton */
-.window-close-button {
-    background-image: texture("/Textures/_RF/Interface/Style/cross.png");
-    background-repeat: no-repeat;
-    background-color: <gold-button-color-default>;
-}
-
-.window-close-button:hover {
-    background-color: <gold-button-color-hovered>;
-}
-
-.window-close-button:active,
-.window-close-button:checked {
-    background-color: <gold-button-color-pressed>;
-}
-
-/* FancyWindowTitle */
-.fancy-window-title {
-    font-family: <title-font>;
-    font-size: 13px;
-    color: <gold-fortress>;
-}
-
-/* WindowHeadingBackground */
 .window-heading-background {
-    background-image: texture("/Textures/_RF/Interface/Style/fancy_window_header.png");
-    background-repeat: stretch;
-    patch-margin: 3px 0 1px 0;
-    padding: 3px 0 1px 0;
+    border: <graphite-black> solid;
+    border-width: 3px 0 1px 0;
+    background-color: <dark-forest>;
+    padding: 3px 8px 3px 4px;
 }
 
-/* WindowHeadingBackgroundLight */
-.window-heading-background-light {
-    background-image: texture("/Textures/_RF/Interface/Style/light_fancy_window_header.png");
-    background-repeat: stretch;
-    patch-margin: 3px 0 1px 0;
-    padding: 3px 0 1px 0;
-}
-
-/* WindowFooterText */
 .window-footer-text {
     font-size: 8px;
     color: <placeholder-font-color>;

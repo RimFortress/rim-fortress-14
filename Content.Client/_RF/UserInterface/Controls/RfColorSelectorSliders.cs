@@ -49,6 +49,7 @@ public sealed partial class RfColorSelectorSliders : RfBoxContainer
     /// The chosen color, setting it does not fire <see cref="OnColorChanged"/>.
     /// </summary>
     [PublicAPI]
+    [SuilProperty("chosen-color")]
     public Color Color
     {
         get => _currentColor;

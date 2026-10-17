@@ -116,9 +116,7 @@ button.blue:disabled {
 }
 
 /* ButtonColorRed */
-.red,
-.red:active,
-.red:checked {
+.red {
     border-color: <bad>;
     background-color: <bad>;
 }
@@ -128,17 +126,36 @@ button.blue:disabled {
     background-color: <light-bad>;
 }
 
+.red:active,
+.red:checked {
+    border-color: <dark-bad>;
+    background-color: <dark-bad>;
+}
+
+.red:disabled {
+    border-color: <darkest-bad>;
+    background-color: <darkest-bad>;
+}
+
 /* ButtonColorGreen */
-.green,
-.green:active,
-.green:checked {
+.green {
     border-color: <good>;
     background-color: <good>;
+}
+.green:active,
+.green:checked {
+    border-color: <dark-good>;
+    background-color: <dark-good>;
 }
 
 .green:hover {
     border-color: <light-good>;
     background-color: <light-good>;
+}
+
+.green:disabled {
+    border-color: <darkest-good>;
+    background-color: <darkest-good>;
 }
 
 /* ButtonAccept (merge with green?) */
@@ -166,6 +183,9 @@ button.blue:disabled {
 .empty:checked,
 .empty:disabled {
     background: transparent;
+    border-style: none;
+    border-width: 0;
+    border-image: none;
     padding: 0;
 }
 

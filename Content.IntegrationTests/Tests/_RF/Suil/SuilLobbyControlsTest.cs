@@ -18,6 +18,7 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 public sealed class SuilLobbyControlsTest : GameTest
 {
     [SidedDependency(Side.Client)] private readonly ISuilHotReload _reload = null!;
+    [SidedDependency(Side.Client)] private readonly ISuilManager _suil = null!;
 
     private void AssertReloads(ISuilView view)
     {
@@ -104,6 +105,52 @@ public sealed class SuilLobbyControlsTest : GameTest
         Assert.That(name.FlexGrow, Is.EqualTo(0f));
 
         AssertReloads(view);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Save_Panel_Is_As_High_As_Its_Buttons()
+    {
+        var panel = new RfCharacterSetupGuiSavePanel();
+        panel.Measure(new System.Numerics.Vector2(1000, 1000));
+
+        Assert.That(panel.DesiredSize.Y, Is.LessThan(150), "no minimum height of the fancy window: " + panel.DesiredSize);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Save_Panel_Buttons_Have_Their_Colors()
+    {
+        var panel = new RfCharacterSetupGuiSavePanel();
+        var view = (ISuilView) panel;
+        var save = (UiElement) view.SuilGetField("save-button")!;
+        var no = (UiElement) view.SuilGetField("no-save-button")!;
+        var cancel = (UiElement) view.SuilGetField("cancel-button")!;
+
+        _suil.UpdateStyleRecursively(panel);
+        TestContext.Out.WriteLine($"{save.BackgroundColor} {no.BackgroundColor} {cancel.BackgroundColor} classes: {string.Join(",", save.SuilStyleClasses)}");
+        Assert.That(save.BackgroundColor, Is.Not.EqualTo(cancel.BackgroundColor));
+        Assert.That(no.BackgroundColor, Is.Not.EqualTo(cancel.BackgroundColor));
+        Assert.That(save.BackgroundColor, Is.Not.EqualTo(no.BackgroundColor));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Icon_Of_A_Framed_Button_Fits_Inside_Its_Border()
+    {
+        var button = new RfButton { SetSize = new System.Numerics.Vector2(36, 36), Disabled = true };
+        button.AddSuilStyleClass("icon-button"); button.AddSuilStyleClass("open-both");
+        var icon = new UiElement();
+        icon.AddSuilStyleClass("icon");
+        icon.BackgroundImage = Robust.Shared.IoC.IoCManager.Resolve<Robust.Client.ResourceManagement.IResourceCache>().GetResource<Robust.Client.ResourceManagement.TextureResource>("/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png").Texture;
+        button.AddChild(icon);
+        _suil.UpdateStyleRecursively(button);
+        button.Measure(new System.Numerics.Vector2(100, 100));
+        button.Arrange(new Robust.Shared.Maths.UIBox2(0, 0, 36, 36));
+        Assert.That(icon.Position.X, Is.GreaterThanOrEqualTo(6), "inside the border");
+        Assert.That(icon.Position.Y, Is.GreaterThanOrEqualTo(5));
+        Assert.That(icon.Position.X + icon.Size.X, Is.LessThanOrEqualTo(36 - 6));
+        Assert.That(icon.Position.Y + icon.Size.Y, Is.LessThanOrEqualTo(36 - 5));
     }
 
     [Test]

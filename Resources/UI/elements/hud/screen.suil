@@ -1,5 +1,5 @@
 /* The screen of the game. The widgets are put in their places by the code (the anchors of the layout). */
-@RimFortressScreen => layout-container (vertical-alignment: bottom, horizontal-alignment: center) {
+@RimFortressScreen => layout-container {
     layout-container #viewport-container (horizontal-expand, vertical-expand) {
         main-viewport #main-viewport
     }
