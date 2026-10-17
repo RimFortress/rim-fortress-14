@@ -93,24 +93,29 @@ button.blue:disabled {
     background-color: <blue-button-color-disabled>;
 }
 
-/* ButtonColorGold (ContainerButton and TextureButton) */
-.gold {
+/* ButtonColorGold (ContainerButton and TextureButton); ExamineButton.StyleClassExamineButton: examine-button */
+.gold,
+.examine-button {
     border-color: <gold-button-color-default>;
     background-color: <gold-button-color-default>;
 }
 
-.gold:hover {
+.gold:hover,
+.examine-button:hover {
     border-color: <gold-button-color-hovered>;
     background-color: <gold-button-color-hovered>;
 }
 
 .gold:active,
-.gold:checked {
+.gold:checked,
+.examine-button:active,
+.examine-button:checked {
     border-color: <gold-button-color-pressed>;
     background-color: <gold-button-color-pressed>;
 }
 
-.gold:disabled {
+.gold:disabled,
+.examine-button:disabled {
     border-color: <gold-button-color-disabled>;
     background-color: <gold-button-color-disabled>;
 }
@@ -187,28 +192,4 @@ button.blue:disabled {
     border-width: 0;
     border-image: none;
     padding: 0;
-}
-
-/* ---------- Examine buttons ---------- */
-
-/* ExamineButton.StyleClassExamineButton: examine-button */
-.examine-button {
-    border-color: <gold-button-color-default>;
-    background-color: <gold-button-color-default>;
-}
-
-.examine-button:hover {
-    border-color: <gold-button-color-hovered>;
-    background-color: <gold-button-color-hovered>;
-}
-
-.examine-button:active,
-.examine-button:checked {
-    border-color: <gold-button-color-pressed>;
-    background-color: <gold-button-color-pressed>;
-}
-
-.examine-button:disabled {
-    border-color: <gold-button-color-disabled>;
-    background-color: <gold-button-color-disabled>;
 }

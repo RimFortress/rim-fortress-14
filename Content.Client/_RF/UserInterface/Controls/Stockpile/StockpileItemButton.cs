@@ -82,10 +82,10 @@ public sealed partial class StockpileItemButton : RfButton
             .Select(x => (Texture) x.Default)
             .ToList();
 
-        Counter.OnValueChanged += value => MaxValue = value.New;
-
         EnsureSetup();
     }
+
+    private void OnCounterChanged((int Old, int New) value) => MaxValue = value.New;
 
     private void EnsureSetup()
     {

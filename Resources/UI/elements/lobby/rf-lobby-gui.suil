@@ -1,3 +1,6 @@
+/* The prefix of the localization keys of the file */
+let loc = ui-lobby;
+
 @RfLobbyGui => layout-container {
     /* Background */
     +texture-rect #background (vertical-expand, horizontal-expand, stretch: keep-aspect-covered)
@@ -11,11 +14,11 @@
                         align-self: flex-start,
                         max-width: 800px
                     ) {
-                        link-banner #link-banner (align-self: center, margin: 3 3 3 3)
+                        link-banner #link-banner (align-self: center, margin: 3)
                         row .fancy-back (gap: 6px, padding: 3px) {
                             +ui-command-button #observe-button .font-big (
                                 command: "observe",
-                                text: $ui-lobby-observe-button
+                                text: $<loc>-observe-button
                             )
                             +_ #start-time .font-big .text-center (
                                 flex-grow: 1,
@@ -23,7 +26,7 @@
                             )
                             +button #ready-button .font-big (
                                 toggle-mode,
-                                text: $ui-lobby-ready-up-button,
+                                text: $<loc>-ready-up-button,
                                 min-width: 137px
                             )
                         }
@@ -33,7 +36,7 @@
                 }
                 /* Left Bot Panel */
                 row (align-self: flex-start) {
-                    dev-info-banner #dev-info-banner (margin: 3 3 3 3)
+                    dev-info-banner #dev-info-banner (margin: 3)
                     row .angle-rect (gap: 6px) {
                         +_ #lobby-song
                         +_ #lobby-background
@@ -56,23 +59,23 @@
             row {
                 /* Server info */
                 col .panel-highlighted (flex-grow: 1, margin: 0 10px) {
-                    _ .rim-heading .label-heading (text: $ui-lobby-server-info-block)
+                    _ .rim-heading .label-heading (text: $<loc>-server-info-block)
                     +server-info #server-info (max-width: 400, margin: 3, horizontal-alignment: left)
                     +_ #station-time (align-self: flex-start, margin: 3px, color: #D3D3D3)
                 }
                 _ .high-divider
                 /* Voting & misc buttons */
                 col .panel-highlighted (margin: 0 10px) {
-                    +button #a-help-button .font-big (text: $ui-lobby-ahelp-button)
+                    +button #a-help-button .font-big (text: $<loc>-ahelp-button)
                     vote-call-menu-button .font-big
                     _ .flex-fill
-                    +button #options-button .font-big (text: $ui-lobby-options-button)
-                    +button #leave-button .font-big (text: $ui-lobby-leave-button)
+                    +button #options-button .font-big (text: $<loc>-options-button, on-pressed => @OpenOptions)
+                    +button #leave-button .font-big (text: $<loc>-leave-button, on-pressed => @Leave)
                 }
             }
             +lobby-character-preview-panel #character-preview (margin: 10)
             _ .low-divider (margin: 10px 0)
-            +chat-box #chat (vertical-expand, margin: 3 3 3 3, min-height: 50)
+            +chat-box #chat (vertical-expand, margin: 3, min-height: 50)
         }
     }
 }

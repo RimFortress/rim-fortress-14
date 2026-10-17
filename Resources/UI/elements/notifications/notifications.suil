@@ -3,14 +3,13 @@
     col (horizontal-expand) {
         row #header .panel-dark-bordered (visible: false, margin: 2) {
             _ .label-key-text (text: $notifications-panel-label, margin: 0 3, align-self: center)
-            _ (flex-grow: 1)
-            button #settings .icon-button .empty (
+            _ .flex-fill
+            icon-button #settings (
+                "<icons>/gear-solid-full.svg.192dpi.png",
                 set-size: 24,
                 tool-tip: $notification-settings-tooltip,
                 on-pressed => @OnSettingsPressed
-            ) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/gear-solid-full.svg.192dpi.png"))
-            }
+            )
         }
 
         scroll-container #scroll (overflow-x: hidden, visible: false, flex-grow: 1) {
@@ -37,14 +36,13 @@
         col (flex-grow: 1) {
             _ #desc (max-width: 280)
             _ .low-divider-dark (margin: 1 3)
-            button #focus-button .icon-button .empty (
+            icon-button #focus-button (
+                "<icons>/location-dot-solid-full.svg.192dpi.png",
                 align-self: flex-end,
                 set-size: 24,
                 tool-tip: $notification-focus-tooltip,
                 on-pressed => @OnFocusPressed
-            ) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/location-dot-solid-full.svg.192dpi.png"))
-            }
+            )
         }
     }
 }

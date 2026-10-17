@@ -2,12 +2,11 @@
 @ColorPicker => row {
     _ #color-panel (min-width: 30, min-height: 30, margin: 4, horizontal-alignment: right, vertical-alignment: center)
 
-    button #pick-color .icon-button .square (
+    framed-icon-button #pick-color .square (
+        "<icons>/eye-dropper-solid.svg.192dpi.png",
         min-width: 32,
         min-height: 32,
         tool-tip: $color-picker-tooltip,
         on-pressed => @OnPickPressed
-    ) {
-        _ .icon (background-image: texture("/Textures/_RF/Interface/eye-dropper-solid.svg.192dpi.png"))
-    }
+    )
 }

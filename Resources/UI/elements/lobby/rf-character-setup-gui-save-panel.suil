@@ -1,7 +1,10 @@
-@RfCharacterSetupGuiSavePanel => window (title: $character-setup-gui-save-panel-title, resizable: false, min-size: 0 0) {
+/* The prefix of the localization keys of the file */
+let loc = character-setup-gui-save-panel;
+
+@RfCharacterSetupGuiSavePanel => window (title: $<loc>-title, resizable: false, min-size: 0 0) {
     row (min-size: 200 40, gap: 4px) {
-        +button #save-button .font-big .green (text: $character-setup-gui-save-panel-save)
-        +button #no-save-button .font-big .red (text: $character-setup-gui-save-panel-nosave)
-        +button #cancel-button .font-big (text: $character-setup-gui-save-panel-cancel)
+        +button #save-button .font-big .green (text: $<loc>-save)
+        +button #no-save-button .font-big .red (text: $<loc>-nosave)
+        +button #cancel-button .font-big (text: $<loc>-cancel, on-pressed => @Cancel)
     }
 }

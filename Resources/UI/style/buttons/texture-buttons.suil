@@ -8,7 +8,7 @@
 
 /* CrossButtonRed */
 .cross-button-red {
-    background-image: texture("/Textures/_RF/Interface/Style/cross.png");
+    background-image: texture("<icons>/Style/cross.png");
     background-repeat: stretch;
     border-style: none;
     border-width: 0;

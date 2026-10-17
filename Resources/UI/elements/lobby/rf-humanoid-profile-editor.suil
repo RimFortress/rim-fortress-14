@@ -1,4 +1,7 @@
 /* A block of the appearance tab, the dividers between the options */
+/* The prefix of the localization keys of the file */
+let loc = humanoid-profile-editor;
+
 let profile-block = { col .panel-highlighted (margin: 10px) { %content% } }
 let profile-low-divider = { _ .low-divider (margin: 2px) }
 let profile-high-divider = { _ .high-divider (margin: 2px) }
@@ -9,24 +12,25 @@ let profile-high-divider = { _ .high-divider (margin: 2px) }
         /* Name box */
         col .panel-highlighted {
             row (gap: 5px) {
-                _ (text: $humanoid-profile-editor-name-label)
+                _ (text: $<loc>-name-label)
                 line-edit #name-edit (min-width: 270px, align-self: center)
-                button #name-randomize (text: $humanoid-profile-editor-randomize)
+                button #name-randomize (text: $<loc>-randomize, on-pressed => @RandomizeName)
             }
             button #randomize-everything-button (
-                text: $humanoid-profile-editor-randomize-everything,
+                text: $<loc>-randomize-everything,
                 align-self: center,
-                max-width: 256px
+                max-width: 256px,
+                on-pressed => @RandomizeEverything
             )
             _ #warning-label .danger (align-self: flex-start, max-width: 425px)
         }
         _ .flex-fill
         /* Import/Export */
         col .panel-dark-bordered (min-width: 60px) {
-            button #import-button (text: $humanoid-profile-editor-import-button)
-            button #export-button (text: $humanoid-profile-editor-export-button)
-            button #export-image-button (text: $humanoid-profile-editor-export-image-button)
-            button #open-images-button (text: $humanoid-profile-editor-open-image-button)
+            button #import-button (text: $<loc>-import-button, on-pressed => @ImportProfile)
+            button #export-button (text: $<loc>-export-button, on-pressed => @ExportProfile)
+            button #export-image-button (text: $<loc>-export-image-button, on-pressed => @ExportImage)
+            button #open-images-button (text: $<loc>-open-image-button, on-pressed => @OpenImages)
         }
     }
     _ (min-height: 10)
@@ -37,18 +41,18 @@ let profile-high-divider = { _ .high-divider (margin: 2px) }
                 col {
                     /* Skin */
                     profile-block {
-                        _ (text: $humanoid-profile-editor-skin-color-label)
-                        slider #skin (min-value: 0, max-value: 100, value: 20)
+                        _ (text: $<loc>-skin-color-label)
+                        slider #skin (min-value: 0, max-value: 100, value: 20, on-value-changed => @OnSkinColorOnValueChanged)
                         col #rgb-skin-color-container (visible: false)
                     }
                     /* Eyes */
                     profile-block {
-                        _ (text: $humanoid-profile-editor-eyes-label)
+                        _ (text: $<loc>-eyes-label)
                         color-selector-sliders #eye-color-picker (selector-type: hsv, margin: 0 0 10 0)
                     }
                     /* Markings */
                     profile-block .profile-markings {
-                        _ (text: $humanoid-profile-editor-markings-tab)
+                        _ (text: $<loc>-markings-tab)
                         marking-picker #markings (flex-grow: 1)
                     }
                 }
@@ -66,42 +70,44 @@ let profile-high-divider = { _ .high-divider (margin: 2px) }
                             horizontal-expand
                         )
                         row (align-self: center) {
-                            button #sprite-rotate-left .open-right (text: "◀")
-                            button #sprite-rotate-right .open-left (text: "▶")
+                            button #sprite-rotate-left .open-right (text: "◀", on-pressed => @RotatePreviewLeft)
+                            button #sprite-rotate-right .open-left (text: "▶", on-pressed => @RotatePreviewRight)
                         }
                     }
                     _ .flex-fill
                     col .panel-highlighted (min-width: 165px, margin: 3px) {
                         /* Species */
                         row {
-                            _ (text: $humanoid-profile-editor-species-label)
+                            _ (text: $<loc>-species-label)
                             _ .flex-fill
                             texture-button #species-info-button (
                                 scale: 0.3 0.3,
                                 vertical-alignment: center,
-                                tool-tip: $humanoid-profile-editor-guidebook-button-tooltip
+                                tool-tip: $<loc>-guidebook-button-tooltip,
+                                on-pressed => @OnSpeciesInfoButtonPressed
                             )
                         }
                         option-button #species-button
                         profile-low-divider
                         /* Age */
-                        _ (text: $humanoid-profile-editor-age-label)
+                        _ (text: $<loc>-age-label)
                         line-edit #age-edit (min-size: 40 0)
                         profile-low-divider
                         /* Sex */
-                        _ (text: $humanoid-profile-editor-sex-label)
+                        _ (text: $<loc>-sex-label)
                         option-button #sex-button
                         profile-low-divider
                         /* Pronouns */
-                        _ (text: $humanoid-profile-editor-pronouns-label)
+                        _ (text: $<loc>-pronouns-label)
                         option-button #pronouns-button
                         profile-low-divider
                         /* Show clothing */
-                        _ (text: $humanoid-profile-editor-clothing)
+                        _ (text: $<loc>-clothing)
                         button #show-clothes (
                             pressed,
                             toggle-mode,
-                            text: $humanoid-profile-editor-clothing-show
+                            text: $<loc>-clothing-show,
+                            on-toggled => @ReloadPreview
                         )
                     }
                 }

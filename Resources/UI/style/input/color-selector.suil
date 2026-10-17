@@ -20,7 +20,7 @@
 .slider > .grabber {
     min-width: 24px;
     min-height: 24px;
-    background-image: texture("/Textures/_RF/Interface/Style/slider_grabber.png");
+    background-image: texture("<icons>/Style/slider_grabber.png");
     background-repeat: stretch;
     patch-margin: 12px;
     background-color: <button-color-default>;

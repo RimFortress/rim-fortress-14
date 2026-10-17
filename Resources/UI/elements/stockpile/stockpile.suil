@@ -18,7 +18,7 @@
             _ #name-label (flex-grow: 1)
 
             row {
-                +int-counter #counter (min-value: 0)
+                +int-counter #counter (min-value: 0, on-value-changed => @OnCounterChanged)
                 +checkbox #unlimited-check (
                     margin: 0 3,
                     tracking-tooltip,
@@ -40,9 +40,7 @@
                 }
 
                 row #search-bar .panel-dark {
-                    button #back-button .icon-button .empty (set-size: 32, on-pressed => @OnBackPressed) {
-                        _ .icon (background-image: texture("/Textures/Interface/VerbIcons/close.svg.192dpi.png"))
-                    }
+                    icon-button #back-button ("/Textures/Interface/VerbIcons/close.svg.192dpi.png", set-size: 32, on-pressed => @OnBackPressed)
 
                     line-edit #search (
                         margin: 2 3,
@@ -69,29 +67,26 @@
         _ .high-divider
 
         row (margin: 3, gap: 5px) {
-            button #expand-stock-button .icon-button .square (
+            framed-icon-button #expand-stock-button .square (
+                "<icons>/expand-solid-full.svg.192dpi.png",
                 set-size: 32,
                 tool-tip: $expand-stockpile-button-tooltip,
                 on-pressed => @OnExpandPressed
-            ) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/expand-solid-full.svg.192dpi.png"))
-            }
+            )
 
-            button #shrink-stock-button .icon-button .square (
+            framed-icon-button #shrink-stock-button .square (
+                "<icons>/VerbIcons/eraser-solid.svg.192dpi.png",
                 set-size: 32,
                 tool-tip: $shrink-stockpile-button-tooltip,
                 on-pressed => @OnShrinkPressed
-            ) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/VerbIcons/eraser-solid.svg.192dpi.png"))
-            }
+            )
 
-            button #suppliers-button .icon-button .square (
+            framed-icon-button #suppliers-button .square (
+                "<icons>/right-to-bracket-solid-full.svg.192dpi.png",
                 set-size: 32,
                 tool-tip: $stockpile-suppliers-button-tooltip,
                 on-pressed => @OnSuppliersPressed
-            ) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/right-to-bracket-solid-full.svg.192dpi.png"))
-            }
+            )
 
             confirm-button #delete-stock-button .icon-button .square (
                 set-size: 32,
@@ -99,7 +94,7 @@
                 tool-tip: $delete-stockpile-button-tooltip,
                 on-pressed => @OnDeletePressed
             ) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"))
+                _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))
             }
         }
     }

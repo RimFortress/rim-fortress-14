@@ -83,34 +83,12 @@ namespace Content.Client._RF.Lobby.UI
 
             Markings.SetModel(_markingsModel);
 
-            ImportButton.OnPressed += _ =>
-            {
-                ImportProfile();
-            };
-
-            ExportButton.OnPressed += _ =>
-            {
-                ExportProfile();
-            };
-
-            ExportImageButton.OnPressed += _ =>
-            {
-                ExportImage();
-            };
-
-            OpenImagesButton.OnPressed += _ =>
-            {
-                _resManager.UserData.OpenOsWindow(ContentSpriteSystem.Exports);
-            };
-
             #region Left
 
             #region Name
 
             NameEdit.OnTextChanged += args => { SetName(args.Text); };
             NameEdit.IsValid = args => args.Length <= maxNameLength;
-            NameRandomize.OnPressed += _ => RandomizeName();
-            RandomizeEverythingButton.OnPressed += _ => RandomizeEverything();
             WarningLabel.Text = Loc.GetString("humanoid-profile-editor-naming-rules-warning");
 
             #endregion Name
@@ -162,11 +140,6 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Skin
 
-            Skin.OnValueChanged += _ =>
-            {
-                OnSkinColorOnValueChanged();
-            };
-
             RgbSkinColorContainer.AddChild(_rgbSkinColorSelector = new RfColorSelectorSliders());
             _rgbSkinColorSelector.SelectorType = RfColorSelectorSliders.ColorSelectorType.Hsv; // defaults color selector to HSV
             _rgbSkinColorSelector.OnColorChanged += _ =>
@@ -205,17 +178,6 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Dummy
 
-            SpriteRotateLeft.OnPressed += _ =>
-            {
-                _previewRotation = _previewRotation.TurnCw();
-                SetPreviewRotation(_previewRotation);
-            };
-            SpriteRotateRight.OnPressed += _ =>
-            {
-                _previewRotation = _previewRotation.TurnCcw();
-                SetPreviewRotation(_previewRotation);
-            };
-
             #endregion Dummy
 
             #region Skills
@@ -231,15 +193,22 @@ namespace Content.Client._RF.Lobby.UI
 
             #endregion Left
 
-            ShowClothes.OnToggled += _ =>
-            {
-                ReloadPreview();
-            };
-
-            SpeciesInfoButton.OnPressed += OnSpeciesInfoButtonPressed;
-
             UpdateSpeciesGuidebookIcon();
             IsDirty = false;
+        }
+
+        private void OpenImages() => _resManager.UserData.OpenOsWindow(ContentSpriteSystem.Exports);
+
+        private void RotatePreviewLeft()
+        {
+            _previewRotation = _previewRotation.TurnCw();
+            SetPreviewRotation(_previewRotation);
+        }
+
+        private void RotatePreviewRight()
+        {
+            _previewRotation = _previewRotation.TurnCcw();
+            SetPreviewRotation(_previewRotation);
         }
 
         private void SetDirty()

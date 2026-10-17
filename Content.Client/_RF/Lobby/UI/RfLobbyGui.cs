@@ -20,9 +20,11 @@ namespace Content.Client._RF.Lobby.UI
 
             LobbySong.Text = Loc.GetString("lobby-state-song-no-song-text");
 
-            LeaveButton.OnPressed += _ => _consoleHost.ExecuteCommand("disconnect");
-            OptionsButton.OnPressed += _ => UserInterfaceManager.GetUIController<OptionsUIController>().ToggleWindow();
         }
+
+        private void Leave() => _consoleHost.ExecuteCommand("disconnect");
+
+        private void OpenOptions() => UserInterfaceManager.GetUIController<OptionsUIController>().ToggleWindow();
 
         public void SwitchState(LobbyGuiState state)
         {

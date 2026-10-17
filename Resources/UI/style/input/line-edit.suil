@@ -6,7 +6,7 @@
 
 /* Fancy LineEdit (the stylebox lineedit.png: patch margin 3, content margin 3 on the vertical and 5 on the horizontal) */
 line-edit {
-    background-image: texture("/Textures/_RF/Interface/Style/lineedit.png");
+    background-image: texture("<icons>/Style/lineedit.png");
     background-repeat: stretch;
     patch-margin: 3px;
     padding: 3px 5px;
@@ -35,7 +35,7 @@ text-edit:placeholder-shown {
 
 /* actionSearchBox */
 .action-search-box {
-    background-image: texture("/Textures/_RF/Interface/Style/dark_panel_dark_thin_border.png");
+    background-image: texture("<icons>/Style/dark_panel_dark_thin_border.png");
     background-repeat: stretch;
     patch-margin: 3px;
     padding: 3px 5px;

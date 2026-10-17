@@ -2,7 +2,7 @@
 
 /* ContextMenuPopup.StyleClassContextMenuPopup: contextMenuPopup (ContextMenuElement.ElementMargin = 2) */
 .context-menu-popup {
-    background-image: texture("/Textures/_RF/Interface/Style/window_background_bordered.png");
+    background-image: texture("<icons>/Style/window_background_bordered.png");
     background-repeat: stretch;
     patch-margin: 2px;
     padding: 2px;

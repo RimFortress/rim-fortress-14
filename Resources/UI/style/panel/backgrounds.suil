@@ -2,7 +2,7 @@
 
 /* BackgroundOpenRight */
 .background-open-right {
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_right.png");
+    background-image: texture("<icons>/Style/button_open_right.png");
     background-repeat: stretch;
     background-color: <graphite-black>;
     patch-margin: 11px 5px 11px 11px;
@@ -11,7 +11,7 @@
 
 /* BackgroundOpenLeft */
 .background-open-left {
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_left.png");
+    background-image: texture("<icons>/Style/button_open_left.png");
     background-repeat: stretch;
     background-color: <graphite-black>;
     patch-margin: 11px 11px 11px 5px;

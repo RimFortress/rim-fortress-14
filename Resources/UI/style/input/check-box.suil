@@ -44,11 +44,11 @@ checkbox:disabled {
 checkbox .indicator {
     min-width: 20px;
     min-height: 20px;
-    background-image: texture("/Textures/_RF/Interface/Style/checkbox_unchecked.png");
+    background-image: texture("<icons>/Style/checkbox_unchecked.png");
     background-repeat: no-repeat;
 }
 
 /* CheckBox.StyleClassCheckBoxChecked: checkBoxChecked */
 checkbox .indicator.checked {
-    background-image: texture("/Textures/_RF/Interface/Style/checkbox_checked.png");
+    background-image: texture("<icons>/Style/checkbox_checked.png");
 }

@@ -101,16 +101,17 @@ public sealed partial class RfCharacterSetupGui : RfBoxContainer
 
         CharEditor.AddChild(profileEditor);
 
-        RulesButton.OnPressed += _ => new RulesAndInfoWindow().Open();
-        StatsButton.OnPressed += _ => new PlaytimeStatsWindow().OpenCentered();
-        SaveProfilesButton.OnPressed += _ => SaveProfiles();
-        ResetButton.OnPressed += _ =>
-        {
-            Profiles = null;
-            OnSave?.Invoke();
-        };
-
         _cfg.OnValueChanged(CCVars.SeeOwnNotes, p => AdminRemarksButton.Visible = p, true);
+    }
+
+    private void OpenRules() => new RulesAndInfoWindow().Open();
+
+    private void OpenStats() => new PlaytimeStatsWindow().OpenCentered();
+
+    private void ResetProfiles()
+    {
+        Profiles = null;
+        OnSave?.Invoke();
     }
 
     /// <summary>

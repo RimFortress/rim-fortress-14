@@ -3,8 +3,16 @@
 let row = { box (flex-direction: row) { %content% } }
 let col = { box (flex-direction: column) { %content% } }
 
+// A button that is only the picture, without a frame.
 let icon-button = (texture) {
     button .empty {
-        _ .icon (margin: 2px, background-image: texture(<texture>))
+        _ .icon (background-image: texture(<texture>))
+    }
+}
+
+// A button with a frame (choose its shape by a class: .square, .open-both, ...) and the picture in it.
+let framed-icon-button = (texture) {
+    button .icon-button {
+        _ .icon (background-image: texture(<texture>))
     }
 }

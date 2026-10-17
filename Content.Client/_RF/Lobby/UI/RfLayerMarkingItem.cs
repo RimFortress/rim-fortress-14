@@ -59,9 +59,6 @@ public sealed partial class RfLayerMarkingItem : RfBoxContainer, ISearchableCont
         UpdateData();
         UpdateSelection();
 
-        SelectButton.OnPressed += _ => SelectButtonPressed();
-        ColorsButton.OnPressed += _ => ColorsButtonPressed();
-
         OnKeyBindDown += OnPressed;
         OnKeyBindUp += OnUnpressed;
 

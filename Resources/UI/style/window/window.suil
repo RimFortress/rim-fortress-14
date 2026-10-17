@@ -11,7 +11,7 @@
 }
 
 .window-header {
-    background-image: texture("/Textures/_RF/Interface/Style/window_header.png");
+    background-image: texture("<icons>/Style/window_header.png");
     background-repeat: stretch;
     patch-margin: 0 0 3px 0;
     expand-patch-margin: 0 0 3px 0;
@@ -19,7 +19,7 @@
 }
 
 .window-header-alert {
-    background-image: texture("/Textures/_RF/Interface/Style/window_header_alert.png");
+    background-image: texture("<icons>/Style/window_header_alert.png");
     background-repeat: stretch;
     patch-margin: 0 0 3px 0;
     expand-patch-margin: 0 0 3px 0;

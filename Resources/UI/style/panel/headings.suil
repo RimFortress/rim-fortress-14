@@ -6,7 +6,7 @@
  * repeating background. Put the content right into the element (a row, as a RfBoxContainer), no wrapper is needed.
  */
 .fancy-back {
-    background-image: texture("/Textures/_RF/Interface/Style/stripeback.png");
+    background-image: texture("<icons>/Style/stripeback.png");
     background-repeat: repeat;
     border-top: 2px solid <gold-fortress>;
     border-bottom: 2px solid <gold-fortress>;
@@ -15,7 +15,7 @@
 
 /* FancyBack with the StyleClassFancyBackWooden */
 .fancy-back.wooden-back {
-    background-image: texture("/Textures/_RF/Interface/Style/wooden_back.png");
+    background-image: texture("<icons>/Style/wooden_back.png");
 }
 
 /*
@@ -23,7 +23,7 @@
  * The old control was aligned to the left.
  */
 .rim-heading {
-    background-image: texture("/Textures/_RF/Interface/Style/rimheading.png");
+    background-image: texture("<icons>/Style/rimheading.png");
     background-repeat: stretch;
     patch-margin: 10px 2px 2px 2px;
     padding: 6px 4px 2px;

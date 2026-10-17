@@ -2,7 +2,7 @@
 
 /* speechBox + sayBox */
 .speech-box.say-box {
-    background-image: texture("/Textures/_RF/Interface/Style/tooltip.png");
+    background-image: texture("<icons>/Style/tooltip.png");
     background-repeat: stretch;
     patch-margin: 2px;
     padding: 2px 7px;
@@ -10,7 +10,7 @@
 
 /* speechBox + whisperBox */
 .speech-box.whisper-box {
-    background-image: texture("/Textures/_RF/Interface/Style/whisper.png");
+    background-image: texture("<icons>/Style/whisper.png");
     background-repeat: stretch;
     patch-margin: 2px;
     padding: 2px 7px;

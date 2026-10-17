@@ -1,4 +1,7 @@
 /* A task of a job in the settings: its name and the check box. */
+/* The prefix of the localization keys of the file */
+let loc = npc-jobs;
+
 @NpcTaskButton => row (tracking-tooltip, margin: 3 2) {
     _ #label .label-key-text (flex-grow: 1)
     +checkbox #check-box
@@ -35,7 +38,7 @@
                 set-size: 24,
                 horizontal-alignment: center,
                 vertical-alignment: center,
-                textures-collection: "/Textures/_RF/Interface/VerbIcons/list-check-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/skull-crossbones-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/hand-holding-medical-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/tree-solid.svg.192dpi.png /Textures/_RF/Interface/cubes-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/hand-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/house-flag-solid-full.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/left-right-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/hand-pointer-solid.svg.192dpi.png /Textures/_RF/Interface/hammer-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/trowel-bricks-solid.svg.192dpi.png /Textures/_RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png"
+                textures-collection: "<icons>/VerbIcons/list-check-solid.svg.192dpi.png <icons>/VerbIcons/skull-crossbones-solid.svg.192dpi.png <icons>/VerbIcons/person-digging-solid.svg.192dpi.png <icons>/VerbIcons/hand-holding-medical-solid.svg.192dpi.png <icons>/VerbIcons/tree-solid.svg.192dpi.png <icons>/cubes-solid.svg.192dpi.png <icons>/VerbIcons/hand-solid.svg.192dpi.png <icons>/VerbIcons/house-flag-solid-full.svg.192dpi.png <icons>/VerbIcons/left-right-solid.svg.192dpi.png <icons>/VerbIcons/hand-pointer-solid.svg.192dpi.png <icons>/hammer-solid.svg.192dpi.png <icons>/VerbIcons/trowel-bricks-solid.svg.192dpi.png <icons>/VerbIcons/seedling-solid.svg.192dpi.png"
             )
         }
 
@@ -47,18 +50,16 @@
 
         line-edit #name-edit (flex-grow: 1, visible: false, on-text-entered => @OnNameEntered)
 
-        button #edit-name-button .icon-button .square (set-size: 35, on-pressed => @OnEditNamePressed) {
-            _ .icon (background-image: texture("/Textures/_RF/Interface/eye-dropper-solid.svg.192dpi.png"))
-        }
+        framed-icon-button #edit-name-button .square ("<icons>/eye-dropper-solid.svg.192dpi.png", set-size: 35, on-pressed => @OnEditNamePressed)
 
         confirm-button #delete-button .icon-button .square (set-size: 35, confirmation-text: "", on-pressed => @OnDeletePressed) {
-            _ .icon (background-image: texture("/Textures/_RF/Interface/ban-solid-full.svg.192dpi.png"))
+            _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))
         }
     }
 }
 
 /* The table of the priorities of the jobs of the pops. */
-@NpcJobsPriorityWindow => window (title: $npc-jobs-priority-window-title, min-size: 940 590) {
+@NpcJobsPriorityWindow => window (title: $<loc>-priority-window-title, min-size: 940 590) {
     col {
         table-control #table (flex-grow: 1)
 
@@ -66,7 +67,7 @@
             row {
                 button #job-settings-button (
                     margin: 0 3,
-                    text: $npc-jobs-priority-window-settings-button-text,
+                    text: $<loc>-priority-window-settings-button-text,
                     on-pressed => @OnJobSettingsPressed
                 )
             }
@@ -75,7 +76,7 @@
 }
 
 /* The jobs (left) and the tasks of the chosen job (right). */
-@NpcJobsSettingsWindow => window (title: $npc-jobs-settings-window-title, min-size: 700 600) {
+@NpcJobsSettingsWindow => window (title: $<loc>-settings-window-title, min-size: 700 600) {
     row {
         box .panel-dark-bordered {
             col (flex-grow: 1) {
@@ -87,12 +88,12 @@
                     row (flex-grow: 1) {
                         button #save-button .accept (
                             flex-grow: 1,
-                            text: $npc-jobs-settings-window-save-button,
+                            text: $<loc>-settings-window-save-button,
                             on-pressed => @OnSavePressed
                         )
                         button #create-role-button (
                             flex-grow: 1,
-                            text: $npc-jobs-settings-window-create-button,
+                            text: $<loc>-settings-window-create-button,
                             on-pressed => @OnCreateRolePressed
                         )
                     }
@@ -105,7 +106,7 @@
         box .panel-light-bordered (flex-grow: 1) {
             col (flex-grow: 1) {
                 box .panel-highlighted {
-                    _ .fancy-window-title (text: $npc-jobs-settings-window-tasks-label, flex-grow: 1, align-self: center)
+                    _ .fancy-window-title (text: $<loc>-settings-window-tasks-label, flex-grow: 1, align-self: center)
                 }
 
                 _ .low-divider-dark (margin: 1 2)

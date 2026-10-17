@@ -1,3 +1,3 @@
 @RfLayerMarkingOrderer => col {
-  col #items  (gap: 0, padding: 4px)
+    col #items (gap: 0, padding: 4px)
 }

@@ -1,7 +1,7 @@
 .option-triangle {
     min-width: 18px;
     min-height: 18px;
-    background-image: texture("/Textures/_RF/Interface/chevron-left-solid-full.svg.192dpi.png");
+    background-image: texture("<icons>/chevron-left-solid-full.svg.192dpi.png");
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
@@ -10,7 +10,7 @@
 }
 
 option-button:checked .option-triangle {
-    background-image: texture("/Textures/_RF/Interface/chevron-down-solid-full.svg.192dpi.png");
+    background-image: texture("<icons>/chevron-down-solid-full.svg.192dpi.png");
 }
 
 .option-button-panel {

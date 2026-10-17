@@ -45,11 +45,11 @@ public sealed partial class ExpeditionItemButton : RfBoxContainer
         NameLabel.SetPlainText(proto.Name);
         NameLabel.ToolTip = proto.Description;
         CostLabel.Text = $"{Loc.GetString("expedition-equipment-editor-points")}: {Cost}";
+    }
 
-        Counter.OnValueChanged += args =>
-        {
-            Count = args.New;
-            OnPointsSet?.Invoke((args.Old * Cost, args.New * Cost));
-        };
+    private void OnCountChanged((int Old, int New) args)
+    {
+        Count = args.New;
+        OnPointsSet?.Invoke((args.Old * Cost, args.New * Cost));
     }
 }

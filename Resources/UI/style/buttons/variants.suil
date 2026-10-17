@@ -10,7 +10,7 @@
 
 /* storageButton: thin buttons (no padding nor vertical margin) */
 .storage-button {
-    background-image: texture("/Textures/_RF/Interface/Style/button.png");
+    background-image: texture("<icons>/Style/button.png");
     background-repeat: stretch;
     patch-margin: 0;
     padding: 0 4px;
@@ -55,7 +55,7 @@
 
 /* chatSelectorOptionButton */
 .chat-selector-option-button {
-    background-image: texture("/Textures/_RF/Interface/Style/rounded_button.png");
+    background-image: texture("<icons>/Style/rounded_button.png");
     background-repeat: stretch;
     patch-margin: 5px;
     padding: 7px;
@@ -63,7 +63,7 @@
 
 /* chatFilterOptionButton */
 .chat-filter-option-button {
-    background-image: texture("/Textures/_RF/Interface/Style/rounded_button_bordered.png");
+    background-image: texture("<icons>/Style/rounded_button_bordered.png");
     background-repeat: stretch;
     patch-margin: 5px;
     padding: 7px;

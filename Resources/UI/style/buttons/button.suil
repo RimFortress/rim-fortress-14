@@ -34,10 +34,10 @@
 /* ContainerButton.StyleClassButton: button */
 button {
     border: 4px solid transparent;
-    border-image: texture("/Textures/_RF/Interface/Style/button_border.png");
+    border-image: texture("<icons>/Style/button_border.png");
     border-image-slice: 4px;
     background-clip: border-box;
-    background-image: texture("/Textures/_RF/Interface/Style/button.png");
+    background-image: texture("<icons>/Style/button.png");
     background-repeat: stretch;
     patch-margin: 5px;
     padding: 2px 4px;
@@ -49,10 +49,10 @@ button {
 button.row-button:first-child {
     border-style: solid;
     border-width: 5px 5px 5px 6px;
-    border-image: texture("/Textures/_RF/Interface/Style/button_open_right_border.png");
+    border-image: texture("<icons>/Style/button_open_right_border.png");
     border-image-slice: 11px 5px 11px 11px;
     border-image-width: 11px 5px 11px 11px;
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_right.png");
+    background-image: texture("<icons>/Style/button_open_right.png");
     patch-margin: 11px 5px 11px 11px;
     padding: 3px 10px 3px 9px;
 }
@@ -62,10 +62,10 @@ button.row-button:first-child {
 button.row-button:last-child {
     border-style: solid;
     border-width: 5px 6px 5px 5px;
-    border-image: texture("/Textures/_RF/Interface/Style/button_open_left_border.png");
+    border-image: texture("<icons>/Style/button_open_left_border.png");
     border-image-slice: 11px 11px 11px 5px;
     border-image-width: 11px 11px 11px 5px;
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_left.png");
+    background-image: texture("<icons>/Style/button_open_left.png");
     patch-margin: 11px 11px 11px 5px;
     padding: 3px 10px 3px 9px;
 }
@@ -75,10 +75,10 @@ button.row-button:last-child {
 button.row-button:only-child {
     border-style: solid;
     border-width: 5px 6px 5px 6px;
-    border-image: texture("/Textures/_RF/Interface/Style/button_open_both_border.png");
+    border-image: texture("<icons>/Style/button_open_both_border.png");
     border-image-slice: 11px;
     border-image-width: 11px;
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
+    background-image: texture("<icons>/Style/button_open_both.png");
     patch-margin: 11px;
     padding: 3px 9px;
 }
@@ -87,9 +87,9 @@ button.row-button:only-child {
 .square {
     border-style: solid;
     border-width: 2px;
-    border-image: texture("/Textures/_RF/Interface/Style/button_square_border.png");
+    border-image: texture("<icons>/Style/button_square_border.png");
     border-image-slice: 2px;
-    background-image: texture("/Textures/_RF/Interface/Style/button_square.png");
+    background-image: texture("<icons>/Style/button_square.png");
     patch-margin: 2px;
     padding: 3px;
 }

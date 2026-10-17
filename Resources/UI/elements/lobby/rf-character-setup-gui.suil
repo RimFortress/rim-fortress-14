@@ -1,18 +1,21 @@
 use "/elements/lobby/parts";
 
+/* The prefix of the localization keys of the file */
+let loc = character-setup-gui-character-setup;
+
 @RfCharacterSetupGui => col .angle-rect-transparent (flex-grow: 1) {
     setup-header {
-        setup-title ($character-setup-gui-character-setup-label)
+        setup-title ($<loc>-label)
         _ .flex-fill
-        +button #reset-button .font-big (text: $humanoid-profile-editor-reset-button)
-        +button #save-profiles-button .font-big (text: $character-setup-gui-character-setup-save-profiles-button)
-        button #stats-button .font-big (text: $character-setup-gui-character-setup-stats-button)
+        +button #reset-button .font-big (text: $humanoid-profile-editor-reset-button, on-pressed => @ResetProfiles)
+        +button #save-profiles-button .font-big (text: $<loc>-save-profiles-button, on-pressed => @SaveProfiles)
+        button #stats-button .font-big (text: $<loc>-stats-button, on-pressed => @OpenStats)
         command-button #admin-remarks-button .font-big (
             command: "adminremarks",
-            text: $character-setup-gui-character-setup-adminremarks-button
+            text: $<loc>-adminremarks-button
         )
-        button #rules-button .font-big (text: $character-setup-gui-character-setup-rules-button)
-        +button #close-button .font-big (text: $character-setup-gui-character-setup-close-button)
+        button #rules-button .font-big (text: $<loc>-rules-button, on-pressed => @OpenRules)
+        +button #close-button .font-big (text: $<loc>-close-button)
     }
     _ .low-divider
     row (flex-grow: 1) {

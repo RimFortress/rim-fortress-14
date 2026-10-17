@@ -3,7 +3,7 @@
 /* tooltipBox, ExamineSystem.StyleClassEntityTooltip: entity-tooltip */
 .tooltip-box,
 .entity-tooltip {
-    background-image: texture("/Textures/_RF/Interface/Style/tooltip.png");
+    background-image: texture("<icons>/Style/tooltip.png");
     background-repeat: stretch;
     patch-margin: 2px;
     padding: 2px 7px;

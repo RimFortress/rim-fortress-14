@@ -1,6 +1,9 @@
 /*
  * Constants of the Rim Fortress theme (StyleFortress.cs: Colors). Imported into every file by /global-usings.
  */
+/* Paths */
+let icons = "/Textures/_RF/Interface";
+
 let main-font = "Source Code Pro";
 let title-font = "Boxfont Round";
 

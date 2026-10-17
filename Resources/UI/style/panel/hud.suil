@@ -18,7 +18,7 @@
 
 /* HotbarPanel: the transparent bordered window background expanded by 4 */
 .hotbar-panel {
-    background-image: texture("/Textures/_RF/Interface/Style/transparent_window_background_bordered.png");
+    background-image: texture("<icons>/Style/transparent_window_background_bordered.png");
     background-repeat: stretch;
     patch-margin: 2px;
     expand-patch-margin: 4px;

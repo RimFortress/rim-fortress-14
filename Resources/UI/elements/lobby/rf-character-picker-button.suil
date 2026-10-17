@@ -1,13 +1,12 @@
+/* The prefix of the localization keys of the file */
+let loc = character-setup-gui-character-picker-button;
+
 @RfCharacterPickerButton => button {
     row {
         col {
-            +button #up .icon-button .open-both (disabled, set-size: 36 36) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/sort-up-solid.svg.192dpi.png"))
-            }
+            +framed-icon-button #up .open-both ("<icons>/sort-up-solid.svg.192dpi.png", disabled, set-size: 36 36)
             _ .flex-fill
-            +button #down .icon-button .open-both (disabled, set-size: 36 36) {
-                _ .icon (background-image: texture("/Textures/_RF/Interface/sort-down-solid.svg.192dpi.png"))
-            }
+            +framed-icon-button #down .open-both ("<icons>/sort-down-solid.svg.192dpi.png", disabled, set-size: 36 36)
         }
         sprite-view #view (scale: 2 2, margin: 4 4 4 0, set-size: 64 64, override-direction: south)
         _ #description-label .text-center (
@@ -17,8 +16,9 @@
             white-space: pre-line
         )
         confirm-button #delete-button .open-both (
-            text: $character-setup-gui-character-picker-button-delete-button,
-            confirmation-text: $character-setup-gui-character-picker-button-confirm-delete-button
+            text: $<loc>-delete-button,
+            confirmation-text: $<loc>-confirm-delete-button,
+            on-pressed => @OnDeleteConfirmed
         )
     }
 }

@@ -42,11 +42,12 @@ public sealed partial class RfCharacterPickerButton : RfButton
         // The name of the character is not markup.
         DescriptionLabel.SetPlainText(description);
 
-        DeleteButton.OnPressed += _ =>
-        {
-            Parent?.RemoveChild(this);
-            OnDeletePressed?.Invoke();
-        };
+    }
+
+    private void OnDeleteConfirmed()
+    {
+        Parent?.RemoveChild(this);
+        OnDeletePressed?.Invoke();
     }
 
     protected override void ExitedTree()

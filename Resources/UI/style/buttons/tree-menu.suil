@@ -25,12 +25,12 @@
  * are chosen by the tag: a rule without a tag knows only the properties of every element.
  */
 tree-menu-button {
-    marker-texture: texture("/Textures/_RF/Interface/Style/tree_menu_button_marker.png");
+    marker-texture: texture("<icons>/Style/tree_menu_button_marker.png");
     marker-color: <gold-button-color-default>;
 }
 
 tree-menu-button:hover {
-    marker-texture: texture("/Textures/_RF/Interface/Style/tree_menu_button_marker_hovered.png");
+    marker-texture: texture("<icons>/Style/tree_menu_button_marker_hovered.png");
 }
 
 /* ---------- Rows (SocializationEffectInfo and TreeItem) ---------- */

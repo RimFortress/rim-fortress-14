@@ -2,7 +2,7 @@
 
 /* PdaContentBackground */
 .pda-content-background {
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
+    background-image: texture("<icons>/Style/button_open_both.png");
     background-repeat: stretch;
     background-color: <pda-content-background>;
     patch-margin: 11px;
@@ -11,7 +11,7 @@
 
 /* PdaBackground */
 .pda-background {
-    background-image: texture("/Textures/_RF/Interface/Style/button_open_both.png");
+    background-image: texture("<icons>/Style/button_open_both.png");
     background-repeat: stretch;
     background-color: <pda-background>;
     patch-margin: 11px;
