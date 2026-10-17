@@ -738,6 +738,9 @@ public sealed class SuilViewEventTests
         Assert.That(view.SuilTryGetMethod("NotAHandler", out _), Is.False, "it returns something");
         Assert.That(view.SuilTryGetMethod("Missing", out _), Is.False);
         Assert.That(view.SuilTryGetMethod("InitializeComponent", out _), Is.False);
+        Assert.That(view.SuilTryGetMethod("RaiseClosed", out var inherited), Is.True, "a method of the base class");
+        Assert.That(inherited, Is.Null);
+        Assert.That(view.SuilTryGetMethod("Static", out _), Is.False);
 
         view.SuilInvoke("Plain", null);
         view.SuilInvoke("WithArgs", Args(view, count: 7));

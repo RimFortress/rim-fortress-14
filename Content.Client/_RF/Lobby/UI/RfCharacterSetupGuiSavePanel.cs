@@ -13,6 +13,4 @@ public sealed partial class RfCharacterSetupGuiSavePanel : RfWindow
 
         CloseButtonVisible = false;
     }
-
-    private void Cancel() => Close();
 }

@@ -606,8 +606,8 @@ internal sealed partial class SuilViewEmitter
 
     /// <summary>
     /// <c>SuilTryGetMethod</c> and <c>SuilInvoke</c> of <c>ISuilView</c>: the methods the hot reload may bind to a handler
-    /// of the new file, which the generator can't know from the old one. Every method of the class that a handler can
-    /// call is in the switch.
+    /// of the new file, which the generator can't know from the old one. Every method of the class (and of its base classes) that a handler
+    /// can call is in the switch.
     /// </summary>
     private void WriteMethodMembers(StringBuilder sb)
     {
@@ -615,12 +615,17 @@ internal sealed partial class SuilViewEmitter
         var methods = new List<IMethodSymbol>();
         var names = new HashSet<string>();
 
-        foreach (var member in viewClass.GetMembers())
+        // The methods of the base classes too (Close of a window), the nearest class wins for the same name.
+        for (INamedTypeSymbol? current = viewClass; current != null; current = current.BaseType)
         {
-            if (member is IMethodSymbol method && IsHandlerMethod(method) && method.Name != "InitializeComponent"
-                && !method.IsStatic && names.Add(method.Name))
+            foreach (var member in current.GetMembers())
             {
-                methods.Add(method);
+                if (member is IMethodSymbol method && IsHandlerMethod(method) && method.Name != "InitializeComponent"
+                    && !method.IsStatic && compilation.IsSymbolAccessibleWithin(method, viewClass)
+                    && names.Add(method.Name))
+                {
+                    methods.Add(method);
+                }
             }
         }
 
