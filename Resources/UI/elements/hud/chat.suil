@@ -16,18 +16,24 @@
                     background-position: center,
                     background-color: <gold-fortress>
                 )
-                chat-messages-bubble #bubble (horizontal-alignment: right, vertical-alignment: top)
+
+                chat-messages-bubble #bubble (
+                    horizontal-alignment: right,
+                    vertical-alignment: top
+                )
             }
 
             _ .low-divider (margin: 3 5)
             fancy-back (horizontal-expand)
 
             button #toggle-button .icon-button .square (
-                set-size: 38,
                 tool-tip: $foldable-chat-toggle-tooltip,
+                set-size: 38,
                 on-pressed => @OnTogglePressed
             ) {
-                _ #toggle-icon .icon (background-image: texture("<icons>/chevron-left-solid-full.svg.192dpi.png"))
+                _ #toggle-icon .icon (
+                    background-image: texture("<icons>/chevron-left-solid-full.svg.192dpi.png")
+                )
             }
         }
     }
@@ -35,8 +41,8 @@
 
 /* The red number on the icon of the chat. */
 @ChatMessagesBubble => box (
-    mouse-filter: pass,
     tool-tip: $chat-messages-bubble-tooltip,
+    mouse-filter: pass,
     tooltip-delay: 0,
     tracking-tooltip,
     background-image: texture("<icons>/Style/chat_messages_bubble.png"),

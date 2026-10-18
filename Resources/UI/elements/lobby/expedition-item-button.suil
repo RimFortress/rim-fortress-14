@@ -4,14 +4,15 @@
     }
     _ .low-divider (margin: 5px 10px)
     _ #name-label .placeholder-text (
-        mouse-filter: pass,
         flex-grow: 1,
         align-self: center,
+        overflow: hidden,
+        mouse-filter: pass,
         color: #FFFFFF,
         white-space: nowrap,
-        overflow: hidden,
         text-overflow: ellipsis
     )
+
     _ #cost-label .placeholder-text (
         min-width: 150px,
         align-self: center,

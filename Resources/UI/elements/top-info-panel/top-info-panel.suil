@@ -15,9 +15,10 @@
     _ .flex-fill
     _ .low-divider
 
-    info-panel-cell #date (texture-path: "<icons>/calendar-solid-full.svg.192dpi.png")
+    info-panel-cell #date (
+        texture-path: "<icons>/calendar-solid-full.svg.192dpi.png"
+    )
     info-panel-cell #time (texture-path: "<icons>/sun-solid.svg.192dpi.png")
-
     _ .low-divider
 
     info-panel-cell #temperature (
@@ -27,7 +28,12 @@
 }
 
 /* A cell of the strip: an icon and a text. */
-@InfoPanelCell => row (mouse-filter: stop, tracking-tooltip, tooltip-delay: 0, margin: 0 5) {
+@InfoPanelCell => row (
+    mouse-filter: stop,
+    tracking-tooltip,
+    tooltip-delay: 0,
+    margin: 0 5
+) {
     _ #icon (
         set-size: 24,
         background-size: contain,
@@ -36,7 +42,11 @@
         background-color: <rim-silver>
     )
 
-    box (margin: 0 0 0 5, background-color: <graphite-black>, border-bottom: 1px solid <black-amber>) {
+    box (
+        margin: 0 0 0 5,
+        background-color: <graphite-black>,
+        border-bottom: 1px solid <black-amber>
+    ) {
         _ #label
     }
 }

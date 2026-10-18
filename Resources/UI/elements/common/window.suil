@@ -7,12 +7,14 @@
             overflow: hidden,
             text-overflow: ellipsis
         )
+
         button #help-button .window-help-button (
-            visible: false,
             set-size: 22 22,
             align-self: center,
+            visible: false,
             on-pressed => @HelpPressed
         )
+
         button #close-button .cross-button-red (
             set-size: 22 22,
             align-self: center,

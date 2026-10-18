@@ -1,28 +1,31 @@
 /* An item of the stockpile settings: the picture, the name, how many to keep or "no limit". */
 @StockpileItemButton => button .square (
-    margin: 0 2 5 2,
     min-height: 50,
     horizontal-expand,
+    margin: 0 2 5 2,
     tracking-tooltip
 ) {
     box .panel-highlighted {
         row (flex-grow: 1) {
             _ .low-divider-dark (margin: 2)
 
-            box .panel-light-bordered (set-size: 52, justify-content: center, align-items: center) {
+            box .panel-light-bordered (
+                set-size: 52,
+                justify-content: center,
+                align-items: center
+            ) {
                 +layered-texture #texture (set-size: 48)
             }
 
             _ .low-divider (margin: 2 5)
-
             _ #name-label (flex-grow: 1)
 
             row {
                 +int-counter #counter (min-value: 0, on-value-changed => @OnCounterChanged)
                 +checkbox #unlimited-check (
+                    tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
                     margin: 0 3,
                     tracking-tooltip,
-                    tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
                     on-pressed => @OnUnlimitedPressed
                 )
             }
@@ -40,12 +43,16 @@
                 }
 
                 row #search-bar .panel-dark {
-                    icon-button #back-button ("/Textures/Interface/VerbIcons/close.svg.192dpi.png", set-size: 32, on-pressed => @OnBackPressed)
+                    icon-button #back-button (
+                        "/Textures/Interface/VerbIcons/close.svg.192dpi.png",
+                        set-size: 32,
+                        on-pressed => @OnBackPressed
+                    )
 
                     line-edit #search (
-                        margin: 2 3,
-                        flex-grow: 1,
                         place-holder: $stockpile-settings-menu-search-placeholder,
+                        flex-grow: 1,
+                        margin: 2 3,
                         on-text-changed => @OnSearchChanged
                     )
                 }
@@ -69,29 +76,29 @@
         row (margin: 3, gap: 5px) {
             framed-icon-button #expand-stock-button .square (
                 "<icons>/expand-solid-full.svg.192dpi.png",
-                set-size: 32,
                 tool-tip: $expand-stockpile-button-tooltip,
+                set-size: 32,
                 on-pressed => @OnExpandPressed
             )
 
             framed-icon-button #shrink-stock-button .square (
                 "<icons>/VerbIcons/eraser-solid.svg.192dpi.png",
-                set-size: 32,
                 tool-tip: $shrink-stockpile-button-tooltip,
+                set-size: 32,
                 on-pressed => @OnShrinkPressed
             )
 
             framed-icon-button #suppliers-button .square (
                 "<icons>/right-to-bracket-solid-full.svg.192dpi.png",
-                set-size: 32,
                 tool-tip: $stockpile-suppliers-button-tooltip,
+                set-size: 32,
                 on-pressed => @OnSuppliersPressed
             )
 
             confirm-button #delete-stock-button .icon-button .square (
-                set-size: 32,
                 confirmation-text: "",
                 tool-tip: $delete-stockpile-button-tooltip,
+                set-size: 32,
                 on-pressed => @OnDeletePressed
             ) {
                 _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))

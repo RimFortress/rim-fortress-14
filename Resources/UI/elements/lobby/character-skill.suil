@@ -1,9 +1,9 @@
 @CharacterSkill => row .panel-highlighted (margin: 0 0 5px 0) {
     row .panel-light-bordered (
         set-size: 36 36,
-        padding: 5px,
         justify-content: center,
-        align-items: center
+        align-items: center,
+        padding: 5px
     ) {
         texture-rect #texture (set-size: 24 24, stretch: keep-aspect-centered)
     }

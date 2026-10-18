@@ -2,12 +2,16 @@
 @NotificationsPanelWidget => box-container (set-size: 300 500) {
     col (horizontal-expand) {
         row #header .panel-dark-bordered (visible: false, margin: 2) {
-            _ .label-key-text (text: $notifications-panel-label, margin: 0 3, align-self: center)
+            _ .label-key-text (
+                text: $notifications-panel-label,
+                align-self: center,
+                margin: 0 3
+            )
             _ .flex-fill
             icon-button #settings (
                 "<icons>/gear-solid-full.svg.192dpi.png",
-                set-size: 24,
                 tool-tip: $notification-settings-tooltip,
+                set-size: 24,
                 on-pressed => @OnSettingsPressed
             )
         }
@@ -32,15 +36,18 @@
         _ #progress-bar (set-height: 3, align-self: flex-start, visible: false)
     }
 
-    box #desc-container .panel-dark-bordered-transparent (visible: false, flex-grow: 1) {
+    box #desc-container .panel-dark-bordered-transparent (
+        flex-grow: 1,
+        visible: false
+    ) {
         col (flex-grow: 1) {
             _ #desc (max-width: 280)
             _ .low-divider-dark (margin: 1 3)
             icon-button #focus-button (
                 "<icons>/location-dot-solid-full.svg.192dpi.png",
-                align-self: flex-end,
-                set-size: 24,
                 tool-tip: $notification-focus-tooltip,
+                set-size: 24,
+                align-self: flex-end,
                 on-pressed => @OnFocusPressed
             )
         }
@@ -48,7 +55,11 @@
 }
 
 /* The window with the list of notifications to mute. */
-@NotificationsSettingsWindow => window (title: $notifications-settings-window-title, set-size: 250 300, resizable: false) {
+@NotificationsSettingsWindow => window (
+    title: $notifications-settings-window-title,
+    set-size: 250 300,
+    resizable: false
+) {
     col {
         _ (text: $notifications-settings-window-ignore)
         _ .low-divider-dark (margin: 1 3)

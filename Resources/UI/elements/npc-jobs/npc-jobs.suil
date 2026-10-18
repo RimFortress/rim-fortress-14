@@ -10,13 +10,13 @@ let loc = npc-jobs;
 /* The priority of a job: a square that shows the number, the click raises it, the right click lowers it. */
 @NpcJobPriorityButton => box .bordered-window-panel (
     set-size: 32,
+    justify-content: center,
+    align-items: center,
     min-value: 0,
     max-value: 10,
     min-color: #228B22,
     max-color: #CD5C5C,
-    mouse-filter: stop,
-    justify-content: center,
-    align-items: center
+    mouse-filter: stop
 ) {
     _ #label
 }
@@ -24,7 +24,12 @@ let loc = npc-jobs;
 /* A cell of the table of priorities: the portrait of a pop and its name. */
 @NpcJobsPopCell => row {
     box .panel-highlighted {
-        sprite-view #icon (override-direction: south, set-size: 48, stretch: fill, margin: 2)
+        sprite-view #icon (
+            set-size: 48,
+            override-direction: south,
+            stretch: fill,
+            margin: 2
+        )
     }
 
     _ #name-label (margin: 0 5, flex-grow: 1)
@@ -48,26 +53,41 @@ let loc = npc-jobs;
             _ #name-label (flex-grow: 1, align-self: center)
         }
 
-        line-edit #name-edit (flex-grow: 1, visible: false, on-text-entered => @OnNameEntered)
+        line-edit #name-edit (
+            flex-grow: 1,
+            visible: false,
+            on-text-entered => @OnNameEntered
+        )
 
-        framed-icon-button #edit-name-button .square ("<icons>/eye-dropper-solid.svg.192dpi.png", set-size: 35, on-pressed => @OnEditNamePressed)
+        framed-icon-button #edit-name-button .square (
+            "<icons>/eye-dropper-solid.svg.192dpi.png",
+            set-size: 35,
+            on-pressed => @OnEditNamePressed
+        )
 
-        confirm-button #delete-button .icon-button .square (set-size: 35, confirmation-text: "", on-pressed => @OnDeletePressed) {
+        confirm-button #delete-button .icon-button .square (
+            confirmation-text: "",
+            set-size: 35,
+            on-pressed => @OnDeletePressed
+        ) {
             _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))
         }
     }
 }
 
 /* The table of the priorities of the jobs of the pops. */
-@NpcJobsPriorityWindow => window (title: $<loc>-priority-window-title, min-size: 940 590) {
+@NpcJobsPriorityWindow => window (
+    title: $<loc>-priority-window-title,
+    min-size: 940 590
+) {
     col {
         table-control #table (flex-grow: 1)
 
         fancy-back (margin: 0 0 5 0) {
             row {
                 button #job-settings-button (
-                    margin: 0 3,
                     text: $<loc>-priority-window-settings-button-text,
+                    margin: 0 3,
                     on-pressed => @OnJobSettingsPressed
                 )
             }
@@ -76,7 +96,10 @@ let loc = npc-jobs;
 }
 
 /* The jobs (left) and the tasks of the chosen job (right). */
-@NpcJobsSettingsWindow => window (title: $<loc>-settings-window-title, min-size: 700 600) {
+@NpcJobsSettingsWindow => window (
+    title: $<loc>-settings-window-title,
+    min-size: 700 600
+) {
     row {
         box .panel-dark-bordered {
             col (flex-grow: 1) {
@@ -87,13 +110,14 @@ let loc = npc-jobs;
                 box .panel-highlighted {
                     row (flex-grow: 1) {
                         button #save-button .accept (
-                            flex-grow: 1,
                             text: $<loc>-settings-window-save-button,
+                            flex-grow: 1,
                             on-pressed => @OnSavePressed
                         )
+
                         button #create-role-button (
-                            flex-grow: 1,
                             text: $<loc>-settings-window-create-button,
+                            flex-grow: 1,
                             on-pressed => @OnCreateRolePressed
                         )
                     }
@@ -106,7 +130,11 @@ let loc = npc-jobs;
         box .panel-light-bordered (flex-grow: 1) {
             col (flex-grow: 1) {
                 box .panel-highlighted {
-                    _ .fancy-window-title (text: $<loc>-settings-window-tasks-label, flex-grow: 1, align-self: center)
+                    _ .fancy-window-title (
+                        text: $<loc>-settings-window-tasks-label,
+                        flex-grow: 1,
+                        align-self: center
+                    )
                 }
 
                 _ .low-divider-dark (margin: 1 2)

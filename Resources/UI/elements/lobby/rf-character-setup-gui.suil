@@ -3,18 +3,36 @@ use "/elements/lobby/parts";
 /* The prefix of the localization keys of the file */
 let loc = character-setup-gui-character-setup;
 
-@RfCharacterSetupGui as character-setup-gui => col .angle-rect-transparent (flex-grow: 1) {
+@RfCharacterSetupGui as character-setup-gui => col .angle-rect-transparent (
+    flex-grow: 1
+) {
     setup-header {
         setup-title ($<loc>-label)
         _ .flex-fill
-        +button #reset-button .font-big (text: $humanoid-profile-editor-reset-button, on-pressed => @ResetProfiles)
-        +button #save-profiles-button .font-big (text: $<loc>-save-profiles-button, on-pressed => @SaveProfiles)
-        button #stats-button .font-big (text: $<loc>-stats-button, on-pressed => @OpenStats)
+        +button #reset-button .font-big (
+            text: $humanoid-profile-editor-reset-button,
+            on-pressed => @ResetProfiles
+        )
+
+        +button #save-profiles-button .font-big (
+            text: $<loc>-save-profiles-button,
+            on-pressed => @SaveProfiles
+        )
+
+        button #stats-button .font-big (
+            text: $<loc>-stats-button,
+            on-pressed => @OpenStats
+        )
+
         command-button #admin-remarks-button .font-big (
             command: "adminremarks",
             text: $<loc>-adminremarks-button
         )
-        button #rules-button .font-big (text: $<loc>-rules-button, on-pressed => @OpenRules)
+
+        button #rules-button .font-big (
+            text: $<loc>-rules-button,
+            on-pressed => @OpenRules
+        )
         +button #close-button .font-big (text: $<loc>-close-button)
     }
     _ .low-divider
@@ -23,6 +41,7 @@ let loc = character-setup-gui-character-setup;
             row .fancy-back (min-height: 30) {
                 _ #characters-count .text-center
             }
+
             scroll-container .scroll-vertical {
                 col #characters
             }

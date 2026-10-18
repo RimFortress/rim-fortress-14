@@ -3,7 +3,6 @@
  */
 /* Paths */
 let icons = "/Textures/_RF/Interface";
-
 let main-font = "Source Code Pro";
 let title-font = "Boxfont Round";
 
@@ -11,20 +10,16 @@ let title-font = "Boxfont Round";
 let gold-fortress = #B07D2B;
 let rim-silver = #C0C0C0;
 let gray-silver = #7F7F7F;
-
 let signal-black = #2D2A23;
 let wooden-fortress = #5E4B3A;
-
 let black-amber = #0B0C0B;
 let graphite-black = #1A1D1A;
 let dark-forest = #293329;
 let bright-green = #4E544E;
-
 let light-good = #6EAD54;
 let good = #61A53E;
 let dark-good = #589338;
 let darkest-good = #416D29;
-
 let light-bad = #BF2233;
 let bad = #9B111E;
 let dark-bad = #8B0000;
@@ -35,21 +30,17 @@ let button-color-default = #5E4B3A;
 let button-color-hovered = #7A614B;
 let button-color-pressed = #737A52;
 let button-color-disabled = #352A21;
-
 let gold-button-color-default = #B07D2B;
 let gold-button-color-hovered = #B28A52;
 let gold-button-color-pressed = #CE9033;
 let gold-button-color-disabled = #997746;
-
 let blue-button-color-default = #226794;
 let blue-button-color-hovered = #4299D2;
 let blue-button-color-pressed = #3896A3;
 let blue-button-color-disabled = #1E5158;
-
 let tree-menu-button-color-default = transparent;
 let tree-menu-button-color-hovered = #2D2A23;
 let tree-menu-button-color-pressed = #1A1D1A;
-
 let scrollbar-grabber-default = #5E4B3A59;
 let scrollbar-grabber-hovered = #7A614B59;
 let scrollbar-grabber-pressed = #737A5259;

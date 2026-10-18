@@ -1,7 +1,16 @@
 // The shortcuts for the boxes. They are ordinary templates: what is not a parameter (a class, an id, gap, ...)
 // goes to the box.
-let row = { box (flex-direction: row) { %content% } }
-let col = { box (flex-direction: column) { %content% } }
+let row = {
+    box (flex-direction: row) {
+        %content%
+    }
+}
+
+let col = {
+    box (flex-direction: column) {
+        %content%
+    }
+}
 
 // A button that is only the picture, without a frame.
 let icon-button = (texture) {

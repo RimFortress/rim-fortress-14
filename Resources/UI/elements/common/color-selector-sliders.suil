@@ -1,9 +1,19 @@
 /* A row of the sliders and the text at its start, which takes the width of its text: the sliders start right after it. */
-let selector-row = { row .color-selector-row (gap: 4px) { %content% } }
-let selector-label = { _ (align-self: center) }
+let selector-row = {
+    row .color-selector-row (gap: 4px) {
+        %content%
+    }
+}
+
+let selector-label = {
+    _ (align-self: center)
+}
 
 /* The rules for the number boxes in the rows are in style/input/color-selector.suil */
-@RfColorSelectorSliders as color-selector-sliders => box (flex-direction: column, gap: 3px) {
+@RfColorSelectorSliders as color-selector-sliders => box (
+    flex-direction: column,
+    gap: 3px
+) {
     row (gap: 6px) {
         option-button #type-selector
         _ #description-label (flex-grow: 1, align-self: center)

@@ -7,7 +7,11 @@
     /* Top left */
     box-container #top-left (orientation: vertical) {
         top-panel-widget
-        +box-container #vote-menu (margin: 10 0 0 0, orientation: vertical, vertical-alignment: bottom)
+        +box-container #vote-menu (
+            orientation: vertical,
+            vertical-alignment: bottom,
+            margin: 10 0 0 0
+        )
     }
 
     /* Left */
