@@ -71,7 +71,13 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     /// </summary>
     private readonly record struct PendingRule(
         IReadOnlyList<Selector> Selectors,
-        IReadOnlyList<SuilDeclaration> Declarations);
+        IReadOnlyList<SuilDeclaration> Declarations,
+        SuilPosition Position);
+
+    /// <summary>
+    /// The rule that is being read or compiled, so that a mistake can say where it is.
+    /// </summary>
+    private SuilPosition _at;
 
     public void PostInject()
     {

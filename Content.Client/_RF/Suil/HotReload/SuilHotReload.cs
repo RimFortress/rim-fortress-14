@@ -40,11 +40,49 @@ public sealed partial class SuilHotReload : ISuilHotReload
     public SuilReloadResult Reload(ISuilView view)
     {
         var source = _suil.Files;
-        return Reload(view, source, source.LoadGlobals());
+        return Reload(view, source, LoadGlobals(source));
+    }
+
+    /// <summary>
+    /// The globals of the files. In a build with <c>EXCEPTION_TOLERANCE</c> a mistake in them is logged, and the files
+    /// are read without globals.
+    /// </summary>
+    private SuilGlobals LoadGlobals(ResourceSuilFileSource source)
+    {
+#if EXCEPTION_TOLERANCE
+        try
+        {
+            return source.LoadGlobals();
+        }
+        catch (Exception e)
+        {
+            _sawmill.Error($"failed to read {SuilGlobalUsings.DefaultPath}: {e.Message}");
+            return SuilGlobals.None;
+        }
+#else
+        return source.LoadGlobals();
+#endif
     }
 
     /// <inheritdoc/>
     public SuilReloadResult Reload(ISuilView view, ISuilFileSource source, SuilGlobals globals)
+    {
+#if EXCEPTION_TOLERANCE
+        // The reload must not take the game down: whatever goes wrong is a result with an error.
+        try
+        {
+            return ReloadCore(view, source, globals);
+        }
+        catch (Exception e)
+        {
+            return new SuilReloadResult(view, new List<string> { $"the reload failed: {e}" }, new List<string>(), new HashSet<string>());
+        }
+#else
+        return ReloadCore(view, source, globals);
+#endif
+    }
+
+    private SuilReloadResult ReloadCore(ISuilView view, ISuilFileSource source, SuilGlobals globals)
     {
         var errors = new List<string>();
         var warnings = new List<string>();
@@ -197,7 +235,7 @@ public sealed partial class SuilHotReload : ISuilHotReload
         _suil.Reload();
 
         var source = _suil.Files;
-        var globals = source.LoadGlobals();
+        var globals = LoadGlobals(source);
         var results = new List<SuilReloadResult>();
 
         foreach (var view in AttachedViews())
@@ -233,7 +271,7 @@ public sealed partial class SuilHotReload : ISuilHotReload
             _suil.Reload();
 
             var source = _suil.Files;
-            var globals = source.LoadGlobals();
+            var globals = LoadGlobals(source);
 
             foreach (var view in AttachedViews())
             {
@@ -251,6 +289,13 @@ public sealed partial class SuilHotReload : ISuilHotReload
 
             return changes;
         }
+#if EXCEPTION_TOLERANCE
+        catch (Exception e)
+        {
+            _sawmill.Error($"failed to check the files for changes: {e}");
+            return new SuilFileChanges(Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>());
+        }
+#endif
         finally
         {
             _checking = false;

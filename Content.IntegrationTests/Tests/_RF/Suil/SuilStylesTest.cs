@@ -328,10 +328,21 @@ public sealed class SuilStylesTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
+    public void A_Style_Error_Says_Where_The_Rule_Is()
+    {
+        var error = Assert.Throws<Content.Client._RF.Suil.SuilStyleError>(
+            () => Load("\n\nsuil-styles-control.a { no-such-property: 1; }"))!;
+
+        Assert.That(error.Position.Line, Is.EqualTo(3));
+        Assert.That(error.Message, Does.Contain("(3:").And.Contain("no-such-property"));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
     public void Custom_Properties_Are_Not_Supported_Constants_Are_Let()
     {
-        Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { --n: 1; }"));
-        Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { count: var(--n); }"));
+        Assert.Throws<Content.Client._RF.Suil.SuilStyleError>(() => Load("suil-styles-control.a { --n: 1; }"));
+        Assert.Throws<Content.Client._RF.Suil.SuilStyleError>(() => Load("suil-styles-control.a { count: var(--n); }"));
     }
 
     [Test]
@@ -454,8 +465,8 @@ public sealed class SuilStylesTest : GameTest
     public void Unknown_Tag_Property_And_Value_Are_Errors()
     {
         Assert.Throws<SuilStyleError>(() => Load("no-such-control { count: 1; }"));
-        Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { no-such-property: 1; }"));
-        Assert.Throws<ArgumentException>(() => Load("suil-styles-control.a { count: not-a-number; }"));
+        Assert.Throws<Content.Client._RF.Suil.SuilStyleError>(() => Load("suil-styles-control.a { no-such-property: 1; }"));
+        Assert.Throws<Content.Client._RF.Suil.SuilStyleError>(() => Load("suil-styles-control.a { count: not-a-number; }"));
         Assert.Throws<SuilStyleError>(() => Load("suil-styles-control[unknown=1] { count: 1; }"));
         Assert.Throws<SuilStyleError>(() => Load("suil-styles-control[count^=\"a\"] { count: 1; }"));
     }

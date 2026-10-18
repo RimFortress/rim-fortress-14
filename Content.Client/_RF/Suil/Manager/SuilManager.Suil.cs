@@ -28,6 +28,7 @@ public sealed partial class SuilManager
             switch (item)
             {
                 case SuilRule rule:
+                    _at = rule.Position;
                     var selectors = new List<Selector>(rule.Selectors.Count);
                     var valid = true;
 
@@ -40,10 +41,11 @@ public sealed partial class SuilManager
                     }
 
                     if (valid)
-                        rules.Add(new PendingRule(selectors, rule.Declarations));
+                        rules.Add(new PendingRule(selectors, rule.Declarations, rule.Position));
 
                     break;
                 case SuilFontFace fontFace:
+                    _at = fontFace.Position;
                     // Only files register fonts; rules loaded from strings (tests) don't.
                     if (fontFaces != null && TryParseFontFace(fontFace.Descriptors, out var face))
                         fontFaces.Add(face);
@@ -259,11 +261,12 @@ public sealed partial class SuilManager
 
     private bool SelectorError(string message)
     {
+        var error = new SuilStyleError("resolving selector", message, _at);
 #if EXCEPTION_TOLERANCE
-        _sawmill.Error($"error while resolving selector: {message}");
+        _sawmill.Error(error.Message);
         return false;
 #else
-        throw new SuilStyleError("resolving selector", message);
+        throw error;
 #endif
     }
 }

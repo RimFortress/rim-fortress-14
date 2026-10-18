@@ -86,7 +86,7 @@ public partial class RfBoxContainer : UiElement
 
     private bool IsReverse => FlexDirection is SuilFlexDirection.RowReverse or SuilFlexDirection.ColumnReverse;
 
-    private static float Main(Vector2 size, bool row) => row ? size.X : size.Y;
+    private static float MainAxis(Vector2 size, bool row) => row ? size.X : size.Y;
 
     private static float Cross(Vector2 size, bool row) => row ? size.Y : size.X;
 
@@ -100,7 +100,7 @@ public partial class RfBoxContainer : UiElement
         var available = Vector2.Max(availableSize - insetSize, Vector2.Zero);
         var gap = MathF.Max(0f, ToPx(Gap));
 
-        var remaining = Main(available, row);
+        var remaining = MainAxis(available, row);
         var crossAvailable = Cross(available, row);
         var mainSize = 0f;
         var crossSize = 0f;
@@ -122,8 +122,8 @@ public partial class RfBoxContainer : UiElement
                 child.Measure(Make(MathF.Max(0f, remaining), crossAvailable, row));
 
                 var desired = child.DesiredSize;
-                remaining -= Main(desired, row);
-                mainSize += Main(desired, row);
+                remaining -= MainAxis(desired, row);
+                mainSize += MainAxis(desired, row);
                 crossSize = MathF.Max(crossSize, Cross(desired, row));
                 count++;
             }
@@ -138,7 +138,7 @@ public partial class RfBoxContainer : UiElement
         var inset = ContentInset;
         var origin = new Vector2(inset.Left, inset.Top);
         var content = Vector2.Max(finalSize - new Vector2(inset.Left + inset.Right, inset.Top + inset.Bottom), Vector2.Zero);
-        var mainContent = Main(content, row);
+        var mainContent = MainAxis(content, row);
         var crossContent = Cross(content, row);
         var gap = MathF.Max(0f, ToPx(Gap));
 
@@ -161,7 +161,7 @@ public partial class RfBoxContainer : UiElement
         var growSum = 0f;
         for (var i = 0; i < count; i++)
         {
-            sizes[i] = Main(items[i].DesiredSize, row);
+            sizes[i] = MainAxis(items[i].DesiredSize, row);
             desiredSum += sizes[i];
             growSum += MathF.Max(0f, GetFlexGrow(items[i], row));
         }

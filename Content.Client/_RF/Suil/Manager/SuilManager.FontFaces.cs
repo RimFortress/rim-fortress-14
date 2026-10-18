@@ -123,11 +123,12 @@ public sealed partial class SuilManager
 
     private bool FontFaceError(string message)
     {
+        var error = new SuilStyleError("reading a font face", message, _at);
 #if EXCEPTION_TOLERANCE
-        _sawmill.Error(message);
+        _sawmill.Error(error.Message);
         return false;
 #else
-        throw new ArgumentException(message);
+        throw error;
 #endif
     }
 

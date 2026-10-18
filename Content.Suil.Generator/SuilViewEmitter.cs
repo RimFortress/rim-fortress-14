@@ -167,7 +167,7 @@ internal sealed partial class SuilViewEmitter(
         var access = element.Access switch
         {
             SuilAccess.Public => "public",
-            SuilAccess.Protected => "protected",
+            SuilAccess.Protected => viewClass.IsSealed ? "private" : "protected", // nothing derives from a sealed class
             _ => "private",
         };
 
@@ -198,7 +198,12 @@ internal sealed partial class SuilViewEmitter(
                 var call = FindMarkedMember(type, property.Name) ? "Apply" : "ApplyShorthand";
                 var soft = call == "Apply" ? string.Empty : $", {(property.IsSoft ? "true" : "false")}";
 
-                return $"global::Content.Client._RF.Suil.SuilElementValues.{call}({target}, {Literal(property.Name)}, new global::Content.Suil.ISuilValue[] {{ {written} }}{soft});";
+                var where = WhereOf(property.Position);
+                var extra = call == "Apply"
+                    ? $", {where}"
+                    : $"{soft}, {where}";
+
+                return $"global::Content.Client._RF.Suil.SuilElementValues.{call}({target}, {Literal(property.Name)}, new global::Content.Suil.ISuilValue[] {{ {written} }}{extra});";
             }
 
             throw new SuilGenerationException(SuilDiagnostics.UnknownProperty, property.Position,
@@ -414,8 +419,18 @@ internal sealed partial class SuilViewEmitter(
         var targetName = target.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var written = string.Join(", ", values.Select(ValueOf));
 
-        return $"({targetName}) global::Content.Client._RF.Suil.SuilElementValues.Read(typeof({owner.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}), {Literal(property.Name)}, new global::Content.Suil.ISuilValue[] {{ {written} }})!";
+        return $"global::Content.Client._RF.Suil.SuilElementValues.Read<{targetName}>(typeof({owner.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}), {Literal(property.Name)}, new global::Content.Suil.ISuilValue[] {{ {written} }}, {WhereOf(property.Position)})";
     }
+
+    /// <summary>
+    /// <c>"file:line:column"</c> of a property, for the message of a mistake that is found while the control is built.
+    /// </summary>
+    private static string WhereOf(SuilPosition position)
+        => position.Line > 0
+            ? Literal(position.File == null
+                ? $"{position.Line}:{position.Column}"
+                : $"{System.IO.Path.GetFileName(position.File)}:{position.Line}:{position.Column}")
+            : "null";
 
     /// <summary>
     /// The C# expression that builds a value of the file again.
@@ -606,7 +621,7 @@ internal sealed partial class SuilViewEmitter(
         sb.AppendLine($"        object? {view}.SuilRootChildren => __suilRootChildren;");
         sb.AppendLine();
         sb.AppendLine("        private global::System.Collections.Generic.ICollection<global::Robust.Client.UserInterface.Control>? __suilContent;");
-        sb.AppendLine("        private global::System.Collections.Generic.IReadOnlyList<global::Robust.Client.UserInterface.Control>? __suilContentBuilt;");
+        sb.AppendLine("        private global::System.Collections.Generic.IReadOnlyList<global::Robust.Client.UserInterface.Control>? __suilContentBuilt = null;");
         sb.AppendLine($"        object? {view}.SuilContent => __suilContent;");
         sb.AppendLine($"        object? {view}.SuilContentBuilt => __suilContentBuilt;");
         sb.AppendLine($"        void {view}.SuilSetContent(object? collection)");

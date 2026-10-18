@@ -33,7 +33,7 @@ public partial class SuilManager
     public void LoadDirectory(ResPath path)
     {
         var source = Files;
-        var globals = source.LoadGlobals();
+        var globals = LoadGlobals(source);
 
         var files = _resource.ContentFindFiles(path)
             .Where(filePath => filePath.Extension == "suil" && !filePath.Filename.StartsWith('.'))
@@ -51,10 +51,55 @@ public partial class SuilManager
     /// <inheritdoc/>
     public void LoadFile(ResPath path)
     {
-        LoadFile(path, Files, Files.LoadGlobals());
+        LoadFile(path, Files, LoadGlobals(Files));
     }
 
+    /// <summary>
+    /// The globals of the files. In a build with <c>EXCEPTION_TOLERANCE</c> a mistake in them is logged, and the files
+    /// are read without globals.
+    /// </summary>
+    private SuilGlobals LoadGlobals(ResourceSuilFileSource source)
+    {
+#if EXCEPTION_TOLERANCE
+        try
+        {
+            return source.LoadGlobals();
+        }
+        catch (Exception e)
+        {
+            _sawmill.Error($"failed to read {SuilGlobalUsings.DefaultPath}: {e.Message}");
+            return SuilGlobals.None;
+        }
+#else
+        return source.LoadGlobals();
+#endif
+    }
+
+    /// <summary>
+    /// Reads the rules of a file. A mistake in the file says where it is (the file, the line); in a build with
+    /// <c>EXCEPTION_TOLERANCE</c> it is logged, and the file gives no rules, the other files are read as usual.
+    /// </summary>
     private void LoadFile(ResPath path, ResourceSuilFileSource source, SuilGlobals globals)
+    {
+#if EXCEPTION_TOLERANCE
+        try
+        {
+            LoadFileCore(path, source, globals);
+        }
+        catch (Exception e)
+        {
+            _pendingByFile.Remove(path);
+            _fontFacesByFile.Remove(path);
+            _sawmill.Error(e is System.IO.FileNotFoundException or SuilTokenizeError or SuilParserError or SuilExpansionError or SuilStyleError
+                ? e.Message
+                : $"failed to read {source.ToSuilPath(path)}: {e}");
+        }
+#else
+        LoadFileCore(path, source, globals);
+#endif
+    }
+
+    private void LoadFileCore(ResPath path, ResourceSuilFileSource source, SuilGlobals globals)
     {
         var suilPath = source.ToSuilPath(path);
 
@@ -98,59 +143,88 @@ public partial class SuilManager
 
         foreach (var rule in pending)
         {
-            foreach (var selector in rule.Selectors)
+            _at = rule.Position;
+
+            try
             {
-                var elemType = SuilStylesheet.GetElementType(selector);
-                // Kept apart so that "color: red !important; color: blue;" keeps both: importance, not
-                // source order, decides the winner, and the cascade applies the important pass last.
-                var normalValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
-                    StringComparer.OrdinalIgnoreCase);
-                var importantValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
-                    StringComparer.OrdinalIgnoreCase);
-
-                for (var i = 0; i < rule.Declarations.Count; i++)
-                {
-                    var declaration = rule.Declarations[i];
-
-                    var propertyValues = declaration.Important ? importantValues : normalValues;
-
-                    if (TryResolveShorthandValue(elemType, declaration, out var expanded))
-                    {
-                        foreach (var prop in expanded)
-                        {
-                            propertyValues[prop.Name] = (prop.Value, prop.Accessor, i);
-                        }
-
-                        continue;
-                    }
-
-                    if (!TryResolveDeclarationValue(elemType, declaration, out var accessor, out var name, out var value))
+                CompileRule(rule, rules);
+            }
+            catch (SuilStyleError)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                var error = new SuilStyleError("compiling a rule", e.Message, rule.Position, e);
 #if EXCEPTION_TOLERANCE
-                        continue;
+                _sawmill.Error(error.Message);
 #else
-                        throw new ArgumentException($"failed to apply declaration '{declaration.Name}'");
+                throw error;
 #endif
-
-                    propertyValues[name] = (value, accessor.Value, i);
-                }
-
-                if (normalValues.Count == 0 && importantValues.Count == 0)
-                    continue;
-
-                var properties = normalValues
-                    .Select(kv => new SuilStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order))
-                    .Concat(importantValues.Select(kv =>
-                        new SuilStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order, Important: true)))
-                    .OrderBy(p => p.Order)
-                    .ToList();
-
-                rules.Add(new SuilStyleRule(selector, properties)
-                {
-                    HasImportant = importantValues.Count > 0,
-                });
             }
         }
 
         return rules;
+    }
+
+    private void CompileRule(PendingRule rule, List<SuilStyleRule> rules)
+    {
+        foreach (var selector in rule.Selectors)
+        {
+            var elemType = SuilStylesheet.GetElementType(selector);
+            // Kept apart so that "color: red !important; color: blue;" keeps both: importance, not
+            // source order, decides the winner, and the cascade applies the important pass last.
+            var normalValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
+                StringComparer.OrdinalIgnoreCase);
+            var importantValues = new Dictionary<string, (object Value, SuilStyleAccessor Accessor, int Order)>(
+                StringComparer.OrdinalIgnoreCase);
+
+            for (var i = 0; i < rule.Declarations.Count; i++)
+            {
+                var declaration = rule.Declarations[i];
+
+                var propertyValues = declaration.Important ? importantValues : normalValues;
+
+                if (TryResolveShorthandValue(elemType, declaration, out var expanded))
+                {
+                    foreach (var prop in expanded)
+                    {
+                        propertyValues[prop.Name] = (prop.Value, prop.Accessor, i);
+                    }
+
+                    continue;
+                }
+
+                if (!TryResolveDeclarationValue(elemType, declaration, out var accessor, out var name, out var value))
+                {
+                    var error = new SuilStyleError("applying a declaration",
+                        $"failed to apply declaration '{declaration.Name}'",
+                        declaration.Position.Line > 0 ? declaration.Position : rule.Position);
+#if EXCEPTION_TOLERANCE
+                    _sawmill.Error(error.Message);
+                    continue;
+#else
+                    throw error;
+#endif
+                }
+
+                propertyValues[name] = (value, accessor.Value, i);
+            }
+
+            if (normalValues.Count == 0 && importantValues.Count == 0)
+                continue;
+
+            var properties = normalValues
+                .Select(kv => new SuilStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order))
+                .Concat(importantValues.Select(kv =>
+                    new SuilStyleProperty(kv.Key, kv.Value.Value, kv.Value.Accessor, kv.Value.Order, Important: true)))
+                .OrderBy(p => p.Order)
+                .ToList();
+
+            rules.Add(new SuilStyleRule(selector, properties)
+            {
+                HasImportant = importantValues.Count > 0,
+            });
+        }
     }
 }

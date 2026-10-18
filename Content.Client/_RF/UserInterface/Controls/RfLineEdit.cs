@@ -605,7 +605,7 @@ public partial class RfLineEdit : UiElement
         else if (function == EngineKeyFunctions.TextPaste)
         {
             if (Editable)
-                Paste();
+                _ = Paste();
         }
         else if (function == EngineKeyFunctions.TextCut)
         {

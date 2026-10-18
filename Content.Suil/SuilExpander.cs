@@ -45,8 +45,9 @@ public static class SuilExpander
     public static SuilFile Expand(
         string text,
         ISuilFileSource? source = null,
-        IReadOnlyList<string>? globalUsings = null)
-        => Expand(SuilParser.ParseFile(text), source, globalUsings);
+        IReadOnlyList<string>? globalUsings = null,
+        string? fileName = null)
+        => Expand(SuilParser.ParseFile(text, fileName), source, globalUsings);
 
     /// <summary>
     /// Turns the string of <c>use</c> into a path for <see cref="ISuilFileSource"/>. Only absolute paths are accepted:
@@ -342,7 +343,17 @@ public static class SuilExpander
             if (!_loading.Add(path))
                 throw new SuilExpansionError(context, $"import cycle through '{path}'", position);
 
-            var imported = source.Load(path);
+            SuilFile imported;
+
+            try
+            {
+                imported = source.Load(path);
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                _loading.Remove(path);
+                throw new SuilExpansionError(context, $"the file '{path}' is not found", position);
+            }
 
             if (imported.Root != null)
             {

@@ -85,7 +85,7 @@ public sealed class SuilViewGeneratorTests
             """.Replace("calc(1px + 2px)", "rgb(1, 2, 3)").Replace(", background: $key(n: 1)", string.Empty));
 
         AssertClean(result);
-        Assert.That(result.Source, Does.Contain("SuilElementValues.Read(typeof(global::Content.Client._RF.Suil.UiElement), \"tint\""));
+        Assert.That(result.Source, Does.Contain("SuilElementValues.Read<").And.Contain("(typeof(global::Content.Client._RF.Suil.UiElement), \"tint\"").And.Contain("Picker.suil:"));
 
         var view = (ISuilView) Activator.CreateInstance(result.Load().GetType("Game.Ui.Picker")!)!;
         var tint = view.SuilGetField("u")!;
@@ -329,7 +329,7 @@ public sealed class SuilViewGeneratorTests
 
         AssertClean(result);
         Assert.That(result.Source, Does.Contain("public global::Content.Client._RF.UserInterface.Controls.RfButton Up = default!;"));
-        Assert.That(result.Source, Does.Contain("protected global::Content.Client._RF.UserInterface.Controls.RfButton DownButton = default!;"));
+        Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.RfButton DownButton = default!;")); // the class is sealed: nothing can use a protected field
         Assert.That(result.Source, Does.Contain("private global::Content.Client._RF.UserInterface.Controls.RfBoxContainer TopRow = default!;"));
         Assert.That(result.Source, Does.Contain("private global::Robust.Client.UserInterface.Controls.SpriteView View = default!;"));
         Assert.That(result.Source, Does.Contain("this.AddSuilStyleClass(\"picker\");"));

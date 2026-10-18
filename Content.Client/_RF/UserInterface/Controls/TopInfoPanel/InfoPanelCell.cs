@@ -11,7 +11,7 @@ public sealed partial class InfoPanelCell : RfBoxContainer
 
     public string TexturePath { set => Icon.BackgroundImage = _resources.GetResource<TextureResource>(new ResPath(value)).Texture; }
 
-    public string Text { set => Label.Text = value; }
+    public new string Text { set => Label.Text = value; }
 
     public InfoPanelCell()
     {

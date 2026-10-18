@@ -539,7 +539,7 @@ public sealed class SuilExpanderTests
         {
             ["/a.suil"] = "use \"/b.suil\";", ["/b.suil"] = "use \"/a.suil\";",
         }), "cycle");
-        Assert.Throws<FileNotFoundException>(() => Expand("use \"/nope.suil\";\nrow", new()));
+        Assert.Throws<SuilExpansionError>(() => Expand("use \"/nope.suil\";\nrow", new()));
     }
 
     [Test]

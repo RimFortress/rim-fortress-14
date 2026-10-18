@@ -93,14 +93,17 @@ internal static class GeneratorHarness
 
             public static class SuilElementValues
             {
-                public static void Apply(Robust.Client.UserInterface.Control target, string name, Content.Suil.ISuilValue[] values)
+                public static void Apply(Robust.Client.UserInterface.Control target, string name, Content.Suil.ISuilValue[] values, string? at = null)
                     => ((UiElement) target).Calls.Add("apply:" + name);
 
-                public static void ApplyShorthand(Robust.Client.UserInterface.Control target, string name, Content.Suil.ISuilValue[] values, bool soft = false)
+                public static void ApplyShorthand(Robust.Client.UserInterface.Control target, string name, Content.Suil.ISuilValue[] values, bool soft = false, string? at = null)
                     => ((UiElement) target).Calls.Add("shorthand:" + name + ":" + soft);
 
-                public static object? Read(System.Type owner, string name, Content.Suil.ISuilValue[] values)
+                public static object? Read(System.Type owner, string name, Content.Suil.ISuilValue[] values, string? at = null)
                     => new Tint { Text = owner.Name + "." + name + ":" + string.Join(",", System.Linq.Enumerable.Select(values, v => v.ToString())) };
+
+                public static T Read<T>(System.Type owner, string name, Content.Suil.ISuilValue[] values, string? at = null)
+                    => (T) Read(owner, name, values, at)!;
             }
 
             public class UiElement : Robust.Client.UserInterface.Control
