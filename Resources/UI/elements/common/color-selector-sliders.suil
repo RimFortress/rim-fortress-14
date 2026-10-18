@@ -3,7 +3,7 @@ let selector-row = { row .color-selector-row (gap: 4px) { %content% } }
 let selector-label = { _ (align-self: center) }
 
 /* The rules for the number boxes in the rows are in style/input/color-selector.suil */
-@RfColorSelectorSliders => box (flex-direction: column, gap: 3px) {
+@RfColorSelectorSliders as color-selector-sliders => box (flex-direction: column, gap: 3px) {
     row (gap: 6px) {
         option-button #type-selector
         _ #description-label (flex-grow: 1, align-self: center)

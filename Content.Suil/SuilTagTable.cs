@@ -7,6 +7,7 @@ namespace Content.Suil;
 public sealed class SuilTagTable
 {
     private readonly Dictionary<string, List<Type>> _byTag = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<Type>> _explicit = new(StringComparer.Ordinal);
 
     public void Add(string tag, Type type)
     {
@@ -17,9 +18,42 @@ public sealed class SuilTagTable
             types.Add(type);
     }
 
-    public void Clear() => _byTag.Clear();
+    /// <summary>
+    /// Adds a tag that was given to a class on purpose (<c>@Class as tag =&gt; ...</c>). It wins over the tags that
+    /// controls have by their names: <c>option-button</c> is the one that was given, not the engine's
+    /// <c>OptionButton</c>.
+    /// </summary>
+    public void AddExplicit(string tag, Type type)
+    {
+        if (!_explicit.TryGetValue(tag, out var types))
+            _explicit[tag] = types = new List<Type>();
 
-    public IEnumerable<string> Tags => _byTag.Keys;
+        if (!types.Contains(type))
+            types.Add(type);
+    }
+
+    public void Clear()
+    {
+        _byTag.Clear();
+        _explicit.Clear();
+    }
+
+    public IEnumerable<string> Tags
+    {
+        get
+        {
+            foreach (var tag in _byTag.Keys)
+            {
+                yield return tag;
+            }
+
+            foreach (var tag in _explicit.Keys)
+            {
+                if (!_byTag.ContainsKey(tag))
+                    yield return tag;
+            }
+        }
+    }
 
     /// <summary>
     /// Finds the type of a tag. A tag that stands for several types is not resolved: <paramref name="candidates"/>
@@ -30,7 +64,7 @@ public sealed class SuilTagTable
         type = null;
         candidates = Array.Empty<Type>();
 
-        if (!_byTag.TryGetValue(tag, out var types))
+        if (!_explicit.TryGetValue(tag, out var types) && !_byTag.TryGetValue(tag, out types))
             return false;
 
         if (types.Count == 1)

@@ -33,7 +33,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </para>
 /// </remarks>
 [Virtual, UsedImplicitly]
-[SuilTag("option-button")]
 public partial class RfOptionButton : RfButton
 {
 

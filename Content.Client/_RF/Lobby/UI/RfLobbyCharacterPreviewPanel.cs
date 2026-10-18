@@ -7,7 +7,6 @@ using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.Lobby.UI;
 
-[SuilTag("lobby-character-preview-panel")]
 public sealed partial class RfLobbyCharacterPreviewPanel : RfBoxContainer
 {
     [Dependency] private IEntityManager _entManager = default!;

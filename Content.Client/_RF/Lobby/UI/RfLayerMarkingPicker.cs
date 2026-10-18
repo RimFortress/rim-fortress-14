@@ -17,7 +17,6 @@ namespace Content.Client._RF.Lobby.UI;
 /// <see cref="RfLayerMarkingOrderer"/> while reordering) and the limits of the layer. The
 /// <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingPicker"/>.
 /// </summary>
-[SuilTag("layer-marking-picker")]
 public sealed partial class RfLayerMarkingPicker : RfBoxContainer
 {
     private const int ColumnWidth = 500;

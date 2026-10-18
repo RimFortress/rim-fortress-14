@@ -1,7 +1,7 @@
 /* The prefix of the localization keys of the file */
 let loc = lobby-character-preview-panel;
 
-@RfLobbyCharacterPreviewPanel => col {
+@RfLobbyCharacterPreviewPanel as lobby-character-preview-panel => col {
     _ .rim-heading .label-heading (text: $lobby-characters-preview-panel-header)
     col #loaded (visible: false) {
         row #view-box (align-self: center)

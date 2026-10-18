@@ -8,7 +8,6 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Lobby.UI;
 
-[SuilTag("expedition-equipment-editor")]
 public sealed partial class RfExpeditionEquipmentEditor : RfBoxContainer
 {
     [Dependency] private IPrototypeManager _protoManager = default!;

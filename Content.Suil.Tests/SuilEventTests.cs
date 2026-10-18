@@ -1528,6 +1528,30 @@ public sealed class SuilViewDeclarationTests
     }
 
     [Test]
+    public void A_View_May_Give_Its_Class_A_Tag()
+    {
+        var file = SuilExpander.Expand("""
+            @Game.Ui.Picker as my-picker => box
+            @Plain => box
+            @Spaced   as   other-tag
+              => box
+            """);
+
+        var views = file.Views.ToList();
+
+        Assert.That(views.Select(v => v.ClassName), Is.EqualTo(new[] { "Game.Ui.Picker", "Plain", "Spaced" }));
+        Assert.That(views.Select(v => v.Tag), Is.EqualTo(new[] { "my-picker", null, "other-tag" }));
+    }
+
+    [Test]
+    public void A_Tag_After_As_Is_Required_And_Can_Not_Be_The_Untyped_One()
+    {
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile("@A as => box"));
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile("@A as _ => box"));
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile("@A as 5 => box"));
+    }
+
+    [Test]
     public void Views_See_The_Lets_Above_Them_And_Are_Expanded()
     {
         var file = SuilExpander.Expand("""

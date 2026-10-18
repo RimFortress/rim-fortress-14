@@ -1,4 +1,4 @@
-@RfTabContainer => box (flex-direction: column) {
+@RfTabContainer as tab => box (flex-direction: column) {
     +box #tab-bar .tab-bar (flex-direction: row)
     +_ #panel .tab-panel (flex-grow: 1)
 }

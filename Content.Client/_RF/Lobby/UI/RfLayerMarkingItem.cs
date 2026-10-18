@@ -19,7 +19,6 @@ namespace Content.Client._RF.Lobby.UI;
 /// A marking in the list of a layer: its preview, the button that selects it and the button that opens the colors of
 /// its sprites. The <see cref="RfBoxContainer"/> version of <see cref="LayerMarkingItem"/>.
 /// </summary>
-[SuilTag("layer-marking-item")]
 public sealed partial class RfLayerMarkingItem : RfBoxContainer, ISearchableControl
 {
     [Dependency] private IEntityManager _entity = default!;

@@ -45,7 +45,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </para>
 /// </remarks>
 [Virtual, UsedImplicitly]
-[SuilTag("tab")]
 public partial class RfTabContainer : RfBoxContainer
 {
     /// <summary>

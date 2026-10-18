@@ -19,7 +19,6 @@ using Direction = Robust.Shared.Maths.Direction;
 
 namespace Content.Client._RF.Lobby.UI
 {
-    [SuilTag("humanoid-profile-editor")]
     public sealed partial class RfHumanoidProfileEditor : RfBoxContainer
     {
         [Dependency] private IClientPreferencesManager _preferencesManager = default!;

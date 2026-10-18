@@ -1,4 +1,4 @@
-@RfLayerMarkingPicker => col (gap: 4px, min-height: 400px) {
+@RfLayerMarkingPicker as layer-marking-picker => col (gap: 4px, min-height: 400px) {
     line-edit #search-bar (place-holder: $markings-search)
     scroll-container #selection-items .scroll-vertical {
         grid #items (columns: 2, gap: 4px, padding: 4px)

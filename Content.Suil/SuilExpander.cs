@@ -283,7 +283,7 @@ public static class SuilExpander
                         }
 
                         CheckSlots(expandedRoot, ref slots);
-                        _rules.Add(new SuilViewDeclaration(view.ClassName, expandedRoot, view.Position));
+                        _rules.Add(new SuilViewDeclaration(view.ClassName, expandedRoot, view.Position, view.Tag));
                         break;
                     case SuilViewDeclaration:
                         break; // the views of an imported file belong to that file

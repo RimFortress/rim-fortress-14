@@ -6,7 +6,7 @@ let profile-block = { col .panel-highlighted (margin: 10px) { %content% } }
 let profile-low-divider = { _ .low-divider (margin: 2px) }
 let profile-high-divider = { _ .high-divider (margin: 2px) }
 
-@RfHumanoidProfileEditor => col (flex-grow: 1, padding: 10px) {
+@RfHumanoidProfileEditor as humanoid-profile-editor => col (flex-grow: 1, padding: 10px) {
     /* Middle container */
     row (gap: 10px) {
         /* Name box */

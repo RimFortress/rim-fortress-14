@@ -1,7 +1,7 @@
 /* The prefix of the localization keys of the file */
 let loc = ui-lobby;
 
-@RfLobbyGui => layout-container {
+@RfLobbyGui as lobby-gui => layout-container {
     /* Background */
     +texture-rect #background (vertical-expand, horizontal-expand, stretch: keep-aspect-covered)
     row #main-container (padding: 10px, gap: 2px) {

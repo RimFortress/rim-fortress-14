@@ -80,7 +80,7 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// view = "@" , class , "=&gt;" , element
+    /// view = "@" , class , [ "as" , tag ] , "=&gt;" , element
     /// class = ident , { "." , ident }
     /// </summary>
     private static SuilViewDeclaration ConsumeViewDeclaration(ref SuilTokenStream stream)
@@ -113,6 +113,23 @@ public static partial class SuilParser
 
         stream.SkipWhitespace();
 
+        string? tag = null;
+
+        if (stream.PeekNext() is IdentToken { Value: "as" })
+        {
+            stream.ConsumeNext();
+            stream.SkipWhitespace();
+
+            if (stream.ConsumeNext() is not IdentToken tagName || tagName.Value == "_")
+            {
+                throw ErrorAtCurrent(ref stream, context,
+                    $"expected the tag of '@{name}' after 'as', not {Describe(stream.Current)}");
+            }
+
+            tag = tagName.Value;
+            stream.SkipWhitespace();
+        }
+
         if (!(stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is DelimToken { CodePoint: '>' }))
         {
             throw ErrorAtNext(ref stream, context,
@@ -125,7 +142,7 @@ public static partial class SuilParser
         if (ConsumeElement(ref stream) is not SuilElement element)
             throw ErrorAtCurrent(ref stream, context, "a content slot can't be the root of a view");
 
-        return new SuilViewDeclaration(name.ToString(), element, position);
+        return new SuilViewDeclaration(name.ToString(), element, position, tag);
     }
 
     /// <summary>

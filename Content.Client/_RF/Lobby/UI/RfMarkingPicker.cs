@@ -14,7 +14,6 @@ namespace Content.Client._RF.Lobby.UI;
 /// The tabs are <see cref="RfTabContainer"/>s (<c>.marking-tabs</c>), the layout is in <c>RfMarkingPicker.xaml</c>,
 /// the styles are in <c>Resources/UI/_RF/lobby/markings.suil</c>.
 /// </remarks>
-[SuilTag("marking-picker")]
 public sealed partial class RfMarkingPicker : RfBoxContainer
 {
     private MarkingsViewModel? _markingsModel;

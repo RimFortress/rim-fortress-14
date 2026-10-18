@@ -26,7 +26,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </para>
 /// </remarks>
 [UsedImplicitly]
-[SuilTag("color-selector-sliders")]
 public sealed partial class RfColorSelectorSliders : RfBoxContainer
 {
     [Dependency] private ILocalizationManager _localization = default!;

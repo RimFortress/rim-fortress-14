@@ -23,7 +23,6 @@ namespace Content.Client._RF.Lobby.UI;
 /// A marking is in an <c>.marking-item-slot</c>, between the <c>.marking-drop-beacon</c>s; the beacon that the
 /// marking would be dropped on gets <c>.drop-target</c>.
 /// </remarks>
-[SuilTag("layer-marking-orderer")]
 public sealed partial class RfLayerMarkingOrderer : RfBoxContainer
 {
     private const float ItemHeight = 64f;

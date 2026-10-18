@@ -46,7 +46,7 @@ public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) 
 /// <c>@Game.Ui.Picker =&gt; button { ... }</c>: the tree of a C# class. <paramref name="ClassName"/> is as it is written,
 /// a full name or its tail (<c>Ui.Picker</c>, <c>Picker</c>) that names one class.
 /// </summary>
-public sealed record SuilViewDeclaration(string ClassName, SuilElement Root, SuilPosition Position) : ISuilTopLevelItem;
+public sealed record SuilViewDeclaration(string ClassName, SuilElement Root, SuilPosition Position, string? Tag = null) : ISuilTopLevelItem;
 
 /// <summary>
 /// <c>use "path";</c>

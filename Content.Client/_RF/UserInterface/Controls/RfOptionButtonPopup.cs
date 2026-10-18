@@ -9,7 +9,6 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// <summary>
 /// The drop-down list of <see cref="RfOptionButton"/>; its layout is in <c>elements/common/option-button-popup.suil</c>.
 /// </summary>
-[SuilTag("option-button-popup")]
 internal sealed partial class RfOptionButtonPopup : Popup
 {
     /// <summary>

@@ -8,7 +8,6 @@ namespace Content.Client._RF.Lobby.UI;
 /// <summary>
 /// Holds character data on the side of the setup GUI.
 /// </summary>
-[SuilTag("character-picker-button")]
 public sealed partial class RfCharacterPickerButton : RfButton
 {
     [Dependency] private IEntityManager _entManager = default!;

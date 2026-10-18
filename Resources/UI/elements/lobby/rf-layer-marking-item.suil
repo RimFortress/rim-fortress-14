@@ -1,4 +1,4 @@
-@RfLayerMarkingItem => col (mouse-filter: pass, gap: 4px) {
+@RfLayerMarkingItem as layer-marking-item => col (mouse-filter: pass, gap: 4px) {
     row (gap: 4px) {
         layered-texture #marking-texture .panel-dark-bordered (
             set-size: 64 64,

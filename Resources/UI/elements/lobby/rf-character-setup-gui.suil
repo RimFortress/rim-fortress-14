@@ -3,7 +3,7 @@ use "/elements/lobby/parts";
 /* The prefix of the localization keys of the file */
 let loc = character-setup-gui-character-setup;
 
-@RfCharacterSetupGui => col .angle-rect-transparent (flex-grow: 1) {
+@RfCharacterSetupGui as character-setup-gui => col .angle-rect-transparent (flex-grow: 1) {
     setup-header {
         setup-title ($<loc>-label)
         _ .flex-fill

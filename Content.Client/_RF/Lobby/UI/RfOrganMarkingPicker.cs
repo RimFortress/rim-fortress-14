@@ -12,7 +12,6 @@ namespace Content.Client._RF.Lobby.UI;
 /// The markings of one organ: a tab for every layer that has markings, in every one the
 /// <see cref="RfLayerMarkingPicker"/>. The <see cref="RfBoxContainer"/> version of <see cref="OrganMarkingPicker"/>.
 /// </summary>
-[SuilTag("organ-marking-picker")]
 public sealed partial class RfOrganMarkingPicker : RfBoxContainer
 {
     [Dependency] private MarkingManager _marking = default!;

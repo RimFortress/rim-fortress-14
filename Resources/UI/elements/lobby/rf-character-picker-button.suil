@@ -1,7 +1,7 @@
 /* The prefix of the localization keys of the file */
 let loc = character-setup-gui-character-picker-button;
 
-@RfCharacterPickerButton => button {
+@RfCharacterPickerButton as character-picker-button => button {
     row {
         col {
             +framed-icon-button #up .open-both ("<icons>/sort-up-solid.svg.192dpi.png", disabled, set-size: 36 36)

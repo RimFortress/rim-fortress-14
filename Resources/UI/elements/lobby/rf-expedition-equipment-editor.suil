@@ -6,7 +6,7 @@ let loc = expedition-equipment-editor;
 
 let equipment-list = { scroll-container .scroll-vertical .panel-light-transparent (padding: 15px) { %content% } }
 
-@RfExpeditionEquipmentEditor => col .angle-rect-transparent (flex-grow: 1) {
+@RfExpeditionEquipmentEditor as expedition-equipment-editor => col .angle-rect-transparent (flex-grow: 1) {
     /* Top panel */
     setup-header {
         setup-title ($<loc>-label)

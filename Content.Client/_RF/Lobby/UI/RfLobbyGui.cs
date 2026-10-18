@@ -5,7 +5,6 @@ using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.Lobby.UI
 {
-    [SuilTag("lobby-gui")]
     public sealed partial class RfLobbyGui : UIScreen
     {
         [Dependency] private IClientConsoleHost _consoleHost = default!;

@@ -127,6 +127,58 @@ public sealed class SuilViewGeneratorTests
     }
 
     [Test]
+    public void A_Declaration_Can_Give_Its_Class_A_Tag()
+    {
+        var result = GeneratorHarness.Run("""
+            using Content.Suil;
+            using Content.Client._RF.UserInterface.Controls;
+            namespace Game.Ui;
+
+            public sealed partial class Tagged : RfButton { public Tagged() { InitializeComponent(); } }
+            public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+            """, new Dictionary<string, string>
+        {
+            ["/Tagged.suil"] = "@Game.Ui.Tagged as my-tag => button",
+            ["/Picker.suil"] = "@Game.Ui.Picker => button { my-tag #inner }",
+        });
+
+        Assert.That(result.GeneratorDiagnostics, Is.Empty, string.Join("\n", result.GeneratorDiagnostics));
+        Assert.That(result.CompilationErrors, Is.Empty, string.Join("\n", result.CompilationErrors));
+
+        var assembly = result.Load();
+        var picker = (ISuilView) Activator.CreateInstance(assembly.GetType("Game.Ui.Picker")!)!;
+        Assert.That(picker.SuilGetField("inner")!.GetType().Name, Is.EqualTo("Tagged"));
+
+        var tablesType = assembly.GetTypes().Single(t => t.Name.StartsWith("SuilDeclaredTags_"));
+        var tags = new SuilTagTable();
+        ((ISuilControlTables) Activator.CreateInstance(tablesType)!).RegisterTags(tags);
+
+        Assert.That(tags.TryGet("my-tag", out var type, out _), Is.True, "the game finds the tag while it runs");
+        Assert.That(type!.Name, Is.EqualTo("Tagged"));
+        Assert.That(assembly.GetCustomAttributes(false).Select(a => a.GetType().Name), Does.Contain("SuilTagAttribute"),
+            "the projects that reference the assembly find it too");
+    }
+
+    [Test]
+    public void A_Class_With_A_Tag_Of_A_Declaration_Is_Known_Only_By_It()
+    {
+        var result = GeneratorHarness.Run("""
+            using Content.Suil;
+            using Content.Client._RF.UserInterface.Controls;
+            namespace Game.Ui;
+
+            public sealed partial class Tagged : RfButton { public Tagged() { InitializeComponent(); } }
+            public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+            """, new Dictionary<string, string>
+        {
+            ["/Tagged.suil"] = "@Game.Ui.Tagged as my-tag => button",
+            ["/Picker.suil"] = "@Game.Ui.Picker => button { tagged #inner }",
+        });
+
+        Assert.That(result.GeneratorDiagnostics.Select(d => d.ToString()), Has.Some.Contain("tagged"));
+    }
+
+    [Test]
     public void A_Shorthand_And_A_Protected_Property_Go_Through_The_Run_Time_Helpers()
     {
         var result = Run("button { padded #a (pad: 1px 2px, hidden: 4) padded #b (pad: ?1px) }", TagsHeader + """
