@@ -12,7 +12,7 @@
                 "<icons>/gear-solid-full.svg.192dpi.png",
                 tool-tip: $notification-settings-tooltip,
                 set-size: 24,
-                on-pressed => @OnSettingsPressed
+                on-pressed => @Controllers.NotificationsSettings.ToggleWindow
             )
         }
 

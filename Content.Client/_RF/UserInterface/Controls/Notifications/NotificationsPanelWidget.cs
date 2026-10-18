@@ -18,13 +18,6 @@ public sealed partial class NotificationsPanelWidget : UIWidget
         _panelController = UserInterfaceManager.GetUIController<NotificationsPanelUiController>();
     }
 
-    private void OnSettingsPressed()
-    {
-        UserInterfaceManager
-            .GetUIController<NotificationsSettingsUiController>()
-            .ToggleWindow();
-    }
-
     protected override void EnteredTree()
     {
         base.EnteredTree();

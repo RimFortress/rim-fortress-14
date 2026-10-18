@@ -130,10 +130,6 @@ public sealed partial class RfColorSelectorSliders : RfBoxContainer
             input.OnValueChanged += args => slider.Value = args.New / GetDivisor(captured);
         }
 
-        HexEdit.OnTextEntered += OnHexEntered;
-        // Enter is easy to miss while editing several colors in a row.
-        HexEdit.OnFocusExit += OnHexEntered;
-
         UpdateType();
         Color = _currentColor;
     }

@@ -45,6 +45,11 @@ let selector-label = {
 
     selector-row {
         selector-label #hex-label (text: $color-selector-input-hex)
-        line-edit #hex-edit (flex-grow: 1, align-self: center)
+        line-edit #hex-edit (
+            flex-grow: 1,
+            align-self: center,
+            on-text-entered => @OnHexEntered,
+            on-focus-exit => @OnHexEntered /* Enter is easy to miss while editing several colors in a row */
+        )
     }
 }

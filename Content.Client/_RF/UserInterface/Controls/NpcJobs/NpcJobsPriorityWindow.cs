@@ -23,13 +23,6 @@ public sealed partial class NpcJobsPriorityWindow : RfWindow
         InitializeComponent();
     }
 
-    private void OnJobSettingsPressed()
-    {
-        UserInterfaceManager
-            .GetUIController<NpcJobsUiController>()
-            .ToggleSettingsWindow();
-    }
-
     public void EnsureSetup()
     {
         _npcJobs = _entity.System<NpcJobsSystem>();

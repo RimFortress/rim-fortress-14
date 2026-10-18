@@ -56,13 +56,21 @@ let loc = npc-jobs;
         line-edit #name-edit (
             flex-grow: 1,
             visible: false,
-            on-text-entered => @OnNameEntered
+            on-text-entered => {
+                #label-container.visible: true;
+                #name-edit.visible: false;
+                @ApplyName
+            }
         )
 
         framed-icon-button #edit-name-button .square (
             "<icons>/eye-dropper-solid.svg.192dpi.png",
             set-size: 35,
-            on-pressed => @OnEditNamePressed
+            on-pressed => {
+                #label-container.visible: false;
+                #name-edit.visible: true;
+                @SelectName
+            }
         )
 
         confirm-button #delete-button .icon-button .square (
@@ -88,7 +96,7 @@ let loc = npc-jobs;
                 button #job-settings-button (
                     text: $<loc>-priority-window-settings-button-text,
                     margin: 0 3,
-                    on-pressed => @OnJobSettingsPressed
+                    on-pressed => @Controllers.NpcJobs.ToggleSettingsWindow
                 )
             }
         }

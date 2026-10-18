@@ -48,12 +48,6 @@ public sealed partial class PopList : UIWidget
     private void SetCombatIcon(string path)
         => CombatIcon.BackgroundImage = _resources.GetResource<TextureResource>(new ResPath(path)).Texture;
 
-    private void OnCombatPressed()
-    {
-        _executable.SetCombatMode(CombatButton.Pressed);
-        UpdateCombat();
-    }
-
     private void AddPop(EntityUid uid)
     {
         if (_icons.ContainsKey(uid) || !_entityManager.EntityExists(uid))

@@ -20,7 +20,10 @@
         vertical-alignment: bottom,
         toggle-mode,
         margin: 0 5,
-        on-pressed => @OnCombatPressed
+        on-pressed => {
+            @Systems.ExecutableGoal.SetCombatMode(#combat-button.pressed);
+            @UpdateCombat
+        }
     ) {
         _ #combat-icon (background-repeat: stretch)
     }

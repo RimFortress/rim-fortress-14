@@ -84,7 +84,7 @@ let loc = ui-lobby;
                     _ .flex-fill
                     +button #options-button .font-big (
                         text: $<loc>-options-button,
-                        on-pressed => @OpenOptions
+                        on-pressed => @Controllers.Options.ToggleWindow
                     )
 
                     +button #leave-button .font-big (

@@ -86,7 +86,6 @@ namespace Content.Client._RF.Lobby.UI
 
             #region Name
 
-            NameEdit.OnTextChanged += args => { SetName(args.Text); };
             NameEdit.IsValid = args => args.Length <= maxNameLength;
             WarningLabel.Text = Loc.GetString("humanoid-profile-editor-naming-rules-warning");
 

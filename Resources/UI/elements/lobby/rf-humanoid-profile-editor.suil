@@ -26,7 +26,7 @@ let profile-high-divider = {
         col .panel-highlighted {
             row (gap: 5px) {
                 _ (text: $<loc>-name-label)
-                line-edit #name-edit (min-width: 270px, align-self: center)
+                line-edit #name-edit (min-width: 270px, align-self: center, on-text-changed => @SetName(args.text))
                 button #name-randomize (text: $<loc>-randomize, on-pressed => @RandomizeName)
             }
 

@@ -23,8 +23,6 @@ namespace Content.Client._RF.Lobby.UI
 
         private void Leave() => _consoleHost.ExecuteCommand("disconnect");
 
-        private void OpenOptions() => UserInterfaceManager.GetUIController<OptionsUIController>().ToggleWindow();
-
         public void SwitchState(LobbyGuiState state)
         {
             DefaultState.Visible = false;
