@@ -1,6 +1,8 @@
 using Robust.Client.Input;
 using Robust.Client.UserInterface;
 using Robust.Shared.Input;
+using Robust.Shared.Map;
+using Robust.Shared.Timing;
 
 namespace Content.Client._RF.Suil.HotReload;
 
@@ -9,11 +11,12 @@ namespace Content.Client._RF.Suil.HotReload;
 /// click or Escape cancels.
 /// </summary>
 /// <remarks>
-/// The clicks are taken before the UI gets them (<see cref="IInputManager.UIKeyBindStateChanged"/>), so the control that is
-/// picked doesn't react to the click, and the outline is drawn after the UI
-/// (<see cref="IUserInterfaceManager.OnPostDrawUIRoot"/>). A control that covers the screen would be in the way of the
-/// first, and an <see cref="Robust.Client.Graphics.Overlay"/> can't do the second: overlays in the screen space are drawn
-/// into the viewport of the game, under the windows and everything else of the UI.
+/// The UI takes the clicks before anyone else (<see cref="IInputManager.UIKeyBindStateChanged"/> is a notification, the
+/// UI is the first to get it), so a button would react to the click that picks it. A transparent control that covers the
+/// whole UI takes the click instead; the control under it is found with that control let the mouse through for a moment.
+/// The outline is drawn after the UI (<see cref="IUserInterfaceManager.OnPostDrawUIRoot"/>): an
+/// <see cref="Robust.Client.Graphics.Overlay"/> can't do it, overlays in the screen space are drawn into the viewport of
+/// the game, under the windows and everything else of the UI.
 /// </remarks>
 public sealed class SuilControlPicker : IDisposable
 {
@@ -22,17 +25,22 @@ public sealed class SuilControlPicker : IDisposable
     private readonly IUserInterfaceManager _ui;
     private readonly IInputManager _input;
     private readonly Action<Control?> _done;
+    private readonly CatchAll _catcher;
 
-    // the button that picked: its release is taken as well, or the control under the mouse would get a release without a press
-    private BoundKeyFunction? _waitingForRelease;
-    private Control? _picked;
     private bool _active = true;
+    private bool _disposed;
+    private bool _pressed;
+    private Control? _picked;
 
     public SuilControlPicker(IUserInterfaceManager ui, IInputManager input, Action<Control?> done)
     {
         _ui = ui;
         _input = input;
         _done = done;
+
+        _catcher = new CatchAll(this);
+        _ui.RootControl.AddChild(_catcher);
+        _catcher.SetPositionLast();
 
         _ui.OnPostDrawUIRoot += OnPostDrawUIRoot;
         _input.UIKeyBindStateChanged += OnKeyBind;
@@ -50,53 +58,63 @@ public sealed class SuilControlPicker : IDisposable
 
     public void Dispose()
     {
-        _ui.OnPostDrawUIRoot -= OnPostDrawUIRoot;
-        _input.UIKeyBindStateChanged -= OnKeyBind;
+        if (_disposed)
+            return;
+
+        _disposed = true;
         _active = false;
+        _ui.OnPostDrawUIRoot -= OnPostDrawUIRoot;
+        _catcher.Orphan();
+
+        // Dispose is called from the handler itself, and the input manager is walking the list of the handlers: taking
+        // one out of it now leaves a hole that it calls (a NullReferenceException). The handler does nothing any more.
+        Timer.Spawn(0, () => _input.UIKeyBindStateChanged -= OnKeyBind);
     }
 
+    /// <summary>
+    /// Escape and the right click cancel; they are taken, so the game does not get them. The left click is also seen
+    /// here, so a pick does not depend on the click being routed to the control that covers the UI.
+    /// </summary>
     private bool OnKeyBind(BoundKeyEventArgs args)
     {
         if (!_active)
             return false;
 
-        var function = args.Function;
-
-        if (_waitingForRelease != null)
+        if (args.Function == EngineKeyFunctions.UIClick)
         {
-            if (function != _waitingForRelease)
-                return false;
+            if (args.State == BoundKeyState.Down)
+                Press(args.PointerLocation);
+            else
+                Release();
 
-            if (args.State != BoundKeyState.Up)
-                return true;
-
-            // the click is over, now the picked control is handed over
-            var picked = _picked;
-            Dispose();
-            _done(picked);
             return true;
         }
 
-        if (function != EngineKeyFunctions.UIClick
-            && function != EngineKeyFunctions.UIRightClick
-            && function != EngineKeyFunctions.EscapeMenu)
-        {
+        if (args.Function != EngineKeyFunctions.UIRightClick && args.Function != EngineKeyFunctions.EscapeMenu)
             return false;
-        }
 
-        if (args.State != BoundKeyState.Down)
-            return true; // the end of a click that started before the picking did
+        if (args.State == BoundKeyState.Down)
+            Finish(null);
 
-        if (function == EngineKeyFunctions.UIClick)
-        {
-            _picked = _ui.MouseGetControl(args.PointerLocation);
-            _waitingForRelease = function;
-            return true;
-        }
-
-        _waitingForRelease = function;
-        _picked = null;
         return true;
+    }
+
+    private void Press(ScreenCoordinates position)
+    {
+        if (_pressed)
+            return;
+
+        _picked = Under(position);
+        _pressed = true;
+    }
+
+    private void Release()
+    {
+        // the end of a click that started before the picking did is not a pick
+        if (!_pressed)
+            return;
+
+        Finish(_picked);
     }
 
     private void Finish(Control? picked)
@@ -108,12 +126,29 @@ public sealed class SuilControlPicker : IDisposable
         _done(picked);
     }
 
+    /// <summary>
+    /// The control under the pointer, not counting the one that catches the clicks.
+    /// </summary>
+    private Control? Under(ScreenCoordinates position)
+    {
+        _catcher.MouseFilter = Control.MouseFilterMode.Ignore;
+
+        try
+        {
+            return _ui.MouseGetControl(position);
+        }
+        finally
+        {
+            _catcher.MouseFilter = Control.MouseFilterMode.Stop;
+        }
+    }
+
     private void OnPostDrawUIRoot(PostDrawUIRootEventArgs args)
     {
-        if (!_active || _waitingForRelease != null)
+        if (!_active)
             return;
 
-        var hovered = _ui.MouseGetControl(_input.MouseScreenPosition);
+        var hovered = Under(_input.MouseScreenPosition);
 
         if (hovered == null || hovered.Root != args.Root)
             return;
@@ -121,5 +156,43 @@ public sealed class SuilControlPicker : IDisposable
         var rect = hovered.GlobalPixelRect;
         args.DrawingHandle.DrawRect(rect, Outline.WithAlpha(0.25f));
         args.DrawingHandle.DrawRect(rect, Outline, filled: false);
+    }
+
+    /// <summary>
+    /// Covers the UI and takes the clicks. The left click picks the control under it when the button is let go; a
+    /// press that started before the picking did is not a pick.
+    /// </summary>
+    private sealed class CatchAll : Control
+    {
+        private readonly SuilControlPicker _owner;
+
+        public CatchAll(SuilControlPicker owner)
+        {
+            _owner = owner;
+            MouseFilter = MouseFilterMode.Stop;
+            HorizontalExpand = true;
+            VerticalExpand = true;
+        }
+
+        // Only the click is handled. A key has several functions (the left mouse button is also "use", "move the stored
+        // item" and others, with a higher priority), and the first function that is handled stops the others: the click
+        // would never come.
+        protected override void KeyBindDown(GUIBoundKeyEventArgs args)
+        {
+            if (args.Function != EngineKeyFunctions.UIClick)
+                return;
+
+            args.Handle();
+            _owner.Press(args.PointerLocation);
+        }
+
+        protected override void KeyBindUp(GUIBoundKeyEventArgs args)
+        {
+            if (args.Function != EngineKeyFunctions.UIClick)
+                return;
+
+            args.Handle();
+            _owner.Release();
+        }
     }
 }

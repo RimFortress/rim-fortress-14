@@ -323,13 +323,18 @@ public sealed partial class SuilHotReload : ISuilHotReload
         if (IsPicking)
             return;
 
+        _sawmill.Info("click on a control to reload its view (right click or Escape to cancel)");
         _picker = new SuilControlPicker(_ui, _input, control =>
         {
             _picker = null;
 
             if (control == null)
+            {
+                _sawmill.Info("picking cancelled");
                 return;
+            }
 
+            _sawmill.Info($"picked {control.GetType().Name}");
             var result = ReloadViewOf(control);
 
             if (result == null)

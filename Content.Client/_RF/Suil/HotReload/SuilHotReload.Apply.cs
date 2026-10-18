@@ -13,7 +13,8 @@ public sealed partial class SuilHotReload
     /// </summary>
     /// <remarks>
     /// A control that the view has a field for is kept when the file still has an element of that id and type: the code
-    /// may have subscribed to it, and a new control would lose that. Its children are rebuilt like the others. Whatever the
+    /// may have subscribed to it, and a new control would lose that. Its children are rebuilt like the others, if the file
+    /// has any. Whatever the
     /// previous plan had on a kept control and the new one hasn't (a class, a property) is taken off.
     /// </remarks>
     private void Apply(
@@ -90,9 +91,15 @@ public sealed partial class SuilHotReload
             ? root
             : control.XamlChildren;
 
-        foreach (var child in new List<Control>(target))
+        // An element written without a body has no children in the file: whatever it holds is its own (the parts of a
+        // ChatBox, the tree of another view) or was put there by the code (the setup windows of the lobby), and is not
+        // touched. The children are rebuilt only where the file has them, now or before.
+        if (plan.Children.Count > 0 || before?.Children.Count > 0 || ReferenceEquals(control, view))
         {
-            target.Remove(child);
+            foreach (var child in new List<Control>(target))
+            {
+                target.Remove(child);
+            }
         }
 
         if (plan.HasContentSlot)

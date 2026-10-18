@@ -19,6 +19,8 @@ public sealed class SuilLobbyControlsTest : GameTest
 {
     [SidedDependency(Side.Client)] private readonly ISuilHotReload _reload = null!;
     [SidedDependency(Side.Client)] private readonly ISuilManager _suil = null!;
+    [SidedDependency(Side.Client)] private readonly IUserInterfaceManager _ui = null!;
+    [SidedDependency(Side.Client)] private readonly Robust.Client.Input.IInputManager _input = null!;
 
     private void AssertReloads(ISuilView view)
     {
@@ -151,6 +153,117 @@ public sealed class SuilLobbyControlsTest : GameTest
         Assert.That(icon.Position.Y, Is.GreaterThanOrEqualTo(5));
         Assert.That(icon.Position.X + icon.Size.X, Is.LessThanOrEqualTo(36 - 6));
         Assert.That(icon.Position.Y + icon.Size.Y, Is.LessThanOrEqualTo(36 - 5));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Reload_Keeps_What_An_Element_Without_A_Body_Holds()
+    {
+        var gui = new RfLobbyGui();
+        var view = (ISuilView) gui;
+
+        int Count(string id) => Descendants((Control) view.SuilGetField(id)!);
+
+        static int Descendants(Control control) => control.Children.Sum(c => 1 + Descendants(c));
+
+        var injected = new Control();
+        gui.CharacterSetupState.AddChild(injected);
+
+        var ids = new[] { "chat", "character-preview", "link-banner", "server-info" };
+        var before = ids.ToDictionary(id => id, Count);
+
+        Assert.That(before["character-preview"], Is.GreaterThan(0), "it is a view with a tree of its own");
+
+        var result = _reload.Reload(view);
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        foreach (var id in ids)
+        {
+            Assert.That(Count(id), Is.EqualTo(before[id]), id + ": its own parts are not touched");
+        }
+
+        Assert.That(injected.Parent, Is.SameAs(gui.CharacterSetupState), "what the code put in is still there");
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void The_Picker_Covers_The_UI_While_It_Waits_And_Leaves_After()
+    {
+        var before = _ui.RootControl.ChildCount;
+        Control? picked = new Control();
+        var done = false;
+
+        var picker = new SuilControlPicker(_ui, _input, c => { picked = c; done = true; });
+
+        Assert.That(_ui.RootControl.ChildCount, Is.EqualTo(before + 1), "a control takes the clicks");
+        var catcher = _ui.RootControl.GetChild(_ui.RootControl.ChildCount - 1);
+        _ui.RootControl.Measure(new System.Numerics.Vector2(1920, 1080));
+        _ui.RootControl.Arrange(new Robust.Shared.Maths.UIBox2(0, 0, 1920, 1080));
+        TestContext.Out.WriteLine($"TMP catcher size {catcher.Size} root size {_ui.RootControl.Size} filter {catcher.MouseFilter} visible {catcher.Visible}");
+        foreach (var child in _ui.RootControl.Children)
+            TestContext.Out.WriteLine($"TMP child {child.GetType().Name} {child.Size} {child.MouseFilter}");
+        Assert.That(picker.IsActive, Is.True);
+
+        picker.Cancel();
+
+        Assert.That(_ui.RootControl.ChildCount, Is.EqualTo(before));
+        Assert.That(done && picked == null, Is.True, "cancelled: nothing is picked");
+        Assert.That(picker.IsActive, Is.False);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Click_Picks_The_Control_Under_The_Catcher_And_Not_The_Button()
+    {
+        var button = new RfButton
+        {
+            SetSize = new System.Numerics.Vector2(100, 50),
+            HorizontalAlignment = Control.HAlignment.Left,
+            VerticalAlignment = Control.VAlignment.Top,
+        };
+        var pressed = false;
+        button.OnPressed += _ => pressed = true;
+        _ui.WindowRoot.AddChild(button);
+
+        try
+        {
+            Control? picked = null;
+            var done = false;
+            using var picker = new SuilControlPicker(_ui, _input, c => { picked = c; done = true; });
+            _ui.RootControl.Measure(new System.Numerics.Vector2(1920, 1080));
+            _ui.RootControl.Arrange(new Robust.Shared.Maths.UIBox2(0, 0, 1920, 1080));
+
+            var at = new Robust.Shared.Map.ScreenCoordinates(new System.Numerics.Vector2(10, 10), _ui.RootControl.Window.Id);
+            var type = _ui.GetType();
+
+            type.GetMethod("HandleCanFocusDown")!.Invoke(_ui, new object?[] { at, null });
+
+            // The left mouse button has other functions with a higher priority, which the engine gives the click first:
+            // if the catcher handled one of them, the click itself would never come.
+            var other = new Robust.Shared.Input.BoundKeyEventArgs(
+                new Robust.Shared.Input.BoundKeyFunction("MoveStoredItem"), Robust.Shared.Input.BoundKeyState.Down, at, true);
+            type.GetMethod("KeyBindDown")!.Invoke(_ui, new object[] { other });
+            Assert.That(other.Handled, Is.False, "the other functions of the button are left to the engine");
+
+            type.GetMethod("KeyBindDown")!.Invoke(_ui, new object[]
+            {
+                new Robust.Shared.Input.BoundKeyEventArgs(Robust.Shared.Input.EngineKeyFunctions.UIClick, Robust.Shared.Input.BoundKeyState.Down, at, true),
+            });
+            type.GetMethod("KeyBindUp")!.Invoke(_ui, new object[]
+            {
+                new Robust.Shared.Input.BoundKeyEventArgs(Robust.Shared.Input.EngineKeyFunctions.UIClick, Robust.Shared.Input.BoundKeyState.Up, at, true),
+            });
+            type.GetMethod("HandleCanFocusUp")!.Invoke(_ui, null);
+
+            Assert.That(done, Is.True);
+            Assert.That(picked, Is.SameAs(button), "the control under the catcher is picked");
+            Assert.That(pressed, Is.False, "and does not react to the click");
+            Assert.That(picker.IsActive, Is.False);
+        }
+        finally
+        {
+            button.Orphan();
+        }
     }
 
     [Test]
