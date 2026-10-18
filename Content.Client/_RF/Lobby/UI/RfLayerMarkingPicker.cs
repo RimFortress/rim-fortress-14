@@ -45,17 +45,15 @@ public sealed partial class RfLayerMarkingPicker : RfBoxContainer
 
         OrderingItems.AddChild(new RfLayerMarkingOrderer(markingsModel, organ, layer));
 
-        SearchBar.OnTextChanged += _ =>
-        {
-            foreach (var element in _searchable)
-            {
-                element.SetHiddenState(true, SearchBar.Text.Trim());
-            }
-        };
-
         UpdateCount();
+    }
 
-        ReorderButton.OnPressed += _ => ReorderButtonPressed();
+    private void OnSearchChanged()
+    {
+        foreach (var element in _searchable)
+        {
+            element.SetHiddenState(true, SearchBar.Text.Trim());
+        }
     }
 
     protected override void EnteredTree()
@@ -117,15 +115,6 @@ public sealed partial class RfLayerMarkingPicker : RfBoxContainer
             ("required", isRequired),
             ("count", count),
             ("selectable", count - selected)));
-    }
-
-    private void ReorderButtonPressed()
-    {
-        var reordering = ReorderButton.Pressed;
-
-        SelectionItems.Visible = !reordering;
-        SearchBar.Visible = !reordering;
-        OrderingItems.Visible = reordering;
     }
 
     protected override void Resized()

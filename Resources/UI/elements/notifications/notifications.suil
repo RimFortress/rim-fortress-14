@@ -22,6 +22,9 @@
     }
 }
 
+on @Controllers.NotificationsPanel.OnNotificationAdded for notifications-panel-widget => @AddNotification
+on @Controllers.NotificationsPanel.OnNotificationRemoved for notifications-panel-widget => @RemoveNotification
+
 /*
  * One notification: the button with the name and the time, the bar of the time left under the text, and the description
  * that opens under the button.

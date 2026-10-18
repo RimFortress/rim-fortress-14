@@ -25,7 +25,7 @@ public sealed partial class PopList : UIWidget
     private ExecutableGoalSystem _executable = default!;
     private CombatModeSystem _combatMode = default!;
     private RimFortressWorldSystem _world = default!;
-    private bool _setup;
+    private bool _resolved;
 
     private readonly Dictionary<EntityUid, PopIcon> _icons = new();
 
@@ -69,27 +69,30 @@ public sealed partial class PopList : UIWidget
         _icons.Remove(uid);
     }
 
-    public void EnsureSetup()
+    private void ResolveSystems()
     {
-        if (_setup)
+        if (_resolved)
             return;
 
+        _resolved = true;
         _selection = _entityManager.System<SelectionSystem>();
         _executable = _entityManager.System<ExecutableGoalSystem>();
         _combatMode = _entityManager.System<CombatModeSystem>();
         _world = _entityManager.System<RimFortressWorldSystem>();
+    }
 
-        _selection.OnSelectedChanged += UpdateSelection;
-        _combatMode.CombatModeChanged += UpdateCombat;
-        _world.OnPlayerUpdate += Update;
-        _setup = true;
+    public void EnsureSetup()
+    {
+        ResolveSystems();
 
         if (_entityManager.TryGetComponent(_player.LocalEntity, out RimFortressPlayerComponent? comp))
-            Update(new(_player.LocalEntity.Value, comp));
+            OnPlayerUpdate(new(_player.LocalEntity.Value, comp));
     }
 
     private void UpdateSelection()
     {
+        ResolveSystems();
+
         var selected = _selection.Selected<EntityUid>();
 
         foreach (var (uid, icon) in _icons)
@@ -100,7 +103,7 @@ public sealed partial class PopList : UIWidget
         UpdateCombat();
     }
 
-    private void UpdateCombat(Entity<CombatModeComponent> ent)
+    private void OnCombatModeChanged(Entity<CombatModeComponent> ent)
     {
         if (!_entityManager.TryGetComponent(_player.LocalEntity, out RimFortressPlayerComponent? player)
             || !player.Pops.Contains(ent))
@@ -111,6 +114,8 @@ public sealed partial class PopList : UIWidget
 
     private void UpdateCombat()
     {
+        ResolveSystems();
+
         CombatMode = true;
         var selected = _selection.Selected<EntityUid>();
 
@@ -126,7 +131,7 @@ public sealed partial class PopList : UIWidget
         }
     }
 
-    private void Update(Entity<RimFortressPlayerComponent> ent)
+    private void OnPlayerUpdate(Entity<RimFortressPlayerComponent> ent)
     {
         foreach (var pop in ent.Comp.Pops)
         {
@@ -150,18 +155,4 @@ public sealed partial class PopList : UIWidget
         Icons.RemoveAllChildren();
         _icons.Clear();
     }
-
-    protected override void ExitedTree()
-    {
-        if (_setup)
-        {
-            _selection.OnSelectedChanged -= UpdateSelection;
-            _combatMode.CombatModeChanged -= UpdateCombat;
-            _world.OnPlayerUpdate -= Update;
-            _setup = false;
-        }
-
-        base.ExitedTree();
-    }
 }
-

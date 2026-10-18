@@ -20,7 +20,6 @@ public sealed partial class StockpileSettingsWindow : RfWindow
 
     private readonly StockpileUiController _stockpileController;
     private readonly ZoningUiController _zoningController;
-    private readonly ZoningSystem _zoning;
 
     private StockpileCategoryPrototype? _currentCategory;
 
@@ -34,28 +33,6 @@ public sealed partial class StockpileSettingsWindow : RfWindow
         _stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
         _zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
 
-        _zoning = _entity.System<ZoningSystem>();
-
-        _stockpileController.OnStockSelected += SetStock;
-        _entity.System<StockpileSystem>().OnStockUpdated += stock =>
-        {
-            if (Visible && _stockpileController.SettingStock == stock)
-                BuildItems(_currentCategory);
-        };
-
-        _stockpileController.OnSupplyRequested += supplied =>
-        {
-            if (_stockpileController.SettingStock is not { } stock)
-                return;
-
-            var stockpile = _entity.System<StockpileSystem>();
-
-            if (StockpileSystem.HasSupplied(stock, supplied))
-                stockpile.RemoveSuppliedStock(stock.AsNullable(), supplied.AsNullable());
-            else
-                stockpile.AddSuppliedStock(stock.AsNullable(), supplied.AsNullable());
-        };
-
         _prototype.PrototypesReloaded += args =>
         {
             if (args.WasModified<EntityPrototype>()
@@ -65,11 +42,12 @@ public sealed partial class StockpileSettingsWindow : RfWindow
 
         Tab.Tabs[0].Title = Loc.GetString("base-zone-window-visuals-tab-general-title");
         Tab.Tabs[1].Title = Loc.GetString("base-zone-window-visuals-tab-visuals-title");
-        Tab.OnTabChanged += _ =>
-        {
-            if (Tab.CurrentTab == 1)
-                VisualsControl.SetZone(_stockpileController.SettingStock);
-        };
+    }
+
+    private void OnTabChanged()
+    {
+        if (Tab.CurrentTab == 1)
+            VisualsControl.SetZone(_stockpileController.SettingStock);
     }
 
     private void OnExpandPressed()
@@ -349,18 +327,23 @@ public sealed partial class StockpileSettingsWindow : RfWindow
         return null;
     }
 
-    protected override void EnteredTree()
+    private void OnStockUpdated(Entity<StockpileComponent> stock)
     {
-        base.EnteredTree();
-        _zoning.OnZoneUpdated += OnZoneUpdate;
-        _zoning.OnZoneDeleted += OnZoneDelete;
+        if (Visible && _stockpileController.SettingStock == stock)
+            BuildItems(_currentCategory);
     }
 
-    protected override void ExitedTree()
+    private void OnSupplyRequested(Entity<StockpileComponent> supplied)
     {
-        base.ExitedTree();
-        _zoning.OnZoneUpdated -= OnZoneUpdate;
-        _zoning.OnZoneDeleted -= OnZoneDelete;
+        if (_stockpileController.SettingStock is not { } stock)
+            return;
+
+        var stockpile = _entity.System<StockpileSystem>();
+
+        if (StockpileSystem.HasSupplied(stock, supplied))
+            stockpile.RemoveSuppliedStock(stock.AsNullable(), supplied.AsNullable());
+        else
+            stockpile.AddSuppliedStock(stock.AsNullable(), supplied.AsNullable());
     }
 
     private void OnZoneUpdate(Entity<ZoneComponent> ent)

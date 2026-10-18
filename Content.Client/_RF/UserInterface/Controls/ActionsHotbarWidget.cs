@@ -1,6 +1,5 @@
 using Content.Client._RF.Construction;
 using Content.Client._RF.NPC.Executable.Systems;
-using Content.Client._RF.Selection;
 using Content.Client._RF.UserInterface.Controllers;
 using Content.Client._RF.UserInterface.Controls.TreeMenu;
 using Content.Client._RF.World;
@@ -25,11 +24,10 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
     private ExecutableGoalSystem _executable = default!;
     private SpriteSystem _sprite = default!;
-    private SelectionSystem _selection = default!;
 
     private readonly Dictionary<ProtoId<ExecutableGoalPrototype>, TreeMenuButton> _taskButtons = new();
     private TreeMenuButton? _taskEraseButton;
-    private bool _setup;
+    private bool _resolved;
 
     public ActionsHotbarWidget()
     {
@@ -38,36 +36,25 @@ public sealed partial class ActionsHotbarWidget : UIWidget
         _zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
     }
 
-    public void EnsureSetup()
+    private void ResolveSystems()
     {
-        if (_setup)
+        if (_resolved)
             return;
 
-        _setup = true;
+        _resolved = true;
         _executable = _entity.System<ExecutableGoalSystem>();
         _sprite = _entity.System<SpriteSystem>();
-        _selection = _entity.System<SelectionSystem>();
-
-        _selection.OnUpdateSelection += UpdateButtons;
-        _executable.OnControllerAttached += UpdateList;
-
-        UpdateList();
     }
 
-    protected override void ExitedTree()
+    public void EnsureSetup()
     {
-        base.ExitedTree();
-
-        if (!_setup)
-            return;
-
-        _setup = false;
-        _selection.OnUpdateSelection -= UpdateButtons;
-        _executable.OnControllerAttached -= UpdateList;
+        UpdateList();
     }
 
     private void UpdateList()
     {
+        ResolveSystems();
+
         PassiveTasksButton.ClearContent();
         _taskButtons.Clear();
 
@@ -137,6 +124,8 @@ public sealed partial class ActionsHotbarWidget : UIWidget
 
     private void UpdateButtons()
     {
+        ResolveSystems();
+
         foreach (var (task, button) in _taskButtons)
         {
             button.Pressed = task == _executable.SelectedTask;

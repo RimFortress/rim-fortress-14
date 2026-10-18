@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 namespace Content.Suil.Generator;
 
 /// <summary>
-/// The value expressions of the handlers: comparisons, <c>= if (...) a else b</c>, <c>num()</c>, <c>str()</c>, the result of
+/// The value expressions of the handlers: comparisons, <c>if (...) a else b</c>, <c>num()</c>, <c>str()</c>, the result of
 /// a call, a text put together with <c>+</c>.
 /// </summary>
 internal sealed partial class SuilViewEmitter
@@ -45,15 +45,32 @@ internal sealed partial class SuilViewEmitter
             }
             case SuilCallNode call:
             {
-                var (invocation, method) = PrepareCall(call.Call, pending, argsType, autoArguments: false);
+                Typed result;
 
-                if (method.ReturnsVoid)
+                if (TryReadMember(call.Call, out var read, out var readType))
                 {
-                    throw new SuilGenerationException(SuilDiagnostics.BadStatement, call.Position,
-                        $"'{method.Name}' returns nothing, so it has no value to use");
+                    result = new Typed(read, readType);
+                }
+                else
+                {
+                    var (invocation, method) = PrepareCall(call.Call, pending, argsType, autoArguments: false);
+
+                    if (method.ReturnsVoid)
+                    {
+                        throw new SuilGenerationException(SuilDiagnostics.BadStatement, call.Position,
+                            $"'{method.Name}' returns nothing, so it has no value to use");
+                    }
+
+                    result = new Typed(invocation, method.ReturnType);
                 }
 
-                return new Typed(invocation, method.ReturnType);
+                if (call.Members is { Count: > 0 } members)
+                {
+                    var (code, type) = MemberPath(result.Code, result.Type!, members, call.Position, "the value of the call");
+                    result = new Typed(code, type);
+                }
+
+                return result;
             }
             case SuilNumberNode number:
                 return new Typed(NumOf(number.Root, pending, argsType), compilation.GetSpecialType(SpecialType.System_Double));

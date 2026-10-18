@@ -2,13 +2,21 @@
     min-height: 400px,
     gap: 4px
 ) {
-    line-edit #search-bar (place-holder: $markings-search)
+    line-edit #search-bar (place-holder: $markings-search, on-text-changed => @OnSearchChanged)
     scroll-container #selection-items .scroll-vertical {
         grid #items (columns: 2, gap: 4px, padding: 4px)
     }
     scroll-container #ordering-items .scroll-vertical (visible: false)
     row (gap: 4px, padding: 4px) {
         _ #markings-status (flex-grow: 1, align-self: center)
-        button #reorder-button (toggle-mode, text: $markings-reorder)
+        button #reorder-button (
+            toggle-mode,
+            text: $markings-reorder,
+            on-pressed => {
+                #selection-items.visible: !#reorder-button.pressed;
+                #search-bar.visible: !#reorder-button.pressed;
+                #ordering-items.visible: #reorder-button.pressed
+            }
+        )
     }
 }

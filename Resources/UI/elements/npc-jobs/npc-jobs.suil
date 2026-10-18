@@ -157,3 +157,6 @@ let loc = npc-jobs;
         }
     }
 }
+
+on @Systems.NpcJobs.OnJobChanged for npc-jobs-priority-window => @OnJobChanged
+on @Systems.NpcJobs.OnJobChanged for npc-jobs-settings-window => @OnJobChanged

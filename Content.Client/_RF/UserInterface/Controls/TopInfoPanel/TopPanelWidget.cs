@@ -2,7 +2,6 @@ using Content.Client._RF.UserInterface.Controllers;
 using Content.Shared._RF.World.Components;
 using Robust.Client.Player;
 using Robust.Client.UserInterface.Controls;
-using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls.TopInfoPanel;
 
@@ -10,12 +9,8 @@ public sealed partial class TopPanelWidget : RfBoxContainer
 {
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private IGameTiming _timing = default!;
 
-    private static readonly TimeSpan UpdateRate = TimeSpan.FromSeconds(1);
     private readonly InfoPanelUiController _controller;
-
-    private TimeSpan _nextUpdate;
 
     public TopPanelWidget()
     {
@@ -24,62 +19,25 @@ public sealed partial class TopPanelWidget : RfBoxContainer
 
         _controller = UserInterfaceManager.GetUIController<InfoPanelUiController>();
 
-        _controller.OnWorldTempChanged += UpdateTemperature;
-
         UpdateTemperature();
     }
 
-    protected override void FrameUpdate(FrameEventArgs args)
-    {
-        base.FrameUpdate(args);
+    private string PopulationText()
+        => _entity.TryGetComponent(_player.LocalEntity, out RimFortressPlayerComponent? player)
+            ? player.Pops.Count.ToString()
+            : string.Empty;
 
-        if (_nextUpdate > _timing.CurTime)
-            return;
+    private string DateText()
+        => $"{Loc.GetString("top-info-panel-datetime-day")} {Math.Floor(_controller.GetWorldTime().TotalDays) + 1}";
 
-        if (_entity.TryGetComponent(_player.LocalEntity, out RimFortressPlayerComponent? player))
-            Population.Text = player.Pops.Count.ToString();
-
-        UpdateDateTime();
-
-        _nextUpdate = _timing.CurTime + UpdateRate;
-    }
-
-    private void UpdateDateTime()
+    private string TimeText()
     {
         var time = _controller.GetWorldTime();
-
-        var timeText = $"{time.Hours:00}:{time.Minutes:00}";
-
-        Time.Text = $"{timeText}";
-        Date.Text = $"{Loc.GetString("top-info-panel-datetime-day")} {Math.Floor(time.TotalDays) + 1}";
-
-        Time.TexturePath = time.Hours switch
-        {
-            < 6 => "/Textures/_RF/Interface/moon-solid.svg.192dpi.png",
-            < 19 => "/Textures/_RF/Interface/sun-solid.svg.192dpi.png",
-            _ => "/Textures/_RF/Interface/moon-solid.svg.192dpi.png",
-        };
+        return $"{time.Hours:00}:{time.Minutes:00}";
     }
 
     private void UpdateTemperature()
     {
-        var tempC = _controller.WorldTemp - 273.15f;
-        Temperature.Text = $"{tempC:0.0}\u00b0";
-
-        Temperature.TexturePath = tempC switch
-        {
-            < 10 => "/Textures/_RF/Interface/temperature-low-solid.svg.192dpi.png",
-            < 20 => "/Textures/_RF/Interface/temperature-half-solid.svg.192dpi.png",
-            < 30 => "/Textures/_RF/Interface/temperature-three-quarters-solid.svg.192dpi.png",
-            _ => "/Textures/_RF/Interface/temperature-high-solid.svg.192dpi.png",
-        };
-    }
-
-    protected override void ExitedTree()
-    {
-        _controller.OnWorldTempChanged -= UpdateTemperature;
-
-        base.ExitedTree();
+        Temperature.Text = $"{_controller.WorldTempCelsius:0.0}\u00b0";
     }
 }
-

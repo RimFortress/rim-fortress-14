@@ -27,10 +27,10 @@
                     margin: 0 3,
                     tracking-tooltip,
                     on-pressed => {
-                        #unlimited-check.tool-tip: = if (#unlimited-check.pressed)
+                        #unlimited-check.tool-tip: if (#unlimited-check.pressed)
                             $stockpile-settings-menu-unlimited-checkbox-enabled-tooltip
                             else $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip;
-                        &.max-value: = if (#unlimited-check.pressed) -1 else 0
+                        &.max-value: if (#unlimited-check.pressed) -1 else 0
                     }
                 )
             }
@@ -41,7 +41,7 @@
 /* The window of a stockpile: the items to keep (with the search) and the look of the zone, and the buttons under them. */
 @StockpileSettingsWindow => window (min-size: 500 750) {
     col {
-        tab #tab (flex-grow: 1) {
+        tab #tab (flex-grow: 1, on-tab-changed => @OnTabChanged) {
             col {
                 box #address-box .panel-light {
                     _ #address .label-heading (margin: 0 0 0 8, align-self: center)
@@ -111,3 +111,9 @@
         }
     }
 }
+
+on @Controllers.Stockpile.OnStockSelected for stockpile-settings-window => @SetStock
+on @Controllers.Stockpile.OnSupplyRequested for stockpile-settings-window => @OnSupplyRequested
+on @Systems.Stockpile.OnStockUpdated for stockpile-settings-window => @OnStockUpdated
+on @Systems.Zoning.OnZoneUpdated for stockpile-settings-window => @OnZoneUpdate
+on @Systems.Zoning.OnZoneDeleted for stockpile-settings-window => @OnZoneDelete

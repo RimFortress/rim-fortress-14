@@ -21,11 +21,16 @@ public sealed class SuilViewSubscriptionTests
             public event Action? Reset;
             public event Func<int>? Wrong;
             public int Value;
+            public float Temp { get; set; } = 293.15f;
+            public Clock Now => new() { Hours = Value };
+            public Clock GetClock() => new() { Hours = Value + 1 };
             public int Get() => Value;
             public int Handlers => Changed?.GetInvocationList().Length ?? 0;
             public void Raise(int value) => Changed?.Invoke(value);
             public void RaiseReset() => Reset?.Invoke();
         }
+
+        public struct Clock { public int Hours { get; set; } }
 
         public sealed class InfoUiController : UIController
         {
@@ -193,7 +198,7 @@ public sealed class SuilViewSubscriptionTests
                 _ #fast (text: bind str(@Systems.Hunger.Get()))
                 _ #slow (text: bind str(@Systems.Hunger.Get()) every 1s)
                 _ #event (text: bind str(@Systems.Hunger.Get()) on @Systems.Hunger.Changed)
-                _ #cond (min-width: bind = if (@Systems.Hunger.Get() > 5) 10 else 1)
+                _ #cond (min-width: bind if (@Systems.Hunger.Get() > 5) 10 else 1)
             }
             """);
 
@@ -253,5 +258,73 @@ public sealed class SuilViewSubscriptionTests
         var result = Run(suil);
 
         Assert.That(Ids(result), Has.Member(id), string.Join("\n", result.GeneratorDiagnostics));
+    }
+
+    [TestCase("@Picker => button\n\non @Systems.Hunger.Changed for picker => @Count")]
+    [TestCase("@Picker as tab => button\n\non @Systems.Hunger.Changed for picker => @Count")]
+    [TestCase("@Picker as tab => button\n\non @Systems.Hunger.Changed for tab => @Count")]
+    public void A_View_Can_Be_Named_By_Its_Default_Tag_Too(string suil)
+    {
+        var result = Run(suil);
+
+        AssertClean(result);
+
+        var assembly = result.Load();
+        var boot = assembly.GetType("Game.Ui.Boot")!;
+        boot.GetMethod("Setup")!.Invoke(null, null);
+        var hunger = boot.GetField("Hunger")!.GetValue(null)!;
+
+        var view = Activator.CreateInstance(assembly.GetType("Game.Ui.Picker")!)!;
+        Call(view, "EnterTree");
+        Call(hunger, "Raise", 1);
+
+        Assert.That(Get(view, "Calls"), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void A_Property_Of_A_System_Or_A_Controller_Can_Be_Read_In_An_Expression()
+    {
+        var result = Run("""
+            @Picker as picker => button {
+                _ #temp (text: bind if (@Systems.Hunger.Temp < 283.15) "cold" elif (@Systems.Hunger.Temp < 300) "warm" else "hot")
+                _ #hours (text: bind str(@Systems.Hunger.Now.Hours))
+                _ #next (text: bind str(@Systems.Hunger.GetClock().Hours))
+            }
+            """);
+
+        AssertClean(result);
+
+        var assembly = result.Load();
+        var boot = assembly.GetType("Game.Ui.Boot")!;
+        boot.GetMethod("Setup")!.Invoke(null, null);
+        var hunger = boot.GetField("Hunger")!.GetValue(null)!;
+
+        string? Text(object view, string field)
+        {
+            var label = Get(view, field);
+            return (string?) label.GetType().GetProperty("Text")!.GetValue(label);
+        }
+
+        hunger.GetType().GetField("Value")!.SetValue(hunger, 7);
+        var view = Activator.CreateInstance(assembly.GetType("Game.Ui.Picker")!)!;
+        Call(view, "EnterTree");
+
+        Assert.That(Text(view, "Temp"), Is.EqualTo("warm"));
+        Assert.That(Text(view, "Hours"), Is.EqualTo("7"));
+        Assert.That(Text(view, "Next"), Is.EqualTo("8"));
+
+        hunger.GetType().GetProperty("Temp")!.SetValue(hunger, 270f);
+        SuilBindings.Update(0.016);
+        Assert.That(Text(view, "Temp"), Is.EqualTo("cold"));
+    }
+
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Hunger.Nope)) }")]
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Hunger.Now.Nope)) }")]
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Hunger.GetClock().Nope)) }")]
+    public void A_Member_That_Is_Not_There_Is_Reported_At_The_Build(string suil)
+    {
+        var result = Run(suil);
+
+        Assert.That(Ids(result), Has.Member("SUIL023").Or.Member("SUIL020"), string.Join("\n", result.GeneratorDiagnostics));
     }
 }

@@ -10,12 +10,13 @@ public static partial class SuilParser
     // comparison = operand ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) operand
 
     /// <summary>
-    /// Whether the value in front starts an expression of values: <c>= if ...</c>, a call, <c>num()</c> or <c>str()</c>.
+    /// Whether the value in front starts an expression of values: <c>if ...</c>, a call, <c>num()</c> or <c>str()</c>.
     /// </summary>
     private static bool StartsExpression(ref SuilTokenStream stream)
         => stream.PeekNext() switch
         {
             DelimToken { CodePoint: '=' } => stream.PeekNext(2) is not DelimToken { CodePoint: '=' or '>' },
+            IdentToken { Value: "if" } or FunctionToken { Value: "if" } => true,
             DelimToken { CodePoint: '@' } => true,
             FunctionToken { Value: "num" or "str" } => true,
             _ => false,
@@ -43,17 +44,22 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// An expression: <c>= if (...) a else b</c>, or a text put together with <c>+</c>, or a lone operand. The leading
-    /// <c>=</c> is optional where it is not needed to tell the expression from a list of values.
+    /// An expression: <c>if (...) a else b</c>, or a text put together with <c>+</c>, or a lone operand. A text put
+    /// together may start with <c>=</c>, where it is not told from a list of values otherwise (<c>= #a.value + "x"</c>);
+    /// a condition is written without it.
     /// </summary>
     private static SuilValueNode ConsumeExpression(ref SuilTokenStream stream, string context)
     {
         stream.SkipWhitespace();
 
+        // `= expression` marks a text put together of operands; a condition needs no sign
         if (stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is not DelimToken { CodePoint: '=' or '>' })
         {
             stream.ConsumeNext();
             stream.SkipWhitespace();
+
+            if (stream.PeekNext() is IdentToken { Value: "if" } or FunctionToken { Value: "if" })
+                throw ErrorAtNext(ref stream, context, "a condition is written without '=': if (condition) a else b");
         }
 
         if (stream.PeekNext() is IdentToken { Value: "if" } or FunctionToken { Value: "if" })
@@ -144,7 +150,19 @@ public static partial class SuilParser
             case DelimToken { CodePoint: '=' }:
                 return ConsumeExpression(ref stream, context);
             case DelimToken { CodePoint: '@' }:
-                return new SuilCallNode(ConsumeCall(ref stream, context), position);
+            {
+                // @Controllers.Info.WorldTemp.Hours, @Controllers.Info.GetTime().Hours: the members of the value
+                var members = new List<string>();
+                var call = ConsumeCall(ref stream, context, members);
+
+                while (stream.PeekNext() is DelimToken { CodePoint: '.' } && stream.PeekNext(2) is IdentToken member)
+                {
+                    stream.ConsumeNext(2);
+                    members.Add(member.Value);
+                }
+
+                return new SuilCallNode(call, position, members.Count == 0 ? null : members);
+            }
             case LeftParenthesisToken:
             {
                 stream.ConsumeNext();

@@ -188,7 +188,9 @@ public static partial class SuilParser
         return new SuilIfBranch(condition, body, position);
     }
 
-    private static SuilCallStatement ConsumeCall(ref SuilTokenStream stream, string context)
+    /// <param name="members">Where the members after the method go (<c>@Controllers.Info.WorldTemp.Hours</c>), for the
+    /// value of an expression; <c>null</c> for a statement, which has none.</param>
+    private static SuilCallStatement ConsumeCall(ref SuilTokenStream stream, string context, List<string>? members = null)
     {
         var position = stream.PeekPosition();
         stream.ConsumeNext(); // @
@@ -231,11 +233,16 @@ public static partial class SuilParser
 
         if (path.Count > 1)
         {
-            if (path.Count != 3 || path[0] is not ("Controllers" or "Systems"))
+            if (path.Count < 3 || path.Count > 3 && members == null || path[0] is not ("Controllers" or "Systems"))
             {
                 throw new SuilParserError(context,
                     $"'@{string.Join(".", path)}': a call is '@Method', '@Controllers.Name.Method' or '@Systems.Name.Method'",
                     position);
+            }
+
+            for (var i = 3; i < path.Count; i++)
+            {
+                members!.Add(path[i]);
             }
 
             scope = path[0] == "Controllers" ? SuilCallScope.Controller : SuilCallScope.System;

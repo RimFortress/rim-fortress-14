@@ -277,6 +277,26 @@ internal sealed partial class SuilViewEmitter
         ITypeSymbol? argsType,
         bool autoArguments)
     {
+        var (owner, receiver, description) = ReceiverOf(call);
+
+        var candidatesOfName = MethodsNamed(owner, call.Method, call.Scope == SuilCallScope.View);
+
+        if (candidatesOfName.Count == 0)
+        {
+            throw new SuilGenerationException(SuilDiagnostics.UnknownMethod, call.Position,
+                description, call.Method);
+        }
+
+        var (method, arguments) = ChooseOverload(candidatesOfName, call, pending, argsType, autoArguments, description);
+
+        return ($"{receiver}.{method.Name}({string.Join(", ", arguments)})", method);
+    }
+
+    /// <summary>
+    /// The class a call is made on, the C# that gets its instance and its name for the messages.
+    /// </summary>
+    private (INamedTypeSymbol Owner, string Receiver, string Description) ReceiverOf(SuilCallStatement call)
+    {
         INamedTypeSymbol owner;
         string receiver;
         string description;
@@ -303,17 +323,34 @@ internal sealed partial class SuilViewEmitter
             description = owner.ToDisplayString();
         }
 
-        var candidatesOfName = MethodsNamed(owner, call.Method, call.Scope == SuilCallScope.View);
+        return (owner, receiver, description);
+    }
 
-        if (candidatesOfName.Count == 0)
-        {
-            throw new SuilGenerationException(SuilDiagnostics.UnknownMethod, call.Position,
-                description, call.Method);
-        }
+    /// <summary>
+    /// <c>@Controllers.Info.WorldTemp</c>: a call without parentheses that names no method but a public property or field
+    /// reads it.
+    /// </summary>
+    private bool TryReadMember(SuilCallStatement call, out string code, out ITypeSymbol? type)
+    {
+        code = string.Empty;
+        type = null;
 
-        var (method, arguments) = ChooseOverload(candidatesOfName, call, pending, argsType, autoArguments, description);
+        if (call.Arguments != null)
+            return false;
 
-        return ($"{receiver}.{method.Name}({string.Join(", ", arguments)})", method);
+        var (owner, receiver, _) = ReceiverOf(call);
+
+        if (MethodsNamed(owner, call.Method, call.Scope == SuilCallScope.View).Count > 0)
+            return false;
+
+        var member = FindPublicMember(owner, call.Method, out var memberType);
+
+        if (member == null || memberType == null || !IsReadable(member))
+            return false;
+
+        code = $"{receiver}.{member.Name}";
+        type = memberType;
+        return true;
     }
 
     /// <summary>

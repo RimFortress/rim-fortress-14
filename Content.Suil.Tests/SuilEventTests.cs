@@ -27,6 +27,15 @@ public sealed class SuilEventTests
     }
 
     [Test]
+    public void A_Condition_Needs_No_Equals_Sign_In_Front()
+    {
+        var root = Root("button (on-pressed => #a.text: if (#b.pressed) \"yes\" else \"no\")");
+        Assert.That(Only(root).Statements, Has.Count.EqualTo(1));
+
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => #a.text: = if (#b.pressed) \"yes\" else \"no\")"));
+    }
+
+    [Test]
     public void A_Change_May_Be_Written_Next_To_The_Target_One_At_A_Time()
     {
         var dotted = Only(Root("""
@@ -244,10 +253,10 @@ public sealed class SuilEventTests
     {
         var root = Root("""
             button (on-pressed => {
-                #a.text: = if (#b.pressed) "yes" elif (#b.value > 3) str(#b.value) + "!" else $none;
+                #a.text: if (#b.pressed) "yes" elif (#b.value > 3) str(#b.value) + "!" else $none;
                 #a.tool-tip: @Controllers.Info.Name();
                 #a.min-width: num(#b.text);
-                @Log(= if (args.pressed) 1 else 2, str(#a.value), @Systems.X.Y)
+                @Log(if (args.pressed) 1 else 2, str(#a.value), @Systems.X.Y)
             })
             """);
 
@@ -273,8 +282,8 @@ public sealed class SuilEventTests
     [Test]
     public void A_Value_By_A_Condition_Needs_An_Else()
     {
-        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { #a.text: = if (#b.pressed) \"yes\" })"));
-        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { #a.text: = if #b.pressed \"yes\" else \"no\" })"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { #a.text: if (#b.pressed) \"yes\" })"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { #a.text: if #b.pressed \"yes\" else \"no\" })"));
     }
 
     [Test]
@@ -284,9 +293,9 @@ public sealed class SuilEventTests
             let mode = left;
             let n = 4;
             button (on-pressed => {
-                #a.text: = if (<mode> == right) "r" elif (<mode> == left) "l" else "?";
+                #a.text: if (<mode> == right) "r" elif (<mode> == left) "l" else "?";
                 #b.visible: <n> > 3;
-                #c.text: = if (#d.pressed) <mode> else "z"
+                #c.text: if (#d.pressed) <mode> else "z"
             })
             """);
 

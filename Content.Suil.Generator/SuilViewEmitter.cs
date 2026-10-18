@@ -338,7 +338,7 @@ internal sealed partial class SuilViewEmitter(
                 : Fail("it needs a value");
         }
 
-        // `= if (...) a else b`, `str(#a.value)`, a call: worked out when the event is raised, then cast to the type
+        // `if (...) a else b`, `str(#a.value)`, a call: worked out when the event is raised, then cast to the type
         if (_handlerElement != null && values is [SuilExprValue exprValue])
         {
             var value = ValueOf(exprValue.Root, target, _handlerElement, _handlerArguments);

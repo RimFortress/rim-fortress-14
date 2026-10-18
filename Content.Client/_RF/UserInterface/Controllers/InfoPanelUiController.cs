@@ -16,6 +16,11 @@ public sealed partial class InfoPanelUiController : UIController
 
     public float WorldTemp { get; private set; } = 293.15f;
 
+    /// <summary>
+    /// <see cref="WorldTemp"/> in degrees Celsius.
+    /// </summary>
+    public float WorldTempCelsius => WorldTemp - 273.15f;
+
     public event Action? OnWorldTempChanged;
 
     public override void Initialize()

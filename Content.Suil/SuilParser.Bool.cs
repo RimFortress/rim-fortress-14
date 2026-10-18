@@ -23,7 +23,7 @@ public static partial class SuilParser
     {
         stream.SkipWhitespace();
 
-        // `= if (...) a else b`, a call, `num()`, `str()`
+        // `if (...) a else b`, a call, `num()`, `str()`
         if (references && StartsExpression(ref stream))
             return ConsumeExpressionValue(ref stream, context, commasEnd);
 

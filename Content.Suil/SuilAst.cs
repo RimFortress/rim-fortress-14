@@ -464,7 +464,7 @@ public sealed record SuilBoolArgs(string Member, SuilPosition Position) : SuilBo
 /// <summary>
 /// A node of a value expression, the value of a property or of an argument that is worked out when the event is raised:
 /// a property of an element, a member of the arguments, the result of a call, <c>num()</c>, <c>str()</c>, a value by
-/// a condition (<c>= if (...) a else b</c>) or a string put together with <c>+</c>. It is also what the sides of a
+/// a condition (<c>if (...) a else b</c>) or a string put together with <c>+</c>. It is also what the sides of a
 /// comparison are.
 /// </summary>
 public abstract record SuilValueNode(SuilPosition Position);
@@ -486,9 +486,11 @@ public sealed record SuilReferenceNode(SuilTarget Target, List<string> Path, Sui
 public sealed record SuilArgsNode(List<string> Path, SuilPosition Position) : SuilValueNode(Position);
 
 /// <summary>
-/// <c>@Controllers.Info.GetName()</c>: the result of a call.
+/// <c>@Controllers.Info.GetName()</c>: the result of a call. Without parentheses and with no such method it is a property
+/// or a field (<c>@Controllers.Info.WorldTemp</c>), and the members after it (<c>@Controllers.Info.GetTime().Hours</c>) are
+/// read from the value.
 /// </summary>
-public sealed record SuilCallNode(SuilCallStatement Call, SuilPosition Position) : SuilValueNode(Position);
+public sealed record SuilCallNode(SuilCallStatement Call, SuilPosition Position, List<string>? Members = null) : SuilValueNode(Position);
 
 /// <summary>
 /// <c>num(x)</c> and <c>str(x)</c>: the value as a number, the value as a text.
@@ -515,7 +517,7 @@ public sealed record SuilConditionalNode(List<SuilConditionalBranch> Branches, S
 public sealed record SuilConditionalBranch(SuilBoolNode Condition, SuilValueNode Value, SuilPosition Position);
 
 /// <summary>
-/// A value expression as the value of a property or of an argument of a call (<c>text: = if (...) a else b</c>,
+/// A value expression as the value of a property or of an argument of a call (<c>text: if (...) a else b</c>,
 /// <c>text: str(#a.value)</c>, <c>@Log(@Controllers.Info.Name)</c>).
 /// </summary>
 public sealed record SuilExprValue(SuilValueNode Root, SuilPosition Position) : ISuilValue;

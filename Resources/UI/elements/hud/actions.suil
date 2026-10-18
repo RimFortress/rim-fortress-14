@@ -37,3 +37,6 @@ let loc = actions-hotbar-widgets;
         )
     }
 }
+
+on @Systems.Selection.OnUpdateSelection for actions-hotbar-widget => @UpdateButtons
+on @Systems.ExecutableGoal.OnControllerAttached for actions-hotbar-widget => @UpdateList

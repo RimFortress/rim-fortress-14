@@ -21,18 +21,19 @@ public sealed partial class NpcJobsPriorityWindow : RfWindow
     {
         IoCManager.InjectDependencies(this);
         InitializeComponent();
+
+        _npcJobs = _entity.System<NpcJobsSystem>();
     }
 
     public void EnsureSetup()
     {
-        _npcJobs = _entity.System<NpcJobsSystem>();
-        _npcJobs.OnJobChanged += _ =>
-        {
-            if (IsOpen)
-                BuildTable();
-        };
-
         BuildTable();
+    }
+
+    private void OnJobChanged()
+    {
+        if (IsOpen)
+            BuildTable();
     }
 
     public override void Close()

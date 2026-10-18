@@ -30,3 +30,7 @@
 
     =grid #icons (columns: 8, fit-content)
 }
+
+on @Systems.Selection.OnSelectedChanged for pop-list => @UpdateSelection
+on @Systems.CombatMode.CombatModeChanged for pop-list => @OnCombatModeChanged
+on @Systems.RimFortressWorld.OnPlayerUpdate for pop-list => @OnPlayerUpdate

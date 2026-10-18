@@ -26,6 +26,8 @@ public sealed partial class NpcJobsSettingsWindow : RfWindow
     {
         IoCManager.InjectDependencies(this);
         InitializeComponent();
+
+        _npcJobs = _entity.System<NpcJobsSystem>();
     }
 
     private void OnSavePressed()
@@ -70,11 +72,10 @@ public sealed partial class NpcJobsSettingsWindow : RfWindow
 
     public void EnsureSetup()
     {
-        _npcJobs = _entity.System<NpcJobsSystem>();
-        _npcJobs.OnJobChanged += _ => Build();
-
         Build();
     }
+
+    private void OnJobChanged() => Build();
 
     public void Build()
     {

@@ -78,7 +78,7 @@ public sealed class SuilSubscriptionTests
                 _ (
                     text: bind str(@Systems.Hunger.Get()),
                     min-width: bind #a.min-width every 250ms,
-                    min-height: bind = if (#a.disabled) 1 else 2 every 2s,
+                    min-height: bind if (#a.disabled) 1 else 2 every 2s,
                     visible: bind !#a.disabled on @Controllers.Info.Said,
                     padding: 4
                 )
@@ -109,5 +109,37 @@ public sealed class SuilSubscriptionTests
     public void A_Broken_Binding_Is_An_Error(string text)
     {
         Assert.Throws<SuilParserError>(() => SuilParser.ParseFile(text));
+    }
+
+    [Test]
+    public void A_Value_Can_Read_Members_After_A_Call_Or_A_Property()
+    {
+        var root = SuilParser.ParseFile("""
+            box (
+                text: bind str(@Controllers.Info.WorldTemp),
+                tool-tip: bind str(@Controllers.Info.GetTime().Hours),
+                min-width: bind str(@Systems.Time.Now.Hours)
+            )
+            """).Root!;
+
+        SuilCallNode Call(int index)
+        {
+            var bind = (SuilBindValue) root.Properties[index].Value![0];
+            var function = (SuilFunctionNode) ((SuilExprValue) bind.Values[0]).Root;
+            return (SuilCallNode) function.Argument;
+        }
+
+        Assert.That(Call(0).Members, Is.Null);
+        Assert.That(Call(0).Call.Method, Is.EqualTo("WorldTemp"));
+        Assert.That(Call(1).Members, Is.EqualTo(new[] { "Hours" }));
+        Assert.That(Call(1).Call.Arguments, Is.Not.Null);
+        Assert.That(Call(2).Call.Method, Is.EqualTo("Now"));
+        Assert.That(Call(2).Members, Is.EqualTo(new[] { "Hours" }));
+    }
+
+    [Test]
+    public void Members_After_A_Statement_Are_Still_An_Error()
+    {
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile("box (on-pressed => @Controllers.Info.Pick.Hours)"));
     }
 }

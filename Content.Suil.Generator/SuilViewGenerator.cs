@@ -154,7 +154,7 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             if (ExpandedFile(path) is not { } file)
                 continue;
 
-            var tagsOfFile = new HashSet<string>(file.Views.Where(v => v.Tag != null).Select(v => v.Tag!), StringComparer.Ordinal);
+            var tagsOfFile = new HashSet<string>(file.Views.SelectMany(TagsOf), StringComparer.Ordinal);
 
             foreach (var subscription in file.Subscriptions.Where(s => !tagsOfFile.Contains(s.Tag)))
             {
@@ -174,9 +174,9 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             try
             {
                 var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol, FieldsOfView);
-                var subscriptions = declaration.Tag == null
-                    ? new List<SuilSubscription>()
-                    : ExpandedFile(view.FilePath)!.Subscriptions.Where(s => s.Tag == declaration.Tag).ToList();
+                var subscriptions = ExpandedFile(view.FilePath)!.Subscriptions
+                    .Where(s => TagsOf(declaration).Contains(s.Tag))
+                    .ToList();
                 var text = emitter.Emit(declaration.Root, view.FilePath, view.Declaration.ClassName, subscriptions);
 
                 context.AddSource(HintName(view.Symbol), SourceText.From(text, Encoding.UTF8));
@@ -186,6 +186,19 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
                 Report(context, e.Descriptor, e.Position, null, e.Args);
             }
         }
+    }
+
+    /// <summary>
+    /// The tags a subscription (<c>on ... for tag</c>) can name a view by: the one that <c>as</c> gives, and the one the
+    /// class has by default, its name in kebab-case.
+    /// </summary>
+    private static IEnumerable<string> TagsOf(SuilViewDeclaration declaration)
+    {
+        if (declaration.Tag != null)
+            yield return declaration.Tag;
+
+        var name = declaration.ClassName;
+        yield return SuilNaming.ToKebab(name.Substring(name.LastIndexOf('.') + 1));
     }
 
     /// <summary>

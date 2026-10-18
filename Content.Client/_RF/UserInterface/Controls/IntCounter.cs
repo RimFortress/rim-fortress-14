@@ -80,9 +80,10 @@ public sealed partial class IntCounter : RfBoxContainer
         InitializeComponent();
 
         CountLine.Text = Value.ToString();
-        CountLine.OnTextChanged += args =>
-            Value = int.TryParse(args.Text, out var value) ? value : 0;
     }
+
+    private void OnCountTextChanged(RfLineEdit.LineEditEventArgs args)
+        => Value = int.TryParse(args.Text, out var value) ? value : 0;
 
     /// <summary>
     /// Set counter value without invoking event
