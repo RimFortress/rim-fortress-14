@@ -57,6 +57,10 @@ public static partial class SuilParser
                 case IdentToken { Value: "use" }:
                     items.Add(ConsumeUse(ref stream));
                     break;
+                case IdentToken { Value: "on" } when stream.PeekNext(2) is DelimToken { CodePoint: '@' }
+                                                     || (stream.PeekNext(2) is WhitespaceToken && stream.PeekNext(3) is DelimToken { CodePoint: '@' }):
+                    items.Add(ConsumeSubscription(ref stream));
+                    break;
                 case DelimToken { CodePoint: '@' }:
                     items.Add(stream.PeekNext(2) is IdentToken { Value: var atName }
                               && atName.Equals("font-face", StringComparison.OrdinalIgnoreCase)
@@ -143,6 +147,85 @@ public static partial class SuilParser
             throw ErrorAtCurrent(ref stream, context, "a content slot can't be the root of a view");
 
         return new SuilViewDeclaration(name.ToString(), element, position, tag);
+    }
+
+    /// <summary>
+    /// subscription = "on" , "@" , ( "Controllers" | "Systems" ) , "." , ident , "." , ident , "for" , tag , "=&gt;" , handler , [ ";" ]
+    /// The semicolon is needed after a lone "#id.property: value", which nothing else ends.
+    /// </summary>
+    private static SuilSubscription ConsumeSubscription(ref SuilTokenStream stream)
+    {
+        const string context = "consuming subscription";
+        var position = stream.PeekPosition();
+        stream.ConsumeNext(); // on
+        stream.SkipWhitespace();
+        stream.ConsumeNext(); // @
+
+        var path = new List<string>();
+
+        while (true)
+        {
+            if (stream.ConsumeNext() is not IdentToken part)
+            {
+                throw ErrorAtCurrent(ref stream, context,
+                    $"expected '@Controllers.Name.Event' or '@Systems.Name.Event' after 'on', not {Describe(stream.Current)}");
+            }
+
+            path.Add(part.Value);
+
+            if (stream.PeekNext() is DelimToken { CodePoint: '.' })
+            {
+                stream.ConsumeNext();
+                continue;
+            }
+
+            break;
+        }
+
+        if (path.Count != 3 || path[0] is not ("Controllers" or "Systems"))
+        {
+            throw new SuilParserError(context,
+                $"'on @{string.Join(".", path)}': a subscription is 'on @Controllers.Name.Event for tag => ...' or 'on @Systems.Name.Event for tag => ...'",
+                position);
+        }
+
+        stream.SkipWhitespace();
+
+        if (stream.ConsumeNext() is not IdentToken { Value: "for" })
+        {
+            throw ErrorAtCurrent(ref stream, context,
+                $"expected 'for' and the tag of a view after 'on @{string.Join(".", path)}', not {Describe(stream.Current)}");
+        }
+
+        stream.SkipWhitespace();
+
+        if (stream.ConsumeNext() is not IdentToken tag || tag.Value == "_")
+        {
+            throw ErrorAtCurrent(ref stream, context,
+                $"expected the tag of a view after 'for', not {Describe(stream.Current)}");
+        }
+
+        stream.SkipWhitespace();
+
+        if (!(stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is DelimToken { CodePoint: '>' }))
+        {
+            throw ErrorAtNext(ref stream, context,
+                $"expected '=>' after 'for {tag.Value}', not {Describe(stream.PeekNext())}");
+        }
+
+        stream.ConsumeNext();
+        stream.ConsumeNext();
+
+        var scope = path[0] == "Controllers" ? SuilCallScope.Controller : SuilCallScope.System;
+        var handler = ConsumeEventHandler(ref stream, path[2], position);
+
+        // Nothing closes a lone "#id.property: value" but the semicolon: the value would go on into the next item of the file.
+        stream.SkipWhitespace();
+
+        if (!handler.IsBlock && stream.PeekNext() is SemicolonToken)
+            stream.ConsumeNext();
+
+        return new SuilSubscription(scope, path[1], path[2], tag.Value, handler, position);
     }
 
     /// <summary>

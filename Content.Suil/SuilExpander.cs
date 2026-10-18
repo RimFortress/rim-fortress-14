@@ -286,7 +286,10 @@ public static class SuilExpander
                         CheckSlots(expandedRoot, ref slots);
                         _rules.Add(new SuilViewDeclaration(view.ClassName, expandedRoot, view.Position, view.Tag));
                         break;
-                    case SuilViewDeclaration:
+                    case SuilSubscription subscription when isMain:
+                        _rules.Add(subscription);
+                        break;
+                    case SuilViewDeclaration or SuilSubscription:
                         break; // the views of an imported file belong to that file
                     case SuilFontFace fontFace:
                         _rules.Add(new SuilFontFace(

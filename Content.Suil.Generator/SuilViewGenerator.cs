@@ -148,6 +148,22 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             return fieldTables[type] = declaration == null ? null : BuildFieldTable(declaration, tags);
         }
 
+        // A subscription of a tag that no view of its file has is reported by every project that builds a view of the file.
+        foreach (var path in views.Select(v => v.FilePath).Distinct().OrderBy(p => p, StringComparer.Ordinal))
+        {
+            if (ExpandedFile(path) is not { } file)
+                continue;
+
+            var tagsOfFile = new HashSet<string>(file.Views.Where(v => v.Tag != null).Select(v => v.Tag!), StringComparer.Ordinal);
+
+            foreach (var subscription in file.Subscriptions.Where(s => !tagsOfFile.Contains(s.Tag)))
+            {
+                Report(context, SuilDiagnostics.UnknownSubscriptionTag, subscription.Position, null,
+                    subscription.Scope == SuilCallScope.Controller ? "Controllers" : "Systems",
+                    subscription.Name, subscription.Event, subscription.Tag);
+            }
+        }
+
         foreach (var view in views)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
@@ -158,7 +174,10 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             try
             {
                 var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol, FieldsOfView);
-                var text = emitter.Emit(declaration.Root, view.FilePath, view.Declaration.ClassName);
+                var subscriptions = declaration.Tag == null
+                    ? new List<SuilSubscription>()
+                    : ExpandedFile(view.FilePath)!.Subscriptions.Where(s => s.Tag == declaration.Tag).ToList();
+                var text = emitter.Emit(declaration.Root, view.FilePath, view.Declaration.ClassName, subscriptions);
 
                 context.AddSource(HintName(view.Symbol), SourceText.From(text, Encoding.UTF8));
             }

@@ -133,4 +133,24 @@ internal static class SuilDiagnostics
         "SUIL028",
         "An element with a handler needs an id",
         "The handler of '{1}' is on an element of type '{0}' that has no id. The hot reload does not touch the handlers, so it must find the control that has them again by its id (button #name (...))");
+
+    public static readonly DiagnosticDescriptor UnknownClassEvent = Error(
+        "SUIL029",
+        "Unknown event in a SUIL subscription",
+        "'{0}' has no public event '{1}'");
+
+    public static readonly DiagnosticDescriptor UnsupportedClassEvent = Error(
+        "SUIL030",
+        "Unsupported event in a SUIL subscription",
+        "The event '{0}' of '{1}' is of the type '{2}'; a subscription needs a delegate that returns void and takes nothing or one argument");
+
+    public static readonly DiagnosticDescriptor UnknownSubscriptionTag = Error(
+        "SUIL031",
+        "Unknown view in a SUIL subscription",
+        "'on @{0}.{1}.{2} for {3}': no view of the file has the tag '{3}' (a view gets it by '@Class as {3} => ...')");
+
+    public static readonly DiagnosticDescriptor TreeHookTaken = Error(
+        "SUIL032",
+        "The view overrides a hook of the tree and doesn't pass it on",
+        "'{0}' has subscriptions (on ... for ...) and overrides {1}(), which they use to subscribe and unsubscribe; call {2}() from the override");
 }

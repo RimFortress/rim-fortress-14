@@ -62,6 +62,20 @@ internal sealed partial class SuilViewEmitter
         var name = $"__h{_handlerCounter++}";
         var delegateName = delegateType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
+        var lambda = StatementsOf(pending, handler, argsType);
+
+        _body.AppendLine($"            {delegateName} {name} = {(argsType == null ? "()" : "__args")} =>");
+        _body.AppendLine("            {");
+        _body.Append(lambda);
+        _body.AppendLine("            };");
+        _body.AppendLine($"            {pending.Variable}.{evt.Name} += {name};");
+    }
+
+    /// <summary>
+    /// The statements of a handler as C#, for the body of a lambda.
+    /// </summary>
+    private StringBuilder StatementsOf(PendingHandlers pending, SuilEventHandler handler, ITypeSymbol? argsType)
+    {
         var lambda = new StringBuilder();
 
         _boolContext = node => BoolOf(node, pending, argsType);
@@ -72,21 +86,22 @@ internal sealed partial class SuilViewEmitter
         // A call without parentheses gets the arguments of the event only as the lone statement of a handler without a block.
         var autoArguments = !handler.IsBlock && handler.Statements.Count == 1;
 
-        foreach (var statement in handler.Statements)
+        try
         {
-            EmitStatement(lambda, "                ", statement, pending, argsType, autoArguments);
+            foreach (var statement in handler.Statements)
+            {
+                EmitStatement(lambda, "                ", statement, pending, argsType, autoArguments);
+            }
+        }
+        finally
+        {
+            _boolContext = null;
+            _numContext = null;
+            _handlerElement = null;
+            _handlerArguments = null;
         }
 
-        _boolContext = null;
-        _numContext = null;
-        _handlerElement = null;
-        _handlerArguments = null;
-
-        _body.AppendLine($"            {delegateName} {name} = {(argsType == null ? "()" : "__args")} =>");
-        _body.AppendLine("            {");
-        _body.Append(lambda);
-        _body.AppendLine("            };");
-        _body.AppendLine($"            {pending.Variable}.{evt.Name} += {name};");
+        return lambda;
     }
 
     /// <summary>

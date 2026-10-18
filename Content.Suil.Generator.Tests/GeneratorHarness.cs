@@ -102,6 +102,10 @@ internal static class GeneratorHarness
                 public System.Collections.Generic.HashSet<string> StyleClasses { get; } = new();
                 public void AddStyleClass(string name) => StyleClasses.Add(name);
                 public void RemoveStyleClass(string name) => StyleClasses.Remove(name);
+                protected virtual void EnteredTree() { }
+                protected virtual void ExitedTree() { }
+                public void EnterTree() => EnteredTree();
+                public void ExitTree() => ExitedTree();
             }
         }
         namespace Robust.Client.UserInterface.Controls

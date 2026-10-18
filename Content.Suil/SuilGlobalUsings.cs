@@ -42,6 +42,7 @@ public static class SuilGlobalUsings
                     SuilRule rule => rule.Position,
                     SuilFontFace fontFace => fontFace.Position,
                     SuilViewDeclaration view => view.Position,
+                    SuilSubscription subscription => subscription.Position,
                     _ => default,
                 };
 

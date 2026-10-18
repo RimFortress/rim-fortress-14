@@ -40,6 +40,11 @@ public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) 
     /// The <c>@Class =&gt; element</c> declarations of the file, in the order they are written.
     /// </summary>
     public IEnumerable<SuilViewDeclaration> Views => Items.OfType<SuilViewDeclaration>();
+
+    /// <summary>
+    /// The <c>on @Systems.X.Event for tag =&gt; ...</c> subscriptions of the file, in the order they are written.
+    /// </summary>
+    public IEnumerable<SuilSubscription> Subscriptions => Items.OfType<SuilSubscription>();
 }
 
 /// <summary>
@@ -47,6 +52,25 @@ public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) 
 /// a full name or its tail (<c>Ui.Picker</c>, <c>Picker</c>) that names one class.
 /// </summary>
 public sealed record SuilViewDeclaration(string ClassName, SuilElement Root, SuilPosition Position, string? Tag = null) : ISuilTopLevelItem;
+
+/// <summary>
+/// <c>on @Systems.Hunger.Changed for hunger-bar =&gt; { ... }</c>: what a view does when an event of a controller or of a system
+/// is raised. The view is the one that was given the tag by <c>@Class as hunger-bar =&gt; ...</c> in the same file; it is
+/// subscribed while it is in the tree of the controls.
+/// </summary>
+/// <param name="Scope"><see cref="SuilCallScope.Controller"/> or <see cref="SuilCallScope.System"/>.</param>
+/// <param name="Name">The name of the controller or of the system, as written (<c>Hunger</c>).</param>
+/// <param name="Event">The name of the C# event, as written (<c>Changed</c>).</param>
+/// <param name="Tag">The tag of the view.</param>
+/// <param name="Handler">What is done, written the way the handler of an element is; its <see cref="SuilEventHandler.Event"/>
+/// is the name of the event.</param>
+public sealed record SuilSubscription(
+    SuilCallScope Scope,
+    string Name,
+    string Event,
+    string Tag,
+    SuilEventHandler Handler,
+    SuilPosition Position) : ISuilTopLevelItem;
 
 /// <summary>
 /// <c>use "path";</c>

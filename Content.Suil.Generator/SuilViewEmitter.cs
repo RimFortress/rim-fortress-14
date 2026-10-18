@@ -41,7 +41,7 @@ internal sealed partial class SuilViewEmitter(
     private int _counter;
     private string? _contentVariable;
 
-    public string Emit(SuilElement root, string viewPath, string viewName)
+    public string Emit(SuilElement root, string viewPath, string viewName, IReadOnlyList<SuilSubscription> subscriptions)
     {
         var rootType = ResolveType(root);
 
@@ -57,6 +57,7 @@ internal sealed partial class SuilViewEmitter(
 
         // The handlers come last: they name elements of the whole view, which have their fields only now.
         EmitHandlers();
+        EmitSubscriptions(root, subscriptions);
 
         return Wrap(viewPath, viewName);
     }
@@ -796,6 +797,10 @@ internal sealed partial class SuilViewEmitter(
         sb.AppendLine("            global::Content.Suil.SuilViewRegistry.Register(this);");
         sb.AppendLine("        }");
         sb.AppendLine();
+
+        if (HasSubscriptions)
+            WriteSubscriptionMembers(sb);
+
         WriteViewMembers(sb, viewPath, viewName);
 
         for (var i = 0; i < containers.Count; i++)
