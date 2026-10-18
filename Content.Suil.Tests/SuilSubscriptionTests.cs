@@ -69,4 +69,45 @@ public sealed class SuilSubscriptionTests
 
         Assert.That(file.Subscriptions.Select(s => s.Tag), Is.EqualTo(new[] { "hud" }));
     }
+
+    [Test]
+    public void A_Binding_Is_Per_Frame_Every_So_Often_Or_On_An_Event()
+    {
+        var root = SuilParser.ParseFile("""
+            box {
+                _ (
+                    text: bind str(@Systems.Hunger.Get()),
+                    min-width: bind #a.min-width every 250ms,
+                    min-height: bind = if (#a.disabled) 1 else 2 every 2s,
+                    visible: bind !#a.disabled on @Controllers.Info.Said,
+                    padding: 4
+                )
+            }
+            """).Root!;
+
+        var properties = ((SuilElement) root.Children.Single()).Properties;
+        var binds = properties.Select(p => p.Value is [SuilBindValue b] ? b : null).ToList();
+
+        Assert.That(binds[0]!.Mode, Is.EqualTo(SuilBindMode.Frame));
+        Assert.That(binds[1]!.Mode, Is.EqualTo(SuilBindMode.Every));
+        Assert.That(binds[1]!.Seconds, Is.EqualTo(0.25).Within(1e-9));
+        Assert.That(binds[2]!.Seconds, Is.EqualTo(2));
+        Assert.That(binds[3]!.Mode, Is.EqualTo(SuilBindMode.Event));
+        Assert.That(binds[3]!.Scope, Is.EqualTo(SuilCallScope.Controller));
+        Assert.That(binds[3]!.Name, Is.EqualTo("Info"));
+        Assert.That(binds[3]!.Event, Is.EqualTo("Said"));
+        Assert.That(binds[4], Is.Null, "an ordinary property");
+    }
+
+    [TestCase("box (text: bind every 1s)")]
+    [TestCase("box (text: bind 5 every 0s)")]
+    [TestCase("box (text: bind 5 every 3)")]
+    [TestCase("box (text: bind 5 every 3m)")]
+    [TestCase("box (text: bind 5 on Hunger.Changed)")]
+    [TestCase("box (text: bind 5 on @Hunger.Changed)")]
+    [TestCase("box (text: bind 5 on @Systems.Hunger)")]
+    public void A_Broken_Binding_Is_An_Error(string text)
+    {
+        Assert.Throws<SuilParserError>(() => SuilParser.ParseFile(text));
+    }
 }

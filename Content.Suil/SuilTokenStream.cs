@@ -22,6 +22,11 @@ public record struct SuilTokenStream(SuilToken[] Tokens, string? File = null)
         : new EofToken();
 
     /// <summary>
+    /// The index of the last token to have been consumed, -1 before the first.
+    /// </summary>
+    public int Index => _position;
+
+    /// <summary>
     /// Consume the next input token.
     /// </summary>
     public ISuilToken ConsumeNext(int amount = 1)

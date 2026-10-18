@@ -860,6 +860,9 @@ public static class SuilExpander
                         result.Add(node is SuilLiteralNode literal ? literal.Value : expression with { Root = node });
                         break;
                     }
+                    case SuilBindValue bind:
+                        result.Add(bind with { Values = ExpandValues(bind.Values, scope, bind.Position.Line > 0 ? bind.Position : position) });
+                        break;
                     case SuilBoolValue boolValue:
                         result.Add(FoldValue(boolValue, scope, position));
                         break;

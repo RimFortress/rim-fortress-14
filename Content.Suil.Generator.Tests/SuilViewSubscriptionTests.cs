@@ -20,6 +20,8 @@ public sealed class SuilViewSubscriptionTests
             public event Action<int>? Changed;
             public event Action? Reset;
             public event Func<int>? Wrong;
+            public int Value;
+            public int Get() => Value;
             public int Handlers => Changed?.GetInvocationList().Length ?? 0;
             public void Raise(int value) => Changed?.Invoke(value);
             public void RaiseReset() => Reset?.Invoke();
@@ -181,5 +183,75 @@ public sealed class SuilViewSubscriptionTests
 
         var passed = Run(suil, code.Replace("{0}", "SuilEnteredTree();").Replace("{1}", "SuilExitedTree();"));
         AssertClean(passed);
+    }
+
+    [Test]
+    public void A_Binding_Is_Worked_Out_Again_While_The_View_Is_In_The_Tree()
+    {
+        var result = Run("""
+            @Picker as picker => button {
+                _ #fast (text: bind str(@Systems.Hunger.Get()))
+                _ #slow (text: bind str(@Systems.Hunger.Get()) every 1s)
+                _ #event (text: bind str(@Systems.Hunger.Get()) on @Systems.Hunger.Changed)
+                _ #cond (min-width: bind = if (@Systems.Hunger.Get() > 5) 10 else 1)
+            }
+            """);
+
+        AssertClean(result);
+
+        var assembly = result.Load();
+        var boot = assembly.GetType("Game.Ui.Boot")!;
+        boot.GetMethod("Setup")!.Invoke(null, null);
+        var hunger = boot.GetField("Hunger")!.GetValue(null)!;
+        var value = hunger.GetType().GetField("Value")!;
+
+        string? Text(object view, string field)
+        {
+            var label = Get(view, field);
+            return (string?) label.GetType().GetProperty("Text")!.GetValue(label);
+        }
+
+        var view = Activator.CreateInstance(assembly.GetType("Game.Ui.Picker")!)!;
+        Assert.That(Text(view, "Fast"), Is.Null, "not in the tree yet");
+
+        value.SetValue(hunger, 3);
+        Call(view, "EnterTree");
+        Call(view, "EnterTree");
+        Assert.That(new[] { Text(view, "Fast"), Text(view, "Slow"), Text(view, "Event") }, Is.All.EqualTo("3"), "worked out when it enters");
+        Assert.That(Get(Get(view, "Cond"), "MinWidth"), Is.EqualTo(1));
+
+        value.SetValue(hunger, 7);
+        SuilBindings.Update(0.016);
+        Assert.That(Text(view, "Fast"), Is.EqualTo("7"), "every frame");
+        Assert.That(Text(view, "Slow"), Is.EqualTo("3"), "not yet");
+        Assert.That(Text(view, "Event"), Is.EqualTo("3"), "no event");
+        Assert.That(Get(Get(view, "Cond"), "MinWidth"), Is.EqualTo(10));
+
+        SuilBindings.Update(1.0);
+        Assert.That(Text(view, "Slow"), Is.EqualTo("7"), "after a second");
+
+        value.SetValue(hunger, 8);
+        Call(hunger, "Raise", 8);
+        Assert.That(Text(view, "Event"), Is.EqualTo("8"), "the event was raised");
+        Assert.That(Text(view, "Fast"), Is.EqualTo("7"), "the frame didn't come");
+
+        Call(view, "ExitTree");
+        value.SetValue(hunger, 9);
+        SuilBindings.Update(5.0);
+        Call(hunger, "Raise", 9);
+        Assert.That(new[] { Text(view, "Fast"), Text(view, "Slow"), Text(view, "Event") }, Is.EqualTo(new[] { "7", "7", "8" }), "out of the tree it works nothing out");
+    }
+
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Nobody.Get())) }", "SUIL027")]
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Hunger.Get()) on @Systems.Hunger.Missing) }", "SUIL029")]
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Hunger.Get()) on @Systems.Hunger.Wrong) }", "SUIL030")]
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(@Systems.Hunger.Get()) on @Systems.Nobody.Changed) }", "SUIL027")]
+    [TestCase("@Picker as picker => button { _ #a (nope: bind 5) }", "SUIL010")]
+    [TestCase("@Picker as picker => button { _ #a (text: bind str(args)) }", "SUIL023")]
+    public void Mistakes_In_A_Binding_Are_Reported_At_The_Build(string suil, string id)
+    {
+        var result = Run(suil);
+
+        Assert.That(Ids(result), Has.Member(id), string.Join("\n", result.GeneratorDiagnostics));
     }
 }

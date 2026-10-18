@@ -73,6 +73,39 @@ public sealed record SuilSubscription(
     SuilPosition Position) : ISuilTopLevelItem;
 
 /// <summary>
+/// When a binding works its value out again.
+/// </summary>
+public enum SuilBindMode
+{
+    /// <summary><c>bind expression</c>: every frame.</summary>
+    Frame,
+
+    /// <summary><c>bind expression every 1s</c>: every so often.</summary>
+    Every,
+
+    /// <summary><c>bind expression on @Systems.X.Event</c>: every time the event is raised.</summary>
+    Event,
+}
+
+/// <summary>
+/// <c>text: bind str(@Systems.Hunger.Value) every 1s</c>: the value of a property of an element that is worked out again
+/// while the view is in the tree of the controls. The property is assigned only when the value changed.
+/// </summary>
+/// <param name="Values">The expression, written the way the value of a property in a handler is.</param>
+/// <param name="Seconds">The period of <see cref="SuilBindMode.Every"/>.</param>
+/// <param name="Scope">The class of the event of <see cref="SuilBindMode.Event"/>.</param>
+/// <param name="Name">The name of the controller or of the system, as written.</param>
+/// <param name="Event">The name of the C# event, as written.</param>
+public sealed record SuilBindValue(
+    List<ISuilValue> Values,
+    SuilBindMode Mode,
+    double Seconds,
+    SuilCallScope Scope,
+    string? Name,
+    string? Event,
+    SuilPosition Position) : ISuilValue;
+
+/// <summary>
 /// <c>use "path";</c>
 /// </summary>
 public sealed record SuilUse(string Path, SuilPosition Position) : ISuilTopLevelItem;

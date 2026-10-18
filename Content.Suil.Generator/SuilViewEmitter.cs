@@ -57,6 +57,7 @@ internal sealed partial class SuilViewEmitter(
 
         // The handlers come last: they name elements of the whole view, which have their fields only now.
         EmitHandlers();
+        EmitBindings();
         EmitSubscriptions(root, subscriptions);
 
         return Wrap(viewPath, viewName);
@@ -102,7 +103,10 @@ internal sealed partial class SuilViewEmitter(
         foreach (var property in properties)
         {
             // the root is the view itself, so its own properties can be named too
-            EmitProperty(variable, variable == "this" ? viewClass : type, property);
+            if (property.Value is [SuilBindValue bind])
+                _binds.Add(new PendingBind(variable, variable == "this" ? viewClass : type, element, property, bind));
+            else
+                EmitProperty(variable, variable == "this" ? viewClass : type, property);
 
             // The file assigned it, so the styles must leave it alone, unless it is soft: `?` before the value.
             // Only a control of SUIL is styled, an engine one has nothing to protect.

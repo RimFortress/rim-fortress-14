@@ -64,7 +64,26 @@ public sealed partial class SuilHotReload
                          "build, build the project to change them");
         }
 
+        if (plan != null && CountBindings(root) is var bindings and > 0)
+        {
+            warnings.Add($"the {bindings} binding(s) of the file (bind ...) are not reloaded: the properties keep the ones of the " +
+                         "build, build the project to change them");
+        }
+
         return plan;
+    }
+
+    private static int CountBindings(SuilElement element)
+    {
+        var count = element.Properties.Count(p => p.Value is [SuilBindValue]);
+
+        foreach (var node in element.Children)
+        {
+            if (node is SuilElement child)
+                count += CountBindings(child);
+        }
+
+        return count;
     }
 
     private static int CountHandlers(SuilElement element)
@@ -127,6 +146,10 @@ public sealed partial class SuilHotReload
 
         foreach (var property in element.Properties)
         {
+            // a binding is in the code that was built: the property keeps working as it did
+            if (property.Value is [SuilBindValue])
+                continue;
+
             // the root is the view itself, so its own properties can be named too
             var propertyOwner = isRoot ? view.GetType() : type;
 
