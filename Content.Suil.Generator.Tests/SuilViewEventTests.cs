@@ -390,7 +390,7 @@ public sealed class SuilViewEventTests
                 sprite-view #sv (override-direction: north)
                 +button #go (on-pressed => {
                     &.min-width: if (#src.ratio >= 2 && #src.text == "abc") 10 elif (#src.text != "abc") 20 else 30;
-                    #dst.text: = str(#src.ratio) + "/" + str(args.count);
+                    #dst.text: str(#src.ratio) + "/" + str(args.count);
                     #dst.ratio: num("1.5");
                     #dst.level: if (#sv.override-direction == south) 1 else 2;
                     #dst.name: if (#src.text == none) "empty" else #src.text + "!"
@@ -441,7 +441,7 @@ public sealed class SuilViewEventTests
 
     [TestCase("button { _ #a  +button #go (on-pressed => { if (#a.text > 5) { &.min-width: 1 } }) }", "SUIL011", TestName = "ordering of texts")]
     [TestCase("button { _ #a  +button #go (on-pressed => { if (#a.text == 5) { &.min-width: 1 } }) }", "SUIL011", TestName = "a text and a number")]
-    [TestCase("button { _ #a  +button #go (on-pressed => { #a.text: = #a.ratio + \"x\" }) }", "SUIL023", TestName = "a number is put together without str()")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { #a.text: #a.ratio + \"x\" }) }", "SUIL023", TestName = "a number is put together without str()")]
     [TestCase("button { _ #a  +button #go (on-pressed => { #a.text: if (#a.ratio > 1) \"a\" }) }", "SUIL003", TestName = "a condition without else")]
     [TestCase("button { _ #a  +button #go (on-pressed => { &.min-width: num(true) }) }", "SUIL023", TestName = "num of a bool")]
     [TestCase("button { _ #a  +button #go (on-pressed => { if (#a.ratio == none) { &.min-width: 1 } }) }", "SUIL023", TestName = "none and a number")]

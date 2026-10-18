@@ -27,6 +27,12 @@ public static partial class SuilParser
         if (references && StartsExpression(ref stream))
             return ConsumeExpressionValue(ref stream, context, commasEnd);
 
+        if (references && stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is not DelimToken { CodePoint: '=' or '>' })
+        {
+            throw ErrorAtNext(ref stream, context,
+                "an expression is written without '=': 'if (condition) a else b', 'str(x) + \"y\"', '#a.text + \"y\"'");
+        }
+
         // `#a.value > 5`, `args.text == "x"`: a comparison is a bool expression
         if (references && HasTopLevelComparison(ref stream, commasEnd))
         {
@@ -42,6 +48,10 @@ public static partial class SuilParser
 
             return new List<ISuilValue> { new SuilBoolValue(compared, comparisonPosition) };
         }
+
+        // `#a.text + "x"`, `"n: " + str(args.count)`: a text put together
+        if (references && HasTopLevelPlus(ref stream, commasEnd))
+            return ConsumeExpressionValue(ref stream, context, commasEnd);
 
         // calc(), min(), max(), clamp() of numbers, the variables and (in handlers) the numeric properties of elements
         if (TryConsumeNumValue(ref stream, context, references, commasEnd, out var number))

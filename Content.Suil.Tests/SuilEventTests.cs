@@ -33,6 +33,20 @@ public sealed class SuilEventTests
         Assert.That(Only(root).Statements, Has.Count.EqualTo(1));
 
         Assert.Throws<SuilParserError>(() => Root("button (on-pressed => #a.text: = if (#b.pressed) \"yes\" else \"no\")"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => #a.text: = #b.text + \"x\")"));
+    }
+
+    [TestCase("#a.text: #b.text + \"!\"")]
+    [TestCase("#a.text: \"n: \" + str(#b.value)")]
+    [TestCase("#a.text: str(#b.value) + \"!\"")]
+    public void A_Text_Put_Together_Needs_No_Sign_In_Front(string statement)
+    {
+        var root = Root($"button (on-pressed => {statement})");
+        var target = (SuilTargetStatement) Only(root).Statements.Single();
+        var property = ((SuilPropertyItem) target.Items.Single()).Property;
+
+        Assert.That(property.Value, Has.Count.EqualTo(1));
+        Assert.That(property.Value![0], Is.InstanceOf<SuilExprValue>());
     }
 
     [Test]

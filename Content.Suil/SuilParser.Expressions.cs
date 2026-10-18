@@ -15,7 +15,6 @@ public static partial class SuilParser
     private static bool StartsExpression(ref SuilTokenStream stream)
         => stream.PeekNext() switch
         {
-            DelimToken { CodePoint: '=' } => stream.PeekNext(2) is not DelimToken { CodePoint: '=' or '>' },
             IdentToken { Value: "if" } or FunctionToken { Value: "if" } => true,
             DelimToken { CodePoint: '@' } => true,
             FunctionToken { Value: "num" or "str" } => true,
@@ -44,23 +43,12 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// An expression: <c>if (...) a else b</c>, or a text put together with <c>+</c>, or a lone operand. A text put
-    /// together may start with <c>=</c>, where it is not told from a list of values otherwise (<c>= #a.value + "x"</c>);
-    /// a condition is written without it.
+    /// An expression: <c>if (...) a else b</c>, or a text put together with <c>+</c>, or a lone operand. It is told from a
+    /// list of values by what is in it: <c>if</c>, a call, <c>num()</c>, <c>str()</c> or a <c>+</c> outside of parentheses.
     /// </summary>
     private static SuilValueNode ConsumeExpression(ref SuilTokenStream stream, string context)
     {
         stream.SkipWhitespace();
-
-        // `= expression` marks a text put together of operands; a condition needs no sign
-        if (stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is not DelimToken { CodePoint: '=' or '>' })
-        {
-            stream.ConsumeNext();
-            stream.SkipWhitespace();
-
-            if (stream.PeekNext() is IdentToken { Value: "if" } or FunctionToken { Value: "if" })
-                throw ErrorAtNext(ref stream, context, "a condition is written without '=': if (condition) a else b");
-        }
 
         if (stream.PeekNext() is IdentToken { Value: "if" } or FunctionToken { Value: "if" })
             return ConsumeConditional(ref stream, context);
@@ -147,8 +135,6 @@ public static partial class SuilParser
 
         switch (stream.PeekNext())
         {
-            case DelimToken { CodePoint: '=' }:
-                return ConsumeExpression(ref stream, context);
             case DelimToken { CodePoint: '@' }:
             {
                 // @Controllers.Info.WorldTemp.Hours, @Controllers.Info.GetTime().Hours: the members of the value
@@ -335,6 +321,38 @@ public static partial class SuilParser
                 case DelimToken { CodePoint: '=' } when depth == 0 && stream.PeekNext(i + 1) is DelimToken { CodePoint: '=' }:
                 case DelimToken { CodePoint: '!' } when depth == 0 && stream.PeekNext(i + 1) is DelimToken { CodePoint: '=' }:
                 case DelimToken { CodePoint: '<' or '>' } when depth == 0:
+                    return true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Whether a <c>+</c> is in the value at its top level (not inside parentheses), up to its end: a text put together.
+    /// </summary>
+    private static bool HasTopLevelPlus(ref SuilTokenStream stream, bool commasEnd)
+    {
+        var depth = 0;
+
+        for (var i = 1;; i++)
+        {
+            switch (stream.PeekNext(i))
+            {
+                case EofToken:
+                    return false;
+                case LeftParenthesisToken or FunctionToken:
+                    depth++;
+                    break;
+                case RightParenthesisToken:
+                    if (depth == 0)
+                        return false;
+
+                    depth--;
+                    break;
+                case SemicolonToken or RightCurlyBracket when depth == 0:
+                    return false;
+                case CommaToken when depth == 0 && commasEnd:
+                    return false;
+                case DelimToken { CodePoint: '+' } when depth == 0:
                     return true;
             }
         }
