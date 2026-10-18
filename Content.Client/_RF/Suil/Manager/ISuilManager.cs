@@ -25,16 +25,6 @@ public interface ISuilManager : ISuilPropertyResolver, ISuilValues
     ResourceSuilFileSource Files { get; }
 
     /// <summary>
-    /// The events of the controls, to subscribe to without reflection: the handlers of the files that are loaded at run time.
-    /// </summary>
-    SuilEventTable Events { get; }
-
-    /// <summary>
-    /// The calls of UI controllers and systems that the files made when they were built, which the hot reload can repeat.
-    /// </summary>
-    SuilCallTable Calls { get; }
-
-    /// <summary>
     /// The type of the control a tag stands for, <c>null</c> for an unknown tag or one that stands for several types.
     /// </summary>
     /// <param name="tag">The tag as written in the file; <c>null</c> is <c>_</c>.</param>

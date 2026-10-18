@@ -132,14 +132,6 @@ public sealed partial class SuilHotReload : ISuilHotReload
             return new SuilReloadResult(view, errors, warnings, dependencies);
         }
 
-        // The handlers the compiled code subscribed and the ones of the last reload give way to the ones of the file.
-        foreach (var unsubscribe in entry?.TakeUnsubscribers() ?? Array.Empty<Action>())
-        {
-            unsubscribe();
-        }
-
-        state.Unsubscribe();
-
         // The children given to the class (%content%) are not the file's: they wait out the rebuilding and go to the
         // new place.
         var oldContent = state.Content ?? view.SuilContent as ICollection<Control>;
@@ -397,20 +389,5 @@ public sealed partial class SuilHotReload : ISuilHotReload
         /// <summary>The values the controls had before the file set the properties, by id ("" is the root).</summary>
         public readonly Dictionary<string, Dictionary<string, object?>> Originals = new(StringComparer.Ordinal);
 
-        /// <summary>The controls of the last reload by their ids, what the targets of the handlers name.</summary>
-        public readonly Dictionary<string, Control> Controls = new(StringComparer.Ordinal);
-
-        /// <summary>The handlers of the file that are subscribed now.</summary>
-        public readonly List<(Control Control, SuilEventAccessor Event, Delegate Added)> Subscriptions = new();
-
-        public void Unsubscribe()
-        {
-            foreach (var (control, evt, added) in Subscriptions)
-            {
-                evt.Unsubscribe(control, added);
-            }
-
-            Subscriptions.Clear();
-        }
     }
 }

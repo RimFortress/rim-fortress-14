@@ -107,8 +107,6 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
 
         var partials = new StringBuilder();
         var shorthandTypes = new List<(INamedTypeSymbol Type, List<ShorthandGroup> Groups, bool InPartial)>();
-        var eventTypes = new List<(INamedTypeSymbol Type, List<EventMember> Events)>();
-        var argumentTypes = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
 
         foreach (var type in types.OrderBy(t => t.ToDisplayString(), StringComparer.Ordinal))
         {
@@ -122,19 +120,6 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
 
             if (groups.Count > 0)
                 shorthandTypes.Add((type, groups, shorthandsInPartial));
-
-            var events = Events(type, compilation);
-
-            if (events.Count > 0)
-            {
-                eventTypes.Add((type, events));
-
-                foreach (var evt in events)
-                {
-                    if (evt.Argument != null)
-                        argumentTypes[evt.Argument.ToDisplayString(Format)] = evt.Argument;
-                }
-            }
 
             if (hasHidden || shorthandsInPartial)
                 WritePartial(partials, type, hasHidden ? hidden : new List<Member>(), shorthandsInPartial ? groups : null);
@@ -177,63 +162,6 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
             sb.AppendLine("            {");
             WriteShorthandTable(sb, "                ", typeName, groups, "shorthands.Add(typeof(" + typeName + "), table);");
             sb.AppendLine("            }");
-        }
-
-        sb.AppendLine("        }");
-        sb.AppendLine();
-        sb.AppendLine("        public void RegisterEvents(global::Content.Suil.SuilEventTable events)");
-        sb.AppendLine("        {");
-
-        foreach (var (type, list) in eventTypes)
-        {
-            var typeName = type.ToDisplayString(Format);
-            sb.AppendLine($"            events.Add(typeof({typeName}), new global::System.Collections.Generic.Dictionary<string, global::Content.Suil.SuilEventAccessor>");
-            sb.AppendLine("            {");
-
-            foreach (var evt in list)
-            {
-                WriteEventAccessor(sb, "                ", typeName, evt);
-            }
-
-            sb.AppendLine("            });");
-        }
-
-        // every readable member of the arguments, for `@Method(args.new)`
-        foreach (var pair in argumentTypes.OrderBy(p => p.Key, StringComparer.Ordinal))
-        {
-            var members = Readable(pair.Value);
-
-            if (members.Count == 0)
-                continue;
-
-            sb.AppendLine($"            events.AddMembers(typeof({pair.Key}), new global::System.Collections.Generic.Dictionary<string, global::System.Func<object, object>>");
-            sb.AppendLine("            {");
-
-            foreach (var (member, name) in members)
-            {
-                sb.AppendLine($"                [{Literal(member)}] = static o => (object) (({pair.Key}) o).{name},");
-            }
-
-            sb.AppendLine("            });");
-        }
-
-        foreach (var pair in argumentTypes.OrderBy(p => p.Key, StringComparer.Ordinal))
-        {
-            var name = pair.Key;
-            var flags = Flags(pair.Value);
-
-            if (flags.Count == 0)
-                continue;
-
-            sb.AppendLine($"            events.AddArguments(typeof({name}), new global::System.Collections.Generic.Dictionary<string, global::System.Func<object, bool>>");
-            sb.AppendLine("            {");
-
-            foreach (var (flag, member) in flags)
-            {
-                sb.AppendLine($"                [{Literal(flag)}] = static o => (({name}) o).{member},");
-            }
-
-            sb.AppendLine("            });");
         }
 
         sb.AppendLine("        }");
@@ -405,125 +333,6 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
     }
 
     // ---- Events ----
-
-    private sealed record EventMember(string Name, string MemberName, string DelegateName, INamedTypeSymbol? Argument);
-
-    /// <summary>
-    /// The public instance events the type declares that a handler of a file can subscribe to: the delegate returns
-    /// nothing and takes nothing or one argument.
-    /// </summary>
-    private static List<EventMember> Events(INamedTypeSymbol type, Compilation compilation)
-    {
-        var result = new List<EventMember>();
-
-        foreach (var member in type.GetMembers())
-        {
-            if (member is not IEventSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public } evt
-                || IsObsolete(evt)
-                || evt.Type is not INamedTypeSymbol { DelegateInvokeMethod: { } invoke } delegateType
-                || !invoke.ReturnsVoid
-                || invoke.Parameters.Length > 1
-                || invoke.Parameters.Any(p => p.RefKind != RefKind.None))
-            {
-                continue;
-            }
-
-            INamedTypeSymbol? argument = null;
-
-            if (invoke.Parameters.Length == 1)
-            {
-                // a pointer, a type parameter or an inaccessible type can't be named in the table
-                if (invoke.Parameters[0].Type is not INamedTypeSymbol named
-                    || named.TypeParameters.Length > 0 && named.IsUnboundGenericType
-                    || !compilation.IsSymbolAccessibleWithin(named, compilation.Assembly))
-                {
-                    continue;
-                }
-
-                argument = named;
-            }
-
-            result.Add(new EventMember(
-                SuilNaming.ToKebab(evt.Name),
-                evt.Name,
-                delegateType.ToDisplayString(Format),
-                argument));
-        }
-
-        return result;
-    }
-
-    private static void WriteEventAccessor(StringBuilder sb, string indent, string typeName, EventMember evt)
-    {
-        var argument = evt.Argument == null ? "null" : $"typeof({evt.Argument.ToDisplayString(Format)})";
-        var lambda = evt.Argument == null ? "() => handler(null)" : "argument => handler(argument)";
-
-        sb.AppendLine($"{indent}[{Literal(evt.Name)}] = new global::Content.Suil.SuilEventAccessor(");
-        sb.AppendLine($"{indent}    {Literal(evt.Name)}, {Literal(evt.MemberName)}, {argument},");
-        sb.AppendLine($"{indent}    static (control, handler) =>");
-        sb.AppendLine($"{indent}    {{");
-        sb.AppendLine($"{indent}        {evt.DelegateName} added = {lambda};");
-        sb.AppendLine($"{indent}        (({typeName}) control).{evt.MemberName} += added;");
-        sb.AppendLine($"{indent}        return added;");
-        sb.AppendLine($"{indent}    }},");
-        sb.AppendLine($"{indent}    static (control, added) => (({typeName}) control).{evt.MemberName} -= ({evt.DelegateName}) added),");
-    }
-
-    /// <summary>
-    /// The public bool members of an arguments type by their names in SUIL: what <c>args.pressed</c> can read.
-    /// </summary>
-    /// <summary>
-    /// The public members of an arguments type that can be read: <c>args.old</c> for <c>Old</c>.
-    /// </summary>
-    private static List<(string Name, string Member)> Readable(INamedTypeSymbol argument)
-    {
-        var result = new List<(string, string)>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-
-        for (INamedTypeSymbol? current = argument; current != null && current.SpecialType != SpecialType.System_Object; current = current.BaseType)
-        {
-            foreach (var member in current.GetMembers())
-            {
-                if (member.IsStatic || member.DeclaredAccessibility != Accessibility.Public)
-                    continue;
-
-                var readable = member is IPropertySymbol { IsIndexer: false, GetMethod: { DeclaredAccessibility: Accessibility.Public } }
-                               or IFieldSymbol { IsConst: false };
-
-                if (readable && seen.Add(member.Name))
-                    result.Add((SuilNaming.ToKebab(member.Name), member.Name));
-            }
-        }
-
-        return result;
-    }
-
-    private static List<(string Name, string Member)> Flags(INamedTypeSymbol argument)
-    {
-        var result = new List<(string, string)>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-
-        for (INamedTypeSymbol? current = argument; current != null; current = current.BaseType)
-        {
-            foreach (var member in current.GetMembers())
-            {
-                if (member.IsStatic || member.DeclaredAccessibility != Accessibility.Public)
-                    continue;
-
-                var type = member switch
-                {
-                    IPropertySymbol { IsIndexer: false, GetMethod: { DeclaredAccessibility: Accessibility.Public } } p => p.Type,
-                    IFieldSymbol f => f.Type,
-                    _ => null,
-                };
-
-                if (type?.SpecialType == SpecialType.System_Boolean && seen.Add(member.Name))
-                    result.Add((SuilNaming.ToKebab(member.Name), member.Name));
-            }
-        }
-
-        return result;
-    }
 
     private sealed record ShorthandMember(string SuilName, string TypeName, string? ParserMethod);
 

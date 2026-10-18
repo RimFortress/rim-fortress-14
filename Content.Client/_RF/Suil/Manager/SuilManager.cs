@@ -25,8 +25,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
     private readonly SuilPropertyRegistry _registry = new();
     private readonly SuilTagTable _tags = new();
     private readonly SuilShorthandTable _shorthands = new();
-    private readonly SuilEventTable _events = new();
-    private readonly SuilCallTable _calls = new();
 
     /// <summary>
     /// Parsed but not yet compiled rules, per file. Values are compiled only in <see cref="BuildStylesheet"/>,
@@ -60,12 +58,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
 
     /// <inheritdoc/>
     public ResourceSuilFileSource Files { get; private set; } = null!;
-
-    /// <inheritdoc/>
-    public SuilEventTable Events => _events;
-
-    /// <inheritdoc/>
-    public SuilCallTable Calls => _calls;
 
     /// <inheritdoc/>
     public SuilStylesheet Stylesheet { get; private set; } = new(new List<SuilStyleRule>());
@@ -654,8 +646,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
         var sw = new RStopwatch();
         sw.Start();
         _shorthands.Clear();
-        _events.Clear();
-        _calls.Clear();
         _registry.Clear();
         _tags.Clear();
 
@@ -666,13 +656,6 @@ public sealed partial class SuilManager : IPostInjectInit, ISuilManager
             tables.RegisterProperties(_registry);
             tables.RegisterTags(_tags);
             tables.RegisterShorthands(_shorthands);
-            tables.RegisterEvents(_events);
-        }
-
-        // the calls of controllers and systems that the files make
-        foreach (var callsType in _reflection.GetAllChildren<ISuilCallTables>().Where(t => !t.IsAbstract && !t.IsInterface))
-        {
-            _factory.CreateInstance<ISuilCallTables>(callsType).RegisterCalls(_calls);
         }
 
         // The tables of the types are made on demand, and the inherited ones of the controls are built from them.

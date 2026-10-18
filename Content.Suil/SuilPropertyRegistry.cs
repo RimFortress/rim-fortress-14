@@ -31,8 +31,6 @@ public interface ISuilControlTables
     void RegisterTags(SuilTagTable tags);
 
     void RegisterShorthands(SuilShorthandTable shorthands);
-
-    void RegisterEvents(SuilEventTable events);
 }
 
 /// <summary>

@@ -128,4 +128,9 @@ internal static class SuilDiagnostics
         "SUIL027",
         "Unknown controller or system in a SUIL call",
         "'@{0}.{1}': {2}");
+
+    public static readonly DiagnosticDescriptor HandlerNeedsId = Error(
+        "SUIL028",
+        "An element with a handler needs an id",
+        "The handler of '{1}' is on an element of type '{0}' that has no id. The hot reload does not touch the handlers, so it must find the control that has them again by its id (button #name (...))");
 }

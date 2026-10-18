@@ -87,7 +87,6 @@ internal sealed partial class SuilViewEmitter
         _body.Append(lambda);
         _body.AppendLine("            };");
         _body.AppendLine($"            {pending.Variable}.{evt.Name} += {name};");
-        _body.AppendLine($"            __unsub.Add(() => {pending.Variable}.{evt.Name} -= {name});");
     }
 
     /// <summary>
@@ -244,19 +243,6 @@ internal sealed partial class SuilViewEmitter
             SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
             & ~SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
-    /// <summary>
-    /// What the calls of controllers and systems in the files need at run time (the hot reload can't find a method by
-    /// its name): <c>Controllers.Zoning.Pick</c>, the types of the parameters and the call.
-    /// </summary>
-    internal sealed record CallRecord(string Key, string Receiver, string Method, IReadOnlyList<string> Parameters, bool ReturnsVoid);
-
-    private readonly List<CallRecord> _calls = new();
-
-    /// <summary>
-    /// The calls of controllers and systems of the file, for the table of the assembly.
-    /// </summary>
-    public IReadOnlyList<CallRecord> Calls => _calls;
-
     // Set while the arguments of a call are written: a value there is a C# value of the parameter, not a property.
     private bool _argumentMode;
 
@@ -311,15 +297,6 @@ internal sealed partial class SuilViewEmitter
         }
 
         var (method, arguments) = ChooseOverload(candidatesOfName, call, pending, argsType, autoArguments, description);
-
-        if (call.Scope != SuilCallScope.View)
-        {
-            var key = $"{(call.Scope == SuilCallScope.Controller ? "Controllers" : "Systems")}.{call.Name}.{method.Name}";
-            var parameters = method.Parameters.Select(p => p.Type.ToDisplayString(TypeFormat)).ToList();
-
-            if (!_calls.Any(c => c.Key == key && c.Parameters.SequenceEqual(parameters)))
-                _calls.Add(new CallRecord(key, receiver, method.Name, parameters, method.ReturnsVoid));
-        }
 
         return ($"{receiver}.{method.Name}({string.Join(", ", arguments)})", method);
     }
@@ -940,91 +917,5 @@ internal sealed partial class SuilViewEmitter
 
         throw new SuilGenerationException(SuilDiagnostics.BadStatement, position,
             $"'{named.ToDisplayString()}' has no public bool member '{written}' for 'args.{written}'");
-    }
-
-    // ---- ISuilView: the methods ----
-
-    /// <summary>
-    /// <c>SuilTryGetMethod</c> and <c>SuilInvoke</c> of <c>ISuilView</c>: the methods the hot reload may bind to a call
-    /// of the new file, which the generator can't know from the old one. Every method of the class and of its base classes
-    /// that a call can make is among them, by its name and the number of the arguments (the optional ones may be left out).
-    /// </summary>
-    private void WriteMethodMembers(StringBuilder sb)
-    {
-        const string view = "global::Content.Suil.ISuilView";
-        var entries = new List<(IMethodSymbol Method, int Arity)>();
-        var names = new HashSet<string>();
-
-        // the nearest class wins for the same name and number of arguments
-        for (INamedTypeSymbol? current = viewClass; current != null; current = current.BaseType)
-        {
-            if (IsControlRoot(current, true))
-                break;
-
-            foreach (var member in current.GetMembers())
-            {
-                if (member is not IMethodSymbol method || !IsCallable(method) || method.Name == "InitializeComponent"
-                    || !compilation.IsSymbolAccessibleWithin(method, viewClass))
-                {
-                    continue;
-                }
-
-                var required = method.Parameters.Count(p => !p.IsOptional);
-
-                for (var arity = required; arity <= method.Parameters.Length; arity++)
-                {
-                    if (names.Add($"{method.Name}/{arity}"))
-                        entries.Add((method, arity));
-                }
-            }
-        }
-
-        sb.AppendLine();
-        sb.AppendLine($"        bool {view}.SuilTryGetMethod(string name, int arity, out global::System.Type[]? parameters)");
-        sb.AppendLine("        {");
-
-        foreach (var (method, arity) in entries)
-        {
-            var types = string.Join(", ", method.Parameters.Take(arity).Select(p => $"typeof({p.Type.ToDisplayString(TypeFormat)})"));
-
-            sb.AppendLine($"            if (name == {Literal(method.Name)} && arity == {arity})");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                parameters = new global::System.Type[] {{ {types} }};");
-            sb.AppendLine("                return true;");
-            sb.AppendLine("            }");
-            sb.AppendLine();
-        }
-
-        sb.AppendLine("            parameters = null;");
-        sb.AppendLine("            return false;");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-        sb.AppendLine($"        object? {view}.SuilInvoke(string name, object?[] arguments)");
-        sb.AppendLine("        {");
-
-        foreach (var (method, arity) in entries)
-        {
-            var casts = string.Join(", ", method.Parameters.Take(arity)
-                .Select((p, i) => $"({p.Type.ToDisplayString(TypeFormat)}) arguments[{i}]!"));
-
-            sb.AppendLine($"            if (name == {Literal(method.Name)} && arguments.Length == {arity})");
-            sb.AppendLine("            {");
-
-            if (method.ReturnsVoid)
-            {
-                sb.AppendLine($"                this.{method.Name}({casts});");
-                sb.AppendLine("                return null;");
-            }
-            else
-            {
-                sb.AppendLine($"                return (object?) this.{method.Name}({casts});");
-            }
-
-            sb.AppendLine("            }");
-            sb.AppendLine();
-        }
-
-        sb.AppendLine("            return null;");
-        sb.AppendLine("        }");
     }
 }

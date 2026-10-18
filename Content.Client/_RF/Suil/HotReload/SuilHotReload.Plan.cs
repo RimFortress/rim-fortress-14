@@ -16,7 +16,6 @@ public sealed partial class SuilHotReload
         public required Type Type;
         public required SuilElement Element;
         public string? Id;
-        public readonly List<PlannedHandler> Handlers = new();
         public readonly List<string> Classes = new();
         public bool HasContentSlot;
         public readonly List<PlannedProperty> Properties = new();
@@ -57,10 +56,28 @@ public sealed partial class SuilHotReload
         var ids = new HashSet<string>(StringComparer.Ordinal);
         var plan = PlanElement(view, root, rootType, isRoot: true, ids, errors, warnings);
 
-        if (plan != null)
-            PlanHandlers(view, plan, errors);
+        // The handlers are in the code that was built, not in the file: the controls that have them are kept (they are
+        // found by their ids), and what the file says about the handlers is not looked at.
+        if (plan != null && CountHandlers(root) is var handlers and > 0)
+        {
+            warnings.Add($"the {handlers} handler(s) of the file (on-...) are not reloaded: the controls keep the ones of the " +
+                         "build, build the project to change them");
+        }
 
         return plan;
+    }
+
+    private static int CountHandlers(SuilElement element)
+    {
+        var count = element.Events.Count;
+
+        foreach (var node in element.Children)
+        {
+            if (node is SuilElement child)
+                count += CountHandlers(child);
+        }
+
+        return count;
     }
 
     private PlannedElement? PlanElement(

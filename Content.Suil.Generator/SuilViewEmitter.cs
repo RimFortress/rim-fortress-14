@@ -110,7 +110,17 @@ internal sealed partial class SuilViewEmitter(
         }
 
         if (element.Events.Count > 0)
+        {
+            // The hot reload doesn't touch the handlers, so the control that has them has to be kept through a reload: it is
+            // found by its id.
+            if (variable != "this" && element.Id == null)
+            {
+                throw new SuilGenerationException(SuilDiagnostics.HandlerNeedsId, element.Position,
+                    type.ToDisplayString(), element.Events[0].Event);
+            }
+
             _handlers.Add(new PendingHandlers(variable, variable == "this" ? viewClass : type, element));
+        }
 
         foreach (var node in element.Children)
         {
@@ -772,9 +782,6 @@ internal sealed partial class SuilViewEmitter(
         // to a place of its own (the contents of a window). The class itself sets it for its users after this.
         sb.AppendLine("            __suilRootChildren = this.XamlChildren;");
 
-        if (_handlers.Count > 0)
-            sb.AppendLine("            var __unsub = new global::System.Collections.Generic.List<global::System.Action>();");
-
         sb.Append(_body);
 
         if (_contentVariable != null)
@@ -786,13 +793,10 @@ internal sealed partial class SuilViewEmitter(
             sb.AppendLine("            this.XamlChildren = __suilContent;");
         }
 
-        sb.AppendLine(_handlers.Count > 0
-            ? "            global::Content.Suil.SuilViewRegistry.Register(this, __unsub);"
-            : "            global::Content.Suil.SuilViewRegistry.Register(this);");
+        sb.AppendLine("            global::Content.Suil.SuilViewRegistry.Register(this);");
         sb.AppendLine("        }");
         sb.AppendLine();
         WriteViewMembers(sb, viewPath, viewName);
-        WriteMethodMembers(sb);
 
         for (var i = 0; i < containers.Count; i++)
         {

@@ -396,28 +396,11 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
     public int Reloaded;
 
-    /// <summary>What the handlers of the file called.</summary>
-    public readonly List<string> Calls = new();
-
-    /// <summary>The unsubscribers a generated <c>InitializeComponent()</c> would have registered.</summary>
-    public int CompiledUnsubscribed;
-
-    public TestView(bool compiledHandler = false)
+    public TestView()
     {
         // what the generated InitializeComponent() does at its end
-        SuilViewRegistry.Register(this, compiledHandler ? new Action[] { () => CompiledUnsubscribed++ } : null);
+        SuilViewRegistry.Register(this);
     }
-
-    public void Refresh() => Calls.Add("refresh");
-
-    public void OnSubmit(RfButtonEventArgs args) => Calls.Add("submit:" + args.GetType().Name);
-
-    public void OnToggle(RfButtonToggledEventArgs args) => Calls.Add("toggle:" + args.Pressed);
-
-    public void Mark(string text, bool pressed, double width) => Calls.Add($"mark:{text}:{pressed}:{width}");
-
-    /// <summary>What a call used as a value gives.</summary>
-    public string Title() => "view-title";
 
     string ISuilView.SuilPath => "/test/view";
 
@@ -444,54 +427,6 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
         Submit = button;
         return true;
-    }
-
-    bool ISuilView.SuilTryGetMethod(string name, int arity, out Type[]? parameters)
-    {
-        switch (name)
-        {
-            case nameof(Refresh) when arity == 0:
-                parameters = Array.Empty<Type>();
-                return true;
-            case nameof(OnSubmit) when arity == 1:
-                parameters = new[] { typeof(RfButtonEventArgs) };
-                return true;
-            case nameof(OnToggle) when arity == 1:
-                parameters = new[] { typeof(RfButtonToggledEventArgs) };
-                return true;
-            case nameof(Mark) when arity == 3:
-                parameters = new[] { typeof(string), typeof(bool), typeof(double) };
-                return true;
-            case nameof(Title) when arity == 0:
-                parameters = Array.Empty<Type>();
-                return true;
-            default:
-                parameters = null;
-                return false;
-        }
-    }
-
-    object? ISuilView.SuilInvoke(string name, object?[] arguments)
-    {
-        switch (name)
-        {
-            case nameof(Refresh):
-                Refresh();
-                break;
-            case nameof(OnSubmit):
-                OnSubmit((RfButtonEventArgs) arguments[0]!);
-                break;
-            case nameof(OnToggle):
-                OnToggle((RfButtonToggledEventArgs) arguments[0]!);
-                break;
-            case nameof(Mark):
-                Mark((string) arguments[0]!, (bool) arguments[1]!, (double) arguments[2]!);
-                break;
-            case nameof(Title):
-                return Title();
-        }
-
-        return null;
     }
 
     void ISuilReloadHandler.OnSuilReloaded() => Reloaded++;

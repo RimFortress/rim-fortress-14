@@ -33,8 +33,6 @@ public sealed partial class SuilHotReload
                 reusable[id] = control;
         }
 
-        state.Controls.Clear();
-
         var previous = new Dictionary<string, PlannedElement>(StringComparer.Ordinal);
 
         if (state.Plan != null)
@@ -78,11 +76,6 @@ public sealed partial class SuilHotReload
 
         ApplyIdentity(control, plan, before);
         ApplyProperties(control, plan, before, key, state, errors);
-
-        if (plan.Id != null)
-            state.Controls[plan.Id] = control;
-
-        Subscribe(view, control, plan, state);
 
         // Everything below is built again. The controls that are kept are taken out first, so nothing is added twice.
         // The children go where XAML would put them: the root's place is the one the generated code used, the others
@@ -130,6 +123,12 @@ public sealed partial class SuilHotReload
 
                 if (childPlan.Id != null)
                     state.Originals.Remove(childPlan.Id);
+
+                if (childPlan.Element.Events.Count > 0)
+                {
+                    warnings.Add($"'{childPlan.Id ?? childPlan.Type.Name}' is a new element and has handlers in the file: " +
+                                 "they work after the project is built");
+                }
             }
 
             ApplyElement(view, child, childPlan, childPlan.Id, previous, state, reusable, errors, warnings);
