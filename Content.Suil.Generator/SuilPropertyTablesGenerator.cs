@@ -198,6 +198,25 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
             sb.AppendLine("            });");
         }
 
+        // every readable member of the arguments, for `@Method(args.new)`
+        foreach (var pair in argumentTypes.OrderBy(p => p.Key, StringComparer.Ordinal))
+        {
+            var members = Readable(pair.Value);
+
+            if (members.Count == 0)
+                continue;
+
+            sb.AppendLine($"            events.AddMembers(typeof({pair.Key}), new global::System.Collections.Generic.Dictionary<string, global::System.Func<object, object>>");
+            sb.AppendLine("            {");
+
+            foreach (var (member, name) in members)
+            {
+                sb.AppendLine($"                [{Literal(member)}] = static o => (object) (({pair.Key}) o).{name},");
+            }
+
+            sb.AppendLine("            });");
+        }
+
         foreach (var pair in argumentTypes.OrderBy(p => p.Key, StringComparer.Ordinal))
         {
             var name = pair.Key;
@@ -453,6 +472,32 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
     /// <summary>
     /// The public bool members of an arguments type by their names in SUIL: what <c>args.pressed</c> can read.
     /// </summary>
+    /// <summary>
+    /// The public members of an arguments type that can be read: <c>args.old</c> for <c>Old</c>.
+    /// </summary>
+    private static List<(string Name, string Member)> Readable(INamedTypeSymbol argument)
+    {
+        var result = new List<(string, string)>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        for (INamedTypeSymbol? current = argument; current != null && current.SpecialType != SpecialType.System_Object; current = current.BaseType)
+        {
+            foreach (var member in current.GetMembers())
+            {
+                if (member.IsStatic || member.DeclaredAccessibility != Accessibility.Public)
+                    continue;
+
+                var readable = member is IPropertySymbol { IsIndexer: false, GetMethod: { DeclaredAccessibility: Accessibility.Public } }
+                               or IFieldSymbol { IsConst: false };
+
+                if (readable && seen.Add(member.Name))
+                    result.Add((SuilNaming.ToKebab(member.Name), member.Name));
+            }
+        }
+
+        return result;
+    }
+
     private static List<(string Name, string Member)> Flags(INamedTypeSymbol argument)
     {
         var result = new List<(string, string)>();

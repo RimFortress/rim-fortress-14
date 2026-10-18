@@ -236,7 +236,9 @@ public sealed record SuilArgument(List<ISuilValue> Values, SuilPosition Position
 /// <c>on-pressed =&gt; @OnSubmit</c> or <c>on-pressed =&gt; { ... }</c>: what the element does when its event is raised.
 /// <paramref name="Event"/> is the name of the event as written, the name of the member in kebab-case.
 /// </summary>
-public sealed record SuilEventHandler(string Event, List<ISuilStatement> Statements, SuilPosition Position);
+/// <param name="IsBlock">The statements are in braces. A lone statement without braces gets the arguments of the event
+/// by itself if it is a call without parentheses; in a block the arguments are passed by hand.</param>
+public sealed record SuilEventHandler(string Event, List<ISuilStatement> Statements, SuilPosition Position, bool IsBlock = false);
 
 /// <summary>
 /// A statement of a handler: a call of a method of the view, or a change of an element.
@@ -247,10 +249,59 @@ public interface ISuilStatement
 }
 
 /// <summary>
-/// <c>@OnSubmit</c>: calls the method of the class of the view. The method takes either nothing or the arguments of
-/// the event.
+/// What a call is made on.
 /// </summary>
-public sealed record SuilCallStatement(string Method, SuilPosition Position) : ISuilStatement;
+public enum SuilCallScope
+{
+    /// <summary><c>@OnSubmit</c>: the class of the view.</summary>
+    View,
+
+    /// <summary><c>@Controllers.Zoning.Pick()</c>: a UI controller.</summary>
+    Controller,
+
+    /// <summary><c>@Systems.Zoning.Pick()</c>: an entity system.</summary>
+    System,
+}
+
+/// <summary>
+/// <c>@OnSubmit</c>, <c>@OnSubmit(args, #go.disabled)</c>, <c>@Controllers.Zoning.Pick()</c>: calls a method of the class of
+/// the view, of a UI controller or of an entity system.
+/// </summary>
+/// <remarks>
+/// Without parentheses (<paramref name="Arguments"/> is <c>null</c>) the method takes nothing, or, as the only statement
+/// of a handler without a block, the arguments of the event. With them, it takes what is listed.
+/// </remarks>
+/// <param name="Method">The name of the method.</param>
+/// <param name="Scope">The class it is called on.</param>
+/// <param name="Name">The name of the controller or of the system, as written (<c>Zoning</c>).</param>
+/// <param name="Arguments">What is passed, or <c>null</c> if there are no parentheses.</param>
+public sealed record SuilCallStatement(
+    string Method,
+    SuilPosition Position,
+    SuilCallScope Scope = SuilCallScope.View,
+    string? Name = null,
+    List<SuilCallArgument>? Arguments = null) : ISuilStatement;
+
+/// <summary>
+/// An argument of a call.
+/// </summary>
+public abstract record SuilCallArgument(SuilPosition Position);
+
+/// <summary>
+/// <c>args</c>, <c>args.new</c>: the arguments of the event, or a member of them. The path is as written (kebab-case).
+/// </summary>
+public sealed record SuilEventArgument(List<string> Path, SuilPosition Position) : SuilCallArgument(Position);
+
+/// <summary>
+/// <c>#panel</c>, <c>&amp;</c>: an element. <c>#panel.min-width</c>, <c>&amp;.value</c>: a member of it.
+/// </summary>
+public sealed record SuilTargetArgument(SuilTarget Target, string? Property, SuilPosition Position) : SuilCallArgument(Position);
+
+/// <summary>
+/// A value written the way the value of a property is: a number, a string, <c>true</c>, a <c>$key</c>, an enum member, a
+/// number or bool expression.
+/// </summary>
+public sealed record SuilValueArgument(List<ISuilValue> Values, SuilPosition Position) : SuilCallArgument(Position);
 
 /// <summary>
 /// <c>#details (visible: true, add .open, remove :loading)</c> or <c>&amp;(set .active args.pressed)</c>: changes an

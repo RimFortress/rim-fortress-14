@@ -84,6 +84,70 @@ public sealed class SuilHotReloadEventTest : GameTest
         Assert.That(view.Calls, Is.EqualTo(new[] { "refresh" }));
     }
 
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Call_Passes_Its_Arguments_From_The_File()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, """
+            box {
+                button #submit (min-width: 4, on-toggled => { @Mark("hi", args.pressed, calc(#submit.min-width + 1)) })
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        Toggle(view.Submit!, true);
+
+        Assert.That(view.Calls, Is.EqualTo(new[] { "mark:hi:True:5" }));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Call_Without_Parentheses_In_A_Block_Takes_Nothing()
+    {
+        var view = new TestView();
+
+        var plain = Reload(view, "box { button #submit (on-pressed => { @OnSubmit }) }");
+        Assert.That(plain.Success, Is.False);
+        Assert.That(string.Join("\n", plain.Errors), Does.Contain("@OnSubmit"));
+
+        var withArguments = Reload(view, "box { button #submit (on-pressed => { @OnSubmit(args) }) }");
+        Assert.That(withArguments.Success, Is.True, string.Join("\n", withArguments.Errors));
+
+        Press(view.Submit!);
+        Assert.That(view.Calls, Is.EqualTo(new[] { "submit:RfButtonEventArgs" }));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Call_Of_A_Controller_Is_Made_If_The_Build_Knew_It()
+    {
+        var suil = Robust.Shared.IoC.IoCManager.Resolve<ISuilManager>();
+        var seen = new List<object?>();
+        suil.Calls.Add("Controllers.Test.Pick", new[] { typeof(int), typeof(string) }, a => seen.AddRange(a));
+        suil.Calls.Add("Controllers.Test.Ping", Type.EmptyTypes, _ => seen.Add("ping"));
+
+        var view = new TestView();
+
+        var known = Reload(view, "box { button #submit (on-pressed => { @Controllers.Test.Pick(3, \"x\") }) }");
+        Assert.That(known.Success, Is.True, string.Join("\n", known.Errors));
+
+        Press(view.Submit!);
+        Assert.That(seen, Is.EqualTo(new object?[] { 3, "x" }));
+
+        var withoutParentheses = Reload(view, "box { button #submit (on-pressed => @Controllers.Test.Ping) }");
+        Assert.That(withoutParentheses.Success, Is.True, string.Join("\n", withoutParentheses.Errors));
+
+        Press(view.Submit!);
+        Assert.That(seen.Last(), Is.EqualTo("ping"));
+
+        var unknown = Reload(view, "box { button #submit (on-pressed => { @Systems.Test.Other(1) }) }");
+        Assert.That(unknown.Success, Is.False);
+        Assert.That(string.Join("\n", unknown.Errors), Does.Contain("build it again"));
+    }
+
     // ---- Blocks ----
 
     [Test]
@@ -649,13 +713,13 @@ public sealed class TestInnerView : RfBoxContainer, ISuilView
 
     bool ISuilView.SuilSetField(string id, object? value) => false;
 
-    bool ISuilView.SuilTryGetMethod(string name, out Type? argumentType)
+    bool ISuilView.SuilTryGetMethod(string name, int arity, out Type[]? parameters)
     {
-        argumentType = null;
+        parameters = null;
         return false;
     }
 
-    void ISuilView.SuilInvoke(string name, object? argument)
+    void ISuilView.SuilInvoke(string name, object?[] arguments)
     {
     }
 }

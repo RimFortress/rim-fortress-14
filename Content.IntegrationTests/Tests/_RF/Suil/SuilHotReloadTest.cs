@@ -414,6 +414,8 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
     public void OnToggle(RfButtonToggledEventArgs args) => Calls.Add("toggle:" + args.Pressed);
 
+    public void Mark(string text, bool pressed, double width) => Calls.Add($"mark:{text}:{pressed}:{width}");
+
     string ISuilView.SuilPath => "/test/view";
 
     string ISuilView.SuilViewName => "Test";
@@ -441,26 +443,29 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
         return true;
     }
 
-    bool ISuilView.SuilTryGetMethod(string name, out Type? argumentType)
+    bool ISuilView.SuilTryGetMethod(string name, int arity, out Type[]? parameters)
     {
         switch (name)
         {
-            case nameof(Refresh):
-                argumentType = null;
+            case nameof(Refresh) when arity == 0:
+                parameters = Array.Empty<Type>();
                 return true;
-            case nameof(OnSubmit):
-                argumentType = typeof(RfButtonEventArgs);
+            case nameof(OnSubmit) when arity == 1:
+                parameters = new[] { typeof(RfButtonEventArgs) };
                 return true;
-            case nameof(OnToggle):
-                argumentType = typeof(RfButtonToggledEventArgs);
+            case nameof(OnToggle) when arity == 1:
+                parameters = new[] { typeof(RfButtonToggledEventArgs) };
+                return true;
+            case nameof(Mark) when arity == 3:
+                parameters = new[] { typeof(string), typeof(bool), typeof(double) };
                 return true;
             default:
-                argumentType = null;
+                parameters = null;
                 return false;
         }
     }
 
-    void ISuilView.SuilInvoke(string name, object? argument)
+    void ISuilView.SuilInvoke(string name, object?[] arguments)
     {
         switch (name)
         {
@@ -468,10 +473,13 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
                 Refresh();
                 break;
             case nameof(OnSubmit):
-                OnSubmit((RfButtonEventArgs) argument!);
+                OnSubmit((RfButtonEventArgs) arguments[0]!);
                 break;
             case nameof(OnToggle):
-                OnToggle((RfButtonToggledEventArgs) argument!);
+                OnToggle((RfButtonToggledEventArgs) arguments[0]!);
+                break;
+            case nameof(Mark):
+                Mark((string) arguments[0]!, (bool) arguments[1]!, (double) arguments[2]!);
                 break;
         }
     }

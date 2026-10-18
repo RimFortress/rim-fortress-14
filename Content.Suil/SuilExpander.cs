@@ -540,12 +540,23 @@ public static class SuilExpander
 
         private ISuilStatement ExpandStatement(ISuilStatement statement, Scope? scope) => statement switch
         {
+            SuilCallStatement { Arguments: not null } call => call with
+            {
+                Arguments = call.Arguments.Select(argument => ExpandArgument(argument, scope)).ToList(),
+            },
             SuilTargetStatement target => target with
             {
                 Target = ExpandTarget(target.Target, scope),
                 Items = target.Items.Select(item => ExpandItem(item, scope)).ToList(),
             },
             _ => statement,
+        };
+
+        private SuilCallArgument ExpandArgument(SuilCallArgument argument, Scope? scope) => argument switch
+        {
+            SuilTargetArgument target => target with { Target = ExpandTarget(target.Target, scope) },
+            SuilValueArgument value => value with { Values = ExpandValues(value.Values, scope, value.Position) },
+            _ => argument,
         };
 
         private ISuilTargetItem ExpandItem(ISuilTargetItem item, Scope? scope) => item switch

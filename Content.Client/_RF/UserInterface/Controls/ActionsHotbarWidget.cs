@@ -38,12 +38,6 @@ public sealed partial class ActionsHotbarWidget : UIWidget
         _zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
     }
 
-    private void OnBuildPressed() => UserInterfaceManager.GetUIController<ConstructionMenuUiController>().ToggleWindow();
-
-    private void OnWorldMapPressed() => UserInterfaceManager.GetUIController<WorldMapUiController>().ToggleWindow();
-
-    private void OnNpcJobsPressed() => UserInterfaceManager.GetUIController<NpcJobsUiController>().TogglePriorityWindow();
-
     public void EnsureSetup()
     {
         if (_setup)

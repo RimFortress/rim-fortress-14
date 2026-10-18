@@ -62,9 +62,12 @@ internal sealed partial class SuilViewEmitter
         _boolContext = node => BoolOf(node, pending, argsType);
         _numContext = node => NumOf(node, pending, argsType);
 
+        // A call without parentheses gets the arguments of the event only as the lone statement of a handler without a block.
+        var autoArguments = !handler.IsBlock && handler.Statements.Count == 1;
+
         foreach (var statement in handler.Statements)
         {
-            EmitStatement(lambda, "                ", statement, pending, argsType);
+            EmitStatement(lambda, "                ", statement, pending, argsType, autoArguments);
         }
 
         _boolContext = null;
@@ -103,12 +106,13 @@ internal sealed partial class SuilViewEmitter
         string indent,
         ISuilStatement statement,
         PendingHandlers pending,
-        ITypeSymbol? argsType)
+        ITypeSymbol? argsType,
+        bool autoArguments)
     {
         switch (statement)
         {
             case SuilCallStatement call:
-                sb.AppendLine($"{indent}{CallOf(call, pending, argsType)}");
+                sb.AppendLine($"{indent}{CallOf(call, pending, argsType, autoArguments)}");
                 break;
             case SuilTargetStatement target:
             {
@@ -135,59 +139,282 @@ internal sealed partial class SuilViewEmitter
         }
     }
 
-    /// <summary>
-    /// <c>this.OnSubmit(__args);</c>: the method must return nothing, and take nothing or something the arguments of the
-    /// event can be passed to.
-    /// </summary>
-    private string CallOf(SuilCallStatement call, PendingHandlers pending, ITypeSymbol? argsType)
-    {
-        var method = FindHandlerMethod(call.Method);
+    private static readonly SymbolDisplayFormat TypeFormat = SymbolDisplayFormat.FullyQualifiedFormat
+        .WithMiscellaneousOptions(
+            SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
+            & ~SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
-        if (method == null)
+    /// <summary>
+    /// What the calls of controllers and systems in the files need at run time (the hot reload can't find a method by
+    /// its name): <c>Controllers.Zoning.Pick</c>, the types of the parameters and the call.
+    /// </summary>
+    internal sealed record CallRecord(string Key, string Receiver, string Method, IReadOnlyList<string> Parameters);
+
+    private readonly List<CallRecord> _calls = new();
+
+    /// <summary>
+    /// The calls of controllers and systems of the file, for the table of the assembly.
+    /// </summary>
+    public IReadOnlyList<CallRecord> Calls => _calls;
+
+    // Set while the arguments of a call are written: a value there is a C# value of the parameter, not a property.
+    private bool _argumentMode;
+
+    /// <summary>
+    /// The C# statement of a call: <c>this.OnSubmit(__args);</c>, <c>this.OnSubmit(a, b);</c> or the same on a controller
+    /// or a system.
+    /// </summary>
+    private string CallOf(SuilCallStatement call, PendingHandlers pending, ITypeSymbol? argsType, bool autoArguments)
+    {
+        INamedTypeSymbol owner;
+        string receiver;
+        string description;
+
+        if (call.Scope == SuilCallScope.View)
+        {
+            owner = viewClass;
+            receiver = "this";
+            description = viewClass.ToDisplayString();
+        }
+        else
+        {
+            owner = SuilCallClasses.Find(compilation, call.Scope, call.Name!, out var candidates)
+                    ?? throw new SuilGenerationException(SuilDiagnostics.UnknownCallClass, call.Position,
+                        call.Scope == SuilCallScope.Controller ? "Controllers" : "Systems",
+                        call.Name!,
+                        candidates.Count == 0
+                            ? "there is no such " + (call.Scope == SuilCallScope.Controller ? "UI controller (a class named NameUiController)" : "system (a class named NameSystem)")
+                            : "it can be " + string.Join(", ", candidates.Select(c => c.ToDisplayString()).OrderBy(n => n, StringComparer.Ordinal)));
+
+            receiver = call.Scope == SuilCallScope.Controller
+                ? $"global::Robust.Shared.IoC.IoCManager.Resolve<global::Robust.Client.UserInterface.IUserInterfaceManager>().GetUIController<{owner.ToDisplayString(TypeFormat)}>()"
+                : $"global::Robust.Shared.IoC.IoCManager.Resolve<global::Robust.Shared.GameObjects.IEntityManager>().System<{owner.ToDisplayString(TypeFormat)}>()";
+            description = owner.ToDisplayString();
+        }
+
+        var candidatesOfName = MethodsNamed(owner, call.Method, call.Scope == SuilCallScope.View);
+
+        if (candidatesOfName.Count == 0)
         {
             throw new SuilGenerationException(SuilDiagnostics.UnknownMethod, call.Position,
-                viewClass.ToDisplayString(), call.Method);
+                description, call.Method);
         }
 
-        if (method.Parameters.Length == 0)
-            return $"this.{method.Name}();";
+        var (method, arguments) = ChooseOverload(candidatesOfName, call, pending, argsType, autoArguments, description);
 
-        var parameter = method.Parameters[0].Type;
-
-        if (argsType == null || !compilation.ClassifyCommonConversion(argsType, parameter).IsImplicit)
+        if (call.Scope != SuilCallScope.View)
         {
-            throw new SuilGenerationException(SuilDiagnostics.BadMethodSignature, call.Position,
-                viewClass.ToDisplayString(), method.Name,
-                argsType == null ? "an event without arguments" : argsType.ToDisplayString(),
-                argsType == null ? "nothing" : argsType.ToDisplayString());
+            var key = $"{(call.Scope == SuilCallScope.Controller ? "Controllers" : "Systems")}.{call.Name}.{method.Name}";
+            var parameters = method.Parameters.Select(p => p.Type.ToDisplayString(TypeFormat)).ToList();
+
+            if (!_calls.Any(c => c.Key == key && c.Parameters.SequenceEqual(parameters)))
+                _calls.Add(new CallRecord(key, receiver, method.Name, parameters));
         }
 
-        return $"this.{method.Name}(__args);";
+        return $"{receiver}.{method.Name}({string.Join(", ", arguments)});";
     }
 
     /// <summary>
-    /// A method of the class (or of its base classes, if the class can reach it) that a handler can call.
+    /// The overload a call means and what is passed to it. Without parentheses it is the one that takes nothing, or, for
+    /// the lone statement of a handler, the one that takes the arguments of the event; with them, the first one the
+    /// arguments fit.
     /// </summary>
-    private IMethodSymbol? FindHandlerMethod(string name)
+    private (IMethodSymbol Method, List<string> Arguments) ChooseOverload(
+        IReadOnlyList<IMethodSymbol> candidates,
+        SuilCallStatement call,
+        PendingHandlers pending,
+        ITypeSymbol? argsType,
+        bool autoArguments,
+        string description)
     {
-        for (INamedTypeSymbol? current = viewClass; current != null; current = current.BaseType)
+        if (call.Arguments == null)
         {
-            foreach (var member in current.GetMembers(name))
+            var parameterless = candidates.FirstOrDefault(m => m.Parameters.All(p => p.IsOptional));
+
+            if (parameterless != null)
+                return (parameterless, new List<string>());
+
+            if (autoArguments && argsType != null)
             {
-                if (member is IMethodSymbol method && IsHandlerMethod(method)
-                    && compilation.IsSymbolAccessibleWithin(method, viewClass))
+                var takesEvent = candidates.FirstOrDefault(m =>
+                    m.Parameters.Length == 1 && compilation.ClassifyCommonConversion(argsType, m.Parameters[0].Type).IsImplicit);
+
+                if (takesEvent != null)
+                    return (takesEvent, new List<string> { "__args" });
+            }
+
+            var first = candidates[0];
+            var hint = first.Parameters.Length == 0
+                ? string.Empty
+                : autoArguments
+                    ? $"it takes {string.Join(", ", first.Parameters.Select(p => p.Type.ToDisplayString()))}; write '@{call.Method}(...)' with the arguments"
+                    : $"it takes {string.Join(", ", first.Parameters.Select(p => p.Type.ToDisplayString()))}; write '@{call.Method}(args)' to pass the arguments of the event";
+
+            throw new SuilGenerationException(SuilDiagnostics.BadMethodSignature, call.Position,
+                description, call.Method, "a call without arguments", hint);
+        }
+
+        SuilGenerationException? failure = null;
+
+        foreach (var method in candidates)
+        {
+            var required = method.Parameters.Count(p => !p.IsOptional);
+
+            if (call.Arguments.Count < required || call.Arguments.Count > method.Parameters.Length)
+                continue;
+
+            try
+            {
+                var arguments = new List<string>();
+
+                for (var i = 0; i < call.Arguments.Count; i++)
                 {
-                    return method;
+                    arguments.Add(ArgumentOf(call.Arguments[i], method.Parameters[i].Type, pending, argsType, i));
                 }
+
+                return (method, arguments);
+            }
+            catch (SuilGenerationException e)
+            {
+                failure ??= e;
             }
         }
 
-        return null;
+        if (failure != null)
+            throw failure;
+
+        throw new SuilGenerationException(SuilDiagnostics.BadMethodSignature, call.Position,
+            description, call.Method, $"{call.Arguments.Count} arguments",
+            "it takes " + string.Join(" or ", candidates.Select(m => m.Parameters.Length.ToString()).Distinct()) + " arguments");
     }
 
-    private static bool IsHandlerMethod(IMethodSymbol method)
-        => method is { MethodKind: MethodKind.Ordinary, IsGenericMethod: false, ReturnsVoid: true }
-           && method.Parameters.Length <= 1
+    /// <summary>
+    /// The C# expression of an argument of a call, of the type of the parameter.
+    /// </summary>
+    private string ArgumentOf(SuilCallArgument argument, ITypeSymbol parameter, PendingHandlers pending, ITypeSymbol? argsType, int index)
+    {
+        switch (argument)
+        {
+            case SuilEventArgument evt:
+            {
+                if (argsType == null)
+                {
+                    throw new SuilGenerationException(SuilDiagnostics.BadStatement, evt.Position,
+                        "'args' is used in an event that gives no arguments");
+                }
+
+                var (expression, type) = MemberPath("__args", argsType, evt.Path, evt.Position, "args");
+                return Checked(expression, type, parameter, evt.Position);
+            }
+            case SuilTargetArgument target:
+            {
+                var (expression, type) = ResolveTarget(target.Target, pending);
+                ITypeSymbol finalType = type;
+
+                if (target.Property != null)
+                    (expression, finalType) = MemberPath(expression, type, new List<string> { target.Property }, target.Position, "the element");
+
+                return Checked(expression, finalType, parameter, target.Position);
+            }
+            case SuilValueArgument value:
+            {
+                var property = new SuilProperty("argument", value.Values, false, value.Position);
+                _argumentMode = true;
+
+                try
+                {
+                    return Convert(parameter, property, $"argument {index + 1}", viewClass);
+                }
+                finally
+                {
+                    _argumentMode = false;
+                }
+            }
+            default:
+                throw new SuilGenerationException(SuilDiagnostics.BadStatement, argument.Position, "unknown argument");
+        }
+    }
+
+    /// <summary>
+    /// <c>__args.New</c>: the members after a name, as written in kebab-case.
+    /// </summary>
+    private static (string Expression, ITypeSymbol Type) MemberPath(
+        string expression,
+        ITypeSymbol type,
+        IReadOnlyList<string> path,
+        SuilPosition position,
+        string what)
+    {
+        foreach (var segment in path)
+        {
+            var name = SuilNaming.ToPascal(segment);
+            ITypeSymbol? memberType = null;
+            var member = type is INamedTypeSymbol named ? FindPublicMember(named, name, out memberType) : null;
+
+            if (member == null || memberType == null || !IsReadable(member))
+            {
+                throw new SuilGenerationException(SuilDiagnostics.BadStatement, position,
+                    $"{what} ('{type.ToDisplayString()}') has no public member '{name}' to read ('{segment}')");
+            }
+
+            expression += "." + member.Name;
+            type = memberType;
+        }
+
+        return (expression, type);
+    }
+
+    /// <summary>
+    /// The expression, if a value of its type can be passed as the parameter.
+    /// </summary>
+    private string Checked(string expression, ITypeSymbol type, ITypeSymbol parameter, SuilPosition position)
+    {
+        var conversion = compilation.ClassifyCommonConversion(type, parameter);
+
+        if (conversion.IsImplicit)
+            return expression;
+
+        if (IsNumeric(type.SpecialType, out _) && IsNumeric(parameter.SpecialType, out _))
+            return $"({parameter.ToDisplayString(TypeFormat)}){expression}";
+
+        throw new SuilGenerationException(SuilDiagnostics.BadStatement, position,
+            $"{type.ToDisplayString()} can't be passed as {parameter.ToDisplayString()}");
+    }
+
+    /// <summary>
+    /// The methods of a class and of its bases that a call can make. The members of the base class of every control
+    /// (<c>Control</c>) and of <c>object</c> are not among them: a file doesn't call <c>AddChild</c>.
+    /// </summary>
+    private IReadOnlyList<IMethodSymbol> MethodsNamed(INamedTypeSymbol type, string name, bool isView)
+    {
+        var result = new List<IMethodSymbol>();
+
+        for (INamedTypeSymbol? current = type; current != null; current = current.BaseType)
+        {
+            if (IsControlRoot(current, isView))
+                break;
+
+            foreach (var member in current.GetMembers(name))
+            {
+                if (member is IMethodSymbol method && IsCallable(method) && compilation.IsSymbolAccessibleWithin(method, viewClass))
+                    result.Add(method);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// The classes whose methods are not called from a file: <c>object</c> and, for a view, the base classes of every
+    /// control (<c>Control</c> and <c>UiElement</c>).
+    /// </summary>
+    private static bool IsControlRoot(INamedTypeSymbol type, bool isView)
+        => type.SpecialType == SpecialType.System_Object
+           || isView && type.ToDisplayString() is "Robust.Client.UserInterface.Control" or "Content.Client._RF.Suil.UiElement";
+
+    private static bool IsCallable(IMethodSymbol method)
+        => method is { MethodKind: MethodKind.Ordinary, IsGenericMethod: false, IsStatic: false }
+           && method.Parameters.Length <= 8
            && method.Parameters.All(p => p.RefKind == RefKind.None);
 
     // ---- Targets ----
@@ -605,70 +832,76 @@ internal sealed partial class SuilViewEmitter
     // ---- ISuilView: the methods ----
 
     /// <summary>
-    /// <c>SuilTryGetMethod</c> and <c>SuilInvoke</c> of <c>ISuilView</c>: the methods the hot reload may bind to a handler
-    /// of the new file, which the generator can't know from the old one. Every method of the class (and of its base classes) that a handler
-    /// can call is in the switch.
+    /// <c>SuilTryGetMethod</c> and <c>SuilInvoke</c> of <c>ISuilView</c>: the methods the hot reload may bind to a call
+    /// of the new file, which the generator can't know from the old one. Every method of the class and of its base classes
+    /// that a call can make is among them, by its name and the number of the arguments (the optional ones may be left out).
     /// </summary>
     private void WriteMethodMembers(StringBuilder sb)
     {
         const string view = "global::Content.Suil.ISuilView";
-        var methods = new List<IMethodSymbol>();
+        var entries = new List<(IMethodSymbol Method, int Arity)>();
         var names = new HashSet<string>();
 
-        // The methods of the base classes too (Close of a window), the nearest class wins for the same name.
+        // the nearest class wins for the same name and number of arguments
         for (INamedTypeSymbol? current = viewClass; current != null; current = current.BaseType)
         {
+            if (IsControlRoot(current, true))
+                break;
+
             foreach (var member in current.GetMembers())
             {
-                if (member is IMethodSymbol method && IsHandlerMethod(method) && method.Name != "InitializeComponent"
-                    && !method.IsStatic && compilation.IsSymbolAccessibleWithin(method, viewClass)
-                    && names.Add(method.Name))
+                if (member is not IMethodSymbol method || !IsCallable(method) || method.Name == "InitializeComponent"
+                    || !compilation.IsSymbolAccessibleWithin(method, viewClass))
                 {
-                    methods.Add(method);
+                    continue;
+                }
+
+                var required = method.Parameters.Count(p => !p.IsOptional);
+
+                for (var arity = required; arity <= method.Parameters.Length; arity++)
+                {
+                    if (names.Add($"{method.Name}/{arity}"))
+                        entries.Add((method, arity));
                 }
             }
         }
 
         sb.AppendLine();
-        sb.AppendLine($"        bool {view}.SuilTryGetMethod(string name, out global::System.Type? argumentType)");
+        sb.AppendLine($"        bool {view}.SuilTryGetMethod(string name, int arity, out global::System.Type[]? parameters)");
         sb.AppendLine("        {");
-        sb.AppendLine("            switch (name)");
-        sb.AppendLine("            {");
 
-        foreach (var method in methods)
+        foreach (var (method, arity) in entries)
         {
-            var argument = method.Parameters.Length == 0
-                ? "null"
-                : $"typeof({method.Parameters[0].Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)})";
+            var types = string.Join(", ", method.Parameters.Take(arity).Select(p => $"typeof({p.Type.ToDisplayString(TypeFormat)})"));
 
-            sb.AppendLine($"                case {Literal(method.Name)}:");
-            sb.AppendLine($"                    argumentType = {argument};");
-            sb.AppendLine("                    return true;");
+            sb.AppendLine($"            if (name == {Literal(method.Name)} && arity == {arity})");
+            sb.AppendLine("            {");
+            sb.AppendLine($"                parameters = new global::System.Type[] {{ {types} }};");
+            sb.AppendLine("                return true;");
+            sb.AppendLine("            }");
+            sb.AppendLine();
         }
 
-        sb.AppendLine("                default:");
-        sb.AppendLine("                    argumentType = null;");
-        sb.AppendLine("                    return false;");
-        sb.AppendLine("            }");
+        sb.AppendLine("            parameters = null;");
+        sb.AppendLine("            return false;");
         sb.AppendLine("        }");
         sb.AppendLine();
-        sb.AppendLine($"        void {view}.SuilInvoke(string name, object? argument)");
+        sb.AppendLine($"        void {view}.SuilInvoke(string name, object?[] arguments)");
         sb.AppendLine("        {");
-        sb.AppendLine("            switch (name)");
-        sb.AppendLine("            {");
 
-        foreach (var method in methods)
+        foreach (var (method, arity) in entries)
         {
-            var call = method.Parameters.Length == 0
-                ? $"this.{method.Name}();"
-                : $"this.{method.Name}(({method.Parameters[0].Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}) argument!);";
+            var casts = string.Join(", ", method.Parameters.Take(arity)
+                .Select((p, i) => $"({p.Type.ToDisplayString(TypeFormat)}) arguments[{i}]!"));
 
-            sb.AppendLine($"                case {Literal(method.Name)}:");
-            sb.AppendLine($"                    {call}");
-            sb.AppendLine("                    break;");
+            sb.AppendLine($"            if (name == {Literal(method.Name)} && arguments.Length == {arity})");
+            sb.AppendLine("            {");
+            sb.AppendLine($"                this.{method.Name}({casts});");
+            sb.AppendLine("                return;");
+            sb.AppendLine("            }");
+            sb.AppendLine();
         }
 
-        sb.AppendLine("            }");
         sb.AppendLine("        }");
     }
 }

@@ -414,6 +414,12 @@ internal sealed partial class SuilViewEmitter(
             }
         }
 
+        if (_argumentMode)
+        {
+            return Fail("this type can't be written in a call: pass a number, a string, true or false, a member of an enum, " +
+                        "a $key, or take the value from args or from an element (#id.property)");
+        }
+
         // A color, a texture, a border image and the like: read at run time by the parsers of the styles. The values are
         // written as they are in the file, so a mistake in them is found when the control is built (and by the hot reload).
         var targetName = target.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);

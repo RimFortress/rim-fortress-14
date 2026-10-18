@@ -123,4 +123,9 @@ internal static class SuilDiagnostics
         "SUIL023",
         "Invalid statement in a SUIL handler",
         "{0}");
+
+    public static readonly DiagnosticDescriptor UnknownCallClass = Error(
+        "SUIL027",
+        "Unknown controller or system in a SUIL call",
+        "'@{0}.{1}': {2}");
 }

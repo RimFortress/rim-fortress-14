@@ -6,8 +6,13 @@ public static partial class SuilParser
     /// The handler after <c>name =&gt;</c> (the arrow is already consumed): one statement, or a block of statements.
     /// <code>
     /// handler   = statement | "{" , { statement , ";" } , "}"
-    /// statement = call | target , "(" , item , { "," , item } , ")"
-    /// call      = "@" , ident
+    /// statement = call
+    ///           | target , "(" , item , { "," , item } , ")"
+    ///           | target , "." , item
+
+    /// call      = "@" , path , [ "(" , [ argument , { "," , argument } ] , ")" ]
+    /// path      = ident | ( "Controllers" | "Systems" ) , "." , ident , "." , ident
+    /// argument  = "args" , { "." , ident } | target , [ "." , ident ] | value
     /// item      = ident , [ ":" , value-list ]
     ///           | ident , ( "+:" | "-:" | "*:" | "/:" ) , number-expression
     ///           | ( "add" | "remove" ) , ref , { ref }
@@ -51,7 +56,7 @@ public static partial class SuilParser
                     if (statements.Count == 0)
                         throw ErrorAtCurrent(ref stream, context, $"the handler of '{name}' is empty");
 
-                    return new SuilEventHandler(name, statements, position);
+                    return new SuilEventHandler(name, statements, position, IsBlock: true);
                 case EofToken:
                     throw ErrorAtNext(ref stream, context, "expected '}', not end of file");
                 case SemicolonToken:
@@ -82,13 +87,21 @@ public static partial class SuilParser
             case DelimToken { CodePoint: '&' } or HashToken or InterpolatedNameToken { Sigil: '#' }:
             {
                 var target = ConsumeTarget(ref stream, context);
+
+                // #panel.visible: false: one change, written next to the target
+                if (stream.PeekNext() is DelimToken { CodePoint: '.' })
+                {
+                    stream.ConsumeNext();
+                    return new SuilTargetStatement(target, new List<ISuilTargetItem> { ConsumeTargetItem(ref stream, context) }, position);
+                }
+
                 stream.SkipWhitespace();
 
                 if (stream.PeekNext() is not LeftParenthesisToken)
                 {
                     throw ErrorAtNext(ref stream,
                         context,
-                        $"expected '(' with what to change after the target, not {Describe(stream.PeekNext())}");
+                        $"expected '(' with what to change, or '.property' after the target, not {Describe(stream.PeekNext())}");
                 }
 
                 stream.ConsumeNext();
@@ -106,10 +119,139 @@ public static partial class SuilParser
         var position = stream.PeekPosition();
         stream.ConsumeNext(); // @
 
-        if (stream.ConsumeNext() is not IdentToken method)
-            throw ErrorAtCurrent(ref stream, context, $"expected the name of a method after '@', not {Describe(stream.Current)}");
+        var path = new List<string>();
+        var hasParentheses = false;
 
-        return new SuilCallStatement(method.Value, position);
+        // The name of the method is glued to the parenthesis of the arguments: that is one token for the tokenizer.
+        while (true)
+        {
+            var token = stream.ConsumeNext();
+
+            if (token is FunctionToken function)
+            {
+                path.Add(function.Value);
+                hasParentheses = true;
+                break;
+            }
+
+            if (token is not IdentToken part)
+            {
+                throw ErrorAtCurrent(ref stream, context,
+                    $"expected the name of a method after '@', not {Describe(stream.Current)}");
+            }
+
+            path.Add(part.Value);
+
+            if (stream.PeekNext() is DelimToken { CodePoint: '.' })
+            {
+                stream.ConsumeNext();
+                continue;
+            }
+
+            break;
+        }
+
+        var scope = SuilCallScope.View;
+        string? name = null;
+        var method = path[0];
+
+        if (path.Count > 1)
+        {
+            if (path.Count != 3 || path[0] is not ("Controllers" or "Systems"))
+            {
+                throw new SuilParserError(context,
+                    $"'@{string.Join(".", path)}': a call is '@Method', '@Controllers.Name.Method' or '@Systems.Name.Method'",
+                    position);
+            }
+
+            scope = path[0] == "Controllers" ? SuilCallScope.Controller : SuilCallScope.System;
+            name = path[1];
+            method = path[2];
+        }
+
+        // a space before the parenthesis would not make it the arguments of the call
+        if (!hasParentheses)
+            return new SuilCallStatement(method, position, scope, name);
+
+        var arguments = new List<SuilCallArgument>();
+
+        while (true)
+        {
+            stream.SkipWhitespace();
+
+            if (stream.PeekNext() is RightParenthesisToken)
+            {
+                stream.ConsumeNext();
+                return new SuilCallStatement(method, position, scope, name, arguments);
+            }
+
+            if (arguments.Count > 0)
+                throw ErrorAtNext(ref stream, context, $"expected ',' or ')', not {Describe(stream.PeekNext())}");
+
+            arguments.Add(ConsumeArgument(ref stream, context));
+            stream.SkipWhitespace();
+
+            while (stream.PeekNext() is CommaToken)
+            {
+                stream.ConsumeNext();
+                arguments.Add(ConsumeArgument(ref stream, context));
+                stream.SkipWhitespace();
+            }
+
+            if (stream.PeekNext() is not RightParenthesisToken)
+                throw ErrorAtNext(ref stream, context, $"expected ',' or ')', not {Describe(stream.PeekNext())}");
+        }
+    }
+
+    /// <summary>
+    /// One argument of a call: <c>args</c> and its members, an element and its property, or a value written the way the
+    /// value of a property is.
+    /// </summary>
+    private static SuilCallArgument ConsumeArgument(ref SuilTokenStream stream, string context)
+    {
+        stream.SkipWhitespace();
+        var position = stream.PeekPosition();
+
+        if (stream.PeekNext() is IdentToken { Value: "args" })
+        {
+            stream.ConsumeNext();
+            var members = new List<string>();
+
+            while (stream.PeekNext() is DelimToken { CodePoint: '.' })
+            {
+                stream.ConsumeNext();
+
+                if (stream.ConsumeNext() is not IdentToken member)
+                    throw ErrorAtCurrent(ref stream, context, $"expected the name of a member after '.', not {Describe(stream.Current)}");
+
+                members.Add(member.Value);
+            }
+
+            return new SuilEventArgument(members, position);
+        }
+
+        if (stream.PeekNext() is DelimToken { CodePoint: '&' } or HashToken or InterpolatedNameToken { Sigil: '#' })
+        {
+            // the element alone, or one of its properties, is passed as it is; anything longer is an expression
+            var start = stream;
+            var target = ConsumeTarget(ref stream, context);
+            string? property = null;
+
+            if (stream.PeekNext() is DelimToken { CodePoint: '.' } && stream.PeekNext(2) is IdentToken member)
+            {
+                stream.ConsumeNext(2);
+                property = member.Value;
+            }
+
+            stream.SkipWhitespace();
+
+            if (stream.PeekNext() is CommaToken or RightParenthesisToken)
+                return new SuilTargetArgument(target, property, position);
+
+            stream = start;
+        }
+
+        return new SuilValueArgument(ConsumeValueOrBool(ref stream, context, references: true), position);
     }
 
     private static SuilTarget ConsumeTarget(ref SuilTokenStream stream, string context)
@@ -167,51 +309,7 @@ public static partial class SuilParser
                 return items;
             }
 
-            var position = stream.PeekPosition();
-
-            if (stream.ConsumeNext() is not IdentToken name)
-            {
-                throw ErrorAtCurrent(ref stream,
-                    context,
-                    $"expected a property or 'add', 'remove', 'set', not {Describe(stream.Current)}");
-            }
-
-            if (name.Value is "add" or "remove" or "set" && StyleRefFollows(ref stream))
-            {
-                items.Add(ConsumeStyleItem(ref stream, context, name.Value, position));
-            }
-            else if (OperatorFollows(ref stream))
-            {
-                // min-width +: 10
-                stream.SkipWhitespace();
-                var op = (char) ((DelimToken) stream.ConsumeNext()).CodePoint;
-                stream.ConsumeNext(); // the colon
-                stream.SkipWhitespace();
-
-                items.Add(new SuilOperatorItem(name.Value, op, ConsumeNumOperand(ref stream, context, references: true), position));
-            }
-            else
-            {
-                stream.SkipWhitespace();
-                List<ISuilValue>? value = null;
-
-                if (stream.PeekNext() is ColonToken)
-                {
-                    stream.ConsumeNext();
-                    stream.SkipWhitespace();
-
-                    if (stream.PeekNext() is DelimToken { CodePoint: '?' })
-                    {
-                        throw ErrorAtNext(ref stream,
-                            context,
-                            "a statement changes the property for good, '?' is only for the properties of an element");
-                    }
-
-                    value = ConsumeValueOrBool(ref stream, context, references: true);
-                }
-
-                items.Add(new SuilPropertyItem(new SuilProperty(name.Value, value, false, position)));
-            }
+            items.Add(ConsumeTargetItem(ref stream, context));
 
             stream.SkipWhitespace();
             var next = stream.ConsumeNext();
@@ -223,6 +321,58 @@ public static partial class SuilParser
                 return items;
 
             throw ErrorAtCurrent(ref stream, context, $"expected ',' or ')', not {Describe(next)}");
+        }
+    }
+
+    /// <summary>
+    /// One change of a target: <c>name: value</c>, <c>name</c> (a flag), <c>name +: number</c>, <c>add .class</c>.
+    /// </summary>
+    private static ISuilTargetItem ConsumeTargetItem(ref SuilTokenStream stream, string context)
+    {
+        var position = stream.PeekPosition();
+
+        if (stream.ConsumeNext() is not IdentToken name)
+        {
+            throw ErrorAtCurrent(ref stream,
+                context,
+                $"expected a property or 'add', 'remove', 'set', not {Describe(stream.Current)}");
+        }
+
+        if (name.Value is "add" or "remove" or "set" && StyleRefFollows(ref stream))
+        {
+            return ConsumeStyleItem(ref stream, context, name.Value, position);
+        }
+        else if (OperatorFollows(ref stream))
+        {
+            // min-width +: 10
+            stream.SkipWhitespace();
+            var op = (char) ((DelimToken) stream.ConsumeNext()).CodePoint;
+            stream.ConsumeNext(); // the colon
+            stream.SkipWhitespace();
+
+            return new SuilOperatorItem(name.Value, op, ConsumeNumOperand(ref stream, context, references: true), position);
+        }
+        else
+        {
+            stream.SkipWhitespace();
+            List<ISuilValue>? value = null;
+
+            if (stream.PeekNext() is ColonToken)
+            {
+                stream.ConsumeNext();
+                stream.SkipWhitespace();
+
+                if (stream.PeekNext() is DelimToken { CodePoint: '?' })
+                {
+                    throw ErrorAtNext(ref stream,
+                        context,
+                        "a statement changes the property for good, '?' is only for the properties of an element");
+                }
+
+                value = ConsumeValueOrBool(ref stream, context, references: true);
+            }
+
+            return new SuilPropertyItem(new SuilProperty(name.Value, value, false, position));
         }
     }
 

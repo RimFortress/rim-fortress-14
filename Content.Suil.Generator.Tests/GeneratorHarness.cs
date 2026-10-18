@@ -61,6 +61,28 @@ internal static class GeneratorHarness
                 public static string GetString(string id, params (string, object)[] args) => id;
             }
         }
+        namespace Robust.Shared.IoC
+        {
+            public static class IoCManager
+            {
+                public static T Resolve<T>() => Holder<T>.Value!;
+                public static void Register<T>(T value) => Holder<T>.Value = value;
+                private static class Holder<T> { public static T? Value; }
+            }
+        }
+        namespace Robust.Shared.GameObjects
+        {
+            public abstract class EntitySystem { }
+            public interface IEntityManager { T System<T>() where T : EntitySystem; }
+        }
+        namespace Robust.Client.UserInterface.Controllers
+        {
+            public abstract class UIController { }
+        }
+        namespace Robust.Client.UserInterface
+        {
+            public interface IUserInterfaceManager { T GetUIController<T>() where T : Robust.Client.UserInterface.Controllers.UIController; }
+        }
         namespace Robust.Client.UserInterface
         {
             public class Control

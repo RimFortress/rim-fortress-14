@@ -27,6 +27,139 @@ public sealed class SuilEventTests
     }
 
     [Test]
+    public void A_Change_May_Be_Written_Next_To_The_Target_One_At_A_Time()
+    {
+        var dotted = Only(Root("""
+            button (on-toggled => {
+                #nested.visible: !#details.disabled;
+                #nested.min-width +: 4;
+                #nested.hidden;
+                &.value -: 1;
+                #details.add .open :loading;
+                #panel/header.text: "x"
+            })
+            """));
+
+        var parenthesised = Only(Root("""
+            button (on-toggled => {
+                #nested (visible: !#details.disabled);
+                #nested (min-width +: 4);
+                #nested (hidden);
+                &(value -: 1);
+                #details (add .open :loading);
+                #panel/header (text: "x")
+            })
+            """));
+
+        Assert.That(dotted.Statements, Has.Count.EqualTo(6));
+        Assert.That(dotted.Statements.Select(s => s.GetType()), Is.EqualTo(parenthesised.Statements.Select(s => s.GetType())));
+
+        for (var i = 0; i < 6; i++)
+        {
+            var a = (SuilTargetStatement) dotted.Statements[i];
+            var b = (SuilTargetStatement) parenthesised.Statements[i];
+
+            Assert.That(a.Target.IsView, Is.EqualTo(b.Target.IsView), i.ToString());
+            Assert.That(a.Target.Id?.ToString(), Is.EqualTo(b.Target.Id?.ToString()), i.ToString());
+            Assert.That(a.Target.Path, Is.EqualTo(b.Target.Path), i.ToString());
+            Assert.That(a.Items, Has.Count.EqualTo(1), i.ToString());
+            Assert.That(a.Items[0].GetType(), Is.EqualTo(b.Items[0].GetType()), i.ToString());
+        }
+
+        Assert.That(((SuilOperatorItem) ((SuilTargetStatement) dotted.Statements[1]).Items[0]).Property, Is.EqualTo("min-width"));
+    }
+
+    [Test]
+    public void A_Single_Dotted_Change_Needs_No_Block()
+    {
+        var root = Root("button (on-pressed => #panel.visible: true, text: \"x\")");
+
+        Assert.That(((SuilTargetStatement) Only(root).Statements.Single()).Items, Has.Count.EqualTo(1));
+        Assert.That(root.Properties.Select(p => p.Name), Is.EqualTo(new[] { "text" }), "the comma ends the change");
+    }
+
+    [Test]
+    public void A_Dotted_Change_Needs_A_Property()
+    {
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => #panel.: 1)"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => #panel. )"));
+    }
+
+    [Test]
+    public void A_Call_Has_A_Scope_And_Arguments()
+    {
+        var root = Root("""
+            button (on-pressed => {
+                @Plain;
+                @WithArgs(args, args.new, args.event.handled, #go, #go.disabled, &, &.value);
+                @Literals(5, "x", true, $key, left, calc(1 + 2), !#go.disabled);
+                @Controllers.Zoning.Pick();
+                @Systems.NpcJobs.Set(args.old)
+            })
+            """);
+
+        var handler = Only(root);
+        Assert.That(handler.IsBlock, Is.True);
+
+        var calls = handler.Statements.Cast<SuilCallStatement>().ToList();
+
+        Assert.That(calls[0].Arguments, Is.Null, "no parentheses");
+        Assert.That(calls[0].Scope, Is.EqualTo(SuilCallScope.View));
+
+        Assert.That(calls[1].Arguments!.Select(a => a.GetType()), Is.EqualTo(new[]
+        {
+            typeof(SuilEventArgument), typeof(SuilEventArgument), typeof(SuilEventArgument), typeof(SuilTargetArgument),
+            typeof(SuilTargetArgument), typeof(SuilTargetArgument), typeof(SuilTargetArgument),
+        }));
+        Assert.That(((SuilEventArgument) calls[1].Arguments![0]).Path, Is.Empty);
+        Assert.That(((SuilEventArgument) calls[1].Arguments![2]).Path, Is.EqualTo(new[] { "event", "handled" }));
+        Assert.That(((SuilTargetArgument) calls[1].Arguments![3]).Property, Is.Null);
+        Assert.That(((SuilTargetArgument) calls[1].Arguments![4]).Property, Is.EqualTo("disabled"));
+        Assert.That(((SuilTargetArgument) calls[1].Arguments![5]).Target.IsView, Is.True);
+
+        Assert.That(calls[2].Arguments!, Has.Count.EqualTo(7));
+        Assert.That(calls[2].Arguments!.All(a => a is SuilValueArgument), Is.True);
+
+        Assert.That(calls[3].Scope, Is.EqualTo(SuilCallScope.Controller));
+        Assert.That(calls[3].Name, Is.EqualTo("Zoning"));
+        Assert.That(calls[3].Method, Is.EqualTo("Pick"));
+        Assert.That(calls[3].Arguments, Is.Empty, "parentheses without arguments");
+
+        Assert.That(calls[4].Scope, Is.EqualTo(SuilCallScope.System));
+        Assert.That(calls[4].Name, Is.EqualTo("NpcJobs"));
+    }
+
+    [Test]
+    public void A_Lone_Statement_Is_Not_A_Block()
+    {
+        Assert.That(Only(Root("button (on-pressed => @OnSubmit)")).IsBlock, Is.False);
+        Assert.That(Only(Root("button (on-pressed => { @OnSubmit })")).IsBlock, Is.True);
+    }
+
+    [Test]
+    public void A_Call_Path_Has_One_Of_The_Known_Shapes()
+    {
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => @Other.Zoning.Pick())"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => @Controllers.Pick())"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => @Controllers.A.B.C())"));
+    }
+
+    [Test]
+    public void The_Variables_In_The_Arguments_Of_A_Call_Are_Put_In()
+    {
+        var root = Expanded("""
+            let amount = 7;
+            let go = go-button;
+            button (on-pressed => { @Controllers.Zoning.Add(<amount>, #<go>.disabled) })
+            """);
+
+        var call = (SuilCallStatement) Only(root).Statements.Single();
+
+        Assert.That(((SuilValueArgument) call.Arguments![0]).Values.Single(), Is.InstanceOf<SuilNumber>());
+        Assert.That(((SuilTargetArgument) call.Arguments![1]).Target.Id!.ToString(), Is.EqualTo("go-button"));
+    }
+
+    [Test]
     public void A_Handler_With_A_Block_Of_Statements()
     {
         var root = Root("""

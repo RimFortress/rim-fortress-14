@@ -27,6 +27,7 @@ public sealed class SuilEventTable
 {
     private readonly Dictionary<Type, IReadOnlyDictionary<string, SuilEventAccessor>> _events = new();
     private readonly Dictionary<Type, IReadOnlyDictionary<string, Func<object, bool>>> _flags = new();
+    private readonly Dictionary<Type, IReadOnlyDictionary<string, Func<object, object>>> _members = new();
 
     public void Add(Type type, IReadOnlyDictionary<string, SuilEventAccessor> events) => _events[type] = events;
 
@@ -35,10 +36,16 @@ public sealed class SuilEventTable
     /// </summary>
     public void AddArguments(Type argumentType, IReadOnlyDictionary<string, Func<object, bool>> flags) => _flags[argumentType] = flags;
 
+    /// <summary>
+    /// Registers the readers of the members of an arguments type, by their names in SUIL: <c>args.new</c> of a call.
+    /// </summary>
+    public void AddMembers(Type argumentType, IReadOnlyDictionary<string, Func<object, object>> members) => _members[argumentType] = members;
+
     public void Clear()
     {
         _events.Clear();
         _flags.Clear();
+        _members.Clear();
     }
 
     /// <summary>
@@ -53,6 +60,21 @@ public sealed class SuilEventTable
         }
 
         accessor = null!;
+        return false;
+    }
+
+    /// <summary>
+    /// Finds the reader of a member of the arguments of an event, <c>new</c> for <c>New</c>.
+    /// </summary>
+    public bool TryGetMember(Type? argumentType, string name, out Func<object, object> reader)
+    {
+        for (var current = argumentType; current != null; current = current.BaseType)
+        {
+            if (_members.TryGetValue(current, out var declared) && declared.TryGetValue(name, out reader!))
+                return true;
+        }
+
+        reader = null!;
         return false;
     }
 

@@ -136,6 +136,159 @@ public sealed class SuilViewEventTests
         Assert.That(view.GetType().GetField("Went")!.GetValue(view), Is.EqualTo(1));
     }
 
+    [Test]
+    public void In_A_Block_A_Call_Without_Parentheses_Takes_Nothing()
+    {
+        var code = View("""
+            public int Count;
+            private void OnSubmit(RfButtonEventArgs args) { Count += args.Count; }
+            """);
+
+        Assert.That(Ids(Run("button (on-pressed => { @OnSubmit })", code)), Is.EqualTo(new[] { "SUIL021" }));
+
+        var result = Run("button (on-pressed => { @OnSubmit(args) })", code);
+        AssertClean(result);
+
+        var view = New(result);
+        Raise(view, "RaisePressed", Args(view, count: 4));
+        Assert.That(view.GetType().GetField("Count")!.GetValue(view), Is.EqualTo(4));
+    }
+
+    [Test]
+    public void A_Call_Passes_The_Arguments_It_Lists()
+    {
+        var result = Run("""
+            button (min-width: 5) {
+                +button #go (on-pressed => {
+                    @Log(args.count, "x", true, 2, &.min-width, #go.disabled, !#go.disabled);
+                    @Mixed(#go, args, calc(#go.min-width + 1));
+                    @Optional(1)
+                })
+            }
+            """, View("""
+            public string Log_ = "";
+            private void Log(int count, string text, bool flag, double number, int viewWidth, bool disabled, bool inverse)
+            {
+                Log_ += $"{count},{text},{flag},{number},{viewWidth},{disabled},{inverse};";
+            }
+
+            private void Mixed(object element, RfButtonEventArgs args, float width) { Log_ += element.GetType().Name + args.Count + width + ";"; }
+            private void Optional(int a, string b = "d") { Log_ += a + b + ";"; }
+            """));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var go = Field(view, "Go");
+        go.GetType().GetProperty("MinWidth")!.SetValue(go, 9);
+        Raise(go, "RaisePressed", Args(view, count: 3));
+
+        Assert.That(view.GetType().GetField("Log_")!.GetValue(view), Is.EqualTo("3,x,True,2,5,False,True;RfButton310;1d;"));
+    }
+
+    [TestCase("button (on-pressed => { @Two(1) })", "SUIL021")]
+    [TestCase("button (on-pressed => { @Two(1, 2, 3) })", "SUIL021")]
+    [TestCase("button (on-pressed => { @Two(\"x\", 2) })", "SUIL011")]
+    [TestCase("button (on-pressed => { @Two(args.nope, 2) })", "SUIL023")]
+    [TestCase("button (on-pressed => { @Two(#nowhere.disabled, 2) })", "SUIL022")]
+    [TestCase("button (on-closed => { @Two(args, 2) })", "SUIL023")]
+    [TestCase("button (on-pressed => { @Controllers.Nobody.Do() })", "SUIL027")]
+    [TestCase("button (on-pressed => { @Systems.Nobody.Do() })", "SUIL027")]
+    [TestCase("button (on-pressed => { @Other.Zoning.Do() })", "SUIL003")]
+    public void Mistakes_In_A_Call_Are_Reported_At_The_Build(string suil, string id)
+    {
+        var result = Run(suil, View("private void Two(int a, int b) { }"));
+
+        Assert.That(Ids(result).Contains(id) || result.GeneratorDiagnostics.Any(d => d.Id.StartsWith("SUIL")), Is.True,
+            string.Join("\n", result.GeneratorDiagnostics));
+        Assert.That(Ids(result), Has.Member(id), string.Join("\n", result.GeneratorDiagnostics));
+    }
+
+    [Test]
+    public void A_Call_Reaches_A_Controller_And_A_System_By_Their_Names()
+    {
+        var code = $$"""
+            {{Usings}}
+            using Robust.Client.UserInterface.Controllers;
+            using Robust.Shared.GameObjects;
+
+            public sealed class ZoningUiController : UIController
+            {
+                public string Log = "";
+                public void Pick(int id, string what) { Log += "pick" + id + what; }
+                public void Toggle() { Log += "toggle"; }
+            }
+
+            public sealed class NpcJobsSystem : EntitySystem
+            {
+                public string Log = "";
+                public bool Set(bool value) { Log += "set" + value; return value; }
+                public void Reset() { Log += "reset"; }
+            }
+
+            public static class Boot
+            {
+                public static ZoningUiController Controller = new();
+                public static NpcJobsSystem Jobs = new();
+
+                public static void Setup()
+                {
+                    Robust.Shared.IoC.IoCManager.Register<Robust.Client.UserInterface.IUserInterfaceManager>(new Ui());
+                    Robust.Shared.IoC.IoCManager.Register<IEntityManager>(new Entities());
+                }
+
+                private sealed class Ui : Robust.Client.UserInterface.IUserInterfaceManager
+                {
+                    public T GetUIController<T>() where T : UIController => (T) (object) Controller;
+                }
+
+                private sealed class Entities : IEntityManager
+                {
+                    public T System<T>() where T : EntitySystem => (T) (object) Jobs;
+                }
+            }
+
+            public sealed partial class Picker : RfButton { public Picker() { InitializeComponent(); } }
+            """;
+
+        var result = Run("""
+            button {
+                +button #go (on-pressed => {
+                    @Controllers.Zoning.Pick(args.count, "z");
+                    @Systems.NpcJobs.Set(!#go.disabled);
+                    @Controllers.Zoning.Toggle;
+                    @Systems.NpcJobs.Reset
+                })
+            }
+            """, code);
+
+        AssertClean(result);
+
+        var assembly = result.Load();
+        var boot = assembly.GetType("Game.Ui.Boot")!;
+        boot.GetMethod("Setup")!.Invoke(null, null);
+        var controller = boot.GetField("Controller")!.GetValue(null)!;
+        var system = boot.GetField("Jobs")!.GetValue(null)!;
+
+        var view = Activator.CreateInstance(assembly.GetType("Game.Ui.Picker")!)!;
+        Raise(Field(view, "Go"), "RaisePressed", Args(view, count: 7));
+
+        Assert.That(controller.GetType().GetField("Log")!.GetValue(controller), Is.EqualTo("pick7ztoggle"));
+        Assert.That(system.GetType().GetField("Log")!.GetValue(system), Is.EqualTo("setTruereset"));
+
+        // the hot reload can call them too: the assembly has a table of the calls the files make
+        var tables = assembly.GetTypes().Single(t => t.Name.StartsWith("SuilCalls_"));
+        var table = new SuilCallTable();
+        ((ISuilCallTables) Activator.CreateInstance(tables)!).RegisterCalls(table);
+
+        var pick = table.Find("Controllers.Zoning.Pick", 2).Single();
+        Assert.That(pick.Parameters.Select(t => t.Name), Is.EqualTo(new[] { "Int32", "String" }));
+        pick.Invoke(new object?[] { 8, "q" });
+        Assert.That(controller.GetType().GetField("Log")!.GetValue(controller), Is.EqualTo("pick7ztogglepick8q"));
+
+        Assert.That(table.Find("Systems.NpcJobs.Set", 1).Single().Parameters.Select(t => t.Name), Is.EqualTo(new[] { "Boolean" }));
+    }
+
     // ---- Blocks ----
 
     [Test]
@@ -265,6 +418,33 @@ public sealed class SuilViewEventTests
         Raise(inc, "RaisePressed", Args(view));
 
         Assert.That(Get(view, "MinWidth"), Is.EqualTo(6), "the view, which is the code-behind class");
+        Assert.That(Get(view, "Disabled"), Is.EqualTo(true));
+        Assert.That(Classes(view), Is.EquivalentTo(new[] { "touched" }));
+        Assert.That(Get(inc, "MinWidth"), Is.EqualTo(9));
+    }
+
+    [Test]
+    public void Changes_Written_One_At_A_Time_Do_The_Same_As_The_Parentheses()
+    {
+        var result = Run("""
+            button (min-width: 5) {
+                +button #inc (on-pressed => {
+                    &.min-width +: 1;
+                    &.add .touched;
+                    &.disabled: !&.disabled;
+                    #inc.min-width: 9
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var inc = Field(view, "Inc");
+
+        Raise(inc, "RaisePressed", Args(view));
+
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(6));
         Assert.That(Get(view, "Disabled"), Is.EqualTo(true));
         Assert.That(Classes(view), Is.EquivalentTo(new[] { "touched" }));
         Assert.That(Get(inc, "MinWidth"), Is.EqualTo(9));
@@ -655,7 +835,6 @@ public sealed class SuilViewEventTests
     [TestCase("button (on-pressed => @Missing)", "SUIL020")]
     [TestCase("button (on-closed => @Takes)", "SUIL021")]
     [TestCase("button (on-pressed => @TakesString)", "SUIL021")]
-    [TestCase("button (on-pressed => @Returns)", "SUIL020")]
     [TestCase("button (on-pressed => { #nowhere (disabled: true) })", "SUIL022")]
     [TestCase("button (on-pressed => { #nowhere (add .a) })", "SUIL022")]
     [TestCase("button { +button #x (on-pressed => { #x/inner (disabled: true) }) }", "SUIL022")]
@@ -717,13 +896,14 @@ public sealed class SuilViewEventTests
     }
 
     [Test]
-    public void The_View_Calls_Its_Methods_By_Name()
+    public void The_View_Calls_Its_Methods_By_Name_And_The_Number_Of_The_Arguments()
     {
         var result = Run("button", View("""
             public string Log = "";
             private void Plain() { Log += "plain;"; }
             private void WithArgs(RfButtonEventArgs args) { Log += "args:" + args.Count + ";"; }
-            private int NotAHandler() => 1;
+            private int Returns() { Log += "returns;"; return 1; }
+            private void Two(int a, string b = "d") { Log += "two:" + a + b + ";"; }
             private static void Static() { }
             """));
 
@@ -731,20 +911,26 @@ public sealed class SuilViewEventTests
 
         var view = (ISuilView) New(result);
 
-        Assert.That(view.SuilTryGetMethod("Plain", out var plain), Is.True);
-        Assert.That(plain, Is.Null);
-        Assert.That(view.SuilTryGetMethod("WithArgs", out var withArgs), Is.True);
-        Assert.That(withArgs!.Name, Is.EqualTo("RfButtonEventArgs"));
-        Assert.That(view.SuilTryGetMethod("NotAHandler", out _), Is.False, "it returns something");
-        Assert.That(view.SuilTryGetMethod("Missing", out _), Is.False);
-        Assert.That(view.SuilTryGetMethod("InitializeComponent", out _), Is.False);
-        Assert.That(view.SuilTryGetMethod("RaiseClosed", out var inherited), Is.True, "a method of the base class");
-        Assert.That(inherited, Is.Null);
-        Assert.That(view.SuilTryGetMethod("Static", out _), Is.False);
+        Assert.That(view.SuilTryGetMethod("Plain", 0, out var plain), Is.True);
+        Assert.That(plain, Is.Empty);
+        Assert.That(view.SuilTryGetMethod("Plain", 1, out _), Is.False, "by the number of the arguments");
+        Assert.That(view.SuilTryGetMethod("WithArgs", 1, out var withArgs), Is.True);
+        Assert.That(withArgs!.Select(t => t.Name), Is.EqualTo(new[] { "RfButtonEventArgs" }));
+        Assert.That(view.SuilTryGetMethod("Returns", 0, out _), Is.True, "what it returns is ignored");
+        Assert.That(view.SuilTryGetMethod("Two", 1, out var one), Is.True, "an optional argument may be left out");
+        Assert.That(one!.Select(t => t.Name), Is.EqualTo(new[] { "Int32" }));
+        Assert.That(view.SuilTryGetMethod("Two", 2, out _), Is.True);
+        Assert.That(view.SuilTryGetMethod("Missing", 0, out _), Is.False);
+        Assert.That(view.SuilTryGetMethod("InitializeComponent", 0, out _), Is.False);
+        Assert.That(view.SuilTryGetMethod("RaiseClosed", 0, out _), Is.True, "a method of the base class");
+        Assert.That(view.SuilTryGetMethod("Static", 0, out _), Is.False);
 
-        view.SuilInvoke("Plain", null);
-        view.SuilInvoke("WithArgs", Args(view, count: 7));
+        view.SuilInvoke("Plain", Array.Empty<object?>());
+        view.SuilInvoke("WithArgs", new[] { Args(view, count: 7) });
+        view.SuilInvoke("Returns", Array.Empty<object?>());
+        view.SuilInvoke("Two", new object?[] { 3 });
+        view.SuilInvoke("Two", new object?[] { 4, "x" });
 
-        Assert.That(view.GetType().GetField("Log")!.GetValue(view), Is.EqualTo("plain;args:7;"));
+        Assert.That(view.GetType().GetField("Log")!.GetValue(view), Is.EqualTo("plain;args:7;returns;two:3d;two:4x;"));
     }
 }

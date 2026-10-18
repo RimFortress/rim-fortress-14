@@ -7,7 +7,7 @@ let loc = actions-hotbar-widgets;
         +tree-menu-button #build-button (
             tool-tip: $<loc>-build-tooltip,
             texture-path: "<icons>/hammer-solid.svg.192dpi.png",
-            on-pressed => @OnBuildPressed
+            on-pressed => @Controllers.ConstructionMenu.ToggleWindow
         )
 
         +tree-menu-button #passive-tasks-button (
@@ -18,7 +18,7 @@ let loc = actions-hotbar-widgets;
         +tree-menu-button #npc-jobs-button (
             tool-tip: $<loc>-npc-jobs-tooltip,
             texture-path: "<icons>/arrow-down-wide-short-solid-full.192dpi.png",
-            on-pressed => @OnNpcJobsPressed
+            on-pressed => @Controllers.NpcJobs.TogglePriorityWindow
         )
 
         _ .low-divider (margin: 10 5)
@@ -33,7 +33,7 @@ let loc = actions-hotbar-widgets;
         +tree-menu-button #world-map-button (
             tool-tip: $<loc>-world-map-tooltip,
             texture-path: "<icons>/map-location-dot-solid.svg.192dpi.png",
-            on-pressed => @OnWorldMapPressed
+            on-pressed => @Controllers.WorldMap.ToggleWindow
         )
     }
 }

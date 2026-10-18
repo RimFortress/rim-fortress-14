@@ -68,17 +68,18 @@ public interface ISuilView
     bool SuilSetField(string id, object? value);
 
     /// <summary>
-    /// Finds a method of the class that a handler of the file can call, <c>@OnSubmit</c>: one that returns nothing and
-    /// takes nothing or one argument.
+    /// Finds a method of the class (or of its base classes) that a call of the file can make, <c>@OnSubmit(args)</c>:
+    /// by its name and the number of the arguments.
     /// </summary>
     /// <param name="name">The name of the method, as in the code.</param>
-    /// <param name="argumentType">The type of its argument, <c>null</c> if it takes nothing.</param>
-    bool SuilTryGetMethod(string name, out Type? argumentType);
+    /// <param name="arity">How many arguments the call has.</param>
+    /// <param name="parameters">The types of its parameters.</param>
+    bool SuilTryGetMethod(string name, int arity, out Type[]? parameters);
 
     /// <summary>
-    /// Calls the method found by <see cref="SuilTryGetMethod"/>, with the arguments of the event if it takes them.
+    /// Calls the method found by <see cref="SuilTryGetMethod"/>. The arguments are of the types of the parameters.
     /// </summary>
-    void SuilInvoke(string name, object? argument);
+    void SuilInvoke(string name, object?[] arguments);
 }
 
 /// <summary>

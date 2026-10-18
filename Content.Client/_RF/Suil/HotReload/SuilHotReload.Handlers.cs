@@ -14,7 +14,12 @@ public sealed partial class SuilHotReload
 
     private abstract record PlannedStatement;
 
-    private sealed record PlannedCall(string Method, bool PassArgument) : PlannedStatement;
+    /// <summary>
+    /// A call: of a method of the view (<paramref name="Entry"/> is <c>null</c>) or of a controller or a system.
+    /// </summary>
+    /// <param name="Arguments">Work out what is passed when the event is raised.</param>
+    private sealed record PlannedCall(string Method, SuilCallEntry? Entry, List<Func<EvalContext, object?>> Arguments)
+        : PlannedStatement;
 
     /// <summary>
     /// <c>#target (...)</c>: what to change on one element.
@@ -101,9 +106,12 @@ public sealed partial class SuilHotReload
 
             var handler = new PlannedHandler { Event = evt };
 
+            // a call without parentheses gets the arguments of the event only as the lone statement without a block
+            var autoArguments = !source.IsBlock && source.Statements.Count == 1;
+
             foreach (var statement in source.Statements)
             {
-                var planned = PlanStatement(view, element, evt, statement, ids, errors);
+                var planned = PlanStatement(view, element, evt, statement, ids, errors, autoArguments);
 
                 if (planned != null)
                     handler.Statements.Add(planned);
@@ -124,30 +132,13 @@ public sealed partial class SuilHotReload
         SuilEventAccessor evt,
         ISuilStatement statement,
         Dictionary<string, Type> ids,
-        List<string> errors)
+        List<string> errors,
+        bool autoArguments)
     {
         switch (statement)
         {
             case SuilCallStatement call:
-            {
-                if (!view.SuilTryGetMethod(call.Method, out var argumentType))
-                {
-                    errors.Add(At(call.Position,
-                        $"'@{call.Method}': {view.GetType().Name} has no such method that a handler can call: " +
-                        "a method is in the code, build the project"));
-                    return null;
-                }
-
-                if (argumentType != null && (evt.ArgumentType == null || !argumentType.IsAssignableFrom(evt.ArgumentType)))
-                {
-                    errors.Add(At(call.Position,
-                        $"'@{call.Method}' takes {argumentType.Name}, and {evt.Name} gives " +
-                        (evt.ArgumentType == null ? "nothing" : evt.ArgumentType.Name)));
-                    return null;
-                }
-
-                return new PlannedCall(call.Method, argumentType != null);
-            }
+                return PlanCall(view, element, evt, call, ids, errors, autoArguments);
             case SuilTargetStatement targetStatement:
             {
                 if (!PlanTarget(targetStatement.Target, element, ids, errors, out var target, out var type))
@@ -213,6 +204,225 @@ public sealed partial class SuilHotReload
             default:
                 return null;
         }
+    }
+
+    private static string CallName(SuilCallStatement call)
+        => call.Scope == SuilCallScope.View ? $"@{call.Method}" : $"@{(call.Scope == SuilCallScope.Controller ? "Controllers" : "Systems")}.{call.Name}.{call.Method}";
+
+    private PlannedStatement? PlanCall(
+        ISuilView view,
+        PlannedElement element,
+        SuilEventAccessor evt,
+        SuilCallStatement call,
+        Dictionary<string, Type> ids,
+        List<string> errors,
+        bool autoArguments)
+    {
+        var name = CallName(call);
+        var key = call.Scope == SuilCallScope.View
+            ? null
+            : $"{(call.Scope == SuilCallScope.Controller ? "Controllers" : "Systems")}.{call.Name}.{call.Method}";
+
+        bool TryFind(int arity, out Type[] parameters, out SuilCallEntry? entry)
+        {
+            entry = null;
+
+            if (key == null)
+            {
+                var found = view.SuilTryGetMethod(call.Method, arity, out var types);
+                parameters = types ?? Array.Empty<Type>();
+                return found;
+            }
+
+            entry = _suil.Calls.Find(key, arity).FirstOrDefault();
+            parameters = entry?.Parameters ?? Array.Empty<Type>();
+            return entry != null;
+        }
+
+        var arguments = new List<Func<EvalContext, object?>>();
+
+        // no parentheses: nothing, or (as the lone statement of a handler) the arguments of the event
+        if (call.Arguments == null)
+        {
+            if (TryFind(0, out _, out var plain))
+                return new PlannedCall(call.Method, plain, arguments);
+
+            if (autoArguments && evt.ArgumentType != null && TryFind(1, out var one, out var takesEvent)
+                && one[0].IsAssignableFrom(evt.ArgumentType))
+            {
+                arguments.Add(context => context.Argument);
+                return new PlannedCall(call.Method, takesEvent, arguments);
+            }
+
+            errors.Add(At(call.Position, key != null && !_suil.Calls.Has(key)
+                ? $"'{name}' was not called by any file when the project was built: build it again"
+                : $"'{name}' without parentheses takes nothing" +
+                  (autoArguments ? " or the arguments of the event" : ", write '" + name + "(args)' to pass the arguments of the event") + ": no such method"));
+            return null;
+        }
+
+        if (!TryFind(call.Arguments.Count, out var parameters, out var entry))
+        {
+            errors.Add(At(call.Position, key != null && !_suil.Calls.Has(key)
+                ? $"'{name}' was not called by any file when the project was built: build it again"
+                : $"'{name}' with {call.Arguments.Count} argument(s): " +
+                  (key == null ? $"{view.GetType().Name} has no such method that a call can make, a method is in the code, build the project" : "no such overload was called when the project was built, build it again")));
+            return null;
+        }
+
+        for (var i = 0; i < call.Arguments.Count; i++)
+        {
+            var evaluate = PlanArgument(call.Arguments[i], parameters[i], element, evt, ids, errors, name);
+
+            if (evaluate == null)
+                return null;
+
+            arguments.Add(evaluate);
+        }
+
+        return new PlannedCall(call.Method, entry, arguments);
+    }
+
+    /// <summary>
+    /// Turns an argument of a call into a function that works out the value of the parameter when the event is raised.
+    /// </summary>
+    private Func<EvalContext, object?>? PlanArgument(
+        SuilCallArgument argument,
+        Type parameter,
+        PlannedElement owner,
+        SuilEventAccessor evt,
+        Dictionary<string, Type> ids,
+        List<string> errors,
+        string callName)
+    {
+        switch (argument)
+        {
+            case SuilEventArgument ofEvent:
+            {
+                if (evt.ArgumentType == null)
+                {
+                    errors.Add(At(ofEvent.Position, $"'{callName}': 'args' is used, and {evt.Name} gives no arguments"));
+                    return null;
+                }
+
+                if (ofEvent.Path.Count == 0 && !parameter.IsAssignableFrom(evt.ArgumentType))
+                {
+                    errors.Add(At(ofEvent.Position, $"'{callName}': {evt.ArgumentType.Name} can't be passed as {parameter.Name}"));
+                    return null;
+                }
+
+                var path = ofEvent.Path;
+                var position = ofEvent.Position;
+
+                // the first member is looked for by the type of the event, the next by the type of what the first one is
+                if (path.Count > 0 && !_suil.Events.TryGetMember(evt.ArgumentType, path[0], out _))
+                {
+                    errors.Add(At(position, $"'{callName}': {evt.ArgumentType.Name} has no readable member '{path[0]}'"));
+                    return null;
+                }
+
+                return context =>
+                {
+                    object? value = context.Argument;
+
+                    foreach (var segment in path)
+                    {
+                        if (value == null || !_suil.Events.TryGetMember(value.GetType(), segment, out var reader))
+                        {
+                            throw new InvalidOperationException($"'args.{string.Join(".", path)}': {value?.GetType().Name} has no member '{segment}' the hot reload can read");
+                        }
+
+                        value = reader(value);
+                    }
+
+                    return ConvertArgument(value, parameter);
+                };
+            }
+            case SuilTargetArgument target:
+            {
+                if (!PlanTarget(target.Target, owner, ids, errors, out var planned, out var type))
+                    return null;
+
+                var property = target.Property;
+
+                if (property != null && type != null
+                    && (!_suil.TryGetPropertyAccessor(type, property, out var found) || found.Value.Getter == null))
+                {
+                    errors.Add(At(target.Position, $"'{callName}': {type.Name} has no readable property '{property}'"));
+                    return null;
+                }
+
+                return context =>
+                {
+                    var control = Resolve(context.State, planned, context.View)
+                                  ?? throw new InvalidOperationException("the element of an argument is not found");
+
+                    if (property == null)
+                        return ConvertArgument(control, parameter);
+
+                    if (!_suil.TryGetPropertyAccessor(control.GetType(), property, out var accessor) || accessor.Value.Getter is not { } getter)
+                        throw new InvalidOperationException($"{control.GetType().Name} has no readable property '{property}'");
+
+                    return ConvertArgument(getter(control), parameter);
+                };
+            }
+            case SuilValueArgument value:
+            {
+                var clr = Nullable.GetUnderlyingType(parameter) ?? parameter;
+
+                // an expression is worked out when the event is raised
+                if (value.Values is [SuilNumValue number])
+                {
+                    var expression = CompileNum(number.Root, owner, ids, errors);
+                    return expression == null ? null : context => ConvertArgument(expression(context), parameter);
+                }
+
+                if (value.Values is [SuilBoolValue { Root: SuilBoolReference reference }] && SuilMath.IsNumeric(clr))
+                {
+                    var expression = CompileNum(new SuilNumReference(reference.Target, reference.Property), owner, ids, errors);
+                    return expression == null ? null : context => ConvertArgument(expression(context), parameter);
+                }
+
+                if (value.Values is [SuilBoolValue boolean])
+                {
+                    var condition = CompileBool(boolean.Root, owner, evt, ids, errors);
+                    return condition == null ? null : context => ConvertArgument(condition(context), parameter);
+                }
+
+                // a constant: the parsers of the properties read it as the type of the parameter
+                var accessor = new SuilStyleAccessor(parameter, (_, _) => { }, null, null, false);
+                var asProperty = new SuilProperty("argument", value.Values, false, value.Position);
+
+                if (!SuilValueConverter.TryConvert(_suil, accessor, asProperty, out var constant, out var error))
+                {
+                    errors.Add(At(value.Position, $"'{callName}': {error}"));
+                    return null;
+                }
+
+                return _ => constant;
+            }
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// A value as the type of a parameter: the same type, or another number.
+    /// </summary>
+    private static object? ConvertArgument(object? value, Type parameter)
+    {
+        if (value == null)
+            return null;
+
+        var clr = Nullable.GetUnderlyingType(parameter) ?? parameter;
+
+        if (clr.IsInstanceOfType(value))
+            return value;
+
+        if (SuilMath.IsNumeric(clr) && SuilMath.IsNumeric(value.GetType()))
+            return SuilMath.FromDouble(clr, SuilMath.ToDouble(value));
+
+        throw new InvalidOperationException($"{value.GetType().Name} can't be passed as {parameter.Name}");
     }
 
     /// <summary>
@@ -636,8 +846,21 @@ public sealed partial class SuilHotReload
         switch (statement)
         {
             case PlannedCall call:
-                view.SuilInvoke(call.Method, call.PassArgument ? context.Argument : null);
+            {
+                var arguments = new object?[call.Arguments.Count];
+
+                for (var i = 0; i < arguments.Length; i++)
+                {
+                    arguments[i] = call.Arguments[i](context);
+                }
+
+                if (call.Entry != null)
+                    call.Entry.Invoke(arguments);
+                else
+                    view.SuilInvoke(call.Method, arguments);
+
                 break;
+            }
             case PlannedTargetStatement onTarget:
             {
                 var target = Resolve(context.State, onTarget.Target, context.View);
