@@ -44,6 +44,14 @@ public static class SuilValueConverter
             return false;
         }
 
+        // none is null, for what can be null; a text "none" is written with quotes
+        if (values is [SuilIdent { Value: "none" }]
+            && (Nullable.GetUnderlyingType(accessor.ClrType) != null || !accessor.ClrType.IsValueType && !accessor.ClrType.IsEnum))
+        {
+            value = null;
+            return true;
+        }
+
         if (accessor.CustomParser is { } parserType)
         {
             var custom = new SuilValueStream(values);

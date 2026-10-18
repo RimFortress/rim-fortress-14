@@ -77,9 +77,10 @@ public interface ISuilView
     bool SuilTryGetMethod(string name, int arity, out Type[]? parameters);
 
     /// <summary>
-    /// Calls the method found by <see cref="SuilTryGetMethod"/>. The arguments are of the types of the parameters.
+    /// Calls the method found by <see cref="SuilTryGetMethod"/>. The arguments are of the types of the parameters. Returns
+    /// what the method returns, <c>null</c> for a method that returns nothing.
     /// </summary>
-    void SuilInvoke(string name, object?[] arguments);
+    object? SuilInvoke(string name, object?[] arguments);
 }
 
 /// <summary>

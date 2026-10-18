@@ -130,6 +130,181 @@ public sealed class SuilEventTests
     }
 
     [Test]
+    public void A_Handler_Has_If_Elif_Else()
+    {
+        var root = Root("""
+            button (on-pressed => {
+                if (#a.disabled && !args.pressed) {
+                    #b.visible: true;
+                    @Go
+                } elif(#a.visible) {
+                    #b.visible: false
+                } elif (true) {
+                    @Other(1)
+                } else {
+                    #b.text: none
+                };
+                #c.visible: false
+            })
+            """);
+
+        var statements = Only(root).Statements;
+        Assert.That(statements, Has.Count.EqualTo(2));
+
+        var branch = (SuilIfStatement) statements[0];
+        Assert.That(branch.Branches, Has.Count.EqualTo(3));
+        Assert.That(branch.Branches[0].Condition, Is.InstanceOf<SuilBoolAnd>());
+        Assert.That(branch.Branches[0].Body, Has.Count.EqualTo(2));
+        Assert.That(branch.Branches[2].Condition, Is.EqualTo(new SuilBoolConst(true)));
+        Assert.That(branch.Else, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public void An_If_May_Be_The_Only_Statement_Of_A_Handler()
+    {
+        var root = Root("button (on-pressed => if (#a.disabled) { #b.visible: true })");
+
+        Assert.That(Only(root).Statements.Single(), Is.InstanceOf<SuilIfStatement>());
+        Assert.That(Only(root).IsBlock, Is.False);
+    }
+
+    [Test]
+    public void An_If_Needs_A_Condition_In_Parentheses_And_A_Block()
+    {
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { if #a.disabled { #b.visible: true } })"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { if (#a.disabled) #b.visible: true })"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { if (#a.disabled) { } })"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { if (#a.disabled { #b.visible: true } })"));
+    }
+
+    [Test]
+    public void The_Variables_In_The_Conditions_Of_An_If_Are_Put_In()
+    {
+        var root = Expanded("""
+            let on = true;
+            button (on-pressed => { if (<on> && #a.disabled) { #b.visible: true } })
+            """);
+
+        var branch = ((SuilIfStatement) Only(root).Statements.Single()).Branches.Single();
+        Assert.That(branch.Condition, Is.InstanceOf<SuilBoolReference>(), "true && x is x");
+    }
+
+    [Test]
+    public void Values_May_Be_Compared()
+    {
+        var root = Root("""
+            button (on-pressed => {
+                if (#a.value > 5 && #b.text == "x" || args.count != 3) { #c.visible: true };
+                if (num(#a.text) <= 2 && str(#a.value) == "7" && #a.mode == left && #a.tip == none) { #c.visible: false };
+                #d.visible: #a.value >= #b.value
+            })
+            """);
+
+        var statements = Only(root).Statements;
+        var first = (SuilIfStatement) statements[0];
+
+        // (a > 5 && b == x) || args.count != 3
+        var or = (SuilBoolOr) first.Branches[0].Condition;
+        var and = (SuilBoolAnd) or.Left;
+        var greater = (SuilBoolCompare) and.Left;
+        Assert.That(greater.Operator, Is.EqualTo(">"));
+        Assert.That(greater.Left, Is.InstanceOf<SuilReferenceNode>());
+        Assert.That(((SuilLiteralNode) greater.Right).Value, Is.EqualTo(new SuilNumber(5, true)));
+        Assert.That(((SuilBoolCompare) and.Right).Operator, Is.EqualTo("=="));
+        Assert.That(((SuilBoolCompare) or.Right).Operator, Is.EqualTo("!="));
+        Assert.That(((SuilBoolCompare) or.Right).Left, Is.InstanceOf<SuilArgsNode>());
+
+        var second = (SuilIfStatement) statements[1];
+        var operators = new List<string>();
+        void Collect(SuilBoolNode node)
+        {
+            switch (node)
+            {
+                case SuilBoolAnd a:
+                    Collect(a.Left);
+                    Collect(a.Right);
+                    break;
+                case SuilBoolCompare c:
+                    operators.Add(c.Operator);
+                    break;
+            }
+        }
+
+        Collect(second.Branches[0].Condition);
+        Assert.That(operators, Is.EqualTo(new[] { "<=", "==", "==", "==" }));
+
+        var assigned = (SuilTargetStatement) statements[2];
+        var value = ((SuilPropertyItem) assigned.Items.Single()).Property.Value!.Single();
+        Assert.That(((SuilBoolValue) value).Root, Is.InstanceOf<SuilBoolCompare>());
+        Assert.That(((SuilBoolCompare) ((SuilBoolValue) value).Root).Operator, Is.EqualTo(">="));
+    }
+
+    [Test]
+    public void A_Value_May_Be_An_Expression()
+    {
+        var root = Root("""
+            button (on-pressed => {
+                #a.text: = if (#b.pressed) "yes" elif (#b.value > 3) str(#b.value) + "!" else $none;
+                #a.tool-tip: @Controllers.Info.Name();
+                #a.min-width: num(#b.text);
+                @Log(= if (args.pressed) 1 else 2, str(#a.value), @Systems.X.Y)
+            })
+            """);
+
+        var statements = Only(root).Statements;
+
+        var first = (SuilExprValue) ((SuilPropertyItem) ((SuilTargetStatement) statements[0]).Items.Single()).Property.Value!.Single();
+        var conditional = (SuilConditionalNode) first.Root;
+        Assert.That(conditional.Branches, Has.Count.EqualTo(2));
+        Assert.That(conditional.Branches[1].Value, Is.InstanceOf<SuilConcatNode>());
+        Assert.That(((SuilLiteralNode) conditional.Else).Value, Is.InstanceOf<SuilLocalization>());
+
+        var call = (SuilExprValue) ((SuilPropertyItem) ((SuilTargetStatement) statements[1]).Items.Single()).Property.Value!.Single();
+        Assert.That(((SuilCallNode) call.Root).Call.Name, Is.EqualTo("Info"));
+
+        var number = (SuilExprValue) ((SuilPropertyItem) ((SuilTargetStatement) statements[2]).Items.Single()).Property.Value!.Single();
+        Assert.That(((SuilFunctionNode) number.Root).Name, Is.EqualTo("num"));
+
+        var log = (SuilCallStatement) statements[3];
+        Assert.That(log.Arguments!.Select(a => ((SuilValueArgument) a).Values.Single().GetType()),
+            Is.All.EqualTo(typeof(SuilExprValue)));
+    }
+
+    [Test]
+    public void A_Value_By_A_Condition_Needs_An_Else()
+    {
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { #a.text: = if (#b.pressed) \"yes\" })"));
+        Assert.Throws<SuilParserError>(() => Root("button (on-pressed => { #a.text: = if #b.pressed \"yes\" else \"no\" })"));
+    }
+
+    [Test]
+    public void The_Variables_And_The_Constants_Of_An_Expression_Are_Worked_Out_At_The_Build()
+    {
+        var root = Expanded("""
+            let mode = left;
+            let n = 4;
+            button (on-pressed => {
+                #a.text: = if (<mode> == right) "r" elif (<mode> == left) "l" else "?";
+                #b.visible: <n> > 3;
+                #c.text: = if (#d.pressed) <mode> else "z"
+            })
+            """);
+
+        var statements = Only(root).Statements;
+
+        // the settled condition leaves the value itself
+        var settled = ((SuilPropertyItem) ((SuilTargetStatement) statements[0]).Items.Single()).Property.Value!.Single();
+        Assert.That(settled, Is.InstanceOf<SuilString>());
+
+        var folded = ((SuilPropertyItem) ((SuilTargetStatement) statements[1]).Items.Single()).Property.Value!.Single();
+        Assert.That(folded, Is.EqualTo(new SuilIdent("true")));
+
+        // a condition that depends on the elements stays, with the variable in the branch put in
+        var kept = (SuilExprValue) ((SuilPropertyItem) ((SuilTargetStatement) statements[2]).Items.Single()).Property.Value!.Single();
+        Assert.That(((SuilLiteralNode) ((SuilConditionalNode) kept.Root).Branches.Single().Value).Value, Is.EqualTo(new SuilIdent("left")));
+    }
+
+    [Test]
     public void A_Lone_Statement_Is_Not_A_Block()
     {
         Assert.That(Only(Root("button (on-pressed => @OnSubmit)")).IsBlock, Is.False);

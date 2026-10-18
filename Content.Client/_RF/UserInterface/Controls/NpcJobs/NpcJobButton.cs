@@ -54,11 +54,7 @@ public sealed partial class NpcJobButton : RfButton
         NameEdit.CursorPosition = NameEdit.Text.Length;
     }
 
-    private void ApplyName()
-    {
-        JobName = NameEdit.Text;
-        OnDataChanged?.Invoke();
-    }
+    private void NotifyDataChanged() => OnDataChanged?.Invoke();
 
     private void OnDeletePressed()
     {

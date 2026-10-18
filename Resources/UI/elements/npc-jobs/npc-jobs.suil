@@ -59,7 +59,8 @@ let loc = npc-jobs;
             on-text-entered => {
                 #label-container.visible: true;
                 #name-edit.visible: false;
-                @ApplyName
+                &.job-name: #name-edit.text;
+                @NotifyDataChanged
             }
         )
 

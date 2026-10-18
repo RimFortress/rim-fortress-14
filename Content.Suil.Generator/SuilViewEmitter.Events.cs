@@ -21,6 +21,11 @@ internal sealed partial class SuilViewEmitter
     // The same for the number expressions.
     private Func<SuilNumNode, string>? _numContext;
 
+    // The element of the handler that is being written and the type of the arguments of its event, for the values that read
+    // a property of another element or a member of the arguments.
+    private PendingHandlers? _handlerElement;
+    private ITypeSymbol? _handlerArguments;
+
     private sealed record PendingHandlers(string Variable, INamedTypeSymbol Type, SuilElement Element);
 
     private void EmitHandlers()
@@ -61,6 +66,8 @@ internal sealed partial class SuilViewEmitter
 
         _boolContext = node => BoolOf(node, pending, argsType);
         _numContext = node => NumOf(node, pending, argsType);
+        _handlerElement = pending;
+        _handlerArguments = argsType;
 
         // A call without parentheses gets the arguments of the event only as the lone statement of a handler without a block.
         var autoArguments = !handler.IsBlock && handler.Statements.Count == 1;
@@ -72,6 +79,8 @@ internal sealed partial class SuilViewEmitter
 
         _boolContext = null;
         _numContext = null;
+        _handlerElement = null;
+        _handlerArguments = null;
 
         _body.AppendLine($"            {delegateName} {name} = {(argsType == null ? "()" : "__args")} =>");
         _body.AppendLine("            {");
@@ -114,6 +123,9 @@ internal sealed partial class SuilViewEmitter
             case SuilCallStatement call:
                 sb.AppendLine($"{indent}{CallOf(call, pending, argsType, autoArguments)}");
                 break;
+            case SuilIfStatement ifStatement:
+                EmitIf(sb, indent, ifStatement, pending, argsType);
+                break;
             case SuilTargetStatement target:
             {
                 var (expression, type) = ResolveTarget(target.Target, pending);
@@ -139,6 +151,94 @@ internal sealed partial class SuilViewEmitter
         }
     }
 
+    /// <summary>
+    /// <c>if (...) { } else if (...) { } else { }</c>. A condition that is a constant is worked out here: the branches that
+    /// can't run are not written (and the ones after a true one), so the compiler has nothing to warn about.
+    /// </summary>
+    private void EmitIf(StringBuilder sb, string indent, SuilIfStatement statement, PendingHandlers pending, ITypeSymbol? argsType)
+    {
+        var branches = new List<SuilIfBranch>();
+        var otherwise = statement.Else;
+
+        foreach (var branch in statement.Branches)
+        {
+            if (branch.Condition is SuilBoolConst { Value: false })
+                continue;
+
+            if (branch.Condition is SuilBoolConst { Value: true })
+            {
+                otherwise = branch.Body;
+                break;
+            }
+
+            branches.Add(branch);
+        }
+
+        void Body(List<ISuilStatement> statements, string bodyIndent)
+        {
+            foreach (var inner in statements)
+            {
+                EmitStatement(sb, bodyIndent, inner, pending, argsType, autoArguments: false);
+            }
+        }
+
+        if (branches.Count == 0)
+        {
+            if (otherwise != null)
+                Body(otherwise, indent);
+
+            return;
+        }
+
+        for (var i = 0; i < branches.Count; i++)
+        {
+            sb.AppendLine($"{indent}{(i == 0 ? "if" : "else if")} ({BoolOf(branches[i].Condition, pending, argsType)})");
+            sb.AppendLine($"{indent}{{");
+            Body(branches[i].Body, indent + "    ");
+            sb.AppendLine($"{indent}}}");
+        }
+
+        if (otherwise != null)
+        {
+            sb.AppendLine($"{indent}else");
+            sb.AppendLine($"{indent}{{");
+            Body(otherwise, indent + "    ");
+            sb.AppendLine($"{indent}}}");
+        }
+    }
+
+    /// <summary>
+    /// The value of a property of another element or of a member of the arguments of the event, as a C# expression of the
+    /// type the value is assigned to: <c>#name-edit.text</c>, <c>args.text</c>.
+    /// </summary>
+    private string ReadOf(SuilBoolNode reference, ITypeSymbol target, SuilPosition position)
+    {
+        var pending = _handlerElement!;
+
+        switch (reference)
+        {
+            case SuilBoolReference element:
+            {
+                var (expression, type) = ResolveTarget(element.Target, pending);
+                var (read, readType) = MemberPath(expression, type, new List<string> { element.Property }, element.Target.Position, "the element");
+                return Checked(read, readType, target, element.Target.Position);
+            }
+            case SuilBoolArgs args:
+            {
+                if (_handlerArguments == null)
+                {
+                    throw new SuilGenerationException(SuilDiagnostics.BadStatement, args.Position,
+                        "'args' is used in an event that gives no arguments");
+                }
+
+                var (read, readType) = MemberPath("__args", _handlerArguments, new List<string> { args.Member }, args.Position, "args");
+                return Checked(read, readType, target, args.Position);
+            }
+            default:
+                throw new SuilGenerationException(SuilDiagnostics.BadStatement, position, "unknown value");
+        }
+    }
+
     private static readonly SymbolDisplayFormat TypeFormat = SymbolDisplayFormat.FullyQualifiedFormat
         .WithMiscellaneousOptions(
             SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
@@ -148,7 +248,7 @@ internal sealed partial class SuilViewEmitter
     /// What the calls of controllers and systems in the files need at run time (the hot reload can't find a method by
     /// its name): <c>Controllers.Zoning.Pick</c>, the types of the parameters and the call.
     /// </summary>
-    internal sealed record CallRecord(string Key, string Receiver, string Method, IReadOnlyList<string> Parameters);
+    internal sealed record CallRecord(string Key, string Receiver, string Method, IReadOnlyList<string> Parameters, bool ReturnsVoid);
 
     private readonly List<CallRecord> _calls = new();
 
@@ -165,6 +265,16 @@ internal sealed partial class SuilViewEmitter
     /// or a system.
     /// </summary>
     private string CallOf(SuilCallStatement call, PendingHandlers pending, ITypeSymbol? argsType, bool autoArguments)
+        => PrepareCall(call, pending, argsType, autoArguments).Invocation + ";";
+
+    /// <summary>
+    /// The C# call (without the semicolon) and the method it is of.
+    /// </summary>
+    private (string Invocation, IMethodSymbol Method) PrepareCall(
+        SuilCallStatement call,
+        PendingHandlers pending,
+        ITypeSymbol? argsType,
+        bool autoArguments)
     {
         INamedTypeSymbol owner;
         string receiver;
@@ -208,10 +318,10 @@ internal sealed partial class SuilViewEmitter
             var parameters = method.Parameters.Select(p => p.Type.ToDisplayString(TypeFormat)).ToList();
 
             if (!_calls.Any(c => c.Key == key && c.Parameters.SequenceEqual(parameters)))
-                _calls.Add(new CallRecord(key, receiver, method.Name, parameters));
+                _calls.Add(new CallRecord(key, receiver, method.Name, parameters, method.ReturnsVoid));
         }
 
-        return $"{receiver}.{method.Name}({string.Join(", ", arguments)});";
+        return ($"{receiver}.{method.Name}({string.Join(", ", arguments)})", method);
     }
 
     /// <summary>
@@ -374,7 +484,8 @@ internal sealed partial class SuilViewEmitter
         if (conversion.IsImplicit)
             return expression;
 
-        if (IsNumeric(type.SpecialType, out _) && IsNumeric(parameter.SpecialType, out _))
+        // a cast that C# allows is made by itself; anything else is a mistake
+        if (conversion.Exists || IsNumeric(type.SpecialType, out _) && IsNumeric(parameter.SpecialType, out _))
             return $"({parameter.ToDisplayString(TypeFormat)}){expression}";
 
         throw new SuilGenerationException(SuilDiagnostics.BadStatement, position,
@@ -743,6 +854,8 @@ internal sealed partial class SuilViewEmitter
                 return $"({BoolOf(or.Left, pending, argsType)} || {BoolOf(or.Right, pending, argsType)})";
             case SuilBoolArgs args:
                 return $"__args.{ArgsMember(argsType, args.Member, args.Position)}";
+            case SuilBoolCompare compare:
+                return CompareOf(compare, pending, argsType);
             case SuilBoolReference reference:
             {
                 var (expression, type) = ResolveTarget(reference.Target, pending);
@@ -886,7 +999,7 @@ internal sealed partial class SuilViewEmitter
         sb.AppendLine("            return false;");
         sb.AppendLine("        }");
         sb.AppendLine();
-        sb.AppendLine($"        void {view}.SuilInvoke(string name, object?[] arguments)");
+        sb.AppendLine($"        object? {view}.SuilInvoke(string name, object?[] arguments)");
         sb.AppendLine("        {");
 
         foreach (var (method, arity) in entries)
@@ -896,12 +1009,22 @@ internal sealed partial class SuilViewEmitter
 
             sb.AppendLine($"            if (name == {Literal(method.Name)} && arguments.Length == {arity})");
             sb.AppendLine("            {");
-            sb.AppendLine($"                this.{method.Name}({casts});");
-            sb.AppendLine("                return;");
+
+            if (method.ReturnsVoid)
+            {
+                sb.AppendLine($"                this.{method.Name}({casts});");
+                sb.AppendLine("                return null;");
+            }
+            else
+            {
+                sb.AppendLine($"                return (object?) this.{method.Name}({casts});");
+            }
+
             sb.AppendLine("            }");
             sb.AppendLine();
         }
 
+        sb.AppendLine("            return null;");
         sb.AppendLine("        }");
     }
 }

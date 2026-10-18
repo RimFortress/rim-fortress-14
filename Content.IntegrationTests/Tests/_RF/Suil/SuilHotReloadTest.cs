@@ -416,6 +416,9 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
 
     public void Mark(string text, bool pressed, double width) => Calls.Add($"mark:{text}:{pressed}:{width}");
 
+    /// <summary>What a call used as a value gives.</summary>
+    public string Title() => "view-title";
+
     string ISuilView.SuilPath => "/test/view";
 
     string ISuilView.SuilViewName => "Test";
@@ -459,13 +462,16 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
             case nameof(Mark) when arity == 3:
                 parameters = new[] { typeof(string), typeof(bool), typeof(double) };
                 return true;
+            case nameof(Title) when arity == 0:
+                parameters = Array.Empty<Type>();
+                return true;
             default:
                 parameters = null;
                 return false;
         }
     }
 
-    void ISuilView.SuilInvoke(string name, object?[] arguments)
+    object? ISuilView.SuilInvoke(string name, object?[] arguments)
     {
         switch (name)
         {
@@ -481,7 +487,11 @@ public sealed class TestView : RfBoxContainer, ISuilView, ISuilReloadHandler
             case nameof(Mark):
                 Mark((string) arguments[0]!, (bool) arguments[1]!, (double) arguments[2]!);
                 break;
+            case nameof(Title):
+                return Title();
         }
+
+        return null;
     }
 
     void ISuilReloadHandler.OnSuilReloaded() => Reloaded++;

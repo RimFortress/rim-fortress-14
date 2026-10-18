@@ -540,6 +540,17 @@ public static class SuilExpander
 
         private ISuilStatement ExpandStatement(ISuilStatement statement, Scope? scope) => statement switch
         {
+            SuilIfStatement ifStatement => ifStatement with
+            {
+                Branches = ifStatement.Branches
+                    .Select(branch => branch with
+                    {
+                        Condition = Fold(branch.Condition, scope, branch.Position),
+                        Body = branch.Body.Select(inner => ExpandStatement(inner, scope)).ToList(),
+                    })
+                    .ToList(),
+                Else = ifStatement.Else?.Select(inner => ExpandStatement(inner, scope)).ToList(),
+            },
             SuilCallStatement { Arguments: not null } call => call with
             {
                 Arguments = call.Arguments.Select(argument => ExpandArgument(argument, scope)).ToList(),
@@ -838,6 +849,14 @@ public static class SuilExpander
                                 .Select(a => new SuilNamedArgument(a.Name, ExpandValues(a.Value, scope, position)))
                                 .ToList()));
                         break;
+                    case SuilExprValue expression:
+                    {
+                        var node = ExpandNode(expression.Root, scope, expression.Position.Line > 0 ? expression.Position : position);
+
+                        // a condition that was settled while expanding leaves a value that needs no work at run time
+                        result.Add(node is SuilLiteralNode literal ? literal.Value : expression with { Root = node });
+                        break;
+                    }
                     case SuilBoolValue boolValue:
                         result.Add(FoldValue(boolValue, scope, position));
                         break;
@@ -915,8 +934,139 @@ public static class SuilExpander
                 }
                 case SuilBoolReference reference:
                     return reference with { Target = ExpandTarget(reference.Target, scope) };
+                case SuilBoolCompare compare:
+                {
+                    var left = ExpandNode(compare.Left, scope, position);
+                    var right = ExpandNode(compare.Right, scope, position);
+
+                    if (left is SuilLiteralNode l && right is SuilLiteralNode r && TryCompareLiterals(compare.Operator, l.Value, r.Value, out var result))
+                        return new SuilBoolConst(result);
+
+                    return compare with { Left = left, Right = right };
+                }
                 default:
                     return node;
+            }
+        }
+
+        // ---- Value expressions ----
+
+        /// <summary>
+        /// The same for a value expression: the variables are replaced, a condition that is a constant picks its branch.
+        /// </summary>
+        private SuilValueNode ExpandNode(SuilValueNode node, Scope? scope, SuilPosition position)
+        {
+            var at = node.Position.Line > 0 ? node.Position : position;
+
+            switch (node)
+            {
+                case SuilLiteralNode literal:
+                {
+                    var values = ExpandValues(new[] { literal.Value }, scope, at);
+
+                    if (values.Count != 1)
+                        throw new SuilExpansionError("expanding variables", "a variable in an expression must hold one value", at);
+
+                    return literal with { Value = values[0] };
+                }
+                case SuilReferenceNode reference:
+                    return reference with { Target = ExpandTarget(reference.Target, scope) };
+                case SuilCallNode call:
+                    return call with { Call = (SuilCallStatement) ExpandStatement(call.Call, scope) };
+                case SuilFunctionNode function:
+                    return function with { Argument = ExpandNode(function.Argument, scope, at) };
+                case SuilConcatNode concat:
+                    return concat with { Parts = concat.Parts.Select(p => ExpandNode(p, scope, at)).ToList() };
+                case SuilNumberNode number:
+                    return number with { Root = FoldNum(number.Root, scope, at) };
+                case SuilConditionalNode conditional:
+                {
+                    var branches = new List<SuilConditionalBranch>();
+
+                    foreach (var branch in conditional.Branches)
+                    {
+                        var condition = Fold(branch.Condition, scope, branch.Position);
+
+                        if (condition is SuilBoolConst { Value: false })
+                            continue;
+
+                        var value = ExpandNode(branch.Value, scope, at);
+
+                        // a condition that holds for sure is the last one: nothing after it can be chosen
+                        if (condition is SuilBoolConst { Value: true })
+                            return branches.Count == 0 ? value : new SuilConditionalNode(branches, value, conditional.Position);
+
+                        branches.Add(branch with { Condition = condition, Value = value });
+                    }
+
+                    var otherwise = ExpandNode(conditional.Else, scope, at);
+                    return branches.Count == 0 ? otherwise : conditional with { Branches = branches, Else = otherwise };
+                }
+                default:
+                    return node;
+            }
+        }
+
+        /// <summary>
+        /// A comparison of two values that are known: numbers by their numbers, texts and idents by their text.
+        /// </summary>
+        private static bool TryCompareLiterals(string op, ISuilValue left, ISuilValue right, out bool result)
+        {
+            result = false;
+
+            if (TryLiteralNumber(left, out var a) && TryLiteralNumber(right, out var b))
+            {
+                result = op switch
+                {
+                    "==" => a == b,
+                    "!=" => a != b,
+                    "<" => a < b,
+                    ">" => a > b,
+                    "<=" => a <= b,
+                    _ => a >= b,
+                };
+                return true;
+            }
+
+            if (op is "==" or "!=" && TryLiteralText(left, out var x) && TryLiteralText(right, out var y))
+            {
+                var equal = string.Equals(x, y, StringComparison.Ordinal);
+                result = op == "==" ? equal : !equal;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryLiteralNumber(ISuilValue value, out double number)
+        {
+            switch (value)
+            {
+                case SuilNumber n:
+                    number = n.Value;
+                    return true;
+                case SuilDimension { Unit: "px" } d:
+                    number = d.Value;
+                    return true;
+                default:
+                    number = 0;
+                    return false;
+            }
+        }
+
+        private static bool TryLiteralText(ISuilValue value, out string text)
+        {
+            switch (value)
+            {
+                case SuilIdent ident:
+                    text = ident.Value;
+                    return true;
+                case SuilString str when str.Parts.All(p => !p.IsVariable):
+                    text = string.Concat(str.Parts.Select(p => p.Text));
+                    return true;
+                default:
+                    text = string.Empty;
+                    return false;
             }
         }
 

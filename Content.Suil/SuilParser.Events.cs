@@ -6,7 +6,7 @@ public static partial class SuilParser
     /// The handler after <c>name =&gt;</c> (the arrow is already consumed): one statement, or a block of statements.
     /// <code>
     /// handler   = statement | "{" , { statement , ";" } , "}"
-    /// statement = call
+    /// statement = call | if
     ///           | target , "(" , item , { "," , item } , ")"
     ///           | target , "." , item
 
@@ -17,6 +17,8 @@ public static partial class SuilParser
     ///           | ident , ( "+:" | "-:" | "*:" | "/:" ) , number-expression
     ///           | ( "add" | "remove" ) , ref , { ref }
     ///           | "set" , ref , { ref } , ( "true" | "false" | "args" , "." , ident )
+    /// if        = "if" , "(" , bool , ")" , block , { "elif" , "(" , bool , ")" , block } , [ "else" , block ]
+    /// block     = "{" , { statement , ";" } , "}"
     /// target    = "&amp;" | "#" id , { "/" , ident }
     /// ref       = "." class | ":" pseudo-class
     /// </code>
@@ -31,7 +33,8 @@ public static partial class SuilParser
         if (stream.PeekNext() is not LeftCurlyBracket)
         {
             // a single statement needs no block: "@Method", "&(value -: 1)", "#id(add .open)"
-            if (stream.PeekNext() is not (DelimToken { CodePoint: '@' or '&' } or HashToken or InterpolatedNameToken { Sigil: '#' }))
+            if (stream.PeekNext() is not (DelimToken { CodePoint: '@' or '&' } or HashToken or InterpolatedNameToken { Sigil: '#' }
+                    or IdentToken { Value: "if" } or FunctionToken { Value: "if" }))
             {
                 throw ErrorAtNext(ref stream,
                     context,
@@ -42,7 +45,21 @@ public static partial class SuilParser
             return new SuilEventHandler(name, statements, position);
         }
 
-        stream.ConsumeNext();
+        var block = ConsumeStatementBlock(ref stream, context, $"the handler of '{name}'");
+        return new SuilEventHandler(name, block, position, IsBlock: true);
+    }
+
+    /// <summary>
+    /// <c>{ statement ; statement }</c>, from the opening brace to the closing one.
+    /// </summary>
+    private static List<ISuilStatement> ConsumeStatementBlock(ref SuilTokenStream stream, string context, string what)
+    {
+        var statements = new List<ISuilStatement>();
+
+        stream.SkipWhitespace();
+
+        if (stream.ConsumeNext() is not LeftCurlyBracket)
+            throw ErrorAtCurrent(ref stream, context, $"expected '{{' for the statements of {what}, not {Describe(stream.Current)}");
 
         while (true)
         {
@@ -54,9 +71,9 @@ public static partial class SuilParser
                     stream.ConsumeNext();
 
                     if (statements.Count == 0)
-                        throw ErrorAtCurrent(ref stream, context, $"the handler of '{name}' is empty");
+                        throw ErrorAtCurrent(ref stream, context, $"{what} is empty");
 
-                    return new SuilEventHandler(name, statements, position, IsBlock: true);
+                    return statements;
                 case EofToken:
                     throw ErrorAtNext(ref stream, context, "expected '}', not end of file");
                 case SemicolonToken:
@@ -82,6 +99,8 @@ public static partial class SuilParser
 
         switch (stream.PeekNext())
         {
+            case IdentToken { Value: "if" } or FunctionToken { Value: "if" }:
+                return ConsumeIf(ref stream, context);
             case DelimToken { CodePoint: '@' }:
                 return ConsumeCall(ref stream, context);
             case DelimToken { CodePoint: '&' } or HashToken or InterpolatedNameToken { Sigil: '#' }:
@@ -110,8 +129,63 @@ public static partial class SuilParser
             default:
                 throw ErrorAtNext(ref stream,
                     context,
-                    $"expected a statement ('@Method' or '#id (...)' or '&(...)'), not {Describe(stream.PeekNext())}");
+                    $"expected a statement ('@Method', '#id (...)', '#id.property: value', '&(...)' or 'if (...) {{ ... }}'), not {Describe(stream.PeekNext())}");
         }
+    }
+
+    /// <summary>
+    /// <c>if (cond) { ... } elif (cond) { ... } else { ... }</c>
+    /// </summary>
+    private static SuilIfStatement ConsumeIf(ref SuilTokenStream stream, string context)
+    {
+        var position = stream.PeekPosition();
+        var branches = new List<SuilIfBranch>();
+        List<ISuilStatement>? otherwise = null;
+
+        branches.Add(ConsumeIfBranch(ref stream, context, "if"));
+
+        while (true)
+        {
+            stream.SkipWhitespace();
+
+            if (stream.PeekNext() is IdentToken { Value: "elif" } or FunctionToken { Value: "elif" })
+            {
+                branches.Add(ConsumeIfBranch(ref stream, context, "elif"));
+                continue;
+            }
+
+            if (stream.PeekNext() is IdentToken { Value: "else" })
+            {
+                stream.ConsumeNext();
+                otherwise = ConsumeStatementBlock(ref stream, context, "'else'");
+            }
+
+            return new SuilIfStatement(branches, otherwise, position);
+        }
+    }
+
+    private static SuilIfBranch ConsumeIfBranch(ref SuilTokenStream stream, string context, string keyword)
+    {
+        var position = stream.PeekPosition();
+        var token = stream.ConsumeNext();
+
+        // `if(` is one token for the tokenizer, `if (` is two
+        if (token is not FunctionToken)
+        {
+            stream.SkipWhitespace();
+
+            if (stream.ConsumeNext() is not LeftParenthesisToken)
+                throw ErrorAtCurrent(ref stream, context, $"expected '(' with the condition after '{keyword}', not {Describe(stream.Current)}");
+        }
+
+        var condition = ConsumeBool(ref stream, context, references: true);
+        stream.SkipWhitespace();
+
+        if (stream.ConsumeNext() is not RightParenthesisToken)
+            throw ErrorAtCurrent(ref stream, context, $"expected ')' after the condition of '{keyword}', not {Describe(stream.Current)}");
+
+        var body = ConsumeStatementBlock(ref stream, context, $"'{keyword}'");
+        return new SuilIfBranch(condition, body, position);
     }
 
     private static SuilCallStatement ConsumeCall(ref SuilTokenStream stream, string context)

@@ -49,6 +49,9 @@ public sealed class SuilHotReloadEventTest : GameTest
         ((Delegate?) field.GetValue(button))?.DynamicInvoke(args);
     }
 
+    private static UiElement Child(TestView view, string id)
+        => view.Children.OfType<UiElement>().First(e => e.SuilStyleIdentifier == id);
+
     private static void Press(RfButton button) => Raise(button, "OnPressed", new RfButtonEventArgs(button, Click()));
 
     private static void Toggle(RfButton button, bool pressed)
@@ -126,8 +129,8 @@ public sealed class SuilHotReloadEventTest : GameTest
     {
         var suil = Robust.Shared.IoC.IoCManager.Resolve<ISuilManager>();
         var seen = new List<object?>();
-        suil.Calls.Add("Controllers.Test.Pick", new[] { typeof(int), typeof(string) }, a => seen.AddRange(a));
-        suil.Calls.Add("Controllers.Test.Ping", Type.EmptyTypes, _ => seen.Add("ping"));
+        suil.Calls.Add("Controllers.Test.Pick", new[] { typeof(int), typeof(string) }, a => { seen.AddRange(a); return null; });
+        suil.Calls.Add("Controllers.Test.Ping", Type.EmptyTypes, _ => { seen.Add("ping"); return null; });
 
         var view = new TestView();
 
@@ -146,6 +149,126 @@ public sealed class SuilHotReloadEventTest : GameTest
         var unknown = Reload(view, "box { button #submit (on-pressed => { @Systems.Test.Other(1) }) }");
         Assert.That(unknown.Success, Is.False);
         Assert.That(string.Join("\n", unknown.Errors), Does.Contain("build it again"));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Value_Is_Taken_From_Another_Element_Or_The_Event_And_None_Is_Null()
+    {
+        var view = new TestView();
+
+        var fixedResult = Reload(view, """
+            box {
+                _ #src (text: "abc")
+                _ #dst (text: "old")
+                button #submit (on-toggled => {
+                    #dst.text: #src.text;
+                    #src.text: none;
+                    &.min-width: #dst.min-width
+                })
+            }
+            """);
+
+        Assert.That(fixedResult.Success, Is.True, string.Join("\n", fixedResult.Errors));
+
+        var src = Child(view, "src");
+        var dst = Child(view, "dst");
+        dst.MinWidth = 7;
+
+        Toggle(view.Submit!, true);
+
+        Assert.That(dst.Text, Is.EqualTo("abc"));
+        Assert.That(src.Text, Is.Null);
+        Assert.That(view.MinWidth, Is.EqualTo(7f));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void If_Elif_Else_Run_The_First_Branch_Whose_Condition_Holds()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, """
+            box {
+                _ #dst (text: "old")
+                button #submit (on-toggled => {
+                    if (args.pressed) {
+                        #dst.text: "pressed"
+                    } elif (#submit.disabled) {
+                        #dst.text: "disabled"
+                    } else {
+                        #dst.text: "else"
+                    };
+                    @Mark("done", args.pressed, 1)
+                })
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        var dst = Child(view, "dst");
+
+        Toggle(view.Submit!, false);
+        Assert.That(dst.Text, Is.EqualTo("else"));
+
+        Toggle(view.Submit!, true);
+        Assert.That(dst.Text, Is.EqualTo("pressed"));
+
+        view.Submit!.Disabled = true;
+        Toggle(view.Submit!, false);
+        Assert.That(dst.Text, Is.EqualTo("disabled"));
+
+        Assert.That(view.Calls, Is.EqualTo(new[] { "mark:done:False:1", "mark:done:True:1", "mark:done:False:1" }));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Expressions_Compare_Choose_Put_Together_And_Call()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, """
+            box {
+                _ #src (text: "abc", min-width: 5, text-align: center)
+                _ #dst
+                button #submit (on-toggled => {
+                    #dst.text: = if (#src.text == "abc" && args.pressed) str(#src.min-width) + "/" + @Title() else "no";
+                    #dst.min-width: = if (#src.text-align == center) num("7") else 1;
+                    #dst.tool-tip: = if (#src.text != none) #src.text + "!" else none;
+                    &.min-width: = if (#src.min-width >= 5 && #src.min-width < 6) 9 else 0
+                })
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
+
+        var dst = Child(view, "dst");
+
+        Toggle(view.Submit!, true);
+
+        Assert.That(dst.Text, Is.EqualTo("5/view-title"));
+        Assert.That(dst.MinWidth, Is.EqualTo(7f));
+        Assert.That(dst.ToolTip, Is.EqualTo("abc!"));
+        Assert.That(view.MinWidth, Is.EqualTo(9f));
+
+        Toggle(view.Submit!, false);
+        Assert.That(dst.Text, Is.EqualTo("no"));
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void A_Comparison_Of_Things_That_Can_Not_Be_Compared_Fails_When_It_Runs()
+    {
+        var view = new TestView();
+
+        var result = Reload(view, """
+            box {
+                _ #src (text: "abc")
+                button #submit (on-toggled => { if (#src.text > 3) { &.min-width: 1 } })
+            }
+            """);
+
+        Assert.That(result.Success, Is.True, "the types are known when the event is raised");
     }
 
     // ---- Blocks ----
@@ -719,7 +842,5 @@ public sealed class TestInnerView : RfBoxContainer, ISuilView
         return false;
     }
 
-    void ISuilView.SuilInvoke(string name, object?[] arguments)
-    {
-    }
+    object? ISuilView.SuilInvoke(string name, object?[] arguments) => null;
 }

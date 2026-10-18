@@ -85,20 +85,10 @@ public sealed partial class StockpileItemButton : RfButton
         EnsureSetup();
     }
 
-    private void OnCounterChanged((int Old, int New) value) => MaxValue = value.New;
-
     private void EnsureSetup()
     {
         ToolTip = NameLabel.Text;
     }
 
-    private void OnUnlimitedPressed()
-    {
-        UnlimitedCheck.ToolTip = Loc.GetString(UnlimitedCheck.Pressed
-            ? "stockpile-settings-menu-unlimited-checkbox-enabled-tooltip"
-            : "stockpile-settings-menu-unlimited-checkbox-disabled-tooltip");
-
-        MaxValue = UnlimitedCheck.Pressed ? -1 : 0;
-    }
 }
 

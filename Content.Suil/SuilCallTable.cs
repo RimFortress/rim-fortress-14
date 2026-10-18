@@ -5,8 +5,11 @@ namespace Content.Suil;
 /// of the method and the way to call it.
 /// </summary>
 /// <param name="Parameters">The types of the parameters of the method.</param>
-/// <param name="Invoke">Calls the method with the arguments, which must be of the types of the parameters.</param>
-public sealed record SuilCallEntry(Type[] Parameters, Action<object?[]> Invoke);
+/// <param name="Invoke">
+/// Calls the method with the arguments, which must be of the types of the parameters, and returns what it returns
+/// (<c>null</c> for a method that returns nothing).
+/// </param>
+public sealed record SuilCallEntry(Type[] Parameters, Func<object?[], object?> Invoke);
 
 /// <summary>
 /// The calls of controllers and systems that the files of an assembly make, found when it was built. The hot reload can't
@@ -17,7 +20,7 @@ public sealed class SuilCallTable
     private readonly Dictionary<string, List<SuilCallEntry>> _byName = new(StringComparer.Ordinal);
 
     /// <param name="key"><c>Controllers.Zoning.Pick</c>: the kind of the class, its name and the method.</param>
-    public void Add(string key, Type[] parameters, Action<object?[]> invoke)
+    public void Add(string key, Type[] parameters, Func<object?[], object?> invoke)
     {
         if (!_byName.TryGetValue(key, out var entries))
             _byName[key] = entries = new List<SuilCallEntry>();

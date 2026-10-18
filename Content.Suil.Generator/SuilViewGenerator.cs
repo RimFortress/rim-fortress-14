@@ -210,7 +210,11 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
             var types = string.Join(", ", call.Parameters.Select(p => $"typeof({p})"));
             var casts = string.Join(", ", call.Parameters.Select((p, i) => $"({p}) a[{i}]!"));
 
-            sb.AppendLine($"            calls.Add({Literal(call.Key)}, new global::System.Type[] {{ {types} }}, static a => {call.Receiver}.{call.Method}({casts}));");
+            var invoke = call.ReturnsVoid
+                ? $"static a => {{ {call.Receiver}.{call.Method}({casts}); return null; }}"
+                : $"static a => (object) {call.Receiver}.{call.Method}({casts})";
+
+            sb.AppendLine($"            calls.Add({Literal(call.Key)}, new global::System.Type[] {{ {types} }}, {invoke});");
         }
 
         sb.AppendLine("        }");

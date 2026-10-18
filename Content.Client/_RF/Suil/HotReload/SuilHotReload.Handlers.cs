@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Shared._RF.Utilities;
 using Content.Suil;
 using Robust.Client.UserInterface;
 
@@ -26,7 +27,20 @@ public sealed partial class SuilHotReload
     /// </summary>
     private sealed record PlannedTargetStatement(PlannedTarget Target, List<PlannedItem> Items) : PlannedStatement;
 
+    /// <summary>
+    /// <c>if (...) { } elif (...) { } else { }</c>.
+    /// </summary>
+    private sealed record PlannedIf(List<(Func<EvalContext, bool> Condition, List<PlannedStatement> Body)> Branches, List<PlannedStatement>? Else)
+        : PlannedStatement;
+
     private abstract record PlannedItem;
+
+    /// <summary>
+    /// <c>text: #name-edit.text</c>, <c>min-width: args.count</c>: a property gets the value another element or the event
+    /// has when the handler runs.
+    /// </summary>
+    private sealed record PlannedAssignValue(string Name, SuilStyleAccessor? Accessor, Func<EvalContext, object?> Value)
+        : PlannedItem;
 
     /// <param name="Properties">Converted when the type of the target is known; otherwise <paramref name="Raw"/> is.</param>
     /// <param name="Raw">Converted when the handler runs, for a target that is reached through the fields of a view.</param>
@@ -75,8 +89,20 @@ public sealed partial class SuilHotReload
         var ids = new Dictionary<string, Type>(StringComparer.Ordinal);
         CollectTypes(root, ids);
         ids[ViewKey] = view.GetType();
-        PlanHandlersOf(view, root, ids, errors);
+        _planningView = view;
+
+        try
+        {
+            PlanHandlersOf(view, root, ids, errors);
+        }
+        finally
+        {
+            _planningView = null;
+        }
     }
+
+    // The view whose handlers are being planned: the calls in the expressions are the calls of its class.
+    private ISuilView? _planningView;
 
     /// <summary>
     /// The key of the type of the view itself among the ids of the elements: not a valid id, so no element has it.
@@ -139,6 +165,35 @@ public sealed partial class SuilHotReload
         {
             case SuilCallStatement call:
                 return PlanCall(view, element, evt, call, ids, errors, autoArguments);
+            case SuilIfStatement ifStatement:
+            {
+                var branches = new List<(Func<EvalContext, bool>, List<PlannedStatement>)>();
+                var failed = false;
+
+                foreach (var branch in ifStatement.Branches)
+                {
+                    var condition = CompileBool(branch.Condition, element, evt, ids, errors);
+                    var body = PlanBlock(view, element, evt, branch.Body, ids, errors);
+
+                    if (condition == null || body == null)
+                    {
+                        failed = true;
+                        continue;
+                    }
+
+                    branches.Add((condition, body));
+                }
+
+                List<PlannedStatement>? otherwise = null;
+
+                if (ifStatement.Else != null)
+                {
+                    otherwise = PlanBlock(view, element, evt, ifStatement.Else, ids, errors);
+                    failed |= otherwise == null;
+                }
+
+                return failed ? null : new PlannedIf(branches, otherwise);
+            }
             case SuilTargetStatement targetStatement:
             {
                 if (!PlanTarget(targetStatement.Target, element, ids, errors, out var target, out var type))
@@ -151,7 +206,7 @@ public sealed partial class SuilHotReload
                 {
                     switch (item)
                     {
-                        case SuilPropertyItem { Property.Value: [SuilNumValue or SuilBoolValue] } expressionItem:
+                        case SuilPropertyItem { Property.Value: [SuilNumValue or SuilBoolValue or SuilExprValue] } expressionItem:
                         {
                             var plannedExpression = PlanExpressionItem(expressionItem.Property, type, element, evt, ids, errors);
 
@@ -204,6 +259,319 @@ public sealed partial class SuilHotReload
             default:
                 return null;
         }
+    }
+
+    /// <summary>
+    /// The statements of a block of an <c>if</c>: calls in it get their arguments by hand, as in any block.
+    /// </summary>
+    private List<PlannedStatement>? PlanBlock(
+        ISuilView view,
+        PlannedElement element,
+        SuilEventAccessor evt,
+        List<ISuilStatement> statements,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        var result = new List<PlannedStatement>();
+        var failed = false;
+
+        foreach (var statement in statements)
+        {
+            var planned = PlanStatement(view, element, evt, statement, ids, errors, autoArguments: false);
+
+            if (planned == null)
+                failed = true;
+            else
+                result.Add(planned);
+        }
+
+        return failed ? null : result;
+    }
+
+    private static object? InvokeCall(ISuilView view, PlannedCall call, object?[] arguments)
+        => call.Entry != null ? call.Entry.Invoke(arguments) : view.SuilInvoke(call.Method, arguments);
+
+    // ---- Value expressions ----
+
+    /// <summary>
+    /// Turns a value expression into a function that works the value out when the event is raised. <c>null</c> if
+    /// something it names is wrong.
+    /// </summary>
+    private Func<EvalContext, object?>? CompileValue(
+        SuilValueNode node,
+        PlannedElement owner,
+        SuilEventAccessor evt,
+        Dictionary<string, Type> ids,
+        List<string> errors)
+    {
+        switch (node)
+        {
+            case SuilLiteralNode literal:
+            {
+                if (!TryLiteral(literal.Value, out var constant, out var error))
+                {
+                    errors.Add(At(literal.Position, error));
+                    return null;
+                }
+
+                return _ => constant;
+            }
+            case SuilReferenceNode reference:
+            {
+                if (!PlanTarget(reference.Target, owner, ids, errors, out var target, out var type))
+                    return null;
+
+                var path = reference.Path;
+
+                if (type != null && (!_suil.TryGetPropertyAccessor(type, path[0], out var found) || found.Value.Getter == null))
+                {
+                    errors.Add(At(reference.Position, $"{type.Name} has no readable property '{path[0]}'"));
+                    return null;
+                }
+
+                return context =>
+                {
+                    var control = Resolve(context.State, target, context.View)
+                                  ?? throw new InvalidOperationException("the element of a value is not found");
+
+                    if (!_suil.TryGetPropertyAccessor(control.GetType(), path[0], out var accessor) || accessor.Value.Getter is not { } getter)
+                        throw new InvalidOperationException($"{control.GetType().Name} has no readable property '{path[0]}'");
+
+                    return ReadPath(getter(control), path, 1);
+                };
+            }
+            case SuilArgsNode args:
+            {
+                if (evt.ArgumentType == null)
+                {
+                    errors.Add(At(args.Position, $"'args' is used, and {evt.Name} gives no arguments"));
+                    return null;
+                }
+
+                var path = args.Path;
+
+                if (path.Count > 0 && !_suil.Events.TryGetMember(evt.ArgumentType, path[0], out _))
+                {
+                    errors.Add(At(args.Position, $"{evt.ArgumentType.Name} has no readable member '{path[0]}'"));
+                    return null;
+                }
+
+                return context => ReadPath(context.Argument, path, 0);
+            }
+            case SuilCallNode callNode:
+            {
+                var planned = PlanCall(_planningView!, owner, evt, callNode.Call, ids, errors, autoArguments: false) as PlannedCall;
+
+                if (planned == null)
+                    return null;
+
+                var view = _planningView!;
+                return context =>
+                {
+                    var arguments = new object?[planned.Arguments.Count];
+
+                    for (var i = 0; i < arguments.Length; i++)
+                    {
+                        arguments[i] = planned.Arguments[i](context);
+                    }
+
+                    return InvokeCall(view, planned, arguments);
+                };
+            }
+            case SuilNumberNode number:
+            {
+                var compiled = CompileNum(number.Root, owner, ids, errors);
+                return compiled == null ? null : context => compiled(context);
+            }
+            case SuilFunctionNode function:
+            {
+                var argument = CompileValue(function.Argument, owner, evt, ids, errors);
+
+                if (argument == null)
+                    return null;
+
+                if (function.Name == "str")
+                    return context => SuilText.ToText(argument(context));
+
+                return context => argument(context) switch
+                {
+                    string text => SuilText.ParseNumber(text),
+                    { } other when SuilMath.IsNumeric(other.GetType()) => SuilMath.ToDouble(other),
+                    var other => throw new InvalidOperationException($"num() takes a text or a number, not {other?.GetType().Name ?? "none"}"),
+                };
+            }
+            case SuilConcatNode concat:
+            {
+                var parts = new List<Func<EvalContext, object?>>();
+
+                foreach (var part in concat.Parts)
+                {
+                    var compiled = CompileValue(part, owner, evt, ids, errors);
+
+                    if (compiled == null)
+                        return null;
+
+                    parts.Add(compiled);
+                }
+
+                return context =>
+                {
+                    var text = new System.Text.StringBuilder();
+
+                    foreach (var part in parts)
+                    {
+                        var value = part(context);
+
+                        if (value is not (null or string))
+                            throw new InvalidOperationException($"a text is put together with '+', and {value.GetType().Name} is not one: use str()");
+
+                        text.Append((string?) value);
+                    }
+
+                    return text.ToString();
+                };
+            }
+            case SuilConditionalNode conditional:
+            {
+                var branches = new List<(Func<EvalContext, bool> Condition, Func<EvalContext, object?> Value)>();
+                var failed = false;
+
+                foreach (var branch in conditional.Branches)
+                {
+                    var condition = CompileBool(branch.Condition, owner, evt, ids, errors);
+                    var value = CompileValue(branch.Value, owner, evt, ids, errors);
+
+                    if (condition == null || value == null)
+                        failed = true;
+                    else
+                        branches.Add((condition, value));
+                }
+
+                var otherwise = CompileValue(conditional.Else, owner, evt, ids, errors);
+
+                if (failed || otherwise == null)
+                    return null;
+
+                return context =>
+                {
+                    foreach (var (condition, value) in branches)
+                    {
+                        if (condition(context))
+                            return value(context);
+                    }
+
+                    return otherwise(context);
+                };
+            }
+            default:
+                errors.Add("an expression can't be used here");
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// A literal of a file: a number is a <c>double</c>, <c>true</c> and <c>false</c> are bools, <c>none</c> is <c>null</c>,
+    /// a text and a <c>$key</c> are texts, any other name stays a text (a member of an enum, told by the other side).
+    /// </summary>
+    private bool TryLiteral(ISuilValue value, out object? constant, out string error)
+    {
+        error = string.Empty;
+        constant = null;
+
+        switch (value)
+        {
+            case SuilNumber number:
+                constant = number.Value;
+                return true;
+            case SuilDimension { Unit: "px" } dimension:
+                constant = dimension.Value;
+                return true;
+            case SuilIdent { Value: "none" }:
+                return true;
+            case SuilIdent { Value: "true" or "false" } boolean:
+                constant = boolean.Value == "true";
+                return true;
+            case SuilIdent ident:
+                constant = ident.Value;
+                return true;
+            case SuilString or SuilLocalization:
+            {
+                var asText = new SuilStyleAccessor(typeof(string), (_, _) => { }, null, null, false);
+
+                if (!SuilValueConverter.TryConvert(_suil, asText, new SuilProperty("value", new List<ISuilValue> { value }, false, default), out constant, out var failure))
+                {
+                    error = failure;
+                    return false;
+                }
+
+                return true;
+            }
+            default:
+                error = "this kind of value can't be used in an expression";
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// The member after member of a value: the arguments of an event are told by the tables of the members of the
+    /// arguments, which have no more than what the events give.
+    /// </summary>
+    private object? ReadPath(object? value, IReadOnlyList<string> path, int start)
+    {
+        for (var i = start; i < path.Count; i++)
+        {
+            if (value == null || !_suil.Events.TryGetMember(value.GetType(), path[i], out var reader))
+            {
+                throw new InvalidOperationException(
+                    $"'{string.Join(".", path)}': {value?.GetType().Name ?? "none"} has no member '{path[i]}' the hot reload can read");
+            }
+
+            value = reader(value);
+        }
+
+        return value;
+    }
+
+    /// <summary>
+    /// <c>a == b</c> and the like for what the expressions give: numbers by their numbers, texts by their characters, a
+    /// member of an enum by its name; two values of kinds that can't be compared are a mistake.
+    /// </summary>
+    private static bool CompareValues(string op, object? left, object? right)
+    {
+        var numbers = left != null && right != null && SuilMath.IsNumeric(left.GetType()) && SuilMath.IsNumeric(right.GetType());
+
+        if (numbers)
+        {
+            var a = SuilMath.ToDouble(left);
+            var b = SuilMath.ToDouble(right);
+
+            return op switch
+            {
+                "==" => a == b,
+                "!=" => a != b,
+                "<" => a < b,
+                ">" => a > b,
+                "<=" => a <= b,
+                _ => a >= b,
+            };
+        }
+
+        if (op is not ("==" or "!="))
+            throw new InvalidOperationException($"'{op}' compares numbers, and {left?.GetType().Name ?? "none"} and {right?.GetType().Name ?? "none"} are not");
+
+        var equal = left == null || right == null
+            ? left == null && right == null
+            : left is string x && right is string y
+                ? string.Equals(x, y, StringComparison.Ordinal)
+                : left.GetType().IsEnum && right is string name
+                    ? string.Equals(left.ToString(), RfCaseConversion.KebabToPascal(name), StringComparison.OrdinalIgnoreCase)
+                    : right.GetType().IsEnum && left is string other
+                        ? string.Equals(right.ToString(), RfCaseConversion.KebabToPascal(other), StringComparison.OrdinalIgnoreCase)
+                        : left.GetType() == right.GetType()
+                            ? left.Equals(right)
+                            : throw new InvalidOperationException($"{left.GetType().Name} and {right.GetType().Name} can't be compared");
+
+        return op == "==" ? equal : !equal;
     }
 
     private static string CallName(SuilCallStatement call)
@@ -371,6 +739,12 @@ public sealed partial class SuilHotReload
                 var clr = Nullable.GetUnderlyingType(parameter) ?? parameter;
 
                 // an expression is worked out when the event is raised
+                if (value.Values is [SuilExprValue computed])
+                {
+                    var evaluate = CompileValue(computed.Root, owner, evt, ids, errors);
+                    return evaluate == null ? null : context => ConvertArgument(evaluate(context), parameter);
+                }
+
                 if (value.Values is [SuilNumValue number])
                 {
                     var expression = CompileNum(number.Root, owner, ids, errors);
@@ -419,6 +793,10 @@ public sealed partial class SuilHotReload
         if (clr.IsInstanceOfType(value))
             return value;
 
+        // the name of a member written in a file: `left`, `top-left`
+        if (clr.IsEnum && value is string name)
+            return Enum.Parse(clr, RfCaseConversion.KebabToPascal(name), ignoreCase: true);
+
         if (SuilMath.IsNumeric(clr) && SuilMath.IsNumeric(value.GetType()))
             return SuilMath.FromDouble(clr, SuilMath.ToDouble(value));
 
@@ -453,6 +831,27 @@ public sealed partial class SuilHotReload
         }
 
         var clr = accessor == null ? null : Nullable.GetUnderlyingType(accessor.Value.ClrType) ?? accessor.Value.ClrType;
+
+        // `= if (...) a else b`, `str(#a.value)`, a call: worked out when the event is raised
+        if (value is SuilExprValue computed)
+        {
+            var evaluate = CompileValue(computed.Root, owner, evt, ids, errors);
+            var asType = accessor?.ClrType ?? typeof(object);
+            return evaluate == null ? null : new PlannedAssignValue(property.Name, accessor, context => ConvertArgument(evaluate(context), asType));
+        }
+
+        // `#name-edit.text`, `args.count`: what another element or the event has, for a property that isn't a bool or
+        // (unless it is a member of the event) a number
+        if (clr != null && clr != typeof(bool) && value is SuilBoolValue { Root: SuilBoolReference or SuilBoolArgs } lone
+            && (!SuilMath.IsNumeric(clr) || lone.Root is SuilBoolArgs))
+        {
+            SuilCallArgument source = lone.Root is SuilBoolReference reference
+                ? new SuilTargetArgument(reference.Target, reference.Property, property.Position)
+                : new SuilEventArgument(new List<string> { ((SuilBoolArgs) lone.Root).Member }, property.Position);
+
+            var read = PlanArgument(source, accessor!.Value.ClrType, owner, evt, ids, errors, property.Name);
+            return read == null ? null : new PlannedAssignValue(property.Name, accessor, read);
+        }
 
         // a number expression, or a reference that is assigned to a number
         if (value is SuilNumValue || clr != null && SuilMath.IsNumeric(clr) && value is SuilBoolValue { Root: SuilBoolReference })
@@ -602,6 +1001,17 @@ public sealed partial class SuilHotReload
             }
             case SuilBoolReference reference:
                 return CompileReference(reference, owner, ids, errors);
+            case SuilBoolCompare compare:
+            {
+                var left = CompileValue(compare.Left, owner, evt, ids, errors);
+                var right = CompileValue(compare.Right, owner, evt, ids, errors);
+
+                if (left == null || right == null)
+                    return null;
+
+                var op = compare.Operator;
+                return context => CompareValues(op, left(context), right(context));
+            }
             default:
                 errors.Add("a variable is left in a bool expression: it must hold true or false");
                 return null;
@@ -854,10 +1264,31 @@ public sealed partial class SuilHotReload
                     arguments[i] = call.Arguments[i](context);
                 }
 
-                if (call.Entry != null)
-                    call.Entry.Invoke(arguments);
-                else
-                    view.SuilInvoke(call.Method, arguments);
+                InvokeCall(view, call, arguments);
+                break;
+            }
+            case PlannedIf planned:
+            {
+                foreach (var (condition, body) in planned.Branches)
+                {
+                    if (!condition(context))
+                        continue;
+
+                    foreach (var inner in body)
+                    {
+                        RunStatement(view, context, inner);
+                    }
+
+                    return;
+                }
+
+                if (planned.Else != null)
+                {
+                    foreach (var inner in planned.Else)
+                    {
+                        RunStatement(view, context, inner);
+                    }
+                }
 
                 break;
             }
@@ -932,6 +1363,24 @@ public sealed partial class SuilHotReload
                 };
 
                 numeric.Setter(target, SuilMath.FromDouble(numeric.ClrType, result)!);
+                break;
+            }
+            case PlannedAssignValue assignValue:
+            {
+                var accessor = assignValue.Accessor;
+
+                if (accessor == null)
+                {
+                    if (!_suil.TryGetPropertyAccessor(target.GetType(), assignValue.Name, out var found))
+                    {
+                        _sawmill.Error($"{view.SuilPath}: {target.GetType().Name} has no property '{assignValue.Name}' to assign");
+                        break;
+                    }
+
+                    accessor = found.Value;
+                }
+
+                accessor.Value.Setter(target, ConvertArgument(assignValue.Value(context), accessor.Value.ClrType)!);
                 break;
             }
             case PlannedAssignBool assign:

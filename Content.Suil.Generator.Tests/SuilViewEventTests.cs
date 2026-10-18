@@ -289,6 +289,182 @@ public sealed class SuilViewEventTests
         Assert.That(table.Find("Systems.NpcJobs.Set", 1).Single().Parameters.Select(t => t.Name), Is.EqualTo(new[] { "Boolean" }));
     }
 
+    [Test]
+    public void A_Value_Can_Be_Taken_From_Another_Element_Or_From_The_Event_And_None_Is_Null()
+    {
+        var result = Run("""
+            button {
+                _ #src (text: "abc")
+                _ #dst (text: "old")
+                +button #go (on-pressed => {
+                    #dst.text: #src.text;
+                    #src.text: none;
+                    &.min-width: args.count
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var src = Field(view, "Src");
+        var dst = Field(view, "Dst");
+
+        Raise(Field(view, "Go"), "RaisePressed", Args(view, count: 6));
+
+        Assert.That(dst.GetType().GetProperty("Text")!.GetValue(dst), Is.EqualTo("abc"));
+        Assert.That(src.GetType().GetProperty("Text")!.GetValue(src), Is.Null);
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(6));
+    }
+
+    [TestCase("button (on-pressed => { &.min-width: #nowhere.text })", "SUIL022")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { &.min-width: #a.text }) }", "SUIL023")]
+    [TestCase("button (on-pressed => { #nowhere.text: args.nope })", "SUIL022")]
+    public void A_Bad_Read_Of_A_Value_Is_Reported_At_The_Build(string suil, string id)
+    {
+        var result = Run(suil, View(string.Empty));
+
+        Assert.That(Ids(result), Has.Member(id), string.Join("\n", result.GeneratorDiagnostics));
+    }
+
+    [Test]
+    public void If_Elif_Else_Run_The_First_Branch_Whose_Condition_Holds()
+    {
+        var result = Run("""
+            button {
+                _ #dst (text: "old")
+                +button #go (on-pressed => {
+                    if (#go.disabled) {
+                        #dst.text: "disabled"
+                    } elif (args.pressed) {
+                        #dst.text: "pressed";
+                        &.min-width +: 1
+                    } else {
+                        #dst.text: "else"
+                    };
+                    &.min-width +: 10
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var go = Field(view, "Go");
+        var dst = Field(view, "Dst");
+
+        string Text() => (string) dst.GetType().GetProperty("Text")!.GetValue(dst)!;
+
+        Raise(go, "RaisePressed", Args(view));
+        Assert.That(Text(), Is.EqualTo("else"));
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(10));
+
+        Raise(go, "RaisePressed", Args(view, pressed: true));
+        Assert.That(Text(), Is.EqualTo("pressed"));
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(21));
+
+        go.GetType().GetProperty("Disabled")!.SetValue(go, true);
+        Raise(go, "RaisePressed", Args(view, pressed: true));
+        Assert.That(Text(), Is.EqualTo("disabled"));
+    }
+
+    [Test]
+    public void An_If_With_A_Constant_Condition_Is_Worked_Out_At_The_Build()
+    {
+        var result = Run("""
+            let debug = false;
+            let release = true;
+            button {
+                _ #dst
+                +button #go (on-pressed => {
+                    if (<debug>) { #dst.text: "debug" } elif (<release>) { #dst.text: "release" } else { #dst.text: "else" }
+                })
+            }
+            """, View(string.Empty));
+
+        AssertClean(result);
+        Assert.That(result.Source, Does.Not.Contain("\"debug\"").And.Not.Contain("\"else\""), "the branches that can't run are not written");
+
+        var view = New(result);
+        var dst = Field(view, "Dst");
+        Raise(Field(view, "Go"), "RaisePressed", Args(view));
+
+        Assert.That(dst.GetType().GetProperty("Text")!.GetValue(dst), Is.EqualTo("release"));
+    }
+
+    [Test]
+    public void Values_Are_Compared_And_Chosen_By_A_Condition_And_Put_Together()
+    {
+        var result = Run("""
+            button {
+                _ #src (text: "abc", ratio: 2.5)
+                _ #dst
+                sprite-view #sv (override-direction: north)
+                +button #go (on-pressed => {
+                    &.min-width: = if (#src.ratio >= 2 && #src.text == "abc") 10 elif (#src.text != "abc") 20 else 30;
+                    #dst.text: = str(#src.ratio) + "/" + str(args.count);
+                    #dst.ratio: num("1.5");
+                    #dst.level: = if (#sv.override-direction == south) 1 else 2;
+                    #dst.name: = if (#src.text == none) "empty" else #src.text + "!"
+                })
+            }
+            """, View("public string Title() => \"t\" + MinWidth;"));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var dst = Field(view, "Dst");
+
+        Raise(Field(view, "Go"), "RaisePressed", Args(view, count: 4));
+
+        Assert.That(Get(view, "MinWidth"), Is.EqualTo(10));
+        Assert.That(dst.GetType().GetProperty("Text")!.GetValue(dst), Is.EqualTo("2.5/4"));
+        Assert.That(dst.GetType().GetProperty("Ratio")!.GetValue(dst), Is.EqualTo(1.5));
+        Assert.That(dst.GetType().GetProperty("Level")!.GetValue(dst), Is.EqualTo((byte) 2), "north is not south");
+        Assert.That(dst.GetType().GetProperty("Name")!.GetValue(dst), Is.EqualTo("abc!"));
+    }
+
+    [Test]
+    public void The_Result_Of_A_Call_Is_A_Value()
+    {
+        var result = Run("""
+            button {
+                _ #dst
+                +button #go (on-pressed => {
+                    #dst.text: @Title();
+                    #dst.ratio: @Twice(@Count(), 1)
+                })
+            }
+            """, View("""
+            public string Title() => "t" + MinWidth;
+            public int Count() => 4;
+            public int Twice(int a, int b) => (a + b) * 2;
+            """));
+
+        AssertClean(result);
+
+        var view = New(result);
+        var dst = Field(view, "Dst");
+        Raise(Field(view, "Go"), "RaisePressed", Args(view));
+
+        Assert.That(dst.GetType().GetProperty("Text")!.GetValue(dst), Is.EqualTo("t0"));
+        Assert.That(dst.GetType().GetProperty("Ratio")!.GetValue(dst), Is.EqualTo(10d), "the int is cast to the double");
+    }
+
+    [TestCase("button { _ #a  +button #go (on-pressed => { if (#a.text > 5) { &.min-width: 1 } }) }", "SUIL011", TestName = "ordering of texts")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { if (#a.text == 5) { &.min-width: 1 } }) }", "SUIL011", TestName = "a text and a number")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { #a.text: = #a.ratio + \"x\" }) }", "SUIL023", TestName = "a number is put together without str()")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { #a.text: = if (#a.ratio > 1) \"a\" }) }", "SUIL003", TestName = "a condition without else")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { &.min-width: num(true) }) }", "SUIL023", TestName = "num of a bool")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { if (#a.ratio == none) { &.min-width: 1 } }) }", "SUIL023", TestName = "none and a number")]
+    [TestCase("button { _ #a  +button #go (on-pressed => { &.min-width: @Nothing() }) }", "SUIL020", TestName = "no such method")]
+    public void A_Mistake_In_An_Expression_Is_Reported_At_The_Build(string suil, string id)
+    {
+        var result = Run(suil, View("public void Nothing_() { }"));
+
+        Assert.That(Ids(result), Has.Member(id), string.Join("\n", result.GeneratorDiagnostics));
+    }
+
     // ---- Blocks ----
 
     [Test]

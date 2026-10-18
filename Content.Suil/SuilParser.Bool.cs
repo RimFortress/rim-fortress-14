@@ -23,6 +23,26 @@ public static partial class SuilParser
     {
         stream.SkipWhitespace();
 
+        // `= if (...) a else b`, a call, `num()`, `str()`
+        if (references && StartsExpression(ref stream))
+            return ConsumeExpressionValue(ref stream, context, commasEnd);
+
+        // `#a.value > 5`, `args.text == "x"`: a comparison is a bool expression
+        if (references && HasTopLevelComparison(ref stream, commasEnd))
+        {
+            var comparisonPosition = stream.PeekPosition();
+            var compared = ConsumeBool(ref stream, context, references);
+            stream.SkipWhitespace();
+
+            if (!AtEndOfValue(stream.PeekNext(), commasEnd))
+            {
+                throw ErrorAtNext(ref stream, context,
+                    $"expected '&&', '||' or the end of the value, not {Describe(stream.PeekNext())}");
+            }
+
+            return new List<ISuilValue> { new SuilBoolValue(compared, comparisonPosition) };
+        }
+
         // calc(), min(), max(), clamp() of numbers, the variables and (in handlers) the numeric properties of elements
         if (TryConsumeNumValue(ref stream, context, references, commasEnd, out var number))
             return number!;
@@ -94,6 +114,12 @@ public static partial class SuilParser
         stream.SkipWhitespace();
 
         var position = stream.PeekPosition();
+
+        if (references && stream.PeekNext() is not (DelimToken { CodePoint: '!' } or LeftParenthesisToken)
+            && TryConsumeComparison(ref stream, context, out var comparison))
+        {
+            return comparison!;
+        }
 
         switch (stream.PeekNext())
         {

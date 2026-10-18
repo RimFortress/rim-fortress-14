@@ -21,12 +21,17 @@
             _ #name-label (flex-grow: 1)
 
             row {
-                +int-counter #counter (min-value: 0, on-value-changed => @OnCounterChanged)
+                +int-counter #counter (min-value: 0, on-value-changed => &.max-value: args.new)
                 +checkbox #unlimited-check (
                     tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
                     margin: 0 3,
                     tracking-tooltip,
-                    on-pressed => @OnUnlimitedPressed
+                    on-pressed => {
+                        #unlimited-check.tool-tip: = if (#unlimited-check.pressed)
+                            $stockpile-settings-menu-unlimited-checkbox-enabled-tooltip
+                            else $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip;
+                        &.max-value: = if (#unlimited-check.pressed) -1 else 0
+                    }
                 )
             }
         }

@@ -301,9 +301,13 @@ internal sealed partial class SuilViewEmitter(
     private string Convert(ITypeSymbol target, SuilProperty property, string memberName, INamedTypeSymbol owner)
     {
         var values = property.Value;
+        var canBeNull = target.IsReferenceType && target.TypeKind != TypeKind.Enum;
 
         if (target is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
+        {
             target = nullable.TypeArguments[0];
+            canBeNull = true;
+        }
 
         string Fail(string reason)
         {
@@ -317,6 +321,29 @@ internal sealed partial class SuilViewEmitter(
             return target.SpecialType == SpecialType.System_Boolean
                 ? "true"
                 : Fail("it needs a value");
+        }
+
+        // `= if (...) a else b`, `str(#a.value)`, a call: worked out when the event is raised, then cast to the type
+        if (_handlerElement != null && values is [SuilExprValue exprValue])
+        {
+            var value = ValueOf(exprValue.Root, target, _handlerElement, _handlerArguments);
+
+            if (IsNone(value) && canBeNull)
+                return "null";
+
+            return Materialize(value, target, property.Position, $"the property '{property.Name}'");
+        }
+
+        // none is null, for what can be null (a string, a texture, a nullable); a text "none" is written with quotes
+        if (canBeNull && values is [SuilIdent { Value: "none" }])
+            return "null";
+
+        // `#name-edit.text`, `args.text`: what another element or the event has, read when the event is raised
+        if (_handlerElement != null && target.SpecialType != SpecialType.System_Boolean
+            && values is [SuilBoolValue { Root: SuilBoolReference or SuilBoolArgs } lone]
+            && (!IsNumeric(target.SpecialType, out _) || lone.Root is SuilBoolArgs))
+        {
+            return ReadOf(lone.Root, target, property.Position);
         }
 
         if (target.SpecialType == SpecialType.System_String)

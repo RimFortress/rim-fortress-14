@@ -304,6 +304,20 @@ public sealed record SuilTargetArgument(SuilTarget Target, string? Property, Sui
 public sealed record SuilValueArgument(List<ISuilValue> Values, SuilPosition Position) : SuilCallArgument(Position);
 
 /// <summary>
+/// <c>if (cond) { ... } elif (cond) { ... } else { ... }</c>: the statements of the first branch whose condition holds, or
+/// the ones after <c>else</c> if there is none.
+/// </summary>
+/// <param name="Branches">The <c>if</c> and the <c>elif</c>s, in the order of the file.</param>
+/// <param name="Else">The statements after <c>else</c>, <c>null</c> if there is no <c>else</c>.</param>
+public sealed record SuilIfStatement(List<SuilIfBranch> Branches, List<ISuilStatement>? Else, SuilPosition Position)
+    : ISuilStatement;
+
+/// <summary>
+/// One <c>if (cond) { ... }</c> or <c>elif (cond) { ... }</c>.
+/// </summary>
+public sealed record SuilIfBranch(SuilBoolNode Condition, List<ISuilStatement> Body, SuilPosition Position);
+
+/// <summary>
 /// <c>#details (visible: true, add .open, remove :loading)</c> or <c>&amp;(set .active args.pressed)</c>: changes an
 /// element. The parentheses hold the properties to assign (constants) and the changes of the classes.
 /// </summary>
@@ -387,6 +401,74 @@ public sealed record SuilBoolReference(SuilTarget Target, string Property) : Sui
 /// <c>args.pressed</c>: a bool member of the arguments of the event.
 /// </summary>
 public sealed record SuilBoolArgs(string Member, SuilPosition Position) : SuilBoolNode;
+
+// ---- Value expressions ----
+
+/// <summary>
+/// A node of a value expression, the value of a property or of an argument that is worked out when the event is raised:
+/// a property of an element, a member of the arguments, the result of a call, <c>num()</c>, <c>str()</c>, a value by
+/// a condition (<c>= if (...) a else b</c>) or a string put together with <c>+</c>. It is also what the sides of a
+/// comparison are.
+/// </summary>
+public abstract record SuilValueNode(SuilPosition Position);
+
+/// <summary>
+/// A value as it is written in a file: a number, a string, an ident (<c>true</c>, <c>none</c>, a member of an enum), a
+/// <c>$key</c>. A variable is replaced when the file is expanded.
+/// </summary>
+public sealed record SuilLiteralNode(ISuilValue Value, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>#panel.min-width</c>, <c>&amp;.model.name</c>: a property of an element and, after it, the members of that.
+/// </summary>
+public sealed record SuilReferenceNode(SuilTarget Target, List<string> Path, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>args</c>, <c>args.new</c>, <c>args.event.handled</c>: the arguments of the event or a member of them.
+/// </summary>
+public sealed record SuilArgsNode(List<string> Path, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>@Controllers.Info.GetName()</c>: the result of a call.
+/// </summary>
+public sealed record SuilCallNode(SuilCallStatement Call, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>num(x)</c> and <c>str(x)</c>: the value as a number, the value as a text.
+/// </summary>
+/// <param name="Name"><c>num</c> or <c>str</c>.</param>
+public sealed record SuilFunctionNode(string Name, SuilValueNode Argument, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>a + b + c</c>: texts put together.
+/// </summary>
+public sealed record SuilConcatNode(List<SuilValueNode> Parts, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>calc(...)</c>, <c>min()</c> and the like: a number expression.
+/// </summary>
+public sealed record SuilNumberNode(SuilNumNode Root, SuilPosition Position) : SuilValueNode(Position);
+
+/// <summary>
+/// <c>if (c) a elif (d) b else e</c>: the value of the first branch whose condition holds.
+/// </summary>
+public sealed record SuilConditionalNode(List<SuilConditionalBranch> Branches, SuilValueNode Else, SuilPosition Position)
+    : SuilValueNode(Position);
+
+public sealed record SuilConditionalBranch(SuilBoolNode Condition, SuilValueNode Value, SuilPosition Position);
+
+/// <summary>
+/// A value expression as the value of a property or of an argument of a call (<c>text: = if (...) a else b</c>,
+/// <c>text: str(#a.value)</c>, <c>@Log(@Controllers.Info.Name)</c>).
+/// </summary>
+public sealed record SuilExprValue(SuilValueNode Root, SuilPosition Position) : ISuilValue;
+
+/// <summary>
+/// <c>a == b</c>, <c>a != b</c>, <c>a &lt; b</c>, <c>a &gt; b</c>, <c>a &lt;= b</c>, <c>a &gt;= b</c>: a comparison of
+/// two values, a bool.
+/// </summary>
+/// <param name="Operator"><c>==</c>, <c>!=</c>, <c>&lt;</c>, <c>&gt;</c>, <c>&lt;=</c> or <c>&gt;=</c>.</param>
+public sealed record SuilBoolCompare(string Operator, SuilValueNode Left, SuilValueNode Right, SuilPosition Position) : SuilBoolNode;
 
 // ---- Number expressions ----
 
