@@ -1,7 +1,6 @@
 using Content.Client._RF.UserInterface.Controllers;
 using Content.Shared._RF.World.Components;
 using Robust.Client.Player;
-using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.UserInterface.Controls.TopInfoPanel;
 
@@ -18,8 +17,6 @@ public sealed partial class TopPanelWidget : RfBoxContainer
         InitializeComponent();
 
         _controller = UserInterfaceManager.GetUIController<InfoPanelUiController>();
-
-        UpdateTemperature();
     }
 
     private string PopulationText()
@@ -34,10 +31,5 @@ public sealed partial class TopPanelWidget : RfBoxContainer
     {
         var time = _controller.GetWorldTime();
         return $"{time.Hours:00}:{time.Minutes:00}";
-    }
-
-    private void UpdateTemperature()
-    {
-        Temperature.Text = $"{_controller.WorldTempCelsius:0.0}\u00b0";
     }
 }

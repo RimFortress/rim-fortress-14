@@ -7,8 +7,6 @@ public sealed partial class InfoPanelCell : RfBoxContainer
 {
     [Dependency] private IResourceCache _resources = default!;
 
-    public Color IconModulate { set => Icon.BackgroundColor = value; }
-
     public string TexturePath { set => Icon.BackgroundImage = _resources.GetResource<TextureResource>(new ResPath(value)).Texture; }
 
     public new string Text { set => Label.Text = value; }

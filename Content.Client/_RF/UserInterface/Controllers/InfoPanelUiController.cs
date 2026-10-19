@@ -21,6 +21,8 @@ public sealed partial class InfoPanelUiController : UIController
     /// </summary>
     public float WorldTempCelsius => WorldTemp - 273.15f;
 
+    public string TempeText => $"{WorldTempCelsius:0.0}\u00b0";
+
     public event Action? OnWorldTempChanged;
 
     public override void Initialize()

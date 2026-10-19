@@ -29,9 +29,9 @@
             every 1s
     )
     _ .low-divider
-
     info-panel-cell #temperature (
         tool-tip: $top-info-panel-temperature-tooltip,
+        text: bind @Controllers.InfoPanel.TempeText on @Controllers.InfoPanel.OnWorldTempChanged,
         texture-path: bind if (@Controllers.InfoPanel.WorldTempCelsius < 10) "<icons>/temperature-low-solid.svg.192dpi.png"
             elif (@Controllers.InfoPanel.WorldTempCelsius < 20) "<icons>/temperature-half-solid.svg.192dpi.png"
             elif (@Controllers.InfoPanel.WorldTempCelsius < 30) "<icons>/temperature-three-quarters-solid.svg.192dpi.png"
@@ -39,8 +39,6 @@
             on @Controllers.InfoPanel.OnWorldTempChanged
     )
 }
-
-on @Controllers.InfoPanel.OnWorldTempChanged for top-panel-widget => @UpdateTemperature
 
 /* A cell of the strip: an icon and a text. */
 @InfoPanelCell => row (
