@@ -1,0 +1,6 @@
+/* ---------- Outlined text ---------- */
+
+/* The text with a black outline, to be read over the world (TextOutline) */
+.outlined {
+    -rf-text-outline-width: 2px;
+}

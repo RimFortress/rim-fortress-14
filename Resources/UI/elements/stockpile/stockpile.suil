@@ -5,35 +5,32 @@
     margin: 0 2 5 2,
     tracking-tooltip
 ) {
-    box .panel-highlighted {
-        row (flex-grow: 1) {
-            _ .low-divider-dark (margin: 2)
+    row (flex-grow: 1) {
+        _ .low-divider-dark (margin: 2)
 
-            box .panel-light-bordered (
-                set-size: 52,
-                justify-content: center,
-                align-items: center
-            ) {
-                +layered-texture #texture (set-size: 48)
-            }
+        box .panel-light-bordered (
+            set-size: 52,
+            justify-content: center,
+            align-items: center
+        ) {
+            +layered-texture #texture (set-size: 48)
+        }
 
-            _ .low-divider (margin: 2 5)
-            _ #name-label (flex-grow: 1)
+        _ .low-divider (margin: 2 5)
+        _ #name-label (flex-grow: 1)
 
-            row {
-                +int-counter #counter (min-value: 0, on-value-changed => &.max-value: args.new)
-                +checkbox #unlimited-check (
-                    tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
-                    margin: 0 3,
-                    tracking-tooltip,
-                    on-pressed => {
-                        #unlimited-check.tool-tip: if (#unlimited-check.pressed)
-                            $stockpile-settings-menu-unlimited-checkbox-enabled-tooltip
-                            else $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip;
-                        &.max-value: if (#unlimited-check.pressed) -1 else 0
-                    }
-                )
-            }
+        row .panel-highlighted-transparent (padding: 0 3) {
+            +int-counter #counter (min-value: 0, on-value-changed => &.max-value: args.new)
+            +checkbox #unlimited-check (
+                tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
+                tracking-tooltip,
+                on-pressed => {
+                    #unlimited-check.tool-tip: if (#unlimited-check.pressed)
+                        $stockpile-settings-menu-unlimited-checkbox-enabled-tooltip
+                        else $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip;
+                    &.max-value: if (#unlimited-check.pressed) -1 else 0
+                }
+            )
         }
     }
 }

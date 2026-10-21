@@ -175,7 +175,7 @@ public sealed partial class ZoningUiController :
         UpdateConditions(zone);
     }
 
-    private void OnCreationFinish(BaseButton.ButtonEventArgs args)
+    public void OnCreationFinish()
     {
         if (!_timing.IsFirstTimePredicted || _creatingZoneType == null)
             return;
@@ -197,7 +197,7 @@ public sealed partial class ZoningUiController :
         EndCreation();
     }
 
-    private void OnCreationCancel(BaseButton.ButtonEventArgs args)
+    public void OnCreationCancel()
     {
         EndCreation();
     }
@@ -276,12 +276,8 @@ public sealed partial class ZoningUiController :
     {
         _creatingZoneType = null;
 
-        if (UIManager.GetActiveUIWidgetOrNull<ZoneCreationWidget>() is { } widget)
-        {
-            widget.FinishButton.OnPressed -= OnCreationFinish;
-            widget.CancelButton.OnPressed -= OnCreationCancel;
+        if (UIManager.GetActiveUIWidgetOrNull<ZoneCreationWidget>() != null)
             UIManager.ActiveScreen?.RemoveWidget<ZoneCreationWidget>();
-        }
 
         _selection.SetDefault<EntityUid>();
     }
@@ -465,12 +461,6 @@ public sealed partial class ZoningUiController :
         CancelPick();
         var widget = UIManager.ActiveScreen!.GetOrAddWidget<ZoneCreationWidget>();
 
-        // Defensive unsubscribe in case a previous creation attempt left this wired up
-        // (e.g. CreateSelection called again before Finish/Cancel), so handlers never stack.
-        widget.FinishButton.OnPressed -= OnCreationFinish;
-        widget.CancelButton.OnPressed -= OnCreationCancel;
-        widget.FinishButton.OnPressed += OnCreationFinish;
-        widget.CancelButton.OnPressed += OnCreationCancel;
         widget.Visible = false;
 
         _selection.SetSelection(

@@ -1,0 +1,31 @@
+/* ---------- Conditions of a zone ---------- */
+
+/* The mark of a condition: the picture of the state under a black outline, which is the same picture a little bigger */
+.condition-outline,
+.condition-mark {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.condition-outline {
+    background-color: black;
+}
+
+.condition-outline.met,
+.condition-mark.met {
+    background-image: texture("<icons>/check-solid.svg.192dpi.png");
+}
+
+.condition-outline.not-met,
+.condition-mark.not-met {
+    background-image: texture("<icons>/Style/cross.png");
+}
+
+.condition-mark.met {
+    background-color: <good>;
+}
+
+.condition-mark.not-met {
+    background-color: <bad>;
+}

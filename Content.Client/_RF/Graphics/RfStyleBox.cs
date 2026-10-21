@@ -119,11 +119,16 @@ public abstract class RfStyleBox : StyleBox
         var pr = insetByPadding ? PaddingRight : 0f;
         var pb = insetByPadding ? PaddingBottom : 0f;
 
+        var left = borderBox.Left + bl + pl;
+        var top = borderBox.Top + bt + pt;
+
+        // A box that is smaller than its border and padding (a squeezed element, one that is not laid out yet) has an empty
+        // area inside, as in CSS, not a negative one.
         return new UIBox2(
-            borderBox.Left + bl + pl,
-            borderBox.Top + bt + pt,
-            borderBox.Right - br - pr,
-            borderBox.Bottom - bb - pb);
+            left,
+            top,
+            MathF.Max(left, borderBox.Right - br - pr),
+            MathF.Max(top, borderBox.Bottom - bb - pb));
     }
 }
 

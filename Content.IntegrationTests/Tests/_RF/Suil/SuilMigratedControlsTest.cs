@@ -11,6 +11,9 @@ using Content.Client._RF.UserInterface.Controls.Stockpile;
 using Content.Client._RF.UserInterface.Controls.Table;
 using Content.Client._RF.UserInterface.Controls.TopInfoPanel;
 using Content.Client._RF.UserInterface.Controls.TreeMenu;
+using Content.Client._RF.Zoning.UI.Controls;
+using Content.Shared._RF.Zoning;
+using Content.Shared._RF.Zoning.Components;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Suil;
@@ -508,5 +511,49 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(view.SuilGetField("hotbar"), Is.SameAs(hotbar), "the control with an id is kept");
         Assert.That(hotbar.GetValue(Robust.Client.UserInterface.Controls.LayoutContainer.MarginLeftProperty), Is.EqualTo(margin), "with its place in the layout");
         Assert.That(screen.Children.Count(), Is.EqualTo(7));
+    }
+
+    private sealed class Condition(bool met, params IZoneConditionDesc[] sub) : IZoneConditionDesc
+    {
+        public string Text => "text";
+        public bool IsMet => met;
+        public string? Progress => "1/2";
+        public List<IZoneConditionDesc>? SubDescriptions => sub.Length == 0 ? null : new List<IZoneConditionDesc>(sub);
+    }
+
+    [Test]
+    [RunOnSide(Side.Client)]
+    public void Zoning_Controls_Are_Built_And_Reload()
+    {
+        var condition = new ZoneConditionControl(new Condition(true, new Condition(false)));
+        var view = (ISuilView) condition;
+        var met = (UiElement) view.SuilGetField("is-met")!;
+        var outline = (UiElement) view.SuilGetField("is-met-outline")!;
+        Assert.That(met.HasSuilStyleClass("met"), Is.True);
+        Assert.That(outline.HasSuilStyleClass("met"), Is.True);
+        Assert.That(((UiElement) view.SuilGetField("sub-descriptions")!).ChildCount, Is.EqualTo(1));
+        var sub = (ZoneConditionControl) ((UiElement) view.SuilGetField("sub-descriptions")!).Children.Single();
+        Assert.That(((UiElement) ((ISuilView) sub).SuilGetField("is-met")!).HasSuilStyleClass("not-met"), Is.True);
+
+        foreach (var control in new Control[]
+                 {
+                     new ZoneChangeTileControl(),
+                     new ZoneChangeNameControl(),
+                     new ZoneVisualsControl(),
+                     new ZoneVisualsLayerControl(default, null),
+                     new ZoneContentControl(),
+                     new ZoneConditionsList(),
+                     new ZoneCreationWidget(),
+                     new BaseZoneWindow(),
+                     condition,
+                 })
+        {
+            var result = _reload.Reload((ISuilView) control);
+            Assert.That(result.Success, Is.True, control.GetType().Name + ": " + string.Join("\n", result.Errors));
+        }
+
+        var window = new BaseZoneWindow();
+        Assert.That(((ISuilView) window).SuilFieldIds, Is.SupersetOf(new[] { "tab", "name-change", "content-box", "visuals-control", "bottom-panel" }));
+        Assert.That(((RfTabContainer) ((ISuilView) window).SuilGetField("tab")!).Tabs, Has.Count.EqualTo(2));
     }
 }
