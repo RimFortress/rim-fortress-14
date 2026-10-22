@@ -332,8 +332,6 @@ public sealed class SuilPropertyTablesGenerator : IIncrementalGenerator
             sb.AppendLine("}");
     }
 
-    // ---- Events ----
-
     private sealed record ShorthandMember(string SuilName, string TypeName, string? ParserMethod);
 
     private sealed record ShorthandGroup(string Name, List<ShorthandMember> Members, string? ParserMethod);

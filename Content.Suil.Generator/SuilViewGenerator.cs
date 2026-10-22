@@ -135,35 +135,6 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
         SuilViewDeclaration? ExpandedView(ViewCandidate view)
             => ExpandedFile(view.FilePath)?.Views.FirstOrDefault(v => v.ClassName == view.Declaration.ClassName);
 
-        // The fields of the views of this project, for the paths of the handlers that go through one view into another.
-        var fieldTables = new Dictionary<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?>(SymbolEqualityComparer.Default);
-
-        IReadOnlyDictionary<string, ViewField>? FieldsOfView(INamedTypeSymbol type)
-        {
-            if (fieldTables.TryGetValue(type, out var known))
-                return known;
-
-            var candidate = views.FirstOrDefault(v => SymbolEqualityComparer.Default.Equals(v.Symbol, type));
-            var declaration = candidate == null ? null : ExpandedView(candidate);
-            return fieldTables[type] = declaration == null ? null : BuildFieldTable(declaration, tags);
-        }
-
-        // A subscription of a tag that no view of its file has is reported by every project that builds a view of the file.
-        foreach (var path in views.Select(v => v.FilePath).Distinct().OrderBy(p => p, StringComparer.Ordinal))
-        {
-            if (ExpandedFile(path) is not { } file)
-                continue;
-
-            var tagsOfFile = new HashSet<string>(file.Views.SelectMany(TagsOf), StringComparer.Ordinal);
-
-            foreach (var subscription in file.Subscriptions.Where(s => !tagsOfFile.Contains(s.Tag)))
-            {
-                Report(context, SuilDiagnostics.UnknownSubscriptionTag, subscription.Position, null,
-                    subscription.Scope == SuilCallScope.Controller ? "Controllers" : "Systems",
-                    subscription.Name, subscription.Event, subscription.Tag);
-            }
-        }
-
         foreach (var view in views)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
@@ -173,11 +144,8 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
 
             try
             {
-                var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol, FieldsOfView);
-                var subscriptions = ExpandedFile(view.FilePath)!.Subscriptions
-                    .Where(s => TagsOf(declaration).Contains(s.Tag))
-                    .ToList();
-                var text = emitter.Emit(declaration.Root, view.FilePath, view.Declaration.ClassName, subscriptions);
+                var emitter = new SuilViewEmitter(compilation, tags, suilControl, view.Symbol);
+                var text = emitter.Emit(declaration.Root, view.FilePath, view.Declaration.ClassName);
 
                 context.AddSource(HintName(view.Symbol), SourceText.From(text, Encoding.UTF8));
             }
@@ -186,19 +154,6 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
                 Report(context, e.Descriptor, e.Position, null, e.Args);
             }
         }
-    }
-
-    /// <summary>
-    /// The tags a subscription (<c>on ... for tag</c>) can name a view by: the one that <c>as</c> gives, and the one the
-    /// class has by default, its name in kebab-case.
-    /// </summary>
-    private static IEnumerable<string> TagsOf(SuilViewDeclaration declaration)
-    {
-        if (declaration.Tag != null)
-            yield return declaration.Tag;
-
-        var name = declaration.ClassName;
-        yield return SuilNaming.ToKebab(name.Substring(name.LastIndexOf('.') + 1));
     }
 
     /// <summary>
@@ -422,32 +377,6 @@ public sealed class SuilViewGenerator : IIncrementalGenerator
 
         Visit(compilation.Assembly.GlobalNamespace);
         return index;
-    }
-
-    /// <summary>
-    /// The fields a view gets from its declaration: the elements with an id, with their access and type.
-    /// </summary>
-    private static IReadOnlyDictionary<string, ViewField>? BuildFieldTable(SuilViewDeclaration declaration, SuilTagRegistry tags)
-    {
-        var fields = new Dictionary<string, ViewField>(StringComparer.Ordinal);
-
-        void Visit(SuilElement element, bool isRoot)
-        {
-            if (!isRoot && element.Id != null
-                && tags.TryResolve(element.Tag ?? SuilTagRegistry.UntypedTag, out var type, out _) && type != null)
-            {
-                var id = element.Id.ToString();
-                fields[id] = new ViewField(SuilNaming.ToPascal(id), element.Access, type);
-            }
-
-            foreach (var child in element.Children.OfType<SuilElement>())
-            {
-                Visit(child, false);
-            }
-        }
-
-        Visit(declaration.Root, true);
-        return fields;
     }
 
     private static bool TryLoadGlobals(

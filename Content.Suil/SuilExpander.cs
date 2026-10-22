@@ -286,10 +286,7 @@ public static class SuilExpander
                         CheckSlots(expandedRoot, ref slots);
                         _rules.Add(new SuilViewDeclaration(view.ClassName, expandedRoot, view.Position, view.Tag));
                         break;
-                    case SuilSubscription subscription when isMain:
-                        _rules.Add(subscription);
-                        break;
-                    case SuilViewDeclaration or SuilSubscription:
+                    case SuilViewDeclaration:
                         break; // the views of an imported file belong to that file
                     case SuilFontFace fontFace:
                         _rules.Add(new SuilFontFace(
@@ -398,7 +395,7 @@ public static class SuilExpander
             switch (let.Value)
             {
                 case SuilValueList list:
-                    return new ValueBinding(NoRuntime(ExpandValues(list.Values, scope, let.Position), let.Position));
+                    return new ValueBinding(ExpandValues(list.Values, scope, let.Position));
                 case SuilTemplate template:
                     var duplicate = template.Parameters.GroupBy(p => p).FirstOrDefault(g => g.Count() > 1);
                     if (duplicate != null)
@@ -410,7 +407,7 @@ public static class SuilExpander
 
                     var defaults = template.Defaults.ToDictionary(
                         pair => pair.Key,
-                        pair => NoRuntime(ExpandValues(pair.Value, scope, let.Position), let.Position));
+                        pair => ExpandValues(pair.Value, scope, let.Position));
 
                     return new TemplateBinding(template, scope, defaults);
                 default:
@@ -509,7 +506,7 @@ public static class SuilExpander
             var properties = element.Properties
                 .Select(p => new SuilProperty(
                     p.Name,
-                    p.Value == null ? null : NoRuntime(ExpandValues(p.Value, scope, p.Position), p.Position),
+                    p.Value == null ? null : ExpandValues(p.Value, scope, p.Position),
                     p.IsSoft,
                     p.Position))
                 .ToList();
@@ -523,91 +520,9 @@ public static class SuilExpander
                     element.Classes.Select(c => ExpandName(c, "class", scope, element.Position)).ToList(),
                     properties,
                     ExpandNodes(element.Children, scope, slotContent),
-                    element.Position)
-                {
-                    Events = ExpandEvents(element.Events, scope),
-                },
+                    element.Position),
             };
         }
-
-        /// <summary>
-        /// The variables of the handlers are the constants of the file: the values and the names are expanded the way
-        /// those of the properties and of the classes of an element are.
-        /// </summary>
-        private List<SuilEventHandler> ExpandEvents(List<SuilEventHandler> events, Scope? scope)
-            => events.Select(handler => handler with
-                {
-                    Statements = handler.Statements.Select(statement => ExpandStatement(statement, scope)).ToList(),
-                })
-                .ToList();
-
-        private ISuilStatement ExpandStatement(ISuilStatement statement, Scope? scope) => statement switch
-        {
-            SuilIfStatement ifStatement => ifStatement with
-            {
-                Branches = ifStatement.Branches
-                    .Select(branch => branch with
-                    {
-                        Condition = Fold(branch.Condition, scope, branch.Position),
-                        Body = branch.Body.Select(inner => ExpandStatement(inner, scope)).ToList(),
-                    })
-                    .ToList(),
-                Else = ifStatement.Else?.Select(inner => ExpandStatement(inner, scope)).ToList(),
-            },
-            SuilCallStatement { Arguments: not null } call => call with
-            {
-                Arguments = call.Arguments.Select(argument => ExpandArgument(argument, scope)).ToList(),
-            },
-            SuilTargetStatement target => target with
-            {
-                Target = ExpandTarget(target.Target, scope),
-                Items = target.Items.Select(item => ExpandItem(item, scope)).ToList(),
-            },
-            _ => statement,
-        };
-
-        private SuilCallArgument ExpandArgument(SuilCallArgument argument, Scope? scope) => argument switch
-        {
-            SuilTargetArgument target => target with { Target = ExpandTarget(target.Target, scope) },
-            SuilValueArgument value => value with { Values = ExpandValues(value.Values, scope, value.Position) },
-            _ => argument,
-        };
-
-        private ISuilTargetItem ExpandItem(ISuilTargetItem item, Scope? scope) => item switch
-        {
-            SuilPropertyItem property => new SuilPropertyItem(property.Property with
-            {
-                Value = property.Property.Value == null
-                    ? null
-                    : ExpandValues(property.Property.Value, scope, property.Property.Position),
-            }),
-            SuilOperatorItem op => FoldOperator(op, scope),
-            SuilStyleItem style => style with
-            {
-                State = style.State == null
-                    ? null
-                    : new SuilStateValue(Fold(style.State.Expression, scope, style.Position)),
-                Refs = style.Refs.Select(r => r with
-                    {
-                        Name = ExpandName(r.Name, r.IsPseudo ? "pseudo-class" : "class", scope, style.Position)
-                    })
-                    .ToList(),
-            },
-            _ => item,
-        };
-
-        private SuilOperatorItem FoldOperator(SuilOperatorItem item, Scope? scope)
-        {
-            var operand = FoldNum(item.Operand, scope, item.Position);
-
-            if (item.Operator == '/' && operand is SuilNumConst { Value: 0 })
-                throw new SuilExpansionError("expanding number expression", "division by zero", item.Position);
-
-            return item with { Operand = operand };
-        }
-
-        private static SuilTarget ExpandTarget(SuilTarget target, Scope? scope)
-            => target.Id == null ? target : target with { Id = ExpandName(target.Id, "id", scope, target.Position) };
 
         private List<ISuilElementNode> Instantiate(
             SuilElement usage,
@@ -631,9 +546,8 @@ public static class SuilExpander
 
             for (var i = 0; i < usage.Arguments.Count; i++)
             {
-                arguments[parameters[i]] = NoRuntime(
-                    ExpandValues(usage.Arguments[i].Values, callerScope, usage.Arguments[i].Position),
-                    usage.Arguments[i].Position);
+                arguments[parameters[i]] =
+                    ExpandValues(usage.Arguments[i].Values, callerScope, usage.Arguments[i].Position);
             }
 
             foreach (var property in usage.Properties)
@@ -652,7 +566,7 @@ public static class SuilExpander
                     {
                         Value = property.Value == null
                             ? null
-                            : NoRuntime(ExpandValues(property.Value, callerScope, property.Position), property.Position),
+                            : ExpandValues(property.Value, callerScope, property.Position),
                     });
                     continue;
                 }
@@ -678,7 +592,7 @@ public static class SuilExpander
                         property.Position);
                 }
 
-                arguments[property.Name] = NoRuntime(ExpandValues(property.Value, callerScope, property.Position), property.Position);
+                arguments[property.Name] = ExpandValues(property.Value, callerScope, property.Position);
             }
 
             // What the usage leaves out takes its default value; every usage gets its own copy of the values.
@@ -715,11 +629,7 @@ public static class SuilExpander
             var id = usage.Id == null ? null : ExpandName(usage.Id, "id", callerScope, usage.Position);
             var classes = usage.Classes.Select(c => ExpandName(c, "class", callerScope, usage.Position)).ToList();
 
-            // The handlers of the usage belong to the root of the template like the properties that aren't parameters; the
-            // variables in them are the caller's.
-            var forwardedEvents = ExpandEvents(usage.Events, callerScope);
-
-            return ApplyUsageHead(usage, id, classes, forwarded, forwardedEvents, ExpandNodes(template.Template.Body, scope, content));
+            return ApplyUsageHead(usage, id, classes, forwarded, ExpandNodes(template.Template.Body, scope, content));
         }
 
         /// <summary>
@@ -731,11 +641,9 @@ public static class SuilExpander
             SuilName? id,
             List<SuilName> classes,
             List<SuilProperty> forwarded,
-            List<SuilEventHandler> forwardedEvents,
             List<ISuilElementNode> expanded)
         {
-            if (usage.Access == SuilAccess.Private && id == null && classes.Count == 0 && forwarded.Count == 0
-                && forwardedEvents.Count == 0)
+            if (usage.Access == SuilAccess.Private && id == null && classes.Count == 0 && forwarded.Count == 0)
             {
                 return expanded;
             }
@@ -743,7 +651,7 @@ public static class SuilExpander
             if (expanded is not [SuilElement root])
             {
                 throw new SuilExpansionError("expanding template",
-                    $"'{usage.Tag}' is used with an access sigil, an id, classes, handlers or properties that are not its parameters, so the template must have exactly one root element",
+                    $"'{usage.Tag}' is used with an access sigil, an id, classes or properties that are not its parameters, so the template must have exactly one root element",
                     usage.Position);
             }
 
@@ -767,7 +675,6 @@ public static class SuilExpander
                     Id = id ?? root.Id,
                     Classes = root.Classes.Concat(classes).ToList(),
                     Properties = properties,
-                    Events = root.Events.Concat(forwardedEvents).ToList(),
                 },
             };
         }
@@ -777,7 +684,6 @@ public static class SuilExpander
             SuilElement element => element with
             {
                 Classes = new List<SuilName>(element.Classes),
-                Events = new List<SuilEventHandler>(element.Events),
                 Arguments = new List<SuilArgument>(element.Arguments),
                 Properties = element.Properties
                     .Select(p => p with { Value = p.Value == null ? null : new List<ISuilValue>(p.Value) })
@@ -852,17 +758,6 @@ public static class SuilExpander
                                 .Select(a => new SuilNamedArgument(a.Name, ExpandValues(a.Value, scope, position)))
                                 .ToList()));
                         break;
-                    case SuilExprValue expression:
-                    {
-                        var node = ExpandNode(expression.Root, scope, expression.Position.Line > 0 ? expression.Position : position);
-
-                        // a condition that was settled while expanding leaves a value that needs no work at run time
-                        result.Add(node is SuilLiteralNode literal ? literal.Value : expression with { Root = node });
-                        break;
-                    }
-                    case SuilBindValue bind:
-                        result.Add(bind with { Values = ExpandValues(bind.Values, scope, bind.Position.Line > 0 ? bind.Position : position) });
-                        break;
                     case SuilBoolValue boolValue:
                         result.Add(FoldValue(boolValue, scope, position));
                         break;
@@ -889,8 +784,7 @@ public static class SuilExpander
         // ---- Bool expressions ----
 
         /// <summary>
-        /// Replaces the variables of a bool expression and folds the constants. What is left of it depends on the elements
-        /// and is for the handlers of the events; a value that is all constants becomes <c>true</c> or <c>false</c>.
+        /// Replaces the variables of a bool expression and folds the constants: the value becomes <c>true</c> or <c>false</c>.
         /// </summary>
         private ISuilValue FoldValue(SuilBoolValue value, Scope? scope, SuilPosition position)
         {
@@ -938,141 +832,8 @@ public static class SuilExpander
 
                     return new SuilBoolOr(left, right);
                 }
-                case SuilBoolReference reference:
-                    return reference with { Target = ExpandTarget(reference.Target, scope) };
-                case SuilBoolCompare compare:
-                {
-                    var left = ExpandNode(compare.Left, scope, position);
-                    var right = ExpandNode(compare.Right, scope, position);
-
-                    if (left is SuilLiteralNode l && right is SuilLiteralNode r && TryCompareLiterals(compare.Operator, l.Value, r.Value, out var result))
-                        return new SuilBoolConst(result);
-
-                    return compare with { Left = left, Right = right };
-                }
                 default:
                     return node;
-            }
-        }
-
-        // ---- Value expressions ----
-
-        /// <summary>
-        /// The same for a value expression: the variables are replaced, a condition that is a constant picks its branch.
-        /// </summary>
-        private SuilValueNode ExpandNode(SuilValueNode node, Scope? scope, SuilPosition position)
-        {
-            var at = node.Position.Line > 0 ? node.Position : position;
-
-            switch (node)
-            {
-                case SuilLiteralNode literal:
-                {
-                    var values = ExpandValues(new[] { literal.Value }, scope, at);
-
-                    if (values.Count != 1)
-                        throw new SuilExpansionError("expanding variables", "a variable in an expression must hold one value", at);
-
-                    return literal with { Value = values[0] };
-                }
-                case SuilReferenceNode reference:
-                    return reference with { Target = ExpandTarget(reference.Target, scope) };
-                case SuilCallNode call:
-                    return call with { Call = (SuilCallStatement) ExpandStatement(call.Call, scope) };
-                case SuilFunctionNode function:
-                    return function with { Argument = ExpandNode(function.Argument, scope, at) };
-                case SuilConcatNode concat:
-                    return concat with { Parts = concat.Parts.Select(p => ExpandNode(p, scope, at)).ToList() };
-                case SuilNumberNode number:
-                    return number with { Root = FoldNum(number.Root, scope, at) };
-                case SuilConditionalNode conditional:
-                {
-                    var branches = new List<SuilConditionalBranch>();
-
-                    foreach (var branch in conditional.Branches)
-                    {
-                        var condition = Fold(branch.Condition, scope, branch.Position);
-
-                        if (condition is SuilBoolConst { Value: false })
-                            continue;
-
-                        var value = ExpandNode(branch.Value, scope, at);
-
-                        // a condition that holds for sure is the last one: nothing after it can be chosen
-                        if (condition is SuilBoolConst { Value: true })
-                            return branches.Count == 0 ? value : new SuilConditionalNode(branches, value, conditional.Position);
-
-                        branches.Add(branch with { Condition = condition, Value = value });
-                    }
-
-                    var otherwise = ExpandNode(conditional.Else, scope, at);
-                    return branches.Count == 0 ? otherwise : conditional with { Branches = branches, Else = otherwise };
-                }
-                default:
-                    return node;
-            }
-        }
-
-        /// <summary>
-        /// A comparison of two values that are known: numbers by their numbers, texts and idents by their text.
-        /// </summary>
-        private static bool TryCompareLiterals(string op, ISuilValue left, ISuilValue right, out bool result)
-        {
-            result = false;
-
-            if (TryLiteralNumber(left, out var a) && TryLiteralNumber(right, out var b))
-            {
-                result = op switch
-                {
-                    "==" => a == b,
-                    "!=" => a != b,
-                    "<" => a < b,
-                    ">" => a > b,
-                    "<=" => a <= b,
-                    _ => a >= b,
-                };
-                return true;
-            }
-
-            if (op is "==" or "!=" && TryLiteralText(left, out var x) && TryLiteralText(right, out var y))
-            {
-                var equal = string.Equals(x, y, StringComparison.Ordinal);
-                result = op == "==" ? equal : !equal;
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool TryLiteralNumber(ISuilValue value, out double number)
-        {
-            switch (value)
-            {
-                case SuilNumber n:
-                    number = n.Value;
-                    return true;
-                case SuilDimension { Unit: "px" } d:
-                    number = d.Value;
-                    return true;
-                default:
-                    number = 0;
-                    return false;
-            }
-        }
-
-        private static bool TryLiteralText(ISuilValue value, out string text)
-        {
-            switch (value)
-            {
-                case SuilIdent ident:
-                    text = ident.Value;
-                    return true;
-                case SuilString str when str.Parts.All(p => !p.IsVariable):
-                    text = string.Concat(str.Parts.Select(p => p.Text));
-                    return true;
-                default:
-                    text = string.Empty;
-                    return false;
             }
         }
 
@@ -1145,8 +906,6 @@ public static class SuilExpander
 
                     return function with { Arguments = arguments };
                 }
-                case SuilNumReference reference:
-                    return reference with { Target = ExpandTarget(reference.Target, scope) };
                 default:
                     return node;
             }
@@ -1179,22 +938,6 @@ public static class SuilExpander
             throw new SuilExpansionError("expanding bool expression",
                 $"variable '{name}' must hold true or false to be used with '!', '&&' and '||'",
                 position);
-        }
-
-        /// <summary>
-        /// The properties of an element, the arguments of a template and <c>let</c> may use only true, false and the
-        /// variables: the elements don't exist yet when the file is expanded. What reads them is a handler of an event.
-        /// </summary>
-        private static List<ISuilValue> NoRuntime(List<ISuilValue> values, SuilPosition position)
-        {
-            if (values.Any(v => v is SuilBoolValue or SuilNumValue))
-            {
-                throw new SuilExpansionError("expanding bool expression",
-                    "here only constants and the variables can be used: the properties of elements and the arguments of the event are read when an event is raised, so only the handler of an event can use them",
-                    position);
-            }
-
-            return values;
         }
 
         private static List<ISuilValue> LookupValues(string name, Scope? scope, SuilPosition position)

@@ -123,12 +123,6 @@ public sealed partial class SuilHotReload
 
                 if (childPlan.Id != null)
                     state.Originals.Remove(childPlan.Id);
-
-                if (childPlan.Element.Events.Count > 0)
-                {
-                    warnings.Add($"'{childPlan.Id ?? childPlan.Type.Name}' is a new element and has handlers in the file: " +
-                                 "they work after the project is built");
-                }
             }
 
             ApplyElement(view, child, childPlan, childPlan.Id, previous, state, reusable, errors, warnings);

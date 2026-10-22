@@ -57,10 +57,6 @@ public static partial class SuilParser
                 case IdentToken { Value: "use" }:
                     items.Add(ConsumeUse(ref stream));
                     break;
-                case IdentToken { Value: "on" } when stream.PeekNext(2) is DelimToken { CodePoint: '@' }
-                                                     || (stream.PeekNext(2) is WhitespaceToken && stream.PeekNext(3) is DelimToken { CodePoint: '@' }):
-                    items.Add(ConsumeSubscription(ref stream));
-                    break;
                 case DelimToken { CodePoint: '@' }:
                     items.Add(stream.PeekNext(2) is IdentToken { Value: var atName }
                               && atName.Equals("font-face", StringComparison.OrdinalIgnoreCase)
@@ -150,202 +146,6 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// subscription = "on" , "@" , ( "Controllers" | "Systems" ) , "." , ident , "." , ident , "for" , tag , "=&gt;" , handler , [ ";" ]
-    /// The semicolon is needed after a lone "#id.property: value", which nothing else ends.
-    /// </summary>
-    private static SuilSubscription ConsumeSubscription(ref SuilTokenStream stream)
-    {
-        const string context = "consuming subscription";
-        var position = stream.PeekPosition();
-        stream.ConsumeNext(); // on
-        stream.SkipWhitespace();
-
-        var (scope, className, eventName) = ConsumeEventPath(ref stream, context, position, "on");
-
-        stream.SkipWhitespace();
-
-        if (stream.ConsumeNext() is not IdentToken { Value: "for" })
-        {
-            throw ErrorAtCurrent(ref stream, context,
-                $"expected 'for' and the tag of a view after 'on @{scope.ToString()}...', not {Describe(stream.Current)}");
-        }
-
-        stream.SkipWhitespace();
-
-        if (stream.ConsumeNext() is not IdentToken tag || tag.Value == "_")
-        {
-            throw ErrorAtCurrent(ref stream, context,
-                $"expected the tag of a view after 'for', not {Describe(stream.Current)}");
-        }
-
-        stream.SkipWhitespace();
-
-        if (!(stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is DelimToken { CodePoint: '>' }))
-        {
-            throw ErrorAtNext(ref stream, context,
-                $"expected '=>' after 'for {tag.Value}', not {Describe(stream.PeekNext())}");
-        }
-
-        stream.ConsumeNext();
-        stream.ConsumeNext();
-
-        var handler = ConsumeEventHandler(ref stream, eventName, position);
-
-        // Nothing closes a lone "#id.property: value" but the semicolon: the value would go on into the next item of the file.
-        stream.SkipWhitespace();
-
-        if (!handler.IsBlock && stream.PeekNext() is SemicolonToken)
-            stream.ConsumeNext();
-
-        return new SuilSubscription(scope, className, eventName, tag.Value, handler, position);
-    }
-
-    /// <summary>
-    /// <c>@Controllers.Name.Event</c> or <c>@Systems.Name.Event</c>, from the <c>@</c>: the class and the event of a
-    /// subscription or of a binding.
-    /// </summary>
-    private static (SuilCallScope Scope, string Name, string Event) ConsumeEventPath(
-        ref SuilTokenStream stream,
-        string context,
-        SuilPosition position,
-        string keyword)
-    {
-        if (stream.ConsumeNext() is not DelimToken { CodePoint: '@' })
-        {
-            throw ErrorAtCurrent(ref stream, context,
-                $"expected '@Controllers.Name.Event' or '@Systems.Name.Event' after '{keyword}', not {Describe(stream.Current)}");
-        }
-
-        var path = new List<string>();
-
-        while (true)
-        {
-            if (stream.ConsumeNext() is not IdentToken part)
-            {
-                throw ErrorAtCurrent(ref stream, context,
-                    $"expected '@Controllers.Name.Event' or '@Systems.Name.Event' after '{keyword}', not {Describe(stream.Current)}");
-            }
-
-            path.Add(part.Value);
-
-            if (stream.PeekNext() is DelimToken { CodePoint: '.' })
-            {
-                stream.ConsumeNext();
-                continue;
-            }
-
-            break;
-        }
-
-        if (path.Count != 3 || path[0] is not ("Controllers" or "Systems"))
-        {
-            throw new SuilParserError(context,
-                $"'{keyword} @{string.Join(".", path)}': the event is '@Controllers.Name.Event' or '@Systems.Name.Event'",
-                position);
-        }
-
-        return (path[0] == "Controllers" ? SuilCallScope.Controller : SuilCallScope.System, path[1], path[2]);
-    }
-
-    /// <summary>
-    /// bind = "bind" , expression , [ "every" , time | "on" , "@" , ( "Controllers" | "Systems" ) , "." , ident , "." , ident ]
-    /// time = number , ( "s" | "ms" )
-    /// The expression is the one of a value in a handler, without <c>args</c>; it ends where the value does, or at
-    /// <c>every</c> or <c>on</c>.
-    /// </summary>
-    private static SuilBindValue ConsumeBind(ref SuilTokenStream stream, string context)
-    {
-        var position = stream.PeekPosition();
-        stream.ConsumeNext(); // bind
-        stream.SkipWhitespace();
-
-        // The expression ends at the end of the value, or at "every" / "on" outside of any parentheses.
-        var depth = 0;
-        var length = 0;
-
-        for (var i = 1;; i++)
-        {
-            var token = stream.PeekNext(i);
-            var ends = false;
-
-            switch (token)
-            {
-                case LeftParenthesisToken or FunctionToken or LeftCurlyBracket:
-                    depth++;
-                    break;
-                case RightParenthesisToken or RightCurlyBracket:
-                    if (depth == 0)
-                        ends = true;
-                    else
-                        depth--;
-
-                    break;
-                case CommaToken or SemicolonToken:
-                    ends = depth == 0;
-                    break;
-                case EofToken:
-                    ends = true;
-                    break;
-                case IdentToken { Value: "every" or "on" }:
-                    ends = depth == 0;
-                    break;
-            }
-
-            if (ends)
-            {
-                length = i - 1;
-                break;
-            }
-        }
-
-        var tokens = new List<SuilToken>();
-        for (var i = 0; i < length; i++)
-        {
-            tokens.Add(stream.Tokens[stream.Index + 1 + i]);
-        }
-
-        var last = tokens.Count > 0 ? tokens[tokens.Count - 1] : stream.Tokens[Math.Max(stream.Index, 0)];
-        tokens.Add(new SuilToken(new EofToken(), last.Line, last.Column));
-
-        var inner = new SuilTokenStream(tokens, stream.File);
-        inner.SkipWhitespace();
-
-        if (inner.PeekNext() is EofToken)
-            throw ErrorAtNext(ref stream, context, "expected an expression after 'bind'");
-
-        var values = ConsumeValueOrBool(ref inner, context, references: true);
-        stream.ConsumeNext(length);
-        stream.SkipWhitespace();
-
-        if (stream.PeekNext() is IdentToken { Value: "every" })
-        {
-            stream.ConsumeNext();
-            stream.SkipWhitespace();
-
-            var seconds = stream.ConsumeNext() switch
-            {
-                DimensionToken { Unit: var unit, Value: var value } when unit.Equals("s", StringComparison.OrdinalIgnoreCase) && value > 0 => value,
-                DimensionToken { Unit: var unit, Value: var value } when unit.Equals("ms", StringComparison.OrdinalIgnoreCase) && value > 0 => value / 1000,
-                _ => throw ErrorAtCurrent(ref stream, context,
-                    $"expected a time like 1s or 250ms after 'every', not {Describe(stream.Current)}"),
-            };
-
-            return new SuilBindValue(values, SuilBindMode.Every, seconds, SuilCallScope.View, null, null, position);
-        }
-
-        if (stream.PeekNext() is IdentToken { Value: "on" })
-        {
-            stream.ConsumeNext();
-            stream.SkipWhitespace();
-
-            var (scope, name, eventName) = ConsumeEventPath(ref stream, context, position, "on");
-            return new SuilBindValue(values, SuilBindMode.Event, 0, scope, name, eventName, position);
-        }
-
-        return new SuilBindValue(values, SuilBindMode.Frame, 0, SuilCallScope.View, null, null, position);
-    }
-
-    /// <summary>
     /// use = "use" , string , ";"
     /// </summary>
     private static SuilUse ConsumeUse(ref SuilTokenStream stream)
@@ -383,7 +183,7 @@ public static partial class SuilParser
         if (stream.PeekNext() is LeftParenthesisToken or LeftCurlyBracket)
             return new SuilLet(name.Value, ConsumeTemplate(ref stream), position);
 
-        var values = ConsumeValueOrBool(ref stream, "consuming let", references: false, commasEnd: false);
+        var values = ConsumeValueOrBool(ref stream, "consuming let", commasEnd: false);
         ExpectSemicolon(ref stream, "consuming let");
         return new SuilLet(name.Value, new SuilValueList(values), position);
     }
@@ -427,7 +227,7 @@ public static partial class SuilParser
                     if (stream.PeekNext() is ColonToken)
                     {
                         stream.ConsumeNext();
-                        defaults[parameter.Value] = ConsumeValueOrBool(ref stream, "consuming template parameters", references: false);
+                        defaults[parameter.Value] = ConsumeValueOrBool(ref stream, "consuming template parameters");
                         stream.SkipWhitespace();
                     }
                     else if (defaults.Count > 0)
@@ -518,7 +318,6 @@ public static partial class SuilParser
 
         string? tag;
         var properties = new List<SuilProperty>();
-        var events = new List<SuilEventHandler>();
         var arguments = new List<SuilArgument>();
         var propertiesConsumed = false;
 
@@ -532,7 +331,7 @@ public static partial class SuilParser
                 break;
             case FunctionToken function: // row(size: 1): the properties are glued to the tag
                 tag = function.Value;
-                properties = ConsumeProperties(ref stream, events, arguments);
+                properties = ConsumeProperties(ref stream, arguments);
                 propertiesConsumed = true;
                 break;
             default:
@@ -598,7 +397,7 @@ public static partial class SuilParser
         if (!propertiesConsumed && stream.PeekNext() is LeftParenthesisToken)
         {
             stream.ConsumeNext();
-            properties = ConsumeProperties(ref stream, events, arguments);
+            properties = ConsumeProperties(ref stream, arguments);
         }
 
         var children = new List<ISuilElementNode>();
@@ -611,7 +410,7 @@ public static partial class SuilParser
             children = ConsumeElementList(ref stream);
         }
 
-        return new SuilElement(access, tag, id, classes, properties, children, position) { Events = events, Arguments = arguments };
+        return new SuilElement(access, tag, id, classes, properties, children, position) { Arguments = arguments };
     }
 
     /// <summary>
@@ -620,7 +419,6 @@ public static partial class SuilParser
     /// item  = arg | prop
     /// arg   = value-list, that doesn't start with an ident
     /// prop  = ident , [ ":" , [ "?" ] , value-list ]
-    ///       | ident , "=>" , handler
     /// An item that is not a property is an argument of a template, like in a call in C#: <c>btn ("Go", 12, tint: red)</c>.
     /// The arguments go first, the named ones after them. An ident alone is a flag (<c>disabled</c>), so an argument can't
     /// be an ident, except <c>true</c> and <c>false</c>: any other is given by name.
@@ -629,7 +427,6 @@ public static partial class SuilParser
     /// </summary>
     private static List<SuilProperty> ConsumeProperties(
         ref SuilTokenStream stream,
-        List<SuilEventHandler>? events,
         List<SuilArgument>? arguments)
     {
         var properties = new List<SuilProperty>();
@@ -658,14 +455,14 @@ public static partial class SuilParser
                         $"expected a property name, not {Describe(stream.PeekNext())}");
                 }
 
-                if (properties.Count > 0 || events?.Count > 0)
+                if (properties.Count > 0)
                 {
                     throw ErrorAtNext(ref stream,
                         "consuming properties",
                         "a positional argument can't follow a named one: the arguments by position go first");
                 }
 
-                arguments.Add(new SuilArgument(ConsumeValueOrBool(ref stream, "consuming arguments", references: false), position));
+                arguments.Add(new SuilArgument(ConsumeValueOrBool(ref stream, "consuming arguments"), position));
                 stream.SkipWhitespace();
 
                 var after = stream.ConsumeNext();
@@ -684,33 +481,6 @@ public static partial class SuilParser
 
             stream.SkipWhitespace();
 
-            // on-pressed => @OnSubmit
-            if (stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is DelimToken { CodePoint: '>' })
-            {
-                if (events == null)
-                {
-                    throw ErrorAtNext(ref stream,
-                        "consuming properties",
-                        "an event handler is only for the properties of an element, not for a statement");
-                }
-
-                stream.ConsumeNext();
-                stream.ConsumeNext();
-                events.Add(ConsumeEventHandler(ref stream, name.Value, position));
-                stream.SkipWhitespace();
-
-                var next = stream.ConsumeNext();
-                if (next is CommaToken)
-                    continue;
-
-                if (next is RightParenthesisToken)
-                    return properties;
-
-                throw ErrorAtCurrent(ref stream,
-                    "consuming properties",
-                    $"expected ',' or ')' after a handler, not {Describe(next)}");
-            }
-
             List<ISuilValue>? value = null;
             var isSoft = false;
 
@@ -725,10 +495,7 @@ public static partial class SuilParser
                     isSoft = true;
                 }
 
-                if (stream.PeekNext() is IdentToken { Value: "bind" } && stream.PeekNext(2) is WhitespaceToken)
-                    value = new List<ISuilValue> { ConsumeBind(ref stream, "consuming properties") };
-                else
-                    value = ConsumeValueOrBool(ref stream, "consuming properties", references: false);
+                value = ConsumeValueOrBool(ref stream, "consuming properties");
 
                 stream.SkipWhitespace();
 

@@ -19,12 +19,6 @@ internal sealed class SuilGenerationException(DiagnosticDescriptor descriptor, S
 }
 
 /// <summary>
-/// A field of a view as its file describes it: the generator of another view in the same project can't see the code
-/// that is generated for this one, so the path <c>#panel/header</c> asks the file.
-/// </summary>
-internal sealed record ViewField(string Member, SuilAccess Access, INamedTypeSymbol Type);
-
-/// <summary>
 /// Writes the partial class of a view from the expanded tree: a field for every element with an id and
 /// <c>InitializeComponent()</c> that builds the elements, sets the classes, ids and properties and adds the children.
 /// </summary>
@@ -32,8 +26,7 @@ internal sealed partial class SuilViewEmitter(
     Compilation compilation,
     SuilTagRegistry tags,
     INamedTypeSymbol? suilControl,
-    INamedTypeSymbol viewClass,
-    Func<INamedTypeSymbol, IReadOnlyDictionary<string, ViewField>?> fieldsOfView)
+    INamedTypeSymbol viewClass)
 {
     private readonly StringBuilder _body = new();
     private readonly List<(string Id, string Name, string Type, string Access)> _fields = new();
@@ -41,7 +34,7 @@ internal sealed partial class SuilViewEmitter(
     private int _counter;
     private string? _contentVariable;
 
-    public string Emit(SuilElement root, string viewPath, string viewName, IReadOnlyList<SuilSubscription> subscriptions)
+    public string Emit(SuilElement root, string viewPath, string viewName)
     {
         var rootType = ResolveType(root);
 
@@ -51,14 +44,7 @@ internal sealed partial class SuilViewEmitter(
                 viewClass.ToDisplayString(), rootType.ToDisplayString(), root.Tag ?? "_");
         }
 
-        _rootId = root.Id?.ToString();
-
         EmitElement(root, "this", rootType);
-
-        // The handlers come last: they name elements of the whole view, which have their fields only now.
-        EmitHandlers();
-        EmitBindings();
-        EmitSubscriptions(root, subscriptions);
 
         return Wrap(viewPath, viewName);
     }
@@ -103,28 +89,12 @@ internal sealed partial class SuilViewEmitter(
         foreach (var property in properties)
         {
             // the root is the view itself, so its own properties can be named too
-            if (property.Value is [SuilBindValue bind])
-                _binds.Add(new PendingBind(variable, variable == "this" ? viewClass : type, element, property, bind));
-            else
-                EmitProperty(variable, variable == "this" ? viewClass : type, property);
+            EmitProperty(variable, variable == "this" ? viewClass : type, property);
 
             // The file assigned it, so the styles must leave it alone, unless it is soft: `?` before the value.
             // Only a control of SUIL is styled, an engine one has nothing to protect.
             if (isSuil && !property.IsSoft && !IsShorthandOnly(variable == "this" ? viewClass : type, property.Name))
                 _body.AppendLine($"            {variable}.SuilSetHard({Literal(property.Name)});");
-        }
-
-        if (element.Events.Count > 0)
-        {
-            // The hot reload doesn't touch the handlers, so the control that has them has to be kept through a reload: it is
-            // found by its id.
-            if (variable != "this" && element.Id == null)
-            {
-                throw new SuilGenerationException(SuilDiagnostics.HandlerNeedsId, element.Position,
-                    type.ToDisplayString(), element.Events[0].Event);
-            }
-
-            _handlers.Add(new PendingHandlers(variable, variable == "this" ? viewClass : type, element));
         }
 
         foreach (var node in element.Children)
@@ -187,7 +157,6 @@ internal sealed partial class SuilViewEmitter(
         };
 
         _fields.Add((id, name, typeName, access));
-        _fieldTypes[id] = (name, type);
         _body.AppendLine($"            this.{name} = {variable};");
     }
 
@@ -338,28 +307,9 @@ internal sealed partial class SuilViewEmitter(
                 : Fail("it needs a value");
         }
 
-        // `if (...) a else b`, `str(#a.value)`, a call: worked out when the event is raised, then cast to the type
-        if (_handlerElement != null && values is [SuilExprValue exprValue])
-        {
-            var value = ValueOf(exprValue.Root, target, _handlerElement, _handlerArguments);
-
-            if (IsNone(value) && canBeNull)
-                return "null";
-
-            return Materialize(value, target, property.Position, $"the property '{property.Name}'");
-        }
-
         // none is null, for what can be null (a string, a texture, a nullable); a text "none" is written with quotes
         if (canBeNull && values is [SuilIdent { Value: "none" }])
             return "null";
-
-        // `#name-edit.text`, `args.text`: what another element or the event has, read when the event is raised
-        if (_handlerElement != null && target.SpecialType != SpecialType.System_Boolean
-            && values is [SuilBoolValue { Root: SuilBoolReference or SuilBoolArgs } lone]
-            && (!IsNumeric(target.SpecialType, out _) || lone.Root is SuilBoolArgs))
-        {
-            return ReadOf(lone.Root, target, property.Position);
-        }
 
         if (target.SpecialType == SpecialType.System_String)
         {
@@ -379,17 +329,6 @@ internal sealed partial class SuilViewEmitter(
             return Fail("expected a string, an ident or a $localization key");
         }
 
-        // `min-width: calc(#panel.min-width * 2)`, or `min-width: #panel.min-width`: read when the event is raised
-        if (IsNumeric(target.SpecialType, out _) && _numContext != null)
-        {
-            if (values is [SuilNumValue numeric])
-                return ToNumeric(target.SpecialType, _numContext(numeric.Root));
-
-            // a lone reference is read as a bool by the parser; the property it is assigned to tells what it is
-            if (values is [SuilBoolValue { Root: SuilBoolReference reference }])
-                return ToNumeric(target.SpecialType, _numContext(new SuilNumReference(reference.Target, reference.Property)));
-        }
-
         if (values.Any(v => v is SuilNumValue))
             return Fail("a number expression can only be assigned to a numeric property");
 
@@ -401,11 +340,7 @@ internal sealed partial class SuilViewEmitter(
             if (values.Count == 1 && values[0] is SuilIdent { Value: "true" or "false" } boolean)
                 return boolean.Value;
 
-            // `!#menu.visible && args.pressed`: read when the event is raised
-            if (values.Count == 1 && values[0] is SuilBoolValue expression && _boolContext != null)
-                return _boolContext(expression.Root);
-
-            return Fail("expected true or false, or a bool expression in a handler of an event");
+            return Fail("expected true or false");
         }
 
         if (IsNumeric(target.SpecialType, out var isIntegral))
@@ -418,7 +353,7 @@ internal sealed partial class SuilViewEmitter(
                 return $"({CSharpKeyword(target.SpecialType)}){NumberLiteral(number, integer)}";
             }
 
-            return Fail("expected a number, or a number expression in a handler of an event");
+            return Fail("expected a number");
         }
 
         if (target.TypeKind == TypeKind.Enum)
@@ -454,12 +389,6 @@ internal sealed partial class SuilViewEmitter(
 
                 return Fail("expected one, two or four numbers (top right bottom left, as in SUIL)");
             }
-        }
-
-        if (_argumentMode)
-        {
-            return Fail("this type can't be written in a call: pass a number, a string, true or false, a member of an enum, " +
-                        "a $key, or take the value from args or from an element (#id.property)");
         }
 
         // A color, a texture, a border image and the like: read at run time by the parsers of the styles. The values are
@@ -801,9 +730,6 @@ internal sealed partial class SuilViewEmitter(
         sb.AppendLine("            global::Content.Suil.SuilViewRegistry.Register(this);");
         sb.AppendLine("        }");
         sb.AppendLine();
-
-        if (HasSubscriptions)
-            WriteSubscriptionMembers(sb);
 
         WriteViewMembers(sb, viewPath, viewName);
 

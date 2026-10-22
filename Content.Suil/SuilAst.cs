@@ -40,11 +40,6 @@ public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) 
     /// The <c>@Class =&gt; element</c> declarations of the file, in the order they are written.
     /// </summary>
     public IEnumerable<SuilViewDeclaration> Views => Items.OfType<SuilViewDeclaration>();
-
-    /// <summary>
-    /// The <c>on @Systems.X.Event for tag =&gt; ...</c> subscriptions of the file, in the order they are written.
-    /// </summary>
-    public IEnumerable<SuilSubscription> Subscriptions => Items.OfType<SuilSubscription>();
 }
 
 /// <summary>
@@ -52,58 +47,6 @@ public sealed record SuilFile(List<ISuilTopLevelItem> Items, SuilElement? Root) 
 /// a full name or its tail (<c>Ui.Picker</c>, <c>Picker</c>) that names one class.
 /// </summary>
 public sealed record SuilViewDeclaration(string ClassName, SuilElement Root, SuilPosition Position, string? Tag = null) : ISuilTopLevelItem;
-
-/// <summary>
-/// <c>on @Systems.Hunger.Changed for hunger-bar =&gt; { ... }</c>: what a view does when an event of a controller or of a system
-/// is raised. The view is the one that was given the tag by <c>@Class as hunger-bar =&gt; ...</c> in the same file; it is
-/// subscribed while it is in the tree of the controls.
-/// </summary>
-/// <param name="Scope"><see cref="SuilCallScope.Controller"/> or <see cref="SuilCallScope.System"/>.</param>
-/// <param name="Name">The name of the controller or of the system, as written (<c>Hunger</c>).</param>
-/// <param name="Event">The name of the C# event, as written (<c>Changed</c>).</param>
-/// <param name="Tag">The tag of the view.</param>
-/// <param name="Handler">What is done, written the way the handler of an element is; its <see cref="SuilEventHandler.Event"/>
-/// is the name of the event.</param>
-public sealed record SuilSubscription(
-    SuilCallScope Scope,
-    string Name,
-    string Event,
-    string Tag,
-    SuilEventHandler Handler,
-    SuilPosition Position) : ISuilTopLevelItem;
-
-/// <summary>
-/// When a binding works its value out again.
-/// </summary>
-public enum SuilBindMode
-{
-    /// <summary><c>bind expression</c>: every frame.</summary>
-    Frame,
-
-    /// <summary><c>bind expression every 1s</c>: every so often.</summary>
-    Every,
-
-    /// <summary><c>bind expression on @Systems.X.Event</c>: every time the event is raised.</summary>
-    Event,
-}
-
-/// <summary>
-/// <c>text: bind str(@Systems.Hunger.Value) every 1s</c>: the value of a property of an element that is worked out again
-/// while the view is in the tree of the controls. The property is assigned only when the value changed.
-/// </summary>
-/// <param name="Values">The expression, written the way the value of a property in a handler is.</param>
-/// <param name="Seconds">The period of <see cref="SuilBindMode.Every"/>.</param>
-/// <param name="Scope">The class of the event of <see cref="SuilBindMode.Event"/>.</param>
-/// <param name="Name">The name of the controller or of the system, as written.</param>
-/// <param name="Event">The name of the C# event, as written.</param>
-public sealed record SuilBindValue(
-    List<ISuilValue> Values,
-    SuilBindMode Mode,
-    double Seconds,
-    SuilCallScope Scope,
-    string? Name,
-    string? Event,
-    SuilPosition Position) : ISuilValue;
 
 /// <summary>
 /// <c>use "path";</c>
@@ -271,11 +214,6 @@ public sealed record SuilElement(
     SuilPosition Position) : ISuilElementNode
 {
     /// <summary>
-    /// The handlers of the events of the element, <c>on-pressed =&gt; @OnSubmit</c> in the parentheses.
-    /// </summary>
-    public List<SuilEventHandler> Events { get; init; } = new();
-
-    /// <summary>
     /// The positional arguments of a usage of a template, <c>btn ("Go", 12)</c>: the values before the named ones, in
     /// the order of the parameters of the template. Only a template takes them.
     /// </summary>
@@ -287,150 +225,11 @@ public sealed record SuilElement(
 /// </summary>
 public sealed record SuilArgument(List<ISuilValue> Values, SuilPosition Position);
 
-// ---- Event handlers ----
-
-/// <summary>
-/// <c>on-pressed =&gt; @OnSubmit</c> or <c>on-pressed =&gt; { ... }</c>: what the element does when its event is raised.
-/// <paramref name="Event"/> is the name of the event as written, the name of the member in kebab-case.
-/// </summary>
-/// <param name="IsBlock">The statements are in braces. A lone statement without braces gets the arguments of the event
-/// by itself if it is a call without parentheses; in a block the arguments are passed by hand.</param>
-public sealed record SuilEventHandler(string Event, List<ISuilStatement> Statements, SuilPosition Position, bool IsBlock = false);
-
-/// <summary>
-/// A statement of a handler: a call of a method of the view, or a change of an element.
-/// </summary>
-public interface ISuilStatement
-{
-    SuilPosition Position { get; }
-}
-
-/// <summary>
-/// What a call is made on.
-/// </summary>
-public enum SuilCallScope
-{
-    /// <summary><c>@OnSubmit</c>: the class of the view.</summary>
-    View,
-
-    /// <summary><c>@Controllers.Zoning.Pick()</c>: a UI controller.</summary>
-    Controller,
-
-    /// <summary><c>@Systems.Zoning.Pick()</c>: an entity system.</summary>
-    System,
-}
-
-/// <summary>
-/// <c>@OnSubmit</c>, <c>@OnSubmit(args, #go.disabled)</c>, <c>@Controllers.Zoning.Pick()</c>: calls a method of the class of
-/// the view, of a UI controller or of an entity system.
-/// </summary>
-/// <remarks>
-/// Without parentheses (<paramref name="Arguments"/> is <c>null</c>) the method takes nothing, or, as the only statement
-/// of a handler without a block, the arguments of the event. With them, it takes what is listed.
-/// </remarks>
-/// <param name="Method">The name of the method.</param>
-/// <param name="Scope">The class it is called on.</param>
-/// <param name="Name">The name of the controller or of the system, as written (<c>Zoning</c>).</param>
-/// <param name="Arguments">What is passed, or <c>null</c> if there are no parentheses.</param>
-public sealed record SuilCallStatement(
-    string Method,
-    SuilPosition Position,
-    SuilCallScope Scope = SuilCallScope.View,
-    string? Name = null,
-    List<SuilCallArgument>? Arguments = null) : ISuilStatement;
-
-/// <summary>
-/// An argument of a call.
-/// </summary>
-public abstract record SuilCallArgument(SuilPosition Position);
-
-/// <summary>
-/// <c>args</c>, <c>args.new</c>: the arguments of the event, or a member of them. The path is as written (kebab-case).
-/// </summary>
-public sealed record SuilEventArgument(List<string> Path, SuilPosition Position) : SuilCallArgument(Position);
-
-/// <summary>
-/// <c>#panel</c>, <c>&amp;</c>: an element. <c>#panel.min-width</c>, <c>&amp;.value</c>: a member of it.
-/// </summary>
-public sealed record SuilTargetArgument(SuilTarget Target, string? Property, SuilPosition Position) : SuilCallArgument(Position);
-
-/// <summary>
-/// A value written the way the value of a property is: a number, a string, <c>true</c>, a <c>$key</c>, an enum member, a
-/// number or bool expression.
-/// </summary>
-public sealed record SuilValueArgument(List<ISuilValue> Values, SuilPosition Position) : SuilCallArgument(Position);
-
-/// <summary>
-/// <c>if (cond) { ... } elif (cond) { ... } else { ... }</c>: the statements of the first branch whose condition holds, or
-/// the ones after <c>else</c> if there is none.
-/// </summary>
-/// <param name="Branches">The <c>if</c> and the <c>elif</c>s, in the order of the file.</param>
-/// <param name="Else">The statements after <c>else</c>, <c>null</c> if there is no <c>else</c>.</param>
-public sealed record SuilIfStatement(List<SuilIfBranch> Branches, List<ISuilStatement>? Else, SuilPosition Position)
-    : ISuilStatement;
-
-/// <summary>
-/// One <c>if (cond) { ... }</c> or <c>elif (cond) { ... }</c>.
-/// </summary>
-public sealed record SuilIfBranch(SuilBoolNode Condition, List<ISuilStatement> Body, SuilPosition Position);
-
-/// <summary>
-/// <c>#details (visible: true, add .open, remove :loading)</c> or <c>&amp;(set .active args.pressed)</c>: changes an
-/// element. The parentheses hold the properties to assign (constants) and the changes of the classes.
-/// </summary>
-public sealed record SuilTargetStatement(SuilTarget Target, List<ISuilTargetItem> Items, SuilPosition Position)
-    : ISuilStatement;
-
-/// <summary>
-/// An item in the parentheses of a <see cref="SuilTargetStatement"/>.
-/// </summary>
-public interface ISuilTargetItem
-{
-    SuilPosition Position { get; }
-}
-
-/// <summary>
-/// <c>min-width +: 10</c>: changes a numeric property by a number, the way <c>+=</c> does. The operators are
-/// <c>+: -: *: /:</c>.
-/// </summary>
-public sealed record SuilOperatorItem(string Property, char Operator, SuilNumNode Operand, SuilPosition Position)
-    : ISuilTargetItem;
-
-/// <summary>
-/// <c>visible: true</c>: assigns a property of the element.
-/// </summary>
-public sealed record SuilPropertyItem(SuilProperty Property) : ISuilTargetItem
-{
-    public SuilPosition Position => Property.Position;
-}
-
-public enum SuilStyleOp
-{
-    /// <summary><c>add</c>: puts the classes and the pseudo-classes on the element.</summary>
-    Add,
-
-    /// <summary><c>remove</c>: takes them off.</summary>
-    Remove,
-
-    /// <summary><c>set</c>: puts them on or takes them off by a state: <c>set .open true</c>.</summary>
-    Set,
-}
-
-/// <summary>
-/// A class (<c>.open</c>) or a pseudo-class (<c>:loading</c>) in a change of the styles.
-/// </summary>
-public sealed record SuilStyleRef(bool IsPseudo, SuilName Name);
-
-/// <summary>
-/// The state of <c>set</c>: a bool expression, like <c>true</c>, <c>args.pressed</c> or <c>!#menu.visible</c>.
-/// </summary>
-public sealed record SuilStateValue(SuilBoolNode Expression);
-
 // ---- Bool expressions ----
 
 /// <summary>
 /// A node of a bool expression: <c>!</c>, <c>&amp;&amp;</c> and <c>||</c> of <c>true</c>, <c>false</c>, the variables
-/// (<c>&lt;flag&gt;</c>) and, in the handlers of the events only, the bool properties of the elements.
+/// (<c>&lt;flag&gt;</c>).
 /// </summary>
 public abstract record SuilBoolNode;
 
@@ -447,94 +246,11 @@ public sealed record SuilBoolAnd(SuilBoolNode Left, SuilBoolNode Right) : SuilBo
 
 public sealed record SuilBoolOr(SuilBoolNode Left, SuilBoolNode Right) : SuilBoolNode;
 
-/// <summary>
-/// <c>#menu/header.visible</c> or <c>&amp;.disabled</c>: a bool property of an element, read when the handler runs.
-/// </summary>
-/// <param name="Target">The element, the same way a statement names it.</param>
-/// <param name="Property">The property as written (kebab-case).</param>
-public sealed record SuilBoolReference(SuilTarget Target, string Property) : SuilBoolNode;
-
-/// <summary>
-/// <c>args.pressed</c>: a bool member of the arguments of the event.
-/// </summary>
-public sealed record SuilBoolArgs(string Member, SuilPosition Position) : SuilBoolNode;
-
-// ---- Value expressions ----
-
-/// <summary>
-/// A node of a value expression, the value of a property or of an argument that is worked out when the event is raised:
-/// a property of an element, a member of the arguments, the result of a call, <c>num()</c>, <c>str()</c>, a value by
-/// a condition (<c>if (...) a else b</c>) or a string put together with <c>+</c>. It is also what the sides of a
-/// comparison are.
-/// </summary>
-public abstract record SuilValueNode(SuilPosition Position);
-
-/// <summary>
-/// A value as it is written in a file: a number, a string, an ident (<c>true</c>, <c>none</c>, a member of an enum), a
-/// <c>$key</c>. A variable is replaced when the file is expanded.
-/// </summary>
-public sealed record SuilLiteralNode(ISuilValue Value, SuilPosition Position) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>#panel.min-width</c>, <c>&amp;.model.name</c>: a property of an element and, after it, the members of that.
-/// </summary>
-public sealed record SuilReferenceNode(SuilTarget Target, List<string> Path, SuilPosition Position) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>args</c>, <c>args.new</c>, <c>args.event.handled</c>: the arguments of the event or a member of them.
-/// </summary>
-public sealed record SuilArgsNode(List<string> Path, SuilPosition Position) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>@Controllers.Info.GetName()</c>: the result of a call. Without parentheses and with no such method it is a property
-/// or a field (<c>@Controllers.Info.WorldTemp</c>), and the members after it (<c>@Controllers.Info.GetTime().Hours</c>) are
-/// read from the value.
-/// </summary>
-public sealed record SuilCallNode(SuilCallStatement Call, SuilPosition Position, List<string>? Members = null) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>num(x)</c> and <c>str(x)</c>: the value as a number, the value as a text.
-/// </summary>
-/// <param name="Name"><c>num</c> or <c>str</c>.</param>
-public sealed record SuilFunctionNode(string Name, SuilValueNode Argument, SuilPosition Position) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>a + b + c</c>: texts put together.
-/// </summary>
-public sealed record SuilConcatNode(List<SuilValueNode> Parts, SuilPosition Position) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>calc(...)</c>, <c>min()</c> and the like: a number expression.
-/// </summary>
-public sealed record SuilNumberNode(SuilNumNode Root, SuilPosition Position) : SuilValueNode(Position);
-
-/// <summary>
-/// <c>if (c) a elif (d) b else e</c>: the value of the first branch whose condition holds.
-/// </summary>
-public sealed record SuilConditionalNode(List<SuilConditionalBranch> Branches, SuilValueNode Else, SuilPosition Position)
-    : SuilValueNode(Position);
-
-public sealed record SuilConditionalBranch(SuilBoolNode Condition, SuilValueNode Value, SuilPosition Position);
-
-/// <summary>
-/// A value expression as the value of a property or of an argument of a call (<c>text: if (...) a else b</c>,
-/// <c>text: str(#a.value)</c>, <c>@Log(@Controllers.Info.Name)</c>).
-/// </summary>
-public sealed record SuilExprValue(SuilValueNode Root, SuilPosition Position) : ISuilValue;
-
-/// <summary>
-/// <c>a == b</c>, <c>a != b</c>, <c>a &lt; b</c>, <c>a &gt; b</c>, <c>a &lt;= b</c>, <c>a &gt;= b</c>: a comparison of
-/// two values, a bool.
-/// </summary>
-/// <param name="Operator"><c>==</c>, <c>!=</c>, <c>&lt;</c>, <c>&gt;</c>, <c>&lt;=</c> or <c>&gt;=</c>.</param>
-public sealed record SuilBoolCompare(string Operator, SuilValueNode Left, SuilValueNode Right, SuilPosition Position) : SuilBoolNode;
-
 // ---- Number expressions ----
 
 /// <summary>
 /// A node of a number expression, the <c>calc()</c> of a numeric field: <c>+ - * /</c>, parentheses, <c>min()</c>,
-/// <c>max()</c>, <c>clamp()</c> and <c>abs()</c> of numbers, <c>px</c> lengths, the variables and, in the handlers of the
-/// events only, the numeric properties of the elements.
+/// <c>max()</c>, <c>clamp()</c> and <c>abs()</c> of numbers, <c>px</c> lengths and the variables.
 /// </summary>
 public abstract record SuilNumNode;
 
@@ -554,39 +270,16 @@ public sealed record SuilNumBinary(char Operator, SuilNumNode Left, SuilNumNode 
 public sealed record SuilNumFunction(string Name, List<SuilNumNode> Arguments, SuilPosition Position) : SuilNumNode;
 
 /// <summary>
-/// <c>#panel.min-width</c> or <c>&amp;.min-height</c>: a numeric property of an element, read when the handler runs.
-/// </summary>
-public sealed record SuilNumReference(SuilTarget Target, string Property) : SuilNumNode;
-
-/// <summary>
 /// A number expression as the value of a property. When the file is expanded the variables are replaced and the constants
-/// are folded to a length in <c>px</c>: what stays an expression depends on the elements, and is for the handlers.
+/// are folded to a length in <c>px</c>.
 /// </summary>
 public sealed record SuilNumValue(SuilNumNode Root, SuilPosition Position) : ISuilValue;
 
 /// <summary>
 /// A bool expression as the value of a property. When the file is expanded the variables are replaced and the constants
-/// are folded: what stays an expression is only what depends on the elements, which the handlers of the events can use.
+/// are folded to <c>true</c> or <c>false</c>.
 /// </summary>
 public sealed record SuilBoolValue(SuilBoolNode Root, SuilPosition Position) : ISuilValue;
-
-/// <summary>
-/// <c>add .open :loading</c>, <c>remove .closed</c>, <c>set .open true</c>.
-/// </summary>
-public sealed record SuilStyleItem(
-    SuilStyleOp Op,
-    List<SuilStyleRef> Refs,
-    SuilStateValue? State,
-    SuilPosition Position) : ISuilTargetItem;
-
-/// <summary>
-/// The element a statement works on: <c>&amp;</c> is the view itself, the C# class of the declaration with its members, <c>#id</c> is the element
-/// of the view with that id, and <c>#id/field/field</c> goes on through the public fields of a view inside it.
-/// </summary>
-/// <param name="IsView"><c>&amp;</c>.</param>
-/// <param name="Id">The id, for a target that isn't <c>&amp;</c>.</param>
-/// <param name="Path">The fields after the id, as written (kebab-case).</param>
-public sealed record SuilTarget(bool IsView, SuilName? Id, List<string> Path, SuilPosition Position);
 
 /// <summary>
 /// A <c>let</c> inside a block of elements or a template: a constant or a template that the elements after it in the

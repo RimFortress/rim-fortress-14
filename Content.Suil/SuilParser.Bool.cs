@@ -3,58 +3,20 @@ namespace Content.Suil;
 public static partial class SuilParser
 {
     /// <summary>
-    /// A value that may be a bool expression. It is one when it has an operator or starts with a reference to an
-    /// element; anything else is an ordinary list of values.
+    /// A value that may be a bool expression. It is one when it has an operator; anything else is an ordinary list of values.
     /// <code>
-    /// expr      = and , { "||" , and }
-    /// and       = unary , { "&amp;&amp;" , unary }
-    /// unary     = "!" , unary | "(" , expr , ")" | "true" | "false" | variable | reference
-    /// reference = "&amp;" , "." , ident
-    ///           | "#" id , { "/" , ident } , "." , ident
-    ///           | "args" , "." , ident
+    /// expr  = and , { "||" , and }
+    /// and   = unary , { "&amp;&amp;" , unary }
+    /// unary = "!" , unary | "(" , expr , ")" | "true" | "false" | variable
     /// </code>
     /// </summary>
-    /// <param name="references">
-    /// Whether the properties of elements may be named: they can in the handlers of events, where they are read when the
-    /// event is raised, and can't in the declaration of an element.
-    /// </param>
     /// <param name="commasEnd">Whether a comma ends the value; the value of <c>let</c> may have commas in it.</param>
-    private static List<ISuilValue> ConsumeValueOrBool(ref SuilTokenStream stream, string context, bool references, bool commasEnd = true)
+    private static List<ISuilValue> ConsumeValueOrBool(ref SuilTokenStream stream, string context, bool commasEnd = true)
     {
         stream.SkipWhitespace();
 
-        // `if (...) a else b`, a call, `num()`, `str()`
-        if (references && StartsExpression(ref stream))
-            return ConsumeExpressionValue(ref stream, context, commasEnd);
-
-        if (references && stream.PeekNext() is DelimToken { CodePoint: '=' } && stream.PeekNext(2) is not DelimToken { CodePoint: '=' or '>' })
-        {
-            throw ErrorAtNext(ref stream, context,
-                "an expression is written without '=': 'if (condition) a else b', 'str(x) + \"y\"', '#a.text + \"y\"'");
-        }
-
-        // `#a.value > 5`, `args.text == "x"`: a comparison is a bool expression
-        if (references && HasTopLevelComparison(ref stream, commasEnd))
-        {
-            var comparisonPosition = stream.PeekPosition();
-            var compared = ConsumeBool(ref stream, context, references);
-            stream.SkipWhitespace();
-
-            if (!AtEndOfValue(stream.PeekNext(), commasEnd))
-            {
-                throw ErrorAtNext(ref stream, context,
-                    $"expected '&&', '||' or the end of the value, not {Describe(stream.PeekNext())}");
-            }
-
-            return new List<ISuilValue> { new SuilBoolValue(compared, comparisonPosition) };
-        }
-
-        // `#a.text + "x"`, `"n: " + str(args.count)`: a text put together
-        if (references && HasTopLevelPlus(ref stream, commasEnd))
-            return ConsumeExpressionValue(ref stream, context, commasEnd);
-
-        // calc(), min(), max(), clamp() of numbers, the variables and (in handlers) the numeric properties of elements
-        if (TryConsumeNumValue(ref stream, context, references, commasEnd, out var number))
+        // calc(), min(), max(), clamp() of numbers and the variables
+        if (TryConsumeNumValue(ref stream, context, commasEnd, out var number))
             return number!;
 
         switch (ScanBool(ref stream, commasEnd))
@@ -68,7 +30,7 @@ public static partial class SuilParser
         }
 
         var position = stream.PeekPosition();
-        var node = ConsumeBool(ref stream, context, references);
+        var node = ConsumeBool(ref stream, context);
 
         stream.SkipWhitespace();
 
@@ -83,11 +45,11 @@ public static partial class SuilParser
     }
 
     /// <summary>
-    /// A bool expression, up to the end of it. The state of <c>set</c> is one.
+    /// A bool expression, up to the end of it.
     /// </summary>
-    private static SuilBoolNode ConsumeBool(ref SuilTokenStream stream, string context, bool references)
+    private static SuilBoolNode ConsumeBool(ref SuilTokenStream stream, string context)
     {
-        var left = ConsumeBoolAnd(ref stream, context, references);
+        var left = ConsumeBoolAnd(ref stream, context);
 
         while (true)
         {
@@ -98,13 +60,13 @@ public static partial class SuilParser
 
             stream.ConsumeNext();
             stream.ConsumeNext();
-            left = new SuilBoolOr(left, ConsumeBoolAnd(ref stream, context, references));
+            left = new SuilBoolOr(left, ConsumeBoolAnd(ref stream, context));
         }
     }
 
-    private static SuilBoolNode ConsumeBoolAnd(ref SuilTokenStream stream, string context, bool references)
+    private static SuilBoolNode ConsumeBoolAnd(ref SuilTokenStream stream, string context)
     {
-        var left = ConsumeBoolUnary(ref stream, context, references);
+        var left = ConsumeBoolUnary(ref stream, context);
 
         while (true)
         {
@@ -115,31 +77,25 @@ public static partial class SuilParser
 
             stream.ConsumeNext();
             stream.ConsumeNext();
-            left = new SuilBoolAnd(left, ConsumeBoolUnary(ref stream, context, references));
+            left = new SuilBoolAnd(left, ConsumeBoolUnary(ref stream, context));
         }
     }
 
-    private static SuilBoolNode ConsumeBoolUnary(ref SuilTokenStream stream, string context, bool references)
+    private static SuilBoolNode ConsumeBoolUnary(ref SuilTokenStream stream, string context)
     {
         stream.SkipWhitespace();
 
         var position = stream.PeekPosition();
 
-        if (references && stream.PeekNext() is not (DelimToken { CodePoint: '!' } or LeftParenthesisToken)
-            && TryConsumeComparison(ref stream, context, out var comparison))
-        {
-            return comparison!;
-        }
-
         switch (stream.PeekNext())
         {
             case DelimToken { CodePoint: '!' }:
                 stream.ConsumeNext();
-                return new SuilBoolNot(ConsumeBoolUnary(ref stream, context, references));
+                return new SuilBoolNot(ConsumeBoolUnary(ref stream, context));
             case LeftParenthesisToken:
             {
                 stream.ConsumeNext();
-                var inner = ConsumeBool(ref stream, context, references);
+                var inner = ConsumeBool(ref stream, context);
                 stream.SkipWhitespace();
 
                 if (stream.ConsumeNext() is not RightParenthesisToken)
@@ -156,56 +112,12 @@ public static partial class SuilParser
             case IdentToken { Value: "false" }:
                 stream.ConsumeNext();
                 return new SuilBoolConst(false);
-            case IdentToken { Value: "args" } when stream.PeekNext(2) is DelimToken { CodePoint: '.' }:
-            {
-                if (!references)
-                    throw ReferenceNotAllowed(ref stream, context);
-
-                stream.ConsumeNext();
-                stream.ConsumeNext();
-
-                return stream.ConsumeNext() is not IdentToken member
-                    ? throw ErrorAtCurrent(ref stream,
-                        context,
-                        $"expected a member of the arguments after 'args.', not {Describe(stream.Current)}")
-                    : new SuilBoolArgs(member.Value, position);
-            }
-            case DelimToken { CodePoint: '&' } when stream.PeekNext(2) is DelimToken { CodePoint: '.' }:
-            case HashToken:
-            case InterpolatedNameToken { Sigil: '#' }:
-                return ConsumeBoolReference(ref stream, context, references);
             default:
                 throw ErrorAtNext(ref stream,
                     context,
-                    $"expected 'true', 'false', a variable, a property of an element or '!', not {Describe(stream.PeekNext())}");
+                    $"expected 'true', 'false', a variable or '!', not {Describe(stream.PeekNext())}");
         }
     }
-
-    /// <summary>
-    /// <c>#menu/header.visible</c>, <c>&amp;.disabled</c>.
-    /// </summary>
-    private static SuilBoolNode ConsumeBoolReference(ref SuilTokenStream stream, string context, bool references)
-    {
-        if (!references)
-            throw ReferenceNotAllowed(ref stream, context);
-
-        var target = ConsumeTarget(ref stream, context);
-
-        if (stream.ConsumeNext() is not DelimToken { CodePoint: '.' } || stream.ConsumeNext() is not IdentToken property)
-        {
-            throw ErrorAtCurrent(ref stream,
-                context,
-                "expected '.property' after the element: the bool property to read, like '#menu.visible'");
-        }
-
-        return new SuilBoolReference(target, property.Value);
-    }
-
-    private static SuilParserError ReferenceNotAllowed(ref SuilTokenStream stream, string context)
-        => ErrorAtNext(ref stream,
-            context,
-            "the properties of elements and the arguments of the event can only be used in the handlers of events (on-pressed => ...); " +
-            "here only true, false and the variables can be");
 
     private static bool AtEndOfValue(ISuilToken token, bool commasEnd)
         => token is RightParenthesisToken or SemicolonToken or RightCurlyBracket or EofToken || commasEnd && token is CommaToken;
@@ -265,23 +177,6 @@ public static partial class SuilParser
                     break;
                 case DelimToken { CodePoint: '!' }:
                     found = true;
-                    break;
-                case DelimToken { CodePoint: '&' } when stream.PeekNext(i + 1) is DelimToken { CodePoint: '.' }:
-                    found = true;
-                    onlyBang = false;
-                    break;
-                case HashToken or InterpolatedNameToken { Sigil: '#' }:
-                    // `#menu.visible` or `#menu/header.visible`; a color is not followed by a dot or a slash
-                    if (stream.PeekNext(i + 1) is DelimToken { CodePoint: '.' or '/' })
-                    {
-                        found = true;
-                        onlyBang = false;
-                    }
-
-                    break;
-                case IdentToken { Value: "args" } when stream.PeekNext(i + 1) is DelimToken { CodePoint: '.' }:
-                    found = true;
-                    onlyBang = false;
                     break;
             }
 

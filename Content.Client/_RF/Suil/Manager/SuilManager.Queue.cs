@@ -62,7 +62,6 @@ public sealed partial class SuilManager
         if (_ui.RootControl is not { } root)
             return false;
 
-        SuilBindings.Failed = e => _sawmill.Error($"a binding failed and is switched off: {e}");
         _flusher = new RfStyleFlusher(FlushStyleUpdates);
         root.AddChild(_flusher);
         return true;
@@ -195,6 +194,5 @@ internal sealed class RfStyleFlusher : Control
         base.FrameUpdate(args);
 
         _flush();
-        SuilBindings.Update(args.DeltaSeconds);
     }
 }

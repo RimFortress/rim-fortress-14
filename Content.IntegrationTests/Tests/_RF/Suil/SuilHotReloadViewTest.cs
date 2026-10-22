@@ -30,8 +30,7 @@ public sealed class SuilHotReloadViewTest : GameTest
         var result = _reload.Reload(view);
 
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
-        Assert.That(result.Warnings, Has.Count.EqualTo(1));
-        Assert.That(result.Warnings[0], Does.Contain("handler"), "the handlers are not reloaded, and the reload says so");
+        Assert.That(result.Warnings, Is.Empty);
         Assert.That(Describe(view), Is.EqualTo(built), "the same tree, built from the file by the interpreter");
         Assert.That(view.HotSubmit, Is.SameAs(submit), "the control with a field is kept");
         Assert.That(result.Dependencies, Does.Contain("/tests/hot-reload-view.suil"));
@@ -40,25 +39,21 @@ public sealed class SuilHotReloadViewTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void The_Compiled_Handlers_Stay_Through_A_Reload()
+    public void The_Subscriptions_Made_In_The_Code_Stay_Through_A_Reload()
     {
         var view = new GeneratedHotReloadView();
         var submit = view.HotSubmit;
 
         Press(submit);
-        Assert.That(view.Submitted, Is.EqualTo(1), "the handler of the compiled code");
-        Assert.That(submit.HasSuilStyleClass("pressed"), Is.True);
-        Assert.That(view.HotNested.MinWidth, Is.EqualTo(4f), "min-width +: 4");
+        Assert.That(view.Submitted, Is.EqualTo(1), "the handler subscribed in the code");
 
         var result = _reload.Reload(view);
         Assert.That(result.Success, Is.True, string.Join("\n", result.Errors));
-        Assert.That(view.HotSubmit, Is.SameAs(submit), "the control that has the handlers is the same");
+        Assert.That(view.HotSubmit, Is.SameAs(submit), "the control that has a subscription is the same");
 
-        view.HotNested.MinWidth = 0;
         Press(submit);
 
         Assert.That(view.Submitted, Is.EqualTo(2), "the handler still works, and works once");
-        Assert.That(view.HotNested.MinWidth, Is.EqualTo(4f));
 
         _reload.Reload(view);
         Press(submit);
@@ -107,7 +102,7 @@ public sealed partial class GeneratedHotReloadView : RfBoxContainer
     public GeneratedHotReloadView()
     {
         InitializeComponent();
-    }
 
-    private void OnHotSubmit() => Submitted++;
+        HotSubmit.OnPressed += _ => Submitted++;
+    }
 }
