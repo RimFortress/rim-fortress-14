@@ -73,6 +73,11 @@ public sealed partial class RfCharacterSetupGui : RfBoxContainer
         InitializeComponent();
         IoCManager.InjectDependencies(this);
 
+        ResetButton.OnPressed += _ => ResetProfiles();
+        SaveProfilesButton.OnPressed += _ => SaveProfiles();
+        StatsButton.OnPressed += _ => OpenStats();
+        RulesButton.OnPressed += _ => OpenRules();
+
         Profiles = _preferencesManager.Preferences?.Characters.ToDictionary();
 
         _createNewCharacterButton = new RfButton

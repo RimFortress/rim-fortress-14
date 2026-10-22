@@ -1,5 +1,7 @@
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared._RF.Zoning.Components;
+using Content.Shared._RF.Zoning.Systems;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.Zoning.UI.Controls;
@@ -17,7 +19,23 @@ public sealed partial class ZoneVisualsControl : RfBoxContainer
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
-        _controller = UserInterfaceManager.GetUIController<ZoningUiController>();
+        _controller = Controller<ZoningUiController>();
+
+        SaveVisualsButton.OnPressed += _ =>
+        {
+            VisualChangesBox.Visible = false;
+            SaveVisuals();
+        };
+        ResetVisualsButton.OnPressed += _ =>
+        {
+            ResetVisuals();
+            UpdateVisuals();
+        };
+
+        Scope.ListenSystem<ZoningSystem, Entity<ZoneComponent>>(
+            (s, h) => s.OnZoneUpdated += h,
+            (s, h) => s.OnZoneUpdated -= h,
+            OnZoneUpdate);
     }
 
     [PublicAPI]

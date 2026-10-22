@@ -26,15 +26,14 @@ let profile-high-divider = {
         col .panel-highlighted {
             row (gap: 5px) {
                 _ (text: $<loc>-name-label)
-                line-edit #name-edit (min-width: 270px, align-self: center, on-text-changed => @SetName(args.text))
-                button #name-randomize (text: $<loc>-randomize, on-pressed => @RandomizeName)
+                line-edit #name-edit (min-width: 270px, align-self: center)
+                button #name-randomize (text: $<loc>-randomize)
             }
 
             button #randomize-everything-button (
                 text: $<loc>-randomize-everything,
                 max-width: 256px,
-                align-self: center,
-                on-pressed => @RandomizeEverything
+                align-self: center
             )
             _ #warning-label .danger (align-self: flex-start, max-width: 425px)
         }
@@ -42,16 +41,14 @@ let profile-high-divider = {
 
         /* Import/Export */
         col .panel-dark-bordered (min-width: 60px) {
-            button #import-button (text: $<loc>-import-button, on-pressed => @ImportProfile)
-            button #export-button (text: $<loc>-export-button, on-pressed => @ExportProfile)
+            button #import-button (text: $<loc>-import-button)
+            button #export-button (text: $<loc>-export-button)
             button #export-image-button (
-                text: $<loc>-export-image-button,
-                on-pressed => @ExportImage
+                text: $<loc>-export-image-button
             )
 
             button #open-images-button (
-                text: $<loc>-open-image-button,
-                on-pressed => @OpenImages
+                text: $<loc>-open-image-button
             )
         }
     }
@@ -68,8 +65,7 @@ let profile-high-divider = {
                         slider #skin (
                             min-value: 0,
                             max-value: 100,
-                            value: 20,
-                            on-value-changed => @OnSkinColorOnValueChanged
+                            value: 20
                         )
                         col #rgb-skin-color-container (visible: false)
                     }
@@ -102,13 +98,11 @@ let profile-high-divider = {
 
                         row (align-self: center) {
                             button #sprite-rotate-left .open-right (
-                                text: "◀",
-                                on-pressed => @RotatePreviewLeft
+                                text: "◀"
                             )
 
                             button #sprite-rotate-right .open-left (
-                                text: "▶",
-                                on-pressed => @RotatePreviewRight
+                                text: "▶"
                             )
                         }
                     }
@@ -121,8 +115,7 @@ let profile-high-divider = {
                             texture-button #species-info-button (
                                 tool-tip: $<loc>-guidebook-button-tooltip,
                                 vertical-alignment: center,
-                                scale: 0.3 0.3,
-                                on-pressed => @OnSpeciesInfoButtonPressed
+                                scale: 0.3 0.3
                             )
                         }
                         option-button #species-button
@@ -148,8 +141,7 @@ let profile-high-divider = {
                         button #show-clothes (
                             text: $<loc>-clothing-show,
                             pressed,
-                            toggle-mode,
-                            on-toggled => @ReloadPreview
+                            toggle-mode
                         )
                     }
                 }

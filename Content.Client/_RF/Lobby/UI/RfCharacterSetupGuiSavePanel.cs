@@ -11,5 +11,7 @@ public sealed partial class RfCharacterSetupGuiSavePanel : RfWindow
         InitializeComponent();
 
         CloseButtonVisible = false;
+
+        CancelButton.OnPressed += _ => Close();
     }
 }

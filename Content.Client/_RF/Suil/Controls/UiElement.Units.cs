@@ -124,6 +124,7 @@ public partial class UiElement
         // controls enter the tree from the top down, and its descendants follow. This also covers a screen built
         // before the SUIL was loaded or reloaded while it was detached.
         Suil.UpdateStyleOnEnter(this);
+        _scope?.Enter();
     }
 
     /// <inheritdoc/>
@@ -135,6 +136,7 @@ public partial class UiElement
             _viewportRoot.OnResized -= RefreshLengthContext;
 
         _viewportRoot = null;
+        _scope?.Exit();
     }
 
     private LengthContext BuildLengthContext()

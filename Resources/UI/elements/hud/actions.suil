@@ -6,8 +6,7 @@ let loc = actions-hotbar-widgets;
     tree-menu #tree (orientation: horizontal) {
         +tree-menu-button #build-button (
             tool-tip: $<loc>-build-tooltip,
-            texture-path: "<icons>/hammer-solid.svg.192dpi.png",
-            on-pressed => @Controllers.ConstructionMenu.ToggleWindow
+            texture-path: "<icons>/hammer-solid.svg.192dpi.png"
         )
 
         +tree-menu-button #passive-tasks-button (
@@ -17,8 +16,7 @@ let loc = actions-hotbar-widgets;
 
         +tree-menu-button #npc-jobs-button (
             tool-tip: $<loc>-npc-jobs-tooltip,
-            texture-path: "<icons>/arrow-down-wide-short-solid-full.192dpi.png",
-            on-pressed => @Controllers.NpcJobs.TogglePriorityWindow
+            texture-path: "<icons>/arrow-down-wide-short-solid-full.192dpi.png"
         )
 
         _ .low-divider (margin: 10 5)
@@ -32,11 +30,7 @@ let loc = actions-hotbar-widgets;
 
         +tree-menu-button #world-map-button (
             tool-tip: $<loc>-world-map-tooltip,
-            texture-path: "<icons>/map-location-dot-solid.svg.192dpi.png",
-            on-pressed => @Controllers.WorldMap.ToggleWindow
+            texture-path: "<icons>/map-location-dot-solid.svg.192dpi.png"
         )
     }
 }
-
-on @Systems.Selection.OnUpdateSelection for actions-hotbar-widget => @UpdateButtons
-on @Systems.ExecutableGoal.OnControllerAttached for actions-hotbar-widget => @UpdateList

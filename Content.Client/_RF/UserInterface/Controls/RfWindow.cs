@@ -1,12 +1,14 @@
 using System.Numerics;
-using Content.Client._RF.Suil;
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client.Guidebook;
 using Content.Client.Guidebook.Components;
 using Content.Shared.Guidebook;
 using Content.Suil;
 using Robust.Client.UserInterface;
+using Robust.Client.UserInterface.Controllers;
 using Robust.Client.UserInterface.CustomControls;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
@@ -27,6 +29,7 @@ public partial class RfWindow : BaseWindow
 
     private readonly RfWindowChrome _chrome = new();
     private GuidebookSystem? _guidebook;
+    private UiScope? _scope;
 
     public RfWindow()
     {
@@ -41,6 +44,12 @@ public partial class RfWindow : BaseWindow
         _chrome.OnCloseRequested += Close;
         _chrome.OnHelpRequested += Help;
     }
+
+    /// <summary>
+    /// What the window does while it is in the tree: listens to events, updates itself at an interval. See
+    /// <see cref="UiScope"/>.
+    /// </summary>
+    public UiScope Scope => _scope ??= new UiScope(IsInsideTree);
 
     public string? Title
     {
@@ -80,6 +89,27 @@ public partial class RfWindow : BaseWindow
 
         _guidebook ??= _sysMan.GetEntitySystem<GuidebookSystem>();
         _guidebook.OpenHelp(HelpGuidebookIds);
+    }
+
+    [ProxyFor(typeof(IUserInterfaceManager), nameof(IUserInterfaceManager.GetUIController))]
+    protected T Controller<T>() where T : UIController, new() => UserInterfaceManager.GetUIController<T>();
+
+    protected override void EnteredTree()
+    {
+        base.EnteredTree();
+        _scope?.Enter();
+    }
+
+    protected override void ExitedTree()
+    {
+        base.ExitedTree();
+        _scope?.Exit();
+    }
+
+    protected override void FrameUpdate(FrameEventArgs args)
+    {
+        base.FrameUpdate(args);
+        _scope?.Update(args.DeltaSeconds, VisibleInTree);
     }
 
     protected override DragMode GetDragModeFor(Vector2 relativeMousePos)

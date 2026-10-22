@@ -11,16 +11,14 @@
 
         button #select-button (
             flex-grow: 1,
-            toggle-mode,
-            on-pressed => @SelectButtonPressed
+            toggle-mode
         )
 
         framed-icon-button #colors-button .square (
             "/Textures/Interface/palette.svg.png",
             set-size: 36 36,
             toggle-mode,
-            visible: false,
-            on-pressed => @ColorsButtonPressed
+            visible: false
         )
     }
     col #colors-container (visible: false, gap: 4px, padding: 4px 0 0 0)

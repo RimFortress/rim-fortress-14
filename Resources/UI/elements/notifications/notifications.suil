@@ -11,8 +11,7 @@
             icon-button #settings (
                 "<icons>/gear-solid-full.svg.192dpi.png",
                 tool-tip: $notification-settings-tooltip,
-                set-size: 24,
-                on-pressed => @Controllers.NotificationsSettings.ToggleWindow
+                set-size: 24
             )
         }
 
@@ -22,15 +21,12 @@
     }
 }
 
-on @Controllers.NotificationsPanel.OnNotificationAdded for notifications-panel-widget => @AddNotification
-on @Controllers.NotificationsPanel.OnNotificationRemoved for notifications-panel-widget => @RemoveNotification
-
 /*
  * One notification: the button with the name and the time, the bar of the time left under the text, and the description
  * that opens under the button.
  */
 @NotificationButton => col {
-    button #button .square (toggle-mode, on-pressed => @OnButtonPressed) {
+    button #button .square (toggle-mode) {
         row {
             _ #name-label (margin: 0 3, flex-grow: 1)
             _ #time-label (margin: 0 3)
@@ -50,8 +46,7 @@ on @Controllers.NotificationsPanel.OnNotificationRemoved for notifications-panel
                 "<icons>/location-dot-solid-full.svg.192dpi.png",
                 tool-tip: $notification-focus-tooltip,
                 set-size: 24,
-                align-self: flex-end,
-                on-pressed => @OnFocusPressed
+                align-self: flex-end
             )
         }
     }

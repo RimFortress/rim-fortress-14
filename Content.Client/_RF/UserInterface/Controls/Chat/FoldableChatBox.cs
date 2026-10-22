@@ -22,6 +22,8 @@ public sealed partial class FoldableChatBox : ChatBox, ISuilReloadHandler
         _openTexture = _cache.GetTexture("/Textures/_RF/Interface/chevron-down-solid-full.svg.192dpi.png");
         _foldedTexture = _cache.GetTexture("/Textures/_RF/Interface/chevron-left-solid-full.svg.192dpi.png");
 
+        ToggleButton.OnPressed += _ => OnTogglePressed();
+
         PlaceChatPanel();
         ChatWindowPanel.Visible = false;
 

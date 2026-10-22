@@ -39,12 +39,14 @@ public sealed partial class StockpileItemButton : RfButton
     public StockpileItemButton()
     {
         InitializeComponent();
+        Subscribe();
     }
 
     public StockpileItemButton(StockpileCategoryPrototype proto, int count)
     {
         IoCManager.InjectDependencies(this);
         InitializeComponent();
+        Subscribe();
 
         _category = true;
         var sprite = _entManager.System<SpriteSystem>();
@@ -70,6 +72,7 @@ public sealed partial class StockpileItemButton : RfButton
     {
         IoCManager.InjectDependencies(this);
         InitializeComponent();
+        Subscribe();
 
         Disabled = true;
 
@@ -83,6 +86,18 @@ public sealed partial class StockpileItemButton : RfButton
             .ToList();
 
         EnsureSetup();
+    }
+
+    private void Subscribe()
+    {
+        Counter.OnValueChanged += args => MaxValue = args.New;
+        UnlimitedCheck.OnPressed += _ =>
+        {
+            UnlimitedCheck.ToolTip = Loc.GetString(UnlimitedCheck.Pressed
+                ? "stockpile-settings-menu-unlimited-checkbox-enabled-tooltip"
+                : "stockpile-settings-menu-unlimited-checkbox-disabled-tooltip");
+            MaxValue = UnlimitedCheck.Pressed ? -1 : 0;
+        };
     }
 
     private void EnsureSetup()

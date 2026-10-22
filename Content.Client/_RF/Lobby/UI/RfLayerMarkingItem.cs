@@ -47,6 +47,9 @@ public sealed partial class RfLayerMarkingItem : RfBoxContainer, ISearchableCont
         InitializeComponent();
         IoCManager.InjectDependencies(this);
 
+        SelectButton.OnPressed += _ => SelectButtonPressed();
+        ColorsButton.OnPressed += _ => ColorsButtonPressed();
+
         _sprite = _entity.System<SpriteSystem>();
 
         _markingsModel = model;

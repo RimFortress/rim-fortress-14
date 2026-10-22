@@ -1,5 +1,6 @@
 using Content.Client._RF.NPC.Executable.Systems;
 using Content.Client._RF.Selection;
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client._RF.World;
 using Content.Client.CombatMode;
 using Content.Shared._RF.World.Components;
@@ -12,7 +13,7 @@ using Robust.Shared.Utility;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
-public sealed partial class PopList : UIWidget
+public sealed partial class PopList : RfWidget
 {
     [Dependency] private IEntityManager _entityManager = default!;
     [Dependency] private IPlayerManager _player = default!;
@@ -43,6 +44,26 @@ public sealed partial class PopList : UIWidget
         IoCManager.InjectDependencies(this);
         InitializeComponent();
         SetCombatIcon(NoCombatModeIcon);
+
+        CombatButton.OnPressed += _ =>
+        {
+            ResolveSystems();
+            _executable.SetCombatMode(CombatButton.Pressed);
+            UpdateCombat();
+        };
+
+        Scope.ListenSystem<SelectionSystem>(
+            (s, h) => s.OnSelectedChanged += h,
+            (s, h) => s.OnSelectedChanged -= h,
+            UpdateSelection);
+        Scope.ListenSystem<CombatModeSystem, Entity<CombatModeComponent>>(
+            (s, h) => s.CombatModeChanged += h,
+            (s, h) => s.CombatModeChanged -= h,
+            OnCombatModeChanged);
+        Scope.ListenSystem<RimFortressWorldSystem, Entity<RimFortressPlayerComponent>>(
+            (s, h) => s.OnPlayerUpdate += h,
+            (s, h) => s.OnPlayerUpdate -= h,
+            OnPlayerUpdate);
     }
 
     private void SetCombatIcon(string path)

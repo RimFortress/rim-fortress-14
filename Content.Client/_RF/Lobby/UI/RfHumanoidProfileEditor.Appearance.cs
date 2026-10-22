@@ -217,7 +217,7 @@ public sealed partial class RfHumanoidProfileEditor
         // make the species guide book a field on the species prototype.
         // I.e., do what jobs/antags do.
 
-        var guidebookController = UserInterfaceManager.GetUIController<GuidebookUIController>();
+        var guidebookController = Controller<GuidebookUIController>();
         var species = Profile?.Species ?? HumanoidCharacterProfile.DefaultSpecies;
         var page = DefaultSpeciesGuidebook;
         if (_prototypeManager.HasIndex<GuideEntryPrototype>(species))

@@ -83,13 +83,11 @@ let loc = ui-lobby;
                     vote-call-menu-button .font-big
                     _ .flex-fill
                     +button #options-button .font-big (
-                        text: $<loc>-options-button,
-                        on-pressed => @Controllers.Options.ToggleWindow
+                        text: $<loc>-options-button
                     )
 
                     +button #leave-button .font-big (
-                        text: $<loc>-leave-button,
-                        on-pressed => @Leave
+                        text: $<loc>-leave-button
                     )
                 }
             }

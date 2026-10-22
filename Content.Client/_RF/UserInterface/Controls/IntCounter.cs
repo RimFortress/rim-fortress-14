@@ -79,6 +79,10 @@ public sealed partial class IntCounter : RfBoxContainer
     {
         InitializeComponent();
 
+        Plus.OnPressed += _ => Value++;
+        Minus.OnPressed += _ => Value--;
+        CountLine.OnTextChanged += OnCountTextChanged;
+
         CountLine.Text = Value.ToString();
     }
 

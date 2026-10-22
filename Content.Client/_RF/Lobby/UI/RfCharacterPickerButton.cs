@@ -24,6 +24,8 @@ public sealed partial class RfCharacterPickerButton : RfButton
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
+        DeleteButton.OnPressed += _ => OnDeleteConfirmed();
+
         ToggleMode = true;
         Group = group;
         var description = profile.Name;

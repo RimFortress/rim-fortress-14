@@ -53,6 +53,8 @@ public sealed partial class PopIcon : RfButton
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
+        OnToggled += _ => OnButtonToggled();
+
         AddSuilStyleClass(SuilClass.Transparent);
 
         Icon.OverrideDirection = Direction.South;
@@ -107,7 +109,7 @@ public sealed partial class PopIcon : RfButton
             return;
 
         if (args.Function == EngineKeyFunctions.UIRightClick)
-            UserInterfaceManager.GetUIController<PopInfoUIController>().OpenWindow(uid, GlobalPosition);
+            Controller<PopInfoUIController>().OpenWindow(uid, GlobalPosition);
     }
 
     protected override void FrameUpdate(FrameEventArgs args)

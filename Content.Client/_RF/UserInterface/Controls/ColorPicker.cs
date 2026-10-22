@@ -32,6 +32,8 @@ public sealed partial class ColorPicker : RfBoxContainer
 
         _window = UserInterfaceManager.CreateWindow<ColorPickerWindow>();
 
+        PickColor.OnPressed += _ => OnPickPressed();
+
         _window.Selector.OnColorChanged += color =>
         {
             ColorPanel.BackgroundColor = color;

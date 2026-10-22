@@ -1,6 +1,8 @@
 using Content.Client._RF.Construction;
 using Content.Client._RF.NPC.Executable.Systems;
+using Content.Client._RF.Selection;
 using Content.Client._RF.UserInterface.Controllers;
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client._RF.UserInterface.Controls.TreeMenu;
 using Content.Client._RF.World;
 using Content.Client._RF.Zoning.UI;
@@ -14,7 +16,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.UserInterface.Controls;
 
-public sealed partial class ActionsHotbarWidget : UIWidget
+public sealed partial class ActionsHotbarWidget : RfWidget
 {
     [Dependency] private IPlayerManager _player = default!;
     [Dependency] private IEntityManager _entity = default!;
@@ -33,7 +35,20 @@ public sealed partial class ActionsHotbarWidget : UIWidget
     {
         InitializeComponent();
 
-        _zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
+        _zoningController = Get<ZoningUiController>();
+
+        BuildButton.OnPressed += _ => Get<ConstructionMenuUiController>().ToggleWindow();
+        NpcJobsButton.OnPressed += _ => Get<NpcJobsUiController>().TogglePriorityWindow();
+        WorldMapButton.OnPressed += _ => Get<WorldMapUiController>().ToggleWindow();
+
+        Scope.ListenSystem<SelectionSystem>(
+            (s, h) => s.OnUpdateSelection += h,
+            (s, h) => s.OnUpdateSelection -= h,
+            UpdateButtons);
+        Scope.ListenSystem<ExecutableGoalSystem>(
+            (s, h) => s.OnControllerAttached += h,
+            (s, h) => s.OnControllerAttached -= h,
+            UpdateList);
     }
 
     private void ResolveSystems()

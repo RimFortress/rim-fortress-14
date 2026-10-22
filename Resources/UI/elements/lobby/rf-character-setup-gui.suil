@@ -10,18 +10,15 @@ let loc = character-setup-gui-character-setup;
         setup-title ($<loc>-label)
         _ .flex-fill
         +button #reset-button .font-big (
-            text: $humanoid-profile-editor-reset-button,
-            on-pressed => @ResetProfiles
+            text: $humanoid-profile-editor-reset-button
         )
 
         +button #save-profiles-button .font-big (
-            text: $<loc>-save-profiles-button,
-            on-pressed => @SaveProfiles
+            text: $<loc>-save-profiles-button
         )
 
         button #stats-button .font-big (
-            text: $<loc>-stats-button,
-            on-pressed => @OpenStats
+            text: $<loc>-stats-button
         )
 
         command-button #admin-remarks-button .font-big (
@@ -30,8 +27,7 @@ let loc = character-setup-gui-character-setup;
         )
 
         button #rules-button .font-big (
-            text: $<loc>-rules-button,
-            on-pressed => @OpenRules
+            text: $<loc>-rules-button
         )
         +button #close-button .font-big (text: $<loc>-close-button)
     }

@@ -28,8 +28,7 @@
 
             button #toggle-button .icon-button .square (
                 tool-tip: $foldable-chat-toggle-tooltip,
-                set-size: 38,
-                on-pressed => @OnTogglePressed
+                set-size: 38
             ) {
                 _ #toggle-icon .icon (
                     background-image: texture("<icons>/chevron-left-solid-full.svg.192dpi.png")

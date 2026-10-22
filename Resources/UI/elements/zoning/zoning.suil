@@ -4,7 +4,7 @@ let visuals-loc = zone-visuals;
 /* The window of a zone: the name and the content of the zone, the look of the zone, and the buttons under them. */
 @BaseZoneWindow => window (title: $<loc>-title, min-size: 450 550) {
     col {
-        tab #tab (flex-grow: 1, on-tab-changed => @OnTabChanged) {
+        tab #tab (flex-grow: 1) {
             scroll-container (flex-grow: 1) {
                 col {
                     zone-change-name-control #name-change
@@ -26,9 +26,6 @@ let visuals-loc = zone-visuals;
     }
 }
 
-on @Systems.Zoning.OnZoneUpdated for base-zone-window => @OnZoneUpdate
-on @Systems.Zoning.OnZoneDeleted for base-zone-window => @OnZoneDelete
-
 /* The buttons under the window of a zone: add tiles, remove tiles, delete the zone. */
 @ZoneChangeTileControl => row {
     _ (flex-grow: 1)
@@ -36,22 +33,19 @@ on @Systems.Zoning.OnZoneDeleted for base-zone-window => @OnZoneDelete
     framed-icon-button #expand-button .square (
         "<icons>/expand-solid-full.svg.192dpi.png",
         tool-tip: $<loc>-expand-button-tooltip,
-        set-size: 40,
-        on-pressed => @OnExpandPressed
+        set-size: 40
     )
 
     framed-icon-button #shrink-button .square (
         "<icons>/VerbIcons/eraser-solid.svg.192dpi.png",
         tool-tip: $<loc>-shrink-button-tooltip,
-        set-size: 40,
-        on-pressed => @OnShrinkPressed
+        set-size: 40
     )
 
     confirm-button #delete-button .icon-button .square (
         confirmation-text: "",
         tool-tip: $<loc>-delete-button-tooltip,
-        set-size: 40,
-        on-pressed => @OnDeletePressed
+        set-size: 40
     ) {
         _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))
     }
@@ -66,33 +60,26 @@ on @Systems.Zoning.OnZoneDeleted for base-zone-window => @OnZoneDelete
         icon-button #edit-button (
             "<icons>/pencil-solid.svg.192dpi.png",
             set-size: 18,
-            margin: 0 5,
-            on-pressed => @OnEditPressed
+            margin: 0 5
         )
     }
 
     row #name-edit-box (align-self: center, visible: false) {
         line-edit #name-edit (
             set-width: 200,
-            margin: 0 5,
-            on-text-entered => @SetName,
-            on-focus-exit => @Cancel
+            margin: 0 5
         )
         icon-button #apply-name-button (
             "<icons>/check-solid.svg.192dpi.png",
-            set-size: 22,
-            on-pressed => @SetName
+            set-size: 22
         )
         _ .low-divider (margin: 3)
         icon-button #cancel-name-button (
             "<icons>/Style/cross.png",
-            set-size: 18,
-            on-pressed => @Cancel
+            set-size: 18
         )
     }
 }
-
-on @Systems.Zoning.OnZoneUpdated for zone-change-name-control => @OnZoneUpdate
 
 /* The looks of the zone in its states, and the buttons to save or to drop the changes. */
 @ZoneVisualsControl => col {
@@ -102,53 +89,34 @@ on @Systems.Zoning.OnZoneUpdated for zone-change-name-control => @OnZoneUpdate
         row .panel-dark (horizontal-expand, margin: 3 2) {
             button #save-visuals-button .open-right (
                 text: $<loc>-visuals-save-button,
-                margin: 2 3,
-                on-pressed => {
-                    #visual-changes-box.visible: false;
-                    @SaveVisuals
-                }
+                margin: 2 3
             )
 
             button #reset-visuals-button .open-left .red (
                 text: $<loc>-visuals-reset-button,
-                margin: 2 3,
-                on-pressed => {
-                    @ResetVisuals;
-                    @UpdateVisuals
-                }
+                margin: 2 3
             )
         }
     }
 }
-
-on @Systems.Zoning.OnZoneUpdated for zone-visuals-control => @OnZoneUpdate
 
 /* The look of the zone in one state: the colors of the border and of the zone, the tile borders and the conditions. */
 @ZoneVisualsLayerControl => col {
     expandable-box #layer-expand {
         col {
             checkbox #layer-enable-button (
-                text: $<visuals-loc>-layer-enable-button,
-                on-pressed => {
-                    #settings-box.visible: #layer-enable-button.pressed;
-                    @OnLayerToggled(#layer-enable-button.pressed)
-                }
+                text: $<visuals-loc>-layer-enable-button
             )
 
             col #settings-box (margin: 3 0 3 10) {
                 col .panel-dark {
                     checkbox #border-color-button (
                         text: $<visuals-loc>-border-color-button,
-                        margin: 0 0 5 0,
-                        on-pressed => {
-                            #border-color.visible: #border-color-button.pressed;
-                            @OnBorderColorToggled(#border-color-button.pressed)
-                        }
+                        margin: 0 0 5 0
                     )
                     color-selector-sliders #border-color (
                         selector-type: rgb,
-                        is-alpha-visible,
-                        on-color-changed => @OnBorderColorChanged
+                        is-alpha-visible
                     )
                 }
 
@@ -157,29 +125,22 @@ on @Systems.Zoning.OnZoneUpdated for zone-visuals-control => @OnZoneUpdate
                 col .panel-dark {
                     checkbox #zone-color-button (
                         text: $<visuals-loc>-zone-color-button,
-                        margin: 0 0 5 0,
-                        on-pressed => {
-                            #zone-color.visible: #zone-color-button.pressed;
-                            @OnZoneColorToggled(#zone-color-button.pressed)
-                        }
+                        margin: 0 0 5 0
                     )
                     color-selector-sliders #zone-color (
                         selector-type: rgb,
-                        is-alpha-visible,
-                        on-color-changed => @OnZoneColorChanged
+                        is-alpha-visible
                     )
                 }
 
                 checkbox #show-tile-borders-button (
                     text: $<visuals-loc>-show-tile-borders-button,
-                    margin: 4 3,
-                    on-pressed => @OnShowTileBordersToggled(#show-tile-borders-button.pressed)
+                    margin: 4 3
                 )
 
                 checkbox #show-conditions-button (
                     text: $<visuals-loc>-show-conditions-button,
-                    margin: 4 3,
-                    on-pressed => @OnShowConditionsToggled(#show-conditions-button.pressed)
+                    margin: 4 3
                 )
             }
         }
@@ -223,15 +184,13 @@ on @Systems.Zoning.OnZoneUpdated for zone-visuals-control => @OnZoneUpdate
     framed-icon-button #finish-button .square .green (
         "<icons>/check-solid.svg.192dpi.png",
         tool-tip: $zone-creation-widget-finish,
-        set-size: 40,
-        on-pressed => @Controllers.Zoning.OnCreationFinish
+        set-size: 40
     )
 
     framed-icon-button #cancel-button .square .red (
         "<icons>/Style/cross.png",
         tool-tip: $zone-creation-widget-cancel,
         set-size: 40,
-        margin: 0 0 0 5,
-        on-pressed => @Controllers.Zoning.OnCreationCancel
+        margin: 0 0 0 5
     )
 }

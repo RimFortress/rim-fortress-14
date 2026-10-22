@@ -1,6 +1,8 @@
+using Content.Client._RF.UserInterface.Scope;
 using System.Linq;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared._RF.Zoning.Components;
+using Content.Shared._RF.Zoning.Systems;
 
 namespace Content.Client._RF.Zoning.UI.Controls;
 
@@ -16,7 +18,18 @@ public sealed partial class BaseZoneWindow : RfWindow
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
-        _controller = UserInterfaceManager.GetUIController<ZoningUiController>();
+        _controller = Controller<ZoningUiController>();
+
+        Tab.OnTabChanged += _ => OnTabChanged();
+
+        Scope.ListenSystem<ZoningSystem, Entity<ZoneComponent>>(
+            (s, h) => s.OnZoneUpdated += h,
+            (s, h) => s.OnZoneUpdated -= h,
+            OnZoneUpdate);
+        Scope.ListenSystem<ZoningSystem, Entity<ZoneComponent>>(
+            (s, h) => s.OnZoneDeleted += h,
+            (s, h) => s.OnZoneDeleted -= h,
+            OnZoneDelete);
 
         Tab.Tabs[0].Title = Loc.GetString("base-zone-window-visuals-tab-general-title");
         Tab.Tabs[1].Title = Loc.GetString("base-zone-window-visuals-tab-visuals-title");

@@ -4,8 +4,7 @@
     toggle-mode,
     tooltip-delay: 0,
     tracking-tooltip,
-    margin: 0 5,
-    on-toggled => @OnButtonToggled
+    margin: 0 5
 ) {
     sprite-view #icon (stretch: fill)
     grid #status-container (columns: 4, horizontal-expand)
@@ -19,18 +18,10 @@
         set-size: 40,
         vertical-alignment: bottom,
         toggle-mode,
-        margin: 0 5,
-        on-pressed => {
-            @Systems.ExecutableGoal.SetCombatMode(#combat-button.pressed);
-            @UpdateCombat
-        }
+        margin: 0 5
     ) {
         _ #combat-icon (background-repeat: stretch)
     }
 
     =grid #icons (columns: 8, fit-content)
 }
-
-on @Systems.Selection.OnSelectedChanged for pop-list => @UpdateSelection
-on @Systems.CombatMode.CombatModeChanged for pop-list => @OnCombatModeChanged
-on @Systems.RimFortressWorld.OnPlayerUpdate for pop-list => @OnPlayerUpdate

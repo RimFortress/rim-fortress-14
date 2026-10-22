@@ -1,3 +1,4 @@
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client._RF.UserInterface.Controllers;
 using Content.Client._RF.Zoning.UI;
 using Content.Client.UserInterface.Controls;
@@ -30,8 +31,8 @@ public sealed partial class StockpileSettingsWindow : RfWindow
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
-        _stockpileController = UserInterfaceManager.GetUIController<StockpileUiController>();
-        _zoningController = UserInterfaceManager.GetUIController<ZoningUiController>();
+        _stockpileController = Controller<StockpileUiController>();
+        _zoningController = Controller<ZoningUiController>();
 
         _prototype.PrototypesReloaded += args =>
         {
@@ -39,6 +40,35 @@ public sealed partial class StockpileSettingsWindow : RfWindow
                 || args.WasModified<StockpileCategoryPrototype>())
                 ReloadPrototypes();
         };
+
+        Tab.OnTabChanged += _ => OnTabChanged();
+        BackButton.OnPressed += _ => OnBackPressed();
+        Search.OnTextChanged += _ => OnSearchChanged();
+        ExpandStockButton.OnPressed += _ => OnExpandPressed();
+        ShrinkStockButton.OnPressed += _ => OnShrinkPressed();
+        SuppliersButton.OnPressed += _ => OnSuppliersPressed();
+        DeleteStockButton.OnPressed += _ => OnDeletePressed();
+
+        Scope.ListenController<StockpileUiController, Entity<StockpileComponent>>(
+            (c, h) => c.OnStockSelected += h,
+            (c, h) => c.OnStockSelected -= h,
+            SetStock);
+        Scope.ListenController<StockpileUiController, Entity<StockpileComponent>>(
+            (c, h) => c.OnSupplyRequested += h,
+            (c, h) => c.OnSupplyRequested -= h,
+            OnSupplyRequested);
+        Scope.ListenSystem<StockpileSystem, Entity<StockpileComponent>>(
+            (s, h) => s.OnStockUpdated += h,
+            (s, h) => s.OnStockUpdated -= h,
+            OnStockUpdated);
+        Scope.ListenSystem<ZoningSystem, Entity<ZoneComponent>>(
+            (s, h) => s.OnZoneUpdated += h,
+            (s, h) => s.OnZoneUpdated -= h,
+            OnZoneUpdate);
+        Scope.ListenSystem<ZoningSystem, Entity<ZoneComponent>>(
+            (s, h) => s.OnZoneDeleted += h,
+            (s, h) => s.OnZoneDeleted -= h,
+            OnZoneDelete);
 
         Tab.Tabs[0].Title = Loc.GetString("base-zone-window-visuals-tab-general-title");
         Tab.Tabs[1].Title = Loc.GetString("base-zone-window-visuals-tab-visuals-title");

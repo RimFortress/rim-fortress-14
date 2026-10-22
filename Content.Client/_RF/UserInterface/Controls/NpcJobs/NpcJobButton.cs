@@ -46,6 +46,23 @@ public sealed partial class NpcJobButton : RfButton
     private void EnsureSetup()
     {
         Icon.OnTextureChanged += _ => OnDataChanged?.Invoke();
+
+        NameEdit.OnTextEntered += _ =>
+        {
+            LabelContainer.Visible = true;
+            NameEdit.Visible = false;
+            JobName = NameEdit.Text;
+            NotifyDataChanged();
+        };
+
+        EditNameButton.OnPressed += _ =>
+        {
+            LabelContainer.Visible = false;
+            NameEdit.Visible = true;
+            SelectName();
+        };
+
+        DeleteButton.OnPressed += _ => OnDeletePressed();
     }
 
     private void SelectName()

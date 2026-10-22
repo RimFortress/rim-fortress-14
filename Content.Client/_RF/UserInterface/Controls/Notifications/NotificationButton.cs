@@ -22,9 +22,7 @@ public sealed partial class NotificationButton : RfBoxContainer
 
     private readonly Notification? _notification;
     private bool _setup;
-    private TimeSpan _nextUpdate;
-
-    private static readonly TimeSpan UpdateRate = TimeSpan.FromSeconds(1);
+    private const float TimeUpdateRate = 1f;
 
     public bool Pressed
     {
@@ -45,6 +43,9 @@ public sealed partial class NotificationButton : RfBoxContainer
 
         _notification = notification;
 
+        Button.OnPressed += OnButtonPressed;
+        FocusButton.OnPressed += _ => OnFocusPressed();
+
         Button.OnKeyBindUp += args =>
         {
             if (args.Function != EngineKeyFunctions.UseSecondary)
@@ -59,6 +60,9 @@ public sealed partial class NotificationButton : RfBoxContainer
 
         Button.TooltipSupplier = SupplyTooltip;
         FocusButton.Visible = notification.TargetCoords != null || notification.Target != null;
+
+        Scope.EveryFrame(_ => UpdateProgress());
+        Scope.Every(TimeUpdateRate, UpdateTime, runOnEnter: true);
 
         if (_notification.ExpireAt == null)
             return;
@@ -100,20 +104,20 @@ public sealed partial class NotificationButton : RfBoxContainer
             Button.AddSuilStyleClass(proto.Style);
     }
 
-    protected override void FrameUpdate(FrameEventArgs args)
+    private void UpdateProgress()
     {
-        base.FrameUpdate(args);
-
-        if (_notification?.ExpireAt is { } expireAt)
-        {
-            var fill = 1f - (float)((expireAt - _timing.CurTime) / (expireAt - _notification.StartedAt));
-            ProgressBar.SetWidth = Button.Width * Math.Clamp(fill, 0f, 1f);
-        }
-
-        if (_nextUpdate > _timing.CurTime || _notification == null)
+        if (_notification?.ExpireAt is not { } expireAt)
             return;
 
-        _nextUpdate = _timing.CurTime + UpdateRate;
+        var fill = 1f - (float)((expireAt - _timing.CurTime) / (expireAt - _notification.StartedAt));
+        ProgressBar.SetWidth = Button.Width * Math.Clamp(fill, 0f, 1f);
+    }
+
+    private void UpdateTime()
+    {
+        if (_notification == null)
+            return;
+
         TimeLabel.Text = Loc.GetString("notification-start-time",
             ("time", _timing.CurTime - _notification.StartedAt));
     }

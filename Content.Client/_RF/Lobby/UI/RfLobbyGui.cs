@@ -13,6 +13,9 @@ namespace Content.Client._RF.Lobby.UI
         {
             InitializeComponent();
             IoCManager.InjectDependencies(this);
+
+            OptionsButton.OnPressed += _ => UserInterfaceManager.GetUIController<OptionsUIController>().ToggleWindow();
+            LeaveButton.OnPressed += _ => Leave();
             ObserveButton.WindowType = typeof(Content.Client.Lobby.UI.ObserveWarningWindow);
             SetAnchorPreset(MainContainer, LayoutPreset.Wide);
             SetAnchorPreset(Background, LayoutPreset.Wide);

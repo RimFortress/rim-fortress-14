@@ -19,17 +19,11 @@
         _ .low-divider (margin: 2 5)
         _ #name-label (flex-grow: 1)
 
-        row .panel-highlighted-transparent (padding: 0 3) {
-            +int-counter #counter (min-value: 0, on-value-changed => &.max-value: args.new)
+        row .panel-highlighted-transparent (padding: 0 3px) {
+            +int-counter #counter (min-value: 0)
             +checkbox #unlimited-check (
                 tool-tip: $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip,
-                tracking-tooltip,
-                on-pressed => {
-                    #unlimited-check.tool-tip: if (#unlimited-check.pressed)
-                        $stockpile-settings-menu-unlimited-checkbox-enabled-tooltip
-                        else $stockpile-settings-menu-unlimited-checkbox-disabled-tooltip;
-                    &.max-value: if (#unlimited-check.pressed) -1 else 0
-                }
+                tracking-tooltip
             )
         }
     }
@@ -38,7 +32,7 @@
 /* The window of a stockpile: the items to keep (with the search) and the look of the zone, and the buttons under them. */
 @StockpileSettingsWindow => window (min-size: 500 750) {
     col {
-        tab #tab (flex-grow: 1, on-tab-changed => @OnTabChanged) {
+        tab #tab (flex-grow: 1) {
             col {
                 box #address-box .panel-light {
                     _ #address .label-heading (margin: 0 0 0 8, align-self: center)
@@ -47,15 +41,13 @@
                 row #search-bar .panel-dark {
                     icon-button #back-button (
                         "/Textures/Interface/VerbIcons/close.svg.192dpi.png",
-                        set-size: 32,
-                        on-pressed => @OnBackPressed
+                        set-size: 32
                     )
 
                     line-edit #search (
                         place-holder: $stockpile-settings-menu-search-placeholder,
                         flex-grow: 1,
-                        margin: 2 3,
-                        on-text-changed => @OnSearchChanged
+                        margin: 2 3
                     )
                 }
 
@@ -79,38 +71,28 @@
             framed-icon-button #expand-stock-button .square (
                 "<icons>/expand-solid-full.svg.192dpi.png",
                 tool-tip: $expand-stockpile-button-tooltip,
-                set-size: 32,
-                on-pressed => @OnExpandPressed
+                set-size: 32
             )
 
             framed-icon-button #shrink-stock-button .square (
                 "<icons>/VerbIcons/eraser-solid.svg.192dpi.png",
                 tool-tip: $shrink-stockpile-button-tooltip,
-                set-size: 32,
-                on-pressed => @OnShrinkPressed
+                set-size: 32
             )
 
             framed-icon-button #suppliers-button .square (
                 "<icons>/right-to-bracket-solid-full.svg.192dpi.png",
                 tool-tip: $stockpile-suppliers-button-tooltip,
-                set-size: 32,
-                on-pressed => @OnSuppliersPressed
+                set-size: 32
             )
 
             confirm-button #delete-stock-button .icon-button .square (
                 confirmation-text: "",
                 tool-tip: $delete-stockpile-button-tooltip,
-                set-size: 32,
-                on-pressed => @OnDeletePressed
+                set-size: 32
             ) {
                 _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))
             }
         }
     }
 }
-
-on @Controllers.Stockpile.OnStockSelected for stockpile-settings-window => @SetStock
-on @Controllers.Stockpile.OnSupplyRequested for stockpile-settings-window => @OnSupplyRequested
-on @Systems.Stockpile.OnStockUpdated for stockpile-settings-window => @OnStockUpdated
-on @Systems.Zoning.OnZoneUpdated for stockpile-settings-window => @OnZoneUpdate
-on @Systems.Zoning.OnZoneDeleted for stockpile-settings-window => @OnZoneDelete

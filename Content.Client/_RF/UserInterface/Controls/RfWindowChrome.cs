@@ -14,6 +14,9 @@ public sealed partial class RfWindowChrome : RfBoxContainer
     public RfWindowChrome()
     {
         InitializeComponent();
+
+        HelpButton.OnPressed += _ => OnHelpRequested?.Invoke();
+        CloseButton.OnPressed += _ => OnCloseRequested?.Invoke();
     }
 
     internal UiElement Body => Contents;
@@ -23,8 +26,4 @@ public sealed partial class RfWindowChrome : RfBoxContainer
     internal RfButton Help => HelpButton;
 
     internal RfButton Close => CloseButton;
-
-    private void ClosePressed() => OnCloseRequested?.Invoke();
-
-    private void HelpPressed() => OnHelpRequested?.Invoke();
 }

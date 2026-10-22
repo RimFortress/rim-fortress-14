@@ -17,8 +17,8 @@ let equipment-list = {
     setup-header {
         setup-title ($<loc>-label)
         _ .flex-fill
-        +button #save-button .font-big (text: $<loc>-save-button, on-pressed => @SaveSettings)
-        +button #reset-button .font-big (text: $<loc>-reset-button, on-pressed => @BuildList)
+        +button #save-button .font-big (text: $<loc>-save-button)
+        +button #reset-button .font-big (text: $<loc>-reset-button)
         +button #close-button .font-big (text: $<loc>-close-button)
     }
 
@@ -46,14 +46,12 @@ let equipment-list = {
                     line-edit #search (
                         place-holder: $<loc>-search,
                         flex-grow: 1,
-                        margin: 4px 0 3px 4px,
-                        on-text-changed => @BuildItems
+                        margin: 4px 0 3px 4px
                     )
 
                     button #clear-search .icon-button .square (
                         set-size: 36 36,
-                        margin: 2px,
-                        on-pressed => @OnClearSearch
+                        margin: 2px
                     ) {
                         _ .icon (
                             mouse-filter: ignore,

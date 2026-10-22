@@ -1,5 +1,7 @@
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared._RF.Zoning.Components;
+using Content.Shared._RF.Zoning.Systems;
 using JetBrains.Annotations;
 
 namespace Content.Client._RF.Zoning.UI.Controls;
@@ -16,7 +18,18 @@ public sealed partial class ZoneChangeNameControl : RfBoxContainer
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
-        _controller = UserInterfaceManager.GetUIController<ZoningUiController>();
+        _controller = Controller<ZoningUiController>();
+
+        EditButton.OnPressed += _ => OnEditPressed();
+        NameEdit.OnTextEntered += _ => SetName();
+        NameEdit.OnFocusExit += _ => Cancel();
+        ApplyNameButton.OnPressed += _ => SetName();
+        CancelNameButton.OnPressed += _ => Cancel();
+
+        Scope.ListenSystem<ZoningSystem, Entity<ZoneComponent>>(
+            (s, h) => s.OnZoneUpdated += h,
+            (s, h) => s.OnZoneUpdated -= h,
+            OnZoneUpdate);
     }
 
     private void OnEditPressed()

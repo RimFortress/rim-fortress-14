@@ -7,7 +7,6 @@
     padding: 10px 10px 9px 10px
 ) {
     info-panel-cell #population (
-        text: bind @PopulationText() every 1s,
         tool-tip: $top-info-panel-pops-tooltip,
         texture-path: "<icons>/VerbIcons/user-group-solid.svg.192dpi.png"
     )
@@ -16,28 +15,10 @@
     _ .flex-fill
     _ .low-divider
 
-    info-panel-cell #date (
-        text: bind @DateText() every 1s,
-        texture-path: "<icons>/calendar-solid-full.svg.192dpi.png"
-    )
-    info-panel-cell #time (
-        text: bind @TimeText() every 1s,
-        texture-path: bind if (
-                @Controllers.InfoPanel.GetWorldTime().Hours >= 6
-                && @Controllers.InfoPanel.GetWorldTime().Hours < 19
-            ) "<icons>/sun-solid.svg.192dpi.png" else "<icons>/moon-solid.svg.192dpi.png"
-            every 1s
-    )
+    info-panel-cell #date (texture-path: "<icons>/calendar-solid-full.svg.192dpi.png")
+    info-panel-cell #time
     _ .low-divider
-    info-panel-cell #temperature (
-        tool-tip: $top-info-panel-temperature-tooltip,
-        text: bind @Controllers.InfoPanel.TempeText on @Controllers.InfoPanel.OnWorldTempChanged,
-        texture-path: bind if (@Controllers.InfoPanel.WorldTempCelsius < 10) "<icons>/temperature-low-solid.svg.192dpi.png"
-            elif (@Controllers.InfoPanel.WorldTempCelsius < 20) "<icons>/temperature-half-solid.svg.192dpi.png"
-            elif (@Controllers.InfoPanel.WorldTempCelsius < 30) "<icons>/temperature-three-quarters-solid.svg.192dpi.png"
-            else "<icons>/temperature-high-solid.svg.192dpi.png"
-            on @Controllers.InfoPanel.OnWorldTempChanged
-    )
+    info-panel-cell #temperature (tool-tip: $top-info-panel-temperature-tooltip)
 }
 
 /* A cell of the strip: an icon and a text. */

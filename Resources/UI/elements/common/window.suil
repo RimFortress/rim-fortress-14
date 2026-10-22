@@ -11,14 +11,12 @@
         button #help-button .window-help-button (
             set-size: 22 22,
             align-self: center,
-            visible: false,
-            on-pressed => @HelpPressed
+            visible: false
         )
 
         button #close-button .cross-button-red (
             set-size: 22 22,
-            align-self: center,
-            on-pressed => @ClosePressed
+            align-self: center
         )
     }
     _ .low-divider

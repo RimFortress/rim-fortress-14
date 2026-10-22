@@ -14,6 +14,29 @@ public sealed partial class ZoneVisualsLayerControl : RfBoxContainer
     public ZoneVisualsLayerControl()
     {
         InitializeComponent();
+
+        LayerEnableButton.OnPressed += _ =>
+        {
+            SettingsBox.Visible = LayerEnableButton.Pressed;
+            OnLayerToggled(LayerEnableButton.Pressed);
+        };
+
+        BorderColorButton.OnPressed += _ =>
+        {
+            BorderColor.Visible = BorderColorButton.Pressed;
+            OnBorderColorToggled(BorderColorButton.Pressed);
+        };
+        BorderColor.OnColorChanged += OnBorderColorChanged;
+
+        ZoneColorButton.OnPressed += _ =>
+        {
+            ZoneColor.Visible = ZoneColorButton.Pressed;
+            OnZoneColorToggled(ZoneColorButton.Pressed);
+        };
+        ZoneColor.OnColorChanged += OnZoneColorChanged;
+
+        ShowTileBordersButton.OnPressed += _ => OnShowTileBordersToggled(ShowTileBordersButton.Pressed);
+        ShowConditionsButton.OnPressed += _ => OnShowConditionsToggled(ShowConditionsButton.Pressed);
     }
 
     public ZoneVisualsLayerControl(ZoneVisualsState state, ZoneVisualsStyle? style) : this()

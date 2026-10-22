@@ -12,7 +12,6 @@
         "<icons>/eye-dropper-solid.svg.192dpi.png",
         tool-tip: $color-picker-tooltip,
         min-width: 32,
-        min-height: 32,
-        on-pressed => @OnPickPressed
+        min-height: 32
     )
 }

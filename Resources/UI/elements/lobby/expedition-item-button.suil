@@ -19,5 +19,5 @@
         color: #FFFFFF
     )
     _ .low-divider (margin: 5px 10px)
-    +int-counter #counter (min-value: 0, on-value-changed => @OnCountChanged)
+    +int-counter #counter (min-value: 0)
 }

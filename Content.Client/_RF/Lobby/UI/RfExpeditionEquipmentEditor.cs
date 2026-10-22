@@ -38,7 +38,12 @@ public sealed partial class RfExpeditionEquipmentEditor : RfBoxContainer
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
-        _lobby = UserInterfaceManager.GetUIController<RfLobbyUIController>();
+        _lobby = Controller<RfLobbyUIController>();
+
+        SaveButton.OnPressed += _ => SaveSettings();
+        ResetButton.OnPressed += _ => BuildList();
+        Search.OnTextChanged += _ => BuildItems();
+        ClearSearch.OnPressed += _ => OnClearSearch();
     }
 
     private void OnClearSearch() => Search.SetText(string.Empty, true);

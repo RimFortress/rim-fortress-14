@@ -25,7 +25,7 @@ public sealed partial class CharacterSkillsTab : RfBoxContainer
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
-        _controller = UserInterfaceManager.GetUIController<RfLobbyUIController>();
+        _controller = Controller<RfLobbyUIController>();
     }
 
     public void Refresh(HumanoidCharacterProfile? profile)

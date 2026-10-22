@@ -116,6 +116,9 @@ public sealed partial class RfColorSelectorSliders : RfBoxContainer
             TypeSelector.AddItem(Loc.GetString($"color-selector-sliders-{type.ToString().ToLower()}"), type);
         }
 
+        HexEdit.OnTextEntered += OnHexEntered;
+        HexEdit.OnFocusExit += OnHexEntered; // Enter is easy to miss while editing several colors in a row
+
         TypeSelector.OnItemSelected += args => SelectorType = (ColorSelectorType) args.Value!;
 
         foreach (var order in new[] { Order.Top, Order.Middle, Order.Bottom, Order.Alpha })

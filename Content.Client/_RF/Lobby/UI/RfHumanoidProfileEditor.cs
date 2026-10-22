@@ -82,6 +82,19 @@ namespace Content.Client._RF.Lobby.UI
 
             Markings.SetModel(_markingsModel);
 
+            NameEdit.OnTextChanged += args => SetName(args.Text);
+            NameRandomize.OnPressed += _ => RandomizeName();
+            RandomizeEverythingButton.OnPressed += _ => RandomizeEverything();
+            ImportButton.OnPressed += _ => ImportProfile();
+            ExportButton.OnPressed += _ => ExportProfile();
+            ExportImageButton.OnPressed += _ => ExportImage();
+            OpenImagesButton.OnPressed += _ => OpenImages();
+            Skin.OnValueChanged += _ => OnSkinColorOnValueChanged();
+            SpriteRotateLeft.OnPressed += _ => RotatePreviewLeft();
+            SpriteRotateRight.OnPressed += _ => RotatePreviewRight();
+            SpeciesInfoButton.OnPressed += OnSpeciesInfoButtonPressed;
+            ShowClothes.OnToggled += _ => ReloadPreview();
+
             #region Left
 
             #region Name

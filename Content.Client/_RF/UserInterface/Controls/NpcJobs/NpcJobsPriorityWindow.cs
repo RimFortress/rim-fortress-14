@@ -1,7 +1,7 @@
 using System.Linq;
 using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controllers;
-using Content.Client.UserInterface.Controls;
+using Content.Client._RF.UserInterface.Scope;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.World.Components;
@@ -15,7 +15,7 @@ public sealed partial class NpcJobsPriorityWindow : RfWindow
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPlayerManager _player = default!;
 
-    private NpcJobsSystem _npcJobs = default!;
+    private readonly NpcJobsSystem _npcJobs;
 
     public NpcJobsPriorityWindow()
     {
@@ -23,6 +23,12 @@ public sealed partial class NpcJobsPriorityWindow : RfWindow
         InitializeComponent();
 
         _npcJobs = _entity.System<NpcJobsSystem>();
+
+        JobSettingsButton.OnPressed += _ => Controller<NpcJobsUiController>().ToggleSettingsWindow();
+        Scope.ListenSystem<NpcJobsSystem, int>(
+            (s, h) => s.OnJobChanged += h,
+            (s, h) => s.OnJobChanged -= h,
+            _ => OnJobChanged());
     }
 
     public void EnsureSetup()
@@ -39,9 +45,7 @@ public sealed partial class NpcJobsPriorityWindow : RfWindow
     public override void Close()
     {
         Table.ClearAll();
-        UserInterfaceManager
-            .GetUIController<NpcJobsUiController>()
-            .SettingsWindow?.Close();
+        Controller<NpcJobsUiController>().SettingsWindow?.Close();
         base.Close();
     }
 

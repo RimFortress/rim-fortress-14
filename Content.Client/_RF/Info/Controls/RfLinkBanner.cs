@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 using Robust.Client.UserInterface;
 using Robust.Shared.Configuration;
 using Content.Shared.CCVar;
-
 using Content.Client._RF.UserInterface;
 using Content.Client._RF.UserInterface.Controls;
 
@@ -45,11 +44,11 @@ public sealed partial class RfLinkBanner : RfBoxContainer
         AddInfoButton("server-info-telegram-button", CCVars.InfoLinksTelegram);
 
         var guidebookButton = AddButton("server-info-guidebook-button");
-        guidebookButton.OnPressed += _ => UserInterfaceManager.GetUIController<GuidebookUIController>().ToggleGuidebook();
+        guidebookButton.OnPressed += _ => Controller<GuidebookUIController>().ToggleGuidebook();
 
         var changelogButton = new RfChangelogButton();
         changelogButton.AddSuilStyleClass(SuilClass.RowButton);
-        changelogButton.OnPressed += _ => UserInterfaceManager.GetUIController<ChangelogUIController>().ToggleWindow();
+        changelogButton.OnPressed += _ => Controller<ChangelogUIController>().ToggleWindow();
         AddChild(changelogButton);
     }
 

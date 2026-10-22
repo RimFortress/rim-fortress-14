@@ -38,6 +38,14 @@ public sealed partial class RfLayerMarkingPicker : RfBoxContainer
     {
         InitializeComponent();
 
+        SearchBar.OnTextChanged += _ => OnSearchChanged();
+        ReorderButton.OnPressed += _ =>
+        {
+            SelectionItems.Visible = !ReorderButton.Pressed;
+            SearchBar.Visible = !ReorderButton.Pressed;
+            OrderingItems.Visible = ReorderButton.Pressed;
+        };
+
         _markingsModel = markingsModel;
         _allMarkings = allMarkings;
         _organ = organ;

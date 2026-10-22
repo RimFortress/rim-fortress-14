@@ -33,6 +33,8 @@ public sealed partial class ExpeditionItemButton : RfBoxContainer
         IoCManager.InjectDependencies(this);
         InitializeComponent();
 
+        Counter.OnValueChanged += OnCountChanged;
+
         Count = count;
         Cost = cost;
 

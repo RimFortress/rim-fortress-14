@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client.UserInterface.Controls;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
@@ -28,6 +29,14 @@ public sealed partial class NpcJobsSettingsWindow : RfWindow
         InitializeComponent();
 
         _npcJobs = _entity.System<NpcJobsSystem>();
+
+        SaveButton.OnPressed += _ => OnSavePressed();
+        CreateRoleButton.OnPressed += _ => OnCreateRolePressed();
+
+        Scope.ListenSystem<NpcJobsSystem, int>(
+            (s, h) => s.OnJobChanged += h,
+            (s, h) => s.OnJobChanged -= h,
+            _ => OnJobChanged());
     }
 
     private void OnSavePressed()

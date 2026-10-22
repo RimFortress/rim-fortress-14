@@ -13,7 +13,11 @@ public sealed partial class ZoneChangeTileControl : RfBoxContainer
     {
         InitializeComponent();
 
-        _controller = UserInterfaceManager.GetUIController<ZoningUiController>();
+        _controller = Controller<ZoningUiController>();
+
+        ExpandButton.OnPressed += _ => OnExpandPressed();
+        ShrinkButton.OnPressed += _ => OnShrinkPressed();
+        DeleteButton.OnPressed += _ => OnDeletePressed();
     }
 
     private void OnExpandPressed()
