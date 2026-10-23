@@ -1,0 +1,152 @@
+let loc = workshop-menu;
+
+/* A result or a content of a workshop: the picture and the name. */
+@RecipeResultButton => row (margin: 2 3) {
+    entity-prototype-view #icon (set-size: 24 24, stretch: fill, margin: 0 2)
+    _ #label (align-self: center)
+}
+
+/* An ingredient of a recipe: the number, the icon (of a prototype or a picture), the name and the quantity. */
+@WorkshopRecipeIngredient => row {
+    _ #number (margin: 0 3 0 5, align-self: center)
+    entity-prototype-view #proto-icon (set-size: 24 24, stretch: fill)
+    texture-rect #icon (set-size: 24 24, stretch: keep-aspect-centered, visible: false)
+    _ #label (margin: 0 5 0 3, align-self: center)
+    _ #quantity (align-self: center)
+}
+
+/* A recipe or a group of recipes in the list: the button (the right click opens the ingredients) and the ingredients. */
+@WorkshopRecipeButton => col (margin: 1 2) {
+    +button #button .square {
+        row (flex-grow: 1) {
+            box .panel-dark-bordered-transparent {
+                entity-prototype-view #icon (set-size: 32 32, scale: 2.5 2.5, stretch: fill)
+            }
+            +_ #name-label (margin: 0 10, align-self: center)
+            _ .flex-fill
+            _ #time-label .label-secondary-color (margin: 0 3, align-self: center)
+            _ #group-marker .high-divider (reserves-space, margin: 2 3)
+        }
+    }
+
+    box #info-box .panel-light-bordered (visible: false, margin: 2 2 0 2) {
+        col (flex-grow: 1) {
+            _ (text: $<loc>-recipe-ingredients, max-width: 350, align-self: flex-start)
+            col #items-box {
+                _ (margin: 1 0, text: $<loc>-recipe-items)
+            }
+            col #reagents-box {
+                _ (margin: 1 0, text: $<loc>-recipe-reagents)
+            }
+            col #materials-box {
+                _ (margin: 1 0, text: $<loc>-recipe-materials)
+            }
+        }
+    }
+}
+
+/* An item of the queue: the icon, the name, the status, the time left and the cross. */
+@RecipeQueueButton => box .angle-rect (margin: 0 2 3 2, mouse-filter: stop) {
+    row (flex-grow: 1, margin: 0 0 0 5) {
+        entity-prototype-view #icon (set-size: 24 24, stretch: fill)
+        _ #recipe-name (margin: 0 3, align-self: center)
+        _ #status (margin: 0 5, align-self: center)
+        _ .flex-fill
+        _ #remaining-time (color: <gray-silver>, align-self: center)
+        button #close-button .cross-button-red (set-size: 22 22, align-self: center, margin: 0 3)
+    }
+}
+
+/* The window of a workshop: the recipes, the contents, the results and the queue. */
+@WorkshopMenu => window (min-size: 850 600) {
+    col {
+        row (flex-grow: 1) {
+            col (flex-grow: 1.2, flex-basis: zero) {
+                row {
+                    framed-icon-button #back-button .square (
+                        "<icons>/chevron-left-solid-full.svg.192dpi.png",
+                        set-size: 36,
+                        margin: 2
+                    )
+                    line-edit #search (
+                        place-holder: $<loc>-search,
+                        flex-grow: 1,
+                        margin: 3 4
+                    )
+                    framed-icon-button #clear-search .square (
+                        "<icons>/Style/cross.png",
+                        set-size: 36,
+                        margin: 2 7 2 2
+                    )
+                }
+
+                scroll-container #recipes-scroll (flex-grow: 1) {
+                    col #recipes-box
+                }
+            }
+
+            _ .low-divider
+
+            col (flex-grow: 1, flex-basis: zero) {
+                box .panel-highlighted {
+                    row (flex-grow: 1) {
+                        row (flex-grow: 1, flex-basis: zero) {
+                            _ (text: $<loc>-contents)
+                        }
+                        _ .low-divider (margin: 2 3)
+                        row (flex-grow: 1, flex-basis: zero) {
+                            _ (text: $<loc>-results, margin: 0 3)
+                            _ .flex-fill
+                            _ #results-label
+                        }
+                    }
+                }
+
+                row (flex-grow: 1) {
+                    box .panel-light (flex-grow: 1, flex-basis: zero) {
+                        scroll-container (flex-grow: 1) {
+                            col #contents-box
+                        }
+                    }
+                    _ .low-divider (margin: 2 3)
+                    box .panel-light (flex-grow: 1, flex-basis: zero) {
+                        scroll-container (flex-grow: 1) {
+                            col #results-box
+                        }
+                    }
+                }
+
+                col (flex-grow: 1.5) {
+                    box .panel-highlighted {
+                        row (flex-grow: 1) {
+                            _ (text: $<loc>-queue)
+                            _ .flex-fill
+                            _ #queue-label
+                        }
+                    }
+                    box .panel-light (flex-grow: 1) {
+                        scroll-container (flex-grow: 1) {
+                            col #queue-box
+                        }
+                    }
+                }
+            }
+        }
+
+        fancy-back {
+            row (horizontal-expand) {
+                row (flex-grow: 1.2, flex-basis: zero, margin: 0 10, align-items: center) {
+                    _ #user-label .label-secondary-color
+                    _ .flex-fill
+                    _ #group-label .label-secondary-color
+                }
+                _ .low-divider
+                row (flex-grow: 1, flex-basis: zero, margin: 0 10, align-items: center) {
+                    _ .label-secondary-color (text: $<loc>-supplied-stock)
+                    _ .flex-fill
+                    option-button #supplied-stock
+                }
+            }
+        }
+    }
+}

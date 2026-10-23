@@ -206,10 +206,7 @@ public partial class RfBoxContainer : UiElement
         }
         else if (growSum > 0f)
         {
-            for (var i = 0; i < count; i++)
-            {
-                sizes[i] += free * MathF.Max(0f, GetFlexGrow(items[i], row)) / growSum;
-            }
+            sizes = ShareFreeSpace(items, sizes, mainContent - gap * (count - 1), row);
         }
         else
         {
@@ -258,6 +255,66 @@ public partial class RfBoxContainer : UiElement
         }
 
         return finalSize;
+    }
+
+    /// <summary>
+    /// Shares the space among the children by <c>flex-grow</c>. The size of a child starts from its content, or from
+    /// nothing with <c>flex-basis: zero</c>; it is never less than its content, and what a child that has more in it takes
+    /// over its share is taken from the others.
+    /// </summary>
+    private static float[] ShareFreeSpace(List<Control> items, float[] desired, float space, bool row)
+    {
+        var count = items.Count;
+        var target = new float[count];
+        var frozen = new bool[count];
+        var grows = new float[count];
+        var bases = new float[count];
+
+        for (var i = 0; i < count; i++)
+        {
+            grows[i] = MathF.Max(0f, GetFlexGrow(items[i], row));
+            bases[i] = items[i] is UiElement { FlexBasis: SuilFlexBasis.Zero } && grows[i] > 0f ? 0f : desired[i];
+        }
+
+        for (var round = 0; round <= count; round++)
+        {
+            var pool = space;
+            var poolGrow = 0f;
+
+            for (var i = 0; i < count; i++)
+            {
+                if (frozen[i])
+                {
+                    pool -= target[i];
+                    continue;
+                }
+
+                pool -= bases[i];
+                poolGrow += grows[i];
+            }
+
+            var violated = false;
+
+            for (var i = 0; i < count; i++)
+            {
+                if (frozen[i])
+                    continue;
+
+                target[i] = bases[i] + (poolGrow > 0f ? pool * grows[i] / poolGrow : 0f);
+
+                if (target[i] < desired[i])
+                {
+                    target[i] = desired[i];
+                    frozen[i] = true;
+                    violated = true;
+                }
+            }
+
+            if (!violated)
+                break;
+        }
+
+        return target;
     }
 
     /// <summary>

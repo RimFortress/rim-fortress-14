@@ -20,6 +20,25 @@ public enum SuilAlignSelf : byte
 }
 
 /// <summary>
+/// SUIL <c>flex-basis</c>: where the size of a child on the main axis of a flex container starts before the free space is
+/// shared by <c>flex-grow</c>.
+/// </summary>
+public enum SuilFlexBasis : byte
+{
+    /// <summary>
+    /// The size of the content: the children that grow get the free space on top of it, so a child with more in it is
+    /// bigger.
+    /// </summary>
+    Auto,
+
+    /// <summary>
+    /// Nothing: the whole space is shared by <c>flex-grow</c>, so the children with the same <c>flex-grow</c> are of one
+    /// size (as long as the content fits). It is what <see cref="Control.HorizontalExpand"/> does.
+    /// </summary>
+    Zero,
+}
+
+/// <summary>
 /// SUIL <c>align-items</c>: the default <see cref="SuilAlignSelf"/> of the children of a flex container.
 /// </summary>
 public enum SuilAlignItems : byte
@@ -43,6 +62,21 @@ public partial class UiElement
     /// </remarks>
     [SuilProperty(parser: typeof(Parsers.SuilNonNegativeNumberParser))]
     public float FlexGrow
+    {
+        get;
+        set
+        {
+            field = value;
+            InvalidateMeasure();
+        }
+    }
+
+    /// <summary>
+    /// SUIL <c>flex-basis</c> (RF extension, the words <c>auto</c> and <c>zero</c>): <c>zero</c> makes the children with
+    /// the same <see cref="FlexGrow"/> equal, whatever is in them, like the halves of a window.
+    /// </summary>
+    [SuilProperty]
+    public SuilFlexBasis FlexBasis
     {
         get;
         set
