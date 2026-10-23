@@ -49,6 +49,14 @@
     background-color: transparent;
 }
 
+/*
+ * The sliders have a width of their own: the window of the color doesn't change its width with the name of the color
+ * (the name is cut by the description-label of RfColorSelectorSliders), and a slider is never smaller than this.
+ */
+.color-selector-row > .slider {
+    min-width: 100px;
+}
+
 /* ---------- The number boxes of the sliders (IntCounter) ---------- */
 
 .color-selector-row > int-counter {

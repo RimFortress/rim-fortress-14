@@ -1,6 +1,8 @@
 using System.Linq;
 using System.Numerics;
+using Content.Client._RF.Graphics;
 using Content.Client._RF.Stylesheets;
+using Content.Client._RF.UserInterface.Scope;
 using Content.Client.Light.EntitySystems;
 using Content.Client.UserInterface.Controls;
 using Content.Shared._RF.Parallax.Fog;
@@ -43,7 +45,7 @@ public sealed partial class WorldMapControl : MapGridControl
 
     public Color RoofColor = Color.Black;
 
-    private float _updateTimer = 1.0f;
+    private UiTimer _updateTimer = new(UpdateTime, due: true);
     private Vector2i _markerCoords;
     private EntityUid? _marker;
 
@@ -60,7 +62,8 @@ public sealed partial class WorldMapControl : MapGridControl
     private readonly Dictionary<Color, List<(Vector2, Vector2)>> _lines = new();
     private readonly Dictionary<Color, List<Vector2>> _circles = new();
     private readonly Dictionary<Color, List<Vector2>> _noScaleCircles = new();
-    private readonly Dictionary<Color, HashSet<UIBox2>> _regions = new();
+    // the regions are in the tiles of the world, where Y goes up: the bottom is below the top
+    private readonly Dictionary<Color, HashSet<Box2>> _regions = new();
     private readonly Dictionary<Color, List<(Vector2, string)>> _noScaleStrings = new();
     private readonly Dictionary<Vector2, EntityUid> _beacons = new();
 
@@ -347,13 +350,8 @@ public sealed partial class WorldMapControl : MapGridControl
 
     protected override void FrameUpdate(FrameEventArgs args)
     {
-        _updateTimer += args.DeltaSeconds;
-
-        if (_updateTimer < UpdateTime)
-            return;
-
-        _updateTimer = 0;
-        UpdateMap();
+        if (_updateTimer.Tick(args.DeltaSeconds))
+            UpdateMap();
     }
 
     protected override void Draw(DrawingHandleScreen handle)
@@ -427,7 +425,7 @@ public sealed partial class WorldMapControl : MapGridControl
                 if (!viewBox.Contains(pos))
                     continue;
 
-                handle.DrawString(_font, pos, text, color);
+                handle.DrawStringOutlined(_font, pos, text, color);
             }
         }
     }
@@ -444,7 +442,7 @@ public sealed partial class WorldMapControl : MapGridControl
         return new UIBox2(lt, rb);
     }
 
-    private UIBox2 ScaleOffsetBox(UIBox2 box)
+    private UIBox2 ScaleOffsetBox(Box2 box)
     {
         return ScaleOffsetBox(box.BottomLeft, box.Size);
     }
@@ -472,7 +470,7 @@ public sealed partial class WorldMapControl : MapGridControl
         }
     }
 
-    private UIBox2 FindMaxRectangle(Vector2i startTile, Color color)
+    private Box2 FindMaxRectangle(Vector2i startTile, Color color)
     {
         var left = startTile.X;
         var top = startTile.Y;
@@ -537,7 +535,7 @@ public sealed partial class WorldMapControl : MapGridControl
                 break;
         }
 
-        return new UIBox2(left, top + 1f, right + 1f, bottom);
+        return new Box2(left, bottom, right + 1f, top + 1f);
     }
 }
 

@@ -21,6 +21,15 @@ public sealed partial class RfWindowChrome : RfBoxContainer
 
     internal UiElement Body => Contents;
 
+    /// <summary>
+    /// The header with the title and the buttons, and the line under it.
+    /// </summary>
+    internal bool HeaderVisible
+    {
+        get => Header.Visible;
+        set => Header.Visible = HeaderDivider.Visible = value;
+    }
+
     internal UiElement Title => TitleLabel;
 
     internal RfButton Help => HelpButton;

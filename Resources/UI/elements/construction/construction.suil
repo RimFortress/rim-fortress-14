@@ -1,0 +1,82 @@
+/* A building in the lists of the construction menu: the picture and the name. */
+@ConstructionButton => button (
+    min-height: 50,
+    margin: 0 2 5 2,
+    toggle-mode: false
+) {
+    row (margin: 3 0 0 0, flex-grow: 1) {
+        box .panel-dark-bordered (
+            set-size: 54,
+            justify-content: center,
+            align-items: center
+        ) {
+            +entity-prototype-view #texture (set-size: 48 48)
+        }
+
+        _ .high-divider (margin: 5 3)
+        _ #name-label (
+            flex-grow: 1,
+            align-self: center,
+            overflow: hidden,
+            text-overflow: ellipsis
+        )
+    }
+}
+
+/* One step of the guide of a building: the icon and the text, shifted by its depth. */
+@ConstructionStep => row (align-items: center) {
+    texture-rect #icon (set-size: 24 24, stretch: keep-aspect-centered)
+    _ #text-label (margin: 0 0 0 4)
+}
+
+let loc = rf-construction-menu;
+
+/* The construction menu: the categories or the buildings of one, the guide of the chosen one and the eraser. */
+@RfConstructionMenu as construction-menu => window (
+    title: $<loc>-label,
+    set-size: 500 700
+) {
+    col {
+        box #search-bar .panel-dark-bordered (visible: false) {
+            row (flex-grow: 1) {
+                box .panel-light (set-size: 32) {
+                    icon-button #back-button (
+                        "/Textures/Interface/VerbIcons/close.svg.192dpi.png",
+                        set-size: 32
+                    )
+                }
+                line-edit #search (place-holder: $<loc>-search-placeholder, flex-grow: 1)
+            }
+        }
+
+        box .panel-light-bordered (flex-grow: 1) {
+            scroll-container #main-scroll (flex-grow: 1) {
+                +col #category-list (flex-grow: 1)
+                +col #item-list (flex-grow: 1, visible: false)
+            }
+        }
+
+        +box #metadata .panel-dark-bordered (set-height: 250, visible: false) {
+            col (flex-grow: 1) {
+                row (margin: 3 5 0 5) {
+                    box .panel-light (set-size: 50, justify-content: center, align-items: center) {
+                        +entity-prototype-view #meta-texture (set-size: 48 48)
+                    }
+                    +_ #meta-name .font-big (margin: 0 0 0 10, align-self: center)
+                }
+
+                _ .high-divider (margin: 10 2)
+                +_ #meta-description (horizontal-expand)
+                _ .high-divider (margin: 10 2)
+
+                scroll-container (flex-grow: 1) {
+                    col #step-list
+                }
+            }
+        }
+
+        row {
+            +button #erase-button .open-both (text: $<loc>-erase, margin: 3, toggle-mode)
+        }
+    }
+}

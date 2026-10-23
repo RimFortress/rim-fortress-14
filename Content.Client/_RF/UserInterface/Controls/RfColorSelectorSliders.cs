@@ -193,7 +193,7 @@ public sealed partial class RfColorSelectorSliders : RfBoxContainer
 
     private void UpdateAllSliders()
     {
-        DescriptionLabel.SetPlainText(ColorNaming.Describe(_currentColor, _localization));
+        UpdateDescription();
         UpdateVisuals();
         UpdateSlider(Order.Top);
         UpdateSlider(Order.Middle);
@@ -224,7 +224,7 @@ public sealed partial class RfColorSelectorSliders : RfBoxContainer
 
         _changePending = false;
         _sinceChange = 0f;
-        DescriptionLabel.SetPlainText(ColorNaming.Describe(_currentColor, _localization));
+        UpdateDescription();
         OnColorChanged?.Invoke(_currentColor);
     }
 
@@ -236,6 +236,15 @@ public sealed partial class RfColorSelectorSliders : RfBoxContainer
 
         if (_changePending && _sinceChange >= ChangeInterval)
             ReportPendingChange();
+    }
+
+    private void UpdateDescription()
+    {
+        var name = ColorNaming.Describe(_currentColor, _localization);
+
+        // the label is cut to a width, the whole name is in the tooltip
+        DescriptionLabel.SetPlainText(name);
+        DescriptionLabel.ToolTip = name;
     }
 
     private void OnHexEntered(RfLineEdit.LineEditEventArgs args)

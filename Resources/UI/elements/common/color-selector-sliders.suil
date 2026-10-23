@@ -16,7 +16,13 @@ let selector-label = {
 ) {
     row (gap: 6px) {
         option-button #type-selector
-        _ #description-label (flex-grow: 1, align-self: center)
+        _ #description-label (
+            align-self: center,
+            max-width: 150px,
+            white-space: nowrap,
+            overflow: hidden,
+            text-overflow: ellipsis
+        )
     }
 
     selector-row {

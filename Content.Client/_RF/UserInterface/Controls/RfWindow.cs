@@ -63,6 +63,16 @@ public partial class RfWindow : BaseWindow
     public Control Contents => _chrome.Body;
 
     /// <summary>
+    /// Whether the header (the title and the buttons) is shown. A window without it is a panel for a menu or a context
+    /// menu: <c>window (header-visible: false)</c>.
+    /// </summary>
+    public bool HeaderVisible
+    {
+        get => _chrome.HeaderVisible;
+        set => _chrome.HeaderVisible = value;
+    }
+
+    /// <summary>
     /// Whether the button that closes the window is shown.
     /// </summary>
     public bool CloseButtonVisible

@@ -1,6 +1,6 @@
 /* The look of a window: the panel, the header with the title and the buttons, the area of the contents. */
 @RfWindowChrome => col .angle-rect {
-    row .window-heading-background {
+    row #header .window-heading-background {
         _ #title-label .window-title (
             flex-grow: 1,
             align-self: center,
@@ -19,6 +19,6 @@
             align-self: center
         )
     }
-    _ .low-divider
+    _ #header-divider .low-divider
     _ #contents (flex-grow: 1, margin: 2px, overflow: hidden)
 }
