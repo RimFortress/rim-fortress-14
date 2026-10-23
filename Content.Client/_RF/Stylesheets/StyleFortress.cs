@@ -793,15 +793,6 @@ public sealed class StyleFortress : StyleBase
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
 
-            // Mood info button
-            Element<SocializationEffectInfo>()
-                .Class(SocializationEffectInfo.EvenRowStyleClass)
-                .Prop(ContainerButton.StylePropertyStyleBox, new StyleBoxFlat(GraphiteBlack)),
-
-            Element<SocializationEffectInfo>()
-                .Class(SocializationEffectInfo.OddRowStyleClass)
-                .Prop(ContainerButton.StylePropertyStyleBox, new StyleBoxFlat(DarkForest)),
-
             // ProgressButton
             Element<ProgressButton>()
                 .Prop(ProgressButton.StylePropertyForeground,

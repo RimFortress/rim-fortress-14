@@ -1,24 +1,25 @@
 using Content.Shared._RF.ColorHelper;
-using Robust.Client.UserInterface;
 using Robust.Shared.Input;
 
 namespace Content.Client._RF.UserInterface.Controls.NpcJobs;
 
-public sealed partial class NpcJobPriorityButton : RfBoxContainer
+/// <summary>
+/// The priority of a job: a square button that shows the number (nothing at the minimum), a click raises the priority,
+/// a right click lowers it, and it goes round at the ends. The look is <c>.priority-button</c>
+/// (<c>style/buttons/priority.suil</c>), the color of the number is between <see cref="MinColor"/> and
+/// <see cref="MaxColor"/>.
+/// </summary>
+public sealed partial class NpcJobPriorityButton : RfButton
 {
-    private int _minValue;
-    private int _maxValue;
-    private int _priority;
-
     /// <summary>
     /// Minimum priority value
     /// </summary>
     public int MinValue
     {
-        get => _minValue;
+        get;
         set
         {
-            _minValue = value;
+            field = value;
             Priority = Math.Clamp(Priority, value, MaxValue);
         }
     }
@@ -28,36 +29,33 @@ public sealed partial class NpcJobPriorityButton : RfBoxContainer
     /// </summary>
     public int MaxValue
     {
-        get => _maxValue;
+        get;
         set
         {
-            _maxValue = value;
+            field = value;
             Priority = Math.Clamp(Priority, MinValue, value);
         }
     }
 
     public int Priority
     {
-        get => _priority;
+        get;
         set
         {
-            var oldVal = _priority;
+            var oldVal = field;
 
             if (value > MaxValue)
-                _priority = MinValue;
+                field = MinValue;
             else if (value < MinValue)
-                _priority = MaxValue;
+                field = MaxValue;
             else
-                _priority = value;
+                field = value;
 
             if (value == oldVal)
                 return;
 
-            Label.Visible = _priority != MinValue;
-            Label.Text = _priority.ToString();
-            Label.Modulate = Color;
-
-            OnPriorityChanged?.Invoke(_priority);
+            UpdateText();
+            OnPriorityChanged?.Invoke(field);
         }
     }
 
@@ -71,8 +69,7 @@ public sealed partial class NpcJobPriorityButton : RfBoxContainer
     /// </summary>
     public Color MaxColor { get; set; }
 
-    public Color Color =>
-        ColorHelper.InterpolatedColor(MinColor, MaxColor, Priority, MinValue, MaxValue);
+    public Color Color => ColorHelper.InterpolatedColor(MinColor, MaxColor, Priority, MinValue, MaxValue);
 
     /// <summary>
     /// Invoked every time the priority is changed
@@ -82,13 +79,31 @@ public sealed partial class NpcJobPriorityButton : RfBoxContainer
     public NpcJobPriorityButton()
     {
         InitializeComponent();
+
+        EnableAllKeybinds = true;
+        AddSuilStyleClass(SuilClass.PriorityButton);
+
+        // The color of the number is the priority's, the styles leave it alone.
+        SuilSetHard("color");
+
+        OnPressed += args =>
+        {
+            if (args.Event.Function == EngineKeyFunctions.UIClick)
+                Priority++;
+            else if (args.Event.Function == EngineKeyFunctions.UIRightClick)
+                Priority--;
+        };
     }
 
-    protected override void KeyBindUp(GUIBoundKeyEventArgs args)
+    private void UpdateText()
     {
-        if (args.Function == EngineKeyFunctions.UIClick)
-            Priority++;
-        else if (args.Function == EngineKeyFunctions.UIRightClick)
-            Priority--;
+        if (Priority == MinValue)
+        {
+            ClearText();
+            return;
+        }
+
+        SetPlainText(Priority.ToString());
+        TextColor = Color;
     }
 }

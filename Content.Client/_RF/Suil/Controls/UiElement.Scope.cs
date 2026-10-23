@@ -1,4 +1,5 @@
 using Content.Client._RF.UserInterface.Scope;
+using JetBrains.Annotations;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controllers;
 using Robust.Shared.Timing;
@@ -11,14 +12,19 @@ public partial class UiElement
     private UiScope? _scope;
 
     /// <summary>
-    /// What the control does while it is in the tree: listens to events, updates itself at an interval. See
-    /// <see cref="UiScope"/>.
+    /// What the control does while it is in the tree: listens to events,
+    /// updates itself at an interval. See <see cref="UiScope"/>.
     /// </summary>
+    [PublicAPI]
     public UiScope Scope => _scope ??= new UiScope(IsInsideTree);
 
+    /// <inheritdoc cref="IUserInterfaceManager.GetUIController"/>
+    [PublicAPI, Pure]
     [ProxyFor(typeof(IUserInterfaceManager), nameof(IUserInterfaceManager.GetUIController))]
     protected T Controller<T>() where T : UIController, new() => UserInterfaceManager.GetUIController<T>();
 
+    /// <inheritdoc cref="IEntityManager.System"/>
+    [PublicAPI, Pure]
     protected static T System<T>() where T : EntitySystem, new() => IoCManager.Resolve<IEntityManager>().System<T>();
 
     /// <inheritdoc/>

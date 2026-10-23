@@ -24,6 +24,10 @@ public class RfButton : UiElement
     /// </summary>
     private int _attemptingPress;
 
+    // The group the button left with the tree: a window is taken out of the tree when it is closed and put back when it
+    // is opened, and the buttons of a group must still be one group then.
+    private RfButtonGroup? _detachedGroup;
+
     /// <summary>
     /// The group this button belongs to. Of multiple buttons in the same group, only one can be pressed (radio buttons).
     /// </summary>
@@ -33,6 +37,8 @@ public class RfButton : UiElement
         get;
         set
         {
+            _detachedGroup = null;
+
             if (value?.InternalButtons.Contains(this) ?? false)
                 return;
 
@@ -285,11 +291,29 @@ public class RfButton : UiElement
             UserInterfaceManager.HoverSound();
     }
 
+    protected override void EnteredTree()
+    {
+        base.EnteredTree();
+
+        if (_detachedGroup is not { } group)
+            return;
+
+        // The group lets only one button stay pressed: the button that was pressed is the one that stays.
+        var pressed = Pressed;
+        Group = group;
+
+        if (pressed)
+            Pressed = true;
+    }
+
     protected override void ExitedTree()
     {
         base.ExitedTree();
 
+        // The group doesn't keep a button that is out of the tree, the button remembers the group.
+        var group = Group;
         Group = null;
+        _detachedGroup = group;
     }
 
     private bool IsIgnoredKey(GUIBoundKeyEventArgs args)

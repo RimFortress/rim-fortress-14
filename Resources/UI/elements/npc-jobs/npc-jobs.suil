@@ -8,18 +8,13 @@ let loc = npc-jobs;
 }
 
 /* The priority of a job: a square that shows the number, the click raises it, the right click lowers it. */
-@NpcJobPriorityButton => box .bordered-window-panel (
+@NpcJobPriorityButton => button .priority-button (
     set-size: 32,
-    justify-content: center,
-    align-items: center,
     min-value: 0,
     max-value: 10,
     min-color: #228B22,
-    max-color: #CD5C5C,
-    mouse-filter: stop
-) {
-    _ #label
-}
+    max-color: #CD5C5C
+)
 
 /* A cell of the table of priorities: the portrait of a pop and its name. */
 @NpcJobsPopCell => row {
@@ -53,10 +48,7 @@ let loc = npc-jobs;
             _ #name-label (flex-grow: 1, align-self: center)
         }
 
-        line-edit #name-edit (
-            flex-grow: 1,
-            visible: false
-        )
+        line-edit #name-edit (flex-grow: 1, visible: false)
 
         framed-icon-button #edit-name-button .square (
             "<icons>/eye-dropper-solid.svg.192dpi.png",

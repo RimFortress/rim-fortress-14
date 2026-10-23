@@ -1,0 +1,208 @@
+/* The window with the information about a pop: the portrait, the buttons, the name and the tabs. */
+@PopInfoWindow => window (
+    title: $pop-info-window-title,
+    set-size: 500 600,
+    resizable: false
+) {
+    col {
+        row (set-height: 135) {
+            box .panel-light-bordered {
+                sprite-view #sprite (
+                    margin: 2,
+                    set-size: 100 100,
+                    scale: 3 3,
+                    override-direction: south
+                )
+            }
+
+            col .panel-highlighted {
+                button #follow-button (text: $pop-info-follow-button)
+            }
+
+            box .panel-highlighted (flex-grow: 1) {
+                _ #name-label (align-self: flex-start)
+            }
+        }
+
+        _ .low-divider
+
+        tab #tab (flex-grow: 1, margin: 0 0 6 0) {
+            skills-info-tab #skills
+            jobs-info-tab #jobs
+            health-info-tab #health
+            mood-info-tab #mood
+            opinion-info-tab #opinion
+            inventory-info-tab #inventory
+        }
+    }
+}
+
+/* The skills of a pop, one after another. */
+@SkillsInfoTab => col {
+    scroll-container (flex-grow: 1) {
+        col #container
+    }
+}
+
+/* One skill: the icon, the name, the level and the bar of the experience. */
+@SkillInfo => col .panel-highlighted (margin: 2) {
+    row (align-items: center) {
+        texture-rect #icon (
+            set-size: 14 14,
+            stretch: keep-aspect-centered,
+            margin: 0 1 0 3
+        )
+        _ #label (margin: 1)
+        _ .flex-fill
+        _ #current-level (margin: 1 2)
+    }
+
+    progress #progress-bar (set-height: 30, horizontal-expand) {
+        row (margin: 3 2) {
+            _ #current-exp
+            _ .flex-fill
+            _ #max-exp (margin: 0 3)
+        }
+    }
+}
+
+/* The jobs of a pop with their priorities, and the current task. */
+@JobsInfoTab => col {
+    scroll-container (flex-grow: 1) {
+        row {
+            box .panel-highlighted {
+                col #container
+            }
+
+            _ .low-divider (margin: 5)
+
+            box .panel-light-bordered (flex-grow: 1) {
+                col {
+                    _ #current-task (max-width: 200, align-self: flex-start, margin: 2)
+                    _ .flex-fill
+                    button #jobs-settings-button (
+                        text: $job-info-tab-jobs-settings,
+                        margin: 2
+                    )
+                }
+            }
+        }
+    }
+}
+
+/* One job: the icon, the name and the priority. */
+@JobInfo => row (set-width: 200, margin: 2, align-items: center) {
+    texture-rect #icon (
+        set-size: 14 14,
+        stretch: keep-aspect-centered,
+        margin: 0 1 0 3
+    )
+    _ #label (margin: 1, flex-grow: 1)
+    +npc-job-priority-button #priority
+}
+
+/* The health: the numbers over the pop and the damage by groups. */
+@HealthInfoTab => col {
+    scroll-container (flex-grow: 1) {
+        col {
+            box .panel-dark-bordered (horizontal-expand, margin: 3 2 3 3) {
+                col {
+                    grid (columns: 2) {
+                        _ (text: $health-info-tab-status-label)
+                        _ #status-label
+
+                        _ (text: $health-info-tab-temperature-label)
+                        _ #temperature-label
+
+                        _ (text: $health-info-tab-blood-level-label)
+                        _ #blood-label
+
+                        _ (text: $health-info-tab-damage-total-label)
+                        _ #damage-label
+                    }
+
+                    _ #bleeding-alert (margin: 2 3)
+                }
+            }
+
+            grid #group-container (columns: 2, margin: 3 2 3 3)
+        }
+    }
+}
+
+/* The damage of one group: the icon, the title and the damage of every type. */
+@DamageGroupInfo => col .panel-highlighted (horizontal-expand) {
+    row {
+        texture-rect #icon (margin: 0 2, set-size: 30 30, stretch: keep-aspect-centered)
+        _ #title (margin: 0 2, align-self: center)
+    }
+
+    _ .low-divider (margin: 3 2)
+
+    col #damage-types (margin: 0 0 0 3)
+}
+
+/* The mood: the sum and the effects it consists of. */
+@MoodInfoTab => col (margin: 3) {
+    _ #total
+
+    _ .high-divider (margin: 10 0)
+
+    scroll-container (flex-grow: 1) {
+        socialization-effects-container #container
+    }
+}
+
+/* The opinions of a pop about the others. */
+@OpinionInfoTab => col {
+    scroll-container (flex-grow: 1, margin: 3) {
+        col #container
+    }
+}
+
+/* The opinion about one pop: the portrait, the name and the sum; the button opens the effects. */
+@OpinionInfoButton => col (margin: 2) {
+    button #button .square (toggle-mode) {
+        row {
+            sprite-view #sprite (set-size: 32 32, override-direction: south)
+            _ .low-divider
+            _ #label (margin: 0 3, align-self: center)
+            _ .flex-fill
+            _ #value-label (margin: 0 3, align-self: center)
+        }
+    }
+
+    box #effects-panel .panel-highlighted (margin: 3 0 0 0, visible: false) {
+        socialization-effects-container #effects-container
+    }
+}
+
+/* The effects in stripes (style/info/info.suil), the first one is the dark one. */
+@SocializationEffectsContainer => col .effects-list
+
+/* One effect: the value, the name and the time left. */
+@SocializationEffectInfo => row .effect-info (
+    mouse-filter: stop,
+    tooltip-delay: 0,
+    tracking-tooltip,
+    padding: 0 3px
+) {
+    _ #value-label (set-width: 50)
+    _ #label
+    _ .flex-fill
+    _ #end-at-label (mouse-filter: stop, tooltip-delay: 0, tracking-tooltip)
+}
+
+/* The inventory of a pop: the hands, and the slots as they are in the window of stripping. */
+@InventoryInfoTab => col {
+    scroll-container (flex-grow: 1) {
+        row {
+            box .panel-highlighted {
+                col (margin: 8 0) {
+                    box-container #hands-container
+                    layout-container #inventory-container
+                }
+            }
+        }
+    }
+}

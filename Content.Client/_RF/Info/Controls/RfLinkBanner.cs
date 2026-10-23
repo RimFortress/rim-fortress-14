@@ -50,6 +50,8 @@ public sealed partial class RfLinkBanner : RfBoxContainer
         changelogButton.AddSuilStyleClass(SuilClass.RowButton);
         changelogButton.OnPressed += _ => Controller<ChangelogUIController>().ToggleWindow();
         AddChild(changelogButton);
+
+        Scope.Entered(UpdateLinks);
     }
 
     private RfButton AddButton(string loc)
@@ -67,11 +69,9 @@ public sealed partial class RfLinkBanner : RfBoxContainer
         _infoLinks.Add((cVar, button));
     }
 
-    protected override void EnteredTree()
+    // The banner is constructed before the client connects to the server, so the links are checked when it shows.
+    private void UpdateLinks()
     {
-        base.EnteredTree();
-
-        // The banner is constructed before the client connects to the server, so the links are checked when it shows.
         foreach (var (cVar, button) in _infoLinks)
         {
             button.Visible = _cfg.GetCVar(cVar) != "";

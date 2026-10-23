@@ -43,6 +43,7 @@ public static class SuilClass
     public const string Red = "red";
     public const string Selected = "selected";
     public const string Square = "square";
+    public const string PriorityButton = "priority-button";
     public const string StorageButton = "storage-button";
     public const string TopButtonLabel = "top-button-label";
     public const string Transparent = "transparent";
@@ -63,6 +64,7 @@ public static class SuilClass
     public const string Fill = "fill";
     public const string Indicator = "indicator";
     public const string PaperLineEdit = "paper-line-edit";
+    public const string Progress = "progress";
     public const string Scrollbar = "scrollbar";
     public const string Slider = "slider";
     public const string Vertical = "vertical";

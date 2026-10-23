@@ -211,6 +211,21 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(_reload.Reload(button).Success, Is.True);
     }
 
+    private static void PressPriority(NpcJobPriorityButton button, Robust.Shared.Input.BoundKeyFunction function)
+    {
+        var field = typeof(RfButton).GetField("OnPressed",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var args = new RfButtonEventArgs(button,
+            new Robust.Client.UserInterface.GUIBoundKeyEventArgs(
+                function,
+                Robust.Shared.Input.BoundKeyState.Up,
+                default,
+                true,
+                System.Numerics.Vector2.Zero,
+                System.Numerics.Vector2.Zero));
+        ((Delegate?) field.GetValue(button))?.DynamicInvoke(args);
+    }
+
     [Test]
     [RunOnSide(Side.Client)]
     public void NpcJobs_Controls_Are_Built_And_Reload()
@@ -221,11 +236,22 @@ public sealed class SuilMigratedControlsTest : GameTest
         Assert.That(priority.MaxColor, Is.EqualTo(Robust.Shared.Maths.Color.FromHex("#CD5C5C")));
         Assert.That(priority.SetSize, Is.EqualTo(new System.Numerics.Vector2(32, 32)));
 
+        Assert.That(priority.HasSuilStyleClass("priority-button"), Is.True);
+        Assert.That(priority.HasText, Is.False, "nothing is shown at the minimum");
+
         priority.Priority = 3;
-        var label = (UiElement) ((ISuilView) priority).SuilGetField("label")!;
-        Assert.That(label.Visible, Is.True);
-        Assert.That(label.Text, Is.EqualTo("3"));
+        Assert.That(priority.Text, Is.EqualTo("3"));
+        Assert.That(priority.SuilIsHard("color"), Is.True, "the color of the number is the priority's");
         Assert.That(_reload.Reload(priority).Success, Is.True);
+
+        priority.Priority = 0;
+        Assert.That(priority.HasText, Is.False);
+
+        PressPriority(priority, Robust.Shared.Input.EngineKeyFunctions.UIClick);
+        Assert.That(priority.Priority, Is.EqualTo(1), "a click raises it");
+        PressPriority(priority, Robust.Shared.Input.EngineKeyFunctions.UIRightClick);
+        PressPriority(priority, Robust.Shared.Input.EngineKeyFunctions.UIRightClick);
+        Assert.That(priority.Priority, Is.EqualTo(10), "a right click lowers it, and it goes round at the minimum");
 
         var job = new NpcJobButton { JobName = "Cook" };
         Assert.That(job.JobName, Is.EqualTo("Cook"));

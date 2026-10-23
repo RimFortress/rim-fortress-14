@@ -33,14 +33,14 @@ tree-menu-button:hover {
     marker-texture: texture("<icons>/Style/tree_menu_button_marker_hovered.png");
 }
 
-/* ---------- Rows (SocializationEffectInfo and TreeItem) ---------- */
+/* ---------- Rows (TreeItem) ---------- */
 
-/* SocializationEffectInfo.EvenRowStyleClass: even-row */
+/* The even row */
 .even-row {
     background-color: <graphite-black>;
 }
 
-/* SocializationEffectInfo.OddRowStyleClass: odd-row */
+/* The odd row */
 .odd-row {
     background-color: <dark-forest>;
 }

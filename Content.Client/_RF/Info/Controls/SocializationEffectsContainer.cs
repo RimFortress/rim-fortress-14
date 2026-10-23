@@ -1,43 +1,28 @@
 using System.Linq;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
+using Content.Client._RF.UserInterface.Controls;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Info.Controls;
 
-public sealed partial class SocializationEffectsContainer : BoxContainer
+public sealed partial class SocializationEffectsContainer : RfBoxContainer
 {
     [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private IEntityManager _entity = default!;
-
-    private SocialSystem _social = default!;
-
-    private bool _setup;
 
     public SocializationEffectsContainer()
     {
         IoCManager.InjectDependencies(this);
-    }
-
-    private void EnsureSetup()
-    {
-        if (_setup)
-            return;
-
-        _setup = true;
-        _social = _entity.System<SocialSystem>();
+        InitializeComponent();
     }
 
     public void UpdateInfo(Dictionary<ProtoId<SocialEffectPrototype>, TimeSpan?> effects)
     {
-        EnsureSetup();
-
         var activeEffects = new Dictionary<ProtoId<SocialEffectPrototype>, (int Value, TimeSpan? EndAt)>();
         foreach (var (protoId, endAt) in effects)
         {
-            activeEffects[protoId] = (_social.GetEffect(protoId, endAt), endAt);
+            activeEffects[protoId] = (System<SocialSystem>().GetEffect(protoId, endAt), endAt);
         }
 
         RemoveMissingEffects(activeEffects.Keys);
@@ -48,7 +33,6 @@ public sealed partial class SocializationEffectsContainer : BoxContainer
         }
 
         SortEffectsByValue();
-        RefreshStyles();
     }
 
     private void RemoveMissingEffects(ICollection<ProtoId<SocialEffectPrototype>> activeProtoIds)
@@ -106,29 +90,4 @@ public sealed partial class SocializationEffectsContainer : BoxContainer
                 child.SetPositionInParent(i);
         }
     }
-
-    private void RefreshStyles()
-    {
-        var even = true;
-
-        foreach (var child in Children)
-        {
-            if (child is not SocializationEffectInfo { Visible: true } info)
-                continue;
-
-            if (even)
-            {
-                info.AddStyleClass(SocializationEffectInfo.EvenRowStyleClass);
-                info.RemoveStyleClass(SocializationEffectInfo.OddRowStyleClass);
-            }
-            else
-            {
-                info.AddStyleClass(SocializationEffectInfo.OddRowStyleClass);
-                info.RemoveStyleClass(SocializationEffectInfo.EvenRowStyleClass);
-            }
-
-            even = !even;
-        }
-    }
 }
-
