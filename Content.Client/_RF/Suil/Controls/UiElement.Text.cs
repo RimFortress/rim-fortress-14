@@ -425,9 +425,9 @@ public partial class UiElement
     } = [];
 
     /// <summary>
-    /// Text outline width (RF extension, <c>-rf-text-outline-width</c>); <c>0</c> disables the outline.
+    /// Text outline width (RF extension, <c>text-outline</c>); <c>0</c> disables the outline.
     /// </summary>
-    [SuilProperty("-rf-text-outline-width", Inherited = true)]
+    [SuilProperty("text-outline", Inherited = true)]
     protected LengthUnit TextOutlineWidth
     {
         get;
@@ -439,9 +439,9 @@ public partial class UiElement
     }
 
     /// <summary>
-    /// Text outline color (RF extension, <c>-rf-text-outline-color</c>); <c>null</c> means black.
+    /// Text outline color (RF extension, <c>text-outline-color</c>); <c>null</c> means black.
     /// </summary>
-    [SuilProperty("-rf-text-outline-color", Inherited = true)]
+    [SuilProperty("text-outline-color", Inherited = true)]
     protected Color? TextOutlineColor
     {
         get;

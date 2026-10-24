@@ -223,7 +223,7 @@ public static class SuilTokenizer
                     if (cp == 0x002E && NameHasVariable(ref stream))
                         return ConsumeInterpolatedName(ref stream, cp);
 
-                    // a name with a leading hyphen, like -rf-text-outline-width
+                    // a name with a leading hyphen, like -webkit-text-stroke
                     if (cp == 0x002D && (IsIdentStart(stream.PeekNext())
                                          || stream.PeekNext() == 0x002D && IsIdentChar(stream.PeekNext(2))))
                     {

@@ -80,9 +80,9 @@ public sealed class SuilValueTests
     [Test]
     public void Names_May_Start_With_A_Hyphen()
     {
-        var rule = (SuilRule) SuilParser.ParseFile(".a { -rf-text-outline-width: 2px; margin: 1px -2px; v: -webkit-box; }").Items.Single();
+        var rule = (SuilRule) SuilParser.ParseFile(".a { -webkit-text-stroke: 2px; margin: 1px -2px; v: -webkit-box; }").Items.Single();
 
-        Assert.That(rule.Declarations.Select(d => d.Name), Is.EqualTo(new[] { "-rf-text-outline-width", "margin", "v" }));
+        Assert.That(rule.Declarations.Select(d => d.Name), Is.EqualTo(new[] { "-webkit-text-stroke", "margin", "v" }));
         Assert.That(rule.Declarations[1].Value, Is.EqualTo(new List<ISuilValue>
         {
             new SuilDimension(1, true, "px"), new SuilDimension(-2, true, "px"),
