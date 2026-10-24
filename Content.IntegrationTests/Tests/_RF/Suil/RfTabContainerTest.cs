@@ -1,4 +1,3 @@
-using Content.Suil;
 #nullable enable
 using Content.Client._RF.UserInterface;
 using Content.Client._RF.UserInterface.Controls;
@@ -14,7 +13,6 @@ namespace Content.IntegrationTests.Tests._RF.Suil;
 [TestFixture]
 public sealed class RfTabContainerTest : GameTest
 {
-    [SidedDependency(Side.Client)] private readonly ISuilManager _suil = null!;
     [SidedDependency(Side.Client)] private readonly IUserInterfaceManager _ui = null!;
 
     private static RfTabContainer Make(out RfTab first, out RfTab second, out RfTab third)
