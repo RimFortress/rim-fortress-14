@@ -1,0 +1,7 @@
+uniform highp vec4 outer_color;
+uniform highp vec4 inner_color;
+
+void fragment()
+{
+    COLOR = UV.y < 0.5 ? outer_color : inner_color;
+}

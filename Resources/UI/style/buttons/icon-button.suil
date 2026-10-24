@@ -1,0 +1,61 @@
+/* ---------- Icon button ---------- */
+
+/*
+ * IconButton: the button (any shape: square, open-both) with the icon in its center. The icon is a child
+ * UiElement with the `icon` class and the texture (background-image) set per button, scaled to fit (as KeepAspectCentered); it is gold and follows the
+ * state of the button, `gold` swaps the colors as in the old control.
+ */
+.icon {
+    margin: 2px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    background-color: <gold-button-color-default>;
+}
+
+/* The frame button with the icon inside: the icon takes the place of the text, the padding of the shape is not needed */
+button.icon-button {
+    padding: 0;
+}
+
+/* The button that is the icon itself: no frame, the picture is its background */
+button.icon {
+    border-style: none;
+    border-width: 0;
+    border-image: none;
+    padding: 0;
+}
+
+.icon:hover,
+button:hover > .icon {
+    background-color: <gold-button-color-hovered>;
+}
+
+.icon:active,
+.icon:checked,
+button:active > .icon,
+button:checked > .icon {
+    background-color: <gold-button-color-pressed>;
+}
+
+.icon:disabled,
+button:disabled > .icon {
+    background-color: <gold-button-color-disabled>;
+}
+
+button.gold > .icon {
+    background-color: <button-color-default>;
+}
+
+button.gold:hover > .icon {
+    background-color: <button-color-hovered>;
+}
+
+button.gold:active > .icon,
+button.gold:checked > .icon {
+    background-color: <button-color-pressed>;
+}
+
+button.gold:disabled > .icon {
+    background-color: <button-color-disabled>;
+}

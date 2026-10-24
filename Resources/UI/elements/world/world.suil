@@ -1,0 +1,61 @@
+let map-loc = world-map-user-interface;
+let marker-loc = world-marker-user-interface;
+
+/* The window of the world map: the strip with the coordinates and the color of the faction over the map. */
+@WorldMapWindow => window (
+    title: $world-map-user-interface-title,
+    min-size: 1210 700
+) {
+    col {
+        _ .fancy-back #header {
+            row (horizontal-expand, align-items: center) {
+                framed-icon-button #reset-coords-button .square (
+                    "/Textures/Interface/VerbIcons/refresh.svg.192dpi.png",
+                    tool-tip: $<map-loc>-reset-coords-tooltip,
+                    set-size: 28
+                )
+                _ #coordinates (margin: 0 3)
+                _ .flex-fill
+                color-picker #faction-color (set-height: 32)
+            }
+        }
+
+        box #map-area (flex-grow: 1) {
+            +world-map-control #world-map
+        }
+    }
+}
+
+/* The menu over the map: the buttons are shown by the state, see WorldMapContextWindowState. */
+@WorldMapContextWindow => window (
+    min-size: 0 0,
+    header-visible: false,
+    resizable: false
+) {
+    col {
+        +button #add-marker-button (text: $<map-loc>-marker)
+        +button #change-marker-button (text: $<map-loc>-change-marker)
+        +button #tp-here-button (text: $<map-loc>-tp-to-marker)
+        +button #delete-marker-button .red (text: $<map-loc>-delete-marker)
+    }
+}
+
+/* The window of a marker: the text, the color and the button that makes it. */
+@WorldMarkerWindow => window (title: $<marker-loc>-title, resizable: false) {
+    col {
+        row {
+            line-edit #text-edit (
+                place-holder: $<marker-loc>-text-placeholder,
+                set-width: 150
+            )
+            _ #color-panel (set-size: 32 32)
+        }
+
+        color-selector-sliders #color-selectors (
+            selector-type: rgb,
+            is-alpha-visible: false
+        )
+
+        button #submit-button .green (text: $<marker-loc>-submit)
+    }
+}

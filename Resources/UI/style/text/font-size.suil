@@ -1,0 +1,17 @@
+/*
+ * The size of the font of any element (a label, a button, ...). The font size is inherited, so a class on a
+ * container changes the text of all its children.
+ * Old classes: LabelBig, LabelSmall, LabelSmallest, ButtonBig, ButtonSmall.
+ */
+
+.font-big {
+    font-size: 16px;
+}
+
+.font-small {
+    font-size: 10px;
+}
+
+.font-smallest {
+    font-size: 8px;
+}

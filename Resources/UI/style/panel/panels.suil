@@ -1,0 +1,62 @@
+/*
+ * StyleFortress.cs: Dividers, PanelContainer, Backgrounds, Slots, PDA backgrounds.
+ *
+ * The content margin of a flat box is its padding plus its border, so a bordered panel with the content margin 10
+ * has `padding: 9px` here.
+ */
+
+/* ---------- Panels ---------- */
+
+/* PanelLight */
+.panel-light {
+    background-color: <dark-forest>;
+    padding: 10px;
+}
+
+/* PanelLightTransparent */
+.panel-light-transparent {
+    background-color: color-mix(in srgb, <dark-forest> 80%, transparent);
+    padding: 10px;
+}
+
+/* PanelDark */
+.panel-dark {
+    background-color: <graphite-black>;
+    padding: 10px;
+}/* PanelLightBordered */
+.panel-light-bordered {
+    background-color: <dark-forest>;
+    border: 1px solid <wooden-fortress>;
+    padding: 9px;
+}/* PanelDarkBordered */
+.panel-dark-bordered {
+    background-color: <graphite-black>;
+    border: 1px solid <wooden-fortress>;
+    padding: 9px;
+}
+
+/* PanelDarkBorderedTransparent */
+.panel-dark-bordered-transparent {
+    background-color: color-mix(in srgb, <graphite-black> 80%, transparent);
+    border: 1px solid <wooden-fortress>;
+    padding: 9px;
+}
+
+/* PanelHighlighted */
+.panel-highlighted {
+    background-color: <graphite-black>;
+    border: 1px solid <black-amber>;
+    padding: 9px;
+}
+
+/* PanelHighlightedTransparent */
+.panel-highlighted-transparent {
+    background-color: color-mix(in srgb, <graphite-black> 80%, transparent);
+    border: 1px solid <black-amber>;
+    padding: 9px;
+}
+
+/* ChatPanel: chat subpanels (chat LineEdit backing, popup backings) */
+.chat-panel {
+    background-color: <chat-background-color>;
+}

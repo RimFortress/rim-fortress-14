@@ -1,0 +1,146 @@
+using Content.Client._RF.Suil;
+using Content.Client._RF.NPC.UI;
+using Content.Shared._RF.NPC.UtilityAi;
+using Content.Shared._RF.NPC.UtilityAi.Prototypes;
+using Content.Client._RF.UserInterface.Controls;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
+
+namespace Content.Client._RF.NPC.UtilityAi.UI;
+
+/// <summary>
+/// A goal of the Utility AI graph: the curves, the conditions and the score.
+/// </summary>
+public sealed partial class UtilityAiGoalControl : DebugNodeControl
+{
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+
+    public UtilityAiGoalControl(
+        UtilityAiGoalDebugInfo info,
+        ProtoId<UtilityAiGoalPrototype>? current)
+    {
+        IoCManager.InjectDependencies(this);
+        InitializeComponent();
+
+        RfTabContainer.SetTabTitle(CommonTab, "Common");
+        RfTabContainer.SetTabTitle(CurvesTab, "Curves");
+        RfTabContainer.SetTabTitle(ConditionsTab, "Conditions");
+
+        RfTabContainer.SetTabVisible(CurvesTab, info.Curves.Length > 0);
+        RfTabContainer.SetTabVisible(ConditionsTab, info.Preconditions.Length > 0);
+
+        // Status
+        if (current == info.ProtoId)
+        {
+            StatusLabel.Text = $@"[color={SuilPalette.LightGood.ToHex()}]\[Active][/color]";
+            SearchText.Add("Active");
+        }
+
+        if (info.AgentGoal)
+        {
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightGood.ToHex()}]\[Available][/color]";
+            SearchText.Add("Available");
+        }
+
+        if (info.FallbackGoal)
+        {
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Yellow.ToHex()}]\[Fallback][/color]";
+            SearchText.Add("Fallback");
+        }
+
+        if (info.ExecutableGoal)
+        {
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={Color.Orange.ToHex()}]\[Executable][/color]";
+            SearchText.Add("Executable");
+        }
+
+        if (info.Cooldown != TimeSpan.Zero)
+        {
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightBad.ToHex()}]\[Cooldown][/color]";
+            SearchText.Add("Cooldown");
+        }
+
+        if (info.Penalty != 0)
+        {
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightBad.ToHex()}]\[Penalty][/color]";
+            SearchText.Add("Penalty");
+        }
+
+        if (info.IncumbentBonus.Length > 0)
+        {
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightGood.ToHex()}]\[Bonus][/color]";
+            SearchText.Add("Bonus");
+        }
+
+        StatusLabel.Text = $"[b]{StatusLabel.Text}[/b]";
+
+        if (!_proto.Resolve(info.ProtoId, out var proto))
+            return;
+
+        Title.Text = $"[b][color={proto.Color.ToHex()}]{info.ProtoId}[/color] ({info.Result:F2})[/b]";
+        SearchText.Add(info.ProtoId);
+
+        // Common
+        AiUiHelper.AddLabel(CommonTab, "Name:", Loc.GetString(proto.Name));
+        AiUiHelper.AddLabel(CommonTab, "Fail Policy:", $"{proto.FailPolicy}");
+
+        if (proto.FailPolicy == UtilityAiFailPolicy.Penalty)
+            AiUiHelper.AddLabel(CommonTab, "Fail Penalty:", $"{proto.FailPenalty}");
+
+        if (proto.Fallbacks.Count > 0)
+            AiUiHelper.AddLabel(CommonTab, "Fallbacks:", string.Join(", ", proto.Fallbacks));
+
+        if (proto.Capture.Count > 0)
+            AiUiHelper.AddLabel(CommonTab, "Capture:", string.Join(", ", proto.Capture));
+
+        if (proto.TempKeys.Count > 0)
+            AiUiHelper.AddLabel(CommonTab, "TempKeys:", string.Join(", ", proto.TempKeys));
+
+        if (info.Cooldown > TimeSpan.Zero)
+            AiUiHelper.AddLabel(CommonTab, "Cooldown:", $"{(info.Cooldown - _timing.CurTime).Seconds}s");
+
+        AiUiHelper.AddTypes(CommonTab, "Goal State", info.GoalState.State);
+
+        // Curves
+        foreach (var curve in info.Curves)
+        {
+            var box = AiUiHelper.AddBox(CurvesTab, curve.Reflection.Name, $"{curve.Output:F3}");
+            AiUiHelper.AddTypes(box.Content, "Fields", curve.Reflection);
+            AiUiHelper.AddLabel(box.Content, "Input:", $"{curve.Input:F3}");
+        }
+
+        if (info.IncumbentBonus.Length > 0)
+        {
+            var incumbentBox = AiUiHelper.AddBox(CurvesTab, "Incumbent Bonus", $"{info.IncumbentBonus[^1].Output:F3}");
+
+            foreach (var curve in info.IncumbentBonus)
+            {
+                var box = AiUiHelper.AddBox(incumbentBox, curve.Reflection.Name, $"{curve.Output:F3}");
+                AiUiHelper.AddTypes(box.Content, "Fields", curve.Reflection);
+                AiUiHelper.AddLabel(box.Content, "Input:", $"{curve.Input:F3}");
+            }
+        }
+
+        if (info.Penalty > 0)
+            AiUiHelper.AddLabel(CurvesTab, "Total Penalty:", $"{info.Penalty:F3}");
+
+        AiUiHelper.AddLabel(CurvesTab, "Modified Score:", $"{info.Modified:F3}");
+        AiUiHelper.AddLabel(CurvesTab, "Total Score:", $"{info.Result:F3}");
+
+        // Conditions
+        foreach (var condition in info.Preconditions)
+        {
+            var box = AiUiHelper.AddBox(
+                ConditionsTab,
+                condition.Reflection.Name,
+                condition.Result
+                    ? $"[color={SuilPalette.LightGood.ToHex()}]True[/color]"
+                    : $"[color={SuilPalette.LightBad.ToHex()}]False[/color]");
+            AiUiHelper.AddTypes(box.Content, "Fields", condition.Reflection);
+            AiUiHelper.AddTypes(box.Content, "State Snapshot", condition.Dump.StateSnapshot.State);
+            AiUiHelper.AddLogs(box.Content, condition.Dump.Dump);
+        }
+    }
+}
+

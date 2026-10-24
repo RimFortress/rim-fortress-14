@@ -1,0 +1,54 @@
+/* The chat that folds into a button with the number of the unread messages. */
+@FoldableChatBox => chat-box (mouse-filter: ignore, set-height: 400) {
+    col #container (horizontal-expand) {
+        row (
+            background-color: <graphite-black>,
+            border: 1px solid <black-amber>,
+            padding: 2px
+        ) {
+            _ {
+                _ #chat-icon (
+                    set-size: 36,
+                    margin: 4,
+                    background-image: texture("<icons>/comment-dots-regular.svg.192dpi.png"),
+                    background-size: contain,
+                    background-repeat: no-repeat,
+                    background-position: center,
+                    background-color: <gold-fortress>
+                )
+
+                chat-messages-bubble #bubble (
+                    horizontal-alignment: right,
+                    vertical-alignment: top
+                )
+            }
+
+            _ .low-divider (margin: 3 5)
+            _ .fancy-back (horizontal-expand)
+
+            button #toggle-button .icon-button .square (
+                tool-tip: $foldable-chat-toggle-tooltip,
+                set-size: 38
+            ) {
+                _ #toggle-icon .icon (
+                    background-image: texture("<icons>/chevron-left-solid-full.svg.192dpi.png")
+                )
+            }
+        }
+    }
+}
+
+/* The red number on the icon of the chat. */
+@ChatMessagesBubble => box (
+    tool-tip: $chat-messages-bubble-tooltip,
+    mouse-filter: pass,
+    tooltip-delay: 0,
+    tracking-tooltip,
+    background-image: texture("<icons>/Style/chat_messages_bubble.png"),
+    background-repeat: stretch,
+    background-color: <light-bad>,
+    patch-margin: 3px,
+    padding: 3px
+) {
+    _ #label .font-smallest
+}

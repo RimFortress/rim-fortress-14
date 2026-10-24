@@ -1,0 +1,36 @@
+/* The hotbar: the tree of the buttons of the commands. */
+/* The prefix of the localization keys of the file */
+let loc = actions-hotbar-widgets;
+
+@ActionsHotbarWidget => box-container {
+    tree-menu #tree (orientation: horizontal) {
+        +tree-menu-button #build-button (
+            tool-tip: $<loc>-build-tooltip,
+            texture-path: "<icons>/hammer-solid.svg.192dpi.png"
+        )
+
+        +tree-menu-button #passive-tasks-button (
+            tool-tip: $<loc>-passive-tasks-tooltip,
+            texture-path: "<icons>/VerbIcons/hand-pointer-solid.svg.192dpi.png"
+        )
+
+        +tree-menu-button #npc-jobs-button (
+            tool-tip: $<loc>-npc-jobs-tooltip,
+            texture-path: "<icons>/arrow-down-wide-short-solid-full.192dpi.png"
+        )
+
+        _ .low-divider (margin: 10 5)
+
+        tree-menu-button #zoning-button (
+            tool-tip: $<loc>-zoning-tooltip,
+            texture-path: "<icons>/vector-square-solid.svg.192dpi.png"
+        )
+
+        _ .low-divider (margin: 10 5)
+
+        +tree-menu-button #world-map-button (
+            tool-tip: $<loc>-world-map-tooltip,
+            texture-path: "<icons>/map-location-dot-solid.svg.192dpi.png"
+        )
+    }
+}

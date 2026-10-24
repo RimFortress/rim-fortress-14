@@ -1,0 +1,59 @@
+/* A row of the sliders and the text at its start, which takes the width of its text: the sliders start right after it. */
+let selector-row = {
+    row .color-selector-row (gap: 4px) {
+        %content%
+    }
+}
+
+let selector-label = {
+    _ (align-self: center)
+}
+
+/* The rules for the number boxes in the rows are in style/input/color-selector.suil */
+@RfColorSelectorSliders as color-selector-sliders => box (
+    flex-direction: column,
+    gap: 3px
+) {
+    row (gap: 6px) {
+        option-button #type-selector
+        _ #description-label (
+            align-self: center,
+            max-width: 150px,
+            white-space: nowrap,
+            overflow: hidden,
+            text-overflow: ellipsis
+        )
+    }
+
+    selector-row {
+        selector-label #top-label
+        color-slider #top-slider (flex-grow: 1, align-self: center)
+        int-counter #top-input
+    }
+
+    selector-row {
+        selector-label #middle-label
+        color-slider #middle-slider (flex-grow: 1, align-self: center)
+        int-counter #middle-input
+    }
+
+    selector-row {
+        selector-label #bottom-label
+        color-slider #bottom-slider (flex-grow: 1, align-self: center)
+        int-counter #bottom-input
+    }
+
+    selector-row #alpha-row (visible: false) {
+        selector-label #alpha-label (text: $color-selector-sliders-alpha)
+        slider #alpha-slider (flex-grow: 1, align-self: center, max-value: 1)
+        int-counter #alpha-input
+    }
+
+    selector-row {
+        selector-label #hex-label (text: $color-selector-input-hex)
+        line-edit #hex-edit (
+            flex-grow: 1,
+            align-self: center
+        )
+    }
+}

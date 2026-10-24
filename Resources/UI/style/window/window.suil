@@ -1,0 +1,25 @@
+.window-title {
+    color: <gold-fortress>;
+    font-weight: bold;
+    font-size: 14px;
+}.window-help-button {
+    background-image: texture("/Textures/Interface/Nano/help.png");
+    background-repeat: no-repeat;
+    background-color: <bright-green>;
+}
+
+.window-help-button:hover {
+    background-color: <dark-bad>;
+}
+
+.window-help-button:active,
+.window-help-button:checked {
+    background-color: <darkest-bad>;
+}
+
+.window-heading-background {
+    border: <graphite-black> solid;
+    border-width: 3px 0 1px 0;
+    background-color: <dark-forest>;
+    padding: 3px 8px 3px 4px;
+}

@@ -1,0 +1,17 @@
+/* ---------- The tooltip (TooltipPopup) ---------- */
+
+/* The text of the tooltip is outlined to be read over any background */
+.tooltip-body {
+    font-outline: 1px;
+}
+
+/* The time before the tooltip is pinned: a thin golden line that fills up */
+.progress.tooltip-timer {
+    min-height: 2px;
+    border: none;
+    background-color: transparent;
+}
+
+.progress.tooltip-timer > .fill {
+    background-color: <gold-fortress>;
+}

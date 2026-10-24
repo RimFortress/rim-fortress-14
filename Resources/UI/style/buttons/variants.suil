@@ -1,0 +1,49 @@
+/* ---------- ListContainer ---------- */
+
+/* ListContainer.StyleClassListContainerButton: list-container-button */
+.list-container-button {
+    padding-left: 10px;
+    background-color: rgb(55, 55, 68);
+}
+
+.list-container-button:hover,
+.list-container-button:active,
+.list-container-button:checked {
+    background-color: rgb(75, 75, 86);
+}
+
+.list-container-button:disabled {
+    background-color: rgb(10, 10, 12);
+}
+
+/* ---------- Chat Channel Selector ---------- */
+
+/* chatSelectorOptionButton */
+.chat-selector-option-button {
+    background-image: texture("<icons>/Style/rounded_button.png");
+    background-repeat: stretch;
+    patch-margin: 5px;
+    padding: 7px;
+}
+
+/* chatFilterOptionButton */
+.chat-filter-option-button {
+    background-image: texture("<icons>/Style/rounded_button_bordered.png");
+    background-repeat: stretch;
+    patch-margin: 5px;
+    padding: 7px;
+    background-color: <button-color-default>;
+}
+
+.chat-filter-option-button:hover {
+    background-color: <button-color-hovered>;
+}
+
+.chat-filter-option-button:active,
+.chat-filter-option-button:checked {
+    background-color: <button-color-pressed>;
+}
+
+.chat-filter-option-button:disabled {
+    background-color: <button-color-disabled>;
+}

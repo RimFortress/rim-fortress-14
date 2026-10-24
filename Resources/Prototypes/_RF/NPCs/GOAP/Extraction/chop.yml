@@ -32,6 +32,6 @@
       range: 3
       whitelist:
         components:
-        - Log
+        - ToolRefinable # the logs
     effects:
       TargetChopDown: true

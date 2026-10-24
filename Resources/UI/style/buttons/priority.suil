@@ -1,0 +1,31 @@
+/* ---------- The priority of a job (NpcJobPriorityButton) ---------- */
+
+/*
+ * A flat square that shows a number; the color of the number is the priority's, the code sets it.
+ * Written as button.priority-button so it beats the rules of button:hover and the like.
+ */
+button.priority-button {
+    border: 2px solid <wooden-fortress>;
+    border-image: none;
+    border-radius: 7px;
+    background-image: none;
+    background-color: <graphite-black>;
+    padding: 0;
+    font-weight: bold;
+    text-align: center;
+}
+
+button.priority-button:hover {
+    border-color: <gold-fortress>;
+    background-color: <dark-forest>;
+}
+
+button.priority-button:active {
+    border-color: <gold-button-color-pressed>;
+    background-color: <black-amber>;
+}
+
+button.priority-button:disabled {
+    border-color: <button-color-disabled>;
+    background-color: <graphite-black>;
+}

@@ -1,15 +1,13 @@
+using Content.Client._RF.UserInterface;
 using System.Linq;
-using Content.Client.Lobby.UI.Roles;
-using Content.Client.Stylesheets;
+using Content.Client._RF.Suil;
 using Content.Shared.Traits;
-using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Lobby.UI;
 
 public sealed partial class RfHumanoidProfileEditor
 {
-
     /// <summary>
     /// Refreshes traits selector
     /// </summary>
@@ -17,16 +15,14 @@ public sealed partial class RfHumanoidProfileEditor
     {
         TraitsList.RemoveAllChildren();
 
-        var traits = _prototypeManager.EnumeratePrototypes<TraitPrototype>().OrderBy(t => Loc.GetString(t.Name)).ToList();
-        TabContainer.SetTabTitle(TraitsTab.GetPositionInParent(), Loc.GetString("humanoid-profile-editor-traits-tab"));
+        var traits = _prototypeManager
+            .EnumeratePrototypes<TraitPrototype>()
+            .OrderBy(t => Loc.GetString(t.Name))
+            .ToList();
 
         if (traits.Count < 1)
         {
-            TraitsList.AddChild(new Label
-            {
-                Text = Loc.GetString("humanoid-profile-editor-no-traits"),
-                FontColorOverride = Color.Gray,
-            });
+            TraitsList.AddChild(CreateHint(Loc.GetString("humanoid-profile-editor-no-traits")));
             return;
         }
 
@@ -59,21 +55,18 @@ public sealed partial class RfHumanoidProfileEditor
             {
                 category = _prototypeManager.Index<TraitCategoryPrototype>(categoryId);
                 // Label
-                TraitsList.AddChild(new Label
-                {
-                    Text = Loc.GetString(category.Name),
-                    Margin = new Thickness(0, 10, 0, 0),
-                    StyleClasses = { StyleClass.LabelHeading },
-                });
+                var label = CreateLabel(Loc.GetString(category.Name), SuilClass.LabelHeading);
+                label.Margin = new Thickness(0, 10, 0, 0);
+                TraitsList.AddChild(label);
             }
 
-            List<TraitPreferenceSelector?> selectors = new();
+            List<RfTraitPreferenceSelector?> selectors = new();
             var selectionCount = 0;
 
             foreach (var traitProto in categoryTraits)
             {
                 var trait = _prototypeManager.Index<TraitPrototype>(traitProto);
-                var selector = new TraitPreferenceSelector(trait);
+                var selector = new RfTraitPreferenceSelector(trait);
 
                 selector.Preference = Profile?.TraitPreferences.Contains(trait.ID) == true;
                 if (selector.Preference)
@@ -99,11 +92,8 @@ public sealed partial class RfHumanoidProfileEditor
             // Selection counter
             if (category is { MaxTraitPoints: >= 0 })
             {
-                TraitsList.AddChild(new Label
-                {
-                    Text = Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints)),
-                    FontColorOverride = Color.Gray
-                });
+                TraitsList.AddChild(CreateHint(
+                    Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", selectionCount), ("max", category.MaxTraitPoints))));
             }
 
             foreach (var selector in selectors)
@@ -114,11 +104,25 @@ public sealed partial class RfHumanoidProfileEditor
                 if (category is { MaxTraitPoints: >= 0 } &&
                     selector.Cost + selectionCount > category.MaxTraitPoints)
                 {
-                    selector.Checkbox.Label.FontColorOverride = Color.Red;
+                    selector.OverLimit = true;
                 }
 
                 TraitsList.AddChild(selector);
             }
         }
+    }
+
+    private static UiElement CreateHint(string text)
+    {
+        var label = new UiElement { Text = text, TextColor = SuilPalette.GraySilver };
+        label.SuilSetHard("color");
+        return label;
+    }
+
+    private static UiElement CreateLabel(string text, string styleClass)
+    {
+        var label = new UiElement { Text = text };
+        label.AddSuilStyleClass(styleClass);
+        return label;
     }
 }

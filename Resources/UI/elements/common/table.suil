@@ -1,0 +1,17 @@
+/* The table: a header row that stays, and the rows under it that scroll. A column is as wide as its widest cell. */
+@TableControl => box (flex-direction: column) {
+    scroll-container (overflow-x: auto, overflow-y: hidden, flex-grow: 1) {
+        col (flex-grow: 1) {
+            col #header-container
+            scroll-container (overflow-x: hidden, overflow-y: auto, flex-grow: 1) {
+                col #rows-container (flex-grow: 1)
+            }
+        }
+    }
+}
+
+/* A row: the highlighted panel with the cells and the dividers between them. */
+@TableRow => box .panel-highlighted (min-height: 48)
+
+/* A cell of a row. */
+@TableCell => box (flex-grow: 1)

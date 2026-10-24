@@ -1,0 +1,19 @@
+.option-triangle {
+    min-width: 18px;
+    min-height: 18px;
+    background-image: texture("<icons>/chevron-left-solid-full.svg.192dpi.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-color: <gold-fortress>;
+    align-self: center;
+}
+
+option-button:checked .option-triangle {
+    background-image: texture("<icons>/chevron-down-solid-full.svg.192dpi.png");
+}
+
+.option-button-panel {
+    background-color: color-mix(in srgb, <signal-black> 90%, transparent);
+    border: solid 1px <graphite-black>;
+}

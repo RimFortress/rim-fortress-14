@@ -1,0 +1,3 @@
+@RfOrganMarkingPicker as organ-marking-picker => col {
+    tab #layer-tabs (flex-grow: 1)
+}

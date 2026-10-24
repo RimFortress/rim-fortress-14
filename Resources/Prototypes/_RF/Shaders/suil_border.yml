@@ -1,0 +1,27 @@
+- type: shader
+  id: DottedBorder
+  kind: source
+  path: /Textures/_RF/Shaders/dotted_border.swsl
+
+- type: shader
+  id: DashedBorder
+  kind: source
+  path: /Textures/_RF/Shaders/dashed_border.swsl
+
+- type: shader
+  id: DoubleBorder
+  kind: source
+  path: /Textures/_RF/Shaders/double_border.swsl
+
+- type: shader
+  id: BevelBorder
+  kind: source
+  path: /Textures/_RF/Shaders/bevel_border.swsl
+  darken_factor: 0.5
+  lighten_factor: 0.5
+  split: 0.5
+
+- type: shader
+  id: RoundedFill
+  kind: source
+  path: /Textures/_RF/Shaders/rounded_fill.swsl

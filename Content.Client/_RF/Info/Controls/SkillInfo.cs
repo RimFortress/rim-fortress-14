@@ -1,0 +1,90 @@
+using Content.Client._RF.Suil;
+using Content.Client._RF.Skills;
+using Content.Client._RF.UserInterface.Controls;
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Components;
+using Robust.Client.GameObjects;
+using Robust.Shared.Prototypes;
+
+namespace Content.Client._RF.Info.Controls;
+
+public sealed partial class SkillInfo : RfBoxContainer
+{
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+
+    /// <summary>
+    /// How often the information will be updated, in seconds
+    /// </summary>
+    private const float UpdateRate = 1f;
+
+    private EntityUid? _uid;
+    private ProtoId<SkillPrototype>? _skill;
+
+    public SkillInfo(EntityUid uid, ProtoId<SkillPrototype> skill)
+    {
+        IoCManager.InjectDependencies(this);
+        InitializeComponent();
+        UpdateInfo(uid, skill);
+
+        // TODO: In a good way it is necessary to write a custom state for SkillsComponent
+        // and when receiving it on the client also call the update event on the client,
+        // to which you can subscribe in the UI and blah blah blah....
+        // But I'm lazy, so what will update the information once every some time, it's not that costly anyway
+        Scope.Every(UpdateRate, () =>
+        {
+            if (_uid != null && _skill != null)
+                UpdateInfo(_uid.Value, _skill.Value);
+        });
+    }
+
+    public void UpdateInfo(EntityUid uid, ProtoId<SkillPrototype> skill)
+    {
+        var skillSys = _entity.System<SkillsSystem>();
+        var proto = _proto.Index(skill);
+
+        if (!skillSys.TryGetSkillData(uid, skill, out var data))
+            return;
+
+        _uid = uid;
+        _skill = skill;
+
+        Label.Text = $"[b][color={proto.Color.ToHex()}]{Loc.GetString(proto.Name)}[/color][/b]";
+
+        if (_entity.TryGetComponent(uid, out SkillExpModificatorComponent? comp)
+            && comp.Multipliers.TryGetValue(proto, out var multiplier))
+        {
+            Label.Text = multiplier switch
+            {
+                > 1 => $"{Label.Text} ([color={SuilPalette.Good.ToHex()}]{(int)(multiplier * 100)}%[/color])",
+                < 1 => $"{Label.Text} ([color={SuilPalette.LightBad.ToHex()}]{(int)(multiplier * 100)}%[/color])",
+                _ => Label.Text,
+            };
+        }
+
+        Icon.Texture = proto.Icon != null
+            ? _entity.System<SpriteSystem>().Frame0(proto.Icon)
+            : null;
+        Icon.ModulateSelfOverride = proto.Color;
+
+        CurrentLevel.Text = $"[b]{data.CurrentLevel}[/b]";
+
+        var modifiedLevel = skillSys.GetModifiedLevel(uid, skill);
+        var delta = modifiedLevel - data.CurrentLevel;
+
+        if (delta != 0)
+        {
+            var color = delta < 0 ? SuilPalette.LightBad : SuilPalette.Good;
+            var sign = delta < 0 ? "–" : "+";
+
+            CurrentLevel.Text = $"{CurrentLevel.Text} ([color={color.ToHex()}]{sign}{Math.Abs(delta)}[/color])";
+        }
+
+        MaxExp.Text = (data.LevelUpExp - data.MinLevelExp).ToString();
+        CurrentExp.Text = (data.CurrentExp - data.MinLevelExp).ToString();
+
+        ProgressBar.MinValue = data.MinLevelExp;
+        ProgressBar.MaxValue = data.LevelUpExp;
+        ProgressBar.Value = data.CurrentExp;
+    }
+}

@@ -7,5 +7,5 @@ namespace Content.Shared._RF.Construction;
 public sealed partial class CommonConstructionGhostComponent : Component
 {
     [DataField]
-    public ProtoId<ConstructionPrototype> ConstructionProto;
+    public ProtoId<ConstructionPrototype>? ConstructionProto;
 }

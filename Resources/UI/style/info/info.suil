@@ -1,0 +1,13 @@
+/* ---------- The windows of the information about a pop (Content.Client/_RF/Info) ---------- */
+
+/*
+ * The effects of the mood and of the opinion go in stripes: the first row is the dark one. The stripes are counted
+ * by the tree, so a sorted or removed effect needs no class from the code.
+ */
+.effects-list > .effect-info:nth-child(odd) {
+    background-color: <graphite-black>;
+}
+
+.effects-list > .effect-info:nth-child(even) {
+    background-color: <dark-forest>;
+}

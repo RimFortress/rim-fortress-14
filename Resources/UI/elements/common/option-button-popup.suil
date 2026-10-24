@@ -1,0 +1,16 @@
+/* The list of an option button */
+@RfOptionButtonPopup as option-button-popup => popup {
+    +scroll-container #scroll .option-button-panel (
+        max-height: 300,
+        return-measure
+    ) {
+        col {
+            +line-edit #filter-box (
+                place-holder: $option-button-filter,
+                visible: false,
+                select-all-on-focus
+            )
+            +col #items-box
+        }
+    }
+}

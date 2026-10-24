@@ -1,0 +1,27 @@
+/* The portrait of a pop: its status icons (the needs) over the picture and the mood in the corner. */
+@PopIcon => button .square (
+    set-size: 80,
+    toggle-mode,
+    tooltip-delay: 0,
+    tracking-tooltip,
+    margin: 0 5
+) {
+    sprite-view #icon (stretch: fill)
+    grid #status-container (columns: 4, horizontal-expand)
+    _ #mood-label (horizontal-alignment: right, vertical-alignment: bottom)
+}
+
+/* The panel of the pops: the combat mode button and the portraits. */
+@PopList => box-container {
+    button #combat-button .empty (
+        tool-tip: $pop-list-combat-mode-tooltip,
+        set-size: 40,
+        vertical-alignment: bottom,
+        toggle-mode,
+        margin: 0 5
+    ) {
+        _ #combat-icon (background-repeat: stretch)
+    }
+
+    =grid #icons (columns: 8, fit-content)
+}

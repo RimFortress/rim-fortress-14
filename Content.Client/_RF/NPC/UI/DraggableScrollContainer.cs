@@ -1,12 +1,16 @@
 using System.Numerics;
+using Content.Client._RF.UserInterface.Controls;
 using Robust.Client.Input;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Input;
 
 namespace Content.Client._RF.NPC.UI;
 
-public sealed partial class DraggableScrollContainer : ScrollContainer
+/// <summary>
+/// A scroll container that is scrolled by dragging the content with the mouse. The wheel is not used for scrolling,
+/// it goes up to the graph, which zooms by it.
+/// </summary>
+public sealed partial class DraggableScrollContainer : RfScrollContainer
 {
     [Dependency] private IInputManager _input = default!;
 
@@ -51,5 +55,9 @@ public sealed partial class DraggableScrollContainer : ScrollContainer
         // Dragging the view: move content opposite to mouse movement.
         SetScrollValue(GetScrollValue() - delta);
         args.Handle();
+    }
+
+    protected override void MouseWheel(GUIMouseWheelEventArgs args)
+    {
     }
 }

@@ -1,0 +1,80 @@
+using Content.Client._RF.Notifications;
+using Content.Client.UserInterface.Controls;
+using Content.Shared._RF.Notifications;
+using Robust.Client.Player;
+using Robust.Client.UserInterface;
+using Robust.Shared.Prototypes;
+using Content.Client._RF.UserInterface.Controls;
+
+namespace Content.Client._RF.Notifications.UI;
+
+public sealed partial class NotificationsSettingsWindow : RfWindow
+{
+    [Dependency] private IEntityManager _entity = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IPlayerManager _player = default!;
+    private NotificationsSystem _notifications = default!;
+
+    private bool _setup;
+    private readonly Dictionary<ProtoId<NotificationPrototype>, Control> _ignoredControls = new();
+
+    public NotificationsSettingsWindow()
+    {
+        InitializeComponent();
+        IoCManager.InjectDependencies(this);
+
+        _proto.PrototypesReloaded += args =>
+        {
+            if (args.WasModified<NotificationPrototype>())
+                ReloadPrototypes();
+        };
+    }
+
+    private void ReloadPrototypes()
+    {
+        Container.RemoveAllChildren();
+
+        foreach (var proto in _proto.EnumeratePrototypes<NotificationPrototype>())
+        {
+            if (_ignoredControls.ContainsKey(proto))
+                continue;
+
+            var button = Button(proto);
+            Container.AddChild(button);
+            _ignoredControls.Add(proto, button);
+        }
+    }
+
+    public void EnsureSetup()
+    {
+        if (_setup)
+            return;
+
+        _setup = true;
+        _notifications = _entity.System<NotificationsSystem>();
+        ReloadPrototypes();
+    }
+
+    private RfCheckBox Button(NotificationPrototype proto)
+    {
+        var checkbox = new RfCheckBox
+        {
+            Text = Loc.GetString(proto.NameId),
+            Pressed = !_notifications.Ignored(_player.LocalEntity ?? EntityUid.Invalid, proto),
+            Margin = new Thickness(3, 2),
+        };
+
+        checkbox.OnPressed += _ =>
+        {
+            if (_player.LocalEntity is not { } uid)
+                return;
+
+            if (!checkbox.Pressed)
+                _notifications.AddIgnored(uid, proto);
+            else
+                _notifications.RemoveIgnored(uid, proto);
+        };
+
+        return checkbox;
+    }
+}

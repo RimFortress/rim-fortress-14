@@ -6,11 +6,13 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Content.IntegrationTests;
 using Content.IntegrationTests.Utility;
+using Robust.Shared.ContentPack; // RimFortress
 using Robust.Shared.Prototypes;
 using Robust.Shared.Reflection;
 using Robust.Shared.Serialization.Markdown.Validation;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
+using YamlDotNet.RepresentationModel; // RimFortress
 using Robust.UnitTesting;
 using Robust.UnitTesting.Pool;
 
@@ -107,11 +109,64 @@ namespace Content.YAMLLinter
                         yamlErrors[kind] = set;
                 }
 
+                // RimFortress Start
+                AddPartialDirectoryPrototypes(instance.ResolveDependency<IResourceManager>(), protoMan, prototypes);
+                // RimFortress End
+
                 fieldErrors = protoMan.ValidateStaticFields(prototypes);
             });
 
             return (yamlErrors, fieldErrors);
         }
+
+        // RimFortress Start
+        /// <summary>
+        /// <see cref="IPrototypeManager.ValidateDirectory(ResPath, out Dictionary{Type, HashSet{string}}, bool)"/> takes
+        /// every prototype of a partial directory (<c>/Prototypes/_RF</c>) for a patch of another one, so the new
+        /// prototypes of the directory are not among the ones it returns, and the static fields that name them are
+        /// reported as unknown. Here they are added, until the engine does it
+        /// (see the TODO in <c>EntryPoint</c>).
+        /// </summary>
+        private static void AddPartialDirectoryPrototypes(
+            IResourceManager resources,
+            IPrototypeManager protoMan,
+            Dictionary<Type, HashSet<string>> prototypes)
+        {
+            foreach (var file in resources.ContentFindFiles(new ResPath("/Prototypes/_RF")))
+            {
+                if (file.Extension != "yml" || file.Filename.StartsWith('.'))
+                    continue;
+
+                using var reader = resources.ContentFileReadText(file);
+                var stream = new YamlStream();
+                stream.Load(reader);
+
+                foreach (var document in stream.Documents)
+                {
+                    if (document.RootNode is not YamlSequenceNode sequence)
+                        continue;
+
+                    foreach (var node in sequence.Children.OfType<YamlMappingNode>())
+                    {
+                        // `!PartialOnly` only patches a prototype that may not be there
+                        if (!node.Children.TryGetValue(new YamlScalarNode("type"), out var typeNode)
+                            || !node.Children.TryGetValue(new YamlScalarNode("id"), out var idNode)
+                            || typeNode is not YamlScalarNode { Value: { } kind } type
+                            || idNode is not YamlScalarNode { Value: { } id } idScalar
+                            || !type.Tag.IsEmpty && type.Tag.Value == "!PartialOnly"
+                            || !idScalar.Tag.IsEmpty && idScalar.Tag.Value == "!PartialOnly"
+                            || !protoMan.TryGetKindType(kind, out var kindType))
+                            continue;
+
+                        if (!prototypes.TryGetValue(kindType, out var ids))
+                            prototypes[kindType] = ids = new HashSet<string>();
+
+                        ids.Add(id);
+                    }
+                }
+            }
+        }
+        // RimFortress End
 
         public static async Task<(Dictionary<string, HashSet<ErrorNode>> YamlErrors, List<string> FieldErrors)>
             RunValidation()

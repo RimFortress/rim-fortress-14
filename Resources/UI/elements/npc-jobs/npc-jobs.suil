@@ -1,0 +1,136 @@
+/* A task of a job in the settings: its name and the check box. */
+/* The prefix of the localization keys of the file */
+let loc = npc-jobs;
+
+@NpcTaskButton => row (tracking-tooltip, margin: 3 2) {
+    _ #label .label-key-text (flex-grow: 1)
+    +checkbox #check-box
+}
+
+/* The priority of a job: a square that shows the number, the click raises it, the right click lowers it. */
+@NpcJobPriorityButton => button .priority-button (
+    set-size: 32,
+    min-value: 0,
+    max-value: 10,
+    min-color: #228B22,
+    max-color: #CD5C5C
+)
+
+/* A cell of the table of priorities: the portrait of a pop and its name. */
+@NpcJobsPopCell => row {
+    box .panel-highlighted {
+        sprite-view #icon (
+            set-size: 48,
+            override-direction: south,
+            stretch: fill,
+            margin: 2
+        )
+    }
+
+    _ #name-label (margin: 0 5, flex-grow: 1)
+}
+
+/* A job in the settings: the icon (click to change), the name (can be edited), the buttons to rename and to delete. */
+@NpcJobButton => button .square (horizontal-expand, toggle-mode) {
+    row {
+        box .panel-highlighted {
+            +texture-switch-button #icon (
+                set-size: 24,
+                horizontal-alignment: center,
+                vertical-alignment: center,
+                textures-collection: "<icons>/VerbIcons/list-check-solid.svg.192dpi.png <icons>/VerbIcons/skull-crossbones-solid.svg.192dpi.png <icons>/VerbIcons/person-digging-solid.svg.192dpi.png <icons>/VerbIcons/hand-holding-medical-solid.svg.192dpi.png <icons>/VerbIcons/tree-solid.svg.192dpi.png <icons>/cubes-solid.svg.192dpi.png <icons>/VerbIcons/hand-solid.svg.192dpi.png <icons>/VerbIcons/house-flag-solid-full.svg.192dpi.png <icons>/VerbIcons/left-right-solid.svg.192dpi.png <icons>/VerbIcons/hand-pointer-solid.svg.192dpi.png <icons>/hammer-solid.svg.192dpi.png <icons>/VerbIcons/trowel-bricks-solid.svg.192dpi.png <icons>/VerbIcons/seedling-solid.svg.192dpi.png"
+            )
+        }
+
+        _ .low-divider-dark (margin: 2)
+
+        box #label-container .panel-dark-bordered (flex-grow: 1) {
+            _ #name-label (flex-grow: 1, align-self: center)
+        }
+
+        line-edit #name-edit (flex-grow: 1, visible: false)
+
+        framed-icon-button #edit-name-button .square (
+            "<icons>/eye-dropper-solid.svg.192dpi.png",
+            set-size: 35
+        )
+
+        confirm-button #delete-button .icon-button .square (
+            confirmation-text: "",
+            set-size: 35
+        ) {
+            _ .icon (background-image: texture("<icons>/ban-solid-full.svg.192dpi.png"))
+        }
+    }
+}
+
+/* The table of the priorities of the jobs of the pops. */
+@NpcJobsPriorityWindow => window (
+    title: $<loc>-priority-window-title,
+    min-size: 940 590
+) {
+    col {
+        table-control #table (flex-grow: 1)
+
+        _ .fancy-back (margin: 0 0 5 0) {
+            row {
+                button #job-settings-button (
+                    text: $<loc>-priority-window-settings-button-text,
+                    margin: 0 3
+                )
+            }
+        }
+    }
+}
+
+/* The jobs (left) and the tasks of the chosen job (right). */
+@NpcJobsSettingsWindow => window (
+    title: $<loc>-settings-window-title,
+    min-size: 700 600
+) {
+    row {
+        box .panel-dark-bordered {
+            col (flex-grow: 1) {
+                scroll-container (flex-grow: 1) {
+                    col #jobs-container (flex-grow: 1)
+                }
+
+                box .panel-highlighted {
+                    row (flex-grow: 1) {
+                        button #save-button .accept (
+                            text: $<loc>-settings-window-save-button,
+                            flex-grow: 1
+                        )
+
+                        button #create-role-button (
+                            text: $<loc>-settings-window-create-button,
+                            flex-grow: 1
+                        )
+                    }
+                }
+            }
+        }
+
+        _ .low-divider-dark (margin: 2 1)
+
+        box .panel-light-bordered (flex-grow: 1) {
+            col (flex-grow: 1) {
+                box .panel-highlighted {
+                    _ .fancy-window-title (
+                        text: $<loc>-settings-window-tasks-label,
+                        flex-grow: 1,
+                        align-self: center
+                    )
+                }
+
+                _ .low-divider-dark (margin: 1 2)
+
+                scroll-container (flex-grow: 1) {
+                    box .panel-highlighted (flex-grow: 1) {
+                        col #tasks-container (flex-grow: 1)
+                    }
+                }
+            }
+        }
+    }
+}

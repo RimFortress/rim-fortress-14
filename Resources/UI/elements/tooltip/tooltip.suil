@@ -1,0 +1,39 @@
+/* The tooltip: the icon and the title, the text, what a tooltip adds after it, and the timer before it is pinned. */
+@TooltipPopup => popup {
+    col #panel .angle-rect (margin: 15, max-width: 400) {
+        row #header {
+            box #icon-panel .panel-dark (
+                set-size: 36 36,
+                padding: 0,
+                mouse-filter: pass,
+                visible: false
+            ) {
+                _ (
+                    set-size: 32 32,
+                    horizontal-alignment: center,
+                    vertical-alignment: center
+                ) {
+                    entity-prototype-view #ent-view (set-size: 32 32)
+                    sprite-view #sprite-view (set-size: 32 32)
+                    texture-rect #texture (set-size: 32 32)
+                }
+            }
+
+            _ #icon-divider .low-divider (margin: 3 5, visible: false)
+            _ #title .label-heading (
+                flex-grow: 1,
+                margin: 0 10,
+                align-self: center
+            )
+        }
+
+        _ #header-divider .low-divider
+
+        col (margin: 2 4 10 7) {
+            _ #body .tooltip-body (visible: false)
+            col #control-after
+        }
+
+        progress #progress .tooltip-timer (margin: 0 0 0 8)
+    }
+}

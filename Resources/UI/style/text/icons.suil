@@ -1,0 +1,17 @@
+/* DirectionIcon.StyleClassDirectionIconArrow: direction-icon-arrow (south pointing arrow) */
+.direction-icon-arrow {
+    background-image: texture("/Textures/Interface/VerbIcons/drop.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* DirectionIcon.StyleClassDirectionIconUnknown: direction-icon-unknown */
+.direction-icon-unknown {
+    background-image: texture("/Textures/Interface/VerbIcons/information.svg.192dpi.png");
+    background-repeat: no-repeat;
+}
+
+/* DirectionIcon.StyleClassDirectionIconHere: direction-icon-here */
+.direction-icon-here {
+    background-image: texture("/Textures/Interface/VerbIcons/dot.svg.192dpi.png");
+    background-repeat: no-repeat;
+}

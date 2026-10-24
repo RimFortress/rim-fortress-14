@@ -1,3 +1,4 @@
+using Content.Client._RF.Graphics;
 using System.Numerics;
 using Robust.Client.Graphics;
 using Robust.Client.Player;
@@ -45,7 +46,7 @@ public sealed partial class WorldOverlay : Overlay
                 handle.DrawCircle(screenPos, 20f, Color.Yellow);
 
                 var text = $"{session.Data.UserName}\nSettlement: {index}";
-                handle.DrawString(_font, screenPos + new Vector2(20, -20), text, Color.White);
+                handle.DrawStringOutlined(_font, screenPos + new Vector2(20, -20), text, Color.White);
 
                 index++;
             }

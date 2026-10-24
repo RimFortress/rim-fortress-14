@@ -1,0 +1,39 @@
+/* The prefix of the localization keys of the file */
+let loc = character-setup-gui-character-picker-button;
+
+@RfCharacterPickerButton as character-picker-button => button {
+    row {
+        col {
+            +framed-icon-button #up .open-both (
+                "<icons>/sort-up-solid.svg.192dpi.png",
+                set-size: 36 36,
+                disabled
+            )
+            _ .flex-fill
+            +framed-icon-button #down .open-both (
+                "<icons>/sort-down-solid.svg.192dpi.png",
+                set-size: 36 36,
+                disabled
+            )
+        }
+
+        sprite-view #view (
+            set-size: 64 64,
+            override-direction: south,
+            scale: 2 2,
+            margin: 4 4 4 0
+        )
+
+        _ #description-label .text-center (
+            max-width: 150px,
+            align-self: flex-start,
+            mouse-filter: ignore,
+            white-space: pre-line
+        )
+
+        confirm-button #delete-button .open-both (
+            text: $<loc>-delete-button,
+            confirmation-text: $<loc>-confirm-delete-button
+        )
+    }
+}

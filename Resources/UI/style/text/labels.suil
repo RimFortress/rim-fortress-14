@@ -1,0 +1,66 @@
+/*
+ * StyleFortress.cs: Labels, Tooltips, Item status, PDA text.
+ *
+ * Label.StylePropertyFont is font-family, font-size, font-weight and font-style; Label.StylePropertyFontColor and
+ * ModulateSelf of a text are `color`. The font of every control is Source Code Pro (base/variables.suil), so only the
+ * size, the weight and the style are written here.
+ */
+
+/* ---------- Labels ---------- */
+
+/* StyleClass.LabelHeading: LabelHeading */
+.label-heading {
+    font-weight: bold;
+    font-size: 16px;
+    color: <gold-fortress>;
+}
+
+/* LabelHeadingBigger */
+.label-heading-bigger {
+    font-weight: bold;
+    font-size: 20px;
+    color: <gold-fortress>;
+}
+
+/* StyleClass.LabelSubText: LabelSubText */
+.label-sub-text {
+    font-size: 10px;
+    color: <gray-silver>;
+}
+
+/* LabelKeyText */
+.label-key-text {
+    font-weight: bold;
+    font-size: 12px;
+    color: <gold-fortress>;
+}
+
+/* LabelSecondaryColor */
+.label-secondary-color {
+    font-size: 12px;
+    color: <gray-silver>;
+}/* Good */
+.good {
+    color: <good-green-fore>;
+}
+
+/* Caution */
+.caution {
+    color: <gold-fortress>;
+}
+
+/* Danger */
+.danger {
+    color: <light-bad>;
+}
+
+/* Disabled */
+.disabled {
+    color: <disabled-button-font-color>;
+}
+
+/* Placeholder.StyleClassPlaceholderText: PlaceholderText */
+.placeholder-text {
+    font-size: 16px;
+    color: <placeholder-font-color>;
+}

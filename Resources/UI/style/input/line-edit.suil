@@ -1,0 +1,34 @@
+/*
+ * StyleFortress.cs: LineEdit, TextEdit, Scroll bars, CheckBox and the controls that have no Suil counterpart yet.
+ */
+
+/* ---------- LineEdit / TextEdit ---------- */
+
+/* Fancy LineEdit (the stylebox lineedit.png: patch margin 3, content margin 3 on the vertical and 5 on the horizontal) */
+line-edit {
+    background-image: texture("<icons>/Style/lineedit.png");
+    background-repeat: stretch;
+    patch-margin: 3px;
+    padding: 3px 5px;
+}
+
+/* LineEdit.StyleClassLineEditNotEditable: notEditable (it was a style property with the color, which never worked) */
+line-edit:read-only,
+text-edit:read-only {
+    color: <gray-silver>;
+}
+
+/* LineEdit.StylePseudoClassPlaceholder, TextEdit.StylePseudoClassPlaceholder: placeholder */
+line-edit:placeholder-shown,
+text-edit:placeholder-shown {
+    color: <placeholder-font-color>;
+}
+
+/*
+ * chatLineEdit: we don't actually draw a StyleBox around the LineEdit itself, we put it around the
+ * input + other buttons, so we must clear the default StyleBox.
+ */
+.chat-line-edit {
+    background: transparent;
+    padding: 0;
+}

@@ -1,0 +1,12 @@
+/* The parts that the windows of the lobby share (imported with `use "/elements/lobby/parts"`). */
+
+/* The header of the setup windows: the title, the buttons on the right. */
+let setup-header = {
+    row .fancy-back (min-height: 40px) {
+        %content%
+    }
+}
+
+let setup-title = (text) {
+    _ .label-heading-bigger (text: <text>, align-self: center, margin: 0 0 0 8px)
+}

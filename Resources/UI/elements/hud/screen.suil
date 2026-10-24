@@ -1,0 +1,33 @@
+/* The screen of the game. The widgets are put in their places by the code (the anchors of the layout). */
+@RimFortressScreen => layout-container {
+    layout-container #viewport-container (horizontal-expand, vertical-expand) {
+        main-viewport #main-viewport
+    }
+
+    /* Top left */
+    box-container #top-left (orientation: vertical) {
+        top-panel-widget
+        +box-container #vote-menu (
+            orientation: vertical,
+            vertical-alignment: bottom,
+            margin: 10 0 0 0
+        )
+    }
+
+    /* Left */
+    actions-hotbar-widget #hotbar
+
+    /* Top right */
+    box-container #top-right {
+        +foldable-chat-box #chat
+    }
+
+    /* Right center */
+    notifications-panel-widget #notifications
+
+    /* Bottom */
+    pop-list #pop-list (horizontal-alignment: center, vertical-alignment: bottom)
+
+    /* Bottom right */
+    =game-top-menu-bar #menu-bar (set-width: 300, margin: 10)
+}

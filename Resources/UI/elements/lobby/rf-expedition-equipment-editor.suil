@@ -1,0 +1,71 @@
+use "/elements/lobby/parts";
+
+/* A list that scrolls: the panel itself, the old panel was inside of the scroll */
+/* The prefix of the localization keys of the file */
+let loc = expedition-equipment-editor;
+
+let equipment-list = {
+    scroll-container .scroll-vertical .panel-light-transparent (padding: 15px) {
+        %content%
+    }
+}
+
+@RfExpeditionEquipmentEditor as expedition-equipment-editor => col .angle-rect-transparent (
+    flex-grow: 1
+) {
+    /* Top panel */
+    setup-header {
+        setup-title ($<loc>-label)
+        _ .flex-fill
+        +button #save-button .font-big (text: $<loc>-save-button)
+        +button #reset-button .font-big (text: $<loc>-reset-button)
+        +button #close-button .font-big (text: $<loc>-close-button)
+    }
+
+    row (flex-grow: 1, margin: 10px 0 0 0) {
+        /* Left panel */
+        col (min-width: 325px, margin: 15px 35px 15px 15px) {
+            row .fancy-back (min-height: 30) {
+                _ .placeholder-text .text-center (
+                    text: $<loc>-categories,
+                    align-self: center,
+                    margin: 2px,
+                    color: #FFFFFF
+                )
+            }
+
+            equipment-list {
+                col #category-box
+            }
+        }
+
+        /* Right panel */
+        col (flex-grow: 1) {
+            col .panel-highlighted (margin: 15px 15px 0 15px) {
+                row (gap: 2px) {
+                    line-edit #search (
+                        place-holder: $<loc>-search,
+                        flex-grow: 1,
+                        margin: 4px 0 3px 4px
+                    )
+
+                    button #clear-search .icon-button .square (
+                        set-size: 36 36,
+                        margin: 2px
+                    ) {
+                        _ .icon (
+                            mouse-filter: ignore,
+                            background-image: texture("<icons>/Style/cross.png")
+                        )
+                    }
+                }
+                _ .low-divider (margin: 3px 5px 3px 2px)
+                _ #points-label (margin: 2px 0 0 3px)
+            }
+
+            equipment-list (margin: 15px) {
+                col #item-box
+            }
+        }
+    }
+}

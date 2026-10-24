@@ -1,0 +1,11 @@
+/* ---------- Progress bar (RfProgressBar: .progress is the track, .fill is inside) ---------- */
+
+.progress {
+    min-height: 20px;
+    background-color: <black-amber>;
+    border: 1px solid <dark-forest>;
+}
+
+.progress > .fill {
+    background-color: <dark-good>;
+}

@@ -1,0 +1,14 @@
+@IntCounter => row #root {
+    button #plus .open-right (
+        text: "+",
+        margin: 2px 1px
+    )
+    line-edit #count-line (
+        min-width: 50px,
+        margin: 5px 0
+    )
+    button #minus .open-left (
+        text: "-",
+        margin: 2px 1px
+    )
+}

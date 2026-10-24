@@ -1,0 +1,24 @@
+/* The look of a window: the panel, the header with the title and the buttons, the area of the contents. */
+@RfWindowChrome => col .angle-rect {
+    row #header .window-heading-background {
+        _ #title-label .window-title (
+            flex-grow: 1,
+            align-self: center,
+            overflow: hidden,
+            text-overflow: ellipsis
+        )
+
+        button #help-button .window-help-button (
+            set-size: 22 22,
+            align-self: center,
+            visible: false
+        )
+
+        button #close-button .cross-button-red (
+            set-size: 22 22,
+            align-self: center
+        )
+    }
+    _ #header-divider .low-divider
+    _ #contents (flex-grow: 1, margin: 2px, overflow: hidden)
+}

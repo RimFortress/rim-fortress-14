@@ -1,0 +1,20 @@
+/* ---------- Shared ---------- */
+
+/* The empty control that takes all the free space (the BoxContainer with HorizontalExpand or VerticalExpand) */
+.flex-fill {
+    flex-grow: 1;
+}
+
+/* A text in the center of its row: it fills the row and is centered on both axes (the row sets the height) */
+.text-center {
+    flex-grow: 1;
+    align-self: center;
+    text-align: center;
+}
+
+/* ScrollContainer: it scrolls vertically only and takes the free space of the column */
+.scroll-vertical {
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-grow: 1;
+}

@@ -3,14 +3,15 @@ using Content.Client._RF.Tooltip.Controls;
 using Content.Client._RF.Tooltip.Prototypes;
 using Content.Shared.Maps;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.RichText;
+using Content.Client._RF.Suil.Markup;
+using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Tooltip.RichText;
 
 /// <summary>
-/// Markup tag for hoverable tooltip terms.
+/// Markup tag for hoverable tooltip terms (the markup of SUIL).
 /// </summary>
 /// <example>
 /// The tag supports 4 modes:<br/>
@@ -27,7 +28,8 @@ namespace Content.Client._RF.Tooltip.RichText;
 /// of the tag, but you can insert your own text using:<br/>
 /// <c>[tooltip="Tooltip text" id="TooltipProtoId"]</c>
 /// </example>
-public sealed partial class TooltipTag : IMarkupTagHandler
+[UsedImplicitly]
+public sealed partial class TooltipTag : IRfMarkupTagHandler
 {
     [Dependency] private IEntityManager _entity = default!;
     [Dependency] private IPrototypeManager _proto = default!;
@@ -38,6 +40,13 @@ public sealed partial class TooltipTag : IMarkupTagHandler
     private const string NetUidParam = "netUid";
 
     public string Name => "tooltip";
+
+    /// <inheritdoc/>
+    public void ApplyContext(MarkupNode node, Control control, RfMarkupContext context)
+    {
+        if (control is TooltipTermLabel term)
+            term.ApplyContext(context.Current);
+    }
 
     /// <inheritdoc/>
     public bool TryCreateControl(MarkupNode node, [NotNullWhen(true)] out Control? control)

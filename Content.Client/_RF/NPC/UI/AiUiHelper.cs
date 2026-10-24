@@ -1,8 +1,6 @@
-using Content.Client._RF.NPC.GOAP.UI;
-using Content.Client._RF.Stylesheets;
+using Content.Client._RF.Suil;
 using Content.Shared._RF.NPC;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.NPC.UI;
 
@@ -14,46 +12,23 @@ public static class AiUiHelper
             return;
 
         AddSeparator(parent);
-        var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
+        var expandBox = new ExpandableBox { Title = $"[b]{title}[/b]" };
         parent.AddChild(expandBox);
 
         foreach (var (key, (type, value)) in data)
         {
             AddSeparator(expandBox.Content);
-            expandBox.Content.AddChild(new BoxContainer
-            {
-                Orientation = BoxContainer.LayoutOrientation.Vertical,
-                Margin = new Thickness(0f, 1f),
-                Children =
-                {
-                    new BoxContainer
-                    {
-                        Children =
-                        {
-                            new RichTextLabel { Text = $"[bold]{key}[/bold]" },
-                            new Control { HorizontalExpand = true },
-                            new RichTextLabel { Text = $":{type}" },
-                        },
-                    },
-                    new BoxContainer
-                    {
-                        Children =
-                        {
-                            new RichTextLabel { Text = value },
-                        },
-                    },
-                },
-            });
+            expandBox.Content.AddChild(new AiFieldRow(key, type, value));
         }
     }
 
     public static void AddTypes(Control parent, string? title, ObjectDebugReflection node)
     {
         var header = title != null
-            ? $"[bold]{title}[/bold]"
+            ? $"[b]{title}[/b]"
             : (string.IsNullOrEmpty(node.Name)
-                ? $"[bold]{node.TypeName}[/bold]"
-                : $"[bold]{node.Name}[/bold] ({node.TypeName})");
+                ? $"[b]{node.TypeName}[/b]"
+                : $"[b]{node.Name}[/b] ({node.TypeName})");
 
         AddSeparator(parent);
         var expandBox = new ExpandableBox { Title = header };
@@ -64,30 +39,7 @@ public static class AiUiHelper
             foreach (var (key, (type, value)) in node.Fields)
             {
                 AddSeparator(expandBox.Content);
-                expandBox.Content.AddChild(new BoxContainer
-                {
-                    Orientation = BoxContainer.LayoutOrientation.Vertical,
-                    Margin = new Thickness(0f, 1f),
-                    Children =
-                    {
-                        new BoxContainer
-                        {
-                            Children =
-                            {
-                                new RichTextLabel { Text = $"[bold]{key}[/bold]" },
-                                new Control { HorizontalExpand = true },
-                                new RichTextLabel { Text = $":{type}" },
-                            },
-                        },
-                        new BoxContainer
-                        {
-                            Children =
-                            {
-                                new RichTextLabel { Text = value },
-                            },
-                        },
-                    },
-                });
+                expandBox.Content.AddChild(new AiFieldRow(key, type, value));
             }
         }
 
@@ -103,33 +55,20 @@ public static class AiUiHelper
     public static void AddLabel(Control parent, string left, string right)
     {
         AddSeparator(parent);
-        parent.AddChild(new BoxContainer
-        {
-            Margin = new Thickness(20f, 0f, 5f, 0f),
-            Children =
-            {
-                new RichTextLabel { Text = $"[bold]{left}[/bold]" },
-                new Control { HorizontalExpand = true },
-                new RichTextLabel { Text = $"[bold]{right}[/bold]" },
-            },
-        });
+        parent.AddChild(new AiLabelRow(left, right));
     }
 
     public static void AddExpandLabel(Control parent, string title, string text)
     {
         AddSeparator(parent);
-        var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
+        var expandBox = new ExpandableBox { Title = $"[b]{title}[/b]" };
         parent.AddChild(expandBox);
-        expandBox.Content.AddChild(new RichTextLabel { Text = text });
+        expandBox.Content.AddChild(new UiElement { Text = text });
     }
 
     public static void AddSeparator(Control parent)
     {
-        parent.AddChild(new PanelContainer
-        {
-            StyleClasses = { StyleFortress.StyleClassLowDividerDark },
-            Margin = new Thickness(3f, 2f),
-        });
+        parent.AddChild(new AiSeparator());
     }
 
     public static void AddLogs(Control parent, string? logs)
@@ -138,13 +77,13 @@ public static class AiUiHelper
             return;
 
         AddSeparator(parent);
-        var box = new ExpandableBox { Title = "[bold]Logs[/bold]" };
+        var box = new ExpandableBox { Title = "[b]Logs[/b]" };
         parent.AddChild(box);
         var dumps = logs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var dump in dumps)
         {
-            box.Content.AddChild(new RichTextLabel { Text = dump });
+            box.Content.AddChild(new UiElement { Text = dump });
         }
     }
 
@@ -153,8 +92,8 @@ public static class AiUiHelper
         AddSeparator(parent);
         var box = new ExpandableBox
         {
-            Title = $"[bold]{title}[/bold]",
-            SecondaryText = second != null ? $"[bold]{second}[/bold]" : null,
+            Title = $"[b]{title}[/b]",
+            SecondaryText = second != null ? $"[b]{second}[/b]" : null,
         };
         parent.AddChild(box);
         return box;

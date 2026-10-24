@@ -30,7 +30,13 @@ using Content.Shared.IoC;
 using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Players.RateLimiting;
 
-using Content.Client._RF.Lobby; // RimFortress
+// RimFortress Start
+using Content.Client._RF.Suil.HotReload;
+using Content.Suil;
+using Content.Client._RF.Suil.Markup;
+using Content.Client._RF.Suil.Text;
+using Content.Client._RF.Lobby;
+// RimFortress End
 
 namespace Content.Client.IoC
 {
@@ -39,7 +45,13 @@ namespace Content.Client.IoC
         public static void Register(IDependencyCollection collection)
         {
             SharedContentIoC.Register(collection);
-            collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>(); // RimFortress
+            // RimFortress Start
+            collection.Register<IPlayerEquipmentManager, PlayerEquipmentManager>();
+            collection.Register<ISuilManager, SuilManager>();
+            collection.Register<ISuilHotReload, SuilHotReload>(); // RimFortress
+            collection.Register<ISuilFontManager, SuilFontManager>();
+            collection.Register<IRfMarkupTagManager, RfMarkupTagManager>();
+            // RimFortress End
             collection.Register<IParallaxManager, ParallaxManager>();
             collection.Register<GeneratedParallaxCache>();
             collection.Register<IChatManager, ChatManager>();

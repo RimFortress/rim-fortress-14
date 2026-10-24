@@ -72,7 +72,12 @@ namespace Content.IntegrationTests.Tests.GameObjects.Components
                         {
                             componentsValidated++;
 
-                            var componentType = component.GetNode("type").AsString();
+                            // RimFortress Start
+                            // `- !Remove type: Foo` has the tag on the key, so the key is not found by its name alone
+                            var componentType = component.Children
+                                .First(pair => pair.Key is YamlScalarNode { Value: "type" })
+                                .Value.AsString();
+                            // RimFortress End
                             var clientAvailability = cComponentFactory.GetComponentAvailability(componentType);
                             var serverAvailability = sComponentFactory.GetComponentAvailability(componentType);
 

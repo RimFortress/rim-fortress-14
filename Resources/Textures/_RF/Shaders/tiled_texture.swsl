@@ -1,8 +1,15 @@
 uniform highp vec2 area_size;
+uniform highp vec2 tex_region_min;
+uniform highp vec2 tex_region_max;
+uniform highp vec2 phase_offset;
 
 void fragment() {
-    highp vec2 pixel_uv = UV * (TEXTURE_PIXEL_SIZE * area_size);
+    highp vec2 region_size_uv = tex_region_max - tex_region_min;
+    highp vec2 region_size_px = region_size_uv / TEXTURE_PIXEL_SIZE;
+
+    highp vec2 pixel_uv = UV * (area_size / region_size_px) - phase_offset;
     highp vec2 tiled_uv = mod(pixel_uv, 1.0);
 
-    COLOR = texture2D(TEXTURE, tiled_uv);
+    highp vec2 sample_uv = tex_region_min + tiled_uv * region_size_uv;
+    COLOR = texture2D(TEXTURE, sample_uv);
 }

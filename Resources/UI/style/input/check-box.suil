@@ -1,0 +1,54 @@
+/* ---------- CheckBox (RfCheckBox: the .indicator is the box, .checked is set while it is checked) ---------- */
+
+/*
+ * The indicator and the label are not the children of the check box but of its inner box, so they are
+ * selected as descendants (`checkbox .indicator`).
+ *
+ * checkbox is a button, so it would take the look of a button (the colors of button:hover, :active, :checked
+ * and :disabled): it is reset here to a transparent control, the rules are of the same specificity and come later.
+ */
+
+/* CheckBox.StyleClassCheckBox: checkBox */
+checkbox {
+    border: none;
+    border-image: none;
+    background-image: none;
+    background-color: transparent;
+    padding: 0;
+    gap: 10px;
+    text-align: left;
+}
+
+/*
+ * The indicator and the label are laid out by the box inside of the check box, and the box is a box,
+ * which has a gap of its own (root.suil). Without this rule, every restyle of the box (on :hover of the check box, for
+ * one) brings that gap back and the gap of the check box is lost.
+ */
+checkbox > box {
+    gap: inherit;
+}
+
+checkbox:hover,
+checkbox:active,
+checkbox:checked {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+checkbox:disabled {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+/* The indicator has no content, so its size (the size of the textures) is set here. */
+checkbox .indicator {
+    min-width: 20px;
+    min-height: 20px;
+    background-image: texture("<icons>/Style/checkbox_unchecked.png");
+    background-repeat: no-repeat;
+}
+
+/* CheckBox.StyleClassCheckBoxChecked: checkBoxChecked */
+checkbox .indicator.checked {
+    background-image: texture("<icons>/Style/checkbox_checked.png");
+}

@@ -1,0 +1,95 @@
+/*
+ * StyleFortress.cs: Button, Top Menu, Storage Button, ListContainer, Chat Channel Selector,
+ * OptionButton, X Texture button, Pinned button, Radial menu.
+ *
+ * - The pseudo-classes of ContainerButton are mapped: normal -> the rule without a pseudo-class, hover -> :hover,
+ *   pressed -> :active and :checked, disabled -> :disabled. :active comes before :disabled, so the disabled
+ *   color wins; the order matters. Files are applied in the order of their paths (button.suil, then colors.suil,
+ *   then the rest), so the modifier classes (`.gold`, `.empty`, ...) of colors.suil win over the shapes.
+ * - Modifier classes: the shape (`.open-left`, `.open-right`, `.open-both`, `.square`),
+ *   the size of the font (`.font-big`, `.font-small`, text/font-size.suil) and the color (`.gold`, `.red`, `.green`, `.blue`, `.accept`, `.negative`, `.transparent`, `.empty`)
+ *   are combined on one button: `button open-left gold`.
+ * - Element<ContainerButton>().Class(button) is the type selector button: RfButton and its descendants
+ *   (RfCheckBox) match it, so no `button` style class is needed. A control type that has no Suil counterpart
+ *   is replaced with the class of the rule.
+ * - ModulateSelf of a textured button is background-color: it modulates the background texture.
+ * - The content margin of an old style box (the override, or the patch margin when there is none, plus the
+ *   Padding of the box) is the padding here, the patch margins are the patch-margin. The texture of the old box
+ *   was also drawn inside its Padding (1px for the buttons); this is not reproduced.
+ */
+
+/* ---------- Button shapes ---------- */
+
+/*
+ * A solid row of buttons: a button with the class `row-button` gets its shape by its place among its siblings,
+ * without choosing `open-*` by hand. The first one is `open-right`, the last one is `open-left`, the only one is
+ * `open-both`, the ones between stay as they are. The selectors are in the lists of the shapes below, so the
+ * shapes are declared once; the rules are of the same specificity, and the later one wins: a button that is the only
+ * one matches all three, `open-both` is the last of them.
+ * Note that a hidden button is counted by :first-child and :last-child as well.
+ * The selectors name the type (`button`) on purpose: a rule of any type that depends on the siblings makes every
+ * control restyle itself whenever a sibling is added or removed, which is slow for a container with many children.
+ */
+
+/* ContainerButton.StyleClassButton: button */
+button {
+    border: 4px solid transparent;
+    border-image: texture("<icons>/Style/button_border.png");
+    border-image-slice: 4px;
+    background-clip: border-box;
+    background-image: texture("<icons>/Style/button.png");
+    background-repeat: stretch;
+    patch-margin: 5px;
+    padding: 2px 4px;
+    text-align: center;
+}
+
+/* StyleClass.ButtonOpenRight: OpenRight */
+.open-right,
+button.row-button:first-child {
+    border-style: solid;
+    border-width: 5px 5px 5px 6px;
+    border-image: texture("<icons>/Style/button_open_right_border.png");
+    border-image-slice: 11px 5px 11px 11px;
+    border-image-width: 11px 5px 11px 11px;
+    background-image: texture("<icons>/Style/button_open_right.png");
+    patch-margin: 11px 5px 11px 11px;
+    padding: 3px 10px 3px 9px;
+}
+
+/* StyleClass.ButtonOpenLeft: OpenLeft */
+.open-left,
+button.row-button:last-child {
+    border-style: solid;
+    border-width: 5px 6px 5px 5px;
+    border-image: texture("<icons>/Style/button_open_left_border.png");
+    border-image-slice: 11px 11px 11px 5px;
+    border-image-width: 11px 11px 11px 5px;
+    background-image: texture("<icons>/Style/button_open_left.png");
+    patch-margin: 11px 11px 11px 5px;
+    padding: 3px 10px 3px 9px;
+}
+
+/* StyleClass.ButtonOpenBoth: OpenBoth */
+.open-both,
+button.row-button:only-child {
+    border-style: solid;
+    border-width: 5px 6px 5px 6px;
+    border-image: texture("<icons>/Style/button_open_both_border.png");
+    border-image-slice: 11px;
+    border-image-width: 11px;
+    background-image: texture("<icons>/Style/button_open_both.png");
+    patch-margin: 11px;
+    padding: 3px 9px;
+}
+
+/* StyleClass.ButtonSquare: ButtonSquare */
+.square {
+    border-style: solid;
+    border-width: 2px;
+    border-image: texture("<icons>/Style/button_square_border.png");
+    border-image-slice: 2px;
+    background-image: texture("<icons>/Style/button_square.png");
+    patch-margin: 2px;
+    padding: 3px;
+}

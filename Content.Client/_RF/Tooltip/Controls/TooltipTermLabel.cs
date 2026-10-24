@@ -1,66 +1,41 @@
-using System.Diagnostics.CodeAnalysis;
-using Content.Client._RF.Stylesheets;
+using Content.Client._RF.Suil;
+using Content.Client._RF.Suil.Markup;
 using Content.Client._RF.Tooltip.Prototypes;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.Tooltip.Controls;
 
 /// <summary>
-/// Inline label for a [tooltip] tag.
+/// Inline label for a [tooltip] tag. Its look is the <c>tooltip-term</c> class.
 /// </summary>
-public sealed class TooltipTermLabel : RichTextLabel
+public sealed class TooltipTermLabel : UiElement
 {
+    private RfInlineStyle? _appliedContext;
+
     public TooltipTermLabel(ITooltipDefinition def, string text)
     {
         MouseFilter = MouseFilterMode.Stop;
         DefaultCursorShape = CursorShape.Hand;
+        AddSuilStyleClass("tooltip-term");
 
-        OnMouseEntered += _ =>
-        {
-            UserInterfaceManager.GetUIController<TooltipUIController>().OpenPopup(this, def);
-            UpdateText(true);
-        };
+        TooltipDefinition = def;
+        TooltipDelay = 0;
+        TooltipPinnable = true;
 
-        OnMouseExited += _ => UpdateText(false);
-        UpdateText(false);
-        return;
-
-        void UpdateText(bool hovered)
-        {
-            var color = hovered ? StyleFortress.GraySilver : StyleFortress.RimSilver;
-            Text = $"[color={color.ToHex()}][italic]{text}[/italic][/color]";
-        }
+        SetPlainText(text);
     }
 
-    protected override void Parented(Control newParent)
+    /// <summary>
+    /// Copies the font of the surrounding text. The color and the slant are the term's own.
+    /// </summary>
+    public void ApplyContext(RfInlineStyle style)
     {
-        base.Parented(newParent);
-
-        if (!TryGetRichText(out var richText))
+        if (_appliedContext == style)
             return;
 
-        OutlineThicknessOverride = richText.OutlineThicknessOverride;
-        OutlineColorOverride = richText.OutlineColorOverride;
-        StyleClasses = richText.StyleClasses;
-    }
-
-    private bool TryGetRichText([NotNullWhen(true)] out RichTextLabel? label)
-    {
-        var control = Parent;
-
-        while (control != null)
-        {
-            if (control is RichTextLabel richText)
-            {
-                label = richText;
-                return true;
-            }
-
-            control = control.Parent;
-        }
-
-        label = null;
-        return false;
+        _appliedContext = style;
+        FontFamily = style.Family;
+        FontSize = style.Size;
+        FontWeight = style.Weight;
     }
 }

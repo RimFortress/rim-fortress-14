@@ -4,6 +4,8 @@ using Content.Client.UserInterface.Controls;
 using Content.Client.UserInterface.Systems.Gameplay;
 using Robust.Client.Input;
 using Robust.Shared.Input.Binding;
+using Content.Client._RF.Info.Controls;
+using Content.Client._RF.ActionsHotbar.UI;
 
 namespace Content.Client._RF.UserInterface;
 

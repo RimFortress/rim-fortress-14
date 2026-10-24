@@ -1,0 +1,159 @@
+/* A block of the appearance tab, the dividers between the options */
+/* The prefix of the localization keys of the file */
+let loc = humanoid-profile-editor;
+
+let profile-block = {
+    col .panel-highlighted (margin: 10px) {
+        %content%
+    }
+}
+
+let profile-low-divider = {
+    _ .low-divider (margin: 2px)
+}
+
+let profile-high-divider = {
+    _ .high-divider (margin: 2px)
+}
+
+@RfHumanoidProfileEditor as humanoid-profile-editor => col (
+    flex-grow: 1,
+    padding: 10px
+) {
+    /* Middle container */
+    row (gap: 10px) {
+        /* Name box */
+        col .panel-highlighted {
+            row (gap: 5px) {
+                _ (text: $<loc>-name-label)
+                line-edit #name-edit (min-width: 270px, align-self: center)
+                button #name-randomize (text: $<loc>-randomize)
+            }
+
+            button #randomize-everything-button (
+                text: $<loc>-randomize-everything,
+                max-width: 256px,
+                align-self: center
+            )
+            _ #warning-label .danger (align-self: flex-start, max-width: 425px)
+        }
+        _ .flex-fill
+
+        /* Import/Export */
+        col .panel-dark-bordered (min-width: 60px) {
+            button #import-button (text: $<loc>-import-button)
+            button #export-button (text: $<loc>-export-button)
+            button #export-image-button (
+                text: $<loc>-export-image-button
+            )
+
+            button #open-images-button (
+                text: $<loc>-open-image-button
+            )
+        }
+    }
+    _ (min-height: 10)
+
+    /* tabContainer */
+    tab #tabs (flex-grow: 1) {
+        row {
+            scroll-container .scroll-vertical {
+                col {
+                    /* Skin */
+                    profile-block {
+                        _ (text: $<loc>-skin-color-label)
+                        slider #skin (
+                            min-value: 0,
+                            max-value: 100,
+                            value: 20
+                        )
+                        col #rgb-skin-color-container (visible: false)
+                    }
+
+                    /* Eyes */
+                    profile-block {
+                        _ (text: $<loc>-eyes-label)
+                        color-selector-sliders #eye-color-picker (selector-type: hsv, margin: 0 0 10 0)
+                    }
+
+                    /* Markings */
+                    profile-block .profile-markings {
+                        _ (text: $<loc>-markings-tab)
+                        marking-picker #markings (flex-grow: 1)
+                    }
+                }
+            }
+            profile-high-divider
+            col {
+                row {
+                    /* Sprite view */
+                    col .panel-dark-bordered (margin: 3px) {
+                        profile-preview-sprite-view #sprite-view (
+                            min-size: 250 250,
+                            stretch: fill,
+                            vertical-expand,
+                            horizontal-expand,
+                            size-flags-stretch-ratio: 1
+                        )
+
+                        row (align-self: center) {
+                            button #sprite-rotate-left .open-right (
+                                text: "◀"
+                            )
+
+                            button #sprite-rotate-right .open-left (
+                                text: "▶"
+                            )
+                        }
+                    }
+                    _ .flex-fill
+                    col .panel-highlighted (min-width: 165px, margin: 3px) {
+                        /* Species */
+                        row {
+                            _ (text: $<loc>-species-label)
+                            _ .flex-fill
+                            texture-button #species-info-button (
+                                tool-tip: $<loc>-guidebook-button-tooltip,
+                                vertical-alignment: center,
+                                scale: 0.3 0.3
+                            )
+                        }
+                        option-button #species-button
+                        profile-low-divider
+
+                        /* Age */
+                        _ (text: $<loc>-age-label)
+                        line-edit #age-edit (min-size: 40 0)
+                        profile-low-divider
+
+                        /* Sex */
+                        _ (text: $<loc>-sex-label)
+                        option-button #sex-button
+                        profile-low-divider
+
+                        /* Pronouns */
+                        _ (text: $<loc>-pronouns-label)
+                        option-button #pronouns-button
+                        profile-low-divider
+
+                        /* Show clothing */
+                        _ (text: $<loc>-clothing)
+                        button #show-clothes (
+                            text: $<loc>-clothing-show,
+                            pressed,
+                            toggle-mode
+                        )
+                    }
+                }
+                _ .flex-fill
+            }
+        }
+        character-skills-tab #skills-tab (margin: 10)
+        col (margin: 10) {
+            /* Traits */
+            scroll-container .scroll-vertical {
+                col #traits-list
+            }
+        }
+    }
+}

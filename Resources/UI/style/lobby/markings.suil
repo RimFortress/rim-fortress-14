@@ -1,0 +1,6 @@
+/* The place where the marking that is dragged would drop to (RfLayerDragDropBeacon): it changes while the marking is dragged. */
+/* MarkingDropTarget: StyleBoxFlat, the dark button color at the half of the opacity with the border of the button color */
+.marking-drop-beacon.drop-target {
+    background-color: color-mix(in srgb, <button-color-disabled> 50%, transparent);
+    border: 2px solid <button-color-default>;
+}

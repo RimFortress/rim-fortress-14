@@ -1,0 +1,68 @@
+/* ---------- Slider (RfSlider: .slider is the track, .fill and .grabber are inside) and the color sliders ---------- */
+
+/*
+ * Slider: the track slider_fill.png modulated graphite-black, the fill dark-good, the grabber button-color-default
+ * (patch margin 12 for all of them). The grabber is 24px wide, as the textures are.
+ * ColorableSlider (color-slider) draws its gradient itself, so the background of its track is not needed.
+ */
+.slider {
+    min-height: 24px;
+    background-color: <black-amber>;
+    border: 2px solid <dark-forest>;
+    border-radius: 12px;
+}
+
+.slider > .fill {
+    background-color: <dark-good>;
+    border-radius: 10px 0px 0px 10px;
+}
+
+.slider > .grabber {
+    min-width: 24px;
+    min-height: 24px;
+    background-image: texture("<icons>/Style/slider_grabber.png");
+    background-repeat: stretch;
+    patch-margin: 12px;
+    background-color: <button-color-default>;
+}
+
+.slider:hover > .grabber {
+    background-color: <button-color-hovered>;
+}
+
+.slider:active > .grabber {
+    background-color: <button-color-pressed>;
+}
+
+.slider:disabled > .grabber {
+    background-color: <button-color-disabled>;
+}
+
+/* The gradient of the track is the color to choose: no own background, no fill */
+.slider.color-slider {
+    background-image: none;
+    background-color: transparent;
+}
+
+.slider.color-slider > .fill {
+    background-image: none;
+    background-color: transparent;
+}
+
+/*
+ * The sliders have a width of their own: the window of the color doesn't change its width with the name of the color
+ * (the name is cut by the description-label of RfColorSelectorSliders), and a slider is never smaller than this.
+ */
+.color-selector-row > .slider {
+    min-width: 100px;
+}
+
+/* ---------- The number boxes of the sliders (IntCounter) ---------- */
+
+.color-selector-row > int-counter {
+    gap: 0;
+}
+
+.color-selector-row > int-counter > line-edit {
+    min-width: 40px;
+}

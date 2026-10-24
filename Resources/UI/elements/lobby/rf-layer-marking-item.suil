@@ -1,0 +1,25 @@
+@RfLayerMarkingItem as layer-marking-item => col (
+    gap: 4px,
+    mouse-filter: pass
+) {
+    row (gap: 4px) {
+        layered-texture #marking-texture .panel-dark-bordered (
+            set-size: 64 64,
+            align-self: center,
+            mouse-filter: ignore
+        )
+
+        button #select-button (
+            flex-grow: 1,
+            toggle-mode
+        )
+
+        framed-icon-button #colors-button .square (
+            "/Textures/Interface/palette.svg.png",
+            set-size: 36 36,
+            toggle-mode,
+            visible: false
+        )
+    }
+    col #colors-container (visible: false, gap: 4px, padding: 4px 0 0 0)
+}

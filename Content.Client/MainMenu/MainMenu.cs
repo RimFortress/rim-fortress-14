@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Content.Client._RF.UserInterface.Controls; // RimFortress
 using Content.Client.MainMenu.UI;
 using Content.Client.UserInterface.Systems.EscapeMenu;
 using Robust.Client;
@@ -61,28 +62,28 @@ namespace Content.Client.MainMenu
             _mainMenuControl.Dispose();
         }
 
-        private void ChangelogButtonPressed(BaseButton.ButtonEventArgs args)
+        private void ChangelogButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             _userInterfaceManager.GetUIController<ChangelogUIController>().ToggleWindow();
         }
 
-        private void OptionsButtonPressed(BaseButton.ButtonEventArgs args)
+        private void OptionsButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             _userInterfaceManager.GetUIController<OptionsUIController>().ToggleWindow();
         }
 
-        private void QuitButtonPressed(BaseButton.ButtonEventArgs args)
+        private void QuitButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             _controllerProxy.Shutdown();
         }
 
-        private void DirectConnectButtonPressed(BaseButton.ButtonEventArgs args)
+        private void DirectConnectButtonPressed(RfButtonEventArgs args) // RimFortress
         {
             var input = _mainMenuControl.AddressBox;
             TryConnect(input.Text);
         }
 
-        private void AddressBoxEntered(LineEdit.LineEditEventArgs args)
+        private void AddressBoxEntered(RfLineEdit.LineEditEventArgs args) // RimFortress
         {
             if (_isConnecting)
             {

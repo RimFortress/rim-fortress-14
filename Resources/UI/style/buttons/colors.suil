@@ -1,0 +1,195 @@
+/* ---------- Colors of the buttons ---------- */
+
+button {
+    border-color: <button-color-default>;
+    background-color: <button-color-default>;
+}
+
+button:hover {
+    border-color: <button-color-hovered>;
+    background-color: <button-color-hovered>;
+}
+
+button:active,
+button:checked {
+    border-color: <button-color-pressed>;
+    background-color: <button-color-pressed>;
+}
+
+button:disabled {
+    color: <disabled-button-font-color>;
+    border-color: <button-color-disabled>;
+    background-color: <button-color-disabled>;
+}
+
+/* ButtonTransparent */
+.transparent {
+    border-color: <button-color-default>;
+    background-color: color-mix(in srgb, <button-color-default> 78.43%, transparent);
+}
+
+.transparent:hover {
+    border-color: <button-color-hovered>;
+    background-color: color-mix(in srgb, <button-color-hovered> 78.43%, transparent);
+}
+
+.transparent:active,
+.transparent:checked {
+    border-color: <button-color-pressed>;
+    background-color: color-mix(in srgb, <button-color-pressed> 78.43%, transparent);
+}
+
+.transparent:disabled {
+    border-color: <button-color-disabled>;
+    background-color: color-mix(in srgb, <button-color-disabled> 78.43%, transparent);
+}
+
+/* negative: the caution buttons; confirming: RfConfirmButton waiting for the second click */
+button.negative,
+button.confirming {
+    border-color: <bad>;
+    background-color: <bad>;
+}
+
+button.negative:hover,
+button.confirming:hover {
+    border-color: <light-bad>;
+    background-color: <light-bad>;
+}
+
+button.negative:active,
+button.negative:checked,
+button.confirming:active,
+button.confirming:checked {
+    border-color: <dark-bad>;
+    background-color: <dark-bad>;
+}
+
+button.negative:disabled,
+button.confirming:disabled {
+    border-color: <darkest-bad>;
+    background-color: <darkest-bad>;
+}
+
+/* ButtonColorBlue */
+button.blue {
+    border-color: <blue-button-color-default>;
+    background-color: <blue-button-color-default>;
+}
+
+button.blue:hover {
+    border-color: <blue-button-color-hovered>;
+    background-color: <blue-button-color-hovered>;
+}
+
+button.blue:active,
+button.blue:checked {
+    border-color: <blue-button-color-pressed>;
+    background-color: <blue-button-color-pressed>;
+}
+
+button.blue:disabled {
+    border-color: <blue-button-color-disabled>;
+    background-color: <blue-button-color-disabled>;
+}
+
+/* ButtonColorGold (ContainerButton and TextureButton); ExamineButton.StyleClassExamineButton: examine-button */
+.gold,
+.examine-button {
+    border-color: <gold-button-color-default>;
+    background-color: <gold-button-color-default>;
+}
+
+.gold:hover,
+.examine-button:hover {
+    border-color: <gold-button-color-hovered>;
+    background-color: <gold-button-color-hovered>;
+}
+
+.gold:active,
+.gold:checked,
+.examine-button:active,
+.examine-button:checked {
+    border-color: <gold-button-color-pressed>;
+    background-color: <gold-button-color-pressed>;
+}
+
+.gold:disabled,
+.examine-button:disabled {
+    border-color: <gold-button-color-disabled>;
+    background-color: <gold-button-color-disabled>;
+}
+
+/* ButtonColorRed */
+.red {
+    border-color: <bad>;
+    background-color: <bad>;
+}
+
+.red:hover {
+    border-color: <light-bad>;
+    background-color: <light-bad>;
+}
+
+.red:active,
+.red:checked {
+    border-color: <dark-bad>;
+    background-color: <dark-bad>;
+}
+
+.red:disabled {
+    border-color: <darkest-bad>;
+    background-color: <darkest-bad>;
+}
+
+/* ButtonColorGreen */
+.green {
+    border-color: <good>;
+    background-color: <good>;
+}
+.green:active,
+.green:checked {
+    border-color: <dark-good>;
+    background-color: <dark-good>;
+}
+
+.green:hover {
+    border-color: <light-good>;
+    background-color: <light-good>;
+}
+
+.green:disabled {
+    border-color: <darkest-good>;
+    background-color: <darkest-good>;
+}
+
+/* ButtonAccept (merge with green?) */
+.accept,
+.accept:active,
+.accept:checked {
+    border-color: <good>;
+    background-color: <good>;
+}
+
+.accept:hover {
+    border-color: <light-good>;
+    background-color: <light-good>;
+}
+
+.accept:disabled {
+    border-color: <darkest-good>;
+    background-color: <darkest-good>;
+}
+
+/* ButtonEmpty: after all the colors, the selectors have the same specificity */
+.empty,
+.empty:hover,
+.empty:active,
+.empty:checked,
+.empty:disabled {
+    background: transparent;
+    border-style: none;
+    border-width: 0;
+    border-image: none;
+    padding: 0;
+}

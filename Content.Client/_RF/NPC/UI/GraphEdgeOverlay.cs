@@ -1,10 +1,14 @@
 using System.Numerics;
+using Content.Client._RF.Suil;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 
 namespace Content.Client._RF.NPC.UI;
 
-public sealed class GraphEdgeOverlay : Control
+/// <summary>
+/// Draws the edges of the graph over the nodes' layer.
+/// </summary>
+public sealed class GraphEdgeOverlay : UiElement
 {
     private Dictionary<int, Control> _nodeControls = new();
     private Dictionary<(int From, int To), List<Vector2>> _edgePaths = new();

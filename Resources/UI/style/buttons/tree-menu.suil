@@ -1,0 +1,61 @@
+/* ---------- Tree menu ---------- */
+
+/*
+ * TreeMenuButton: the rounded button with the icon (.icon-button).
+ */
+.tree-menu-button {
+    border: transparent;
+    border-radius: 5px;
+    background: <tree-menu-button-color-default>;
+    background-repeat: stretch;
+    padding: 5px;
+}
+
+.tree-menu-button:hover {
+    background-color: <tree-menu-button-color-hovered>;
+}
+
+.tree-menu-button:active,
+.tree-menu-button:checked {
+    background-color: <tree-menu-button-color-pressed>;
+}
+
+/*
+ * The marker over the button while it has a panel to open. Its properties belong to the button of the menu, so they
+ * are chosen by the tag: a rule without a tag knows only the properties of every element.
+ */
+tree-menu-button {
+    marker-texture: texture("<icons>/Style/tree_menu_button_marker.png");
+    marker-color: <gold-button-color-default>;
+}
+
+tree-menu-button:hover {
+    marker-texture: texture("<icons>/Style/tree_menu_button_marker_hovered.png");
+}
+
+/* ---------- Rows (TreeItem) ---------- */
+
+/* The even row */
+.even-row {
+    background-color: <graphite-black>;
+}
+
+/* The odd row */
+.odd-row {
+    background-color: <dark-forest>;
+}
+
+/* TreeItem.StyleIdentifierTreeButton: tree-button */
+#tree-button.even-row {
+    background-color: <graphite-black>;
+}
+
+#tree-button.odd-row {
+    background-color: <dark-forest>;
+}
+
+/* TreeItem.StyleClassSelected: selected */
+#tree-button.selected,
+#tree-button:hover {
+    background-color: <bright-green>;
+}

@@ -1,0 +1,25 @@
+uniform highp float side_length;
+uniform highp float thickness;
+uniform highp float corner_fade;
+
+void fragment()
+{
+    highp float radius = thickness * 0.5;
+    highp float period = thickness * 2.0;
+
+    highp float rawX = UV.x * side_length;
+    highp float y = UV.y * thickness;
+
+    highp float centeredX = rawX - side_length * 0.5;
+    highp float x = mod(centeredX + period * 0.5, period) - period * 0.5;
+
+    highp float dist = length(vec2(x, y - radius));
+    highp float dotAlpha = 1.0 - smoothstep(radius - 0.75, radius + 0.75, dist);
+
+    highp float edgeFade = min(
+        smoothstep(0.0, corner_fade, rawX),
+        smoothstep(0.0, corner_fade, side_length - rawX));
+
+    COLOR = texture2D(TEXTURE, UV);
+    COLOR.a *= dotAlpha * edgeFade;
+}

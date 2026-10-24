@@ -1,0 +1,61 @@
+/* ---------- TabContainer (RfTabContainer) ---------- */
+
+/*
+ * TabContainer: panel tabcontainer_panel.png (patch margin 2, content margin top 2), active tab dark-forest,
+ * inactive tab graphite-black, content margin horizontal 5.
+ *
+ * The structure of tab is
+ *     tab
+ *       .tab-bar            a row of button.tab, the selected one is :checked and .selected
+ *       .tab-panel          holds the pages
+ * and the container is a box, so:
+ *   - `flex-direction: column-reverse` puts the bar below the pages;
+ *   - `flex-direction: row` + `.tab-bar { flex-direction: column }` puts the bar to the left of the pages
+ *     (`row-reverse` to the right);
+ *   - `gap` is the space between the bar and the panel (and `.tab-bar { gap }` between the tabs);
+ *   - `.tab-bar { justify-content: center }` aligns the tabs, `.tab { flex-grow: 1 }` stretches them to the bar;
+ *   - a tab is a button, so everything of button works for it: borders, border-image, background-image,
+ *     font, `:hover`, `:disabled`, `.tab:first-child`, `.tab:last-child`;
+ *   - `tab.my-tabs > .tab-bar > .tab` restyles the tabs of one container.
+ * The child combinators keep a container that lies on a page from taking the rules of the outer one.
+ */
+
+tab {
+    gap: 0;
+}
+
+tab > .tab-bar {
+    gap: 0;
+}
+
+tab > .tab-panel {
+    border: 2px solid <wooden-fortress>;
+    background-color: <dark-forest>;
+    background-clip: border-box;
+    background-repeat: stretch;
+    padding: 2px 0 0 0;
+}
+
+/* The tab: a flat button of two colors, it doesn't take the texture of button. */
+tab > .tab-bar > .tab {
+    border: none;
+    border-image: none;
+    background-image: none;
+    padding: 0 5px;
+    text-align: center;
+    background-color: <graphite-black>;
+}
+
+tab > .tab-bar > .tab:hover {
+    background-color: color-mix(in srgb, <dark-forest> 60%, <graphite-black>);
+}
+
+tab > .tab-bar > .tab:active,
+tab > .tab-bar > .tab:checked {
+    background-color: <dark-forest>;
+}
+
+tab > .tab-bar > .tab:disabled {
+    color: <disabled-button-font-color>;
+    background-color: <graphite-black>;
+}

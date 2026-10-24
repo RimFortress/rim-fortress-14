@@ -1,0 +1,4 @@
+/* A trait that doesn't fit in the points of its category (RfTraitPreferenceSelector): it changes with the points */
+checkbox.over-limit .label {
+    color: <light-bad>;
+}
