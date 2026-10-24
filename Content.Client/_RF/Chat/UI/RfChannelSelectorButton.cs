@@ -1,7 +1,6 @@
 using Content.Client.UserInterface.Systems.Chat;
 using Content.Suil;
 using Content.Shared.Chat;
-using Robust.Shared.Utility;
 using Content.Client._RF.UserInterface.Controls;
 
 namespace Content.Client._RF.Chat.UI;
@@ -42,7 +41,7 @@ public sealed class RfChannelSelectorButton : RfOptionButton
 
     public RfChannelSelectorButton()
     {
-        _chatUIController = UserInterfaceManager.GetUIController<ChatUIController>();
+        _chatUIController = Controller<ChatUIController>();
         _chatUIController.SelectableChannelsChanged += SetChannels;
         OnItemSelected += args => Select((ChatSelectChannel) args.Value!);
 

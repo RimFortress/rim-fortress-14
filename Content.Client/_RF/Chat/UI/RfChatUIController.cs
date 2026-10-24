@@ -30,7 +30,7 @@ namespace Content.Client._RF.Chat.UI;
 /// public API of the original for everything else.
 /// </para>
 /// </remarks>
-public sealed class RfChatUIController : UIController
+public sealed partial class RfChatUIController : UIController
 {
     [Dependency] private IChatManager _manager = default!;
     [Dependency] private IConfigurationManager _config = default!;

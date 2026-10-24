@@ -30,9 +30,7 @@ public sealed partial class RfCharacterPickerButton : RfButton
         Group = group;
         var description = profile.Name;
 
-        _previewDummy = UserInterfaceManager
-            .GetUIController<RfLobbyUIController>()
-            .LoadProfileEntity(profile, null, true);
+        _previewDummy = Controller<RfLobbyUIController>().LoadProfileEntity(profile, null, true);
 
         description = $"{description}, \n{_entManager.System<SkillsSystem>().SkillProfession(profile.SkillsPreferences)}";
 

@@ -1,6 +1,5 @@
 using System.Numerics;
 using Content.Client.UserInterface.Systems.Chat;
-using Content.Client._RF.UserInterface.Controls;
 
 namespace Content.Client._RF.Chat.UI;
 
@@ -17,7 +16,7 @@ public sealed partial class RfChannelFilterButton : RfChatPopupButton<RfChannelF
     public RfChannelFilterButton()
     {
         InitializeComponent();
-        _chat = UserInterfaceManager.GetUIController<ChatUIController>();
+        _chat = Controller<ChatUIController>();
 
         _chat.FilterableChannelsChanged += Popup.SetChannels;
         _chat.UnreadMessageCountsUpdated += Popup.UpdateUnread;
