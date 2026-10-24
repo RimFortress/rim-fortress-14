@@ -1,3 +1,4 @@
+#nullable enable
 using Content.Suil;
 
 namespace Content.IntegrationTests.Tests._RF.Suil;

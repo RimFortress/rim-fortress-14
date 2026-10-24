@@ -1,7 +1,6 @@
 #nullable enable
 using Content.Client._RF.Suil;
 using Content.Client._RF.Suil.Parsers;
-using Content.IntegrationTests.Tests._RF.Suil;
 using Content.Suil;
 using Content.Client._RF.Graphics;
 using Content.IntegrationTests.Fixtures;
@@ -133,7 +132,7 @@ public sealed class TestBorderImageControl : UiElement
 {
     public Robust.Client.Graphics.Texture? Source => BorderImageSource;
     public BorderImageSlice Slice => BorderImageSlice;
-    public BorderImageWidth Width => BorderImageWidth;
+    public new BorderImageWidth Width => BorderImageWidth;
     public BorderImageOutset Outset => BorderImageOutset;
     public BorderImageRepeat Repeat => BorderImageRepeat;
 }
