@@ -215,8 +215,8 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         ClampMargins(ref scaledMargin.Left, ref scaledMargin.Right, box.Width);
         ClampMargins(ref scaledMargin.Top, ref scaledMargin.Bottom, box.Height);
 
-        var innerRight = box.Width - scaledMargin.Right;
-        var innerBottom = box.Height - scaledMargin.Bottom;
+        var innerRight = MathF.Max(scaledMargin.Left, box.Width - scaledMargin.Right);
+        var innerBottom = MathF.Max(scaledMargin.Top, box.Height - scaledMargin.Bottom);
 
         if (sourceMargin.Left > 0)
         {
@@ -428,9 +428,11 @@ public sealed class RfStyleBoxTexture : RfStyleBox
         if (total <= maxSize)
             return;
 
+        // The rounding of the floats must not leave the margins a hair wider than the size: the boxes between
+        // them would turn inside out.
         var scale = maxSize / total;
         start *= scale;
-        end *= scale;
+        end = MathF.Min(end * scale, maxSize - start);
     }
 
     protected override float GetDefaultContentMargin(Margin margin) => margin switch

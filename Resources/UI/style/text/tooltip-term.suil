@@ -1,0 +1,10 @@
+/* ---------- The term in a text that has a tooltip ([tooltip] tag) ---------- */
+
+.tooltip-term {
+    color: <rim-silver>;
+    font-style: italic;
+}
+
+.tooltip-term:hover {
+    color: <gray-silver>;
+}

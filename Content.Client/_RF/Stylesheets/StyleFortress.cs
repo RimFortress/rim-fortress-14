@@ -119,12 +119,7 @@ public sealed class StyleFortress : StyleBase
 
     // Background
     public const string StyleClassPanelDark = "PanelDark";
-
-    public const string StyleClassPanelDarkBordered = "PanelDarkBordered";
-
     public const string ClassAngleRect = "AngleRect";
-    public const string StyleClassPanelAngleRectGolden = "AngleRectGolden";
-    public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
 
     // Buttons
     public const string ButtonCaution = "negative";
@@ -467,12 +462,9 @@ public sealed class StyleFortress : StyleBase
         };
         highlightedPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
 
-        var angleRect = StyleBoxTex("angle_rect_panel.png");
+        var angleRect = StyleBoxTex("/Legacy/angle_rect_panel.png");
         angleRect.SetPatchMargin(StyleBox.Margin.All, 11);
         angleRect.SetContentMarginOverride(StyleBox.Margin.All, 3);
-
-        var angleRectGolden = StyleBoxTex("angle_rect_golden_panel.png", angleRect);
-        var angleRectTransparent = StyleBoxTex("angle_rect_panel_transparent.png", angleRect);
 
         #endregion
 
@@ -1449,14 +1441,6 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(ClassAngleRect)
                 .Prop(PanelContainer.StylePropertyPanel, angleRect),
-
-            Element<PanelContainer>()
-                .Class(StyleClassPanelAngleRectGolden)
-                .Prop(PanelContainer.StylePropertyPanel, angleRectGolden),
-
-            Element<PanelContainer>()
-                .Class(StyleClassPanelAngleRectTransparent)
-                .Prop(PanelContainer.StylePropertyPanel, angleRectTransparent),
 
             #endregion
 

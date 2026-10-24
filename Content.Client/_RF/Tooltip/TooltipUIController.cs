@@ -22,10 +22,12 @@ public sealed class TooltipUIController : UIController
     /// </summary>
     /// <param name="owner">Target control.</param>
     /// <param name="def">Tooltip content settings.</param>
+    /// <param name="tracking">Does the tooltip follow the cursor until it is pinned?</param>
+    /// <param name="pinnable">Is the tooltip pinned after it has been open for a while?</param>
     [PublicAPI]
-    public void OpenPopup(Control owner, ITooltipDefinition def)
+    public void OpenPopup(Control owner, ITooltipDefinition def, bool tracking = true, bool pinnable = true)
     {
-        var popup = new TooltipPopup(def);
+        var popup = new TooltipPopup(def, tracking, pinnable);
         popup.OpenAtMouse();
         TryGetParent(owner, out var parent);
         CloseAfter(parent);
@@ -42,12 +44,14 @@ public sealed class TooltipUIController : UIController
     /// it the root tooltip, but it cannot be closed automatically.
     /// </summary>
     /// <param name="def">Tooltip content settings.</param>
+    /// <param name="tracking">Does the tooltip follow the cursor until it is pinned?</param>
+    /// <param name="pinnable">Is the tooltip pinned after it has been open for a while?</param>
     /// <returns>A created tooltip.</returns>
     [PublicAPI]
-    public TooltipPopup OpenPopupEphemeral(ITooltipDefinition def)
+    public TooltipPopup OpenPopupEphemeral(ITooltipDefinition def, bool tracking = true, bool pinnable = true)
     {
         CloseAll();
-        var popup = new TooltipPopup(def);
+        var popup = new TooltipPopup(def, tracking, pinnable);
         popup.OpenAtMouse();
         popup.OnMouseExited += OnMouseExited;
         popup.OnPopupHide += CloseAll;

@@ -97,6 +97,9 @@ public partial class UiElement : Control
     public UiElement()
     {
         IoCManager.InjectDependencies(this);
+
+        TooltipSupplier = SupplyTooltip;
+        TrackingTooltip = true;
     }
 
     protected override void Parented(Control newParent)

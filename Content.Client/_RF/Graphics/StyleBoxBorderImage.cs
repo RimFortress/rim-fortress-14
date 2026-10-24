@@ -137,7 +137,8 @@ public sealed class StyleBoxBorderImage(
             borderBox.Right + ResolveOutset(Outset.Right, border.Right, uiScale),
             borderBox.Bottom + ResolveOutset(Outset.Bottom, border.Bottom, uiScale));
 
-        if (area.Width <= 0f || area.Height <= 0f)
+        // Not `<=`: a NaN size is not drawn either.
+        if (!(area.Width > 0f) || !(area.Height > 0f))
             return;
 
         // Slice, in image pixels.
@@ -162,10 +163,11 @@ public sealed class StyleBoxBorderImage(
         wB *= factor;
         wL *= factor;
 
-        var innerLeft = area.Left + wL;
-        var innerTop = area.Top + wT;
-        var innerRight = area.Right - wR;
-        var innerBottom = area.Bottom - wB;
+        var innerLeft = MathF.Min(area.Left + wL, area.Right);
+        var innerTop = MathF.Min(area.Top + wT, area.Bottom);
+        // The rounding of the floats can turn the inner box inside out when the borders take the whole area.
+        var innerRight = Math.Clamp(area.Right - wR, innerLeft, area.Right);
+        var innerBottom = Math.Clamp(area.Bottom - wB, innerTop, area.Bottom);
 
         // Corners.
         DrawRegion(handle, new UIBox2(area.Left, area.Top, innerLeft, innerTop), new UIBox2(0, 0, sL, sT), Top.Color);
