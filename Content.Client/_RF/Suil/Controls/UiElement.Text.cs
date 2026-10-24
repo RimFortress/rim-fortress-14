@@ -425,10 +425,10 @@ public partial class UiElement
     } = [];
 
     /// <summary>
-    /// Text outline width (RF extension, <c>text-outline</c>); <c>0</c> disables the outline.
+    /// Text outline width (RF extension, <c>font-outline</c>); <c>0</c> disables the outline.
     /// </summary>
-    [SuilProperty("text-outline", Inherited = true)]
-    protected LengthUnit TextOutlineWidth
+    [SuilProperty("font-outline", Inherited = true)]
+    protected LengthUnit FontOutlineWidth
     {
         get;
         set
@@ -439,10 +439,10 @@ public partial class UiElement
     }
 
     /// <summary>
-    /// Text outline color (RF extension, <c>text-outline-color</c>); <c>null</c> means black.
+    /// Text outline color (RF extension, <c>font-outline-color</c>); <c>null</c> means black.
     /// </summary>
-    [SuilProperty("text-outline-color", Inherited = true)]
-    protected Color? TextOutlineColor
+    [SuilProperty("font-outline-color", Inherited = true)]
+    protected Color? FontOutlineColor
     {
         get;
         set
@@ -477,7 +477,7 @@ public partial class UiElement
             return cached;
 
         var context = LengthContext;
-        var outlineWidth = ToPx(TextOutlineWidth);
+        var outlineWidth = ToPx(FontOutlineWidth);
 
         return _textStyle = new RfTextStyle
         {
@@ -504,7 +504,7 @@ public partial class UiElement
             DecorationThickness = TextDecorationThickness is { } thickness ? ToPx(thickness) : null,
             UnderlineOffset = TextUnderlineOffset is { } offset ? ToPx(offset) : null,
             Shadows = TextShadow.Select(ResolveShadow).ToArray(),
-            Outline = outlineWidth > 0f ? new TextOutline(outlineWidth, TextOutlineColor ?? Color.Black) : null,
+            Outline = outlineWidth > 0f ? new TextOutline(outlineWidth, FontOutlineColor ?? Color.Black) : null,
         };
     }
 

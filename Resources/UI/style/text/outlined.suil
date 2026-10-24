@@ -2,5 +2,5 @@
 
 /* The text with a black outline, to be read over the world (TextOutline) */
 .outlined {
-    text-outline: 2px;
+    font-outline: 2px;
 }

@@ -132,7 +132,7 @@ public sealed class RfTextStyle
     public IReadOnlyList<RfTextShadow> Shadows { get; init; } = [];
 
     /// <summary>
-    /// Text outline (RF extension, e.g. <c>text-outline</c> or <c>-webkit-text-stroke</c>).
+    /// Text outline (RF extension, e.g. <c>font-outline</c> or <c>-webkit-text-stroke</c>).
     /// </summary>
     public TextOutline? Outline { get; init; }
 
