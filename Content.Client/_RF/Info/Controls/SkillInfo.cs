@@ -1,5 +1,5 @@
+using Content.Client._RF.Suil;
 using Content.Client._RF.Skills;
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
@@ -56,8 +56,8 @@ public sealed partial class SkillInfo : RfBoxContainer
         {
             Label.Text = multiplier switch
             {
-                > 1 => $"{Label.Text} ([color={StyleFortress.Good.ToHex()}]{(int)(multiplier * 100)}%[/color])",
-                < 1 => $"{Label.Text} ([color={StyleFortress.LightBad.ToHex()}]{(int)(multiplier * 100)}%[/color])",
+                > 1 => $"{Label.Text} ([color={SuilPalette.Good.ToHex()}]{(int)(multiplier * 100)}%[/color])",
+                < 1 => $"{Label.Text} ([color={SuilPalette.LightBad.ToHex()}]{(int)(multiplier * 100)}%[/color])",
                 _ => Label.Text,
             };
         }
@@ -74,7 +74,7 @@ public sealed partial class SkillInfo : RfBoxContainer
 
         if (delta != 0)
         {
-            var color = delta < 0 ? StyleFortress.LightBad : StyleFortress.Good;
+            var color = delta < 0 ? SuilPalette.LightBad : SuilPalette.Good;
             var sign = delta < 0 ? "–" : "+";
 
             CurrentLevel.Text = $"{CurrentLevel.Text} ([color={color.ToHex()}]{sign}{Math.Abs(delta)}[/color])";

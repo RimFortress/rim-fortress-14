@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Numerics;
 using Content.Client._RF.NPC.UI;
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client._RF.UserInterface.Scope;
@@ -190,8 +189,8 @@ public sealed partial class GoapDebugTab : UiElement
                            + "[/bold]";
         NodesExpanded.Text = $"[bold]Nodes Expanded: {plan.Value.NodesExpanded}[/bold]";
         Planning.Text = plan.Value.Success
-            ? $"[bold]Planning: [color={StyleFortress.LightGood.ToHex()}]Success[/color][/bold]"
-            : $"[bold]Planning: [color={StyleFortress.LightBad.ToHex()}]Failed[/color][/bold]";
+            ? $"[bold]Planning: [color={SuilPalette.LightGood.ToHex()}]Success[/color][/bold]"
+            : $"[bold]Planning: [color={SuilPalette.LightBad.ToHex()}]Failed[/color][/bold]";
         ElapsedTime.Text = $"[bold]Elapsed Time: {plan.Value.ElapsedTime.TotalMilliseconds}ms[/bold]";
         AddTypes(StartState, plan.Value.StartState);
         AddTypes(GoalState, plan.Value.GoalState);

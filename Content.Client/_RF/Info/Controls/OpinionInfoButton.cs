@@ -1,4 +1,4 @@
-using Content.Client._RF.Stylesheets;
+using Content.Client._RF.Suil;
 using Content.Shared._RF.Social;
 using Content.Shared._RF.Social.Systems;
 using Content.Client._RF.UserInterface.Controls;
@@ -39,9 +39,9 @@ public sealed partial class OpinionInfoButton : RfBoxContainer
 
         var color = Value switch
         {
-            < 0 => StyleFortress.LightBad,
-            > 0 => StyleFortress.Good,
-            _ => StyleFortress.GraySilver,
+            < 0 => SuilPalette.LightBad,
+            > 0 => SuilPalette.Good,
+            _ => SuilPalette.GraySilver,
         };
 
         var sign = Value switch

@@ -1,5 +1,5 @@
+using Content.Client._RF.Suil;
 using System.Linq;
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.UserInterface.Controls;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
@@ -27,7 +27,7 @@ public abstract class DebugNodeControl : RfBoxContainer
         if (_selected)
         {
             var box = UIBox2.FromDimensions(-Vector2i.One, PixelSize + Vector2i.One * 2);
-            handle.DrawRect(box, StyleFortress.GoldFortress, filled: false);
+            handle.DrawRect(box, SuilPalette.GoldFortress, filled: false);
         }
 
         base.Draw(handle);

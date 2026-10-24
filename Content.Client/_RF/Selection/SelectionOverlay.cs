@@ -1,6 +1,6 @@
+using Content.Client._RF.Suil;
 using System.Linq;
 using System.Numerics;
-using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.Selection.Components;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
@@ -139,7 +139,7 @@ public sealed partial class SelectionOverlay : Overlay
         var icon = _sprite.Frame0(sprite);
         var box = new Box2(new Vector2(mapPos.X, mapPos.Y - size), new Vector2(mapPos.X + size, mapPos.Y));
 
-        args.WorldHandle.DrawRect(box, StyleFortress.BlackAmber.WithAlpha(0.6f));
+        args.WorldHandle.DrawRect(box, SuilPalette.BlackAmber.WithAlpha(0.6f));
         args.WorldHandle.DrawTextureRect(icon, box, color);
     }
 

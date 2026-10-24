@@ -1,6 +1,6 @@
+using Content.Client._RF.Suil;
 using System.Linq;
 using Content.Client._RF.NPC.UI;
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client._RF.UserInterface.Scope;
 using Content.Shared._RF.NPC.GOAP;
@@ -65,8 +65,8 @@ public sealed partial class GraphNodeControl : DebugNodeControl
                 : AiUiHelper.AddBox(PreconditionsTab,
                     condition.Name,
                     debug.Value.Preconditions[i].Result
-                        ? $"[color={StyleFortress.LightGood.ToHex()}]True[/color]"
-                        : $"[color={StyleFortress.LightBad.ToHex()}]False[/color]");
+                        ? $"[color={SuilPalette.LightGood.ToHex()}]True[/color]"
+                        : $"[color={SuilPalette.LightBad.ToHex()}]False[/color]");
             AiUiHelper.AddLabel(box.Content, "Type:", entityCon ? "ECS" : "Static");
             AiUiHelper.AddTypes(box.Content, "Fields", condition);
 
@@ -99,8 +99,8 @@ public sealed partial class GraphNodeControl : DebugNodeControl
     {
         return result switch
         {
-            GoapActionResult.Finished => $"[color={StyleFortress.LightGood.ToHex()}]Finished[/color]",
-            GoapActionResult.Failed => $"[color={StyleFortress.LightBad.ToHex()}]Failed[/color]",
+            GoapActionResult.Finished => $"[color={SuilPalette.LightGood.ToHex()}]Finished[/color]",
+            GoapActionResult.Failed => $"[color={SuilPalette.LightBad.ToHex()}]Failed[/color]",
             GoapActionResult.Continuing => $"[color={Color.Yellow.ToHex()}]Continuing[/color]",
             _ => throw new ArgumentOutOfRangeException(),
         };
@@ -112,7 +112,7 @@ public sealed partial class GraphNodeControl : DebugNodeControl
             return null;
 
         if (action.StartupSuccess == false)
-            return $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]";
+            return $"[color={SuilPalette.LightBad.ToHex()}]Fail[/color]";
 
         if (action.UpdateDumps.Count == 0)
             return $"[color={Color.Yellow.ToHex()}]Not Started[/color]";
@@ -146,8 +146,8 @@ public sealed partial class GraphNodeControl : DebugNodeControl
                     box.Content,
                     "Startup",
                     debugAction.StartupSuccess == true
-                        ? $"[color={StyleFortress.LightGood.ToHex()}]Success[/color]"
-                        : $"[color={StyleFortress.LightBad.ToHex()}]Fail[/color]");
+                        ? $"[color={SuilPalette.LightGood.ToHex()}]Success[/color]"
+                        : $"[color={SuilPalette.LightBad.ToHex()}]Fail[/color]");
 
                 if (debugAction.StartupDump != null)
                 {
@@ -207,7 +207,7 @@ public sealed partial class GraphNodeControl : DebugNodeControl
 
         if (DebugController.GoapBreakpoints.Any(x => x.NodeId == _graphNode.Id))
         {
-            SubTitle.Text = $@"[color={StyleFortress.LightBad.ToHex()}]\[BP\][/color]";
+            SubTitle.Text = $@"[color={SuilPalette.LightBad.ToHex()}]\[BP\][/color]";
             SearchText.Add("[BP]");
         }
 
@@ -216,7 +216,7 @@ public sealed partial class GraphNodeControl : DebugNodeControl
 
         if (_debug is { HelpGoal: true })
         {
-            StatusLabel.Text = $@"[color={StyleFortress.GoldFortress.ToHex()}]\[GOAL\][/color]";
+            StatusLabel.Text = $@"[color={SuilPalette.GoldFortress.ToHex()}]\[GOAL\][/color]";
             SearchText.Add("[GOAL]");
         }
 
@@ -249,7 +249,7 @@ public sealed partial class GraphNodeControl : DebugNodeControl
                          => x.UpdateDumps.Any(y
                              => y.Result == GoapActionResult.Finished)))
             {
-                StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.Good.ToHex()}]\[FINISH\][/color]";
+                StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.Good.ToHex()}]\[FINISH\][/color]";
                 SearchText.Add("[FINISH]");
             }
         }
@@ -258,11 +258,11 @@ public sealed partial class GraphNodeControl : DebugNodeControl
             switch (_debug?.PreconditionsMet)
             {
                 case true:
-                    StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[NOT MET\][/color]";
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightBad.ToHex()}]\[NOT MET\][/color]";
                     SearchText.Add("[NOT MET]");
                     break;
                 case false:
-                    StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[MET\][/color]";
+                    StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightGood.ToHex()}]\[MET\][/color]";
                     SearchText.Add("[MET]");
                     break;
             }

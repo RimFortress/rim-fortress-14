@@ -1,5 +1,5 @@
+using Content.Client._RF.Suil;
 using Content.Client._RF.NPC.UI;
-using Content.Client._RF.Stylesheets;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Client._RF.UserInterface.Controls;
@@ -33,13 +33,13 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
         // Status
         if (current == info.ProtoId)
         {
-            StatusLabel.Text = $@"[color={StyleFortress.LightGood.ToHex()}]\[Active][/color]";
+            StatusLabel.Text = $@"[color={SuilPalette.LightGood.ToHex()}]\[Active][/color]";
             SearchText.Add("Active");
         }
 
         if (info.AgentGoal)
         {
-            StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Available][/color]";
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightGood.ToHex()}]\[Available][/color]";
             SearchText.Add("Available");
         }
 
@@ -57,19 +57,19 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
 
         if (info.Cooldown != TimeSpan.Zero)
         {
-            StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Cooldown][/color]";
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightBad.ToHex()}]\[Cooldown][/color]";
             SearchText.Add("Cooldown");
         }
 
         if (info.Penalty != 0)
         {
-            StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightBad.ToHex()}]\[Penalty][/color]";
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightBad.ToHex()}]\[Penalty][/color]";
             SearchText.Add("Penalty");
         }
 
         if (info.IncumbentBonus.Length > 0)
         {
-            StatusLabel.Text = $@"{StatusLabel.Text} [color={StyleFortress.LightGood.ToHex()}]\[Bonus][/color]";
+            StatusLabel.Text = $@"{StatusLabel.Text} [color={SuilPalette.LightGood.ToHex()}]\[Bonus][/color]";
             SearchText.Add("Bonus");
         }
 
@@ -135,8 +135,8 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
                 ConditionsTab,
                 condition.Reflection.Name,
                 condition.Result
-                    ? $"[color={StyleFortress.LightGood.ToHex()}]True[/color]"
-                    : $"[color={StyleFortress.LightBad.ToHex()}]False[/color]");
+                    ? $"[color={SuilPalette.LightGood.ToHex()}]True[/color]"
+                    : $"[color={SuilPalette.LightBad.ToHex()}]False[/color]");
             AiUiHelper.AddTypes(box.Content, "Fields", condition.Reflection);
             AiUiHelper.AddTypes(box.Content, "State Snapshot", condition.Dump.StateSnapshot.State);
             AiUiHelper.AddLogs(box.Content, condition.Dump.Dump);

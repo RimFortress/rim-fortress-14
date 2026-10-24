@@ -1,4 +1,3 @@
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.UserInterface;
 using System.Linq;
 using Content.Client._RF.Suil;
@@ -115,7 +114,7 @@ public sealed partial class RfHumanoidProfileEditor
 
     private static UiElement CreateHint(string text)
     {
-        var label = new UiElement { Text = text, TextColor = StyleFortress.GraySilver };
+        var label = new UiElement { Text = text, TextColor = SuilPalette.GraySilver };
         label.SuilSetHard("color");
         return label;
     }

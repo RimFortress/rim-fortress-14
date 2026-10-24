@@ -1,4 +1,4 @@
-using Content.Client._RF.Stylesheets;
+using Content.Client._RF.Suil;
 using Content.Shared._RF.Social.Components;
 using Content.Shared._RF.Social.Systems;
 
@@ -19,9 +19,9 @@ public sealed partial class MoodInfoTab : InfoTab
         var mood = System<SocialSystem>().GetMood(uid);
         var color = mood switch
         {
-            < 0 => StyleFortress.LightBad,
-            > 0 => StyleFortress.Good,
-            _ => StyleFortress.GraySilver,
+            < 0 => SuilPalette.LightBad,
+            > 0 => SuilPalette.Good,
+            _ => SuilPalette.GraySilver,
         };
 
         Total.Text = Loc.GetString("mood-info-total", ("color", color), ("mood", mood));

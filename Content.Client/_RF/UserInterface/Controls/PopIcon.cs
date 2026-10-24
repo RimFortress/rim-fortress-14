@@ -1,7 +1,6 @@
 using System.Numerics;
 using Content.Client._RF.Info;
 using Content.Client._RF.Selection;
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.Suil;
 using Content.Shared._RF.Needs.Components;
 using Content.Shared._RF.Needs.Systems;
@@ -155,9 +154,9 @@ public sealed partial class PopIcon : RfButton
     {
         var color = value switch
         {
-            < 0 => StyleFortress.LightBad,
-            > 0 => StyleFortress.Good,
-            _ => StyleFortress.GraySilver,
+            < 0 => SuilPalette.LightBad,
+            > 0 => SuilPalette.Good,
+            _ => SuilPalette.GraySilver,
         };
 
         var sign = value switch

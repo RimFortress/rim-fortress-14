@@ -1,4 +1,4 @@
-using Content.Client._RF.Stylesheets;
+using Content.Client._RF.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client._RF.World;
 using Content.Shared._RF.Social;
@@ -39,9 +39,9 @@ public sealed partial class SocializationEffectInfo : RfBoxContainer
 
         var color = value switch
         {
-            < 0 => StyleFortress.LightBad,
-            > 0 => StyleFortress.Good,
-            _ => StyleFortress.GraySilver,
+            < 0 => SuilPalette.LightBad,
+            > 0 => SuilPalette.Good,
+            _ => SuilPalette.GraySilver,
         };
 
         var sign = Value switch
