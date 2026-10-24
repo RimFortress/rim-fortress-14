@@ -6,7 +6,7 @@
   - !type:Component
     components:
     - type: Seed
-      seedId: wheat
+      plantId: WheatPlants
 
 - type: searchQuery
   id: BasePlantHolderQuery

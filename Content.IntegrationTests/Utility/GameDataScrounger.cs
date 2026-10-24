@@ -68,6 +68,7 @@ public static partial class GameDataScrounger
     {
         public required string Id;
         public required HashSet<string> Components;
+        public required HashSet<string> RemovedComponents; // RimFortress
         public required List<string> Parents;
         public required bool Abstract;
     }
@@ -274,7 +275,8 @@ public static partial class GameDataScrounger
                 var entity = new EntityMetadata()
                 {
                     Abstract = @abstract,
-                    Components = components?.Children.Select(x => x["type"].ToString()).ToHashSet() ?? new(),
+                    Components = ComponentTypes(components, removed: false), // RimFortress
+                    RemovedComponents = ComponentTypes(components, removed: true), // RimFortress
                     Parents = parents,
                     Id = id.AsString(),
                 };
@@ -330,7 +332,46 @@ public static partial class GameDataScrounger
 
             entity.Components.UnionWith(parentMeta.Components);
         }
+
+        // RimFortress Start
+        // `- !Remove type: Foo` takes a component the parents give away.
+        entity.Components.ExceptWith(entity.RemovedComponents);
+        // RimFortress End
     }
+
+    // RimFortress Start
+    /// <summary>
+    ///     The types of the components of an entity: the ones it adds, or, if <paramref name="removed"/>, the ones it
+    ///     takes away with <c>!Remove</c>. The tag is on the key (<c>- !Remove type: Foo</c>), so the key is not found by
+    ///     its name alone.
+    /// </summary>
+    private static HashSet<string> ComponentTypes(YamlSequenceNode? components, bool removed)
+    {
+        var result = new HashSet<string>();
+
+        if (components == null)
+            return result;
+
+        foreach (var component in components.Children)
+        {
+            if (component is not YamlMappingNode mapping)
+                continue;
+
+            foreach (var (key, value) in mapping.Children)
+            {
+                if (key is not YamlScalarNode { Value: "type" } scalar || value is not YamlScalarNode { Value: { } type })
+                    continue;
+
+                if ((!scalar.Tag.IsEmpty && scalar.Tag.Value == "!Remove") != removed)
+                    continue;
+
+                result.Add(type);
+            }
+        }
+
+        return result;
+    }
+    // RimFortress End
 
     // Did you know there's no way to find the resources folder in the real filesystem
     // from content? Makes sense, but ough. So this is unfortunately copy-pasted from engine.

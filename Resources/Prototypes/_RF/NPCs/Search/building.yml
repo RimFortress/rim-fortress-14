@@ -6,8 +6,8 @@
     components:
     - type: CommonConstructionGhost
     - type: Construction
-      graph: FloorBananium
-      node: BananiumFloor
+      graph: Girder
+      node: start
     requireAll: false
   - !type:Constructed
     invert: true

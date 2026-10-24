@@ -9,7 +9,7 @@
   # Grass
   - !type:BiomeTileLayer
     threshold: -0.25
-    tile: FloorGrassLight
+    tile: FloorGrass
     noise:
       seed: 18
       frequency: 0.040
@@ -82,7 +82,7 @@
       fractalType: FBm
       frequency: 2
     allowedTiles:
-      - FloorGrassLight
+      - FloorGrass
     entities:
       - FloraTree
       - FloraTreeStump
@@ -107,7 +107,7 @@
       fractalType: FBm
       frequency: 2
     allowedTiles:
-      - FloorGrassLight
+      - FloorGrass
     entities:
       - FloraRockSolid
 
@@ -267,7 +267,7 @@
   - !type:BiomeDecalLayer
     allowedTiles:
       - FloorPlanetGrass
-      - FloorGrassLight
+      - FloorGrass
     divisions: 1
     threshold: 0.70
     noise:
@@ -294,7 +294,7 @@
   - !type:BiomeDecalLayer
     allowedTiles:
       - FloorPlanetGrass
-      - FloorGrassLight
+      - FloorGrass
     divisions: 1
     threshold: 0.70
     noise:
@@ -404,7 +404,7 @@
   - !type:BiomeDecalLayer
     allowedTiles:
       - FloorPlanetGrass
-      - FloorGrassLight
+      - FloorGrass
       - FloorGrassDark
     noise:
       seed: 12
@@ -422,7 +422,7 @@
   - !type:BiomeDecalLayer
     allowedTiles:
       - FloorPlanetGrass
-      - FloorGrassLight
+      - FloorGrass
       - FloorGrassDark
     noise:
       seed: 13
@@ -437,7 +437,7 @@
   - !type:BiomeDecalLayer
     allowedTiles:
       - FloorPlanetGrass
-      - FloorGrassLight
+      - FloorGrass
       - FloorGrassDark
     noise:
       seed: 14

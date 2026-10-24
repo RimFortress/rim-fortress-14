@@ -68,8 +68,8 @@ public sealed class GoapStaticGraphPrototypeTest : GameTest
     - !type:MarkOwnerInRange
       range: 3
       whitelist:
-        components:
-        - Log
+        tags:
+        - Ore
     effects:
       TargetDug: true
 

@@ -135,7 +135,7 @@ public sealed partial class NeedsSystem : EntitySystem
 
         _entityEffects.TryApplyEffects(ent, threshold.Effects, user: ent);
 
-        need.ActualDecayRate = need.ThresholdDecayModifiers.GetValueOrDefault(need.CurrentThreshold, 1);
+        need.ActualDecayRate = need.ThresholdDecayModifiers.GetValueOrDefault(new ProtoId<NeedThresholdPrototype>(threshold.ID), 1);
         SetAuthoritativeValue(ent, protoId, GetValue(ent, protoId));
 
         need.LastThreshold = need.CurrentThreshold;
@@ -181,10 +181,10 @@ public sealed partial class NeedsSystem : EntitySystem
 /// <summary>
 /// Raises when the threshold value of the need changes
 /// </summary>
-/// <param name="Old">ID of the previous threshold</param>
+/// <param name="Old">ID of the previous threshold, if there was one</param>
 /// <param name="New">ID of the current threshold</param>
 [PublicAPI]
 public record struct NeedThresholdChangedEvent(
     ProtoId<NeedPrototype> Need,
-    ProtoId<NeedThresholdPrototype> Old,
+    ProtoId<NeedThresholdPrototype>? Old,
     ProtoId<NeedThresholdPrototype> New);

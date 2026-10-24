@@ -224,7 +224,7 @@
     exp: 10
   ingredients:
     items:
-      FoodMeatSnail: 1
+      MobSnail: 1
     reagents:
       Water: 10
 

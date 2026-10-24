@@ -52,7 +52,7 @@ public sealed partial class NeedData
     /// Stored in order to prevent recalculating
     /// </summary>
     [DataField]
-    public ProtoId<NeedThresholdPrototype> LastThreshold;
+    public ProtoId<NeedThresholdPrototype>? LastThreshold;
 
     /// <summary>
     /// The time when the threshold will update next
@@ -64,7 +64,7 @@ public sealed partial class NeedData
     /// The current level of satisfaction threshold the entity is at
     /// </summary>
     [DataField]
-    public ProtoId<NeedThresholdPrototype> CurrentThreshold;
+    public ProtoId<NeedThresholdPrototype>? CurrentThreshold;
 
     /// <summary>
     /// Multipliers of the decline of the satisfaction value for each threshold.

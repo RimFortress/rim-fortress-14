@@ -133,7 +133,11 @@ public sealed partial class PopIcon : RfButton
             if (!_needs.TryGetNeedIcon(new(uid, needs), data.Id, out var needIcon))
                 continue;
 
-            _needs.TryGetThresholdLocalization(data.CurrentThreshold, out var locale);
+            string? locale = null;
+
+            if (data.CurrentThreshold is { } threshold)
+                _needs.TryGetThresholdLocalization(threshold, out locale);
+
             StatusContainer.AddChild(StatusIcon(needIcon, locale));
         }
     }

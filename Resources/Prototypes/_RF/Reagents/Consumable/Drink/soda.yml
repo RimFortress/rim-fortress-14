@@ -25,9 +25,9 @@
   metabolisms:
     Digestion:
       effects: !Clear
-      - !type:ChangeNeed
-        need: Chemicals
-        amount: 0.5
+      - !type:Satiate
+        satiationType: Chemicals
+        factor: 0.5
         conditions:
         - !type:MetabolizerTypeCondition
           type: [ Changeling ]

@@ -8,7 +8,7 @@
 
   # Random dug snow
   - !type:BiomeTileLayer
-    tile: FloorSnowDug
+    tile: FloorSnow
     threshold: 0.50
     noise:
       seed: 2
@@ -36,7 +36,7 @@
   # Dug snow
   - !type:BiomeTileLayer
     threshold: 0.25
-    tile: FloorSnowDug
+    tile: FloorSnow
     noise:
       seed: 18
       frequency: 0.04
@@ -59,7 +59,7 @@
 
   # Road
   - !type:BiomeTileLayer
-    tile: FloorSnowDug
+    tile: FloorSnow
     threshold: 0.85
     noise:
       seed: 6
@@ -191,7 +191,7 @@
       cellularDistanceFunction: Euclidean
       cellularReturnType: Distance2
     entities:
-      - WallIce
+      - WallRockSnow
   - !type:BiomeEntityLayer
     allowedTiles:
       - FloorConcreteSmooth
