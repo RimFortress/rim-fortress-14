@@ -9,7 +9,7 @@ let visuals-loc = zone-visuals;
                 col {
                     zone-change-name-control #name-change
                     _ .low-divider (margin: 5 3)
-                    expandable-box #content-box (title: $<loc>-content-title, orientation: vertical)
+                    expandable-box #content-box (title: $<loc>-content-title)
                 }
             }
 

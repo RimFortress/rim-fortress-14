@@ -1,8 +1,6 @@
-using Content.Client._RF.NPC.GOAP.UI;
-using Content.Client._RF.Stylesheets;
+using Content.Client._RF.Suil;
 using Content.Shared._RF.NPC;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controls;
 
 namespace Content.Client._RF.NPC.UI;
 
@@ -20,30 +18,7 @@ public static class AiUiHelper
         foreach (var (key, (type, value)) in data)
         {
             AddSeparator(expandBox.Content);
-            expandBox.Content.AddChild(new BoxContainer
-            {
-                Orientation = BoxContainer.LayoutOrientation.Vertical,
-                Margin = new Thickness(0f, 1f),
-                Children =
-                {
-                    new BoxContainer
-                    {
-                        Children =
-                        {
-                            new RichTextLabel { Text = $"[bold]{key}[/bold]" },
-                            new Control { HorizontalExpand = true },
-                            new RichTextLabel { Text = $":{type}" },
-                        },
-                    },
-                    new BoxContainer
-                    {
-                        Children =
-                        {
-                            new RichTextLabel { Text = value },
-                        },
-                    },
-                },
-            });
+            expandBox.Content.AddChild(new AiFieldRow(key, type, value));
         }
     }
 
@@ -64,30 +39,7 @@ public static class AiUiHelper
             foreach (var (key, (type, value)) in node.Fields)
             {
                 AddSeparator(expandBox.Content);
-                expandBox.Content.AddChild(new BoxContainer
-                {
-                    Orientation = BoxContainer.LayoutOrientation.Vertical,
-                    Margin = new Thickness(0f, 1f),
-                    Children =
-                    {
-                        new BoxContainer
-                        {
-                            Children =
-                            {
-                                new RichTextLabel { Text = $"[bold]{key}[/bold]" },
-                                new Control { HorizontalExpand = true },
-                                new RichTextLabel { Text = $":{type}" },
-                            },
-                        },
-                        new BoxContainer
-                        {
-                            Children =
-                            {
-                                new RichTextLabel { Text = value },
-                            },
-                        },
-                    },
-                });
+                expandBox.Content.AddChild(new AiFieldRow(key, type, value));
             }
         }
 
@@ -103,16 +55,7 @@ public static class AiUiHelper
     public static void AddLabel(Control parent, string left, string right)
     {
         AddSeparator(parent);
-        parent.AddChild(new BoxContainer
-        {
-            Margin = new Thickness(20f, 0f, 5f, 0f),
-            Children =
-            {
-                new RichTextLabel { Text = $"[bold]{left}[/bold]" },
-                new Control { HorizontalExpand = true },
-                new RichTextLabel { Text = $"[bold]{right}[/bold]" },
-            },
-        });
+        parent.AddChild(new AiLabelRow(left, right));
     }
 
     public static void AddExpandLabel(Control parent, string title, string text)
@@ -120,16 +63,12 @@ public static class AiUiHelper
         AddSeparator(parent);
         var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
         parent.AddChild(expandBox);
-        expandBox.Content.AddChild(new RichTextLabel { Text = text });
+        expandBox.Content.AddChild(new UiElement { Text = text });
     }
 
     public static void AddSeparator(Control parent)
     {
-        parent.AddChild(new PanelContainer
-        {
-            StyleClasses = { StyleFortress.StyleClassLowDividerDark },
-            Margin = new Thickness(3f, 2f),
-        });
+        parent.AddChild(new AiSeparator());
     }
 
     public static void AddLogs(Control parent, string? logs)
@@ -144,7 +83,7 @@ public static class AiUiHelper
 
         foreach (var dump in dumps)
         {
-            box.Content.AddChild(new RichTextLabel { Text = dump });
+            box.Content.AddChild(new UiElement { Text = dump });
         }
     }
 

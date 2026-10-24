@@ -1,0 +1,245 @@
+/* The frame of a node of a debug graph: the title, the contents that scroll and the status under them. */
+let debug-node = {
+    col .panel-highlighted (padding: 0, mouse-filter: pass) {
+        col (flex-grow: 1, margin: 1) {
+            col .panel-dark (padding: 0, mouse-filter: pass) {
+                row (margin: 4 8 4 5) {
+                    +_ #title (align-self: center)
+                    _ .flex-fill
+                    +_ #sub-title (align-self: center)
+                }
+            }
+
+            _ .low-divider
+
+            scroll-container .scroll-vertical {
+                %content%
+            }
+
+            +_ #status-label .label-sub-text (margin: 0 5)
+        }
+    }
+}
+
+/* A field of an object: the name with the type, and under them the value. */
+@AiFieldRow => col (margin: 1 0) {
+    row {
+        _ #key (align-self: center)
+        _ .flex-fill
+        _ #type (align-self: center)
+    }
+
+    _ #value
+}
+
+/* A line with the name on the left and the value on the right. */
+@AiLabelRow => row (margin: 0 5 0 20) {
+    _ #left (align-self: center)
+    _ .flex-fill
+    _ #right (align-self: center)
+}
+
+/* The dark line between the entries of a list. */
+@AiSeparator => _ .low-divider-dark (margin: 2 3)
+
+/* A title with the secondary text on the right, and the contents that are shown by a click on the title. */
+@ExpandableBox => col {
+    row #title-box (mouse-filter: pass) {
+        _ #marker (
+            set-size: 18,
+            margin: 0 3,
+            align-self: center,
+            background-size: contain,
+            background-repeat: no-repeat,
+            background-position: center
+        )
+        _ #title-label (align-self: center)
+        _ .flex-fill
+        _ #secondary-label (margin: 0 5, align-self: center)
+    }
+
+    +col #content (visible: false, margin: 0 0 0 20) {
+        %content%
+    }
+}
+
+/* A panel over the graph: it is dragged by the title and folded by the right click on it. */
+@DraggablePanel => col .panel-light-bordered (
+    padding: 0,
+    horizontal-alignment: left,
+    vertical-alignment: top,
+    mouse-filter: pass
+) {
+    col (margin: 1) {
+        col #drag .panel-dark (padding: 0, mouse-filter: pass) {
+            row (margin: 4 8 4 5) {
+                _ #marker (
+                    set-size: 18,
+                    margin: 0 3,
+                    align-self: center,
+                    background-size: contain,
+                    background-repeat: no-repeat,
+                    background-position: center
+                )
+                _ #label (align-self: center)
+            }
+        }
+
+        _ #divider .low-divider
+
+        col #contents (margin: 2) {
+            %content%
+        }
+    }
+}
+
+/* The field of a graph: it is scrolled by dragging, the panels are over it. */
+@AiGraphView => _ .panel-dark (padding: 0, mouse-filter: pass) {
+    draggable-scroll-container #scroll-container (scrollbar-width: none) {
+        free-layout #graph-root (margin: 1000)
+        graph-edge-overlay #edge-overlay (margin: 1000)
+    }
+
+    _ #expanded-container (
+        horizontal-alignment: center,
+        vertical-alignment: center
+    )
+
+    free-layout {
+        draggable-panel #search-panel (title: "Search") {
+            +line-edit #search (set-width: 150)
+        }
+    }
+
+    %content%
+}
+
+/* A breakpoint of the GOAP: the check that turns it on and off, and the cross that removes it. */
+@BreakpointControl => row (margin: 2 0) {
+    +checkbox #check (margin: 0 3, align-self: center)
+    _ .flex-fill
+    +button #remove-button .cross-button-red (
+        set-size: 22 22,
+        margin: 0 3,
+        align-self: center
+    )
+}
+
+/* The tab of the GOAP graph: the breakpoints and the plan are over the graph. */
+@GoapDebugTab => _ {
+    ai-graph-view #graph {
+        free-layout {
+            draggable-panel #breakpoints-panel (title: "Breakpoints") {
+                col #breakpoints
+
+                col #create-point-box (margin: 3, visible: false) {
+                    option-button #node-id
+                    option-button #point-type (visible: false)
+                    option-button #action-index (visible: false)
+                    option-button #result (visible: false)
+
+                    row {
+                        button #confirm .green (
+                            text: "Confirm",
+                            flex-grow: 1,
+                            flex-basis: zero,
+                            disabled
+                        )
+                        button #cancel .red (
+                            text: "Cancel",
+                            flex-grow: 1,
+                            flex-basis: zero
+                        )
+                    }
+                }
+
+                button #add-point-button (text: "Add Breakpoint")
+            }
+
+            draggable-panel #plan-panel (title: "Plan Info") {
+                _ #total-cost (margin: 0 5)
+                ai-separator
+                _ #planning-nodes (margin: 0 5)
+                ai-separator
+                _ #nodes-in-plan (margin: 0 5)
+                ai-separator
+                _ #conditions-checked (margin: 0 5)
+                ai-separator
+                _ #effects-applied (margin: 0 5)
+                ai-separator
+                _ #skipped-expensive-nodes (margin: 0 5)
+                ai-separator
+                _ #nodes-expanded (margin: 0 5)
+                ai-separator
+                _ #planning (margin: 0 5)
+                ai-separator
+                _ #elapsed-time (margin: 0 5)
+                ai-separator
+                expandable-box #start-state (title: "[bold]Start State[/bold]")
+                ai-separator
+                expandable-box #goal-state (title: "[bold]Goal State[/bold]")
+                ai-separator
+            }
+        }
+    }
+}
+
+/* A node of the GOAP graph: what it does, what it needs and how the planning went through it. */
+@GraphNodeControl => debug-node {
+    tab #tab-container {
+        col #common-tab
+        col #actions-tab
+        col #preconditions-tab
+    }
+}
+
+/* The tab of the Utility AI graph. */
+@UtilityAiDebugTab => _ {
+    ai-graph-view #graph
+}
+
+/* A goal of the Utility AI graph: the curves, the conditions and the score. */
+@UtilityAiGoalControl => debug-node {
+    tab #tab-container {
+        col #common-tab
+        col #curves-tab
+        col #conditions-tab
+    }
+}
+
+/* The tab of the search of an NPC. */
+@SearcherDebugTab => _ {
+    ai-graph-view #graph
+}
+
+/* A query of the search of an NPC: the filters, the considerations and the results. */
+@SearchQueryControl => debug-node {
+    tab #tab-container {
+        col #query-tab
+        col #filters-tab
+        col #considerations-tab
+    }
+}
+
+/* The window for the debug of the AI of an NPC: the target on the top and a tab for each brain. */
+@AiDevWindow => col .panel-light (padding: 0) {
+    row (margin: 5 5 0 5) {
+        col (flex-grow: 1) {
+            _ #target-label
+            _ #time-label
+            _ #tick-label
+        }
+
+        col {
+            button #refresh (text: "Refresh", disabled)
+        }
+    }
+
+    _ .low-divider
+
+    tab #tab-container (flex-grow: 1) {
+        goap-debug-tab #goap-debug-tab
+        utility-ai-debug-tab #utility-ai-debug-tab
+        searcher-debug-tab #searcher-debug-tab
+    }
+}
