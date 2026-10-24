@@ -78,6 +78,21 @@ public partial class RfOptionButton : RfButton
     } = string.Empty;
 
     /// <summary>
+    /// If not <c>null</c>, the label shows it instead of the text of the selected item: a button that says more than the
+    /// item it has chosen (the channel of the chat by the prefix typed, the radio of the channel).
+    /// </summary>
+    [PublicAPI]
+    public string? LabelOverride
+    {
+        get;
+        set
+        {
+            field = value;
+            UpdateLabel();
+        }
+    }
+
+    /// <summary>
     /// If true, hides the triangle to the right of the label.
     /// </summary>
     [PublicAPI]
@@ -391,7 +406,7 @@ public partial class RfOptionButton : RfButton
 
     private void UpdateLabel()
     {
-        var text = Selected?.Text ?? string.Empty;
+        var text = LabelOverride ?? Selected?.Text ?? string.Empty;
         LabelControl.SetPlainText(Prefix.Length == 0 ? text : $"{Prefix} {text}");
     }
 

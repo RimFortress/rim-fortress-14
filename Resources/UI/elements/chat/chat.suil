@@ -1,0 +1,64 @@
+let loc = hud-chatbox;
+
+/* The button of the filter: the icon button of the theme, it opens the filter. */
+@RfChannelFilterButton as channel-filter-button => framed-icon-button .chat-filter-option-button (
+    "/Textures/Interface/Nano/filter.svg.96dpi.png",
+    min-width: 42
+)
+
+/* The filter of the channels (a check box for each) and the words to highlight. */
+@RfChannelFilterPopup as channel-filter-popup => popup {
+    box .panel-dark-bordered {
+        row (gap: 8px, margin: 0 10) {
+            col #filter-box (min-width: 105, margin: 10 0, gap: 4px)
+
+            col (min-width: 120, margin: 10 0, gap: 4px) {
+                _ (text: $<loc>-highlights)
+
+                box (background-color: #323446) {
+                    text-edit #highlight-edit (min-height: 150, margin: 5, flex-grow: 1)
+                }
+
+                button #highlight-button (
+                    text: $<loc>-highlights-button,
+                    tool-tip: $<loc>-highlights-tooltip
+                )
+            }
+        }
+    }
+}
+
+/* The line to write in: the channel, the text and the filter. */
+@RfChatInputBox as chat-input-box => box .chat-panel (gap: 4px) {
+    +channel-selector-button #channel-selector .chat-selector-option-button (
+        min-width: 75,
+        hide-triangle
+    )
+    +history-line-edit #input .chat-line-edit (flex-grow: 1)
+    +channel-filter-button #filter-button .chat-filter-option-button
+}
+
+/* The chat: the log of the messages and the line to write in. */
+@RfChatBox as chat-box => box-container (
+    min-size: 465 225,
+    horizontal-expand,
+    vertical-expand,
+    mouse-filter: stop
+) {
+    +box #chat-window-panel .chat-panel (
+        flex-grow: 1,
+        horizontal-expand,
+        vertical-expand
+    ) {
+        col (flex-grow: 1, gap: 4px) {
+            box (flex-grow: 1, margin: 8 8 4 8) {
+                output-panel #contents (
+                    horizontal-expand,
+                    vertical-expand,
+                    show-scroll-down-button
+                )
+            }
+            +chat-input-box #chat-input (margin: 2)
+        }
+    }
+}

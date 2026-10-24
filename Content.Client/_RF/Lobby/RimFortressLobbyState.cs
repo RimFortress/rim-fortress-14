@@ -2,7 +2,7 @@ using Content.Client._RF.Lobby.UI;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Audio;
 using Content.Client.GameTicking.Managers;
-using Content.Client.UserInterface.Systems.Chat;
+using Content.Client._RF.UserInterface.Controllers;
 using Content.Client.Voting;
 using Content.Shared.CCVar;
 using Robust.Client;
@@ -48,7 +48,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
 
         Lobby = (RfLobbyGui)_userInterfaceManager.ActiveScreen;
 
-        var chatController = _userInterfaceManager.GetUIController<ChatUIController>();
+        var chatController = _userInterfaceManager.GetUIController<RfChatUIController>();
         _gameTicker = _entityManager.System<ClientGameTicker>();
         _contentAudioSystem = _entityManager.System<ContentAudioSystem>();
         _contentAudioSystem.LobbySoundtrackChanged += UpdateLobbySoundtrackInfo;
@@ -83,7 +83,7 @@ public sealed partial class RimFortressLobbyState : Robust.Client.State.State
 
     protected override void Shutdown()
     {
-        var chatController = _userInterfaceManager.GetUIController<ChatUIController>();
+        var chatController = _userInterfaceManager.GetUIController<RfChatUIController>();
         chatController.SetMainChat(false);
         _gameTicker.InfoBlobUpdated -= UpdateLobbyUi;
         _gameTicker.LobbyStatusUpdated -= LobbyStatusUpdated;

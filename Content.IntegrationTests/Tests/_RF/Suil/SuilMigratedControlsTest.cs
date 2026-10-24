@@ -524,7 +524,9 @@ public sealed class SuilMigratedControlsTest : GameTest
             "viewport-container", "main-viewport", "top-left", "vote-menu", "hotbar", "top-right", "chat", "notifications", "pop-list",
             "menu-bar",
         }));
-        Assert.That(screen.ChatBox, Is.SameAs(view.SuilGetField("chat")));
+        Assert.That(screen.Chat, Is.SameAs(view.SuilGetField("chat")), "the chat of the game is the one of RimFortress");
+        Assert.That(screen.ChatBox, Is.Not.Null, "the box the original controller wants is not shown");
+        Assert.That(screen.ChatBox.Parent, Is.Null);
         Assert.That(((Content.Client.UserInterface.Systems.MenuBar.Widgets.GameTopMenuBar) view.SuilGetField("menu-bar")!).CharacterButton.Visible, Is.False, "what the code hid");
         Assert.That(screen.VoteMenu.Parent, Is.SameAs(view.SuilGetField("top-left")));
         Assert.That(screen.Children.Count(), Is.EqualTo(7));

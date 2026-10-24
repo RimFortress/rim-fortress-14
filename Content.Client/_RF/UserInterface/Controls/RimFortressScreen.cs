@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Client._RF.UserInterface.Controls.Chat;
 using Content.Client.Stylesheets;
 using Content.Client.UserInterface.Screens;
 using Content.Client.UserInterface.Systems.Chat.Widgets;
@@ -11,7 +12,10 @@ namespace Content.Client._RF.UserInterface.Controls;
 /// </summary>
 public sealed partial class RimFortressScreen : InGameScreen
 {
-    public override ChatBox ChatBox => Chat;
+    // The chat of the game is Chat (RfChatBox); the screen has to give a box of the original kind, see LegacyChatBox.
+    private readonly ChatBox _legacyChat = LegacyChatBox.Create();
+
+    public override ChatBox ChatBox => _legacyChat;
 
     public RimFortressScreen()
     {

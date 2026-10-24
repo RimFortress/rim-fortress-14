@@ -1,13 +1,12 @@
 using Content.Suil;
 using Content.Client.Resources;
 using Content.Client.UserInterface.Systems.Chat;
-using Content.Client.UserInterface.Systems.Chat.Widgets;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
 
 namespace Content.Client._RF.UserInterface.Controls.Chat;
 
-public sealed partial class FoldableChatBox : ChatBox, ISuilReloadHandler
+public sealed partial class FoldableChatBox : RfChatBox, ISuilReloadHandler
 {
     [Dependency] private IResourceCache _cache = default!;
 
@@ -35,7 +34,7 @@ public sealed partial class FoldableChatBox : ChatBox, ISuilReloadHandler
     }
 
     /// <summary>
-    /// The panel of the chat is a part of <see cref="ChatBox"/>, not of the file: it is moved under the row of the buttons.
+    /// The panel of the chat is a part of <see cref="RfChatBox"/>, not of the file: it is moved under the row of the buttons.
     /// </summary>
     private void PlaceChatPanel()
     {

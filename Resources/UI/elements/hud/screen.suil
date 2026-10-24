@@ -19,7 +19,7 @@
 
     /* Top right */
     box-container #top-right {
-        =foldable-chat-box #chat
+        +foldable-chat-box #chat
     }
 
     /* Right center */
