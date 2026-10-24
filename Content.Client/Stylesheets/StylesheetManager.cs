@@ -28,7 +28,6 @@ namespace Content.Client.Stylesheets
 
         [Obsolete("Update to use SheetSystem instead")]
         public Stylesheet SheetSpace { get; private set; } = default!;
-        public Stylesheet SheetFortress { get; private set; } = default!; // RimFortress
 
         private Dictionary<string, Stylesheet> Stylesheets { get; set; } = default!;
 
@@ -54,9 +53,8 @@ namespace Content.Client.Stylesheets
             SheetSystem = Init(new SystemStylesheet(new BaseStylesheet.NoConfig(), this));
             SheetNano = new StyleNano(_resCache).Stylesheet; // TODO: REMOVE (obsolete)
             SheetSpace = new StyleSpace(_resCache).Stylesheet; // TODO: REMOVE (obsolete)
-            SheetFortress = new StyleFortress(_resCache).Stylesheet; // RimFortress
 
-            // _userInterfaceManager.Stylesheet = SheetNanotrasen; RimFortress
+            _userInterfaceManager.Stylesheet = new StyleFortress(_resCache).Stylesheet; // RimFortress
 
             // warn about unused sheetlets
             if (UnusedSheetlets.Count > 0)

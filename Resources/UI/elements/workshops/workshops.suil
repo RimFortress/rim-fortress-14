@@ -10,7 +10,11 @@ let loc = workshop-menu;
 @WorkshopRecipeIngredient => row {
     _ #number (margin: 0 3 0 5, align-self: center)
     entity-prototype-view #proto-icon (set-size: 24 24, stretch: fill)
-    texture-rect #icon (set-size: 24 24, stretch: keep-aspect-centered, visible: false)
+    texture-rect #icon (
+        set-size: 24 24,
+        stretch: keep-aspect-centered,
+        visible: false
+    )
     _ #label (margin: 0 5 0 3, align-self: center)
     _ #quantity (align-self: center)
 }
@@ -35,9 +39,11 @@ let loc = workshop-menu;
             col #items-box {
                 _ (margin: 1 0, text: $<loc>-recipe-items)
             }
+
             col #reagents-box {
                 _ (margin: 1 0, text: $<loc>-recipe-reagents)
             }
+
             col #materials-box {
                 _ (margin: 1 0, text: $<loc>-recipe-materials)
             }
@@ -53,7 +59,11 @@ let loc = workshop-menu;
         _ #status (margin: 0 5, align-self: center)
         _ .flex-fill
         _ #remaining-time (color: <gray-silver>, align-self: center)
-        button #close-button .cross-button-red (set-size: 22 22, align-self: center, margin: 0 3)
+        button #close-button .cross-button-red (
+            set-size: 22 22,
+            align-self: center,
+            margin: 0 3
+        )
     }
 }
 
@@ -68,11 +78,7 @@ let loc = workshop-menu;
                         set-size: 36,
                         margin: 2
                     )
-                    line-edit #search (
-                        place-holder: $<loc>-search,
-                        flex-grow: 1,
-                        margin: 3 4
-                    )
+                    line-edit #search (place-holder: $<loc>-search, flex-grow: 1, margin: 3 4)
                     framed-icon-button #clear-search .square (
                         "<icons>/Style/cross.png",
                         set-size: 36,
@@ -124,6 +130,7 @@ let loc = workshop-menu;
                             _ #queue-label
                         }
                     }
+
                     box .panel-light (flex-grow: 1) {
                         scroll-container (flex-grow: 1) {
                             col #queue-box
@@ -133,7 +140,7 @@ let loc = workshop-menu;
             }
         }
 
-        fancy-back {
+        _ .fancy-back {
             row (horizontal-expand) {
                 row (flex-grow: 1.2, flex-basis: zero, margin: 0 10, align-items: center) {
                     _ #user-label .label-secondary-color

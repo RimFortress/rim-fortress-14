@@ -7,7 +7,7 @@ let marker-loc = world-marker-user-interface;
     min-size: 1210 700
 ) {
     col {
-        fancy-back #header {
+        _ .fancy-back #header {
             row (horizontal-expand, align-items: center) {
                 framed-icon-button #reset-coords-button .square (
                     "/Textures/Interface/VerbIcons/refresh.svg.192dpi.png",

@@ -72,7 +72,7 @@ let loc = npc-jobs;
     col {
         table-control #table (flex-grow: 1)
 
-        fancy-back (margin: 0 0 5 0) {
+        _ .fancy-back (margin: 0 0 5 0) {
             row {
                 button #job-settings-button (
                     text: $<loc>-priority-window-settings-button-text,

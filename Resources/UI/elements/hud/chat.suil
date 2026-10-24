@@ -24,7 +24,7 @@
             }
 
             _ .low-divider (margin: 3 5)
-            fancy-back (horizontal-expand)
+            _ .fancy-back (horizontal-expand)
 
             button #toggle-button .icon-button .square (
                 tool-tip: $foldable-chat-toggle-tooltip,

@@ -1,7 +1,5 @@
 using System.Linq;
-using Content.Client._RF.Info.Controls;
 using Content.Client._RF.UserInterface.Controls;
-using Content.Client._RF.UserInterface.Controls.Chat;
 using Content.Client.ContextMenu.UI;
 using Content.Client.Examine;
 using Content.Client.PDA;
@@ -18,11 +16,11 @@ using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.CustomControls;
-using Robust.Shared.Prototypes;
 using static Robust.Client.UserInterface.StylesheetHelpers;
 
 namespace Content.Client._RF.Stylesheets;
 
+[Obsolete("use SUIL for styling")]
 public sealed class StyleFortress : StyleBase
 {
     #region Colors
@@ -64,7 +62,6 @@ public sealed class StyleFortress : StyleBase
     public static readonly Color BlueButtonColorHovered = Color.FromHex("#4299D2");
     public static readonly Color BlueButtonColorPressed = Color.FromHex("#3896A3");
     public static readonly Color BlueButtonColorDisabled = Color.FromHex("#1E5158");
-
     //
 
     public static readonly Color ChatBackgroundColor = DarkForest.WithAlpha(0.8f);
@@ -112,13 +109,6 @@ public sealed class StyleFortress : StyleBase
 
     public const string StyleClassButtonHelp = "HelpButton";
 
-    public const string StyleClassPopupMessageSmall = "PopupMessageSmall";
-    public const string StyleClassPopupMessageSmallCaution = "PopupMessageSmallCaution";
-    public const string StyleClassPopupMessageMedium = "PopupMessageMedium";
-    public const string StyleClassPopupMessageMediumCaution = "PopupMessageMediumCaution";
-    public const string StyleClassPopupMessageLarge = "PopupMessageLarge";
-    public const string StyleClassPopupMessageLargeCaution = "PopupMessageLargeCaution";
-
     // Used by the APC and SMES menus
     public const string StyleClassPowerStateNone = "PowerStateNone";
     public const string StyleClassPowerStateLow = "PowerStateLow";
@@ -128,34 +118,13 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassItemStatusNotHeld = "ItemStatusNotHeld";
 
     // Background
-    public const string StyleClassPanelLight = "PanelLight";
-    public const string StyleClassPanelLightTransparent = "PanelLightTransparent";
-
-    public const string StyleClassPanelLightBordered = "PanelLightBordered";
-    public const string StyleClassPanelLightBorderedTransparent = "PanelLightBorderedTransparent";
-
     public const string StyleClassPanelDark = "PanelDark";
-    public const string StyleClassPanelDarkTransparent = "PanelDarkTransparent";
 
     public const string StyleClassPanelDarkBordered = "PanelDarkBordered";
-    public const string StyleClassPanelDarkBorderedTransparent = "PanelDarkBorderedTransparent";
-
-    public const string StyleClassPanelHighlighted = "PanelHighlighted";
-    public const string StyleClassPanelHighlightedTransparent = "PanelHighlightedTransparent";
 
     public const string ClassAngleRect = "AngleRect";
     public const string StyleClassPanelAngleRectGolden = "AngleRectGolden";
     public const string StyleClassPanelAngleRectTransparent = "AngleRectTransparent";
-
-
-
-    // FancyBack
-    public const string StyleClassFancyBackNone = "NoneBack";
-    public const string StyleClassFancyBackWooden = "WoodenBack";
-
-    // Dividers
-    public const string StyleClassHighDividerDark = "HighDividerDark";
-    public const string StyleClassLowDividerDark = "LowDividerDark";
 
     // Buttons
     public const string ButtonCaution = "negative";
@@ -172,13 +141,7 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassButtonBig = "ButtonBig";
     public const string StyleClassButtonEmpty = "ButtonEmpty";
 
-    // Bwoink
-    public const string StyleClassPinButtonPinned = "pinButtonPinned";
-    public const string StyleClassPinButtonUnpinned = "pinButtonUnpinned";
-
     #endregion
-
-    public static readonly ProtoId<ShaderPrototype> TileShader = "TiledTexture";
 
     public override Stylesheet Stylesheet { get; }
 
@@ -261,28 +224,28 @@ public sealed class StyleFortress : StyleBase
 
         #region Buttons
 
-        var button = StyleBoxTex("button.png");
+        var button = StyleBoxTex("/Legacy/button.png");
         button.SetPatchMargin(StyleBox.Margin.All, 5);
         button.SetPadding(StyleBox.Margin.All, 1);
         button.SetContentMarginOverride(StyleBox.Margin.Vertical, 6);
         button.SetContentMarginOverride(StyleBox.Margin.Horizontal, 8);
 
-        var buttonOpenRight = StyleBoxTex("button_open_right.png", button);
+        var buttonOpenRight = StyleBoxTex("/Legacy/button_open_right.png", button);
         buttonOpenRight.SetPatchMargin(StyleBox.Margin.All, 11);
         buttonOpenRight.SetPatchMargin(StyleBox.Margin.Right, 5);
         buttonOpenRight.SetContentMarginOverride(StyleBox.Margin.Left, 11);
         buttonOpenRight.SetPadding(StyleBox.Margin.Right, 2);
 
-        var buttonOpenLeft = StyleBoxTex("button_open_left.png", button);
+        var buttonOpenLeft = StyleBoxTex("/Legacy/button_open_left.png", button);
         buttonOpenLeft.SetPatchMargin(StyleBox.Margin.All, 11);
         buttonOpenLeft.SetPatchMargin(StyleBox.Margin.Left, 5);
         buttonOpenLeft.SetContentMarginOverride(StyleBox.Margin.Right, 11);
 
-        var buttonOpenBoth = StyleBoxTex("button_open_both.png", button);
+        var buttonOpenBoth = StyleBoxTex("/Legacy/button_open_both.png", button);
         buttonOpenBoth.SetPatchMargin(StyleBox.Margin.All, 11);
         buttonOpenBoth.SetContentMarginOverride(StyleBox.Margin.Horizontal, 8);
 
-        var buttonSquare = StyleBoxTex("button_square.png", button);
+        var buttonSquare = StyleBoxTex("/Legacy/button_square.png", button);
         buttonSquare.SetPatchMargin(StyleBox.Margin.All, 2);
         buttonSquare.SetContentMarginOverride(StyleBox.Margin.All, 5);
 
@@ -302,6 +265,8 @@ public sealed class StyleFortress : StyleBase
         chatFilterButton.SetPatchMargin(StyleBox.Margin.All, 5);
         chatFilterButton.SetPadding(StyleBox.Margin.All, 2);
 
+        var treeMenuButton = StyleBoxTex("rounded_button_bordered.png");
+        treeMenuButton.SetPatchMargin(StyleBox.Margin.All, 5);
 
         var empty = new StyleBoxEmpty();
 
@@ -489,21 +454,10 @@ public sealed class StyleFortress : StyleBase
         };
         lightBorderedPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
 
-        var lightBorderedPanelTransparent = new StyleBoxFlat(lightBorderedPanel)
-            { BackgroundColor = DarkForest.WithAlpha(0.8f) };
-
-        var darkBorderedPanel = new StyleBoxFlat(lightBorderedPanel)
-            { BackgroundColor = GraphiteBlack};
-        var darkBorderedPanelTransparent = new StyleBoxFlat(lightBorderedPanel)
-            { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
-
         var lightPanel = new StyleBoxFlat { BackgroundColor = DarkForest };
         lightPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
 
-        var lightPanelTransparent = new StyleBoxFlat(lightPanel) { BackgroundColor = DarkForest.WithAlpha(0.8f) };
-
         var darkPanel = new StyleBoxFlat(lightPanel) { BackgroundColor = GraphiteBlack };
-        var darkPanelTransparent = new StyleBoxFlat(lightPanel) { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
 
         var highlightedPanel = new StyleBoxFlat
         {
@@ -512,9 +466,6 @@ public sealed class StyleFortress : StyleBase
             BorderColor = BlackAmber,
         };
         highlightedPanel.SetContentMarginOverride(StyleBox.Margin.All, 10);
-
-        var highlightedPanelTransparent = new StyleBoxFlat(highlightedPanel)
-            { BackgroundColor = GraphiteBlack.WithAlpha(0.8f) };
 
         var angleRect = StyleBoxTex("angle_rect_panel.png");
         angleRect.SetPatchMargin(StyleBox.Margin.All, 11);
@@ -1346,23 +1297,6 @@ public sealed class StyleFortress : StyleBase
                     SelectorElement.Type(typeof(PanelContainer))),
                 new[] { new StyleProperty(PanelContainer.StylePropertyPanel, rimHeadingBox), }),
 
-            #region FancyBack
-
-            Element<FancyBack>()
-                .Prop(FancyBack.StylePropertyEdgeColor, GoldFortress)
-                .Prop(ShaderPanelContainer.StylePropertyTexture, GetTex("stripeback.png"))
-                .Prop(ShaderPanelContainer.StylePropertyShader, TileShader),
-
-            Element<FancyBack>()
-                .Class(StyleClassFancyBackNone)
-                .Prop(StripeBack.StylePropertyBackground, Texture.Transparent),
-
-            Element<FancyBack>()
-                .Class(StyleClassFancyBackWooden)
-                .Prop(ShaderPanelContainer.StylePropertyTexture, GetTex("wooden_back.png")),
-
-            #endregion
-
             // StyleClassItemStatus
             Element()
                 .Class(StyleClassItemStatus)
@@ -1504,26 +1438,6 @@ public sealed class StyleFortress : StyleBase
                         ContentMarginBottomOverride = 3,
                     }),
 
-            Element<PanelContainer>()
-                .Class(StyleClassLowDividerDark)
-                .Prop(PanelContainer.StylePropertyPanel,
-                    new StyleBoxFlat
-                    {
-                        BackgroundColor = BlackAmber,
-                        ContentMarginLeftOverride = 2,
-                        ContentMarginBottomOverride = 2,
-                    }),
-
-            Element<PanelContainer>()
-                .Class(StyleClassHighDividerDark)
-                .Prop(PanelContainer.StylePropertyPanel,
-                    new StyleBoxFlat
-                    {
-                        BackgroundColor = BlackAmber,
-                        ContentMarginLeftOverride = 3,
-                        ContentMarginBottomOverride = 3,
-                    }),
-
             #endregion
 
             #region PanelContainer
@@ -1531,37 +1445,6 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class(StyleClassPanelDark)
                 .Prop(PanelContainer.StylePropertyPanel, darkPanel),
-            Element<PanelContainer>()
-                .Class(StyleClassPanelDarkTransparent)
-                .Prop(PanelContainer.StylePropertyPanel, darkPanelTransparent),
-
-            Element<PanelContainer>()
-                .Class(StyleClassPanelLight)
-                .Prop(PanelContainer.StylePropertyPanel, lightPanel),
-            Element<PanelContainer>()
-                .Class(StyleClassPanelLightTransparent)
-                .Prop(PanelContainer.StylePropertyPanel, lightPanelTransparent),
-
-            Element<PanelContainer>()
-                .Class(StyleClassPanelDarkBordered)
-                .Prop(PanelContainer.StylePropertyPanel, darkBorderedPanel),
-            Element<PanelContainer>()
-                .Class(StyleClassPanelDarkBorderedTransparent)
-                .Prop(PanelContainer.StylePropertyPanel, darkBorderedPanelTransparent),
-
-            Element<PanelContainer>()
-                .Class(StyleClassPanelLightBordered)
-                .Prop(PanelContainer.StylePropertyPanel, lightBorderedPanel),
-            Element<PanelContainer>()
-                .Class(StyleClassPanelLightBorderedTransparent)
-                .Prop(PanelContainer.StylePropertyPanel, lightBorderedPanelTransparent),
-
-            Element<PanelContainer>()
-                .Class(StyleClassPanelHighlighted)
-                .Prop(PanelContainer.StylePropertyPanel, highlightedPanel),
-            Element<PanelContainer>()
-                .Class(StyleClassPanelHighlightedTransparent)
-                .Prop(PanelContainer.StylePropertyPanel, highlightedPanelTransparent),
 
             Element<PanelContainer>()
                 .Class(ClassAngleRect)
@@ -1765,18 +1648,6 @@ public sealed class StyleFortress : StyleBase
 
             #endregion
 
-            // Pinned button style
-            Element<TextureButton>()
-                .Class(StyleClassPinButtonPinned)
-                .Prop(TextureButton.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Bwoink/pinned.png")),
-
-            // Unpinned button style
-            Element<TextureButton>()
-                .Class(StyleClassPinButtonUnpinned)
-                .Prop(TextureButton.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Bwoink/un_pinned.png")),
-
             #region StyleNano legacy stuff
 
             Element<TextureRect>()
@@ -1926,6 +1797,7 @@ public sealed class StyleFortress : StyleBase
 
 public static class ResCacheExtension
 {
+    [Obsolete]
     public static VectorFont SourceCodeStack(
         this IResourceCache resCache,
         SourceCodeVariant variation = SourceCodeVariant.Regular,
@@ -1935,6 +1807,7 @@ public static class ResCacheExtension
     }
 }
 
+[Obsolete]
 public enum SourceCodeVariant : byte
 {
     Black,
