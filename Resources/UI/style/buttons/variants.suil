@@ -1,38 +1,3 @@
-/* ---------- Top menu ---------- */
-
-/* MenuButton.StyleClassLabelTopButton: topButtonLabel */
-.top-button-label {
-    font-weight: bold;
-    font-size: 14px;
-}
-
-/* ---------- Storage Button ---------- */
-
-/* storageButton: thin buttons (no padding nor vertical margin) */
-.storage-button {
-    background-image: texture("<icons>/Style/button.png");
-    background-repeat: stretch;
-    patch-margin: 0;
-    padding: 0 4px;
-}
-
-.storage-button {
-    background-color: <button-color-default>;
-}
-
-.storage-button:hover {
-    background-color: <button-color-hovered>;
-}
-
-.storage-button:active,
-.storage-button:checked {
-    background-color: <button-color-pressed>;
-}
-
-.storage-button:disabled {
-    background-color: <button-color-disabled>;
-}
-
 /* ---------- ListContainer ---------- */
 
 /* ListContainer.StyleClassListContainerButton: list-container-button */

@@ -268,9 +268,9 @@ public sealed partial class GraphNodeControl : DebugNodeControl
             }
         }
 
-        SubTitle.Text = $"[bold]{SubTitle.Text.Trim()}[/bold]";
+        SubTitle.Text = $"[b]{SubTitle.Text.Trim()}[/b]";
         StatusLabel.Visible = !string.IsNullOrWhiteSpace(StatusLabel.Text);
-        StatusLabel.Text = $"[bold]{StatusLabel.Text.Trim()}[/bold]";
+        StatusLabel.Text = $"[b]{StatusLabel.Text.Trim()}[/b]";
     }
 
     private void OnBreakpointHit((GoapBreakpoint Point, GoapPlanDebugInfo Plan) args)

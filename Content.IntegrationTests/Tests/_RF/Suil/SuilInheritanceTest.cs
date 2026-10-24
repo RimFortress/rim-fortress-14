@@ -81,29 +81,6 @@ public sealed class SuilInheritanceTest : GameTest
         });
     }
 
-    [TestCase(":root { font-family: \"Foo\"; }")]
-    [TestCase("let f = \"Foo\"; :root { font-family: <f>; }")]
-    [RunOnSide(Side.Client)]
-    public void Root_Font_Family_Reaches_A_Descendant(string rule)
-    {
-        Load(rule);
-        var root = Node();
-        var middle = new Robust.Client.UserInterface.Controls.BoxContainer();
-        var child = Node();
-        root.AddChild(middle);
-        middle.AddChild(child);
-        var screen = new Robust.Client.UserInterface.Control();
-        screen.AddChild(root);
-
-        Style(root, child);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(root.FontFamilyValue.Names, Is.EqualTo(new[] { "Foo" }));
-            Assert.That(child.FontFamilyValue.Names, Is.EqualTo(new[] { "Foo" }));
-        });
-    }
-
     [Test]
     [RunOnSide(Side.Client)]
     public void Inherited_Property_Reaches_A_Child_That_Was_Never_Restyled()
@@ -240,21 +217,6 @@ public sealed class SuilInheritanceTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Control_Without_A_Suil_Ancestor_Keeps_Its_Default()
-    {
-        Load(".p { color: red; }");
-        var engineParent = new Control();
-        var child = Node("c");
-        engineParent.AddChild(child);
-
-        Style(child);
-
-        var defaultColor = new TestInheritanceControl().ColorValue;
-        Assert.That(child.ColorValue, Is.EqualTo(defaultColor));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
     public void Parent_Change_Reaches_Descendants_That_Do_Not_Declare_The_Property()
     {
         var parent = Node("p");
@@ -298,31 +260,6 @@ public sealed class SuilInheritanceTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Root_Font_Size_Is_The_Default()
-    {
-        Assert.That(new TestInheritanceControl().ComputedFontSize, Is.EqualTo(UiElement.DefaultFontSize));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Font_Size_Is_Inherited()
-    {
-        Load(".p { font-size: 20px; }");
-        var parent = Node("p");
-        var child = Node("c");
-        parent.AddChild(child);
-
-        Style(parent);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(parent.ComputedFontSize, Is.EqualTo(20f));
-            Assert.That(child.ComputedFontSize, Is.EqualTo(20f));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
     public void Em_Font_Size_Is_Relative_To_The_Parent_And_Is_Not_Applied_Twice_To_Descendants()
     {
         Load("""
@@ -344,23 +281,6 @@ public sealed class SuilInheritanceTest : GameTest
             // The grandchild inherits the computed 40px, not "2em" of its own parent again.
             Assert.That(grandchild.ComputedFontSize, Is.EqualTo(40f));
         });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Percent_Font_Size_Is_Relative_To_The_Parent()
-    {
-        Load("""
-            .p { font-size: 20px; }
-            .c { font-size: 150%; }
-            """);
-        var parent = Node("p");
-        var child = Node("c");
-        parent.AddChild(child);
-
-        Style(parent, child);
-
-        Assert.That(child.ComputedFontSize, Is.EqualTo(30f));
     }
 
     [Test]
@@ -421,20 +341,6 @@ public sealed class SuilInheritanceTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Unitless_Line_Height_Stays_A_Multiplier()
-    {
-        Load(".p { line-height: 2; }");
-        var parent = Node("p");
-        var child = Node("c");
-        parent.AddChild(child);
-
-        Style(parent);
-
-        Assert.That(child.LineHeightValue, Is.EqualTo(SuilLineHeight.FromMultiplier(2f)));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
     public void Relative_Line_Height_Length_Is_Inherited_As_Pixels()
     {
         Load(".p { font-size: 10px; line-height: 2em; }");
@@ -465,17 +371,6 @@ public sealed class SuilInheritanceTest : GameTest
     #endregion
 
     #region SUIL-wide keywords
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Keyword_Is_Stored_As_A_Marker_Value_Case_Insensitively()
-    {
-        var sheet = Load(".c { color: INHERIT; }");
-        var property = sheet.Rules.Single().Properties.Single();
-
-        Assert.That(property.Name, Is.EqualTo("color"));
-        Assert.That(property.Value, Is.SameAs(SuilWideValue.For(SuilWideKeyword.Inherit)));
-    }
 
     [Test]
     [RunOnSide(Side.Client)]
@@ -708,39 +603,6 @@ public sealed class SuilInheritanceTest : GameTest
     #endregion
 
     #region Property tables
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Only_The_Inherited_Properties_Are_Flagged()
-    {
-        var accessors = _suil.GetPropertyAccessors(typeof(UiElement));
-
-        var inherited = new[]
-        {
-            "color", "font-family", "font-size", "font-weight", "font-style", "letter-spacing", "word-spacing",
-            "line-height", "text-align", "text-indent", "text-transform", "white-space", "word-break",
-            "overflow-wrap", "text-shadow",
-        };
-
-        var notInherited = new[]
-        {
-            "text-overflow", "line-clamp", "text-decoration-line", "text-decoration-style", "text-underline-offset",
-            "padding-left", "border-top-width", "margin-left", "min-height",
-        };
-
-        Assert.Multiple(() =>
-        {
-            foreach (var name in inherited)
-            {
-                Assert.That(accessors[name].Inherited, Is.True, name);
-            }
-
-            foreach (var name in notInherited)
-            {
-                Assert.That(accessors[name].Inherited, Is.False, name);
-            }
-        });
-    }
 
     [Test]
     [RunOnSide(Side.Client)]

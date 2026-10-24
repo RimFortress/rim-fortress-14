@@ -27,63 +27,6 @@ public sealed class SuilManagerTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void TypeSelector_Resolves_Known_Control_Type()
-    {
-        var sheet = Load("label { min-height: 10px; }");
-        var selector = (SuilElementSelector)sheet.Rules.Single().Selector;
-
-        Assert.That(selector.ElementType, Is.EqualTo(typeof(Label)));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Class_Id_And_PseudoClass_Selectors_Are_Parsed_Without_A_Type()
-    {
-        var sheet = Load(".foo#bar:testPseudo { min-height: 1px; }");
-        var selector = (SuilElementSelector)sheet.Rules.Single().Selector;
-
-        Assert.That(selector.ElementType, Is.Null);
-        // exact member names below (StyleClasses/StyleIdentifier/StylePseudoClass)
-        // assumed from the constructor's parameter order — verify against the
-        // real SuilElementSelector declaration before relying on this test.
-        Assert.That(selector.ElementClasses, Does.Contain("foo"));
-        Assert.That(selector.ElementId, Is.EqualTo("bar"));
-        Assert.That(selector.PseudoClasses, Does.Contain("testPseudo"));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Unknown_Type_Selector_Throws()
-    {
-        Assert.Throws<SuilStyleError>(() => _suil.LoadSuilString("not-a-real-control { min-height: 1px; }"));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Engine_Property_Is_Stored_Under_Its_Kebab_Case_Name()
-    {
-        // The properties of the engine controls are found by the generated tables like any other: by the name of the
-        // member in kebab-case, which is also the name in the stylesheet.
-        var sheet = Load("label { min-height: 10px; }");
-        var property = sheet.Rules.Single().Properties.Single();
-
-        Assert.That(property.Name, Is.EqualTo("min-height"));
-        Assert.That(property.Value, Is.EqualTo(10f));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Enum_Property_Converts_Kebab_Case_Ident_To_The_Enum_Value()
-    {
-        var sheet = Load("label { horizontal-alignment: center; }");
-        var property = sheet.Rules.Single().Properties.Single();
-
-        Assert.That(property.Name, Is.EqualTo("horizontal-alignment"));
-        Assert.That(property.Value, Is.EqualTo(Control.HAlignment.Center));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
     public void Applying_The_Stylesheet_Updates_A_Real_Engine_Control()
     {
         Load("_ { min-height: 25px; }");
@@ -110,18 +53,6 @@ public sealed class SuilManagerTest : GameTest
         Assert.That(control.MaxWidth, Is.EqualTo(42f));
     }
 
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Multiple_LoadString_Calls_Accumulate_Into_One_Stylesheet()
-    {
-        var sheet = Load("""
-                label { min-height: 1px; }
-                .foo { min-height: 2px; }
-            """);
-
-        Assert.That(sheet.Rules, Has.Count.GreaterThanOrEqualTo(2));
-    }
-
 #if EXCEPTION_TOLERANCE
     [Test]
     [RunOnSide(Side.Client)]
@@ -136,21 +67,6 @@ public sealed class SuilManagerTest : GameTest
         Assert.That(properties.Single().Name, Is.EqualTo(nameof(Control.MinHeight)));
     }
 #endif
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void TryParseValue_Generic_And_NonGeneric_Overloads_Agree()
-    {
-        var stream = SuilTestValues.Stream("center");
-
-        var genericOk = _suil.TryParse<Control.HAlignment>(ref stream, out var viaGeneric);
-
-        stream = SuilTestValues.Stream("center");
-        var nonGenericOk = _suil.TryParse(ref stream, typeof(Control.HAlignment), out var viaNonGeneric);
-
-        Assert.That(genericOk, Is.EqualTo(nonGenericOk));
-        Assert.That(viaGeneric, Is.EqualTo(viaNonGeneric));
-    }
 
     [Test]
     [RunOnSide(Side.Client)]

@@ -1,6 +1,5 @@
 #nullable enable
 using System.Collections.Generic;
-using Content.Client._RF.Stylesheets;
 using Content.Client._RF.Suil;
 using Content.Suil;
 using Robust.Shared.Maths;
@@ -20,15 +19,6 @@ public sealed class SuilPaletteTest
         Assert.That(SuilPalette.LightBad, Is.EqualTo(Color.FromHex("#BF2233")));
         Assert.That(SuilPalette.ScrollbarGrabberDefault, Is.EqualTo(Color.FromHex("#5E4B3A59")), "with alpha");
         Assert.That(SuilPalette.TreeMenuButtonColorDefault, Is.EqualTo(Color.Transparent), "transparent");
-    }
-
-    [Test]
-    public void Palette_Matches_The_Legacy_Style()
-    {
-        Assert.That(SuilPalette.GoldFortress, Is.EqualTo(StyleFortress.GoldFortress));
-        Assert.That(SuilPalette.GraySilver, Is.EqualTo(StyleFortress.GraySilver));
-        Assert.That(SuilPalette.LightGood, Is.EqualTo(StyleFortress.LightGood));
-        Assert.That(SuilPalette.GoldButtonColorHovered, Is.EqualTo(StyleFortress.GoldButtonColorHovered));
     }
 
     // What the generator writes for the colors that are not a hex number: the parser of the stylesheets reads them.

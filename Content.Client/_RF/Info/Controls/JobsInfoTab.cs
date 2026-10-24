@@ -6,6 +6,7 @@ using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
 using Robust.Client.Player;
 using Robust.Shared.Prototypes;
+using Content.Client._RF.NpcJobs.UI;
 
 namespace Content.Client._RF.Info.Controls;
 
@@ -62,7 +63,7 @@ public sealed partial class JobsInfoTab : InfoTab
             return;
 
         var taskName = System<UtilityAiSystem>().TryGetCurrentGoal(uid, out var id) && _proto.TryIndex(id, out var task)
-            ? $"[color={task.Color.ToHex()}][bold]{Loc.GetString(task.Name)}[/bold][/color]"
+            ? $"[color={task.Color.ToHex()}][b]{Loc.GetString(task.Name)}[/b][/color]"
             : Loc.GetString("job-info-tab-task-none");
 
         CurrentTask.Text = $"{Loc.GetString("job-info-tab-current-task")}: {taskName}";

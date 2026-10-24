@@ -1,3 +1,4 @@
+using Robust.Client.Input;
 using Content.Client._RF.Suil.Text;
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
@@ -177,4 +178,28 @@ public sealed class RfBulletTag : IRfMarkupTagHandler
 
     /// <inheritdoc/>
     public string TextBefore(MarkupNode node) => "  \u2022 ";
+}
+
+/// <summary>
+/// <c>[keybind="UseSecondary"]</c>: the key that is bound to the function, or the name of the function if there is no
+/// key.
+/// </summary>
+[UsedImplicitly]
+public sealed partial class RfKeybindTag : IRfMarkupTagHandler
+{
+    [Dependency] private IInputManager _inputManager = default!;
+
+    /// <inheritdoc/>
+    public string Name => "keybind";
+
+    /// <inheritdoc/>
+    public string TextBefore(MarkupNode node)
+    {
+        if (!node.Value.TryGetString(out var keyBindName))
+            return "";
+
+        return _inputManager.TryGetKeyBinding(keyBindName, out var binding)
+            ? binding.GetKeyString()
+            : keyBindName;
+    }
 }

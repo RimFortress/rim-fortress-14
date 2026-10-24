@@ -11,14 +11,7 @@
     border-top: 2px solid <gold-fortress>;
     border-bottom: 2px solid <gold-fortress>;
     margin: 4px 0;
-}
-
-/* FancyBack with the StyleClassFancyBackWooden */
-.fancy-back.wooden-back {
-    background-image: texture("<icons>/Style/wooden_back.png");
-}
-
-/*
+}/*
  * NanoHeading: the panel with the heading under it. NanoHeading is the Label with this class and `label-heading`.
  * The old control was aligned to the left.
  */

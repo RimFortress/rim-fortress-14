@@ -20,10 +20,3 @@
     min-width: 2px;
     min-height: 2px;
 }
-
-/* HighDividerDark */
-.high-divider-dark {
-    background-color: <black-amber>;
-    min-width: 3px;
-    min-height: 3px;
-}

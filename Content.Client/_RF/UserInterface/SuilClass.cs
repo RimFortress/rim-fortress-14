@@ -1,3 +1,5 @@
+using Content.Client._RF.ActionsHotbar.UI;
+
 namespace Content.Client._RF.UserInterface;
 
 /// <summary>

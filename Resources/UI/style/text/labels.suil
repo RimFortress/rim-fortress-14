@@ -39,14 +39,7 @@
 .label-secondary-color {
     font-size: 12px;
     color: <gray-silver>;
-}
-
-/* StatusFieldTitle */
-.status-field-title {
-    color: <gold-fortress>;
-}
-
-/* Good */
+}/* Good */
 .good {
     color: <good-green-fore>;
 }
@@ -70,15 +63,4 @@
 .placeholder-text {
     font-size: 16px;
     color: <placeholder-font-color>;
-}
-
-/* SiliconLawContainer.StyleClassSiliconLawPositionLabel: SiliconLawPositionLabel */
-.silicon-law-position-label {
-    color: <gold-fortress>;
-}
-
-/* hotbarSlotNumber */
-.hotbar-slot-number {
-    font-weight: bold;
-    font-size: 16px;
 }

@@ -1,8 +1,9 @@
 using System.Numerics;
-using Content.Client._RF.UserInterface.Controls.Chat;
 using Content.Client.Stylesheets;
 using Content.Client.UserInterface.Screens;
 using Content.Client.UserInterface.Systems.Chat.Widgets;
+using Content.Client._RF.Info.Controls;
+using Content.Client._RF.Chat.UI;
 
 namespace Content.Client._RF.UserInterface.Controls;
 

@@ -175,9 +175,9 @@ let debug-node = {
                 ai-separator
                 _ #elapsed-time (margin: 0 5)
                 ai-separator
-                expandable-box #start-state (title: "[bold]Start State[/bold]")
+                expandable-box #start-state (title: "[b]Start State[/b]")
                 ai-separator
-                expandable-box #goal-state (title: "[bold]Goal State[/bold]")
+                expandable-box #goal-state (title: "[b]Goal State[/b]")
                 ai-separator
             }
         }

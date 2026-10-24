@@ -9,14 +9,7 @@
 :root {
     font-family: <main-font>;
     font-size: 12px;
-}
-
-/* StyleClass.Italic */
-.italic {
-    font-style: italic;
-}
-
-/* BoxContainer (box): the default gap */
+}/* BoxContainer (box): the default gap */
 box {
     gap: 3px;
 }

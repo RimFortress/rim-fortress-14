@@ -73,12 +73,12 @@ public sealed partial class UtilityAiGoalControl : DebugNodeControl
             SearchText.Add("Bonus");
         }
 
-        StatusLabel.Text = $"[bold]{StatusLabel.Text}[/bold]";
+        StatusLabel.Text = $"[b]{StatusLabel.Text}[/b]";
 
         if (!_proto.Resolve(info.ProtoId, out var proto))
             return;
 
-        Title.Text = $"[bold][color={proto.Color.ToHex()}]{info.ProtoId}[/color] ({info.Result:F2})[/bold]";
+        Title.Text = $"[b][color={proto.Color.ToHex()}]{info.ProtoId}[/color] ({info.Result:F2})[/b]";
         SearchText.Add(info.ProtoId);
 
         // Common

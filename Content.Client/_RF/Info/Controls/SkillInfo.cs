@@ -49,7 +49,7 @@ public sealed partial class SkillInfo : RfBoxContainer
         _uid = uid;
         _skill = skill;
 
-        Label.Text = $"[bold][color={proto.Color.ToHex()}]{Loc.GetString(proto.Name)}[/color][/bold]";
+        Label.Text = $"[b][color={proto.Color.ToHex()}]{Loc.GetString(proto.Name)}[/color][/b]";
 
         if (_entity.TryGetComponent(uid, out SkillExpModificatorComponent? comp)
             && comp.Multipliers.TryGetValue(proto, out var multiplier))
@@ -67,7 +67,7 @@ public sealed partial class SkillInfo : RfBoxContainer
             : null;
         Icon.ModulateSelfOverride = proto.Color;
 
-        CurrentLevel.Text = $"[bold]{data.CurrentLevel}[/bold]";
+        CurrentLevel.Text = $"[b]{data.CurrentLevel}[/b]";
 
         var modifiedLevel = skillSys.GetModifiedLevel(uid, skill);
         var delta = modifiedLevel - data.CurrentLevel;

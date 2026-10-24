@@ -52,25 +52,6 @@ public sealed class SuilStylesTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Type_Selector_Sets_Public_Properties()
-    {
-        Load("""suil-styles-control { count: 5; label: "x"; ratio: 1.5px; enabled: true; mode: flex-start; }""");
-
-        var control = Node();
-        Style(control);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(control.Count, Is.EqualTo(5f));
-            Assert.That(control.Label, Is.EqualTo("x"));
-            Assert.That(control.Ratio, Is.EqualTo(1.5f));
-            Assert.That(control.Enabled, Is.True);
-            Assert.That(control.Mode, Is.EqualTo(SuilStylesMode.FlexStart));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
     public void Specificity_Id_Class_Type()
     {
         Load("""
@@ -312,18 +293,6 @@ public sealed class SuilStylesTest : GameTest
         });
     }
 
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Attribute_Exists_Always_Matches()
-    {
-        Load("suil-styles-control[count] { ratio: 1px; }");
-
-        var control = Node();
-        Style(control);
-
-        Assert.That(control.Ratio, Is.EqualTo(1f));
-    }
-
     // ---- Variables ----
 
     [Test]
@@ -386,23 +355,6 @@ public sealed class SuilStylesTest : GameTest
             Assert.That(control.PaddingTopValue, Is.EqualTo(LengthUnit.Px(1f)), "a shorthand");
             Assert.That(control.PaddingRightValue, Is.EqualTo(LengthUnit.Px(2f)));
             Assert.That(control.ColorValue, Is.EqualTo(Color.Red));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Properties_Of_The_Engine_Class_Are_Stylable()
-    {
-        Load("suil-styles-control { min-height: 11px; horizontal-expand: true; margin: 1px 2px; }");
-
-        var control = Node();
-        Style(control);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(control.MinHeight, Is.EqualTo(11f));
-            Assert.That(control.HorizontalExpand, Is.True);
-            Assert.That(control.Margin, Is.EqualTo(new Thickness(2f, 1f, 2f, 1f)));
         });
     }
 

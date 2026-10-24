@@ -66,14 +66,7 @@ public sealed partial class RecipeQueueButton : RfBoxContainer
             MarginLeft = LengthUnit.Px(BaseMargin + SubRecipeIndent);
         else
         {
-            TooltipSupplier = _ =>
-            {
-                var msg = FormattedMessage.FromMarkupOrThrow(
-                    ToolTip = Loc.GetString("workshop-menu-recipe-queue-tooltip"));
-                var tooltip = new Robust.Client.UserInterface.CustomControls.Tooltip();
-                tooltip.SetMessage(msg);
-                return tooltip;
-            };
+            ToolTip = Loc.GetString("workshop-menu-recipe-queue-tooltip");
             CloseButton.OnPressed += _ => OnRemoved?.Invoke();
         }
 

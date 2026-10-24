@@ -20,8 +20,8 @@ public sealed partial class SearchQueryControl : DebugNodeControl
         RfTabContainer.SetTabVisible(FiltersTab, info.Filters.Count > 0);
         RfTabContainer.SetTabVisible(ConsiderationsTab, info.Considerations.Count > 0);
 
-        Title.Text = $"[bold]{info.ProtoId}[/bold]";
-        SubTitle.Text = $"[bold]{info.Results.Count}[/bold]";
+        Title.Text = $"[b]{info.ProtoId}[/b]";
+        SubTitle.Text = $"[b]{info.Results.Count}[/b]";
         StatusLabel.Visible = false;
 
         SearchText = new() { info.ProtoId.Id, info.Results.Count.ToString() };

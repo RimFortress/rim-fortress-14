@@ -12,7 +12,7 @@ public static class AiUiHelper
             return;
 
         AddSeparator(parent);
-        var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
+        var expandBox = new ExpandableBox { Title = $"[b]{title}[/b]" };
         parent.AddChild(expandBox);
 
         foreach (var (key, (type, value)) in data)
@@ -25,10 +25,10 @@ public static class AiUiHelper
     public static void AddTypes(Control parent, string? title, ObjectDebugReflection node)
     {
         var header = title != null
-            ? $"[bold]{title}[/bold]"
+            ? $"[b]{title}[/b]"
             : (string.IsNullOrEmpty(node.Name)
-                ? $"[bold]{node.TypeName}[/bold]"
-                : $"[bold]{node.Name}[/bold] ({node.TypeName})");
+                ? $"[b]{node.TypeName}[/b]"
+                : $"[b]{node.Name}[/b] ({node.TypeName})");
 
         AddSeparator(parent);
         var expandBox = new ExpandableBox { Title = header };
@@ -61,7 +61,7 @@ public static class AiUiHelper
     public static void AddExpandLabel(Control parent, string title, string text)
     {
         AddSeparator(parent);
-        var expandBox = new ExpandableBox { Title = $"[bold]{title}[/bold]" };
+        var expandBox = new ExpandableBox { Title = $"[b]{title}[/b]" };
         parent.AddChild(expandBox);
         expandBox.Content.AddChild(new UiElement { Text = text });
     }
@@ -77,7 +77,7 @@ public static class AiUiHelper
             return;
 
         AddSeparator(parent);
-        var box = new ExpandableBox { Title = "[bold]Logs[/bold]" };
+        var box = new ExpandableBox { Title = "[b]Logs[/b]" };
         parent.AddChild(box);
         var dumps = logs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
@@ -92,8 +92,8 @@ public static class AiUiHelper
         AddSeparator(parent);
         var box = new ExpandableBox
         {
-            Title = $"[bold]{title}[/bold]",
-            SecondaryText = second != null ? $"[bold]{second}[/bold]" : null,
+            Title = $"[b]{title}[/b]",
+            SecondaryText = second != null ? $"[b]{second}[/b]" : null,
         };
         parent.AddChild(box);
         return box;

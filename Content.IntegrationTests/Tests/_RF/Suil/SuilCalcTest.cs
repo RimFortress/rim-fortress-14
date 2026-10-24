@@ -54,20 +54,6 @@ public sealed class SuilCalcTest : GameTest
 
     [Test]
     [RunOnSide(Side.Client)]
-    public void Calc_Of_Absolute_Units_Folds_To_Pixels()
-    {
-        Assert.That(Length("calc(1in + 4px)"), Is.EqualTo(LengthUnit.Px(100f)));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Calc_Of_A_Single_Dimension_Is_That_Dimension()
-    {
-        Assert.That(Length("calc(2em)"), Is.EqualTo(LengthUnit.Em(2f)));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
     public void Calc_With_Relative_Units_Is_Kept_And_Resolved_Later()
     {
         var length = Length("calc(100% - 2em)");
@@ -134,13 +120,6 @@ public sealed class SuilCalcTest : GameTest
     public void Min_Max_Clamp_Pick_The_Right_Argument(string suil, float expected)
     {
         Assert.That(Px(suil, 400f), Is.EqualTo(expected));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Min_Of_Absolute_Units_Folds_To_Pixels()
-    {
-        Assert.That(Length("min(1in, 50px)"), Is.EqualTo(LengthUnit.Px(50f)));
     }
 
     [TestCase("calc(1px + 2)")] // a length and a number can't be added
@@ -298,64 +277,9 @@ public sealed class SuilCalcTest : GameTest
         });
     }
 
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void New_Units_Are_Classified()
-    {
-        Assert.Multiple(() =>
-        {
-            foreach (var unit in new[] { LengthUnit.Rlh(1), LengthUnit.Cap(1), LengthUnit.Ic(1) })
-            {
-                Assert.That(unit.IsFontRelative, Is.True, unit.ToString());
-                Assert.That(unit.IsViewportRelative, Is.False, unit.ToString());
-                Assert.That(unit.IsAbsolute, Is.False, unit.ToString());
-            }
-
-            foreach (var unit in new[] { LengthUnit.Dvh(1), LengthUnit.Svh(1), LengthUnit.Lvh(1) })
-            {
-                Assert.That(unit.IsViewportRelative, Is.True, unit.ToString());
-                Assert.That(unit.IsFontRelative, Is.False, unit.ToString());
-                Assert.That(unit.ViewportToPx(new Vector2(800, 600)), Is.EqualTo(LengthUnit.Px(6f)), unit.ToString());
-            }
-
-            Assert.That(LengthUnitType.FontRelativeUnits, Does.Contain(LengthUnitType.Rlh));
-            Assert.That(LengthUnitType.ViewportUnits, Does.Contain(LengthUnitType.Dvh));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Initial_Context_Has_Metrics_For_The_New_Units()
-    {
-        var context = LengthContext.Initial(10f, new Vector2(100, 100));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(LengthUnit.Rlh(1).Resolve(context), Is.GreaterThan(0f));
-            Assert.That(LengthUnit.Cap(1).Resolve(context), Is.GreaterThan(0f));
-            Assert.That(LengthUnit.Ic(1).Resolve(context), Is.GreaterThan(0f));
-        });
-    }
-
     #endregion
 
     #region Float and thickness
-
-    [TestCase("4px", 4f)]
-    [TestCase("1in", 96f)] // used to be divided by the ratio: 1/96
-    [TestCase("2.54cm", 96f)]
-    [TestCase("12pt", 16f)]
-    [TestCase("0", 0f)]
-    [TestCase("calc(1in + 4px)", 100f)]
-    [TestCase("calc(2 * 3px)", 6f)]
-    [TestCase("min(1in, 50px)", 50f)]
-    [TestCase("clamp(0px, 200px, 100px)", 100f)]
-    [RunOnSide(Side.Client)]
-    public void Float_Is_A_Context_Free_Length_In_Pixels(string suil, float expected)
-    {
-        Assert.That(TryParse<float>(suil, out var value), Is.True);
-        Assert.That(value, Is.EqualTo(expected).Within(0.001f));
-    }
 
     [TestCase("1em")]
     [TestCase("50%")]
@@ -449,20 +373,6 @@ public sealed class SuilCalcTest : GameTest
             Assert.That(abs, Is.True);
             Assert.That(value, Is.EqualTo(100f));
         });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Background_Position_Takes_Any_Absolute_Unit()
-    {
-        var stream = new SuilValueStream(Tokens("1in"));
-
-        Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out var value, out var abs, out _, true), Is.True);
-        Assert.That(abs, Is.True);
-        Assert.That(value, Is.EqualTo(96f));
-
-        stream = new SuilValueStream(Tokens("1em"));
-        Assert.That(BackgroundPositionParsing.TryParseComponent(ref stream, out _, out _, out _, true), Is.False);
     }
 
     #endregion

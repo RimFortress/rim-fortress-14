@@ -10,6 +10,7 @@ using Robust.Client.UserInterface;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Content.Client._RF.Stockpile.UI;
 
 namespace Content.Client._RF.Stockpile;
 

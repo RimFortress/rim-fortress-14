@@ -179,19 +179,19 @@ public sealed partial class GoapDebugTab : UiElement
         if (plan == null)
             return;
 
-        TotalCost.Text = $"[bold]Total Cost: {plan.Value.TotalCost}[/bold]";
-        ConditionsChecked.Text = $"[bold]Conditions Checked: {plan.Value.ConditionsChecked}[/bold]";
-        PlanningNodes.Text = $"[bold]Available Nodes: {graphDebug.Nodes.Count}[/bold]";
-        NodesInPlan.Text = "[bold]Nodes in Plan: "
+        TotalCost.Text = $"[b]Total Cost: {plan.Value.TotalCost}[/b]";
+        ConditionsChecked.Text = $"[b]Conditions Checked: {plan.Value.ConditionsChecked}[/b]";
+        PlanningNodes.Text = $"[b]Available Nodes: {graphDebug.Nodes.Count}[/b]";
+        NodesInPlan.Text = "[b]Nodes in Plan: "
                            + graphDebug.Nodes.Count(x
                                => plan.Value.Actions.Any(y
                                    => y.NodeIndex == x.Id))
-                           + "[/bold]";
-        NodesExpanded.Text = $"[bold]Nodes Expanded: {plan.Value.NodesExpanded}[/bold]";
+                           + "[/b]";
+        NodesExpanded.Text = $"[b]Nodes Expanded: {plan.Value.NodesExpanded}[/b]";
         Planning.Text = plan.Value.Success
-            ? $"[bold]Planning: [color={SuilPalette.LightGood.ToHex()}]Success[/color][/bold]"
-            : $"[bold]Planning: [color={SuilPalette.LightBad.ToHex()}]Failed[/color][/bold]";
-        ElapsedTime.Text = $"[bold]Elapsed Time: {plan.Value.ElapsedTime.TotalMilliseconds}ms[/bold]";
+            ? $"[b]Planning: [color={SuilPalette.LightGood.ToHex()}]Success[/color][/b]"
+            : $"[b]Planning: [color={SuilPalette.LightBad.ToHex()}]Failed[/color][/b]";
+        ElapsedTime.Text = $"[b]Elapsed Time: {plan.Value.ElapsedTime.TotalMilliseconds}ms[/b]";
         AddTypes(StartState, plan.Value.StartState);
         AddTypes(GoalState, plan.Value.GoalState);
 

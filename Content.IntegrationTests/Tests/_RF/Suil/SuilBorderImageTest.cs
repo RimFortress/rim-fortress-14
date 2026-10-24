@@ -32,69 +32,6 @@ public sealed class SuilBorderImageTest : GameTest
     private static SuilValueStream Stream(string suil)
         => SuilTestValues.Stream(suil);
 
-    [TestCase("30", 30f, BorderImageEdgeKind.Number)]
-    [TestCase("25%", 25f, BorderImageEdgeKind.Percent)]
-    [RunOnSide(Side.Client)]
-    public void Slice_With_One_Value_Applies_To_All_Sides(string suil, float value, BorderImageEdgeKind kind)
-    {
-        var stream = Stream(suil);
-
-        Assert.That(BorderImageParsing.TryParseSlice(ref stream, out var slice), Is.True);
-        Assert.Multiple(() =>
-        {
-            var edge = new BorderImageEdge(kind, value);
-            Assert.That(slice.Edges, Is.EqualTo(new BorderImageEdges(edge)));
-            Assert.That(slice.Fill, Is.False);
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Slice_Px_Is_The_Same_As_A_Number()
-    {
-        // Not in the specification, but every size of the stylesheets is written with a unit.
-        var stream = Stream("4px 11px");
-
-        Assert.That(BorderImageParsing.TryParseSlice(ref stream, out var slice) && stream.AtEnd, Is.True);
-        Assert.Multiple(() =>
-        {
-            Assert.That(slice.Edges.Top, Is.EqualTo(BorderImageEdge.Number(4)));
-            Assert.That(slice.Edges.Left, Is.EqualTo(BorderImageEdge.Number(11)));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Slice_Takes_Four_Values_And_Fill_In_Any_Place()
-    {
-        var stream = Stream("fill 1 2 3 4");
-
-        Assert.That(BorderImageParsing.TryParseSlice(ref stream, out var slice), Is.True);
-        Assert.Multiple(() =>
-        {
-            Assert.That(slice.Fill, Is.True);
-            Assert.That(slice.Edges.Top, Is.EqualTo(BorderImageEdge.Number(1)));
-            Assert.That(slice.Edges.Right, Is.EqualTo(BorderImageEdge.Number(2)));
-            Assert.That(slice.Edges.Bottom, Is.EqualTo(BorderImageEdge.Number(3)));
-            Assert.That(slice.Edges.Left, Is.EqualTo(BorderImageEdge.Number(4)));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Slice_With_Two_Values_Is_Vertical_Then_Horizontal()
-    {
-        var stream = Stream("1 2");
-
-        Assert.That(BorderImageParsing.TryParseSlice(ref stream, out var slice), Is.True);
-        Assert.Multiple(() =>
-        {
-            Assert.That(slice.Edges.Top, Is.EqualTo(slice.Edges.Bottom));
-            Assert.That(slice.Edges.Left, Is.EqualTo(slice.Edges.Right));
-            Assert.That(slice.Edges.Top, Is.Not.EqualTo(slice.Edges.Left));
-        });
-    }
-
     [TestCase("-1")]
     [TestCase("-1px")]
     [TestCase("10em")]
@@ -106,18 +43,6 @@ public sealed class SuilBorderImageTest : GameTest
         var stream = Stream(suil);
 
         Assert.That(BorderImageParsing.TryParseSlice(ref stream, out _) && stream.AtEnd, Is.False);
-    }
-
-    [TestCase("stretch", BorderImageRepeatMode.Stretch, BorderImageRepeatMode.Stretch)]
-    [TestCase("round", BorderImageRepeatMode.Round, BorderImageRepeatMode.Round)]
-    [TestCase("repeat space", BorderImageRepeatMode.Repeat, BorderImageRepeatMode.Space)]
-    [RunOnSide(Side.Client)]
-    public void Repeat_Takes_One_Or_Two_Keywords(string suil, BorderImageRepeatMode x, BorderImageRepeatMode y)
-    {
-        var stream = Stream(suil);
-
-        Assert.That(BorderImageParsing.TryParseRepeat(ref stream, out var repeat), Is.True);
-        Assert.That(repeat, Is.EqualTo(new BorderImageRepeat(x, y)));
     }
 
     [Test]

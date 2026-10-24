@@ -1,6 +1,7 @@
 using Content.Suil;
 using Content.Client.Changelog;
 using JetBrains.Annotations;
+using Content.Client._RF.UserInterface.Controls;
 
 namespace Content.Client._RF.UserInterface.Controls;
 

@@ -16,8 +16,8 @@ public sealed partial class ZoneConditionControl : RfBoxContainer
         IsMetOutline.AddSuilStyleClass(state);
         IsMet.AddSuilStyleClass(state);
 
-        TextLabel.Text = $"[bold]{desc.Text}[/bold]";
-        Progress.Text = $"[bold]{desc.Progress}[/bold]";
+        TextLabel.Text = $"[b]{desc.Text}[/b]";
+        Progress.Text = $"[b]{desc.Progress}[/b]";
 
         if (desc.SubDescriptions == null)
             return;

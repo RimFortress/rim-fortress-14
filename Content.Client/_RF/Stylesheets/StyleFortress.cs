@@ -70,28 +70,12 @@ public sealed class StyleFortress : StyleBase
     public static readonly Color DisabledButtonFontColor = RimSilver.WithAlpha(0.51f);
     public static readonly Color PlaceholderFontColor = Color.FromHex("#7C7763");
 
-    public static readonly Color GoodGreenFore = Color.FromHex("#31843E");
-
     #endregion
 
     #region StyleClasses
 
     public const string StyleClassBorderedWindowPanel = "BorderedWindowPanel";
-    public const string StyleClassInventorySlotBackground = "InventorySlotBackground";
-    public const string StyleClassHandSlotHighlight = "HandSlotHighlight";
     public const string StyleClassChatPanel = "ChatPanel";
-    public const string StyleClassTransparentBorderedWindowPanel = "TransparentBorderedWindowPanel";
-    public const string StyleClassHotbarPanel = "HotbarPanel";
-    public const string StyleClassTooltipPanel = "tooltipBox";
-    public const string StyleClassTooltipAlertTitle = "tooltipAlertTitle";
-    public const string StyleClassTooltipAlertDescription = "tooltipAlertDesc";
-    public const string StyleClassTooltipAlertCooldown = "tooltipAlertCooldown";
-    public const string StyleClassTooltipActionTitle = "tooltipActionTitle";
-    public const string StyleClassTooltipActionDescription = "tooltipActionDesc";
-    public const string StyleClassTooltipActionCooldown = "tooltipActionCooldown";
-    public const string StyleClassTooltipActionRequirements = "tooltipActionCooldown";
-    public const string StyleClassTooltipActionCharges = "tooltipActionCharges";
-    public const string StyleClassHotbarSlotNumber = "hotbarSlotNumber";
     public const string StyleClassActionSearchBox = "actionSearchBox";
     public const string StyleClassChatLineEdit = "chatLineEdit";
 
@@ -105,14 +89,10 @@ public sealed class StyleFortress : StyleBase
     public const string StyleClassLabelSecondaryColor = "LabelSecondaryColor";
     public const string StyleClassLabelBig = "LabelBig";
     public const string StyleClassLabelSmall = "LabelSmall";
-    public const string StyleClassLabelSmallest = "LabelSmallest";
 
     public const string StyleClassButtonHelp = "HelpButton";
 
     // Used by the APC and SMES menus
-    public const string StyleClassPowerStateNone = "PowerStateNone";
-    public const string StyleClassPowerStateLow = "PowerStateLow";
-    public const string StyleClassPowerStateGood = "PowerStateGood";
 
     public const string StyleClassItemStatus = "ItemStatus";
     public const string StyleClassItemStatusNotHeld = "ItemStatusNotHeld";
@@ -123,16 +103,12 @@ public sealed class StyleFortress : StyleBase
 
     // Buttons
     public const string ButtonCaution = "negative";
-    public const string StyleClassChatChannelSelectorButton = "chatSelectorOptionButton";
     public const string StyleClassChatFilterOptionButton = "chatFilterOptionButton";
-    public const string StyleClassStorageButton = "storageButton";
 
     public const string StyleClassCrossButtonRed = "CrossButtonRed";
-    public const string StyleClassButtonColorRed = "ButtonColorRed";
     public const string StyleClassButtonColorGreen = "ButtonColorGreen";
     public const string StyleClassButtonColorGold = "ButtonColorGold";
     public const string StyleClassButtonColorBlue = "ButtonColorBlue";
-    public const string StyleClassButtonTransparent = "ButtonTransparent";
     public const string StyleClassButtonBig = "ButtonBig";
     public const string StyleClassButtonEmpty = "ButtonEmpty";
 
@@ -160,12 +136,10 @@ public sealed class StyleFortress : StyleBase
         var sourceCode8 = resCache.SourceCodeStack(size: 8);
         var sourceCode10 = resCache.SourceCodeStack(size: 10);
         var sourceCode12 = resCache.SourceCodeStack(size: 12);
-        var sourceCode15 = resCache.SourceCodeStack(size: 15);
         var sourceCode16 = resCache.SourceCodeStack(size: 16);
         var sourceCodeBold12 = resCache.SourceCodeStack(SourceCodeVariant.Bold, 12);
         var sourceCodeBold14 = resCache.SourceCodeStack(SourceCodeVariant.Bold, 14);
         var sourceCodeBold16 = resCache.SourceCodeStack(SourceCodeVariant.Bold, 16);
-        var sourceCodeBold18 = resCache.SourceCodeStack(SourceCodeVariant.Bold, 18);
         var sourceCodeBold20 = resCache.SourceCodeStack(SourceCodeVariant.Bold, 20);
         var sourceCodeItalic10 = resCache.SourceCodeStack(SourceCodeVariant.Italic);
         var sourceCodeItalic12 = resCache.SourceCodeStack(SourceCodeVariant.Italic, 12);
@@ -212,8 +186,6 @@ public sealed class StyleFortress : StyleBase
         var fancyWindowHeader = StyleBoxTex("fancy_window_header.png");
         fancyWindowHeader.SetPatchMargin(StyleBox.Margin.Top, 3);
         fancyWindowHeader.SetPatchMargin(StyleBox.Margin.Bottom, 1);
-
-        var lightFancyWindowHeader = StyleBoxTex("light_fancy_window_header.png", fancyWindowHeader);
 
         #endregion
 
@@ -530,9 +502,6 @@ public sealed class StyleFortress : StyleBase
             Element()
                 .Class(StyleClassBorderedWindowPanel)
                 .Prop(PanelContainer.StylePropertyPanel, borderedWindowBackground),
-            Element()
-                .Class(StyleClassTransparentBorderedWindowPanel)
-                .Prop(PanelContainer.StylePropertyPanel, borderedTransparentWindowBackground),
 
             // Window header.
             Element<PanelContainer>()
@@ -585,10 +554,6 @@ public sealed class StyleFortress : StyleBase
             Element<PanelContainer>()
                 .Class("WindowHeadingBackground")
                 .Prop(PanelContainer.StylePropertyPanel, fancyWindowHeader),
-
-            Element<PanelContainer>()
-                .Class("WindowHeadingBackgroundLight")
-                .Prop(PanelContainer.StylePropertyPanel, lightFancyWindowHeader),
 
             #endregion
 
@@ -643,27 +608,6 @@ public sealed class StyleFortress : StyleBase
                 .Class(ContainerButton.StyleClassButton)
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, ButtonColorDisabled),
-
-            // Colors for the transparent buttons.
-            Element<ContainerButton>()
-                .Class(StyleClassButtonTransparent)
-                .Pseudo(ContainerButton.StylePseudoClassNormal)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorDefault.WithAlpha(200)),
-
-            Element<ContainerButton>()
-                .Class(StyleClassButtonTransparent)
-                .Pseudo(ContainerButton.StylePseudoClassHover)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorHovered.WithAlpha(200)),
-
-            Element<ContainerButton>()
-                .Class(StyleClassButtonTransparent)
-                .Pseudo(ContainerButton.StylePseudoClassPressed)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorPressed.WithAlpha(200)),
-
-            Element<ContainerButton>()
-                .Class(StyleClassButtonTransparent)
-                .Pseudo(ContainerButton.StylePseudoClassDisabled)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorDisabled.WithAlpha(200)),
 
             // Colors for the caution buttons.
             Element<ContainerButton>()
@@ -736,11 +680,6 @@ public sealed class StyleFortress : StyleBase
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
 
-            // ProgressButton
-            Element<ProgressButton>()
-                .Prop(ProgressButton.StylePropertyForeground,
-                    new StyleBoxFlat { BackgroundColor = Color.Black.WithAlpha(0.2f) }),
-
             #region Blue Button
 
             Element<ContainerButton>()
@@ -784,26 +723,6 @@ public sealed class StyleFortress : StyleBase
 
             Element<ContainerButton>()
                 .Class(ContainerButton.StyleClassButton, StyleClassButtonColorGold)
-                .Pseudo(ContainerButton.StylePseudoClassDisabled)
-                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
-
-            Element<TextureButton>()
-                .Class(StyleClassButtonColorGold)
-                .Pseudo(ContainerButton.StylePseudoClassNormal)
-                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDefault),
-
-            Element<TextureButton>()
-                .Class(StyleClassButtonColorGold)
-                .Pseudo(ContainerButton.StylePseudoClassHover)
-                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorHovered),
-
-            Element<TextureButton>()
-                .Class(StyleClassButtonColorGold)
-                .Pseudo(ContainerButton.StylePseudoClassPressed)
-                .Prop(Control.StylePropertyModulateSelf, GoldButtonColorPressed),
-
-            Element<TextureButton>()
-                .Class(StyleClassButtonColorGold)
                 .Pseudo(ContainerButton.StylePseudoClassDisabled)
                 .Prop(Control.StylePropertyModulateSelf, GoldButtonColorDisabled),
 
@@ -907,36 +826,6 @@ public sealed class StyleFortress : StyleBase
             Element<DirectionIcon>()
                 .Class(DirectionIcon.StyleClassDirectionIconHere)
                 .Prop(TextureRect.StylePropertyTexture, directionIconHereTex),
-
-            #region Storage Button
-
-            // Thin buttons (No padding nor vertical margin)
-            Element<ContainerButton>()
-                .Class(StyleClassStorageButton)
-                .Prop(ContainerButton.StylePropertyStyleBox, buttonStorage),
-
-            Element<ContainerButton>()
-                .Class(StyleClassStorageButton)
-                .Pseudo(ContainerButton.StylePseudoClassNormal)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorDefault),
-
-            Element<ContainerButton>()
-                .Class(StyleClassStorageButton)
-                .Pseudo(ContainerButton.StylePseudoClassHover)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorHovered),
-
-            Element<ContainerButton>()
-                .Class(StyleClassStorageButton)
-                .Pseudo(ContainerButton.StylePseudoClassPressed)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorPressed),
-
-            Element<ContainerButton>()
-                .Class(StyleClassStorageButton)
-                .Pseudo(ContainerButton.StylePseudoClassDisabled)
-                .Prop(Control.StylePropertyModulateSelf, ButtonColorDisabled),
-
-            #endregion
-
             #region ListContainer
 
             Element<ContainerButton>()
@@ -1073,37 +962,6 @@ public sealed class StyleFortress : StyleBase
 
             Element<Robust.Client.UserInterface.CustomControls.Tooltip>()
                 .Prop(PanelContainer.StylePropertyPanel, tooltipBox),
-            Element<PanelContainer>()
-                .Class(StyleClassTooltipPanel)
-                .Prop(PanelContainer.StylePropertyPanel, tooltipBox),
-
-            // alert tooltip
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipAlertTitle)
-                .Prop("font", sourceCodeBold18),
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipAlertDescription)
-                .Prop("font", sourceCode16),
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipAlertCooldown)
-                .Prop("font", sourceCode16),
-
-            // action tooltip
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipActionTitle)
-                .Prop("font", sourceCodeBold16),
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipActionDescription)
-                .Prop("font", sourceCode15),
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipActionCooldown)
-                .Prop("font", sourceCode15),
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipActionRequirements)
-                .Prop("font", sourceCode15),
-            Element<RichTextLabel>()
-                .Class(StyleClassTooltipActionCharges)
-                .Prop("font", sourceCode15),
 
             // Entity tooltip
             Element<PanelContainer>()
@@ -1201,24 +1059,8 @@ public sealed class StyleFortress : StyleBase
                 .Prop(Label.StylePropertyFont, sourceCode10),
 
             Element<Label>()
-                .Class(StyleClassLabelSmallest)
-                .Prop(Label.StylePropertyFont, sourceCode8),
-
-            Element<Label>()
                 .Class("StatusFieldTitle")
                 .Prop(Label.StylePropertyFontColor, GoldFortress),
-
-            Element<Label>()
-                .Class("Good")
-                .Prop(Label.StylePropertyFontColor, GoodGreenFore),
-
-            Element<Label>()
-                .Class("Caution")
-                .Prop(Label.StylePropertyFontColor, GoldFortress),
-
-            Element<Label>()
-                .Class("Danger")
-                .Prop(Label.StylePropertyFontColor, LightBad),
 
             Element<Label>()
                 .Class("Disabled")
@@ -1331,15 +1173,8 @@ public sealed class StyleFortress : StyleBase
             Element<Slider>()
                 .Class(StyleClassSliderWhite)
                 .Prop(Slider.StylePropertyFill, sliderFillWhite),
-
             #endregion
-
             #region Chat Channel Selector
-
-            // chat channel option selector
-            Element<Button>()
-                .Class(StyleClassChatChannelSelectorButton)
-                .Prop(ContainerButton.StylePropertyStyleBox, chatChannelButton),
 
             // chat filter button
             Element<ContainerButton>()
@@ -1496,21 +1331,6 @@ public sealed class StyleFortress : StyleBase
             Element<LineEdit>()
                 .Class("PaperLineEdit")
                 .Prop(LineEdit.StylePropertyStyleBox, new StyleBoxEmpty()),
-
-            // Red Button ---
-            Element<Button>()
-                .Class(StyleClassButtonColorRed)
-                .Prop(Control.StylePropertyModulateSelf, Bad),
-
-            Element<Button>()
-                .Class(StyleClassButtonColorRed)
-                .Pseudo(ContainerButton.StylePseudoClassNormal)
-                .Prop(Control.StylePropertyModulateSelf, Bad),
-
-            Element<Button>()
-                .Class(StyleClassButtonColorRed)
-                .Pseudo(ContainerButton.StylePseudoClassHover)
-                .Prop(Control.StylePropertyModulateSelf, LightBad),
             // ---
 
             // Green Button ---
@@ -1560,21 +1380,7 @@ public sealed class StyleFortress : StyleBase
                 .Parent(Element<Button>().Class("ButtonSmall"))
                 .Child(Element<Label>())
                 .Prop(Label.StylePropertyFont, sourceCode8),
-            // ---
-
             #region Radial menu
-
-            // Radial menu buttons
-            Element<TextureButton>()
-                .Class("RadialMenuButton")
-                .Prop(TextureButton.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Radial/button_normal.png")),
-
-            Element<TextureButton>()
-                .Class("RadialMenuButton")
-                .Pseudo(TextureButton.StylePseudoClassHover)
-                .Prop(TextureButton.StylePropertyTexture,
-                    resCache.GetTexture("/Textures/Interface/Radial/button_hover.png")),
 
             Element<TextureButton>()
                 .Class("RadialMenuCloseButton")
@@ -1645,26 +1451,6 @@ public sealed class StyleFortress : StyleBase
                 .Class(SiliconLawContainer.StyleClassSiliconLawPositionLabel)
                 .Prop(Label.StylePropertyFontColor, GoldFortress),
 
-            // hotbar slot
-            Element<RichTextLabel>()
-                .Class(StyleClassHotbarSlotNumber)
-                .Prop(Label.StylePropertyFont, sourceCodeBold16),
-
-            // inventory slot background
-            Element()
-                .Class(StyleClassInventorySlotBackground)
-                .Prop(PanelContainer.StylePropertyPanel, invSlotBg),
-
-            // hand slot highlight
-            Element()
-                .Class(StyleClassHandSlotHighlight)
-                .Prop(PanelContainer.StylePropertyPanel, handSlotHighlight),
-
-            // Hotbar background
-            Element<PanelContainer>()
-                .Class(StyleClassHotbarPanel)
-                .Prop(PanelContainer.StylePropertyPanel, hotbarBackground),
-
             // ItemStatus for hands
             Element()
                 .Class(StyleClassItemStatusNotHeld)
@@ -1676,28 +1462,6 @@ public sealed class StyleFortress : StyleBase
                 .Class(StyleClassItemStatus)
                 .Prop(nameof(RichTextLabel.LineHeightScale), 0.7f)
                 .Prop(nameof(Control.Margin), new Thickness(4, 0, 0, 2)),
-
-            // APC and SMES power state label colors
-            Element<Label>()
-                .Class(StyleClassPowerStateNone)
-                .Prop(Label.StylePropertyFontColor, new Color(0.8f, 0.0f, 0.0f)),
-
-            Element<Label>()
-                .Class(StyleClassPowerStateLow)
-                .Prop(Label.StylePropertyFontColor, new Color(0.9f, 0.36f, 0.0f)),
-
-            Element<Label>()
-                .Class(StyleClassPowerStateGood)
-                .Prop(Label.StylePropertyFontColor, new Color(0.024f, 0.8f, 0.0f)),
-
-            Element<PanelContainer>()
-                .Class("BackgroundOpenRight")
-                .Prop(PanelContainer.StylePropertyPanel, buttonOpenRight)
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
-            Element<PanelContainer>()
-                .Class("BackgroundOpenLeft")
-                .Prop(PanelContainer.StylePropertyPanel, buttonOpenLeft)
-                .Prop(Control.StylePropertyModulateSelf, GraphiteBlack),
 
             #region PDA
 

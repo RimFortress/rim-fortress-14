@@ -23,29 +23,12 @@
 .panel-dark {
     background-color: <graphite-black>;
     padding: 10px;
-}
-
-/* PanelDarkTransparent */
-.panel-dark-transparent {
-    background-color: color-mix(in srgb, <graphite-black> 80%, transparent);
-    padding: 10px;
-}
-
-/* PanelLightBordered */
+}/* PanelLightBordered */
 .panel-light-bordered {
     background-color: <dark-forest>;
     border: 1px solid <wooden-fortress>;
     padding: 9px;
-}
-
-/* PanelLightBorderedTransparent */
-.panel-light-bordered-transparent {
-    background-color: color-mix(in srgb, <dark-forest> 80%, transparent);
-    border: 1px solid <wooden-fortress>;
-    padding: 9px;
-}
-
-/* PanelDarkBordered */
+}/* PanelDarkBordered */
 .panel-dark-bordered {
     background-color: <graphite-black>;
     border: 1px solid <wooden-fortress>;

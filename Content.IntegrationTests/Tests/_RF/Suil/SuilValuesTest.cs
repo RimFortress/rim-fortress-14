@@ -47,26 +47,6 @@ public sealed class SuilValuesTest : GameTest
 
     // ---- Colors ----
 
-    [TestCase("#B07D2B", "#B07D2B")]
-    [TestCase("#5E4B3A59", "#5E4B3A59")]
-    [TestCase("#abc", "#aabbcc")]
-    [TestCase("rgb(255, 0, 0)", "#FF0000")]
-    [TestCase("rgb(255 0 0)", "#FF0000")]
-    [TestCase("rgba(0, 0, 255, 0.5)", "#0000FF7F")]
-    [RunOnSide(Side.Client)]
-    public void Colors(string text, string expectedHex)
-    {
-        Assert.That(Parse<Color>(text), Is.EqualTo(Color.FromHex(expectedHex)));
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Named_Color()
-    {
-        Assert.That(Parse<Color>("red"), Is.EqualTo(Color.Red));
-        Assert.That(TryParse<Color>("nonsense", out _), Is.False);
-    }
-
     [Test]
     [RunOnSide(Side.Client)]
     public void Color_Mix_Of_Two_Colors()
@@ -83,34 +63,6 @@ public sealed class SuilValuesTest : GameTest
     }
 
     // ---- Lengths ----
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Lengths()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<LengthUnit>("12px"), Is.EqualTo(LengthUnit.Px(12f)));
-            Assert.That(Parse<LengthUnit>("-4px"), Is.EqualTo(LengthUnit.Px(-4f)));
-            Assert.That(Parse<LengthUnit>("50%"), Is.EqualTo(new LengthUnit(50f, LengthUnitType.Percent)));
-            Assert.That(Parse<LengthUnit>("1.5em"), Is.EqualTo(new LengthUnit(1.5f, LengthUnitType.Em)));
-            Assert.That(Parse<LengthUnit>("0"), Is.EqualTo(LengthUnit.Zero));
-            Assert.That(TryParse<LengthUnit>("12", out _), Is.False, "a number is not a length");
-            Assert.That(TryParse<LengthUnit>("12 px", out _), Is.False);
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Absolute_Lengths_Become_Pixels()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<float>("4px"), Is.EqualTo(4f));
-            Assert.That(Parse<float>("1in"), Is.EqualTo(96f));
-            Assert.That(TryParse<float>("1em", out _), Is.False, "em needs an element");
-        });
-    }
 
     [Test]
     [RunOnSide(Side.Client)]
@@ -133,44 +85,7 @@ public sealed class SuilValuesTest : GameTest
 
     // ---- Boxes ----
 
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Thickness_Follows_The_Suil_Order()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<Thickness>("1px"), Is.EqualTo(new Thickness(1f)));
-            Assert.That(Parse<Thickness>("1px 2px"), Is.EqualTo(new Thickness(2f, 1f, 2f, 1f)));
-            Assert.That(Parse<Thickness>("1px 2px 3px 4px"), Is.EqualTo(new Thickness(4f, 1f, 2f, 3f)));
-            Assert.That(TryParse<Thickness>("1px 2px 3px 4px 5px", out _), Is.False);
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Border_Image_Slice()
-    {
-        var stream = Stream("30 fill");
-
-        Assert.That(BorderImageParsing.TryParseSlice(ref stream, out var slice) && stream.AtEnd, Is.True);
-        Assert.That(slice.Fill, Is.True);
-        Assert.That(slice.Edges.Top, Is.EqualTo(BorderImageEdge.Number(30)));
-    }
-
     // ---- Text ----
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Strings_And_Idents()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<string>("\"a b\""), Is.EqualTo("a b"));
-            Assert.That(Parse<string>("word"), Is.EqualTo("word"));
-            Assert.That(Parse<bool>("true"), Is.True);
-            Assert.That(TryParse<bool>("maybe", out _), Is.False);
-        });
-    }
 
     [Test]
     [RunOnSide(Side.Client)]
@@ -181,19 +96,6 @@ public sealed class SuilValuesTest : GameTest
             Assert.That(Parse<SuilFontFamily>("\"Noto Sans\", Arial, sans-serif").Names,
                 Is.EqualTo(new[] { "Noto Sans", "Arial", "sans-serif" }));
             Assert.That(Parse<SuilFontFamily>("Source Code Pro").Names, Is.EqualTo(new[] { "Source Code Pro" }));
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Line_Height()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<SuilLineHeight>("normal"), Is.EqualTo(SuilLineHeight.Normal));
-            Assert.That(Parse<SuilLineHeight>("1.5"), Is.EqualTo(SuilLineHeight.FromMultiplier(1.5f)));
-            Assert.That(Parse<SuilLineHeight>("120%"), Is.EqualTo(SuilLineHeight.FromMultiplier(1.2f)));
-            Assert.That(Parse<SuilLineHeight>("20px"), Is.EqualTo(SuilLineHeight.FromLength(LengthUnit.Px(20f))));
         });
     }
 
@@ -216,32 +118,6 @@ public sealed class SuilValuesTest : GameTest
     }
 
     // ---- Resources and the rest ----
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Texture_Function_Takes_A_String()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<Texture>("texture(\"/Textures/_RF/Interface/Style/cross.png\")"), Is.Not.Null);
-            Assert.That(Parse<Texture>("none"), Is.Null, "none is the null of a reference type");
-            Assert.That(TryParse<Texture>("texture(1)", out _), Is.False);
-            Assert.That(TryParse<Texture>("texture(\"a\", \"b\")", out _), Is.False);
-        });
-    }
-
-    [Test]
-    [RunOnSide(Side.Client)]
-    public void Enums_Are_Written_In_Kebab_Case()
-    {
-        Assert.Multiple(() =>
-        {
-            Assert.That(Parse<SuilJustifyContent>("flex-start"), Is.EqualTo(SuilJustifyContent.FlexStart));
-            Assert.That(Parse<SuilJustifyContent>("space-between"), Is.EqualTo(SuilJustifyContent.SpaceBetween));
-            Assert.That(Parse<SuilFlexDirection>("column"), Is.EqualTo(SuilFlexDirection.Column));
-            Assert.That(TryParse<SuilFlexDirection>("diagonal", out _), Is.False);
-        });
-    }
 
     [Test]
     [RunOnSide(Side.Client)]

@@ -51,7 +51,7 @@ public sealed partial class SocializationEffectInfo : RfBoxContainer
             _ => "",
         };
 
-        ValueLabel.Text = $"[bold][color={color.ToHex()}]{sign}{Math.Abs(value)}[/color][/bold]";
+        ValueLabel.Text = $"[b][color={color.ToHex()}]{sign}{Math.Abs(value)}[/color][/b]";
         Label.Text = Loc.GetString(proto.Name);
     }
 

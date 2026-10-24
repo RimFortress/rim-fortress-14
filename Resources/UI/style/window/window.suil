@@ -2,31 +2,7 @@
     color: <gold-fortress>;
     font-weight: bold;
     font-size: 14px;
-}
-
-.window-title-alert {
-    color: <rim-silver>;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.window-header {
-    background-image: texture("<icons>/Style/window_header.png");
-    background-repeat: stretch;
-    patch-margin: 0 0 3px 0;
-    expand-patch-margin: 0 0 3px 0;
-    padding: 0;
-}
-
-.window-header-alert {
-    background-image: texture("<icons>/Style/window_header_alert.png");
-    background-repeat: stretch;
-    patch-margin: 0 0 3px 0;
-    expand-patch-margin: 0 0 3px 0;
-    padding: 0;
-}
-
-.window-help-button {
+}.window-help-button {
     background-image: texture("/Textures/Interface/Nano/help.png");
     background-repeat: no-repeat;
     background-color: <bright-green>;
@@ -46,9 +22,4 @@
     border-width: 3px 0 1px 0;
     background-color: <dark-forest>;
     padding: 3px 8px 3px 4px;
-}
-
-.window-footer-text {
-    font-size: 8px;
-    color: <placeholder-font-color>;
 }

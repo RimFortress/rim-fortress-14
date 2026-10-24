@@ -32,17 +32,3 @@ text-edit:placeholder-shown {
     background: transparent;
     padding: 0;
 }
-
-/* actionSearchBox */
-.action-search-box {
-    background-image: texture("<icons>/Style/dark_panel_dark_thin_border.png");
-    background-repeat: stretch;
-    patch-margin: 3px;
-    padding: 3px 5px;
-}
-
-/* PaperLineEdit */
-.paper-line-edit {
-    background: transparent;
-    padding: 0;
-}

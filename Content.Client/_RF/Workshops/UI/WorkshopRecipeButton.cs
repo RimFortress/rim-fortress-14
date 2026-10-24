@@ -40,14 +40,7 @@ public sealed partial class WorkshopRecipeButton : RfBoxContainer
             _entity.System<RimFortressWorldSystem>().ToWorldTime(proto.CraftingTime));
         GroupMarker.Visible = false;
 
-        Button.TooltipSupplier = _ =>
-        {
-            var msg = FormattedMessage.FromMarkupOrThrow(
-                Button.ToolTip = $"{result.Description}\n{Loc.GetString("workshop-menu-recipe-tooltip")}");
-            var tooltip = new Robust.Client.UserInterface.CustomControls.Tooltip();
-            tooltip.SetMessage(msg);
-            return tooltip;
-        };
+        Button.ToolTip = $"{result.Description}\n{Loc.GetString("workshop-menu-recipe-tooltip")}";
 
         Button.OnKeyBindUp += args =>
         {

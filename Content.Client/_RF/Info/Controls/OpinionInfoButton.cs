@@ -52,8 +52,8 @@ public sealed partial class OpinionInfoButton : RfBoxContainer
         };
 
         Sprite.SetEntity(targetUid);
-        Label.Text = $"[bold]{name}[/bold]";
-        ValueLabel.Text = $"[bold][color={color.ToHex()}]{sign}{Math.Abs(Value)}[/color][/bold]";
+        Label.Text = $"[b]{name}[/b]";
+        ValueLabel.Text = $"[b][color={color.ToHex()}]{sign}{Math.Abs(Value)}[/color][/b]";
         EffectsContainer.UpdateInfo(effects);
     }
 }

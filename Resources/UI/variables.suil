@@ -4,7 +4,6 @@
 /* Paths */
 let icons = "/Textures/_RF/Interface";
 let main-font = "Source Code Pro";
-let title-font = "Boxfont Round";
 
 /* Base colors */
 let gold-fortress = #B07D2B;
@@ -47,16 +46,8 @@ let scrollbar-grabber-pressed = #737A5259;
 
 /* Backgrounds */
 let chat-background-color = #293329CC;
-let default-paper-background-color = #EAEDDE;
 
 /* Text */
 let disabled-button-font-color = #C0C0C082;
 let placeholder-font-color = #7C7763;
 let good-green-fore = #31843E;
-
-/* PDA */
-let pda-content-background = #25252A;
-let pda-background = #000000;
-let pda-background-rect = #717059;
-let pda-footer-text = #757575;
-let pda-window-footer-text = #333D3B;

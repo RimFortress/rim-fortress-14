@@ -12,7 +12,7 @@ public sealed partial class AiFieldRow : RfBoxContainer
     {
         InitializeComponent();
 
-        Key.Text = $"[bold]{key}[/bold]";
+        Key.Text = $"[b]{key}[/b]";
         Type.Text = $":{type}";
         Value.Text = value;
     }
@@ -27,8 +27,8 @@ public sealed partial class AiLabelRow : RfBoxContainer
     {
         InitializeComponent();
 
-        Left.Text = $"[bold]{left}[/bold]";
-        Right.Text = $"[bold]{right}[/bold]";
+        Left.Text = $"[b]{left}[/b]";
+        Right.Text = $"[b]{right}[/b]";
     }
 }
 
