@@ -9,7 +9,10 @@
 :root {
     font-family: <main-font>;
     font-size: 12px;
-}/* BoxContainer (box): the default gap */
+    text-outline: 1px;
+}
+
+/* BoxContainer (box): the default gap */
 box {
     gap: 3px;
 }
