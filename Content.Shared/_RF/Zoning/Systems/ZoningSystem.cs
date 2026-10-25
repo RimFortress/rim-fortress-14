@@ -139,6 +139,9 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
             default:
                 throw new ArgumentOutOfRangeException(nameof(ent.Comp.CollisionMode));
         }
+
+        // Physics disables collision on init while the body has no fixtures, so re-enable it once some exist.
+        _physics.SetCanCollide(ent, true);
     }
 
     private static HashSet<HashSet<Vector2i>> GetRegions(IReadOnlySet<Vector2i> tiles)

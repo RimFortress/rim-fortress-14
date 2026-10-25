@@ -4,6 +4,10 @@
   components:
   - type: Workshop
     craftingPlace: -0.5,-1
+  - type: ContainerContainer
+    containers:
+      workshop_entity_container: !type:Container
+      workshop_result_container: !type:Container
   - type: WorkshopVisuals
     stages:
     - threshold: 0
