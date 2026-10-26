@@ -46,7 +46,7 @@ public sealed class GoapStaticGraphPrototypeTest : GameTest
     - InContainer == false
     - Buckled == false
     - Pulled == false
-    - Query/Pickaxe == true
+    - Query/Pickaxe != null
     actions:
     - !type:EntityCoords
       targetKey: Query/Pickaxe
