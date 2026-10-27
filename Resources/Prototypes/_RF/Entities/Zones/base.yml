@@ -4,4 +4,5 @@
   components:
   - type: Zone
   - type: Physics
+    canCollide: false
   - type: Fixtures

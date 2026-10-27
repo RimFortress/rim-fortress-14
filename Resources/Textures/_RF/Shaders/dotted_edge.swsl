@@ -5,28 +5,27 @@ uniform highp float thickness;
 uniform highp float dashLength;
 uniform highp float gapLength;
 
+// NOTE: the body of fragment() is inlined into main(), so a `return` here would skip writing the output color
+// and leave it undefined (garbage on Mesa/Linux). Always fall through to the single COLOR assignment instead.
 void fragment() {
     highp vec2 px = FRAGCOORD.xy;
     highp vec2 dir = point2 - point1;
     highp float len = length(dir);
 
-    if (len < 0.0001) {
-        COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-        return;
-    }
-
-    highp vec2 unit = dir / len;
+    // Guard against division by zero for degenerate segments.
+    highp vec2 unit = dir / max(len, 0.0001);
     highp vec2 normal = vec2(-unit.y, unit.x);
     highp vec2 rel = px - point1;
 
     highp float along = dot(rel, unit);
     highp float across = dot(rel, normal);
 
-    if (along < 0.0 || along > len || abs(across) > thickness * 0.5) {
-        COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-        return;
-    }
+    bool onLine = len >= 0.0001
+        && along >= 0.0
+        && along <= len
+        && abs(across) <= thickness * 0.5;
 
     bool inDash = mod(along, dashLength + gapLength) < dashLength;
-    COLOR = inDash ? color : vec4(0.0, 0.0, 0.0, 0.0);
+
+    COLOR = (onLine && inDash) ? color : vec4(0.0, 0.0, 0.0, 0.0);
 }
