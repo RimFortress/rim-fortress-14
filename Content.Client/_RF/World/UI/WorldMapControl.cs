@@ -206,6 +206,31 @@ public sealed partial class WorldMapControl : MapGridControl
                 }
             }
         }
+
+        // Frozen chunks that the player has visited before
+        if (!EntManager.TryGetComponent(MapUid.Value, out FogOfWarComponent? fog)
+            || !fog.PersistChunks
+            || !EntManager.TryGetComponent(fog.FowGrid, out MapGridComponent? fowGrid))
+            return;
+
+        var fowEnt = new Entity<MapGridComponent>(fog.FowGrid, fowGrid);
+
+        foreach (var chunk in fog.FrozenChunks)
+        {
+            for (var x = 0; x < ChunkSize; x++)
+            {
+                for (var y = 0; y < ChunkSize; y++)
+                {
+                    var indices = new Vector2i(x + chunk.X, y + chunk.Y);
+                    var tile = _map.GetTileRef(fowEnt, indices);
+
+                    if (tile.Tile.IsEmpty)
+                        continue;
+
+                    _tiles[indices] = _turf.GetContentTileDefinition(tile).NavMapColor;
+                }
+            }
+        }
     }
 
     private void ApplyRoof()
