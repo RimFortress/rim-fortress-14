@@ -5,7 +5,6 @@ using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Parallax.Biomes;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
-using Robust.Shared.Network;
 
 namespace Content.Server._RF.Parallax.Fog;
 
@@ -15,25 +14,23 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     [Dependency] private IPlayerManager _player = default!;
     [Dependency] private EntityQuery<FogOfWarComponent> _fogQuery;
     [Dependency] private EntityQuery<BiomeComponent> _biomeQuery;
+    [Dependency] private EntityQuery<FogOfWarVisitedComponent> _visitedQuery;
 
     /// <summary>
-    /// Chunks that the player has visited and that are not loaded for him right now
+    /// Cache of the players who saw the chunk while it was loaded. It is filled again when the chunks are loaded, so it
+    /// is not saved. The visited chunks themselves are stored in <see cref="FogOfWarVisitedComponent"/>.
     /// </summary>
-    private readonly Dictionary<NetUserId, Dictionary<EntityUid, HashSet<Vector2i>>> _visited = new();
-
-    /// <summary>
-    /// Players who saw the chunk while it was loaded
-    /// </summary>
-    private readonly Dictionary<EntityUid, Dictionary<Vector2i, HashSet<NetUserId>>> _viewers = new();
+    private readonly Dictionary<EntityUid, Dictionary<Vector2i, HashSet<EntityUid>>> _viewers = new();
 
     [SubscribeLocalEvent]
     private void OnShutdown(Entity<FogOfWarComponent> ent, ref ComponentShutdown args)
     {
         _viewers.Remove(ent);
 
-        foreach (var maps in _visited.Values)
+        var query = EntityQueryEnumerator<FogOfWarVisitedComponent>();
+        while (query.MoveNext(out var visited))
         {
-            maps.Remove(ent);
+            visited.Chunks.Remove(ent);
         }
     }
 
@@ -50,8 +47,9 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         var chunks = new Dictionary<Vector2i, HashSet<Vector2i>>();
         var allModified = biome.ModifiedTiles.ToDictionary();
 
-        if (_visited.TryGetValue(args.SenderSession.UserId, out var maps)
-            && maps.TryGetValue(map, out var visited))
+        if (args.SenderSession.AttachedEntity is { } player
+            && _visitedQuery.TryComp(player, out var maps)
+            && maps.Chunks.TryGetValue(map, out var visited))
         {
             foreach (var chunk in visited)
             {
@@ -74,14 +72,14 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
 
         var chunkViewers = GetChunkViewers(map, args.Chunk);
 
-        foreach (var user in GetNearbyUsers(map, args.Chunk))
+        foreach (var player in GetNearbyPlayers(map, args.Chunk))
         {
-            chunkViewers.Add(user);
+            chunkViewers.Add(player);
 
-            if (_visited.TryGetValue(user, out var maps) && maps.TryGetValue(map, out var visited))
+            if (_visitedQuery.TryComp(player, out var maps) && maps.Chunks.TryGetValue(map, out var visited))
                 visited.Remove(args.Chunk);
 
-            if (_player.TryGetSessionById(user, out var session))
+            if (_player.TryGetSessionByEntity(player, out var session))
                 RaiseNetworkEvent(new FogOfWarChunkUnfrozen(GetNetEntity(map), args.Chunk), session);
         }
     }
@@ -95,27 +93,29 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
             return;
 
         // Everyone who saw the chunk while it was loaded + everyone who is near it now
-        var users = new HashSet<NetUserId>(GetNearbyUsers(map, args.Chunk));
+        var players = new HashSet<EntityUid>(GetNearbyPlayers(map, args.Chunk));
 
         if (_viewers.TryGetValue(map, out var chunks) && chunks.Remove(args.Chunk, out var viewers))
-            users.UnionWith(viewers);
+            players.UnionWith(viewers);
 
-        if (users.Count == 0)
+        if (players.Count == 0)
             return;
 
         args.Grid.Comp1.ModifiedTiles.ToDictionary().TryGetValue(args.Chunk, out var modifiedTiles);
 
-        foreach (var user in users)
+        foreach (var player in players)
         {
-            if (!_visited.TryGetValue(user, out var maps))
-                _visited[user] = maps = new();
+            if (!Exists(player))
+                continue;
 
-            if (!maps.TryGetValue(map, out var visited))
-                maps[map] = visited = new();
+            var maps = EnsureComp<FogOfWarVisitedComponent>(player);
+
+            if (!maps.Chunks.TryGetValue(map, out var visited))
+                maps.Chunks[map] = visited = new();
 
             visited.Add(args.Chunk);
 
-            if (!_player.TryGetSessionById(user, out var session))
+            if (!_player.TryGetSessionByEntity(player, out var session))
                 continue;
 
             var msg = new FogOfWarChunkFrozen(
@@ -127,7 +127,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         }
     }
 
-    private HashSet<NetUserId> GetChunkViewers(EntityUid map, Vector2i chunk)
+    private HashSet<EntityUid> GetChunkViewers(EntityUid map, Vector2i chunk)
     {
         if (!_viewers.TryGetValue(map, out var chunks))
             _viewers[map] = chunks = new();
@@ -139,12 +139,12 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     }
 
     /// <summary>
-    /// Users who control a fog clearer that is close enough to the chunk to have it loaded
+    /// Player entities that control a fog clearer which is close enough to the chunk to have it loaded
     /// </summary>
-    private IEnumerable<NetUserId> GetNearbyUsers(EntityUid map, Vector2i chunk)
+    private IEnumerable<EntityUid> GetNearbyPlayers(EntityUid map, Vector2i chunk)
     {
         var chunkBox = Box2.FromDimensions(chunk, new Vector2(SharedBiomeSystem.ChunkSize));
-        var users = new HashSet<NetUserId>();
+        var players = new HashSet<EntityUid>();
 
         var query = EntityQueryEnumerator<FogOfWarClearerComponent, ControllableNpcComponent, TransformComponent>();
         while (query.MoveNext(out var clearer, out var npc, out var xform))
@@ -158,13 +158,9 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
             if (!box.Intersects(chunkBox))
                 continue;
 
-            foreach (var controller in npc.CanControl)
-            {
-                if (_player.TryGetSessionByEntity(controller, out var session))
-                    users.Add(session.UserId);
-            }
+            players.UnionWith(npc.CanControl);
         }
 
-        return users;
+        return players;
     }
 }
