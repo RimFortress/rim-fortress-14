@@ -3,6 +3,7 @@
   parent: BaseUtilityAiGoal
   color: "#D3D3D3"
   conditions:
+  - CombatMode == false
   - InConversation != true
   scoreCurves:
   - preset: UAIScoreNeeds
@@ -29,6 +30,7 @@
   color: "#D3D3D3"
   parent: BaseUtilityAiGoal
   conditions:
+  - CombatMode == false
   - InConversation != true
   failPolicy: Cooldown
   scoreCurves:
