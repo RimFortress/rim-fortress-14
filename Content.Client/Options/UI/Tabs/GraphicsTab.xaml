@@ -40,6 +40,12 @@
                           Text="{Loc 'ui-options-vp-vertical-fit'}"
                           ToolTip="{Loc 'ui-options-vp-vertical-fit-tooltip'}" />
 
+                <!-- Fog of War --> <!-- RimFortress -->
+                <Label Text="{Loc 'ui-options-fog-label'}" StyleClasses="LabelKeyText"/>
+                <ui:OptionSlider Name="FogMaxFrozenChunksSlider" Title="{Loc 'ui-options-fog-max-frozen-chunks'}" />
+                <ui:OptionSlider Name="FogChunksPerFrameSlider" Title="{Loc 'ui-options-fog-chunks-per-frame'}" />
+                <ui:OptionSlider Name="WorldMapChunksPerFrameSlider" Title="{Loc 'ui-options-world-map-chunks-per-frame'}" />
+
                 <!-- Misc -->
                 <Label Text="{Loc 'ui-options-misc-label'}" StyleClasses="LabelKeyText"/>
                 <CheckBox Name="FpsCounterCheckBox" Text="{Loc 'ui-options-fps-counter'}" />

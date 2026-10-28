@@ -96,7 +96,7 @@ public sealed class RfVars : CVars
     /// removed. 0 means no limit
     /// </summary>
     public static readonly CVarDef<int> FogMaxFrozenChunks =
-        CVarDef.Create("fog.max_frozen_chunks", 128, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
+        CVarDef.Create("fog.max_frozen_chunks", 0, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
 
     #endregion
 
