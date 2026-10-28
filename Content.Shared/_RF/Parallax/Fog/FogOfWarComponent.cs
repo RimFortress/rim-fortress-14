@@ -41,6 +41,15 @@ public sealed partial class FogOfWarComponent : Component
     [ViewVariables]
     public HashSet<Vector2i> FrozenChunks = new();
 
+    /// <summary>
+    /// Frozen chunks from the oldest to the newest, used to evict the oldest ones
+    /// </summary>
+    [ViewVariables]
+    public LinkedList<Vector2i> FrozenOrder = new();
+
+    [ViewVariables]
+    public Dictionary<Vector2i, LinkedListNode<Vector2i>> FrozenNodes = new();
+
     [ViewVariables]
     public Dictionary<Vector2i, HashSet<EntityUid>> FrozenEntities = new();
 

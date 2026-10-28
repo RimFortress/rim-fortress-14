@@ -2,6 +2,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Client.Decals;
 using Content.Client.Parallax;
+using Content.Shared._RF.CCVar;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared.Decals;
 using Content.Shared.Light.Components;
@@ -9,6 +10,7 @@ using Content.Shared.Parallax.Biomes;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Player;
+using Robust.Shared.Configuration;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Map.Enumerators;
@@ -20,6 +22,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     [Dependency] private TransformSystem _transform = default!;
     [Dependency] private IOverlayManager _overlay = default!;
     [Dependency] private IPlayerManager _player = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
     [Dependency] private SharedMapSystem _map = default!;
     [Dependency] private BiomeSystem _biome = default!;
     [Dependency] private DecalSystem _decals = default!;
@@ -27,11 +30,6 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     [Dependency] private EntityQuery<TransformComponent> _xformQuery;
     [Dependency] private EntityQuery<BiomeComponent> _biomeQuery;
     [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
-
-    /// <summary>
-    /// How many chunks are copied to the frozen grid per frame, so the client doesn't freeze on a big full state.
-    /// </summary>
-    private const int ChunksPerFrame = 2;
 
     private readonly Queue<(EntityUid Map, Vector2i Chunk, HashSet<Vector2i> Modified)> _pending = new();
 
@@ -47,11 +45,29 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         SubscribeNetworkEvent<FogOfWarChunkUnfrozen>(OnChunkUnfrozen);
         SubscribeNetworkEvent<FogOfWarFullStateMessage>(OnFullState);
 
+        _cfg.OnValueChanged(RfVars.FogMaxFrozenChunks, OnMaxFrozenChunksChanged);
+
         SubscribeLocalEvent<FogOfWarComponent, ComponentStartup>(OnFogStartup);
         SubscribeLocalEvent<FogOfWarComponent, ComponentShutdown>(OnFogShutdown);
     }
 
     #region Frozen chunks
+
+    public override void Shutdown()
+    {
+        base.Shutdown();
+
+        _cfg.UnsubValueChanged(RfVars.FogMaxFrozenChunks, OnMaxFrozenChunksChanged);
+    }
+
+    private void OnMaxFrozenChunksChanged(int value)
+    {
+        var query = EntityQueryEnumerator<FogOfWarComponent>();
+        while (query.MoveNext(out var uid, out var fog))
+        {
+            EvictOldest((uid, fog));
+        }
+    }
 
     private void OnFogStartup(Entity<FogOfWarComponent> ent, ref ComponentStartup args)
     {
@@ -73,6 +89,8 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
 
         ent.Comp.FowGrid = EntityUid.Invalid;
         ent.Comp.FrozenChunks.Clear();
+        ent.Comp.FrozenOrder.Clear();
+        ent.Comp.FrozenNodes.Clear();
         ent.Comp.FrozenEntities.Clear();
         ent.Comp.FrozenDecals.Clear();
     }
@@ -82,7 +100,18 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         if (!TryGetEntity(msg.Map, out var map) || !_fogQuery.HasComp(map))
             return;
 
-        foreach (var (chunk, modified) in msg.Chunks)
+        var chunks = msg.Chunks.AsEnumerable();
+        var max = _cfg.GetCVar(RfVars.FogMaxFrozenChunks);
+
+        // Only the closest chunks fit, the rest would be evicted right away
+        if (max > 0 && msg.Chunks.Count > max)
+        {
+            var center = _player.LocalEntity is { } player ? _transform.GetWorldPosition(player) : Vector2.Zero;
+            chunks = chunks.OrderBy(c => (c.Key + new Vector2(SharedBiomeSystem.ChunkSize) / 2 - center).LengthSquared())
+                .Take(max);
+        }
+
+        foreach (var (chunk, modified) in chunks)
         {
             _pending.Enqueue((map.Value, chunk, modified));
         }
@@ -114,7 +143,9 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
 
     private void ProcessPending()
     {
-        for (var i = 0; i < ChunksPerFrame && _pending.TryDequeue(out var item); i++)
+        var perFrame = Math.Max(1, _cfg.GetCVar(RfVars.FogChunksPerFrame));
+
+        for (var i = 0; i < perFrame && _pending.TryDequeue(out var item); i++)
         {
             if (!_fogQuery.TryComp(item.Map, out var fog)
                 || !_biomeQuery.TryComp(item.Map, out var biome)
@@ -123,7 +154,29 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
                 || !fog.FrozenChunks.Add(item.Chunk))
                 continue;
 
+            fog.FrozenNodes[item.Chunk] = fog.FrozenOrder.AddLast(item.Chunk);
+            EvictOldest((item.Map, fog), item.Chunk);
+
             FreezeChunk((item.Map, fog, biome, grid), item.Chunk, item.Modified);
+        }
+    }
+
+    /// <summary>
+    /// Removes the oldest frozen chunks if there are more of them than the limit allows
+    /// </summary>
+    private void EvictOldest(Entity<FogOfWarComponent> ent, Vector2i? keep = null)
+    {
+        var max = _cfg.GetCVar(RfVars.FogMaxFrozenChunks);
+
+        if (max <= 0)
+            return;
+
+        while (ent.Comp.FrozenChunks.Count > max && ent.Comp.FrozenOrder.First is { } oldest)
+        {
+            if (oldest.Value == keep)
+                break;
+
+            UnfreezeChunk(ent, oldest.Value);
         }
     }
 
@@ -150,7 +203,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     {
         if (!EnsureFowGrid((source, source.Comp1)))
         {
-            source.Comp1.FrozenChunks.Remove(chunk);
+            UnfreezeChunk((source, source.Comp1), chunk);
             return;
         }
 
@@ -242,7 +295,13 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     {
         var fog = ent.Comp;
 
-        if (!fog.FrozenChunks.Remove(chunk) || !fog.FowGrid.IsValid() || !Exists(fog.FowGrid))
+        if (!fog.FrozenChunks.Remove(chunk))
+            return;
+
+        if (fog.FrozenNodes.Remove(chunk, out var node))
+            fog.FrozenOrder.Remove(node);
+
+        if (!fog.FowGrid.IsValid() || !Exists(fog.FowGrid))
             return;
 
         if (fog.FrozenEntities.Remove(chunk, out var entities))
