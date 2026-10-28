@@ -39,15 +39,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         base.Initialize();
 
         _overlay.AddOverlay(new FogOfWarOverlay());
-
-        SubscribeNetworkEvent<FogOfWarChunkFrozen>(OnChunkFrozen);
-        SubscribeNetworkEvent<FogOfWarChunkUnfrozen>(OnChunkUnfrozen);
-        SubscribeNetworkEvent<FogOfWarFullStateMessage>(OnFullState);
-
         _cfg.OnValueChanged(RfVars.FogMaxFrozenChunks, OnMaxFrozenChunksChanged);
-
-        SubscribeLocalEvent<FogOfWarComponent, ComponentStartup>(OnFogStartup);
-        SubscribeLocalEvent<FogOfWarComponent, ComponentShutdown>(OnFogShutdown);
     }
 
     #region Frozen chunks
@@ -68,11 +60,6 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         }
     }
 
-    private void OnFogStartup(Entity<FogOfWarComponent> ent, ref ComponentStartup args)
-    {
-        RequestFullState(ent);
-    }
-
     private void RequestFullState(Entity<FogOfWarComponent> ent)
     {
         if (!ent.Comp.PersistChunks || _player.LocalSession == null)
@@ -81,6 +68,13 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         RaiseNetworkEvent(new FogOfWarFullStateRequest(GetNetEntity(ent)));
     }
 
+    [SubscribeLocalEvent]
+    private void OnFogStartup(Entity<FogOfWarComponent> ent, ref ComponentStartup args)
+    {
+        RequestFullState(ent);
+    }
+
+    [SubscribeLocalEvent]
     private void OnFogShutdown(Entity<FogOfWarComponent> ent, ref ComponentShutdown args)
     {
         if (ent.Comp.FowGrid.IsValid() && Exists(ent.Comp.FowGrid) && LifeStage(ent.Comp.FowGrid) < EntityLifeStage.Terminating)
@@ -94,6 +88,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         ent.Comp.FrozenDecals.Clear();
     }
 
+    [SubscribeNetworkEvent]
     private void OnFullState(FogOfWarFullStateMessage msg)
     {
         if (!TryGetEntity(msg.Map, out var map) || !_fogQuery.HasComp(map))
@@ -116,6 +111,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         }
     }
 
+    [SubscribeNetworkEvent]
     private void OnChunkFrozen(FogOfWarChunkFrozen msg)
     {
         if (!TryGetEntity(msg.Map, out var map) || !_fogQuery.HasComp(map))
@@ -124,6 +120,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
         _pending.Enqueue((map.Value, msg.Chunk, msg.ModifiedTiles));
     }
 
+    [SubscribeNetworkEvent]
     private void OnChunkUnfrozen(FogOfWarChunkUnfrozen msg)
     {
         if (!TryGetEntity(msg.Map, out var map) || !_fogQuery.TryComp(map, out var fog))
