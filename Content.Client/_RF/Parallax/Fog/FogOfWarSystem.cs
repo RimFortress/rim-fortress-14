@@ -11,6 +11,7 @@ using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.Player;
 using Robust.Shared.Configuration;
+using Robust.Shared.GameStates;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Map.Enumerators;
@@ -26,6 +27,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     [Dependency] private SharedMapSystem _map = default!;
     [Dependency] private BiomeSystem _biome = default!;
     [Dependency] private DecalSystem _decals = default!;
+    [Dependency] private ChunkEntitySystem _chunkEntities = default!;
     [Dependency] private EntityQuery<FogOfWarComponent> _fogQuery;
     [Dependency] private EntityQuery<TransformComponent> _xformQuery;
     [Dependency] private EntityQuery<BiomeComponent> _biomeQuery;
@@ -78,7 +80,10 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     private void OnFogShutdown(Entity<FogOfWarComponent> ent, ref ComponentShutdown args)
     {
         if (ent.Comp.FowGrid.IsValid() && Exists(ent.Comp.FowGrid) && LifeStage(ent.Comp.FowGrid) < EntityLifeStage.Terminating)
+        {
+            DeleteDecalChunks(ent.Comp.FowGrid);
             Del(ent.Comp.FowGrid);
+        }
 
         ent.Comp.FowGrid = EntityUid.Invalid;
         ent.Comp.FrozenChunks.Clear();
@@ -233,6 +238,9 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
 
         SetTilesSafe(fowGrid, tiles);
 
+        // Entities and decals are picked by the tile that is already there, like the server does it: it has the tiles
+        // set before it. Without the tile, a layer that has nothing to spawn passes the turn to the layers below it
+        // (grass in the desert), because each of them works out its own tile.
         // Entities
         var entities = new HashSet<EntityUid>();
         fog.FrozenEntities[chunk] = entities;
@@ -246,7 +254,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
                 if (modified.Contains(indices))
                     continue;
 
-                if (!_biome.TryGetEntity(indices, biome, sourceEnt, out var prototype))
+                if (!_biome.TryGetEntity(indices, biome, fowGrid, out var prototype))
                     continue;
 
                 // Frozen entities live on the frozen grid, which is the one that has the tiles
@@ -273,7 +281,7 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
                 var indices = new Vector2i(x + chunk.X, y + chunk.Y);
 
                 if (modified.Contains(indices)
-                    || !_biome.TryGetDecals(indices, biome.Layers, biome.Seed, sourceEnt, out var tileDecals))
+                    || !_biome.TryGetDecals(indices, biome.Layers, biome.Seed, fowGrid, out var tileDecals))
                     continue;
 
                 foreach (var (id, position) in tileDecals)
@@ -284,6 +292,30 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
                         decals.Add(index);
                 }
             }
+        }
+
+        // The decal chunk entities are created as predicted spawns, and the client deletes all of them on the next
+        // prediction reset, because it expects the server to create them. Nobody will, so keep them.
+        foreach (var decalChunk in decals.Select(d => d.Chunk).Distinct())
+        {
+            if (_chunkEntities.TryGetChunk(fowGrid, decalChunk, out var chunkEnt))
+                RemComp<PredictedSpawnComponent>(chunkEnt.Value.Owner);
+        }
+    }
+
+    private void DeleteDecalChunks(EntityUid fowGrid)
+    {
+        var chunks = new List<EntityUid>();
+        var enumerator = _chunkEntities.GetChunks(fowGrid);
+
+        while (enumerator.MoveNext(out var chunk))
+        {
+            chunks.Add(chunk.Value.Owner);
+        }
+
+        foreach (var chunk in chunks)
+        {
+            Del(chunk);
         }
     }
 
@@ -314,6 +346,15 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
             foreach (var decal in decals)
             {
                 _decals.RemoveDecal(fog.FowGrid, decal);
+            }
+
+            // Don't leave empty decal chunks behind
+            foreach (var decalChunk in decals.Select(d => d.Chunk).Distinct())
+            {
+                if (_chunkEntities.TryGetChunk(fog.FowGrid, decalChunk, out var chunkEnt)
+                    && TryComp(chunkEnt.Value.Owner, out DecalChunkComponent? decalComp)
+                    && decalComp.Decals.Count == 0)
+                    Del(chunkEnt.Value.Owner);
             }
         }
 
