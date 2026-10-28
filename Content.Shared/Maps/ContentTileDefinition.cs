@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Pathfinding.Prototypes; // RimFortress
 using Content.Shared.Atmos;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Shuttles.Systems;
@@ -144,6 +145,12 @@ public sealed partial class ContentTileDefinition : IPrototype, IInheritingProto
     /// </summary>
     [DataField]
     public float PathfindingCost;
+
+    /// <summary>
+    /// Tags assigned to this tile during pathfinding.
+    /// </summary>
+    [DataField]
+    public HashSet<ProtoId<PathTagPrototype>> PathTags = new();
     // RimFortress End
 
     public void AssignTileId(ushort id)
