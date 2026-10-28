@@ -100,6 +100,16 @@ public sealed class RfVars : CVars
 
     #endregion
 
+    #region World Map
+
+    /// <summary>
+    /// How many chunks of the world map are redrawn into textures per frame
+    /// </summary>
+    public static readonly CVarDef<int> WorldMapChunksPerFrame =
+        CVarDef.Create("worldmap.chunks_per_frame", 4, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    #endregion
+
     #region User Interface
 
     /// <summary>
