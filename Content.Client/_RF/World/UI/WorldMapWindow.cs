@@ -43,7 +43,6 @@ public sealed partial class WorldMapWindow : RfWindow
     public void Set(EntityUid? mapUid)
     {
         WorldMap.MapUid = mapUid;
-        WorldMap.UpdateMap();
 
         if (_entity.TryGetComponent(_player.LocalEntity, out RimFortressPlayerComponent? player))
             FactionColor.Color = player.FactionColor;

@@ -83,6 +83,33 @@ public sealed class RfVars : CVars
 
     #endregion
 
+    #region Fog of War
+
+    /// <summary>
+    /// How many frozen chunks the client copies per frame. Lower values smooth out the load spikes
+    /// </summary>
+    public static readonly CVarDef<int> FogChunksPerFrame =
+        CVarDef.Create("fog.chunks_per_frame", 2, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    /// <summary>
+    /// Maximum number of frozen chunks kept on the client. When the limit is exceeded, the oldest chunks are
+    /// removed. 0 means no limit
+    /// </summary>
+    public static readonly CVarDef<int> FogMaxFrozenChunks =
+        CVarDef.Create("fog.max_frozen_chunks", 0, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    #endregion
+
+    #region World Map
+
+    /// <summary>
+    /// How many chunks of the world map are redrawn into textures per frame
+    /// </summary>
+    public static readonly CVarDef<int> WorldMapChunksPerFrame =
+        CVarDef.Create("worldmap.chunks_per_frame", 4, CVar.CLIENT | CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    #endregion
+
     #region User Interface
 
     /// <summary>

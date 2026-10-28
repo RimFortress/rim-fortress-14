@@ -419,3 +419,17 @@ public abstract partial class SharedBiomeSystem : EntitySystem
         return noiseCopy;
     }
 }
+
+// RimFortress Start
+public sealed class BiomeChunkLoaded(Entity<BiomeComponent, MapGridComponent> grid, Vector2i chunk) : EntityEventArgs
+{
+    public Entity<BiomeComponent, MapGridComponent> Grid = grid;
+    public Vector2i Chunk = chunk;
+}
+
+public sealed class BiomeChunkUnloaded(Entity<BiomeComponent, MapGridComponent> grid, Vector2i chunk) : EntityEventArgs
+{
+    public Entity<BiomeComponent, MapGridComponent> Grid = grid;
+    public Vector2i Chunk = chunk;
+}
+// RimFortress End

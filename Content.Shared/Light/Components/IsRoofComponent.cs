@@ -5,7 +5,7 @@ namespace Content.Shared.Light.Components;
 /// <summary>
 /// Counts the tile this entity on as being rooved.
 /// </summary>
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)] // RimFortress: raise AfterAutoHandleState
 public sealed partial class IsRoofComponent : Component
 {
     [DataField, AutoNetworkedField]
