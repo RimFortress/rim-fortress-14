@@ -6,16 +6,15 @@ using Content.Shared.Parallax.Biomes;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
 using Robust.Shared.Network;
-using Robust.Shared.Player;
 
 namespace Content.Server._RF.Parallax.Fog;
 
-public sealed class FogOfWarSystem : SharedFogOfWarSystem
+public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
 {
     [Dependency] private TransformSystem _transform = default!;
     [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private EntityQuery<FogOfWarComponent> _fogQuery = default!;
-    [Dependency] private EntityQuery<BiomeComponent> _biomeQuery = default!;
+    [Dependency] private EntityQuery<FogOfWarComponent> _fogQuery;
+    [Dependency] private EntityQuery<BiomeComponent> _biomeQuery;
 
     /// <summary>
     /// Chunks that the player has visited and that are not loaded for him right now
@@ -27,17 +26,7 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
     /// </summary>
     private readonly Dictionary<EntityUid, Dictionary<Vector2i, HashSet<NetUserId>>> _viewers = new();
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<BiomeChunkLoaded>(OnChunkLoaded);
-        SubscribeLocalEvent<BiomeChunkUnloaded>(OnChunkUnloaded);
-        SubscribeLocalEvent<FogOfWarComponent, ComponentShutdown>(OnShutdown);
-
-        SubscribeNetworkEvent<FogOfWarFullStateRequest>(OnFullStateRequest);
-    }
-
+    [SubscribeLocalEvent]
     private void OnShutdown(Entity<FogOfWarComponent> ent, ref ComponentShutdown args)
     {
         _viewers.Remove(ent);
@@ -48,6 +37,7 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
         }
     }
 
+    [SubscribeNetworkEvent]
     private void OnFullStateRequest(FogOfWarFullStateRequest msg, EntitySessionEventArgs args)
     {
         var map = GetEntity(msg.Map);
@@ -74,6 +64,7 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
         RaiseNetworkEvent(new FogOfWarFullStateMessage(msg.Map, chunks), args.SenderSession);
     }
 
+    [SubscribeLocalEvent]
     private void OnChunkLoaded(BiomeChunkLoaded args)
     {
         var map = args.Grid.Owner;
@@ -95,6 +86,7 @@ public sealed class FogOfWarSystem : SharedFogOfWarSystem
         }
     }
 
+    [SubscribeLocalEvent]
     private void OnChunkUnloaded(BiomeChunkUnloaded args)
     {
         var map = args.Grid.Owner;
