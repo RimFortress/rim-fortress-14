@@ -38,7 +38,6 @@ public sealed partial class FogOfWarSystem : SharedFogOfWarSystem
     {
         base.Initialize();
 
-        _overlay.AddOverlay(new FogOfWarTilesOverlay());
         _overlay.AddOverlay(new FogOfWarOverlay());
 
         SubscribeNetworkEvent<FogOfWarChunkFrozen>(OnChunkFrozen);
