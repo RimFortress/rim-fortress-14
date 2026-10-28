@@ -244,6 +244,9 @@ public abstract partial class SharedUtilityAiSystem : EntitySystem
 
             var score = GetScore(ent, goal);
 
+            if (score <= 0f)
+                continue;
+
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (score == 1f)
             {
