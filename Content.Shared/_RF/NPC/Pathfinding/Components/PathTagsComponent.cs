@@ -8,9 +8,9 @@ namespace Content.Shared._RF.NPC.Pathfinding.Components;
 /// A component that stores the current entities' path search tags.
 /// </summary>
 /// <remarks>
-/// The tags are changed only through <see cref="RfPathfindingSystem"/>, which keeps the navigation map up to date.
+/// The tags are changed only through <see cref="SharedRfPathfindingSystem"/>, which keeps the navigation map up to date.
 /// </remarks>
-[RegisterComponent, Access(typeof(RfPathfindingSystem))]
+[RegisterComponent, Access(typeof(SharedRfPathfindingSystem))]
 public sealed partial class PathTagsComponent : Component
 {
     /// <summary>

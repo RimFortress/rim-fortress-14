@@ -19,7 +19,7 @@ namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 /// <summary>
 /// Path profiles: the rules by which the cost of path nodes is calculated.
 /// </summary>
-public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionChecker, IPathAlgorithmRunner
+public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathConditionChecker, IPathAlgorithmRunner
 {
     [Dependency] private IPrototypeManager _proto = null!;
     [Dependency] private MathCurvesSystem _curves = null!;

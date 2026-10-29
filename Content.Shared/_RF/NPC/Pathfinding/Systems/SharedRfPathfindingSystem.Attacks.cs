@@ -17,7 +17,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 
 // Damage that the agent is able to deal.
-public sealed partial class RfPathfindingSystem
+public abstract partial class SharedRfPathfindingSystem
 {
     [Dependency] private ItemSlotsSystem _slots = null!;
     [Dependency] private SharedContainerSystem _container = null!;

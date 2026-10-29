@@ -61,6 +61,16 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     private static readonly ProtoId<TagPrototype> AllowBiomeLoadingTag = "AllowBiomeLoading";
     private static readonly ProtoId<TagPrototype> NoSaveTag = "NoSaveOnModify"; // RimFortress
 
+    // RimFortress Start
+    /// <summary>
+    /// True while a biome chunk is being loaded or unloaded. The tiles and entities that are created or deleted
+    /// at that time are what the biome generates by itself, so they do not change anything for the pathfinding,
+    /// which can calculate the same data without them. Reacting to them would rebuild the navigation map
+    /// every time the loaded area moves.
+    /// </summary>
+    public bool IsProcessingChunk { get; private set; }
+    // RimFortress End
+
     private List<(Vector2i, Tile)> _tiles = new();
 
     private ObjectPool<HashSet<Vector2i>> _tilePool =
@@ -475,7 +485,18 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
                 continue;
 
             // Load NOW!
-            LoadChunk(component, gridUid, grid, chunk, seed);
+            // RimFortress Start
+            IsProcessingChunk = true;
+
+            try
+            {
+                LoadChunk(component, gridUid, grid, chunk, seed);
+            }
+            finally
+            {
+                IsProcessingChunk = false;
+            }
+            // RimFortress End
         }
     }
 
@@ -916,7 +937,18 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
 
             // Unload NOW!
             tiles ??= new List<(Vector2i, Tile)>(ChunkSize * ChunkSize);
-            UnloadChunk(component, gridUid, grid, chunk, seed, tiles);
+            // RimFortress Start
+            IsProcessingChunk = true;
+
+            try
+            {
+                UnloadChunk(component, gridUid, grid, chunk, seed, tiles);
+            }
+            finally
+            {
+                IsProcessingChunk = false;
+            }
+            // RimFortress End
         }
     }
 

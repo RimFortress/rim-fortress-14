@@ -33,7 +33,7 @@ public readonly record struct PathNodeGoal(
 /// </summary>
 /// <param name="Agent">
 /// The agent that searches for the path. It must have started a request with
-/// <see cref="Systems.RfPathfindingSystem.BeginRequest"/>, the cost of nodes is calculated by its profile.
+/// <see cref="Systems.SharedRfPathfindingSystem.BeginRequest"/>, the cost of nodes is calculated by its profile.
 /// </param>
 /// <param name="Start">Where the path starts.</param>
 /// <param name="Target">Where the path must lead, null if the algorithm does not search for a destination.</param>

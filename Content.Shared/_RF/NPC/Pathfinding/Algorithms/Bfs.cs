@@ -13,8 +13,16 @@ public sealed partial class Bfs : BasePathAlgorithm<Bfs>
     public float Range = 20f;
 
     /// <summary>
-    /// The maximum number of nodes the search is allowed to expand.
+    /// The maximum number of nodes the search is allowed to expand, 0 for no limit.
     /// </summary>
     [DataField]
     public int MaxNodes = 400;
+
+    /// <summary>
+    /// The maximum number of chunks of the navigation map the search is allowed to build, 0 for no limit.
+    /// The map is built as the search reaches the places that are not on it yet, chunks that are already on the
+    /// map are free.
+    /// </summary>
+    [DataField]
+    public int MaxChunks = 8;
 }

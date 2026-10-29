@@ -8,14 +8,14 @@ namespace Content.Shared._RF.NPC.Pathfinding;
 /// <summary>
 /// How close a node is to the nearest source of a path tag.
 /// </summary>
-/// <param name="Tag">The index of the tag in the tag cache of <see cref="Systems.RfPathfindingSystem"/>.</param>
+/// <param name="Tag">The index of the tag in the tag cache of <see cref="Systems.SharedRfPathfindingSystem"/>.</param>
 /// <param name="Distance">
-/// The distance to the nearest source in steps of <see cref="Systems.RfPathfindingSystem.DistanceStep"/>,
+/// The distance to the nearest source in steps of <see cref="Systems.SharedRfPathfindingSystem.DistanceStep"/>,
 /// 0 if the source is on the node itself.
 /// </param>
 public readonly record struct PathInfluence(byte Tag, byte Distance);
 
-[InlineArray(RfPathfindingSystem.InfluenceSlots)]
+[InlineArray(SharedRfPathfindingSystem.InfluenceSlots)]
 public struct PathInfluenceSlots
 {
     private PathInfluence _element0;

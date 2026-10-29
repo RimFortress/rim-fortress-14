@@ -8,7 +8,7 @@ using Robust.Shared.Timing;
 namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 
 // Path tags of entities.
-public sealed partial class RfPathfindingSystem
+public abstract partial class SharedRfPathfindingSystem
 {
     [Dependency] private IGameTiming _timing = null!;
     [Dependency] private SharedTransformSystem _transform = null!;

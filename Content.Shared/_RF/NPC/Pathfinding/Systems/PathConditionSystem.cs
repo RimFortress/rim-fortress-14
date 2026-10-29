@@ -6,7 +6,7 @@ namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 /// <typeparam name="T">Path condition type.</typeparam>
 public abstract partial class PathConditionSystem<T> : EntitySystem where T : BasePathCondition<T>
 {
-    [Dependency] protected RfPathfindingSystem Pathfinding = null!;
+    [Dependency] protected SharedRfPathfindingSystem Pathfinding = null!;
     
     public override void Initialize()
     {

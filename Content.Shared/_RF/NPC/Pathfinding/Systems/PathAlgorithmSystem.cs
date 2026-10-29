@@ -9,7 +9,7 @@ namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 /// <typeparam name="T">Path algorithm type.</typeparam>
 public abstract partial class PathAlgorithmSystem<T> : EntitySystem where T : BasePathAlgorithm<T>
 {
-    [Dependency] protected RfPathfindingSystem Pathfinding = null!;
+    [Dependency] protected SharedRfPathfindingSystem Pathfinding = null!;
 
     public override void Initialize()
     {
@@ -27,7 +27,7 @@ public abstract partial class PathAlgorithmSystem<T> : EntitySystem where T : Ba
     /// Searches for a path.
     /// </summary>
     /// <remarks>
-    /// The cost of a node is calculated by <see cref="RfPathfindingSystem.EvaluateNode"/>. The method must call
+    /// The cost of a node is calculated by <see cref="SharedRfPathfindingSystem.EvaluateNode"/>. The method must call
     /// <see cref="PathJob.Yield"/> regularly, and must stop when <see cref="PathJob.Token"/> is cancelled.
     /// </remarks>
     /// <param name="search">The input of the search.</param>
