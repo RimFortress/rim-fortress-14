@@ -1,3 +1,15 @@
+# Every tile with a body that does not move is the source of it. The influence is how close to such a body a node is,
+# the profiles use it to keep the path at a distance, as far as the size of the agent needs.
+- type: pathTag
+  id: Obstacle
+  influence: 0.75
+  # One next to the body and nothing at the edge of the radius, the closer to the body the node is, the worse.
+  influenceCurve:
+  - mul:
+    - float: -1.3333
+  - add:
+    - float: 1
+
 - type: pathTag
   id: Lava
 

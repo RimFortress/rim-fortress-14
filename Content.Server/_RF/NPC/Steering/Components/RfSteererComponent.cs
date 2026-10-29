@@ -31,10 +31,19 @@ public sealed partial class RfSteererComponent : Component
     public float Gain = 0.5f;
 
     /// <summary>
-    /// How fast the agent goes close to the end of the path, for each meter left to go.
+    /// The share of the sideways velocity that the agent counters in a tick. It is small because the mover turns the
+    /// velocity to the input, and a strong correction to the side makes the agent twitch.
     /// </summary>
     [DataField]
-    public float ApproachGain = 3f;
+    public float SideGain = 0.15f;
+
+    /// <summary>
+    /// The share of the distance left to the end of the path that the agent covers between two decisions when it is
+    /// close to it. The agent keeps its speed until the last moment it can stop at, and this only keeps it from
+    /// twitching around the end: the lower it is, the more gently the agent comes to a stop.
+    /// </summary>
+    [DataField]
+    public float ApproachGain = 0.5f;
 
     /// <summary>
     /// How far from other bodies the agent keeps, besides the radii.
@@ -72,6 +81,61 @@ public sealed partial class RfSteererComponent : Component
     /// </summary>
     [DataField]
     public float StopSpeed = 0.25f;
+
+    /// <summary>
+    /// How fast the agent turns to where it goes, in degrees a second.
+    /// </summary>
+    [DataField]
+    public float TurnSpeed = 720f;
+
+    /// <summary>
+    /// How much farther than the range of the order the agent has to be pushed from the place it has arrived at to go
+    /// back to it. Without it, an agent that is nudged back and forth around the border of the range keeps starting
+    /// and stopping.
+    /// </summary>
+    [DataField]
+    public float RestartMargin = 0.3f;
+
+    /// <summary>
+    /// When the last order was carried out.
+    /// </summary>
+    public TimeSpan FinishedAt;
+
+    /// <summary>
+    /// The agent is stuck if it gets no closer to the end of the path for this long, even if it keeps moving: it can go
+    /// from side to side in front of something without ever getting by it.
+    /// </summary>
+    [DataField]
+    public TimeSpan NoProgressTime = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// The agent has made progress if it is this much closer to the end of the path than it was.
+    /// </summary>
+    [DataField]
+    public float ProgressDistance = 0.5f;
+
+    /// <summary>
+    /// How far from a place where the agent got stuck the paths that are searched for after it cost more, and how much.
+    /// </summary>
+    [DataField]
+    public float AvoidRadius = 2.5f;
+
+    /// <summary>
+    /// See <see cref="AvoidRadius"/>.
+    /// </summary>
+    [DataField]
+    public float AvoidCost = 40f;
+
+    /// <summary>
+    /// The paths are not made straighter during the order: the agent has got stuck on the way, and the path that is
+    /// straighter than the one that was found is the one it got stuck on.
+    /// </summary>
+    public bool NoSmoothing;
+
+    /// <summary>
+    /// The places where the agent has got stuck during the order, the paths do not lead there again.
+    /// </summary>
+    public List<Content.Shared._RF.NPC.Pathfinding.PathAvoid> Avoid = new();
 
     /// <summary>
     /// The agent is stuck if it does not move farther than <see cref="StuckDistance"/> for this long while it is told to move.

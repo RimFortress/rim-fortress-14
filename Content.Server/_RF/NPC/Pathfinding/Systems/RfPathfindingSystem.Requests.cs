@@ -62,6 +62,7 @@ public sealed partial class RfPathfindingSystem
     /// The region the target takes up, in the coordinates of the entity of <paramref name="target"/>. The range is
     /// counted from it, so a target that is big and solid can be reached.
     /// </param>
+    /// <param name="avoid">The places the path should not go by, such as the ones where the agent got stuck.</param>
     /// <returns>False if there is nothing to search with, no profile can be used.</returns>
     [PublicAPI]
     public bool RequestPath(
@@ -69,7 +70,8 @@ public sealed partial class RfPathfindingSystem
         EntityCoordinates? target,
         float range,
         ProtoId<PathProfilePrototype>? profile = null,
-        Box2? targetBounds = null)
+        Box2? targetBounds = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
     {
         CancelPath(new Entity<PathProfilesComponent?>(agent.Owner, agent.Comp1));
 
@@ -90,6 +92,7 @@ public sealed partial class RfPathfindingSystem
         comp.RequestTarget = target;
         comp.RequestRange = range;
         comp.RequestTargetBounds = targetBounds;
+        comp.RequestAvoid = avoid == null ? null : new List<PathAvoid>(avoid);
         comp.RequestProfileIndex = -1;
         comp.RequestStatus = PathRequestStatus.Searching;
 
@@ -194,6 +197,7 @@ public sealed partial class RfPathfindingSystem
         comp.RequestProfileIndex = 0;
         comp.RequestTarget = null;
         comp.RequestTargetBounds = null;
+        comp.RequestAvoid = null;
         comp.RequestStatus = PathRequestStatus.None;
         comp.RequestResult = PathSearchResult.NoPath;
         comp.RequestProfile = null;
@@ -243,7 +247,8 @@ public sealed partial class RfPathfindingSystem
                 profile.Algorithm,
                 this,
                 comp.JobCancel.Token,
-                comp.RequestTargetBounds);
+                comp.RequestTargetBounds,
+                comp.RequestAvoid);
 
             _jobs.EnqueueJob(comp.Job);
             return true;

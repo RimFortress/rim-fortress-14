@@ -506,10 +506,22 @@ public sealed partial class RfPathfindingSystem
 
     private static void LinkPolys(RfPathPoly polyA, RfPathPoly polyB)
     {
-        // Need to ensure they intersect by at least 2 tiles.
-        var overlap = Box2.Area(polyA.Box.Enlarged(StepOffset).Intersect(polyB.Box.Enlarged(StepOffset)));
+        var a = polyA.Box;
+        var b = polyB.Box;
+        var overlapX = MathF.Min(a.Right, b.Right) - MathF.Max(a.Left, b.Left);
+        var overlapY = MathF.Min(a.Top, b.Top) - MathF.Max(a.Bottom, b.Bottom);
 
-        if (overlap <= 0.5f / SubStep)
+        // The polys are made of the points, which are DistanceStep apart, and are next to each other if they have
+        // a border at least as long as that. A tile that is divided into small polys by what influences it must stay
+        // in one piece, or the map falls apart into islands that cannot be walked between.
+        const float epsilon = 0.001f;
+        const float contact = DistanceStep - epsilon;
+
+        var touching = MathF.Abs(overlapX) < epsilon && overlapY >= contact
+                       || MathF.Abs(overlapY) < epsilon && overlapX >= contact
+                       || overlapX > epsilon && overlapY > epsilon;
+
+        if (!touching)
             return;
 
         polyA.AddNeighbor(polyB);

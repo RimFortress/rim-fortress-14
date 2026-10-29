@@ -240,4 +240,142 @@ public sealed class RfSteeringTest : GameTest
             Assert.That(_transform.GetWorldPosition(other).X, Is.EqualTo(2.5f).Within(0.4f));
         });
     }
+
+    /// <summary>
+    /// An agent arrives with its face to where it was going, braking with the input must not turn it around.
+    /// </summary>
+    [Test]
+    public async Task TestFacesForwardOnArrival([Values("Plating", "FloorIce")] string floor)
+    {
+        await Setup(floor);
+        await Pair.Server.WaitPost(() => Go(floor == "Plating" ? 30.5f : 60.5f, 1, 0.3f));
+
+        var (status, _, _, _) = await Run(1500);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(status, Is.EqualTo(RfSteeringStatus.InRange));
+
+            var facing = _transform.GetWorldRotation(_mob).ToWorldVec();
+            Assert.That(facing.X, Is.GreaterThan(0.9f), "the agent must look where it went, not back");
+        });
+    }
+
+    /// <summary>
+    /// An agent that is pressed against something it cannot pass must not twitch, and must give up after a while.
+    /// </summary>
+    [Test]
+    public async Task TestDoesNotTwitchAgainstWall()
+    {
+        await Setup("Plating");
+
+        EntityUid block = default;
+        await Pair.Server.WaitPost(() =>
+        {
+            block = _entMan.SpawnAtPosition("TestRfBlock", new EntityCoordinates(_grid, 15.5f, 1.5f));
+
+            var path = new List<PathNodeRef>();
+
+            for (var x = 2; x < 30; x++)
+            {
+                path.Add(new PathNodeRef(_grid.Owner, default, 0, new Box2(x, 1, x + 1, 2)));
+            }
+
+            // The wall is on the way and the agent is told not to avoid it, as if it were the target.
+            var result = new PathSearchResult(PathSearchStatus.Path, path, new());
+            Assert.That(_entMan.System<RfSteeringSystem>().Follow(
+                _mob, result, new EntityCoordinates(_grid, 30.5f, 1.5f), 0.3f, null, block));
+        });
+
+        var flips = 0;
+        var last = 0f;
+        var status = RfSteeringStatus.Moving;
+
+        for (var i = 0; i < 300; i++)
+        {
+            await Pair.Server.WaitRunTicks(1);
+            await Pair.Server.WaitPost(() =>
+            {
+                status = _entMan.GetComponent<RfSteeringComponent>(_mob).Status;
+                var input = _entMan.GetComponent<Content.Shared.Movement.Components.InputMoverComponent>(_mob)
+                    .CurTickSprintMovement.X;
+
+                // Only after the agent has got to the wall.
+                if (i > 100 && Math.Abs(input) > 0.05f)
+                {
+                    if (last != 0f && Math.Sign(input) != Math.Sign(last))
+                        flips++;
+
+                    last = input;
+                }
+            });
+        }
+
+        TestContext.Out.WriteLine($"MEASURE wall: status {status}, input flips {flips}");
+        Assert.That(flips, Is.LessThan(5), "the input must not jump from side to side");
+        Assert.That(status, Is.EqualTo(RfSteeringStatus.Stuck));
+    }
+
+    /// <summary>
+    /// Two agents are to stand close to each other, as when they talk. They must get there and stop.
+    /// </summary>
+    [Test]
+    public async Task TestAgentsStandCloseTogether()
+    {
+        await Setup("Plating");
+
+        EntityUid other = default;
+        await Pair.Server.WaitPost(() =>
+        {
+            other = _entMan.SpawnAtPosition("TestRfSteerMob", new EntityCoordinates(_grid, 24.5f, 1.5f));
+            Go(_mob, 2, 12.0f, 1, 0.3f);
+            Go(other, 24, 12.9f, 1, 0.3f);
+        });
+
+        var statuses = (RfSteeringStatus.Moving, RfSteeringStatus.Moving);
+
+        for (var i = 0; i < 600 && (statuses.Item1 == RfSteeringStatus.Moving || statuses.Item2 == RfSteeringStatus.Moving); i++)
+        {
+            await Pair.Server.WaitRunTicks(1);
+            await Pair.Server.WaitPost(() =>
+            {
+                statuses = (_entMan.GetComponent<RfSteeringComponent>(_mob).Status,
+                    _entMan.GetComponent<RfSteeringComponent>(other).Status);
+            });
+        }
+
+        TestContext.Out.WriteLine($"MEASURE together: {statuses}");
+        Assert.That(statuses.Item1, Is.Not.EqualTo(RfSteeringStatus.Moving));
+        Assert.That(statuses.Item2, Is.Not.EqualTo(RfSteeringStatus.Moving));
+    }
+
+    /// <summary>
+    /// On the ground an agent goes at full speed to the last moment and stops short, it does not slow down early as if
+    /// it were on ice.
+    /// </summary>
+    [Test]
+    public async Task TestKeepsSpeedUntilTheEndOnFloor()
+    {
+        await Setup("Plating");
+        await Pair.Server.WaitPost(() => Go(30.5f, 1, 0.3f));
+
+        var speedBefore = 0f;
+        var status = RfSteeringStatus.Moving;
+
+        for (var i = 0; i < 1000 && status == RfSteeringStatus.Moving; i++)
+        {
+            await Pair.Server.WaitRunTicks(1);
+            await Pair.Server.WaitPost(() =>
+            {
+                status = _entMan.GetComponent<RfSteeringComponent>(_mob).Status;
+
+                // A meter and a half before the end.
+                if (_transform.GetWorldPosition(_mob).X < 29f)
+                    speedBefore = _entMan.GetComponent<PhysicsComponent>(_mob).LinearVelocity.Length();
+            });
+        }
+
+        TestContext.Out.WriteLine($"MEASURE floor speed 1.5 m before the end: {speedBefore:F2}");
+        Assert.That(speedBefore, Is.GreaterThan(4f), "the agent must not have begun to slow down yet");
+    }
 }

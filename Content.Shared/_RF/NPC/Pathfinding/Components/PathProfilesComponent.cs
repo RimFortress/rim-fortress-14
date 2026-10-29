@@ -75,6 +75,12 @@ public sealed partial class PathProfilesComponent : Component
     public Box2? RequestTargetBounds;
 
     /// <summary>
+    /// The places the path should not go by.
+    /// </summary>
+    [ViewVariables]
+    public List<PathAvoid>? RequestAvoid;
+
+    /// <summary>
     /// The job that is searching for the path.
     /// </summary>
     [ViewVariables]

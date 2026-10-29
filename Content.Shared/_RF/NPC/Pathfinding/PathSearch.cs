@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Pathfinding.Components;
@@ -31,6 +32,16 @@ public readonly record struct PathNodeGoal(
     StateKey<float> RangeKey);
 
 /// <summary>
+/// A place the path should not go by: it costs more the closer to the place a node is. It is how a request remembers
+/// the places that did not work, where the agent got stuck, so that the next path does not lead there again.
+/// </summary>
+/// <param name="Graph">The grid.</param>
+/// <param name="Position">The place, in the coordinates of the grid.</param>
+/// <param name="Radius">How far from the place the nodes cost more.</param>
+/// <param name="Cost">How much more a node at the place costs, it falls to nothing at the radius.</param>
+public readonly record struct PathAvoid(EntityUid Graph, Vector2 Position, float Radius, float Cost);
+
+/// <summary>
 /// The input of a path search algorithm.
 /// </summary>
 /// <param name="Agent">
@@ -46,13 +57,15 @@ public readonly record struct PathNodeGoal(
 /// the range is counted from the region and not from the point: a target that is big and solid cannot be reached
 /// at its center.
 /// </param>
+/// <param name="Avoid">The places the path should not go by, null if there are none.</param>
 public readonly record struct PathSearch(
     Entity<PathProfilesComponent, GoapComponent> Agent,
     EntityCoordinates Start,
     EntityCoordinates? Target,
     float Range,
     PathJob Job,
-    Box2? TargetBounds = null);
+    Box2? TargetBounds = null,
+    IReadOnlyList<PathAvoid>? Avoid = null);
 
 public enum PathSearchStatus : byte
 {

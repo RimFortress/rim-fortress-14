@@ -132,6 +132,33 @@ public abstract partial class RfPathAlgorithmSystem<T> : PathAlgorithmSystem<T> 
         => Vector2.Transform(_transform.ToMapCoordinates(coordinates).Position, _transform.GetInvWorldMatrix(grid));
 
     /// <summary>
+    /// How much more the poly costs for being close to the places that the path should not go by.
+    /// </summary>
+    protected static float AvoidPenalty(in PathSearch search, RfPathPoly poly)
+    {
+        if (search.Avoid is not { Count: > 0 } avoid)
+            return 0f;
+
+        var penalty = 0f;
+        var center = poly.Box.Center;
+
+        for (var i = 0; i < avoid.Count; i++)
+        {
+            var place = avoid[i];
+
+            if (place.Graph != poly.GraphUid)
+                continue;
+
+            var distance = Vector2.Distance(center, place.Position);
+
+            if (distance < place.Radius)
+                penalty += place.Cost * (1f - distance / place.Radius);
+        }
+
+        return penalty;
+    }
+
+    /// <summary>
     /// Evaluates the poly for the agent. Polys with the same facts are evaluated once per search.
     /// </summary>
     protected PathNodeEval Evaluate(PathSearchState state, PathSearch search, RfPathPoly poly, (int Layer, int Mask) collision)

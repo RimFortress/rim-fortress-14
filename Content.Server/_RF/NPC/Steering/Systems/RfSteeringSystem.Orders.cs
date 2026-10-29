@@ -24,6 +24,12 @@ public sealed partial class RfSteeringSystem
     // of the update of the action, because it replaces the plan that the action is a part of.
     private readonly List<EntityUid> _goalStarts = new();
 
+    // For how long after an agent has arrived the restart margin is in effect.
+    private static readonly TimeSpan RestartWindow = TimeSpan.FromSeconds(2);
+
+    // How many places where the agent got stuck are remembered.
+    private const int MaxAvoid = 6;
+
     // The goal of the node that has not been performed: it could not be planned, or it was replaced.
     [SubscribeLocalEvent]
     private void OnGoalEnded(Entity<RfSteererComponent> ent, ref UtilityAiGoalFinished args)
@@ -154,14 +160,19 @@ public sealed partial class RfSteeringSystem
 
         if (steerer.Phase == RfMovePhase.None)
         {
-            // Nothing to do if the agent is there already, a steering that is braking goes on by itself.
-            if (IsInRange(agent, target, entity, range))
+            // Nothing to do if the agent is there already, a steering that is braking goes on by itself. An agent that
+            // has just got there is not sent back for being a little farther than the range, it would twitch.
+            var recent = _timing.CurTime - steerer.FinishedAt < RestartWindow;
+
+            if (IsInRange(agent, target, entity, recent ? range + steerer.RestartMargin : range))
                 return GoapActionResult.Finished;
 
             steerer.Target = target;
             steerer.TargetEntity = entity;
             steerer.Range = range;
             steerer.Repaths = 0;
+            steerer.Avoid.Clear();
+            steerer.NoSmoothing = false;
 
             if (!Search(search, steerer))
                 return GoapActionResult.Failed;
@@ -240,7 +251,22 @@ public sealed partial class RfSteeringSystem
                     ? Fail(agent, steerer)
                     : Done(agent, steerer);
             default:
-                // Stuck or off the path, the path is searched for again.
+                // Stuck or off the path, the path is searched for again, and not by the place where it did not work.
+                if (steering.Status == RfSteeringStatus.Stuck)
+                {
+                    steerer.NoSmoothing = true;
+
+                    if (steerer.Avoid.Count >= MaxAvoid)
+                        steerer.Avoid.RemoveAt(0);
+
+                    steerer.Avoid.Add(new PathAvoid(
+                        steering.Graph,
+                        Transform(agent).LocalPosition,
+                        steerer.AvoidRadius,
+                        steerer.AvoidCost));
+                }
+
+                Log.Debug($"{ToPrettyString(agent)} is {steering.Status} at {Transform(agent).LocalPosition}, searching again ({steerer.Repaths + 1})");
                 steerer.Target = target;
 
                 return ++steerer.Repaths > steerer.MaxRepaths || !Search(search, steerer)
@@ -286,7 +312,7 @@ public sealed partial class RfSteeringSystem
         steerer.SearchedTarget = target;
         steerer.SearchedBounds = bounds;
 
-        return _pathfinding.RequestPath(agent, target, range, targetBounds: bounds);
+        return _pathfinding.RequestPath(agent, target, range, targetBounds: bounds, avoid: steerer.Avoid);
     }
 
     /// <summary>
@@ -318,6 +344,7 @@ public sealed partial class RfSteeringSystem
 
     private GoapActionResult Done(EntityUid agent, RfSteererComponent steerer)
     {
+        steerer.FinishedAt = _timing.CurTime;
         Cancel(agent);
         return GoapActionResult.Finished;
     }

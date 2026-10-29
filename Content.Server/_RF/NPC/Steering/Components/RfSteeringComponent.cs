@@ -105,6 +105,28 @@ public sealed partial class RfSteeringComponent : Component
     public float Radius;
 
     /// <summary>
+    /// Whether the steering made the mover leave the rotation of the agent alone, in which case it turns the agent
+    /// itself: the mover turns it to the input, and the input is against the movement when the agent brakes.
+    /// </summary>
+    public bool AddedNoRotate;
+
+    /// <summary>
+    /// The side the agent is going around a body by, -1 to the right and 1 to the left, 0 if none. It is kept for a
+    /// while so that the agent does not change its mind every decision.
+    /// </summary>
+    public int AvoidSide;
+
+    /// <summary>
+    /// Until when the <see cref="AvoidSide"/> is kept.
+    /// </summary>
+    public TimeSpan AvoidUntil;
+
+    /// <summary>
+    /// The acceleration of the floor the <see cref="Authority"/> is of, relative to the usual one.
+    /// </summary>
+    public float Floor;
+
+    /// <summary>
     /// How many times the <see cref="Authority"/> has been measured.
     /// </summary>
     public int Samples;
@@ -123,6 +145,16 @@ public sealed partial class RfSteeringComponent : Component
     /// Where the agent was when the <see cref="StuckSince"/> started.
     /// </summary>
     public Vector2 StuckPosition;
+
+    /// <summary>
+    /// The least distance to the end of the path that the agent has been at, and when it was last made smaller.
+    /// </summary>
+    public float BestRemaining = float.MaxValue;
+
+    /// <summary>
+    /// See <see cref="BestRemaining"/>.
+    /// </summary>
+    public TimeSpan ProgressSince;
 
     /// <summary>
     /// When the agent last made progress.

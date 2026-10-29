@@ -2,11 +2,13 @@ using System.Numerics;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared.Interaction;
+using Content.Shared.Maps;
 using Content.Shared.Movement.Components;
 using Content.Shared.Movement.Events;
 using Content.Shared.Movement.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
@@ -29,8 +31,12 @@ public sealed partial class RfSteeringSystem : EntitySystem
     [Dependency] private SharedTransformSystem _transform = null!;
     [Dependency] private SharedMoverController _mover = null!;
     [Dependency] private EntityLookupSystem _lookup = null!;
+    [Dependency] private SharedMapSystem _maps = null!;
+    [Dependency] private ITileDefinitionManager _tileDefs = null!;
     [Dependency] private SharedInteractionSystem _interaction = null!;
     [Dependency] private SharedPhysicsSystem _physics = null!;
+
+    [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
     [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery;
     [Dependency] private EntityQuery<MovementSpeedModifierComponent> _modifierQuery;
@@ -39,9 +45,21 @@ public sealed partial class RfSteeringSystem : EntitySystem
     private const float DefaultSpeed = MovementSpeedModifierComponent.DefaultBaseSprintSpeed;
     private const float MinBrake = 1f;
 
+    // The share of the full speed at which a right-angle turn is taken, the turn is slower the sharper it is.
+    private const float CornerSpeed = 0.3f;
+
+    // How far short of the line across the way through a node the agent has reached the node, in meters.
+    private const float NodeReach = 0.12f;
+
     // The least the input changes the speed in a tick, in meters a second, and the most that is believed.
     private const float MinStep = 0.05f;
+
+    // How much faster than it wants the agent can be before it brakes, in meters a second.
+    private const float OverSpeed = 0.2f;
     private const float MaxAuthority = 400f;
+
+    // The least change of the speed by the input, in meters a second a second, that is believed to be the floor.
+    private const float MinSample = 1.5f;
 
     // How many nodes ahead the agent can be in, if it was thrown forward.
     private const int Lookahead = 4;
@@ -79,6 +97,9 @@ public sealed partial class RfSteeringSystem : EntitySystem
             return;
 
         mover.CurTickSprintMovement = Vector2.Zero;
+
+        if (ent.Comp.AddedNoRotate)
+            RemComp<NoRotateOnMoveComponent>(ent);
 
         var ev = new SpriteMoveEvent(false);
         RaiseLocalEvent(ent, ref ev);
@@ -124,11 +145,48 @@ public sealed partial class RfSteeringSystem : EntitySystem
             Decide(uid, steering, steerer, modifier, mover, xform, pos, velocity, now, frameTime);
         }
 
+        if (steering.AddedNoRotate && steering.Status == RfSteeringStatus.Moving)
+            Face(uid, steering, steerer, xform, mover, velocity, frameTime);
+
         var input = GetInput(steering, steerer, modifier, velocity, frameTime);
 
         steering.LastVelocity = velocity;
         steering.LastInput = input;
         SetInput(mover, input, tick);
+    }
+
+    /// <summary>
+    /// Turns the agent to where it goes, and not to where the input points: when it brakes with the input the two
+    /// are opposite, and an agent would come to its target backwards.
+    /// </summary>
+    private void Face(
+        EntityUid uid,
+        RfSteeringComponent steering,
+        RfSteererComponent steerer,
+        TransformComponent xform,
+        InputMoverComponent mover,
+        Vector2 velocity,
+        float frameTime)
+    {
+        // What the agent wants, and where it is going if it wants nothing yet or is sliding.
+        var heading = steering.Desired.LengthSquared() > 0.04f
+            ? steering.Desired
+            : velocity.LengthSquared() > 0.25f
+                ? velocity
+                : Vector2.Zero;
+
+        if (heading == Vector2.Zero)
+            return;
+
+        var target = _mover.GetParentGridAngle(mover).RotateVec(heading).ToWorldAngle();
+        var current = _transform.GetWorldRotation(xform);
+        var difference = Angle.ShortestDistance(current, target);
+        var step = Angle.FromDegrees(steerer.TurnSpeed * frameTime);
+
+        if (Math.Abs(difference.Theta) < 0.001)
+            return;
+
+        _transform.SetWorldRotation(uid, current + Math.Clamp(difference.Theta, -step.Theta, step.Theta));
     }
 
     /// <summary>
@@ -148,29 +206,23 @@ public sealed partial class RfSteeringSystem : EntitySystem
     {
         var previous = steering.Desired;
         var nodes = steering.Nodes;
+
+        AdjustToFloor(steering, modifier, xform);
         var last = nodes.Count - 1;
 
-        // The agent can be pushed ahead or knocked back, it is at the farthest of the nodes near it that it is in.
-        var found = false;
-
-        for (var i = Math.Min(last, steering.Index + Lookahead); i >= steering.Index; i--)
-        {
-            if (!nodes[i].Contains(pos))
-                continue;
-
-            steering.Index = i;
-            found = true;
-            break;
-        }
-
-        // Going around something takes the agent off the nodes, it moves on when it is past the middle of the way
-        // to the next one.
+        // The agent moves on to the next node when it has passed it, which it has if it is past the line across the way
+        // through the node. A node is not passed on getting into its tile: the corner of a corridor is turned at, and
+        // not cut. Going around something takes the agent off the nodes, and being pushed ahead takes it past several.
         while (steering.Index < last)
         {
             var from = nodes[steering.Index].Center;
-            var way = nodes[steering.Index + 1].Center - from;
+            var next = nodes[steering.Index + 1].Center;
 
-            if (Vector2.Dot(pos - from, way) <= way.LengthSquared() * 0.5f)
+            var way = next - from;
+            var length = way.Length();
+
+            // A node is reached a little short of its line too, the agent slows down for the turn and may stop there.
+            if (length > 0.0001f && Vector2.Dot(pos - next, way) / length < -NodeReach)
                 break;
 
             steering.Index++;
@@ -178,7 +230,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
         // The nodes of straight parts of the path are left out, so it is the distance to the path that tells that the
         // agent has left it, and not the distance to its node.
-        if (!found && DistanceToPath(steering, pos) > steerer.LeaveDistance)
+        if (DistanceToPath(steering, pos) > steerer.LeaveDistance)
         {
             Finish(steering, RfSteeringStatus.OffPath);
             return;
@@ -230,17 +282,35 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
         // Near the end the speed is proportional to the distance: the root alone is infinitely steep there and
         // the agent would flip between full speed forward and back every tick.
-        var speed = Math.Min(GetSpeed(modifier), Math.Min(MathF.Sqrt(2f * brake * left), left * steerer.ApproachGain));
+        var approach = steerer.ApproachGain / (Math.Max(steerer.UpdateInterval, 1) * Math.Max(frameTime, 0.001f));
+        var speed = Math.Min(GetSpeed(modifier), Math.Min(MathF.Sqrt(2f * brake * left), left * approach));
 
         var toAim = aim - pos;
         var distance = toAim.Length();
+
+        // The speed from which the agent can take the turn at the node it is heading for.
+        if (steering.Index + 2 <= last && distance > 0.01f)
+        {
+            var after = nodes[steering.Index + 2].Center - aim;
+            var cosine = after.LengthSquared() > 0.0001f ? Vector2.Dot(toAim / distance, after.Normalized()) : 1f;
+
+            if (cosine < 0.95f)
+            {
+                var turn = GetSpeed(modifier) * (CornerSpeed + (1f - CornerSpeed) * Math.Max(cosine, 0f));
+                speed = Math.Min(speed, MathF.Sqrt(turn * turn + 2f * brake * distance));
+            }
+        }
         steering.Desired = distance > 0.01f ? toAim / distance * speed : Vector2.Zero;
 
+        // Whether the agent gets anywhere is judged by where it wants to go and not by where it is allowed to: an agent
+        // that waits for the others to make way for it is as stuck as the one that is pressed against a wall.
+        var wanted = steering.Desired.LengthSquared();
+
         // The agent is not to run into anything, and it is not to crowd the others.
-        steering.Desired = Avoid(uid, steering, steerer, mover, xform, velocity, previous, brake, frameTime);
+        steering.Desired = Avoid(uid, steering, steerer, mover, xform, velocity, previous, toAim, steering.End - pos, brake, now, frameTime);
 
         // Stuck: it is told to move and does not.
-        if (steering.Desired.LengthSquared() < 0.25f || (pos - steering.StuckPosition).Length() > steerer.StuckDistance)
+        if (wanted < 0.25f || (pos - steering.StuckPosition).Length() > steerer.StuckDistance)
         {
             steering.StuckPosition = pos;
             steering.StuckSince = now;
@@ -249,6 +319,39 @@ public sealed partial class RfSteeringSystem : EntitySystem
         {
             Finish(steering, RfSteeringStatus.Stuck);
         }
+
+        // Moving is not getting anywhere: an agent can go to and fro in front of what it cannot get by.
+        if (remaining < steering.BestRemaining - steerer.ProgressDistance)
+        {
+            steering.BestRemaining = remaining;
+            steering.ProgressSince = now;
+        }
+        else if (wanted >= 0.25f && now - steering.ProgressSince > steerer.NoProgressTime)
+        {
+            Finish(steering, RfSteeringStatus.Stuck);
+        }
+    }
+
+    /// <summary>
+    /// The measured response of the agent to the input is of the floor it was measured on. The agent cannot measure
+    /// it again while it keeps going at one speed with one input, so when the floor changes the measure is changed by
+    /// as much as the acceleration of the floor, that the mover applies, has changed.
+    /// </summary>
+    private void AdjustToFloor(RfSteeringComponent steering, MovementSpeedModifierComponent? modifier, TransformComponent xform)
+    {
+        var floor = 1f;
+
+        if (_gridQuery.TryComp(xform.GridUid, out var grid)
+            && _maps.TryGetTileRef(xform.GridUid.Value, grid, xform.Coordinates, out var tile)
+            && _tileDefs[tile.Tile.TypeId] is ContentTileDefinition definition)
+            floor = definition.MobAcceleration ?? 1f;
+
+        if (steering.Samples == 0)
+            steering.Authority = (modifier?.Acceleration ?? MovementSpeedModifierComponent.DefaultAcceleration) * floor;
+        else if (steering.Floor > 0f && !MathHelper.CloseTo(steering.Floor, floor))
+            steering.Authority *= floor / steering.Floor;
+
+        steering.Floor = floor;
     }
 
     private static float DistanceToPath(RfSteeringComponent steering, Vector2 pos)
@@ -289,9 +392,16 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
     /// <summary>
     /// The input that brings the velocity to the desired one. It is not limited to a few directions or to full speed,
-    /// the mover takes any vector no longer than one, and when the desired speed is lower than the current one the
-    /// input points the other way, that brakes much quicker than waiting for the floor to do it.
+    /// the mover takes any vector no longer than one. The mover speeds up toward the direction of the input by itself,
+    /// so the input is the desired velocity, and it is corrected only where the mover does not do it by itself: when
+    /// the agent is faster than it wants to be the input points the other way, that brakes much quicker than
+    /// waiting for the floor to do it, and when it slides to the side the input takes it back.
     /// </summary>
+    /// <remarks>
+    /// The mover turns the velocity, and does not add the correction to it, so the response to the input is not
+    /// the same along the velocity and across it. A correction in proportion to the difference of the velocities
+    /// that is the same in both directions makes the agent twitch from side to side.
+    /// </remarks>
     private static Vector2 GetInput(
         RfSteeringComponent steering,
         RfSteererComponent steerer,
@@ -299,18 +409,33 @@ public sealed partial class RfSteeringSystem : EntitySystem
         Vector2 velocity,
         float frameTime)
     {
-        if (steering.Desired == Vector2.Zero && velocity.Length() <= steerer.StopSpeed * 0.5f)
-            return Vector2.Zero;
-
-        // The mover gives the speed that is proportional to the input when nothing is in the way. What is left is
-        // the difference of the speeds, a share of which is corrected every tick, as the input changes the speed
-        // by the measured amount a tick, so that the correction never overshoots.
-        var speed = GetSpeed(modifier);
         var perTick = Math.Max(steering.Authority * frameTime, MinStep);
-        var input = steering.Desired / speed + (steering.Desired - velocity) / perTick * steerer.Gain;
-        var length = input.Length();
+        Vector2 input;
 
-        return length > 1f ? input / length : input;
+        if (steering.Desired == Vector2.Zero)
+        {
+            if (velocity.Length() <= steerer.StopSpeed * 0.5f)
+                return Vector2.Zero;
+
+            input = -velocity / perTick * steerer.Gain;
+        }
+        else
+        {
+            var length = steering.Desired.Length();
+            var direction = steering.Desired / length;
+            var along = Vector2.Dot(velocity, direction);
+            var across = velocity - direction * along;
+
+            input = steering.Desired / GetSpeed(modifier);
+
+            if (along - length > OverSpeed)
+                input -= direction * ((along - length) / perTick * steerer.Gain);
+
+            input -= across / perTick * steerer.SideGain;
+        }
+
+        var size = input.Length();
+        return size > 1f ? input / size : input;
     }
 
     /// <summary>
@@ -324,16 +449,14 @@ public sealed partial class RfSteeringSystem : EntitySystem
     {
         var strength = steering.LastInput.Length();
 
-        if (steering.Samples == 0)
-            steering.Authority = modifier?.Acceleration ?? MovementSpeedModifierComponent.DefaultAcceleration;
-
         if (strength < 0.3f || frameTime <= 0f)
             return;
 
         var change = Vector2.Dot(velocity - steering.LastVelocity, steering.LastInput / strength) / frameTime / strength;
 
-        // The change against the input, a collision, or a wall tell nothing about the floor.
-        if (change <= 0f)
+        // The change against the input, a collision, or a wall tell nothing about the floor. An agent that is pressed
+        // against something would otherwise "learn" that the input does nothing, and then give the strongest one.
+        if (change < MinSample)
             return;
 
         // The first measures count more, there is nothing but a guess before them.
@@ -345,7 +468,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
     private static float GetSpeed(MovementSpeedModifierComponent? modifier)
         => modifier?.CurrentSprintSpeed is > 0f and var speed ? speed : DefaultSpeed;
 
-    private void SetInput(InputMoverComponent mover, Vector2 input, GameTick tick)
+    private static void SetInput(InputMoverComponent mover, Vector2 input, GameTick tick)
     {
         mover.CurTickSprintMovement = input;
         mover.LastInputTick = tick;
@@ -384,6 +507,13 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.Nodes.Clear();
         steering.Remaining.Clear();
         steering.Index = 0;
+        // A mob in combat mode keeps its rotation to the one who commands it, the steering does not touch that.
+        if (!HasComp<NoRotateOnMoveComponent>(agent))
+        {
+            AddComp<NoRotateOnMoveComponent>(agent);
+            steering.AddedNoRotate = true;
+        }
+
         steering.Bounds = bounds;
         steering.Ignore = ignore;
         steering.Sight = null;
@@ -398,22 +528,36 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.Desired = Vector2.Zero;
         steering.NextDecision = _timing.CurTick;
         steering.StuckSince = _timing.CurTime;
+        steering.BestRemaining = float.MaxValue;
+        steering.ProgressSince = _timing.CurTime;
         steering.StuckPosition = Transform(agent).LocalPosition;
         steering.LastInput = Vector2.Zero;
         steering.Samples = 0;
+
+        var points = new List<Vector2>(path.Count);
 
         foreach (var node in path)
         {
             if (node.Graph != graph)
                 break;
 
-            steering.Nodes.Add(node.Box);
+            points.Add(node.Box.Center);
+        }
+
+        var wholePath = points.Count == path.Count;
+
+        // The path is made of the steps of a grid, the agent is not to walk by it as by rails.
+        points = Smooth(agent, graph, points, steering);
+
+        foreach (var point in points)
+        {
+            steering.Nodes.Add(Box2.CenteredAround(point, Vector2.Zero));
         }
 
         var lastCenter = steering.Nodes[^1].Center;
 
         // The end is the target only if the path leads to it. A body is come up to from the side of the path.
-        steering.End = result.Status == PathSearchStatus.Path && steering.Nodes.Count == path.Count
+        steering.End = result.Status == PathSearchStatus.Path && wholePath
             ? bounds is { } region
                 ? Vector2.Clamp(lastCenter, region.BottomLeft, region.TopRight)
                 : _transform.WithEntityId(target, graph).Position
