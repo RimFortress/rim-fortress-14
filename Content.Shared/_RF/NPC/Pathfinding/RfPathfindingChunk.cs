@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Runtime.InteropServices;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 
@@ -52,6 +53,10 @@ public sealed class RfPathfindingChunk
     [ViewVariables]
     public readonly List<RfPathPortal> Portals = new();
 
+    /// <summary>
+    /// Creates an empty chunk whose points are not calculated yet.
+    /// </summary>
+    /// <param name="origin">The origin of the chunk on the grid.</param>
     public RfPathfindingChunk(Vector2i origin)
     {
         Origin = origin;
@@ -61,21 +66,25 @@ public sealed class RfPathfindingChunk
     /// <summary>
     /// The index in <see cref="Points"/> of the point with the given position in the chunk.
     /// </summary>
+    [PublicAPI, Pure]
     public static int PointIndex(int x, int y) => x * PointsPerSide + y;
 
     /// <summary>
     /// The index in <see cref="Polys"/> of the tile with the given position in the chunk.
     /// </summary>
+    [PublicAPI, Pure]
     public static int TileIndex(int x, int y) => x * RfPathfindingSystem.ChunkSize + y;
 
     /// <summary>
     /// Returns the polys of the tile. The span is valid until the polys of the tile are changed.
     /// </summary>
+    [PublicAPI, Pure]
     public ReadOnlySpan<RfPathPoly> GetPolys(int tile)
         => Polys[tile] is { } polys ? CollectionsMarshal.AsSpan(polys) : default;
 
     /// <summary>
     /// Returns the list of the tile's polys, creating it if needed.
     /// </summary>
+    [PublicAPI]
     public List<RfPathPoly> EnsurePolys(int tile) => Polys[tile] ??= new List<RfPathPoly>(1);
 }

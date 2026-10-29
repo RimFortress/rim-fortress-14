@@ -116,11 +116,13 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <summary>
     /// Returns the index of the tag, which is used in <see cref="PathNodeFacts"/>.
     /// </summary>
+    [PublicAPI, Pure]
     public bool TryGetTagIndex(ProtoId<PathTagPrototype> tag, out int index) => _pathTagIndices.TryGetValue(tag, out index);
 
     /// <summary>
     /// Returns the radius in tiles within which the tag influences nodes.
     /// </summary>
+    [PublicAPI, Pure]
     public float GetTagRadius(int index) => (_pathTagInfluence[index].Length - 1) * DistanceStep;
 
     #region Facts
@@ -128,6 +130,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <summary>
     /// Returns the distance in tiles from the node to the nearest source of the tag.
     /// </summary>
+    [PublicAPI, Pure]
     public bool TryGetDistance(in PathNodeFacts facts, ProtoId<PathTagPrototype> tag, out float distance)
     {
         distance = 0f;
@@ -150,12 +153,14 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <summary>
     /// Is the source of the tag located on the node itself.
     /// </summary>
+    [PublicAPI, Pure]
     public bool HasTag(in PathNodeFacts facts, ProtoId<PathTagPrototype> tag)
         => TryGetDistance(facts, tag, out var distance) && distance == 0f;
 
     /// <summary>
     /// Returns the strength of the tag's influence on the node, 0 if there is none.
     /// </summary>
+    [PublicAPI, Pure]
     public float GetInfluence(in PathNodeFacts facts, ProtoId<PathTagPrototype> tag)
     {
         if (!TryGetTagIndex(tag, out var index))
@@ -176,6 +181,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <summary>
     /// Marks the node as the source of the tag.
     /// </summary>
+    [PublicAPI]
     public void AddTag(ref PathNodeFacts facts, ProtoId<PathTagPrototype> tag)
     {
         if (TryGetTagIndex(tag, out var index))
@@ -186,6 +192,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// Adds the influence of the tag to the node: the node is at the given distance in tiles from the nearest
     /// source of the tag. If the node is influenced by the tag already, the closer source is kept.
     /// </summary>
+    [PublicAPI]
     public void AddInfluence(ref PathNodeFacts facts, int tagIndex, float distance)
     {
         var steps = (int) MathF.Round(distance / DistanceStep);
@@ -255,6 +262,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <summary>
     /// Returns the profiles of the agent that it is able to use now, in the order in which they must be tried.
     /// </summary>
+    [PublicAPI, Pure]
     public List<ProtoId<PathProfilePrototype>> GetProfiles(Entity<PathProfilesComponent, GoapComponent> agent)
     {
         var result = new List<ProtoId<PathProfilePrototype>>();
@@ -273,6 +281,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// Prepares the agent for a path request with the profile: the state of the request is written to the
     /// agent's <see cref="PathProfilesComponent"/>. An agent can have only one request at a time.
     /// </summary>
+    [PublicAPI]
     public bool BeginRequest(Entity<PathProfilesComponent, GoapComponent> agent, ProtoId<PathProfilePrototype> profileId)
     {
         if (!_proto.TryIndex(profileId, out var profile))
@@ -302,6 +311,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <param name="agent">An agent that has started a request with <see cref="BeginRequest"/>.</param>
     /// <param name="facts">Facts about the node.</param>
     /// <param name="blocked">Is the node blocked for the agent by collision.</param>
+    [PublicAPI]
     public PathNodeEval EvaluateNode(Entity<PathProfilesComponent, GoapComponent> agent, in PathNodeFacts facts, bool blocked)
     {
         var comp = agent.Comp1;
@@ -352,6 +362,13 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
         return true;
     }
 
+    /// <summary>
+    /// Checks the path condition by raising an event that is handled by the condition's system.
+    /// </summary>
+    /// <param name="ctx">The node and the agent for which the path is being searched.</param>
+    /// <param name="condition">Path condition.</param>
+    /// <returns>True, if the check is passed; otherwise, false.</returns>
+    [PublicAPI, Pure]
     public bool CheckCondition<T>(PathNodeContext ctx, T condition) where T : BasePathCondition<T>
     {
         var ev = new PathConditionCheck<T>(ctx, condition, false);
@@ -359,9 +376,24 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
         return ev.Result;
     }
 
+    /// <summary>
+    /// Checks the path condition, taking its <see cref="BasePathCondition{T}.Invert"/> into account.
+    /// </summary>
+    /// <param name="ctx">The node and the agent for which the path is being searched.</param>
+    /// <param name="condition">Path condition.</param>
+    /// <returns>True, if the check is passed; otherwise, false.</returns>
     [PublicAPI, Pure]
     public bool CheckCondition(PathNodeContext ctx, PathCondition condition) => condition.Check(ctx, this);
 
+    /// <summary>
+    /// Runs the path search algorithm by raising an event that is handled by the algorithm's system.
+    /// </summary>
+    /// <param name="search">The input of the search.</param>
+    /// <param name="algorithm">The algorithm and its settings.</param>
+    /// <returns>
+    /// The result of the search, which is finished when the search is done; no path if nothing handles the algorithm.
+    /// </returns>
+    [PublicAPI]
     public Task<PathSearchResult> Search<T>(PathSearch search, T algorithm) where T : BasePathAlgorithm<T>
     {
         var ev = new PathAlgorithmSearch<T>(search, algorithm, null);

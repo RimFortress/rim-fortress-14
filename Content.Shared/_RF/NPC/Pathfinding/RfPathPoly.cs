@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Utility;
 
@@ -11,6 +12,11 @@ namespace Content.Shared._RF.NPC.Pathfinding;
 /// its polys are replaced and marked <see cref="RfPathfindingFlags.Invalid"/>, so anything that holds a poly
 /// for a long time (a path search job) must check <see cref="IsValid"/> or hold a <see cref="Ref"/> instead.
 /// </remarks>
+/// <param name="graphUid">The grid that owns the poly.</param>
+/// <param name="chunkOrigin">The origin of the chunk of the grid that contains the poly.</param>
+/// <param name="tileIndex">The index of the poly's tile in the chunk.</param>
+/// <param name="box">The region of the grid that the poly covers.</param>
+/// <param name="data">The data of the poly.</param>
 public sealed class RfPathPoly(
     EntityUid graphUid,
     Vector2i chunkOrigin,
@@ -71,11 +77,13 @@ public sealed class RfPathPoly(
     /// <summary>
     /// Has the poly not been replaced after a rebuild of its chunk.
     /// </summary>
+    [PublicAPI, Pure]
     public bool IsValid() => (Data.Flags & RfPathfindingFlags.Invalid) == 0;
 
     /// <summary>
     /// Makes the poly a neighbor of this one, if it is not already.
     /// </summary>
+    [PublicAPI]
     public void AddNeighbor(RfPathPoly poly)
     {
         if (!Neighbors.Contains(poly))
@@ -86,6 +94,7 @@ public sealed class RfPathPoly(
     /// Is the poly the same region of the map as the other one, even if their facts differ.
     /// Neighbors are not compared.
     /// </summary>
+    [PublicAPI, Pure]
     public bool IsEquivalent(RfPathPoly other)
     {
         return GraphUid == other.GraphUid &&
@@ -98,6 +107,7 @@ public sealed class RfPathPoly(
     /// <summary>
     /// Is the poly the same as the other one, including its facts. Neighbors are not compared.
     /// </summary>
+    [PublicAPI, Pure]
     public bool Equals(RfPathPoly? other)
     {
         if (ReferenceEquals(this, other))

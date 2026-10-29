@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Runtime.CompilerServices;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 using Content.Shared.Damage;
@@ -47,6 +48,10 @@ public struct PathNodeFacts : IEquatable<PathNodeFacts>
     /// </summary>
     public DamageSpecifier? Destroy;
 
+    /// <summary>
+    /// Are the facts the same: the same tags at the same distances and the same damage to destroy.
+    /// </summary>
+    [PublicAPI, Pure]
     public bool Equals(PathNodeFacts other)
     {
         if (InfluenceCount != other.InfluenceCount || !Equals(Destroy, other.Destroy))

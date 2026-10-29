@@ -43,5 +43,12 @@ public abstract partial class BasePathCondition<T> : PathCondition where T : Bas
 /// </summary>
 public interface IPathConditionChecker
 {
+    /// <summary>
+    /// Checks the path condition.
+    /// </summary>
+    /// <param name="ctx">The node and the agent for which the path is being searched.</param>
+    /// <param name="condition">Path condition.</param>
+    /// <returns>True, if the check is passed; otherwise, false.</returns>
+    [Pure]
     bool CheckCondition<T>(PathNodeContext ctx, T condition) where T : BasePathCondition<T>;
 }

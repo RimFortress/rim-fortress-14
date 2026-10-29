@@ -10,6 +10,7 @@ using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
 using Content.Shared.Weapons.Ranged.Systems;
 using Content.Shared.Whitelist;
+using JetBrains.Annotations;
 using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
 
@@ -50,6 +51,7 @@ public sealed partial class RfPathfindingSystem
     /// </remarks>
     /// <param name="agent">The agent whose attacks are collected.</param>
     /// <param name="attacks">The list to which the attacks are added.</param>
+    [PublicAPI]
     public void CollectAttacks(Entity<GoapComponent> agent, List<PathAttack> attacks)
     {
         // Bare hands, claws and the like.
@@ -175,6 +177,7 @@ public sealed partial class RfPathfindingSystem
     /// </remarks>
     /// <param name="required">Damage that destroys the target, per damage type.</param>
     /// <param name="attacks">The attacks of the agent, see <see cref="CollectAttacks"/>.</param>
+    [PublicAPI, Pure]
     public float GetDestroyTime(DamageSpecifier required, List<PathAttack> attacks)
     {
         _plan.Clear();

@@ -26,7 +26,7 @@ public sealed partial class CanDestroy : BasePathCondition<CanDestroy>
     public string Var = "destroyTime";
 }
 
-public sealed partial class CanDestroyPathConditionSystem : PathConditionSystem<CanDestroy>
+public sealed class CanDestroyPathConditionSystem : PathConditionSystem<CanDestroy>
 {
     protected override bool ConditionCheck(PathNodeContext ctx, CanDestroy condition)
     {

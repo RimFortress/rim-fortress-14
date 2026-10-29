@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Content.Shared._RF.NPC.Pathfinding;
 
 /// <summary>
@@ -25,6 +27,10 @@ public enum RfPathfindingFlags : byte
 /// <remarks>
 /// Doors, access and climbing are not flags: they are path tags stored in <see cref="Facts"/>.
 /// </remarks>
+/// <param name="flags">The state of the region.</param>
+/// <param name="layer">The collision layers of the entities that occupy the node.</param>
+/// <param name="mask">The collision masks of the entities that occupy the node.</param>
+/// <param name="facts">Everything that affects the cost of passing through the node.</param>
 public struct RfPathfindingData(RfPathfindingFlags flags, int layer, int mask, PathNodeFacts facts)
     : IEquatable<RfPathfindingData>
 {
@@ -63,9 +69,14 @@ public struct RfPathfindingData(RfPathfindingFlags flags, int layer, int mask, P
     /// Do the nodes belong to the same navigation region. The facts only affect the cost of passing through
     /// a node and not the shape of the region, so they are not compared.
     /// </summary>
+    [PublicAPI, Pure]
     public readonly bool IsEquivalent(in RfPathfindingData other)
         => CollisionLayer == other.CollisionLayer && CollisionMask == other.CollisionMask && Flags == other.Flags;
 
+    /// <summary>
+    /// Are the data the same, including the facts.
+    /// </summary>
+    [PublicAPI, Pure]
     public readonly bool Equals(RfPathfindingData other)
         => IsEquivalent(other) && Facts.Equals(other.Facts);
 

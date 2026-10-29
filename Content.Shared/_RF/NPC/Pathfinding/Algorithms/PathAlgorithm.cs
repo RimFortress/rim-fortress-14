@@ -35,5 +35,12 @@ public abstract partial class BasePathAlgorithm<T> : PathAlgorithm where T : Bas
 /// </summary>
 public interface IPathAlgorithmRunner
 {
+    /// <summary>
+    /// Runs the path search algorithm.
+    /// </summary>
+    /// <param name="search">The input of the search.</param>
+    /// <param name="algorithm">The algorithm and its settings.</param>
+    /// <returns>The result of the search, which is finished when the search is done.</returns>
+    [PublicAPI]
     Task<PathSearchResult> Search<T>(PathSearch search, T algorithm) where T : BasePathAlgorithm<T>;
 }

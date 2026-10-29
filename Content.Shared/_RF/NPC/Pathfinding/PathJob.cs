@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Threading;
 using System.Threading.Tasks;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -22,12 +23,16 @@ public sealed class PathJob(
     CancellationToken cancellation = default)
     : Job<PathSearchResult>(maxTime, cancellation)
 {
+    /// <summary>
+    /// Cancels the search when the request is no longer needed.
+    /// </summary>
     public CancellationToken Token => Cancellation;
 
     /// <summary>
     /// Gives control back to the job queue if the job has run out of its time slice.
     /// Algorithms must call it regularly, but not necessarily on every step.
     /// </summary>
+    [PublicAPI]
     public ValueTask Yield() => SuspendIfOutOfTime();
 
     protected override async Task<PathSearchResult> Process()
