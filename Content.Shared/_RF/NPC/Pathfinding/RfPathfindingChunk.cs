@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using System.Runtime.InteropServices;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 
@@ -22,6 +21,8 @@ public readonly record struct PathTagSource(byte Tag, Vector2i Tile);
 /// </remarks>
 public sealed class RfPathfindingChunk
 {
+    private static readonly RfPathPoly[] NoPolys = Array.Empty<RfPathPoly>();
+
     /// <summary>
     /// The number of points on each side of the chunk.
     /// </summary>
@@ -90,11 +91,13 @@ public sealed class RfPathfindingChunk
     public static int TileIndex(int x, int y) => x * SharedRfPathfindingSystem.ChunkSize + y;
 
     /// <summary>
-    /// Returns the polys of the tile. The span is valid until the polys of the tile are changed.
+    /// Returns the polys of the tile, an empty list if it has none.
     /// </summary>
+    /// <remarks>
+    /// Go through the list with an index: the enumerator of an interface allocates.
+    /// </remarks>
     [PublicAPI, Pure]
-    public ReadOnlySpan<RfPathPoly> GetPolys(int tile)
-        => Polys[tile] is { } polys ? CollectionsMarshal.AsSpan(polys) : default;
+    public IReadOnlyList<RfPathPoly> GetPolys(int tile) => (IReadOnlyList<RfPathPoly>?) Polys[tile] ?? NoPolys;
 
     /// <summary>
     /// Returns the list of the tile's polys, creating it if needed.

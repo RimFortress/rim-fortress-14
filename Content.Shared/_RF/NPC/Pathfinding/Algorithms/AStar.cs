@@ -35,6 +35,13 @@ public sealed partial class AStar : BasePathAlgorithm<AStar>
     public float? AreaMargin = 32f;
 
     /// <summary>
+    /// Paths that cost more than this are not considered. Nodes that are expensive to pass through, such as walls,
+    /// cannot be passed through at all if the limit is lower than their cost. Null for no limit.
+    /// </summary>
+    [DataField]
+    public float? MaxCost;
+
+    /// <summary>
     /// If true, and the target cannot be reached, the path to the closest reachable node is returned.
     /// </summary>
     [DataField]

@@ -160,36 +160,58 @@ public sealed partial class RfPathfindingSystem
     /// <param name="poly">The poly whose neighbors are needed.</param>
     /// <returns>How many chunks were built, so that a search can count them against its limit.</returns>
     [PublicAPI]
-    public int EnsureNeighbors(RfPathPoly poly)
+    public int EnsureNeighbors(RfPathPoly poly) => EnsureNeighbors(poly, null, out _);
+
+    /// <summary>
+    /// Builds the chunks next to the poly that lie in the direction of a point, if it is on the border of its
+    /// chunk and they are not on the map yet. The chunks in the other directions are left alone, because a search
+    /// that goes somewhere does not need them until it has no other way.
+    /// </summary>
+    /// <param name="poly">The poly whose neighbors are needed.</param>
+    /// <param name="toward">The point in the coordinates of the grid, null for all directions.</param>
+    /// <param name="skipped">Whether a chunk that is not on the map was left unbuilt.</param>
+    /// <returns>How many chunks were built, so that a search can count them against its limit.</returns>
+    [PublicAPI]
+    public int EnsureNeighbors(RfPathPoly poly, Vector2? toward, out bool skipped)
     {
         var x = poly.TileIndex / ChunkSize;
         var y = poly.TileIndex % ChunkSize;
         var built = 0;
+        skipped = false;
 
         if (x == 0)
-            built += EnsureNeighbor(poly, new Vector2i(-1, 0));
+            built += EnsureNeighbor(poly, new Vector2i(-1, 0), toward, ref skipped);
 
         if (x == ChunkSize - 1)
-            built += EnsureNeighbor(poly, new Vector2i(1, 0));
+            built += EnsureNeighbor(poly, new Vector2i(1, 0), toward, ref skipped);
 
         if (y == 0)
-            built += EnsureNeighbor(poly, new Vector2i(0, -1));
+            built += EnsureNeighbor(poly, new Vector2i(0, -1), toward, ref skipped);
 
         if (y == ChunkSize - 1)
-            built += EnsureNeighbor(poly, new Vector2i(0, 1));
+            built += EnsureNeighbor(poly, new Vector2i(0, 1), toward, ref skipped);
 
         return built;
     }
 
-    private int EnsureNeighbor(RfPathPoly poly, Vector2i direction)
+    private int EnsureNeighbor(RfPathPoly poly, Vector2i direction, Vector2? toward, ref bool skipped)
     {
         var origin = poly.ChunkOrigin + direction;
 
-        if (!_pathGridQuery.TryComp(poly.GraphUid, out var map) || !map.Chunks.ContainsKey(origin))
-            return EnsureChunk(poly.GraphUid, origin) == null ? 0 : 1;
+        // A chunk that is on the map is only marked as used.
+        if (_pathGridQuery.TryComp(poly.GraphUid, out var map) && map.Chunks.ContainsKey(origin))
+        {
+            EnsureChunk(poly.GraphUid, origin);
+            return 0;
+        }
 
-        EnsureChunk(poly.GraphUid, origin);
-        return 0;
+        if (toward is { } point && Vector2.Dot(new Vector2(direction.X, direction.Y), point - poly.Box.Center) <= 0f)
+        {
+            skipped = true;
+            return 0;
+        }
+
+        return EnsureChunk(poly.GraphUid, origin) == null ? 0 : 1;
     }
 
     /// <summary>
@@ -216,10 +238,12 @@ public sealed partial class RfPathfindingSystem
 
         var tile = (int) MathHelper.Mod(local.X, ChunkSize) * ChunkSize + (int) MathHelper.Mod(local.Y, ChunkSize);
 
-        foreach (var poly in chunk.GetPolys(tile))
+        var polys = chunk.GetPolys(tile);
+
+        for (var i = 0; i < polys.Count; i++)
         {
-            if (poly.Box.Contains(local))
-                return poly;
+            if (polys[i].Box.Contains(local))
+                return polys[i];
         }
 
         return null;

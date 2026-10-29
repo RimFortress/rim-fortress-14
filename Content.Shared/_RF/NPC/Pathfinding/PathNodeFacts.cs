@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using System.Runtime.CompilerServices;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 using Content.Shared.Damage;
 
@@ -15,10 +14,47 @@ namespace Content.Shared._RF.NPC.Pathfinding;
 /// </param>
 public readonly record struct PathInfluence(byte Tag, byte Distance);
 
-[InlineArray(SharedRfPathfindingSystem.InfluenceSlots)]
+/// <summary>
+/// A fixed number of <see cref="PathInfluence"/> slots, <see cref="SharedRfPathfindingSystem.InfluenceSlots"/> of them.
+/// </summary>
+/// <remarks>
+/// The slots are fields, because the sandbox of the client does not allow the methods that the compiler generates
+/// for inline arrays (they return spans).
+/// </remarks>
 public struct PathInfluenceSlots
 {
-    private PathInfluence _element0;
+    private PathInfluence _0, _1, _2, _3, _4, _5, _6, _7;
+
+    public PathInfluence this[int index]
+    {
+        readonly get => index switch
+        {
+            0 => _0,
+            1 => _1,
+            2 => _2,
+            3 => _3,
+            4 => _4,
+            5 => _5,
+            6 => _6,
+            7 => _7,
+            _ => throw new ArgumentOutOfRangeException(nameof(index)),
+        };
+        set
+        {
+            switch (index)
+            {
+                case 0: _0 = value; break;
+                case 1: _1 = value; break;
+                case 2: _2 = value; break;
+                case 3: _3 = value; break;
+                case 4: _4 = value; break;
+                case 5: _5 = value; break;
+                case 6: _6 = value; break;
+                case 7: _7 = value; break;
+                default: throw new ArgumentOutOfRangeException(nameof(index));
+            }
+        }
+    }
 }
 
 /// <summary>
