@@ -1,4 +1,6 @@
 using System.Threading;
+using System.Threading.Tasks;
+using Robust.Shared.Map.Components;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Pathfinding;
@@ -191,6 +193,23 @@ public sealed partial class RfPathfindingSystem
     }
 
     /// <summary>
+    /// Builds the chunks of the grid that are waiting for the cooldown. A search that starts after the world has
+    /// changed, for example after a wall was destroyed, must not see the world as it was.
+    /// </summary>
+    private void RebuildPending(EntityUid? grid)
+    {
+        if (grid is not { } uid
+            || !TryComp(uid, out RfGridPathfindingComponent? map)
+            || !TryComp(uid, out MapGridComponent? gridComp)
+            || map.DirtyChunks.Count == 0)
+            return;
+
+        RebuildDirty(
+            new Entity<RfGridPathfindingComponent, MapGridComponent>(uid, map, gridComp),
+            new ParallelOptions { MaxDegreeOfParallelism = _parallel.ParallelProcessCount });
+    }
+
+    /// <summary>
     /// Starts the search with the next profile of the request that can be used.
     /// </summary>
     /// <returns>False if there are no profiles left.</returns>
@@ -204,6 +223,8 @@ public sealed partial class RfPathfindingSystem
 
             if (!_proto.TryIndex(id, out var profile) || !BeginRequest(agent, id))
                 continue;
+
+            RebuildPending(Transform(agent).GridUid);
 
             comp.JobCancel = new CancellationTokenSource();
             comp.Job = new PathJob(

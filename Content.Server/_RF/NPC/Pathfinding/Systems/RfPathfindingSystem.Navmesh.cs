@@ -1,12 +1,12 @@
 using System.Numerics;
 using System.Threading.Tasks;
-using Content.Shared._RF;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared.Parallax.Biomes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Events;
 using Robust.Shared.Timing;
 using Robust.Shared.Threading;
@@ -87,6 +87,13 @@ public sealed partial class RfPathfindingSystem
     private void OnBodyTypeChange(ref PhysicsBodyTypeChangedEvent ev)
     {
         MarkBodyDirty(ev.Entity);
+    }
+
+    // A body that is deleted does not raise any of the events above, the place it was in has to be built again.
+    [SubscribeLocalEvent]
+    private void OnBodyTerminating(Entity<PhysicsComponent> ent, ref EntityTerminatingEvent args)
+    {
+        MarkBodyDirty(ent);
     }
 
     private void MarkBodyDirty(EntityUid body)

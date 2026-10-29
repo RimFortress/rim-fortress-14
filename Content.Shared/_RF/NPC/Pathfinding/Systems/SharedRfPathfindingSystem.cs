@@ -332,6 +332,7 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
         var modifier = 1f;
         ProtoId<UtilityAiGoalPrototype>? goal = null;
         var goalKey = default(StateKey<EntityCoordinates>);
+        var goalRangeKey = default(StateKey<float>);
 
         foreach (var rule in comp.ActiveRules)
         {
@@ -348,12 +349,14 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
 
             goal = rule.Goal;
             goalKey = rule.GoalTargetKey;
+            goalRangeKey = rule.GoalRangeKey;
         }
 
         return new PathNodeEval(
             Math.Clamp(modifier, MinCostModifier, int.MaxValue),
             goal,
-            goalKey);
+            goalKey,
+            goalRangeKey);
     }
 
     #endregion

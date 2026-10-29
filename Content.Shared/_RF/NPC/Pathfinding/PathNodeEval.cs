@@ -14,7 +14,9 @@ namespace Content.Shared._RF.NPC.Pathfinding;
 /// </param>
 /// <param name="Goal">The goal that the agent must perform at this node.</param>
 /// <param name="GoalTargetKey">The key to which the coordinates of the node will be written for the goal.</param>
+/// <param name="GoalRangeKey">The key of the agent's state that holds how far from the node it stops for the goal.</param>
 public readonly record struct PathNodeEval(
     float Modifier,
     ProtoId<UtilityAiGoalPrototype>? Goal,
-    StateKey<EntityCoordinates> GoalTargetKey);
+    StateKey<EntityCoordinates> GoalTargetKey,
+    StateKey<float> GoalRangeKey);

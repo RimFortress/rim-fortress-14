@@ -1,0 +1,135 @@
+using System.Numerics;
+using Robust.Shared.Timing;
+
+namespace Content.Server._RF.NPC.Steering.Components;
+
+/// <summary>
+/// A component that moves the agent along a path. It exists only while the agent is following one.
+/// </summary>
+/// <remarks>
+/// All of the positions are in the coordinates of the grid of the path, which is the frame the input of the mover is
+/// given in when the agent is standing on that grid.
+/// </remarks>
+[RegisterComponent]
+public sealed partial class RfSteeringComponent : Component
+{
+    /// <summary>
+    /// The grid the path is on.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid Graph;
+
+    /// <summary>
+    /// The regions of the nodes of the path, from the start to the end.
+    /// </summary>
+    [ViewVariables]
+    public List<Box2> Nodes = new();
+
+    /// <summary>
+    /// The distance from the center of each node to the end of the path along it.
+    /// </summary>
+    [ViewVariables]
+    public List<float> Remaining = new();
+
+    /// <summary>
+    /// Where the path ends.
+    /// </summary>
+    [ViewVariables]
+    public Vector2 End;
+
+    /// <summary>
+    /// The node the agent is at.
+    /// </summary>
+    [ViewVariables]
+    public int Index;
+
+    /// <summary>
+    /// How close to the <see cref="End"/> the agent needs to get.
+    /// </summary>
+    [ViewVariables]
+    public float Range;
+
+    /// <summary>
+    /// How the movement is going.
+    /// </summary>
+    [ViewVariables]
+    public RfSteeringStatus Status;
+
+    /// <summary>
+    /// The velocity the agent wants to have, the result of the last decision.
+    /// </summary>
+    [ViewVariables]
+    public Vector2 Desired;
+
+    /// <summary>
+    /// The tick the next decision is made on.
+    /// </summary>
+    [ViewVariables]
+    public GameTick NextDecision;
+
+    /// <summary>
+    /// How much the velocity changes for a unit of the input in a second, as it was measured. It depends on the
+    /// floor and the state of the mob, so it is not taken from anywhere.
+    /// </summary>
+    [ViewVariables]
+    public float Authority;
+
+    /// <summary>
+    /// The radius of the agent, taken from its fixtures.
+    /// </summary>
+    [ViewVariables]
+    public float Radius;
+
+    /// <summary>
+    /// How many times the <see cref="Authority"/> has been measured.
+    /// </summary>
+    public int Samples;
+
+    /// <summary>
+    /// The velocity and the input of the last tick, to measure the <see cref="Authority"/>.
+    /// </summary>
+    public Vector2 LastVelocity;
+
+    /// <summary>
+    /// See <see cref="LastVelocity"/>.
+    /// </summary>
+    public Vector2 LastInput;
+
+    /// <summary>
+    /// Where the agent was when the <see cref="StuckSince"/> started.
+    /// </summary>
+    public Vector2 StuckPosition;
+
+    /// <summary>
+    /// When the agent last made progress.
+    /// </summary>
+    public TimeSpan StuckSince;
+}
+
+public enum RfSteeringStatus : byte
+{
+    /// <summary>
+    /// The agent is going to the end of the path.
+    /// </summary>
+    Moving,
+
+    /// <summary>
+    /// The agent has reached the end and stopped.
+    /// </summary>
+    InRange,
+
+    /// <summary>
+    /// The agent does not get anywhere, the path has to be searched for again.
+    /// </summary>
+    Stuck,
+
+    /// <summary>
+    /// The agent is too far from the path, it has to be searched for again.
+    /// </summary>
+    OffPath,
+
+    /// <summary>
+    /// The movement was cancelled, the agent is braking and will be released as soon as it has stopped.
+    /// </summary>
+    Stopping,
+}

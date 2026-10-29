@@ -23,10 +23,12 @@ public readonly record struct PathNodeRef(EntityUid Graph, Vector2i Chunk, byte 
 /// <param name="Node">The node of the path.</param>
 /// <param name="Goal">The goal that must be performed.</param>
 /// <param name="TargetKey">The key to which the coordinates of the node will be written for the goal.</param>
+/// <param name="RangeKey">The key of the agent's state that holds how far from the node it stops for the goal.</param>
 public readonly record struct PathNodeGoal(
     PathNodeRef Node,
     ProtoId<UtilityAiGoalPrototype> Goal,
-    StateKey<EntityCoordinates> TargetKey);
+    StateKey<EntityCoordinates> TargetKey,
+    StateKey<float> RangeKey);
 
 /// <summary>
 /// The input of a path search algorithm.

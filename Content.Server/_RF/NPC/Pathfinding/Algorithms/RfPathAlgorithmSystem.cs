@@ -194,7 +194,7 @@ public abstract partial class RfPathAlgorithmSystem<T> : PathAlgorithmSystem<T> 
 
             if (eval.Goal is { } goal)
             {
-                goals.Add(new PathNodeGoal(poly.Ref, goal, eval.GoalTargetKey));
+                goals.Add(new PathNodeGoal(poly.Ref, goal, eval.GoalTargetKey, eval.GoalRangeKey));
             }
             else if (i > 0 && i < route.Count - 1 && IsOnLine(route[i - 1], poly, route[i + 1]))
             {

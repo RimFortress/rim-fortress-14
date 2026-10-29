@@ -205,6 +205,10 @@ public sealed partial class RfPathfindingSystem
 
         foreach (var ent in entities)
         {
+            // The bodies that are being deleted are still found, they are the reason for the rebuild.
+            if (TerminatingOrDeleted(ent))
+                continue;
+
             var xform = Transform(ent);
 
             if (xform.ParentUid != grid.Owner)

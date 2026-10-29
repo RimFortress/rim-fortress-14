@@ -45,4 +45,11 @@ public sealed partial class PathfindingRule
     /// </summary>
     [DataField]
     public StateKey<EntityCoordinates> GoalTargetKey = "TargetCoordinates";
+
+    /// <summary>
+    /// A key in the agent's state from which the distance is taken at which the agent stops before the path node
+    /// to perform the <see cref="Goal"/>. By default it is the same range the movement actions use.
+    /// </summary>
+    [DataField]
+    public StateKey<float> GoalRangeKey = GoapState.MovementRange;
 }
