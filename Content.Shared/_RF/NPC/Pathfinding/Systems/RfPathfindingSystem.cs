@@ -21,10 +21,10 @@ namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 /// </summary>
 public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionChecker, IPathAlgorithmRunner
 {
-    [Dependency] private IPrototypeManager _proto = default!;
-    [Dependency] private MathCurvesSystem _curves = default!;
-    [Dependency] private SharedGoapSystem _goap = default!;
-    [Dependency] private SharedMeleeWeaponSystem _melee = default!;
+    [Dependency] private IPrototypeManager _proto = null!;
+    [Dependency] private MathCurvesSystem _curves = null!;
+    [Dependency] private SharedGoapSystem _goap = null!;
+    [Dependency] private SharedMeleeWeaponSystem _melee = null!;
 
     /// <summary>
     /// The cost modifier is never lower than this, otherwise the A* heuristic stops being admissible.

@@ -19,10 +19,10 @@ namespace Content.Shared._RF.NPC.Pathfinding.Systems;
 // Damage that the agent is able to deal.
 public sealed partial class RfPathfindingSystem
 {
-    [Dependency] private ItemSlotsSystem _slots = default!;
-    [Dependency] private SharedContainerSystem _container = default!;
-    [Dependency] private SharedNpcSearcherSystem _searcher = default!;
-    [Dependency] private EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private ItemSlotsSystem _slots = null!;
+    [Dependency] private SharedContainerSystem _container = null!;
+    [Dependency] private SharedNpcSearcherSystem _searcher = null!;
+    [Dependency] private EntityWhitelistSystem _whitelist = null!;
 
     [Dependency] private EntityQuery<MeleeWeaponComponent> _meleeQuery;
     [Dependency] private EntityQuery<GunComponent> _gunQuery;
