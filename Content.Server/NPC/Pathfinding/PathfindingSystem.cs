@@ -23,15 +23,6 @@ using Robust.Shared.Threading;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
-// RimFortress Start
-using Content.Server.Parallax;
-using Robust.Shared.Prototypes;
-using Content.Server._RF.NPC.Components;
-using Content.Server._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.GOAP.Components;
-// RimFortress End
-
 namespace Content.Server.NPC.Pathfinding
 {
     /// <summary>
@@ -61,12 +52,6 @@ namespace Content.Server.NPC.Pathfinding
         [Dependency] private SharedMapSystem _maps = default!;
         [Dependency] private SharedPhysicsSystem _physics = default!;
         [Dependency] private SharedTransformSystem _transform = default!;
-        // RimFortress Start
-        [Dependency] private BiomeSystem _biome = default!;
-        [Dependency] private IPrototypeManager _prototype = default!;
-        [Dependency] private ITileDefinitionManager _tileDef = default!;
-        [Dependency] private GoapSystem _goap = default!;
-        // RimFortress End
 
         [Dependency] private EntityQuery<AccessReaderComponent> _accessReaderQuery = default!;
         [Dependency] private EntityQuery<DestructibleComponent> _destructibleQuery = default!;
@@ -74,7 +59,6 @@ namespace Content.Server.NPC.Pathfinding
         [Dependency] private EntityQuery<ClimbableComponent> _climbableQuery = default!;
         [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery = default!;
         [Dependency] private EntityQuery<MapGridComponent> _mapGridQuery = default!;
-        [Dependency] private EntityQuery<PathfindingCostComponent> _pathfindingCostQuery = default!; // RimFortress
 
         private readonly Dictionary<ICommonSession, PathfindingDebugMode> _subscribedSessions = new();
 
@@ -446,11 +430,6 @@ namespace Content.Server.NPC.Pathfinding
 
         public PathFlags GetFlags(EntityUid uid)
         {
-            // RimFortress Start
-            if (TryComp(uid, out GoapComponent? goap))
-                return GetFlags(goap.State);
-            // RimFortress End
-
             if (!_npc.TryGetNpc(uid, out var npc))
             {
                 return PathFlags.None;
@@ -485,27 +464,6 @@ namespace Content.Server.NPC.Pathfinding
 
             return flags;
         }
-
-        // RimFortress Start
-        public PathFlags GetFlags(GoapState state)
-        {
-            var flags = PathFlags.None;
-
-            if (_goap.TryGetValue(state, GoapState.NavPry, out var pry) && pry)
-                flags |= PathFlags.Prying;
-
-            if (_goap.TryGetValue(state, GoapState.NavSmash, out var smash) && smash)
-                flags |= PathFlags.Smashing;
-
-            if (_goap.TryGetValue(state, GoapState.NavClimb, out var climb) && climb)
-                flags |= PathFlags.Climbing;
-
-            if (_goap.TryGetValue(state, GoapState.NavInteract, out var interact) && interact)
-                flags |= PathFlags.Interact;
-
-            return flags;
-        }
-        // RimFortress End
 
         private async Task<PathResultEvent> GetPath(
             PathRequest request, bool safe = false)

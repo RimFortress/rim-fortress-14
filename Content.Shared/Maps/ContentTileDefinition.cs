@@ -141,12 +141,6 @@ public sealed partial class ContentTileDefinition : IPrototype, IInheritingProto
     public Color NavMapColor = Color.Gray;
 
     /// <summary>
-    /// Modifier for the base cost of searching for a path through a given tile
-    /// </summary>
-    [DataField]
-    public float PathfindingCost;
-
-    /// <summary>
     /// Tags assigned to this tile during pathfinding.
     /// </summary>
     [DataField]
