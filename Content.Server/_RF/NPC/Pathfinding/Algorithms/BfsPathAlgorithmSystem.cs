@@ -21,6 +21,9 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
         var collision = GetCollision(search.Agent);
         var startPos = start.Box.Center;
         var maxCost = algorithm.MaxCost ?? float.PositiveInfinity;
+
+        // The range of the request, if it has one, is how far from the start the node is to be.
+        var range = search.Range > 0f ? search.Range : algorithm.Range;
         var state = RentState();
 
         try
@@ -76,7 +79,7 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
                         var eval = Evaluate(state, search, next, collision);
                         nextNode = new PathSearchNode(float.PositiveInfinity, null, eval.Modifier, false);
 
-                        if (Vector2.Distance(startPos, next.Box.Center) > algorithm.Range)
+                        if (Vector2.Distance(startPos, next.Box.Center) > range)
                         {
                             nextNode.Closed = true;
                             continue;

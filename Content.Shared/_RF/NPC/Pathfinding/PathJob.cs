@@ -20,7 +20,8 @@ public sealed class PathJob(
     float range,
     PathAlgorithm algorithm,
     IPathAlgorithmRunner runner,
-    CancellationToken cancellation = default)
+    CancellationToken cancellation = default,
+    Box2? targetBounds = null)
     : Job<PathSearchResult>(maxTime, cancellation)
 {
     /// <summary>
@@ -41,6 +42,6 @@ public sealed class PathJob(
         if (Cancellation.IsCancellationRequested)
             return PathSearchResult.NoPath;
 
-        return await algorithm.Search(new PathSearch(agent, start, target, range, this), runner);
+        return await algorithm.Search(new PathSearch(agent, start, target, range, this, targetBounds), runner);
     }
 }

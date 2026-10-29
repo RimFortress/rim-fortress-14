@@ -7,9 +7,8 @@
     - Pulled == false
     - Query/Crowbar != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Crowbar
     - !type:MoveTo
+      targetEntityKey: Query/Crowbar
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Crowbar
@@ -19,9 +18,8 @@
   - preconditions:
     - CrowbarPickedUp == true
     actions:
-    - !type:EntityCoords
-      targetKey: Target
     - !type:MoveTo
+      targetEntityKey: Target
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Target

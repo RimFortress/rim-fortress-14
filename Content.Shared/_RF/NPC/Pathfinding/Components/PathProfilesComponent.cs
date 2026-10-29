@@ -69,6 +69,12 @@ public sealed partial class PathProfilesComponent : Component
     public float RequestRange;
 
     /// <summary>
+    /// The region the target takes up, if the range is counted from it and not from the point.
+    /// </summary>
+    [ViewVariables]
+    public Box2? RequestTargetBounds;
+
+    /// <summary>
     /// The job that is searching for the path.
     /// </summary>
     [ViewVariables]

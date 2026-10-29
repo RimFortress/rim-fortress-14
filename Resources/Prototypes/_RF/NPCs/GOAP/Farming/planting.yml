@@ -4,9 +4,8 @@
   - preconditions:
     - Query/Seed != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Seed
     - !type:MoveTo
+      targetEntityKey: Query/Seed
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Seed
@@ -17,9 +16,8 @@
     - Query/EmptyPlantHolder != null
     - SeedPickedUp == true
     actions:
-    - !type:EntityCoords
-      targetKey: Query/EmptyPlantHolder
     - !type:MoveTo
+      targetEntityKey: Query/EmptyPlantHolder
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/EmptyPlantHolder

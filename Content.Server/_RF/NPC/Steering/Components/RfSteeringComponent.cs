@@ -1,4 +1,5 @@
 using System.Numerics;
+using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
 namespace Content.Server._RF.NPC.Steering.Components;
@@ -42,6 +43,29 @@ public sealed partial class RfSteeringComponent : Component
     /// </summary>
     [ViewVariables]
     public int Index;
+
+    /// <summary>
+    /// The region the end of the path is the edge of, if the agent goes to a body: the range is counted from it.
+    /// </summary>
+    [ViewVariables]
+    public Box2? Bounds;
+
+    /// <summary>
+    /// A body that the agent is not to avoid, it is the target of the path and the agent is to come up to it.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? Ignore;
+
+    /// <summary>
+    /// If it is set, the agent has got there when it sees these coordinates for a while, it need not come up to them.
+    /// </summary>
+    [ViewVariables]
+    public EntityCoordinates? Sight;
+
+    /// <summary>
+    /// How long the <see cref="Sight"/> has been seen.
+    /// </summary>
+    public float SightSeen;
 
     /// <summary>
     /// How close to the <see cref="End"/> the agent needs to get.

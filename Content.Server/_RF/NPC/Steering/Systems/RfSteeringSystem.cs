@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Shared._RF.NPC.Pathfinding;
+using Content.Shared.Interaction;
 using Content.Shared.Movement.Components;
 using Content.Shared.Movement.Events;
 using Content.Shared.Movement.Systems;
@@ -28,6 +29,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
     [Dependency] private SharedTransformSystem _transform = null!;
     [Dependency] private SharedMoverController _mover = null!;
     [Dependency] private EntityLookupSystem _lookup = null!;
+    [Dependency] private SharedInteractionSystem _interaction = null!;
     [Dependency] private SharedPhysicsSystem _physics = null!;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
     [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery;
@@ -174,15 +176,30 @@ public sealed partial class RfSteeringSystem : EntitySystem
             steering.Index++;
         }
 
-        var node = nodes[steering.Index].Center;
-
-        if (!found && (node - pos).Length() > steerer.LeaveDistance)
+        // The nodes of straight parts of the path are left out, so it is the distance to the path that tells that the
+        // agent has left it, and not the distance to its node.
+        if (!found && DistanceToPath(steering, pos) > steerer.LeaveDistance)
         {
             Finish(steering, RfSteeringStatus.OffPath);
             return;
         }
 
-        var toEnd = (steering.End - pos).Length();
+        var toEnd = steering.Bounds is { } region ? DistanceTo(region, pos) : (steering.End - pos).Length();
+
+        // Seeing the target for a while is enough, the agent need not come up to it.
+        if (steering.Sight is { } sight)
+        {
+            if (_interaction.InRangeUnobstructed(uid, sight, SightRange))
+                steering.SightSeen += Math.Max(steerer.UpdateInterval, 1) * frameTime;
+            else
+                steering.SightSeen = 0f;
+
+            if (steering.SightSeen >= SightTime)
+            {
+                Finish(steering, RfSteeringStatus.InRange);
+                return;
+            }
+        }
 
         if (toEnd <= steering.Range && velocity.Length() <= steerer.StopSpeed)
         {
@@ -232,6 +249,36 @@ public sealed partial class RfSteeringSystem : EntitySystem
         {
             Finish(steering, RfSteeringStatus.Stuck);
         }
+    }
+
+    private static float DistanceToPath(RfSteeringComponent steering, Vector2 pos)
+    {
+        var nodes = steering.Nodes;
+        var distance = (nodes[steering.Index].Center - pos).Length();
+
+        // The segments on both sides of the node the agent is at.
+        if (steering.Index > 0)
+            distance = Math.Min(distance, DistanceToSegment(nodes[steering.Index - 1].Center, nodes[steering.Index].Center, pos));
+
+        if (steering.Index < nodes.Count - 1)
+            distance = Math.Min(distance, DistanceToSegment(nodes[steering.Index].Center, nodes[steering.Index + 1].Center, pos));
+
+        return distance;
+    }
+
+    private static float DistanceToSegment(Vector2 a, Vector2 b, Vector2 point)
+    {
+        var way = b - a;
+        var length = way.LengthSquared();
+        var t = length > 0f ? Math.Clamp(Vector2.Dot(point - a, way) / length, 0f, 1f) : 0f;
+        return (a + way * t - point).Length();
+    }
+
+    private static float DistanceTo(in Box2 box, Vector2 point)
+    {
+        var dx = Math.Max(Math.Max(box.Left - point.X, 0f), point.X - box.Right);
+        var dy = Math.Max(Math.Max(box.Bottom - point.Y, 0f), point.Y - box.Top);
+        return MathF.Sqrt(dx * dx + dy * dy);
     }
 
     private static void Finish(RfSteeringComponent steering, RfSteeringStatus status)
@@ -312,9 +359,20 @@ public sealed partial class RfSteeringSystem : EntitySystem
     /// <param name="result">The path, only the nodes on the first grid of it are followed.</param>
     /// <param name="target">Where the path was searched for.</param>
     /// <param name="range">How close to the end of the path the agent needs to get.</param>
+    /// <param name="bounds">
+    /// The region of the body the path leads to, in the coordinates of the grid. The range is counted from it, and the
+    /// end of the path is the place on it that is the closest to the path.
+    /// </param>
+    /// <param name="ignore">The body the path leads to, it is not avoided.</param>
     /// <returns>False if the path is empty.</returns>
     [PublicAPI]
-    public bool Follow(EntityUid agent, PathSearchResult result, EntityCoordinates target, float range)
+    public bool Follow(
+        EntityUid agent,
+        PathSearchResult result,
+        EntityCoordinates target,
+        float range,
+        Box2? bounds = null,
+        EntityUid? ignore = null)
     {
         if (result.Path is not { Count: > 0 } path)
             return false;
@@ -326,7 +384,16 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.Nodes.Clear();
         steering.Remaining.Clear();
         steering.Index = 0;
+        steering.Bounds = bounds;
+        steering.Ignore = ignore;
+        steering.Sight = null;
+        steering.SightSeen = 0f;
+        steering.Radius = GetRadius(agent);
         steering.Range = Math.Max(range, MinRange);
+
+        // The agent cannot get closer to a solid body than its size.
+        if (bounds != null)
+            steering.Range = Math.Max(steering.Range, steering.Radius + RangeMargin);
         steering.Status = RfSteeringStatus.Moving;
         steering.Desired = Vector2.Zero;
         steering.NextDecision = _timing.CurTick;
@@ -334,7 +401,6 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.StuckPosition = Transform(agent).LocalPosition;
         steering.LastInput = Vector2.Zero;
         steering.Samples = 0;
-        steering.Radius = GetRadius(agent);
 
         foreach (var node in path)
         {
@@ -346,9 +412,11 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
         var lastCenter = steering.Nodes[^1].Center;
 
-        // The end is the target only if the path leads to it.
+        // The end is the target only if the path leads to it. A body is come up to from the side of the path.
         steering.End = result.Status == PathSearchStatus.Path && steering.Nodes.Count == path.Count
-            ? _transform.WithEntityId(target, graph).Position
+            ? bounds is { } region
+                ? Vector2.Clamp(lastCenter, region.BottomLeft, region.TopRight)
+                : _transform.WithEntityId(target, graph).Position
             : lastCenter;
 
         // Distances from the end, counted back.
@@ -371,6 +439,15 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
     // The smallest distance the agent can be asked to get to the end, it cannot stop closer than that.
     private const float MinRange = 0.15f;
+
+    // How far from a solid body the center of the agent can be said to be at it, besides the radius of the agent.
+    private const float RangeMargin = 0.25f;
+
+    // How far the agent looks for the target when it is enough to see it.
+    private const float SightRange = 10f;
+
+    // For how long the target must be in sight.
+    private const float SightTime = 0.5f;
 
     /// <summary>
     /// Stops the movement of the agent. The agent brakes with the input and the component is removed when it has

@@ -7,5 +7,8 @@
   - type: WorldMapStruct
     mainColor: "#4184B4"
     drawType: Tile
+  - type: PathTags
+    tags:
+    - Water
   - type: PathfindingCost
     modifier: 5

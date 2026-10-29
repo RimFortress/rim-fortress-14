@@ -237,6 +237,13 @@ public abstract partial class RfPathAlgorithmSystem<T> : PathAlgorithmSystem<T> 
     /// <summary>
     /// The distance from the point to the nearest point of the box, 0 if the point is inside of it.
     /// </summary>
+    protected static float DistanceTo(in Box2 box, in Box2 other)
+    {
+        var dx = MathF.Max(MathF.Max(box.Left - other.Right, 0f), other.Left - box.Right);
+        var dy = MathF.Max(MathF.Max(box.Bottom - other.Top, 0f), other.Bottom - box.Top);
+        return MathF.Sqrt(dx * dx + dy * dy);
+    }
+
     protected static float DistanceTo(in Box2 box, Vector2 point)
     {
         var dx = MathF.Max(MathF.Max(box.Left - point.X, 0f), point.X - box.Right);

@@ -4,9 +4,8 @@
   - preconditions:
     - Query/Bucket != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Bucket
     - !type:MoveTo
+      targetEntityKey: Query/Bucket
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Bucket
@@ -17,9 +16,8 @@
     - BucketPickedUp == true
     - Query/WaterSource != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/WaterSource
     - !type:MoveTo
+      targetEntityKey: Query/WaterSource
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/WaterSource
@@ -30,9 +28,8 @@
     - BuckedFilled == true
     - Query/PlantWaterTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/PlantWaterTarget
     - !type:MoveTo
+      targetEntityKey: Query/PlantWaterTarget
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/PlantWaterTarget

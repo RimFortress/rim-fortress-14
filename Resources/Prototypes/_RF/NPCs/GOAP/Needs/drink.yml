@@ -55,9 +55,8 @@
     - Pulled == false
     - Drink != null
     actions:
-    - !type:EntityCoords
-      targetKey: Drink
     - !type:MoveTo
+      targetEntityKey: Drink
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Drink
@@ -75,9 +74,8 @@
     - DrinkOpened == true
     - Query/WaterSource != null # TODO: replace water with any reagent that will quench the thirst.
     actions:
-    - !type:EntityCoords
-      targetKey: Query/WaterSource
     - !type:MoveTo
+      targetEntityKey: Query/WaterSource
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/WaterSource

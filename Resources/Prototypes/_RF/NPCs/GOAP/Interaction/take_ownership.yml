@@ -7,9 +7,8 @@
     - Pulled == false
     - Query/TakeOwnershipTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/TakeOwnershipTarget
     - !type:MoveTo
+      targetEntityKey: Query/TakeOwnershipTarget
       rangeKey: InteractRange
     - !type:MarkOwner
       targetKey: Query/TakeOwnershipTarget

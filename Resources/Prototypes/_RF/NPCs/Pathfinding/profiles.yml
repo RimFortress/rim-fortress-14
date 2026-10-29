@@ -1,0 +1,27 @@
+# Goes where it is possible to go and does not like lava and water. Nothing is impassable, a node that is blocked
+# only costs a lot, so that the path through it is the last resort.
+- type: pathProfile
+  id: Walker
+  rules:
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 10000
+  - when:
+    - !type:HasTag
+      tag: Lava
+    cost:
+    - float: 100
+  - when:
+    - !type:HasTag
+      tag: Water
+    cost:
+    - float: 5
+
+# Picks a random place nearby for the agent to wander to, see PickAccessible.
+- type: pathProfile
+  id: Wander
+  parent: Walker
+  algorithm: !type:Bfs
+    range: 7
+    minRange: 2

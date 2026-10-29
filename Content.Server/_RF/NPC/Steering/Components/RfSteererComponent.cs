@@ -116,6 +116,12 @@ public sealed partial class RfSteererComponent : Component
     public EntityCoordinates Target;
 
     /// <summary>
+    /// The entity the agent was told to go to, if it is not a place. The range is counted from its region.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? TargetEntity;
+
+    /// <summary>
     /// How close to the <see cref="Target"/> the agent was told to get.
     /// </summary>
     [ViewVariables]
@@ -144,6 +150,12 @@ public sealed partial class RfSteererComponent : Component
     /// </summary>
     [ViewVariables]
     public ProtoId<UtilityAiGoalPrototype>? ReturnGoal;
+
+    /// <summary>
+    /// The region of the <see cref="TargetEntity"/> the last path was searched for, in the coordinates of the grid.
+    /// </summary>
+    [ViewVariables]
+    public Box2? SearchedBounds;
 
     /// <summary>
     /// How many times the path has been searched for again during the order.

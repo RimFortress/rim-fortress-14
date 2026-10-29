@@ -103,13 +103,42 @@ public sealed partial class RfSteeringSystem
     /// <param name="agent">The agent.</param>
     /// <param name="target">Where to go.</param>
     /// <param name="range">How close to the target the agent needs to get.</param>
+    /// <param name="stopOnSight">Is it enough for the agent to see the target for a while to have got there.</param>
     /// <returns>
     /// <see cref="GoapActionResult.Continuing"/> while the agent is on the way,
     /// <see cref="GoapActionResult.Finished"/> when it has got there and stopped,
     /// <see cref="GoapActionResult.Failed"/> when it cannot.
     /// </returns>
     [PublicAPI]
-    public GoapActionResult Move(Entity<GoapComponent> agent, EntityCoordinates target, float range)
+    public GoapActionResult Move(
+        Entity<GoapComponent> agent,
+        EntityCoordinates target,
+        float range,
+        bool stopOnSight = false)
+        => Move(agent, target, null, range, stopOnSight);
+
+    /// <summary>
+    /// Carries out the order to get to the entity. The range is counted from the region the entity takes up and not
+    /// from its center, so an entity that is big and solid, a wall or a machine, can be reached: the agent comes up
+    /// to it and does not try to get into its center. The target is followed if it moves.
+    /// </summary>
+    /// <inheritdoc cref="Move(Entity{GoapComponent}, EntityCoordinates, float, bool)"/>
+    [PublicAPI]
+    public GoapActionResult Move(
+        Entity<GoapComponent> agent,
+        EntityUid target,
+        float range,
+        bool stopOnSight = false)
+        => TerminatingOrDeleted(target)
+            ? GoapActionResult.Failed
+            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight);
+
+    private GoapActionResult Move(
+        Entity<GoapComponent> agent,
+        EntityCoordinates target,
+        EntityUid? entity,
+        float range,
+        bool stopOnSight)
     {
         if (!_profilesQuery.TryComp(agent, out var profiles))
             return GoapActionResult.Failed;
@@ -125,7 +154,12 @@ public sealed partial class RfSteeringSystem
 
         if (steerer.Phase == RfMovePhase.None)
         {
+            // Nothing to do if the agent is there already, a steering that is braking goes on by itself.
+            if (IsInRange(agent, target, entity, range))
+                return GoapActionResult.Finished;
+
             steerer.Target = target;
+            steerer.TargetEntity = entity;
             steerer.Range = range;
             steerer.Repaths = 0;
 
@@ -155,6 +189,9 @@ public sealed partial class RfSteeringSystem
 
             // The agent goes only to the first node that has a goal, the rest of the path is found again after it.
             steerer.PendingGoal = result.Goals.Count > 0 ? result.Goals[0] : null;
+            var stop = steerer.Range;
+            var bounds = steerer.SearchedBounds;
+            var ignore = steerer.TargetEntity;
 
             if (steerer.PendingGoal is { } goal)
             {
@@ -167,14 +204,16 @@ public sealed partial class RfSteeringSystem
                     PathSearchStatus.PartialPath,
                     result.Path.GetRange(0, index + 1),
                     result.Goals);
+
+                // The distance to stop at is in the state of the agent, the way the movement ranges are.
+                if (_goap.TryGetValue(agent.Comp.State, goal.RangeKey, out var key))
+                    stop = key;
+
+                bounds = null;
+                ignore = null;
             }
 
-            // The distance to stop at is in the state of the agent, the way the movement ranges are.
-            var stop = steerer.PendingGoal is { } pending && _goap.TryGetValue(agent.Comp.State, pending.RangeKey, out var key)
-                ? key
-                : range;
-
-            if (!Follow(agent, result, steerer.SearchedTarget, stop))
+            if (!Follow(agent, result, steerer.SearchedTarget, stop, bounds, ignore))
                 return Fail(agent, steerer);
 
             steerer.Partial = steerer.PendingGoal == null && result.Status == PathSearchStatus.PartialPath;
@@ -183,6 +222,8 @@ public sealed partial class RfSteeringSystem
 
         if (!TryComp(agent, out RfSteeringComponent? steering))
             return Fail(agent, steerer);
+
+        steering.Sight = stopOnSight && steerer.PendingGoal == null ? target : null;
 
         switch (steering.Status)
         {
@@ -195,7 +236,7 @@ public sealed partial class RfSteeringSystem
                 return GoapActionResult.Continuing;
             case RfSteeringStatus.InRange:
                 // A partial path ends at the closest point, which is not where the agent was asked to get.
-                return steerer.Partial && !IsInRange(agent, target, range)
+                return steerer.Partial && !stopOnSight && !IsInRange(agent, target, entity, range)
                     ? Fail(agent, steerer)
                     : Done(agent, steerer);
             default:
@@ -228,17 +269,52 @@ public sealed partial class RfSteeringSystem
 
     private bool Search(Entity<PathProfilesComponent, GoapComponent> agent, RfSteererComponent steerer)
     {
-        steerer.SearchedTarget = steerer.Target;
-        return _pathfinding.RequestPath(agent, steerer.Target, steerer.Range);
+        var target = steerer.Target;
+        Box2? bounds = null;
+        var range = steerer.Range;
+
+        // The region of the target is taken in the coordinates of the grid of the agent, the path is on it.
+        if (steerer.TargetEntity is { } entity
+            && Transform(agent).GridUid is { } grid
+            && Transform(entity).MapID == Transform(agent).MapID)
+        {
+            target = _transform.WithEntityId(target, grid);
+            bounds = _transform.GetInvWorldMatrix(grid).TransformBox(_lookup.GetWorldAABB(entity));
+            range = GetRange(agent, steerer.Range, true);
+        }
+
+        steerer.SearchedTarget = target;
+        steerer.SearchedBounds = bounds;
+
+        return _pathfinding.RequestPath(agent, target, range, targetBounds: bounds);
     }
+
+    /// <summary>
+    /// The range the agent can get to a solid entity at: it cannot come closer than its own size.
+    /// </summary>
+    private float GetRange(EntityUid agent, float range, bool solid)
+        => solid ? Math.Max(range, GetRadius(agent) + RangeMargin) : range;
 
     private bool Moved(RfSteererComponent steerer, EntityCoordinates target)
         => !steerer.SearchedTarget.TryDistance(EntityManager, _transform, target, out var distance)
            || distance > steerer.RetargetDistance;
 
-    private bool IsInRange(EntityUid agent, EntityCoordinates target, float range)
-        => Transform(agent).Coordinates.TryDistance(EntityManager, _transform, target, out var distance)
-           && distance <= range;
+    private bool IsInRange(EntityUid agent, EntityCoordinates target, EntityUid? entity, float range)
+    {
+        if (entity is not { } uid || Transform(uid).MapID != Transform(agent).MapID)
+        {
+            return Transform(agent).Coordinates.TryDistance(EntityManager, _transform, target, out var distance)
+                   && distance <= range;
+        }
+
+        // The distance from the agent to the region of the entity.
+        var box = _lookup.GetWorldAABB(uid);
+        var position = _transform.GetWorldPosition(agent);
+        var dx = Math.Max(Math.Max(box.Left - position.X, 0f), position.X - box.Right);
+        var dy = Math.Max(Math.Max(box.Bottom - position.Y, 0f), position.Y - box.Top);
+
+        return MathF.Sqrt(dx * dx + dy * dy) <= GetRange(agent, range, true);
+    }
 
     private GoapActionResult Done(EntityUid agent, RfSteererComponent steerer)
     {

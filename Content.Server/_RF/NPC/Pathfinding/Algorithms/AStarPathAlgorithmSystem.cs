@@ -27,6 +27,11 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
         var collision = GetCollision(search.Agent);
         var startPos = start.Box.Center;
         var targetPos = ToLocal(target, goal.GraphUid);
+
+        // The range is counted from the region of the target if there is one, otherwise from its point.
+        var region = search.TargetBounds is { } bounds && target.EntityId == goal.GraphUid
+            ? bounds
+            : Box2.CenteredAround(targetPos, Vector2.Zero);
         var weight = algorithm.HeuristicWeight * TieBreaker;
         var maxCost = algorithm.MaxCost ?? float.PositiveInfinity;
 
@@ -40,10 +45,10 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
         try
         {
             state.Nodes[start] = new PathSearchNode(0f, null, 1f, false);
-            state.Open.Enqueue(start, Heuristic(startPos, targetPos, search.Range, weight));
+            state.Open.Enqueue(start, Heuristic(startPos, region, search.Range, weight));
 
             var best = start;
-            var bestDistance = DistanceTo(start.Box, targetPos);
+            var bestDistance = DistanceTo(start.Box, region);
             var expanded = 0;
             var built = 0;
             var lastChunk = start.ChunkOrigin;
@@ -63,7 +68,7 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
 
                     node.Closed = true;
                     var currentG = node.G;
-                    var distance = DistanceTo(current.Box, targetPos);
+                    var distance = DistanceTo(current.Box, region);
 
                     if (ReferenceEquals(current, goal) || distance <= search.Range)
                         return BuildResult(state, search, current, PathSearchStatus.Path, collision);
@@ -128,7 +133,7 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
 
                         nextNode.G = g;
                         nextNode.Parent = current;
-                        state.Open.Enqueue(next, g + Heuristic(next.Box.Center, targetPos, search.Range, weight));
+                        state.Open.Enqueue(next, g + Heuristic(next.Box.Center, region, search.Range, weight));
                     }
 
                     if (expanded % NodesPerYield != 0)
@@ -144,7 +149,7 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
                 if (stop || state.Deferred.Count == 0 || algorithm.MaxChunks > 0 && built >= algorithm.MaxChunks)
                     break;
 
-                built += Reopen(state, targetPos, search.Range, weight, algorithm.MaxChunks, built);
+                built += Reopen(state, region, search.Range, weight, algorithm.MaxChunks, built);
             }
 
             if (algorithm.AllowPartial && !ReferenceEquals(best, start))
@@ -162,7 +167,7 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
     /// Builds the chunks that were left unbuilt, and puts the polys next to them back into the queue.
     /// </summary>
     /// <returns>How many chunks were built.</returns>
-    private int Reopen(PathSearchState state, Vector2 target, float range, float weight, int maxChunks, int built)
+    private int Reopen(PathSearchState state, Box2 target, float range, float weight, int maxChunks, int built)
     {
         var total = 0;
 
@@ -185,8 +190,8 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
         return total;
     }
 
-    private static float Heuristic(Vector2 position, Vector2 target, float range, float weight)
-        => MathF.Max(Octile(position, target) - range, 0f) * weight;
+    private static float Heuristic(Vector2 position, in Box2 target, float range, float weight)
+        => MathF.Max(Octile(position, Vector2.Clamp(position, target.BottomLeft, target.TopRight)) - range, 0f) * weight;
 
     private static bool OutOfArea(RfPathPoly poly, Vector2 start, Vector2 target, float limit)
     {

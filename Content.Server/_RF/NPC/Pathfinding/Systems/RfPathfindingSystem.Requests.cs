@@ -58,13 +58,18 @@ public sealed partial class RfPathfindingSystem
     /// <param name="target">Where the path is to lead, null for algorithms that choose the place themselves.</param>
     /// <param name="range">How close to the target the agent needs to get.</param>
     /// <param name="profile">The only profile to try, null to try all the ones the agent can use.</param>
+    /// <param name="targetBounds">
+    /// The region the target takes up, in the coordinates of the entity of <paramref name="target"/>. The range is
+    /// counted from it, so a target that is big and solid can be reached.
+    /// </param>
     /// <returns>False if there is nothing to search with, no profile can be used.</returns>
     [PublicAPI]
     public bool RequestPath(
         Entity<PathProfilesComponent, GoapComponent> agent,
         EntityCoordinates? target,
         float range,
-        ProtoId<PathProfilePrototype>? profile = null)
+        ProtoId<PathProfilePrototype>? profile = null,
+        Box2? targetBounds = null)
     {
         CancelPath(new Entity<PathProfilesComponent?>(agent.Owner, agent.Comp1));
 
@@ -84,6 +89,7 @@ public sealed partial class RfPathfindingSystem
 
         comp.RequestTarget = target;
         comp.RequestRange = range;
+        comp.RequestTargetBounds = targetBounds;
         comp.RequestProfileIndex = -1;
         comp.RequestStatus = PathRequestStatus.Searching;
 
@@ -187,6 +193,7 @@ public sealed partial class RfPathfindingSystem
         comp.RequestProfiles.Clear();
         comp.RequestProfileIndex = 0;
         comp.RequestTarget = null;
+        comp.RequestTargetBounds = null;
         comp.RequestStatus = PathRequestStatus.None;
         comp.RequestResult = PathSearchResult.NoPath;
         comp.RequestProfile = null;
@@ -235,7 +242,8 @@ public sealed partial class RfPathfindingSystem
                 comp.RequestRange,
                 profile.Algorithm,
                 this,
-                comp.JobCancel.Token);
+                comp.JobCancel.Token,
+                comp.RequestTargetBounds);
 
             _jobs.EnqueueJob(comp.Job);
             return true;

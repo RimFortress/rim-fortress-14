@@ -23,7 +23,7 @@ public enum BfsPick : byte
 public sealed partial class Bfs : BasePathAlgorithm<Bfs>
 {
     /// <summary>
-    /// How far from the start the search is allowed to go.
+    /// How far from the start the search is allowed to go. The range of the request replaces it, if it has one.
     /// </summary>
     [DataField]
     public float Range = 20f;

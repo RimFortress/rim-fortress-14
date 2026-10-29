@@ -71,6 +71,38 @@ public sealed class RfNodeGoalTest : GameTest
     goalTargetKey: BreakTarget
     goalRangeKey: BreakRange
 
+- type: pathProfile
+  id: TestNodePlain
+  rules:
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 10000
+
+- type: entity
+  id: TestBigBlock
+  components:
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: ""-1.5,-1.5,1.5,1.5""
+        mask:
+        - MobMask
+        layer:
+        - Impassable
+
+- type: entity
+  id: TestNodePlainAgent
+  parent: TestNodeAgent
+  components:
+  - type: PathProfiles
+    profiles:
+    - TestNodePlain
+
 - type: entity
   id: TestNodeAgent
   components:
@@ -156,6 +188,58 @@ public sealed class RfNodeGoalTest : GameTest
         {
             Assert.That(TestNodeBreakSystem.Broken, Is.EqualTo(1), "the goal of the node must have been performed once");
             Assert.That(_transform.GetWorldPosition(agent).X, Is.GreaterThan(19.5f), "the agent must have got through");
+        });
+    }
+
+    /// <summary>
+    /// A solid target that takes up a lot of room cannot be reached at its center. The agent comes up to the side of
+    /// it, the range is counted from the edge, and it does not fail.
+    /// </summary>
+    [Test]
+    public async Task TestReachesBigSolidTarget()
+    {
+        var map = await Pair.CreateTestMap();
+        var grid = map.Grid;
+        EntityUid agent = default;
+        EntityUid block = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            for (var x = 0; x < 30; x++)
+            {
+                for (var y = 0; y < 8; y++)
+                {
+                    _maps.SetTile(grid.Owner, grid.Comp, new Vector2i(x, y), new Tile(1));
+                }
+            }
+
+            block = _entMan.SpawnAtPosition("TestBigBlock", new EntityCoordinates(grid, 15.5f, 3.5f));
+            agent = _entMan.SpawnAtPosition("TestNodePlainAgent", new EntityCoordinates(grid, 2.5f, 3.5f));
+        });
+
+        await Pair.RunTicksSync(5);
+
+        var result = GoapActionResult.Continuing;
+
+        for (var i = 0; i < 1500 && result == GoapActionResult.Continuing; i++)
+        {
+            await Pair.RunTicksSync(1);
+            await Pair.Server.WaitPost(() =>
+            {
+                result = _entMan.System<RfSteeringSystem>().Move(
+                    new Entity<GoapComponent>(agent, _entMan.GetComponent<GoapComponent>(agent)),
+                    block,
+                    0.6f);
+            });
+        }
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(result, Is.EqualTo(GoapActionResult.Finished));
+
+            var position = _transform.GetWorldPosition(agent);
+            Assert.That(position.X, Is.LessThan(14f), "the agent must be at the edge of the block, not inside it");
+            Assert.That(position.X, Is.GreaterThan(12f));
         });
     }
 }

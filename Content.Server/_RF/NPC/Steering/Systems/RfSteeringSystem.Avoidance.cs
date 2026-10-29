@@ -62,7 +62,7 @@ public sealed partial class RfSteeringSystem
             steerer.AvoidHorizon);
 
         var reach = radius + wantedWorld.Length() * horizon + steerer.SeparationRange + 0.5f;
-        Gather(uid, xform, position, reach);
+        Gather(uid, steering.Ignore, xform, position, reach);
 
         if (_obstacles.Count == 0)
             return wanted;
@@ -106,7 +106,7 @@ public sealed partial class RfSteeringSystem
     /// <summary>
     /// Collects the bodies the agent can run into.
     /// </summary>
-    private void Gather(EntityUid uid, TransformComponent xform, Vector2 position, float reach)
+    private void Gather(EntityUid uid, EntityUid? ignore, TransformComponent xform, Vector2 position, float reach)
     {
         _obstacles.Clear();
         _near.Clear();
@@ -124,6 +124,7 @@ public sealed partial class RfSteeringSystem
         foreach (var other in _near)
         {
             if (other == uid
+                || other == ignore
                 || !_physicsQuery.TryComp(other, out var otherBody)
                 || !otherBody.CanCollide
                 || !_physics.IsCurrentlyHardCollidable((uid, fixtures, body), other))

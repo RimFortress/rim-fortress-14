@@ -1,7 +1,6 @@
 using System.Numerics;
 using Content.Server.CombatMode;
-using Content.Server.NPC.Components;
-using Content.Server.NPC.Systems;
+using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
@@ -52,7 +51,7 @@ public sealed partial class Melee : BaseGoapAction<Melee>
 public sealed partial class MeleeActionSystem : GoapActionSystem<Melee>
 {
     [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private NPCSteeringSystem _steering = default!;
+    [Dependency] private MoveToActionSystem _moveTo = default!;
     [Dependency] private SharedMeleeWeaponSystem _melee = default!;
     [Dependency] private CombatModeSystem _combatMode = default!;
 
@@ -81,7 +80,7 @@ public sealed partial class MeleeActionSystem : GoapActionSystem<Melee>
         if (action.RemoveCombatMode)
             _combatMode.SetInCombatMode(ent, false);
 
-        _steering.Unregister(ent);
+        _moveTo.Stop(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Melee action)
@@ -126,17 +125,21 @@ public sealed partial class MeleeActionSystem : GoapActionSystem<Melee>
             return GoapActionResult.Failed;
         }
 
-        if (TryComp<NPCSteeringComponent>(ent, out var steering) &&
-            steering.Status == SteeringStatus.NoPath)
+        // The target is followed until it is within the reach of the weapon. The reach is counted from the body of
+        // the target and not from its center, the center of a big target can be out of reach when it is touched.
+        if (distance > weapon.Range)
         {
-            handle.CreateDump("steering return NoPath");
-            return GoapActionResult.Failed;
+            var move = _moveTo.Move(ent, handle, target, weapon.Range);
+
+            if (move != GoapActionResult.Finished)
+                return move;
+        }
+        else
+        {
+            _moveTo.Stop(ent);
         }
 
-        _steering.Register(ent, new EntityCoordinates(target, Vector2.Zero), steering);
-
-        if (distance > weapon.Range
-            || weapon.NextAttack > _timing.CurTime)
+        if (weapon.NextAttack > _timing.CurTime)
             return GoapActionResult.Continuing;
 
         if (_melee.AttemptLightAttack(ent, weaponUid, weapon, target) && maxHits == 1)

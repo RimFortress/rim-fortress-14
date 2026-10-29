@@ -6,9 +6,8 @@
     - Buckled == false
     - Pulled == false
     actions:
-    - !type:EntityCoords
-      targetKey: PickupTarget
     - !type:MoveTo
+      targetEntityKey: PickupTarget
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: PickupTarget

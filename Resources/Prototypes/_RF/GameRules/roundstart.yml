@@ -4,6 +4,9 @@
   components:
   - type: Goap
     rootTask: Idle
+  - type: PathProfiles
+    profiles:
+    - Walker
   - type: UtilityAi
     goals:
     # Needs

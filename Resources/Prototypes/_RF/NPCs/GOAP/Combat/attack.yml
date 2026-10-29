@@ -30,9 +30,8 @@
     - Pulled == false
     - WeaponTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: WeaponTarget
     - !type:MoveTo
+      targetEntityKey: WeaponTarget
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: WeaponTarget
@@ -47,9 +46,8 @@
     - WeaponPickedUp == true
     - Query/AttackTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/AttackTarget
     - !type:MoveTo
+      targetEntityKey: Query/AttackTarget
       rangeKey: MeleeRange
       stopOnLineOfSight: true
     - !type:Juke
@@ -68,9 +66,8 @@
     actions:
     - !type:Wield
       targetState: true
-    - !type:EntityCoords
-      targetKey: Query/AttackTarget
     - !type:MoveTo
+      targetEntityKey: Query/AttackTarget
       rangeKey: MeleeRange
     - !type:Juke
     - !type:Melee
@@ -85,9 +82,8 @@
     - WeaponTarget == null
     - Query/AttackTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/AttackTarget
     - !type:MoveTo
+      targetEntityKey: Query/AttackTarget
       rangeKey: MeleeRange
     - !type:Juke
     - !type:Melee

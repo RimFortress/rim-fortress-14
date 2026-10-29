@@ -4,9 +4,8 @@
   - preconditions:
     - Query/Hoe != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Hoe
     - !type:MoveTo
+      targetEntityKey: Query/Hoe
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Hoe
@@ -17,9 +16,8 @@
     - Query/WeedPlantHolder != null
     - HoePickedUp == true
     actions:
-    - !type:EntityCoords
-      targetKey: Query/WeedPlantHolder
     - !type:MoveTo
+      targetEntityKey: Query/WeedPlantHolder
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/WeedPlantHolder

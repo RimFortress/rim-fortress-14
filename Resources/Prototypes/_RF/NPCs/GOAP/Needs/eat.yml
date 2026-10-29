@@ -24,9 +24,8 @@
     - Pulled == false
     - Query/Food != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Food
     - !type:MoveTo
+      targetEntityKey: Query/Food
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Food

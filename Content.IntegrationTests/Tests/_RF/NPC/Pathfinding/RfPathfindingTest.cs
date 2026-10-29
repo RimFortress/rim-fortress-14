@@ -400,7 +400,7 @@ public sealed class RfPathfindingTest : GameTest
         await Pair.Server.WaitAssertion(() =>
         {
             var start = new Vector2(3.5f, 3.5f);
-            var result = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f, Pick = BfsPick.Farthest }, start, null);
+            var result = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f, Pick = BfsPick.Farthest }, start, null, range: 0f);
 
             Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
 
@@ -409,9 +409,13 @@ public sealed class RfPathfindingTest : GameTest
 
             for (var i = 0; i < 20; i++)
             {
-                var random = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f }, start, null);
+                var random = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f }, start, null, range: 0f);
                 Assert.That(Vector2.Distance(start, random.Path[^1].Box.Center), Is.InRange(3f, 4.01f));
             }
+
+            // The range of the request replaces the one of the algorithm.
+            var limited = Search(grid, agent, new Bfs { Range = 20f, MinRange = 3f, Pick = BfsPick.Farthest }, start, null, range: 4f);
+            Assert.That(Vector2.Distance(start, limited.Path[^1].Box.Center), Is.InRange(3f, 4.01f));
         });
     }
 

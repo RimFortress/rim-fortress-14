@@ -35,7 +35,6 @@
       rangeKey: IdleRange
     - !type:MoveTo
       rangeKey: InteractRange
-      findPath: false
     - !type:RandomTime
       key: IdleTime
       minSec: 2

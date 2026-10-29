@@ -25,9 +25,8 @@
     actions:
     - !type:CaptureQuery
       capture: Query/Sharp
-    - !type:EntityCoords
-      targetKey: Query/Sharp
     - !type:MoveTo
+      targetEntityKey: Query/Sharp
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Sharp
@@ -38,9 +37,8 @@
     - HarvestPlant != null
     - NeedSharp == false
     actions:
-    - !type:EntityCoords
-      targetKey: HarvestPlant
     - !type:MoveTo
+      targetEntityKey: HarvestPlant
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: HarvestPlant

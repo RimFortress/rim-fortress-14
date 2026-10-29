@@ -32,9 +32,8 @@
     - ActiveHandsFree == true
     - Query/FrendlyAttackTarget || Query/NearbyDestructible != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/FrendlyAttackTarget || Query/NearbyDestructible
     - !type:MoveTo
+      targetEntityKey: Query/FrendlyAttackTarget || Query/NearbyDestructible
       rangeKey: MeleeRange
     - !type:Juke
     - !type:Melee

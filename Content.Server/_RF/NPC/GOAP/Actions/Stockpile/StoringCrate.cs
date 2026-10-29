@@ -48,13 +48,13 @@ public sealed partial class StoringCrate : BaseGoapAction<StoringCrate>
 
 public sealed partial class StoringCrateGoapActionSystem : GoapActionSystem<StoringCrate>
 {
-    [Dependency] private InteractionSystem _interaction = default!;
-    [Dependency] private NpcSearcherSystem _searcher = default!;
-    [Dependency] private StockpileSystem _stockpile = default!;
-    [Dependency] private NpcTimingSystem _npcTiming = default!;
-    [Dependency] private MoveToActionSystem _moveTo = default!;
-    [Dependency] private PullingSystem _pulling = default!;
-    [Dependency] private MovePullingGoapActionSystem _movePulling = default!;
+    [Dependency] private InteractionSystem _interaction = null!;
+    [Dependency] private NpcSearcherSystem _searcher = null!;
+    [Dependency] private StockpileSystem _stockpile = null!;
+    [Dependency] private NpcTimingSystem _npcTiming = null!;
+    [Dependency] private MoveToActionSystem _moveTo = null!;
+    [Dependency] private PullingSystem _pulling = null!;
+    [Dependency] private MovePullingGoapActionSystem _movePulling = null!;
 
     [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
     [Dependency] private EntityQuery<PullerComponent> _pullerQuery;
@@ -163,10 +163,7 @@ public sealed partial class StoringCrateGoapActionSystem : GoapActionSystem<Stor
                 }
             }
 
-            var result = _moveTo.Move(ent,
-                this,
-                Transform(crate).Coordinates,
-                GoapState.InteractRange);
+            var result = _moveTo.Move(ent, this, crate, GoapState.InteractRange);
 
             if (result != GoapActionResult.Finished)
                 return result;

@@ -41,12 +41,18 @@ public readonly record struct PathNodeGoal(
 /// <param name="Target">Where the path must lead, null if the algorithm does not search for a destination.</param>
 /// <param name="Range">How close to the <paramref name="Target"/> the agent needs to get.</param>
 /// <param name="Job">The job that runs the search, the algorithm must yield through it.</param>
+/// <param name="TargetBounds">
+/// The region the target takes up, in the coordinates of the entity of <paramref name="Target"/>. If it is set,
+/// the range is counted from the region and not from the point: a target that is big and solid cannot be reached
+/// at its center.
+/// </param>
 public readonly record struct PathSearch(
     Entity<PathProfilesComponent, GoapComponent> Agent,
     EntityCoordinates Start,
     EntityCoordinates? Target,
     float Range,
-    PathJob Job);
+    PathJob Job,
+    Box2? TargetBounds = null);
 
 public enum PathSearchStatus : byte
 {
