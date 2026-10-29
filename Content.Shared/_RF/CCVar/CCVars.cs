@@ -100,6 +100,22 @@ public sealed class RfVars : CVars
 
     #endregion
 
+    #region Pathfinding
+
+    /// <summary>
+    /// How long in seconds per tick the path searches of all the NPCs together are allowed to take.
+    /// </summary>
+    public static readonly CVarDef<double> PathfindingTime =
+        CVarDef.Create("pathfinding.time", 0.004, CVar.SERVER | CVar.ARCHIVE);
+
+    /// <summary>
+    /// How long in seconds a single path search runs before it gives way to the others.
+    /// </summary>
+    public static readonly CVarDef<double> PathfindingJobTime =
+        CVarDef.Create("pathfinding.job_time", 0.001, CVar.SERVER | CVar.ARCHIVE);
+
+    #endregion
+
     #region World Map
 
     /// <summary>

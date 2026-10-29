@@ -8,6 +8,7 @@ using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Algorithms;
 using Content.Shared._RF.NPC.Pathfinding.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 using Robust.Shared.CPUJob.JobQueues;
 using Robust.Shared.CPUJob.JobQueues.Queues;
@@ -15,6 +16,7 @@ using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Maths;
+using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests._RF.NPC.Pathfinding;
 
@@ -80,6 +82,18 @@ public sealed class RfPathfindingTest : GameTest
     cost:
     - float: 10000
 
+# Does not go through anything that costs a lot, and gives up instead of coming close.
+- type: pathProfile
+  id: TestStrict
+  algorithm: !type:AStar
+    maxCost: 5000
+    allowPartial: false
+  rules:
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 10000
+
 - type: entity
   id: TestPathAgent
   components:
@@ -100,6 +114,15 @@ public sealed class RfPathfindingTest : GameTest
         - MobMask
         layer:
         - MobLayer
+
+- type: entity
+  id: TestPathLadderAgent
+  parent: TestPathAgent
+  components:
+  - type: PathProfiles
+    profiles:
+    - TestStrict
+    - TestWalker
 ";
 
     [SidedDependency(Side.Server)] private readonly RfPathfindingSystem _pathfinding = default!;
@@ -220,6 +243,7 @@ public sealed class RfPathfindingTest : GameTest
     /// </summary>
     private async Task<(Entity<MapGridComponent> Grid, Entity<PathProfilesComponent, GoapComponent> Agent)> CreateWorld(
         int width,
+        string agentProto,
         params (int X, int Y)[] walls)
     {
         var map = await Pair.CreateTestMap();
@@ -241,7 +265,7 @@ public sealed class RfPathfindingTest : GameTest
                 _entMan.SpawnAtPosition("TestPathWall", new EntityCoordinates(grid, x + 0.5f, y + 0.5f));
             }
 
-            agent = _entMan.SpawnAtPosition("TestPathAgent", new EntityCoordinates(grid, 0.5f, 7.5f));
+            agent = _entMan.SpawnAtPosition(agentProto, new EntityCoordinates(grid, 0.5f, 7.5f));
         });
 
         await Pair.RunTicksSync(5);
@@ -293,7 +317,7 @@ public sealed class RfPathfindingTest : GameTest
     [Test]
     public async Task TestAStarGoesAroundWalls()
     {
-        var (grid, agent) = await CreateWorld(8, (3, 3));
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent", (3, 3));
 
         await Pair.Server.WaitAssertion(() =>
         {
@@ -319,7 +343,7 @@ public sealed class RfPathfindingTest : GameTest
     [Test]
     public async Task TestAStarBuildsChunksWithinTheLimit()
     {
-        var (grid, agent) = await CreateWorld(32);
+        var (grid, agent) = await CreateWorld(32, "TestPathAgent");
 
         await Pair.Server.WaitAssertion(() =>
         {
@@ -346,7 +370,7 @@ public sealed class RfPathfindingTest : GameTest
     [Test]
     public async Task TestAStarMaxCost()
     {
-        var (grid, agent) = await CreateWorld(8, (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent", (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
 
         await Pair.Server.WaitAssertion(() =>
         {
@@ -371,7 +395,7 @@ public sealed class RfPathfindingTest : GameTest
     [Test]
     public async Task TestBfsPicksNodeInRange()
     {
-        var (grid, agent) = await CreateWorld(8);
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent");
 
         await Pair.Server.WaitAssertion(() =>
         {
@@ -388,6 +412,119 @@ public sealed class RfPathfindingTest : GameTest
                 var random = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f }, start, null);
                 Assert.That(Vector2.Distance(start, random.Path[^1].Box.Center), Is.InRange(3f, 4.01f));
             }
+        });
+    }
+
+    /// <summary>
+    /// Runs the game until the search of the agent is over.
+    /// </summary>
+    private async Task WaitForRequest(Entity<PathProfilesComponent, GoapComponent> agent)
+    {
+        var status = PathRequestStatus.Searching;
+
+        for (var i = 0; i < 100 && status == PathRequestStatus.Searching; i++)
+        {
+            await Pair.RunTicksSync(2);
+            await Pair.Server.WaitPost(() => status = _pathfinding.GetStatus(agent));
+        }
+
+        Assert.That(status, Is.EqualTo(PathRequestStatus.Finished));
+    }
+
+    /// <summary>
+    /// A request goes through the profiles of the agent: when a profile does not find a path, the next one is tried.
+    /// </summary>
+    [Test]
+    public async Task TestRequestTriesNextProfile()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathLadderAgent",
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+        var target = new EntityCoordinates(grid, 7.5f, 3.5f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(_pathfinding.GetProfiles(agent), Has.Count.EqualTo(2));
+            Assert.That(_pathfinding.RequestPath(agent, target, 0.4f), Is.True);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.Searching));
+        });
+
+        await WaitForRequest(agent);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.TryGetResult(agent, out var result, out var profile), Is.True);
+
+            // The first profile does not go through the wall, so the second one found the path.
+            Assert.That(profile, Is.EqualTo((ProtoId<PathProfilePrototype>?) "TestWalker"));
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+
+            // The result stays until it is cancelled.
+            Assert.That(_pathfinding.TryGetResult(agent, out _, out _), Is.True);
+            _pathfinding.CancelPath(agent.Owner);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+            Assert.That(_pathfinding.TryGetResult(agent, out _, out _), Is.False);
+        });
+    }
+
+    /// <summary>
+    /// A request with a particular profile only tries that profile, and one without a target is searched
+    /// by the algorithm that chooses the place itself.
+    /// </summary>
+    [Test]
+    public async Task TestRequestSingleProfile()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathLadderAgent",
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(_pathfinding.RequestPath(agent, new EntityCoordinates(grid, 7.5f, 3.5f), 0.4f, "TestStrict"), Is.True);
+        });
+
+        await WaitForRequest(agent);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.TryGetResult(agent, out var result, out var profile), Is.True);
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.NoPath));
+            Assert.That(profile, Is.Null);
+
+            Assert.That(_pathfinding.RequestPath(agent, null, 0f, "TestNoSuchProfile"), Is.False);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+        });
+    }
+
+    /// <summary>
+    /// A request that is cancelled does not leave a result, even if its search had not started yet.
+    /// </summary>
+    [Test]
+    public async Task TestRequestCancel()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent");
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(_pathfinding.RequestPath(agent, new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
+            _pathfinding.CancelPath(agent.Owner);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+        });
+
+        await Pair.RunTicksSync(20);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+
+            // A new request works after the cancelled one.
+            Assert.That(_pathfinding.RequestPath(agent, new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
+        });
+
+        await WaitForRequest(agent);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.TryGetResult(agent, out var result, out _), Is.True);
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
         });
     }
 }

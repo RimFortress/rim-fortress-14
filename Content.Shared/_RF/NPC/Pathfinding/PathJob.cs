@@ -37,6 +37,10 @@ public sealed class PathJob(
 
     protected override async Task<PathSearchResult> Process()
     {
+        // The request may have been cancelled while the job was waiting in the queue.
+        if (Cancellation.IsCancellationRequested)
+            return PathSearchResult.NoPath;
+
         return await algorithm.Search(new PathSearch(agent, start, target, range, this), runner);
     }
 }

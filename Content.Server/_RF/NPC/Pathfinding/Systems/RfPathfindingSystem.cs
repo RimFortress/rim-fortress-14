@@ -25,6 +25,7 @@ public sealed partial class RfPathfindingSystem : SharedRfPathfindingSystem
         base.Initialize();
 
         InitializeBaking();
+        InitializeRequests();
 
         // The tag indices have changed, so everything that was built has to be built again.
         Subs.ProtoReload<PathTagPrototype>(_proto, ClearMaps);
@@ -41,6 +42,8 @@ public sealed partial class RfPathfindingSystem : SharedRfPathfindingSystem
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
+
+        _jobs.Process();
 
         var now = _timing.CurTime;
         var options = new ParallelOptions { MaxDegreeOfParallelism = _parallel.ParallelProcessCount };
