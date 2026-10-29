@@ -77,10 +77,16 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
         BuildTagCache();
     }
 
+    /// <summary>
+    /// The largest radius in tiles within which a tag influences nodes.
+    /// </summary>
+    public float MaxTagRadius { get; private set; }
+
     private void BuildTagCache()
     {
         _pathTagIndices.Clear();
         _pathTagInfluence.Clear();
+        MaxTagRadius = 0f;
 
         foreach (var tag in _proto.EnumeratePrototypes<PathTagPrototype>().OrderBy(x => x.ID, StringComparer.Ordinal))
         {
@@ -110,6 +116,7 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
 
             _pathTagIndices.Add(tag.ID, _pathTagIndices.Count);
             _pathTagInfluence.Add(samples);
+            MaxTagRadius = MathF.Max(MaxTagRadius, (samples.Length - 1) * DistanceStep);
         }
     }
 

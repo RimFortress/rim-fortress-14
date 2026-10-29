@@ -98,33 +98,50 @@ public abstract partial class SharedRfPathfindingSystem
     }
 
     /// <summary>
+    /// Is the marking of chunks as the ones to rebuild disabled for now, because what changes is not a change of
+    /// the world for the pathfinding.
+    /// </summary>
+    protected virtual bool SuppressDirtying => false;
+
+    /// <summary>
     /// Marks the chunks of a grid that fall within a radius of a point as the ones to rebuild.
     /// </summary>
     /// <param name="grid">The grid.</param>
     /// <param name="position">The point in the grid's coordinates.</param>
     /// <param name="radius">Radius in tiles.</param>
     private void MarkDirty(EntityUid grid, Vector2 position, float radius)
+        => MarkDirty(grid, new Box2(position - new Vector2(radius), position + new Vector2(radius)));
+
+    /// <summary>
+    /// Marks the chunks of a grid that an area touches as the ones to rebuild. Only chunks that are on the map
+    /// are marked: the others are built from the world as it is when they are needed.
+    /// </summary>
+    /// <param name="grid">The grid.</param>
+    /// <param name="area">The area in the grid's coordinates.</param>
+    protected void MarkDirty(EntityUid grid, Box2 area)
     {
-        if (!_gridQuery.TryComp(grid, out var comp))
+        if (SuppressDirtying || !_gridQuery.TryComp(grid, out var comp))
             return;
 
-        var now = _timing.CurTime;
-
-        if (comp.NextUpdate < now && !MetaData(grid).EntityPaused)
-            comp.NextUpdate = now + UpdateCooldown;
-
-        var min = position - new Vector2(radius);
-        var max = position + new Vector2(radius);
-        var minChunk = new Vector2i((int) MathF.Floor(min.X / ChunkSize), (int) MathF.Floor(min.Y / ChunkSize));
-        var maxChunk = new Vector2i((int) MathF.Floor(max.X / ChunkSize), (int) MathF.Floor(max.Y / ChunkSize));
+        var minChunk = new Vector2i((int) MathF.Floor(area.Left / ChunkSize), (int) MathF.Floor(area.Bottom / ChunkSize));
+        var maxChunk = new Vector2i((int) MathF.Floor(area.Right / ChunkSize), (int) MathF.Floor(area.Top / ChunkSize));
+        var marked = false;
 
         for (var x = minChunk.X; x <= maxChunk.X; x++)
         {
             for (var y = minChunk.Y; y <= maxChunk.Y; y++)
             {
-                comp.DirtyChunks.Add(new Vector2i(x, y));
+                var origin = new Vector2i(x, y);
+
+                if (comp.Chunks.ContainsKey(origin))
+                    marked |= comp.DirtyChunks.Add(origin);
             }
         }
+
+        var now = _timing.CurTime;
+
+        if (marked && comp.NextUpdate < now && !MetaData(grid).EntityPaused)
+            comp.NextUpdate = now + UpdateCooldown;
     }
 
     /// <summary>

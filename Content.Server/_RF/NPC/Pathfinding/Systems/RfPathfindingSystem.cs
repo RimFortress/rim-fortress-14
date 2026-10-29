@@ -1,29 +1,70 @@
+using System.Threading.Tasks;
 using Content.Server.Destructible;
 using Content.Server.Destructible.Thresholds.Behaviors;
+using Content.Shared._RF;
+using Content.Shared._RF.NPC.Pathfinding.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Destructible;
 using Content.Shared.Destructible.Thresholds.Triggers;
 using Content.Shared.FixedPoint;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.Pathfinding.Systems;
 
 public sealed partial class RfPathfindingSystem : SharedRfPathfindingSystem
 {
-    [Dependency] private IComponentFactory _factory = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private IPrototypeManager _proto = null!;
+    [Dependency] private EntityQuery<DestructibleComponent> _destructibleQuery;
 
-    [Dependency] private EntityQuery<DestructibleComponent> _destructibleQuery = default!;
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        InitializeBaking();
+
+        // The tag indices have changed, so everything that was built has to be built again.
+        Subs.ProtoReload<PathTagPrototype>(_proto, ClearMaps);
+        _transform.OnGlobalMoveEvent += OnMoveEvent;
+    }
+
+    public override void Shutdown()
+    {
+        base.Shutdown();
+
+        _transform.OnGlobalMoveEvent -= OnMoveEvent;
+    }
+
+    public override void Update(float frameTime)
+    {
+        base.Update(frameTime);
+
+        var now = _timing.CurTime;
+        var options = new ParallelOptions { MaxDegreeOfParallelism = _parallel.ParallelProcessCount };
+        var query = AllEntityQuery<RfGridPathfindingComponent, MapGridComponent>();
+
+        while (query.MoveNext(out var uid, out var map, out var grid))
+        {
+            if (map.DirtyChunks.Count > 0 && now >= map.NextUpdate)
+                RebuildDirty(new Entity<RfGridPathfindingComponent, MapGridComponent>(uid, map, grid), options);
+
+            if (now >= map.NextEviction)
+                Evict(map, now);
+        }
+    }
 
     public override DamageSpecifier? GetDestroyDamage(EntityUid uid)
         => _destructibleQuery.TryComp(uid, out var destructible) ? GetDestroyDamage(destructible) : null;
 
+    // The same instance is returned for every entity of a prototype, so comparing them is cheap.
     public override DamageSpecifier? GetDestroyDamage(EntityPrototype prototype)
-        => prototype.TryComp<DestructibleComponent>(out var destructible, _factory)
-            ? GetDestroyDamage(destructible)
-            : null;
+        => _destroyDamage.GetOrAdd(prototype.ID,
+            _ => prototype.TryComp<DestructibleComponent>(out var destructible, EntityManager.ComponentFactory)
+                ? GetDestroyDamage(destructible)
+                : null);
 
     /// <summary>
     /// Converts the thresholds of the entity that destroy or break it to the damage needed for that.
@@ -56,7 +97,7 @@ public sealed partial class RfPathfindingSystem : SharedRfPathfindingSystem
         switch (trigger)
         {
             case DamageTrigger total:
-                foreach (var type in _prototype.EnumeratePrototypes<DamageTypePrototype>())
+                foreach (var type in _proto.EnumeratePrototypes<DamageTypePrototype>())
                 {
                     AddMin(ref result, type.ID, total.Damage);
                 }
@@ -65,15 +106,13 @@ public sealed partial class RfPathfindingSystem : SharedRfPathfindingSystem
             case DamageTypeTrigger type:
                 AddMin(ref result, type.DamageType, type.Damage);
                 break;
-#pragma warning disable CS0618 // DamageGroupPrototype is obsolete, but the trigger uses it
             case DamageGroupTrigger group:
-                foreach (var type in _prototype.Index(group.DamageGroup).DamageTypes)
+                foreach (var type in _proto.Index(group.DamageGroup).DamageTypes)
                 {
                     AddMin(ref result, type, group.Damage);
                 }
 
                 break;
-#pragma warning restore CS0618
             case OrTrigger or:
                 foreach (var inner in or.Triggers)
                 {

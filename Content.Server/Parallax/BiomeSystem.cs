@@ -69,6 +69,14 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
     /// every time the loaded area moves.
     /// </summary>
     public bool IsProcessingChunk { get; private set; }
+
+    /// <summary>
+    /// Has the tile been changed by something other than the biome. The biome does not own such tiles: it leaves
+    /// them as they are when it unloads the chunk.
+    /// </summary>
+    public bool IsTileModified(BiomeComponent component, Vector2i tile)
+        => component.ModifiedTiles.TryGetValue(SharedMapSystem.GetChunkIndices(tile, ChunkSize) * ChunkSize, out var modified)
+           && modified.Contains(tile);
     // RimFortress End
 
     private List<(Vector2i, Tile)> _tiles = new();

@@ -19,6 +19,12 @@ public sealed partial class RfGridPathfindingComponent : Component
     public TimeSpan NextUpdate;
 
     /// <summary>
+    /// The next time the chunks that have not been used for too long are removed.
+    /// </summary>
+    [AutoPausedField]
+    public TimeSpan NextEviction;
+
+    /// <summary>
     /// How long a chunk of the navigation map is kept after it was last used by a search. The map is only a
     /// cache of what the world looks like, a removed chunk is built again when it is needed.
     /// </summary>
