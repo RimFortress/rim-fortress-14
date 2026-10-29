@@ -135,7 +135,7 @@ public sealed partial class RfSteererComponent : Component
     /// <summary>
     /// The places where the agent has got stuck during the order, the paths do not lead there again.
     /// </summary>
-    public List<Content.Shared._RF.NPC.Pathfinding.PathAvoid> Avoid = new();
+    public List<PathAvoid> Avoid = new();
 
     /// <summary>
     /// The agent is stuck if it does not move farther than <see cref="StuckDistance"/> for this long while it is told to move.
