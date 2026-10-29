@@ -50,8 +50,6 @@
       targetEntityKey: Query/AttackTarget
       rangeKey: MeleeRange
       stopOnLineOfSight: true
-    - !type:Juke
-      jukeType: Away
     - !type:Gun
       targetKey: Query/AttackTarget
       removeCombatMode: false
@@ -69,7 +67,6 @@
     - !type:MoveTo
       targetEntityKey: Query/AttackTarget
       rangeKey: MeleeRange
-    - !type:Juke
     - !type:Melee
       targetKey: Query/AttackTarget
       removeCombatMode: false
@@ -85,7 +82,6 @@
     - !type:MoveTo
       targetEntityKey: Query/AttackTarget
       rangeKey: MeleeRange
-    - !type:Juke
     - !type:Melee
       targetKey: Query/AttackTarget
       removeCombatMode: false

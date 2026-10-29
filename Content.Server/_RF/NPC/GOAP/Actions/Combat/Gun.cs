@@ -98,9 +98,6 @@ public sealed partial class Gun : BaseGoapAction<Gun>
     /// </summary>
     [ViewVariables]
     public static readonly StateKey<EntityUid> NearbyMagazineKey = "NearbyMagazine";
-
-    [ViewVariables]
-    public static readonly StateKey<JukeType> PreviousJukeTypeKey = "PreviousJukeType";
 }
 
 public sealed partial class GunActionSystem : GoapActionSystem<Gun>
@@ -130,7 +127,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private EntityQuery<WieldableComponent> _wieldQuery;
     [Dependency] private EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery;
     [Dependency] private EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery;
-    [Dependency] private EntityQuery<NPCJukeComponent> _jukeQuery;
 
     private static readonly ProtoId<SearchQueryPrototype> InventoryMagazineQuery = "InventoryMagazine";
     private static readonly ProtoId<SearchQueryPrototype> NearbyMagazineQuery = "NearbyMagazine";
@@ -164,7 +160,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
         Set(ent, Gun.TargetInLosKey, false);
         Set(ent, Gun.MovingToMagazineKey, false);
         Remove(ent, Gun.NearbyMagazineKey);
-        Remove(ent, Gun.PreviousJukeTypeKey);
         NpcTimingSystem.ClearQueue(ent);
 
         return true;
@@ -180,7 +175,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
         Remove(ent, Gun.TargetInLosKey);
         Remove(ent, Gun.MovingToMagazineKey);
         Remove(ent, Gun.NearbyMagazineKey);
-        Remove(ent, Gun.PreviousJukeTypeKey);
         NpcTimingSystem.ClearQueue(ent);
         _moveTo.Stop(ent);
     }
@@ -214,11 +208,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
 
             _moveTo.Stop(ent);
             Set(ent, Gun.MovingToMagazineKey, false);
-
-            if (TryGet(ent, Gun.PreviousJukeTypeKey, out var type))
-                EnsureComp<NPCJukeComponent>(ent).JukeType = type;
-
-            Remove(ent, Gun.PreviousJukeTypeKey);
             return ReplaceMagazine(ent, ammoUid);
         }
 
@@ -442,12 +431,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
         // Else, going to the magazine
         Set(ent, Gun.MovingToMagazineKey, true);
         Set(ent, Gun.NearbyMagazineKey, ammoUid.Value);
-
-        if (_jukeQuery.TryComp(ent, out var juke))
-        {
-            Set(ent, Gun.PreviousJukeTypeKey, juke.JukeType);
-            RemComp(ent, juke);
-        }
 
         return GoapActionResult.Continuing;
     }
