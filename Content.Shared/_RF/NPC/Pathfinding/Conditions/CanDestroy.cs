@@ -1,5 +1,4 @@
 using Content.Shared._RF.NPC.Pathfinding.Systems;
-using Content.Shared.FixedPoint;
 
 namespace Content.Shared._RF.NPC.Pathfinding.Conditions;
 
@@ -9,10 +8,16 @@ namespace Content.Shared._RF.NPC.Pathfinding.Conditions;
 public sealed partial class CanDestroy : BasePathCondition<CanDestroy>
 {
     /// <summary>
+    /// The agent must be able to do this in greater than this number of seconds.
+    /// </summary>
+    [DataField]
+    public float? MoreThan;
+
+    /// <summary>
     /// The agent must be able to do this in less than this number of seconds.
     /// </summary>
     [DataField]
-    public float LessThan = float.PositiveInfinity;
+    public float? LessThan;
 
     /// <summary>
     /// The name of the variable to which the time to destroy in seconds will be written.
@@ -28,21 +33,10 @@ public sealed partial class CanDestroyPathConditionSystem : PathConditionSystem<
         if (ctx.Facts.Destroy is not { } required)
             return false;
 
-        // Every type of damage brings the node closer to destruction proportionally to what it needs.
-        var progress = 0f;
+        var time = Pathfinding.GetDestroyTime(required, ctx.Attacks);
 
-        foreach (var (type, needed) in required.DamageDict)
-        {
-            if (needed > FixedPoint2.Zero && ctx.Damage.DamageDict.TryGetValue(type, out var dealt) && dealt > FixedPoint2.Zero)
-                progress += dealt.Float() / needed.Float();
-        }
-
-        if (progress <= 0f)
-            return false;
-
-        var time = 1f / progress;
-
-        if (time >= condition.LessThan)
+        if (condition.MoreThan != null && time <= condition.MoreThan
+            || condition.LessThan != null && time >= condition.LessThan)
             return false;
 
         ctx.Variables[condition.Var] = time;

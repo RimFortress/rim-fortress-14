@@ -16,7 +16,13 @@ public sealed partial class TagInfluence : BasePathCondition<TagInfluence>
     /// The influence must be greater than this value.
     /// </summary>
     [DataField]
-    public float MoreThan;
+    public float? MoreThan;
+
+    /// <summary>
+    /// The influence must be less than this value.
+    /// </summary>
+    [DataField]
+    public float? LessThan;
 
     /// <summary>
     /// The name of the variable to which the strength of the influence will be written.
@@ -31,7 +37,8 @@ public sealed class TagInfluencePathConditionSystem : PathConditionSystem<TagInf
     {
         var influence = Pathfinding.GetInfluence(ctx.Facts, condition.Tag);
 
-        if (influence <= condition.MoreThan)
+        if (condition.MoreThan != null && influence <= condition.MoreThan
+            || condition.LessThan != null && influence >= condition.LessThan)
             return false;
 
         ctx.Variables[condition.Var] = influence;

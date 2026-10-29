@@ -9,7 +9,6 @@ using Content.Shared._RF.NPC.Pathfinding.Algorithms;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
-using Content.Shared.Damage;
 using Content.Shared.Weapons.Melee;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
@@ -117,8 +116,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
     /// <summary>
     /// Returns the index of the tag, which is used in <see cref="PathNodeFacts"/>.
     /// </summary>
-    public bool TryGetTagIndex(ProtoId<PathTagPrototype> tag, out int index)
-        => _pathTagIndices.TryGetValue(tag, out index);
+    public bool TryGetTagIndex(ProtoId<PathTagPrototype> tag, out int index) => _pathTagIndices.TryGetValue(tag, out index);
 
     /// <summary>
     /// Returns the radius in tiles within which the tag influences nodes.
@@ -282,10 +280,9 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
 
         var comp = agent.Comp1;
         comp.ActiveProfile = profileId;
-        comp.Damage = new DamageSpecifier();
 
-        if (_melee.TryGetWeapon(agent, out var weapon, out var melee))
-            comp.Damage = _melee.GetDamage(weapon, agent, melee) * _melee.GetAttackRate(weapon, agent, melee);
+        comp.Attacks.Clear();
+        CollectAttacks(new Entity<GoapComponent>(agent.Owner, agent.Comp2), comp.Attacks);
 
         // Agent conditions do not depend on the node, so they are checked once per request.
         comp.ActiveRules.Clear();
@@ -310,7 +307,7 @@ public sealed partial class RfPathfindingSystem : EntitySystem, IPathConditionCh
         var comp = agent.Comp1;
         var ctx = new PathNodeContext(
             new Entity<GoapComponent>(agent.Owner, agent.Comp2),
-            comp.Damage,
+            comp.Attacks,
             facts,
             blocked,
             _variables);

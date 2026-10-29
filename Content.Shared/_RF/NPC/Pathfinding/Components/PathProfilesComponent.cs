@@ -1,5 +1,4 @@
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
-using Content.Shared.Damage;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.NPC.Pathfinding.Components;
@@ -31,8 +30,8 @@ public sealed partial class PathProfilesComponent : Component
     public List<PathfindingRule> ActiveRules = new();
 
     /// <summary>
-    /// How much damage per second the agent is able to deal during the path request.
+    /// All the ways the agent is able to deal damage during the path request.
     /// </summary>
     [ViewVariables]
-    public DamageSpecifier Damage = new();
+    public List<PathAttack> Attacks = new();
 }

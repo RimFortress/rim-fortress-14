@@ -1,0 +1,33 @@
+# Used by the pathfinding to calculate the damage the agent is able to deal.
+# The results are kept up to date by the searcher, ammo counts are read from them when a path is requested.
+- type: searchQuery
+  id: PathMelees
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: MeleeWeapon
+      damage:
+        types:
+          Slash: 0
+
+- type: searchQuery
+  id: PathGuns
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: Gun
+
+# Spare magazines, the ones that fit a particular gun are chosen when the damage is calculated.
+- type: searchQuery
+  id: PathMagazines
+  query: !type:Inventory
+  filters:
+  - !type:Component
+    components:
+    - type: BallisticAmmoProvider
+  - !type:Component
+    components:
+    - type: Gun
+    invert: true
