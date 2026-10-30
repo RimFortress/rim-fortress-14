@@ -1,6 +1,6 @@
 - type: !PartialOnly tile
   id: FloorAstroIce
-  pathfindingCost: 10
+  pathTags: [Ice]
 
 - type: !PartialOnly tile
   id: FloorSnow
@@ -9,7 +9,7 @@
 - type: !PartialOnly tile
   id: FloorIce
   navMapColor: "#B0E8F8"
-  pathfindingCost: 10
+  pathTags: [Ice]
 
 - type: !PartialOnly tile
   id: FloorSnowDug

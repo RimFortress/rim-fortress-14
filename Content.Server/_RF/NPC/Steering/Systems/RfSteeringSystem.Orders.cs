@@ -5,6 +5,8 @@ using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
+using Robust.Shared.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
@@ -110,6 +112,7 @@ public sealed partial class RfSteeringSystem
     /// <param name="target">Where to go.</param>
     /// <param name="range">How close to the target the agent needs to get.</param>
     /// <param name="stopOnSight">Is it enough for the agent to see the target for a while to have got there.</param>
+    /// <param name="query">What the path is searched for with, null for the default of the agent.</param>
     /// <returns>
     /// <see cref="GoapActionResult.Continuing"/> while the agent is on the way,
     /// <see cref="GoapActionResult.Finished"/> when it has got there and stopped,
@@ -120,31 +123,34 @@ public sealed partial class RfSteeringSystem
         Entity<GoapComponent> agent,
         EntityCoordinates target,
         float range,
-        bool stopOnSight = false)
-        => Move(agent, target, null, range, stopOnSight);
+        bool stopOnSight = false,
+        ProtoId<PathQueryPrototype>? query = null)
+        => Move(agent, target, null, range, stopOnSight, query);
 
     /// <summary>
     /// Carries out the order to get to the entity. The range is counted from the region the entity takes up and not
     /// from its center, so an entity that is big and solid, a wall or a machine, can be reached: the agent comes up
     /// to it and does not try to get into its center. The target is followed if it moves.
     /// </summary>
-    /// <inheritdoc cref="Move(Entity{GoapComponent}, EntityCoordinates, float, bool)"/>
+    /// <inheritdoc cref="Move(Entity{GoapComponent}, EntityCoordinates, float, bool, ProtoId{PathQueryPrototype}?)"/>
     [PublicAPI]
     public GoapActionResult Move(
         Entity<GoapComponent> agent,
         EntityUid target,
         float range,
-        bool stopOnSight = false)
+        bool stopOnSight = false,
+        ProtoId<PathQueryPrototype>? query = null)
         => TerminatingOrDeleted(target)
             ? GoapActionResult.Failed
-            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight);
+            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight, query);
 
     private GoapActionResult Move(
         Entity<GoapComponent> agent,
         EntityCoordinates target,
         EntityUid? entity,
         float range,
-        bool stopOnSight)
+        bool stopOnSight,
+        ProtoId<PathQueryPrototype>? query)
     {
         if (!_profilesQuery.TryComp(agent, out var profiles))
             return GoapActionResult.Failed;
@@ -170,6 +176,7 @@ public sealed partial class RfSteeringSystem
             steerer.Target = target;
             steerer.TargetEntity = entity;
             steerer.Range = range;
+            steerer.ActiveQuery = query ?? steerer.Query;
             steerer.Repaths = 0;
             steerer.Avoid.Clear();
             steerer.NoSmoothing = false;
@@ -312,7 +319,7 @@ public sealed partial class RfSteeringSystem
         steerer.SearchedTarget = target;
         steerer.SearchedBounds = bounds;
 
-        return _pathfinding.RequestPath(agent, target, range, targetBounds: bounds, avoid: steerer.Avoid);
+        return _pathfinding.RequestPath(agent, steerer.ActiveQuery, target, range, targetBounds: bounds, avoid: steerer.Avoid);
     }
 
     /// <summary>

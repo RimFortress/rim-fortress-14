@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Prototypes;
@@ -166,6 +167,18 @@ public sealed partial class RfSteererComponent : Component
     /// </summary>
     [DataField]
     public int MaxRepaths = 3;
+
+    /// <summary>
+    /// The query that the paths of the agent are searched for with, unless the order is for another.
+    /// </summary>
+    [DataField]
+    public ProtoId<PathQueryPrototype> Query = "Travel";
+
+    /// <summary>
+    /// The query of the order that is carried out.
+    /// </summary>
+    [ViewVariables]
+    public ProtoId<PathQueryPrototype> ActiveQuery = "Travel";
 
     /// <summary>
     /// What the agent is doing to carry out the order.

@@ -1,4 +1,6 @@
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.NPC.Pathfinding;
 
@@ -17,4 +19,5 @@ public readonly record struct PathNodeContext(
     List<PathAttack> Attacks,
     PathNodeFacts Facts,
     bool Blocked,
-    Dictionary<string, float> Variables);
+    Dictionary<string, float> Variables,
+    ProtoId<PathQueryPrototype>? Query = null);

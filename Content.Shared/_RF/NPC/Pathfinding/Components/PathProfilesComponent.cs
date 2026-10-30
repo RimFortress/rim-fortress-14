@@ -26,6 +26,12 @@ public sealed partial class PathProfilesComponent : Component
     public ProtoId<PathProfilePrototype>? ActiveProfile;
 
     /// <summary>
+    /// The query of the path request that is in progress.
+    /// </summary>
+    [ViewVariables]
+    public ProtoId<PathQueryPrototype>? ActiveQuery;
+
+    /// <summary>
     /// Rules of the <see cref="ActiveProfile"/> whose agent conditions are met.
     /// </summary>
     [ViewVariables]
@@ -61,6 +67,12 @@ public sealed partial class PathProfilesComponent : Component
     /// </summary>
     [ViewVariables]
     public EntityCoordinates? RequestTarget;
+
+    /// <summary>
+    /// What the request is for.
+    /// </summary>
+    [ViewVariables]
+    public ProtoId<PathQueryPrototype>? RequestQuery;
 
     /// <summary>
     /// How close to the target the agent needs to get.

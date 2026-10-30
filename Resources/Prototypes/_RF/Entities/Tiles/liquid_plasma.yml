@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: FloorLiquidPlasmaEntity
+  components:
+  - type: PathTags
+    tags: [LiquidPlasma]

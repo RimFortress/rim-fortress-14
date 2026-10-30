@@ -259,8 +259,8 @@ public sealed class RfPathfindingBiomeTest : GameTest
                     agent,
                     _entMan.GetComponent<Content.Shared._RF.NPC.Pathfinding.Components.PathProfilesComponent>(agent),
                     _entMan.GetComponent<Content.Shared._RF.NPC.GOAP.Components.GoapComponent>(agent));
-                Assert.That(_pathfinding.BeginRequest(ag, "Walker"), Is.True);
-                var profile = _proto.Index<Content.Shared._RF.NPC.Pathfinding.Prototypes.PathProfilePrototype>("Walker");
+                Assert.That(_pathfinding.BeginRequest(ag, "Walker", "Travel"), Is.True);
+                var profile = _proto.Index<Content.Shared._RF.NPC.Pathfinding.Prototypes.PathQueryPrototype>("Travel");
                 var job = new PathJob(0.05, ag, new EntityCoordinates(map, from.X + 0.5f, from.Y + 0.5f), new EntityCoordinates(map, from.X + 0.5f, from.Y + 2.5f), 0.5f, profile.Algorithm, _pathfinding);
                 var queue = new Robust.Shared.CPUJob.JobQueues.Queues.JobQueue();
                 queue.EnqueueJob(job);

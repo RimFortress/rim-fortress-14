@@ -286,16 +286,21 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
 
     /// <summary>
     /// Prepares the agent for a path request with the profile: the state of the request is written to the
-    /// agent's <see cref="PathProfilesComponent"/>. An agent can have only one request at a time.
+    /// agent's <see cref="PathProfilesComponent"/>. An agent can have only one request at a time. The query is what the
+    /// request is for, the rules of the profile can apply to some queries and not to the others.
     /// </summary>
     [PublicAPI]
-    public bool BeginRequest(Entity<PathProfilesComponent, GoapComponent> agent, ProtoId<PathProfilePrototype> profileId)
+    public bool BeginRequest(
+        Entity<PathProfilesComponent, GoapComponent> agent,
+        ProtoId<PathProfilePrototype> profileId,
+        ProtoId<PathQueryPrototype>? query = null)
     {
         if (!_proto.TryIndex(profileId, out var profile))
             return false;
 
         var comp = agent.Comp1;
         comp.ActiveProfile = profileId;
+        comp.ActiveQuery = query;
 
         comp.Attacks.Clear();
         CollectAttacks(new Entity<GoapComponent>(agent.Owner, agent.Comp2), comp.Attacks);
@@ -327,7 +332,8 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
             comp.Attacks,
             facts,
             blocked,
-            _variables);
+            _variables,
+            comp.ActiveQuery);
 
         var modifier = 1f;
         ProtoId<UtilityAiGoalPrototype>? goal = null;

@@ -22,12 +22,12 @@ public sealed partial class PickAccessible : BaseGoapAction<PickAccessible>
     public StateKey<EntityCoordinates> TargetCoordinates = "TargetCoordinates";
 
     /// <summary>
-    /// The profile that searches for the place, its algorithm has to be one that does not need a destination,
-    /// such as <see cref="Content.Shared._RF.NPC.Pathfinding.Algorithms.Bfs"/>. The rules of the profile decide
-    /// which places the agent can get to.
+    /// What the place is searched for with: the algorithm of the query chooses it, and the rules of the profiles of the
+    /// agent decide which places it can get to, so the same action does for the agents that can go by lava and for the
+    /// ones that cannot.
     /// </summary>
     [DataField]
-    public ProtoId<PathProfilePrototype> Profile = "Wander";
+    public ProtoId<PathQueryPrototype> Query = "Wander";
 }
 
 public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessible>
@@ -52,9 +52,9 @@ public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessib
             return false;
         }
 
-        if (!_pathfinding.RequestPath((ent, profiles, ent.Comp), null, maxRange, action.Profile))
+        if (!_pathfinding.RequestPath((ent, profiles, ent.Comp), action.Query, null, maxRange))
         {
-            CreateDump($"the profile {action.Profile} cannot be used to search for a place");
+            CreateDump("none of the profiles of the agent can choose a place");
             return false;
         }
 

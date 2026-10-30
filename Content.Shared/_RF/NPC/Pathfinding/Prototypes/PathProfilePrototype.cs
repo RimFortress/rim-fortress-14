@@ -1,5 +1,4 @@
 using Content.Shared._RF.NPC.GOAP;
-using Content.Shared._RF.NPC.Pathfinding.Algorithms;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
@@ -35,10 +34,4 @@ public sealed partial class PathProfilePrototype : IPrototype, IInheritingProtot
     /// </summary>
     [DataField, AlwaysPushInheritance]
     public List<PathfindingRule> Rules = new();
-
-    /// <summary>
-    /// The algorithm that is used to search for a path and its settings.
-    /// </summary>
-    [DataField]
-    public PathAlgorithm Algorithm = new AStar();
 }

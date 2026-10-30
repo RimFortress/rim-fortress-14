@@ -55,7 +55,14 @@ public sealed partial class RfPathfindingSystem
     /// to find out how the search went.
     /// </summary>
     /// <param name="agent">The agent that needs the path.</param>
-    /// <param name="target">Where the path is to lead, null for algorithms that choose the place themselves.</param>
+    /// <param name="query">
+    /// What the request is for. The algorithm of the query searches for the path, the rules of the profiles of the agent
+    /// say what costs what, and the ones that are for other queries only are not used.
+    /// </param>
+    /// <param name="target">
+    /// Where the path is to lead. If it is null, the algorithm of the query chooses the place itself, for example, a
+    /// place to wander to, and then the range is how far from the agent the place can be.
+    /// </param>
     /// <param name="range">How close to the target the agent needs to get.</param>
     /// <param name="profile">The only profile to try, null to try all the ones the agent can use.</param>
     /// <param name="targetBounds">
@@ -67,6 +74,7 @@ public sealed partial class RfPathfindingSystem
     [PublicAPI]
     public bool RequestPath(
         Entity<PathProfilesComponent, GoapComponent> agent,
+        ProtoId<PathQueryPrototype> query,
         EntityCoordinates? target,
         float range,
         ProtoId<PathProfilePrototype>? profile = null,
@@ -76,6 +84,9 @@ public sealed partial class RfPathfindingSystem
         CancelPath(new Entity<PathProfilesComponent?>(agent.Owner, agent.Comp1));
 
         var comp = agent.Comp1;
+
+        if (!_proto.HasIndex(query))
+            return false;
 
         if (profile is { } only)
         {
@@ -89,6 +100,7 @@ public sealed partial class RfPathfindingSystem
             comp.RequestProfiles.AddRange(GetProfiles(agent));
         }
 
+        comp.RequestQuery = query;
         comp.RequestTarget = target;
         comp.RequestRange = range;
         comp.RequestTargetBounds = targetBounds;
@@ -195,6 +207,7 @@ public sealed partial class RfPathfindingSystem
 
         comp.RequestProfiles.Clear();
         comp.RequestProfileIndex = 0;
+        comp.RequestQuery = null;
         comp.RequestTarget = null;
         comp.RequestTargetBounds = null;
         comp.RequestAvoid = null;
@@ -232,8 +245,15 @@ public sealed partial class RfPathfindingSystem
         {
             var id = comp.RequestProfiles[comp.RequestProfileIndex];
 
-            if (!_proto.TryIndex(id, out var profile) || !BeginRequest(agent, id))
+            if (comp.RequestQuery is not { } queryId
+                || !_proto.TryIndex(queryId, out var query)
+                || !_proto.HasIndex(id)
+                || !BeginRequest(agent, id, queryId))
+            {
                 continue;
+            }
+
+            var algorithm = query.Algorithm;
 
             RebuildPending(Transform(agent).GridUid);
 
@@ -244,7 +264,7 @@ public sealed partial class RfPathfindingSystem
                 Transform(agent).Coordinates,
                 comp.RequestTarget,
                 comp.RequestRange,
-                profile.Algorithm,
+                algorithm,
                 this,
                 comp.JobCancel.Token,
                 comp.RequestTargetBounds,

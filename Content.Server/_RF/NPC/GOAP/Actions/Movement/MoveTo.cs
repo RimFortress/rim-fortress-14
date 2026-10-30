@@ -4,7 +4,9 @@ using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using JetBrains.Annotations;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Movement;
 
@@ -45,6 +47,13 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
     /// </summary>
     [DataField]
     public bool StopOnLineOfSight;
+
+    /// <summary>
+    /// What the path is searched for with, null for the default of the agent. The rules of the profiles of the agent can
+    /// be different for different queries.
+    /// </summary>
+    [DataField]
+    public ProtoId<PathQueryPrototype>? Query;
 }
 
 /// <summary>
@@ -65,12 +74,12 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         if (action.TargetEntityKey is { } entityKey)
         {
             return TryGet(ent, entityKey, out var target)
-                ? Move(ent, this, target, range, action.StopOnLineOfSight)
+                ? Move(ent, this, target, range, action.StopOnLineOfSight, action.Query)
                 : GoapActionResult.Failed;
         }
 
         return TryGet(ent, action.TargetKey, out var coordinates)
-            ? Move(ent, this, coordinates, range, action.StopOnLineOfSight)
+            ? Move(ent, this, coordinates, range, action.StopOnLineOfSight, action.Query)
             : GoapActionResult.Failed;
     }
 
@@ -92,6 +101,7 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
     /// <param name="target">Target Coordinates to move to.</param>
     /// <param name="rangeKey">How close we need to get before considering movement finished.</param>
     /// <param name="stopOnLineOfSight">Do we only need to move into line of sight?</param>
+    /// <param name="query">What the path is searched for with, null for the default of the agent.</param>
     /// <returns>
     /// <see cref="GoapActionResult.Finished"/> if the movement is finished,
     /// <see cref="GoapActionResult.Continuing"/> if it is in progress,
@@ -103,47 +113,51 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         GoapDebugDumpSystem handler,
         EntityCoordinates target,
         StateKey<float> rangeKey,
-        bool stopOnLineOfSight = false)
+        bool stopOnLineOfSight = false,
+        ProtoId<PathQueryPrototype>? query = null)
         => handler.TryGet(ent, rangeKey, out var range)
-            ? Move(ent, handler, target, range, stopOnLineOfSight)
+            ? Move(ent, handler, target, range, stopOnLineOfSight, query)
             : GoapActionResult.Failed;
 
-    /// <inheritdoc cref="Move(Entity{GoapComponent}, GoapDebugDumpSystem, EntityCoordinates, StateKey{float}, bool)"/>
+    /// <inheritdoc cref="Move(Entity{GoapComponent}, GoapDebugDumpSystem, EntityCoordinates, StateKey{float}, bool, ProtoId{PathQueryPrototype}?)"/>
     [PublicAPI]
     public GoapActionResult Move(
         Entity<GoapComponent> ent,
         GoapDebugDumpSystem handler,
         EntityCoordinates target,
         float range,
-        bool stopOnLineOfSight = false)
-        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight));
+        bool stopOnLineOfSight = false,
+        ProtoId<PathQueryPrototype>? query = null)
+        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query));
 
     /// <summary>
     /// Moves the agent to the entity. The agent comes up to the region the entity takes up and not to its center,
     /// so the entities that are big and solid can be reached, and the range does not have to be made bigger for them.
     /// The entity is followed if it moves.
     /// </summary>
-    /// <inheritdoc cref="Move(Entity{GoapComponent}, GoapDebugDumpSystem, EntityCoordinates, StateKey{float}, bool)"/>
+    /// <inheritdoc cref="Move(Entity{GoapComponent}, GoapDebugDumpSystem, EntityCoordinates, StateKey{float}, bool, ProtoId{PathQueryPrototype}?)"/>
     [PublicAPI]
     public GoapActionResult Move(
         Entity<GoapComponent> ent,
         GoapDebugDumpSystem handler,
         EntityUid target,
         StateKey<float> rangeKey,
-        bool stopOnLineOfSight = false)
+        bool stopOnLineOfSight = false,
+        ProtoId<PathQueryPrototype>? query = null)
         => handler.TryGet(ent, rangeKey, out var range)
-            ? Move(ent, handler, target, range, stopOnLineOfSight)
+            ? Move(ent, handler, target, range, stopOnLineOfSight, query)
             : GoapActionResult.Failed;
 
-    /// <inheritdoc cref="Move(Entity{GoapComponent}, GoapDebugDumpSystem, EntityUid, StateKey{float}, bool)"/>
+    /// <inheritdoc cref="Move(Entity{GoapComponent}, GoapDebugDumpSystem, EntityUid, StateKey{float}, bool, ProtoId{PathQueryPrototype}?)"/>
     [PublicAPI]
     public GoapActionResult Move(
         Entity<GoapComponent> ent,
         GoapDebugDumpSystem handler,
         EntityUid target,
         float range,
-        bool stopOnLineOfSight = false)
-        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight));
+        bool stopOnLineOfSight = false,
+        ProtoId<PathQueryPrototype>? query = null)
+        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query));
 
     /// <summary>
     /// Finishes the AI's movement. The agent brakes and the path request is cancelled.

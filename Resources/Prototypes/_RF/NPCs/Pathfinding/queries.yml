@@ -1,0 +1,18 @@
+# Queries are what a path is asked for, the profiles of the agents say what costs what. A rule of a profile can be for
+# one query only, see the Query condition, it can be inverted, and a new kind of request is a new query, not a change of the profiles.
+
+# A way to a place. A path that would have to go through what the profile does not let through is not a path, and
+# the agent gives up at once instead of walking up to it.
+- type: pathQuery
+  id: Travel
+  algorithm: !type:AStar
+    maxCost: 5000
+    allowPartial: false
+
+# A place to go to when there is nowhere to go (see PickAccessible), not far from the agent.
+- type: pathQuery
+  id: Wander
+  algorithm: !type:Bfs
+    range: 7
+    minRange: 2
+    maxCost: 5000

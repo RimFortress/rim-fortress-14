@@ -75,9 +75,6 @@ public sealed class RfNodeGoalTest : GameTest
 
 - type: pathProfile
   id: TestNodePlain
-  algorithm: !type:AStar
-    maxCost: 5000
-    allowPartial: false
   rules:
   - when:
     - !type:TagInfluence

@@ -10,8 +10,33 @@
   - add:
     - float: 1
 
+# Lava burns. The tiles next to it are not nice to walk by either, the influence is how close to the lava the node is.
 - type: pathTag
   id: Lava
+  influence: 1
+  influenceCurve:
+  - mul: [float: -1]
+  - add: [float: 1]
+
+# What is fallen into. The influence is how close to the edge the node is, an agent that is by the edge of it gets in
+# with its body, the tiles trigger when the body is over them.
+- type: pathTag
+  id: Chasm
+  influence: 0.5
+  influenceCurve:
+  - mul: [float: -2]
+  - add: [float: 1]
+
+# Liquid plasma, as dangerous as lava.
+- type: pathTag
+  id: LiquidPlasma
+  influence: 0.5
+  influenceCurve:
+  - mul: [float: -2]
+  - add: [float: 1]
 
 - type: pathTag
   id: Water
+
+- type: pathTag
+  id: Ice

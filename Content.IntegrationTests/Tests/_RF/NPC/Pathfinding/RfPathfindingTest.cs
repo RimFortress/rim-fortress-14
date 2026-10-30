@@ -82,17 +82,50 @@ public sealed class RfPathfindingTest : GameTest
     cost:
     - float: 10000
 
-# Does not go through anything that costs a lot, and gives up instead of coming close.
-- type: pathProfile
-  id: TestStrict
+# A query that does not go through anything that costs a lot, and gives up instead of coming close.
+- type: pathQuery
+  id: TestStrictQuery
   algorithm: !type:AStar
     maxCost: 5000
     allowPartial: false
+
+- type: pathQuery
+  id: TestQuery
+
+- type: pathProfile
+  id: TestStrict
   rules:
   - when:
     - !type:Blocked
     cost:
     - float: 10000
+
+# What is blocked is gone through if it is not much, so the profile after the strict one finds the path.
+- type: pathProfile
+  id: TestLenient
+  rules:
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 20
+
+# The same profile, the rules of it are for different queries.
+- type: pathProfile
+  id: TestByQuery
+  rules:
+  - when:
+    - !type:Blocked
+    - !type:Query
+      id: TestStrictQuery
+    cost:
+    - float: 10000
+  - when:
+    - !type:Blocked
+    - !type:Query
+      id: TestStrictQuery
+      invert: true
+    cost:
+    - float: 20
 
 - type: entity
   id: TestPathAgent
@@ -122,7 +155,7 @@ public sealed class RfPathfindingTest : GameTest
   - type: PathProfiles
     profiles:
     - TestStrict
-    - TestWalker
+    - TestLenient
 ";
 
     [SidedDependency(Side.Server)] private readonly RfPathfindingSystem _pathfinding = default!;
@@ -448,7 +481,7 @@ public sealed class RfPathfindingTest : GameTest
         await Pair.Server.WaitPost(() =>
         {
             Assert.That(_pathfinding.GetProfiles(agent), Has.Count.EqualTo(2));
-            Assert.That(_pathfinding.RequestPath(agent, target, 0.4f), Is.True);
+            Assert.That(_pathfinding.RequestPath(agent, "TestStrictQuery", target, 0.4f), Is.True);
             Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.Searching));
         });
 
@@ -459,7 +492,7 @@ public sealed class RfPathfindingTest : GameTest
             Assert.That(_pathfinding.TryGetResult(agent, out var result, out var profile), Is.True);
 
             // The first profile does not go through the wall, so the second one found the path.
-            Assert.That(profile, Is.EqualTo((ProtoId<PathProfilePrototype>?) "TestWalker"));
+            Assert.That(profile, Is.EqualTo((ProtoId<PathProfilePrototype>?) "TestLenient"));
             Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
 
             // The result stays until it is cancelled.
@@ -482,7 +515,7 @@ public sealed class RfPathfindingTest : GameTest
 
         await Pair.Server.WaitPost(() =>
         {
-            Assert.That(_pathfinding.RequestPath(agent, new EntityCoordinates(grid, 7.5f, 3.5f), 0.4f, "TestStrict"), Is.True);
+            Assert.That(_pathfinding.RequestPath(agent, "TestStrictQuery", new EntityCoordinates(grid, 7.5f, 3.5f), 0.4f, "TestStrict"), Is.True);
         });
 
         await WaitForRequest(agent);
@@ -493,7 +526,7 @@ public sealed class RfPathfindingTest : GameTest
             Assert.That(result.Status, Is.EqualTo(PathSearchStatus.NoPath));
             Assert.That(profile, Is.Null);
 
-            Assert.That(_pathfinding.RequestPath(agent, null, 0f, "TestNoSuchProfile"), Is.False);
+            Assert.That(_pathfinding.RequestPath(agent, "TestStrictQuery", null, 0f, "TestNoSuchProfile"), Is.False);
             Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
         });
     }
@@ -508,7 +541,7 @@ public sealed class RfPathfindingTest : GameTest
 
         await Pair.Server.WaitPost(() =>
         {
-            Assert.That(_pathfinding.RequestPath(agent, new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
+            Assert.That(_pathfinding.RequestPath(agent, "TestQuery", new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
             _pathfinding.CancelPath(agent.Owner);
             Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
         });
@@ -520,7 +553,7 @@ public sealed class RfPathfindingTest : GameTest
             Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
 
             // A new request works after the cancelled one.
-            Assert.That(_pathfinding.RequestPath(agent, new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
+            Assert.That(_pathfinding.RequestPath(agent, "TestQuery", new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
         });
 
         await WaitForRequest(agent);
@@ -530,5 +563,32 @@ public sealed class RfPathfindingTest : GameTest
             Assert.That(_pathfinding.TryGetResult(agent, out var result, out _), Is.True);
             Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
         });
+    }
+
+    /// <summary>
+    /// The rules of a profile can be for some queries and not for the others: with the same profile the agent can go
+    /// through what is blocked for one request and cannot for another.
+    /// </summary>
+    [Test]
+    public async Task TestRulesCanBeForOneQuery()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent",
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+        var target = new EntityCoordinates(grid, 7.5f, 3.5f);
+
+        foreach (var (query, expected) in new[] { ("TestStrictQuery", PathSearchStatus.NoPath), ("TestQuery", PathSearchStatus.Path) })
+        {
+            await Pair.Server.WaitPost(() =>
+                Assert.That(_pathfinding.RequestPath(agent, query, target, 0.4f, "TestByQuery"), Is.True));
+
+            await WaitForRequest(agent);
+
+            await Pair.Server.WaitAssertion(() =>
+            {
+                Assert.That(_pathfinding.TryGetResult(agent, out var result, out _), Is.True);
+                Assert.That(result.Status, Is.EqualTo(expected), query);
+                _pathfinding.CancelPath(agent.Owner);
+            });
+        }
     }
 }
