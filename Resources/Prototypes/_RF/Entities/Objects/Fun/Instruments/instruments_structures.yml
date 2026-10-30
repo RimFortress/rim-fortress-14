@@ -1,0 +1,11 @@
+- type: !PartialOnly entity
+  id: PianoInstrument
+  components:
+  - type: PathTags
+    tags: [Climbable]
+
+- type: !PartialOnly entity
+  id: UprightPianoInstrument
+  components:
+  - type: PathTags
+    tags: [Climbable]

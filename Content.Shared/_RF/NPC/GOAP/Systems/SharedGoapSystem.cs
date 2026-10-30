@@ -1,3 +1,4 @@
+using Content.Shared.Climbing.Components;
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -36,6 +37,7 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private SharedNpcSearcherSystem _searcher = default!;
     [Dependency] private SharedBuckleSystem _buckle = default!;
+    [Dependency] private EntityQuery<ClimbingComponent> _climbingQuery;
     [Dependency] private PullingSystem _pulling = default!;
     [Dependency] private EngagementSystem _engagement = default!;
     [Dependency] private SharedCombatModeSystem _combatMode = default!;
@@ -581,6 +583,12 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
         if (key.Equals(GoapState.Buckled))
         {
             value = _buckle.IsBuckled(owner);
+            return true;
+        }
+
+        if (key.Equals(GoapState.Climbing))
+        {
+            value = _climbingQuery.TryComp(owner, out var climbing) && climbing.IsClimbing;
             return true;
         }
 

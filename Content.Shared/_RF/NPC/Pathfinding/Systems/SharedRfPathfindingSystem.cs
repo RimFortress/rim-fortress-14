@@ -66,6 +66,9 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
     // The strength of each tag's influence by the distance in steps from its source.
     private readonly List<float[]> _pathTagInfluence = new();
 
+    // Whether the bodies with each tag are obstacles, see PathTagPrototype.MakesObstacle.
+    private readonly List<bool> _pathTagMakesObstacle = new();
+
     // A buffer for the variables of the rule that is being evaluated.
     private readonly Dictionary<string, float> _variables = new();
 
@@ -86,6 +89,7 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
     {
         _pathTagIndices.Clear();
         _pathTagInfluence.Clear();
+        _pathTagMakesObstacle.Clear();
         MaxTagRadius = 0f;
 
         foreach (var tag in _proto.EnumeratePrototypes<PathTagPrototype>().OrderBy(x => x.ID, StringComparer.Ordinal))
@@ -116,6 +120,7 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
 
             _pathTagIndices.Add(tag.ID, _pathTagIndices.Count);
             _pathTagInfluence.Add(samples);
+            _pathTagMakesObstacle.Add(tag.MakesObstacle);
             MaxTagRadius = MathF.Max(MaxTagRadius, (samples.Length - 1) * DistanceStep);
         }
     }
@@ -125,6 +130,13 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
     /// </summary>
     [PublicAPI, Pure]
     public bool TryGetTagIndex(ProtoId<PathTagPrototype> tag, out int index) => _pathTagIndices.TryGetValue(tag, out index);
+
+    /// <summary>
+    /// Whether the solid bodies that have the tag are obstacles to keep away from, see
+    /// <see cref="PathTagPrototype.MakesObstacle"/>.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool TagMakesObstacle(int index) => _pathTagMakesObstacle[index];
 
     /// <summary>
     /// Returns the radius in tiles within which the tag influences nodes.

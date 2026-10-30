@@ -3,9 +3,32 @@
 - type: pathProfile
   id: Walker
   rules:
+  # What is blocked is not gone through. What can be climbed onto is, unless the place is only to wander to: an agent that
+  # is not going anywhere in particular does not climb the tables.
   - when:
     - !type:Blocked
+    - !type:Or
+      conditions:
+      - !type:HasTag
+        tag: Climbable
+        invert: true
+      - !type:Query
+        id: Wander
     cost: [float: 10000]
+  # A path that goes over what can be climbed onto has a goal at it: to climb.
+  - when:
+    - !type:HasTag
+      tag: Climbable
+    - !type:Blocked
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Climbing == false
+    cost: [float: 2]
+    goal: Climb
+    goalTargetKey: ClimbTarget
+    goalRangeKey: InteractRange
   # Bodies are gone around at a distance, the agent has a size and the path knows nothing of it.
   - when:
     - !type:TagInfluence
@@ -14,11 +37,23 @@
     cost:
     - var: influence
     - mul: [float: 3]
-  # Where the agent does not fit between the bodies the path is not made, however close it is to the target.
+  # Where the agent does not fit between the bodies the path is not made, however close it is to the target. What is
+  # climbed onto is on the tile of the body itself, and it is not a place to avoid.
   - when:
     - !type:TagInfluence
       tag: Obstacle
       moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    cost: [float: 10000]
+  # What can be climbed onto is an obstacle like the others for the one that does not climb.
+  - when:
+    - !type:TagInfluence
+      tag: Climbable
+      moreThan: 0.55
+    - !type:Query
+      id: Wander
     cost: [float: 10000]
   # Where an agent burns or falls the path does not go, the cost is more than the profile allows. It does not go by the
   # edge of it either: the tiles work when the body is over them, and an agent has a size. A node is at the edge if the

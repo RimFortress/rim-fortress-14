@@ -16,6 +16,7 @@ utility-ai-goal-deconstruct-name = Deconstruct
 utility-ai-goal-attack-name = Attack
 utility-ai-goal-inventory-storage-name = Put in inventory
 utility-ai-goal-drop-name = Drop
+utility-ai-goal-climb-name = Climb
 
 utility-ai-goal-plant-name = Plant
 utility-ai-goal-harvest-name = Gather the harvest

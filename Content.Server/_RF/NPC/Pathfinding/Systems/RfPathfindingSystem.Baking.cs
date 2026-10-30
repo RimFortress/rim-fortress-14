@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Numerics;
 using Content.Server.Parallax;
 using Content.Shared._RF;
@@ -31,14 +32,14 @@ public sealed partial class RfPathfindingSystem
 
     [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
+    [Dependency] private EntityQuery<PathTagsComponent> _tagsQuery;
 
     /// <summary>
     /// The tag that every tile with a body that does not move is the source of, its influence is how close to such
     /// a body a node is. A profile can make the nodes near such bodies cost more, so that the path keeps away from
     /// them as far as the size of the agent needs.
     /// </summary>
-    public static readonly Robust.Shared.Prototypes.ProtoId<PathTagPrototype> ObstacleTag = "Obstacle";
-    [Dependency] private EntityQuery<PathTagsComponent> _tagsQuery;
+    public static readonly ProtoId<PathTagPrototype> ObstacleTag = "Obstacle";
 
     // What relevant collision groups we track for pathfinding.
     // Stuff like chairs have collision but aren't relevant for mobs.
@@ -78,7 +79,7 @@ public sealed partial class RfPathfindingSystem
     /// <param name="Masks">Collision masks of the points, as the layers.</param>
     /// <param name="Destroy">Damage needed to destroy the entity, null if it cannot be.</param>
     /// <param name="Tags">Indices of the path tags of the entity.</param>
-    private readonly record struct VirtualEntity(int[]?[] Layers, int[]?[] Masks, DamageSpecifier? Destroy, byte[] Tags);
+    private readonly record struct VirtualEntity(int[]?[] Layers, int[]?[] Masks, DamageSpecifier? Destroy, byte[] Tags, bool Soft);
 
     // The tiles around the tile of a virtual entity, that it can reach into: the body can be bigger than a tile.
     private const int FootprintSide = 3;
@@ -117,9 +118,7 @@ public sealed partial class RfPathfindingSystem
 
             if ((fixture.CollisionMask & PathfindingCollisionLayer) != 0x0 ||
                 (fixture.CollisionLayer & PathfindingCollisionMask) != 0x0)
-            {
                 return true;
-            }
         }
 
         return false;
@@ -306,7 +305,10 @@ public sealed partial class RfPathfindingSystem
 
             // The tiles of the chunks next to this one that a body of the world takes up influence the tiles of this one
             // by being close to them. The chunk next to this one that is built already has them among its sources.
-            if (obstacle >= 0 && _physicsQuery.TryComp(ent, out var body) && body.BodyType == BodyType.Static)
+            if (obstacle >= 0
+                && _physicsQuery.TryComp(ent, out var body)
+                && body.BodyType == BodyType.Static
+                && !(tags != null && MakesNoObstacle(tags.Tags)))
             {
                 for (var x = Math.Max(minTile.X, (int) box.Left); x <= Math.Min(maxTile.X, (int) box.Right - 1); x++)
                 {
@@ -421,7 +423,7 @@ public sealed partial class RfPathfindingSystem
                         }
 
                         // What the biome puts there does not move, the tiles of this chunk are close to it.
-                        if (obstacle >= 0 && entity.Layers[FootprintIndex(0, 0)] != null)
+                        if (obstacle >= 0 && !entity.Soft && entity.Layers[FootprintIndex(0, 0)] != null)
                             sources.Add(new PathTagSource((byte) obstacle, tile));
                     }
                 }
@@ -468,12 +470,26 @@ public sealed partial class RfPathfindingSystem
         });
 
 
+    /// <summary>
+    /// Whether some tag of the body says that the body is not an obstacle to keep away from.
+    /// </summary>
+    private bool MakesNoObstacle(IEnumerable<ProtoId<PathTagPrototype>> tags)
+    {
+        foreach (var tag in tags)
+        {
+            if (TryGetTagIndex(tag, out var index) && !TagMakesObstacle(index))
+                return true;
+        }
+
+        return false;
+    }
+
     private VirtualEntity GetVirtualEntity(string proto) => _virtualEntities.GetOrAdd(proto, CreateVirtualEntity);
 
     private VirtualEntity CreateVirtualEntity(string protoId)
     {
         if (!_proto.TryIndex<EntityPrototype>(protoId, out var proto))
-            return new VirtualEntity(new int[]?[FootprintSize], new int[]?[FootprintSize], null, Array.Empty<byte>());
+            return new VirtualEntity(new int[]?[FootprintSize], new int[]?[FootprintSize], null, Array.Empty<byte>(), false);
 
         var tags = new List<byte>();
 
@@ -486,13 +502,16 @@ public sealed partial class RfPathfindingSystem
             }
         }
 
+        // A body with such a tag is not an obstacle to keep away from, see the tag.
+        var isSoft = tags.Any(tag => !TagMakesObstacle(tag));
+
         var layers = new int[]?[FootprintSize];
         var masks = new int[]?[FootprintSize];
 
         // The biome puts the entity in the center of the tile, without rotation.
         if (!proto.TryComp<FixturesComponent>(out var fixtures, EntityManager.ComponentFactory)
             || !IsBodyRelevant(fixtures))
-            return new VirtualEntity(layers, masks, GetDestroyDamage(proto), tags.ToArray());
+            return new VirtualEntity(layers, masks, GetDestroyDamage(proto), tags.ToArray(), isSoft);
 
         var transform = new Transform(new Vector2(0.5f, 0.5f), Angle.Zero);
 
@@ -525,7 +544,7 @@ public sealed partial class RfPathfindingSystem
             }
         }
 
-        return new VirtualEntity(layers, masks, GetDestroyDamage(proto), tags.ToArray());
+        return new VirtualEntity(layers, masks, GetDestroyDamage(proto), tags.ToArray(), isSoft);
     }
 
     /// <summary>
@@ -547,8 +566,9 @@ public sealed partial class RfPathfindingSystem
         if (entity.Layers[index] is not { } layers || entity.Masks[index] is not { } masks)
             return;
 
-        // What the biome creates does not move.
-        solid = true;
+        // What the biome creates does not move. What has a tag that is not an obstacle (what can be climbed onto, for one) is not
+        // kept away from, see the tag.
+        solid |= !entity.Soft;
 
         for (var i = 0; i < SubStep * SubStep; i++)
         {
@@ -573,7 +593,8 @@ public sealed partial class RfPathfindingSystem
         ref bool solid)
     {
         var xform = Transform(ent);
-        var isStatic = _physicsQuery.TryComp(ent, out var body) && body.BodyType == BodyType.Static;
+        var isStatic = _physicsQuery.TryComp(ent, out var body) && body.BodyType == BodyType.Static
+                       && !(_tagsQuery.TryComp(ent, out var entityTags) && MakesNoObstacle(entityTags.Tags));
         var transform = new Transform(xform.LocalPosition, xform.LocalRotation);
         var destroy = GetEntityDestroyDamage(ent);
 

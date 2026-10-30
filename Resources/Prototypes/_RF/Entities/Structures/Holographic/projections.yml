@@ -1,0 +1,11 @@
+- type: !PartialOnly entity
+  id: HolosignSecurity
+  components:
+  - type: PathTags
+    tags: [Climbable]
+
+- type: !PartialOnly entity
+  id: XenoborgDeflectorField
+  components:
+  - type: PathTags
+    tags: [Climbable]

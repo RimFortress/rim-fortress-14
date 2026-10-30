@@ -45,3 +45,12 @@
     TargetOwned: true
   capture:
   - Query/TakeOwnershipTarget
+
+# The goal of the path nodes that are climbed over, it is not chosen by the agent by itself.
+- type: utilityAiGoal
+  id: Climb
+  color: "#00D5FF"
+  tempKeys:
+  - ClimbTarget
+  goalState:
+    Climbed: true

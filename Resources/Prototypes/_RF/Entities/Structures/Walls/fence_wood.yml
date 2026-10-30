@@ -1,0 +1,11 @@
+- type: !PartialOnly entity
+  id: BaseFenceWood
+  components:
+  - type: PathTags
+    tags: [Climbable]
+
+- type: !PartialOnly entity
+  id: BaseFenceWoodSmall
+  components:
+  - type: PathTags
+    tags: [Climbable]

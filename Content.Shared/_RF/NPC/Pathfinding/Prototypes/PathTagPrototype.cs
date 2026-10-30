@@ -27,4 +27,12 @@ public sealed partial class PathTagPrototype : IPrototype
     /// </summary>
     [DataField]
     public List<MathCurve> InfluenceCurve = new();
+
+    /// <summary>
+    /// Whether the solid bodies that have the tag are obstacles that the agents keep away from, which is to say, whether
+    /// their tiles are sources of the obstacle tag. A body that can be climbed onto, such as a table, is not one: the way
+    /// to it is from the side, and a profile of those who do not climb has the rules for it by its own tag.
+    /// </summary>
+    [DataField]
+    public bool MakesObstacle = true;
 }

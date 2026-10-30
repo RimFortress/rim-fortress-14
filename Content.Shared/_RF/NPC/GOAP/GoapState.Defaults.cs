@@ -184,6 +184,12 @@ public partial class GoapState
     public static readonly StateKey<bool> Buckled = RegisterEcsDefault<bool>("Buckled");
 
     /// <summary>
+    /// Stores whether the owner is on top of something it has climbed onto.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<bool> Climbing = RegisterEcsDefault<bool>("Climbing");
+
+    /// <summary>
     /// Stores whether the owner is being pulled or not.
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
