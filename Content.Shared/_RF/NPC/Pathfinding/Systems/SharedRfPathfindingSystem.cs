@@ -2,16 +2,13 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Numerics;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
-using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Pathfinding.Algorithms;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
-using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Content.Shared.Weapons.Melee;
 using JetBrains.Annotations;
-using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.NPC.Pathfinding.Systems;
@@ -348,9 +345,8 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
             comp.ActiveQuery);
 
         var modifier = 1f;
-        ProtoId<UtilityAiGoalPrototype>? goal = null;
-        var goalKey = default(StateKey<EntityCoordinates>);
-        var goalRangeKey = default(StateKey<float>);
+        PathGoalInfo? before = null;
+        PathGoalInfo? after = null;
 
         foreach (var rule in comp.ActiveRules)
         {
@@ -361,20 +357,16 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
 
             modifier += _curves.Get(rule.Cost, input: 0f, user: agent, variables: _variables);
 
-            // Only the first goal is used, the order of the rules decides which one it is.
-            if (goal != null || rule.Goal == null)
+            if (rule.Goal is not { } goal)
                 continue;
 
-            goal = rule.Goal;
-            goalKey = rule.GoalTargetKey;
-            goalRangeKey = rule.GoalRangeKey;
+            // Only the first goal of each kind is used, the order of the rules decides which one it is.
+            ref var slot = ref goal.Phase == PathGoalPhase.Before ? ref before : ref after;
+
+            slot ??= new PathGoalInfo(goal.Id, goal.TargetKey, goal.RangeKey, goal.EntityTag, goal.EntityKey);
         }
 
-        return new PathNodeEval(
-            Math.Clamp(modifier, MinCostModifier, int.MaxValue),
-            goal,
-            goalKey,
-            goalRangeKey);
+        return new PathNodeEval(Math.Clamp(modifier, MinCostModifier, int.MaxValue), before, after);
     }
 
     #endregion

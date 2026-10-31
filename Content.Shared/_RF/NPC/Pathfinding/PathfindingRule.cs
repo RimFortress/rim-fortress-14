@@ -1,5 +1,6 @@
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -37,19 +38,52 @@ public sealed partial class PathfindingRule
     /// The cost of this goal will be added to the node's cost.
     /// </summary>
     [DataField]
-    public ProtoId<UtilityAiGoalPrototype>? Goal;
+    public PathRuleGoal? Goal;
+}
+
+/// <summary>
+/// The UAI goal that a <see cref="PathfindingRule"/> gives to the path node, and what it needs to be performed.
+/// </summary>
+[DataDefinition]
+public sealed partial class PathRuleGoal
+{
+    /// <summary>
+    /// The UAI goal that must be performed at the path node.
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<UtilityAiGoalPrototype> Id;
 
     /// <summary>
-    /// A key to which the coordinates of the path node for executing the
-    /// <see cref="Goal"/> will be written in the agent's state.
+    /// A key to which the coordinates of the path node for executing the goal will be written in the agent's state.
     /// </summary>
     [DataField]
-    public StateKey<EntityCoordinates> GoalTargetKey = "TargetCoordinates";
+    public StateKey<EntityCoordinates> TargetKey = "TargetCoordinates";
 
     /// <summary>
     /// A key in the agent's state from which the distance is taken at which the agent stops before the path node
-    /// to perform the <see cref="Goal"/>. By default it is the same range the movement actions use.
+    /// to perform the goal. By default it is the same range the movement actions use.
     /// </summary>
     [DataField]
-    public StateKey<float> GoalRangeKey = GoapState.MovementRange;
+    public StateKey<float> RangeKey = GoapState.MovementRange;
+
+    /// <summary>
+    /// When the goal is performed: before the agent goes through the node, or after.
+    /// There can be one goal of each kind at a node, the first rule of the kind gives it.
+    /// </summary>
+    [DataField("when")]
+    public PathGoalPhase Phase = PathGoalPhase.Before;
+
+    /// <summary>
+    /// The path tag of the entity at the node that the goal is for. The entity with it, found at the node, is written to
+    /// the <see cref="EntityKey"/>.
+    /// </summary>
+    [DataField]
+    public ProtoId<PathTagPrototype>? EntityTag;
+
+    /// <summary>
+    /// A key to which the entity at the node is written in the agent's state, for the goals that are for an entity,
+    /// such as the one that opens a door. The place is not enough for them.
+    /// </summary>
+    [DataField]
+    public StateKey<EntityUid>? EntityKey;
 }

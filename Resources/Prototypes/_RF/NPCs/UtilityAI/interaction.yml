@@ -54,3 +54,38 @@
   - ClimbTarget
   goalState:
     Climbed: true
+
+# The goals of the doors on the path, they are not chosen by the agent by itself, see the Door rules of the profiles.
+- type: utilityAiGoal
+  id: DoorOpen
+  color: "#00D5FF"
+  tempKeys:
+  - DoorTarget
+  - DoorPoint
+  - DoorOpened
+  goalState:
+    DoorOpened: true
+
+- type: utilityAiGoal
+  id: DoorClose
+  color: "#00D5FF"
+  tempKeys:
+  - DoorTarget
+  - DoorPoint
+  - DoorClosed
+  goalState:
+    DoorClosed: true
+
+- type: utilityAiGoal
+  id: DoorPry
+  color: "#00D5FF"
+  capture:
+  - Query/Crowbar
+  tempKeys:
+  - DoorTarget
+  - DoorPoint
+  - DoorPried
+  - DoorCrowbar
+  goalState:
+    DoorPried: true
+

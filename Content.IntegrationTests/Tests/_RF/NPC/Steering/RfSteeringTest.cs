@@ -93,19 +93,21 @@ public sealed class RfSteeringTest : GameTest
         await Pair.RunTicksSync(5);
     }
 
-    private void Go(float endX, int interval, float range) => Go(_mob, 2, endX, interval, range);
+    private void Go(float endX, int interval, float range, bool detour = false) => Go(_mob, 2, endX, interval, range, detour);
 
     /// <summary>
     /// Sends the agent along the row of tiles between the two places, in either direction.
     /// </summary>
-    private void Go(EntityUid mob, int startX, float endX, int interval, float range)
+    private void Go(EntityUid mob, int startX, float endX, int interval, float range, bool detour = false)
     {
         var path = new List<PathNodeRef>();
         var step = endX > startX ? 1 : -1;
 
         for (var x = startX; step > 0 ? x < (int) endX : x > (int) endX; x += step)
         {
-            path.Add(new PathNodeRef(_grid.Owner, default, 0, new Box2(x, 1, x + 1, 2)));
+            // The path of the agent does not lead through what is in the way, it leads around it.
+            var y = detour && x is >= 14 and <= 16 ? 2 : 1;
+            path.Add(new PathNodeRef(_grid.Owner, default, 0, new Box2(x, y, x + 1, y + 1)));
         }
 
         _entMan.GetComponent<RfSteererComponent>(mob).UpdateInterval = interval;
@@ -196,7 +198,7 @@ public sealed class RfSteeringTest : GameTest
     {
         await Setup("Plating");
         await Pair.Server.WaitPost(() => _entMan.SpawnAtPosition("TestRfBlock", new EntityCoordinates(_grid, 15.5f, 1.5f)));
-        await Pair.Server.WaitPost(() => Go(30.5f, interval, 0.3f));
+        await Pair.Server.WaitPost(() => Go(30.5f, interval, 0.3f, detour: true));
 
         var (status, _, x, _) = await Run(1000);
 

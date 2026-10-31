@@ -227,7 +227,9 @@ public sealed partial class UtilityAiSystem : SharedUtilityAiSystem
             ent.Comp.Cooldowns.Remove(goal);
         }
 
-        if (ent.Comp.NextCheck > Timing.CurTime)
+        // The goal that was put aside for another one is gone back to, no matter what is better meanwhile: the other one is
+        // a part of it.
+        if (ent.Comp.NextCheck > Timing.CurTime || ent.Comp.SuspendedGoal != null)
             return;
 
         ent.Comp.NextCheck = Timing.CurTime + ent.Comp.BetterGoalCheckRate;

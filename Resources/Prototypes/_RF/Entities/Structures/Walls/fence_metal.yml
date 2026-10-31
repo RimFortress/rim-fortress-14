@@ -3,3 +3,9 @@
   components:
   - type: PathTags
     tags: [Climbable]
+
+- type: !PartialOnly entity
+  id: FenceMetalGate
+  components:
+  - type: PathTags
+    tags: [Door]

@@ -99,6 +99,23 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    // The target of the order is not lost when the goal is put aside for another one, such as the opening of a door.
+    [SubscribeLocalEvent]
+    private void OnUtilityAiSuspendedKeys(Entity<ControllableNpcComponent> ent, ref UtilityAiSuspendedKeys args)
+    {
+        if (!Executables.TryGetValue(args.Goal, out var execs))
+            return;
+
+        foreach (var exec in execs)
+        {
+            if (!Proto.Resolve(exec, out var proto))
+                continue;
+
+            args.Keys.Add(proto.TargetKey);
+            args.Keys.Add(proto.TargetCoordinatesKey);
+        }
+    }
+
     [SubscribeLocalEvent]
     private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref BeforeUtilityAiGoalFinished args)
     {

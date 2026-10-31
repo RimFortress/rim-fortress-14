@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Map;
@@ -19,17 +20,49 @@ namespace Content.Shared._RF.NPC.Pathfinding;
 public readonly record struct PathNodeRef(EntityUid Graph, Vector2i Chunk, byte Tile, Box2 Box);
 
 /// <summary>
-/// A goal that the agent must perform when it reaches a node of the path.
+/// When the goal of a path node is performed.
 /// </summary>
-/// <param name="Node">The node of the path.</param>
+public enum PathGoalPhase : byte
+{
+    /// <summary>
+    /// Before the agent goes through the node: it stops short of it, the goal is performed, and then the path is searched for
+    /// again. It is how a door is opened.
+    /// </summary>
+    Before,
+
+    /// <summary>
+    /// After the agent has gone through the node and is far enough from it. It is how a door is closed behind.
+    /// </summary>
+    After,
+}
+
+/// <summary>
+/// What the agent performs at a path node, as the rule that gave it describes.
+/// </summary>
 /// <param name="Goal">The goal that must be performed.</param>
 /// <param name="TargetKey">The key to which the coordinates of the node will be written for the goal.</param>
-/// <param name="RangeKey">The key of the agent's state that holds how far from the node it stops for the goal.</param>
-public readonly record struct PathNodeGoal(
-    PathNodeRef Node,
+/// <param name="RangeKey">
+/// The key of the agent's state that holds how far from the node it stops for the goal, or how far past it the goal is
+/// performed.
+/// </param>
+/// <param name="EntityTag">
+/// The path tag of the entity at the node that the goal is for, such as a door. Null if the goal is not for an entity.
+/// </param>
+/// <param name="EntityKey">The key to which the entity at the node, the one with the tag, will be written.</param>
+public readonly record struct PathGoalInfo(
     ProtoId<UtilityAiGoalPrototype> Goal,
     StateKey<EntityCoordinates> TargetKey,
-    StateKey<float> RangeKey);
+    StateKey<float> RangeKey,
+    ProtoId<PathTagPrototype>? EntityTag,
+    StateKey<EntityUid>? EntityKey);
+
+/// <summary>
+/// A goal that the agent must perform at a node of the path.
+/// </summary>
+/// <param name="Node">The node of the path.</param>
+/// <param name="Info">What is performed.</param>
+/// <param name="Phase">When it is performed, in relation to the agent going through the node.</param>
+public readonly record struct PathNodeGoal(PathNodeRef Node, PathGoalInfo Info, PathGoalPhase Phase);
 
 /// <summary>
 /// A place the path should not go by: it costs more the closer to the place a node is. It is how a request remembers

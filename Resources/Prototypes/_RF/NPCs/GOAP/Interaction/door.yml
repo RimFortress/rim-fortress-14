@@ -1,0 +1,59 @@
+# What is done at the doors on the path: the doors are opened, closed and pried, see the Door rules of the profiles.
+# The door is in the DoorTarget key. The agent is close to it when the goal is begun, but it can be farther than it can
+# reach, such as after it has gone through the door.
+- type: goapCompound
+  id: Door
+  tasks:
+  - preconditions:
+    - ActiveHandFree == true
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:EntityCoords
+      targetKey: DoorTarget
+    - !type:RotateToTarget
+    # A door that has just been opened does not react until it has finished opening. The agent waits before it goes up to
+    # the door, and not after, it would be out of reach by the time it has waited.
+    - !type:RandomTime
+      key: DoorWaitTime
+      minSec: 0.55
+      maxSec: 0.75
+    - !type:Wait
+      timeKey: DoorWaitTime
+    - !type:MoveTo
+      targetEntityKey: DoorTarget
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: DoorTarget
+      keepCombatMode: true
+    effects:
+      DoorClosed: true
+      DoorOpened: true
+
+  # A crowbar is taken in the hand, and then the door is interacted with.
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Crowbar != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Query/Crowbar
+      rangeKey: InteractRange
+    - !type:Pickup
+      targetKey: Query/Crowbar
+    effects:
+      DoorCrowbar: true
+
+  - preconditions:
+    - DoorCrowbar == true
+    actions:
+    - !type:MoveTo
+      targetEntityKey: DoorTarget
+      rangeKey: InteractRange
+    - !type:InteractWith
+      targetKey: DoorTarget
+      keepCombatMode: true
+    effects:
+      DoorPried: true

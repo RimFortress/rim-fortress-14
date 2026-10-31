@@ -102,6 +102,11 @@ public partial class GoapState
     /// </summary>
     public static readonly StateKey<bool> NavClimb = "NavClimb";
 
+    /// <summary>
+    /// Does the NPC close the doors it has gone through, if they do not close by themselves.
+    /// </summary>
+    public static readonly StateKey<bool> CloseDoors = RegisterDefault("CloseDoors", false);
+
     public static readonly StateKey<float> MovementRange = RegisterDefault("MovementRange", 0.333f);
 
     public static readonly StateKey<float> RotateSpeed = RegisterDefault("RotateSpeed", float.MaxValue);
@@ -169,7 +174,7 @@ public partial class GoapState
     /// Is the owner's active hand free?
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
-    public static readonly StateKey<bool> ActiveHandFree = RegisterEcsDefault<bool>("InContainer");
+    public static readonly StateKey<bool> ActiveHandFree = RegisterEcsDefault<bool>("ActiveHandFree");
 
     /// <summary>
     /// Stores the entity In the active hand.

@@ -4,6 +4,8 @@
   components:
   - type: Goap
     rootTask: Idle
+    state:
+      CloseDoors: true
   - type: PathProfiles
     profiles:
     - Walker

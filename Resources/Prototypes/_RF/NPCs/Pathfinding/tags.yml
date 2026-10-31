@@ -50,3 +50,25 @@
   - mul: [float: -1.3333]
   - add: [float: 1]
 
+# A door. Whether it is passable, and what it takes, is in the tags of the kind of the door, see DoorPathSystem. It is not
+# an obstacle that the agents keep away from: the way to it is from the side.
+- type: pathTag
+  id: Door
+  makesObstacle: false
+
+# The door cannot be gone through: welded, bolted, or there is no way to open it.
+- type: pathTag
+  id: DoorBlocked
+
+# The door is closed and has to be pried, there is no power.
+- type: pathTag
+  id: DoorNeedsPry
+
+# The door is closed and has to be opened by hand, it does not open when it is walked into.
+- type: pathTag
+  id: DoorNeedsOpening
+
+# The door is open and stays open, it can be closed after the agent.
+- type: pathTag
+  id: DoorCanClose
+

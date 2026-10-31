@@ -69,9 +69,10 @@ public sealed class RfNodeGoalTest : GameTest
     - !type:Blocked
     cost:
     - float: 5
-    goal: TestNodeBreakGoal
-    goalTargetKey: BreakTarget
-    goalRangeKey: BreakRange
+    goal:
+      id: TestNodeBreakGoal
+      targetKey: BreakTarget
+      rangeKey: BreakRange
 
 - type: pathProfile
   id: TestNodePlain

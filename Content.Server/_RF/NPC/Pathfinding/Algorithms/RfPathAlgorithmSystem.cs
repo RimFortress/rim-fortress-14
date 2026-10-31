@@ -219,9 +219,15 @@ public abstract partial class RfPathAlgorithmSystem<T> : PathAlgorithmSystem<T> 
             var poly = route[i];
             var eval = Evaluate(state, search, poly, collision);
 
-            if (eval.Goal is { } goal)
+            if (eval.Before is { } before)
+                goals.Add(new PathNodeGoal(poly.Ref, before, PathGoalPhase.Before));
+
+            if (eval.After is { } after)
+                goals.Add(new PathNodeGoal(poly.Ref, after, PathGoalPhase.After));
+
+            if (eval.Before != null || eval.After != null)
             {
-                goals.Add(new PathNodeGoal(poly.Ref, goal, eval.GoalTargetKey, eval.GoalRangeKey));
+                // The node of a goal stays in the path.
             }
             else if (i > 0 && i < route.Count - 1 && IsOnLine(route[i - 1], poly, route[i + 1]))
             {

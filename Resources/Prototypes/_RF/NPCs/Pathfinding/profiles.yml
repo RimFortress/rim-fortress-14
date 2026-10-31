@@ -14,7 +14,87 @@
         invert: true
       - !type:Query
         id: Wander
+    # The doors are gone through by their own rules, see below.
+    - !type:HasTag
+      tag: Door
+      invert: true
     cost: [float: 10000]
+  # The doors. A closed door that opens by itself is no trouble. The agent that only looks for a place to wander to does
+  # not go through a door that has to be opened or pried, and nobody goes through a door that cannot be.
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsOpening
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  # A door that has to be opened by hand: the agent stops short of it, opens it and goes on.
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsOpening
+    - !type:Query
+      id: Wander
+      invert: true
+    cost: [float: 4]
+    goal:
+      id: DoorOpen
+      targetKey: DoorPoint
+      rangeKey: InteractRange
+      entityTag: Door
+      entityKey: DoorTarget
+  # A door that has to be pried is pried if the agent has something to pry it with.
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar != null
+    cost: [float: 8]
+    goal:
+      id: DoorPry
+      targetKey: DoorPoint
+      rangeKey: InteractRange
+      entityTag: Door
+      entityKey: DoorTarget
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar == null
+    cost: [float: 10000]
+  # A door that stays open is closed after the agent has gone through, if the agent closes the doors and is not in the combat
+  # mode: it is on an order then, and it does not stop for the doors.
+  - when:
+    - !type:HasTag
+      tag: DoorCanClose
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - CloseDoors == true
+    - CombatMode == false
+    cost: [float: 1]
+    goal:
+      id: DoorClose
+      when: After
+      targetKey: DoorPoint
+      rangeKey: InteractRange
+      entityTag: Door
+      entityKey: DoorTarget
   # A path that goes over what can be climbed onto has a goal at it: to climb.
   - when:
     - !type:HasTag
@@ -26,9 +106,10 @@
     requires:
     - Climbing == false
     cost: [float: 2]
-    goal: Climb
-    goalTargetKey: ClimbTarget
-    goalRangeKey: InteractRange
+    goal:
+      id: Climb
+      targetKey: ClimbTarget
+      rangeKey: InteractRange
   # Bodies are gone around at a distance, the agent has a size and the path knows nothing of it.
   - when:
     - !type:TagInfluence

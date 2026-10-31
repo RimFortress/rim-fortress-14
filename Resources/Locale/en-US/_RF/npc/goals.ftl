@@ -17,6 +17,9 @@ utility-ai-goal-attack-name = Attack
 utility-ai-goal-inventory-storage-name = Put in inventory
 utility-ai-goal-drop-name = Drop
 utility-ai-goal-climb-name = Climb
+utility-ai-goal-door-open-name = Open the door
+utility-ai-goal-door-close-name = Close the door
+utility-ai-goal-door-pry-name = Pry the door open
 
 utility-ai-goal-plant-name = Plant
 utility-ai-goal-harvest-name = Gather the harvest

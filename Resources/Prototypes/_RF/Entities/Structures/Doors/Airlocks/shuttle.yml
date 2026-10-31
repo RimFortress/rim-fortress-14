@@ -1,0 +1,10 @@
+- type: !PartialOnly entity
+  id: AirlockShuttle
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: AirlockGlassShuttle
+  components:
+  - type: PathTags
+    tags: [Door]

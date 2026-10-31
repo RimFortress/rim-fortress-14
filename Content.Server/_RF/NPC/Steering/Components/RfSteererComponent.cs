@@ -217,16 +217,15 @@ public sealed partial class RfSteererComponent : Component
     public PathNodeGoal? PendingGoal;
 
     /// <summary>
-    /// The goal of a path node that is being performed, the order is not carried out meanwhile.
+    /// The goals that are performed after the agent has gone through their nodes, on the path that is followed.
     /// </summary>
     [ViewVariables]
-    public ProtoId<UtilityAiGoalPrototype>? NodeGoal;
+    public List<AfterGoal> Afters = new();
 
     /// <summary>
-    /// The goal that was replaced by the <see cref="NodeGoal"/>, it is set again when that is finished.
+    /// The goal that is about to be started, it is the one of the node the agent has come to, or has gone through.
     /// </summary>
-    [ViewVariables]
-    public ProtoId<UtilityAiGoalPrototype>? ReturnGoal;
+    public PathNodeGoal? GoalToStart;
 
     /// <summary>
     /// The region of the <see cref="TargetEntity"/> the last path was searched for, in the coordinates of the grid.
@@ -268,4 +267,25 @@ public enum RfMovePhase : byte
     /// The agent has got to a node with a goal, the goal is about to be started.
     /// </summary>
     StartingGoal,
+}
+
+/// <summary>
+/// A goal that is performed after its node is behind the agent.
+/// </summary>
+public sealed class AfterGoal
+{
+    /// <summary>
+    /// The goal and its node.
+    /// </summary>
+    public PathNodeGoal Goal;
+
+    /// <summary>
+    /// How far from the node the agent has to be for the goal to start.
+    /// </summary>
+    public float Range;
+
+    /// <summary>
+    /// Whether the agent has been at the node.
+    /// </summary>
+    public bool Reached;
 }

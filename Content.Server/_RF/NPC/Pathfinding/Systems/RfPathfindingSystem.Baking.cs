@@ -229,7 +229,19 @@ public sealed partial class RfPathfindingSystem
             StampInfluence(points, gridOrigin, sources.Span);
             BuildPolys(points, grid.Owner, origin, polys);
 
-            return new BuiltChunk(polys, sources.Span.ToArray());
+            // Only what is in the chunk is kept for the chunks next to it. The sources taken from them are theirs, they would
+            // come back after the chunk they came from has changed.
+            var own = new List<PathTagSource>(sources.Span.Length);
+
+            foreach (var source in sources.Span)
+            {
+                var local = source.Tile - gridOrigin;
+
+                if (local is { X: >= 0 and < ChunkSize, Y: >= 0 and < ChunkSize })
+                    own.Add(source);
+            }
+
+            return new BuiltChunk(polys, own.ToArray());
         }
         finally
         {

@@ -32,6 +32,9 @@ public sealed partial class RfSteeringSystem
     // How close to a body the end of the path is for the body to be the one the path leads to.
     private const float EndMargin = 0.1f;
 
+    // How many nodes ahead are looked at for the bodies that the path goes through.
+    private const int PathBodyNodes = 3;
+
 
     // How much farther than the next node of the path the agent looks for what is in the way.
     private const float AimSlack = 0f;
@@ -96,6 +99,17 @@ public sealed partial class RfSteeringSystem
         var end = position + angle.RotateVec(toEnd);
         var body = steering.Radius + StaticClearance;
         _obstacles.RemoveAll(o => !o.Agent && (Inside(o, end, EndMargin) || Inside(o, aim, body) && !Inside(o, aim, 0f)));
+
+        // The path goes through a body on purpose if a node of it is in the body, as it does through a door that opens as it
+        // is walked into. The path of an agent is not made through what the profile does not let through.
+        var local = xform.LocalPosition;
+        var last = Math.Min(steering.Nodes.Count - 1, steering.Index + PathBodyNodes);
+
+        for (var i = steering.Index; i <= last; i++)
+        {
+            var node = position + angle.RotateVec(steering.Nodes[i].Center - local);
+            _obstacles.RemoveAll(o => !o.Agent && Inside(o, node, 0f));
+        }
 
         if (_obstacles.Count == 0)
         {

@@ -11,6 +11,7 @@ using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
+using System.Numerics;
 
 namespace Content.Server._RF.NPC.Steering.Systems;
 
@@ -29,41 +30,15 @@ public sealed partial class RfSteeringSystem
     // For how long after an agent has arrived the restart margin is in effect.
     private static readonly TimeSpan RestartWindow = TimeSpan.FromSeconds(2);
 
+    // How close to the node of a goal that is performed after it the agent has to come to be counted as having gone through
+    // it, how far past it the goal is performed (the agent is still within reach of the node then, it brakes and the goal
+    // has to be able to go back), and how far from the place an entity of the node is looked for.
+    private const float NodeReached = 0.8f;
+    private const float AfterRange = 1f;
+    private const float EntityRange = 0.5f;
+
     // How many places where the agent got stuck are remembered.
     private const int MaxAvoid = 6;
-
-    // The goal of the node that has not been performed: it could not be planned, or it was replaced.
-    [SubscribeLocalEvent]
-    private void OnGoalEnded(Entity<RfSteererComponent> ent, ref UtilityAiGoalFinished args)
-    {
-        if (ent.Comp.NodeGoal != args.Goal)
-            return;
-
-        ent.Comp.NodeGoal = null;
-        ent.Comp.ReturnGoal = null;
-    }
-
-    /// <summary>
-    /// When the goal of a node is finished the agent returns to what it was doing, which brings it to the target
-    /// along a new path: the obstacle is gone, so the path is different.
-    /// </summary>
-    [SubscribeLocalEvent]
-    private void OnGoalFinished(Entity<RfSteererComponent> ent, ref BeforeUtilityAiGoalFinished args)
-    {
-        if (ent.Comp.NodeGoal != args.Goal)
-            return;
-
-        var back = ent.Comp.ReturnGoal;
-        ent.Comp.NodeGoal = null;
-        ent.Comp.ReturnGoal = null;
-
-        // If the goal failed, the agent chooses by itself, going back would lead to the same node.
-        if (args.Reason != UtilityAiGoalFinishReason.Finished || back == null)
-            return;
-
-        _utility.SetGoal(ent.Owner, back.Value);
-        args.Handled = true;
-    }
 
     private void UpdateOrders()
     {
@@ -83,24 +58,76 @@ public sealed partial class RfSteeringSystem
     {
         var steerer = agent.Comp1;
 
-        if (steerer.Phase != RfMovePhase.StartingGoal || steerer.PendingGoal is not { } goal)
+        if (steerer.Phase != RfMovePhase.StartingGoal || steerer.GoalToStart is not { } node)
             return;
 
         steerer.Phase = RfMovePhase.None;
         steerer.PendingGoal = null;
+        steerer.GoalToStart = null;
+        steerer.Afters.Clear();
 
+        var goal = node.Info;
         var state = agent.Comp2.State;
-        state.SetValue(goal.TargetKey, new EntityCoordinates(goal.Node.Graph, goal.Node.Box.Center));
+        var place = new EntityCoordinates(node.Node.Graph, node.Node.Box.Center);
+        state.SetValue(goal.TargetKey, place);
 
-        _utility.TryGetCurrentGoal(agent.Owner, out var current);
+        // The goals that are for an entity, such as a door, need it and not the place.
+        if (goal.EntityTag is { } tag && goal.EntityKey is { } key)
+        {
+            var placeWorld = _transform.ToMapCoordinates(place).Position;
+            var nearest = float.MaxValue;
 
-        // A new goal is planned only when there is no plan, the plan of the order has to be given up.
-        if (agent.Comp2.Plan != null)
-            _goap.PlanShutdown((agent.Owner, agent.Comp2), GoapPlanFinishReason.Interrupted);
+            foreach (var found in _lookup.GetEntitiesInRange<PathTagsComponent>(place, EntityRange))
+            {
+                if (!_pathfinding.HasTag(found.Owner, tag))
+                    continue;
 
-        steerer.NodeGoal = goal.Goal;
-        steerer.ReturnGoal = current;
-        _utility.SetGoal(agent.Owner, goal.Goal);
+                var distance = (_transform.GetWorldPosition(found) - placeWorld).LengthSquared();
+
+                if (distance >= nearest)
+                    continue;
+
+                nearest = distance;
+                state.SetValue(key, found.Owner);
+            }
+        }
+
+        // What the agent was doing is put aside and goes on when the goal of the node is done.
+        _utility.SuspendGoal(agent.Owner, goal.Goal);
+    }
+
+    /// <summary>
+    /// Starts the goal that is performed after its node, if the agent has gone through the node and is far enough from it.
+    /// </summary>
+    /// <returns>True, if a goal has been started.</returns>
+    private bool CheckAfters(Entity<GoapComponent> agent, RfSteererComponent steerer, RfSteeringComponent steering)
+    {
+        if (steerer.Afters.Count == 0 || Transform(agent).ParentUid != steering.Graph)
+            return false;
+
+        var position = Transform(agent).LocalPosition;
+
+        foreach (var after in steerer.Afters)
+        {
+            var distance = Vector2.Distance(position, after.Goal.Node.Box.Center);
+
+            if (distance < NodeReached)
+            {
+                after.Reached = true;
+                continue;
+            }
+
+            if (!after.Reached || distance < after.Range)
+                continue;
+
+            steerer.Afters.Remove(after);
+            steerer.GoalToStart = after.Goal;
+            steerer.Phase = RfMovePhase.StartingGoal;
+            _goalStarts.Add(agent);
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -157,9 +184,9 @@ public sealed partial class RfSteeringSystem
 
         var steerer = EnsureComp<RfSteererComponent>(agent);
 
-        // The goal of the node is about to be started, or is being performed. The plan of this order is replaced
-        // when the new one is ready, until then the agent stays where it is.
-        if (steerer.Phase == RfMovePhase.StartingGoal || steerer.NodeGoal != null)
+        // The goal of the node is about to be started. The plan of this order is replaced when the new one is ready, until
+        // then the agent stays where it is. The plan of the goal itself can move, such as to pick up a tool.
+        if (steerer.Phase == RfMovePhase.StartingGoal)
             return GoapActionResult.Continuing;
 
         var search = new Entity<PathProfilesComponent, GoapComponent>(agent, profiles, agent.Comp);
@@ -205,8 +232,13 @@ public sealed partial class RfSteeringSystem
             if (result.Status == PathSearchStatus.NoPath)
                 return Fail(agent, steerer);
 
-            // The agent goes only to the first node that has a goal, the rest of the path is found again after it.
-            steerer.PendingGoal = result.Goals.Count > 0 ? result.Goals[0] : null;
+            // The agent goes only to the first node that has a goal of the kind that is performed before the node, the
+            // rest of the path is found again after it.
+            // A goal at the node the agent is standing in is not performed, it is already there: in the doorway of a door that
+            // is being opened or closed, for example, and it would not get out of it.
+            var first = result.Path.Count > 0 ? result.Path[0] : default;
+            var beforeIndex = result.Goals.FindIndex(g => g.Phase == PathGoalPhase.Before && g.Node != first);
+            steerer.PendingGoal = beforeIndex >= 0 ? result.Goals[beforeIndex] : null;
             var stop = steerer.Range;
             var bounds = steerer.SearchedBounds;
             var ignore = steerer.TargetEntity;
@@ -224,11 +256,22 @@ public sealed partial class RfSteeringSystem
                     result.Goals);
 
                 // The distance to stop at is in the state of the agent, the way the movement ranges are.
-                if (_goap.TryGetValue(agent.Comp.State, goal.RangeKey, out var key))
+                if (_goap.TryGetValue(agent.Comp.State, goal.Info.RangeKey, out var key))
                     stop = key;
 
                 bounds = null;
                 ignore = null;
+            }
+
+            // The goals of the kind that is performed after the node, on the part of the path that is followed.
+            steerer.Afters.Clear();
+
+            foreach (var after in result.Goals)
+            {
+                if (after.Phase != PathGoalPhase.After || !result.Path.Contains(after.Node))
+                    continue;
+
+                steerer.Afters.Add(new AfterGoal { Goal = after, Range = AfterRange });
             }
 
             if (!Follow(agent, result, steerer.SearchedTarget, stop, bounds, ignore))
@@ -246,9 +289,11 @@ public sealed partial class RfSteeringSystem
         switch (steering.Status)
         {
             case RfSteeringStatus.Moving:
+                CheckAfters(agent, steerer, steering);
                 return GoapActionResult.Continuing;
             case RfSteeringStatus.InRange when steerer.PendingGoal != null:
                 // The agent is at the node whose goal it has to perform.
+                steerer.GoalToStart = steerer.PendingGoal;
                 steerer.Phase = RfMovePhase.StartingGoal;
                 _goalStarts.Add(agent);
                 return GoapActionResult.Continuing;
@@ -292,6 +337,8 @@ public sealed partial class RfSteeringSystem
         {
             steerer.Phase = RfMovePhase.None;
             steerer.PendingGoal = null;
+            steerer.GoalToStart = null;
+            steerer.Afters.Clear();
         }
 
         if (_profilesQuery.TryComp(agent, out var profiles))
