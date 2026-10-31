@@ -33,21 +33,21 @@ namespace Content.Server._RF.World;
 /// </summary>
 public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
-    [Dependency] private IAdminManager _admin = default!;
-    [Dependency] private MindSystem _mind = default!;
-    [Dependency] private BiomeSystem _biome = default!;
-    [Dependency] private MapSystem _map = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private IServerPreferencesManager _preferences = default!;
-    [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private StationSpawningSystem _station = default!;
-    [Dependency] private EntityLookupSystem _lookup = default!;
-    [Dependency] private IConfigurationManager _cvar = default!;
-    [Dependency] private IPlayerEquipmentManager _equipment = default!;
-    [Dependency] private ExecutableGoalSystem _executable = default!;
-    [Dependency] private FogOfWarSystem _faw = default!;
-    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private IAdminManager _admin = null!;
+    [Dependency] private MindSystem _mind = null!;
+    [Dependency] private BiomeSystem _biome = null!;
+    [Dependency] private MapSystem _map = null!;
+    [Dependency] private IPrototypeManager _prototype = null!;
+    [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private IServerPreferencesManager _preferences = null!;
+    [Dependency] private IPlayerManager _player = null!;
+    [Dependency] private StationSpawningSystem _station = null!;
+    [Dependency] private EntityLookupSystem _lookup = null!;
+    [Dependency] private IConfigurationManager _cvar = null!;
+    [Dependency] private IPlayerEquipmentManager _equipment = null!;
+    [Dependency] private ExecutableGoalSystem _executable = null!;
+    [Dependency] private FogOfWarSystem _faw = null!;
+    [Dependency] private OwnershipSystem _ownership = null!;
 
     private readonly HashSet<ICommonSession> _debugSubscribers = new();
 
@@ -140,6 +140,7 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
 
         player.Comp.Pops.AddRange(pops);
         Dirty(player);
+        Settlements.MarkDirty(player);
     }
 
     /// <summary>
@@ -161,6 +162,7 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
 
         player.Comp.Pops.Add(pop);
         Dirty(player);
+        Settlements.MarkDirty(player);
     }
 
     /// <summary>
@@ -186,6 +188,7 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         _faw.RemoveFogClearer(pop, player);
 
         Dirty(player);
+        Settlements.MarkDirty(player);
         return true;
     }
 
@@ -264,10 +267,18 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         if (_debugSubscribers.Count == 0)
             return;
 
-        var coords = AllPlayersSettlements()
-            .Select(x
-                => (GetNetEntity(x.Key), x.Value.Select(y => GetNetCoordinates(y)).ToList()))
-            .ToDictionary();
+        var coords = new Dictionary<NetEntity, List<NetCoordinates>>();
+        var players = EntityQueryEnumerator<RimFortressPlayerComponent>();
+
+        while (players.MoveNext(out var player, out _))
+        {
+            coords.Add(
+                GetNetEntity(player),
+                Settlements.GetPlayerSettlements(player)
+                    .Select(x => GetNetCoordinates(Settlements.GetCoordinates(x)))
+                    .ToList());
+        }
+
         var msg = new SettlementCoordinatesMessage(coords);
 
         foreach (var subscriber in _debugSubscribers)

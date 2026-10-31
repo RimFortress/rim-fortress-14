@@ -19,19 +19,6 @@ public sealed class RfVars : CVars
         CVarDef.Create("rimfortress.roundstart_equipment_points", 100, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
-    /// Pops outside this radius will be considered part of different player settlements.
-    /// Used to find the coordinates of player settlements
-    /// </summary>
-    public static readonly CVarDef<int> MaxSettlementRadius =
-        CVarDef.Create("rimfortress.max_settlement_radius", 100, CVar.SERVER | CVar.REPLICATED);
-
-    /// <summary>
-    /// The minimum size of a group of pops necessary to be considered a settlement
-    /// </summary>
-    public static readonly CVarDef<int> MinSettlementMembers =
-        CVarDef.Create("rimfortress.min_settlement_members", 2, CVar.SERVER | CVar.REPLICATED);
-
-    /// <summary>
     /// Radius from the target point within which spawning can occur
     /// </summary>
     public static readonly CVarDef<int> SpawnAreaRadius =

@@ -1,4 +1,5 @@
 using Content.Server._RF.World;
+using Content.Server._RF.World.Settlements;
 using Content.Server.Administration.Logs;
 using Content.Server.Chat.Managers;
 using Content.Server.GameTicking.Rules;
@@ -34,6 +35,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     [Dependency] private MapSystem _map = default!;
     [Dependency] private IAdminLogManager _adminLogger = default!;
     [Dependency] private IChatManager _chat = default!;
+    [Dependency] private SettlementSystem _settlements = default!;
 
     protected override void Added(EntityUid uid, RimFortressRuleComponent comp, GameRuleComponent gameRule, GameRuleAddedEvent args)
     {
@@ -76,9 +78,10 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
                     || GameTicker.RoundDuration() < worldRule.StartOffset)
                     continue;
 
-                var coords = _world.GetPlayerSettlements(new(uid, uid.Comp));
-                foreach (var coord in coords)
+                foreach (var settlement in _settlements.GetPlayerSettlements(uid))
                 {
+                    var coord = _settlements.GetCoordinates(settlement);
+
                     if (_transform.GetGrid(coord) is not { } gridUid)
                         continue;
 

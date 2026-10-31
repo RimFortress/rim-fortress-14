@@ -1,6 +1,7 @@
 using System.Linq;
 using Content.Server._RF.GameTicking.Rules;
 using Content.Server._RF.World;
+using Content.Server._RF.World.Settlements;
 using Content.Server.Administration;
 using Content.Shared.Administration;
 using Robust.Shared.Prototypes;
@@ -16,6 +17,7 @@ public sealed partial class RfRuleCommand : ToolshedCommand
 
     private RimFortressRuleSystem? _rule;
     private RimFortressWorldSystem? _world;
+    private SettlementSystem? _settlements;
 
     [CommandImplementation("start")]
     public IEnumerable<EntityUid> StartWorldRule(
@@ -25,14 +27,16 @@ public sealed partial class RfRuleCommand : ToolshedCommand
         _rule ??= GetSys<RimFortressRuleSystem>();
         _world ??= GetSys<RimFortressWorldSystem>();
 
+        _settlements ??= GetSys<SettlementSystem>();
+
         return uids.Where(uid =>
         {
-            var settlements = _world.GetPlayerSettlements(uid);
+            var settlements = _settlements.GetPlayerSettlements(uid);
 
             if (settlements.Count == 0)
                 return false;
 
-            _rule.StartWorldRule(eventProto, uid, _random.Pick(settlements));
+            _rule.StartWorldRule(eventProto, uid, _settlements.GetCoordinates(_random.Pick(settlements)));
             return true;
         });
     }
@@ -45,14 +49,16 @@ public sealed partial class RfRuleCommand : ToolshedCommand
         _rule ??= GetSys<RimFortressRuleSystem>();
         _world ??= GetSys<RimFortressWorldSystem>();
 
+        _settlements ??= GetSys<SettlementSystem>();
+
         return uids.Where(uid =>
         {
-            var settlements = _world.GetPlayerSettlements(uid);
+            var settlements = _settlements.GetPlayerSettlements(uid);
 
             if (settlements.Count == 0)
                 return false;
 
-            _rule.StartWorldRule(eventProto, uid, _random.Pick(settlements), true);
+            _rule.StartWorldRule(eventProto, uid, _settlements.GetCoordinates(_random.Pick(settlements)), true);
             return true;
         });
     }

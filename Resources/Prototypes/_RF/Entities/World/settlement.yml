@@ -1,0 +1,7 @@
+# A settlement of a player, see SettlementTracker. It is where the center of the group of pops is.
+- type: entity
+  id: RimFortressSettlement
+  name: settlement
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Settlement

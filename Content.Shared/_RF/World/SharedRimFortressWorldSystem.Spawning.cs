@@ -91,9 +91,9 @@ public partial class SharedRimFortressWorldSystem
         if (Rule is not { } rule)
             return new();
 
-        var settlements = AllSettlements();
+        var settlements = Settlements.AllSettlements();
         var coords = settlements.Count > 0
-            ? _random.Pick(settlements)
+            ? Settlements.GetCoordinates(_random.Pick(settlements))
             : new EntityCoordinates(rule.WorldMap, Vector2.Zero);
 
         return GetSpawnTiles(coords, amount);
@@ -168,7 +168,10 @@ public partial class SharedRimFortressWorldSystem
 
         var angle = Angle.FromDegrees(_random.NextFloat(360f));
         var distance = radiusFromPlayers;
-        var settlements = AllSettlements();
+        var settlements = Settlements
+            .AllSettlements()
+            .Select(x => Settlements.GetCoordinates(x))
+            .ToList();
 
         while (true)
         {

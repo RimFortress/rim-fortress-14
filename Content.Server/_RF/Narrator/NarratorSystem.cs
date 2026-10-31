@@ -1,19 +1,18 @@
 using Content.Server._RF.GameTicking.Rules;
-using Content.Server._RF.World;
+using Content.Server._RF.World.Settlements;
 using Content.Server.Cargo.Systems;
 using Content.Server.Construction.Components;
 using Content.Server.GameTicking;
-using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Narrator;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.World.Components;
+using Content.Shared._RF.World.Settlements;
 using Content.Shared.EntityTable;
 using Content.Shared.Item;
 using Robust.Server.Player;
-using Robust.Shared.Configuration;
 using Robust.Shared.Console;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -23,21 +22,21 @@ namespace Content.Server._RF.Narrator;
 
 public sealed partial class NarratorSystem : EntitySystem
 {
-    [Dependency] private IConfigurationManager _cfg = default!;
-    [Dependency] private PricingSystem _pricing = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private GameTicker _ticker = default!;
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private RimFortressRuleSystem _rule = default!;
-    [Dependency] private RimFortressWorldSystem _world = default!;
-    [Dependency] private IConsoleHost _host = default!;
-    [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private EntityTableSystem _table = default!;
-    [Dependency] private OwnershipSystem _ownership = default!;
-    [Dependency] private MathCurvesSystem _curves = default!;
+    [Dependency] private PricingSystem _pricing = null!;
+    [Dependency] private IPrototypeManager _prototype = null!;
+    [Dependency] private GameTicker _ticker = null!;
+    [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private RimFortressRuleSystem _rule = null!;
+    [Dependency] private IConsoleHost _host = null!;
+    [Dependency] private IPlayerManager _player = null!;
+    [Dependency] private EntityTableSystem _table = null!;
+    [Dependency] private OwnershipSystem _ownership = null!;
+    [Dependency] private MathCurvesSystem _curves = null!;
+    [Dependency] private SettlementSystem _settlements = null!;
 
     [Dependency] private EntityQuery<ItemComponent> _itemQuery;
     [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery;
+    [Dependency] private EntityQuery<SettlementTrackerComponent> _trackers;
 
     private readonly Dictionary<EntityUid, int> _lastWaitPoint = new();
 
@@ -60,7 +59,11 @@ public sealed partial class NarratorSystem : EntitySystem
         double constructionCost = 0;
         double popCost = 0;
 
-        var settlementRadius = _cfg.GetCVar(RfVars.MaxSettlementRadius);
+        // Whatever is closer to the center of the settlement than its group can be is a part of it.
+        if (!_trackers.TryComp(player, out var tracker))
+            return 0;
+
+        var settlementRadius = tracker.Radius;
         var entities = EntityQueryEnumerator<OwnershipComponent, TransformComponent>();
 
         while (entities.MoveNext(out var uid, out var comp, out var xform))
@@ -276,8 +279,9 @@ public sealed partial class NarratorSystem : EntitySystem
         var rules = _rule.AvailableRules(new(player, player.Comp));
         var chance = _curves.Get(proto.EventChanceCurves, waitPoints);
 
-        foreach (var coords in _world.GetPlayerSettlements(player))
+        foreach (var settlement in _settlements.GetPlayerSettlements(player))
         {
+            var coords = _settlements.GetCoordinates(settlement);
             var wealth = SettlementWealth(player, proto, coords);
             var wealthFactor = _curves.Get(proto.WealthCurves, wealth);
 
