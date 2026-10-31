@@ -108,8 +108,10 @@
     cost: [float: 2]
     goal:
       id: Climb
-      targetKey: ClimbTarget
+      targetKey: ClimbPoint
       rangeKey: InteractRange
+      entityTag: Climbable
+      entityKey: ClimbTarget
   # Bodies are gone around at a distance, the agent has a size and the path knows nothing of it.
   - when:
     - !type:TagInfluence

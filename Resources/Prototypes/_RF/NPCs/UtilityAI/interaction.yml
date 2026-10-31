@@ -52,6 +52,7 @@
   color: "#00D5FF"
   tempKeys:
   - ClimbTarget
+  - ClimbPoint
   goalState:
     Climbed: true
 
