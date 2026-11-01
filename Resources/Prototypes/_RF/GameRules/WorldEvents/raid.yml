@@ -16,6 +16,55 @@
     variables:
       kills: [float: 0]
       losses: [float: 0]
+      raidersTotal: [float: 0]
+      # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
+      # kills takes away. When it falls below retreatMorale the raiders retreat.
+      moraleKillBonus: [float: 0.5]
+      stalemateTime: [float: 600]
+      retreatMorale: [float: 0.3]
+      # For how long they retreat, until those who are left are gone.
+      retreatDuration: [float: 180]
+  - type: Phases
+    phases:
+      Assault:
+        tick:
+        - !type:SetPhase
+          phase: Retreat
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: morale
+            - minus: [var: retreatMorale]
+            - !type:Threshold
+              lessThan: 0
+      Retreat:
+        enter:
+        - !type:ApplyToEngagementActors
+          engagement: Raid
+          role: Raider
+          effects:
+          - !type:SetGoapFlag
+            key: Retreating
+        # They leave the way that is the cheapest, round the settlements, and are gone where nobody observes them.
+        tick:
+        - !type:ApplyToEngagementActors
+          engagement: Raid
+          role: Raider
+          effects:
+          - !type:DespawnEntity
+            conditions:
+            - !type:Unobserved
+        # Those who cannot leave in time are gone with the end of the raid.
+        - !type:EndWorldRule
+          result: Failed
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - !type:CurTimeSeconds
+            - minus: [var: phaseStartedAt]
+            - minus: [var: retreatDuration]
+            - !type:Threshold
+              moreThan: 0
   - type: KeyedEntityEffectOnTrigger
     effects:
       started:
@@ -33,8 +82,14 @@
         value:
         - !type:SearchQueryCount
           query: RaidTargets
+      - !type:SetPhase
+        phase: Assault
       # Every raider joins the raid, and knows where the settlement is.
       spawned:
+      - !type:SetMathVariable
+        key: raidersTotal
+        value:
+        - add: [float: 1]
       - !type:JoinEngagement
         engagement: Raid
         role: Raider
@@ -57,6 +112,23 @@
         value:
         - !type:CurTimeSeconds
         - minus: [var: lastKillAt]
+      - !type:SetMathVariable
+        key: aliveFraction
+        value:
+        - var: raiders
+        - div: [var: raidersTotal]
+      - !type:SetMathVariable
+        key: pressure
+        value:
+        - var: sinceLastKill
+        - div: [var: stalemateTime]
+      - !type:SetMathVariable
+        key: morale
+        value:
+        - var: deadFraction
+        - mul: [var: moraleKillBonus]
+        - add: [var: aliveFraction]
+        - minus: [var: pressure]
       # The settlement is destroyed when most of its residents are dead.
       - !type:EndWorldRule
         result: Won
@@ -66,7 +138,7 @@
           - var: deadFraction
           - !type:Threshold
             moreThan: 0.8
-      # The raid is lost if the raiders are all dead, or if they cannot kill anyone for a long time.
+      # The raid is lost if the raiders are all dead. If they cannot kill anyone for a long time their morale falls and they retreat.
       - !type:EndWorldRule
         result: Failed
         conditions:
@@ -75,14 +147,6 @@
           - var: raiders
           - !type:Threshold
             lessThan: 1
-      - !type:EndWorldRule
-        result: Failed
-        conditions:
-        - !type:MathCurveCondition
-          curves:
-          - var: sinceLastKill
-          - !type:Threshold
-            moreThan: 600
       RaidTargetsDead.added:
       - !type:SetMathVariable
         key: kills
@@ -97,3 +161,10 @@
         key: losses
         value:
         - add: [float: 1]
+      # Whoever is left when the raid is over is gone.
+      ended:
+      - !type:ApplyToEngagementActors
+        engagement: Raid
+        role: Raider
+        effects:
+        - !type:DespawnEntity

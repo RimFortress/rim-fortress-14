@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Algorithms;
+using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Random;
 
 namespace Content.Server._RF.NPC.Pathfinding.Algorithms;
@@ -10,6 +11,9 @@ namespace Content.Server._RF.NPC.Pathfinding.Algorithms;
 public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
 {
     [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private SharedBiomeSystem _biome = null!;
+
+    [Dependency] private EntityQuery<BiomeComponent> _biomeQuery;
 
     protected override async Task<PathSearchResult> Search(PathSearch search, Bfs algorithm)
     {
@@ -35,6 +39,7 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
             var expanded = 0;
             var built = 0;
             var lastChunk = start.ChunkOrigin;
+            RfPathPoly? unobserved = null;
             Map.Touch(start);
 
             while (state.Open.TryDequeue(out var current, out _))
@@ -48,7 +53,16 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
                 var currentG = node.G;
 
                 if (!ReferenceEquals(current, start) && Vector2.Distance(startPos, current.Box.Center) >= algorithm.MinRange)
+                {
                     state.Candidates.Add(current);
+
+                    // The nodes are reached in the order of their cost, so the first one is the cheapest.
+                    if (algorithm.Pick == BfsPick.Unobserved && !IsLoaded(current))
+                    {
+                        unobserved = current;
+                        break;
+                    }
+                }
 
                 if (algorithm.MaxNodes > 0 && ++expanded > algorithm.MaxNodes)
                     break;
@@ -105,13 +119,20 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
                     return PathSearchResult.NoPath;
             }
 
-            return state.Candidates.Count == 0
-                ? PathSearchResult.NoPath
-                : BuildResult(state,
-                    search,
-                    Pick(state.Candidates, startPos, algorithm.Pick),
-                    PathSearchStatus.Path,
-                    collision);
+            if (unobserved != null)
+                return BuildResult(state, search, unobserved, PathSearchStatus.Path, collision);
+
+            if (state.Candidates.Count == 0)
+                return PathSearchResult.NoPath;
+
+            // Nowhere to leave to, so as far as it goes.
+            var partial = algorithm.Pick == BfsPick.Unobserved;
+
+            return BuildResult(state,
+                search,
+                Pick(state.Candidates, startPos, partial ? BfsPick.Farthest : algorithm.Pick),
+                partial ? PathSearchStatus.PartialPath : PathSearchStatus.Path,
+                collision);
         }
         finally
         {
@@ -140,4 +161,11 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
 
         return farthest;
     }
+
+    /// <summary>
+    /// Is the chunk of the node loaded by the biome. A world without a biome has nothing that is not.
+    /// </summary>
+    private bool IsLoaded(RfPathPoly poly)
+        => !_biomeQuery.TryComp(poly.GraphUid, out var biome)
+           || _biome.IsChunkLoaded((poly.GraphUid, biome), poly.ChunkOrigin * SharedBiomeSystem.ChunkSize);
 }

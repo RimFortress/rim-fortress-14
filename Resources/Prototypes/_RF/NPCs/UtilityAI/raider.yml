@@ -8,6 +8,7 @@
   - add: [float: 0.05]
   conditions:
   - Query/HostileTarget != null
+  - Retreating == false
   capture:
   - Query/HostileTarget
   goalState:
@@ -21,5 +22,17 @@
   conditions:
   - !type:KeyExist
     key: SettlementTarget
+  - Retreating == false
   goalState:
     RaiderAdvanced: true
+
+# The raiders that have lost heart run away and do not fight.
+- type: utilityAiGoal
+  id: RaiderRetreat
+  color: "#888888"
+  scoreCurves:
+  - float: 0.95
+  conditions:
+  - Retreating == true
+  goalState:
+    RaiderRetreated: true

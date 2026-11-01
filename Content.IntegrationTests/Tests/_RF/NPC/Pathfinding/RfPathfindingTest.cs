@@ -10,6 +10,7 @@ using Content.Shared._RF.NPC.Pathfinding.Algorithms;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
+using Content.Shared.Parallax.Biomes;
 using Robust.Shared.CPUJob.JobQueues;
 using Robust.Shared.CPUJob.JobQueues.Queues;
 using Robust.Shared.GameObjects;
@@ -81,6 +82,16 @@ public sealed class RfPathfindingTest : GameTest
     - !type:Blocked
     cost:
     - float: 10000
+  # The settlements radiate the cost for those who leave.
+  - when:
+    - !type:TagInfluence
+      tag: Settlement
+      moreThan: 0
+    - !type:Query
+      id: Retreat
+    cost:
+    - var: influence
+    - mul: [float: 10]
 
 # A query that does not go through anything that costs a lot, and gives up instead of coming close.
 - type: pathQuery
@@ -319,9 +330,10 @@ public sealed class RfPathfindingTest : GameTest
         Vector2 start,
         Vector2? target,
         float range = 0.4f,
-        double maxTime = 0.05)
+        double maxTime = 0.05,
+        ProtoId<PathQueryPrototype>? query = null)
     {
-        Assert.That(_pathfinding.BeginRequest(agent, "TestWalker"), Is.True);
+        Assert.That(_pathfinding.BeginRequest(agent, "TestWalker", query), Is.True);
 
         var job = new PathJob(
             maxTime,
@@ -449,6 +461,101 @@ public sealed class RfPathfindingTest : GameTest
             // The range of the request replaces the one of the algorithm.
             var limited = Search(grid, agent, new Bfs { Range = 20f, MinRange = 3f, Pick = BfsPick.Farthest }, start, null, range: 4f);
             Assert.That(Vector2.Distance(start, limited.Path[^1].Box.Center), Is.InRange(3f, 4.01f));
+        });
+    }
+
+    /// <summary>
+    /// Only the middle chunk of the world is loaded, the agent stands in it.
+    /// </summary>
+    private async Task<(Entity<MapGridComponent> Grid, Entity<PathProfilesComponent, GoapComponent> Agent)> CreateLoadedMiddle()
+    {
+        var world = await CreateWorld(24, "TestPathAgent");
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The world is a strip, 8 tiles high.
+            for (var x = 0; x < 24; x++)
+            {
+                for (var y = 8; y < 24; y++)
+                {
+                    _maps.SetTile(world.Grid.Owner, world.Grid.Comp, new Vector2i(x, y), new Tile(1));
+                }
+            }
+
+            var biome = _entMan.AddComponent<BiomeComponent>(world.Grid);
+            biome.Enabled = false;
+#pragma warning disable RA0002
+            biome.LoadedChunks.Add(new Vector2i(8, 8));
+#pragma warning restore RA0002
+        });
+
+        return world;
+    }
+
+    /// <summary>
+    /// A search for the way out leads to the closest node that is not in the area that is loaded.
+    /// </summary>
+    [Test]
+    public async Task TestBfsLeadsOutOfTheLoadedArea()
+    {
+        var (grid, agent) = await CreateLoadedMiddle();
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(11.5f, 11.5f);
+            var result = Search(grid, agent, new Bfs { Range = 40f, MaxNodes = 0, Pick = BfsPick.Unobserved }, start, null, range: 0f);
+
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+
+            var end = result.Path[^1].Box.Center;
+            Assert.That(end.X < 8f || end.X >= 16f || end.Y < 8f || end.Y >= 16f, Is.True, $"{end} is in the loaded chunk");
+            Assert.That(Vector2.Distance(start, end), Is.LessThan(6f), "the closest way out");
+        });
+    }
+
+    /// <summary>
+    /// The settlements radiate the cost, by their path tag: the way out does not lead by one when there is another.
+    /// </summary>
+    [Test]
+    public async Task TestBfsLeadsOutAwayFromSettlements()
+    {
+        var (grid, agent) = await CreateLoadedMiddle();
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The closest ways out are to the west and to the south, the settlement is at the west, near both.
+            var settlement = _entMan.SpawnEntity(null, new EntityCoordinates(grid, 6f, 11.5f));
+            _pathfinding.AddTag(settlement, "Settlement");
+        });
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(11.5f, 11.5f);
+            var bfs = new Bfs { Range = 40f, MaxNodes = 0, Pick = BfsPick.Unobserved };
+            var result = Search(grid, agent, bfs, start, null, range: 0f, query: "Retreat");
+            var end = result.Path[^1].Box.Center;
+
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+            Assert.That(end.X, Is.GreaterThanOrEqualTo(16f), $"{end}: it left to the east, as far from the settlement as it can");
+
+            // For those who do not leave the settlement is nothing.
+            var free = Search(grid, agent, bfs, start, null, range: 0f).Path[^1].Box.Center;
+            Assert.That(free.X < 8f || free.Y < 8f, Is.True, $"{free}");
+        });
+    }
+
+    /// <summary>
+    /// When the whole world is loaded there is nowhere to leave to, and the path leads as far as it goes.
+    /// </summary>
+    [Test]
+    public async Task TestBfsHasNowhereToLeaveTo()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent");
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var result = Search(grid, agent, new Bfs { Range = 40f, Pick = BfsPick.Unobserved }, new Vector2(3.5f, 3.5f), null, range: 0f);
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.PartialPath));
         });
     }
 

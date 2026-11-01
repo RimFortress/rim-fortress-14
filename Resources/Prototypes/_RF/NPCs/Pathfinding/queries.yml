@@ -16,3 +16,13 @@
     range: 7
     minRange: 2
     maxCost: 5000
+
+# A place to leave to: the cheapest way to a chunk of the world that is not loaded, where nobody observes. The profiles say
+# what costs what, a way out goes round the settlements, see the Settlement tag.
+- type: pathQuery
+  id: Retreat
+  algorithm: !type:Bfs
+    range: 150
+    maxNodes: 6000
+    maxChunks: 0
+    pick: Unobserved

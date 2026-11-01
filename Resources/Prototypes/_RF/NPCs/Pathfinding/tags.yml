@@ -72,3 +72,12 @@
 - type: pathTag
   id: DoorCanClose
 
+# Every settlement of a player is the source of it. The influence is how close to a settlement a node is, the profiles use it
+# to keep the path away from the settlements, as the ones who leave one do not want to go through another.
+- type: pathTag
+  id: Settlement
+  makesObstacle: false
+  influence: 40
+  influenceCurve:
+  - mul: [float: -0.025]
+  - add: [float: 1]

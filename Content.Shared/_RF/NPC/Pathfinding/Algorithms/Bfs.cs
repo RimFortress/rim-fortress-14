@@ -14,6 +14,12 @@ public enum BfsPick : byte
     /// The node that is the farthest from the start.
     /// </summary>
     Farthest,
+
+    /// <summary>
+    /// The cheapest node that is in a chunk of the world that is not loaded, where nobody observes. It is where an agent
+    /// that is leaving goes. If no such node is reached, the path leads to the farthest node, and it is a partial one.
+    /// </summary>
+    Unobserved,
 }
 
 /// <summary>

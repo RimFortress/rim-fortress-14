@@ -397,6 +397,12 @@ public abstract partial class SharedBiomeSystem : EntitySystem
         biome = ProtoMan.Index<BiomeTemplatePrototype>(grid.Comp1.Template);
         return true;
     }
+
+    /// <summary>
+    /// Is the chunk loaded, the origin of the chunk is the indices of its first tile.
+    /// </summary>
+    public bool IsChunkLoaded(Entity<BiomeComponent?> biome, Vector2i chunkOrigin)
+        => Resolve(biome, ref biome.Comp, false) && biome.Comp.LoadedChunks.Contains(chunkOrigin);
     // RimFortress End
 
     /// <summary>

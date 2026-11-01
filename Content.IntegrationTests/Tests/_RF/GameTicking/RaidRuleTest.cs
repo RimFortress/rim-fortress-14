@@ -11,12 +11,14 @@ using Content.Shared._RF.MathHelpers.MathVariables;
 using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.Phases;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.World.Settlements;
 using Content.Shared._RF.World.Components;
 using Content.Shared.GameTicking.Components;
+using Content.Shared.Parallax.Biomes;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.NPC.Systems;
@@ -36,6 +38,7 @@ public sealed class RaidRuleTest : GameTest
 {
     private static readonly StateKey<HashSet<EntityUid>> Targets = "Targets";
     private static readonly StateKey<EntityCoordinates> SettlementTarget = "SettlementTarget";
+    private static readonly StateKey<bool> Retreating = "Retreating";
 
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
     [SidedDependency(Side.Server)] private readonly RimFortressRuleSystem _rules = default!;
@@ -284,5 +287,181 @@ public sealed class RaidRuleTest : GameTest
             Assert.That(seen, Does.Not.Contain(_raiders[1]), "its own");
             Assert.That(seen, Does.Not.Contain(_raiders[0]));
         });
+    }
+
+    private string? Phase() => _entMan.GetComponent<PhasesComponent>(_rule).Current;
+
+    [Test]
+    public async Task TestRaidStartsWithAssault()
+    {
+        await Setup();
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Assault"));
+            Assert.That(Variable("raidersTotal"), Is.EqualTo(3f));
+            Assert.That(Variable("morale"), Is.EqualTo(1f).Within(0.05f));
+        });
+    }
+
+    /// <summary>
+    /// The raiders that are being killed lose heart and retreat: they get a place to run to, and are gone when the
+    /// retreat is over, and the raid is lost.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersRetreatWhenMoraleFalls()
+    {
+        await Setup(raiders: 4);
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        // Two of four are alive: 0.5, which is more than 0.3.
+        await Pair.Server.WaitPost(() =>
+        {
+            _mobState.ChangeMobState(_raiders[0], MobState.Dead);
+            _mobState.ChangeMobState(_raiders[1], MobState.Dead);
+        });
+        await Run(2.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Assault")));
+
+        // One of four: 0.25.
+        await Pair.Server.WaitPost(() => _mobState.ChangeMobState(_raiders[2], MobState.Dead));
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Retreat"));
+            foreach (var raider in _raiders)
+            {
+                var state = _entMan.GetComponent<GoapComponent>(raider).State;
+                Assert.That(_goap.TryGetValue(state, Retreating, out var retreating) && retreating, Is.True);
+            }
+
+            Assert.That(Ended(), Is.False);
+        });
+
+        // The retreat takes retreatDuration, then who is left is gone.
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "retreatDuration", 1f));
+        await Run(3.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Ended(), Is.True);
+            Assert.That(Result(), Is.EqualTo("Failed"));
+            Assert.That(_entMan.Deleted(_raiders[3]), Is.True);
+        });
+    }
+
+    /// <summary>
+    /// The retreating raiders are gone where nobody observes them: in a chunk that is not loaded. The others go on.
+    /// </summary>
+    [Test]
+    public async Task TestRetreatingRaidersAreGoneWhereNobodyObserves()
+    {
+        await Setup(raiders: 4);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The chunks of 8 tiles from 0 to 24 are loaded.
+            var biome = _entMan.AddComponent<BiomeComponent>(_grid);
+            biome.Enabled = false;
+#pragma warning disable RA0002
+            for (var x = 0; x < 3; x++)
+            {
+                for (var y = 0; y < 3; y++)
+                {
+                    biome.LoadedChunks.Add(new Vector2i(x * 8, y * 8));
+                }
+            }
+#pragma warning restore RA0002
+
+            _transform.SetCoordinates(_raiders[0], At(12.5f, 12.5f)); // the middle one, with all around loaded
+            _transform.SetCoordinates(_raiders[1], At(4.5f, 4.5f)); // at the edge of the loaded area, but loaded
+            _transform.SetCoordinates(_raiders[2], At(30.5f, 30.5f)); // in a chunk that is not loaded
+            _transform.SetCoordinates(_raiders[3], At(12.5f, 12.5f));
+            Start();
+        });
+        await Run(1.2f);
+
+        // Nobody retreats yet, nobody is gone.
+        await Pair.Server.WaitAssertion(() => Assert.That(_raiders.All(r => !_entMan.Deleted(r)), Is.True));
+
+        // They lose heart.
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "retreatMorale", 5f));
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Retreat"));
+            Assert.That(_entMan.Deleted(_raiders[0]), Is.False, "it is in the middle of the observed area");
+            Assert.That(_entMan.Deleted(_raiders[1]), Is.False, "it is at the edge, but the chunk is loaded");
+            Assert.That(_entMan.Deleted(_raiders[2]), Is.True, "it is out of the loaded chunks");
+            Assert.That(_entMan.Deleted(_raiders[3]), Is.False);
+        });
+
+        // The one that has got out of the loaded chunks is gone too.
+        await Pair.Server.WaitPost(() => _transform.SetCoordinates(_raiders[0], At(28.5f, 12.5f)));
+        await Run(1.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(_entMan.Deleted(_raiders[0]), Is.True));
+    }
+
+    /// <summary>
+    /// A raider that retreats walks out of the loaded area on its own, and is gone when it is in a chunk that is not loaded.
+    /// </summary>
+    [Test]
+    public async Task TestRetreatingRaiderWalksOutOfTheLoadedArea()
+    {
+        await Setup(raiders: 1);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            var biome = _entMan.AddComponent<BiomeComponent>(_grid);
+            biome.Enabled = false;
+#pragma warning disable RA0002
+            for (var x = 0; x < 3; x++)
+            {
+                for (var y = 0; y < 3; y++)
+                {
+                    biome.LoadedChunks.Add(new Vector2i(x * 8, y * 8));
+                }
+            }
+#pragma warning restore RA0002
+
+            _transform.SetCoordinates(_raiders[0], At(12.5f, 12.5f));
+            Start();
+            _variables.Set(_rule, "retreatMorale", 5f);
+        });
+
+        // Not at once: it has to walk.
+        await Run(2.5f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Retreat")));
+
+        for (var i = 0; i < 20 && !_entMan.Deleted(_raiders[0]); i++)
+        {
+            await Run(1f);
+        }
+
+        await Pair.Server.WaitAssertion(() => Assert.That(_entMan.Deleted(_raiders[0]), Is.True, "it has left"));
+    }
+
+    /// <summary>
+    /// Without kills the raiders lose heart with time, that is a stalemate.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersRetreatWhenNobodyIsKilled()
+    {
+        await Setup();
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "lastKillAt", (float) Pair.Server.Timing.CurTime.TotalSeconds - 300f));
+        await Run(2.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Assault"), "morale is 1 - 300/600"));
+
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "lastKillAt", (float) Pair.Server.Timing.CurTime.TotalSeconds - 500f));
+        await Run(2.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Retreat")));
     }
 }

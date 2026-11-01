@@ -8,6 +8,7 @@
   - proto: Pickup
   - proto: Combat
   - proto: RaiderAdvance
+  - proto: RaiderRetreat
 
 - type: goapCompound
   id: RaiderAdvance
@@ -22,3 +23,19 @@
       rangeKey: IdleRange
     effects:
       RaiderAdvanced: true
+
+- type: goapCompound
+  id: RaiderRetreat
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:PickAccessible
+      rangeKey: RetreatRange
+      query: Retreat
+    - !type:MoveTo
+      rangeKey: IdleRange
+    effects:
+      RaiderRetreated: true
