@@ -43,16 +43,17 @@ public sealed partial class EngagementSystem : EntitySystem
         }
     }
 
+    // A change of the state of the mob is likely to be what an agent needs to stay in a role for, so the conditions are
+    // checked at once and not at the next update. Which states are fine is up to the role.
     [SubscribeLocalEvent]
     private void OnMobStateChanged(Entity<EngagementParticipantComponent> ent, ref MobStateChangedEvent args)
     {
-        if (args.NewMobState == MobState.Alive)
-            return;
-
-        foreach (var (engagementUid, _) in ent.Comp.Membership.ToArray())
+        foreach (var (engagementUid, roleId) in ent.Comp.Membership.ToArray())
         {
-            if (_engagementQuery.TryComp(engagementUid, out var comp))
-                LeaveEngagement((engagementUid, comp), ent.Owner, EngagementEndReason.Interrupted);
+            if (_engagementQuery.TryComp(engagementUid, out var comp)
+                && _prototype.Resolve(roleId, out var role)
+                && !MeetsStayRequirements(role, ent.Owner))
+                LeaveEngagement((engagementUid, comp), ent.Owner, EngagementEndReason.Dissolved);
         }
     }
 
@@ -210,6 +211,9 @@ public sealed partial class EngagementSystem : EntitySystem
         if (role.InitiatorOnly && actor != engagement.Comp.Initiator)
             return false;
 
+        if (!MeetsStayRequirements(role, actor))
+            return false;
+
         var current = engagement.Comp.Actors.TryGetValue(role, out var set) ? set.Count : 0;
 
         if (current >= role.MaxCount)
@@ -271,6 +275,17 @@ public sealed partial class EngagementSystem : EntitySystem
 
         if (remaining < role.MinCount)
             EndEngagement(engagement.AsNullable(), EngagementEndReason.Dissolved);
+    }
+
+    /// <summary>
+    /// Checks <see cref="EngagementRolePrototype.StayConditions"/> of the role for the actor.
+    /// </summary>
+    private bool MeetsStayRequirements(EngagementRolePrototype role, EntityUid actor)
+    {
+        if (role.StayConditions.Count == 0)
+            return true;
+
+        return _goapQuery.TryComp(actor, out var goap) && _goap.CheckCondition(actor, goap.State, role.StayConditions);
     }
 
     /// <summary>
@@ -467,7 +482,7 @@ public sealed partial class EngagementSystem : EntitySystem
             foreach (var (roleId, actors) in comp.Actors.ToArray())
             {
                 if (!_prototype.Resolve(roleId, out var role)
-                    || !role.AlwaysConditionCheck)
+                    || !role.AlwaysConditionCheck && role.StayConditions.Count == 0)
                     continue;
 
                 foreach (var actor in actors.ToArray())
@@ -477,8 +492,10 @@ public sealed partial class EngagementSystem : EntitySystem
 
                     comp.NextConditionCheck[actor] = _timing.CurTime + role.ConditionsCheckRate;
 
-                    if (!MeetsForwardRequirements((uid, comp), role, actor)
-                        || !MeetsReverseRequirements(new(uid, comp), role, actor))
+                    if (!MeetsStayRequirements(role, actor)
+                        || role.AlwaysConditionCheck
+                        && (!MeetsForwardRequirements((uid, comp), role, actor)
+                            || !MeetsReverseRequirements(new(uid, comp), role, actor)))
                         LeaveEngagement((uid, comp), actor, EngagementEndReason.Dissolved);
                 }
             }

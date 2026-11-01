@@ -62,6 +62,19 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     public List<GoapCondition> Conditions = new();
 
     /// <summary>
+    /// What has to hold for an agent to stay in this role, such as being alive. They are checked as long as the agent has the
+    /// role, every <see cref="ConditionsCheckRate"/> and at once when its mob state changes, and the agent leaves the role
+    /// when they stop holding. An agent that cannot satisfy them cannot take the role.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="Conditions"/> these are not requirements to take the role that are checked again from time to time
+    /// (<see cref="AlwaysConditionCheck"/>), so a role can ask for much less of the one who plays it than of the one who
+    /// takes it.
+    /// </remarks>
+    [DataField(serverOnly: true)]
+    public List<GoapCondition> StayConditions = new();
+
+    /// <summary>
     /// Conditions regarding other participants in the situation
     /// that must be met in order for the agent to take on this role.
     /// </summary>
