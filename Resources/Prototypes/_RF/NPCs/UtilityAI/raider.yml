@@ -1,0 +1,25 @@
+# A raider fights the enemies that it sees, and goes to the settlement it is sent to when there are none.
+- type: utilityAiGoal
+  id: RaiderAttack
+  color: "#FF0000"
+  scoreCurves:
+  - float: 0.90
+  incumbentBonus:
+  - add: [float: 0.05]
+  conditions:
+  - Query/HostileTarget != null
+  capture:
+  - Query/HostileTarget
+  goalState:
+    TargetAttacked: true
+
+- type: utilityAiGoal
+  id: RaiderAdvance
+  color: "#FF8800"
+  scoreCurves:
+  - float: 0.50
+  conditions:
+  - !type:KeyExist
+    key: SettlementTarget
+  goalState:
+    RaiderAdvanced: true

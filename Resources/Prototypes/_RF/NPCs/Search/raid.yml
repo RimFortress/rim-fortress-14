@@ -1,0 +1,29 @@
+# The enemies of an agent that fights on its own, such as a raider, whoever they are and wherever they are.
+- type: searchQuery
+  id: HostileTarget
+  query: !type:Nearby
+    whitelist:
+      components:
+      - MobState
+    range: 30
+  filters:
+  - !type:IsAlive
+  - !type:IsHostile
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+# The residents of the settlement that the raid is for, as they were when it began. A raid is won when most of them are dead.
+- type: searchQuery
+  id: RaidTargets
+  query: !type:KeyEntities
+    key: Targets
+
+- type: searchQuery
+  id: RaidTargetsDead
+  notify: true
+  query: !type:KeyEntities
+    key: Targets
+  filters:
+  - !type:IsDead

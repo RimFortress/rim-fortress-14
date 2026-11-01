@@ -1,4 +1,5 @@
 using Content.Shared._RF.Narrator;
+using Content.Shared._RF.World.Settlements;
 using Content.Shared.Destructible.Thresholds;
 using Content.Shared.Parallax.Biomes;
 using Robust.Shared.Map;
@@ -47,6 +48,13 @@ public sealed partial class WorldRuleComponent : Component
     /// </summary>
     [ViewVariables]
     public string? Result;
+
+    /// <summary>
+    /// The settlement that the rule is about, if it is about one, see <see cref="SettlementComponent"/>.
+    /// The coordinates of the target are its center.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? Settlement;
 
     [ViewVariables]
     public EntityUid Target;

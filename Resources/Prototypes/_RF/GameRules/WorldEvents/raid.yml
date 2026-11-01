@@ -1,0 +1,99 @@
+# Raids
+- type: entity
+  id: Raid
+  parent: BaseScriptedWorldRule
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: WorldRule
+    startOffset: 15m
+    cost: 75
+  - type: MigrationRule
+    spawn:
+      Raider: 45
+  - type: NotificationRule
+    proto: Raid
+  - type: MathVariables
+    variables:
+      kills: [float: 0]
+      losses: [float: 0]
+  - type: KeyedEntityEffectOnTrigger
+    effects:
+      started:
+      - !type:CopySettlementResidents
+      - !type:SetMathVariable
+        key: startedAt
+        value:
+        - !type:CurTimeSeconds
+      - !type:SetMathVariable
+        key: lastKillAt
+        value:
+        - !type:CurTimeSeconds
+      - !type:SetMathVariable
+        key: targetsTotal
+        value:
+        - !type:SearchQueryCount
+          query: RaidTargets
+      # Every raider joins the raid, and knows where the settlement is.
+      spawned:
+      - !type:JoinEngagement
+        engagement: Raid
+        role: Raider
+      - !type:SetSettlementTarget
+      tick:
+      - !type:SetMathVariable
+        key: deadFraction
+        value:
+        - !type:SearchQueryCount
+          query: RaidTargetsDead
+        - div: [var: targetsTotal]
+      - !type:SetMathVariable
+        key: raiders
+        value:
+        - !type:EngagementActors
+          engagement: Raid
+          role: Raider
+      - !type:SetMathVariable
+        key: sinceLastKill
+        value:
+        - !type:CurTimeSeconds
+        - minus: [var: lastKillAt]
+      # The settlement is destroyed when most of its residents are dead.
+      - !type:EndWorldRule
+        result: Won
+        conditions:
+        - !type:MathCurveCondition
+          curves:
+          - var: deadFraction
+          - !type:Threshold
+            moreThan: 0.8
+      # The raid is lost if the raiders are all dead, or if they cannot kill anyone for a long time.
+      - !type:EndWorldRule
+        result: Failed
+        conditions:
+        - !type:MathCurveCondition
+          curves:
+          - var: raiders
+          - !type:Threshold
+            lessThan: 1
+      - !type:EndWorldRule
+        result: Failed
+        conditions:
+        - !type:MathCurveCondition
+          curves:
+          - var: sinceLastKill
+          - !type:Threshold
+            moreThan: 600
+      RaidTargetsDead.added:
+      - !type:SetMathVariable
+        key: kills
+        value:
+        - add: [float: 1]
+      - !type:SetMathVariable
+        key: lastKillAt
+        value:
+        - !type:CurTimeSeconds
+      Raid.left.Raider:
+      - !type:SetMathVariable
+        key: losses
+        value:
+        - add: [float: 1]

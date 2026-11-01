@@ -44,14 +44,14 @@
   - preconditions:
     - GunFound == true
     - WeaponPickedUp == true
-    - Query/AttackTarget != null
+    - Query/AttackTarget || Query/HostileTarget != null
     actions:
     - !type:MoveTo
-      targetEntityKey: Query/AttackTarget
+      targetEntityKey: Query/AttackTarget || Query/HostileTarget
       rangeKey: MeleeRange
       stopOnLineOfSight: true
     - !type:Gun
-      targetKey: Query/AttackTarget
+      targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
     effects:
       TargetAttacked: true
@@ -60,15 +60,15 @@
   - preconditions:
     - MeleeFound == true
     - WeaponPickedUp == true
-    - Query/AttackTarget != null
+    - Query/AttackTarget || Query/HostileTarget != null
     actions:
     - !type:Wield
       targetState: true
     - !type:MoveTo
-      targetEntityKey: Query/AttackTarget
+      targetEntityKey: Query/AttackTarget || Query/HostileTarget
       rangeKey: MeleeRange
     - !type:Melee
-      targetKey: Query/AttackTarget
+      targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
       costMultiplier: 4
     effects:
@@ -77,13 +77,13 @@
   # Fistfight
   - preconditions:
     - WeaponTarget == null
-    - Query/AttackTarget != null
+    - Query/AttackTarget || Query/HostileTarget != null
     actions:
     - !type:MoveTo
-      targetEntityKey: Query/AttackTarget
+      targetEntityKey: Query/AttackTarget || Query/HostileTarget
       rangeKey: MeleeRange
     - !type:Melee
-      targetKey: Query/AttackTarget
+      targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
       costMultiplier: 100 # A fistfight is the least desirable option
     effects:

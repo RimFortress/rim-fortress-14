@@ -17,5 +17,5 @@ public sealed partial class MathVariablesComponent : Component
     /// Current values of the variables.
     /// </summary>
     [DataField("currentVariables")]
-    public readonly Dictionary<string, float> Variables = new();
+    public Dictionary<string, float> Variables = new();
 }

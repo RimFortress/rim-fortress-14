@@ -1,0 +1,8 @@
+# A raider is in the raid until it is dead, a raider that is down is still in it. The raid is over when it has none left.
+- type: engagementRole
+  id: Raider
+  force: true
+  stayConditions:
+  - !type:MobState
+    targetState: Dead
+    invert: true

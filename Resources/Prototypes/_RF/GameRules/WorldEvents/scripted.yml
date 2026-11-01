@@ -1,0 +1,21 @@
+# A world rule whose course is described by what it is made of: variables, triggers and what they do, search queries of its own.
+# It measures every second while it goes on (the key of the trigger is tick), and it has a disabled Goap, which keeps the search
+# queries of the rule. What is in it is described by the rule that inherits it.
+- type: entity
+  id: BaseScriptedWorldRule
+  parent: BaseWorldRule
+  abstract: true
+  components:
+  - type: Goap
+    rootTask: Empty
+    enabled: false
+  - type: MathVariables
+  - type: TriggerOnSearchResult
+  - type: TriggerOnEngagement
+  - type: ActiveGameRuleTriggerCondition
+    keys:
+    - tick
+  - type: RepeatingTrigger
+    delay: 1
+    keyOut: tick
+  - type: KeyedEntityEffectOnTrigger

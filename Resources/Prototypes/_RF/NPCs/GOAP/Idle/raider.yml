@@ -1,0 +1,24 @@
+# What a raider can do. It has no chores of a settler.
+- type: goapCompound
+  id: RaiderIdle
+  tasks:
+  - proto: Utility
+  - proto: Door
+  - proto: Climb
+  - proto: Pickup
+  - proto: Combat
+  - proto: RaiderAdvance
+
+- type: goapCompound
+  id: RaiderAdvance
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:MoveTo
+      targetKey: SettlementTarget
+      rangeKey: IdleRange
+    effects:
+      RaiderAdvanced: true

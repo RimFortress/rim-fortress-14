@@ -35,12 +35,12 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// </summary>
 public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 {
-    [Dependency] protected IPrototypeManager Proto = default!;
-    [Dependency] private INetManager _net = default!;
-    [Dependency] private MathCurvesSystem _mathCurves = default!;
+    [Dependency] protected IPrototypeManager Proto = null!;
+    [Dependency] private INetManager _net = null!;
+    [Dependency] private MathCurvesSystem _mathCurves = null!;
 
-    [Dependency] private EntityQuery<SearchTrackedComponent> _trackedQuery = default!;
-    [Dependency] private EntityQuery<NpcSearcherComponent> _searcherQuery = default!;
+    [Dependency] private EntityQuery<SearchTrackedComponent> _trackedQuery;
+    [Dependency] private EntityQuery<NpcSearcherComponent> _searcherQuery;
 
     /// <summary>
     /// Agents currently holding a live result for a given query prototype.
@@ -304,6 +304,10 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
         float[]? considerationScores,
         NpcSearcherComponent.LiveSearchResult live)
     {
+        // Whoever is being deleted is not tracked, its components are removed one by one and that dirties the filters.
+        if (TerminatingOrDeleted(candidate))
+            return;
+
         var tracked = EnsureComp<SearchTrackedComponent>(candidate);
         tracked.Tracking[(agent, protoId)] = new SearchTrackEntry(filterStage, considerationScores);
         live.Tracked.Add(candidate);

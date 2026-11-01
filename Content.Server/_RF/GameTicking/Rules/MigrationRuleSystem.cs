@@ -1,3 +1,4 @@
+using Content.Shared.Trigger.Systems;
 using Content.Server._RF.Narrator;
 using Content.Server._RF.NPC.Executable.Systems;
 using Content.Shared._RF.GameTicking.Rules;
@@ -11,9 +12,16 @@ namespace Content.Server._RF.GameTicking.Rules;
 /// </summary>
 public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleComponent>
 {
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private ExecutableGoalSystem _executable = default!;
-    [Dependency] private NarratorSystem _narrator = default!;
+    [Dependency] private IPrototypeManager _prototype = null!;
+    [Dependency] private ExecutableGoalSystem _executable = null!;
+    [Dependency] private NarratorSystem _narrator = null!;
+    [Dependency] private TriggerSystem _trigger = null!;
+
+
+    /// <summary>
+    /// The key of the trigger of the rule for every entity that it has spawned, the user is the entity.
+    /// </summary>
+    public const string Spawned = "spawned";
 
     protected override void Started(Entity<MigrationRuleComponent> ent, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
     {
@@ -51,6 +59,12 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
 
         if (ent.Comp.AddToPops)
             World.AddPops(args.Target, pops);
+
+        // What is to happen to every one of them is said by what reacts to the trigger, such as joining a situation.
+        foreach (var pop in pops)
+        {
+            _trigger.Trigger(ent, pop, Spawned, predicted: false);
+        }
 
         if (!_prototype.Resolve(ent.Comp.Goal, out var task))
             return;

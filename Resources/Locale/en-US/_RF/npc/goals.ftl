@@ -50,3 +50,5 @@ utility-ai-goal-damage-healing-name = Heal
 utility-ai-goal-patient-waiting-name = Undergoing treatment
 utility-ai-goal-interrupt-healing-name = Heal
 utility-ai-goal-finish-healing-name = Heal
+utility-ai-goal-raider-attack-name = Attack the enemy
+utility-ai-goal-raider-advance-name = Advance on the settlement

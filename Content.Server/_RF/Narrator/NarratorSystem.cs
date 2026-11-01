@@ -160,7 +160,7 @@ public sealed partial class NarratorSystem : EntitySystem
                     if (_random.NextFloat() < chance
                         && PickRandomEvent(new(uid, player), comp.Narrator) is { } ev)
                     {
-                        _rule.StartWorldRule(ev.Proto, uid, ev.Coords);
+                        _rule.StartWorldRule(ev.Proto, uid, ev.Settlement);
 
                         player.LastEventTime = _ticker.RoundDuration();
                         _lastWaitPoint[uid] = 0;
@@ -210,24 +210,24 @@ public sealed partial class NarratorSystem : EntitySystem
     /// <summary>
     /// Returns a random event that the narrator can trigger
     /// </summary>
-    public (EntityCoordinates Coords, EntProtoId Proto)? PickRandomEvent(
+    public (EntityUid Settlement, EntityCoordinates Coords, EntProtoId Proto)? PickRandomEvent(
         Entity<RimFortressPlayerComponent?> player,
         ProtoId<NarratorPrototype> narrator)
     {
         if (!Resolve(player, ref player.Comp))
             return null;
 
-        var available = new List<(EntityCoordinates Coords, EntProtoId Proto)>();
+        var available = new List<(EntityUid Settlement, EntityCoordinates Coords, EntProtoId Proto)>();
         var rules = _rule.AvailableRules(new(player, player.Comp));
 
-        foreach (var (coords, proto, comp) in rules)
+        foreach (var (settlement, coords, proto, comp) in rules)
         {
             var points = EventPoints(player, narrator, coords);
 
             if (comp.Cost > points)
                 continue;
 
-            available.Add((coords, proto));
+            available.Add((settlement, coords, proto));
         }
 
         if (available.Count == 0)
@@ -286,7 +286,7 @@ public sealed partial class NarratorSystem : EntitySystem
             var wealthFactor = _curves.Get(proto.WealthCurves, wealth);
 
             var events = "";
-            foreach (var (_, eventId, comp) in rules)
+            foreach (var (_, _, eventId, comp) in rules)
             {
                 var points = EventPoints(player, protoId, coords);
 

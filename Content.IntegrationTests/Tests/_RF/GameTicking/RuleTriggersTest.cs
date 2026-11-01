@@ -6,7 +6,6 @@ using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Server._RF.GameTicking.Rules;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.MathHelpers.MathVariables;
-using Content.Shared._RF.NPC;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -154,15 +153,17 @@ public sealed class RuleTriggersTest : GameTest
           - !type:Threshold
             moreThan: 0.5
       TestRuleTargetsDead.added:
-      - !type:AddMathVariable
+      - !type:SetMathVariable
         key: kills
         value:
-        - float: 1
+        - add:
+          - float: 1
       TestRuleSquad.left.TestRuleMember:
-      - !type:AddMathVariable
+      - !type:SetMathVariable
         key: losses
         value:
-        - float: 1
+        - add:
+          - float: 1
       ended.Won:
       - !type:SetMathVariable
         key: celebrated

@@ -60,9 +60,9 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         }
     }
 
-    public List<(EntityCoordinates Coords, EntProtoId Proto, WorldRuleComponent Comp)> AvailableRules(Entity<RimFortressPlayerComponent> uid)
+    public List<(EntityUid Settlement, EntityCoordinates Coords, EntProtoId Proto, WorldRuleComponent Comp)> AvailableRules(Entity<RimFortressPlayerComponent> uid)
     {
-        var available = new List<(EntityCoordinates, EntProtoId, WorldRuleComponent)>();
+        var available = new List<(EntityUid, EntityCoordinates, EntProtoId, WorldRuleComponent)>();
 
         var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
         while (query.MoveNext(out var ruleUid, out var rf, out var rule))
@@ -92,7 +92,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
                             || !worldRule.RequiredBiomes.Contains(biome)))
                         continue;
 
-                    available.Add((coord, spawn, worldRule));
+                    available.Add((settlement, coord, spawn, worldRule));
                 }
             }
         }
@@ -150,13 +150,18 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     /// </summary>
     /// <returns>The entity for the added worldrule</returns>
     [PublicAPI]
-    public EntityUid AddWorldRule(EntProtoId ruleId, EntityUid target, EntityCoordinates targetCoordinates)
+    public EntityUid AddWorldRule(
+        EntProtoId ruleId,
+        EntityUid target,
+        EntityCoordinates targetCoordinates,
+        EntityUid? settlement = null)
     {
         var ruleEntity = Spawn(ruleId, MapCoordinates.Nullspace);
         var comp = Comp<WorldRuleComponent>(ruleEntity);
 
         comp.Target = target;
         comp.TargetCoordinates = targetCoordinates;
+        comp.Settlement = settlement;
 
         var str = $"Added world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}";
         Log.Info(str);
@@ -167,6 +172,17 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         var ev = new WorldRuleAddedEvent(ruleEntity, ruleId, target, targetCoordinates);
         RaiseLocalEvent(ruleEntity, ref ev, true);
         return ruleEntity;
+    }
+
+    /// <summary>
+    /// Adds a world rule that is about a settlement and starts it. The coordinates of the target are the center of the
+    /// settlement.
+    /// </summary>
+    [PublicAPI]
+    public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityUid settlement, bool ignoreDelay = false)
+    {
+        var ruleEntity = AddWorldRule(ruleId, target, _settlements.GetCoordinates(settlement), settlement);
+        return StartWorldRule(ruleEntity, ignoreDelay);
     }
 
     /// <summary>

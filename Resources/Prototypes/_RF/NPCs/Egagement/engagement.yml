@@ -60,3 +60,10 @@
   roles:
   - Doctor
   - HealedFriened
+
+# Raids
+
+- type: engagement
+  id: Raid
+  roles:
+  - Raider

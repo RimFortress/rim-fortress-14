@@ -41,11 +41,17 @@
     - RandomVisualRaid4Gear
   - type: InputMover
   - type: MobMover
-  - type: HTN
-    rootTask:
-      task: IdleCompound
+  - type: CombatMode
+    isInCombatMode: true
+  - type: Goap
+    rootTask: RaiderIdle
+  - type: PathProfiles
+    profiles:
+    - Walker
+  - type: UtilityAi
+    goals:
+    - RaiderAttack
+    - RaiderAdvance
   - type: NpcFactionMember
     factions:
     - Raiders
-  - type: ControllableNpc
-    goals: [] # TODO
