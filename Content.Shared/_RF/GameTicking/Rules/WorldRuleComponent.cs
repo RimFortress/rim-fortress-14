@@ -42,6 +42,12 @@ public sealed partial class WorldRuleComponent : Component
     [DataField]
     public int Cost = 10;
 
+    /// <summary>
+    /// How the rule ended, if it has and the one who ended it said. It is whatever the one who uses the rule expects.
+    /// </summary>
+    [ViewVariables]
+    public string? Result;
+
     [ViewVariables]
     public EntityUid Target;
 

@@ -11,7 +11,19 @@ namespace Content.Shared._RF.MathHelpers.MathCurve;
 [TypeSerializer]
 public sealed class MathCurveSerializer : ITypeReader<MathCurve, MappingDataNode>
 {
-    private Type? GetType(MappingDataNode node)
+    // The type that is written out with a tag is the one that is meant, whatever the fields are called: the fields of one curve
+    // can be called the same as those that tell another one apart in a node without a tag.
+    private static Type? GetType(MappingDataNode node, IReflectionManager reflection)
+    {
+        if (node.Tag is { } tag
+            && tag.StartsWith("!type:")
+            && reflection.TryLooseGetType(tag[6..], out var tagged))
+            return tagged;
+
+        return GetType(node);
+    }
+
+    private static Type? GetType(MappingDataNode node)
     {
         if (node.Has("float"))
             return typeof(FloatCurve);
@@ -46,6 +58,12 @@ public sealed class MathCurveSerializer : ITypeReader<MathCurve, MappingDataNode
         if (node.Has("var"))
             return typeof(Variable);
 
+        if (node.Has("max"))
+            return typeof(MaxCurve);
+
+        if (node.Has("min"))
+            return typeof(MinCurve);
+
         return null;
     }
 
@@ -57,10 +75,10 @@ public sealed class MathCurveSerializer : ITypeReader<MathCurve, MappingDataNode
         ISerializationContext? context = null,
         ISerializationManager.InstantiationDelegate<MathCurve>? instanceProvider = null)
     {
-        if (GetType(node) is { } type)
-            return (MathCurve)serializationManager.Read(type, node, hookCtx, context)!;
-
         var reflection = dependencies.Resolve<IReflectionManager>();
+
+        if (GetType(node, reflection) is { } type)
+            return (MathCurve)serializationManager.Read(type, node, hookCtx, context)!;
 
         if (node.Tag == null)
             throw new NullReferenceException($"Found null tag for MathCurve");
@@ -79,10 +97,10 @@ public sealed class MathCurveSerializer : ITypeReader<MathCurve, MappingDataNode
         IDependencyCollection dependencies,
         ISerializationContext? context = null)
     {
-        if (GetType(node) is { } type)
-            return serializationManager.ValidateNode(type, node, context);
-
         var reflection = dependencies.Resolve<IReflectionManager>();
+
+        if (GetType(node, reflection) is { } type)
+            return serializationManager.ValidateNode(type, node, context);
 
         if (node.Tag == null)
             return new ErrorNode(node, $"Unable to validate MathCurve type");

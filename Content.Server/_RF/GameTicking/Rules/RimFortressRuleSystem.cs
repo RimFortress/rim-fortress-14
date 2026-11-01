@@ -265,8 +265,10 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     /// <summary>
     /// Ends a world rule.
     /// </summary>
+    /// <param name="uid">The rule.</param>
+    /// <param name="result">How it ends, if the one who ends it says.</param>
     [PublicAPI]
-    public bool EndWorldRule(Entity<WorldRuleComponent?> uid)
+    public bool EndWorldRule(Entity<WorldRuleComponent?> uid, string? result = null)
     {
         if (!Resolve(uid, ref uid.Comp))
             return false;
@@ -278,13 +280,15 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         if (MetaData(uid).EntityPrototype is not { } proto) // you really fucked up
             return false;
 
+        uid.Comp.Result ??= result;
+
         RemComp<ActiveGameRuleComponent>(uid);
         EnsureComp<EndedGameRuleComponent>(uid);
 
         Log.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
         _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
 
-        var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Target, uid.Comp.TargetCoordinates);
+        var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Target, uid.Comp.TargetCoordinates, uid.Comp.Result);
         RaiseLocalEvent(uid, ref ev, true);
         return true;
     }
@@ -317,5 +321,11 @@ public readonly record struct WorldRuleStartedEvent(EntityUid RuleEntity, EntPro
 /// <param name="RuleId">Prototype of the world event</param>
 /// <param name="Target">The target entity of the event</param>
 /// <param name="TargetCoordinates">Target coordinates of the event</param>
+/// <param name="Result">How the event has ended, if the one who ended it said</param>
 [ByRefEvent]
-public readonly record struct WorldRuleEndedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
+public readonly record struct WorldRuleEndedEvent(
+    EntityUid RuleEntity,
+    EntProtoId RuleId,
+    EntityUid Target,
+    EntityCoordinates TargetCoordinates,
+    string? Result = null);

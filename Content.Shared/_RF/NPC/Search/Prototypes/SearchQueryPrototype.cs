@@ -22,6 +22,14 @@ public sealed partial class SearchQueryPrototype : IPrototype, IInheritingProtot
     public string ID { get; private set; } = default!;
 
     /// <summary>
+    /// Tell the agent when an entity gets into the result of this query, or leaves it,
+    /// with <see cref="SearchResultChangedEvent"/>. It costs an event on every change,
+    /// so only the queries that are listened to have it.
+    /// </summary>
+    [DataField]
+    public bool Notify;
+
+    /// <summary>
     /// A search query whose results will be filtered and scored.
     /// </summary>
     [DataField(required: true, serverOnly: true)]
