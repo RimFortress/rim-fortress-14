@@ -14,14 +14,30 @@
   goalState:
     TargetAttacked: true
 
+# The closest of the residents that are alive: whom the raider goes to, until it sees an enemy.
+- type: utilityAiGoal
+  id: RaiderApproach
+  color: "#FFAA00"
+  scoreCurves:
+  - float: 0.60
+  conditions:
+  - Query/RaidObjective != null
+  - Retreating == false
+  capture:
+  - Query/RaidObjective
+  goalState:
+    RaiderApproached: true
+
+# Where the settlement is, when there is nobody to go to.
 - type: utilityAiGoal
   id: RaiderAdvance
   color: "#FF8800"
   scoreCurves:
   - float: 0.50
   conditions:
+  - Query/RaidObjective == null
   - !type:KeyExist
-    key: SettlementTarget
+    key: Engagement/Raid/Owner/SettlementTarget
   - Retreating == false
   goalState:
     RaiderAdvanced: true

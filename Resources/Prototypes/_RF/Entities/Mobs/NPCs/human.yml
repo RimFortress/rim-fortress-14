@@ -49,12 +49,15 @@
       Retreating: false
       # How far a raider looks for the way out when it retreats.
       RetreatRange: 150.0
+      # How close to the resident it goes to a raider gets before it looks for the enemies to fight.
+      RaidApproachRange: 15.0
   - type: PathProfiles
     profiles:
     - Walker
   - type: UtilityAi
     goals:
     - RaiderAttack
+    - RaiderApproach
     - RaiderAdvance
     - RaiderRetreat
   - type: NpcFactionMember

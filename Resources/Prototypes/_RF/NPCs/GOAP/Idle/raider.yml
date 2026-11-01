@@ -7,8 +7,25 @@
   - proto: Climb
   - proto: Pickup
   - proto: Combat
+  - proto: RaiderApproach
   - proto: RaiderAdvance
   - proto: RaiderRetreat
+
+- type: goapCompound
+  id: RaiderApproach
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/RaidObjective != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Query/RaidObjective
+      rangeKey: RaidApproachRange
+      query: Approach
+    effects:
+      RaiderApproached: true
 
 - type: goapCompound
   id: RaiderAdvance
@@ -19,7 +36,7 @@
     - Pulled == false
     actions:
     - !type:MoveTo
-      targetKey: SettlementTarget
+      targetKey: Engagement/Raid/Owner/SettlementTarget
       rangeKey: IdleRange
     effects:
       RaiderAdvanced: true

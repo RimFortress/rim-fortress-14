@@ -9,6 +9,7 @@ using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared._RF.NPC.Search.Systems;
+using Content.Shared._RF.NPC.Systems;
 using Content.Shared.Buckle;
 using Content.Shared.CombatMode;
 using Content.Shared.Dataset;
@@ -40,6 +41,8 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
     [Dependency] private EntityQuery<ClimbingComponent> _climbingQuery;
     [Dependency] private PullingSystem _pulling = default!;
     [Dependency] private EngagementSystem _engagement = default!;
+    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private EntityQuery<GoapComponent> _goapQuery;
     [Dependency] private SharedCombatModeSystem _combatMode = default!;
 
     protected readonly Dictionary<ICommonSession, List<GoapBreakpoint>> Breakpoints = new();
@@ -675,6 +678,27 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
 
             value = ent.Value.Owner;
             return true;
+        }
+
+        if (GoapState.EngagementOwnerDomain.TryGetParams(domains, out engagement, out string? ownerKey))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
+                return false;
+
+            var ownerKeyId = new StateKey<T>(ownerKey);
+
+            foreach (var situationOwner in _ownership.GetOwners(ent.Value.Owner))
+            {
+                if (!_goapQuery.TryComp(situationOwner, out var ownerGoap)
+                    || !TryGetValue(ownerGoap.State, ownerKeyId, out var found))
+                    continue;
+
+                value = found;
+                return true;
+            }
+
+            return false;
         }
 
         if (GoapState.EngagementStartedDomain.TryGetParams(domains, out engagement))

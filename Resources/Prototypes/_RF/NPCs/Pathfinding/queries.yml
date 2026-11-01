@@ -26,3 +26,11 @@
     maxNodes: 6000
     maxChunks: 0
     pick: Unobserved
+
+# A way to somewhere that may be out of reach, such as the resident of a settlement behind its walls: as close as it goes, and
+# the agent is not stopped by what it cannot go through.
+- type: pathQuery
+  id: Approach
+  algorithm: !type:AStar
+    maxCost: 5000
+    allowPartial: true

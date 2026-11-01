@@ -1,7 +1,10 @@
 using System.Linq;
+using Content.Shared._RF.NPC.Engagement;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
+using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 
 namespace Content.Server._RF.NPC.Search.Queries;
@@ -11,6 +14,8 @@ namespace Content.Server._RF.NPC.Search.Queries;
 /// so it is a fixed set of entities, such as those that an event is about, whose classes (alive, down, dead) are told apart by
 /// the filters of the query. The result follows the key: when its value is set or removed (with <c>SharedGoapSystem.SetValue</c>,
 /// which says so), the entities that are no longer in it leave the result, and those which are new get into it.
+/// The key can be one of a domain, such as that of the owner of the situation (<c>Engagement/Raid/Owner/Targets</c>): then it
+/// follows the key of the owner, and the agent gets the entities when it joins the situation.
 /// </summary>
 public sealed partial class KeyEntities : BaseSearchQuery<KeyEntities>
 {
@@ -23,15 +28,31 @@ public sealed partial class KeyEntities : BaseSearchQuery<KeyEntities>
 
 public sealed partial class KeyEntitiesQuerySystem : NpcSearchQuerySystem<KeyEntities>
 {
+    [Dependency] private SharedGoapSystem _goap = null!;
+
     [SubscribeLocalEvent]
     private void OnSet(ref GoapStateValueSet<HashSet<EntityUid>> ev) => Update(ev.Agent, ev.Key, ev.Value);
 
     [SubscribeLocalEvent]
     private void OnRemove(ref GoapStateValueRemove<HashSet<EntityUid>> ev) => Update(ev.Agent, ev.Key, null);
 
+    [SubscribeLocalEvent]
+    private void OnJoined(Entity<NpcSearcherComponent> ent, ref EngagementRoleJoined ev)
+    {
+        if (ev.Actor != ent.Owner || !TryComp(ent, out GoapComponent? goap))
+            return;
+
+        // What the situation has, the agent has now.
+        foreach (var key in DomainKeys(ent.Comp))
+        {
+            _goap.TryGetValue(goap.State, key, out var value);
+            Update(ent, key, value);
+        }
+    }
+
     protected override void GetQuery(GoapState state, KeyEntities query)
     {
-        if (!SharedGoapSystem.TryGetValueNoEcsDefaults(state, query.Key, out var entities))
+        if (!_goap.TryGetValue(state, query.Key, out var entities))
             return;
 
         foreach (var uid in entities)
@@ -41,6 +62,18 @@ public sealed partial class KeyEntitiesQuerySystem : NpcSearchQuerySystem<KeyEnt
 
             if (!TerminatingOrDeleted(uid))
                 Query.Add(uid);
+        }
+    }
+
+    /// <summary>
+    /// The keys of the queries of the searcher that are not its own, but of a domain.
+    /// </summary>
+    private IEnumerable<StateKey<HashSet<EntityUid>>> DomainKeys(NpcSearcherComponent searcher)
+    {
+        foreach (var proto in searcher.Queries.Keys)
+        {
+            if (TryGetQuery(proto, out var query) && query.Key.Id.Contains(GoapState.KeyDomainSeparator))
+                yield return query.Key;
         }
     }
 

@@ -40,9 +40,7 @@ public sealed partial class SetSettlementTargetEntityEffectsSystem
 
     protected override void Effect(Entity<WorldRuleComponent> ent, ref EntityEffectEvent<SetSettlementTarget> args)
     {
-        if (args.User is not { } user
-            || ent.Comp.Settlement is not { } settlement
-            || !_goapQuery.TryComp(user, out var goap))
+        if (ent.Comp.Settlement is not { } settlement || !_goapQuery.TryComp(ent, out var goap))
             return;
 
         _goap.SetValue(goap.State, args.Effect.Key, _settlements.GetCoordinates(settlement));

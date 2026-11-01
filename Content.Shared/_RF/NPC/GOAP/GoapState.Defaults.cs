@@ -258,6 +258,15 @@ public partial class GoapState
         = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/ProtoId");
 
     /// <summary>
+    /// Returns what the key of the state of the owner of the situation of the target type, in which the agent is engaged, is. It is
+    /// how the participants share what the situation is about, such as the residents that a raid is for: the owner of the
+    /// situation, an event, keeps it once, and it is not copied to the participants. The type of the value is the one of the key
+    /// that is asked for.
+    /// </summary>
+    public static readonly DomainKey EngagementOwnerDomain
+        = ProtoKeyDomain<EngagementPrototype>("ProtoId", "Key", "Engagement/ProtoId/Owner/Key");
+
+    /// <summary>
     /// Returns the started situation of the target type in which the agent is engaged.
     /// </summary>
     public static readonly DomainKey EngagementStartedDomain

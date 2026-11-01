@@ -68,7 +68,9 @@
   - type: KeyedEntityEffectOnTrigger
     effects:
       started:
+      # What the raid is about is kept here once, the raiders read it from the raid, see Engagement/Raid/Owner/...
       - !type:CopySettlementResidents
+      - !type:SetSettlementTarget
       - !type:SetMathVariable
         key: startedAt
         value:
@@ -93,7 +95,6 @@
       - !type:JoinEngagement
         engagement: Raid
         role: Raider
-      - !type:SetSettlementTarget
       tick:
       - !type:SetMathVariable
         key: deadFraction

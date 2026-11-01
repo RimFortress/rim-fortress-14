@@ -53,3 +53,4 @@ utility-ai-goal-finish-healing-name = Heal
 utility-ai-goal-raider-attack-name = Attack the enemy
 utility-ai-goal-raider-advance-name = Advance on the settlement
 utility-ai-goal-raider-retreat-name = Retreat
+utility-ai-goal-raider-approach-name = Go to the settler

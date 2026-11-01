@@ -1,6 +1,7 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Server._RF.GameTicking.Rules;
@@ -37,7 +38,7 @@ namespace Content.IntegrationTests.Tests._RF.GameTicking;
 public sealed class RaidRuleTest : GameTest
 {
     private static readonly StateKey<HashSet<EntityUid>> Targets = "Targets";
-    private static readonly StateKey<EntityCoordinates> SettlementTarget = "SettlementTarget";
+    private static readonly StateKey<EntityCoordinates> SettlementTarget = "Engagement/Raid/Owner/SettlementTarget";
     private static readonly StateKey<bool> Retreating = "Retreating";
 
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
@@ -289,6 +290,38 @@ public sealed class RaidRuleTest : GameTest
         });
     }
 
+    /// <summary>
+    /// What the raid is about is kept by the raid, once: the raiders read it from there by the key of the owner of the situation,
+    /// and have no copies of their own. Who is not in the situation reads nothing.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersReadWhatTheRaidIsAboutFromTheRaid()
+    {
+        await Setup(raiders: 2);
+        EntityUid outsider = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            outsider = _entMan.SpawnEntity("Raider", At(30, 32));
+            _raiders.RemoveAt(1);
+            Start();
+        });
+        await Run(0.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var key = new StateKey<HashSet<EntityUid>>("Engagement/Raid/Owner/Targets");
+            var own = _entMan.GetComponent<GoapComponent>(_raiders[0]).State;
+
+            Assert.That(_goap.TryGetValue(own, key, out var targets), Is.True);
+            Assert.That(targets, Is.EquivalentTo(_residents));
+            Assert.That(SharedGoapSystem.TryGetValueNoEcsDefaults(own, Targets, out _), Is.False, "not copied");
+
+            var other = _entMan.GetComponent<GoapComponent>(outsider).State;
+            Assert.That(_goap.TryGetValue(other, key, out _), Is.False, "it is not in the raid");
+        });
+    }
+
     private string? Phase() => _entMan.GetComponent<PhasesComponent>(_rule).Current;
 
     [Test]
@@ -463,5 +496,59 @@ public sealed class RaidRuleTest : GameTest
         await Pair.Server.WaitPost(() => _variables.Set(_rule, "lastKillAt", (float) Pair.Server.Timing.CurTime.TotalSeconds - 500f));
         await Run(2.2f);
         await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Retreat")));
+    }
+
+    /// <summary>
+    /// A raider goes to the living resident that is the closest to it, and not to the center of the settlement, which may be
+    /// out of reach. The residents are the ones that were in the settlement when the raid began.
+    /// </summary>
+    [Test]
+    public async Task TestRaiderChoosesTheClosestLivingResident()
+    {
+        await Setup(raiders: 2);
+        await Pair.Server.WaitPost(Start);
+        await Run(0.3f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var raider = new Entity<GoapComponent>(_raiders[0], _entMan.GetComponent<GoapComponent>(_raiders[0]));
+            var objective = _searcher.GetResults(raider, "RaidObjective");
+
+            Assert.That(objective, Is.EquivalentTo(_residents), "all of them, the same as the rule has");
+            Assert.That(objective[0], Is.EqualTo(_residents[^1]), "the closest to the raider is the first");
+        });
+
+        // The one that is dead is not chosen.
+        await Pair.Server.WaitPost(() => _mobState.ChangeMobState(_residents[^1], MobState.Dead));
+        await Run(0.3f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var raider = new Entity<GoapComponent>(_raiders[0], _entMan.GetComponent<GoapComponent>(_raiders[0]));
+            var objective = _searcher.GetResults(raider, "RaidObjective");
+
+            Assert.That(objective, Does.Not.Contain(_residents[^1]));
+            Assert.That(objective[0], Is.EqualTo(_residents[^2]));
+        });
+    }
+
+    /// <summary>
+    /// The raiders walk to the residents.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersGoToTheResidents()
+    {
+        await Setup(raiders: 2);
+        await Pair.Server.WaitPost(Start);
+
+        float Distance() => Vector2.Distance(
+            _transform.GetWorldPosition(_raiders[0]),
+            _transform.GetWorldPosition(_residents[^1]));
+
+        var before = 0f;
+        await Pair.Server.WaitPost(() => before = Distance());
+        await Run(15f);
+
+        await Pair.Server.WaitAssertion(() => Assert.That(Distance(), Is.LessThan(before - 8f)));
     }
 }

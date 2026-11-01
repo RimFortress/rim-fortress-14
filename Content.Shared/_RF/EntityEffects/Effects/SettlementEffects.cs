@@ -19,8 +19,8 @@ public sealed partial class CopySettlementResidents : EntityEffectBase<CopySettl
 }
 
 /// <summary>
-/// Puts the coordinates of the center of the settlement that the target world rule is about into a key of the state of the user
-/// of the effect, so it knows where to go.
+/// Puts the coordinates of the center of the settlement that the target world rule is about into a key of its own state. The
+/// participants of the situations that it owns read it from there, see <c>Engagement/Raid/Owner/SettlementTarget</c>.
 /// </summary>
 public sealed partial class SetSettlementTarget : EntityEffectBase<SetSettlementTarget>
 {
