@@ -59,7 +59,9 @@
   - type: UtilityAi
     goals:
     - RaiderAttack
+    - RaiderHold
     - RaiderFollow
+    - RaiderFollowSupport
     - RaiderApproach
     - RaiderAdvance
     - RaiderRetreat

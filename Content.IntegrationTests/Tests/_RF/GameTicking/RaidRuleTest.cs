@@ -16,6 +16,7 @@ using Content.Shared._RF.Phases;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.World.Settlements;
 using Content.Shared._RF.World.Components;
 using Content.Shared.Damage;
@@ -98,7 +99,7 @@ public sealed class RaidRuleTest : GameTest
 
             for (var i = 0; i < residents; i++)
             {
-                var pop = _entMan.SpawnEntity("MobHuman", At(5 + i, 5));
+                var pop = _entMan.SpawnEntity("MobHuman", At(5 + i % 8, 5 + i / 8));
                 player.Pops.Add(pop);
                 _ownership.AddOwnership(pop, owner: _player);
             }
@@ -136,7 +137,7 @@ public sealed class RaidRuleTest : GameTest
     /// </summary>
     private void StartAgainstStrongSettlement()
     {
-        _variables.Set(_rule, "squadPowerRatio", 3f);
+        _variables.Set(_rule, "squadPowerRatio", 100f);
         Start();
     }
 
@@ -590,6 +591,191 @@ public sealed class RaidRuleTest : GameTest
             // The squad: all that have the role in the squad of the one who asks.
             Assert.That(_goap.TryGetValue(raider, new StateKey<IReadOnlyCollection<EntityUid>>("Engagement/RaidSquad/Role/SquadLeader/All"), out var leaders), Is.True);
             Assert.That(leaders, Has.Count.EqualTo(1));
+        });
+    }
+
+    /// <summary>
+    /// The raiders are far from the residents, so they do not see anybody to fight, and the squad alone decides what they do.
+    /// </summary>
+    private async Task StartFarAway(float holdRatio, float rushRatio)
+    {
+        await Pair.Server.WaitPost(() =>
+        {
+            _variables.Set(_rule, "holdRatio", holdRatio);
+            _variables.Set(_rule, "rushRatio", rushRatio);
+
+            for (var i = 0; i < _raiders.Count; i++)
+            {
+                _transform.SetCoordinates(_raiders[i], At(36 + i % 4, 38));
+            }
+
+            StartAgainstStrongSettlement();
+        });
+        await Run(3f);
+    }
+
+    private string? Goal(EntityUid raider) => _entMan.GetComponent<UtilityAiComponent>(raider).CurrentGoal;
+
+    private float SquadRatio() => _variables.Get(
+        _ownership.GetOwned(_rule).Single(x => _entMan.TryGetComponent(x, out EngagementComponent? e) && e.Kind.Id == "RaidSquad"),
+        "ratio");
+
+    private (EntityUid Leader, List<EntityUid> Assault, List<EntityUid> Support) SquadByRoles()
+    {
+        var squad = Squads().Single();
+        return (squad.Actors["SquadLeader"].Single(), squad.Actors["SquadAssault"].ToList(), squad.Actors["SquadSupport"].ToList());
+    }
+
+    /// <summary>
+    /// A squad that is too weak against the residents does not advance: all of it holds the position.
+    /// </summary>
+    [Test]
+    public async Task TestWeakSquadHolds()
+    {
+        await Setup(raiders: 4);
+        await StartFarAway(holdRatio: 1000f, rushRatio: 2000f);
+
+        Vector2 start = default;
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var (leader, assault, support) = SquadByRoles();
+
+            foreach (var raider in assault.Concat(support).Append(leader))
+            {
+                Assert.That(Goal(raider), Is.EqualTo("RaiderHold"));
+            }
+
+            start = _transform.GetWorldPosition(leader);
+        });
+
+        await Run(8f);
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(Vector2.Distance(_transform.GetWorldPosition(SquadByRoles().Leader), start), Is.LessThan(2f)));
+    }
+
+    /// <summary>
+    /// When the stance of the squad changes, its members give up what they were doing and decide anew: a squad that has been
+    /// going to the residents holds when it is too weak for them now.
+    /// </summary>
+    [Test]
+    public async Task TestSquadChangesTacticsWhenItsStanceChanges()
+    {
+        await Setup(raiders: 4);
+        await StartFarAway(holdRatio: 0f, rushRatio: 1000f);
+
+        Vector2 position = default;
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var (leader, assault, _) = SquadByRoles();
+            Assert.That(Goal(leader), Is.EqualTo("RaiderApproach"));
+            Assert.That(Goal(assault[0]), Is.EqualTo("RaiderFollow"));
+        });
+
+        // The residents are too strong now.
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "holdRatio", 100f));
+        await Run(3f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var (leader, assault, support) = SquadByRoles();
+
+            foreach (var raider in assault.Concat(support).Append(leader))
+            {
+                Assert.That(Goal(raider), Is.EqualTo("RaiderHold"));
+            }
+
+            position = _transform.GetWorldPosition(leader);
+        });
+
+        await Run(6f);
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(Vector2.Distance(_transform.GetWorldPosition(SquadByRoles().Leader), position), Is.LessThan(2f)));
+    }
+
+    /// <summary>
+    /// The stance of a squad is made of its ratio by the thresholds of the raid: it holds when it is weaker than the one, rushes
+    /// when it is stronger than the other, and keeps together otherwise.
+    /// </summary>
+    [Test]
+    public async Task TestStanceFollowsTheRatio()
+    {
+        await Setup(residents: 8, raiders: 4);
+        await Pair.Server.WaitPost(StartAgainstStrongSettlement);
+        await Run(1.2f);
+
+        float Stance() => _variables.Get(
+            _ownership.GetOwned(_rule).Single(x => _entMan.TryGetComponent(x, out EngagementComponent? e) && e.Kind.Id == "RaidSquad"),
+            "stance");
+
+        var ratio = 0f;
+        await Pair.Server.WaitAssertion(() => ratio = SquadRatio());
+
+        foreach (var (hold, rush, stance) in new[]
+                 {
+                     (ratio * 2f, ratio * 4f, 0f),
+                     (ratio / 2f, ratio * 2f, 1f),
+                     (ratio / 4f, ratio / 2f, 2f),
+                 })
+        {
+            await Pair.Server.WaitPost(() =>
+            {
+                _variables.Set(_rule, "holdRatio", hold);
+                _variables.Set(_rule, "rushRatio", rush);
+            });
+            await Run(1.2f);
+            await Pair.Server.WaitAssertion(() => Assert.That(Stance(), Is.EqualTo(stance), $"ratio {ratio}, hold {hold}, rush {rush}"));
+        }
+    }
+
+    /// <summary>
+    /// A squad that is about as strong as the residents keeps together: the leader goes to the residents, and all the others
+    /// stay with the leader.
+    /// </summary>
+    [Test]
+    public async Task TestEvenSquadKeepsTogether()
+    {
+        await Setup(raiders: 4);
+        await StartFarAway(holdRatio: 0f, rushRatio: 1000f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var (leader, assault, support) = SquadByRoles();
+
+            Assert.That(Goal(leader), Is.EqualTo("RaiderApproach"));
+
+            foreach (var raider in assault.Concat(support))
+            {
+                Assert.That(Goal(raider), Is.EqualTo("RaiderFollow"));
+            }
+        });
+    }
+
+    /// <summary>
+    /// A squad that is much stronger than the residents does not keep together: the assault goes for the residents by itself,
+    /// the support stays with the leader.
+    /// </summary>
+    [Test]
+    public async Task TestStrongSquadSpreadsOut()
+    {
+        await Setup(raiders: 4);
+        await StartFarAway(holdRatio: 0f, rushRatio: 0f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var (leader, assault, support) = SquadByRoles();
+
+            Assert.That(Goal(leader), Is.EqualTo("RaiderApproach"));
+
+            foreach (var raider in assault)
+            {
+                Assert.That(Goal(raider), Is.EqualTo("RaiderApproach"));
+            }
+
+            foreach (var raider in support)
+            {
+                Assert.That(Goal(raider), Is.EqualTo("RaiderFollowSupport"));
+            }
         });
     }
 

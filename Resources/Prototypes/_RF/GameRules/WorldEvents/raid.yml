@@ -23,6 +23,10 @@
       targetPower: [float: 0]
       raidPower: [float: 0]
       squadPowerRatio: [float: 0.6]
+      # The stance of a squad: it holds if it is weaker than holdRatio of the power of the residents, and rushes if it is stronger
+      # than rushRatio of it, otherwise it keeps together, see the goals of the raiders.
+      holdRatio: [float: 0.5]
+      rushRatio: [float: 1.5]
       planning: [float: 0]
       # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
       # kills takes away. When it falls below retreatMorale the raiders retreat.
@@ -123,6 +127,23 @@
         minPower:
         - var: targetPower
         - mul: [var: squadPowerRatio]
+      - !type:MeasureSquads
+        squad: RaidSquad
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        threat:
+        - var: targetPower
+        stance:
+        - var: ratio
+        - minus: [var: holdRatio]
+        - !type:Threshold
+          moreThan: 0
+        - add:
+          - var: ratio
+          - minus: [var: rushRatio]
+          - !type:Threshold
+            moreThan: 0
       tick:
       - !type:SetMathVariable
         key: targetPower
@@ -162,6 +183,16 @@
           preset: FighterPower
         threat:
         - var: targetPower
+        stance:
+        - var: ratio
+        - minus: [var: holdRatio]
+        - !type:Threshold
+          moreThan: 0
+        - add:
+          - var: ratio
+          - minus: [var: rushRatio]
+          - !type:Threshold
+            moreThan: 0
       - !type:SetMathVariable
         key: deadFraction
         value:

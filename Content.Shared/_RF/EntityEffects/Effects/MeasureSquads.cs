@@ -13,7 +13,9 @@ namespace Content.Shared._RF.EntityEffects.Effects;
 /// <summary>
 /// Measures the squads (the situations of a kind that the target owns): how strong each is, and how strong it is against what the
 /// squads are up against. They are the variables <c>power</c> and <c>ratio</c> of the squad, which its participants read as
-/// <c>Engagement/RaidSquad/Var/ratio</c>, so a squad knows how strong it is and acts as it may.
+/// <c>Engagement/RaidSquad/Var/ratio</c>, so a squad knows how strong it is and acts as it may. What it may is the stance of
+/// the squad, a number that <see cref="Stance"/> makes of the power and the ratio (and the variables of the target), such as
+/// hold, keep together, rush. The participants decide what to do by it, the goals of the utility AI look at the variable.
 /// </summary>
 public sealed partial class MeasureSquads : EntityEffectBase<MeasureSquads>
 {
@@ -34,6 +36,13 @@ public sealed partial class MeasureSquads : EntityEffectBase<MeasureSquads>
     /// </summary>
     [DataField(required: true)]
     public List<MathCurve> Power = new();
+
+    /// <summary>
+    /// The stance of a squad, written to its variable <c>stance</c>. The curves see the variables of the target, and the
+    /// <c>power</c> and the <c>ratio</c> of the squad. The stance is not measured if it is not set.
+    /// </summary>
+    [DataField]
+    public List<MathCurve> Stance = new();
 }
 
 public sealed partial class MeasureSquadsEntityEffectsSystem : EntityEffectSystem<MathVariablesComponent, MeasureSquads>
@@ -52,7 +61,8 @@ public sealed partial class MeasureSquadsEntityEffectsSystem : EntityEffectSyste
     protected override void Effect(Entity<MathVariablesComponent> ent, ref EntityEffectEvent<MeasureSquads> args)
     {
         var fighter = args.Effect.Power;
-        var threat = _curves.Get(args.Effect.Threat, 0f, ent, _variables.GetVariables(ent.AsNullable()));
+        var variables = _variables.GetVariables(ent.AsNullable());
+        var threat = _curves.Get(args.Effect.Threat, 0f, ent, variables);
 
         foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
@@ -61,7 +71,15 @@ public sealed partial class MeasureSquadsEntityEffectsSystem : EntityEffectSyste
 
             var power = comp.Actors.Values.SelectMany(x => x).Sum(x => _curves.Get(fighter, 0f, x));
             _variables.Set(owned, "power", power);
-            _variables.Set(owned, "ratio", power / Math.Max(threat, MinThreat));
+            var ratio = power / Math.Max(threat, MinThreat);
+            _variables.Set(owned, "ratio", ratio);
+
+            if (args.Effect.Stance.Count == 0)
+                continue;
+
+            var squadVariables = new Dictionary<string, float>(variables) { ["power"] = power, ["ratio"] = ratio };
+            var stance = _curves.Get(args.Effect.Stance, 0f, ent, squadVariables);
+            _variables.Set(owned, "stance", stance);
         }
     }
 }

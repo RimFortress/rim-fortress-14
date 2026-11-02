@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration.Managers;
 using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Components;
@@ -237,6 +238,13 @@ public sealed partial class UtilityAiSystem : SharedUtilityAiSystem
         if (!TryGetGoal(ent.AsNullable(), out var newGoal)
             || ent.Comp.CurrentGoal == newGoal)
             return;
+
+        // A better goal is not waited for until the plan of the current one is over: the plan is given up, the goal is
+        // finished as interrupted, and the actions clean up after themselves. The incumbent bonus is what keeps the agent from
+        // changing its mind over a small difference. It is done first, so what the old goal leaves behind is taken from
+        // the old goal and not from the new one.
+        if (TryComp(ent, out GoapComponent? goap) && goap.Plan != null)
+            Goap.PlanShutdown((ent.Owner, goap), GoapPlanFinishReason.Interrupted);
 
         SetGoal(ent.Owner, newGoal.Value);
     }

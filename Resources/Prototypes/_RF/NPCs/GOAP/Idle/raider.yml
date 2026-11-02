@@ -7,10 +7,23 @@
   - proto: Climb
   - proto: Pickup
   - proto: Combat
+  - proto: RaiderHold
   - proto: RaiderFollow
   - proto: RaiderApproach
   - proto: RaiderAdvance
   - proto: RaiderRetreat
+
+- type: goapCompound
+  id: RaiderHold
+  tasks:
+  - preconditions:
+    - Engagement/RaidSquad/Var/stance < 0.5
+    actions:
+    - !type:WaitWhile
+      conditions:
+      - Engagement/RaidSquad/Var/stance < 0.5
+    effects:
+      RaiderHeld: true
 
 - type: goapCompound
   id: RaiderFollow

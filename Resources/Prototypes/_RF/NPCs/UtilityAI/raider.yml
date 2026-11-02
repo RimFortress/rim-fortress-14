@@ -14,7 +14,11 @@
   goalState:
     TargetAttacked: true
 
-# A member of a squad stays with the leader of the squad, until it sees an enemy or has no leader.
+# The tactics of a squad depend on its stance (see MeasureSquads and the Raid rule: it is made of how strong the squad is against the
+# residents) and on the role. In the stance 2, rush, the squad is much stronger: it does not keep together, the assault goes for the
+# residents by itself, and only the support stays with the leader. In the stance 1 the squad stays together: all the members stay with
+# the leader. In the stance 0, hold, the squad is too weak: it does not advance, the leader holds, and so do the members, until the
+# squad is stronger or the raid loses heart. All of them fight what they see.
 - type: utilityAiGoal
   id: RaiderFollow
   color: "#FFCC44"
@@ -23,9 +27,35 @@
   conditions:
   - Engagement/RaidSquad/Role/SquadLeader != null
   - Engagement/RaidSquad/Role/SquadLeader/In == false
+  - Engagement/RaidSquad/Var/stance > 0.5
+  - Engagement/RaidSquad/Var/stance < 1.5
   - Retreating == false
   goalState:
     RaiderFollowed: true
+
+- type: utilityAiGoal
+  id: RaiderFollowSupport
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.65
+  conditions:
+  - Engagement/RaidSquad/Role/SquadSupport/In == true
+  - Engagement/RaidSquad/Role/SquadLeader != null
+  - Engagement/RaidSquad/Var/stance > 1.5
+  - Retreating == false
+  goalState:
+    RaiderFollowed: true
+
+- type: utilityAiGoal
+  id: RaiderHold
+  color: "#BBBB44"
+  scoreCurves:
+  - float: 0.7
+  conditions:
+  - Engagement/RaidSquad/Var/stance < 0.5
+  - Retreating == false
+  goalState:
+    RaiderHeld: true
 
 # The closest of the residents that are alive: whom the raider goes to, until it sees an enemy.
 - type: utilityAiGoal
