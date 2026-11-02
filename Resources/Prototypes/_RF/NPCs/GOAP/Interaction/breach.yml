@@ -1,0 +1,19 @@
+# Breaks through what blocks the way, the goal of the path nodes of the Breacher profile: the agent comes up to it and hits it until
+# it is destroyed.
+- type: goapCompound
+  id: Breach
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - BreachTarget != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: BreachTarget
+      rangeKey: MeleeRange
+    - !type:Melee
+      targetKey: BreachTarget
+      removeCombatMode: false
+    effects:
+      Breached: true

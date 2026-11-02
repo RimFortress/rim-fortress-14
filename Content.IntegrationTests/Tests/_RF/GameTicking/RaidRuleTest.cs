@@ -890,6 +890,110 @@ public sealed class RaidRuleTest : GameTest
         });
     }
 
+    /// <summary>
+    /// The raiders break through the walls when there is no other way to the residents: they are walled in, and the raiders come to
+    /// the wall, break it, and get in.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersBreakThroughWalls()
+    {
+        await Setup(residents: 3, raiders: 2);
+
+        var walls = new List<EntityUid>();
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The residents are the enemies of the raiders, as they are in the game.
+            foreach (var resident in _residents)
+            {
+                _faction.AddFaction(resident, "RimFortress");
+            }
+
+            // A closed ring of walls around the residents, the tiles from 3 to 11 and from 3 to 7.
+            for (var x = 3; x <= 11; x++)
+            {
+                for (var y = 3; y <= 7; y++)
+                {
+                    if (x != 3 && x != 11 && y != 3 && y != 7)
+                        continue;
+
+                    walls.Add(_entMan.SpawnEntity("WallWood", At(x + 0.5f, y + 0.5f)));
+                }
+            }
+
+            Start();
+        });
+
+        // Time for the path map to be made, and for the raiders to come.
+        for (var i = 0; i < 24 && walls.All(w => !_entMan.Deleted(w)); i++)
+        {
+            await Run(5f);
+        }
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(walls.Count(w => _entMan.Deleted(w)), Is.GreaterThan(0), "a wall has been broken"));
+
+        // And they get in.
+        for (var i = 0; i < 24 && !_raiders.Any(r => Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f); i++)
+        {
+            await Run(5f);
+        }
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(_raiders.Any(r => !_entMan.Deleted(r)
+                                          && Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f),
+                Is.True,
+                "a raider is inside the walls"));
+    }
+
+    /// <summary>
+    /// The raiders do not break the walls when there is a way round: they go through the gap.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersUseTheGapInsteadOfBreakingWalls()
+    {
+        await Setup(residents: 3, raiders: 2);
+
+        var walls = new List<EntityUid>();
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The residents are the enemies of the raiders, as they are in the game.
+            foreach (var resident in _residents)
+            {
+                _faction.AddFaction(resident, "RimFortress");
+            }
+
+            // A closed ring of walls around the residents, the tiles from 3 to 11 and from 3 to 7.
+            for (var x = 3; x <= 11; x++)
+            {
+                for (var y = 3; y <= 7; y++)
+                {
+                    if (x != 3 && x != 11 && y != 3 && y != 7 || x == 11 && y == 5)
+                        continue;
+
+                    walls.Add(_entMan.SpawnEntity("WallWood", At(x + 0.5f, y + 0.5f)));
+                }
+            }
+
+            Start();
+        });
+
+        // They get in.
+        for (var i = 0; i < 24 && !_raiders.Any(r => Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f); i++)
+        {
+            await Run(5f);
+        }
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(_raiders.Any(r => !_entMan.Deleted(r)
+                                          && Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f),
+                Is.True,
+                "a raider is inside the walls"));
+
+        Assert.That(walls.Count(w => _entMan.Deleted(w)), Is.Zero, "no wall has been broken");
+    }
+
     private string? Phase() => _entMan.GetComponent<PhasesComponent>(_rule).Current;
 
     [Test]

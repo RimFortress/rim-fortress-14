@@ -57,3 +57,4 @@ utility-ai-goal-raider-approach-name = Go to the settler
 utility-ai-goal-raider-follow-name = Follow the squad leader
 utility-ai-goal-raider-follow-support-name = Stay with the squad leader
 utility-ai-goal-raider-hold-name = Hold the position
+utility-ai-goal-breach-name = Break through

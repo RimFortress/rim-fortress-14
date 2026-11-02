@@ -56,6 +56,7 @@
   - type: PathProfiles
     profiles:
     - Walker
+    - Breacher
   - type: UtilityAi
     goals:
     - RaiderAttack

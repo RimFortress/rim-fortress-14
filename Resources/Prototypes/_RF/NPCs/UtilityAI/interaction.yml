@@ -90,3 +90,13 @@
   goalState:
     DoorPried: true
 
+
+# The goal of the path nodes that are broken through, it is not chosen by the agent by itself, see the Breacher profile.
+- type: utilityAiGoal
+  id: Breach
+  color: "#FF5500"
+  tempKeys:
+  - BreachTarget
+  - BreachPoint
+  goalState:
+    Breached: true

@@ -1,24 +1,11 @@
 # Goes where it is possible to go. How it is searched for is up to the query, see queries.yml. It does not go through lava, liquid plasma and chasms, or through what is blocked, and
 # does not like water, ice and the tiles next to the lava.
+# The rules that the walkers have in common: the doors, what is climbed onto, the bodies that are gone around, lava, water. What
+# is blocked is up to the profile itself, see Walker and Breacher.
 - type: pathProfile
-  id: Walker
+  id: WalkerBase
+  abstract: true
   rules:
-  # What is blocked is not gone through. What can be climbed onto is, unless the place is only to wander to: an agent that
-  # is not going anywhere in particular does not climb the tables.
-  - when:
-    - !type:Blocked
-    - !type:Or
-      conditions:
-      - !type:HasTag
-        tag: Climbable
-        invert: true
-      - !type:Query
-        id: Wander
-    # The doors are gone through by their own rules, see below.
-    - !type:HasTag
-      tag: Door
-      invert: true
-    cost: [float: 10000]
   # The doors. A closed door that opens by itself is no trouble. The agent that only looks for a place to wander to does
   # not go through a door that has to be opened or pried, and nobody goes through a door that cannot be.
   - when:
@@ -120,16 +107,6 @@
     cost:
     - var: influence
     - mul: [float: 3]
-  # Where the agent does not fit between the bodies the path is not made, however close it is to the target. What is
-  # climbed onto is on the tile of the body itself, and it is not a place to avoid.
-  - when:
-    - !type:TagInfluence
-      tag: Obstacle
-      moreThan: 0.55
-    - !type:HasTag
-      tag: Climbable
-      invert: true
-    cost: [float: 10000]
   # What can be climbed onto is an obstacle like the others for the one that does not climb.
   - when:
     - !type:TagInfluence
@@ -190,3 +167,107 @@
     cost:
     - var: influence
     - mul: [float: 10]
+
+# What is blocked is not gone through.
+- type: pathProfile
+  id: Walker
+  parent: WalkerBase
+  rules:
+  # What is blocked is not gone through. What can be climbed onto is, unless the place is only to wander to: an agent that
+  # is not going anywhere in particular does not climb the tables.
+  - when:
+    - !type:Blocked
+    - !type:Or
+      conditions:
+      - !type:HasTag
+        tag: Climbable
+        invert: true
+      - !type:Query
+        id: Wander
+    # The doors are gone through by their own rules, see below.
+    - !type:HasTag
+      tag: Door
+      invert: true
+    cost: [float: 10000]
+  # Where the agent does not fit between the bodies the path is not made, however close it is to the target. What is
+  # climbed onto is on the tile of the body itself, and it is not a place to avoid.
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    cost: [float: 10000]
+
+# What is blocked is broken through, if the agent is able to destroy it with what it deals, and it costs as much as it takes. It is
+# for the agents that are to get to the place at any price, such as the raiders: the profile comes after Walker, so it is only the way
+# when there is no way round. The agent stops short of the wall and breaks it, see the Breach goal, and the path is searched for
+# again. A place that is only to wander to is not broken through, and what cannot be destroyed is not.
+- type: pathProfile
+  id: Breacher
+  parent: WalkerBase
+  rules:
+  - when:
+    - !type:Blocked
+    - !type:Or
+      conditions:
+      - !type:HasTag
+        tag: Climbable
+        invert: true
+      - !type:Query
+        id: Wander
+    - !type:HasTag
+      tag: Door
+      invert: true
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+      - !type:Query
+        id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:Blocked
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    - !type:HasTag
+      tag: Door
+      invert: true
+    - !type:CanDestroy
+      lessThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    cost:
+    - var: destroyTime
+    - mul: [float: 0.5]
+    goal:
+      id: Breach
+      targetKey: BreachPoint
+      rangeKey: MeleeRange
+      entityKey: BreachTarget
+      # What blocks the node: solid, and not something that cannot be destroyed.
+      entityConditions:
+      - !type:Solid
+      - !type:CanBeDestroyed
+  # Where the agent does not fit between the bodies the path is not made, unless it breaks them.
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+      - !type:Query
+        id: Wander
+    cost: [float: 10000]

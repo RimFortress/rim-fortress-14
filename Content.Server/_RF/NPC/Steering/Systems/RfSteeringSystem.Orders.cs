@@ -70,18 +70,21 @@ public sealed partial class RfSteeringSystem
         var place = new EntityCoordinates(node.Node.Graph, node.Node.Box.Center);
         state.SetValue(goal.TargetKey, place);
 
-        // The goals that are for an entity, such as a door, need it and not the place.
-        if (goal.EntityTag is { } tag && goal.EntityKey is { } key)
+        // The goals that are for an entity, such as a door, need it and not the place. It is the nearest one that has the tag, if there
+        // is one, and meets the conditions, if there are any.
+        if (goal.EntityKey is { } key && (goal.EntityTag != null || goal.EntityConditions is { Length: > 0 }))
         {
             var placeWorld = _transform.ToMapCoordinates(place).Position;
             var nearest = float.MaxValue;
 
-            foreach (var found in _lookup.GetEntitiesInRange<PathTagsComponent>(place, EntityRange))
+            foreach (var found in _lookup.GetEntitiesInRange<TransformComponent>(place, EntityRange))
             {
-                if (!_pathfinding.HasTag(found.Owner, tag))
+                if (found.Owner == agent.Owner
+                    || goal.EntityTag is { } tag && !_pathfinding.HasTag(found.Owner, tag)
+                    || !_conditions.TryConditions(found.Owner, goal.EntityConditions, agent.Owner))
                     continue;
 
-                var distance = (_transform.GetWorldPosition(found) - placeWorld).LengthSquared();
+                var distance = (_transform.GetWorldPosition(found.Owner) - placeWorld).LengthSquared();
 
                 if (distance >= nearest)
                     continue;

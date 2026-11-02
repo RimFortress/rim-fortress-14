@@ -5,6 +5,7 @@
   - proto: Utility
   - proto: Door
   - proto: Climb
+  - proto: Breach
   - proto: Pickup
   - proto: Combat
   - proto: RaiderHold

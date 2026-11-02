@@ -1,5 +1,6 @@
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared.EntityConditions;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Map;
@@ -79,6 +80,13 @@ public sealed partial class PathRuleGoal
     /// </summary>
     [DataField]
     public ProtoId<PathTagPrototype>? EntityTag;
+
+    /// <summary>
+    /// What the entity at the node that the goal is for has to be like, the conditions that it has to meet, in addition to
+    /// <see cref="EntityTag"/> if it is set. The agent is the source of the conditions.
+    /// </summary>
+    [DataField]
+    public EntityCondition[] EntityConditions = [];
 
     /// <summary>
     /// A key to which the entity at the node is written in the agent's state, for the goals that are for an entity,

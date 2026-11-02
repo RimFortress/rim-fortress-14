@@ -2,6 +2,7 @@ using System.Numerics;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
+using Content.Shared.EntityConditions;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.UtilityAi.Prototypes;
 using Robust.Shared.Map;
@@ -49,12 +50,16 @@ public enum PathGoalPhase : byte
 /// The path tag of the entity at the node that the goal is for, such as a door. Null if the goal is not for an entity.
 /// </param>
 /// <param name="EntityKey">The key to which the entity at the node, the one with the tag, will be written.</param>
+/// <param name="EntityConditions">
+/// What the entity at the node that the goal is for has to be like, in addition to the tag, the conditions it has to meet.
+/// </param>
 public readonly record struct PathGoalInfo(
     ProtoId<UtilityAiGoalPrototype> Goal,
     StateKey<EntityCoordinates> TargetKey,
     StateKey<float> RangeKey,
     ProtoId<PathTagPrototype>? EntityTag,
-    StateKey<EntityUid>? EntityKey);
+    StateKey<EntityUid>? EntityKey,
+    EntityCondition[]? EntityConditions = null);
 
 /// <summary>
 /// A goal that the agent must perform at a node of the path.

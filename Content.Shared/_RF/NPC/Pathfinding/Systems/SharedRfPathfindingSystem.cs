@@ -363,7 +363,7 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
             // Only the first goal of each kind is used, the order of the rules decides which one it is.
             ref var slot = ref goal.Phase == PathGoalPhase.Before ? ref before : ref after;
 
-            slot ??= new PathGoalInfo(goal.Id, goal.TargetKey, goal.RangeKey, goal.EntityTag, goal.EntityKey);
+            slot ??= new PathGoalInfo(goal.Id, goal.TargetKey, goal.RangeKey, goal.EntityTag, goal.EntityKey, goal.EntityConditions);
         }
 
         return new PathNodeEval(Math.Clamp(modifier, MinCostModifier, int.MaxValue), before, after);

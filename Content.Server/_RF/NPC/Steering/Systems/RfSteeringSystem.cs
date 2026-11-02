@@ -1,3 +1,4 @@
+using Content.Shared.EntityConditions;
 using System.Numerics;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Shared._RF.NPC.Pathfinding;
@@ -38,6 +39,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
     [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
+    [Dependency] private SharedEntityConditionsSystem _conditions = null!;
     [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery;
     [Dependency] private EntityQuery<MovementSpeedModifierComponent> _modifierQuery;
 
