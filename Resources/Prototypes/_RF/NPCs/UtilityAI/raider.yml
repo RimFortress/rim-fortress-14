@@ -27,6 +27,7 @@
   conditions:
   - Engagement/RaidSquad/Role/SquadLeader != null
   - Engagement/RaidSquad/Role/SquadLeader/In == false
+  - Engagement/RaidSquad/Role/SquadBreacher/In == false
   - Engagement/RaidSquad/Var/stance > 0.5
   - Engagement/RaidSquad/Var/stance < 1.5
   - Retreating == false

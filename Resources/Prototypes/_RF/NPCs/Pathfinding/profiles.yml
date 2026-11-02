@@ -7,11 +7,8 @@
   abstract: true
   rules:
   # The doors. A closed door that opens by itself is no trouble. The agent that only looks for a place to wander to does
-  # not go through a door that has to be opened or pried, and nobody goes through a door that cannot be.
-  - when:
-    - !type:HasTag
-      tag: DoorBlocked
-    cost: [float: 10000]
+  # not go through a door that has to be opened or pried. A door that cannot be gone through, or has to be pried and there is nothing
+  # to pry it with, is up to the profile, see Walker and Breacher.
   - when:
     - !type:HasTag
       tag: DoorNeedsOpening
@@ -54,15 +51,6 @@
       rangeKey: InteractRange
       entityTag: Door
       entityKey: DoorTarget
-  - when:
-    - !type:HasTag
-      tag: DoorNeedsPry
-    - !type:Query
-      id: Wander
-      invert: true
-    requires:
-    - Query/Crowbar == null
-    cost: [float: 10000]
   # A door that stays open is closed after the agent has gone through, if the agent closes the doors and is not in the combat
   # mode: it is on an order then, and it does not stop for the doors.
   - when:
@@ -199,14 +187,35 @@
       tag: Climbable
       invert: true
     cost: [float: 10000]
+  # A door that cannot be gone through is not, and neither is one that has to be pried when there is nothing to pry it with.
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar == null
+    cost: [float: 10000]
 
 # What is blocked is broken through, if the agent is able to destroy it with what it deals, and it costs as much as it takes. It is
 # for the agents that are to get to the place at any price, such as the raiders: the profile comes after Walker, so it is only the way
 # when there is no way round. The agent stops short of the wall and breaks it, see the Breach goal, and the path is searched for
 # again. A place that is only to wander to is not broken through, and what cannot be destroyed is not.
+# In a squad that has a breacher only the breacher breaks, the others wait for the way to be made, and in one that has none anybody
+# does.
 - type: pathProfile
   id: Breacher
   parent: WalkerBase
+  conditions:
+  - !type:Or
+    conditions:
+    - Engagement/RaidSquad/Role/SquadBreacher/In == true
+    - Engagement/RaidSquad/Role/SquadBreacher == null
   rules:
   - when:
     - !type:Blocked
@@ -271,3 +280,72 @@
       - !type:Query
         id: Wander
     cost: [float: 10000]
+  # A door that cannot be gone through, or has to be pried when there is nothing to pry it with, is broken the same way as a wall, if
+  # the agent is able to, the door that has a crowbar to pry it is pried (see WalkerBase) and not broken.
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+      - !type:Query
+        id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+    requires:
+    - Query/Crowbar == null
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    - !type:CanDestroy
+      lessThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    cost:
+    - var: destroyTime
+    - mul: [float: 0.5]
+    goal:
+      id: Breach
+      targetKey: BreachPoint
+      rangeKey: MeleeRange
+      entityKey: BreachTarget
+      entityConditions:
+      - !type:Solid
+      - !type:CanBeDestroyed
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:CanDestroy
+      lessThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar == null
+    cost:
+    - var: destroyTime
+    - mul: [float: 0.5]
+    goal:
+      id: Breach
+      targetKey: BreachPoint
+      rangeKey: MeleeRange
+      entityKey: BreachTarget
+      entityConditions:
+      - !type:Solid
+      - !type:CanBeDestroyed

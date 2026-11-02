@@ -10,7 +10,7 @@
 # A raid is split into squads, see PlanSquads. A squad has a leader, who goes where the raid goes, and the others, who stay with
 # the leader and fight what they see. The roles of the others are chosen by the engagement system, in proportion to the weights:
 # there are three of the assault for each one of the support. The assault stays close to the leader and the support keeps further
-# off. When the leader is dead one of the others takes his place, see the Raid rule.
+# off. The breacher carries a crowbar, see below. When the leader is dead one of the others takes his place, see the Raid rule.
 - type: engagementRole
   id: SquadLeader
   parent: Raider
@@ -33,3 +33,16 @@
   weight: 1
   onStart:
     SquadFollowRange: 9.0
+
+# The breacher of a squad: whoever carries a crowbar. It goes ahead to the targets of the squad and breaks through the doors and the
+# walls on the way, and the others follow the way it makes, see the Breacher profile and the goals of the raiders. A squad that has
+# none breaks through by whoever can.
+- type: engagementRole
+  id: SquadBreacher
+  parent: Raider
+  minCount: 0
+  weight: 1
+  conditions:
+  - Query/Crowbar != null
+  onStart:
+    SquadFollowRange: 5.0

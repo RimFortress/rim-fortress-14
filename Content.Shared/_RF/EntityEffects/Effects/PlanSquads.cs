@@ -108,6 +108,16 @@ public sealed partial class PlanSquadsEntityEffectsSystem : EntityEffectSystem<M
             }
         }
 
+        // The squads whose participants are all gone are over.
+        foreach (var squad in squads.ToArray())
+        {
+            if (squad.Comp.Actors.Values.Any(x => x.Count > 0))
+                continue;
+
+            squads.Remove(squad);
+            _engagement.EndEngagement(squad.AsNullable(), EngagementEndReason.Dissolved);
+        }
+
         if (fighters.Count == 0)
             return;
 

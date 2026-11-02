@@ -74,6 +74,8 @@
   dissolveInvalid: false
   roles:
   - SquadLeader
+  # Before the others: when a participant could take it, it takes the breacher, which only some can.
+  - SquadBreacher
   - SquadAssault
   - SquadSupport
   # The numbers of the squad (its power, the ratio and the stance, see MeasureSquads) and the state that keeps what only the

@@ -112,6 +112,8 @@
         key: raidersTotal
         value:
         - add: [float: 1]
+      # The raid owns the raiders and everything they carry, so they share the equipment: what one has, the others find.
+      - !type:OwnUser
       - !type:JoinEngagement
         engagement: Raid
         roles: [Raider]

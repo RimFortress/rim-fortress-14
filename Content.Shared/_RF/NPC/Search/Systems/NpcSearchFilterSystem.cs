@@ -105,7 +105,8 @@ public abstract partial class NpcSearchFilterSystem<T> : EntitySystem where T : 
 
         foreach (var ((agent, protoId), stage) in ent.Comp.Tracking)
         {
-            if (!FilterPrototypes.TryGetValue(protoId, out var indexes))
+            // An agent that is being deleted has no state any more, such as when it finds itself among what is owned.
+            if (TerminatingOrDeleted(agent) || !FilterPrototypes.TryGetValue(protoId, out var indexes))
                 continue;
 
             foreach (var (ind, filter) in indexes)

@@ -42,6 +42,17 @@ namespace Content.IntegrationTests.Tests._RF.GameTicking;
 /// </summary>
 public sealed class RaidRuleTest : GameTest
 {
+    [TestPrototypes]
+    private const string Prototypes = @"
+# A wall that cannot be destroyed, so the doors are the only way.
+- type: entity
+  parent: WallWood
+  id: TestRaidWall
+  components:
+  - type: Destructible
+    thresholds: []
+";
+
     private static readonly StateKey<HashSet<EntityUid>> Targets = "Targets";
     private static readonly StateKey<EntityCoordinates> SettlementTarget = "Engagement/Raid/Owner/SettlementTarget";
     private static readonly StateKey<bool> Retreating = "Retreating";
@@ -992,6 +1003,244 @@ public sealed class RaidRuleTest : GameTest
                 "a raider is inside the walls"));
 
         Assert.That(walls.Count(w => _entMan.Deleted(w)), Is.Zero, "no wall has been broken");
+    }
+
+    /// <summary>
+    /// The residents are walled in with a door in the wall, and the raiders come to it.
+    /// </summary>
+    /// <param name="prepare">What is done to the door, and to the raiders.</param>
+    private async Task<EntityUid> WalledInWithDoor(Action<EntityUid> prepare)
+    {
+        await Setup(residents: 3, raiders: 2);
+        EntityUid door = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var resident in _residents)
+            {
+                _faction.AddFaction(resident, "RimFortress");
+            }
+
+            for (var x = 3; x <= 11; x++)
+            {
+                for (var y = 3; y <= 7; y++)
+                {
+                    if (x != 3 && x != 11 && y != 3 && y != 7 || x == 11 && y == 5)
+                        continue;
+
+                    _entMan.SpawnEntity("TestRaidWall", At(x + 0.5f, y + 0.5f));
+                }
+            }
+
+            door = _entMan.SpawnEntity("Airlock", At(11.5f, 5.5f));
+            prepare(door);
+            Start();
+        });
+
+        return door;
+    }
+
+    private async Task WaitForRaiderInside()
+    {
+        for (var i = 0; i < 30 && !_raiders.Any(r => !_entMan.Deleted(r)
+                                                      && Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f); i++)
+        {
+            await Run(5f);
+        }
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(_raiders.Any(r => !_entMan.Deleted(r)
+                                          && Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f),
+                Is.True,
+                "a raider is inside the walls"));
+    }
+
+    /// <summary>
+    /// The raider carries a crowbar, and the others do not.
+    /// </summary>
+    private void GiveOnlyCrowbar(EntityUid raider)
+    {
+        RemoveCrowbars();
+        var crowbar = _entMan.SpawnEntity("Crowbar", _entMan.GetComponent<TransformComponent>(raider).Coordinates);
+        Assert.That(_entMan.System<Content.Shared.Hands.EntitySystems.SharedHandsSystem>().TryPickupAnyHand(raider, crowbar), Is.True);
+    }
+
+    private void RemoveCrowbars()
+    {
+        var crowbars = new List<EntityUid>();
+        var query = _entMan.AllEntityQueryEnumerator<MetaDataComponent>();
+
+        while (query.MoveNext(out var uid, out var meta))
+        {
+            if (meta.EntityPrototype?.ID == "Crowbar")
+                crowbars.Add(uid);
+        }
+
+        foreach (var crowbar in crowbars)
+        {
+            _entMan.DeleteEntity(crowbar);
+        }
+    }
+
+    /// <summary>
+    /// A door that has no power has to be pried, and the raiders have crowbars: they pry it, and do not break it.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersPryTheDoorWithACrowbar()
+    {
+        var door = await WalledInWithDoor(_ => GiveOnlyCrowbar(_raiders[0]));
+        await WaitForRaiderInside();
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_entMan.Deleted(door), Is.False, "the door is not broken");
+            Assert.That(_entMan.GetComponent<Content.Shared.Doors.Components.DoorComponent>(door).State,
+                Is.AnyOf(Content.Shared.Doors.Components.DoorState.Open, Content.Shared.Doors.Components.DoorState.Opening));
+        });
+    }
+
+    /// <summary>
+    /// With nothing to pry the door with it is broken.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersBreakTheDoorWithoutACrowbar()
+    {
+        var door = await WalledInWithDoor(_ => RemoveCrowbars());
+        await WaitForRaiderInside();
+
+        await Pair.Server.WaitAssertion(() => Assert.That(_entMan.Deleted(door), Is.True, "the door is broken"));
+    }
+
+    /// <summary>
+    /// A door that is welded cannot be pried, it is broken.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersBreakTheWeldedDoor()
+    {
+        var door = await WalledInWithDoor(d =>
+        {
+            _entMan.System<Content.Shared.Tools.Systems.WeldableSystem>().SetWeldedState(d, true);
+        });
+        await WaitForRaiderInside();
+
+        await Pair.Server.WaitAssertion(() => Assert.That(_entMan.Deleted(door), Is.True, "the door is broken"));
+    }
+
+    /// <summary>
+    /// The raid owns the raiders and everything they carry, so a raider finds the crowbar it carries by the query of the crowbars,
+    /// and the crowbars of the others too.
+    /// </summary>
+    [Test]
+    public async Task TestRaidOwnsRaidersAndTheirEquipment()
+    {
+        await Setup(raiders: 2);
+        await Pair.Server.WaitPost(Start);
+        await Run(0.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            foreach (var raider in _raiders)
+            {
+                Assert.That(_ownership.HasOwner(raider, _rule), Is.True, "the raid owns the raider");
+            }
+
+            var agent = new Entity<GoapComponent>(_raiders[0], _entMan.GetComponent<GoapComponent>(_raiders[0]));
+            var crowbars = _searcher.GetResults(agent, "Crowbar");
+
+            Assert.That(crowbars, Has.Count.EqualTo(2), "its own and the other's");
+
+            foreach (var crowbar in crowbars)
+            {
+                Assert.That(_ownership.HasOwner(crowbar, _rule), Is.True);
+            }
+        });
+    }
+
+    /// <summary>
+    /// The one who carries a crowbar is the breacher of the squad, the others cannot be.
+    /// </summary>
+    [Test]
+    public async Task TestBreacherIsTheOneWithACrowbar()
+    {
+        await Setup(residents: 12, raiders: 5);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The weakest of them, so it is not the leader.
+            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 40));
+            GiveOnlyCrowbar(_raiders[0]);
+            StartAgainstStrongSettlement();
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var squad = Squads().Single();
+            Assert.That(squad.Actors["SquadBreacher"].Single(), Is.EqualTo(_raiders[0]));
+        });
+    }
+
+    /// <summary>
+    /// A squad that has no one with a crowbar has no breacher.
+    /// </summary>
+    [Test]
+    public async Task TestSquadHasNoBreacherWithoutCrowbars()
+    {
+        await Setup(residents: 12, raiders: 5);
+        await Pair.Server.WaitPost(() =>
+        {
+            RemoveCrowbars();
+            StartAgainstStrongSettlement();
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() => Assert.That(Squads().Single().Actors.Any(x => x.Key == "SquadBreacher"), Is.False));
+    }
+
+    /// <summary>
+    /// The breacher goes ahead to the targets of the squad, and the others follow the leader.
+    /// </summary>
+    [Test]
+    public async Task TestBreacherGoesAheadAndTheOthersFollow()
+    {
+        await Setup(raiders: 4);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 40));
+            GiveOnlyCrowbar(_raiders[0]);
+        });
+        await StartFarAway(holdRatio: 0f, rushRatio: 1000f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var squad = Squads().Single();
+            var breacher = squad.Actors["SquadBreacher"].Single();
+
+            Assert.That(Goal(breacher), Is.EqualTo("RaiderApproach"));
+
+            foreach (var raider in Others(squad).Where(x => x != breacher))
+            {
+                Assert.That(Goal(raider), Is.EqualTo("RaiderFollow"));
+            }
+        });
+    }
+
+    /// <summary>
+    /// A squad with a breacher breaks the way to the residents: the breacher breaks the welded door, and the others come in after it.
+    /// </summary>
+    [Test]
+    public async Task TestBreacherOfTheSquadBreaksTheWeldedDoor()
+    {
+        var door = await WalledInWithDoor(d =>
+        {
+            _entMan.System<Content.Shared.Tools.Systems.WeldableSystem>().SetWeldedState(d, true);
+            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 40));
+            GiveOnlyCrowbar(_raiders[0]);
+        });
+        await WaitForRaiderInside();
+
+        await Pair.Server.WaitAssertion(() => Assert.That(_entMan.Deleted(door), Is.True, "the door is broken"));
     }
 
     private string? Phase() => _entMan.GetComponent<PhasesComponent>(_rule).Current;
