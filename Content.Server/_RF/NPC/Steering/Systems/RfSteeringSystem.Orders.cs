@@ -7,7 +7,6 @@ using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Robust.Shared.Prototypes;
-using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
@@ -353,8 +352,10 @@ public sealed partial class RfSteeringSystem
         Box2? bounds = null;
         var range = steerer.Range;
 
-        // The region of the target is taken in the coordinates of the grid of the agent, the path is on it.
+        // The region of the target is taken in the coordinates of the grid of the agent, the path is on it. A target that is gone
+        // (a leader that is followed) is a place where it was.
         if (steerer.TargetEntity is { } entity
+            && !TerminatingOrDeleted(entity)
             && Transform(agent).GridUid is { } grid
             && Transform(entity).MapID == Transform(agent).MapID)
         {

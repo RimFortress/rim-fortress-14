@@ -8,6 +8,7 @@ using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
+using Content.Shared._RF.MathHelpers.MathVariables;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared.Buckle;
@@ -42,6 +43,9 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
     [Dependency] private PullingSystem _pulling = default!;
     [Dependency] private EngagementSystem _engagement = default!;
     [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private EntityQuery<EngagementComponent> _engagementQuery;
+    [Dependency] private MathVariablesSystem _variables = default!;
+    [Dependency] private EntityQuery<MathVariablesComponent> _variablesQuery;
     [Dependency] private EntityQuery<GoapComponent> _goapQuery;
     [Dependency] private SharedCombatModeSystem _combatMode = default!;
 
@@ -701,6 +705,47 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
             return false;
         }
 
+        if (GoapState.EngagementVarDomain.TryGetParams(domains, out engagement, out string? varName))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
+                || !_variablesQuery.HasComp(ent.Value.Owner))
+                return false;
+
+            value = _variables.Get(ent.Value.Owner, varName);
+            return true;
+        }
+
+        if (GoapState.EngagementRoleAllDomain.TryGetParams(domains, out engagement, out ProtoId<EngagementRolePrototype>? allRole))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_proto.HasIndex(allRole)
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
+                || !_engagement.TryGetActors(ent.Value.AsNullable(), allRole.Value, out var actors))
+                return false;
+
+            value = new HashSet<EntityUid>(actors);
+            return true;
+        }
+
+        if (GoapState.OwnedEngagementAllDomain.TryGetParams(domains, out engagement))
+        {
+            if (!_proto.HasIndex(engagement))
+                return false;
+
+            value = GetOwnedActors(owner, engagement.Value, null);
+            return true;
+        }
+
+        if (GoapState.OwnedEngagementRoleAllDomain.TryGetParams(domains, out engagement, out allRole))
+        {
+            if (!_proto.HasIndex(engagement) || !_proto.HasIndex(allRole))
+                return false;
+
+            value = GetOwnedActors(owner, engagement.Value, allRole.Value);
+            return true;
+        }
+
         if (GoapState.EngagementStartedDomain.TryGetParams(domains, out engagement))
         {
             if (!_proto.HasIndex(engagement)
@@ -833,6 +878,31 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
     }
 
     #endregion
+
+    /// <summary>
+    /// Returns the participants of the situations of a kind that the entity owns, in a role or in any.
+    /// </summary>
+    private HashSet<EntityUid> GetOwnedActors(
+        EntityUid owner,
+        ProtoId<EngagementPrototype> kind,
+        ProtoId<EngagementRolePrototype>? role)
+    {
+        var result = new HashSet<EntityUid>();
+
+        foreach (var owned in _ownership.GetOwned(owner))
+        {
+            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != kind)
+                continue;
+
+            foreach (var (actorRole, actors) in comp.Actors)
+            {
+                if (role == null || role == actorRole)
+                    result.UnionWith(actors);
+            }
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Forces the entity to perform a re-planning.

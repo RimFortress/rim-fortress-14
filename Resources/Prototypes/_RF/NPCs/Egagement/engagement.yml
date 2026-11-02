@@ -67,3 +67,12 @@
   id: Raid
   roles:
   - Raider
+
+# The squad of a raid: there are as many of them as the raiders need, see JoinEngagement. It is not over when it has no leader.
+- type: engagement
+  id: RaidSquad
+  dissolveInvalid: false
+  roles:
+  - SquadLeader
+  - SquadAssault
+  - SquadSupport

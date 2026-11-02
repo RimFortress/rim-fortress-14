@@ -51,12 +51,15 @@
       RetreatRange: 150.0
       # How close to the resident it goes to a raider gets before it looks for the enemies to fight.
       RaidApproachRange: 15.0
+      # How close to the leader of the squad a member stays.
+      SquadFollowRange: 6.0
   - type: PathProfiles
     profiles:
     - Walker
   - type: UtilityAi
     goals:
     - RaiderAttack
+    - RaiderFollow
     - RaiderApproach
     - RaiderAdvance
     - RaiderRetreat

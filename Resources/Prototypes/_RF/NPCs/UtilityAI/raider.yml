@@ -14,6 +14,19 @@
   goalState:
     TargetAttacked: true
 
+# A member of a squad stays with the leader of the squad, until it sees an enemy or has no leader.
+- type: utilityAiGoal
+  id: RaiderFollow
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.65
+  conditions:
+  - Engagement/RaidSquad/Role/SquadLeader != null
+  - Engagement/RaidSquad/Role/SquadLeader/In == false
+  - Retreating == false
+  goalState:
+    RaiderFollowed: true
+
 # The closest of the residents that are alive: whom the raider goes to, until it sees an enemy.
 - type: utilityAiGoal
   id: RaiderApproach

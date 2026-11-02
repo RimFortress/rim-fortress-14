@@ -2,6 +2,7 @@ using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.Systems;
+using System.Linq;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 
@@ -9,8 +10,10 @@ namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Makes the user of the effect take a role in a situation (<see cref="EngagementSystem"/>) that the target owns,
-/// see <see cref="OwnershipSystem"/>. If the target owns no such situation yet, it is started,
-/// and the target becomes its owner. The role has to be one that can be taken by force.
+/// see <see cref="OwnershipSystem"/>. The situations of the kind that the target owns are tried one by one for a place in one of
+/// the roles, and if there is none in any, a new one is started, and the target becomes its owner. It is how the squads are
+/// made: a squad takes as many as its roles can have, and the next one goes to another. The roles have to be ones that can be
+/// taken by force.
 /// </summary>
 public sealed partial class JoinEngagement : EntityEffectBase<JoinEngagement>
 {
@@ -21,10 +24,10 @@ public sealed partial class JoinEngagement : EntityEffectBase<JoinEngagement>
     public ProtoId<EngagementPrototype> Engagement;
 
     /// <summary>
-    /// The role that is taken.
+    /// The roles that are taken, the first that has a place.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementRolePrototype> Role;
+    public List<ProtoId<EngagementRolePrototype>> Roles = new();
 }
 
 public sealed partial class JoinEngagementEntityEffectsSystem : EntityEffectSystem<MetaDataComponent, JoinEngagement>
@@ -39,25 +42,32 @@ public sealed partial class JoinEngagementEntityEffectsSystem : EntityEffectSyst
         if (args.User is not { } user)
             return;
 
-        Entity<EngagementComponent>? situation = null;
-
-        foreach (var owned in _ownership.GetOwned(ent))
+        foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != args.Effect.Engagement)
-                continue;
-
-            situation = (owned, comp);
-            break;
-        }
-
-        if (situation == null)
-        {
-            if (!_engagement.TryStartEngagement(args.Effect.Engagement, user, out situation))
+            if (_engagementQuery.TryComp(owned, out var comp)
+                && comp.Kind == args.Effect.Engagement
+                && TryJoin((owned, comp), args.Effect.Roles, user))
                 return;
-
-            _ownership.AddOwnership(situation.Value, owner: ent);
         }
 
-        _engagement.TryJoinEngagement(situation.Value.AsNullable(), args.Effect.Role, user);
+        if (!_engagement.TryStartEngagement(args.Effect.Engagement, user, out var situation))
+            return;
+
+        _ownership.AddOwnership(situation.Value, owner: ent);
+
+        // Nothing to take at all, such as the roles that are not forced: the situation is for nothing.
+        if (!TryJoin(situation.Value, args.Effect.Roles, user))
+            QueueDel(situation.Value);
+    }
+
+    private bool TryJoin(Entity<EngagementComponent> situation, List<ProtoId<EngagementRolePrototype>> roles, EntityUid user)
+    {
+        foreach (var role in roles)
+        {
+            if (_engagement.TryJoinEngagement(situation.AsNullable(), role, user))
+                return true;
+        }
+
+        return false;
     }
 }

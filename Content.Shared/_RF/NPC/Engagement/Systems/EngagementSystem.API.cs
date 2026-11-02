@@ -122,6 +122,58 @@ public partial class EngagementSystem
     }
 
     /// <summary>
+    /// Seats an actor into the role of the situation that fits it best, the system chooses. Only the roles that can be taken by
+    /// force are considered, the same as for <see cref="TryJoinEngagement"/>, and the actor has to meet the requirements of
+    /// the role. A role that has fewer than <see cref="EngagementRolePrototype.MinCount"/> comes first; of the others, the
+    /// one that has the fewest for its <see cref="EngagementRolePrototype.Weight"/>, so the roles are filled in proportion to
+    /// their weights.
+    /// </summary>
+    /// <param name="engagement">The situation to join.</param>
+    /// <param name="actor">The entity to seat.</param>
+    /// <returns>True, if the actor was seated.</returns>
+    [PublicAPI]
+    public bool TryJoinAnyRole(Entity<EngagementComponent?> engagement, EntityUid actor)
+    {
+        if (!Resolve(engagement, ref engagement.Comp)
+            || !_prototype.Resolve(engagement.Comp.Kind, out var proto))
+            return false;
+
+        EngagementRolePrototype? best = null;
+        var bestScore = (Deficit: 1, Fill: float.MaxValue);
+
+        foreach (var roleId in proto.Roles)
+        {
+            if (!_prototype.Resolve(roleId, out var role)
+                || !role.Force
+                || !CanSeat(engagement!, role, actor)
+                || !MeetsForwardRequirements(engagement!, role, actor)
+                || !MeetsReverseRequirements(engagement!, role, actor))
+                continue;
+
+            var count = engagement.Comp.Actors.TryGetValue(roleId, out var set) ? set.Count : 0;
+            var deficit = count < role.MinCount;
+
+            if (!deficit && role.Weight <= 0f)
+                continue;
+
+            // The roles that are not full come first, then the ones that are the least filled for their weights.
+            var score = (Deficit: deficit ? 0 : 1, Fill: deficit ? count : count / role.Weight);
+
+            if (best != null && score.CompareTo(bestScore) >= 0)
+                continue;
+
+            best = role;
+            bestScore = score;
+        }
+
+        if (best == null)
+            return false;
+
+        SeatActor(engagement!, best, actor);
+        return true;
+    }
+
+    /// <summary>
     /// Sends an invitation for a non-forced role.
     /// The actor must call <see cref="AcceptInvite(EntityUid, Entity{EngagementComponent?}, ProtoId{EngagementRolePrototype}?)"/>
     /// before <see cref="EngagementPrototype.InviteTime"/> elapses, or the invite expires on its own during <see cref="Update"/>.

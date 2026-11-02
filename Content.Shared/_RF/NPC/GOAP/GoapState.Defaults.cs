@@ -267,6 +267,38 @@ public partial class GoapState
         = ProtoKeyDomain<EngagementPrototype>("ProtoId", "Key", "Engagement/ProtoId/Owner/Key");
 
     /// <summary>
+    /// Returns a variable (<c>MathVariables</c>) of the situation of the target type in which the agent is engaged, a number.
+    /// It is how a squad tells its participants how strong it is.
+    /// </summary>
+    public static readonly DomainKey EngagementVarDomain
+        = ProtoKeyDomain<EngagementPrototype>("ProtoId", "Name", "Engagement/ProtoId/Var/Name");
+
+    /// <summary>
+    /// Returns all the entities that play the target role in the situation of the target type in which the agent is engaged.
+    /// </summary>
+    public static readonly DomainKey EngagementRoleAllDomain
+        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+            "ProtoId",
+            "RoleId",
+            "Engagement/ProtoId/Role/RoleId/All");
+
+    /// <summary>
+    /// Returns the participants in all the roles of all the situations of the target type that the agent owns, see
+    /// <c>OwnershipSystem</c>.
+    /// </summary>
+    public static readonly DomainKey OwnedEngagementAllDomain
+        = ProtoDomain<EngagementPrototype>("ProtoId", "OwnedEngagement/ProtoId/All");
+
+    /// <summary>
+    /// Returns the participants in the target role of all the situations of the target type that the agent owns.
+    /// </summary>
+    public static readonly DomainKey OwnedEngagementRoleAllDomain
+        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+            "ProtoId",
+            "RoleId",
+            "OwnedEngagement/ProtoId/Role/RoleId/All");
+
+    /// <summary>
     /// Returns the started situation of the target type in which the agent is engaged.
     /// </summary>
     public static readonly DomainKey EngagementStartedDomain

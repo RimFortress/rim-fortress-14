@@ -7,9 +7,26 @@
   - proto: Climb
   - proto: Pickup
   - proto: Combat
+  - proto: RaiderFollow
   - proto: RaiderApproach
   - proto: RaiderAdvance
   - proto: RaiderRetreat
+
+- type: goapCompound
+  id: RaiderFollow
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Engagement/RaidSquad/Role/SquadLeader != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Engagement/RaidSquad/Role/SquadLeader
+      rangeKey: SquadFollowRange
+      query: Approach
+    effects:
+      RaiderFollowed: true
 
 - type: goapCompound
   id: RaiderApproach

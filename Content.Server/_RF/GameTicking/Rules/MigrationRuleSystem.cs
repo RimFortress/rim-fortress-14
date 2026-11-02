@@ -23,6 +23,12 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
     /// </summary>
     public const string Spawned = "spawned";
 
+    /// <summary>
+    /// The key of the trigger of the rule when it has spawned all of them, with no user. It is for what depends on all of them
+    /// being there, such as the squads.
+    /// </summary>
+    public const string SpawnedAll = "spawned.all";
+
     protected override void Started(Entity<MigrationRuleComponent> ent, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
     {
         if (Rule.GetRule() is not { } rule)
@@ -65,6 +71,8 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
         {
             _trigger.Trigger(ent, pop, Spawned, predicted: false);
         }
+
+        _trigger.Trigger(ent, key: SpawnedAll, predicted: false);
 
         if (!_prototype.Resolve(ent.Comp.Goal, out var task))
             return;

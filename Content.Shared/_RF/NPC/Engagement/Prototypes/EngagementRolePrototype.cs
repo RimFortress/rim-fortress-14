@@ -56,6 +56,15 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     public bool AlwaysConditionCheck;
 
     /// <summary>
+    /// How big a share of the participants that are put into a situation without a role in mind this role is for, see
+    /// <c>EngagementSystem.TryJoinAnyRole</c>: the roles are filled in proportion to their weights, so a role of weight 3 has
+    /// three times as many as a role of weight 1. A role of weight 0 is never taken that way, except to fill it up to its
+    /// <see cref="MinCount"/>.
+    /// </summary>
+    [DataField]
+    public float Weight = 1f;
+
+    /// <summary>
     /// The requirements an agent must satisfy to take on this role.
     /// </summary>
     [DataField(serverOnly: true)]

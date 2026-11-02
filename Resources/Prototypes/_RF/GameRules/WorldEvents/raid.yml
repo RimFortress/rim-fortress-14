@@ -17,6 +17,13 @@
       kills: [float: 0]
       losses: [float: 0]
       raidersTotal: [float: 0]
+      # How strong the residents and the raiders are, see EntityPowerSystem, and how the raiders are split into squads. A squad has to
+      # be at least squadPowerRatio of the power of the residents, so a force that is not stronger than that is one squad, and the
+      # stronger it is the more squads there are, up to maxSquads of the PlanSquads.
+      targetPower: [float: 0]
+      raidPower: [float: 0]
+      squadPowerRatio: [float: 0.6]
+      planning: [float: 0]
       # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
       # kills takes away. When it falls below retreatMorale the raiders retreat.
       moraleKillBonus: [float: 0.5]
@@ -84,9 +91,18 @@
         value:
         - !type:SearchQueryCount
           query: RaidTargets
+      - !type:SetMathVariable
+        key: targetPower
+        value:
+        - !type:ForEachEntity
+          key: Query/RaidTargetsAlive/All
+          curves:
+          - add:
+            - !type:PrototypeCurve
+              preset: FighterPower
       - !type:SetPhase
         phase: Assault
-      # Every raider joins the raid, and knows where the settlement is.
+      # Every raider joins the raid, and its squad is made when all of them are there.
       spawned:
       - !type:SetMathVariable
         key: raidersTotal
@@ -94,8 +110,58 @@
         - add: [float: 1]
       - !type:JoinEngagement
         engagement: Raid
-        role: Raider
+        roles: [Raider]
+      spawned.all:
+      - !type:PlanSquads
+        source: Raid
+        sourceRole: Raider
+        squad: RaidSquad
+        maxSquads: 4
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        minPower:
+        - var: targetPower
+        - mul: [var: squadPowerRatio]
       tick:
+      - !type:SetMathVariable
+        key: targetPower
+        value:
+        - !type:ForEachEntity
+          key: Query/RaidTargetsAlive/All
+          curves:
+          - add:
+            - !type:PrototypeCurve
+              preset: FighterPower
+      - !type:SetMathVariable
+        key: raidPower
+        value:
+        - !type:ForEachEntity
+          key: OwnedEngagement/Raid/Role/Raider/All
+          curves:
+          - add:
+            - !type:PrototypeCurve
+              preset: FighterPower
+      # The squads are made again when the force has changed so that they are not what they should be: the weaker it is the fewer
+      # squads there are, and a squad that has lost its strength joins the others.
+      - !type:PlanSquads
+        source: Raid
+        sourceRole: Raider
+        squad: RaidSquad
+        maxSquads: 4
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        minPower:
+        - var: targetPower
+        - mul: [var: squadPowerRatio]
+      - !type:MeasureSquads
+        squad: RaidSquad
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        threat:
+        - var: targetPower
       - !type:SetMathVariable
         key: deadFraction
         value:
@@ -157,6 +223,20 @@
         key: lastKillAt
         value:
         - !type:CurTimeSeconds
+      # A squad that has lost its leader gets a new one from the members.
+      RaidSquad.left.SquadLeader:
+      - !type:PromoteEngagementActor
+        engagement: RaidSquad
+        role: SquadLeader
+        rank:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        conditions:
+        - !type:MathCurveCondition
+          curves:
+          - var: planning
+          - !type:Threshold
+            lessThan: 0.5
       Raid.left.Raider:
       - !type:SetMathVariable
         key: losses
