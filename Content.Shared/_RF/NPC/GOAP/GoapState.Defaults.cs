@@ -267,6 +267,14 @@ public partial class GoapState
         = ProtoKeyDomain<EngagementPrototype>("ProtoId", "Key", "Engagement/ProtoId/Owner/Key");
 
     /// <summary>
+    /// Returns what the key of the state of the situation itself, of the target type, in which the agent is engaged, is. The
+    /// situation has the state if its prototype says so (<c>Components</c>), and it is where what is only for the participants
+    /// is kept, such as the targets that a squad is given. The type of the value is the one of the key that is asked for.
+    /// </summary>
+    public static readonly DomainKey EngagementStateDomain
+        = ProtoKeyDomain<EngagementPrototype>("ProtoId", "Key", "Engagement/ProtoId/State/Key");
+
+    /// <summary>
     /// Returns a variable (<c>MathVariables</c>) of the situation of the target type in which the agent is engaged, a number.
     /// It is how a squad tells its participants how strong it is.
     /// </summary>

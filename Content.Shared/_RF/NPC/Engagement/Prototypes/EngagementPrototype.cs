@@ -19,6 +19,13 @@ public sealed partial class EngagementPrototype : IPrototype
     public HashSet<ProtoId<EngagementRolePrototype>> Roles = new();
 
     /// <summary>
+    /// The components that the entity of the situation has when it is started, such as the state (<c>Goap</c>) in which it keeps
+    /// what the participants have in common, and that they read as <c>Engagement/Kind/State/Key</c>.
+    /// </summary>
+    [DataField]
+    public ComponentRegistry Components = new();
+
+    /// <summary>
     /// If true, the situation will be closed if the conditions regarding the number of roles are not met.
     /// </summary>
     [DataField]

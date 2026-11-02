@@ -28,12 +28,12 @@
   filters:
   - !type:IsDead
 
-# The living residents of the settlement that the raid is for, as they were when it began, the closest first: whom a raider goes
-# to. The settlement itself is only a place, and it may be out of reach.
+# The living residents that the squad of a raider is given, the closest first: whom a raider goes to. The residents are shared
+# between the squads by the raid, see AssignSquadTargets. The settlement itself is only a place, and it may be out of reach.
 - type: searchQuery
   id: RaidObjective
   query: !type:KeyEntities
-    key: Engagement/Raid/Owner/Targets
+    key: Engagement/RaidSquad/State/Objective
   filters:
   - !type:IsAlive
   considerations:

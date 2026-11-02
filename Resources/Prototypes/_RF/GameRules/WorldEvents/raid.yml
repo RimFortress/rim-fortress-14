@@ -144,6 +144,26 @@
           - minus: [var: rushRatio]
           - !type:Threshold
             moreThan: 0
+      - !type:AssignSquadTargets
+        squad: RaidSquad
+        targets: Query/RaidTargetsAlive/All
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        # The target goes to the squad that it costs the least: the closer, the cheaper, the more the squad has got for its
+        # strength, the dearer, and what is already the squad's is cheaper by a fifth, so they are not passed over little things.
+        cost:
+        - var: distance
+        - mul:
+          - float: 1
+          - add:
+            - var: load
+            - div: [var: capacity]
+        - mul:
+          - float: 1
+          - minus:
+            - var: current
+            - mul: [float: 0.2]
       tick:
       - !type:SetMathVariable
         key: targetPower
@@ -193,6 +213,26 @@
           - minus: [var: rushRatio]
           - !type:Threshold
             moreThan: 0
+      - !type:AssignSquadTargets
+        squad: RaidSquad
+        targets: Query/RaidTargetsAlive/All
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        # The target goes to the squad that it costs the least: the closer, the cheaper, the more the squad has got for its
+        # strength, the dearer, and what is already the squad's is cheaper by a fifth, so they are not passed over little things.
+        cost:
+        - var: distance
+        - mul:
+          - float: 1
+          - add:
+            - var: load
+            - div: [var: capacity]
+        - mul:
+          - float: 1
+          - minus:
+            - var: current
+            - mul: [float: 0.2]
       - !type:SetMathVariable
         key: deadFraction
         value:

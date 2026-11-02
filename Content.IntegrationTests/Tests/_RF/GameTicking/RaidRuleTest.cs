@@ -779,6 +779,117 @@ public sealed class RaidRuleTest : GameTest
         });
     }
 
+    /// <summary>
+    /// The share of the targets of a squad, which its participants read.
+    /// </summary>
+    private HashSet<EntityUid> Share(EngagementComponent squad, EntityUid member)
+    {
+        var state = _entMan.GetComponent<GoapComponent>(member).State;
+        var found = _goap.TryGetValue(state, new StateKey<HashSet<EntityUid>>("Engagement/RaidSquad/State/Objective"), out var share);
+        Assert.That(found, Is.True, "the squad has been given its share");
+        return share!;
+    }
+
+    /// <summary>
+    /// Every target is given to one squad, and none to two: the squads do not go for the same resident.
+    /// </summary>
+    [Test]
+    public async Task TestTargetsAreSharedBetweenSquads()
+    {
+        await Setup(residents: 8, raiders: 10);
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var squads = Squads();
+            Assert.That(squads, Has.Count.GreaterThan(1), "the force must be split for the test");
+
+            var shares = squads.Select(x => Share(x, x.Actors["SquadLeader"].Single())).ToList();
+
+            Assert.That(shares.SelectMany(x => x), Is.EquivalentTo(_residents), "everybody is given to somebody, only once");
+
+            foreach (var share in shares)
+            {
+                Assert.That(share, Is.Not.Empty);
+            }
+        });
+    }
+
+    /// <summary>
+    /// A raider goes only for the residents of its squad, whoever is closer.
+    /// </summary>
+    [Test]
+    public async Task TestRaiderGoesOnlyForItsSquadShare()
+    {
+        await Setup(residents: 8, raiders: 10);
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            foreach (var squad in Squads())
+            {
+                var share = Share(squad, squad.Actors["SquadLeader"].Single());
+
+                foreach (var member in squad.Actors.Values.SelectMany(x => x))
+                {
+                    var agent = new Entity<GoapComponent>(member, _entMan.GetComponent<GoapComponent>(member));
+                    Assert.That(_searcher.GetResults(agent, "RaidObjective"), Is.EquivalentTo(share));
+                }
+            }
+        });
+    }
+
+    /// <summary>
+    /// The shares do not change by themselves, and follow who is alive.
+    /// </summary>
+    [Test]
+    public async Task TestSharesAreStableAndFollowWhoIsAlive()
+    {
+        await Setup(residents: 8, raiders: 10);
+        await Pair.Server.WaitPost(Start);
+        await Run(2.2f);
+
+        var before = new List<(EntityUid Leader, HashSet<EntityUid> Share)>();
+        EntityUid killed = default;
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            foreach (var squad in Squads())
+            {
+                var leader = squad.Actors["SquadLeader"].Single();
+                before.Add((leader, new HashSet<EntityUid>(Share(squad, leader))));
+            }
+        });
+
+        // Nothing has changed: the shares are what they were.
+        await Run(4f);
+        await Pair.Server.WaitAssertion(() =>
+        {
+            foreach (var (leader, share) in before)
+            {
+                var squad = Squads().Single(x => x.Actors["SquadLeader"].Single() == leader);
+                Assert.That(Share(squad, leader), Is.EquivalentTo(share));
+            }
+        });
+
+        // One of the residents is killed: he is nobody's now, and the others are shared as before, give or take the balance.
+        await Pair.Server.WaitPost(() =>
+        {
+            killed = before[0].Share.First();
+            _mobState.ChangeMobState(killed, MobState.Dead);
+        });
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var shares = Squads().Select(x => Share(x, x.Actors["SquadLeader"].Single())).ToList();
+
+            Assert.That(shares.SelectMany(x => x), Is.EquivalentTo(_residents.Where(x => x != killed)));
+        });
+    }
+
     private string? Phase() => _entMan.GetComponent<PhasesComponent>(_rule).Current;
 
     [Test]

@@ -76,3 +76,10 @@
   - SquadLeader
   - SquadAssault
   - SquadSupport
+  # The numbers of the squad (its power, the ratio and the stance, see MeasureSquads) and the state that keeps what only the
+  # squad has: the share of the targets that it is given, see AssignSquadTargets.
+  components:
+  - type: MathVariables
+  - type: Goap
+    rootTask: Empty
+    enabled: false

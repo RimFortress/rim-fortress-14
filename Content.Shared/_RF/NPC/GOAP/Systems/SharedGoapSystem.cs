@@ -705,6 +705,18 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
             return false;
         }
 
+        if (GoapState.EngagementStateDomain.TryGetParams(domains, out engagement, out string? stateKey))
+        {
+            if (!_proto.HasIndex(engagement)
+                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
+                || !_goapQuery.TryComp(ent.Value.Owner, out var situationGoap)
+                || !TryGetValue(situationGoap.State, new StateKey<T>(stateKey), out var found))
+                return false;
+
+            value = found;
+            return true;
+        }
+
         if (GoapState.EngagementVarDomain.TryGetParams(domains, out engagement, out string? varName))
         {
             if (!_proto.HasIndex(engagement)

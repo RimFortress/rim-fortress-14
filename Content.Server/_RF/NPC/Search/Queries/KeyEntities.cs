@@ -31,10 +31,36 @@ public sealed partial class KeyEntitiesQuerySystem : NpcSearchQuerySystem<KeyEnt
     [Dependency] private SharedGoapSystem _goap = null!;
 
     [SubscribeLocalEvent]
-    private void OnSet(ref GoapStateValueSet<HashSet<EntityUid>> ev) => Update(ev.Agent, ev.Key, ev.Value);
+    private void OnSet(ref GoapStateValueSet<HashSet<EntityUid>> ev)
+    {
+        Update(ev.Agent, ev.Key, ev.Value);
+        RefreshDomainQueries();
+    }
 
     [SubscribeLocalEvent]
-    private void OnRemove(ref GoapStateValueRemove<HashSet<EntityUid>> ev) => Update(ev.Agent, ev.Key, null);
+    private void OnRemove(ref GoapStateValueRemove<HashSet<EntityUid>> ev)
+    {
+        Update(ev.Agent, ev.Key, null);
+        RefreshDomainQueries();
+    }
+
+    /// <summary>
+    /// The queries whose keys are not of the agent but of a domain (those of the owner of the situation, of the situation
+    /// itself) follow what the key is now: it is not known whose state has been changed, and it is not often.
+    /// </summary>
+    private void RefreshDomainQueries()
+    {
+        var searchers = EntityQueryEnumerator<NpcSearcherComponent, GoapComponent>();
+
+        while (searchers.MoveNext(out var uid, out var searcher, out var goap))
+        {
+            foreach (var key in DomainKeys(searcher).ToArray())
+            {
+                _goap.TryGetValue(goap.State, key, out var value);
+                Update(uid, key, value);
+            }
+        }
+    }
 
     [SubscribeLocalEvent]
     private void OnJoined(Entity<NpcSearcherComponent> ent, ref EngagementRoleJoined ev)
@@ -43,7 +69,7 @@ public sealed partial class KeyEntitiesQuerySystem : NpcSearchQuerySystem<KeyEnt
             return;
 
         // What the situation has, the agent has now.
-        foreach (var key in DomainKeys(ent.Comp))
+        foreach (var key in DomainKeys(ent.Comp).ToArray())
         {
             _goap.TryGetValue(goap.State, key, out var value);
             Update(ent, key, value);

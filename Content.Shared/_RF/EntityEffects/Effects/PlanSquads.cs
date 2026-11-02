@@ -2,7 +2,6 @@ using System.Linq;
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.MathHelpers.MathVariables;
-using Content.Shared._RF.NPC.Engagement;
 using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
@@ -159,7 +158,6 @@ public sealed partial class PlanSquadsEntityEffectsSystem : EntityEffectSystem<M
                 continue;
 
             _ownership.AddOwnership(squad.Value, owner: ent);
-            EnsureComp<MathVariablesComponent>(squad.Value);
 
             foreach (var member in members)
             {

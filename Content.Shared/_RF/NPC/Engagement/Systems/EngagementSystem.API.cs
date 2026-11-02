@@ -30,10 +30,11 @@ public partial class EngagementSystem
     {
         engagement = null;
 
-        if (!_prototype.HasIndex(protoId))
+        if (!_prototype.Resolve(protoId, out var proto))
             return false;
 
         var uid = Spawn();
+        EntityManager.AddComponents(uid, proto.Components);
         var comp = EnsureComp<EngagementComponent>(uid);
         comp.Kind = protoId;
         comp.Initiator = initiator;
