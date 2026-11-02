@@ -30,6 +30,12 @@ public sealed partial class PathProfilePrototype : IPrototype, IInheritingProtot
     public List<GoapCondition> Conditions = new();
 
     /// <summary>
+    /// The entities that the paths of the agents with this profile keep away from, see <see cref="PathAvoidSource"/>.
+    /// </summary>
+    [DataField, AlwaysPushInheritance]
+    public List<PathAvoidSource> Avoid = new();
+
+    /// <summary>
     /// A list of rules describing how to calculate the cost of each tile when finding a path.
     /// </summary>
     [DataField, AlwaysPushInheritance]

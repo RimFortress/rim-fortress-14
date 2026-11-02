@@ -1,10 +1,13 @@
 #nullable enable
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Server._RF.NPC.Pathfinding.Systems;
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Algorithms;
 using Content.Shared._RF.NPC.Pathfinding.Components;
@@ -77,6 +80,11 @@ public sealed class RfPathfindingTest : GameTest
 
 - type: pathProfile
   id: TestWalker
+  avoid:
+  # The entities in the key are avoided, as strong as the first of them is told by the curve: the number 1.
+  - key: TestThreats
+    radius: 6
+    cost: [float: 30]
   rules:
   - when:
     - !type:Blocked
@@ -172,6 +180,7 @@ public sealed class RfPathfindingTest : GameTest
     [SidedDependency(Side.Server)] private readonly RfPathfindingSystem _pathfinding = default!;
     [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
+    [SidedDependency(Side.Server)] private readonly SharedGoapSystem _goap = default!;
 
     private static RfPathPoly Poly(RfPathfindingChunk chunk, int x, int y)
         => chunk.GetPolys(RfPathfindingChunk.TileIndex(x, y))[0];
@@ -331,7 +340,8 @@ public sealed class RfPathfindingTest : GameTest
         Vector2? target,
         float range = 0.4f,
         double maxTime = 0.05,
-        ProtoId<PathQueryPrototype>? query = null)
+        ProtoId<PathQueryPrototype>? query = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
     {
         Assert.That(_pathfinding.BeginRequest(agent, "TestWalker", query), Is.True);
 
@@ -342,7 +352,8 @@ public sealed class RfPathfindingTest : GameTest
             target == null ? null : new EntityCoordinates(grid, target.Value),
             range,
             algorithm,
-            _pathfinding);
+            _pathfinding,
+            avoid: avoid);
         var queue = new JobQueue();
         queue.EnqueueJob(job);
 
@@ -558,6 +569,47 @@ public sealed class RfPathfindingTest : GameTest
             Assert.That(result.Status, Is.EqualTo(PathSearchStatus.PartialPath));
         });
     }
+
+    /// <summary>
+    /// The path keeps away from the entities that the profile says to avoid, where they are: with two ways that are the same, it takes
+    /// the one that is not near them, and it does not change when they are not there.
+    /// </summary>
+    [Test]
+    public async Task TestPathAvoidsTheEntitiesOfTheProfile()
+    {
+        // A wall across the strip with two gaps, at the bottom and at the top, and the target on the other side.
+        var walls = Enumerable.Range(0, 8).Where(y => y != 1 && y != 6).Select(y => (12, y)).ToArray();
+        var (grid, agent) = await CreateWorld(24, "TestPathAgent", walls);
+        EntityUid threat = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            threat = _entMan.SpawnEntity(null, new EntityCoordinates(grid, 12.5f, 1.5f));
+            _goap.SetValue(agent.Comp2.State, new StateKey<IReadOnlyCollection<EntityUid>>("TestThreats"), new HashSet<EntityUid> { threat });
+        });
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(3.5f, 3.5f);
+            var target = new Vector2(20.5f, 3.5f);
+
+            // The entity is at the bottom gap: the path goes by the top one.
+            var avoided = Search(grid, agent, new AStar(), start, target, avoid: _pathfinding.GetAvoid(agent, "TestWalker", null));
+            Assert.That(avoided.Status, Is.EqualTo(PathSearchStatus.Path));
+            Assert.That(CrossingAt(avoided, 12), Is.GreaterThan(4f), "by the top gap");
+
+            // And the other way round.
+            _entMan.GetComponent<TransformComponent>(threat).LocalPosition = new Vector2(12.5f, 6.5f);
+            var other = Search(grid, agent, new AStar(), start, target, avoid: _pathfinding.GetAvoid(agent, "TestWalker", null));
+            Assert.That(CrossingAt(other, 12), Is.LessThan(4f), "by the bottom gap");
+        });
+    }
+
+    /// <summary>
+    /// The y of the path where it goes by the column.
+    /// </summary>
+    private static float CrossingAt(PathSearchResult result, int column)
+        => result.Path.First(x => x.Box.Center.X >= column && x.Box.Center.X < column + 1).Box.Center.Y;
 
     /// <summary>
     /// Runs the game until the search of the agent is over.

@@ -1243,6 +1243,34 @@ public sealed class RaidRuleTest : GameTest
         await Pair.Server.WaitAssertion(() => Assert.That(_entMan.Deleted(door), Is.True, "the door is broken"));
     }
 
+    /// <summary>
+    /// The paths of the raiders keep away from the residents that are alive, the stronger the more: there is a place to avoid for each
+    /// of them, and none for the dead. The paths of those who are not in the raid are not changed.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersAvoidTheResidents()
+    {
+        await Setup(residents: 5, raiders: 2);
+        await Pair.Server.WaitPost(Start);
+        await Run(0.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var pathfinding = _entMan.System<Content.Server._RF.NPC.Pathfinding.Systems.RfPathfindingSystem>();
+            var raider = new Entity<Content.Shared._RF.NPC.Pathfinding.Components.PathProfilesComponent, GoapComponent>(
+                _raiders[0],
+                _entMan.GetComponent<Content.Shared._RF.NPC.Pathfinding.Components.PathProfilesComponent>(_raiders[0]),
+                _entMan.GetComponent<GoapComponent>(_raiders[0]));
+
+            Assert.That(pathfinding.GetAvoid(raider, "Walker", null), Has.Count.EqualTo(5));
+
+            _mobState.ChangeMobState(_residents[0], MobState.Dead);
+            _mobState.ChangeMobState(_residents[1], MobState.Dead);
+
+            Assert.That(pathfinding.GetAvoid(raider, "Walker", null), Has.Count.EqualTo(3));
+        });
+    }
+
     private string? Phase() => _entMan.GetComponent<PhasesComponent>(_rule).Current;
 
     [Test]

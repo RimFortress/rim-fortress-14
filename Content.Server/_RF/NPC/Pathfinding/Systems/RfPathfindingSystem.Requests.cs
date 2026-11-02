@@ -1,8 +1,11 @@
 using System.Threading;
+using System.Numerics;
 using System.Threading.Tasks;
 using Robust.Shared.Map.Components;
 using Content.Shared._RF.CCVar;
+using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
@@ -19,6 +22,8 @@ namespace Content.Server._RF.NPC.Pathfinding.Systems;
 public sealed partial class RfPathfindingSystem
 {
     [Dependency] private IConfigurationManager _cfg = null!;
+    [Dependency] private SharedGoapSystem _goap = null!;
+    [Dependency] private MathCurvesSystem _curves = null!;
 
     // All of the searches are run by one queue, so together they never take more than their share of a tick.
     private readonly PathJobQueue _jobs = new();
@@ -254,6 +259,7 @@ public sealed partial class RfPathfindingSystem
             }
 
             var algorithm = query.Algorithm;
+            var avoid = GetAvoid(agent, id, comp.RequestAvoid);
 
             RebuildPending(Transform(agent).GridUid);
 
@@ -268,12 +274,53 @@ public sealed partial class RfPathfindingSystem
                 this,
                 comp.JobCancel.Token,
                 comp.RequestTargetBounds,
-                comp.RequestAvoid);
+                avoid);
 
             _jobs.EnqueueJob(comp.Job);
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// The places that the path of the agent keeps away from: the ones that the request has, and those around the entities that the
+    /// profile says to avoid, where they are now.
+    /// </summary>
+    [PublicAPI]
+    public IReadOnlyList<PathAvoid>? GetAvoid(
+        Entity<PathProfilesComponent, GoapComponent> agent,
+        ProtoId<PathProfilePrototype> profileId,
+        IReadOnlyList<PathAvoid>? requested)
+    {
+        if (!_proto.TryIndex(profileId, out var profile)
+            || profile.Avoid.Count == 0
+            || Transform(agent).GridUid is not { } graph)
+            return requested;
+
+        var places = requested == null ? new List<PathAvoid>() : new List<PathAvoid>(requested);
+        var inverse = _transform.GetInvWorldMatrix(graph);
+
+        foreach (var source in profile.Avoid)
+        {
+            if (!_goap.CheckCondition(agent.Owner, agent.Comp2.State, source.AgentConditions)
+                || !_goap.TryGetValue(agent.Comp2.State, source.Key, out var entities))
+                continue;
+
+            foreach (var uid in entities)
+            {
+                if (TerminatingOrDeleted(uid) || uid == agent.Owner)
+                    continue;
+
+                var cost = _curves.Get(source.Cost, 0f, uid);
+
+                if (cost <= 0f)
+                    continue;
+
+                places.Add(new PathAvoid(graph, Vector2.Transform(_transform.GetWorldPosition(uid), inverse), source.Radius, cost));
+            }
+        }
+
+        return places;
     }
 }

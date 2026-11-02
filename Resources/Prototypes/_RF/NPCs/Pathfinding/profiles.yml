@@ -5,6 +5,19 @@
 - type: pathProfile
   id: WalkerBase
   abstract: true
+  avoid:
+  # The raiders keep out of reach of the residents of the settlement that the raid is for, the stronger a resident is the more: they
+  # come to the settlement by the way that is covered the least, round the strong, and break through where it is weak. It is where the
+  # residents are when the path is searched for, and the places that are covered are only counted by how far they are, not by what is
+  # in the way.
+  - key: Engagement/Raid/Owner/Targets
+    radius: 14
+    requires:
+    - Engagement/Raid/In == true
+    cost:
+    - !type:PrototypeCurve
+      preset: FighterPower
+    - mul: [float: 15]
   rules:
   # The doors. A closed door that opens by itself is no trouble. The agent that only looks for a place to wander to does
   # not go through a door that has to be opened or pried. A door that cannot be gone through, or has to be pried and there is nothing
