@@ -38,10 +38,26 @@
       retreatMorale: [float: 0.3]
       # For how long they retreat, until those who are left are gone.
       retreatDuration: [float: 180]
+      # For how long the raiders that have won leave, until those who are left are gone: they walk away to where nobody sees them.
+      withdrawDuration: [float: 240]
+      # What the phases look at, before the first measurement is made.
+      deadFraction: [float: 0]
+      morale: [float: 1]
+      raiders: [float: 1]
   - type: Phases
     phases:
+      # The raiders come to the settlement and fight. The raid is won when most of the residents are dead, and then the raiders leave,
+      # it is lost when the raiders are all dead, and when they lose heart they retreat.
       Assault:
         tick:
+        - !type:SetPhase
+          phase: Withdraw
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: deadFraction
+            - !type:Threshold
+              moreThan: 0.8
         - !type:SetPhase
           phase: Retreat
           conditions:
@@ -51,6 +67,16 @@
             - minus: [var: retreatMorale]
             - !type:Threshold
               lessThan: 0
+        - !type:EndWorldRule
+          result: Failed
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: raiders
+            - !type:Threshold
+              lessThan: 1
+      # The raiders have lost heart and run. They leave the way that is the cheapest, round the settlements, and are gone where nobody
+      # observes them. The raid is lost when they are all gone, or when they have not got away in time.
       Retreat:
         enter:
         - !type:ApplyToEngagementActors
@@ -59,7 +85,6 @@
           effects:
           - !type:SetGoapFlag
             key: Retreating
-        # They leave the way that is the cheapest, round the settlements, and are gone where nobody observes them.
         tick:
         - !type:ApplyToEngagementActors
           engagement: Raid
@@ -68,6 +93,22 @@
           - !type:DespawnEntity
             conditions:
             - !type:Unobserved
+        - !type:SetPhase
+          phase: Withdraw
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: deadFraction
+            - !type:Threshold
+              moreThan: 0.8
+        - !type:EndWorldRule
+          result: Failed
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: raiders
+            - !type:Threshold
+              lessThan: 1
         # Those who cannot leave in time are gone with the end of the raid.
         - !type:EndWorldRule
           result: Failed
@@ -77,6 +118,43 @@
             - !type:CurTimeSeconds
             - minus: [var: phaseStartedAt]
             - minus: [var: retreatDuration]
+            - !type:Threshold
+              moreThan: 0
+      # The raid has won. The raiders leave the same way as when they retreat, and are not seen to vanish: each is gone only where
+      # nobody observes it. The raid is over when they are all gone, or when they have not got away in time.
+      Withdraw:
+        enter:
+        - !type:ApplyToEngagementActors
+          engagement: Raid
+          role: Raider
+          effects:
+          - !type:SetGoapFlag
+            key: Retreating
+        tick:
+        - !type:ApplyToEngagementActors
+          engagement: Raid
+          role: Raider
+          effects:
+          - !type:DespawnEntity
+            conditions:
+            - !type:Unobserved
+        - !type:EndWorldRule
+          result: Won
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: raiders
+            - !type:Threshold
+              lessThan: 1
+        # Those who cannot leave in time, such as the ones that are down, are gone with the end of the raid.
+        - !type:EndWorldRule
+          result: Won
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - !type:CurTimeSeconds
+            - minus: [var: phaseStartedAt]
+            - minus: [var: withdrawDuration]
             - !type:Threshold
               moreThan: 0
   - type: KeyedEntityEffectOnTrigger
@@ -231,24 +309,6 @@
         - mul: [var: moraleKillBonus]
         - add: [var: aliveFraction]
         - minus: [var: pressure]
-      # The settlement is destroyed when most of its residents are dead.
-      - !type:EndWorldRule
-        result: Won
-        conditions:
-        - !type:MathCurveCondition
-          curves:
-          - var: deadFraction
-          - !type:Threshold
-            moreThan: 0.8
-      # The raid is lost if the raiders are all dead. If they cannot kill anyone for a long time their morale falls and they retreat.
-      - !type:EndWorldRule
-        result: Failed
-        conditions:
-        - !type:MathCurveCondition
-          curves:
-          - var: raiders
-          - !type:Threshold
-            lessThan: 1
       RaidTargetsDead.added:
       - !type:SetMathVariable
         key: kills

@@ -253,6 +253,90 @@ public sealed class RaidRuleTest : GameTest
         await Pair.Server.WaitPost(() => _mobState.ChangeMobState(_residents[4], MobState.Dead));
         await Run(2.2f);
 
+        // The raid has won, but it is not over: the raiders leave.
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Withdraw"));
+            Assert.That(Ended(), Is.False);
+        });
+
+        // They have not got away in time, and the raid is over.
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "withdrawDuration", 1f));
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Ended(), Is.True);
+            Assert.That(Result(), Is.EqualTo("Won"));
+        });
+    }
+
+    /// <summary>
+    /// The raiders that have won leave, and do not vanish before the eyes of the player: each of them is gone where nobody observes it,
+    /// and the raid is won when they are all gone.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersLeaveUnseenAfterTheVictory()
+    {
+        await Setup(raiders: 3);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            var biome = _entMan.AddComponent<BiomeComponent>(_grid);
+            biome.Enabled = false;
+#pragma warning disable RA0002
+            for (var x = 0; x < 4; x++)
+            {
+                for (var y = 0; y < 4; y++)
+                {
+                    biome.LoadedChunks.Add(new Vector2i(x * 8, y * 8));
+                }
+            }
+#pragma warning restore RA0002
+
+            _transform.SetCoordinates(_raiders[0], At(4.5f, 4.5f)); // observed, and far from the edge of the loaded area
+            _transform.SetCoordinates(_raiders[1], At(4.5f, 6.5f)); // observed
+            _transform.SetCoordinates(_raiders[2], At(36.5f, 36.5f)); // in a chunk that is not loaded
+            Start();
+        });
+        await Run(1.2f);
+
+        // The residents are dead.
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var resident in _residents)
+            {
+                _mobState.ChangeMobState(resident, MobState.Dead);
+            }
+        });
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Withdraw"));
+            Assert.That(Ended(), Is.False, "the raiders are still there");
+
+            foreach (var raider in _raiders.Take(2))
+            {
+                Assert.That(_entMan.Deleted(raider), Is.False, "it is seen: it is not gone");
+                var state = _entMan.GetComponent<GoapComponent>(raider).State;
+                Assert.That(_goap.TryGetValue(state, Retreating, out var leaving) && leaving, Is.True, "it is leaving");
+            }
+
+            Assert.That(_entMan.Deleted(_raiders[2]), Is.True, "it is not seen: it is gone");
+        });
+
+        // They get away one after another, and the raid is won when the last of them is gone.
+        await Pair.Server.WaitPost(() => _transform.SetCoordinates(_raiders[0], At(36.5f, 4.5f)));
+        await Run(1.2f);
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_entMan.Deleted(_raiders[0]), Is.True);
+            Assert.That(Ended(), Is.False);
+        });
+
+        await Pair.Server.WaitPost(() => _transform.SetCoordinates(_raiders[1], At(36.5f, 6.5f)));
+        await Run(2.2f);
         await Pair.Server.WaitAssertion(() =>
         {
             Assert.That(Ended(), Is.True);
@@ -1429,7 +1513,8 @@ public sealed class RaidRuleTest : GameTest
         await Pair.Server.WaitAssertion(() =>
         {
             Assert.That(Phase(), Is.EqualTo("Retreat"));
-            foreach (var raider in _raiders)
+            // The ones that are alive run, the dead ones are not in the raid any more.
+            foreach (var raider in _raiders.Where(r => _mobState.IsAlive(r)))
             {
                 var state = _entMan.GetComponent<GoapComponent>(raider).State;
                 Assert.That(_goap.TryGetValue(state, Retreating, out var retreating) && retreating, Is.True);
