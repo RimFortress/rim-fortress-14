@@ -19,7 +19,8 @@
       raidersTotal: [float: 0]
       # How strong the residents and the raiders are, see EntityPowerSystem, and how the raiders are split into squads. A squad has to
       # be at least squadPowerRatio of the power of the residents, so a force that is not stronger than that is one squad, and the
-      # stronger it is the more squads there are, up to maxSquads of the PlanSquads.
+      # stronger it is the more squads there are, up to maxSquads of the PlanSquads, when the raid has just come. After that the squads
+      # are only joined, see MergeWeakSquads.
       targetPower: [float: 0]
       raidPower: [float: 0]
       squadPowerRatio: [float: 0.6]
@@ -27,6 +28,8 @@
       # than rushRatio of it, otherwise it keeps together, see the goals of the raiders.
       holdRatio: [float: 0.5]
       rushRatio: [float: 1.5]
+      # A squad that is weaker than mergeFraction of that joins another one, if it stays so for long enough and one is near.
+      mergeFraction: [float: 0.5]
       planning: [float: 0]
       # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
       # kills takes away. When it falls below retreatMorale the raiders retreat.
@@ -117,55 +120,6 @@
       - !type:JoinEngagement
         engagement: Raid
         roles: [Raider]
-      spawned.all:
-      - !type:PlanSquads
-        source: Raid
-        sourceRole: Raider
-        squad: RaidSquad
-        maxSquads: 4
-        power:
-        - !type:PrototypeCurve
-          preset: FighterPower
-        minPower:
-        - var: targetPower
-        - mul: [var: squadPowerRatio]
-      - !type:MeasureSquads
-        squad: RaidSquad
-        power:
-        - !type:PrototypeCurve
-          preset: FighterPower
-        threat:
-        - var: targetPower
-        stance:
-        - var: ratio
-        - minus: [var: holdRatio]
-        - !type:Threshold
-          moreThan: 0
-        - add:
-          - var: ratio
-          - minus: [var: rushRatio]
-          - !type:Threshold
-            moreThan: 0
-      - !type:AssignSquadTargets
-        squad: RaidSquad
-        targets: Query/RaidTargetsAlive/All
-        power:
-        - !type:PrototypeCurve
-          preset: FighterPower
-        # The target goes to the squad that it costs the least: the closer, the cheaper, the more the squad has got for its
-        # strength, the dearer, and what is already the squad's is cheaper by a fifth, so they are not passed over little things.
-        cost:
-        - var: distance
-        - mul:
-          - float: 1
-          - add:
-            - var: load
-            - div: [var: capacity]
-        - mul:
-          - float: 1
-          - minus:
-            - var: current
-            - mul: [float: 0.2]
       tick:
       - !type:SetMathVariable
         key: targetPower
@@ -185,9 +139,9 @@
           - add:
             - !type:PrototypeCurve
               preset: FighterPower
-      # The squads are made again when the force has changed so that they are not what they should be: the weaker it is the fewer
-      # squads there are, and a squad that has lost its strength joins the others.
+      # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeWeakSquads.
       - !type:PlanSquads
+        onlyIfNone: true
         source: Raid
         sourceRole: Raider
         squad: RaidSquad
@@ -215,14 +169,27 @@
           - minus: [var: rushRatio]
           - !type:Threshold
             moreThan: 0
+      # A squad that has been too weak for a while joins the closest squad, if it is near. The other squads stay as they are.
+      - !type:MergeWeakSquads
+        squad: RaidSquad
+        delay: 10
+        maxDistance: 30
+        weak:
+        - var: power
+        - minus:
+          - var: targetPower
+          - mul: [var: squadPowerRatio]
+          - mul: [var: mergeFraction]
+        - !type:Threshold
+          lessThan: 0
       - !type:AssignSquadTargets
         squad: RaidSquad
         targets: Query/RaidTargetsAlive/All
         power:
         - !type:PrototypeCurve
           preset: FighterPower
-        # The target goes to the squad that it costs the least: the closer, the cheaper, the more the squad has got for its
-        # strength, the dearer, and what is already the squad's is cheaper by a fifth, so they are not passed over little things.
+        # The target that nobody has goes to the squad that it costs the least: the closer, the cheaper, the more the squad has got for
+        # its strength, the dearer.
         cost:
         - var: distance
         - mul:
@@ -230,11 +197,6 @@
           - add:
             - var: load
             - div: [var: capacity]
-        - mul:
-          - float: 1
-          - minus:
-            - var: current
-            - mul: [float: 0.2]
       - !type:SetMathVariable
         key: deadFraction
         value:

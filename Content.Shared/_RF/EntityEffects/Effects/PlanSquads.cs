@@ -13,7 +13,9 @@ namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Splits the participants of the situations of a kind that the target owns (the raiders) into squads:
-/// situations of another kind that the target owns too.
+/// situations of another kind that the target owns too. It is for the start of the raid: it takes all the squads apart if they are
+/// not right, which makes the raiders change places, so what happens later is up to the effects that change the squads a little,
+/// such as <see cref="MergeWeakSquads"/>.
 /// </summary>
 public sealed partial class PlanSquads : EntityEffectBase<PlanSquads>
 {
@@ -54,6 +56,13 @@ public sealed partial class PlanSquads : EntityEffectBase<PlanSquads>
     /// </summary>
     [DataField]
     public int MaxSquads = 4;
+
+    /// <summary>
+    /// Does nothing if there are squads already (with participants): the effect then only makes the squads that are not there yet,
+    /// once, and what happens to them later is up to the others.
+    /// </summary>
+    [DataField]
+    public bool OnlyIfNone;
 
     /// <summary>
     /// The variable of the target that is 1 while the squads are being made, and 0 otherwise. The squads that are disbanded say
@@ -118,7 +127,7 @@ public sealed partial class PlanSquadsEntityEffectsSystem : EntityEffectSystem<M
             _engagement.EndEngagement(squad.AsNullable(), EngagementEndReason.Dissolved);
         }
 
-        if (fighters.Count == 0)
+        if (fighters.Count == 0 || effect.OnlyIfNone && squads.Count > 0)
             return;
 
         var total = fighters.Sum(x => x.Power);

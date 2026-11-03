@@ -17,10 +17,10 @@ namespace Content.Shared._RF.EntityEffects.Effects;
 /// <summary>
 /// Shares the targets between the squads that the target owns: every target is given to one squad, and every squad has its share
 /// in a key of the state of the squad, which its participants read as <c>Engagement/RaidSquad/State/Objective</c>. A target goes to
-/// the squad it costs the least, as the cost curves say: that can be how far it is from the squad, how much of the targets
-/// the squad has already got compared with its strength (<c>load</c> and <c>capacity</c>), and whether it is the squad's already
-/// (<c>current</c>), so the targets are not passed from squad to squad over a small difference. The strongest targets are shared
-/// first. It can be applied as often as the squads or the targets may have changed.
+/// the squad it costs the least, as the cost curves say: that can be how far it is from the squad, and how much of the targets
+/// the squad has already got compared with its strength (<c>load</c> and <c>capacity</c>). The strongest targets are shared first.
+/// A target that a squad has stays with it: only those that nobody has are shared, so it can be applied as often as the squads or
+/// the targets may have changed, and nothing is passed over.
 /// </summary>
 public sealed partial class AssignSquadTargets : EntityEffectBase<AssignSquadTargets>
 {
@@ -51,8 +51,7 @@ public sealed partial class AssignSquadTargets : EntityEffectBase<AssignSquadTar
     /// <summary>
     /// What it costs a squad to take a target, calculated with the target as the user. The least cost wins. The curves see the
     /// variables of the target of the effect and: <c>distance</c> from the squad to the target, <c>load</c> the power of the
-    /// targets the squad has got already, <c>capacity</c> the power of the squad, <c>power</c> of the target, and <c>current</c>
-    /// which is 1 if the target is the squad's already, 0 if not.
+    /// targets the squad has got already, <c>capacity</c> the power of the squad, <c>power</c> of the target.
     /// </summary>
     [DataField(required: true)]
     public List<MathCurve> Cost = new();
@@ -122,7 +121,27 @@ public sealed partial class AssignSquadTargetsEntityEffectsSystem : EntityEffect
             .OrderByDescending(x => x.Power)
             .ToList();
 
+        // Who has a target keeps it: the targets are not passed from squad to squad, and the squads do not run across the settlement
+        // because of a loss somewhere. Only the targets that nobody has are given out: the ones that were the share of a squad that is
+        // gone, and the new ones.
+        var free = new List<(EntityUid Uid, float Power)>();
+
         foreach (var (target, power) in weighted)
+        {
+            var owner = squads.FirstOrDefault(x =>
+                SharedGoapSystem.TryGetValueNoEcsDefaults(x.Goap.State, effect.Key, out var share) && share.Contains(target));
+
+            if (owner == null)
+            {
+                free.Add((target, power));
+                continue;
+            }
+
+            owner.Share.Add(target);
+            owner.Load += power;
+        }
+
+        foreach (var (target, power) in free)
         {
             var targetPosition = _transform.GetWorldPosition(target);
             SquadState? best = null;
@@ -130,16 +149,12 @@ public sealed partial class AssignSquadTargetsEntityEffectsSystem : EntityEffect
 
             foreach (var squad in squads)
             {
-                var current = SharedGoapSystem.TryGetValueNoEcsDefaults(squad.Goap.State, effect.Key, out var share)
-                              && share.Contains(target);
-
                 var costVariables = new Dictionary<string, float>(variables)
                 {
                     ["distance"] = Vector2.Distance(squad.Position, targetPosition),
                     ["load"] = squad.Load,
                     ["capacity"] = squad.Capacity,
                     ["power"] = power,
-                    ["current"] = current ? 1f : 0f,
                 };
 
                 var cost = _curves.Get(effect.Cost, 0f, target, costVariables);

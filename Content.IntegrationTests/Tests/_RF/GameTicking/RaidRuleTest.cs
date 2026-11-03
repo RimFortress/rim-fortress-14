@@ -424,10 +424,10 @@ public sealed class RaidRuleTest : GameTest
     }
 
     /// <summary>
-    /// When the force is weaker the squads are fewer: a squad that has lost its strength joins the others.
+    /// A squad that has been too weak for a while joins the closest squad: the squads are fewer, and everybody is in one.
     /// </summary>
     [Test]
-    public async Task TestSquadsJoinWhenTheForceIsWeaker()
+    public async Task TestWeakSquadJoinsTheClosest()
     {
         await Setup(residents: 2, raiders: 10);
         await Pair.Server.WaitPost(Start);
@@ -438,19 +438,130 @@ public sealed class RaidRuleTest : GameTest
 
         await Pair.Server.WaitPost(() =>
         {
-            for (var i = 0; i < 8; i++)
+            for (var i = 0; i < 6; i++)
             {
                 _mobState.ChangeMobState(_raiders[i], MobState.Dead);
             }
+
+            // Every squad is too weak now.
+            _variables.Set(_rule, "mergeFraction", 1000f);
         });
-        await Run(2.2f);
+
+        // Not at once: it has to be weak for the delay.
+        await Run(3f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Squads().Count, Is.GreaterThanOrEqualTo(2)));
+
+        await Run(12f);
 
         await Pair.Server.WaitAssertion(() =>
         {
             Assert.That(before, Is.GreaterThan(1));
-            Assert.That(Squads(), Has.Count.EqualTo(ExpectedSquads()));
             Assert.That(Squads().Count, Is.LessThan(before));
-            AssertEverybodyIsInOneSquad(_raiders.Skip(8));
+            AssertEverybodyIsInOneSquad(_raiders.Skip(6));
+        });
+    }
+
+    /// <summary>
+    /// The squads that are not weak are not touched when somebody is lost somewhere else: the same members, the same leaders, and the
+    /// same targets. The raid does not change places over a loss.
+    /// </summary>
+    [Test]
+    public async Task TestLossInOneSquadDoesNotMoveTheOthers()
+    {
+        await Setup(residents: 8, raiders: 10);
+        await Pair.Server.WaitPost(Start);
+        await Run(2.2f);
+
+        var before = new List<(EntityUid Leader, HashSet<EntityUid> Members, HashSet<EntityUid> Share)>();
+        EntityUid lost = default;
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Squads(), Has.Count.GreaterThan(1), "the force must be split for the test");
+
+            foreach (var squad in Squads())
+            {
+                var leader = squad.Actors["SquadLeader"].Single();
+                before.Add((leader, squad.Actors.Values.SelectMany(a => a).ToHashSet(), new HashSet<EntityUid>(Share(squad, leader))));
+            }
+        });
+
+        // The member of one of the squads is lost.
+        await Pair.Server.WaitPost(() =>
+        {
+            lost = before[0].Members.First(x => x != before[0].Leader);
+            _mobState.ChangeMobState(lost, MobState.Dead);
+        });
+        await Run(15f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            foreach (var (leader, members, share) in before.Skip(1))
+            {
+                var squad = Squads().Single(x => x.Actors["SquadLeader"].Single() == leader);
+
+                Assert.That(squad.Actors.Values.SelectMany(a => a), Is.EquivalentTo(members), "the same members");
+                Assert.That(Share(squad, leader), Is.EquivalentTo(share), "the same targets");
+            }
+
+            // The squad that has lost somebody has the same leader and the rest.
+            var first = Squads().Single(x => x.Actors["SquadLeader"].Single() == before[0].Leader);
+            Assert.That(first.Actors.Values.SelectMany(a => a), Is.EquivalentTo(before[0].Members.Where(x => x != lost)));
+        });
+    }
+
+    /// <summary>
+    /// A squad that is weak does not join a squad that is far: it stays where it is.
+    /// </summary>
+    [Test]
+    public async Task TestWeakSquadDoesNotJoinAFarSquad()
+    {
+        await Setup(residents: 8, raiders: 10);
+
+        // The squads hold their positions, so they stay where they are put.
+        await Pair.Server.WaitPost(() =>
+        {
+            _variables.Set(_rule, "holdRatio", 1000f);
+            _variables.Set(_rule, "rushRatio", 2000f);
+            Start();
+        });
+        await Run(2.2f);
+
+        var before = 0;
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var squads = Squads();
+            before = squads.Count;
+            Assert.That(before, Is.GreaterThan(1), "the force must be split for the test");
+        });
+
+        // The first squad is in one corner, the others in the other.
+        await Pair.Server.WaitPost(() =>
+        {
+            var squads = Squads();
+
+            foreach (var member in squads[0].Actors.Values.SelectMany(a => a))
+            {
+                _transform.SetCoordinates(member, At(2, 38));
+            }
+
+            foreach (var member in squads.Skip(1).SelectMany(x => x.Actors.Values.SelectMany(a => a)))
+            {
+                _transform.SetCoordinates(member, At(38, 2));
+            }
+
+            _variables.Set(_rule, "mergeFraction", 1000f);
+        });
+        await Run(20f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            // The ones near each other have joined, and the far ones are as they were.
+            var squads = Squads();
+            Assert.That(squads.Count, Is.GreaterThanOrEqualTo(2));
+            Assert.That(squads.Count(x => x.Actors.Values.SelectMany(a => a).Any(m =>
+                Vector2.Distance(_transform.GetWorldPosition(m), new Vector2(2, 38)) < 4f)), Is.EqualTo(1));
         });
     }
 
@@ -610,6 +721,7 @@ public sealed class RaidRuleTest : GameTest
     /// </summary>
     private async Task StartFarAway(float holdRatio, float rushRatio)
     {
+        await Run(1f);
         await Pair.Server.WaitPost(() =>
         {
             _variables.Set(_rule, "holdRatio", holdRatio);
@@ -885,7 +997,7 @@ public sealed class RaidRuleTest : GameTest
             }
         });
 
-        // One of the residents is killed: he is nobody's now, and the others are shared as before, give or take the balance.
+        // One of the residents is killed: he is nobody's now, and the others stay with whom they were with.
         await Pair.Server.WaitPost(() =>
         {
             killed = before[0].Share.First();
@@ -895,9 +1007,11 @@ public sealed class RaidRuleTest : GameTest
 
         await Pair.Server.WaitAssertion(() =>
         {
-            var shares = Squads().Select(x => Share(x, x.Actors["SquadLeader"].Single())).ToList();
-
-            Assert.That(shares.SelectMany(x => x), Is.EquivalentTo(_residents.Where(x => x != killed)));
+            foreach (var (leader, share) in before)
+            {
+                var squad = Squads().Single(x => x.Actors["SquadLeader"].Single() == leader);
+                Assert.That(Share(squad, leader), Is.EquivalentTo(share.Where(x => x != killed)));
+            }
         });
     }
 
