@@ -284,9 +284,14 @@
       - !type:SetMathVariable
         key: raiders
         value:
+        # Those who can fight: the ones that are down are in the raid, but they are not in the formation, they are neither the force
+        # of the raid nor the morale of it.
         - !type:EngagementActors
           engagement: Raid
           role: Raider
+          conditions:
+          - !type:MobState
+            targetState: Alive
       - !type:SetMathVariable
         key: sinceLastKill
         value:
@@ -337,10 +342,13 @@
         key: losses
         value:
         - add: [float: 1]
-      # Whoever is left when the raid is over is gone.
+      # Whoever is able to fight and is left when the raid is over is gone. The ones that are down are left where they lie.
       ended:
       - !type:ApplyToEngagementActors
         engagement: Raid
         role: Raider
         effects:
         - !type:DespawnEntity
+          conditions:
+          - !type:MobStateCondition
+            mobstate: Alive

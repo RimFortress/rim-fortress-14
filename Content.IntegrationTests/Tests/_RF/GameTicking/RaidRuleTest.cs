@@ -268,6 +268,7 @@ public sealed class RaidRuleTest : GameTest
         {
             Assert.That(Ended(), Is.True);
             Assert.That(Result(), Is.EqualTo("Won"));
+            Assert.That(_raiders.All(r => _entMan.Deleted(r)), Is.True, "the ones that could fight and are left are gone");
         });
     }
 
@@ -1466,6 +1467,68 @@ public sealed class RaidRuleTest : GameTest
             _mobState.ChangeMobState(_residents[1], MobState.Dead);
 
             Assert.That(pathfinding.GetAvoid(raider, "Walker", null), Has.Count.EqualTo(3));
+        });
+    }
+
+    /// <summary>
+    /// Takes the raider down, not dead: it is critical.
+    /// </summary>
+    private void PutDown(EntityUid raider)
+    {
+        _entMan.System<DamageableSystem>().TryChangeDamage(raider, new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 150));
+        Assert.That(_mobState.IsCritical(raider), Is.True, "the raider must be down for the test");
+    }
+
+    /// <summary>
+    /// The raiders that are down are in the raid, but they are not the force of it: they are not counted in its morale.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersThatAreDownAreNotInTheFormation()
+    {
+        await Setup(raiders: 3);
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Variable("raiders"), Is.EqualTo(3f)));
+
+        await Pair.Server.WaitPost(() =>
+        {
+            PutDown(_raiders[0]);
+            PutDown(_raiders[1]);
+        });
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Variable("raiders"), Is.EqualTo(1f));
+            Assert.That(Variable("aliveFraction"), Is.EqualTo(1f / 3f).Within(0.01f));
+            Assert.That(Ended(), Is.False, "one of them can fight");
+        });
+    }
+
+    /// <summary>
+    /// A raid in which all the raiders are down is lost, they are not waited for to die, and they are left where they lie.
+    /// </summary>
+    [Test]
+    public async Task TestRaidIsLostWhenAllTheRaidersAreDown()
+    {
+        await Setup(raiders: 3);
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var raider in _raiders)
+            {
+                PutDown(raider);
+            }
+        });
+        await Run(2.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Ended(), Is.True);
+            Assert.That(Result(), Is.EqualTo("Failed"));
+            Assert.That(_raiders.All(r => !_entMan.Deleted(r)), Is.True, "the ones that are down are left");
         });
     }
 
