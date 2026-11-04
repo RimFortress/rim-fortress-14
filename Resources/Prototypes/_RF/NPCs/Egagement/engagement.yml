@@ -29,7 +29,7 @@
     roles:
     - Raider
 
-# The squad of a raid: there are as many of them as the raiders need, see JoinEngagement. It is not over when it has no leader.
+# The squad of a raid: there are as many of them as the raiders need, see PlaceInGroup. It is not over when it has no leader.
 - type: entity
   id: RaidSquad
   parent: BaseEngagement
@@ -42,8 +42,8 @@
     - SquadBreacher
     - SquadAssault
     - SquadSupport
-  # The numbers of the squad (its power, the ratio and the stance, see MeasureSquads) and the state that keeps what only the
-  # squad has: the share of the targets that it is given, see AssignSquadTargets.
+  # The numbers of the squad (its power, the ratio and the stance, see MeasureGroups) and the state that keeps what only the
+  # squad has: the share of the targets that it is given, see AssignGroupTargets.
   - type: MathVariables
   - type: Goap
     rootTask: Empty

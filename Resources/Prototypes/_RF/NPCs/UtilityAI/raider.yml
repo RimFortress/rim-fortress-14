@@ -14,7 +14,7 @@
   goalState:
     TargetAttacked: true
 
-# The tactics of a squad depend on its stance (see MeasureSquads and the Raid rule: it is made of how strong the squad is against the
+# The tactics of a squad depend on its stance (see MeasureGroups and the Raid rule: it is made of how strong the squad is against the
 # residents) and on the role. In the stance 2, rush, the squad is much stronger: it does not keep together, the assault goes for the
 # residents by itself, and only the support stays with the leader. In the stance 1 the squad stays together: all the members stay with
 # the leader. In the stance 0, hold, the squad is too weak: it does not advance, the leader holds, and so do the members, until the

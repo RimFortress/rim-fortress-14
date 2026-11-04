@@ -19,8 +19,8 @@
       raidersTotal: [float: 0]
       # How strong the residents and the raiders are, see EntityPowerSystem, and how the raiders are split into squads. A squad has to
       # be at least squadPowerRatio of the power of the residents, so a force that is not stronger than that is one squad, and the
-      # stronger it is the more squads there are, up to maxSquads of the PlanSquads, when the raid has just come. After that the squads
-      # are only joined, see MergeWeakSquads.
+      # stronger it is the more squads there are, up to maxGroups of the FormGroups, when the raid has just come. After that the squads
+      # are only joined, see MergeGroups.
       targetPower: [float: 0]
       raidPower: [float: 0]
       squadPowerRatio: [float: 0.6]
@@ -30,7 +30,6 @@
       rushRatio: [float: 1.5]
       # A squad that is weaker than mergeFraction of that joins another one, if it stays so for long enough and one is near.
       mergeFraction: [float: 0.5]
-      planning: [float: 0]
       # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
       # kills takes away. When it falls below retreatMorale the raiders retreat.
       moraleKillBonus: [float: 0.5]
@@ -195,8 +194,8 @@
         - add: [float: 1]
       # The raid owns the raiders and everything they carry, so they share the equipment: what one has, the others find.
       - !type:OwnUser
-      - !type:JoinEngagement
-        engagement: RaidForce
+      - !type:PlaceInGroup
+        group: RaidForce
         roles: [Raider]
       tick:
       - !type:SetMathVariable
@@ -217,21 +216,21 @@
           - add:
             - !type:PrototypeCurve
               preset: FighterPower
-      # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeWeakSquads.
-      - !type:PlanSquads
+      # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeGroups.
+      - !type:FormGroups
         onlyIfNone: true
         source: RaidForce
         sourceRole: Raider
-        squad: RaidSquad
-        maxSquads: 4
+        group: RaidSquad
+        maxGroups: 4
         power:
         - !type:PrototypeCurve
           preset: FighterPower
         minPower:
         - var: targetPower
         - mul: [var: squadPowerRatio]
-      - !type:MeasureSquads
-        squad: RaidSquad
+      - !type:MeasureGroups
+        group: RaidSquad
         power:
         - !type:PrototypeCurve
           preset: FighterPower
@@ -248,8 +247,8 @@
           - !type:Threshold
             moreThan: 0
       # A squad that has been too weak for a while joins the closest squad, if it is near. The other squads stay as they are.
-      - !type:MergeWeakSquads
-        squad: RaidSquad
+      - !type:MergeGroups
+        group: RaidSquad
         delay: 10
         maxDistance: 30
         weak:
@@ -260,8 +259,8 @@
           - mul: [var: mergeFraction]
         - !type:Threshold
           lessThan: 0
-      - !type:AssignSquadTargets
-        squad: RaidSquad
+      - !type:AssignGroupTargets
+        group: RaidSquad
         targets: Query/RaidTargetsAlive/All
         power:
         - !type:PrototypeCurve
@@ -325,18 +324,12 @@
         - !type:CurTimeSeconds
       # A squad that has lost its leader gets a new one from the members.
       RaidSquad.left.SquadLeader:
-      - !type:PromoteEngagementActor
-        engagement: RaidSquad
+      - !type:FillGroupRole
+        group: RaidSquad
         role: SquadLeader
         rank:
         - !type:PrototypeCurve
           preset: FighterPower
-        conditions:
-        - !type:MathCurveCondition
-          curves:
-          - var: planning
-          - !type:Threshold
-            lessThan: 0.5
       RaidForce.left.Raider:
       - !type:SetMathVariable
         key: losses

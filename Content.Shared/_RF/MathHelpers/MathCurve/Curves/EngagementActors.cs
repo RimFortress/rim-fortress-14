@@ -4,7 +4,7 @@ using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
-using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.NPC.Groups.Systems;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.MathHelpers.MathCurve.Curves;
@@ -38,10 +38,9 @@ public sealed partial class EngagementActors : BaseMathCurve<EngagementActors>
 
 public sealed partial class EngagementActorsCurveSystem : MathCurveSystem<EngagementActors>
 {
-    [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private GroupsSystem _groups = default!;
     [Dependency] private SharedGoapSystem _goap = default!;
 
-    [Dependency] private EntityQuery<EngagementComponent> _engagementQuery;
     [Dependency] private EntityQuery<GoapComponent> _goapQuery;
 
     protected override float Curve(EngagementActors curve, float input, MathCurveContext ctx)
@@ -51,23 +50,11 @@ public sealed partial class EngagementActorsCurveSystem : MathCurveSystem<Engage
 
         var count = 0;
 
-        foreach (var owned in _ownership.GetOwned(user))
+        foreach (var actor in _groups.GetMembers(user, curve.Engagement, curve.Role))
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != curve.Engagement.Id)
-                continue;
-
-            foreach (var (role, actors) in comp.Actors)
-            {
-                if (curve.Role != null && role != curve.Role)
-                    continue;
-
-                foreach (var actor in actors)
-                {
-                    if (curve.Conditions.Count == 0
-                        || _goapQuery.TryComp(actor, out var goap) && _goap.CheckCondition(actor, goap.State, curve.Conditions))
-                        count++;
-                }
-            }
+            if (curve.Conditions.Count == 0
+                || _goapQuery.TryComp(actor, out var goap) && _goap.CheckCondition(actor, goap.State, curve.Conditions))
+                count++;
         }
 
         return count;
