@@ -8,6 +8,8 @@
   - proto: Breach
   - proto: Pickup
   - proto: Combat
+  - proto: Healing
+  - proto: Rescue
   - proto: RaiderHold
   - proto: RaiderFollow
   - proto: RaiderApproach

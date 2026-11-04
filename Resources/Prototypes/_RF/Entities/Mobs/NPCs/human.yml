@@ -47,12 +47,16 @@
     rootTask: RaiderIdle
     state:
       Retreating: false
+      # Trained to treat, see SquadMedic: the purchases of medicine make a raider one.
+      FieldMedic: false
       # How far a raider looks for the way out when it retreats.
       RetreatRange: 150.0
       # How close to the resident it goes to a raider gets before it looks for the enemies to fight.
       RaidApproachRange: 15.0
       # How close to the leader of the squad a member stays.
       SquadFollowRange: 6.0
+      # How far from the casualty the medic takes it out of the fire.
+      ShelterRange: 14.0
   - type: PathProfiles
     profiles:
     - Walker
@@ -63,6 +67,14 @@
     - RaiderHold
     - RaiderFollow
     - RaiderFollowSupport
+    - RaiderFollowMedic
+    - MedicRescue
+    - MedicStopBleeding
+    - MedicRestoreBlood
+    - MedicHealDamage
+    - FinishHealing
+    - RaiderPatientWaiting
+    - RaiderStopHealing
     - RaiderApproach
     - RaiderAdvance
     - RaiderRetreat

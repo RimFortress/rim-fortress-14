@@ -5,12 +5,14 @@
   - !type:MobState
     targetState: Alive
 
+# The one who is treated may be down, but not dead.
 - type: engagementRole
   id: HealedFriened
   force: true
   stayConditions:
   - !type:MobState
-    targetState: Alive
+    targetState: Dead
+    invert: true
   conditionsFor:
     Doctor:
     - !type:IsFriend

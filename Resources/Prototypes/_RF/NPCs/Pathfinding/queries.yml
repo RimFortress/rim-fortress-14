@@ -34,3 +34,14 @@
   algorithm: !type:AStar
     maxCost: 5000
     allowPartial: true
+
+# A place to take cover at, near the agent: the one that the profiles charge the least for standing at, such as the one that the
+# enemies do not see, and of those that are equal the closest, see the rules of the profiles.
+- type: pathQuery
+  id: Shelter
+  algorithm: !type:Bfs
+    range: 25
+    minRange: 4
+    maxNodes: 2500
+    maxCost: 5000
+    pick: Safest

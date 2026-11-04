@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Content.IntegrationTests.Fixtures;
+using Content.Server.Atmos.EntitySystems;
+using Content.Server.Gravity;
+using Content.Shared.Atmos;
+using Content.Shared.Gravity;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Server._RF.GameTicking.Rules;
 using Content.Server._RF.World.Settlements;
@@ -32,6 +36,7 @@ using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Maths;
+using Robust.Shared.Physics.Systems;
 using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests._RF.GameTicking;
@@ -71,6 +76,7 @@ public sealed class RaidRuleTest : GameTest
     [SidedDependency(Side.Server)] private readonly SharedNpcSearcherSystem _searcher = default!;
     [SidedDependency(Side.Server)] private readonly NpcFactionSystem _faction = default!;
 
+    private EntityUid _map;
     private Entity<MapGridComponent> _grid;
     private EntityUid _player;
     private EntityUid _settlement;
@@ -84,6 +90,7 @@ public sealed class RaidRuleTest : GameTest
     {
         var map = await Pair.CreateTestMap();
         _grid = map.Grid;
+        _map = map.MapUid;
         _residents.Clear();
         _raiders.Clear();
 
@@ -1486,13 +1493,14 @@ public sealed class RaidRuleTest : GameTest
                 _entMan.GetComponent<GoapComponent>(_raiders[0]));
 
             Assert.That(pathfinding.BeginRequest(raider, "Walker"), Is.True);
-            Assert.That(raider.Comp1.Dynamic!.Sources.Single().Value, Has.Count.EqualTo(5));
+            // One list of sources for each rule that refers to the tag (the one for the shelter looks at the line of sight).
+            Assert.That(raider.Comp1.Dynamic!.Sources.Values.Select(x => x.Count), Has.All.EqualTo(5));
 
             _mobState.ChangeMobState(_residents[0], MobState.Dead);
             _mobState.ChangeMobState(_residents[1], MobState.Dead);
 
             Assert.That(pathfinding.BeginRequest(raider, "Walker"), Is.True);
-            Assert.That(raider.Comp1.Dynamic!.Sources.Single().Value, Has.Count.EqualTo(3));
+            Assert.That(raider.Comp1.Dynamic!.Sources.Values.Select(x => x.Count), Has.All.EqualTo(3));
         });
     }
 
@@ -1787,5 +1795,230 @@ public sealed class RaidRuleTest : GameTest
         await Run(15f);
 
         await Pair.Server.WaitAssertion(() => Assert.That(Distance(), Is.LessThan(before - 8f)));
+    }
+
+    /// <summary>
+    /// What the purchase does for the raider that it is bought for: the medicine, and the training to use it.
+    /// </summary>
+    private void Buy(EntityUid raider, string purchase)
+        => _entMan.System<Content.Shared.EntityEffects.SharedEntityEffectsSystem>()
+            .ApplyEffects(raider, _proto.Index<Content.Shared._RF.Narrator.EventPurchasePrototype>(purchase).Effects, 1f, _rule);
+
+    /// <summary>
+    /// The weakest of the raiders, with nothing in the hands: so it is not the leader of the squad, whom the strongest is.
+    /// </summary>
+    private void Weaken(EntityUid raider)
+    {
+        foreach (var held in _entMan.System<Content.Shared.Hands.EntitySystems.SharedHandsSystem>().EnumerateHeld(raider).ToArray())
+        {
+            _entMan.DeleteEntity(held);
+        }
+
+        Damage(raider, "Blunt", 20);
+    }
+
+    /// <summary>
+    /// Air to breathe and gravity to walk by. Without air everybody takes damage all the time, and the treatment, which is stopped by
+    /// damage, does not get done, and without gravity whatever moves goes on moving, so no one can stop where it wants to.
+    /// </summary>
+    private async Task AddAtmosphere()
+    {
+        await Pair.Server.WaitPost(() =>
+        {
+            var gravity = _entMan.EnsureComponent<GravityComponent>(_map);
+            _entMan.System<GravitySystem>().EnableGravity(_map, gravity);
+
+            var moles = new float[Atmospherics.AdjustedNumberOfGases];
+            moles[(int) Gas.Oxygen] = 21.824779f;
+            moles[(int) Gas.Nitrogen] = 82.10312f;
+            _entMan.System<AtmosphereSystem>().SetMapAtmosphere(_map, false, new GasMixture(moles, Atmospherics.T20C));
+        });
+    }
+
+    /// <summary>
+    /// Brings the raider down where it stands. There is no gravity in the test world, so whatever moves goes on moving for ever.
+    /// </summary>
+    private void KnockDown(EntityUid raider)
+    {
+        Damage(raider, "Blunt", 150);
+        Assert.That(_mobState.IsCritical(raider), Is.True);
+        _entMan.System<SharedPhysicsSystem>().SetLinearVelocity(raider, Vector2.Zero);
+    }
+
+    private void Damage(EntityUid uid, string type, float amount)
+        => _entMan.System<DamageableSystem>().TryChangeDamage(uid, new DamageSpecifier(_proto.Index<DamageTypePrototype>(type), amount));
+
+    // Of one type: there is no air, so the damage of the suffocation grows, whatever is treated.
+    private float BluntDamage(EntityUid uid)
+        => _entMan.System<DamageableSystem>()
+            .GetPositiveDamage(new Entity<Content.Shared.Damage.Components.DamageableComponent>(uid, _entMan.GetComponent<Content.Shared.Damage.Components.DamageableComponent>(uid)))
+            .DamageDict.GetValueOrDefault("Blunt").Float();
+
+    /// <summary>
+    /// Whoever carries medicine is the medic of the squad, one for a squad.
+    /// </summary>
+    [Test]
+    public async Task TestMedicIsTheOneWhoCarriesMedicine()
+    {
+        await Setup(residents: 12, raiders: 5);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Buy(_raiders[3], "RaidKitBandages");
+            Buy(_raiders[4], "RaidKitBrutepack");
+            Weaken(_raiders[3]);
+            Weaken(_raiders[4]);
+            StartAgainstStrongSettlement();
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var medic = Squads().Single().Actors["SquadMedic"].Single();
+            Assert.That(medic, Is.EqualTo(_raiders[3]).Or.EqualTo(_raiders[4]));
+        });
+    }
+
+    /// <summary>
+    /// A squad that has no medicine has no medic.
+    /// </summary>
+    [Test]
+    public async Task TestSquadHasNoMedicWithoutMedicine()
+    {
+        await Setup(residents: 12, raiders: 5);
+        await Pair.Server.WaitPost(StartAgainstStrongSettlement);
+        await Run(1.2f);
+
+        await Pair.Server.WaitAssertion(() => Assert.That(Squads().Single().Actors.Any(x => x.Key == "SquadMedic"), Is.False));
+    }
+
+    /// <summary>
+    /// The medic takes the raider that is down out of the fire, to where the resident, who is an enemy, does not see it.
+    /// </summary>
+    [Test]
+    public async Task TestMedicTakesTheCasualtyOutOfTheFire()
+    {
+        await Setup(residents: 2, raiders: 3);
+
+        EntityUid medic = default, casualty = default, enemy = default;
+        await Pair.Server.WaitPost(() =>
+        {
+            medic = _raiders[0];
+            casualty = _raiders[1];
+            enemy = _residents[0];
+            _faction.AddFaction(enemy, "RimFortress");
+
+            // It does not shoot: only how far the casualty is from the enemy matters.
+            Buy(medic, "RaidKitBandages");
+            Weaken(medic);
+            _transform.SetCoordinates(enemy, At(5.5f, 20.5f));
+            _transform.SetCoordinates(_residents[1], At(5.5f, 22.5f));
+            _transform.SetCoordinates(casualty, At(11.5f, 20.5f));
+            _transform.SetCoordinates(medic, At(13.5f, 20.5f));
+            StartAgainstStrongSettlement();
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(Squads().Single().Actors["SquadMedic"].Single(), Is.EqualTo(medic));
+            KnockDown(casualty);
+        });
+
+        float Distance() => Vector2.Distance(_transform.GetWorldPosition(casualty), _transform.GetWorldPosition(enemy));
+
+        var before = 0f;
+        await Pair.Server.WaitPost(() => before = Distance());
+        await Run(12f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Distance(), Is.GreaterThan(before + 3f),
+                $"the casualty is further from the enemy. before {before}, enemy {_entMan.GetComponent<Content.Shared.Mobs.Components.MobStateComponent>(enemy).CurrentState}, casualty {_entMan.GetComponent<Content.Shared.Mobs.Components.MobStateComponent>(casualty).CurrentState} at {_transform.GetWorldPosition(casualty)}, medic at {_transform.GetWorldPosition(medic)}");
+        });
+    }
+
+    /// <summary>
+    /// The casualty is not moved when nobody threatens it: it is treated where it lies.
+    /// </summary>
+    [Test]
+    public async Task TestMedicLeavesTheCasualtyWhereItLiesWhenNobodyThreatens()
+    {
+        await Setup(residents: 2, raiders: 3);
+        await AddAtmosphere();
+
+        EntityUid medic = default, casualty = default;
+        await Pair.Server.WaitPost(() =>
+        {
+            medic = _raiders[0];
+            casualty = _raiders[1];
+            Buy(medic, "RaidKitBandages");
+            Weaken(medic);
+
+            // The residents are not enemies of the raiders here, and the squad holds the position.
+            _transform.SetCoordinates(casualty, At(30.5f, 30.5f));
+            _transform.SetCoordinates(medic, At(32.5f, 30.5f));
+            _variables.Set(_rule, "holdRatio", 1000f);
+            StartAgainstStrongSettlement();
+        });
+        await Run(1.2f);
+
+        var lay = Vector2.Zero;
+        await Pair.Server.WaitPost(() =>
+        {
+            Damage(medic, "Blunt", -20);
+            KnockDown(casualty);
+            lay = _transform.GetWorldPosition(casualty);
+        });
+        await Run(8f);
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(Vector2.Distance(_transform.GetWorldPosition(casualty), lay), Is.LessThan(1.5f), "it is where it was"));
+    }
+
+    /// <summary>
+    /// When nobody shoots, the medic treats the wounded raiders with what it has.
+    /// </summary>
+    [Test]
+    public async Task TestMedicTreatsTheWoundedWhenItIsSafe()
+    {
+        await Setup(residents: 2, raiders: 3);
+        await AddAtmosphere();
+
+        EntityUid medic = default, wounded = default;
+        await Pair.Server.WaitPost(() =>
+        {
+            medic = _raiders[0];
+            wounded = _raiders[1];
+            Buy(medic, "RaidKitBrutepack");
+            Weaken(medic);
+            _transform.SetCoordinates(medic, At(30.5f, 30.5f));
+            _transform.SetCoordinates(wounded, At(32.5f, 30.5f));
+
+            // The others stay where they are, the wounded waits, and the squad holds the position: the medic does not go
+            // anywhere with the leader.
+            foreach (var raider in _raiders.Where(x => x != medic))
+            {
+                _entMan.GetComponent<GoapComponent>(raider).Enabled = false;
+            }
+
+            _variables.Set(_rule, "holdRatio", 1000f);
+            StartAgainstStrongSettlement();
+        });
+        await Run(1.2f);
+
+        var before = 0f;
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(Squads().Single().Actors["SquadMedic"].Single(), Is.EqualTo(medic));
+
+            // Now it is not hurt, so it is the others that it treats.
+            Damage(medic, "Blunt", -20);
+            Damage(wounded, "Blunt", 80);
+            before = BluntDamage(wounded);
+        });
+        await Run(20f);
+
+        await Pair.Server.WaitAssertion(() => Assert.That(BluntDamage(wounded), Is.LessThan(before - 5f), "the wounds are treated"));
     }
 }

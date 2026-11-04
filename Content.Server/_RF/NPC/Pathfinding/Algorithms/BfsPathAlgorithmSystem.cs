@@ -130,7 +130,9 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
 
             return BuildResult(state,
                 search,
-                Pick(state.Candidates, startPos, partial ? BfsPick.Farthest : algorithm.Pick),
+                algorithm.Pick == BfsPick.Safest
+                    ? PickSafest(state)
+                    : Pick(state.Candidates, startPos, partial ? BfsPick.Farthest : algorithm.Pick),
                 partial ? PathSearchStatus.PartialPath : PathSearchStatus.Path,
                 collision);
         }
@@ -138,6 +140,29 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
         {
             ReturnState(state);
         }
+    }
+
+    /// <summary>
+    /// The candidate that costs the least to stand on. The candidates are in the order of the cost of getting to them, so of those
+    /// that are equal the closest is chosen.
+    /// </summary>
+    private static RfPathPoly PickSafest(PathSearchState state)
+    {
+        var best = state.Candidates[0];
+        var bestModifier = state.Nodes[best].Modifier;
+
+        for (var i = 1; i < state.Candidates.Count; i++)
+        {
+            var modifier = state.Nodes[state.Candidates[i]].Modifier;
+
+            if (modifier >= bestModifier - 0.001f)
+                continue;
+
+            best = state.Candidates[i];
+            bestModifier = modifier;
+        }
+
+        return best;
     }
 
     private RfPathPoly Pick(List<RfPathPoly> candidates, Vector2 startPos, BfsPick pick)

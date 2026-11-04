@@ -20,6 +20,13 @@ public enum BfsPick : byte
     /// that is leaving goes. If no such node is reached, the path leads to the farthest node, and it is a partial one.
     /// </summary>
     Unobserved,
+
+    /// <summary>
+    /// The node that is the cheapest to stand on: the one the rules of the profiles charge the least for being there (not for getting
+    /// there), such as the node that is not seen by the enemies, and the closest of those that are equal. It is where an agent
+    /// goes to take cover.
+    /// </summary>
+    Safest,
 }
 
 /// <summary>

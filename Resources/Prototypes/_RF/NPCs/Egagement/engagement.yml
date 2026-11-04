@@ -40,7 +40,9 @@
     dissolveInvalid: false
     roles:
     - SquadLeader
-    # Before the others: when a participant could take it, it takes the breacher, which only some can.
+    # Before the others: when a participant could take it, it takes the medic, which only some can, and then the breacher, which
+    # only some can as well. The medic comes first, there is one for a squad and it is the rarer.
+    - SquadMedic
     - SquadBreacher
     - SquadAssault
     - SquadSupport

@@ -22,6 +22,22 @@
     cost:
     - var: influence
     - mul: [float: 15]
+  # A place to take cover is where the residents do not see: the nodes they can shoot at cost the more, the stronger they are.
+  - when:
+    - !type:TagInfluence
+      tag: Resident
+      sight: true
+      weight:
+      - !type:PrototypeCurve
+        preset: FighterPower
+      moreThan: 0
+    - !type:Query
+      id: Shelter
+    requires:
+    - Engagement/RaidForce/In == true
+    cost:
+    - var: influence
+    - mul: [float: 30]
   # The doors. A closed door that opens by itself is no trouble. The agent that only looks for a place to wander to does
   # not go through a door that has to be opened or pried. A door that cannot be gone through, or has to be pried and there is nothing
   # to pry it with, is up to the profile, see Walker and Breacher.

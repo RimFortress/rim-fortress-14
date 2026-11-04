@@ -46,3 +46,17 @@
   - Query/Crowbar != null
   onStart:
     SquadFollowRange: 5.0
+
+# The field medic of a squad: whoever is trained to treat (the purchases of medicine do it, see the Raid), one for a squad. It stays
+# with the leader. What it does is to take the raiders that are down out of the fire to a place where nobody shoots and to treat them
+# there, and to treat the ones that are wounded when it is quiet, see the goals of the raiders and the Rescue.
+- type: engagementRole
+  id: SquadMedic
+  parent: Raider
+  minCount: 0
+  maxCount: 1
+  weight: 2
+  conditions:
+  - FieldMedic == true
+  onStart:
+    SquadFollowRange: 7.0

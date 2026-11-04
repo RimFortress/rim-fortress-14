@@ -25,6 +25,14 @@
         RaidKitCrowbar: 1
     - purchases:
         RaidKitPistol: 1
+    # The medicine: a raider has some of it, or none, and the one that has it is the medic of its squad, see SquadMedic.
+    - max: 2
+      purchases:
+        RaidKitBandages: 3
+        RaidKitBrutepack: 3
+        RaidKitOintment: 2
+        RaidKitBloodpack: 2
+        RaidKitMedkit: 1
     purchaseShare:
       min: 0.2
       max: 0.4
