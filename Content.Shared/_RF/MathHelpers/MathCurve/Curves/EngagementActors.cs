@@ -19,7 +19,7 @@ public sealed partial class EngagementActors : BaseMathCurve<EngagementActors>
     /// The kind of the situations, the prototype.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Engagement;
+    public EntProtoId<EngagementComponent> Engagement;
 
     /// <summary>
     /// The role that is counted, all roles if it is not set.
@@ -53,7 +53,7 @@ public sealed partial class EngagementActorsCurveSystem : MathCurveSystem<Engage
 
         foreach (var owned in _ownership.GetOwned(user))
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != curve.Engagement)
+            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != curve.Engagement.Id)
                 continue;
 
             foreach (var (role, actors) in comp.Actors)

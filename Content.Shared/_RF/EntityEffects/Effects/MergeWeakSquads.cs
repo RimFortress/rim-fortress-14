@@ -28,7 +28,7 @@ public sealed partial class MergeWeakSquads : EntityEffectBase<MergeWeakSquads>
     /// The kind of the squads. They must have the variables of <c>MeasureSquads</c> (<c>power</c> and <c>ratio</c>).
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Squad;
+    public EntProtoId<EngagementComponent> Squad;
 
     /// <summary>
     /// Is a squad weak: the curves give more than a half. They see the variables of the target and the <c>power</c> and the
@@ -78,7 +78,7 @@ public sealed partial class MergeWeakSquadsEntityEffectsSystem : EntityEffectSys
 
         foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
-            if (_engagementQuery.TryComp(owned, out var comp) && comp.Kind == effect.Squad)
+            if (_engagementQuery.TryComp(owned, out var comp) && Prototype(owned)?.ID == effect.Squad.Id)
                 squads.Add((owned, comp));
         }
 

@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using JetBrains.Annotations;
@@ -10,11 +11,8 @@ namespace Content.Shared._RF.NPC.Engagement;
 /// reached its <see cref="EngagementRolePrototype.MinCount"/> for the first time.
 /// </summary>
 /// <param name="Engagement">The situation entity.</param>
-/// <param name="Kind">The situation's prototype.</param>
 [PublicAPI]
-public readonly record struct EngagementStarted(
-    EntityUid Engagement,
-    ProtoId<EngagementPrototype> Kind);
+public readonly record struct EngagementStarted(EntityUid Engagement);
 
 /// <summary>
 /// Raised on the joining actor and on the situation entity when a role is occupied,

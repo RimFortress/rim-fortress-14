@@ -17,7 +17,7 @@ public sealed partial class ApplyToEngagementActors : EntityEffectBase<ApplyToEn
     /// The kind of the situations.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Engagement;
+    public EntProtoId<EngagementComponent> Engagement;
 
     /// <summary>
     /// The role of those that the effects are applied to, all of them if it is not set.
@@ -47,7 +47,7 @@ public sealed partial class ApplyToEngagementActorsEntityEffectsSystem
 
         foreach (var owned in _ownership.GetOwned(ent))
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != args.Effect.Engagement)
+            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != args.Effect.Engagement.Id)
                 continue;
 
             foreach (var (role, members) in comp.Actors)

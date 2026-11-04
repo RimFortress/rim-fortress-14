@@ -21,7 +21,7 @@ public sealed partial class JoinEngagement : EntityEffectBase<JoinEngagement>
     /// The kind of the situation.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Engagement;
+    public EntProtoId<EngagementComponent> Engagement;
 
     /// <summary>
     /// The roles that are taken, the first that has a place.
@@ -45,7 +45,7 @@ public sealed partial class JoinEngagementEntityEffectsSystem : EntityEffectSyst
         foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
             if (_engagementQuery.TryComp(owned, out var comp)
-                && comp.Kind == args.Effect.Engagement
+                && Prototype(owned)?.ID == args.Effect.Engagement.Id
                 && TryJoin((owned, comp), args.Effect.Roles, user))
                 return;
         }

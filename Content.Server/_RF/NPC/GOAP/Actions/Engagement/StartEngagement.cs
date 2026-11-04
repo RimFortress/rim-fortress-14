@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP;
@@ -13,10 +14,10 @@ namespace Content.Server._RF.NPC.GOAP.Actions.Engagement;
 public sealed partial class StartEngagement : BaseGoapAction<StartEngagement>
 {
     /// <summary>
-    /// A prototype engagement that will be initiated.
+    /// The kind of situation (the prototype of its entity) that will be initiated.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Proto;
+    public EntProtoId<EngagementComponent> Proto;
 
     /// <summary>
     /// The role in which the agent will participate in the situation.

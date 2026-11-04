@@ -24,19 +24,23 @@ public partial class EngagementSystem
     /// <returns>True, if the situation was created.</returns>
     [PublicAPI]
     public bool TryStartEngagement(
-        ProtoId<EngagementPrototype> protoId,
+        EntProtoId<EngagementComponent> protoId,
         EntityUid initiator,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement)
     {
         engagement = null;
 
-        if (!_prototype.Resolve(protoId, out var proto))
+        if (!_prototype.HasIndex(protoId))
             return false;
 
-        var uid = Spawn();
-        EntityManager.AddComponents(uid, proto.Components);
-        var comp = EnsureComp<EngagementComponent>(uid);
-        comp.Kind = protoId;
+        var uid = Spawn(protoId);
+
+        if (!_engagementQuery.TryComp(uid, out var comp))
+        {
+            Del(uid);
+            return false;
+        }
+
         comp.Initiator = initiator;
 
         engagement = (uid, comp);
@@ -54,21 +58,21 @@ public partial class EngagementSystem
     /// <returns>True, if the situation was created. Individual candidates may still fail to be seated.</returns>
     [PublicAPI]
     public bool TryStartEngagement(
-        ProtoId<EngagementPrototype> protoId,
+        EntProtoId<EngagementComponent> protoId,
         EntityUid initiator,
         IEnumerable<EntityUid> invited,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement)
     {
-        engagement = null;
-
-        if (!_prototype.Resolve(protoId, out var proto))
-            return false;
-
-        if (!TryAssignRoles(proto, initiator, invited, out var assignment))
-            return false;
-
         if (!TryStartEngagement(protoId, initiator, out engagement))
             return false;
+
+        // The roles are found in the situation that has been made, and it is taken back if there is no way to seat them.
+        if (!TryAssignRoles(engagement.Value.Comp, initiator, invited, out var assignment))
+        {
+            Del(engagement.Value.Owner);
+            engagement = null;
+            return false;
+        }
 
         foreach (var (roleId, actors) in assignment)
         {
@@ -135,14 +139,13 @@ public partial class EngagementSystem
     [PublicAPI]
     public bool TryJoinAnyRole(Entity<EngagementComponent?> engagement, EntityUid actor)
     {
-        if (!Resolve(engagement, ref engagement.Comp)
-            || !_prototype.Resolve(engagement.Comp.Kind, out var proto))
+        if (!Resolve(engagement, ref engagement.Comp))
             return false;
 
         EngagementRolePrototype? best = null;
         var bestScore = (Deficit: 1, Fill: float.MaxValue);
 
-        foreach (var roleId in proto.Roles)
+        foreach (var roleId in engagement.Comp.Roles)
         {
             if (!_prototype.Resolve(roleId, out var role)
                 || !role.Force
@@ -177,7 +180,7 @@ public partial class EngagementSystem
     /// <summary>
     /// Sends an invitation for a non-forced role.
     /// The actor must call <see cref="AcceptInvite(EntityUid, Entity{EngagementComponent?}, ProtoId{EngagementRolePrototype}?)"/>
-    /// before <see cref="EngagementPrototype.InviteTime"/> elapses, or the invite expires on its own during <see cref="Update"/>.
+    /// before <see cref="EngagementComponent.InviteTime"/> elapses, or the invite expires on its own during <see cref="Update"/>.
     /// </summary>
     /// <param name="engagement">The situation to invite into.</param>
     /// <param name="roleId">The role being offered. Must have <see cref="EngagementRolePrototype.Force"/> set to false.</param>
@@ -387,7 +390,7 @@ public partial class EngagementSystem
     /// <summary>
     /// Removes a single actor from the situation, applying <see cref="EngagementRolePrototype.OnFinish"/>
     /// and <see cref="EngagementRolePrototype.OnFinishRemove"/> to its GoapState. If this drops the actor's
-    /// role below <see cref="EngagementRolePrototype.MinCount"/> and <see cref="EngagementPrototype.DissolveInvalid"/>
+    /// role below <see cref="EngagementRolePrototype.MinCount"/> and <see cref="EngagementComponent.DissolveInvalid"/>
     /// is set, the whole situation is dissolved for every remaining participant.
     /// </summary>
     /// <param name="engagement">The situation to leave.</param>
@@ -469,7 +472,7 @@ public partial class EngagementSystem
     [PublicAPI, Pure]
     public bool TryGetEngagement(
         Entity<EngagementParticipantComponent?> ent,
-        ProtoId<EngagementPrototype> protoId,
+        EntProtoId<EngagementComponent> protoId,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement,
         [NotNullWhen(true)] out ProtoId<EngagementRolePrototype>? roleId)
     {
@@ -481,7 +484,7 @@ public partial class EngagementSystem
 
         foreach (var (uid, id) in ent.Comp.Membership)
         {
-            if (!_engagementQuery.TryComp(uid, out var comp) || comp.Kind != protoId)
+            if (!_engagementQuery.TryComp(uid, out var comp) || Prototype(uid)?.ID != protoId.Id)
                 continue;
 
             engagement = new(uid, comp);
@@ -506,7 +509,7 @@ public partial class EngagementSystem
     public bool TryFindEngagement(
         EntityUid actor,
         ProtoId<EngagementRolePrototype> role,
-        ProtoId<EngagementPrototype> protoId,
+        EntProtoId<EngagementComponent> protoId,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement)
     {
         engagement = null;
@@ -516,7 +519,7 @@ public partial class EngagementSystem
 
         foreach (var (uid, actorRole) in participant.Membership)
         {
-            if (actorRole != role || !_engagementQuery.TryComp(uid, out var comp) || comp.Kind != protoId)
+            if (actorRole != role || !_engagementQuery.TryComp(uid, out var comp) || Prototype(uid)?.ID != protoId.Id)
                 continue;
 
             engagement = new(uid, comp);
@@ -575,7 +578,7 @@ public partial class EngagementSystem
     [PublicAPI, Pure]
     public bool TryGetInviteEngagement(
         Entity<EngagementParticipantComponent?> ent,
-        ProtoId<EngagementPrototype> protoId,
+        EntProtoId<EngagementComponent> protoId,
         [NotNullWhen(true)] out Entity<EngagementComponent>? engagement,
         ProtoId<EngagementRolePrototype>? role = null)
     {
@@ -587,7 +590,7 @@ public partial class EngagementSystem
         foreach (var invite in ent.Comp.Invites)
         {
             if (!_engagementQuery.TryComp(invite.EngageUid, out var comp)
-                || comp.Kind != protoId)
+                || Prototype(invite.EngageUid)?.ID != protoId.Id)
                 continue;
 
             if (role != null && invite.Role != role)
@@ -610,7 +613,7 @@ public partial class EngagementSystem
     [PublicAPI, Pure]
     public bool TryGetInviteInviter(
         Entity<EngagementParticipantComponent?> ent,
-        ProtoId<EngagementPrototype> protoId,
+        EntProtoId<EngagementComponent> protoId,
         [NotNullWhen(true)] out EntityUid? inviter,
         ProtoId<EngagementRolePrototype>? role = null)
     {
@@ -622,7 +625,7 @@ public partial class EngagementSystem
         foreach (var invite in ent.Comp.Invites)
         {
             if (!_engagementQuery.TryComp(invite.EngageUid, out var comp)
-                || comp.Kind != protoId)
+                || Prototype(invite.EngageUid)?.ID != protoId.Id)
                 continue;
 
             if (role != null && invite.Role != role)

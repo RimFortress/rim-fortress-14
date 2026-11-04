@@ -382,6 +382,40 @@ public sealed partial class GoapState : IEnumerable<KeyValuePair<string, object>
             validator: ProtoValidator(domains, (param1, typeof(TP1)), (param2, typeof(TP2))));
 
     /// <summary>
+    /// A domain whose parameter is the prototype of an entity that has a component, such as a kind of a situation.
+    /// </summary>
+    private static DomainKey EntityProtoDomain<TComp>(string param, string domains)
+        where TComp : IComponent, new()
+        => Domain<EntProtoId<TComp>>(param,
+            x => new EntProtoId<TComp>(x),
+            domains,
+            validator: ProtoValidator(domains, (param, typeof(EntityPrototype))));
+
+    /// <summary>
+    /// A domain whose first parameter is the prototype of an entity that has a component, and the second is a prototype.
+    /// </summary>
+    private static DomainKey EntityProtoDomain<TComp, TP2>(string param1, string param2, string domains)
+        where TComp : IComponent, new()
+        where TP2 : class, IPrototype
+        => Domain<EntProtoId<TComp>, ProtoId<TP2>>(
+            (param1, x => new EntProtoId<TComp>(x)),
+            (param2, x => new ProtoId<TP2>(x)),
+            domains,
+            validator: ProtoValidator(domains, (param1, typeof(EntityPrototype)), (param2, typeof(TP2))));
+
+    /// <summary>
+    /// A domain whose first parameter is the prototype of an entity that has a component, and the second is the name of a key,
+    /// which is not checked.
+    /// </summary>
+    private static DomainKey EntityProtoKeyDomain<TComp>(string protoParam, string keyParam, string domains)
+        where TComp : IComponent, new()
+        => Domain<EntProtoId<TComp>, string>(
+            (protoParam, x => new EntProtoId<TComp>(x)),
+            (keyParam, x => x),
+            domains,
+            validator: ProtoValidator(domains, new[] { keyParam }, (protoParam, typeof(EntityPrototype))));
+
+    /// <summary>
     /// A domain whose first parameter is a prototype, and the second is the name of a key, which is not checked.
     /// </summary>
     private static DomainKey ProtoKeyDomain<TP1>(string protoParam, string keyParam, string domains)

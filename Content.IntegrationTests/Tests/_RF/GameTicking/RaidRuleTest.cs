@@ -54,7 +54,7 @@ public sealed class RaidRuleTest : GameTest
 ";
 
     private static readonly StateKey<HashSet<EntityUid>> Targets = "Targets";
-    private static readonly StateKey<EntityCoordinates> SettlementTarget = "Engagement/Raid/Owner/SettlementTarget";
+    private static readonly StateKey<EntityCoordinates> SettlementTarget = "Engagement/RaidForce/Owner/SettlementTarget";
     private static readonly StateKey<bool> Retreating = "Retreating";
 
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
@@ -188,7 +188,7 @@ public sealed class RaidRuleTest : GameTest
 
             // They are in one situation that the rule owns, in the role of a raider.
             var owned = _ownership.GetOwned(_rule)
-                .Where(x => _entMan.TryGetComponent(x, out EngagementComponent? e) && e.Kind.Id == "Raid")
+                .Where(x => _entMan.HasComponent<EngagementComponent>(x) && _entMan.GetComponent<MetaDataComponent>(x).EntityPrototype?.ID == "RaidForce")
                 .ToList();
             Assert.That(owned, Has.Count.EqualTo(1), "one situation for all of them");
 
@@ -422,7 +422,7 @@ public sealed class RaidRuleTest : GameTest
 
         await Pair.Server.WaitAssertion(() =>
         {
-            var key = new StateKey<HashSet<EntityUid>>("Engagement/Raid/Owner/Targets");
+            var key = new StateKey<HashSet<EntityUid>>("Engagement/RaidForce/Owner/Targets");
             var own = _entMan.GetComponent<GoapComponent>(_raiders[0]).State;
 
             Assert.That(_goap.TryGetValue(own, key, out var targets), Is.True);
@@ -436,9 +436,8 @@ public sealed class RaidRuleTest : GameTest
 
     private List<EngagementComponent> Squads()
         => _ownership.GetOwned(_rule)
-            .Select(x => _entMan.TryGetComponent(x, out EngagementComponent? e) ? e : null)
-            .Where(e => e is { Kind.Id: "RaidSquad" })
-            .Select(e => e!)
+            .Where(x => _entMan.GetComponent<MetaDataComponent>(x).EntityPrototype?.ID == "RaidSquad")
+            .Select(x => _entMan.GetComponent<EngagementComponent>(x))
             .ToList();
 
     /// <summary>
@@ -788,7 +787,7 @@ public sealed class RaidRuleTest : GameTest
             var rule = _entMan.GetComponent<GoapComponent>(_rule).State;
             var raider = _entMan.GetComponent<GoapComponent>(_raiders[0]).State;
 
-            Assert.That(_goap.TryGetValue(rule, new StateKey<IReadOnlyCollection<EntityUid>>("OwnedEngagement/Raid/Role/Raider/All"), out var all), Is.True);
+            Assert.That(_goap.TryGetValue(rule, new StateKey<IReadOnlyCollection<EntityUid>>("OwnedEngagement/RaidForce/Role/Raider/All"), out var all), Is.True);
             Assert.That(all, Is.EquivalentTo(_raiders));
             Assert.That(_goap.TryGetValue(rule, new StateKey<IReadOnlyCollection<EntityUid>>("OwnedEngagement/RaidSquad/All"), out var squadMembers), Is.True);
             Assert.That(squadMembers, Is.EquivalentTo(_raiders));
@@ -825,7 +824,7 @@ public sealed class RaidRuleTest : GameTest
     private string? Goal(EntityUid raider) => _entMan.GetComponent<UtilityAiComponent>(raider).CurrentGoal;
 
     private float SquadRatio() => _variables.Get(
-        _ownership.GetOwned(_rule).Single(x => _entMan.TryGetComponent(x, out EngagementComponent? e) && e.Kind.Id == "RaidSquad"),
+        _ownership.GetOwned(_rule).Single(x => _entMan.HasComponent<EngagementComponent>(x) && _entMan.GetComponent<MetaDataComponent>(x).EntityPrototype?.ID == "RaidSquad"),
         "ratio");
 
     private (EntityUid Leader, List<EntityUid> Assault, List<EntityUid> Support) SquadByRoles()
@@ -913,7 +912,7 @@ public sealed class RaidRuleTest : GameTest
         await Run(1.2f);
 
         float Stance() => _variables.Get(
-            _ownership.GetOwned(_rule).Single(x => _entMan.TryGetComponent(x, out EngagementComponent? e) && e.Kind.Id == "RaidSquad"),
+            _ownership.GetOwned(_rule).Single(x => _entMan.HasComponent<EngagementComponent>(x) && _entMan.GetComponent<MetaDataComponent>(x).EntityPrototype?.ID == "RaidSquad"),
             "stance");
 
         var ratio = 0f;

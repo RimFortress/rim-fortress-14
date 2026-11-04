@@ -86,10 +86,7 @@ public sealed partial class EngagementSystem : EntitySystem
         EntityUid actor,
         EntityUid inviter)
     {
-        if (!_prototype.Resolve(engagement.Comp.Kind, out var proto))
-            return;
-
-        var validUntil = _timing.CurTime + proto.InviteTime;
+        var validUntil = _timing.CurTime + engagement.Comp.InviteTime;
         engagement.Comp.Invites.Add((role, actor, validUntil));
 
         var participant = EnsureComp<EngagementParticipantComponent>(actor);
@@ -108,7 +105,7 @@ public sealed partial class EngagementSystem : EntitySystem
     /// directions, via DFS backtracking over the whole candidate pool at once.
     /// </summary>
     private bool TryAssignRoles(
-        EngagementPrototype proto,
+        EngagementComponent proto,
         EntityUid initiator,
         IEnumerable<EntityUid> candidates,
         [NotNullWhen(true)] out Dictionary<ProtoId<EngagementRolePrototype>, List<EntityUid>>? assignment)
@@ -233,9 +230,7 @@ public sealed partial class EngagementSystem : EntitySystem
         EngagementEndReason reason,
         bool cleanupParticipant)
     {
-        if (!_prototype.Resolve(roleId, out var role)
-            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
-            || !proto.Roles.Contains(role))
+        if (!_prototype.Resolve(roleId, out var role) || !engagement.Comp.Roles.Contains(roleId))
             return;
 
         if (!engagement.Comp.Actors.TryGetValue(roleId, out var set) || !set.Remove(actor))
@@ -268,7 +263,7 @@ public sealed partial class EngagementSystem : EntitySystem
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement.Owner, ev);
 
-        if (!engagement.Comp.Started || !proto.DissolveInvalid)
+        if (!engagement.Comp.Started || !engagement.Comp.DissolveInvalid)
             return;
 
         var remaining = engagement.Comp.Actors.TryGetValue(role, out var left) ? left.Count : 0;
@@ -417,10 +412,10 @@ public sealed partial class EngagementSystem : EntitySystem
     /// </summary>
     private void CheckStarted(Entity<EngagementComponent> engagement)
     {
-        if (engagement.Comp.Started || !_prototype.TryIndex(engagement.Comp.Kind, out var proto))
+        if (engagement.Comp.Started)
             return;
 
-        foreach (var roleId in proto.Roles)
+        foreach (var roleId in engagement.Comp.Roles)
         {
             if (!_prototype.Resolve(roleId, out var role))
                 continue;
@@ -432,7 +427,7 @@ public sealed partial class EngagementSystem : EntitySystem
         }
 
         engagement.Comp.Started = true;
-        var ev = new EngagementStarted(engagement.Owner, engagement.Comp.Kind);
+        var ev = new EngagementStarted(engagement.Owner);
         RaiseLocalEvent(engagement.Owner, ev);
 
         foreach (var (roleId, actors) in engagement.Comp.Actors)

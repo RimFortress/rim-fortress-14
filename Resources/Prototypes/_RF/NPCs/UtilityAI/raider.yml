@@ -81,7 +81,7 @@
   conditions:
   - Query/RaidObjective == null
   - !type:KeyExist
-    key: Engagement/Raid/Owner/SettlementTarget
+    key: Engagement/RaidForce/Owner/SettlementTarget
   - Retreating == false
   goalState:
     RaiderAdvanced: true

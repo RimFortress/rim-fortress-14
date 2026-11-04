@@ -1,26 +1,27 @@
 using Content.Shared.Chat;
 using Robust.Shared.Map;
-using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.Conversation.Components;
 
 /// <summary>
-/// A component that stores information about the current status of the conversation.
+/// A kind of a situation (see <see cref="Content.Shared._RF.NPC.Engagement.Components.EngagementComponent"/>) that is a conversation
+/// between NPCs: the order in which they speak, and the information about the current status of it. The lines are in the
+/// localization by the id of the prototype of the entity: <c>conversation-id-line-N</c>.
 /// </summary>
 [RegisterComponent]
 public sealed partial class ConversationComponent : Component
 {
     /// <summary>
-    /// Conversation script prototype.
+    /// Settings for the order in which actors speak lines.
     /// </summary>
-    [ViewVariables]
-    public ProtoId<ConversationScriptPrototype> Script;
+    [DataField(required: true)]
+    public ConversationOrderType Order = default!;
 
     /// <summary>
     /// Next participant in the conversation
     /// </summary>
     [ViewVariables]
-    public HashSet<EntityUid> NextActors;
+    public HashSet<EntityUid> NextActors = new();
 
     /// <summary>
     /// The next line spoken by this entity in the conversation.

@@ -23,7 +23,7 @@ public sealed partial class PlanSquads : EntityEffectBase<PlanSquads>
     /// The kind of the situations that the squads are made of the participants of.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Source;
+    public EntProtoId<EngagementComponent> Source;
 
     /// <summary>
     /// The role of the participants who are put into squads, all the roles if it is not set.
@@ -35,7 +35,7 @@ public sealed partial class PlanSquads : EntityEffectBase<PlanSquads>
     /// The kind of the squads.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Squad;
+    public EntProtoId<EngagementComponent> Squad;
 
     /// <summary>
     /// How strong a fighter is, calculated with the fighter as the user. It is what the squads are shared out by, and the strongest
@@ -92,13 +92,13 @@ public sealed partial class PlanSquadsEntityEffectsSystem : EntityEffectSystem<M
             if (!_engagementQuery.TryComp(owned, out var comp))
                 continue;
 
-            if (comp.Kind == effect.Squad)
+            if (Prototype(owned)?.ID == effect.Squad.Id)
             {
                 squads.Add((owned, comp));
                 continue;
             }
 
-            if (comp.Kind != effect.Source)
+            if (Prototype(owned)?.ID != effect.Source.Id)
                 continue;
 
             foreach (var (role, actors) in comp.Actors)

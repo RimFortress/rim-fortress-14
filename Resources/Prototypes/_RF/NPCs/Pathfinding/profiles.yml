@@ -10,10 +10,10 @@
   # come to the settlement by the way that is covered the least, round the strong, and break through where it is weak. It is where the
   # residents are when the path is searched for, and the places that are covered are only counted by how far they are, not by what is
   # in the way.
-  - key: Engagement/Raid/Owner/Targets
+  - key: Engagement/RaidForce/Owner/Targets
     radius: 14
     requires:
-    - Engagement/Raid/In == true
+    - Engagement/RaidForce/In == true
     cost:
     - !type:PrototypeCurve
       preset: FighterPower

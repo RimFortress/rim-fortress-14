@@ -67,7 +67,7 @@
     - Pulled == false
     actions:
     - !type:MoveTo
-      targetKey: Engagement/Raid/Owner/SettlementTarget
+      targetKey: Engagement/RaidForce/Owner/SettlementTarget
       rangeKey: IdleRange
     effects:
       RaiderAdvanced: true

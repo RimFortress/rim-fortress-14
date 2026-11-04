@@ -3,40 +3,8 @@ using Content.Shared._RF.MathHelpers;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared.Chat;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
 namespace Content.Shared._RF.Conversation;
-
-/// <summary>
-/// Prototype conversation script between NPCs.
-/// </summary>
-[Prototype]
-public sealed partial class ConversationScriptPrototype : IPrototype, IInheritingPrototype
-{
-    /// <inheritdoc/>
-    [IdDataField]
-    public string ID { get; private set; } = default!;
-
-    /// <inheritdoc />
-    [ParentDataField(typeof(AbstractPrototypeIdArraySerializer<ConversationScriptPrototype>))]
-    public string[]? Parents { get; private set; }
-
-    /// <inheritdoc />
-    [AbstractDataField, NeverPushInheritance]
-    public bool Abstract { get; private set; }
-
-    /// <summary>
-    /// A situation that will be used to start a conversation.
-    /// </summary>
-    [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Engagement;
-
-    /// <summary>
-    /// Settings for the order in which actors speak lines.
-    /// </summary>
-    [DataField(required: true)]
-    public ConversationOrderType Order = default!;
-}
 
 [ImplicitDataDefinitionForInheritors]
 public abstract partial class ConversationOrderType

@@ -1,86 +1,49 @@
-- type: dataset
-  id: BasicConversationEngagements
-  values:
-  - BaseDialogEngagement
-  - MorningGreeting
-  - SmalltalkRejected
-  - SmalltalkIgnored
-  - SmalltalkRude
-  - ThankForHealing
-  - CheckOnPatient
-
-# Conversations
-
-- type: engagement
-  id: BaseDialogEngagement
-  roles:
-  - BaseDialogInitiator
-  - BaseDialogResponder
-
-- type: engagement
-  id: MorningGreeting
-  roles:
-  - MorningGreetingInitiator
-  - MorningGreetingResponder
-
-- type: engagement
-  id: SmalltalkRejected
-  roles:
-  - SmalltalkRejectedInitiator
-  - SmalltalkRejectedResponder
-
-- type: engagement
-  id: SmalltalkIgnored
-  roles:
-  - SmalltalkIgnoredInitiator
-  - SmalltalkIgnoredResponder
-
-- type: engagement
-  id: SmalltalkRude
-  roles:
-  - SmalltalkRudeInitiator
-  - SmalltalkRudeResponder
-
-- type: engagement
-  id: ThankForHealing
-  roles:
-  - ThankForHealingInitiator
-  - BaseDialogResponder
-
-- type: engagement
-  id: CheckOnPatient
-  roles:
-  - CheckOnPatientInitiator
-  - CheckOnPatientResponder
+# The kinds of situations are the prototypes of entities that have the Engagement component: the roles, whether the situation is
+# closed when a role has fewer than it needs, and how long the invitations wait. Any other component that a kind needs is here too.
+- type: entity
+  id: BaseEngagement
+  abstract: true
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Engagement
 
 # Healing
 
-- type: engagement
+- type: entity
   id: Healing
-  roles:
-  - Doctor
-  - HealedFriened
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    roles:
+    - Doctor
+    - HealedFriened
 
 # Raids
 
-- type: engagement
-  id: Raid
-  roles:
-  - Raider
+# All the raiders of a raid.
+- type: entity
+  id: RaidForce
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    roles:
+    - Raider
 
 # The squad of a raid: there are as many of them as the raiders need, see JoinEngagement. It is not over when it has no leader.
-- type: engagement
+- type: entity
   id: RaidSquad
-  dissolveInvalid: false
-  roles:
-  - SquadLeader
-  # Before the others: when a participant could take it, it takes the breacher, which only some can.
-  - SquadBreacher
-  - SquadAssault
-  - SquadSupport
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    dissolveInvalid: false
+    roles:
+    - SquadLeader
+    # Before the others: when a participant could take it, it takes the breacher, which only some can.
+    - SquadBreacher
+    - SquadAssault
+    - SquadSupport
   # The numbers of the squad (its power, the ratio and the stance, see MeasureSquads) and the state that keeps what only the
   # squad has: the share of the targets that it is given, see AssignSquadTargets.
-  components:
   - type: MathVariables
   - type: Goap
     rootTask: Empty

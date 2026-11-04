@@ -5,28 +5,42 @@ using Robust.Shared.Prototypes;
 namespace Content.Shared._RF.NPC.Engagement.Components;
 
 /// <summary>
-/// A component that stores data about the situation in which AIs is engaged.
+/// A situation in which multiple AIs are involved in a single interaction: the entity that has it. The kinds of situations are
+/// the prototypes of such entities (the kind of one is <c>Prototype(uid)</c>), so a situation can have any other components that a kind of it needs, such as the state
+/// (<c>Goap</c>) in which it keeps what the participants have in common, and that they read as <c>Engagement/Kind/State/Key</c>.
 /// </summary>
 [RegisterComponent]
 [Access(typeof(EngagementSystem))]
 public sealed partial class EngagementComponent : Component
 {
     /// <summary>
-    /// Prototype of this situation.
+    /// A list of roles available in this situation.
     /// </summary>
     [DataField]
-    public ProtoId<EngagementPrototype> Kind;
+    public HashSet<ProtoId<EngagementRolePrototype>> Roles = new();
+
+    /// <summary>
+    /// If true, the situation will be closed if the conditions regarding the number of roles are not met.
+    /// </summary>
+    [DataField]
+    public bool DissolveInvalid = true;
+
+    /// <summary>
+    /// The amount of time given to potential participants in the situation to accept the invitation.
+    /// </summary>
+    [DataField]
+    public TimeSpan InviteTime = TimeSpan.FromSeconds(7);
 
     /// <summary>
     /// A list of the participants in the situation and their roles.
     /// </summary>
-    [DataField]
+    [ViewVariables]
     public Dictionary<ProtoId<EngagementRolePrototype>, HashSet<EntityUid>> Actors = new();
 
     /// <summary>
     /// Initiator of this situation.
     /// </summary>
-    [DataField]
+    [ViewVariables]
     public EntityUid Initiator;
 
     /// <summary>
@@ -34,7 +48,7 @@ public sealed partial class EngagementComponent : Component
     /// otherwise, waiting for a response to the invitations
     /// from the minimum number of participants required to get started.
     /// </summary>
-    [DataField]
+    [ViewVariables]
     public bool Started;
 
     /// <summary>

@@ -40,7 +40,7 @@ public sealed partial class EngagementInvitesSearchQuerySystem : NpcSearchQueryS
                 continue;
 
             if (_prototype.TryIndex(query.Dataset, out var dataset)
-                && !dataset.Values.Contains(comp.Kind.Id))
+                && !dataset.Values.Contains(Prototype(ev.Engagement)?.ID ?? ""))
                 continue;
 
             Searcher.ReportDirty(ent, proto, added: new() { ev.Inviter });
@@ -59,7 +59,7 @@ public sealed partial class EngagementInvitesSearchQuerySystem : NpcSearchQueryS
                 continue;
 
             if (_prototype.TryIndex(query.Dataset, out var dataset)
-                && !dataset.Values.Contains(comp.Kind.Id))
+                && !dataset.Values.Contains(Prototype(ev.Engagement)?.ID ?? ""))
                 continue;
 
             Searcher.ReportDirty(ent, proto, removed: new() { ev.Inviter });
@@ -85,7 +85,7 @@ public sealed partial class EngagementInvitesSearchQuerySystem : NpcSearchQueryS
             }
 
             if (!_query.TryComp(invite.EngageUid, out var engage)
-                || !dataset.Values.Contains(engage.Kind.Id))
+                || !dataset.Values.Contains(Prototype(invite.EngageUid)?.ID ?? ""))
                 continue;
 
             Query.Add(invite.Inviter);

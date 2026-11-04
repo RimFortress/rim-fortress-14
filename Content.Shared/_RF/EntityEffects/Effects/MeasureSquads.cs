@@ -23,7 +23,7 @@ public sealed partial class MeasureSquads : EntityEffectBase<MeasureSquads>
     /// The kind of the squads.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Squad;
+    public EntProtoId<EngagementComponent> Squad;
 
     /// <summary>
     /// How strong what the squads are up against is. The curves see the variables of the target.
@@ -66,7 +66,7 @@ public sealed partial class MeasureSquadsEntityEffectsSystem : EntityEffectSyste
 
         foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != args.Effect.Squad)
+            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != args.Effect.Squad.Id)
                 continue;
 
             var power = comp.Actors.Values.SelectMany(x => x).Sum(x => _curves.Get(fighter, 0f, x));

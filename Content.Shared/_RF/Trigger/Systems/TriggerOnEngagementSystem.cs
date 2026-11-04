@@ -16,11 +16,11 @@ public sealed partial class TriggerOnEngagementSystem : EntitySystem
 
     [SubscribeLocalEvent]
     private void OnRoleJoined(Entity<EngagementComponent> ent, ref EngagementRoleJoined args)
-        => TriggerOwners(ent, args.Actor, $"{ent.Comp.Kind}.joined.{args.Role}");
+        => TriggerOwners(ent, args.Actor, $"{Prototype(ent)?.ID}.joined.{args.Role}");
 
     [SubscribeLocalEvent]
     private void OnRoleLeft(Entity<EngagementComponent> ent, ref EngagementRoleLeft args)
-        => TriggerOwners(ent, args.Actor, $"{ent.Comp.Kind}.left.{args.Role}");
+        => TriggerOwners(ent, args.Actor, $"{Prototype(ent)?.ID}.left.{args.Role}");
 
     private void TriggerOwners(EntityUid engagement, EntityUid actor, string key)
     {

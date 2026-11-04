@@ -23,7 +23,6 @@ namespace Content.Shared._RF.Conversation.Systems;
 public sealed partial class ConversationSystem : EntitySystem
 {
     [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
     [Dependency] private SharedTransformSystem _transform = default!;
     [Dependency] private EngagementSystem _engagement = default!;
 
@@ -48,7 +47,7 @@ public sealed partial class ConversationSystem : EntitySystem
         if (!TryGetConversation(ent.AsNullable(), out var conv))
             return;
 
-        // Leaving one role is enough - if the underlying EngagementPrototype has
+        // Leaving one role is enough - if the underlying engagement entity has
         // DissolveInvalid set (which every conversation kind should), the Engagement
         // system itself cascades this into EndEngagement for the remaining actors.
         _engagement.LeaveEngagement(conv.Value.Owner, ent.Owner, EngagementEndReason.Interrupted);
@@ -92,6 +91,7 @@ public sealed partial class ConversationSystem : EntitySystem
 
     private void OnEngagementJoined(Entity<ConversationComponent> ent, ref EngagementRoleJoined args)
     {
+        EnsureStartPosition(ent);
         var actor = EnsureComp<ConversationActorComponent>(args.Actor);
         actor.Conversation = ent;
         actor.Ready = false;
@@ -104,8 +104,25 @@ public sealed partial class ConversationSystem : EntitySystem
         RemComp<ConversationActorComponent>(args.Actor);
     }
 
+    /// <summary>
+    /// The conversation starts where its initiator is. The component is on the entity from the very beginning, so the place is
+    /// found when it is first needed, and not when the conversation is started.
+    /// </summary>
+    private void EnsureStartPosition(Entity<ConversationComponent> ent)
+    {
+        if (ent.Comp.StartPosition.EntityId.IsValid()
+            || !_engagementQuery.TryComp(ent, out var comp)
+            || !Exists(comp.Initiator))
+            return;
+
+        // TODO: I think the starting location for the conversation should be determined using a more advanced method
+        ent.Comp.StartPosition = Transform(comp.Initiator).Coordinates;
+    }
+
     private void SetupActors(Entity<ConversationComponent> ent)
     {
+        EnsureStartPosition(ent);
+
         if (!_engagementQuery.TryComp(ent, out var comp))
             return;
 
@@ -123,14 +140,13 @@ public sealed partial class ConversationSystem : EntitySystem
     }
 
     /// <summary>
-    /// Picks the first line and positions actors. Dissolves the situation if the script
+    /// Picks the first line and positions actors. Dissolves the situation if the conversation
     /// has no lines, or its first speaker never ended up seated.
     /// </summary>
     private void StartConversation(Entity<ConversationComponent> ent)
     {
-        if (!_prototype.Resolve(ent.Comp.Script, out var script)
-            || !_engagementQuery.TryComp(ent, out var comp)
-            || GetNextMessage(script) is not { } first
+        if (!_engagementQuery.TryComp(ent, out var comp)
+            || GetNextMessage(ent.Comp) is not { } first
             || !_engagement.TryGetActors(ent.Owner, first.Actor, out var firstActors)
             || firstActors.Count == 0)
         {
@@ -159,12 +175,12 @@ public sealed partial class ConversationSystem : EntitySystem
     }
 
     private (int Index, ProtoId<EngagementRolePrototype> Actor, TimeSpan Delay, InGameICChatType SpeakType, bool Speak)? GetNextMessage(
-        ConversationScriptPrototype script,
+        ConversationComponent conv,
         int current = -1)
     {
         var next = current + 1;
 
-        switch (script.Order)
+        switch (conv.Order)
         {
             case ConversationBasicOrderType seq:
                 if (current >= seq.Lines - 1)
@@ -181,15 +197,13 @@ public sealed partial class ConversationSystem : EntitySystem
                 delay = TimeSpan.FromSeconds(nextLine.Delay?.Next(_random) ?? custom.Delay.Next(_random));
                 return (next, nextLine.Id, delay, nextLine.SpeakType, nextLine.Speak);
             default:
-                throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
+                throw new ArgumentOutOfRangeException(nameof(ConversationComponent.Order), conv.Order, null);
         }
     }
 
     private Vector2 GetRotatePosition(ConversationComponent conv, EngagementComponent engage)
     {
-        var script = _prototype.Index(conv.Script);
-
-        switch (script.Order)
+        switch (conv.Order)
         {
             case ConversationBasicOrderType:
                 return ConversationCenter(engage);
@@ -204,7 +218,7 @@ public sealed partial class ConversationSystem : EntitySystem
 
                 return Transform(engage.Actors[msg.FaceTo.Value].First()).Coordinates.Position;
             default:
-                throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
+                throw new ArgumentOutOfRangeException(nameof(ConversationComponent.Order), conv.Order, null);
         }
     }
 
@@ -228,8 +242,7 @@ public sealed partial class ConversationSystem : EntitySystem
 
     private bool ValidateConversation(Entity<ConversationComponent, EngagementComponent> ent)
     {
-        if (!_prototype.HasIndex(ent.Comp1.Script)
-            || ent.Comp2.Started && ent.Comp1.NextActors.Count == 0)
+        if (ent.Comp2.Started && ent.Comp1.NextActors.Count == 0)
         {
             Invalid();
             return false;
@@ -278,7 +291,7 @@ public sealed partial class ConversationSystem : EntitySystem
     /// having already consented and is seated immediately even if its assigned role isn't
     /// <see cref="EngagementRolePrototype.Force"/> - its own invite, if any, is accepted on the spot.
     /// </remarks>
-    /// <param name="protoId">Conversation script prototype.</param>
+    /// <param name="protoId">The kind of the conversation: the prototype of its entity.</param>
     /// <param name="initiator">The entity starting the conversation. Must be included in <paramref name="candidates"/>.</param>
     /// <param name="candidates">Candidate entities that may end up participating in the conversation.</param>
     /// <param name="actors">
@@ -287,29 +300,26 @@ public sealed partial class ConversationSystem : EntitySystem
     /// </param>
     [PublicAPI]
     public bool TryStartConversation(
-        ProtoId<ConversationScriptPrototype> protoId,
+        EntProtoId<ConversationComponent> protoId,
         EntityUid initiator,
         HashSet<EntityUid> candidates,
         [NotNullWhen(true)] out Dictionary<ProtoId<EngagementRolePrototype>, HashSet<EntityUid>>? actors)
     {
         actors = null;
 
-        if (!_prototype.TryIndex(protoId, out var script))
-            return false;
-
         DebugTools.Assert(candidates.Contains(initiator));
 
-        if (!_engagement.TryStartEngagement(script.Engagement, initiator, candidates, out var engagement))
+        if (!_engagement.TryStartEngagement(protoId.Id, initiator, candidates, out var engagement))
             return false;
 
-        var convEnt = engagement.Value.Owner;
-        var convComp = EnsureComp<ConversationComponent>(convEnt);
-        convComp.Script = protoId;
-        convComp.NextActors = new();
-        // TODO: I think the starting location for the conversation should be determined using a more advanced method
-        convComp.StartPosition = Transform(initiator).Coordinates;
+        if (!_conversationQuery.TryComp(engagement.Value, out var convComp))
+        {
+            _engagement.EndEngagement(engagement.Value.AsNullable(), EngagementEndReason.Dissolved);
+            return false;
+        }
+
         actors = engagement.Value.Comp.Actors;
-        SetupActors(new(convEnt, convComp));
+        SetupActors(new(engagement.Value.Owner, convComp));
         return true;
     }
 
@@ -332,7 +342,7 @@ public sealed partial class ConversationSystem : EntitySystem
             || !conv.Value.Comp1.NextSpeak)
             return false;
 
-        line = Loc.GetString($"conversation-{conv.Value.Comp1.Script.Id.ToLowerInvariant()}-line-{Id()}");
+        line = Loc.GetString($"conversation-{Prototype(conv.Value.Owner)?.ID.ToLowerInvariant()}-line-{Id()}");
         delay = conv.Value.Comp1.NextDelay;
         speakType = conv.Value.Comp1.NextSpeakType;
         return true;
@@ -341,10 +351,7 @@ public sealed partial class ConversationSystem : EntitySystem
         {
             var comp = conv.Value.Comp1;
 
-            if (!_prototype.Resolve(comp.Script, out var script))
-                return comp.NextMessage + 1;
-
-            switch (script.Order)
+            switch (comp.Order)
             {
                 case ConversationBasicOrderType:
                     return comp.NextMessage + 1;
@@ -359,7 +366,7 @@ public sealed partial class ConversationSystem : EntitySystem
 
                     return id;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(ConversationScriptPrototype.Order), script.Order, null);
+                    throw new ArgumentOutOfRangeException(nameof(ConversationComponent.Order), comp.Order, null);
             }
         }
     }
@@ -371,13 +378,12 @@ public sealed partial class ConversationSystem : EntitySystem
     public void ContinueConversation(Entity<ConversationActorComponent?> ent)
     {
         if (!TryGetConversation(ent, out var conv)
-            || !conv.Value.Comp1.NextActors.Contains(ent)
-            || !_prototype.Resolve(conv.Value.Comp1.Script, out var script))
+            || !conv.Value.Comp1.NextActors.Contains(ent))
             return;
 
         var comp = conv.Value.Comp1;
 
-        if (GetNextMessage(script, comp.NextMessage) is not { } next)
+        if (GetNextMessage(comp, comp.NextMessage) is not { } next)
         {
             EndConversation(ent, true);
             return;
@@ -400,7 +406,7 @@ public sealed partial class ConversationSystem : EntitySystem
             if (!_actorQuery.TryComp(uid, out var actor))
                 return;
 
-            if (script.Order is ConversationCustomOrderType custom
+            if (comp.Order is ConversationCustomOrderType custom
                 && custom.Custom[comp.NextMessage].PosOffset is { } offset)
             {
                 actor.TargetPos = new EntityCoordinates(comp.StartPosition.EntityId, comp.StartPosition.Position + offset);

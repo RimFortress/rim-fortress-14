@@ -22,7 +22,7 @@ public sealed partial class PromoteEngagementActor : EntityEffectBase<PromoteEng
     /// The kind of the situations.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Engagement;
+    public EntProtoId<EngagementComponent> Engagement;
 
     /// <summary>
     /// The role that is filled.
@@ -52,7 +52,7 @@ public sealed partial class PromoteEngagementActorEntityEffectsSystem
 
         foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != args.Effect.Engagement)
+            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != args.Effect.Engagement.Id)
                 continue;
 
             if (_engagement.TryGetActors((owned, comp), args.Effect.Role, out _))

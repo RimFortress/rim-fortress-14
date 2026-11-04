@@ -15,11 +15,11 @@
   # If not invites: x * 0
   - mul:
     - !type:EngagementInvites
-      dataset: BasicConversationEngagements
+      dataset: BasicConversations
     - clamp: {max: 1}
   - div:
     - !type:EngagementMembership
-      dataset: BasicConversationEngagements
+      dataset: BasicConversations
     - add: [float: 1]
     - pow: [float: 2]
   goalState:
@@ -41,10 +41,10 @@
         need: Socialization
   - div:
     - !type:EngagementMembership
-      dataset: BasicConversationEngagements
+      dataset: BasicConversations
     - add:
       - !type:EngagementInvites
-        dataset: BasicConversationEngagements
+        dataset: BasicConversations
     - add: [float: 1]
     - pow: [float: 2]
   goalState:

@@ -665,7 +665,7 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
             return true;
         }
 
-        if (GoapState.InEngagementDomain.TryGetParams(domains, out ProtoId<EngagementPrototype>? engagement))
+        if (GoapState.InEngagementDomain.TryGetParams(domains, out EntProtoId<EngagementComponent>? engagement))
         {
             if (!_proto.HasIndex(engagement))
                 return false;
@@ -896,14 +896,14 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
     /// </summary>
     private HashSet<EntityUid> GetOwnedActors(
         EntityUid owner,
-        ProtoId<EngagementPrototype> kind,
+        EntProtoId<EngagementComponent> kind,
         ProtoId<EngagementRolePrototype>? role)
     {
         var result = new HashSet<EntityUid>();
 
         foreach (var owned in _ownership.GetOwned(owner))
         {
-            if (!_engagementQuery.TryComp(owned, out var comp) || comp.Kind != kind)
+            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != kind.Id)
                 continue;
 
             foreach (var (actorRole, actors) in comp.Actors)

@@ -48,13 +48,16 @@ public sealed class EngagementStayConditionsTest : GameTest
   id: TestStayAlways
   force: true
 
-- type: engagement
+- type: entity
   id: TestStay
-  dissolveInvalid: false
-  roles:
-  - TestStayAlive
-  - TestStayNotDead
-  - TestStayAlways
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    dissolveInvalid: false
+    roles:
+    - TestStayAlive
+    - TestStayNotDead
+    - TestStayAlways
 ";
 
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;

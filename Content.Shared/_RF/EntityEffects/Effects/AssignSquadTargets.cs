@@ -28,7 +28,7 @@ public sealed partial class AssignSquadTargets : EntityEffectBase<AssignSquadTar
     /// The kind of the squads. They must have a state (<c>Goap</c>) and the variable <c>power</c>, see <c>MeasureSquads</c>.
     /// </summary>
     [DataField(required: true)]
-    public ProtoId<EngagementPrototype> Squad;
+    public EntProtoId<EngagementComponent> Squad;
 
     /// <summary>
     /// The key of the state of the target with the targets, those that are to be shared.
@@ -91,7 +91,7 @@ public sealed partial class AssignSquadTargetsEntityEffectsSystem : EntityEffect
         foreach (var owned in _ownership.GetOwned(ent).ToArray())
         {
             if (!_engagementQuery.TryComp(owned, out var comp)
-                || comp.Kind != effect.Squad
+                || Prototype(owned)?.ID != effect.Squad.Id
                 || !_goapQuery.TryComp(owned, out var goap))
                 continue;
 

@@ -45,11 +45,14 @@ public sealed class RuleTriggersTest : GameTest
     targetState: Dead
     invert: true
 
-- type: engagement
+- type: entity
   id: TestRuleSquad
-  dissolveInvalid: false
-  roles:
-  - TestRuleMember
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    dissolveInvalid: false
+    roles:
+    - TestRuleMember
 
 # The fixed set of the entities that the rule is about, told apart by what they are like.
 - type: searchQuery

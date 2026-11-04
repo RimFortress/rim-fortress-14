@@ -80,14 +80,14 @@
       Retreat:
         enter:
         - !type:ApplyToEngagementActors
-          engagement: Raid
+          engagement: RaidForce
           role: Raider
           effects:
           - !type:SetGoapFlag
             key: Retreating
         tick:
         - !type:ApplyToEngagementActors
-          engagement: Raid
+          engagement: RaidForce
           role: Raider
           effects:
           - !type:DespawnEntity
@@ -125,14 +125,14 @@
       Withdraw:
         enter:
         - !type:ApplyToEngagementActors
-          engagement: Raid
+          engagement: RaidForce
           role: Raider
           effects:
           - !type:SetGoapFlag
             key: Retreating
         tick:
         - !type:ApplyToEngagementActors
-          engagement: Raid
+          engagement: RaidForce
           role: Raider
           effects:
           - !type:DespawnEntity
@@ -160,7 +160,7 @@
   - type: KeyedEntityEffectOnTrigger
     effects:
       started:
-      # What the raid is about is kept here once, the raiders read it from the raid, see Engagement/Raid/Owner/...
+      # What the raid is about is kept here once, the raiders read it from the raid, see Engagement/RaidForce/Owner/...
       - !type:CopySettlementResidents
       - !type:SetSettlementTarget
       - !type:SetMathVariable
@@ -196,7 +196,7 @@
       # The raid owns the raiders and everything they carry, so they share the equipment: what one has, the others find.
       - !type:OwnUser
       - !type:JoinEngagement
-        engagement: Raid
+        engagement: RaidForce
         roles: [Raider]
       tick:
       - !type:SetMathVariable
@@ -212,7 +212,7 @@
         key: raidPower
         value:
         - !type:ForEachEntity
-          key: OwnedEngagement/Raid/Role/Raider/All
+          key: OwnedEngagement/RaidForce/Role/Raider/All
           curves:
           - add:
             - !type:PrototypeCurve
@@ -220,7 +220,7 @@
       # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeWeakSquads.
       - !type:PlanSquads
         onlyIfNone: true
-        source: Raid
+        source: RaidForce
         sourceRole: Raider
         squad: RaidSquad
         maxSquads: 4
@@ -287,7 +287,7 @@
         # Those who can fight: the ones that are down are in the raid, but they are not in the formation, they are neither the force
         # of the raid nor the morale of it.
         - !type:EngagementActors
-          engagement: Raid
+          engagement: RaidForce
           role: Raider
           conditions:
           - !type:MobState
@@ -337,7 +337,7 @@
           - var: planning
           - !type:Threshold
             lessThan: 0.5
-      Raid.left.Raider:
+      RaidForce.left.Raider:
       - !type:SetMathVariable
         key: losses
         value:
@@ -345,7 +345,7 @@
       # Whoever is able to fight and is left when the raid is over is gone. The ones that are down are left where they lie.
       ended:
       - !type:ApplyToEngagementActors
-        engagement: Raid
+        engagement: RaidForce
         role: Raider
         effects:
         - !type:DespawnEntity
