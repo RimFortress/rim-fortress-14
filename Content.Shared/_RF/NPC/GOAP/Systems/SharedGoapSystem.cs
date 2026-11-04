@@ -6,6 +6,7 @@ using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Domains;
 using Content.Shared._RF.NPC.GOAP.Prototypes;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using Content.Shared._RF.MathHelpers.MathVariables;
@@ -41,7 +42,7 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
     [Dependency] private SharedBuckleSystem _buckle = default!;
     [Dependency] private EntityQuery<ClimbingComponent> _climbingQuery;
     [Dependency] private PullingSystem _pulling = default!;
-    [Dependency] private EngagementSystem _engagement = default!;
+    [Dependency] private GoapDomainSystem _domains = default!;
     [Dependency] private OwnershipSystem _ownership = default!;
     [Dependency] private EntityQuery<EngagementComponent> _engagementQuery;
     [Dependency] private MathVariablesSystem _variables = default!;
@@ -433,6 +434,8 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
         var owner = Owner(state);
         var ev = new GoapStateValueSet<T>(owner, key, value);
         RaiseLocalEvent(owner, ref ev, true);
+        var changed = new GoapStateKeyChanged(owner, key.Id);
+        RaiseLocalEvent(owner, ref changed, true);
     }
 
     /// <inheritdoc cref="GoapState.SetValue"/>
@@ -459,6 +462,8 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
         var owner = Owner(state);
         var ev = new GoapStateValueRemove<T>(owner, key, value);
         RaiseLocalEvent(owner, ref ev, true);
+        var changed = new GoapStateKeyChanged(owner, key.Id);
+        RaiseLocalEvent(owner, ref changed, true);
         return true;
     }
 
@@ -627,294 +632,13 @@ public abstract partial class SharedGoapSystem : EntitySystem, IGoapConditionChe
         where T : notnull
     {
         value = null;
-        var owner = Owner(state);
         var domains = GoapState.GetDomainParts(key);
 
-        if (domains.Length < 2)
-            return false;
-
-        if (GoapState.QueryDomain.TryGetParams(domains, out ProtoId<SearchQueryPrototype>? query))
-        {
-            if (!_proto.HasIndex(query)
-                || !_searcher.TryGetBestResult(owner, state, query.Value, out var result))
-                return false;
-
-            value = result.Value;
-            return true;
-        }
-
-        if (GoapState.QueryAllDomain.TryGetParams(domains, out query))
-        {
-            if (!_proto.HasIndex(query))
-                return false;
-
-            var results = _searcher.GetResults(owner, state, query.Value);
-
-            if (results.Count == 0)
-                return false;
-
-            value = (T)results;
-            return true;
-        }
-
-        // Engagements
-
-        if (GoapState.InAnyEngagementDomain.Equals(domains))
-        {
-            value = TryComp(owner, out EngagementParticipantComponent? participant) && participant.Membership.Count > 0;
-            return true;
-        }
-
-        if (GoapState.InEngagementDomain.TryGetParams(domains, out EntProtoId<EngagementComponent>? engagement))
-        {
-            if (!_proto.HasIndex(engagement))
-                return false;
-
-            value = _engagement.TryGetEngagement(owner, engagement.Value, out _, out _);
-            return true;
-        }
-
-        if (GoapState.EngagementDomain.TryGetParams(domains, out engagement))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
-                return false;
-
-            value = ent.Value.Owner;
-            return true;
-        }
-
-        if (GoapState.EngagementOwnerDomain.TryGetParams(domains, out engagement, out string? ownerKey))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
-                return false;
-
-            var ownerKeyId = new StateKey<T>(ownerKey);
-
-            foreach (var situationOwner in _ownership.GetOwners(ent.Value.Owner))
-            {
-                if (!_goapQuery.TryComp(situationOwner, out var ownerGoap)
-                    || !TryGetValue(ownerGoap.State, ownerKeyId, out var found))
-                    continue;
-
-                value = found;
-                return true;
-            }
-
-            return false;
-        }
-
-        if (GoapState.EngagementStateDomain.TryGetParams(domains, out engagement, out string? stateKey))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
-                || !_goapQuery.TryComp(ent.Value.Owner, out var situationGoap)
-                || !TryGetValue(situationGoap.State, new StateKey<T>(stateKey), out var found))
-                return false;
-
-            value = found;
-            return true;
-        }
-
-        if (GoapState.EngagementVarDomain.TryGetParams(domains, out engagement, out string? varName))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
-                || !_variablesQuery.HasComp(ent.Value.Owner))
-                return false;
-
-            value = _variables.Get(ent.Value.Owner, varName);
-            return true;
-        }
-
-        if (GoapState.EngagementRoleAllDomain.TryGetParams(domains, out engagement, out ProtoId<EngagementRolePrototype>? allRole))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_proto.HasIndex(allRole)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
-                || !_engagement.TryGetActors(ent.Value.AsNullable(), allRole.Value, out var actors))
-                return false;
-
-            value = new HashSet<EntityUid>(actors);
-            return true;
-        }
-
-        if (GoapState.OwnedEngagementAllDomain.TryGetParams(domains, out engagement))
-        {
-            if (!_proto.HasIndex(engagement))
-                return false;
-
-            value = GetOwnedActors(owner, engagement.Value, null);
-            return true;
-        }
-
-        if (GoapState.OwnedEngagementRoleAllDomain.TryGetParams(domains, out engagement, out allRole))
-        {
-            if (!_proto.HasIndex(engagement) || !_proto.HasIndex(allRole))
-                return false;
-
-            value = GetOwnedActors(owner, engagement.Value, allRole.Value);
-            return true;
-        }
-
-        if (GoapState.EngagementStartedDomain.TryGetParams(domains, out engagement))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
-                || !ent.Value.Comp.Started)
-                return false;
-
-            value = ent.Value.Owner;
-            return true;
-        }
-
-        if (GoapState.InEngagementRoleDomain.TryGetParams(domains, out engagement, out ProtoId<EngagementRolePrototype>? role))
-        {
-            if (!_proto.HasIndex(engagement) || !_proto.HasIndex(role))
-                return false;
-
-            value = _engagement.TryFindEngagement(owner, role.Value, engagement.Value, out _);
-            return true;
-        }
-
-        if (GoapState.EngagementRoleDomain.TryGetParams(domains, out engagement, out role))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_proto.HasIndex(role)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _)
-                || !_engagement.TryGetActors(ent.Value.AsNullable(), role.Value, out var actors)
-                || actors.Count == 0)
-                return false;
-
-            value = actors.First();
-            return true;
-        }
-
-        if (GoapState.EngagementInvitedDomain.TryGetParams(domains, out engagement))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetInviteEngagement(owner, engagement.Value, out var ent))
-                return false;
-
-            value = ent.Value.Owner;
-            return true;
-        }
-
-        if (GoapState.EngagementInvitedInviterDomain.TryGetParams(domains, out engagement))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_engagement.TryGetInviteInviter(owner, engagement.Value, out var ent))
-                return false;
-
-            value = ent.Value;
-            return true;
-        }
-
-        if (GoapState.EngagementInvitedRoleDomain.TryGetParams(domains, out engagement, out role))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_proto.HasIndex(role)
-                || !_engagement.TryGetInviteEngagement(owner, engagement.Value, out var ent, role))
-                return false;
-
-            value = ent.Value.Owner;
-            return true;
-        }
-
-        if (GoapState.EngagementInvitedRoleInviterDomain.TryGetParams(domains, out engagement, out role))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_proto.HasIndex(role)
-                || !_engagement.TryGetInviteInviter(owner, engagement.Value, out var ent, role))
-                return false;
-
-            value = ent.Value;
-            return true;
-        }
-
-        if (GoapState.EngagementInvitesRoleInvitedDomain.TryGetParams(domains, out engagement, out role))
-        {
-            if (!_proto.HasIndex(engagement)
-                || !_proto.HasIndex(role)
-                || !_engagement.TryGetEngagement(owner, engagement.Value, out var ent, out _))
-                return false;
-
-            foreach (var invite in ent.Value.Comp.Invites)
-            {
-                if (invite.Role != role)
-                    continue;
-
-                value = invite.Uid;
-                return true;
-            }
-
-            return false;
-        }
-
-        // Datasets
-
-        if (GoapState.DatasetAllDomain.TryGetParams(domains, out ProtoId<DatasetPrototype>? dataset))
-        {
-            if (!_proto.TryIndex(dataset, out var proto))
-                return false;
-
-            value = proto.Values;
-        }
-
-        if (GoapState.DatasetRandomDomain.TryGetParams(domains, out dataset))
-        {
-            if (!_proto.TryIndex(dataset, out var proto))
-                return false;
-
-            value = _random.Pick(proto.Values);
-        }
-
-        if (GoapState.LocalizedDatasetAllDomain.TryGetParams(domains, out ProtoId<LocalizedDatasetPrototype>? localeDataset))
-        {
-            if (!_proto.TryIndex(localeDataset, out var proto))
-                return false;
-
-            value = proto.Values;
-        }
-
-        if (GoapState.LocalizedDatasetRandomDomain.TryGetParams(domains, out localeDataset))
-        {
-            if (!_proto.TryIndex(localeDataset, out var proto))
-                return false;
-
-            value = _random.Pick(proto.Values);
-        }
-
-        return false;
+        // The keys of the domains are found out by the providers of the families, see GoapDomainSystem.
+        return domains.Length >= 2 && _domains.TryResolve(state, domains, out value);
     }
 
     #endregion
-
-    /// <summary>
-    /// Returns the participants of the situations of a kind that the entity owns, in a role or in any.
-    /// </summary>
-    private HashSet<EntityUid> GetOwnedActors(
-        EntityUid owner,
-        EntProtoId<EngagementComponent> kind,
-        ProtoId<EngagementRolePrototype>? role)
-    {
-        var result = new HashSet<EntityUid>();
-
-        foreach (var owned in _ownership.GetOwned(owner))
-        {
-            if (!_engagementQuery.TryComp(owned, out var comp) || Prototype(owned)?.ID != kind.Id)
-                continue;
-
-            foreach (var (actorRole, actors) in comp.Actors)
-            {
-                if (role == null || role == actorRole)
-                    result.UnionWith(actors);
-            }
-        }
-
-        return result;
-    }
 
     /// <summary>
     /// Forces the entity to perform a re-planning.

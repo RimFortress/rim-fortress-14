@@ -33,6 +33,15 @@ public sealed partial class EngagementSystem : EntitySystem
     [Dependency] private EntityQuery<EngagementParticipantComponent> _participantQuery = default!;
     [Dependency] private EntityQuery<GoapComponent> _goapQuery = default!;
 
+    /// <summary>
+    /// Tells (<see cref="EngagementChanged"/>) that who is in the situation has changed.
+    /// </summary>
+    private void Changed(EntityUid engagement, EntityUid? extra1 = null, EntityUid? extra2 = null)
+    {
+        var changed = new EngagementChanged(engagement, extra1, extra2);
+        RaiseLocalEvent(ref changed);
+    }
+
     [SubscribeLocalEvent]
     private void OnParticipantRemove(Entity<EngagementParticipantComponent> ent, ref ComponentRemove args)
     {
@@ -96,6 +105,7 @@ public sealed partial class EngagementSystem : EntitySystem
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement, ev);
         RaiseLocalEvent(inviter, ev);
+        Changed(engagement, actor, inviter);
     }
 
     /// <summary>
@@ -262,6 +272,7 @@ public sealed partial class EngagementSystem : EntitySystem
         var ev = new EngagementRoleLeft(engagement.Owner, actor, role, reason);
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner, actor);
 
         if (!engagement.Comp.Started || !engagement.Comp.DissolveInvalid)
             return;
@@ -401,6 +412,7 @@ public sealed partial class EngagementSystem : EntitySystem
         var ev = new EngagementRoleJoined(engagement.Owner, actor, role);
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner, actor);
 
         CheckStarted(engagement);
     }
@@ -429,6 +441,7 @@ public sealed partial class EngagementSystem : EntitySystem
         engagement.Comp.Started = true;
         var ev = new EngagementStarted(engagement.Owner);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner);
 
         foreach (var (roleId, actors) in engagement.Comp.Actors)
         {

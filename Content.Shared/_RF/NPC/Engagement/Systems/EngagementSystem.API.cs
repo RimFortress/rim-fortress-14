@@ -380,6 +380,7 @@ public partial class EngagementSystem
             RaiseLocalEvent(actor, ev);
             RaiseLocalEvent(engagement, ev);
             RaiseLocalEvent(invite.Inviter, ev);
+            Changed(engagement, actor, invite.Inviter);
         }
     }
 
@@ -455,6 +456,7 @@ public partial class EngagementSystem
 
         var ev = new EngagementEnded(engagement.Owner, reason);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner);
         Del(engagement.Owner);
     }
 

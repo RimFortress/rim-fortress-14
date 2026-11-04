@@ -79,3 +79,14 @@ public readonly record struct EngagementInviteRemoved(
     EntityUid Engagement,
     EntityUid Inviter,
     EntityUid Invited);
+
+/// <summary>
+/// Broadcast when something about who is in a situation (or is invited to it) has changed: someone has joined or left, has been invited
+/// or not any more, the situation has started or is over. It is for those who depend on it as a whole, and do not care which of these
+/// it was, such as the keys of the domains of the state of an agent, see <c>EngagementGoapDomains</c>.
+/// </summary>
+/// <param name="Engagement">The situation entity.</param>
+/// <param name="Extra1">Another entity that it is about, such as the one who has left.</param>
+/// <param name="Extra2">And another one.</param>
+[PublicAPI, ByRefEvent]
+public readonly record struct EngagementChanged(EntityUid Engagement, EntityUid? Extra1 = null, EntityUid? Extra2 = null);

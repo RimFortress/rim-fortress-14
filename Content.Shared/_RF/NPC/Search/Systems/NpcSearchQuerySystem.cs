@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Domains;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
 using JetBrains.Annotations;
@@ -15,6 +16,7 @@ public abstract partial class NpcSearchQuerySystem<T> : EntitySystem where T : B
 {
     [Dependency] protected IPrototypeManager Proto = default!;
     [Dependency] protected SharedNpcSearcherSystem Searcher = default!;
+    [Dependency] protected GoapDomainSystem Domains = default!;
 
     [Dependency] protected EntityQuery<NpcSearcherComponent> SearcherQuery = default!;
     [Dependency] protected EntityQuery<SearchTrackedComponent> TrackedQuery = default!;
@@ -46,7 +48,23 @@ public abstract partial class NpcSearchQuerySystem<T> : EntitySystem where T : B
             if (proto.Query is T query)
                 _queries[proto] = query;
         }
+
+        OnQueriesLoaded();
     }
+
+    /// <summary>
+    /// Called when the queries of this type are loaded or reloaded. A query that depends on keys of the state tells that it does, so it
+    /// gets to know when their values change: <see cref="GoapDomainSystem.Watch{T}"/> for the keys of the domains (the others
+    /// are followed by <c>GoapStateValueSet</c>).
+    /// </summary>
+    protected virtual void OnQueriesLoaded()
+    {
+    }
+
+    /// <summary>
+    /// The queries of this type, by the prototypes.
+    /// </summary>
+    protected IEnumerable<KeyValuePair<ProtoId<SearchQueryPrototype>, T>> Queries => _queries;
 
     private void OnGetSearchQuery(Entity<NpcSearcherComponent> ent, ref GetSearchQuery<T> ev)
     {

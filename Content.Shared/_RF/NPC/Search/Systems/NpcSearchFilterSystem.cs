@@ -1,5 +1,6 @@
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Domains;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Components;
 using Content.Shared._RF.NPC.Search.Prototypes;
@@ -182,6 +183,8 @@ public abstract class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFil
     where TFilter : BaseSearchFilter<TFilter>
     where TKey : notnull
 {
+    [Dependency] private GoapDomainSystem _domains = default!;
+
     private readonly
         Dictionary<StateKey<TKey>, HashSet<ProtoId<SearchQueryPrototype>>> _types = new();
 
@@ -191,6 +194,7 @@ public abstract class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFil
 
         SubscribeLocalEvent<GoapStateValueSet<TKey>>(OnGoapSetValue);
         SubscribeLocalEvent<GoapStateValueRemove<TKey>>(OnGoapRemoveValue);
+        SubscribeLocalEvent<GoapDomainKeyChanged>(OnDomainKeyChanged);
         Subs.ProtoReload<SearchQueryPrototype>(Proto, ReloadPrototypes);
 
         ReloadPrototypes();
@@ -211,6 +215,9 @@ public abstract class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFil
                 {
                     if (!_types.TryAdd(key, new() { proto }))
                         _types[key].Add(proto);
+
+                    // A key of a domain is not set: the one who finds its value tells when it changes.
+                    _domains.Watch(key);
                 }
             }
         }
@@ -224,6 +231,11 @@ public abstract class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFil
     private void OnGoapRemoveValue(ref GoapStateValueRemove<TKey> ev)
     {
         OnValueChanged(ev.Agent, ev.Key);
+    }
+
+    private void OnDomainKeyChanged(ref GoapDomainKeyChanged ev)
+    {
+        OnValueChanged(ev.Agent, new StateKey<TKey>(ev.Key));
     }
 
     private void OnValueChanged(EntityUid agentUid, StateKey<TKey> key)

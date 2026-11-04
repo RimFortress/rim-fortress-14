@@ -1,7 +1,7 @@
 using System.Linq;
-using Content.Shared._RF.NPC.Engagement;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Domains;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Components;
@@ -15,7 +15,8 @@ namespace Content.Server._RF.NPC.Search.Queries;
 /// the filters of the query. The result follows the key: when its value is set or removed (with <c>SharedGoapSystem.SetValue</c>,
 /// which says so), the entities that are no longer in it leave the result, and those which are new get into it.
 /// The key can be one of a domain, such as that of the owner of the situation (<c>Engagement/Raid/Owner/Targets</c>): then it
-/// follows the key of the owner, and the agent gets the entities when it joins the situation.
+/// follows the key of the owner, and the agent gets the entities when it joins the situation (see <c>GoapDomainSystem</c>: the queries
+/// are told to follow the keys of the domains, and the one who knows them tells when they change).
 /// </summary>
 public sealed partial class KeyEntities : BaseSearchQuery<KeyEntities>
 {
@@ -30,49 +31,50 @@ public sealed partial class KeyEntitiesQuerySystem : NpcSearchQuerySystem<KeyEnt
 {
     [Dependency] private SharedGoapSystem _goap = null!;
 
+    /// <summary>
+    /// The keys of the queries that are of a domain.
+    /// </summary>
+    private readonly HashSet<string> _domainKeys = new();
+
     [SubscribeLocalEvent]
     private void OnSet(ref GoapStateValueSet<HashSet<EntityUid>> ev)
     {
         Update(ev.Agent, ev.Key, ev.Value);
-        RefreshDomainQueries();
     }
 
     [SubscribeLocalEvent]
     private void OnRemove(ref GoapStateValueRemove<HashSet<EntityUid>> ev)
     {
         Update(ev.Agent, ev.Key, null);
-        RefreshDomainQueries();
     }
 
     /// <summary>
-    /// The queries whose keys are not of the agent but of a domain (those of the owner of the situation, of the situation
-    /// itself) follow what the key is now: it is not known whose state has been changed, and it is not often.
+    /// A key of a domain is not set by anybody, so the value of it is found out again when the one who knows (see
+    /// <c>GoapDomainSystem</c>) says that it may have changed for the agent: someone has joined the situation, the owner has put other
+    /// entities in its key, and so on.
     /// </summary>
-    private void RefreshDomainQueries()
-    {
-        var searchers = EntityQueryEnumerator<NpcSearcherComponent, GoapComponent>();
-
-        while (searchers.MoveNext(out var uid, out var searcher, out var goap))
-        {
-            foreach (var key in DomainKeys(searcher).ToArray())
-            {
-                _goap.TryGetValue(goap.State, key, out var value);
-                Update(uid, key, value);
-            }
-        }
-    }
-
     [SubscribeLocalEvent]
-    private void OnJoined(Entity<NpcSearcherComponent> ent, ref EngagementRoleJoined ev)
+    private void OnDomainKeyChanged(ref GoapDomainKeyChanged ev)
     {
-        if (ev.Actor != ent.Owner || !TryComp(ent, out GoapComponent? goap))
+        if (!_domainKeys.Contains(ev.Key) || !TryComp(ev.Agent, out GoapComponent? goap))
             return;
 
-        // What the situation has, the agent has now.
-        foreach (var key in DomainKeys(ent.Comp).ToArray())
+        var key = new StateKey<HashSet<EntityUid>>(ev.Key);
+        _goap.TryGetValue(goap.State, key, out var value);
+        Update(ev.Agent, key, value);
+    }
+
+    protected override void OnQueriesLoaded()
+    {
+        _domainKeys.Clear();
+
+        foreach (var (_, query) in Queries)
         {
-            _goap.TryGetValue(goap.State, key, out var value);
-            Update(ent, key, value);
+            if (!GoapDomainSystem.IsDomainKey(query.Key.Id))
+                continue;
+
+            _domainKeys.Add(query.Key.Id);
+            Domains.Watch(query.Key);
         }
     }
 
@@ -88,18 +90,6 @@ public sealed partial class KeyEntitiesQuerySystem : NpcSearchQuerySystem<KeyEnt
 
             if (!TerminatingOrDeleted(uid))
                 Query.Add(uid);
-        }
-    }
-
-    /// <summary>
-    /// The keys of the queries of the searcher that are not its own, but of a domain.
-    /// </summary>
-    private IEnumerable<StateKey<HashSet<EntityUid>>> DomainKeys(NpcSearcherComponent searcher)
-    {
-        foreach (var proto in searcher.Queries.Keys)
-        {
-            if (TryGetQuery(proto, out var query) && query.Key.Id.Contains(GoapState.KeyDomainSeparator))
-                yield return query.Key;
         }
     }
 

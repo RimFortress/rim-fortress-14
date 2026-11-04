@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Domains;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Components;
@@ -36,6 +37,7 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 {
     [Dependency] protected IPrototypeManager Proto = null!;
+    [Dependency] private GoapDomainSystem _domains = null!;
     [Dependency] private INetManager _net = null!;
     [Dependency] private MathCurvesSystem _mathCurves = null!;
 
@@ -258,8 +260,11 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
     {
         var change = live.Upsert(candidate, score);
 
-        if (change != 0)
-            Notify(agent, protoId, candidate, change > 0);
+        if (change == 0)
+            return;
+
+        _domains.Invalidate(agent, SearchGoapDomains.Family);
+        Notify(agent, protoId, candidate, change > 0);
     }
 
     private void Remove(
@@ -268,8 +273,11 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
         NpcSearcherComponent.LiveSearchResult live,
         EntityUid candidate)
     {
-        if (live.Remove(candidate))
-            Notify(agent, protoId, candidate, false);
+        if (!live.Remove(candidate))
+            return;
+
+        _domains.Invalidate(agent, SearchGoapDomains.Family);
+        Notify(agent, protoId, candidate, false);
     }
 
     private void Notify(EntityUid agent, ProtoId<SearchQueryPrototype> protoId, EntityUid candidate, bool added)
