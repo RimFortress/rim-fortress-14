@@ -1,3 +1,5 @@
+using Content.Shared._RF.MathHelpers.MathCurve;
+using Content.Shared.EntityConditions;
 using Content.Shared.EntityEffects;
 
 namespace Content.Shared._RF.Phases;
@@ -33,6 +35,13 @@ public sealed partial class PhasesComponent : Component
     /// </summary>
     [ViewVariables]
     public TimeSpan EnteredAt;
+
+    /// <summary>
+    /// Since when the conditions of the transitions of the current phase hold (by the numbers of them), for those that have a
+    /// <see cref="PhaseTransition.Delay"/>.
+    /// </summary>
+    [ViewVariables]
+    public Dictionary<int, TimeSpan> Holding = new();
 }
 
 /// <summary>
@@ -49,7 +58,16 @@ public sealed partial class PhaseDefinition
     public EntityEffect[] Enter = [];
 
     /// <summary>
-    /// Applied every time that the entity is triggered by <see cref="PhasesComponent.TickKey"/> while the phase goes on.
+    /// How the phase ends, and what the entity does when it does. On every trigger by <see cref="PhasesComponent.TickKey"/> they are
+    /// looked at in the order they are written, and the first whose conditions hold is applied: then the trigger is over,
+    /// <see cref="Tick"/> is not applied.
+    /// </summary>
+    [DataField]
+    public List<PhaseTransition> Transitions = new();
+
+    /// <summary>
+    /// Applied every time that the entity is triggered by <see cref="PhasesComponent.TickKey"/> while the phase goes on, if none of
+    /// the <see cref="Transitions"/> has happened.
     /// </summary>
     [DataField]
     public EntityEffect[] Tick = [];
@@ -59,4 +77,43 @@ public sealed partial class PhaseDefinition
     /// </summary>
     [DataField]
     public EntityEffect[] Exit = [];
+}
+
+/// <summary>
+/// A way out of a phase: when it is time, the effects are applied and another phase starts. It is the end of the whole thing if the
+/// effects end it (<c>EndWorldRule</c> with the result), the outcomes of an event are the transitions that do that.
+/// </summary>
+[DataDefinition]
+public sealed partial class PhaseTransition
+{
+    /// <summary>
+    /// The phase to start. The effects are applied only, if it is not set.
+    /// </summary>
+    [DataField]
+    public string? To;
+
+    /// <summary>
+    /// What has to hold for the transition. It holds always if there is nothing, which is for the transitions that wait for
+    /// <see cref="After"/> only.
+    /// </summary>
+    [DataField]
+    public EntityCondition[]? When;
+
+    /// <summary>
+    /// For how long the phase has to go on, in seconds: the curves see the variables of the entity. Not counted if there are none.
+    /// </summary>
+    [DataField]
+    public List<MathCurve> After = new();
+
+    /// <summary>
+    /// For how long the conditions have to hold without a break, in seconds, so a moment is not enough.
+    /// </summary>
+    [DataField]
+    public float Delay;
+
+    /// <summary>
+    /// Applied before the next phase starts.
+    /// </summary>
+    [DataField]
+    public EntityEffect[] Effects = [];
 }

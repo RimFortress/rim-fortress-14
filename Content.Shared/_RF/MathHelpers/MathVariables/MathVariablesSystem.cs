@@ -1,4 +1,5 @@
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
+using Content.Shared.Trigger;
 using JetBrains.Annotations;
 
 namespace Content.Shared._RF.MathHelpers.MathVariables;
@@ -17,6 +18,34 @@ public sealed partial class MathVariablesSystem : EntitySystem
         foreach (var (key, curves) in ent.Comp.InitVariables)
         {
             Set(ent.AsNullable(), key, _curves.Get(curves));
+        }
+    }
+
+    [SubscribeLocalEvent]
+    private void OnTrigger(Entity<MathVariablesComponent> ent, ref TriggerEvent args)
+    {
+        if (ent.Comp.Metrics.Count > 0 && args.Key == ent.Comp.MetricsKey)
+            UpdateMetrics(ent.AsNullable());
+    }
+
+    /// <summary>
+    /// Calculates the metrics of the entity (<see cref="MathVariablesComponent.Metrics"/>) again.
+    /// </summary>
+    [PublicAPI]
+    public void UpdateMetrics(Entity<MathVariablesComponent?> ent)
+    {
+        if (!_query.Resolve(ent, ref ent.Comp, false))
+            return;
+
+        // The metrics that are not calculated yet are 0, and not a variable that is not there.
+        foreach (var key in ent.Comp.Metrics.Keys)
+        {
+            ent.Comp.Variables.TryAdd(key, 0f);
+        }
+
+        foreach (var (key, curves) in ent.Comp.Metrics)
+        {
+            ent.Comp.Variables[key] = _curves.Get(curves, ent.Comp.Variables[key], ent.Owner, GetVariables(ent));
         }
     }
 

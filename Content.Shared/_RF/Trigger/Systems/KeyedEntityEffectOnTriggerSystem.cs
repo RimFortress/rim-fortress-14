@@ -1,3 +1,5 @@
+using Content.Shared._RF.MathHelpers.MathVariables;
+using Content.Shared._RF.Phases;
 using Content.Shared._RF.Trigger.Components.Effects;
 using Content.Shared.EntityEffects;
 using Content.Shared.Trigger;
@@ -8,7 +10,8 @@ public sealed partial class KeyedEntityEffectOnTriggerSystem : EntitySystem
 {
     [Dependency] private SharedEntityEffectsSystem _effects = null!;
 
-    [SubscribeLocalEvent]
+    // After the metrics of the entity are calculated, and the phases have decided what is next.
+    [SubscribeLocalEvent(after: [typeof(MathVariablesSystem), typeof(PhasesSystem)])]
     private void OnTrigger(Entity<KeyedEntityEffectOnTriggerComponent> ent, ref TriggerEvent args)
     {
         var target = ent.Comp.TargetUser ? args.User : ent.Owner;

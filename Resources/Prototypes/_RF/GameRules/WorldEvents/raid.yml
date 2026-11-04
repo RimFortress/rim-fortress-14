@@ -13,16 +13,14 @@
   - type: NotificationRule
     proto: Raid
   - type: MathVariables
+    # What is tuned, and the counters that the events change.
     variables:
       kills: [float: 0]
       losses: [float: 0]
       raidersTotal: [float: 0]
-      # How strong the residents and the raiders are, see EntityPowerSystem, and how the raiders are split into squads. A squad has to
-      # be at least squadPowerRatio of the power of the residents, so a force that is not stronger than that is one squad, and the
-      # stronger it is the more squads there are, up to maxGroups of the FormGroups, when the raid has just come. After that the squads
-      # are only joined, see MergeGroups.
-      targetPower: [float: 0]
-      raidPower: [float: 0]
+      # A squad has to be at least squadPowerRatio of the power of the residents (targetPower, see below), so a force that is not
+      # stronger than that is one squad, and the stronger it is the more squads there are, up to maxGroups of the FormGroups, when
+      # the raid has just come. After that the squads are only joined, see MergeGroups.
       squadPowerRatio: [float: 0.6]
       # The stance of a squad: it holds if it is weaker than holdRatio of the power of the residents, and rushes if it is stronger
       # than rushRatio of it, otherwise it keeps together, see the goals of the raiders.
@@ -39,123 +37,123 @@
       retreatDuration: [float: 180]
       # For how long the raiders that have won leave, until those who are left are gone: they walk away to where nobody sees them.
       withdrawDuration: [float: 240]
-      # What the phases look at, before the first measurement is made.
-      deadFraction: [float: 0]
-      morale: [float: 1]
-      raiders: [float: 1]
+    # What is measured every second, before anything else is done: in the order written, so a metric can use those before it.
+    metrics:
+      # How strong the residents and the raiders are, see EntityPowerSystem.
+      targetPower:
+      - !type:ForEachEntity
+        key: Query/RaidTargetsAlive/All
+        curves:
+        - add:
+          - !type:PrototypeCurve
+            preset: FighterPower
+      raidPower:
+      - !type:ForEachEntity
+        key: OwnedEngagement/RaidForce/Role/Raider/All
+        curves:
+        - add:
+          - !type:PrototypeCurve
+            preset: FighterPower
+      deadFraction:
+      - !type:SearchQueryCount
+        query: RaidTargetsDead
+      - div: [var: targetsTotal]
+      # Those who can fight: the ones that are down are in the raid, but they are not in the formation, they are neither the force
+      # of the raid nor the morale of it.
+      raiders:
+      - !type:EngagementActors
+        engagement: RaidForce
+        role: Raider
+        conditions:
+        - !type:MobState
+          targetState: Alive
+      aliveFraction:
+      - var: raiders
+      - div: [var: raidersTotal]
+      pressure:
+      - !type:CurTimeSeconds
+      - minus: [var: lastKillAt]
+      - div: [var: stalemateTime]
+      morale:
+      - var: deadFraction
+      - mul: [var: moraleKillBonus]
+      - add: [var: aliveFraction]
+      - minus: [var: pressure]
   - type: Phases
     phases:
       # The raiders come to the settlement and fight. The raid is won when most of the residents are dead, and then the raiders leave,
       # it is lost when the raiders are all dead, and when they lose heart they retreat.
       Assault:
-        tick:
-        - !type:SetPhase
-          phase: Withdraw
-          conditions:
+        transitions:
+        - to: Withdraw
+          when:
           - !type:MathCurveCondition
             curves:
             - var: deadFraction
             - !type:Threshold
               moreThan: 0.8
-        - !type:SetPhase
-          phase: Retreat
-          conditions:
+        - to: Retreat
+          when:
           - !type:MathCurveCondition
             curves:
             - var: morale
             - minus: [var: retreatMorale]
             - !type:Threshold
               lessThan: 0
-        - !type:EndWorldRule
-          result: Failed
-          conditions:
+        - when: &NoRaiders
           - !type:MathCurveCondition
             curves:
             - var: raiders
             - !type:Threshold
               lessThan: 1
+          effects:
+          - !type:EndWorldRule
+            result: Failed
       # The raiders have lost heart and run. They leave the way that is the cheapest, round the settlements, and are gone where nobody
-      # observes them. The raid is lost when they are all gone, or when they have not got away in time.
+      # observes them. The raid is lost when they are all gone, or when they have not got away in time (those who cannot leave in
+      # time are gone with the end of the raid).
       Retreat:
         enter:
-        - !type:ApplyToEngagementActors
-          engagement: RaidForce
-          role: Raider
-          effects:
-          - !type:SetGoapFlag
-            key: Retreating
+        - !type:NestedEffect
+          proto: RaidersRunAway
         tick:
-        - !type:ApplyToEngagementActors
-          engagement: RaidForce
-          role: Raider
-          effects:
-          - !type:DespawnEntity
-            conditions:
-            - !type:Unobserved
-        - !type:SetPhase
-          phase: Withdraw
-          conditions:
+        - !type:NestedEffect
+          proto: RaidersLeaveUnseen
+        transitions:
+        - to: Withdraw
+          when:
           - !type:MathCurveCondition
             curves:
             - var: deadFraction
             - !type:Threshold
               moreThan: 0.8
-        - !type:EndWorldRule
-          result: Failed
-          conditions:
-          - !type:MathCurveCondition
-            curves:
-            - var: raiders
-            - !type:Threshold
-              lessThan: 1
-        # Those who cannot leave in time are gone with the end of the raid.
-        - !type:EndWorldRule
-          result: Failed
-          conditions:
-          - !type:MathCurveCondition
-            curves:
-            - !type:CurTimeSeconds
-            - minus: [var: phaseStartedAt]
-            - minus: [var: retreatDuration]
-            - !type:Threshold
-              moreThan: 0
+        - when: *NoRaiders
+          effects:
+          - !type:EndWorldRule
+            result: Failed
+        - after: [var: retreatDuration]
+          effects:
+          - !type:EndWorldRule
+            result: Failed
       # The raid has won. The raiders leave the same way as when they retreat, and are not seen to vanish: each is gone only where
-      # nobody observes it. The raid is over when they are all gone, or when they have not got away in time.
+      # nobody observes it. The raid is over when they are all gone, or when they have not got away in time, such as the ones that
+      # are down.
       Withdraw:
         enter:
-        - !type:ApplyToEngagementActors
-          engagement: RaidForce
-          role: Raider
-          effects:
-          - !type:SetGoapFlag
-            key: Retreating
+        - !type:NestedEffect
+          proto: RaidersRunAway
         tick:
-        - !type:ApplyToEngagementActors
-          engagement: RaidForce
-          role: Raider
+        - !type:NestedEffect
+          proto: RaidersLeaveUnseen
+        transitions:
+        - when: *NoRaiders
           effects:
-          - !type:DespawnEntity
-            conditions:
-            - !type:Unobserved
-        - !type:EndWorldRule
-          result: Won
-          conditions:
-          - !type:MathCurveCondition
-            curves:
-            - var: raiders
-            - !type:Threshold
-              lessThan: 1
-        # Those who cannot leave in time, such as the ones that are down, are gone with the end of the raid.
-        - !type:EndWorldRule
-          result: Won
-          conditions:
-          - !type:MathCurveCondition
-            curves:
-            - !type:CurTimeSeconds
-            - minus: [var: phaseStartedAt]
-            - minus: [var: withdrawDuration]
-            - !type:Threshold
-              moreThan: 0
+          - !type:EndWorldRule
+            result: Won
+        - after: [var: withdrawDuration]
+          effects:
+          - !type:EndWorldRule
+            result: Won
   - type: KeyedEntityEffectOnTrigger
     effects:
       started:
@@ -175,15 +173,6 @@
         value:
         - !type:SearchQueryCount
           query: RaidTargets
-      - !type:SetMathVariable
-        key: targetPower
-        value:
-        - !type:ForEachEntity
-          key: Query/RaidTargetsAlive/All
-          curves:
-          - add:
-            - !type:PrototypeCurve
-              preset: FighterPower
       - !type:SetPhase
         phase: Assault
       # Every raider joins the raid, and its squad is made when all of them are there.
@@ -198,24 +187,6 @@
         group: RaidForce
         roles: [Raider]
       tick:
-      - !type:SetMathVariable
-        key: targetPower
-        value:
-        - !type:ForEachEntity
-          key: Query/RaidTargetsAlive/All
-          curves:
-          - add:
-            - !type:PrototypeCurve
-              preset: FighterPower
-      - !type:SetMathVariable
-        key: raidPower
-        value:
-        - !type:ForEachEntity
-          key: OwnedEngagement/RaidForce/Role/Raider/All
-          curves:
-          - add:
-            - !type:PrototypeCurve
-              preset: FighterPower
       # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeGroups.
       # Not before it is known what the raid is up against: the number of the squads depends on it.
       - !type:FormGroups
@@ -281,45 +252,6 @@
           - add:
             - var: load
             - div: [var: capacity]
-      - !type:SetMathVariable
-        key: deadFraction
-        value:
-        - !type:SearchQueryCount
-          query: RaidTargetsDead
-        - div: [var: targetsTotal]
-      - !type:SetMathVariable
-        key: raiders
-        value:
-        # Those who can fight: the ones that are down are in the raid, but they are not in the formation, they are neither the force
-        # of the raid nor the morale of it.
-        - !type:EngagementActors
-          engagement: RaidForce
-          role: Raider
-          conditions:
-          - !type:MobState
-            targetState: Alive
-      - !type:SetMathVariable
-        key: sinceLastKill
-        value:
-        - !type:CurTimeSeconds
-        - minus: [var: lastKillAt]
-      - !type:SetMathVariable
-        key: aliveFraction
-        value:
-        - var: raiders
-        - div: [var: raidersTotal]
-      - !type:SetMathVariable
-        key: pressure
-        value:
-        - var: sinceLastKill
-        - div: [var: stalemateTime]
-      - !type:SetMathVariable
-        key: morale
-        value:
-        - var: deadFraction
-        - mul: [var: moraleKillBonus]
-        - add: [var: aliveFraction]
-        - minus: [var: pressure]
       RaidTargetsDead.added:
       - !type:SetMathVariable
         key: kills
@@ -352,3 +284,26 @@
           conditions:
           - !type:MobStateCondition
             mobstate: Alive
+
+# What the raiders do when they leave, see the phases of the raid.
+- type: entityEffect
+  id: RaidersRunAway
+  effects:
+  - !type:ApplyToEngagementActors
+    engagement: RaidForce
+    role: Raider
+    effects:
+    - !type:SetGoapFlag
+      key: Retreating
+
+# They are not seen to vanish: each is gone only where nobody observes it.
+- type: entityEffect
+  id: RaidersLeaveUnseen
+  effects:
+  - !type:ApplyToEngagementActors
+    engagement: RaidForce
+    role: Raider
+    effects:
+    - !type:DespawnEntity
+      conditions:
+      - !type:Unobserved

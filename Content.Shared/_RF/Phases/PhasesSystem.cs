@@ -1,4 +1,6 @@
+using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.MathHelpers.MathVariables;
+using Content.Shared.EntityConditions;
 using Content.Shared.EntityEffects;
 using Content.Shared.Trigger;
 using Content.Shared.Trigger.Systems;
@@ -12,6 +14,8 @@ public sealed partial class PhasesSystem : EntitySystem
     [Dependency] private SharedEntityEffectsSystem _effects = null!;
     [Dependency] private TriggerSystem _trigger = null!;
     [Dependency] private MathVariablesSystem _variables = null!;
+    [Dependency] private MathCurvesSystem _curves = null!;
+    [Dependency] private SharedEntityConditionsSystem _conditions = null!;
     [Dependency] private IGameTiming _timing = null!;
 
     /// <summary>
@@ -29,7 +33,8 @@ public sealed partial class PhasesSystem : EntitySystem
     /// </summary>
     public const string StartedAtVariable = "phaseStartedAt";
 
-    [SubscribeLocalEvent]
+    // After the metrics of the entity are calculated, they are what the transitions look at.
+    [SubscribeLocalEvent(after: [typeof(MathVariablesSystem)])]
     private void OnTrigger(Entity<PhasesComponent> ent, ref TriggerEvent args)
     {
         if (args.Key != ent.Comp.TickKey
@@ -37,7 +42,54 @@ public sealed partial class PhasesSystem : EntitySystem
             || !ent.Comp.Phases.TryGetValue(current, out var phase))
             return;
 
+        if (TryTransition(ent, phase, args.User))
+            return;
+
         _effects.ApplyEffects(ent, phase.Tick, 1f, args.User);
+    }
+
+    /// <summary>
+    /// Applies the first transition of the phase whose time has come.
+    /// </summary>
+    private bool TryTransition(Entity<PhasesComponent> ent, PhaseDefinition phase, EntityUid? user)
+    {
+        var now = _timing.CurTime;
+
+        for (var i = 0; i < phase.Transitions.Count; i++)
+        {
+            var transition = phase.Transitions[i];
+            var ready = _conditions.TryConditions(ent, transition.When)
+                        && (transition.After.Count == 0
+                            || (now - ent.Comp.EnteredAt).TotalSeconds
+                            >= _curves.Get(transition.After, 0f, ent, _variables.GetVariables(ent.Owner)));
+
+            if (!ready)
+            {
+                ent.Comp.Holding.Remove(i);
+                continue;
+            }
+
+            if (transition.Delay > 0f)
+            {
+                if (!ent.Comp.Holding.TryGetValue(i, out var since))
+                {
+                    ent.Comp.Holding[i] = now;
+                    continue;
+                }
+
+                if ((now - since).TotalSeconds < transition.Delay)
+                    continue;
+            }
+
+            _effects.ApplyEffects(ent, transition.Effects, 1f, user);
+
+            if (transition.To != null)
+                SetPhase(ent.AsNullable(), transition.To);
+
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -67,6 +119,7 @@ public sealed partial class PhasesSystem : EntitySystem
 
         ent.Comp.Current = phase;
         ent.Comp.EnteredAt = _timing.CurTime;
+        ent.Comp.Holding.Clear();
 
         if (TryComp<MathVariablesComponent>(ent, out var variables))
             _variables.Set((ent, variables), StartedAtVariable, (float) _timing.CurTime.TotalSeconds);
