@@ -4,6 +4,7 @@ using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Damage;
 using Content.Shared.FixedPoint;
+using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Projectiles;
 using Content.Shared.Weapons.Melee;
 using Content.Shared.Weapons.Ranged.Components;
@@ -34,7 +35,7 @@ public sealed class CombatStatsSystem : EntitySystem
     public const float RangedRange = 12f;
 
     [Dependency] private SharedMeleeWeaponSystem _melee = null!;
-    [Dependency] private SharedGunSystem _gun = null!;
+    [Dependency] private SharedHandsSystem _hands = null!;
     [Dependency] private ItemSlotsSystem _slots = null!;
     [Dependency] private SharedContainerSystem _container = null!;
     [Dependency] private SharedNpcSearcherSystem _searcher = null!;
@@ -58,17 +59,29 @@ public sealed class CombatStatsSystem : EntitySystem
     #region Collecting
 
     /// <summary>
-    /// Collects the attacks that the agent has ready: the weapon that it holds, the firearm that it holds with the ammunition that is
-    /// in it, and if it has nothing in the hands, the hands. It needs nothing but the agent.
+    /// Collects the attacks that the agent has ready: everything that it holds in the hands (a melee weapon, a firearm with the ammunition
+    /// that is in it), and the hands themselves if it holds no melee weapon. It needs nothing but the agent.
     /// </summary>
     [PublicAPI]
     public void CollectHeld(EntityUid agent, List<CombatAttack> attacks)
     {
-        if (_melee.TryGetWeapon(agent, out var weapon, out var melee))
-            AddMelee(agent, weapon, melee, attacks);
+        var armed = false;
 
-        if (_gun.TryGetGun(agent, out var gun) && gun.Owner != agent)
-            AddGun(gun.Owner, gun.Comp, Array.Empty<EntityUid>(), attacks);
+        foreach (var held in _hands.EnumerateHeld(agent))
+        {
+            if (_meleeQuery.TryComp(held, out var melee))
+            {
+                AddMelee(agent, held, melee, attacks);
+                armed = true;
+            }
+
+            if (_gunQuery.TryComp(held, out var gun))
+                AddGun(held, gun, Array.Empty<EntityUid>(), attacks);
+        }
+
+        // Bare hands, claws and the like: what the agent fights with when it holds nothing to fight with.
+        if (!armed && _melee.TryGetWeapon(agent, out var weapon, out var own))
+            AddMelee(agent, weapon, own, attacks);
     }
 
     /// <summary>

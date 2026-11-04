@@ -1,4 +1,6 @@
 using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.MathHelpers;
+using Content.Shared._RF.Narrator;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.GameTicking.Rules;
@@ -20,6 +22,22 @@ public sealed partial class MigrationRuleComponent : Component
     /// </summary>
     [DataField]
     public Dictionary<EntProtoId, int> Spawn = new();
+
+    /// <summary>
+    /// What can be bought for the entities that come, with the points of the event, see <c>EventBudgetSystem</c>: the gear that makes them
+    /// stronger. The purchases are in groups, and each group has its own chance of being chosen, its own limit of how many of it one
+    /// entity can have (the armor, the weapons, the tools), and the chances of the purchases in it. The gear is given before the entities
+    /// are told that they have come (<see cref="MigrationRuleSystem.Spawned"/>), so they are counted with it.
+    /// </summary>
+    [DataField]
+    public List<EventPurchaseGroup> Purchases = new();
+
+    /// <summary>
+    /// What part of the points is kept for the <see cref="Purchases"/>, from 0 to 1, chosen by chance between the two numbers every time.
+    /// The rest is for the entities that come. What is left of the points of the entities is spent on the purchases too.
+    /// </summary>
+    [DataField]
+    public MinMaxFloat PurchaseShare = new(0f, 0f);
 
     /// <summary>
     /// Should spawn entities be added to a player's pops list.

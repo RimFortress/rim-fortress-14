@@ -1,0 +1,57 @@
+# What the event points of a raid can buy for the raiders, on top of what each of them comes with (the base gear, see the Raider): the
+# cost is in the points, the same as the raiders themselves cost, and the gear is added to what the raider has. How the purchases are
+# grouped and how likely each is to be chosen is up to the raid. See EventBudgetSystem and the Raid.
+
+- type: startingGear
+  id: RaidKitArmorGear
+  equipment:
+    outerClothing: ClothingOuterArmorBasic
+
+- type: startingGear
+  id: RaidKitHelmetGear
+  equipment:
+    head: ClothingHeadHelmetBasic
+
+- type: startingGear
+  id: RaidKitCrowbarGear
+  storage:
+    back:
+    - Crowbar
+
+- type: startingGear
+  id: RaidKitPistolGear
+  inhand:
+  - WeaponPistolMk58
+  storage:
+    back:
+    - MagazinePistol
+    - MagazinePistol
+
+- type: eventPurchase
+  id: RaidKitArmor
+  cost: 12
+  effects:
+  - !type:EquipGear
+    gear: RaidKitArmorGear
+
+- type: eventPurchase
+  id: RaidKitHelmet
+  cost: 8
+  effects:
+  - !type:EquipGear
+    gear: RaidKitHelmetGear
+
+# A crowbar is what a breacher is made of, see the squad roles.
+- type: eventPurchase
+  id: RaidKitCrowbar
+  cost: 4
+  effects:
+  - !type:EquipGear
+    gear: RaidKitCrowbarGear
+
+- type: eventPurchase
+  id: RaidKitPistol
+  cost: 25
+  effects:
+  - !type:EquipGear
+    gear: RaidKitPistolGear

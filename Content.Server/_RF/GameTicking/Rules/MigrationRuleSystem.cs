@@ -1,7 +1,9 @@
 using Content.Shared.Trigger.Systems;
 using Content.Server._RF.Narrator;
 using Content.Server._RF.NPC.Executable.Systems;
+using System.Linq;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared._RF.Narrator;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -16,6 +18,7 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
     [Dependency] private ExecutableGoalSystem _executable = null!;
     [Dependency] private NarratorSystem _narrator = null!;
     [Dependency] private TriggerSystem _trigger = null!;
+    [Dependency] private EventBudgetSystem _budget = null!;
 
 
     /// <summary>
@@ -33,33 +36,24 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
         var spawn = new List<EntProtoId> { Random.Pick(ent.Comp.Spawn.Keys) };
         var points = _narrator.EventPoints(args.Target, rule.Narrator, args.TargetCoordinates) - worldRule.Cost;
 
-        while (true)
+        // A part of the points is kept for the gear of those who come.
+        var purchasePoints = ent.Comp.Purchases.Count == 0 ? 0 : (int) (Math.Max(0, points) * Math.Clamp(ent.Comp.PurchaseShare.Next(Random), 0f, 1f));
+        points -= purchasePoints;
+
+        // The first one is there anyway; the rest is bought, as many as the limit lets.
+        if (ent.Comp.MaxSpawn == 0 || spawn.Count < ent.Comp.MaxSpawn)
         {
-            if (ent.Comp.MaxSpawn != 0 && spawn.Count >= ent.Comp.MaxSpawn)
-                break;
-
-            var available = new List<EntProtoId>();
-
-            foreach (var (proto, cost) in ent.Comp.Spawn)
-            {
-                if (cost > points)
-                    continue;
-
-                available.Add(proto);
-            }
-
-            if (available.Count == 0)
-                break;
-
-            var entProto = Random.Pick(available);
-            spawn.Add(entProto);
-            points -= ent.Comp.Spawn[entProto];
+            var max = ent.Comp.MaxSpawn == 0 ? 0 : ent.Comp.MaxSpawn - spawn.Count;
+            spawn.AddRange(_budget.Buy(ref points, ent.Comp.Spawn.Select(x => (x.Key, x.Value, 1f)), max));
         }
 
         var pops = World.SpawnPop(args.TargetCoordinates, spawn, ent.Comp.RadiusFromSettlement);
 
         if (ent.Comp.AddToPops)
             World.AddPops(args.Target, pops);
+
+        if (ent.Comp.Purchases.Count > 0)
+            _budget.Spend(purchasePoints + Math.Max(0, points), ent.Comp.Purchases, pops, ent);
 
         // What is to happen to every one of them is said by what reacts to the trigger, such as joining a situation.
         foreach (var pop in pops)

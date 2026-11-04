@@ -8,8 +8,26 @@
     startOffset: 15m
     cost: 75
   - type: MigrationRule
+    # A raider comes with its base gear, and what the points are left after the raiders are bought for, a part of them is kept for
+    # that, makes them stronger: armor, a helmet, a crowbar, a pistol, see the purchases. They are given before the squads are made,
+    # so the raiders are counted with them.
     spawn:
-      Raider: 45
+      Raider: 35
+    # The purchases are in groups: a group has its own chance (weight) among the groups, the most of it that one raider can have (each
+    # has its own number from none to that), and the chances of the purchases in it. The limit is of a kind of purchases, not of all of them together.
+    purchases:
+    - weight: 3
+      max: 2
+      purchases:
+        RaidKitArmor: 1
+        RaidKitHelmet: 1
+    - purchases:
+        RaidKitCrowbar: 1
+    - purchases:
+        RaidKitPistol: 1
+    purchaseShare:
+      min: 0.2
+      max: 0.4
   - type: NotificationRule
     proto: Raid
   - type: MathVariables
