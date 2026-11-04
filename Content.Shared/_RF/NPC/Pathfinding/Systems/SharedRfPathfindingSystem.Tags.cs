@@ -21,15 +21,52 @@ public abstract partial class SharedRfPathfindingSystem
 
     [SubscribeLocalEvent]
     private void OnPathTagsStartup(Entity<PathTagsComponent> ent, ref ComponentStartup args)
-        => MarkDirty(ent, ent.Comp);
+    {
+        foreach (var tag in ent.Comp.Tags)
+        {
+            if (_dynamicTags.TryGetValue(tag, out var dynamic))
+                dynamic.Sources.Add(ent);
+        }
+
+        MarkDirty(ent, ent.Comp);
+    }
 
     [SubscribeLocalEvent]
     private void OnPathTagsShutdown(Entity<PathTagsComponent> ent, ref ComponentShutdown args)
-        => MarkDirty(ent, ent.Comp);
+    {
+        foreach (var tag in ent.Comp.Tags)
+        {
+            if (_dynamicTags.TryGetValue(tag, out var dynamic))
+                dynamic.Sources.Remove(ent);
+        }
+
+        MarkDirty(ent, ent.Comp);
+    }
+
+    /// <summary>
+    /// The entities that already have the tags are the sources of the dynamic ones, when the tags are loaded or reloaded.
+    /// </summary>
+    private void FindDynamicSources()
+    {
+        var query = EntityQueryEnumerator<PathTagsComponent>();
+
+        while (query.MoveNext(out var uid, out var comp))
+        {
+            foreach (var tag in comp.Tags)
+            {
+                if (_dynamicTags.TryGetValue(tag, out var dynamic))
+                    dynamic.Sources.Add(uid);
+            }
+        }
+    }
 
     [SubscribeLocalEvent]
     private void OnPathTagsMove(Entity<PathTagsComponent> ent, ref MoveEvent args)
     {
+        // What has only dynamic tags moves without the navigation map knowing it.
+        if (!IsBaked(ent.Comp, null))
+            return;
+
         MarkDirty(ent, ent.Comp);
 
         // The place the entity has left, if it was lying directly on a grid.
@@ -60,6 +97,9 @@ public abstract partial class SharedRfPathfindingSystem
         if (!ent.Comp.Tags.Add(tag))
             return false;
 
+        if (_dynamicTags.TryGetValue(tag, out var dynamic))
+            dynamic.Sources.Add(ent);
+
         MarkDirty(ent, ent.Comp, tag);
         return true;
     }
@@ -76,6 +116,9 @@ public abstract partial class SharedRfPathfindingSystem
         if (!Resolve(ent, ref ent.Comp, false) || !ent.Comp.Tags.Remove(tag))
             return false;
 
+        if (_dynamicTags.TryGetValue(tag, out var dynamic))
+            dynamic.Sources.Remove(ent);
+
         MarkDirty(ent, ent.Comp, tag);
         return true;
     }
@@ -88,6 +131,10 @@ public abstract partial class SharedRfPathfindingSystem
     /// <param name="changed">The tag that has just been added or removed, which may not be in the component.</param>
     private void MarkDirty(EntityUid uid, PathTagsComponent comp, ProtoId<PathTagPrototype>? changed = null)
     {
+        // Dynamic tags are not baked, an entity that has only them is nothing to the navigation map.
+        if (!IsBaked(comp, changed))
+            return;
+
         var xform = Transform(uid);
 
         if (xform.GridUid is not { } grid)
@@ -142,6 +189,20 @@ public abstract partial class SharedRfPathfindingSystem
 
         if (marked && comp.NextUpdate < now && !MetaData(grid).EntityPaused)
             comp.NextUpdate = now + UpdateCooldown;
+    }
+
+    private bool IsBaked(PathTagsComponent comp, ProtoId<PathTagPrototype>? changed)
+    {
+        if (changed is { } other && !_dynamicTags.ContainsKey(other))
+            return true;
+
+        foreach (var tag in comp.Tags)
+        {
+            if (!_dynamicTags.ContainsKey(tag))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

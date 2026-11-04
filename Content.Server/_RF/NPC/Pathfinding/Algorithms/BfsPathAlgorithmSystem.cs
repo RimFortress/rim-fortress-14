@@ -91,7 +91,7 @@ public sealed partial class BfsPathAlgorithmSystem : RfPathAlgorithmSystem<Bfs>
                     if (!exists)
                     {
                         var eval = Evaluate(state, search, next, collision);
-                        nextNode = new PathSearchNode(float.PositiveInfinity, null, eval.Modifier + AvoidPenalty(search, next), false);
+                        nextNode = new PathSearchNode(float.PositiveInfinity, null, eval.Modifier + ExtraCost(search, next, collision), false);
 
                         if (Vector2.Distance(startPos, next.Box.Center) > range)
                         {

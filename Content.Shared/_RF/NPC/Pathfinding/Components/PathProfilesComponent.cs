@@ -1,3 +1,4 @@
+using Content.Shared._RF.Combat;
 using System.Threading;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Robust.Shared.Map;
@@ -38,10 +39,23 @@ public sealed partial class PathProfilesComponent : Component
     public List<PathfindingRule> ActiveRules = new();
 
     /// <summary>
+    /// Rules of the <see cref="ActiveProfile"/> whose agent conditions are met and that refer to dynamic tags: they are evaluated for
+    /// each node that the search reaches, and not once for the nodes with the same facts.
+    /// </summary>
+    [ViewVariables]
+    public List<PathfindingRule> ActiveDynamicRules = new();
+
+    /// <summary>
+    /// Where the sources of the dynamic tags are during the path request, null if no rule needs them.
+    /// </summary>
+    [ViewVariables]
+    public PathDynamicInfluence? Dynamic;
+
+    /// <summary>
     /// All the ways the agent is able to deal damage during the path request.
     /// </summary>
     [ViewVariables]
-    public List<PathAttack> Attacks = new();
+    public List<CombatAttack> Attacks = new();
 
     /// <summary>
     /// The state of the path request of the agent.

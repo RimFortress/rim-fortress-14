@@ -16,5 +16,5 @@ public sealed partial class HasTag : BasePathCondition<HasTag>
 public sealed class HasTagPathConditionSystem : PathConditionSystem<HasTag>
 {
     protected override bool ConditionCheck(PathNodeContext ctx, HasTag condition)
-        => Pathfinding.HasTag(ctx.Facts, condition.Tag);
+        => Pathfinding.HasTag(ctx, condition.Tag);
 }

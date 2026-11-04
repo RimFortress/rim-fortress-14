@@ -135,27 +135,23 @@ public abstract partial class RfPathAlgorithmSystem<T> : PathAlgorithmSystem<T> 
     /// How much more the poly costs for being close to the places that the path should not go by.
     /// </summary>
     protected static float AvoidPenalty(in PathSearch search, RfPathPoly poly)
+        => search.Avoid is { Count: > 0 } avoid ? RfPathfindingSystem.GetAvoidPenalty(avoid, poly.GraphUid, poly.Box.Center) : 0f;
+
+    /// <summary>
+    /// How much more the poly costs for the rules of the dynamic tags, which depend on where the sources are and are evaluated for each
+    /// poly that the search reaches, and for the places the request keeps away from.
+    /// </summary>
+    protected float ExtraCost(in PathSearch search, RfPathPoly poly, (int Layer, int Mask) collision)
     {
-        if (search.Avoid is not { Count: > 0 } avoid)
-            return 0f;
+        ref readonly var data = ref poly.Data;
+        var cost = AvoidPenalty(search, poly);
 
-        var penalty = 0f;
-        var center = poly.Box.Center;
+        if (search.Agent.Comp1.ActiveDynamicRules.Count == 0)
+            return cost;
 
-        for (var i = 0; i < avoid.Count; i++)
-        {
-            var place = avoid[i];
+        var blocked = (collision.Layer & data.CollisionMask) != 0 || (collision.Mask & data.CollisionLayer) != 0;
 
-            if (place.Graph != poly.GraphUid)
-                continue;
-
-            var distance = Vector2.Distance(center, place.Position);
-
-            if (distance < place.Radius)
-                penalty += place.Cost * (1f - distance / place.Radius);
-        }
-
-        return penalty;
+        return cost + Pathfinding.EvaluateDynamic(search.Agent, data.Facts, blocked, poly.GraphUid, poly.Box.Center);
     }
 
     /// <summary>

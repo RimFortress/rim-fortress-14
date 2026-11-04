@@ -85,11 +85,13 @@
       importance: [float: 0.55]
 
 # How strong a fighter is, the user is the fighter: how much it can take before it is critical, times how much its blow deals,
-# with what it has in the hands. A fighter of 100 health and 10 damage of a blow is 1 strong. A fighter that is down is not strong.
+# with what it has in the hands (a blow or a shot, the greater, and a firearm that has no ammunition is not counted, see
+# CombatStatsSystem). A fighter of 100 health and 10 damage of a blow is 1 strong. A fighter that is down is not strong.
 - type: mathCurve
   id: FighterPower
   curves:
-  - !type:MeleeBlow
+  - !type:CombatStat
+    stat: Blow
   - div: [float: 10]
   - add: [float: 1]
   - mul:

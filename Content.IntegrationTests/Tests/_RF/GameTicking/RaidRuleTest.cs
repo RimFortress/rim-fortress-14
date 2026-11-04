@@ -1454,8 +1454,8 @@ public sealed class RaidRuleTest : GameTest
     }
 
     /// <summary>
-    /// The paths of the raiders keep away from the residents that are alive, the stronger the more: there is a place to avoid for each
-    /// of them, and none for the dead. The paths of those who are not in the raid are not changed.
+    /// The paths of the raiders keep away from the residents that are alive, the stronger the more: each is a source of the dynamic tag
+    /// of the residents for the request, and the dead ones are not. The paths of those who are not in the raid are not changed.
     /// </summary>
     [Test]
     public async Task TestRaidersAvoidTheResidents()
@@ -1472,12 +1472,14 @@ public sealed class RaidRuleTest : GameTest
                 _entMan.GetComponent<Content.Shared._RF.NPC.Pathfinding.Components.PathProfilesComponent>(_raiders[0]),
                 _entMan.GetComponent<GoapComponent>(_raiders[0]));
 
-            Assert.That(pathfinding.GetAvoid(raider, "Walker", null), Has.Count.EqualTo(5));
+            Assert.That(pathfinding.BeginRequest(raider, "Walker"), Is.True);
+            Assert.That(raider.Comp1.Dynamic!.Sources.Single().Value, Has.Count.EqualTo(5));
 
             _mobState.ChangeMobState(_residents[0], MobState.Dead);
             _mobState.ChangeMobState(_residents[1], MobState.Dead);
 
-            Assert.That(pathfinding.GetAvoid(raider, "Walker", null), Has.Count.EqualTo(3));
+            Assert.That(pathfinding.BeginRequest(raider, "Walker"), Is.True);
+            Assert.That(raider.Comp1.Dynamic!.Sources.Single().Value, Has.Count.EqualTo(3));
         });
     }
 

@@ -33,6 +33,15 @@ public sealed class RfPathfindingTest : GameTest
   id: TestLava
   influence: 2
 
+- type: pathTag
+  id: TestThreat
+  dynamic: true
+  influence: 6
+  influenceCurve:
+  - div: [var: radius]
+  - mul: [float: -1]
+  - add: [float: 1]
+
 - type: entity
   id: TestPathWall
   components:
@@ -80,12 +89,15 @@ public sealed class RfPathfindingTest : GameTest
 
 - type: pathProfile
   id: TestWalker
-  avoid:
-  # The entities in the key are avoided, as strong as the first of them is told by the curve: the number 1.
-  - key: TestThreats
-    radius: 6
-    cost: [float: 30]
   rules:
+  # The entities with the dynamic tag are avoided, wherever they are when the path is searched for.
+  - when:
+    - !type:TagInfluence
+      tag: TestThreat
+      moreThan: 0
+    cost:
+    - var: influence
+    - mul: [float: 30]
   - when:
     - !type:Blocked
     cost:
@@ -571,11 +583,11 @@ public sealed class RfPathfindingTest : GameTest
     }
 
     /// <summary>
-    /// The path keeps away from the entities that the profile says to avoid, where they are: with two ways that are the same, it takes
-    /// the one that is not near them, and it does not change when they are not there.
+    /// The path keeps away from the entities that have a dynamic tag that the profile has a rule for, where they are: with two ways that
+    /// are the same, it takes the one that is not near them. The tag is not baked into the navigation map.
     /// </summary>
     [Test]
-    public async Task TestPathAvoidsTheEntitiesOfTheProfile()
+    public async Task TestPathAvoidsTheEntitiesWithADynamicTag()
     {
         // A wall across the strip with two gaps, at the bottom and at the top, and the target on the other side.
         var walls = Enumerable.Range(0, 8).Where(y => y != 1 && y != 6).Select(y => (12, y)).ToArray();
@@ -585,7 +597,7 @@ public sealed class RfPathfindingTest : GameTest
         await Pair.Server.WaitPost(() =>
         {
             threat = _entMan.SpawnEntity(null, new EntityCoordinates(grid, 12.5f, 1.5f));
-            _goap.SetValue(agent.Comp2.State, new StateKey<IReadOnlyCollection<EntityUid>>("TestThreats"), new HashSet<EntityUid> { threat });
+            _pathfinding.AddTag(threat, "TestThreat");
         });
 
         await Pair.Server.WaitAssertion(() =>
@@ -594,13 +606,13 @@ public sealed class RfPathfindingTest : GameTest
             var target = new Vector2(20.5f, 3.5f);
 
             // The entity is at the bottom gap: the path goes by the top one.
-            var avoided = Search(grid, agent, new AStar(), start, target, avoid: _pathfinding.GetAvoid(agent, "TestWalker", null));
+            var avoided = Search(grid, agent, new AStar(), start, target);
             Assert.That(avoided.Status, Is.EqualTo(PathSearchStatus.Path));
             Assert.That(CrossingAt(avoided, 12), Is.GreaterThan(4f), "by the top gap");
 
             // And the other way round.
             _entMan.GetComponent<TransformComponent>(threat).LocalPosition = new Vector2(12.5f, 6.5f);
-            var other = Search(grid, agent, new AStar(), start, target, avoid: _pathfinding.GetAvoid(agent, "TestWalker", null));
+            var other = Search(grid, agent, new AStar(), start, target);
             Assert.That(CrossingAt(other, 12), Is.LessThan(4f), "by the bottom gap");
         });
     }

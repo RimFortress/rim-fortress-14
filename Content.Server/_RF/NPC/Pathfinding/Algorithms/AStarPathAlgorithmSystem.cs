@@ -116,7 +116,7 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
                         if (!exists)
                         {
                             var eval = Evaluate(state, search, next, collision);
-                            nextNode = new PathSearchNode(float.PositiveInfinity, null, eval.Modifier + AvoidPenalty(search, next), false);
+                            nextNode = new PathSearchNode(float.PositiveInfinity, null, eval.Modifier + ExtraCost(search, next, collision), false);
 
                             // It is out of the area of the search, so it is not worth looking at again.
                             if (OutOfArea(next, startPos, targetPos, limit))

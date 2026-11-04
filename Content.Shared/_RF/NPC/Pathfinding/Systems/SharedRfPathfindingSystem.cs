@@ -1,3 +1,5 @@
+using Content.Shared._RF.Combat;
+using Content.Shared._RF.NPC.Pathfinding.Conditions;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Numerics;
@@ -22,6 +24,7 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
     [Dependency] private MathCurvesSystem _curves = null!;
     [Dependency] private SharedGoapSystem _goap = null!;
     [Dependency] private SharedMeleeWeaponSystem _melee = null!;
+    [Dependency] private CombatStatsSystem _combat = null!;
 
     /// <summary>
     /// The cost modifier is never lower than this, otherwise the A* heuristic stops being admissible.
@@ -66,6 +69,12 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
     // Whether the bodies with each tag are obstacles, see PathTagPrototype.MakesObstacle.
     private readonly List<bool> _pathTagMakesObstacle = new();
 
+    // The dynamic tags: not baked, found out for a node when the path is searched for.
+    private readonly Dictionary<ProtoId<PathTagPrototype>, PathDynamicTag> _dynamicTags = new();
+
+    // Whether the rules refer to a dynamic tag, which makes them dynamic: they are evaluated for each node, and not once per facts.
+    private readonly Dictionary<PathfindingRule, bool> _dynamicRules = new();
+
     // A buffer for the variables of the rule that is being evaluated.
     private readonly Dictionary<string, float> _variables = new();
 
@@ -87,10 +96,20 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
         _pathTagIndices.Clear();
         _pathTagInfluence.Clear();
         _pathTagMakesObstacle.Clear();
+        _dynamicTags.Clear();
+        _dynamicRules.Clear();
         MaxTagRadius = 0f;
 
         foreach (var tag in _proto.EnumeratePrototypes<PathTagPrototype>().OrderBy(x => x.ID, StringComparer.Ordinal))
         {
+            // The dynamic tags are not a part of the navigation map: no index, no facts.
+            if (tag.Dynamic)
+            {
+                var shape = SampleShape(tag.InfluenceCurve, tag.Influence);
+                _dynamicTags.Add(tag.ID, new PathDynamicTag(tag.ID, shape, tag.Influence));
+                continue;
+            }
+
             if (_pathTagIndices.Count >= TagCapacity)
             {
                 Log.Error($"Too many path tags, '{tag.ID}' and the following will be ignored.");
@@ -105,21 +124,15 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
                 steps = MaxDistanceSteps;
             }
 
-            // Without a curve the tag influences nodes within its radius with full strength.
-            var samples = new float[steps + 1];
-
-            for (var i = 0; i < samples.Length; i++)
-            {
-                samples[i] = tag.InfluenceCurve.Count == 0
-                    ? 1f
-                    : _curves.Get(tag.InfluenceCurve, input: i * DistanceStep, user: null);
-            }
+            var samples = SampleShape(tag.InfluenceCurve, steps * DistanceStep);
 
             _pathTagIndices.Add(tag.ID, _pathTagIndices.Count);
             _pathTagInfluence.Add(samples);
             _pathTagMakesObstacle.Add(tag.MakesObstacle);
             MaxTagRadius = MathF.Max(MaxTagRadius, (samples.Length - 1) * DistanceStep);
         }
+
+        FindDynamicSources();
     }
 
     /// <summary>
@@ -140,6 +153,34 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
     /// </summary>
     [PublicAPI, Pure]
     public float GetTagRadius(int index) => (_pathTagInfluence[index].Length - 1) * DistanceStep;
+
+    /// <summary>
+    /// Returns how strong the influence of the tag is by the distance from its source, in steps of <see cref="DistanceStep"/>. It is
+    /// the shape of a field, which a field of a profile can have as well (<see cref="PathAvoidSource.Tag"/>).
+    /// </summary>
+    [PublicAPI, Pure]
+    public float[] GetTagShape(int index) => _pathTagInfluence[index];
+
+    /// <summary>
+    /// Makes the shape of a field of the curves: how strong it is by the distance, the input of the curves, the radius being their
+    /// variable <c>radius</c>.
+    /// </summary>
+    /// <param name="curves">The curves, the strength by the distance in tiles.</param>
+    /// <param name="radius">The radius of the field.</param>
+    [PublicAPI]
+    public float[] SampleShape(List<MathHelpers.MathCurve.MathCurve> curves, float radius)
+    {
+        var samples = new float[(int) MathF.Ceiling(radius / DistanceStep) + 1];
+        var variables = new Dictionary<string, float> { ["radius"] = radius };
+
+        // Without a curve the influence is full within the radius.
+        for (var i = 0; i < samples.Length; i++)
+        {
+            samples[i] = curves.Count == 0 ? 1f : _curves.Get(curves, input: i * DistanceStep, user: null, variables: variables);
+        }
+
+        return samples;
+    }
 
     #region Facts
 
@@ -312,19 +353,256 @@ public abstract partial class SharedRfPathfindingSystem : EntitySystem, IPathCon
         comp.ActiveQuery = query;
 
         comp.Attacks.Clear();
-        CollectAttacks(new Entity<GoapComponent>(agent.Owner, agent.Comp2), comp.Attacks);
+        _combat.CollectCarried(new Entity<GoapComponent>(agent.Owner, agent.Comp2), comp.Attacks);
 
         // Agent conditions do not depend on the node, so they are checked once per request.
         comp.ActiveRules.Clear();
+        comp.ActiveDynamicRules.Clear();
 
         foreach (var rule in profile.Rules)
         {
-            if (_goap.CheckCondition(agent.Owner, agent.Comp2.State, rule.AgentConditions))
-                comp.ActiveRules.Add(rule);
+            if (!_goap.CheckCondition(agent.Owner, agent.Comp2.State, rule.AgentConditions))
+                continue;
+
+            (IsDynamic(rule) ? comp.ActiveDynamicRules : comp.ActiveRules).Add(rule);
         }
+
+        comp.Dynamic = comp.ActiveDynamicRules.Count == 0 ? null : FindSources(agent.Owner, comp.ActiveDynamicRules);
 
         return true;
     }
+
+    #region Dynamic tags
+
+    /// <summary>
+    /// Does the rule refer to a dynamic tag, so that it is not up to the facts of the node alone.
+    /// </summary>
+    private bool IsDynamic(PathfindingRule rule)
+    {
+        if (_dynamicTags.Count == 0)
+            return false;
+
+        if (_dynamicRules.TryGetValue(rule, out var dynamic))
+            return dynamic;
+
+        dynamic = rule.Conditions.Any(RefersToDynamicTag);
+        _dynamicRules[rule] = dynamic;
+        return dynamic;
+    }
+
+    private bool RefersToDynamicTag(PathCondition condition) => condition switch
+    {
+        TagInfluence influence => _dynamicTags.ContainsKey(influence.Tag),
+        HasTag has => _dynamicTags.ContainsKey(has.Tag),
+        Or or => or.Conditions.Any(RefersToDynamicTag),
+        _ => false,
+    };
+
+    /// <summary>
+    /// The conditions of the rules that refer to dynamic tags, including those inside the other conditions.
+    /// </summary>
+    private IEnumerable<PathCondition> DynamicConditionsOf(IEnumerable<PathCondition> conditions)
+    {
+        foreach (var condition in conditions)
+        {
+            switch (condition)
+            {
+                case TagInfluence influence when _dynamicTags.ContainsKey(influence.Tag):
+                case HasTag has when _dynamicTags.ContainsKey(has.Tag):
+                    yield return condition;
+                    break;
+                case Or or:
+                    foreach (var inner in DynamicConditionsOf(or.Conditions))
+                    {
+                        yield return inner;
+                    }
+
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds where the sources of the dynamic tags that the rules refer to are, and what each counts for according to the rule.
+    /// </summary>
+    private PathDynamicInfluence? FindSources(EntityUid agent, List<PathfindingRule> rules)
+    {
+        if (Transform(agent).GridUid is not { } graph)
+            return null;
+
+        var inverse = _transform.GetInvWorldMatrix(graph);
+        var dynamic = new PathDynamicInfluence(graph);
+
+        foreach (var condition in rules.SelectMany(x => DynamicConditionsOf(x.Conditions)))
+        {
+            switch (condition)
+            {
+                case HasTag has:
+                    dynamic.Positions[has.Tag] = Positions(has.Tag);
+                    break;
+                case TagInfluence influence:
+                    dynamic.Positions.TryAdd(influence.Tag, Positions(influence.Tag));
+                    dynamic.Sources[influence] = Sources(influence);
+                    break;
+            }
+        }
+
+        return dynamic;
+
+        List<Vector2> Positions(ProtoId<PathTagPrototype> tag)
+        {
+            var positions = new List<Vector2>();
+
+            foreach (var uid in _dynamicTags[tag].Sources)
+            {
+                if (!TerminatingOrDeleted(uid) && uid != agent)
+                    positions.Add(Vector2.Transform(_transform.GetWorldPosition(uid), inverse));
+            }
+
+            return positions;
+        }
+
+        List<PathDynamicInfluence.Source> Sources(TagInfluence condition)
+        {
+            var info = _dynamicTags[condition.Tag];
+            var sources = new List<PathDynamicInfluence.Source>();
+
+            foreach (var uid in info.Sources)
+            {
+                if (TerminatingOrDeleted(uid) || uid == agent)
+                    continue;
+
+                var weight = condition.Weight.Count == 0 ? 1f : _curves.Get(condition.Weight, 0f, uid);
+                var radius = condition.Reach.Count == 0 ? info.Radius : _curves.Get(condition.Reach, 0f, uid);
+
+                if (weight <= 0f || radius <= 0f)
+                    continue;
+
+                sources.Add(new PathDynamicInfluence.Source(
+                    Vector2.Transform(_transform.GetWorldPosition(uid), inverse),
+                    weight,
+                    radius));
+            }
+
+            return sources;
+        }
+    }
+
+    /// <summary>
+    /// Is something that stops projectiles between two points of a grid. It is the navigation map's to tell, which the shared part
+    /// does not have: nothing is in the way here.
+    /// </summary>
+    [PublicAPI]
+    public virtual bool IsSightBlocked(EntityUid graph, Vector2 from, Vector2 to) => false;
+
+    /// <summary>
+    /// The influence of the dynamic tag on the point: the sum of the sources, each as much as it counts for and as the shape of the tag
+    /// says for the distance to it, stretched to the radius of the source.
+    /// </summary>
+    private float GetDynamicInfluence(PathDynamicInfluence dynamic, TagInfluence condition, Vector2 point)
+    {
+        if (!_dynamicTags.TryGetValue(condition.Tag, out var info) || !dynamic.Sources.TryGetValue(condition, out var sources))
+            return 0f;
+
+        var influence = 0f;
+
+        foreach (var source in sources)
+        {
+            var distance = Vector2.Distance(point, source.Position);
+
+            if (distance >= source.Radius)
+                continue;
+
+            var step = (int) (distance / source.Radius * info.Radius / DistanceStep);
+            var strength = info.Shape[Math.Min(step, info.Shape.Length - 1)];
+
+            if (strength <= 0f || condition.Sight && IsSightBlocked(dynamic.Graph, source.Position, point))
+                continue;
+
+            influence += source.Weight * strength;
+        }
+
+        return influence;
+    }
+
+    /// <summary>
+    /// Returns the strength of the tag's influence on the node of the context, 0 if there is none: from the facts of the node for a baked
+    /// tag, from where the sources are for a dynamic one.
+    /// </summary>
+    [PublicAPI, Pure]
+    public float GetInfluence(in PathNodeContext ctx, TagInfluence condition)
+        => ctx.Dynamic is { } dynamic && _dynamicTags.ContainsKey(condition.Tag)
+            ? GetDynamicInfluence(dynamic, condition, ctx.Point)
+            : GetInfluence(ctx.Facts, condition.Tag);
+
+    /// <summary>
+    /// Is the source of the tag located on the node of the context. For a dynamic tag it is a source in the tile of the node.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool HasTag(in PathNodeContext ctx, ProtoId<PathTagPrototype> tag)
+    {
+        if (!_dynamicTags.ContainsKey(tag))
+            return HasTag(ctx.Facts, tag);
+
+        if (ctx.Dynamic is not { } dynamic || !dynamic.Positions.TryGetValue(tag, out var positions))
+            return false;
+
+        foreach (var position in positions)
+        {
+            if (Vector2.Distance(ctx.Point, position) < 0.5f)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns the cost that the rules of the dynamic tags add to a node: they depend on where the sources are, so they are not
+    /// evaluated with the facts of the node alone, and not cached for them.
+    /// </summary>
+    /// <param name="agent">An agent that has started a request with <see cref="BeginRequest"/>.</param>
+    /// <param name="facts">Facts about the node.</param>
+    /// <param name="blocked">Is the node blocked for the agent by collision.</param>
+    /// <param name="graph">The grid of the node.</param>
+    /// <param name="point">The point of the node, in the coordinates of the grid.</param>
+    [PublicAPI]
+    public float EvaluateDynamic(
+        Entity<PathProfilesComponent, GoapComponent> agent,
+        in PathNodeFacts facts,
+        bool blocked,
+        EntityUid graph,
+        Vector2 point)
+    {
+        var comp = agent.Comp1;
+
+        if (comp.ActiveDynamicRules.Count == 0)
+            return 0f;
+
+        var ctx = new PathNodeContext(
+            new Entity<GoapComponent>(agent.Owner, agent.Comp2),
+            comp.Attacks,
+            facts,
+            blocked,
+            _variables,
+            comp.ActiveQuery,
+            point,
+            graph,
+            comp.Dynamic);
+
+        var cost = 0f;
+
+        foreach (var rule in comp.ActiveDynamicRules)
+        {
+            _variables.Clear();
+
+            if (RuleApplies(rule, ctx))
+                cost += _curves.Get(rule.Cost, input: 0f, user: agent, variables: _variables);
+        }
+
+        return cost;
+    }
+
+    #endregion
 
     /// <summary>
     /// Evaluates the node with the given facts using the profile of the agent's current path request.

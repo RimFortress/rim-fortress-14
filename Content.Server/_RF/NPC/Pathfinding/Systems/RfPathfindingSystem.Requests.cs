@@ -259,7 +259,7 @@ public sealed partial class RfPathfindingSystem
             }
 
             var algorithm = query.Algorithm;
-            var avoid = GetAvoid(agent, id, comp.RequestAvoid);
+            var avoid = comp.RequestAvoid;
 
             RebuildPending(Transform(agent).GridUid);
 
@@ -284,43 +284,30 @@ public sealed partial class RfPathfindingSystem
     }
 
     /// <summary>
-    /// The places that the path of the agent keeps away from: the ones that the request has, and those around the entities that the
-    /// profile says to avoid, where they are now.
+    /// How much more a node at a point costs for the places that the request keeps away from (where the agent got stuck): each adds its
+    /// cost, the less the farther the point is, and nothing if it is out of the radius.
     /// </summary>
-    [PublicAPI]
-    public IReadOnlyList<PathAvoid>? GetAvoid(
-        Entity<PathProfilesComponent, GoapComponent> agent,
-        ProtoId<PathProfilePrototype> profileId,
-        IReadOnlyList<PathAvoid>? requested)
+    /// <param name="avoid">The places.</param>
+    /// <param name="graph">The grid of the point.</param>
+    /// <param name="point">The point, in the coordinates of the grid.</param>
+    [PublicAPI, Pure]
+    public static float GetAvoidPenalty(IReadOnlyList<PathAvoid> avoid, EntityUid graph, Vector2 point)
     {
-        if (!_proto.TryIndex(profileId, out var profile)
-            || profile.Avoid.Count == 0
-            || Transform(agent).GridUid is not { } graph)
-            return requested;
+        var penalty = 0f;
 
-        var places = requested == null ? new List<PathAvoid>() : new List<PathAvoid>(requested);
-        var inverse = _transform.GetInvWorldMatrix(graph);
-
-        foreach (var source in profile.Avoid)
+        for (var i = 0; i < avoid.Count; i++)
         {
-            if (!_goap.CheckCondition(agent.Owner, agent.Comp2.State, source.AgentConditions)
-                || !_goap.TryGetValue(agent.Comp2.State, source.Key, out var entities))
+            var place = avoid[i];
+
+            if (place.Graph != graph)
                 continue;
 
-            foreach (var uid in entities)
-            {
-                if (TerminatingOrDeleted(uid) || uid == agent.Owner)
-                    continue;
+            var distance = Vector2.Distance(point, place.Position);
 
-                var cost = _curves.Get(source.Cost, 0f, uid);
-
-                if (cost <= 0f)
-                    continue;
-
-                places.Add(new PathAvoid(graph, Vector2.Transform(_transform.GetWorldPosition(uid), inverse), source.Radius, cost));
-            }
+            if (distance < place.Radius)
+                penalty += place.Cost * (1f - distance / place.Radius);
         }
 
-        return places;
+        return penalty;
     }
 }

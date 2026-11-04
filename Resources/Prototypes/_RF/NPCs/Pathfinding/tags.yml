@@ -81,3 +81,15 @@
   influenceCurve:
   - mul: [float: -0.025]
   - add: [float: 1]
+
+# Every resident of a settlement has it. It is a dynamic tag: it is not baked into the navigation map, because the residents move, and
+# the influence on a node is made of where they are when the path is searched for. What it costs, and how much each resident counts
+# for, is up to the profiles, see the rules.
+- type: pathTag
+  id: Resident
+  dynamic: true
+  influence: 14
+  influenceCurve:
+  - div: [var: radius]
+  - mul: [float: -1]
+  - add: [float: 1]

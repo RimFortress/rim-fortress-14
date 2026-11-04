@@ -6,6 +6,8 @@ using Content.Shared.Parallax.Biomes;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
+using Content.Shared.Physics;
+using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Events;
 using Robust.Shared.Timing;
@@ -236,6 +238,20 @@ public sealed partial class RfPathfindingSystem
         var local = Vector2.Transform(
             _transform.ToMapCoordinates(coordinates).Position,
             _transform.GetInvWorldMatrix(gridUid));
+
+        return GetPoly(gridUid, map, local, build);
+    }
+
+    /// <summary>
+    /// Returns the poly of the grid that contains the point.
+    /// </summary>
+    /// <param name="gridUid">The grid.</param>
+    /// <param name="map">Its navigation map.</param>
+    /// <param name="local">The point in the coordinates of the grid.</param>
+    /// <param name="build">Build the chunk of the point if it is not on the map yet.</param>
+    /// <returns>The poly, null if there is none.</returns>
+    private RfPathPoly? GetPoly(EntityUid gridUid, RfGridPathfindingComponent map, Vector2 local, bool build)
+    {
         var origin = new Vector2i((int) MathF.Floor(local.X / ChunkSize), (int) MathF.Floor(local.Y / ChunkSize));
 
         if (map.Chunks.TryGetValue(origin, out var chunk))
@@ -255,6 +271,47 @@ public sealed partial class RfPathfindingSystem
 
         return null;
     }
+
+    /// <summary>
+    /// Is something that stops projectiles between two points of a grid: a wall, a window, a closed door. It is told by the navigation
+    /// map, so only the chunks that are on it are looked at, and what is not there is not in the way.
+    /// </summary>
+    /// <param name="gridUid">The grid.</param>
+    /// <param name="from">The first point, in the coordinates of the grid.</param>
+    /// <param name="to">The second point, in the coordinates of the grid.</param>
+    public override bool IsSightBlocked(EntityUid gridUid, Vector2 from, Vector2 to)
+    {
+        if (!_pathGridQuery.TryComp(gridUid, out var map))
+            return false;
+
+        var delta = to - from;
+        var length = delta.Length();
+        var steps = (int) MathF.Ceiling(length / SightStep);
+
+        // The tiles of the ends are the ones that the points are on: the place where the shooter stands, and the node that is looked at.
+        var fromTile = new Vector2i((int) MathF.Floor(from.X), (int) MathF.Floor(from.Y));
+        var toTile = new Vector2i((int) MathF.Floor(to.X), (int) MathF.Floor(to.Y));
+
+        for (var i = 1; i < steps; i++)
+        {
+            var point = from + delta * (i / (float) steps);
+            var tile = new Vector2i((int) MathF.Floor(point.X), (int) MathF.Floor(point.Y));
+
+            if (tile == fromTile || tile == toTile)
+                continue;
+
+            if (GetPoly(gridUid, map, point, false) is { } poly
+                && (poly.Data.CollisionLayer & (int) CollisionGroup.BulletImpassable) != 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The distance between the points that are looked at for something in the way, in tiles.
+    /// </summary>
+    private const float SightStep = 0.5f;
 
     /// <summary>
     /// Marks the poly's chunk as used, so it is not removed while a search goes through it.

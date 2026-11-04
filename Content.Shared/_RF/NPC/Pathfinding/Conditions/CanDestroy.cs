@@ -1,3 +1,4 @@
+using Content.Shared._RF.Combat;
 using Content.Shared._RF.NPC.Pathfinding.Systems;
 
 namespace Content.Shared._RF.NPC.Pathfinding.Conditions;
@@ -28,12 +29,14 @@ public sealed partial class CanDestroy : BasePathCondition<CanDestroy>
 
 public sealed class CanDestroyPathConditionSystem : PathConditionSystem<CanDestroy>
 {
+    [Dependency] private CombatStatsSystem _combat = null!;
+
     protected override bool ConditionCheck(PathNodeContext ctx, CanDestroy condition)
     {
         if (ctx.Facts.Destroy is not { } required)
             return false;
 
-        var time = Pathfinding.GetDestroyTime(required, ctx.Attacks);
+        var time = _combat.GetTimeToDeal(required, ctx.Attacks);
 
         if (condition.MoreThan != null && time <= condition.MoreThan
             || condition.LessThan != null && time >= condition.LessThan)
