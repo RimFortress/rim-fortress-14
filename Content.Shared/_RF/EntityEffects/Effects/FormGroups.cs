@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Shared._RF.MathHelpers.Assignment;
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.MathHelpers.MathVariables;
@@ -68,24 +69,15 @@ public sealed partial class FormGroups : EntityEffectBase<FormGroups>
 public sealed partial class FormGroupsEntityEffectsSystem : EntityEffectSystem<MathVariablesComponent, FormGroups>
 {
     [Dependency] private GroupsSystem _groups = null!;
+    [Dependency] private EntityScoringSystem _scoring = null!;
     [Dependency] private MathCurvesSystem _curves = null!;
     [Dependency] private MathVariablesSystem _variables = null!;
 
     protected override void Effect(Entity<MathVariablesComponent> ent, ref EntityEffectEvent<FormGroups> args)
     {
         var effect = args.Effect;
-        var members = new List<(EntityUid Uid, float Power)>();
-
-        foreach (var source in _groups.GetGroups(ent, effect.Source))
-        {
-            foreach (var member in _groups.GetMembers(source.Comp, effect.SourceRole))
-            {
-                var power = _curves.Get(effect.Power, 0f, member);
-
-                if (power > 0f)
-                    members.Add((member, power));
-            }
-        }
+        var sources = _groups.GetGroups(ent, effect.Source).SelectMany(x => _groups.GetMembers(x.Comp, effect.SourceRole));
+        var members = _scoring.Score(sources, effect.Power, positiveOnly: true);
 
         // The groups whose participants are all gone are over.
         var groups = _groups.Prune(ent, effect.Group);
@@ -93,7 +85,7 @@ public sealed partial class FormGroupsEntityEffectsSystem : EntityEffectSystem<M
         if (members.Count == 0 || effect.OnlyIfNone && groups.Count > 0)
             return;
 
-        var total = members.Sum(x => x.Power);
+        var total = members.Sum(x => x.Score);
         var minPower = _curves.Get(effect.MinPower, 0f, ent, _variables.GetVariables(ent.AsNullable()));
         var count = minPower > 0f ? (int) MathF.Floor(total / minPower) : effect.MaxGroups;
         count = Math.Clamp(count, 1, Math.Max(1, Math.Min(effect.MaxGroups, members.Count)));
@@ -101,6 +93,6 @@ public sealed partial class FormGroupsEntityEffectsSystem : EntityEffectSystem<M
         if (_groups.IsFormed(groups, members.Select(x => x.Uid), count))
             return;
 
-        _groups.Form(ent, effect.Group, members, count);
+        _groups.Form(ent, effect.Group, members.Select(x => (x.Uid, x.Score)), count);
     }
 }

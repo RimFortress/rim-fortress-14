@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Shared._RF.MathHelpers.Assignment;
 using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Groups.Systems;
 using Content.Shared._RF.NPC.Engagement;
@@ -79,14 +80,14 @@ public sealed class GroupsSystemTest : GameTest
     {
         // 9 5 4 3 2 1: the strongest are the first of the lists, every other goes to the weakest.
         var items = new[] { 9f, 5f, 4f, 3f, 2f, 1f }.Select(x => (x, x));
-        var lists = GroupsSystem.Partition(items, 2);
+        var lists = Assignment.Partition(items, 2);
 
         Assert.That(lists, Has.Count.EqualTo(2));
         Assert.That(lists[0][0], Is.EqualTo(9f), "the strongest is the first of the first");
         Assert.That(lists[1][0], Is.EqualTo(5f));
         Assert.That(lists.Sum(x => x.Sum()), Is.EqualTo(24f));
         Assert.That(Math.Abs(lists[0].Sum() - lists[1].Sum()), Is.LessThanOrEqualTo(4f));
-        Assert.That(GroupsSystem.Partition(items, 10), Has.Count.EqualTo(6), "not more lists than there are items");
+        Assert.That(Assignment.Partition(items, 10), Has.Count.EqualTo(6), "not more lists than there are items");
     }
 
     [Test]

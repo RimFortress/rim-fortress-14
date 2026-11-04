@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Shared._RF.MathHelpers.Assignment;
 using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.MathHelpers.MathVariables;
@@ -48,6 +49,7 @@ public sealed partial class MeasureGroups : EntityEffectBase<MeasureGroups>
 public sealed partial class MeasureGroupsEntityEffectsSystem : EntityEffectSystem<MathVariablesComponent, MeasureGroups>
 {
     [Dependency] private GroupsSystem _groups = null!;
+    [Dependency] private EntityScoringSystem _scoring = null!;
     [Dependency] private MathCurvesSystem _curves = null!;
     [Dependency] private MathVariablesSystem _variables = null!;
 
@@ -64,7 +66,7 @@ public sealed partial class MeasureGroupsEntityEffectsSystem : EntityEffectSyste
 
         foreach (var (owned, comp) in _groups.GetGroups(ent, args.Effect.Group))
         {
-            var power = _groups.GetMembers(comp).Sum(x => _curves.Get(fighter, 0f, x));
+            var power = _scoring.Aggregate(_groups.GetMembers(comp), fighter, EntityAggregate.Sum);
             _variables.Set(owned, "power", power);
             var ratio = power / Math.Max(threat, MinThreat);
             _variables.Set(owned, "ratio", ratio);

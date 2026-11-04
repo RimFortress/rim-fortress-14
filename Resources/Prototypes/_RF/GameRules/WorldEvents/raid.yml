@@ -217,8 +217,15 @@
             - !type:PrototypeCurve
               preset: FighterPower
       # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeGroups.
+      # Not before it is known what the raid is up against: the number of the squads depends on it.
       - !type:FormGroups
         onlyIfNone: true
+        conditions:
+        - !type:MathCurveCondition
+          curves:
+          - var: targetPower
+          - !type:Threshold
+            moreThan: 0
         source: RaidForce
         sourceRole: Raider
         group: RaidSquad

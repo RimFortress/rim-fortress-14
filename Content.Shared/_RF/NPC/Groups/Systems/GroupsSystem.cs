@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Numerics;
+using Content.Shared._RF.MathHelpers.Assignment;
 using Content.Shared._RF.NPC.Engagement;
 using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
@@ -176,39 +177,6 @@ public sealed partial class GroupsSystem : EntitySystem
     }
 
     /// <summary>
-    /// Divides the items into the given number of lists so that the weights of the lists are about the same. The strongest
-    /// of the items are the first of the lists, the others go to the list that is the weakest at the time.
-    /// </summary>
-    [PublicAPI]
-    public static List<List<T>> Partition<T>(IEnumerable<(T Item, float Weight)> items, int count)
-    {
-        var sorted = items.OrderByDescending(x => x.Weight).ToList();
-        count = Math.Clamp(count, 1, Math.Max(1, sorted.Count));
-        var lists = new List<(List<T> Items, float Weight)>();
-
-        for (var i = 0; i < Math.Min(count, sorted.Count); i++)
-        {
-            lists.Add((new List<T> { sorted[i].Item }, sorted[i].Weight));
-        }
-
-        for (var i = lists.Count; i < sorted.Count; i++)
-        {
-            var weakest = 0;
-
-            for (var j = 1; j < lists.Count; j++)
-            {
-                if (lists[j].Weight < lists[weakest].Weight)
-                    weakest = j;
-            }
-
-            lists[weakest].Items.Add(sorted[i].Item);
-            lists[weakest] = (lists[weakest].Items, lists[weakest].Weight + sorted[i].Weight);
-        }
-
-        return lists.Select(x => x.Items).ToList();
-    }
-
-    /// <summary>
     /// Are the groups there already what <see cref="Form"/> would make: as many as needed, and every member is in one.
     /// </summary>
     [PublicAPI]
@@ -250,7 +218,7 @@ public sealed partial class GroupsSystem : EntitySystem
 
         var formed = new List<Entity<EngagementComponent>>();
 
-        foreach (var part in Partition(members, count))
+        foreach (var part in Assignment.Partition(members, count))
         {
             if (!_engagement.TryStartEngagement(kind, part[0], part, out var group)
                 && !_engagement.TryStartEngagement(kind, part[0], out group))

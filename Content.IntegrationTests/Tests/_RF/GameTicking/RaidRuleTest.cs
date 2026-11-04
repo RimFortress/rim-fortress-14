@@ -1207,9 +1207,10 @@ public sealed class RaidRuleTest : GameTest
     /// The residents are walled in with a door in the wall, and the raiders come to it.
     /// </summary>
     /// <param name="prepare">What is done to the door, and to the raiders.</param>
-    private async Task<EntityUid> WalledInWithDoor(Action<EntityUid> prepare)
+    /// <param name="raiders">How many raiders there are.</param>
+    private async Task<EntityUid> WalledInWithDoor(Action<EntityUid> prepare, int raiders = 2)
     {
-        await Setup(residents: 3, raiders: 2);
+        await Setup(residents: 3, raiders: raiders);
         EntityUid door = default;
 
         await Pair.Server.WaitPost(() =>
@@ -1232,6 +1233,7 @@ public sealed class RaidRuleTest : GameTest
 
             door = _entMan.SpawnEntity("Airlock", At(11.5f, 5.5f));
             prepare(door);
+
             Start();
         });
 
@@ -1240,10 +1242,11 @@ public sealed class RaidRuleTest : GameTest
 
     private async Task WaitForRaiderInside()
     {
-        for (var i = 0; i < 30 && !_raiders.Any(r => !_entMan.Deleted(r)
-                                                      && Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f); i++)
+        // The steps are short: the door is looked at as soon as the first one is in, and not when the others have broken it.
+        for (var i = 0; i < 150 && !_raiders.Any(r => !_entMan.Deleted(r)
+                                                       && Vector2.Distance(_transform.GetWorldPosition(r), new Vector2(7f, 5f)) < 3.5f); i++)
         {
-            await Run(5f);
+            await Run(1f);
         }
 
         await Pair.Server.WaitAssertion(() =>
@@ -1259,8 +1262,16 @@ public sealed class RaidRuleTest : GameTest
     private void GiveOnlyCrowbar(EntityUid raider)
     {
         RemoveCrowbars();
+        var hands = _entMan.System<Content.Shared.Hands.EntitySystems.SharedHandsSystem>();
+
+        // Whatever else the raider carries would make breaking through cheaper than prying, and the way is not what is looked at.
+        foreach (var held in hands.EnumerateHeld(raider).ToArray())
+        {
+            _entMan.DeleteEntity(held);
+        }
+
         var crowbar = _entMan.SpawnEntity("Crowbar", _entMan.GetComponent<TransformComponent>(raider).Coordinates);
-        Assert.That(_entMan.System<Content.Shared.Hands.EntitySystems.SharedHandsSystem>().TryPickupAnyHand(raider, crowbar), Is.True);
+        Assert.That(hands.TryPickupAnyHand(raider, crowbar), Is.True);
     }
 
     private void RemoveCrowbars()
@@ -1286,7 +1297,8 @@ public sealed class RaidRuleTest : GameTest
     [Test]
     public async Task TestRaidersPryTheDoorWithACrowbar()
     {
-        var door = await WalledInWithDoor(_ => GiveOnlyCrowbar(_raiders[0]));
+        // A raider alone: another one that has no crowbar would break the door, and race the one that pries it.
+        var door = await WalledInWithDoor(_ => GiveOnlyCrowbar(_raiders[0]), raiders: 1);
         await WaitForRaiderInside();
 
         await Pair.Server.WaitAssertion(() =>
