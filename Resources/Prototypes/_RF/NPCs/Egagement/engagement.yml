@@ -1,11 +1,13 @@
 # The kinds of situations are the prototypes of entities that have the Engagement component: the roles, whether the situation is
 # closed when a role has fewer than it needs, and how long the invitations wait. Any other component that a kind needs is here too.
+# A situation that is owned (by an event, for the raiders, say) lives as long as the owner does, and is gone when the owner lets it go.
 - type: entity
   id: BaseEngagement
   abstract: true
   categories: [ HideSpawnMenu ]
   components:
   - type: Engagement
+  - type: DespawnWithOwner
 
 # Healing
 

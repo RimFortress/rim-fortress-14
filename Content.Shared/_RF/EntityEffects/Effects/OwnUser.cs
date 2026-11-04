@@ -1,13 +1,15 @@
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared.EntityEffects;
-using Robust.Shared.Containers;
+using Content.Shared.Whitelist;
 
 namespace Content.Shared._RF.EntityEffects.Effects;
 
 /// <summary>
 /// Makes the target the owner of the user of the effect, see <see cref="OwnershipSystem"/>, and of everything that the user
 /// carries: what it wears, what it holds, and what is in the containers of that. It is how an event owns the ones it has sent
-/// and their equipment, so they share it: the queries of what is owned (<c>Owned</c>) find the equipment of the owner.
+/// and their equipment, so they share it: the queries of what is owned (<c>Owned</c>) find the equipment of the owner. What is owned
+/// of what the user carries can be told by the lists, so the event does not own what is not a thing of its own, such as the solutions
+/// of the bodies. When the event is over, the ownership is let go of by <see cref="RemoveOwnership"/>.
 /// </summary>
 public sealed partial class OwnUser : EntityEffectBase<OwnUser>
 {
@@ -16,50 +18,32 @@ public sealed partial class OwnUser : EntityEffectBase<OwnUser>
     /// </summary>
     [DataField]
     public bool Carried = true;
+
+    /// <summary>
+    /// Of what the user carries, only what it lets pass is owned, such as the entities that are items. All of it if it is not set.
+    /// </summary>
+    [DataField]
+    public EntityWhitelist? Whitelist;
+
+    /// <summary>
+    /// Of what the user carries, what it lets pass is not owned.
+    /// </summary>
+    [DataField]
+    public EntityWhitelist? Blacklist;
 }
 
 public sealed partial class OwnUserEntityEffectsSystem : EntityEffectSystem<MetaDataComponent, OwnUser>
 {
     [Dependency] private OwnershipSystem _ownership = null!;
-    [Dependency] private SharedContainerSystem _container = null!;
-
-    [Dependency] private EntityQuery<ContainerManagerComponent> _managerQuery;
 
     protected override void Effect(Entity<MetaDataComponent> ent, ref EntityEffectEvent<OwnUser> args)
     {
         if (args.User is not { } user || user == ent.Owner)
             return;
 
-        _ownership.AddOwnership(user, owner: ent.Owner);
-
-        if (!args.Effect.Carried)
-            return;
-
-        foreach (var carried in GetCarried(user))
-        {
-            _ownership.AddOwnership(carried, owner: ent.Owner);
-        }
-    }
-
-    /// <summary>
-    /// Everything in the containers of the entity, and in the containers of that, all the way down.
-    /// </summary>
-    private IEnumerable<EntityUid> GetCarried(EntityUid uid)
-    {
-        if (!_managerQuery.TryComp(uid, out var manager))
-            yield break;
-
-        foreach (var container in _container.GetAllContainers(uid, manager))
-        {
-            foreach (var contained in container.ContainedEntities)
-            {
-                yield return contained;
-
-                foreach (var inner in GetCarried(contained))
-                {
-                    yield return inner;
-                }
-            }
-        }
+        if (args.Effect.Carried)
+            _ownership.AddOwnershipRecursively(ent.Owner, user, args.Effect.Whitelist, args.Effect.Blacklist);
+        else
+            _ownership.AddOwnership(user, owner: ent.Owner);
     }
 }

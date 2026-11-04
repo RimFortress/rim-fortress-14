@@ -338,10 +338,21 @@ public sealed class RaidRuleTest : GameTest
 
         await Pair.Server.WaitPost(() => _transform.SetCoordinates(_raiders[1], At(36.5f, 6.5f)));
         await Run(2.2f);
+        await Run(0.5f);
         await Pair.Server.WaitAssertion(() =>
         {
             Assert.That(Ended(), Is.True);
             Assert.That(Result(), Is.EqualTo("Won"));
+
+            // The raid has cleaned up after itself: it owns nothing, and the situations of the raiders are gone with it.
+            Assert.That(_ownership.GetOwned(_rule), Is.Empty);
+
+            var situations = _entMan.AllEntityQueryEnumerator<EngagementComponent, MetaDataComponent>();
+
+            while (situations.MoveNext(out var _, out var _, out var meta))
+            {
+                Assert.That(meta.EntityPrototype?.ID, Is.Not.AnyOf("RaidForce", "RaidSquad"), "the situation lives for the sake of the raid");
+            }
         });
     }
 
@@ -757,7 +768,9 @@ public sealed class RaidRuleTest : GameTest
     {
         await Setup(residents: 12, raiders: 4);
         await Pair.Server.WaitPost(StartAgainstStrongSettlement);
-        await Run(25f);
+        // Before the raid is over: in the world of the test there is no air, and a few seconds later everybody is down, which ends the raid
+        // and the squads with it.
+        await Run(12f);
 
         await Pair.Server.WaitAssertion(() =>
         {

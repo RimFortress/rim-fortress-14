@@ -200,7 +200,11 @@
         value:
         - add: [float: 1]
       # The raid owns the raiders and everything they carry, so they share the equipment: what one has, the others find.
+      # Only the things are owned: not the solutions of the bodies and the like.
       - !type:OwnUser
+        whitelist:
+          components:
+          - Item
       - !type:PlaceInGroup
         group: RaidForce
         roles: [Raider]
@@ -292,7 +296,9 @@
         key: losses
         value:
         - add: [float: 1]
-      # Whoever is able to fight and is left when the raid is over is gone. The ones that are down are left where they lie.
+      # The raid cleans up after itself. Whoever is able to fight and is left when the raid is over is gone, with what it carries; the
+      # ones that are down are left where they lie, and so is their equipment, they are no longer the raid's. The situations of the
+      # raiders (the force and the squads) are gone with the ownership, they live for the sake of the raid.
       ended:
       - !type:ApplyToEngagementActors
         engagement: RaidForce
@@ -302,6 +308,7 @@
           conditions:
           - !type:MobStateCondition
             mobstate: Alive
+      - !type:RemoveOwnership
 
 # What the raiders do when they leave, see the phases of the raid.
 - type: entityEffect
