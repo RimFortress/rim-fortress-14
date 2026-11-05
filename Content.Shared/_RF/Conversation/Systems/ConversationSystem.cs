@@ -84,7 +84,8 @@ public sealed partial class ConversationSystem : EntitySystem
         {
             foreach (var uid in uids)
             {
-                RemComp<ConversationActorComponent>(uid);
+                if (_actorQuery.TryComp(uid, out var actor) && actor.Conversation == ent.Owner)
+                    RemComp<ConversationActorComponent>(uid);
             }
         }
     }
@@ -101,7 +102,9 @@ public sealed partial class ConversationSystem : EntitySystem
 
     private void OnEngagementLeft(Entity<ConversationComponent> ent, ref EngagementRoleLeft args)
     {
-        RemComp<ConversationActorComponent>(args.Actor);
+        // Only what belongs to this conversation is taken away: the actor may be in another one by now.
+        if (_actorQuery.TryComp(args.Actor, out var actor) && actor.Conversation == ent.Owner)
+            RemComp<ConversationActorComponent>(args.Actor);
     }
 
     /// <summary>
@@ -244,7 +247,7 @@ public sealed partial class ConversationSystem : EntitySystem
     {
         if (ent.Comp2.Started && ent.Comp1.NextActors.Count == 0)
         {
-            Invalid();
+            Invalid("it has started and nobody is to speak next");
             return false;
         }
 
@@ -255,7 +258,7 @@ public sealed partial class ConversationSystem : EntitySystem
                 && _engagement.IsMember(ent.Owner, uid))
                 continue;
 
-            Invalid();
+            Invalid($"{ToPrettyString(uid)} is to speak next, but is not in it any more (conversation of the actor: {(actor == null ? "none" : ToPrettyString(actor.Conversation))})");
             return false;
         }
 
@@ -267,16 +270,16 @@ public sealed partial class ConversationSystem : EntitySystem
                     && actor.Conversation == ent.Owner)
                     continue;
 
-                Invalid();
+                Invalid($"{ToPrettyString(uid)} is in it, but is in another conversation or in none (conversation of the actor: {(actor == null ? "none" : ToPrettyString(actor.Conversation))})");
                 return false;
             }
         }
 
         return true;
 
-        void Invalid()
+        void Invalid(string reason)
         {
-            Log.Debug($"terminating invalid conversation {ToPrettyString(ent)}");
+            Log.Debug($"terminating invalid conversation {ToPrettyString(ent)}: {reason}");
             _engagement.EndEngagement(new(ent, ent.Comp2), EngagementEndReason.Dissolved);
         }
     }

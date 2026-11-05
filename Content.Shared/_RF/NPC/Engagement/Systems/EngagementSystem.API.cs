@@ -361,11 +361,14 @@ public partial class EngagementSystem
         Entity<EngagementParticipantComponent?> actor,
         ProtoId<EngagementRolePrototype>? role = null)
     {
-        if (!Resolve(engagement, ref engagement.Comp)
-            || !Resolve(actor, ref actor.Comp))
+        if (!Resolve(engagement, ref engagement.Comp))
             return;
 
         engagement.Comp.Invites.RemoveWhere(x => x.Uid == actor.Owner && (role == null || x.Role == role));
+
+        // The actor can be gone, or have no component any more: the invite of the situation is withdrawn all the same.
+        if (!_participantQuery.Resolve(actor, ref actor.Comp, false))
+            return;
 
         foreach (var invite in actor.Comp.Invites.ToArray())
         {
@@ -404,7 +407,7 @@ public partial class EngagementSystem
         EngagementEndReason reason)
     {
         if (!Resolve(engagement, ref engagement.Comp)
-            || !_participantQuery.Resolve(actor, ref actor.Comp)
+            || !_participantQuery.Resolve(actor, ref actor.Comp, false)
             || !actor.Comp.Membership.TryGetValue(engagement.Owner, out var role))
             return false;
 

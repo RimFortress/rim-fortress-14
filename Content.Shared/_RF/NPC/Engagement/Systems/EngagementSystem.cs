@@ -255,7 +255,8 @@ public sealed partial class EngagementSystem : EntitySystem
         {
             participant.Membership.Remove(engagement.Owner);
 
-            if (participant.Membership.Count == 0)
+            // The invites are in the component as well: it is not removed from under those who are invited to something else.
+            if (participant.Membership.Count == 0 && participant.Invites.Count == 0)
                 RemComp<EngagementParticipantComponent>(actor);
         }
 
