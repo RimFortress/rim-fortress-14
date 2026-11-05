@@ -87,6 +87,13 @@ public abstract partial class SharedSettlementSystem : EntitySystem
     /// <summary>
     /// Returns the coordinates of the center of a settlement.
     /// </summary>
+    /// <summary>
+    /// For a resident that has left the group of the settlement and stays for a while: since when it has been away.
+    /// </summary>
+    [PublicAPI]
+    public bool TryGetAwaySince(Entity<SettlementComponent> settlement, EntityUid pop, out TimeSpan since)
+        => settlement.Comp.Away.TryGetValue(pop, out since);
+
     [PublicAPI]
     public EntityCoordinates GetCoordinates(EntityUid settlement) => Transform(settlement).Coordinates;
 

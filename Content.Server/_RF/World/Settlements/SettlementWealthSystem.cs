@@ -109,7 +109,11 @@ public sealed partial class SettlementWealthSystem : EntitySystem
         comp.NextUpdate = now + comp.MinUpdateInterval;
     }
 
-    private string? Categorize(SettlementWealthComponent comp, EntityUid uid)
+    /// <summary>
+    /// The category of the wealth that the entity falls into, null if it falls into none.
+    /// </summary>
+    [PublicAPI]
+    public string? Categorize(SettlementWealthComponent comp, EntityUid uid)
     {
         foreach (var category in comp.Categories)
         {

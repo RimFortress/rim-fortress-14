@@ -295,6 +295,45 @@ public sealed class SettlementNarratorTest : GameTest
     }
 
     /// <summary>
+    /// The world of the game is a map and not a grid: the pops and the things lie on the map itself. A thing of the player is adopted
+    /// by the settlement there as well.
+    /// </summary>
+    [Test]
+    public async Task TestThingsAreAdoptedInAWorldThatIsAMap()
+    {
+        var map = await Pair.CreateTestMap();
+        EntityUid thing = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            EntityCoordinates At(float x, float y) => new(map.MapUid, x, y);
+
+            // Where there is no grid: a thing over a grid is put on it, and the world of the game has none.
+            _player = _entMan.SpawnEntity(null, At(500, 500));
+            var player = _entMan.AddComponent<RimFortressPlayerComponent>(_player);
+            var tracker = _entMan.AddComponent<SettlementTrackerComponent>(_player);
+            tracker.Radius = Radius;
+            tracker.UpdateInterval = TimeSpan.FromSeconds(0.1);
+
+            for (var i = 0; i < 2; i++)
+            {
+                player.Pops.Add(_entMan.SpawnEntity("MobHuman", At(510 + i, 510)));
+            }
+
+            thing = _entMan.SpawnEntity("TestWealthThing", At(512, 511));
+            _ownership.AddOwnership(thing, owner: _player);
+            _settlements.MarkDirty(_player);
+        });
+        await Run(0.5f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_ownership.HasOwner(thing, Settlement().Owner), Is.True, "the settlement adopts it");
+            Assert.That(_ownership.HasOwner(thing, _player), Is.False);
+        });
+    }
+
+    /// <summary>
     /// The wealth is priced by the categories of the settlement: a building is not a thing, and what is in a box is the price of the box.
     /// </summary>
     [Test]

@@ -218,12 +218,3 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
         return false;
     }
 }
-
-[Serializable, NetSerializable]
-public sealed class SettlementCoordinatesMessage(Dictionary<NetEntity, List<NetCoordinates>> coords) : EntityEventArgs
-{
-    public Dictionary<NetEntity, List<NetCoordinates>> Coords = coords;
-}
-
-[Serializable, NetSerializable]
-public sealed class WorldDebugInfoRequest : EntityEventArgs;

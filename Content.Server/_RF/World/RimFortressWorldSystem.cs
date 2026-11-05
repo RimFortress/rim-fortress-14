@@ -47,23 +47,6 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
     [Dependency] private ExecutableGoalSystem _executable = null!;
     [Dependency] private FogOfWarSystem _faw = null!;
 
-    private readonly HashSet<ICommonSession> _debugSubscribers = new();
-
-    [SubscribeNetworkEvent]
-    private void OnDebugRequest(WorldDebugInfoRequest msg, EntitySessionEventArgs args)
-    {
-        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug))
-        {
-            _debugSubscribers.Remove(args.SenderSession);
-            return;
-        }
-
-        if (_debugSubscribers.Add(args.SenderSession))
-            return;
-
-        _debugSubscribers.Remove(args.SenderSession);
-    }
-
     public EntityUid InitializeWorld(EntityUid uid, RimFortressRuleComponent rule)
     {
         Rule = rule;
@@ -255,32 +238,5 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         AddPops(player, pops);
 
         player.Comp.GotRoundstartPops = true;
-    }
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (_debugSubscribers.Count == 0)
-            return;
-
-        var coords = new Dictionary<NetEntity, List<NetCoordinates>>();
-        var players = EntityQueryEnumerator<RimFortressPlayerComponent>();
-
-        while (players.MoveNext(out var player, out _))
-        {
-            coords.Add(
-                GetNetEntity(player),
-                Settlements.GetPlayerSettlements(player)
-                    .Select(x => GetNetCoordinates(Settlements.GetCoordinates(x)))
-                    .ToList());
-        }
-
-        var msg = new SettlementCoordinatesMessage(coords);
-
-        foreach (var subscriber in _debugSubscribers)
-        {
-            RaiseNetworkEvent(msg, subscriber);
-        }
     }
 }

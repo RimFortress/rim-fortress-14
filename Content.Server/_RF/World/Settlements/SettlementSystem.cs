@@ -257,7 +257,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
             Wait(settlement, tracker, now);
         }
 
-        Adopt(uid, tracker);
+        Adopt(uid, tracker, grid);
         OwnLoners(comp, uid, tracker);
     }
 
@@ -298,7 +298,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
     /// Gives what waits with the player (a zone that was marked out where there was no settlement, the things of a settlement that
     /// is gone) to the settlement that is near it, if there is one.
     /// </summary>
-    private void Adopt(EntityUid player, SettlementTrackerComponent tracker)
+    private void Adopt(EntityUid player, SettlementTrackerComponent tracker, EntityUid grid)
     {
         var waiting = _ownership.GetOwned(player);
 
@@ -318,7 +318,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
                 || TerminatingOrDeleted(uid)
                 || HasComp<MobStateComponent>(uid)
                 || !_xformQuery.TryComp(uid, out var xform)
-                || !HasComp<MapGridComponent>(xform.ParentUid))
+                || xform.ParentUid != grid)
                 continue;
 
             if (FindSettlementAt(settlements, uid, tracker.Radius) is not { } settlement)
