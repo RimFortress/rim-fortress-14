@@ -31,6 +31,28 @@
   - !type:IsAlive
     invert: true
 
+# The residents that are dead: the raid is won when most of them are.
+- type: searchQuery
+  id: RaidTargetsDead
+  query: !type:KeyEntities
+    key: Targets
+  filters:
+  - !type:IsDead
+
+# The residents that are not dead yet, the closest first: whom a raider that finishes the down off goes to, see the Finish phase of the
+# raid. Unlike RaidObjective it includes those who are down. A raider reads them from the raid.
+- type: searchQuery
+  id: RaidFinishTarget
+  query: !type:KeyEntities
+    key: Engagement/RaidForce/Owner/Targets
+  filters:
+  - !type:IsDead
+    invert: true
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
 # The living residents that the squad of a raider is given, the closest first: whom a raider goes to. The residents are shared
 # between the squads by the raid, see AssignGroupTargets. The settlement itself is only a place, and it may be out of reach.
 - type: searchQuery

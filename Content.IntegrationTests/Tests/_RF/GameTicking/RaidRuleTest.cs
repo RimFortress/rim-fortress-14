@@ -156,7 +156,12 @@ public sealed class RaidRuleTest : GameTest
         Start();
     }
 
-    private void Start()
+    /// <summary>
+    /// Starts the raid. Most of the tests are not about the camp, so it is over at once, unless the test is about it.
+    /// </summary>
+    private void Start() => Start(false);
+
+    private void Start(bool camp)
     {
         Assert.That(
             _rules.StartWorldRule(
@@ -169,6 +174,9 @@ public sealed class RaidRuleTest : GameTest
         {
             _trigger.Trigger(_rule, raider, MigrationRuleSystem.Spawned, predicted: false);
         }
+
+        if (!camp)
+            _variables.Set(_rule, "campDuration", 0f);
     }
 
     private async Task Run(float seconds) => await Pair.RunTicksSync((int) (seconds * 60) + 2);
@@ -1626,6 +1634,271 @@ public sealed class RaidRuleTest : GameTest
             Assert.That(Phase(), Is.EqualTo("Assault"));
             Assert.That(Variable("raidersTotal"), Is.EqualTo(3f));
             Assert.That(Variable("morale"), Is.EqualTo(1f).Within(0.05f));
+        });
+    }
+
+    private static readonly StateKey<bool> Camping = "Camping";
+    private static readonly StateKey<bool> Executing = "Executing";
+    private static readonly StateKey<EntityCoordinates> CampTarget = "CampTarget";
+
+    private bool Flag(EntityUid raider, StateKey<bool> key)
+        => _goap.TryGetValue(_entMan.GetComponent<GoapComponent>(raider).State, key, out var value) && value;
+
+    private void Down(EntityUid pop, int damage = 150)
+        => _entMan.System<DamageableSystem>().TryChangeDamage(pop, new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), damage));
+
+    /// <summary>
+    /// The raid does not begin at once: the raiders camp, for a time between a minute and a minute and a half, together, and the
+    /// residents have time to get ready.
+    /// </summary>
+    [Test]
+    public async Task TestRaidStartsWithCamp()
+    {
+        await Setup();
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(() => Start(camp: true));
+        await Run(3f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Camp"));
+            Assert.That(Variable("campDuration"), Is.InRange(60f, 90f));
+            Assert.That(_raiders.All(r => Flag(r, Camping)), Is.True, "the raiders camp");
+
+            // The camp is where the raiders are.
+            var state = _entMan.GetComponent<GoapComponent>(_rule).State;
+            Assert.That(_goap.TryGetValue(state, CampTarget, out var camp), Is.True, "the place of the camp is chosen");
+            var position = _transform.ToMapCoordinates(camp).Position;
+
+            foreach (var raider in _raiders)
+            {
+                Assert.That((_transform.GetWorldPosition(raider) - position).Length(), Is.LessThan(4f));
+            }
+        });
+    }
+
+    /// <summary>
+    /// The raiders do not go to the settlement while they camp, they stay about where they are.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersStayNearTheCampWhileItLasts()
+    {
+        await Setup();
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(() => Start(camp: true));
+        await Run(1.5f);
+
+        var camp = Vector2.Zero;
+        await Pair.Server.WaitPost(() =>
+        {
+            var state = _entMan.GetComponent<GoapComponent>(_rule).State;
+            Assert.That(_goap.TryGetValue(state, CampTarget, out var place), Is.True);
+            camp = _transform.ToMapCoordinates(place).Position;
+        });
+
+        await Run(20f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Camp"));
+
+            foreach (var raider in _raiders)
+            {
+                Assert.That((_transform.GetWorldPosition(raider) - camp).Length(), Is.LessThan(11f), "they walk about, but not far");
+            }
+        });
+    }
+
+    /// <summary>
+    /// The camp is over when the time is out: the raiders go to the settlement.
+    /// </summary>
+    [Test]
+    public async Task TestCampEndsWhenTheTimeIsOut()
+    {
+        await Setup();
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(() => Start(camp: true));
+        await Run(1.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Camp")));
+
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "campDuration", 3f));
+        await Run(4f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Assault"));
+            Assert.That(_raiders.Any(r => Flag(r, Camping)), Is.False, "the raiders do not camp any more");
+        });
+    }
+
+    /// <summary>
+    /// If the raiders are attacked the camp is over, and they do not wait for the time.
+    /// </summary>
+    [Test]
+    public async Task TestCampEndsWhenTheRaidersAreAttacked()
+    {
+        await Setup();
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(() => Start(camp: true));
+        await Run(2.5f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Camp")));
+
+        await Pair.Server.WaitPost(() => Down(_raiders[0], 10));
+        await Run(2.5f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Assault"));
+            Assert.That(_raiders.Any(r => Flag(r, Camping)), Is.False);
+        });
+    }
+
+    /// <summary>
+    /// The raid puts the residents down and does not kill them while it is not sure of the victory: even when most of them are down.
+    /// </summary>
+    [Test]
+    public async Task TestRaidDoesNotFinishTheDownWhenItIsNotMuchStronger()
+    {
+        await Setup();
+        await Pair.Server.WaitPost(() =>
+        {
+            Start();
+            _variables.Set(_rule, "finishRatio", 1000f);
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                Down(_residents[i]);
+            }
+        });
+        await Run(2.5f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Variable("downFraction"), Is.EqualTo(0.6f).Within(0.01f));
+            Assert.That(Phase(), Is.EqualTo("Assault"));
+            Assert.That(_raiders.Any(r => Flag(r, Executing)), Is.False);
+        });
+    }
+
+    /// <summary>
+    /// Down is not enough for the victory: the residents have to be dead.
+    /// </summary>
+    [Test]
+    public async Task TestRaidIsNotWonWhileTheResidentsAreOnlyDown()
+    {
+        await Setup();
+        await Pair.Server.WaitPost(() =>
+        {
+            Start();
+            _variables.Set(_rule, "finishRatio", 1000f);
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var resident in _residents)
+            {
+                Down(resident);
+            }
+        });
+        await Run(2.5f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Variable("downFraction"), Is.EqualTo(1f).Within(0.01f));
+            Assert.That(Variable("deadFraction"), Is.EqualTo(0f));
+            Assert.That(Phase(), Is.Not.EqualTo("Withdraw"));
+            Assert.That(Ended(), Is.False);
+        });
+    }
+
+    /// <summary>
+    /// When most of the residents are down and the raiders are far stronger than those who stand, the raid goes on to finish them.
+    /// </summary>
+    [Test]
+    public async Task TestRaidFinishesTheDownWhenItIsSureOfTheVictory()
+    {
+        await Setup();
+        await Pair.Server.WaitPost(() =>
+        {
+            Start();
+            _variables.Set(_rule, "finishRatio", 0f);
+        });
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                Down(_residents[i]);
+            }
+        });
+        await Run(2.5f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Finish"));
+            Assert.That(_raiders.All(r => Flag(r, Executing)), Is.True, "each raider finishes the down off by itself");
+        });
+
+        // It is won when most of them are dead.
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var resident in _residents)
+            {
+                _mobState.ChangeMobState(resident, MobState.Dead);
+            }
+        });
+        await Run(2.5f);
+
+        await Pair.Server.WaitAssertion(() => Assert.That(Phase(), Is.EqualTo("Withdraw")));
+    }
+
+    /// <summary>
+    /// A raider kills a resident who is down (but not dead yet) when the raid is sure of the victory, and does not touch it before that.
+    /// </summary>
+    [Test]
+    public async Task TestRaiderKillsTheDownResidentOnlyWhenTheRaidFinishes()
+    {
+        await Setup(residents: 2, raiders: 1);
+        await AddAtmosphere();
+        EntityUid victim = default;
+
+        // The raiders stay in the camp, near the one who is down, and the other resident is far away and well.
+        await Pair.Server.WaitPost(() =>
+        {
+            Start(camp: true);
+            victim = _residents[0];
+            _transform.SetCoordinates(victim, At(28, 30));
+            _transform.SetCoordinates(_residents[1], At(2, 38));
+            // Down, and far from death: it dies by itself in minutes.
+            Down(victim, 150);
+        });
+        await Run(5f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Phase(), Is.EqualTo("Camp"));
+            Assert.That(_mobState.IsCritical(victim), Is.True, "the raiders put the residents down, they do not kill them");
+        });
+
+        // Now the raid is sure of the victory.
+        await Pair.Server.WaitPost(() =>
+        {
+            _variables.Set(_rule, "campDuration", 0f);
+            _variables.Set(_rule, "finishRatio", 0f);
+            _variables.Set(_rule, "finishDownFraction", 0f);
+        });
+        await Run(10f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_mobState.IsDead(victim), Is.True, "the raider has finished it off");
+            Assert.That(Phase(), Is.AnyOf("Finish", "Withdraw"));
         });
     }
 

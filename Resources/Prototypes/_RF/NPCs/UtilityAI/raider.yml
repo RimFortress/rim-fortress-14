@@ -31,6 +31,7 @@
   - Engagement/RaidSquad/Var/stance > 0.5
   - Engagement/RaidSquad/Var/stance < 1.5
   - Retreating == false
+  - Executing == false
   goalState:
     RaiderFollowed: true
 
@@ -47,6 +48,7 @@
   - Engagement/RaidSquad/Var/stance > 0.5
   - Engagement/RaidSquad/Var/stance < 1.5
   - Retreating == false
+  - Executing == false
   goalState:
     RaiderEscorted: true
 
@@ -60,6 +62,7 @@
   - Engagement/RaidSquad/Role/SquadLeader != null
   - Engagement/RaidSquad/Var/stance > 1.5
   - Retreating == false
+  - Executing == false
   goalState:
     RaiderFollowed: true
 
@@ -71,6 +74,7 @@
   conditions:
   - Engagement/RaidSquad/Var/stance < 0.5
   - Retreating == false
+  - Executing == false
   goalState:
     RaiderHeld: true
 
@@ -232,3 +236,40 @@
   - !type:Threatened
   goalState:
     HealingEngagementInterrupted: true
+
+# The raid camps where it has come, close together, and the raiders only walk about a little, until the raid goes to the settlement
+# or somebody attacks it (it is not above the fight: the raiders that see an enemy fight it).
+- type: utilityAiGoal
+  id: RaiderCamp
+  color: "#88AA44"
+  scoreCurves:
+  - float: 0.80
+  # A failed attempt (no place to walk to, say) does not send the raider off to the settlement: it tries again.
+  failPenalty: 0
+  conditions:
+  - Camping == true
+  - Retreating == false
+  - !type:KeyExist
+    key: Engagement/RaidForce/Owner/CampTarget
+  goalState:
+    RaiderCamped: true
+
+# The raid is sure of the victory (see the Finish phase), so a raider goes by itself to the nearest of the residents who are not dead
+# yet and finishes them off, a resident that is down too. The target is taken by one raider only. Whoever can fight is fought first.
+- type: utilityAiGoal
+  id: RaiderExecute
+  color: "#AA0000"
+  scoreCurves:
+  - float: 0.85
+  incumbentBonus:
+  - add: [float: 0.05]
+  conditions:
+  - Executing == true
+  - Retreating == false
+  - Query/RaidFinishTarget != null
+  capture:
+  - Query/RaidFinishTarget
+  failPolicy: Cooldown
+  failCooldown: 10
+  goalState:
+    TargetExecuted: true
