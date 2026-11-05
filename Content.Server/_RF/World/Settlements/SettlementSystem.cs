@@ -2,11 +2,15 @@ using System.Numerics;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.World.Components;
+using Content.Server.GameTicking;
 using Content.Shared._RF.World.Settlements;
 using Content.Shared.Mobs;
+using Content.Shared.Mobs.Components;
+using Robust.Shared.Map.Components;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Whitelist;
 using Robust.Shared.Map;
+using System.Linq;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -21,6 +25,15 @@ namespace Content.Server._RF.World.Settlements;
 /// settlements that were found before by the pops they have in common: the settlement and the group that have the most pops
 /// in common are one, so a settlement does not change when pops come and go or move around. What is left over is new
 /// settlements, the settlements that have been divided or have become one, and the ones that are gone.
+/// <para>
+/// A player owns its settlements and nothing else, and a settlement owns the things that are in it: its residents, with what they
+/// carry, and whatever the residents take or make. So what the pops of a settlement share (see the <c>Owned</c> search query) is
+/// what the settlement owns. A pop that has been away from its settlement for longer than <c>LeaveDelay</c> makes a settlement of its
+/// own, however few the pops are: how many residents a settlement needs is up to what is done to it (the events say how many they
+/// need), not to the settlements. What is outside the radius of every settlement (a zone or a ghost that is marked out far from them,
+/// the things of a settlement that is gone) is owned by the player for the time being, and the settlement that comes near adopts it,
+/// see <see cref="Adopt"/>. The pops are all in a settlement, so they never share what the other settlements have.
+/// </para>
 /// </remarks>
 public sealed partial class SettlementSystem : SharedSettlementSystem
 {
@@ -29,6 +42,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
     [Dependency] private MobStateSystem _mobState = null!;
     [Dependency] private EntityWhitelistSystem _whitelist = null!;
     [Dependency] private SharedTransformSystem _xform = null!;
+    [Dependency] private GameTicker _ticker = null!;
 
     [Dependency] private EntityQuery<SettlementComponent> _settlements;
     [Dependency] private EntityQuery<SettlementResidentComponent> _residents;
@@ -90,7 +104,8 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
 
         foreach (var owner in ent.Comp.Owners)
         {
-            MarkDirty(owner);
+            // The pops are owned by their settlements, which are the player's.
+            MarkDirty(_settlements.TryComp(owner, out var settlement) ? settlement.Player : owner);
         }
     }
 
@@ -152,6 +167,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
         settlement.Away.Remove(pop);
         settlement.ResidentCount = settlement.Residents.Count;
         Dirty(uid, settlement);
+        _ownership.RemoveOwnership(pop.Owner, owner: uid);
 
         if (removeComponent)
             RemComp<SettlementResidentComponent>(pop);
@@ -173,11 +189,10 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
             return;
 
         var radius = tracker.Radius;
-        var minResidents = tracker.MinResidents;
 
         CollectPoints(uid, comp, tracker, grid);
 
-        var groups = BuildGroups(tracker, radius, minResidents);
+        var groups = BuildGroups(tracker, radius);
         var old = FindSettlements(uid, true);
 
         Match(old, groups, tracker);
@@ -191,11 +206,15 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
                 origins[group] = FindOrigin(old, group);
         }
 
+        // The pops that are in the group of a settlement are its (or another's) residents at once. The pops of a group that has no
+        // settlement yet are not: they stay in the settlement that they are leaving for LeaveDelay, and only then they are free to
+        // make a settlement of their own.
         _clusteredPops.Clear();
 
         foreach (var group in groups)
         {
-            _clusteredPops.UnionWith(group.Pops);
+            if (group.Settlement != null)
+                _clusteredPops.UnionWith(group.Pops);
         }
 
         // The settlements that found their groups.
@@ -210,7 +229,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
         // The groups that did not find a settlement, such as the ones that are cut off from the others.
         foreach (var group in groups)
         {
-            if (group.Settlement != null)
+            if (group.Settlement != null || !IsFree(group))
                 continue;
 
             var origin = origins[group];
@@ -237,6 +256,116 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
 
             Wait(settlement, tracker, now);
         }
+
+        Adopt(uid, tracker);
+        OwnLoners(comp, uid, tracker);
+    }
+
+    /// <summary>
+    /// The pops that live in no settlement are the player's, with what they carry: they are left without an owner otherwise, and
+    /// what the pops search for is what is owned by their owners.
+    /// </summary>
+    /// <summary>
+    /// A group can make a settlement if none of its pops is a resident of a settlement any more: they have not been here before, or
+    /// they have been away from their settlement for longer than <see cref="SettlementTrackerComponent.LeaveDelay"/>.
+    /// </summary>
+    private bool IsFree(Group group)
+    {
+        foreach (var pop in group.Pops)
+        {
+            if (_residents.TryComp(pop, out var resident) && _settlements.HasComp(resident.Settlement))
+                return false;
+        }
+
+        return true;
+    }
+
+    private void OwnLoners(RimFortressPlayerComponent comp, EntityUid player, SettlementTrackerComponent tracker)
+    {
+        foreach (var pop in comp.Pops)
+        {
+            if (TerminatingOrDeleted(pop)
+                || _mobState.IsDead(pop)
+                || _residents.HasComp(pop)
+                || _ownership.HasOwner(pop, player))
+                continue;
+
+            _ownership.AddOwnershipRecursively(player, pop, tracker.ResidentItems);
+        }
+    }
+
+    /// <summary>
+    /// Gives what waits with the player (a zone that was marked out where there was no settlement, the things of a settlement that
+    /// is gone) to the settlement that is near it, if there is one.
+    /// </summary>
+    private void Adopt(EntityUid player, SettlementTrackerComponent tracker)
+    {
+        var waiting = _ownership.GetOwned(player);
+
+        if (waiting.Count == 0)
+            return;
+
+        var settlements = FindSettlements(player, false);
+
+        if (settlements.Count == 0)
+            return;
+
+        foreach (var uid in waiting.ToArray())
+        {
+            // Pops and what they carry are not adopted by the place they are at: they belong to a settlement by being its
+            // residents. What is adopted lies on the ground of the world.
+            if (_settlements.HasComp(uid)
+                || TerminatingOrDeleted(uid)
+                || HasComp<MobStateComponent>(uid)
+                || !_xformQuery.TryComp(uid, out var xform)
+                || !HasComp<MapGridComponent>(xform.ParentUid))
+                continue;
+
+            if (FindSettlementAt(settlements, uid, tracker.Radius) is not { } settlement)
+                continue;
+
+            _ownership.RemoveOwnership(uid, owner: player);
+            _ownership.AddOwnership(uid, owner: settlement);
+        }
+    }
+
+    private Entity<SettlementComponent>? FindSettlementAt(
+        List<Entity<SettlementComponent>> settlements,
+        EntityUid uid,
+        float radius)
+        => _xformQuery.TryComp(uid, out var xform)
+            ? FindSettlementAt(settlements, xform.Coordinates, radius)
+            : null;
+
+    private Entity<SettlementComponent>? FindSettlementAt(
+        List<Entity<SettlementComponent>> settlements,
+        EntityCoordinates coordinates,
+        float radius)
+    {
+        Entity<SettlementComponent>? best = null;
+        var bestDistance = radius;
+
+        foreach (var settlement in settlements)
+        {
+            if (!coordinates.TryDistance(EntityManager, Transform(settlement.Owner).Coordinates, out var distance)
+                || distance > bestDistance)
+                continue;
+
+            best = settlement;
+            bestDistance = distance;
+        }
+
+        return best;
+    }
+
+    /// <inheritdoc/>
+    public override Entity<SettlementComponent>? Claim(EntityUid player, EntityUid uid, EntityCoordinates coordinates)
+    {
+        var radius = _trackers.TryComp(player, out var tracker) ? tracker.Radius : 0f;
+        var settlement = FindSettlementAt(GetPlayerSettlements(player), coordinates, radius);
+
+        _ownership.AddOwnership(uid, owner: settlement?.Owner ?? player);
+        return settlement;
     }
 
     /// <summary>
@@ -273,9 +402,18 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
         if (!tracker.CountOwned)
             return;
 
-        foreach (var owned in _ownership.GetOwned(player))
+        // What the player's settlements own, and what waits with the player for a settlement.
+        var candidates = new HashSet<EntityUid>(_ownership.GetOwned(player));
+
+        foreach (var settlement in FindSettlements(player, true))
+        {
+            candidates.UnionWith(_ownership.GetOwned(settlement));
+        }
+
+        foreach (var owned in candidates)
         {
             if (allPops.Contains(owned)
+                || _settlements.HasComp(owned)
                 || TerminatingOrDeleted(owned)
                 || !_xformQuery.TryComp(owned, out var xform)
                 || xform.ParentUid != grid
@@ -296,7 +434,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
     /// <summary>
     /// Divides the points into groups, and keeps the ones that have enough pops.
     /// </summary>
-    private List<Group> BuildGroups(SettlementTrackerComponent tracker, float radius, int minResidents)
+    private List<Group> BuildGroups(SettlementTrackerComponent tracker, float radius)
     {
         var groups = new List<Group>();
 
@@ -324,7 +462,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
                 }
             }
 
-            if (group.Pops.Count < minResidents)
+            if (group.Pops.Count == 0)
                 continue;
 
             // If nothing weighs anything, the pops are the ones that matter.
@@ -460,6 +598,13 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
         settlement.Created = now;
         Dirty(uid, settlement);
 
+        // The player owns its settlements, and the settlement owns what is in it.
+        _ownership.AddOwnership(uid, owner: player);
+
+        // The events of a settlement are waited for from the moment it is there.
+        if (TryComp(uid, out SettlementEventsComponent? events))
+            events.LastEventTime = _ticker.RoundDuration();
+
         ApplyGroup((uid, settlement), group, tracker, radius, grid, now);
         RaiseLocalEvent(uid, new SettlementCreatedEvent(uid, player), true);
 
@@ -480,7 +625,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
         var comp = settlement.Comp;
         var residents = new HashSet<EntityUid>(group.Pops);
 
-        // The residents that have left their group stay for a while, if they have not gone far.
+        // The residents that have left their group stay for a while.
         foreach (var resident in comp.Residents)
         {
             if (group.Pops.Contains(resident))
@@ -498,9 +643,7 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
             if (!comp.Away.TryGetValue(resident, out var since))
                 comp.Away[resident] = since = now;
 
-            if (now - since > tracker.LeaveDelay
-                || _popPositions.TryGetValue(resident, out var position)
-                && Vector2.Distance(position, group.Center) > radius * tracker.LeaveRadiusFactor)
+            if (now - since > tracker.LeaveDelay)
             {
                 comp.Away.Remove(resident);
                 continue;
@@ -554,6 +697,10 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
                 comp.Residents.Remove(resident);
                 comp.Away.Remove(resident);
 
+                // The pop goes with what it carries, to the player (see OwnLoners) if it is alive and is still the player's.
+                if (!TerminatingOrDeleted(resident))
+                    _ownership.RemoveOwnershipRecursively(settlement.Owner, resident);
+
                 // A pop that has moved to another settlement is not to be taken from it.
                 if (!TerminatingOrDeleted(resident)
                     && _residents.TryComp(resident, out var residentComp)
@@ -564,10 +711,16 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
 
         if (added != null)
         {
+            var items = _trackers.TryComp(comp.Player, out var tracker) ? tracker.ResidentItems : null;
+
             foreach (var resident in added)
             {
                 comp.Residents.Add(resident);
                 EnsureComp<SettlementResidentComponent>(resident).Settlement = settlement.Owner;
+
+                // The settlement owns the pop and what it carries, and the player does not any more.
+                _ownership.RemoveOwnershipRecursively(comp.Player, resident);
+                _ownership.AddOwnershipRecursively(settlement.Owner, resident, items);
             }
         }
 
@@ -595,6 +748,13 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
             survivor.Owner,
             new SettlementsMergedEvent(survivor.Owner, new[] { absorbed.Owner }),
             true);
+
+        // Whatever the absorbed settlement owned is the survivor's.
+        foreach (var owned in _ownership.GetOwned(absorbed.Owner).ToArray())
+        {
+            if (!_settlements.HasComp(owned) && !TerminatingOrDeleted(owned))
+                _ownership.AddOwnership(owned, owner: survivor.Owner);
+        }
 
         Dissolve(absorbed);
     }
@@ -635,6 +795,17 @@ public sealed partial class SettlementSystem : SharedSettlementSystem
         Dirty(settlement.Owner, comp);
 
         SetResidents(settlement, new HashSet<EntityUid>());
+
+        // What the settlement owned waits with the player for another settlement, see Adopt.
+        if (!TerminatingOrDeleted(comp.Player))
+        {
+            foreach (var owned in _ownership.GetOwned(settlement.Owner).ToArray())
+            {
+                if (!_settlements.HasComp(owned) && !TerminatingOrDeleted(owned))
+                    _ownership.AddOwnership(owned, owner: comp.Player);
+            }
+        }
+
         QueueDel(settlement.Owner);
     }
 

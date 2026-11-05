@@ -1,6 +1,10 @@
 - type: narrator
   id: Basic
-  constructionCostMod: 0.5
+  # What the categories of the wealth of a settlement count for (see the settlement): the buildings are worth half of what they cost.
+  wealthWeights:
+    Construction:
+    - mul:
+      - float: 0.5
   eventWaitFactor: 0.016 # ~1 point per minute
   wealthCurves:
   - moreThan: 40000
@@ -49,7 +53,10 @@
 
 - type: narrator
   id: Random
-  constructionCostMod: 1
+  wealthWeights:
+    Construction:
+    - mul:
+      - float: 1
   eventWaitFactor: 0.016 # ~1 point per minute
   wealthCurves:
   - lessThan: 20000

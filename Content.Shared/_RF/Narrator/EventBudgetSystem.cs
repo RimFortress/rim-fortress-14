@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared.EntityConditions;
 using Content.Shared.EntityEffects;
 using JetBrains.Annotations;
@@ -24,7 +25,7 @@ public sealed record EventBudgetResult(int Left, List<(ProtoId<EventPurchaseProt
 /// is bought for, and the chances of the purchases in it: what it costs, for whom it is, and what it does to them, is in the purchase.</item>
 /// </list>
 /// </summary>
-public sealed class EventBudgetSystem : EntitySystem
+public sealed partial class EventBudgetSystem : EntitySystem
 {
     [Dependency] private IRobustRandom _random = null!;
     [Dependency] private IPrototypeManager _proto = null!;
@@ -53,12 +54,52 @@ public sealed class EventBudgetSystem : EntitySystem
             if (affordable.Count == 0)
                 break;
 
-            var chosen = Pick<(T Item, int Cost, float Weight)>(affordable, x => x.Weight);
+            var chosen = Pick(affordable, x => x.Weight);
             bought.Add(chosen.Item);
             points -= chosen.Cost;
         }
 
         return bought;
+    }
+
+    /// <summary>
+    /// All the purchases there are.
+    /// </summary>
+    [PublicAPI]
+    public IEnumerable<EventPurchasePrototype> GetPurchases() => _proto.EnumeratePrototypes<EventPurchasePrototype>();
+
+    [PublicAPI]
+    public EventPurchasePrototype GetPurchase(ProtoId<EventPurchasePrototype> id) => _proto.Index(id);
+
+    /// <summary>
+    /// The purchases that an event makes for those who come with it, the groups of them.
+    /// </summary>
+    [PublicAPI]
+    public bool TryGetPurchaseGroups(EntProtoId rule, out IReadOnlyList<EventPurchaseGroup> groups)
+    {
+        groups = Array.Empty<EventPurchaseGroup>();
+
+        if (!_proto.TryIndex(rule, out var proto)
+            || !proto.TryComp(out MigrationRuleComponent? migration, EntityManager.ComponentFactory)
+            || migration.Purchases.Count == 0)
+            return false;
+
+        groups = migration.Purchases;
+        return true;
+    }
+
+    /// <summary>
+    /// Applies a purchase to an entity, no points are spent: for trying purchases out. The conditions of the purchase are asked.
+    /// </summary>
+    /// <returns>True, if the purchase fits the entity and was applied.</returns>
+    [PublicAPI]
+    public bool Apply(EventPurchasePrototype purchase, EntityUid target, EntityUid? source = null)
+    {
+        if (TerminatingOrDeleted(target) || !_conditions.TryConditions(target, purchase.Conditions, source))
+            return false;
+
+        _effects.ApplyEffects(target, purchase.Effects, 1f, source);
+        return true;
     }
 
     /// <summary>

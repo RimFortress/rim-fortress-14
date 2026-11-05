@@ -151,6 +151,101 @@ public sealed partial class OwnershipSystem : EntitySystem
         => owner != null && Resolve(ent, ref ent.Comp, false) && ent.Comp.Owners.Contains(owner.Value);
 
     /// <summary>
+    /// Checks whether the owner owns the entity directly or through those who own it: a player owns a settlement, a settlement owns
+    /// what is in it, so the player owns that as well. The owners are walked breadth-first, each once, so a chain of any length is
+    /// followed and a cycle of the owners ends the walk.
+    /// </summary>
+    /// <param name="ent">The entity.</param>
+    /// <param name="owner">The owner.</param>
+    [Pure, PublicAPI]
+    public bool IsOwnedBy(EntityUid ent, EntityUid? owner)
+    {
+        if (owner == null)
+            return false;
+
+        var found = false;
+        WalkOwners(ent, uid =>
+        {
+            found = uid == owner.Value;
+            return !found;
+        });
+
+        return found;
+    }
+
+    /// <summary>
+    /// The owners of the entity and the owners of those, and so on: for a pop it is its settlement and the player of it.
+    /// </summary>
+    [Pure, PublicAPI]
+    public HashSet<EntityUid> GetOwnersRecursively(EntityUid uid)
+    {
+        var result = new HashSet<EntityUid>();
+        WalkOwners(uid, owner => result.Add(owner) || true);
+        return result;
+    }
+
+    /// <summary>
+    /// What the entity owns and what is owned by that, and so on: for a player it is its settlements and all that is in them.
+    /// </summary>
+    [Pure, PublicAPI]
+    public HashSet<EntityUid> GetOwnedRecursively(EntityUid uid)
+    {
+        var result = new HashSet<EntityUid>();
+        WalkOwned(uid, owned => result.Add(owned) || true);
+        return result;
+    }
+
+    // The walks go through the graph of the ownership by a queue, each entity once: there is no limit of the depth, and an entity that
+    // is reached again (a cycle of the owners, or two ways to the same owner) is not walked through twice.
+    private void WalkOwners(EntityUid start, Func<EntityUid, bool> visit)
+    {
+        var queue = new Queue<EntityUid>();
+        var seen = new HashSet<EntityUid> { start };
+        queue.Enqueue(start);
+
+        while (queue.TryDequeue(out var uid))
+        {
+            if (!_ownershipQuery.TryComp(uid, out var comp))
+                continue;
+
+            foreach (var owner in comp.Owners)
+            {
+                if (!seen.Add(owner))
+                    continue;
+
+                if (!visit(owner))
+                    return;
+
+                queue.Enqueue(owner);
+            }
+        }
+    }
+
+    private void WalkOwned(EntityUid start, Func<EntityUid, bool> visit)
+    {
+        var queue = new Queue<EntityUid>();
+        var seen = new HashSet<EntityUid> { start };
+        queue.Enqueue(start);
+
+        while (queue.TryDequeue(out var uid))
+        {
+            if (!_ownershipQuery.TryComp(uid, out var comp))
+                continue;
+
+            foreach (var owned in comp.Owned)
+            {
+                if (!seen.Add(owned))
+                    continue;
+
+                if (!visit(owned))
+                    return;
+
+                queue.Enqueue(owned);
+            }
+        }
+    }
+
+    /// <summary>
     /// Checks whether the target entity owns this.
     /// </summary>
     [Pure, PublicAPI]
@@ -385,6 +480,16 @@ public sealed partial class OwnershipSystem : EntitySystem
     /// <param name="owned">The entity that is owned with what it carries.</param>
     /// <param name="whitelist">What of that is owned: only the entities that it lets pass, all of them if it is not set.</param>
     /// <param name="blacklist">What of that is not owned: the entities that it lets pass.</param>
+    /// <summary>
+    /// Makes the entity owned by the owner, and everything that is in it or on it: what it wears, what it holds, and what is in the
+    /// containers of that, all the way down (the children of the entity in the world). It is how an event owns the ones it has sent and
+    /// their equipment, so they share it: the queries of what is owned find the equipment of the owner. The entity itself is owned
+    /// whatever the lists say, they are for what it carries.
+    /// </summary>
+    /// <param name="owner">The owner.</param>
+    /// <param name="owned">The entity that is owned with what it carries.</param>
+    /// <param name="whitelist">What of that is owned: only the entities that it lets pass, all of them if it is not set.</param>
+    /// <param name="blacklist">What of that is not owned: the entities that it lets pass.</param>
     [PublicAPI]
     public void AddOwnershipRecursively(
         EntityUid owner,
@@ -393,20 +498,23 @@ public sealed partial class OwnershipSystem : EntitySystem
         EntityWhitelist? blacklist = null)
     {
         AddOwnership(owned, owner: owner);
-        OwnChildren(owner, owned, whitelist, blacklist);
-    }
 
-    private void OwnChildren(EntityUid owner, EntityUid parent, EntityWhitelist? whitelist, EntityWhitelist? blacklist)
-    {
-        var children = Transform(parent).ChildEnumerator;
+        // The children are walked by a queue, down the tree of the transforms. What is not owned can still have in it what is: a box
+        // that is not an item, with items in it.
+        var queue = new Queue<EntityUid>();
+        queue.Enqueue(owned);
 
-        while (children.MoveNext(out var child))
+        while (queue.TryDequeue(out var parent))
         {
-            // What is not owned can still have in it what is: a box that is not an item, with items in it.
-            if (_whitelist.CheckBoth(child, blacklist, whitelist))
-                AddOwnership(child, owner: owner);
+            var children = Transform(parent).ChildEnumerator;
 
-            OwnChildren(owner, child, whitelist, blacklist);
+            while (children.MoveNext(out var child))
+            {
+                if (_whitelist.CheckBoth(child, blacklist, whitelist))
+                    AddOwnership(child, owner: owner);
+
+                queue.Enqueue(child);
+            }
         }
     }
 
@@ -418,13 +526,19 @@ public sealed partial class OwnershipSystem : EntitySystem
     [PublicAPI]
     public void RemoveOwnershipRecursively(EntityUid owner, EntityUid owned)
     {
-        RemoveOwnership(owner, owned: owned);
+        var queue = new Queue<EntityUid>();
+        queue.Enqueue(owned);
 
-        var children = Transform(owned).ChildEnumerator;
-
-        while (children.MoveNext(out var child))
+        while (queue.TryDequeue(out var parent))
         {
-            RemoveOwnershipRecursively(owner, child);
+            RemoveOwnership(owner, owned: parent);
+
+            var children = Transform(parent).ChildEnumerator;
+
+            while (children.MoveNext(out var child))
+            {
+                queue.Enqueue(child);
+            }
         }
     }
 

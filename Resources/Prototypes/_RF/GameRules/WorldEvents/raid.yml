@@ -7,6 +7,8 @@
   - type: WorldRule
     startOffset: 15m
     cost: 75
+    # A raid is not for a pop that is off on its own.
+    minResidents: 2
   - type: MigrationRule
     # A raider comes with its base gear, and what the points are left after the raiders are bought for, a part of them is kept for
     # that, makes them stronger: armor, a helmet, a crowbar, a pistol, see the purchases. They are given before the squads are made,

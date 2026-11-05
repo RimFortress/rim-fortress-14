@@ -14,10 +14,12 @@ public sealed partial class NarratorPrototype : IPrototype
     public string ID { get; private set; } = default!;
 
     /// <summary>
-    /// Modifier of the effect of the value of buildings on the calculation of settlement wealth
+    /// What each category of the wealth of a settlement (see <c>SettlementWealthComponent</c>) counts for: the curves get the price of
+    /// the category, and what they give is added to the wealth. A category that has none counts for its price: a narrator that
+    /// values the buildings less than the things, or that does not value them at all, says so here.
     /// </summary>
     [DataField]
-    public float ConstructionCostMod;
+    public Dictionary<string, List<MathCurve>> WealthWeights = new();
 
     /// <summary>
     /// The modifier by which the time since the last event in seconds is multiplied to get wait points

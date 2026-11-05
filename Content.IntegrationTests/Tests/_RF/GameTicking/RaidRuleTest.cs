@@ -113,13 +113,11 @@ public sealed class RaidRuleTest : GameTest
             _entMan.AddComponent<NotificationComponent>(_player);
             var tracker = _entMan.AddComponent<SettlementTrackerComponent>(_player);
             tracker.Radius = 20;
-            tracker.MinResidents = 2;
 
             for (var i = 0; i < residents; i++)
             {
                 var pop = _entMan.SpawnEntity("MobHuman", At(5 + i % 8, 5 + i / 8));
                 player.Pops.Add(pop);
-                _ownership.AddOwnership(pop, owner: _player);
             }
 
             _settlements.MarkDirty(_player);
@@ -127,8 +125,7 @@ public sealed class RaidRuleTest : GameTest
             _residents.AddRange(_settlements.GetResidents(_settlements.GetPlayerSettlements(_player).Single()));
 
             // The rule is added like the narrator does it: for a settlement.
-            var coords = _settlements.GetCoordinates(_settlement);
-            _rule = _rules.AddWorldRule("Raid", _player, coords, _settlement);
+            _rule = _rules.AddWorldRule("Raid", _settlement);
 
             for (var i = 0; i < raiders; i++)
             {

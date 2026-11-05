@@ -106,7 +106,7 @@ public sealed partial class ZoningUiController :
         var enumerator = EntityManager.EntityQueryEnumerator<ZoneVisualsComponent>();
         while (enumerator.MoveNext(out var zoneUid, out var comp))
         {
-            if (!_ownership.HasOwner(zoneUid, _player.LocalEntity))
+            if (!_ownership.IsOwnedBy(zoneUid, _player.LocalEntity))
                 continue;
 
             comp.CurrentState &= ~ZoneVisualsState.Picking;
@@ -314,7 +314,7 @@ public sealed partial class ZoningUiController :
 
         foreach (var zone in zones)
         {
-            if (!_ownership.HasOwner(zone.Owner, localPlayer))
+            if (!_ownership.IsOwnedBy(zone.Owner, localPlayer))
                 continue;
 
             if (EntityManager.TryGetComponent(zone, out visuals))
@@ -641,7 +641,7 @@ public sealed partial class ZoningUiController :
         var enumerator = EntityManager.EntityQueryEnumerator<ZoneVisualsComponent>();
         while (enumerator.MoveNext(out var uid, out var comp))
         {
-            if (!_ownership.HasOwner(uid, _player.LocalEntity))
+            if (!_ownership.IsOwnedBy(uid, _player.LocalEntity))
                 continue;
 
             comp.CurrentState |= ZoneVisualsState.Picking;
@@ -664,7 +664,7 @@ public sealed partial class ZoningUiController :
         var enumerator = EntityManager.EntityQueryEnumerator<ZoneVisualsComponent>();
         while (enumerator.MoveNext(out var uid, out var comp))
         {
-            if (!_ownership.HasOwner(uid, _player.LocalEntity))
+            if (!_ownership.IsOwnedBy(uid, _player.LocalEntity))
                 continue;
 
             comp.CurrentState &= ~ZoneVisualsState.Picking;

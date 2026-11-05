@@ -1,5 +1,6 @@
 using Content.Server._RF.Notifications.Systems;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared._RF.World.Settlements;
 
 namespace Content.Server._RF.GameTicking.Rules;
 
@@ -10,12 +11,15 @@ public sealed partial class NotificationRuleSystem : WorldRuleSystem<Notificatio
 {
     [Dependency] private NotificationsSystem _notifications = default!;
 
+    [Dependency] private EntityQuery<SettlementComponent> _settlementQuery;
+
     protected override void Started(
         Entity<NotificationRuleComponent> ent,
         WorldRuleComponent worldRule,
         WorldRuleStartedEvent args)
     {
-        _notifications.SendNotification(args.Target, ent.Comp.Proto, args.TargetCoordinates);
+        if (_settlementQuery.TryComp(args.Settlement, out var settlement))
+            _notifications.SendNotification(settlement.Player, ent.Comp.Proto, args.TargetCoordinates);
     }
 
     protected override void Ended(
@@ -23,6 +27,7 @@ public sealed partial class NotificationRuleSystem : WorldRuleSystem<Notificatio
         WorldRuleComponent worldRule,
         WorldRuleEndedEvent args)
     {
-        _notifications.RemoveNotification(args.Target, ent.Comp.Proto);
+        if (_settlementQuery.TryComp(args.Settlement, out var settlement))
+            _notifications.RemoveNotification(settlement.Player, ent.Comp.Proto);
     }
 }

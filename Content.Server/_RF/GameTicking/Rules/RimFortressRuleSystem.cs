@@ -3,17 +3,12 @@ using Content.Server._RF.World.Settlements;
 using Content.Server.Administration.Logs;
 using Content.Server.Chat.Managers;
 using Content.Server.GameTicking.Rules;
-using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
-using Content.Shared._RF.World.Components;
 using Content.Shared.Database;
-using Content.Shared.EntityTable;
 using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
 using JetBrains.Annotations;
-using Robust.Server.GameObjects;
 using Robust.Shared.Map;
-using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -28,11 +23,6 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     [Dependency] private RimFortressWorldSystem _world = default!;
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private EntityTableSystem _table = default!;
-    [Dependency] private TransformSystem _transform = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private BiomeSystem _biome = default!;
-    [Dependency] private MapSystem _map = default!;
     [Dependency] private IAdminLogManager _adminLogger = default!;
     [Dependency] private IChatManager _chat = default!;
     [Dependency] private SettlementSystem _settlements = default!;
@@ -58,46 +48,6 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
             ev.Handled = true;
             return;
         }
-    }
-
-    public List<(EntityUid Settlement, EntityCoordinates Coords, EntProtoId Proto, WorldRuleComponent Comp)> AvailableRules(Entity<RimFortressPlayerComponent> uid)
-    {
-        var available = new List<(EntityUid, EntityCoordinates, EntProtoId, WorldRuleComponent)>();
-
-        var query = EntityQueryEnumerator<RimFortressRuleComponent, GameRuleComponent>();
-        while (query.MoveNext(out var ruleUid, out var rf, out var rule))
-        {
-            if (!GameTicker.IsGameRuleActive(ruleUid, rule))
-                continue;
-
-            foreach (var spawn in _table.GetSpawns(rf.WorldEvents))
-            {
-                var proto = _prototype.Index(spawn);
-
-                if (!proto.TryComp(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
-                    || GameTicker.RoundDuration() < worldRule.StartOffset)
-                    continue;
-
-                foreach (var settlement in _settlements.GetPlayerSettlements(uid))
-                {
-                    var coord = _settlements.GetCoordinates(settlement);
-
-                    if (_transform.GetGrid(coord) is not { } gridUid)
-                        continue;
-
-                    var indicates = _map.TileIndicesFor(gridUid, Comp<MapGridComponent>(gridUid), coord);
-
-                    if (worldRule.RequiredBiomes != null
-                        && (!_biome.TryGetBiome(indicates, gridUid, out var biome)
-                            || !worldRule.RequiredBiomes.Contains(biome)))
-                        continue;
-
-                    available.Add((settlement, coord, spawn, worldRule));
-                }
-            }
-        }
-
-        return available;
     }
 
     public override void Update(float frameTime)
@@ -129,47 +79,29 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         return Resolve(ruleEntity, ref component) && HasComp<ActiveGameRuleComponent>(ruleEntity);
     }
 
-    public bool HasDelayedEvent(Entity<RimFortressPlayerComponent?> entity)
-    {
-        if (!Resolve(entity, ref entity.Comp))
-            return false;
-
-        var query = EntityQueryEnumerator<DelayedStartRuleComponent, WorldRuleComponent>();
-        while (query.MoveNext(out _, out var comp))
-        {
-            if (comp.Target == entity.Owner)
-                return true;
-        }
-
-        return false;
-    }
-
     /// <summary>
-    /// Adds a world rule to the list, but does not
-    /// start it yet, instead waiting until the rule is actually started by other code
+    /// Adds a world rule for a settlement to the list, but does not
+    /// start it yet, instead waiting until the rule is actually started by other code.
+    /// The events depend on the settlement alone: the player that the settlement belongs to is reached through it.
     /// </summary>
     /// <returns>The entity for the added worldrule</returns>
     [PublicAPI]
-    public EntityUid AddWorldRule(
-        EntProtoId ruleId,
-        EntityUid target,
-        EntityCoordinates targetCoordinates,
-        EntityUid? settlement = null)
+    public EntityUid AddWorldRule(EntProtoId ruleId, EntityUid settlement)
     {
+        var coordinates = _settlements.GetCoordinates(settlement);
         var ruleEntity = Spawn(ruleId, MapCoordinates.Nullspace);
         var comp = Comp<WorldRuleComponent>(ruleEntity);
 
-        comp.Target = target;
-        comp.TargetCoordinates = targetCoordinates;
         comp.Settlement = settlement;
+        comp.TargetCoordinates = coordinates;
 
-        var str = $"Added world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}";
+        var str = $"Added world rule {ToPrettyString(ruleEntity)} for {ToPrettyString(settlement)}";
         Log.Info(str);
         _chat.SendAdminAnnouncement(str);
 
-        _adminLogger.Add(LogType.EventStarted, $"Added game rule {ToPrettyString(ruleEntity)} for {ToPrettyString(target)}");
+        _adminLogger.Add(LogType.EventStarted, $"Added game rule {ToPrettyString(ruleEntity)} for {ToPrettyString(settlement)}");
 
-        var ev = new WorldRuleAddedEvent(ruleEntity, ruleId, target, targetCoordinates);
+        var ev = new WorldRuleAddedEvent(ruleEntity, ruleId, settlement, coordinates);
         RaiseLocalEvent(ruleEntity, ref ev, true);
         return ruleEntity;
     }
@@ -179,72 +111,26 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
     /// settlement.
     /// </summary>
     [PublicAPI]
-    public bool StartWorldRule(EntProtoId ruleId, EntityUid target, EntityUid settlement, bool ignoreDelay = false)
+    public bool StartWorldRule(EntProtoId ruleId, EntityUid settlement, bool ignoreDelay = false)
     {
-        var ruleEntity = AddWorldRule(ruleId, target, _settlements.GetCoordinates(settlement), settlement);
-        return StartWorldRule(ruleEntity, ignoreDelay);
-    }
-
-    /// <summary>
-    /// World rules can be 'started' separately from being added. 'Starting' them usually
-    /// happens at round start while they can be added and removed before then.
-    /// </summary>
-    [PublicAPI]
-    public bool StartWorldRule(
-        EntProtoId ruleId,
-        EntityUid target,
-        EntityCoordinates targetCoordinates,
-        bool ignoreDelay = false)
-    {
-        return StartWorldRule(ruleId, target, targetCoordinates, out _, ignoreDelay);
-    }
-
-    /// <summary>
-    /// World rules can be 'started' separately from being added. 'Starting' them usually
-    /// happens at round start while they can be added and removed before then.
-    /// </summary>
-    [PublicAPI]
-    public bool StartWorldRule(
-        EntProtoId ruleId,
-        EntityUid target,
-        EntityCoordinates targetCoordinates,
-        out EntityUid ruleEntity,
-        bool ignoreDelay = false)
-    {
-        ruleEntity = AddWorldRule(ruleId, target, targetCoordinates);
-        return StartWorldRule(ruleEntity, ignoreDelay);
+        return StartWorldRule(AddWorldRule(ruleId, settlement), ignoreDelay);
     }
 
     [PublicAPI]
     public bool StartWorldRule(Entity<WorldRuleComponent?> ruleEntity, bool ignoreDelay = false)
     {
         if (!Resolve(ruleEntity, ref ruleEntity.Comp)
-            || !ruleEntity.Comp.Target.IsValid()
-            || !ruleEntity.Comp.TargetCoordinates.IsValid(EntityManager))
-            return false;
-
-        return StartWorldRule(ruleEntity, ruleEntity.Comp.Target, ruleEntity.Comp.TargetCoordinates, ignoreDelay);
-    }
-
-    /// <summary>
-    /// Game rules can be 'started' separately from being added. 'Starting' them usually
-    /// happens at round start while they can be added and removed before then.
-    /// </summary>
-    [PublicAPI]
-    public bool StartWorldRule(
-        Entity<WorldRuleComponent?> ruleEntity,
-        EntityUid target,
-        EntityCoordinates targetCoordinates,
-        bool ignoreDelay = false)
-    {
-        if (!Resolve(ruleEntity, ref ruleEntity.Comp)
+            || !ruleEntity.Comp.Settlement.IsValid()
+            || TerminatingOrDeleted(ruleEntity.Comp.Settlement)
             || HasComp<ActiveGameRuleComponent>(ruleEntity)
             || HasComp<EndedGameRuleComponent>(ruleEntity)
             || MetaData(ruleEntity).EntityPrototype is not { } proto)
             return false;
 
+        // The settlement can have moved while the rule waited.
+        var settlement = ruleEntity.Comp.Settlement;
+        var targetCoordinates = _settlements.GetCoordinates(settlement);
         ruleEntity.Comp.TargetCoordinates = targetCoordinates;
-        ruleEntity.Comp.Target = target;
 
         // If we already have it, then we just skip the delay as it has already happened.
         if (!ignoreDelay && !RemComp<DelayedStartRuleComponent>(ruleEntity) && ruleEntity.Comp.Delay is { } delay)
@@ -273,7 +159,7 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
 
         EnsureComp<ActiveGameRuleComponent>(ruleEntity);
 
-        var ev = new WorldRuleStartedEvent(ruleEntity, proto, target, targetCoordinates);
+        var ev = new WorldRuleStartedEvent(ruleEntity, proto, settlement, targetCoordinates);
         RaiseLocalEvent(ruleEntity, ref ev, true);
         return true;
     }
@@ -301,10 +187,10 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         RemComp<ActiveGameRuleComponent>(uid);
         EnsureComp<EndedGameRuleComponent>(uid);
 
-        Log.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
-        _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Target)}");
+        Log.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Settlement)}");
+        _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Settlement)}");
 
-        var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Target, uid.Comp.TargetCoordinates, uid.Comp.Result);
+        var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Settlement, uid.Comp.TargetCoordinates, uid.Comp.Result);
         RaiseLocalEvent(uid, ref ev, true);
         return true;
     }
@@ -315,33 +201,41 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
 /// </summary>
 /// <param name="RuleEntity">Entity of the world event</param>
 /// <param name="RuleId">Prototype of the world event</param>
-/// <param name="Target">The target entity of the event</param>
+/// <param name="Settlement">The settlement that the event is about</param>
 /// <param name="TargetCoordinates">Target coordinates of the event</param>
-[ByRefEvent]
-public readonly record struct WorldRuleAddedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
+[ByRefEvent, PublicAPI]
+public readonly record struct WorldRuleAddedEvent(
+    EntityUid RuleEntity,
+    EntProtoId RuleId,
+    EntityUid Settlement,
+    EntityCoordinates TargetCoordinates);
 
 /// <summary>
 /// Raised when the world event starts
 /// </summary>
 /// <param name="RuleEntity">Entity of the world event</param>
 /// <param name="RuleId">Prototype of the world event</param>
-/// <param name="Target">The target entity of the event</param>
+/// <param name="Settlement">The settlement that the event is about</param>
 /// <param name="TargetCoordinates">Target coordinates of the event</param>
-[ByRefEvent]
-public readonly record struct WorldRuleStartedEvent(EntityUid RuleEntity, EntProtoId RuleId, EntityUid Target, EntityCoordinates TargetCoordinates);
+[ByRefEvent, PublicAPI]
+public readonly record struct WorldRuleStartedEvent(
+    EntityUid RuleEntity,
+    EntProtoId RuleId,
+    EntityUid Settlement,
+    EntityCoordinates TargetCoordinates);
 
 /// <summary>
 /// Raised when the world event is ended
 /// </summary>
 /// <param name="RuleEntity">Entity of the world event</param>
 /// <param name="RuleId">Prototype of the world event</param>
-/// <param name="Target">The target entity of the event</param>
+/// <param name="Settlement">The settlement that the event is about</param>
 /// <param name="TargetCoordinates">Target coordinates of the event</param>
 /// <param name="Result">How the event has ended, if the one who ended it said</param>
-[ByRefEvent]
+[ByRefEvent, PublicAPI]
 public readonly record struct WorldRuleEndedEvent(
     EntityUid RuleEntity,
     EntProtoId RuleId,
-    EntityUid Target,
+    EntityUid Settlement,
     EntityCoordinates TargetCoordinates,
     string? Result = null);

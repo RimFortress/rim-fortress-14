@@ -3,7 +3,7 @@ using Content.Shared._RF.MathHelpers;
 using Content.Shared._RF.Narrator;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server._RF.GameTicking.Rules;
+namespace Content.Shared._RF.GameTicking.Rules;
 
 /// <summary>
 /// Entity migration event to the player's settlement.
@@ -24,17 +24,18 @@ public sealed partial class MigrationRuleComponent : Component
     public Dictionary<EntProtoId, int> Spawn = new();
 
     /// <summary>
-    /// What can be bought for the entities that come, with the points of the event, see <c>EventBudgetSystem</c>: the gear that makes them
-    /// stronger. The purchases are in groups, and each group has its own chance of being chosen, its own limit of how many of it one
-    /// entity can have (the armor, the weapons, the tools), and the chances of the purchases in it. The gear is given before the entities
-    /// are told that they have come (<see cref="MigrationRuleSystem.Spawned"/>), so they are counted with it.
+    /// What can be bought for the entities that come, with the points of the event,
+    /// see <see cref="EventBudgetSystem"/>: the gear that makes them stronger. The purchases are in groups,
+    /// and each group has its own chance of being chosen, its own limit of how many of it one entity can have
+    /// (the armor, the weapons, the tools), and the chances of the purchases in it.
     /// </summary>
     [DataField]
     public List<EventPurchaseGroup> Purchases = new();
 
     /// <summary>
-    /// What part of the points is kept for the <see cref="Purchases"/>, from 0 to 1, chosen by chance between the two numbers every time.
-    /// The rest is for the entities that come. What is left of the points of the entities is spent on the purchases too.
+    /// What part of the points is kept for the <see cref="Purchases"/>, from 0 to 1,
+    /// chosen by chance between the two numbers every time. The rest is for the entities that come.
+    /// What is left of the points of the entities is spent on the purchases too.
     /// </summary>
     [DataField]
     public MinMaxFloat PurchaseShare = new(0f, 0f);

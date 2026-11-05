@@ -95,7 +95,6 @@ public sealed class SettlementTest : GameTest
             var tracker = _entMan.AddComponent<SettlementTrackerComponent>(_player);
             tracker.UpdateInterval = TimeSpan.FromSeconds(0.1);
             tracker.Radius = Radius;
-            tracker.MinResidents = 2;
             tracker.LeaveDelay = TimeSpan.FromSeconds(leaveDelay);
             tracker.GracePeriod = TimeSpan.FromSeconds(gracePeriod);
             tracker.CountOwned = countOwned;
@@ -106,7 +105,6 @@ public sealed class SettlementTest : GameTest
     {
         var pop = _entMan.SpawnEntity("MobHuman", new EntityCoordinates(_grid, x, y));
         _entMan.GetComponent<RimFortressPlayerComponent>(_player).Pops.Add(pop);
-        _ownership.AddOwnership(pop, owner: _player);
         _settlements.MarkDirty(_player);
         return pop;
     }
@@ -206,7 +204,19 @@ public sealed class SettlementTest : GameTest
         });
 
         await Run(0.3f);
-        await Pair.Server.WaitAssertion(() => Assert.That(Settlements(), Is.Empty, "one pop is not a settlement"));
+        await Pair.Server.WaitAssertion(() =>
+        {
+            // A settlement is of any size, as long as there is a pop: the events say how many they need.
+            var settlements = Settlements();
+            Assert.That(settlements.Single().Comp.ResidentCount, Is.EqualTo(1));
+        });
+
+        await Pair.Server.WaitPost(() => _entMan.GetComponent<RimFortressPlayerComponent>(_player).Pops.Clear());
+        await Pair.Server.WaitPost(() => _settlements.MarkDirty(_player));
+        await Run(2f);
+
+        // The things are not a settlement without a pop.
+        await Pair.Server.WaitAssertion(() => Assert.That(Settlements(), Is.Empty));
     }
 
     [Test]
@@ -265,7 +275,8 @@ public sealed class SettlementTest : GameTest
     }
 
     /// <summary>
-    /// A part of a settlement that is cut off is a new settlement, and the bigger part stays the old one.
+    /// A part of a settlement that is cut off is a new settlement when it has been away for long enough, and the bigger part stays the
+    /// old one.
     /// </summary>
     [Test]
     public async Task TestSettlementSplit()
@@ -294,6 +305,10 @@ public sealed class SettlementTest : GameTest
         });
 
         await Run(0.3f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Settlements(), Has.Count.EqualTo(1), "they have not been away for long"));
+
+        // The pops that have been away for longer than the delay are free to make a settlement.
+        await Run(1.5f);
 
         await Pair.Server.WaitAssertion(() =>
         {

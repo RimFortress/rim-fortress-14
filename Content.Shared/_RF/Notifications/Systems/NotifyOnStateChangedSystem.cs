@@ -20,7 +20,8 @@ public sealed partial class NotifyOnStateChangedSystem : EntitySystem
 
         var desc = Loc.GetString(proto.DescId, ("target", _notifications.GetEntityString(ent)));
 
-        foreach (var uid in _ownership.GetOwners(ent))
+        // The pops belong to their settlements, which belong to the player that is told.
+        foreach (var uid in _ownership.GetOwnersRecursively(ent))
         {
             if (!TryComp(uid, out NotificationComponent? comp))
                 continue;

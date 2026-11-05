@@ -17,9 +17,6 @@ public sealed partial class RimFortressPlayerComponent : Component
     [ViewVariables(VVAccess.ReadOnly)]
     public bool GotRoundstartPops;
 
-    [ViewVariables]
-    public TimeSpan LastEventTime;
-
     [ViewVariables, AutoNetworkedField]
     public Color FactionColor = Color.Blue;
 }

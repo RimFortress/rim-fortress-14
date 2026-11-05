@@ -4,6 +4,7 @@ using Content.Server._RF.NPC.Executable.Systems;
 using System.Linq;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.Narrator;
+using Content.Shared._RF.World.Settlements;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -20,21 +21,26 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
     [Dependency] private TriggerSystem _trigger = null!;
     [Dependency] private EventBudgetSystem _budget = null!;
 
+    [Dependency] private EntityQuery<SettlementComponent> _settlementQuery;
 
     /// <summary>
     /// The key of the trigger of the rule for every entity that it has spawned, the user is the entity.
     /// </summary>
     public const string Spawned = "spawned";
 
-
     protected override void Started(Entity<MigrationRuleComponent> ent, WorldRuleComponent worldRule, WorldRuleStartedEvent args)
     {
-        if (Rule.GetRule() is not { } rule)
+        // The points of the event are those that its narrator gives.
+        if (worldRule.Narrator is not { } narrator || !TryComp(narrator, out NarratorRuleComponent? rule))
             return;
 
         // We spawn one entity anyway, regardless of points, so as not to trigger the event for nothing
         var spawn = new List<EntProtoId> { Random.Pick(ent.Comp.Spawn.Keys) };
-        var points = _narrator.EventPoints(args.Target, rule.Narrator, args.TargetCoordinates) - worldRule.Cost;
+
+        if (!_settlementQuery.TryComp(args.Settlement, out var settlement))
+            return;
+
+        var points = _narrator.EventPoints((args.Settlement, settlement), rule.Narrator) - worldRule.Cost;
 
         // A part of the points is kept for the gear of those who come.
         var purchasePoints = ent.Comp.Purchases.Count == 0 ? 0 : (int) (Math.Max(0, points) * Math.Clamp(ent.Comp.PurchaseShare.Next(Random), 0f, 1f));
@@ -50,7 +56,7 @@ public sealed partial class MigrationRuleSystem : WorldRuleSystem<MigrationRuleC
         var pops = World.SpawnPop(args.TargetCoordinates, spawn, ent.Comp.RadiusFromSettlement);
 
         if (ent.Comp.AddToPops)
-            World.AddPops(args.Target, pops);
+            World.AddPops(settlement.Player, pops);
 
         if (ent.Comp.Purchases.Count > 0)
             _budget.Spend(purchasePoints + Math.Max(0, points), ent.Comp.Purchases, pops, ent);

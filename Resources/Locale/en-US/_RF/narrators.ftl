@@ -1,2 +1,11 @@
-cmd-narratorinfo-decs = Outputs the debug information of the narrator
-cmd-narratorinfo-help = Usage: narratorinfo <UserName>
+command-description-narrator-settlements = All the settlements, or the settlements of the players that are piped in.
+command-description-narrator-global = What the narrators count for the events of the whole world.
+command-description-narrator-info = What the narrators count for the settlements: the wealth, the points, the events that can happen.
+command-description-narrator-wealth = Counts the wealth of the settlements anew and says it by the categories.
+command-description-narrator-points = Adds points to the settlements, to be spent on the events. A negative number takes them away.
+command-description-narrator-wait = Makes the settlements have waited for their events for so many seconds longer. A negative number makes the wait shorter.
+command-description-narrator-roll = Starts the event for the settlements at once: the chance is not asked, nor are the points.
+command-description-narrator-rollany = Starts an event that the narrator can afford for the settlements at once, the narrator chooses it: the chance is not asked.
+command-description-narrator-purchases = The purchases that the events can make.
+command-description-narrator-buy = Applies the purchase to the entities that are piped in, no points are spent.
+command-description-narrator-spend = Spends the points on the purchases of the event for the entities that are piped in, as the event does when it comes, and says what was bought.

@@ -11,7 +11,6 @@ using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
-using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared._RF.World.Components;
 using Content.Shared.Administration;
@@ -47,7 +46,6 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
     [Dependency] private IPlayerEquipmentManager _equipment = null!;
     [Dependency] private ExecutableGoalSystem _executable = null!;
     [Dependency] private FogOfWarSystem _faw = null!;
-    [Dependency] private OwnershipSystem _ownership = null!;
 
     private readonly HashSet<ICommonSession> _debugSubscribers = new();
 
@@ -135,7 +133,6 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
             beacon.Text = MetaData(pop).EntityName;
 
             _faw.AddFogClearer(pop, player);
-            _ownership.AddOwnership(pop, owner: player);
         }
 
         player.Comp.Pops.AddRange(pops);
@@ -158,7 +155,6 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         beacon.Text = MetaData(pop).EntityName;
 
         _faw.AddFogClearer(pop, player);
-        _ownership.AddOwnership(pop, owner: player);
 
         player.Comp.Pops.Add(pop);
         Dirty(player);
@@ -237,7 +233,8 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
                     var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
                     var equip = Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
 
-                    _ownership.AddOwnership(equip, owner: player);
+                    // It is the settlement's if there is one where it lies, and waits for one if there is not.
+                    Settlements.Claim(player, equip, Transform(equip).Coordinates);
                 }
             }
         }

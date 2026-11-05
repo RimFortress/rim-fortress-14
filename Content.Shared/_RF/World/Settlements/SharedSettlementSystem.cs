@@ -97,6 +97,17 @@ public abstract partial class SharedSettlementSystem : EntitySystem
     public IReadOnlySet<EntityUid> GetResidents(Entity<SettlementComponent> settlement) => settlement.Comp.Residents;
 
     /// <summary>
+    /// Gives a thing of the player to the settlement it is in, to be owned by it. If there is no settlement there, the player keeps
+    /// the thing until there is.
+    /// </summary>
+    /// <param name="player">The player.</param>
+    /// <param name="uid">The thing.</param>
+    /// <param name="coordinates">Where it is.</param>
+    /// <returns>The settlement that owns the thing, null if it is the player who does.</returns>
+    [PublicAPI]
+    public virtual Entity<SettlementComponent>? Claim(EntityUid player, EntityUid uid, EntityCoordinates coordinates) => null;
+
+    /// <summary>
     /// Makes sure the settlements of a player are up to date: if something has changed, or it has been a while, they are
     /// found again. Only the server does something.
     /// </summary>

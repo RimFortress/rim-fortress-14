@@ -102,13 +102,14 @@
   - type: RimFortressRule
     biome: RfContinental
     defaultPopsJob: Passenger
+    dayDuration: 1800 #30 min
+    popsComponentsOverride: PopsComponentsOverride
+  - type: NarratorRule
+    narrator: Basic
     worldEvents: !type:NestedSelector
       tableId: BasicWorldRulesTable
     globalEvents: !type:NestedSelector
       tableId: BasicGlobalRulesTable
-    narrator: Basic
-    dayDuration: 1800 #30 min
-    popsComponentsOverride: PopsComponentsOverride
 
 - type: entityTable
   id: BasicWorldRulesTable

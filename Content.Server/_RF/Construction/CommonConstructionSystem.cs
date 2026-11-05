@@ -4,6 +4,7 @@ using Content.Server.Popups;
 using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.World.Settlements;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Construction.EntitySystems;
 using Content.Shared.Construction.Steps;
@@ -31,6 +32,7 @@ public sealed partial class CommonConstructionSystem : SharedCommonConstructionS
     [Dependency] private ConstructionSystem _construction = default!;
     [Dependency] private PopupSystem _popup = default!;
     [Dependency] private OwnershipSystem _ownership = default!;
+    [Dependency] private SharedSettlementSystem _settlements = default!;
 
     [SubscribeNetworkEvent]
     private void OnSpawnRequest(ConstructionGhostSpawnRequest request, EntitySessionEventArgs args)
@@ -49,7 +51,8 @@ public sealed partial class CommonConstructionSystem : SharedCommonConstructionS
         if (ghost == null)
             return;
 
-        _ownership.AddOwnership(ghost.Value, owned: user);
+        // The ghost is the settlement's where it is built, and the player's until there is a settlement for it.
+        _settlements.Claim(user, ghost.Value, coords);
     }
 
     [SubscribeNetworkEvent]

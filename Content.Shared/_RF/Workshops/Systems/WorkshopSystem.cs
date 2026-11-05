@@ -25,25 +25,25 @@ namespace Content.Shared._RF.Workshops.Systems;
 
 public sealed partial class WorkshopSystem : EntitySystem
 {
-    [Dependency] private SharedSolutionContainerSystem _solution = default!;
-    [Dependency] private SharedContainerSystem _container = default!;
-    [Dependency] private OwnershipSystem _ownership = default!;
-    [Dependency] private SharedSkillsSystem _skills = default!;
-    [Dependency] private SharedAudioSystem _audio = default!;
-    [Dependency] private IPrototypeManager _proto = default!;
-    [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private ContainerStockSupplierSystem _containerSupplier = default!;
-    [Dependency] private SharedAppearanceSystem _appearance = default!;
-    [Dependency] private SharedPointLightSystem _pointLight = default!;
-    [Dependency] private StockpileSystem _stockpile = default!;
-    [Dependency] private SharedUserInterfaceSystem _ui = default!;
-    [Dependency] private SharedHandsSystem _hands = default!;
-    [Dependency] private SharedStackSystem _stack = default!;
-    [Dependency] private SharedItemSystem _item = default!;
-    [Dependency] private SharedDoAfterSystem _doAfter = default!;
-    [Dependency] private SharedNpcSearcherSystem _searcher = default!;
+    [Dependency] private SharedSolutionContainerSystem _solution = null!;
+    [Dependency] private SharedContainerSystem _container = null!;
+    [Dependency] private OwnershipSystem _ownership = null!;
+    [Dependency] private SharedSkillsSystem _skills = null!;
+    [Dependency] private SharedAudioSystem _audio = null!;
+    [Dependency] private IPrototypeManager _proto = null!;
+    [Dependency] private IGameTiming _timing = null!;
+    [Dependency] private ContainerStockSupplierSystem _containerSupplier = null!;
+    [Dependency] private SharedAppearanceSystem _appearance = null!;
+    [Dependency] private SharedPointLightSystem _pointLight = null!;
+    [Dependency] private StockpileSystem _stockpile = null!;
+    [Dependency] private SharedUserInterfaceSystem _ui = null!;
+    [Dependency] private SharedHandsSystem _hands = null!;
+    [Dependency] private SharedStackSystem _stack = null!;
+    [Dependency] private SharedItemSystem _item = null!;
+    [Dependency] private SharedDoAfterSystem _doAfter = null!;
+    [Dependency] private SharedNpcSearcherSystem _searcher = null!;
 
-    [Dependency] private EntityQuery<StackComponent> _stackQuery = default!;
+    [Dependency] private EntityQuery<StackComponent> _stackQuery;
 
     public override void Initialize()
     {
@@ -248,7 +248,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (_ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.IsOwnedBy(ent.Owner, args.Actor))
             AddToQueue(ent.AsNullable(), args.ProtoId);
     }
 
@@ -257,7 +257,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (_ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.IsOwnedBy(ent.Owner, args.Actor))
             RemoveFromQueue(ent.AsNullable(), args.Index);
     }
 
@@ -266,7 +266,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (_ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.IsOwnedBy(ent.Owner, args.Actor))
             ToggleRepeat(ent.AsNullable(), args.Index);
     }
 
@@ -275,7 +275,7 @@ public sealed partial class WorkshopSystem : EntitySystem
         if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (_ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.IsOwnedBy(ent.Owner, args.Actor))
             ToggleSuspend(ent.AsNullable(), args.Index);
     }
 
@@ -284,12 +284,12 @@ public sealed partial class WorkshopSystem : EntitySystem
         if (!_timing.IsFirstTimePredicted)
             return;
 
-        if (!_ownership.HasOwner(ent.Owner, args.Actor)
+        if (!_ownership.IsOwnedBy(ent.Owner, args.Actor)
             || !TryComp(ent, out ContainerStockSupplierComponent? comp))
             return;
 
         if (_stockpile.TryGetStock(args.StockId, out var stock)
-            && _ownership.HasOwner(stock.Value.Owner, args.Actor))
+            && _ownership.IsOwnedBy(stock.Value.Owner, args.Actor))
             _containerSupplier.SetOnlySupplied(new(ent, comp), stock.Value);
         else
             _containerSupplier.ClearSupplied(new(ent, comp));
@@ -297,7 +297,7 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private void UpdateUserInterface(Entity<WorkshopComponent> ent, ref BoundUIOpenedEvent args)
     {
-        if (_ownership.HasOwner(ent.Owner, args.Actor))
+        if (_ownership.IsOwnedBy(ent.Owner, args.Actor))
             UpdateUi(ent.AsNullable());
     }
 

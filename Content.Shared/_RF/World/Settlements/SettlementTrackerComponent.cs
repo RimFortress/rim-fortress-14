@@ -23,14 +23,8 @@ public sealed partial class SettlementTrackerComponent : Component
     public float Radius = 100f;
 
     /// <summary>
-    /// How many pops a group needs to be a settlement.
-    /// </summary>
-    [DataField]
-    public int MinResidents = 2;
-
-    /// <summary>
     /// Do the things the player owns join the groups. They connect the pops that are far from each other and are a part of
-    /// the settlement, but they are not residents and do not make a group a settlement.
+    /// the settlement, but they are not residents and do not make a group a settlement: a group needs a pop.
     /// </summary>
     [DataField]
     public bool CountOwned = true;
@@ -46,6 +40,13 @@ public sealed partial class SettlementTrackerComponent : Component
     /// </summary>
     [DataField]
     public EntityWhitelist? OwnedBlacklist;
+
+    /// <summary>
+    /// What a pop brings with it into a settlement, to be owned by the settlement with it: whatever the pop carries that fits the
+    /// whitelist. The things that are not things (the solutions of the body, the virtual storages) are not owned.
+    /// </summary>
+    [DataField]
+    public EntityWhitelist? ResidentItems;
 
     /// <summary>
     /// How much a pop weighs when the center of the settlement is found.
@@ -67,14 +68,8 @@ public sealed partial class SettlementTrackerComponent : Component
     public float MatchThreshold = 0.3f;
 
     /// <summary>
-    /// A resident that has left its group stays a resident while it is closer to the settlement than this many radii of a
-    /// group, and for <see cref="LeaveDelay"/>.
-    /// </summary>
-    [DataField]
-    public float LeaveRadiusFactor = 1.5f;
-
-    /// <summary>
-    /// How long a resident that has left its group stays a resident.
+    /// How long a resident that has left its group stays a resident. After that it is free to make a settlement of its own, however
+    /// few the pops are that are with it.
     /// </summary>
     [DataField]
     public TimeSpan LeaveDelay = TimeSpan.FromSeconds(20);

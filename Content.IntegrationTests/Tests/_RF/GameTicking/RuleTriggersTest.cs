@@ -16,6 +16,9 @@ using Content.Shared.GameTicking.Components;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Trigger.Systems;
+using Content.Server._RF.World.Settlements;
+using Content.Shared._RF.World.Components;
+using Content.Shared._RF.World.Settlements;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 
@@ -201,6 +204,23 @@ public sealed class RuleTriggersTest : GameTest
         {
             _rule = _entMan.SpawnEntity("TestRuleTriggersRule", MapCoordinates.Nullspace);
 
+            // A rule is about a settlement.
+            // A settlement of a player, with a pop of it: a settlement without a player is disbanded.
+            var player = _entMan.SpawnEntity(null, _coords);
+            _entMan.AddComponent<RimFortressPlayerComponent>(player);
+            var tracker = _entMan.AddComponent<SettlementTrackerComponent>(player);
+            tracker.GracePeriod = TimeSpan.FromHours(1);
+
+            for (var i = 0; i < 2; i++)
+            {
+                _entMan.GetComponent<RimFortressPlayerComponent>(player).Pops.Add(_entMan.SpawnEntity("MobHuman", _coords));
+            }
+
+            _entMan.System<SettlementSystem>().MarkDirty(player);
+
+            _entMan.GetComponent<WorldRuleComponent>(_rule).Settlement =
+                _entMan.System<SettlementSystem>().GetPlayerSettlements(player).Single().Owner;
+
             for (var i = 0; i < targets; i++)
             {
                 _targets.Add(_entMan.SpawnEntity("MobHuman", _coords));
@@ -221,8 +241,6 @@ public sealed class RuleTriggersTest : GameTest
         Assert.That(
             _rules.StartWorldRule(
                 new Entity<WorldRuleComponent?>(_rule, _entMan.GetComponent<WorldRuleComponent>(_rule)),
-                _targets[0],
-                _coords,
                 ignoreDelay: true),
             Is.True);
     }
