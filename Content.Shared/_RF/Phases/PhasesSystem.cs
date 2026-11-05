@@ -111,6 +111,8 @@ public sealed partial class PhasesSystem : EntitySystem
         if (ent.Comp.Current == phase)
             return false;
 
+        var previousPhase = ent.Comp.Current;
+
         if (ent.Comp.Current is { } old && ent.Comp.Phases.TryGetValue(old, out var previous))
         {
             _effects.ApplyEffects(ent, previous.Exit);
@@ -126,6 +128,9 @@ public sealed partial class PhasesSystem : EntitySystem
 
         _effects.ApplyEffects(ent, next.Enter);
         _trigger.Trigger(ent, key: EnteredPrefix + phase, predicted: false);
+
+        var ev = new PhaseChangedEvent(ent.Owner, previousPhase, phase);
+        RaiseLocalEvent(ent.Owner, ref ev, true);
         return true;
     }
 
@@ -136,3 +141,12 @@ public sealed partial class PhasesSystem : EntitySystem
     public string? GetPhase(Entity<PhasesComponent?> ent)
         => Resolve(ent, ref ent.Comp, false) ? ent.Comp.Current : null;
 }
+
+/// <summary>
+/// Raised on the entity, and for everyone, when its phase has changed.
+/// </summary>
+/// <param name="Entity">The entity.</param>
+/// <param name="From">The phase that has ended, null if it was the first.</param>
+/// <param name="To">The phase that has started.</param>
+[ByRefEvent, PublicAPI]
+public readonly record struct PhaseChangedEvent(EntityUid Entity, string? From, string To);

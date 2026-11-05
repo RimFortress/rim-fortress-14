@@ -24,6 +24,7 @@ public sealed partial class SettlementDebugSystem : EntitySystem
     private const float TintStrength = 0.65f;
 
     private static readonly Color WaitingColor = Color.Orange;
+    public static readonly Color EventColor = Color.Red;
 
     // The sprites that are painted and the colors they had, to give them back.
     private readonly Dictionary<EntityUid, Color> _painted = new();
@@ -95,6 +96,16 @@ public sealed partial class SettlementDebugSystem : EntitySystem
         {
             if (TryGetEntity(waiting.Uid, out var uid))
                 wanted.TryAdd(uid.Value, WaitingColor);
+        }
+
+        // The ones who have come with an event are red, whoever they were owned by before.
+        foreach (var ev in msg.Events)
+        {
+            foreach (var entity in ev.Entities)
+            {
+                if (TryGetEntity(entity.Uid, out var uid))
+                    wanted[uid.Value] = EventColor;
+            }
         }
 
         // What is not owned any more, or is gone, gets its color back.

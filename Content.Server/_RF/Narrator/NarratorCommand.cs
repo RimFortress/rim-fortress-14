@@ -104,6 +104,21 @@ public sealed class NarratorCommand : ToolshedCommand
 
     #endregion
 
+    #region Events
+
+    /// <summary>
+    /// The events of the world, the ones that go on and the ones that have ended: where, in what phase, how they ended, how many have
+    /// come.
+    /// </summary>
+    [CommandImplementation("events")]
+    public IEnumerable<string> Events()
+    {
+        _narrator ??= GetSys<NarratorSystem>();
+        return _narrator.DescribeEvents();
+    }
+
+    #endregion
+
     #region Points and events
 
     /// <summary>

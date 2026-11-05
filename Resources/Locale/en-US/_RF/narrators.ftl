@@ -9,3 +9,4 @@ command-description-narrator-rollany = Starts an event that the narrator can aff
 command-description-narrator-purchases = The purchases that the events can make.
 command-description-narrator-buy = Applies the purchase to the entities that are piped in, no points are spent.
 command-description-narrator-spend = Spends the points on the purchases of the event for the entities that are piped in, as the event does when it comes, and says what was bought.
+command-description-narrator-events = The events of the world, going on and ended: where, in what phase, how they ended, how many have come.

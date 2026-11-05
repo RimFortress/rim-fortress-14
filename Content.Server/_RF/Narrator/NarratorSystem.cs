@@ -1,10 +1,14 @@
 using Content.Server._RF.GameTicking.Rules;
 using Content.Server._RF.World.Settlements;
+using Content.Server.Administration.Logs;
 using Content.Server.GameTicking;
 using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared.Database;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Narrator;
+using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.Phases;
 using Content.Shared._RF.World.Settlements;
 using Content.Shared.EntityTable;
 using Content.Shared.GameTicking.Components;
@@ -32,6 +36,9 @@ public sealed partial class NarratorSystem : EntitySystem
     [Dependency] private MathCurvesSystem _curves = null!;
     [Dependency] private SettlementSystem _settlements = null!;
     [Dependency] private SettlementWealthSystem _wealth = null!;
+    [Dependency] private IAdminLogManager _adminLogger = null!;
+    [Dependency] private PhasesSystem _phases = null!;
+    [Dependency] private OwnershipSystem _ownership = null!;
     [Dependency] private TransformSystem _transform = null!;
     [Dependency] private BiomeSystem _biome = null!;
     [Dependency] private MapSystem _map = null!;
@@ -144,11 +151,28 @@ public sealed partial class NarratorSystem : EntitySystem
 
             events.LastWaitPoints = newPoints;
 
-            if (_random.NextFloat() >= _curves.Get(narrator.EventChanceCurves, newPoints))
+            var chance = _curves.Get(narrator.EventChanceCurves, newPoints);
+
+            if (_random.NextFloat() >= chance)
                 continue;
 
+            var points = EventPoints(settlement, rule.Comp.Narrator);
+
             if (PickRandomEvent(settlement, rule) is { } ev)
+            {
+                _adminLogger.Add(
+                    LogType.EventRan,
+                    LogImpact.Low,
+                    $"Narrator: {ToPrettyString(settlement)}: the chance {chance:0.00} has come up, the narrator has {points} points and chooses {ev}");
                 StartEvent(settlement, ev, rule.Owner);
+            }
+            else
+            {
+                _adminLogger.Add(
+                    LogType.EventRan,
+                    LogImpact.Low,
+                    $"Narrator: {ToPrettyString(settlement)}: the chance {chance:0.00} has come up, but no event can be afforded with {points} points ({settlement.Comp.ResidentCount} residents)");
+            }
         }
     }
 
@@ -212,11 +236,22 @@ public sealed partial class NarratorSystem : EntitySystem
         if (!_eventsQuery.TryComp(settlement, out var events))
             return false;
 
+        var pointsBefore = narrator is { } n && TryComp(n, out NarratorRuleComponent? narratorRule)
+            ? EventPoints(settlement, narratorRule.Narrator)
+            : -1;
+
         var ruleEntity = _rule.AddWorldRule(proto, settlement);
         Comp<WorldRuleComponent>(ruleEntity).Narrator = narrator;
+        var started = $"{(narrator == null ? "no narrator" : "narrator " + ToPrettyString(narrator.Value))}, " +
+                      $"the points of the settlement {pointsBefore}, {events.BonusPoints} of them added by hand";
+        _adminLogger.Add(LogType.EventRan, LogImpact.Low, $"{ToPrettyString(ruleEntity)}: {started}");
 
         if (!_rule.StartWorldRule(ruleEntity, ignoreDelay))
+        {
+            Log.Warning($"{ToPrettyString(ruleEntity)} could not be started");
+            _adminLogger.Add(LogType.EventRan, LogImpact.Medium, $"{ToPrettyString(ruleEntity)}: could not be started");
             return false;
+        }
 
         // The points that were added by hand are spent as the others are.
         if (_prototype.Resolve(proto, out var prototype)

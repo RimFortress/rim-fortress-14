@@ -27,6 +27,10 @@ public partial class SharedRimFortressWorldSystem
         var spawned = new List<EntityUid>();
         var freeTiles = GetSpawnTiles(targetCoords, popPrototypes.Count, radius ?? _playerSafeRadius).ToList();
 
+        // There is nowhere to spawn them.
+        if (freeTiles.Count == 0)
+            return spawned;
+
         // Spawn the entities on a random free tile
         while (popPrototypes.Count > 0)
         {

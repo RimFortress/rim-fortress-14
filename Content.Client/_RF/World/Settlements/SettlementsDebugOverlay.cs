@@ -14,7 +14,7 @@ namespace Content.Client._RF.World.Settlements;
 /// circle of how far its things are, its center, its residents with a line to each, and what is said about it in words (the residents,
 /// the wealth by the categories, the points of the narrator). What it owns is not drawn here: the sprites of those are painted in its
 /// color (see <see cref="SettlementDebugSystem"/>), and the sprites of what waits with the player for a settlement are orange. See the
-/// <c>showsettlements</c> command.
+/// <c>showsettlements</c> command. The events that go on are red: a ring where each is, and a line to each who has come with it.
 /// </summary>
 public sealed class SettlementsDebugOverlay : Overlay
 {
@@ -112,6 +112,23 @@ public sealed class SettlementsDebugOverlay : Overlay
             handle.DrawCircle(center, 1.2f, color);
             handle.DrawCircle(center, 1.2f, Color.Black, false);
         }
+
+        // The events: a ring where it is (the settlement it is about), and a line to each who has come with it.
+        foreach (var ev in snapshot.Events)
+        {
+            if (!TryGetPosition(ev.Coordinates, args.MapId, out var place))
+                continue;
+
+            handle.DrawCircle(place, 3f, SettlementDebugSystem.EventColor.WithAlpha(0.12f));
+            handle.DrawCircle(place, 3f, SettlementDebugSystem.EventColor, false);
+            handle.DrawCircle(place, 4f, SettlementDebugSystem.EventColor.WithAlpha(0.5f), false);
+
+            foreach (var entity in ev.Entities)
+            {
+                if (TryGetPosition(entity.Coordinates, args.MapId, out var position))
+                    handle.DrawLine(place, position, SettlementDebugSystem.EventColor.WithAlpha(0.6f));
+            }
+        }
     }
 
     private void DrawScreen(in OverlayDrawArgs args, SettlementsDebugMessage snapshot)
@@ -139,6 +156,23 @@ public sealed class SettlementsDebugOverlay : Overlay
         y += 13;
         handle.DrawStringOutlined(_font, new Vector2(10, y), "the sprites are painted in the color of the owner; a white line is a pop that is away from the group", Color.LightGray);
 
+        // The events: what they are, how far they are, how many have come.
+        y += 16;
+        handle.DrawStringOutlined(_bigFont, new Vector2(10, y), $"Events: {snapshot.Events.Count}", SettlementDebugSystem.EventColor);
+        y += 16;
+
+        foreach (var ev in snapshot.Events)
+        {
+            handle.DrawStringOutlined(_font, new Vector2(10, y), EventText(ev), SettlementDebugSystem.EventColor);
+            y += 13;
+
+            if (!TryGetPosition(ev.Coordinates, map, out var place))
+                continue;
+
+            var onScreen = args.ViewportControl.WorldToScreen(place);
+            handle.DrawStringOutlined(_bigFont, onScreen + new Vector2(30, 10), EventText(ev), SettlementDebugSystem.EventColor);
+        }
+
         // The text by each settlement and by each pop that is away.
         foreach (var settlement in snapshot.Settlements)
         {
@@ -160,6 +194,9 @@ public sealed class SettlementsDebugOverlay : Overlay
             }
         }
     }
+
+    private static string EventText(EventDebugInfo ev)
+        => $"{ev.Name} [{ev.State}] settlement #{ev.Settlement.Id}, narrator {ev.Narrator}, {ev.Entities.Count} came";
 
     private static string SettlementText(SettlementDebugInfo settlement)
     {

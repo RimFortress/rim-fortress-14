@@ -17,8 +17,16 @@ public sealed class SettlementsDebugRequest(bool enabled) : EntityEventArgs
 /// it, and does not know what is owned by whom, so the server says it.
 /// </summary>
 [Serializable, NetSerializable]
-public sealed class SettlementsDebugMessage(List<SettlementDebugInfo> settlements, List<SettlementDebugEntity> waiting) : EntityEventArgs
+public sealed class SettlementsDebugMessage(
+    List<SettlementDebugInfo> settlements,
+    List<SettlementDebugEntity> waiting,
+    List<EventDebugInfo> events) : EntityEventArgs
 {
+    /// <summary>
+    /// The events that are going on.
+    /// </summary>
+    public readonly List<EventDebugInfo> Events = events;
+
     public readonly List<SettlementDebugInfo> Settlements = settlements;
 
     /// <summary>
@@ -72,3 +80,23 @@ public sealed record SettlementDebugInfo(
 /// <param name="Away">For a resident that has left the group of its settlement: for how many seconds it has been away, -1 if not.</param>
 [Serializable, NetSerializable]
 public readonly record struct SettlementDebugEntity(NetEntity Uid, NetCoordinates Coordinates, string Category, float Away = -1f);
+
+/// <summary>
+/// An event of the world that is going on, for the debug overlay.
+/// </summary>
+/// <param name="Rule">The event.</param>
+/// <param name="Name">What it is.</param>
+/// <param name="Settlement">The settlement that it is about.</param>
+/// <param name="Coordinates">Where it is: the center of the settlement.</param>
+/// <param name="State">The phase of the event, if it has any.</param>
+/// <param name="Narrator">The narrator that has started it, if one has.</param>
+/// <param name="Entities">The living ones that it owns (the ones who have come).</param>
+[Serializable, NetSerializable]
+public sealed record EventDebugInfo(
+    NetEntity Rule,
+    string Name,
+    NetEntity Settlement,
+    NetCoordinates Coordinates,
+    string State,
+    string Narrator,
+    List<SettlementDebugEntity> Entities);

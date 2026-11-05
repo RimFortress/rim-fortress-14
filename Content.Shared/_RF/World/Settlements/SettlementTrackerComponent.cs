@@ -20,7 +20,7 @@ public sealed partial class SettlementTrackerComponent : Component
     /// How far from each other two things can be to belong to one group: pops that are farther are in different settlements.
     /// </summary>
     [DataField]
-    public float Radius = 100f;
+    public float Radius = 30f;
 
     /// <summary>
     /// Do the things the player owns join the groups. They connect the pops that are far from each other and are a part of

@@ -85,9 +85,9 @@
         - add:
           - !type:PrototypeCurve
             preset: FighterPower
-      deadFraction:
+      downFraction:
       - !type:SearchQueryCount
-        query: RaidTargetsDead
+        query: RaidTargetsDown
       - div: [var: targetsTotal]
       # Those who can fight: the ones that are down are in the raid, but they are not in the formation, they are neither the force
       # of the raid nor the morale of it.
@@ -116,13 +116,13 @@
       - minus: [var: lastKillAt]
       - div: [var: stalemateTime]
       morale:
-      - var: deadFraction
+      - var: downFraction
       - mul: [var: moraleKillBonus]
       - add: [var: aliveFraction]
       - minus: [var: pressure]
   - type: Phases
     phases:
-      # The raiders come to the settlement and fight. The raid is won when most of the residents are dead, and then the raiders leave,
+      # The raiders come to the settlement and fight. The raid is won when most of the residents are down (dead or critical, it does not wait for them to bleed out), and then the raiders leave,
       # it is lost when the raiders are all dead, and when they lose heart they retreat.
       Assault:
         transitions:
@@ -130,7 +130,7 @@
           when:
           - !type:MathCurveCondition
             curves:
-            - var: deadFraction
+            - var: downFraction
             - !type:Threshold
               moreThan: 0.8
         - to: Retreat
@@ -165,7 +165,7 @@
           when:
           - !type:MathCurveCondition
             curves:
-            - var: deadFraction
+            - var: downFraction
             - !type:Threshold
               moreThan: 0.8
         - when: *NoRaiders
@@ -297,7 +297,7 @@
           - add:
             - var: load
             - div: [var: capacity]
-      RaidTargetsDead.added:
+      RaidTargetsDown.added:
       - !type:SetMathVariable
         key: kills
         value:

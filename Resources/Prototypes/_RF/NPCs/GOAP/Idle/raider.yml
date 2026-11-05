@@ -104,6 +104,5 @@
       rangeKey: RetreatRange
       query: Retreat
     - !type:MoveTo
-      rangeKey: IdleRange
     effects:
       RaiderRetreated: true

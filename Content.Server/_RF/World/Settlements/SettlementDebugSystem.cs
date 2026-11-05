@@ -1,10 +1,14 @@
 using System.Linq;
 using Content.Server._RF.Narrator;
 using Content.Server.Administration.Managers;
+using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.NPC.Systems;
+using Content.Shared._RF.Phases;
 using Content.Shared._RF.World.Components;
 using Content.Shared._RF.World.Settlements;
 using Content.Shared.Administration;
+using Content.Shared.GameTicking.Components;
+using Content.Shared.Mobs.Components;
 using Robust.Server.Player;
 using Robust.Shared.Enums;
 using Robust.Shared.Map;
@@ -35,6 +39,7 @@ public sealed partial class SettlementDebugSystem : EntitySystem
     [Dependency] private OwnershipSystem _ownership = null!;
     [Dependency] private NarratorSystem _narrator = null!;
     [Dependency] private SharedTransformSystem _transform = null!;
+    [Dependency] private PhasesSystem _phases = null!;
 
     [Dependency] private EntityQuery<SettlementComponent> _settlementQuery;
     [Dependency] private EntityQuery<SettlementWealthComponent> _wealthQuery;
@@ -43,6 +48,7 @@ public sealed partial class SettlementDebugSystem : EntitySystem
     [Dependency] private EntityQuery<TransformComponent> _xformQuery;
     [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
     [Dependency] private EntityQuery<MapComponent> _mapQuery;
+    [Dependency] private EntityQuery<MobStateComponent> _mobStateQuery;
 
     private readonly HashSet<ICommonSession> _subscribers = new();
     private TimeSpan _nextSend;
@@ -146,7 +152,40 @@ public sealed partial class SettlementDebugSystem : EntitySystem
             }
         }
 
-        return new SettlementsDebugMessage(infos, waiting);
+        return new SettlementsDebugMessage(infos, waiting, BuildEvents(now));
+    }
+
+    private List<EventDebugInfo> BuildEvents(TimeSpan now)
+    {
+        var events = new List<EventDebugInfo>();
+        var query = EntityQueryEnumerator<WorldRuleComponent, ActiveGameRuleComponent>();
+
+        while (query.MoveNext(out var uid, out var rule, out _))
+        {
+            var entities = new List<SettlementDebugEntity>();
+
+            // The ones who have come: the living owned by the event.
+            foreach (var owned in _ownership.GetOwned(uid))
+            {
+                if (_mobStateQuery.HasComp(owned) && Member(owned, null, null, now) is { } member)
+                    entities.Add(member);
+            }
+
+            var narrator = rule.Narrator is { } n && TryComp(n, out NarratorRuleComponent? narratorRule)
+                ? narratorRule.Narrator.Id
+                : "none";
+
+            events.Add(new EventDebugInfo(
+                GetNetEntity(uid),
+                MetaData(uid).EntityPrototype?.ID ?? ToPrettyString(uid),
+                GetNetEntity(rule.Settlement),
+                GetNetCoordinates(TerminatingOrDeleted(rule.Settlement) ? rule.TargetCoordinates : _settlements.GetCoordinates(rule.Settlement)),
+                _phases.GetPhase(uid) ?? "active",
+                narrator,
+                entities));
+        }
+
+        return events;
     }
 
     /// <summary>

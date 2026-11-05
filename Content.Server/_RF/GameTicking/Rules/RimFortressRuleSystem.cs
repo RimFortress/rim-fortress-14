@@ -1,3 +1,4 @@
+using Content.Shared._RF.Phases;
 using Content.Server._RF.World;
 using Content.Server._RF.World.Settlements;
 using Content.Server.Administration.Logs;
@@ -48,6 +49,13 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
             ev.Handled = true;
             return;
         }
+    }
+
+    [SubscribeLocalEvent]
+    private void OnPhaseChanged(ref PhaseChangedEvent args)
+    {
+        if (HasComp<WorldRuleComponent>(args.Entity))
+            _adminLogger.Add(LogType.EventRan, LogImpact.Low, $"World rule {ToPrettyString(args.Entity)}: phase {args.From ?? "-"} -> {args.To}");
     }
 
     public override void Update(float frameTime)
@@ -187,7 +195,9 @@ public sealed partial class RimFortressRuleSystem : GameRuleSystem<RimFortressRu
         RemComp<ActiveGameRuleComponent>(uid);
         EnsureComp<EndedGameRuleComponent>(uid);
 
-        Log.Info($"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Settlement)}");
+        var ended = $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Settlement)}: {uid.Comp.Result ?? "no result"}";
+        Log.Info(ended);
+        _chat.SendAdminAnnouncement(ended);
         _adminLogger.Add(LogType.EventStopped, $"Ended world rule {ToPrettyString(uid)} for {ToPrettyString(uid.Comp.Settlement)}");
 
         var ev = new WorldRuleEndedEvent(uid, proto, uid.Comp.Settlement, uid.Comp.TargetCoordinates, uid.Comp.Result);

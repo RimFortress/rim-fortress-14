@@ -20,13 +20,16 @@
   query: !type:KeyEntities
     key: Targets
 
+# The residents that are down: dead, or in the critical state. A resident that is down is not a threat, and it is as good as beaten
+# for the raid, which does not wait for it to bleed out.
 - type: searchQuery
-  id: RaidTargetsDead
+  id: RaidTargetsDown
   notify: true
   query: !type:KeyEntities
     key: Targets
   filters:
-  - !type:IsDead
+  - !type:IsAlive
+    invert: true
 
 # The living residents that the squad of a raider is given, the closest first: whom a raider goes to. The residents are shared
 # between the squads by the raid, see AssignGroupTargets. The settlement itself is only a place, and it may be out of reach.
