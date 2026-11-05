@@ -34,6 +34,22 @@
   goalState:
     RaiderFollowed: true
 
+# The breacher goes ahead and breaks through, so it is not left alone: the others of the squad (the leader too) stay with it and fight
+# what they see, until the squad rushes and each goes for its own.
+- type: utilityAiGoal
+  id: RaiderEscort
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.66
+  conditions:
+  - Engagement/RaidSquad/Role/SquadBreacher != null
+  - Engagement/RaidSquad/Role/SquadBreacher/In == false
+  - Engagement/RaidSquad/Var/stance > 0.5
+  - Engagement/RaidSquad/Var/stance < 1.5
+  - Retreating == false
+  goalState:
+    RaiderEscorted: true
+
 - type: utilityAiGoal
   id: RaiderFollowSupport
   color: "#FFCC44"

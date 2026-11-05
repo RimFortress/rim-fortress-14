@@ -12,6 +12,7 @@
   - proto: Rescue
   - proto: RaiderHold
   - proto: RaiderFollow
+  - proto: RaiderEscort
   - proto: RaiderApproach
   - proto: RaiderAdvance
   - proto: RaiderRetreat
@@ -43,6 +44,23 @@
       query: Approach
     effects:
       RaiderFollowed: true
+
+# Stays with the breacher of the squad, wherever it goes, and covers it: the fight is up to the goals of the raiders.
+- type: goapCompound
+  id: RaiderEscort
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Engagement/RaidSquad/Role/SquadBreacher != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Engagement/RaidSquad/Role/SquadBreacher
+      rangeKey: SquadFollowRange
+      query: Approach
+    effects:
+      RaiderEscorted: true
 
 - type: goapCompound
   id: RaiderApproach

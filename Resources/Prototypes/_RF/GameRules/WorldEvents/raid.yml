@@ -57,6 +57,9 @@
       # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
       # kills takes away. When it falls below retreatMorale the raiders retreat.
       moraleKillBonus: [float: 0.5]
+      # How much a raider that is down (critical) counts for in the morale, as a share of one that stands: it is not lost as long as it
+      # can be treated (see SquadMedic), but it is worth less. The one that is dead counts for nothing.
+      downMoraleShare: [float: 0.5]
       stalemateTime: [float: 600]
       retreatMorale: [float: 0.3]
       # For how long they retreat, until those who are left are gone.
@@ -93,8 +96,18 @@
         conditions:
         - !type:MobState
           targetState: Alive
+      # Those who are down, they are neither the force nor counted in the formation, but the raiders have not lost them yet.
+      downRaiders:
+      - !type:EngagementActors
+        engagement: RaidForce
+        role: Raider
+        conditions:
+        - !type:MobState
+          targetState: Critical
       aliveFraction:
-      - var: raiders
+      - var: downRaiders
+      - mul: [var: downMoraleShare]
+      - add: [var: raiders]
       - div: [var: raidersTotal]
       pressure:
       - !type:CurTimeSeconds

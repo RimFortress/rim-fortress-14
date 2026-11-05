@@ -1449,9 +1449,10 @@ public sealed class RaidRuleTest : GameTest
 
             Assert.That(Goal(breacher), Is.EqualTo("RaiderApproach"));
 
-            foreach (var raider in Others(squad).Where(x => x != breacher))
+            // They stay with the breacher and cover it, the leader too.
+            foreach (var raider in squad.Actors.SelectMany(x => x.Value).Distinct().Where(x => x != breacher))
             {
-                Assert.That(Goal(raider), Is.EqualTo("RaiderFollow"));
+                Assert.That(Goal(raider), Is.EqualTo("RaiderEscort"));
             }
         });
     }
@@ -1514,7 +1515,8 @@ public sealed class RaidRuleTest : GameTest
     }
 
     /// <summary>
-    /// The raiders that are down are in the raid, but they are not the force of it: they are not counted in its morale.
+    /// The raiders that are down are in the raid, but they are not the force of it: they are not counted in the formation, and they
+    /// count for half in its morale.
     /// </summary>
     [Test]
     public async Task TestRaidersThatAreDownAreNotInTheFormation()
@@ -1534,9 +1536,56 @@ public sealed class RaidRuleTest : GameTest
         await Pair.Server.WaitAssertion(() =>
         {
             Assert.That(Variable("raiders"), Is.EqualTo(1f));
-            Assert.That(Variable("aliveFraction"), Is.EqualTo(1f / 3f).Within(0.01f));
+            Assert.That(Variable("aliveFraction"), Is.EqualTo((1f + 2f * 0.5f) / 3f).Within(0.01f));
             Assert.That(Ended(), Is.False, "one of them can fight");
         });
+    }
+
+    /// <summary>
+    /// A raider that is down costs the morale less than one that is dead, and when it is treated the morale is back.
+    /// </summary>
+    [Test]
+    public async Task TestRaiderThatIsDownHurtsTheMoraleLessThanDeathAndTreatmentRestoresIt()
+    {
+        await Setup(raiders: 4);
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() => PutDown(_raiders[0]));
+        await Run(1.2f);
+        var down = 0f;
+        await Pair.Server.WaitAssertion(() => down = Variable("aliveFraction"));
+
+        await Pair.Server.WaitPost(() => _mobState.ChangeMobState(_raiders[0], MobState.Dead));
+        await Run(1.2f);
+        var dead = 0f;
+        await Pair.Server.WaitAssertion(() => dead = Variable("aliveFraction"));
+
+        Assert.That(down, Is.EqualTo(3.5f / 4f).Within(0.01f));
+        Assert.That(dead, Is.EqualTo(3f / 4f).Within(0.01f));
+        Assert.That(down, Is.GreaterThan(dead));
+
+    }
+
+    /// <summary>
+    /// A raider that is treated stands again, and the morale is back.
+    /// </summary>
+    [Test]
+    public async Task TestTreatedRaiderRestoresTheMorale()
+    {
+        await Setup(raiders: 4);
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(Start);
+        await Run(1.2f);
+
+        await Pair.Server.WaitPost(() => PutDown(_raiders[0]));
+        await Run(1.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Variable("aliveFraction"), Is.EqualTo(3.5f / 4f).Within(0.01f)));
+
+        await Pair.Server.WaitPost(() => Damage(_raiders[0], "Blunt", -150));
+        await Run(1.2f);
+        await Pair.Server.WaitAssertion(() => Assert.That(Variable("aliveFraction"), Is.EqualTo(1f).Within(0.01f)));
     }
 
     /// <summary>
