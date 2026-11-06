@@ -41,7 +41,7 @@ public sealed class SettlementsDebugMessage(
 /// <param name="Uid">The settlement.</param>
 /// <param name="Player">The player of the settlement.</param>
 /// <param name="PlayerName">The name of the player, if it is known.</param>
-/// <param name="Coordinates">The center.</param>
+/// <param name="Coordinates">The center as the server saw it: for when the client does not have the entity of the settlement, otherwise it is drawn where the entity is.</param>
 /// <param name="Radius">How far from the center the things of the group are.</param>
 /// <param name="Reach">How far from the center a thing is adopted by the settlement.</param>
 /// <param name="Residents">The number of the residents.</param>
@@ -75,11 +75,10 @@ public sealed record SettlementDebugInfo(
 /// An entity that is owned, for the debug overlay.
 /// </summary>
 /// <param name="Uid">The entity.</param>
-/// <param name="Coordinates">Where it is.</param>
 /// <param name="Category">The category of its wealth, or Other.</param>
 /// <param name="Away">For a resident that has left the group of its settlement: for how many seconds it has been away, -1 if not.</param>
 [Serializable, NetSerializable]
-public readonly record struct SettlementDebugEntity(NetEntity Uid, NetCoordinates Coordinates, string Category, float Away = -1f);
+public readonly record struct SettlementDebugEntity(NetEntity Uid, string Category, float Away = -1f);
 
 /// <summary>
 /// An event of the world that is going on, for the debug overlay.
@@ -87,7 +86,7 @@ public readonly record struct SettlementDebugEntity(NetEntity Uid, NetCoordinate
 /// <param name="Rule">The event.</param>
 /// <param name="Name">What it is.</param>
 /// <param name="Settlement">The settlement that it is about.</param>
-/// <param name="Coordinates">Where it is: the center of the settlement.</param>
+/// <param name="Coordinates">The center of the settlement: for when the client does not have the settlement, which is where the event is drawn.</param>
 /// <param name="State">The phase of the event, if it has any.</param>
 /// <param name="Narrator">The narrator that has started it, if one has.</param>
 /// <param name="Entities">The living ones that it owns (the ones who have come).</param>

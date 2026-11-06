@@ -63,10 +63,35 @@ public sealed class SettlementsDebugOverlay : Overlay
             DrawScreen(args, snapshot);
     }
 
-    private bool TryGetPosition(NetCoordinates coordinates, MapId map, out Vector2 position)
+    /// <summary>
+    /// Where the entity is now: the client asks the entity itself, so it moves smoothly. The ones that the client does not have are not drawn.
+    /// </summary>
+    private bool TryGetPosition(NetEntity net, MapId map, out Vector2 position)
     {
         position = default;
-        var local = _entity.GetCoordinates(coordinates);
+
+        if (!_entity.TryGetEntity(net, out var uid) || !_entity.EntityExists(uid))
+            return false;
+
+        var mapCoordinates = _transform.GetMapCoordinates(uid.Value);
+
+        if (mapCoordinates.MapId != map)
+            return false;
+
+        position = mapCoordinates.Position;
+        return true;
+    }
+
+    /// <summary>
+    /// Where a settlement or an event is: where its entity is if the client has it, otherwise where the server saw it.
+    /// </summary>
+    private bool TryGetPosition(NetEntity net, NetCoordinates fallback, MapId map, out Vector2 position)
+    {
+        if (TryGetPosition(net, map, out position))
+            return true;
+
+        position = default;
+        var local = _entity.GetCoordinates(fallback);
 
         if (!local.IsValid(_entity))
             return false;
@@ -86,7 +111,7 @@ public sealed class SettlementsDebugOverlay : Overlay
 
         foreach (var settlement in snapshot.Settlements)
         {
-            if (!TryGetPosition(settlement.Coordinates, args.MapId, out var center))
+            if (!TryGetPosition(settlement.Uid, settlement.Coordinates, args.MapId, out var center))
                 continue;
 
             var color = SettlementColor(settlement.Uid);
@@ -104,7 +129,7 @@ public sealed class SettlementsDebugOverlay : Overlay
 
             foreach (var member in settlement.Members)
             {
-                if (member.Category == "Pop" && TryGetPosition(member.Coordinates, args.MapId, out var position))
+                if (member.Category == "Pop" && TryGetPosition(member.Uid, args.MapId, out var position))
                     handle.DrawLine(center, position, member.Away >= 0f ? Color.White.WithAlpha(0.5f) : lineColor);
             }
 
@@ -116,7 +141,7 @@ public sealed class SettlementsDebugOverlay : Overlay
         // The events: a ring where it is (the settlement it is about), and a line to each who has come with it.
         foreach (var ev in snapshot.Events)
         {
-            if (!TryGetPosition(ev.Coordinates, args.MapId, out var place))
+            if (!TryGetPosition(ev.Settlement, ev.Coordinates, args.MapId, out var place))
                 continue;
 
             handle.DrawCircle(place, 3f, SettlementDebugSystem.EventColor.WithAlpha(0.12f));
@@ -125,7 +150,7 @@ public sealed class SettlementsDebugOverlay : Overlay
 
             foreach (var entity in ev.Entities)
             {
-                if (TryGetPosition(entity.Coordinates, args.MapId, out var position))
+                if (TryGetPosition(entity.Uid, args.MapId, out var position))
                     handle.DrawLine(place, position, SettlementDebugSystem.EventColor.WithAlpha(0.6f));
             }
         }
@@ -166,7 +191,7 @@ public sealed class SettlementsDebugOverlay : Overlay
             handle.DrawStringOutlined(_font, new Vector2(10, y), EventText(ev), SettlementDebugSystem.EventColor);
             y += 13;
 
-            if (!TryGetPosition(ev.Coordinates, map, out var place))
+            if (!TryGetPosition(ev.Settlement, ev.Coordinates, map, out var place))
                 continue;
 
             var onScreen = args.ViewportControl.WorldToScreen(place);
@@ -176,7 +201,7 @@ public sealed class SettlementsDebugOverlay : Overlay
         // The text by each settlement and by each pop that is away.
         foreach (var settlement in snapshot.Settlements)
         {
-            if (!TryGetPosition(settlement.Coordinates, map, out var center))
+            if (!TryGetPosition(settlement.Uid, settlement.Coordinates, map, out var center))
                 continue;
 
             var screen = args.ViewportControl.WorldToScreen(center);
@@ -189,7 +214,7 @@ public sealed class SettlementsDebugOverlay : Overlay
 
             foreach (var member in settlement.Members.Where(x => x.Away >= 0f))
             {
-                if (TryGetPosition(member.Coordinates, map, out var position))
+                if (TryGetPosition(member.Uid, map, out var position))
                     handle.DrawStringOutlined(_font, args.ViewportControl.WorldToScreen(position) + new Vector2(10, -6), $"away {member.Away:0}s", Color.White);
             }
         }

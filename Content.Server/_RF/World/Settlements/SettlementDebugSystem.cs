@@ -11,7 +11,6 @@ using Content.Shared.GameTicking.Components;
 using Content.Shared.Mobs.Components;
 using Robust.Server.Player;
 using Robust.Shared.Enums;
-using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
@@ -25,11 +24,6 @@ namespace Content.Server._RF.World.Settlements;
 /// </summary>
 public sealed partial class SettlementDebugSystem : EntitySystem
 {
-    /// <summary>
-    /// How often the snapshots are sent.
-    /// </summary>
-    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(1);
-
     [Dependency] private IAdminManager _admin = null!;
     [Dependency] private IGameTiming _timing = null!;
     [Dependency] private IPlayerManager _players = null!;
@@ -38,7 +32,6 @@ public sealed partial class SettlementDebugSystem : EntitySystem
     [Dependency] private SettlementWealthSystem _wealth = null!;
     [Dependency] private OwnershipSystem _ownership = null!;
     [Dependency] private NarratorSystem _narrator = null!;
-    [Dependency] private SharedTransformSystem _transform = null!;
     [Dependency] private PhasesSystem _phases = null!;
 
     [Dependency] private EntityQuery<SettlementComponent> _settlementQuery;
@@ -49,6 +42,11 @@ public sealed partial class SettlementDebugSystem : EntitySystem
     [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
     [Dependency] private EntityQuery<MapComponent> _mapQuery;
     [Dependency] private EntityQuery<MobStateComponent> _mobStateQuery;
+
+    /// <summary>
+    /// How often the snapshots are sent.
+    /// </summary>
+    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(1);
 
     private readonly HashSet<ICommonSession> _subscribers = new();
     private TimeSpan _nextSend;
@@ -206,6 +204,6 @@ public sealed partial class SettlementDebugSystem : EntitySystem
         if (settlement is { } owner && _settlements.TryGetAwaySince(owner, uid, out var since))
             away = (float) (now - since).TotalSeconds;
 
-        return new SettlementDebugEntity(GetNetEntity(uid), GetNetCoordinates(xform.Coordinates), category ?? "Other", away);
+        return new SettlementDebugEntity(GetNetEntity(uid), category ?? "Other", away);
     }
 }

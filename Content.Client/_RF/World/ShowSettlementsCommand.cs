@@ -3,15 +3,13 @@ using Robust.Shared.Console;
 
 namespace Content.Client._RF.World;
 
-public sealed class ShowSettlementsCommand : IConsoleCommand
+public sealed class ShowSettlementsCommand : LocalizedEntityCommands
 {
-    public string Command => "showsettlements";
-    public string Description => "Shows the settlements: their color, the area they reach, what they own and what it is worth";
-    public string Help => $"{Command}";
+    public override string Command => "showsettlements";
 
-    public void Execute(IConsoleShell shell, string argStr, string[] args)
+    public override void Execute(IConsoleShell shell, string argStr, string[] args)
     {
-        var system = IoCManager.Resolve<IEntitySystemManager>().GetEntitySystem<SettlementDebugSystem>();
+        var system = EntityManager.System<SettlementDebugSystem>();
         system.Enabled ^= true;
     }
 }
