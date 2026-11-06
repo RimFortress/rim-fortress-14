@@ -1,5 +1,6 @@
 # Breaks through what blocks the way, the goal of the path nodes of the Breacher profile: the agent comes up to it and hits it until
-# it is destroyed.
+# it is destroyed. What it hits with is taken in the hands first: a raider with a gun in the hand has nothing to hit with (the gun is
+# not a weapon of melee), and the crowbar is in its bag.
 - type: goapCompound
   id: Breach
   tasks:
@@ -7,7 +8,39 @@
     - InContainer == false
     - Buckled == false
     - Pulled == false
+    - Query/InventoryMelees != null
+    actions:
+    - !type:CaptureQuery
+      capture: Query/InventoryMelees
+      targetKey: BreachWeapon
+    - !type:Pickup
+      targetKey: BreachWeapon
+    effects:
+      BreachArmed: true
+
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
     - BreachTarget != null
+    - BreachArmed == true
+    actions:
+    - !type:MoveTo
+      targetEntityKey: BreachTarget
+      rangeKey: MeleeRange
+    - !type:Melee
+      targetKey: BreachTarget
+      removeCombatMode: false
+    effects:
+      Breached: true
+
+  # Nothing to hit with but the fists.
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - BreachTarget != null
+    - Query/InventoryMelees == null
     actions:
     - !type:MoveTo
       targetEntityKey: BreachTarget

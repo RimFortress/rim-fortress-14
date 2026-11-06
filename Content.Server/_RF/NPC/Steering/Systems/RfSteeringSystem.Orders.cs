@@ -261,7 +261,9 @@ public sealed partial class RfSteeringSystem
                 if (_goap.TryGetValue(agent.Comp.State, goal.Info.RangeKey, out var key))
                     stop = key;
 
-                bounds = null;
+                // The distance is counted from the region of the node and not from its center: the node of a wall or a door is the
+                // tile of the body, which the agent cannot come to the center of, and it stops half a tile and its own size short of it.
+                bounds = goal.Node.Box;
                 ignore = null;
             }
 

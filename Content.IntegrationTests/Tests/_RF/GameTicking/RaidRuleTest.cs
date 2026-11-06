@@ -5,6 +5,8 @@ using System.Numerics;
 using Content.IntegrationTests.Fixtures;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.Gravity;
+using Content.Server.Body.Components;
+using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared.Atmos;
 using Content.Shared.Gravity;
 using Content.IntegrationTests.Fixtures.Attributes;
@@ -56,6 +58,7 @@ public sealed class RaidRuleTest : GameTest
   components:
   - type: Destructible
     thresholds: []
+
 ";
 
     private static readonly StateKey<HashSet<EntityUid>> Targets = "Targets";
@@ -143,7 +146,18 @@ public sealed class RaidRuleTest : GameTest
         if (_rule == default)
             return;
 
-        await Pair.Server.WaitPost(() => _entMan.DeleteEntity(_rule));
+        // Everything of the test goes with it: the pops of a test that has gone are alive in the pool, in the same places, and are
+        // the targets of the raiders of the next one.
+        await Pair.Server.WaitPost(() =>
+        {
+            _entMan.DeleteEntity(_rule);
+
+            foreach (var uid in _residents.Concat(_raiders).Append(_settlement).Append(_player).Append(_map).ToArray())
+            {
+                if (uid != default && _entMan.EntityExists(uid))
+                    _entMan.DeleteEntity(uid);
+            }
+        });
         _rule = default;
     }
 
@@ -1122,6 +1136,117 @@ public sealed class RaidRuleTest : GameTest
                 Assert.That(Share(squad, leader), Is.EquivalentTo(share.Where(x => x != killed)));
             }
         });
+    }
+
+    /// <summary>
+    /// A wall round the whole settlement, large and far from the residents: a squad breaks through it and does not stand at it, the
+    /// path that goes through the wall is chosen over the one that ends at it.
+    /// </summary>
+    [Test]
+    public async Task TestSquadsBreakThroughAWallRoundTheWholeSettlement()
+        => await BreakThroughTheRing(GiveCrowbar);
+
+    /// <summary>
+    /// The same, but the breachers have pistols: they are able to shoot, and the wall is broken all the same.
+    /// </summary>
+    [Test]
+    public async Task TestBreachersWithPistolsBreakThroughAWallRoundTheWholeSettlement()
+        => await BreakThroughTheRing(GivePistolAndCrowbar);
+
+    /// <summary>
+    /// The raider has nothing but what the test gives it: what it comes with is random, and one that has nothing to break a wall with does
+    /// not break it, which is the right thing for it.
+    /// </summary>
+    private void StripRaider(EntityUid raider)
+    {
+        var inventory = _entMan.System<Content.Shared.Inventory.InventorySystem>();
+
+        foreach (var item in inventory.GetHandOrInventoryEntities(raider).ToArray())
+        {
+            _entMan.DeleteEntity(item);
+        }
+    }
+
+    private void GiveCrowbar(EntityUid raider)
+    {
+        StripRaider(raider);
+        var hands = _entMan.System<Content.Shared.Hands.EntitySystems.SharedHandsSystem>();
+        var coordinates = _entMan.GetComponent<TransformComponent>(raider).Coordinates;
+        Assert.That(hands.TryPickupAnyHand(raider, _entMan.SpawnEntity("Crowbar", coordinates)), Is.True);
+    }
+
+    private void GivePistolAndCrowbar(EntityUid raider)
+    {
+        StripRaider(raider);
+        var hands = _entMan.System<Content.Shared.Hands.EntitySystems.SharedHandsSystem>();
+        var coordinates = _entMan.GetComponent<TransformComponent>(raider).Coordinates;
+        Assert.That(hands.TryPickupAnyHand(raider, _entMan.SpawnEntity("WeaponPistolMk58", coordinates)), Is.True);
+        Assert.That(hands.TryPickupAnyHand(raider, _entMan.SpawnEntity("Crowbar", coordinates)), Is.True);
+    }
+
+    private async Task BreakThroughTheRing(Action<EntityUid> equip)
+    {
+        await Setup(residents: 5, raiders: 6);
+        await AddAtmosphere();
+
+        var walls = new List<EntityUid>();
+
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var resident in _residents)
+            {
+                _faction.AddFaction(resident, "RimFortress");
+
+                // The room inside the walls is sealed and has no air in the test, the residents are not to suffocate there.
+                _entMan.RemoveComponent<RespiratorComponent>(resident);
+            }
+
+            // The ring is large, the residents are inside it, in the middle, the raiders outside.
+            for (var x = 8; x <= 32; x++)
+            {
+                for (var y = 8; y <= 32; y++)
+                {
+                    if (x != 8 && x != 32 && y != 8 && y != 32)
+                        continue;
+
+                    walls.Add(_entMan.SpawnEntity("WallWood", At(x + 0.5f, y + 0.5f)));
+                }
+            }
+
+            for (var i = 0; i < _residents.Count; i++)
+            {
+                _transform.SetCoordinates(_residents[i], At(18 + i, 20));
+            }
+
+            for (var i = 0; i < _raiders.Count; i++)
+            {
+                _transform.SetCoordinates(_raiders[i], At(2 + i % 3, 2 + i / 3));
+            }
+
+            foreach (var raider in _raiders)
+            {
+                equip(raider);
+            }
+
+            Start();
+        });
+
+        for (var i = 0; i < 150 && walls.All(w => !_entMan.Deleted(w)); i++)
+        {
+            await Run(1f);
+
+            // The sealed room has no air, the residents are kept well so that the raid goes on.
+            await Pair.Server.WaitPost(() =>
+            {
+                foreach (var resident in _residents)
+                {
+                    _entMan.System<DamageableSystem>().SetAllDamage(resident, 0);
+                }
+            });
+        }
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(walls.Count(w => _entMan.Deleted(w)), Is.GreaterThan(0), "a wall has been broken"));
     }
 
     /// <summary>

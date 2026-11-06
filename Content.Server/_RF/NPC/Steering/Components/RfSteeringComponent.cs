@@ -142,6 +142,12 @@ public sealed partial class RfSteeringComponent : Component
     public Vector2 LastInput;
 
     /// <summary>
+    /// Where the agent was when it began to follow the path. The first node is the center of the poly the agent was in, which can be far
+    /// from the agent, and the same goes for the last node and the end of the path.
+    /// </summary>
+    public Vector2 Start;
+
+    /// <summary>
     /// Where the agent was when the <see cref="StuckSince"/> started.
     /// </summary>
     public Vector2 StuckPosition;

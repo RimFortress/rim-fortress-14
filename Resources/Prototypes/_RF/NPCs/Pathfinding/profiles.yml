@@ -295,7 +295,21 @@
       entityConditions:
       - !type:Solid
       - !type:CanBeDestroyed
-  # Where the agent does not fit between the bodies the path is not made, unless it breaks them.
+  # Where the agent does not fit between the bodies the path is not made, unless it breaks them. The place next to a body that can
+  # be broken is not that: the agent that has broken through a wall comes out of it onto the tiles that are right next to the wall,
+  # where the influence is large, and those cost the path through the wall more than it can have (a price of 10000 would be paid
+  # for every step), so such a place costs a lot, as much as it is close to the bodies, but not more than the path can have: the breaker
+  # goes through it only when there is nothing cheaper (a door, a gap), and the place to only wander to is not gone to.
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
   - when:
     - !type:TagInfluence
       tag: Obstacle
@@ -309,9 +323,12 @@
         invert: true
       - !type:CanDestroy
         moreThan: 90
-      - !type:Query
-        id: Wander
-    cost: [float: 10000]
+    - !type:Query
+      id: Wander
+      invert: true
+    cost:
+    - var: influence
+    - mul: [float: 1000]
   # A door that cannot be gone through, or has to be pried when there is nothing to pry it with, is broken the same way as a wall, if
   # the agent is able to, the door that has a crowbar to pry it is pried (see WalkerBase) and not broken.
   - when:

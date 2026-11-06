@@ -151,9 +151,12 @@ public sealed partial class RfPathfindingSystem
 
             var profile = comp.RequestProfiles[comp.RequestProfileIndex];
 
-            // The first partial path is the best one, the profiles are in the order of preference.
+            // The profiles are in the order of preference, so the first partial path is kept, unless a later one gets clearly closer to the
+            // target: the profile that does not break through what blocks the way ends at it, and that which does goes on.
             if (result.Status == PathSearchStatus.Path
-                || result.Status == PathSearchStatus.PartialPath && comp.RequestResult.Status == PathSearchStatus.NoPath)
+                || result.Status == PathSearchStatus.PartialPath
+                && (comp.RequestResult.Status == PathSearchStatus.NoPath
+                    || comp.RequestResult.Status == PathSearchStatus.PartialPath && IsClearlyCloser(comp, result, comp.RequestResult)))
             {
                 comp.RequestResult = result;
                 comp.RequestProfile = profile;
@@ -309,5 +312,32 @@ public sealed partial class RfPathfindingSystem
         }
 
         return penalty;
+    }
+
+    /// <summary>
+    /// How much closer to the target a partial path has to end than another one to be preferred to it, in tiles.
+    /// </summary>
+    private const float PartialMargin = 1.5f;
+
+    /// <summary>
+    /// Does a partial path end clearly closer to the target of the request than the other one.
+    /// </summary>
+    private bool IsClearlyCloser(PathProfilesComponent comp, in PathSearchResult candidate, in PathSearchResult current)
+    {
+        if (comp.RequestTarget is not { } target || candidate.Path.Count == 0 || current.Path.Count == 0)
+            return false;
+
+        return DistanceToTarget(comp, target, candidate) < DistanceToTarget(comp, target, current) - PartialMargin;
+    }
+
+    private float DistanceToTarget(PathProfilesComponent comp, EntityCoordinates target, in PathSearchResult result)
+    {
+        var end = result.Path[^1];
+        var position = _transform.WithEntityId(target, end.Graph).Position;
+
+        if (comp.RequestTargetBounds is { } bounds)
+            position = Vector2.Clamp(end.Box.Center, bounds.BottomLeft, bounds.TopRight);
+
+        return Vector2.Distance(end.Box.Center, position);
     }
 }

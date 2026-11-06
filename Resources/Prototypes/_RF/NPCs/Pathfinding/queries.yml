@@ -2,10 +2,14 @@
 # one query only, see the Query condition, it can be inverted, and a new kind of request is a new query, not a change of the profiles.
 
 # A way to a place. A path that would have to go through what the profile does not let through is not a path, and
-# the agent gives up at once instead of walking up to it.
+# the agent gives up at once instead of walking up to it. The search is stopped at maxNodes nodes: a path to a target in the middle of what the profiles charge a lot for (the residents'
+# fire, the bodies round a wall that is to be broken through) goes a long way round in the nodes before it gets there, and with the
+# default (4000) such a path was "not found" for the raiders at a wall, so they stood at it for minutes, until the search happened to
+# succeed.
 - type: pathQuery
   id: Travel
   algorithm: !type:AStar
+    maxNodes: 10000
     maxCost: 5000
     allowPartial: false
 
@@ -32,6 +36,7 @@
 - type: pathQuery
   id: Approach
   algorithm: !type:AStar
+    maxNodes: 10000
     maxCost: 5000
     allowPartial: true
 

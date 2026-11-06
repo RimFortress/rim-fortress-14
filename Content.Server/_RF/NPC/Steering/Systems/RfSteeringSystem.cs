@@ -361,12 +361,21 @@ public sealed partial class RfSteeringSystem : EntitySystem
         var nodes = steering.Nodes;
         var distance = (nodes[steering.Index].Center - pos).Length();
 
-        // The segments on both sides of the node the agent is at.
+        // The segments on both sides of the node the agent is at. The nodes are the centers of the polys, and a poly can be large: the path
+        // begins where the agent was and ends at the end of the path, and not at the centers of the first and the last poly, or an agent
+        // that walks straight to the target inside the poly would be taken for having left the path.
         if (steering.Index > 0)
             distance = Math.Min(distance, DistanceToSegment(nodes[steering.Index - 1].Center, nodes[steering.Index].Center, pos));
+        else
+            distance = Math.Min(distance, DistanceToSegment(steering.Start, nodes[0].Center, pos));
 
         if (steering.Index < nodes.Count - 1)
             distance = Math.Min(distance, DistanceToSegment(nodes[steering.Index].Center, nodes[steering.Index + 1].Center, pos));
+        else
+            distance = Math.Min(distance, DistanceToSegment(nodes[steering.Index].Center, steering.End, pos));
+
+        if (nodes.Count == 1)
+            distance = Math.Min(distance, DistanceToSegment(steering.Start, steering.End, pos));
 
         return distance;
     }
@@ -533,6 +542,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.BestRemaining = float.MaxValue;
         steering.ProgressSince = _timing.CurTime;
         steering.StuckPosition = Transform(agent).LocalPosition;
+        steering.Start = steering.StuckPosition;
         steering.LastInput = Vector2.Zero;
         steering.Samples = 0;
 
