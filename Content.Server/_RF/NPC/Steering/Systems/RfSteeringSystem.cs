@@ -1,6 +1,7 @@
 using Content.Shared.EntityConditions;
 using System.Numerics;
 using Content.Server._RF.NPC.Steering.Components;
+using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared.Interaction;
 using Content.Shared.Maps;
@@ -32,6 +33,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
     [Dependency] private SharedTransformSystem _transform = null!;
     [Dependency] private SharedMoverController _mover = null!;
     [Dependency] private EntityLookupSystem _lookup = null!;
+    [Dependency] private SharedExecutableGoalSystem _executable = null!;
     [Dependency] private SharedMapSystem _maps = null!;
     [Dependency] private ITileDefinitionManager _tileDefs = null!;
     [Dependency] private SharedInteractionSystem _interaction = null!;
@@ -95,6 +97,9 @@ public sealed partial class RfSteeringSystem : EntitySystem
     [SubscribeLocalEvent]
     private void OnSteeringShutdown(Entity<RfSteeringComponent> ent, ref ComponentShutdown args)
     {
+        if (!TerminatingOrDeleted(ent))
+            _executable.ClearRoute(ent);
+
         if (TerminatingOrDeleted(ent) || !TryComp(ent, out InputMoverComponent? mover))
             return;
 
@@ -587,6 +592,19 @@ public sealed partial class RfSteeringSystem : EntitySystem
         }
 
         steering.Remaining.Reverse();
+
+        // The player sees the way that the agent goes, and the clients are told only when it is another way.
+        var route = new List<Vector2>(steering.Nodes.Count + 1);
+
+        foreach (var node in steering.Nodes)
+        {
+            route.Add(node.Center);
+        }
+
+        if (Vector2.DistanceSquared(route[^1], steering.End) > 0.01f)
+            route.Add(steering.End);
+
+        _executable.SetRoute(agent, graph, route);
 
         var ev = new SpriteMoveEvent(true);
         RaiseLocalEvent(agent, ref ev);

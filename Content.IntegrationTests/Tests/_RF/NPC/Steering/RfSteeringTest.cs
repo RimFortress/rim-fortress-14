@@ -207,6 +207,26 @@ public sealed class RfSteeringTest : GameTest
     }
 
     /// <summary>
+    /// The end of the path is where the agent cannot stand (somebody or something is there): it gets as close as it can, and stops there.
+    /// It is not left in that state for good, as it does not try to move any more and so is never taken for being stuck, but it is not
+    /// in range either.
+    /// </summary>
+    [Test]
+    public async Task TestAgentThatStopsShortOfTheEndIsStuck([Values(1, 5)] int interval)
+    {
+        await Setup("Plating");
+        await Pair.Server.WaitPost(() => _entMan.SpawnAtPosition("TestRfBlock", new EntityCoordinates(_grid, 20.5f, 1.5f)));
+
+        // The end is in the middle of the block, the range is small.
+        await Pair.Server.WaitPost(() => Go(20.5f, interval, 0.3f));
+
+        var (status, _, x, _) = await Run(1500);
+
+        Assert.That(status, Is.EqualTo(RfSteeringStatus.Stuck), "the agent that cannot get closer is told that it is stuck");
+        Assert.That(x, Is.LessThan(20f));
+    }
+
+    /// <summary>
     /// Two agents go toward each other along the same row, they pass and both get to their ends.
     /// </summary>
     [Test]

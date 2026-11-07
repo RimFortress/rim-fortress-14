@@ -36,6 +36,24 @@ public sealed partial class ExecutableGoalSystem : SharedExecutableGoalSystem
 
     public bool Eraser { get; private set; }
 
+    /// <summary>
+    /// How often the path of an agent is asked for, if the server does not tell it.
+    /// </summary>
+    private static readonly TimeSpan RouteAskInterval = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// Asks the server for the path that the agent follows, if it has not been asked for lately. The server tells the path when it is
+    /// changed, so what the client does not know is only the path that was there before the agent came into view.
+    /// </summary>
+    public void RequestRoute(EntityUid uid, ControllableNpcComponent comp)
+    {
+        if (Timing.CurTime < comp.RouteAskedAt + RouteAskInterval)
+            return;
+
+        comp.RouteAskedAt = Timing.CurTime;
+        RaiseNetworkEvent(new NpcRouteRequest(GetNetEntity(uid)));
+    }
+
     [Access(typeof(ControllableNpcBoundUserInterface))]
     public EntityUid? UiTarget;
 

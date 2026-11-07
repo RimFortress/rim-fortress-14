@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using Content.Shared._RF.NPC.Executable.Components;
 using Content.Shared._RF.NPC.Executable.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -232,6 +233,94 @@ public partial class SharedExecutableGoalSystem
         RaiseLocalEvent(uid, new NpcControllerAdded(user));
         DirtyField(user, control, nameof(NpcControllerComponent.CanControl));
         DirtyField(uid, comp, nameof(ControllableNpcComponent.CanControl));
+
+        // The new controller is told the path that the agent follows now.
+        if (_net.IsServer && comp.Route.Count > 0 && TryGetSession(user, out var session))
+            SendRoute(uid, comp, session);
+    }
+
+    /// <summary>
+    /// The sessions of those who control the agent: the path of the agent is told to them and to nobody else.
+    /// </summary>
+    [PublicAPI]
+    public List<ICommonSession> GetControllerSessions(EntityUid uid)
+    {
+        var sessions = new List<ICommonSession>();
+
+        if (!ControllableQuery.TryComp(uid, out var comp))
+            return sessions;
+
+        foreach (var user in comp.CanControl)
+        {
+            if (TryGetSession(user, out var session))
+                sessions.Add(session);
+        }
+
+        return sessions;
+    }
+
+    private bool TryGetSession(EntityUid user, [NotNullWhen(true)] out ICommonSession? session)
+    {
+        session = null;
+        return TryComp(user, out ActorComponent? actor) && (session = actor.PlayerSession) != null;
+    }
+
+    /// <summary>
+    /// Sets the path that the agent follows, and tells it to those who control the agent if it is not the one that they have. A path
+    /// that is searched for again and is the same is not told again, and how far along the path the agent is, is not told at all:
+    /// the client finds it out from where the agent is. Nothing is told about an agent that cannot be controlled.
+    /// </summary>
+    /// <param name="uid">The agent.</param>
+    /// <param name="graph">The grid that the points are in the coordinates of.</param>
+    /// <param name="points">The points of the path, none if the agent follows no path.</param>
+    /// <returns>True if the path is another one and the controllers are told.</returns>
+    [PublicAPI]
+    public bool SetRoute(EntityUid uid, EntityUid graph, IReadOnlyList<Vector2> points)
+    {
+        if (!ControllableQuery.TryComp(uid, out var comp)
+            || comp.RouteGraph == graph && IsSameRoute(comp.Route, points))
+            return false;
+
+        comp.RouteGraph = graph;
+        comp.Route.Clear();
+        comp.Route.AddRange(points);
+
+        foreach (var session in GetControllerSessions(uid))
+        {
+            SendRoute(uid, comp, session);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// The agent follows no path any more.
+    /// </summary>
+    [PublicAPI]
+    public void ClearRoute(EntityUid uid) => SetRoute(uid, EntityUid.Invalid, Array.Empty<Vector2>());
+
+    private void SendRoute(EntityUid uid, ControllableNpcComponent comp, ICommonSession session)
+        => RaiseNetworkEvent(
+            new NpcRouteMessage(GetNetEntity(uid), GetNetEntity(comp.RouteGraph), new List<Vector2>(comp.Route)),
+            session);
+
+    /// <summary>
+    /// How much a point may differ from the one it was for the path to be the same one.
+    /// </summary>
+    private const float SameRouteDistance = 0.05f;
+
+    private static bool IsSameRoute(List<Vector2> old, IReadOnlyList<Vector2> points)
+    {
+        if (old.Count != points.Count)
+            return false;
+
+        for (var i = 0; i < points.Count; i++)
+        {
+            if (Vector2.DistanceSquared(old[i], points[i]) > SameRouteDistance * SameRouteDistance)
+                return false;
+        }
+
+        return true;
     }
 
     /// <summary>
