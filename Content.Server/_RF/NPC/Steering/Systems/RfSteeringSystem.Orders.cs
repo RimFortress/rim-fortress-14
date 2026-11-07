@@ -226,8 +226,10 @@ public sealed partial class RfSteeringSystem
 
         if (profiles.RequestStatus != PathRequestStatus.None)
         {
-            if (!_pathfinding.TryGetResult(search, out var result, out _))
+            if (!_pathfinding.TryGetResult(search, out var result, out var resultProfile))
                 return GoapActionResult.Continuing;
+
+            steerer.PathProfile = resultProfile;
 
             _pathfinding.CancelPath(new Entity<PathProfilesComponent?>(agent.Owner, profiles));
 

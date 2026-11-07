@@ -159,6 +159,7 @@ public sealed class AStarPathAlgorithmSystem : RfPathAlgorithmSystem<AStar>
         }
         finally
         {
+            Map.CaptureExplored(search.Agent, state);
             ReturnState(state);
         }
     }

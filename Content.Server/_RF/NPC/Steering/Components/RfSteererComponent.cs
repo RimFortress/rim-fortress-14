@@ -181,6 +181,12 @@ public sealed partial class RfSteererComponent : Component
     public ProtoId<PathQueryPrototype> ActiveQuery = "Travel";
 
     /// <summary>
+    /// The profile that gave the path that is followed, for debugging.
+    /// </summary>
+    [ViewVariables]
+    public ProtoId<PathProfilePrototype>? PathProfile;
+
+    /// <summary>
     /// What the agent is doing to carry out the order.
     /// </summary>
     [ViewVariables]
