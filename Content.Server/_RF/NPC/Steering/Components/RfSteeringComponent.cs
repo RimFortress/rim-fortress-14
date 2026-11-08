@@ -63,6 +63,13 @@ public sealed partial class RfSteeringComponent : Component
     public EntityCoordinates? Sight;
 
     /// <summary>
+    /// If it is set, the agent keeps facing this entity while it moves, instead of turning to where it goes: a fighter that
+    /// steps back or circles its enemy does not turn its back to it.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? FaceEntity;
+
+    /// <summary>
     /// How long the <see cref="Sight"/> has been seen.
     /// </summary>
     public float SightSeen;

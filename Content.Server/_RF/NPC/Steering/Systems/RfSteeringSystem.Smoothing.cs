@@ -116,7 +116,7 @@ public sealed partial class RfSteeringSystem
     /// <summary>
     /// Whether the agent can go from one point to the other in a straight line.
     /// </summary>
-    private bool IsStraight(EntityUid graph, Vector2 from, Vector2 to, float margin, int obstacleTag)
+    private bool IsStraight(EntityUid graph, Vector2 from, Vector2 to, float margin, int obstacleTag, bool plain = true)
     {
         var way = to - from;
 
@@ -138,8 +138,19 @@ public sealed partial class RfSteeringSystem
         {
             var point = from + way * (i / (float) steps);
 
-            if (_pathfinding.GetPoly(new EntityCoordinates(graph, point)) is not { } poly
-                || !IsPlain(poly.Data, obstacleTag)
+            if (_pathfinding.GetPoly(new EntityCoordinates(graph, point)) is not { } poly)
+                return false;
+
+            // A short step is not planned around the tags: it goes right next to the enemy, where they all are
+            if (!plain)
+            {
+                if (!IsFloor(poly.Data))
+                    return false;
+
+                continue;
+            }
+
+            if (!IsPlain(poly.Data, obstacleTag)
                 || _pathfinding.GetInfluence(poly.Data.Facts, RfPathfindingSystem.ObstacleTag) > ShortcutInfluence)
                 return false;
         }
@@ -151,6 +162,9 @@ public sealed partial class RfSteeringSystem
     /// Whether the ground is the kind that a shortcut can go over: not a void, nothing that is to be destroyed, and no
     /// tag that makes the node cost more but the one of the closeness of the bodies, which the shortcut deals with itself.
     /// </summary>
+    private static bool IsFloor(in RfPathfindingData data)
+        => (data.Flags & RfPathfindingFlags.Space) == 0 && data.Facts.Destroy == null;
+
     private static bool IsPlain(in RfPathfindingData data, int obstacleTag)
     {
         if ((data.Flags & RfPathfindingFlags.Space) != 0 || data.Facts.Destroy != null)

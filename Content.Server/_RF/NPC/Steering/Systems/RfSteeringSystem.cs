@@ -175,17 +175,27 @@ public sealed partial class RfSteeringSystem : EntitySystem
         Vector2 velocity,
         float frameTime)
     {
-        // What the agent wants, and where it is going if it wants nothing yet or is sliding.
-        var heading = steering.Desired.LengthSquared() > 0.04f
-            ? steering.Desired
-            : velocity.LengthSquared() > 0.25f
-                ? velocity
-                : Vector2.Zero;
+        Angle target;
 
-        if (heading == Vector2.Zero)
-            return;
+        if (steering.FaceEntity is { } face && !TerminatingOrDeleted(face)
+            && _transform.GetWorldPosition(face) - _transform.GetWorldPosition(uid) is var toFace
+            && toFace.LengthSquared() > 0.01f)
+            target = toFace.ToWorldAngle();
+        else
+        {
+            // What the agent wants, and where it is going if it wants nothing yet or is sliding.
+            var heading = steering.Desired.LengthSquared() > 0.04f
+                ? steering.Desired
+                : velocity.LengthSquared() > 0.25f
+                    ? velocity
+                    : Vector2.Zero;
 
-        var target = _mover.GetParentGridAngle(mover).RotateVec(heading).ToWorldAngle();
+            if (heading == Vector2.Zero)
+                return;
+
+            target = _mover.GetParentGridAngle(mover).RotateVec(heading).ToWorldAngle();
+        }
+
         var current = _transform.GetWorldRotation(xform);
         var difference = Angle.ShortestDistance(current, target);
         var step = Angle.FromDegrees(steerer.TurnSpeed * frameTime);
@@ -533,6 +543,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.Bounds = bounds;
         steering.Ignore = ignore;
         steering.Sight = null;
+        steering.FaceEntity = null;
         steering.SightSeen = 0f;
         steering.Radius = GetRadius(agent);
         steering.Range = Math.Max(range, MinRange);

@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Server._RF.NPC.Steering.Systems;
 using Content.Shared._RF.NPC.GOAP;
@@ -173,6 +174,23 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
     [PublicAPI]
     public bool IsMoving(EntityUid ent)
         => _steererQuery.TryComp(ent, out var steerer) && steerer.Phase != RfMovePhase.None;
+
+    /// <summary>
+    /// Makes a short step to a place close by, with no path searched for,
+    /// if the way there is clear. Stop it with <see cref="Stop"/>.
+    /// </summary>
+    /// <param name="ent">AI entity.</param>
+    /// <param name="target">Where to step, in the world coordinates.</param>
+    /// <param name="face">The entity the agent keeps facing on the way.</param>
+    /// <returns>False if the step is not possible.</returns>
+    [PublicAPI]
+    public bool Step(EntityUid ent, Vector2 target, EntityUid? face = null) => _steering.Step(ent, target, face);
+
+    /// <summary>
+    /// Checks whether the agent is making a <see cref="Step"/>.
+    /// </summary>
+    [PublicAPI]
+    public bool IsStepping(EntityUid ent) => _steering.IsStepping(ent);
 
     private static GoapActionResult Report(GoapDebugDumpSystem handler, GoapActionResult result)
     {

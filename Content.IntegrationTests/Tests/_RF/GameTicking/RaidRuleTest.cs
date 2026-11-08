@@ -1910,6 +1910,53 @@ public sealed class RaidRuleTest : GameTest
     }
 
     /// <summary>
+    /// The raiders that fight in melee do not just stand and trade blows: after a blow they step back or around the enemy.
+    /// </summary>
+    [Test]
+    public async Task TestRaidersMoveInAMeleeFight()
+    {
+        await Setup();
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var raider in _raiders)
+            {
+                GiveCrowbar(raider);
+            }
+
+            foreach (var resident in _residents)
+            {
+                _faction.AddFaction(resident, "RimFortress");
+                _entMan.RemoveComponent<RespiratorComponent>(resident);
+            }
+
+            Start();
+
+            // The residents are not to die, so the fight goes on.
+            _variables.Set(_rule, "finishRatio", 1000f);
+        });
+
+        var stepped = false;
+
+        for (var i = 0; i < 40 && !stepped; i++)
+        {
+            await Run(1f);
+            await Pair.Server.WaitPost(() =>
+            {
+                stepped = _raiders.Any(r => !_entMan.Deleted(r) && _entMan.TryGetComponent(r, out Content.Server._RF.NPC.GOAP.Actions.Combat.MeleeFootworkComponent? footwork) && footwork.Steps > 0);
+
+                foreach (var resident in _residents)
+                {
+                    if (!_entMan.Deleted(resident) && _mobState.IsDead(resident))
+                        _entMan.System<DamageableSystem>().ClearAllDamage(resident);
+                }
+            });
+        }
+
+        Assert.That(stepped, Is.True, "a raider has made a step in the fight");
+    }
+
+    /// <summary>
     /// Down is not enough for the victory: the residents have to be dead.
     /// </summary>
     [Test]

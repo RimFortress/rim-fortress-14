@@ -71,6 +71,7 @@
       targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
       costMultiplier: 4
+      footwork: {}
     effects:
       TargetAttacked: true
 
@@ -86,5 +87,6 @@
       targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
       costMultiplier: 100 # A fistfight is the least desirable option
+      footwork: {}
     effects:
       TargetAttacked: true
