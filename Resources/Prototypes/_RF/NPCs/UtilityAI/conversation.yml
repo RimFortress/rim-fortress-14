@@ -39,12 +39,12 @@
       need:
       - !type:NeedLevel
         need: Socialization
+  # The more invitations the agent has, the more it is for accepting them. How many conversations it is in does not count here: the
+  # conversation it has started itself is one of them, and the goal would be worth less for it than before, and be given up for any
+  # other, with the conversation torn down. The one that is in a conversation already does not start another, see the conditions.
   - div:
-    - !type:EngagementMembership
+    - !type:EngagementInvites
       dataset: BasicConversations
-    - add:
-      - !type:EngagementInvites
-        dataset: BasicConversations
     - add: [float: 1]
     - pow: [float: 2]
   goalState:
