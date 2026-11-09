@@ -1,10 +1,13 @@
 using System.Numerics;
+using Content.Server._RF.NPC.Pathfinding;
+using Content.Server._RF.NPC.Pathfinding.Systems;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Server._RF.NPC.Steering.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using JetBrains.Annotations;
+using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -55,6 +58,12 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
     /// </summary>
     [DataField]
     public ProtoId<PathQueryPrototype>? Query;
+
+    /// <summary>
+    /// What the path keeps away from, the places are taken from the results of the query every time the path is searched for.
+    /// </summary>
+    [DataField]
+    public PathAvoidSpec? Avoid;
 }
 
 /// <summary>
@@ -63,6 +72,7 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
 public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
 {
     [Dependency] private RfSteeringSystem _steering = null!;
+    [Dependency] private RfPathfindingSystem _pathfinding = null!;
     [Dependency] private EntityQuery<RfSteererComponent> _steererQuery;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, MoveTo action) => 2f;
@@ -75,12 +85,12 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         if (action.TargetEntityKey is { } entityKey)
         {
             return TryGet(ent, entityKey, out var target)
-                ? Move(ent, this, target, range, action.StopOnLineOfSight, action.Query)
+                ? Move(ent, this, target, range, action.StopOnLineOfSight, action.Query, _pathfinding.GetAvoid(ent, action.Avoid))
                 : GoapActionResult.Failed;
         }
 
         return TryGet(ent, action.TargetKey, out var coordinates)
-            ? Move(ent, this, coordinates, range, action.StopOnLineOfSight, action.Query)
+            ? Move(ent, this, coordinates, range, action.StopOnLineOfSight, action.Query, _pathfinding.GetAvoid(ent, action.Avoid))
             : GoapActionResult.Failed;
     }
 
@@ -128,8 +138,9 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         EntityCoordinates target,
         float range,
         bool stopOnLineOfSight = false,
-        ProtoId<PathQueryPrototype>? query = null)
-        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query));
+        ProtoId<PathQueryPrototype>? query = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
+        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query, avoid));
 
     /// <summary>
     /// Moves the agent to the entity. The agent comes up to the region the entity takes up and not to its center,
@@ -157,8 +168,9 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         EntityUid target,
         float range,
         bool stopOnLineOfSight = false,
-        ProtoId<PathQueryPrototype>? query = null)
-        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query));
+        ProtoId<PathQueryPrototype>? query = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
+        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query, avoid));
 
     /// <summary>
     /// Finishes the AI's movement. The agent brakes and the path request is cancelled.

@@ -1,3 +1,4 @@
+using Content.Server._RF.NPC.Pathfinding;
 using Content.Server._RF.NPC.Pathfinding.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -28,6 +29,12 @@ public sealed partial class PickAccessible : BaseGoapAction<PickAccessible>
     /// </summary>
     [DataField]
     public ProtoId<PathQueryPrototype> Query = "Wander";
+
+    /// <summary>
+    /// What the place is kept away from: the more of them are near a place, the worse it is for the query.
+    /// </summary>
+    [DataField]
+    public PathAvoidSpec? Avoid;
 }
 
 public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessible>
@@ -52,7 +59,7 @@ public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessib
             return false;
         }
 
-        if (!_pathfinding.RequestPath((ent, profiles, ent.Comp), action.Query, null, maxRange))
+        if (!_pathfinding.RequestPath(new(ent, profiles, ent.Comp), action.Query, null, maxRange, avoid: _pathfinding.GetAvoid(ent, action.Avoid)))
         {
             CreateDump("none of the profiles of the agent can choose a place");
             return false;

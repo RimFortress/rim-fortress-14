@@ -12,10 +12,10 @@ namespace Content.Shared._RF.Social.Systems;
 
 public sealed partial class SocialSystem : EntitySystem
 {
-    [Dependency] private IConfigurationManager _cfg = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private SharedRimFortressWorldSystem _world = default!;
+    [Dependency] private IConfigurationManager _cfg = null!;
+    [Dependency] private IPrototypeManager _prototype = null!;
+    [Dependency] private IGameTiming _timing = null!;
+    [Dependency] private SharedRimFortressWorldSystem _world = null!;
 
     public int MinMood { get; private set; }
     public int MaxMood { get; private set; }
@@ -132,7 +132,7 @@ public sealed partial class SocialSystem : EntitySystem
         var query = EntityQueryEnumerator<SocialComponent>();
         var remove = new HashSet<ProtoId<SocialEffectPrototype>>();
 
-        while (query.MoveNext(out var comp))
+        while (query.MoveNext(out var uid, out var comp))
         {
             if (comp.NexUpdate >= _timing.CurTime)
                 continue;
@@ -156,7 +156,7 @@ public sealed partial class SocialSystem : EntitySystem
             remove.Clear();
 
             // Check relation effects
-            foreach (var (_, effects) in comp.OpinionEffects)
+            foreach (var (other, effects) in comp.OpinionEffects)
             {
                 foreach (var (protoId, endAt) in effects)
                 {
@@ -169,6 +169,12 @@ public sealed partial class SocialSystem : EntitySystem
                 foreach (var protoId in remove)
                 {
                     effects.Remove(protoId);
+                }
+
+                if (remove.Count > 0)
+                {
+                    var ev = new OpinionChangedEvent(other);
+                    RaiseLocalEvent(uid, ref ev);
                 }
 
                 remove.Clear();
@@ -248,6 +254,8 @@ public sealed partial class SocialSystem : EntitySystem
         if (!Resolve(ent, ref ent.Comp) || !AddEffect(ent.Comp.OpinionEffects.GetOrNew(other), protoId))
             return false;
 
+        var ev = new OpinionChangedEvent(other);
+        RaiseLocalEvent(ent, ref ev);
         Dirty(ent);
         return true;
     }
@@ -296,6 +304,8 @@ public sealed partial class SocialSystem : EntitySystem
             || !effect.Remove(protoId))
             return false;
 
+        var ev = new OpinionChangedEvent(other);
+        RaiseLocalEvent(ent, ref ev);
         Dirty(ent);
         return false;
     }
@@ -356,3 +366,11 @@ public sealed partial class SocialSystem : EntitySystem
 
     #endregion
 }
+
+/// <summary>
+/// The opinion of the entity about another one has changed: an effect was added, removed or ran out. It is raised on the entity that has
+/// the opinion, for the systems whose results depend on it (the search filters).
+/// </summary>
+/// <param name="Other">The entity that the opinion is about.</param>
+[ByRefEvent]
+public readonly record struct OpinionChangedEvent(EntityUid Other);

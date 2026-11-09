@@ -40,6 +40,16 @@ public sealed partial class SocialTriggerSystem : EntitySystem
             ev.Handled = true;
         }
 
+        foreach (var effect in ent.Comp.Effects)
+        {
+            if (ent.Comp.BothSide)
+                _social.AddBothOpinionEffect(ent.Owner, ev.User.Value, effect);
+            else
+                _social.AddOpinionEffect(ent.Owner, ev.User.Value, effect);
+
+            ev.Handled = true;
+        }
+
         if (ent.Comp.RemovedEffect != null)
         {
             if (ent.Comp.BothSide)

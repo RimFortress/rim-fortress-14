@@ -6,6 +6,8 @@
     rootTask: Idle
     state:
       CloseDoors: true
+      # How far a resident looks for a place to run to from the threats.
+      FleeRange: 35.0
   - type: PathProfiles
     profiles:
     - Walker
@@ -24,6 +26,8 @@
     - MentalBreakdownThrow
     - MentalBreakdownAttack
     - MentalBreakdownIdle
+    # Safety
+    - Flee
     # Executables
     - Dig
     - Chop

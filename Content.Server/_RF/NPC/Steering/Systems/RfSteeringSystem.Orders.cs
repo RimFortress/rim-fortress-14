@@ -10,6 +10,7 @@ using Robust.Shared.Prototypes;
 using Content.Shared._RF.NPC.UtilityAi.Systems;
 using JetBrains.Annotations;
 using Robust.Shared.Map;
+using System.Linq;
 using System.Numerics;
 
 namespace Content.Server._RF.NPC.Steering.Systems;
@@ -153,8 +154,9 @@ public sealed partial class RfSteeringSystem
         EntityCoordinates target,
         float range,
         bool stopOnSight = false,
-        ProtoId<PathQueryPrototype>? query = null)
-        => Move(agent, target, null, range, stopOnSight, query);
+        ProtoId<PathQueryPrototype>? query = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
+        => Move(agent, target, null, range, stopOnSight, query, avoid);
 
     /// <summary>
     /// Carries out the order to get to the entity. The range is counted from the region the entity takes up and not
@@ -168,10 +170,11 @@ public sealed partial class RfSteeringSystem
         EntityUid target,
         float range,
         bool stopOnSight = false,
-        ProtoId<PathQueryPrototype>? query = null)
+        ProtoId<PathQueryPrototype>? query = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
         => TerminatingOrDeleted(target)
             ? GoapActionResult.Failed
-            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight, query);
+            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight, query, avoid);
 
     private GoapActionResult Move(
         Entity<GoapComponent> agent,
@@ -179,12 +182,19 @@ public sealed partial class RfSteeringSystem
         EntityUid? entity,
         float range,
         bool stopOnSight,
-        ProtoId<PathQueryPrototype>? query)
+        ProtoId<PathQueryPrototype>? query,
+        IReadOnlyList<PathAvoid>? avoid)
     {
         if (!_profilesQuery.TryComp(agent, out var profiles))
             return GoapActionResult.Failed;
 
         var steerer = EnsureComp<RfSteererComponent>(agent);
+
+        // The places the order keeps away from, they are the order's and the agent can have different ones every time it is asked.
+        steerer.OrderAvoid.Clear();
+
+        if (avoid != null)
+            steerer.OrderAvoid.AddRange(avoid);
 
         // The goal of the node is about to be started. The plan of this order is replaced when the new one is ready, until
         // then the agent stays where it is. The plan of the goal itself can move, such as to pick up a tool.
@@ -374,7 +384,9 @@ public sealed partial class RfSteeringSystem
         steerer.SearchedTarget = target;
         steerer.SearchedBounds = bounds;
 
-        return _pathfinding.RequestPath(agent, steerer.ActiveQuery, target, range, targetBounds: bounds, avoid: steerer.Avoid);
+        var avoid = steerer.OrderAvoid.Count == 0 ? steerer.Avoid : steerer.Avoid.Concat(steerer.OrderAvoid).ToList();
+
+        return _pathfinding.RequestPath(agent, steerer.ActiveQuery, target, range, targetBounds: bounds, avoid: avoid);
     }
 
     /// <summary>

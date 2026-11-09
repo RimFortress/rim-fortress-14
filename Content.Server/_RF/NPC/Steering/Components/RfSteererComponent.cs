@@ -139,6 +139,12 @@ public sealed partial class RfSteererComponent : Component
     public List<PathAvoid> Avoid = new();
 
     /// <summary>
+    /// The places that the order keeps away from for as long as it lasts, such as the enemies that the agent runs from (see
+    /// <see cref="Avoid"/>, which are the places where it got stuck). They are given with the order every time.
+    /// </summary>
+    public List<PathAvoid> OrderAvoid = new();
+
+    /// <summary>
     /// The agent is stuck if it does not move farther than <see cref="StuckDistance"/> for this long while it is told to move.
     /// </summary>
     [DataField]

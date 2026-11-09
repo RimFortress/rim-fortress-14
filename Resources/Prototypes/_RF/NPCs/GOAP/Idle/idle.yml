@@ -16,6 +16,7 @@
   - proto: Climb
   - proto: Door
   - proto: Combat
+  - proto: Flee
   - proto: InventoryStorage
   - proto: Drop
   # Needs

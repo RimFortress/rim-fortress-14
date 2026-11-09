@@ -1,0 +1,23 @@
+# Runs from the threats (see the Threats query): to the place that is far from them, by the way that goes round them. It goes on as
+# long as there is a threat near, see the Flee goal.
+- type: goapCompound
+  id: Flee
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:PickAccessible
+      rangeKey: FleeRange
+      query: Flee
+      avoid: &Threats
+        query: Threats
+        radius: 18
+        cost: 30
+    - !type:MoveTo
+      rangeKey: InteractRange
+      query: FleeRoute
+      avoid: *Threats
+    effects:
+      Fled: true

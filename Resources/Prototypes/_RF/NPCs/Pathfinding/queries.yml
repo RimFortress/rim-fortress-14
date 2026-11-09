@@ -50,3 +50,22 @@
     maxNodes: 2500
     maxCost: 5000
     pick: Safest
+
+# A place to run to: far from what the agent keeps away from (see the avoid of the actions: the threats),
+# and the closest of those that are as good. It is not near the agent, one has to run to be safe.
+- type: pathQuery
+  id: Flee
+  algorithm: !type:Bfs
+    range: 35
+    minRange: 10
+    maxNodes: 3000
+    maxCost: 5000
+    pick: Safest
+
+# The way to the place that is run to: it goes round the threats and not past them. As close as it goes.
+- type: pathQuery
+  id: FleeRoute
+  algorithm: !type:AStar
+    maxNodes: 10000
+    maxCost: 5000
+    allowPartial: true
