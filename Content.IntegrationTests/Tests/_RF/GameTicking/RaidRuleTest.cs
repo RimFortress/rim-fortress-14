@@ -486,7 +486,10 @@ public sealed class RaidRuleTest : GameTest
     {
         var minPower = Variable("targetPower") * Variable("squadPowerRatio");
         var count = minPower > 0f ? (int) MathF.Floor(Variable("raidPower") / minPower) : 4;
-        return Math.Clamp(count, 1, Math.Min(4, _raiders.Count(r => !_entMan.Deleted(r) && _mobState.IsAlive(r))));
+        var alive = _raiders.Count(r => !_entMan.Deleted(r) && _mobState.IsAlive(r));
+
+        // A squad has at least minMembers of the raiders.
+        return Math.Clamp(count, 1, Math.Max(1, Math.Min(4, alive / 3)));
     }
 
     /// <summary>
@@ -523,6 +526,28 @@ public sealed class RaidRuleTest : GameTest
         {
             Assert.That(Variable("raidPower"), Is.LessThan(Variable("targetPower") * Variable("squadPowerRatio") * 2f));
             Assert.That(Squads(), Has.Count.EqualTo(1));
+            AssertEverybodyIsInOneSquad(_raiders);
+        });
+    }
+
+    /// <summary>
+    /// A settlement that is weak does not make a squad of every raider: a squad is a leader with the ones who stay with him, and not a
+    /// lone leader, so there is one leader in a squad and the others have other roles.
+    /// </summary>
+    [Test]
+    public async Task TestWeakSettlementDoesNotMakeSquadsOfOne()
+    {
+        await Setup(residents: 2, raiders: 4);
+        await Pair.Server.WaitPost(Start);
+        await Run(2f);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Variable("raidPower"), Is.GreaterThan(Variable("targetPower") * Variable("squadPowerRatio") * 4f), "the settlement must be weak for the test");
+
+            var squad = Squads().Single();
+            Assert.That(squad.Actors["SquadLeader"], Has.Count.EqualTo(1));
+            Assert.That(Others(squad), Has.Count.EqualTo(3), "the others are not leaders");
             AssertEverybodyIsInOneSquad(_raiders);
         });
     }

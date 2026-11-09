@@ -387,6 +387,9 @@
         sourceRole: Raider
         group: RaidSquad
         maxGroups: 4
+        # A squad is a leader and the ones who stay with him: a weak settlement (the power of the residents is small) does not make a squad of
+        # every raider, each of them a leader with nobody to lead.
+        minMembers: 3
         power:
         - !type:PrototypeCurve
           preset: FighterPower

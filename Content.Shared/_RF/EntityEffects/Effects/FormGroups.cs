@@ -59,6 +59,14 @@ public sealed partial class FormGroups : EntityEffectBase<FormGroups>
     public int MaxGroups = 4;
 
     /// <summary>
+    /// How many members a group has at least: there are no more groups than the members fill so, however weak the target is. Without it
+    /// a target that is weak (the power that the groups are measured against is small) makes a group of every member, a "group" of
+    /// one, which is a leader with nobody to lead.
+    /// </summary>
+    [DataField]
+    public int MinMembers = 1;
+
+    /// <summary>
     /// Does nothing if there are groups already (with participants): the effect then only makes the groups that are not there yet,
     /// once, and what happens to them later is up to the others.
     /// </summary>
@@ -88,7 +96,7 @@ public sealed partial class FormGroupsEntityEffectsSystem : EntityEffectSystem<M
         var total = members.Sum(x => x.Score);
         var minPower = _curves.Get(effect.MinPower, 0f, ent, _variables.GetVariables(ent.AsNullable()));
         var count = minPower > 0f ? (int) MathF.Floor(total / minPower) : effect.MaxGroups;
-        count = Math.Clamp(count, 1, Math.Max(1, Math.Min(effect.MaxGroups, members.Count)));
+        count = Math.Clamp(count, 1, Math.Max(1, Math.Min(effect.MaxGroups, members.Count / Math.Max(effect.MinMembers, 1))));
 
         if (_groups.IsFormed(groups, members.Select(x => x.Uid), count))
             return;
