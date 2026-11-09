@@ -47,10 +47,11 @@ public sealed partial class MigrationRuleComponent : Component
     public bool AddToPops;
 
     /// <summary>
-    /// Minimum radius from the player's settlements where the event will take place.
+    /// How far from the settlement the event takes place: the distance is chosen by chance between the two numbers. The minimum is also
+    /// how close to any settlement of the player it can be.
     /// </summary>
     [DataField]
-    public int RadiusFromSettlement = 30;
+    public MinMaxFloat RadiusFromSettlement = new(30f, 45f);
 
     /// <summary>
     /// Utility AI goal that will be given to entities.

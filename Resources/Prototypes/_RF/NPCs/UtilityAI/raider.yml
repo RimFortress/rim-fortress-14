@@ -9,6 +9,9 @@
   conditions:
   - Query/HostileTarget != null
   - Retreating == false
+  # The camp does not attack: the raiders fight when the raid goes to the settlement or when they are attacked (the raid goes to it then,
+  # see the Camp phase).
+  - Camping == false
   capture:
   - Query/HostileTarget
   goalState:

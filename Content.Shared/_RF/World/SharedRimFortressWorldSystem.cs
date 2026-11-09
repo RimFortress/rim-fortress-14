@@ -1,3 +1,4 @@
+using Content.Shared._RF.MathHelpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.CCVar;
@@ -12,11 +13,9 @@ using Content.Shared.Pinpointer;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
 using Robust.Shared.Configuration;
-using Robust.Shared.Map;
 using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.World;
@@ -41,6 +40,7 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     [Dependency] protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
 
     private int _playerSafeRadius = 100;
+    private MinMaxFloat SafeRadius => new(_playerSafeRadius, _playerSafeRadius);
     protected int SpawnAreaRadius = 20;
     protected int MinSpawnAreaTiles = 100;
 

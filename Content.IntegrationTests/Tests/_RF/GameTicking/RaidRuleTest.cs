@@ -26,6 +26,8 @@ using Content.Shared._RF.NPC.UtilityAi.Components;
 using Content.Shared._RF.World.Settlements;
 using Content.Shared._RF.World.Components;
 using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
+using Content.Shared.FixedPoint;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Damage.Systems;
 using Content.Shared.GameTicking.Components;
@@ -1832,6 +1834,64 @@ public sealed class RaidRuleTest : GameTest
                 Assert.That((_transform.GetWorldPosition(raider) - camp).Length(), Is.LessThan(11f), "they walk about, but not far");
             }
         });
+    }
+
+#pragma warning disable CS0618
+    private FixedPoint2 ResidentDamage() => _entMan.System<DamageableSystem>().GetTotalDamage(_residents[0]);
+#pragma warning restore CS0618
+
+    /// <summary>
+    /// The camp does not attack: the raiders that camp next to a resident leave it alone, until the raid goes to the settlement.
+    /// </summary>
+    [Test]
+    public async Task TestCampDoesNotAttackTheResidentsNearby()
+    {
+        await Setup(residents: 2, raiders: 2);
+        await AddAtmosphere();
+        await Pair.Server.WaitPost(() =>
+        {
+            foreach (var resident in _residents)
+            {
+                _faction.AddFaction(resident, "RimFortress");
+                _entMan.RemoveComponent<RespiratorComponent>(resident);
+            }
+
+            _transform.SetCoordinates(_residents[1], At(2, 38));
+            Start(camp: true);
+            _transform.SetCoordinates(_residents[0], At(27, 30));
+        });
+        await Run(1.5f);
+
+        // The resident comes with some damage of its own, and it only gets better while nobody hits it.
+        var previous = FixedPoint2.Zero;
+        await Pair.Server.WaitPost(() => previous = ResidentDamage());
+
+        for (var k = 0; k < 8; k++)
+        {
+            await Run(1f);
+            await Pair.Server.WaitAssertion(() =>
+            {
+                Assert.That(ResidentDamage(), Is.LessThanOrEqualTo(previous + FixedPoint2.New(0.01f)), "nobody has hit it");
+                previous = ResidentDamage();
+            });
+        }
+
+        // The raid goes to the settlement, and the one who is near is attacked at once.
+        await Pair.Server.WaitPost(() => _variables.Set(_rule, "campDuration", 0f));
+        var low = previous;
+        var hit = false;
+
+        for (var k = 0; k < 10 && !hit; k++)
+        {
+            await Run(1f);
+            await Pair.Server.WaitPost(() =>
+            {
+                low = FixedPoint2.Min(low, ResidentDamage());
+                hit = ResidentDamage() > low + FixedPoint2.New(1f);
+            });
+        }
+
+        Assert.That(hit, Is.True, "the assault fights");
     }
 
     /// <summary>

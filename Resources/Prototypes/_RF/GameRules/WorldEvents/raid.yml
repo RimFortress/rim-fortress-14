@@ -10,6 +10,10 @@
     # A raid is not for a pop that is off on its own.
     minResidents: 2
   - type: MigrationRule
+    # The raid comes from far away: the settlement is small, and a raid that comes in sight of it is no raid.
+    radiusFromSettlement:
+      min: 50
+      max: 65
     # A raider comes with its base gear, and what the points are left after the raiders are bought for, a part of them is kept for
     # that, makes them stronger: armor, a helmet, a crowbar, a pistol, see the purchases. They are given before the squads are made,
     # so the raiders are counted with them.
