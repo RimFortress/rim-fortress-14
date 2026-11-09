@@ -9,7 +9,7 @@ namespace Content.Client._RF.Combat;
 
 /// <summary>
 /// The shake of a sprite on a hit (<see cref="HitShakeEvent"/>):
-/// it is thrown along the blow and swings back and forth with the
+/// it is pushed along the blow and then shakes in all directions with the
 /// fading, the stronger the hit, the farther and the longer.
 /// It is an animation of the sprite offset, like the vanilla lunge.
 /// </summary>
@@ -41,19 +41,24 @@ public sealed partial class HitShakeSystem : EntitySystem
         var step = 1f / Math.Max(shake.Frequency, 1f);
         var swings = Math.Max(2, (int) (length / step));
 
-        // Along the blow, or in a random direction if the source is unknown, with a slight scatter so that the hits are not alike
-        var axis = direction == Vector2.Zero ? _random.NextAngle().ToVec() : direction;
-        var side = new Vector2(-axis.Y, axis.X);
-
         var frames = new List<AnimationTrackProperty.KeyFrame> { new(Vector2.Zero, 0f) };
+
+        // It shakes in all directions: each swing goes to a random place around the sprite, always far from the previous one (the angle
+        // turns by more than a quarter of a circle), so the sprite does not swing along a line like on a spring. The blow only
+        // pushes the first swing, along its direction.
+        var angle = direction == Vector2.Zero ? _random.NextAngle() : direction.ToAngle();
+
         for (var i = 0; i < swings; i++)
         {
             var fade = 1f - (float) i / swings;
-            var sign = i % 2 == 0 ? 1f : -1f;
-            // The first swing is the blow itself: farther, then it swings back with less each time
-            var along = axis * sign * amplitude * fade * (i == 0 ? 1.4f : 1f);
-            var across = side * _random.NextFloat(-0.35f, 0.35f) * amplitude * fade;
-            frames.Add(new AnimationTrackProperty.KeyFrame(along + across, (i + 1) * step));
+            var radius = amplitude * fade * _random.NextFloat(0.6f, 1f);
+
+            if (i == 0 && direction != Vector2.Zero)
+                radius = amplitude * 1.2f;
+            else
+                angle += Angle.FromDegrees(_random.NextFloat(100f, 260f));
+
+            frames.Add(new AnimationTrackProperty.KeyFrame(angle.ToVec() * radius, (i + 1) * step));
         }
 
         frames.Add(new AnimationTrackProperty.KeyFrame(Vector2.Zero, (swings + 1) * step));
