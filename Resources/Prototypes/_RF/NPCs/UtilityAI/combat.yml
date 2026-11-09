@@ -28,6 +28,8 @@
   conditions:
   - CombatMode == false
   - Query/Threats != null
+  # Whoever has hit it and is within reach is fought, see DefendSelf, and the resident does not start to run for the moment before it gets to it.
+  - Query/Aggressor == null
   scoreCurves:
   - float: 0.95
   # Nowhere to run to is no reason to try again at once.
@@ -35,3 +37,19 @@
   failCooldown: 3
   goalState:
     Fled: true
+
+# A resident that has been hit by somebody within reach fights back, and does not run: it is caught, and the one who is as fast as it is hits
+# it in the back at every stop. It is over the Flee goal (0.95). The combat mode is on only while the fight lasts, so there are no conditions
+# of the base goal here.
+- type: utilityAiGoal
+  id: DefendSelf
+  color: "#FF6600"
+  conditions:
+  - CombatMode == false
+  - Query/Aggressor != null
+  scoreCurves:
+  - float: 0.96
+  incumbentBonus:
+  - add: [float: 0.05]
+  goalState:
+    Defended: true

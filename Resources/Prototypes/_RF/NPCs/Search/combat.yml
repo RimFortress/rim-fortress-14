@@ -133,3 +133,22 @@
   - !type:TargetDistance
     curves:
     - preset: TargetDistance
+
+# The ones that have hit the agent just now and are within reach of it: whom it fights back at, instead of running from them (a chaser
+# that is as fast as the one who runs gets a hit in at every stop, and the chase goes on for as long as the one who runs lives).
+- type: searchQuery
+  id: Aggressor
+  query: !type:Nearby
+    whitelist:
+      components:
+      - MobState
+    range: 3.5
+  filters:
+  - !type:IsAlive
+  - !type:Opinion
+    hasEffects:
+    - OpinionRecentlyAttacked
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

@@ -177,6 +177,21 @@
     - !type:HasTag
       tag: Ice
     cost: [float: 0.5]
+  # A place to run to is at home: the farther from the settlement a node is, the more it costs, so the one that runs from the enemies runs
+  # to the settlement (to its own people), and not away into the wilds, where it is hunted down.
+  - when:
+    - !type:TagInfluence
+      tag: Settlement
+    - !type:Or
+      conditions:
+      - !type:Query
+        id: Flee
+      - !type:Query
+        id: FleeRoute
+    cost:
+    - var: influence
+    - mul: [float: -10]
+    - add: [float: 10]
   # A way out goes round the settlements: the closer to one, the more a node costs.
   - when:
     - !type:TagInfluence

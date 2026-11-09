@@ -15,6 +15,7 @@ utility-ai-goal-pry-name = Pry
 utility-ai-goal-deconstruct-name = Deconstruct
 utility-ai-goal-attack-name = Attack
 utility-ai-goal-flee-name = Flee from the enemy
+utility-ai-goal-defend-self-name = Fight back
 utility-ai-goal-inventory-storage-name = Put in inventory
 utility-ai-goal-drop-name = Drop
 utility-ai-goal-climb-name = Climb

@@ -209,4 +209,39 @@ public sealed class FleeTest : GameTest
             Assert.That(searcher.GetResults(_pop, goap.State, threats), Is.Empty, "it is forgiven");
         });
     }
+
+    /// <summary>
+    /// A resident that has been hit by somebody next to it fights back and does not run, the one who is as fast as it is would hit it in the
+    /// back at every stop.
+    /// </summary>
+    [Test]
+    public async Task TestResidentFightsBackAtWhoHasHitIt()
+    {
+        await Setup("MobHuman");
+        var start = Vector2.Zero;
+        await Pair.Server.WaitPost(() =>
+        {
+            _faction.ClearFactions(_enemy);
+            _faction.AddFaction(_enemy, "RimFortress");
+            _transform.SetCoordinates(_enemy, new EntityCoordinates(_grid, 41.5f, 40.5f));
+            start = Position(_pop);
+        });
+        await Pair.RunTicksSync(30);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            var damage = new Content.Shared.Damage.DamageSpecifier();
+            damage.DamageDict["Blunt"] = 5;
+            _entMan.System<Content.Shared.Damage.Systems.DamageableSystem>().TryChangeDamage(_pop, damage, ignoreResistances: true, origin: _enemy);
+        });
+        await Pair.RunTicksSync(60 * 6);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(Vector2.Distance(Position(_pop), start), Is.LessThan(6f), "it has not run");
+#pragma warning disable CS0618
+            Assert.That(_entMan.System<Content.Shared.Damage.Systems.DamageableSystem>().GetTotalDamage(_enemy), Is.GreaterThan(Content.Shared.FixedPoint.FixedPoint2.Zero), "it has hit back");
+#pragma warning restore CS0618
+        });
+    }
 }

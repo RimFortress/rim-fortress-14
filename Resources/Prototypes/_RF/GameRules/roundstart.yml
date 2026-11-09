@@ -28,6 +28,7 @@
     - MentalBreakdownIdle
     # Safety
     - Flee
+    - DefendSelf
     # Executables
     - Dig
     - Chop

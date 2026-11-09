@@ -17,6 +17,7 @@
   - proto: Door
   - proto: Combat
   - proto: Flee
+  - proto: DefendSelf
   - proto: InventoryStorage
   - proto: Drop
   # Needs
