@@ -39,6 +39,8 @@
 - type: utilityAiGoal
   id: TakeOwnership
   color: "#075967"
+  conditions:
+  - CombatMode == false
   scoreCurves:
   - float: 0.8
   goalState:

@@ -41,10 +41,25 @@ public sealed partial class Melee : BaseGoapAction<Melee>
     public StateKey<int> MaxHitsKey = "MeleeMaxHits";
 
     /// <summary>
-    /// If true, combat mode will be disabled when the action is finished.
+    /// If true, the combat mode is put back as it was before the action when the action is over,
+    /// whatever it was (the one that the player has put on is not taken away,
+    /// and the one that was not on is not left behind). It is what the action does by default,
+    /// and it takes the place of <see cref="RemoveCombatMode"/>.
+    /// </summary>
+    [DataField]
+    public bool RestoreCombatMode = true;
+
+    /// <summary>
+    /// If true, combat mode will be disabled when the action is finished. Used when <see cref="RestoreCombatMode"/> is off.
     /// </summary>
     [DataField]
     public bool RemoveCombatMode = true;
+
+    /// <summary>
+    /// The key where the combat mode that the agent had when the action began is kept, for <see cref="RestoreCombatMode"/>.
+    /// </summary>
+    [DataField]
+    public StateKey<bool> CombatModeBeforeKey = "MeleeCombatModeBefore";
 
     /// <summary>
     /// How the agent moves in the fight besides coming up to the target, null if it just stands and hits. Without it the fight is
@@ -143,6 +158,7 @@ public sealed partial class MeleeActionSystem : GoapActionSystem<Melee>
             return false;
         }
 
+        Set(ent, action.CombatModeBeforeKey, _combatMode.IsInCombatMode(ent));
         _combatMode.SetInCombatMode(ent, true);
         return true;
     }
@@ -151,7 +167,14 @@ public sealed partial class MeleeActionSystem : GoapActionSystem<Melee>
     {
         Remove(ent, action.MaxHitsKey);
 
-        if (action.RemoveCombatMode)
+        if (action.RestoreCombatMode)
+        {
+            if (TryGet(ent, action.CombatModeBeforeKey, out var before))
+                _combatMode.SetInCombatMode(ent, before);
+
+            Remove(ent, action.CombatModeBeforeKey);
+        }
+        else if (action.RemoveCombatMode)
             _combatMode.SetInCombatMode(ent, false);
 
         _moveTo.Stop(ent);

@@ -235,6 +235,13 @@ public sealed partial class UtilityAiSystem : SharedUtilityAiSystem
 
         ent.Comp.NextCheck = Timing.CurTime + ent.Comp.BetterGoalCheckRate;
 
+        // Nothing is better than the best score there can be: a goal that has it is pursued until it is over, and it is not swapped for
+        // another goal that has it too, whichever of them is found first.
+        if (ent.Comp.CurrentGoal is { } current
+            && ConditionsMet(ent.Owner, current)
+            && GetScore(ent.AsNullable(), current) >= 1f)
+            return;
+
         if (!TryGetGoal(ent.AsNullable(), out var newGoal)
             || ent.Comp.CurrentGoal == newGoal)
             return;

@@ -89,8 +89,9 @@
   - Query/LowBloodLevelFriend == null
   - Query/DamageHealTarget == null
   - Query/HealingBuckleTarget == null
+  - CombatMode == false
   scoreCurves:
-  - float: 1
+  - float: 0.99
   goalState:
     HealingEngagementFinished: true
 
@@ -105,7 +106,8 @@
   id: PatientWaiting
   conditions:
   - Engagement/Healing/Role/HealedFriened/In == true
+  - CombatMode == false
   scoreCurves:
-  - float: 1
+  - float: 0.99
   goalState:
     PatientWaiting: true

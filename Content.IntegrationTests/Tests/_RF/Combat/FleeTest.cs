@@ -244,4 +244,107 @@ public sealed class FleeTest : GameTest
 #pragma warning restore CS0618
         });
     }
+
+    /// <summary>
+    /// The order of the player is carried out: the resident that is told to go somewhere in the combat mode goes there, and the other goals
+    /// that are as important as the order (the chores) do not take it over on the way.
+    /// </summary>
+    [Test]
+    public async Task TestOrderIsNotTakenOverByTheOtherGoals()
+    {
+        await Setup("MobHuman");
+        var destination = new EntityCoordinates(_grid, 40.5f, 52.5f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // Something to do besides the order: a mob of the same faction next to it.
+            _faction.ClearFactions(_enemy);
+            _faction.AddFaction(_enemy, "RimFortress");
+            _combat.SetInCombatMode(_pop, true);
+            Assert.That(_entMan.System<Content.Shared._RF.NPC.Executable.Systems.SharedExecutableGoalSystem>().TrySetGoal(_pop, "MoveTo", targetCoords: destination), Is.True);
+        });
+        await Pair.RunTicksSync(60 * 6);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_entMan.GetComponent<Content.Shared.CombatMode.CombatModeComponent>(_pop).IsInCombatMode, Is.True, "the combat mode is the player's");
+            Assert.That(Vector2.Distance(Position(_pop), _transform.ToWorldPosition(destination)), Is.LessThan(2f), "it has gone where it was told");
+        });
+    }
+
+    /// <summary>
+    /// The self-defense puts the combat mode back as it was: it is on for the fight only, if it was not on before it.
+    /// </summary>
+    [Test]
+    public async Task TestSelfDefenseLeavesNoCombatMode()
+    {
+        await Setup("Raider");
+
+        await Pair.Server.WaitPost(() =>
+        {
+            _transform.SetCoordinates(_enemy, new EntityCoordinates(_grid, 41.5f, 40.5f));
+            Assert.That(Pair.Server.System<Content.Shared._RF.Social.Systems.SocialSystem>().AddOpinionEffect(_pop, _enemy, "OpinionRecentlyAttacked"), Is.True);
+        });
+        var fighting = false;
+
+        for (var i = 0; i < 20 && !fighting; i++)
+        {
+            await Pair.RunTicksSync(6);
+            await Pair.Server.WaitPost(() => fighting = _entMan.GetComponent<Content.Shared.CombatMode.CombatModeComponent>(_pop).IsInCombatMode);
+        }
+
+        Assert.That(fighting, Is.True, "it is fighting");
+
+        // The one who has hit it is gone.
+        await Pair.Server.WaitPost(() => _transform.SetCoordinates(_enemy, new EntityCoordinates(_grid, 70.5f, 70.5f)));
+        await Pair.RunTicksSync(60 * 4);
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(_entMan.GetComponent<Content.Shared.CombatMode.CombatModeComponent>(_pop).IsInCombatMode, Is.False, "the fight is over"));
+    }
+
+    /// <summary>
+    /// The order that comes after a fight is carried out: the goals that are as important as the order and have no conditions (the chores)
+    /// do not take it over a moment after, whichever of them comes first.
+    /// </summary>
+    [Test]
+    public async Task TestOrderAfterAFightIsCarriedOut()
+    {
+        await Setup("Raider");
+        var destination = new EntityCoordinates(_grid, 40.5f, 52.5f);
+
+        // The player has put the combat mode on, and the raider that is next to the resident hits it.
+        await Pair.Server.WaitPost(() =>
+        {
+            _combat.SetInCombatMode(_pop, true);
+            _transform.SetCoordinates(_enemy, new EntityCoordinates(_grid, 41.5f, 40.5f));
+        });
+        await Pair.RunTicksSync(30);
+        await Pair.Server.WaitPost(() =>
+        {
+            var damage = new Content.Shared.Damage.DamageSpecifier();
+            damage.DamageDict["Blunt"] = 1;
+            _entMan.System<Content.Shared.Damage.Systems.DamageableSystem>().TryChangeDamage(_pop, damage, ignoreResistances: true, origin: _enemy);
+        });
+        await Pair.RunTicksSync(75);
+
+        // The order comes in the middle of it, and the raider is next to the resident all the way: the order is carried out, and the goal that
+        // is found anew is not the fight.
+        await Pair.Server.WaitPost(() =>
+            Assert.That(_entMan.System<Content.Shared._RF.NPC.Executable.Systems.SharedExecutableGoalSystem>().TrySetGoal(_pop, "MoveTo", targetCoords: destination), Is.True));
+
+        for (var i = 0; i < 12; i++)
+        {
+            await Pair.RunTicksSync(30);
+            await Pair.Server.WaitAssertion(() =>
+            {
+                var goal = _entMan.GetComponent<Content.Shared._RF.NPC.UtilityAi.Components.UtilityAiComponent>(_pop).CurrentGoal?.Id;
+                var done = Vector2.Distance(Position(_pop), _transform.ToWorldPosition(destination)) < 2f;
+                Assert.That(goal == "MoveTo" || done || goal == null, Is.True, $"nothing takes the order over ({goal})");
+            });
+        }
+
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(_entMan.GetComponent<Content.Shared.CombatMode.CombatModeComponent>(_pop).IsInCombatMode, Is.True, "the combat mode is the player's"));
+    }
 }

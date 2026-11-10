@@ -55,7 +55,8 @@
   color: "#D3D3D3"
   conditions:
   - InConversation == true
+  - CombatMode == false
   scoreCurves:
-  - float: 1
+  - float: 0.99
   goalState:
     ConversationFinished: true
