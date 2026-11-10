@@ -108,10 +108,41 @@ public sealed class FleeTest : GameTest
             _combat.SetInCombatMode(_pop, true);
             start = Position(_pop);
         });
+        await Pair.RunTicksSync(60 * 5);
+
+        // It does not run from the enemy, and does not go for it: it stands where it is until the player says what to do.
+        await Pair.Server.WaitAssertion(() =>
+            Assert.That(Vector2.Distance(Position(_pop), start), Is.LessThan(1.5f), "it stands"));
+    }
+
+    /// <summary>
+    /// An agent in the combat mode that has no order stands still: no self-defense, no flight, no going for the enemies it sees, even when
+    /// one hits it; it fights the target that it is given.
+    /// </summary>
+    [Test]
+    public async Task TestResidentInCombatModeStandsAndFightsTheGivenTarget()
+    {
+        await Setup("Raider");
+        var start = Vector2.Zero;
+        await Pair.Server.WaitPost(() =>
+        {
+            _faction.ClearFactions(_enemy);
+            _faction.AddFaction(_enemy, "RimFortress");
+            _combat.SetInCombatMode(_pop, true);
+            _transform.SetCoordinates(_enemy, new EntityCoordinates(_grid, 46.5f, 40.5f));
+            start = Position(_pop);
+        });
+        await Pair.RunTicksSync(30);
+        await Pair.Server.WaitPost(() =>
+        {
+            var damage = new Content.Shared.Damage.DamageSpecifier();
+            damage.DamageDict["Blunt"] = 1;
+            _entMan.System<Content.Shared.Damage.Systems.DamageableSystem>().TryChangeDamage(_pop, damage, ignoreResistances: true, origin: _enemy);
+        });
         await Pair.RunTicksSync(60 * 4);
 
         await Pair.Server.WaitAssertion(() =>
-            Assert.That(Vector2.Distance(Position(_pop), start), Is.LessThan(6f), "it stands and fights"));
+            Assert.That(Vector2.Distance(Position(_pop), start), Is.LessThan(1.5f), "it stands, there is no order"));
     }
 
     /// <summary>
