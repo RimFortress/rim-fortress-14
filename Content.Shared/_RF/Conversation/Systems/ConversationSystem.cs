@@ -171,8 +171,8 @@ public sealed partial class ConversationSystem : EntitySystem
                     continue;
 
                 actor.TargetFaceTo = firstActors.Contains(uid)
-                    ? GetRotatePosition(ent.Comp, comp)
-                    : ConversationCenter(comp);
+                    ? GetRotatePosition(ent.Comp, comp, uid)
+                    : ConversationCenter(comp, uid);
             }
         }
     }
@@ -204,12 +204,12 @@ public sealed partial class ConversationSystem : EntitySystem
         }
     }
 
-    private Vector2 GetRotatePosition(ConversationComponent conv, EngagementComponent engage)
+    private Vector2 GetRotatePosition(ConversationComponent conv, EngagementComponent engage, EntityUid actor)
     {
         switch (conv.Order)
         {
             case ConversationBasicOrderType:
-                return ConversationCenter(engage);
+                return ConversationCenter(engage, actor);
             case ConversationCustomOrderType custom:
                 var msg = custom.Custom[conv.NextMessage];
 
@@ -217,7 +217,7 @@ public sealed partial class ConversationSystem : EntitySystem
                     return Transform(conv.NextActors.First()).Coordinates.Position + msg.FaceDir.Value;
 
                 if (msg.FaceTo == null)
-                    return ConversationCenter(engage);
+                    return ConversationCenter(engage, actor);
 
                 return Transform(engage.Actors[msg.FaceTo.Value].First()).Coordinates.Position;
             default:
@@ -225,7 +225,11 @@ public sealed partial class ConversationSystem : EntitySystem
         }
     }
 
-    private Vector2 ConversationCenter(EngagementComponent comp)
+    /// <summary>
+    /// The middle of the other participants, which is where an actor faces when it has nobody in particular to face: not of all of them
+    /// together with itself, the actor that has come to the place of the conversation would face the middle that is behind it.
+    /// </summary>
+    private Vector2 ConversationCenter(EngagementComponent comp, EntityUid actor)
     {
         var pos = Vector2.Zero;
         var count = 0;
@@ -234,13 +238,33 @@ public sealed partial class ConversationSystem : EntitySystem
         {
             foreach (var uid in uids)
             {
+                if (uid == actor)
+                    continue;
+
                 pos += Transform(uid).Coordinates.Position;
                 count++;
             }
         }
 
-        pos /= count;
-        return pos;
+        // Nobody else: where the actor is, the face is left as it is.
+        return count == 0 ? Transform(actor).Coordinates.Position : pos / count;
+    }
+
+    /// <summary>
+    /// Works out where the actor faces now, by where the others are now, and not by where they were when the conversation began: the
+    /// participants walk to the place of the conversation and meet there, so what they were to face when it began is not where it is when they
+    /// have come, and the one who has come the farthest would turn its back on the others.
+    /// </summary>
+    [PublicAPI]
+    public void RefreshFaceTo(Entity<ConversationActorComponent?> ent)
+    {
+        if (!Resolve(ent, ref ent.Comp, false)
+            || !TryGetConversation(ent, out var conv))
+            return;
+
+        ent.Comp.TargetFaceTo = conv.Value.Comp1.NextActors.Contains(ent.Owner)
+            ? GetRotatePosition(conv.Value.Comp1, conv.Value.Comp2, ent.Owner)
+            : ConversationCenter(conv.Value.Comp2, ent.Owner);
     }
 
     private bool ValidateConversation(Entity<ConversationComponent, EngagementComponent> ent)
@@ -416,7 +440,7 @@ public sealed partial class ConversationSystem : EntitySystem
                 actor.TargetRangeKey = GoapState.MovementRange;
             }
 
-            actor.TargetFaceTo = GetRotatePosition(comp, conv.Value.Comp2);
+            actor.TargetFaceTo = GetRotatePosition(comp, conv.Value.Comp2, uid);
         }
     }
 

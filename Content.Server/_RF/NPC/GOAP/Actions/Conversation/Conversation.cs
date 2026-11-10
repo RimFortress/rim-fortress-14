@@ -80,6 +80,9 @@ public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conv
             return result;
         }
 
+
+        _conversation.RefreshFaceTo(actor);
+
         if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {
             CreateDump("failed to face to the target coordinates");
@@ -92,6 +95,8 @@ public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conv
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
+
+        _conversation.RefreshFaceTo(actor);
 
         if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {
