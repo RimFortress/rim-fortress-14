@@ -129,17 +129,69 @@ public sealed partial class ConversationSystem : EntitySystem
         if (!_engagementQuery.TryComp(ent, out var comp))
             return;
 
+        var actors = new List<EntityUid>();
+
         foreach (var (_, uids) in comp.Actors)
         {
             foreach (var uid in uids)
             {
-                var actor = EnsureComp<ConversationActorComponent>(uid);
-                actor.Conversation = ent;
-                actor.Ready = false;
+                // The initiator is the first, the one that finds the place for the others goes by its profiles.
+                if (uid == comp.Initiator)
+                    actors.Insert(0, uid);
+                else
+                    actors.Add(uid);
+            }
+        }
+
+        // The place is found now that everybody is known, and not when the first one has joined.
+        var place = FindPlace(ent, actors);
+
+        foreach (var uid in actors)
+        {
+            var actor = EnsureComp<ConversationActorComponent>(uid);
+            actor.Conversation = ent;
+            actor.Ready = false;
+
+            if (place.Spots.TryGetValue(uid, out var spot))
+            {
+                // Each has its own spot, and comes up to it: the range of the whole place would let all of them stop in a crowd.
+                actor.TargetPos = spot;
+                actor.TargetRangeKey = GoapState.ConversationSpotRange;
+            }
+            else
+            {
                 actor.TargetPos = ent.Comp.StartPosition;
                 actor.TargetRangeKey = GoapState.ConversationRange;
             }
         }
+    }
+
+    /// <summary>
+    /// Asks for the place of the conversation, and keeps the center of it as the start position if there is one.
+    /// </summary>
+    private ConversationPlaceEvent FindPlace(Entity<ConversationComponent> ent, List<EntityUid> actors)
+    {
+        var parent = actors.Count > 0 ? Transform(actors[0]).ParentUid : EntityUid.Invalid;
+        var sum = Vector2.Zero;
+        var count = 0;
+
+        foreach (var uid in actors)
+        {
+            if (Transform(uid).ParentUid != parent)
+                continue;
+
+            sum += Transform(uid).Coordinates.Position;
+            count++;
+        }
+
+        var preferred = count == 0 ? ent.Comp.StartPosition : new EntityCoordinates(parent, sum / count);
+        var place = new ConversationPlaceEvent(preferred, actors);
+        RaiseLocalEvent(ent, ref place);
+
+        if (place.Handled)
+            ent.Comp.StartPosition = place.Center;
+
+        return place;
     }
 
     /// <summary>

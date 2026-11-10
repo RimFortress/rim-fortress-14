@@ -3,9 +3,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Robust.Shared.Map.Components;
 using Content.Shared._RF.CCVar;
-using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP.Components;
-using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
@@ -22,8 +20,6 @@ namespace Content.Server._RF.NPC.Pathfinding.Systems;
 public sealed partial class RfPathfindingSystem
 {
     [Dependency] private IConfigurationManager _cfg = null!;
-    [Dependency] private SharedGoapSystem _goap = null!;
-    [Dependency] private MathCurvesSystem _curves = null!;
 
     // All of the searches are run by one queue, so together they never take more than their share of a tick.
     private readonly PathJobQueue _jobs = new();

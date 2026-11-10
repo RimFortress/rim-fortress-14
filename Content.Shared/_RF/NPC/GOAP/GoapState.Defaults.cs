@@ -127,6 +127,13 @@ public partial class GoapState
     public static readonly StateKey<float> ConversationRange = RegisterDefault("ConversationRange", 2.5f);
 
     /// <summary>
+    /// How close to the spot of its own at a conversation (see <c>ConversationPlaceEvent</c>) a participant comes. It is not the range of the
+    /// whole place: that would let all of them stop in a crowd at its edge; and it is not tight, an agent that is to stop in a few centimeters
+    /// creeps up to the spot for a long time.
+    /// </summary>
+    public static readonly StateKey<float> ConversationSpotRange = RegisterDefault("ConversationSpotRange", 0.5f);
+
+    /// <summary>
     /// Default key for storing the action queue.
     /// </summary>
     public static readonly StateKey<List<(TimeSpan Time, Func<bool>? Act)>> WaitActionsQueue = "WaitActionsQueue";

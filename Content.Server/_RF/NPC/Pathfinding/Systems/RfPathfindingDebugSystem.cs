@@ -3,14 +3,13 @@ using System.Numerics;
 using System.Text;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Server.Administration.Managers;
-using Content.Shared._RF.Combat;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Pathfinding;
 using Content.Shared._RF.NPC.Pathfinding.Components;
 using Content.Shared._RF.NPC.Pathfinding.Prototypes;
+using Content.Shared._RF.NPC.Pathfinding.Systems;
 using Content.Shared.Administration;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Physics;
 using Robust.Shared.Physics;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
@@ -53,7 +52,7 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
     [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery;
     [Dependency] private EntityQuery<PathProfilesComponent> _profilesQuery;
     [Dependency] private EntityQuery<GoapComponent> _goapQuery;
-    [Dependency] private EntityQuery<RfSteererComponent> _steererQuery;
+    [Dependency] private EntityQuery<RfSteeringComponent> _steeeringQuery;
 
     [SubscribeNetworkEvent]
     private void OnRequest(PathDebugRequest msg, EntitySessionEventArgs args)
@@ -116,8 +115,8 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
         foreach (var (origin, chunk) in map.Chunks)
         {
             var chunkBox = Box2.FromDimensions(
-                origin * Content.Shared._RF.NPC.Pathfinding.Systems.SharedRfPathfindingSystem.ChunkSize,
-                Content.Shared._RF.NPC.Pathfinding.Systems.SharedRfPathfindingSystem.ChunkSizeVec);
+                origin * SharedRfPathfindingSystem.ChunkSize,
+                SharedRfPathfindingSystem.ChunkSizeVec);
 
             if (!chunkBox.Intersects(local))
                 continue;
@@ -238,39 +237,6 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
     }
 
     /// <summary>
-    /// What the rules of the request that an agent has are, to give them back.
-    /// </summary>
-    private sealed record Saved(
-        ProtoId<PathProfilePrototype>? Profile,
-        ProtoId<PathQueryPrototype>? Query,
-        List<PathfindingRule> Rules,
-        List<PathfindingRule> DynamicRules,
-        PathDynamicInfluence? Dynamic,
-        List<CombatAttack> Attacks);
-
-    private static Saved Save(PathProfilesComponent comp)
-        => new(
-            comp.ActiveProfile,
-            comp.ActiveQuery,
-            new List<PathfindingRule>(comp.ActiveRules),
-            new List<PathfindingRule>(comp.ActiveDynamicRules),
-            comp.Dynamic,
-            new List<CombatAttack>(comp.Attacks));
-
-    private static void Restore(PathProfilesComponent comp, Saved saved)
-    {
-        comp.ActiveProfile = saved.Profile;
-        comp.ActiveQuery = saved.Query;
-        comp.ActiveRules.Clear();
-        comp.ActiveRules.AddRange(saved.Rules);
-        comp.ActiveDynamicRules.Clear();
-        comp.ActiveDynamicRules.AddRange(saved.DynamicRules);
-        comp.Dynamic = saved.Dynamic;
-        comp.Attacks.Clear();
-        comp.Attacks.AddRange(saved.Attacks);
-    }
-
-    /// <summary>
     /// Starts a request of the agent with the profile and the query that are asked for, to evaluate the nodes by its rules. It is
     /// the request that the agent has, so what it had is to be given back (see <see cref="Restore"/>): everything is done at once and
     /// nothing else works with the agent in the meantime, so a search of the agent does not see it.
@@ -330,7 +296,7 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
 
     private void BuildCost(PathDebugRequest msg, List<PathDebugGrid> grids, StringBuilder info)
     {
-        var saved = FindAgent(msg) is { } who && _profilesQuery.TryComp(who, out var own) ? Save(own) : null;
+        var saved = FindAgent(msg) is { } who && _profilesQuery.TryComp(who, out var own) ? _pathfinding.SaveRequest(own) : null;
 
         try
         {
@@ -339,7 +305,7 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
         finally
         {
             if (saved != null && FindAgent(msg) is { } who2 && _profilesQuery.TryComp(who2, out var own2))
-                Restore(own2, saved);
+                _pathfinding.RestoreRequest(own2, saved);
         }
     }
 
@@ -434,8 +400,6 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
     private void BuildRoutes(PathDebugRequest msg, List<PathDebugRoute> routes, StringBuilder info)
     {
         var query = AllEntityQuery<RfSteererComponent, TransformComponent>();
-        var steering = GetEntityQuery<RfSteeringComponent>();
-        var profiles = GetEntityQuery<PathProfilesComponent>();
 
         while (query.MoveNext(out var uid, out var steerer, out var xform))
         {
@@ -454,11 +418,11 @@ public sealed partial class RfPathfindingDebugSystem : EntitySystem
             if (msg.Profile != null && steerer.PathProfile?.Id != msg.Profile)
                 continue;
 
-            var hasSteering = steering.TryGetComponent(uid, out var steer);
+            var hasSteering = _steeeringQuery.TryGetComponent(uid, out var steer);
             var nodes = new List<Vector2>();
             var goals = new List<PathDebugGoal>();
             var avoid = new List<PathDebugAvoid>();
-            var graph = EntityUid.Invalid;
+            EntityUid graph;
 
             if (hasSteering)
             {
