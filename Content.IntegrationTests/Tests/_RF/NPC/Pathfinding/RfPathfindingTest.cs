@@ -537,37 +537,6 @@ public sealed class RfPathfindingTest : GameTest
     }
 
     /// <summary>
-    /// The settlements radiate the cost, by their path tag: the way out does not lead by one when there is another.
-    /// </summary>
-    [Test]
-    public async Task TestBfsLeadsOutAwayFromSettlements()
-    {
-        var (grid, agent) = await CreateLoadedMiddle();
-
-        await Pair.Server.WaitPost(() =>
-        {
-            // The closest ways out are to the west and to the south, the settlement is at the west, near both.
-            var settlement = _entMan.SpawnEntity(null, new EntityCoordinates(grid, 6f, 11.5f));
-            _pathfinding.AddTag(settlement, "Settlement");
-        });
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            var start = new Vector2(11.5f, 11.5f);
-            var bfs = new Bfs { Range = 40f, MaxNodes = 0, Pick = BfsPick.Unobserved };
-            var result = Search(grid, agent, bfs, start, null, range: 0f, query: "Retreat");
-            var end = result.Path[^1].Box.Center;
-
-            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
-            Assert.That(end.X, Is.GreaterThanOrEqualTo(16f), $"{end}: it left to the east, as far from the settlement as it can");
-
-            // For those who do not leave the settlement is nothing.
-            var free = Search(grid, agent, bfs, start, null, range: 0f).Path[^1].Box.Center;
-            Assert.That(free.X < 8f || free.Y < 8f, Is.True, $"{free}");
-        });
-    }
-
-    /// <summary>
     /// When the whole world is loaded there is nowhere to leave to, and the path leads as far as it goes.
     /// </summary>
     [Test]

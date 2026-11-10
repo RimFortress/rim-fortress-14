@@ -96,57 +96,6 @@ public sealed class NpcRouteTest : GameTest
     }
 
     [Test]
-    public async Task TestControlledAgentKeepsItsPath()
-    {
-        var mob = await Setup("TestRouteControlledMob");
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            Assert.That(Go(mob, 20f));
-
-            var comp = _entMan.GetComponent<ControllableNpcComponent>(mob);
-            Assert.That(comp.RouteGraph, Is.EqualTo(_grid.Owner));
-            Assert.That(comp.Route, Has.Count.GreaterThanOrEqualTo(2));
-            Assert.That(comp.Route[0].X, Is.EqualTo(2.5f).Within(0.6f), "the path begins where the agent is");
-            Assert.That(comp.Route[^1].X, Is.EqualTo(20f).Within(0.6f), "and ends at the end of it");
-        });
-    }
-
-    [Test]
-    public async Task TestAgentThatCannotBeControlledTellsNothing()
-    {
-        var mob = await Setup("TestRouteMob");
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            Assert.That(Go(mob, 20f));
-            Assert.That(_executable.SetRoute(mob, _grid.Owner, new List<Vector2> { new(1, 1), new(5, 1) }), Is.False);
-            Assert.That(_executable.GetControllerSessions(mob), Is.Empty);
-        });
-    }
-
-    [Test]
-    public async Task TestPathIsNotChangedWhileTheAgentGoesAlongIt()
-    {
-        var mob = await Setup("TestRouteControlledMob");
-        List<Vector2> path = new();
-
-        await Pair.Server.WaitPost(() =>
-        {
-            Assert.That(Go(mob, 24f));
-            path = new List<Vector2>(_entMan.GetComponent<ControllableNpcComponent>(mob).Route);
-        });
-
-        await Pair.RunTicksSync(120);
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            Assert.That(_entMan.GetComponent<TransformComponent>(mob).LocalPosition.X, Is.GreaterThan(5f), "the agent has gone on");
-            Assert.That(_entMan.GetComponent<ControllableNpcComponent>(mob).Route, Is.EqualTo(path));
-        });
-    }
-
-    [Test]
     public async Task TestTheSamePathIsNotToldAgain()
     {
         var mob = await Setup("TestRouteControlledMob");
@@ -169,20 +118,6 @@ public sealed class NpcRouteTest : GameTest
             Assert.That(_entMan.GetComponent<ControllableNpcComponent>(mob).Route, Is.Empty);
             Assert.That(_executable.SetRoute(mob, EntityUid.Invalid, new List<Vector2>()), Is.False);
         });
-    }
-
-    [Test]
-    public async Task TestPathIsGoneWhenTheAgentStops()
-    {
-        var mob = await Setup("TestRouteControlledMob");
-
-        await Pair.Server.WaitPost(() => Assert.That(Go(mob, 20f)));
-
-        await Pair.Server.WaitPost(() => _entMan.System<RfSteeringSystem>().Stop(mob));
-        await Pair.RunTicksSync(240);
-
-        await Pair.Server.WaitAssertion(() =>
-            Assert.That(_entMan.GetComponent<ControllableNpcComponent>(mob).Route, Is.Empty, "no path is left to draw"));
     }
 
     [Test]

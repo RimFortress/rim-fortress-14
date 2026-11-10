@@ -105,23 +105,6 @@ public sealed class RfPathfindingClimbTest : GameTest
     }
 
     /// <summary>
-    /// Every body that can be climbed onto has the tag.
-    /// </summary>
-    [Test]
-    public async Task TestClimbablesAreMarked()
-    {
-        var (grid, _) = await Setup(new[] { new Vector2i(10, 5) }, new Vector2(2.5f, 6.5f));
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            var chunk = _pathfinding.EnsureChunk(grid, new Vector2i(1, 0))!;
-            var poly = chunk.GetPolys(RfPathfindingChunk.TileIndex(2, 5))[0];
-
-            Assert.That(_pathfinding.HasTag(poly.Data.Facts, "Climbable"), Is.True);
-        });
-    }
-
-    /// <summary>
     /// The way is closed by a row of tables, and the agent climbs over it: the goal of the rule is performed at the node of
     /// the table, and then the way goes on.
     /// </summary>

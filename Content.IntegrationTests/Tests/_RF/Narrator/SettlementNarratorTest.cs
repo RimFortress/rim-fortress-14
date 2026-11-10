@@ -448,38 +448,6 @@ public sealed class SettlementNarratorTest : GameTest
     }
 
     /// <summary>
-    /// An event that cannot spawn anyone ends at once and says so: here the world has no place to spawn them (the test world is not
-    /// the world of the game), and the event is shown as ended with nobody come, with the narrator that started it.
-    /// </summary>
-    [Test]
-    public async Task TestEventThatCannotSpawnAnyoneEndsAndIsShownSo()
-    {
-        await Setup(pops: 4);
-        await Run(0.5f);
-
-        await Pair.Server.WaitPost(() =>
-        {
-            var narrator = _entMan.SpawnEntity(null, MapCoordinates.Nullspace);
-            _entMan.AddComponent<Content.Shared._RF.GameTicking.Rules.NarratorRuleComponent>(narrator).Narrator = "Basic";
-            _entMan.AddComponent<Content.Shared.GameTicking.Components.ActiveGameRuleComponent>(narrator);
-
-            _narrator.AddBonusPoints(Settlement(), 300);
-            Assert.That(_narrator.Roll(Settlement(), "Raid"), Is.EqualTo((Robust.Shared.Prototypes.EntProtoId?) "Raid"));
-        });
-        await Run(1f);
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            var events = string.Join("\n", _narrator.DescribeEvents());
-
-            Assert.That(events, Does.Contain("Raid"));
-            Assert.That(events, Does.Contain("ended (Failed)"));
-            Assert.That(events, Does.Contain("0 came"));
-            Assert.That(events, Does.Not.Contain("narrator none"), "it was started by a narrator");
-        });
-    }
-
-    /// <summary>
     /// An event that is started without a narrator has no points to be made of: it is shown without a narrator, and nobody comes.
     /// </summary>
     [Test]

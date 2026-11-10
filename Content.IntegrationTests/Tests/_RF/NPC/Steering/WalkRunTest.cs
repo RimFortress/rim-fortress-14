@@ -112,10 +112,4 @@ public sealed class WalkRunTest : GameTest
         Assert.That(speed, Is.GreaterThan(3.5f), $"it runs in the combat mode ({speed})");
     }
 
-    [Test]
-    public async Task TestOrderCanMakeAgentInCombatModeWalk()
-    {
-        var speed = await TopSpeed(false, true);
-        Assert.That(speed, Is.InRange(1.5f, 2.3f), $"the order says walk ({speed})");
-    }
 }

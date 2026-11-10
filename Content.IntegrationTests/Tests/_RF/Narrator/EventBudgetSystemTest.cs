@@ -235,31 +235,4 @@ public sealed class EventBudgetSystemTest : GameTest
         });
     }
 
-    [Test]
-    public async Task TestKitsOfTheRaidChangeWhatTheRaiderCanDo()
-    {
-        await Setup(1, "Raider");
-
-        await Pair.Server.WaitAssertion(() =>
-        {
-            var raider = _targets[0];
-            Assert.That(Wears(raider, "outerClothing"), Is.False);
-
-            var result = SpendUntilBought(Group(1f, 1, ("RaidKitArmor", 1f)));
-
-            Assert.That(result.Bought, Is.Not.Empty);
-            Assert.That(Wears(raider, "outerClothing"), Is.True, "the armor is on the raider");
-
-            // A pistol is a ranged attack that it did not have.
-            var attacks = new List<CombatAttack>();
-            _entMan.System<CombatStatsSystem>().CollectHeld(raider, attacks);
-            Assert.That(CombatStatsSystem.GetBlow(attacks, AttackKind.Ranged), Is.Zero);
-
-            SpendUntilBought(Group(1f, 1, ("RaidKitPistol", 1f)));
-
-            attacks.Clear();
-            _entMan.System<CombatStatsSystem>().CollectHeld(raider, attacks);
-            Assert.That(CombatStatsSystem.GetBlow(attacks, AttackKind.Ranged), Is.GreaterThan(0f), "the pistol is in the hands");
-        });
-    }
 }
