@@ -47,7 +47,8 @@ public sealed partial class RfSteeringSystem
             || !IsFloor(poly.Data))
             return false;
 
-        EnsureComp<RfSteererComponent>(agent);
+        // A step is made in a fight, and it is a quick one.
+        EnsureComp<RfSteererComponent>(agent).Sprint = true;
 
         var path = new List<PathNodeRef>
         {

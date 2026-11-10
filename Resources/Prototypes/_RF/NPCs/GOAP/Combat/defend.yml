@@ -13,6 +13,7 @@
     - !type:MoveTo
       targetEntityKey: Query/Aggressor
       rangeKey: MeleeRange
+      sprint: true
     - !type:Melee
       targetKey: Query/Aggressor
       footwork: {}

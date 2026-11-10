@@ -3,6 +3,7 @@ using System.Numerics;
 using Content.Server._RF.NPC.Steering.Components;
 using Content.Shared._RF.NPC.Executable.Systems;
 using Content.Shared._RF.NPC.Pathfinding;
+using Content.Shared.CombatMode;
 using Content.Shared.Interaction;
 using Content.Shared.Maps;
 using Content.Shared.Movement.Components;
@@ -38,6 +39,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
     [Dependency] private ITileDefinitionManager _tileDefs = null!;
     [Dependency] private SharedInteractionSystem _interaction = null!;
     [Dependency] private SharedPhysicsSystem _physics = null!;
+    [Dependency] private SharedCombatModeSystem _combatMode = null!;
 
     [Dependency] private EntityQuery<MapGridComponent> _gridQuery;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
@@ -46,7 +48,8 @@ public sealed partial class RfSteeringSystem : EntitySystem
     [Dependency] private EntityQuery<MovementSpeedModifierComponent> _modifierQuery;
 
     // If the agent has no modifier, it moves like a mob without any.
-    private const float DefaultSpeed = MovementSpeedModifierComponent.DefaultBaseSprintSpeed;
+    private const float DefaultSprintSpeed = MovementSpeedModifierComponent.DefaultBaseSprintSpeed;
+    private const float DefaultWalkSpeed = MovementSpeedModifierComponent.DefaultBaseWalkSpeed;
     private const float MinBrake = 1f;
 
     // The share of the full speed at which a right-angle turn is taken, the turn is slower the sharper it is.
@@ -104,6 +107,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
             return;
 
         mover.CurTickSprintMovement = Vector2.Zero;
+        mover.CurTickWalkMovement = Vector2.Zero;
 
         if (ent.Comp.AddedNoRotate)
             RemComp<NoRotateOnMoveComponent>(ent);
@@ -127,11 +131,14 @@ public sealed partial class RfSteeringSystem : EntitySystem
             if (steering.Status == RfSteeringStatus.Moving)
                 steering.Status = xform.ParentUid != steering.Graph ? RfSteeringStatus.OffPath : RfSteeringStatus.Stuck;
 
-            SetInput(mover, Vector2.Zero, tick);
+            SetInput(mover, Vector2.Zero, tick, steering.Sprint);
             return;
         }
 
         _modifierQuery.TryComp(uid, out var modifier);
+
+        // The agent walks, and runs when the order says so, or when it is in the combat mode and the order has nothing to say about it.
+        steering.Sprint = steerer.Sprint ?? _combatMode.IsInCombatMode(uid);
 
         // The input is given in the frame of the grid the mob stands on, and so are the positions.
         var frame = -_mover.GetParentGridAngle(mover);
@@ -159,7 +166,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
         steering.LastVelocity = velocity;
         steering.LastInput = input;
-        SetInput(mover, input, tick);
+        SetInput(mover, input, tick, steering.Sprint);
     }
 
     /// <summary>
@@ -300,7 +307,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
         // Near the end the speed is proportional to the distance: the root alone is infinitely steep there and
         // the agent would flip between full speed forward and back every tick.
         var approach = steerer.ApproachGain / (Math.Max(steerer.UpdateInterval, 1) * Math.Max(frameTime, 0.001f));
-        var speed = Math.Min(GetSpeed(modifier), Math.Min(MathF.Sqrt(2f * brake * left), left * approach));
+        var speed = Math.Min(GetSpeed(modifier, steering.Sprint), Math.Min(MathF.Sqrt(2f * brake * left), left * approach));
 
         var toAim = aim - pos;
         var distance = toAim.Length();
@@ -313,7 +320,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
 
             if (cosine < 0.95f)
             {
-                var turn = GetSpeed(modifier) * (CornerSpeed + (1f - CornerSpeed) * Math.Max(cosine, 0f));
+                var turn = GetSpeed(modifier, steering.Sprint) * (CornerSpeed + (1f - CornerSpeed) * Math.Max(cosine, 0f));
                 speed = Math.Min(speed, MathF.Sqrt(turn * turn + 2f * brake * distance));
             }
         }
@@ -452,7 +459,7 @@ public sealed partial class RfSteeringSystem : EntitySystem
             var along = Vector2.Dot(velocity, direction);
             var across = velocity - direction * along;
 
-            input = steering.Desired / GetSpeed(modifier);
+            input = steering.Desired / GetSpeed(modifier, steering.Sprint);
 
             if (along - length > OverSpeed)
                 input -= direction * ((along - length) / perTick * steerer.Gain);
@@ -491,12 +498,17 @@ public sealed partial class RfSteeringSystem : EntitySystem
         steering.Samples++;
     }
 
-    private static float GetSpeed(MovementSpeedModifierComponent? modifier)
-        => modifier?.CurrentSprintSpeed is > 0f and var speed ? speed : DefaultSpeed;
+    private static float GetSpeed(MovementSpeedModifierComponent? modifier, bool sprint) => sprint
+        ? modifier?.CurrentSprintSpeed is > 0f and var run ? run : DefaultSprintSpeed
+        : modifier?.CurrentWalkSpeed is > 0f and var walk
+            ? walk
+            : DefaultWalkSpeed;
 
-    private static void SetInput(InputMoverComponent mover, Vector2 input, GameTick tick)
+    // The input of a walk and the input of a run are different ones for the mover, each is given a speed of its own.
+    private static void SetInput(InputMoverComponent mover, Vector2 input, GameTick tick, bool sprint)
     {
-        mover.CurTickSprintMovement = input;
+        mover.CurTickSprintMovement = sprint ? input : Vector2.Zero;
+        mover.CurTickWalkMovement = sprint ? Vector2.Zero : input;
         mover.LastInputTick = tick;
         mover.LastInputSubTick = ushort.MaxValue;
     }

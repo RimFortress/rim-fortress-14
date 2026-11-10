@@ -1,6 +1,5 @@
 #nullable enable
 using System.Collections.Generic;
-using System.Numerics;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
 using Content.Server._RF.NPC.Steering.Components;
@@ -111,6 +110,9 @@ public sealed class RfSteeringTest : GameTest
         }
 
         _entMan.GetComponent<RfSteererComponent>(mob).UpdateInterval = interval;
+
+        // The tests are about the steering at the speed of a run, the walk is the business of WalkRunTest.
+        _entMan.GetComponent<RfSteererComponent>(mob).Sprint = true;
 
         var coordinates = new EntityCoordinates(_grid, endX, 1.5f);
         var result = new PathSearchResult(PathSearchStatus.Path, path, new());

@@ -143,6 +143,8 @@ public sealed partial class RfSteeringSystem
     /// <param name="range">How close to the target the agent needs to get.</param>
     /// <param name="stopOnSight">Is it enough for the agent to see the target for a while to have got there.</param>
     /// <param name="query">What the path is searched for with, null for the default of the agent.</param>
+    /// <param name="avoid">The places that the path keeps away from.</param>
+    /// <param name="sprint">True to run, false to walk, null for the default: running in the combat mode, walking otherwise.</param>
     /// <returns>
     /// <see cref="GoapActionResult.Continuing"/> while the agent is on the way,
     /// <see cref="GoapActionResult.Finished"/> when it has got there and stopped,
@@ -155,8 +157,9 @@ public sealed partial class RfSteeringSystem
         float range,
         bool stopOnSight = false,
         ProtoId<PathQueryPrototype>? query = null,
-        IReadOnlyList<PathAvoid>? avoid = null)
-        => Move(agent, target, null, range, stopOnSight, query, avoid);
+        IReadOnlyList<PathAvoid>? avoid = null,
+        bool? sprint = null)
+        => Move(agent, target, null, range, stopOnSight, query, avoid, sprint);
 
     /// <summary>
     /// Carries out the order to get to the entity. The range is counted from the region the entity takes up and not
@@ -171,10 +174,11 @@ public sealed partial class RfSteeringSystem
         float range,
         bool stopOnSight = false,
         ProtoId<PathQueryPrototype>? query = null,
-        IReadOnlyList<PathAvoid>? avoid = null)
+        IReadOnlyList<PathAvoid>? avoid = null,
+        bool? sprint = null)
         => TerminatingOrDeleted(target)
             ? GoapActionResult.Failed
-            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight, query, avoid);
+            : Move(agent, Transform(target).Coordinates, target, range, stopOnSight, query, avoid, sprint);
 
     private GoapActionResult Move(
         Entity<GoapComponent> agent,
@@ -183,12 +187,16 @@ public sealed partial class RfSteeringSystem
         float range,
         bool stopOnSight,
         ProtoId<PathQueryPrototype>? query,
-        IReadOnlyList<PathAvoid>? avoid)
+        IReadOnlyList<PathAvoid>? avoid,
+        bool? sprint)
     {
         if (!_profilesQuery.TryComp(agent, out var profiles))
             return GoapActionResult.Failed;
 
         var steerer = EnsureComp<RfSteererComponent>(agent);
+
+        // How the order is carried out: at a run, at a walk, or as the agent does it by default.
+        steerer.Sprint = sprint;
 
         // The places the order keeps away from, they are the order's and the agent can have different ones every time it is asked.
         steerer.OrderAvoid.Clear();

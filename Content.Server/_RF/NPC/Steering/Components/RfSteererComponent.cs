@@ -139,6 +139,12 @@ public sealed partial class RfSteererComponent : Component
     public List<PathAvoid> Avoid = new();
 
     /// <summary>
+    /// Whether the order is carried out at a run (true) or at a walk (false); null if the order has nothing to say about it, then the agent
+    /// runs when it is in the combat mode and walks when it is not.
+    /// </summary>
+    public bool? Sprint;
+
+    /// <summary>
     /// The places that the order keeps away from for as long as it lasts, such as the enemies that the agent runs from (see
     /// <see cref="Avoid"/>, which are the places where it got stuck). They are given with the order every time.
     /// </summary>

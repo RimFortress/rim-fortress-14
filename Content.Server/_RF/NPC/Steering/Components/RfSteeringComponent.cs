@@ -15,6 +15,13 @@ namespace Content.Server._RF.NPC.Steering.Components;
 public sealed partial class RfSteeringComponent : Component
 {
     /// <summary>
+    /// Whether the agent runs now (the input of a run, the sprint speed) and not walks, decided every tick, see
+    /// <see cref="RfSteererComponent.Sprint"/>.
+    /// </summary>
+    [ViewVariables]
+    public bool Sprint;
+
+    /// <summary>
     /// The grid the path is on.
     /// </summary>
     [ViewVariables]

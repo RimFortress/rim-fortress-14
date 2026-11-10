@@ -19,5 +19,6 @@
       rangeKey: InteractRange
       query: FleeRoute
       avoid: *Threats
+      sprint: true
     effects:
       Fled: true

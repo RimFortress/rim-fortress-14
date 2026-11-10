@@ -64,6 +64,13 @@ public sealed partial class MoveTo : BaseGoapAction<MoveTo>
     /// </summary>
     [DataField]
     public PathAvoidSpec? Avoid;
+
+    /// <summary>
+    /// True to run, false to walk, null for the default of the agent: it runs in the combat mode and walks when it is not in it. The agent
+    /// that runs from the enemies or goes to fight is not in the combat mode yet, so the action says so.
+    /// </summary>
+    [DataField]
+    public bool? Sprint;
 }
 
 /// <summary>
@@ -85,12 +92,12 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         if (action.TargetEntityKey is { } entityKey)
         {
             return TryGet(ent, entityKey, out var target)
-                ? Move(ent, this, target, range, action.StopOnLineOfSight, action.Query, _pathfinding.GetAvoid(ent, action.Avoid))
+                ? Move(ent, this, target, range, action.StopOnLineOfSight, action.Query, _pathfinding.GetAvoid(ent, action.Avoid), action.Sprint)
                 : GoapActionResult.Failed;
         }
 
         return TryGet(ent, action.TargetKey, out var coordinates)
-            ? Move(ent, this, coordinates, range, action.StopOnLineOfSight, action.Query, _pathfinding.GetAvoid(ent, action.Avoid))
+            ? Move(ent, this, coordinates, range, action.StopOnLineOfSight, action.Query, _pathfinding.GetAvoid(ent, action.Avoid), action.Sprint)
             : GoapActionResult.Failed;
     }
 
@@ -139,8 +146,9 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         float range,
         bool stopOnLineOfSight = false,
         ProtoId<PathQueryPrototype>? query = null,
-        IReadOnlyList<PathAvoid>? avoid = null)
-        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query, avoid));
+        IReadOnlyList<PathAvoid>? avoid = null,
+        bool? sprint = null)
+        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query, avoid, sprint));
 
     /// <summary>
     /// Moves the agent to the entity. The agent comes up to the region the entity takes up and not to its center,
@@ -169,8 +177,9 @@ public sealed partial class MoveToActionSystem : GoapActionSystem<MoveTo>
         float range,
         bool stopOnLineOfSight = false,
         ProtoId<PathQueryPrototype>? query = null,
-        IReadOnlyList<PathAvoid>? avoid = null)
-        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query, avoid));
+        IReadOnlyList<PathAvoid>? avoid = null,
+        bool? sprint = null)
+        => Report(handler, _steering.Move(ent, target, range, stopOnLineOfSight, query, avoid, sprint));
 
     /// <summary>
     /// Finishes the AI's movement. The agent brakes and the path request is cancelled.

@@ -6,5 +6,6 @@
     - Buckled == false
     - Pulled == false
     action: !type:MoveTo
+      sprint: true
     effects:
       NearTargetPlace: true

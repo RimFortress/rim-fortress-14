@@ -123,10 +123,12 @@
     - !type:MoveTo
       targetKey: Engagement/RaidForce/Owner/CampTarget
       rangeKey: CampRange
+      sprint: false
     - !type:PickAccessible
       rangeKey: CampWanderRange
     - !type:MoveTo
       rangeKey: InteractRange
+      sprint: false
     - !type:RandomTime
       key: IdleTime
       minSec: 3
