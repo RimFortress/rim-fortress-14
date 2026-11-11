@@ -64,7 +64,6 @@ public sealed class RfSteeringTest : GameTest
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
     [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
     [SidedDependency(Side.Server)] private readonly SharedTransformSystem _transform = default!;
-    [SidedDependency(Side.Server)] private readonly IGameTiming _timing = default!;
     [SidedDependency(Side.Server)] private readonly ITileDefinitionManager _tileDefs = default!;
 
     private Entity<MapGridComponent> _grid;

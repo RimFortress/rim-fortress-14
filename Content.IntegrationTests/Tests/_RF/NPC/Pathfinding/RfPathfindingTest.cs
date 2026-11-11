@@ -192,7 +192,6 @@ public sealed class RfPathfindingTest : GameTest
     [SidedDependency(Side.Server)] private readonly RfPathfindingSystem _pathfinding = default!;
     [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
-    [SidedDependency(Side.Server)] private readonly SharedGoapSystem _goap = default!;
 
     private static RfPathPoly Poly(RfPathfindingChunk chunk, int x, int y)
         => chunk.GetPolys(RfPathfindingChunk.TileIndex(x, y))[0];

@@ -40,7 +40,7 @@ public sealed class OwnershipLifecycleTest : GameTest
         _coords = new EntityCoordinates(map.Grid, 0.5f, 0.5f);
     }
 
-    private EntityUid Spawn(string? proto = "MobHuman") => _entMan.SpawnEntity(proto, _coords);
+    private new EntityUid Spawn(string? proto = "MobHuman") => _entMan.SpawnEntity(proto, _coords);
 
     [Test]
     public async Task TestOwnerOwnsWhatTheOwnedCarries()

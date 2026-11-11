@@ -71,7 +71,6 @@ public sealed class SettlementNarratorTest : GameTest
     [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
     [SidedDependency(Side.Server)] private readonly SharedTransformSystem _transform = default!;
     [SidedDependency(Side.Server)] private readonly SharedContainerSystem _container = default!;
-    [SidedDependency(Side.Server)] private readonly IGameTiming _timing = default!;
 
     private Entity<MapGridComponent> _grid;
     private EntityUid _player;
@@ -231,10 +230,10 @@ public sealed class SettlementNarratorTest : GameTest
             Assert.That(settlements, Has.Count.EqualTo(2));
 
             away = settlements.Single(x => x.Owner != home.Owner);
-            Assert.That(away.Comp.ResidentCount, Is.EqualTo(1), "a settlement of one");
+            Assert.That(away.Comp!.ResidentCount, Is.EqualTo(1), "a settlement of one");
             Assert.That(home.Comp.ResidentCount, Is.EqualTo(2));
 
-            Assert.That(_ownership.HasOwner(_pops[2], away.Owner), Is.True, "it is owned by its own settlement");
+            Assert.That(_ownership.HasOwner(_pops[2], away!.Owner), Is.True, "it is owned by its own settlement");
             Assert.That(_ownership.HasOwner(_pops[2], home.Owner), Is.False);
             Assert.That(_ownership.HasOwner(_pops[2], _player), Is.False, "and not by the player");
             Assert.That(_ownership.HasOwner(ghost, away.Owner), Is.True, "which has adopted what is near");

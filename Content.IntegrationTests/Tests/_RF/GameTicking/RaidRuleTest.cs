@@ -51,6 +51,9 @@ namespace Content.IntegrationTests.Tests._RF.GameTicking;
 /// </summary>
 public sealed class RaidRuleTest : GameTest
 {
+    private const string RimFortressFaction = "RimFortress";
+    private static readonly ProtoId<DamageTypePrototype> BluntType = "Blunt";
+
     [TestPrototypes]
     private const string Prototypes = @"
 # A wall that cannot be destroyed, so the doors are the only way.
@@ -429,7 +432,7 @@ public sealed class RaidRuleTest : GameTest
         // One of them is hurt, and so it is the weakest, the others are not hurt.
         await Pair.Server.WaitPost(() =>
         {
-            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 40));
+            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index(BluntType), 40));
             StartAgainstStrongSettlement();
         });
         await Run(1.2f);
@@ -752,7 +755,7 @@ public sealed class RaidRuleTest : GameTest
         {
             foreach (var resident in _residents)
             {
-                _faction.AddFaction(resident, "RimFortress");
+                _faction.AddFaction(resident, RimFortressFaction);
 
                 // The room inside the walls is sealed and has no air in the test, the residents are not to suffocate there.
                 _entMan.RemoveComponent<RespiratorComponent>(resident);
@@ -822,7 +825,7 @@ public sealed class RaidRuleTest : GameTest
             // The residents are the enemies of the raiders, as they are in the game.
             foreach (var resident in _residents)
             {
-                _faction.AddFaction(resident, "RimFortress");
+                _faction.AddFaction(resident, RimFortressFaction);
             }
 
             // A closed ring of walls around the residents, the tiles from 3 to 11 and from 3 to 7.
@@ -877,7 +880,7 @@ public sealed class RaidRuleTest : GameTest
             // The residents are the enemies of the raiders, as they are in the game.
             foreach (var resident in _residents)
             {
-                _faction.AddFaction(resident, "RimFortress");
+                _faction.AddFaction(resident, RimFortressFaction);
             }
 
             // A closed ring of walls around the residents, the tiles from 3 to 11 and from 3 to 7.
@@ -924,7 +927,7 @@ public sealed class RaidRuleTest : GameTest
         {
             foreach (var resident in _residents)
             {
-                _faction.AddFaction(resident, "RimFortress");
+                _faction.AddFaction(resident, RimFortressFaction);
             }
 
             for (var x = 3; x <= 11; x++)
@@ -1008,7 +1011,7 @@ public sealed class RaidRuleTest : GameTest
 
         await Pair.Server.WaitPost(() =>
         {
-            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 40));
+            _entMan.System<DamageableSystem>().TryChangeDamage(_raiders[0], new DamageSpecifier(_proto.Index(BluntType), 40));
             GiveOnlyCrowbar(_raiders[0]);
         });
         await StartFarAway(holdRatio: 0f, rushRatio: 1000f);
@@ -1033,7 +1036,7 @@ public sealed class RaidRuleTest : GameTest
     /// </summary>
     private void PutDown(EntityUid raider)
     {
-        _entMan.System<DamageableSystem>().TryChangeDamage(raider, new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), 150));
+        _entMan.System<DamageableSystem>().TryChangeDamage(raider, new DamageSpecifier(_proto.Index(BluntType), 150));
         Assert.That(_mobState.IsCritical(raider), Is.True, "the raider must be down for the test");
     }
 
@@ -1101,7 +1104,7 @@ public sealed class RaidRuleTest : GameTest
         => _goap.TryGetValue(_entMan.GetComponent<GoapComponent>(raider).State, key, out var value) && value;
 
     private void Down(EntityUid pop, int damage = 150)
-        => _entMan.System<DamageableSystem>().TryChangeDamage(pop, new DamageSpecifier(_proto.Index<DamageTypePrototype>("Blunt"), damage));
+        => _entMan.System<DamageableSystem>().TryChangeDamage(pop, new DamageSpecifier(_proto.Index(BluntType), damage));
 
 #pragma warning disable CS0618
     private FixedPoint2 ResidentDamage() => _entMan.System<DamageableSystem>().GetTotalDamage(_residents[0]);
@@ -1119,7 +1122,7 @@ public sealed class RaidRuleTest : GameTest
         {
             foreach (var resident in _residents)
             {
-                _faction.AddFaction(resident, "RimFortress");
+                _faction.AddFaction(resident, RimFortressFaction);
                 _entMan.RemoveComponent<RespiratorComponent>(resident);
             }
 

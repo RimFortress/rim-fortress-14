@@ -20,6 +20,9 @@ namespace Content.IntegrationTests.Tests._RF.Combat;
 /// </summary>
 public sealed class FleeTest : GameTest
 {
+    private const string RimFortressFaction = "RimFortress";
+    private const string NanoTrasenFaction = "NanoTrasen";
+
     [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
     [SidedDependency(Side.Server)] private readonly SettlementSystem _settlements = default!;
     [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
@@ -58,7 +61,7 @@ public sealed class FleeTest : GameTest
 
             // The pops of the game are of the faction of the settlement and of no other, see PopsComponentsOverride.
             _faction.ClearFactions(_pop);
-            _faction.AddFaction(_pop, "RimFortress");
+            _faction.AddFaction(_pop, RimFortressFaction);
             _settlements.MarkDirty(player);
 
             _enemy = _entMan.SpawnEntity(enemy, new EntityCoordinates(_grid, 34.5f, 40.5f));
@@ -106,7 +109,7 @@ public sealed class FleeTest : GameTest
         await Pair.Server.WaitPost(() =>
         {
             _faction.ClearFactions(_pop);
-            _faction.AddFaction(_pop, "NanoTrasen");
+            _faction.AddFaction(_pop, NanoTrasenFaction);
             start = Position(_pop);
         });
         await Pair.RunTicksSync(60 * 4);
@@ -131,7 +134,7 @@ public sealed class FleeTest : GameTest
         await Pair.Server.WaitPost(() =>
         {
             _faction.ClearFactions(_enemy);
-            _faction.AddFaction(_enemy, "RimFortress");
+            _faction.AddFaction(_enemy, RimFortressFaction);
         });
         await Pair.RunTicksSync(60);
 
