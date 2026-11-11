@@ -16,7 +16,7 @@ namespace Content.Client._RF.World.Settlements;
 /// color (see <see cref="SettlementDebugSystem"/>), and the sprites of what waits with the player for a settlement are orange. See the
 /// <c>showsettlements</c> command. The events that go on are red: a ring where each is, and a line to each who has come with it.
 /// </summary>
-public sealed class SettlementsDebugOverlay : Overlay
+public sealed partial class SettlementsDebugOverlay : Overlay
 {
     [Dependency] private IEntityManager _entity = null!;
     [Dependency] private IResourceCache _resource = null!;

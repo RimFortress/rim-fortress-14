@@ -15,7 +15,7 @@ namespace Content.Client._RF.NPC.Engagement;
 /// participant it says in which situations it is and in which role, and what it is doing; in the corner there is the list of the
 /// situations with who owns them and how many are in which role. See the <c>showengagements</c> command.
 /// </summary>
-public sealed class EngagementsDebugOverlay : Overlay
+public sealed partial class EngagementsDebugOverlay : Overlay
 {
     [Dependency] private IEntityManager _entity = null!;
     [Dependency] private IResourceCache _resource = null!;
